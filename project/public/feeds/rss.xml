@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>TaxiAssur - Blog Assurance Taxi</title>
+    <description>Actualités, conseils et guides sur l'assurance taxi par les experts TaxiAssur</description>
+    <link>https://taxiassur.com/blog</link>
+    <atom:link href="https://taxiassur.com/feeds/rss.xml" rel="self" type="application/rss+xml"/>
+    <language>fr-FR</language>
+    <lastBuildDate>Mon, 15 Jan 2024 08:00:00 GMT</lastBuildDate>
+    
+    <item>
+      <title>Assurance Taxi 2024 : Nouvelles Réglementations et Opportunités</title>
+      <description>Découvrez les changements majeurs de l'assurance taxi en 2024 et comment optimiser votre couverture pour économiser jusqu'à 35% sur vos primes.</description>
+      <link>https://taxiassur.com/blog/assurance-taxi-2024</link>
+      <guid>https://taxiassur.com/blog/assurance-taxi-2024</guid>
+      <pubDate>Mon, 15 Jan 2024 08:00:00 GMT</pubDate>
+      <author>team@taxiassur.com (TaxiAssur)</author>
+    </item>
+    
+    <item>
+      <title>Véhicules Électriques pour Taxis : Guide Complet de l'Assurance</title>
+      <description>Tout savoir sur l'assurance des taxis électriques : spécificités, avantages, tarifs préférentiels et démarches simplifiées avec TaxiAssur.</description>
+      <link>https://taxiassur.com/blog/vehicules-electriques-taxi</link>
+      <guid>https://taxiassur.com/blog/vehicules-electriques-taxi</guid>
+      <pubDate>Wed, 10 Jan 2024 09:30:00 GMT</pubDate>
+      <author>team@taxiassur.com (TaxiAssur)</author>
+    </item>
+  </channel>
+</rss>

@@ -1,0 +1,237 @@
+import { BlogPost, FaqEntry, Review, Offer, BlogPostSchema, FaqEntrySchema, ReviewSchema, OfferSchema } from './schema';
+import { createClient } from '@supabase/supabase-js';
+
+// Configuration Supabase (optionnelle)
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseKey = import.meta.env.VITE_SUPABASE_KEY;
+const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null;
+
+// Fonction utilitaire pour lire les fichiers JSON locaux
+async function fetchLocalContent<T>(type: string, schema: any): Promise<T[]> {
+  try {
+    const response = await fetch(`/content/${type}/`);
+    if (!response.ok) {
+      // Si le dossier n'existe pas, essayer de lire les fichiers individuels
+      const items: T[] = [];
+      let index = 0;
+      
+      while (true) {
+        try {
+          const fileResponse = await fetch(`/content/${type}/index-${index}.json`);
+          if (!fileResponse.ok) break;
+          
+          const data = await fileResponse.json();
+          const validated = schema.parse(data);
+          if (validated.status === 'published') {
+            items.push(validated);
+          }
+          index++;
+        } catch {
+          break;
+        }
+      }
+      
+      return items;
+    }
+    
+    const html = await response.text();
+    const fileLinks = html.match(/href="([^"]*\.json)"/g) || [];
+    const items: T[] = [];
+    
+    for (const link of fileLinks) {
+      const filename = link.match(/href="([^"]*)"/)?.[1];
+      if (filename) {
+        try {
+          const fileResponse = await fetch(`/content/${type}/${filename}`);
+          if (fileResponse.ok) {
+            const data = await fileResponse.json();
+            const validated = schema.parse(data);
+            if (validated.status === 'published') {
+              items.push(validated);
+            }
+          }
+        } catch (error) {
+          console.warn(`Failed to load ${filename}:`, error);
+        }
+      }
+    }
+    
+    return items;
+  } catch (error) {
+    console.warn(`Failed to load ${type} content:`, error);
+    return [];
+  }
+}
+
+// Fonction pour lire un fichier spécifique
+async function fetchLocalItem<T>(type: string, id: string, schema: any): Promise<T | null> {
+  try {
+    const response = await fetch(`/content/${type}/${id}.json`);
+    if (!response.ok) return null;
+    
+    const data = await response.json();
+    const validated = schema.parse(data);
+    return validated.status === 'published' ? validated : null;
+  } catch (error) {
+    console.warn(`Failed to load ${type}/${id}:`, error);
+    return null;
+  }
+}
+
+// Blog Posts
+export async function getBlogPosts(): Promise<BlogPost[]> {
+  if (supabase) {
+    try {
+      const { data, error } = await supabase
+        .from('blog')
+        .select('*')
+        .eq('status', 'published')
+        .order('createdAt', { ascending: false });
+      
+      if (!error && data) {
+        return data.map(item => BlogPostSchema.parse(item));
+      }
+    } catch (error) {
+      console.warn('Supabase blog fetch failed, falling back to local:', error);
+    }
+  }
+  
+  const posts = await fetchLocalContent<BlogPost>('blog', BlogPostSchema);
+  return posts.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+}
+
+export async function getBlogPost(id: string): Promise<BlogPost | null> {
+  if (supabase) {
+    try {
+      const { data, error } = await supabase
+        .from('blog')
+        .select('*')
+        .eq('id', id)
+        .eq('status', 'published')
+        .single();
+      
+      if (!error && data) {
+        return BlogPostSchema.parse(data);
+      }
+    } catch (error) {
+      console.warn('Supabase blog post fetch failed, falling back to local:', error);
+    }
+  }
+  
+  return await fetchLocalItem<BlogPost>('blog', id, BlogPostSchema);
+}
+
+// FAQ Entries
+export async function getFaqEntries(): Promise<FaqEntry[]> {
+  if (supabase) {
+    try {
+      const { data, error } = await supabase
+        .from('faq')
+        .select('*')
+        .eq('status', 'published')
+        .order('updatedAt', { ascending: false });
+      
+      if (!error && data) {
+        return data.map(item => FaqEntrySchema.parse(item));
+      }
+    } catch (error) {
+      console.warn('Supabase FAQ fetch failed, falling back to local:', error);
+    }
+  }
+  
+  return await fetchLocalContent<FaqEntry>('faq', FaqEntrySchema);
+}
+
+// Reviews
+export async function getReviews(): Promise<Review[]> {
+  if (supabase) {
+    try {
+      const { data, error } = await supabase
+        .from('reviews')
+        .select('*')
+        .eq('status', 'published')
+        .order('createdAt', { ascending: false });
+      
+      if (!error && data) {
+        return data.map(item => ReviewSchema.parse(item));
+      }
+    } catch (error) {
+      console.warn('Supabase reviews fetch failed, falling back to local:', error);
+    }
+  }
+  
+  const reviews = await fetchLocalContent<Review>('reviews', ReviewSchema);
+  return reviews.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+}
+
+// Offers
+export async function getOffers(): Promise<Offer[]> {
+  if (supabase) {
+    try {
+      const { data, error } = await supabase
+        .from('offers')
+        .select('*')
+        .eq('status', 'published')
+        .order('updatedAt', { ascending: false });
+      
+      if (!error && data) {
+        return data.map(item => OfferSchema.parse(item));
+      }
+    } catch (error) {
+      console.warn('Supabase offers fetch failed, falling back to local:', error);
+    }
+  }
+  
+  return await fetchLocalContent<Offer>('offers', OfferSchema);
+}
+
+export async function getOffer(id: string): Promise<Offer | null> {
+  if (supabase) {
+    try {
+      const { data, error } = await supabase
+        .from('offers')
+        .select('*')
+        .eq('id', id)
+        .eq('status', 'published')
+        .single();
+      
+      if (!error && data) {
+        return OfferSchema.parse(data);
+      }
+    } catch (error) {
+      console.warn('Supabase offer fetch failed, falling back to local:', error);
+    }
+  }
+  
+  return await fetchLocalItem<Offer>('offers', id, OfferSchema);
+}
+
+// Fonction utilitaire pour obtenir la dernière date de mise à jour
+export async function getLastUpdateDate(): Promise<string> {
+  try {
+    const [posts, faqs, reviews, offers] = await Promise.all([
+      getBlogPosts(),
+      getFaqEntries(),
+      getReviews(),
+      getOffers()
+    ]);
+    
+    const dates = [
+      ...posts.map(p => p.updatedAt || p.createdAt),
+      ...faqs.map(f => f.updatedAt),
+      ...reviews.map(r => r.createdAt),
+      ...offers.map(o => o.updatedAt)
+    ];
+    
+    if (dates.length === 0) return new Date().toISOString();
+    
+    const latestDate = dates.reduce((latest, current) => {
+      return new Date(current) > new Date(latest) ? current : latest;
+    });
+    
+    return latestDate;
+  } catch (error) {
+    console.warn('Failed to get last update date:', error);
+    return new Date().toISOString();
+  }
+}

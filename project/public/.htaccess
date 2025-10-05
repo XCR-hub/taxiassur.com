@@ -1,0 +1,107 @@
+SetEnv SMTP_PASS "Team2025!,&"
+SetEnv SMTP_USER "noreply@taxiassur.com"
+SetEnv SMTP_HOST "smtp.ionos.fr"
+SetEnv SMTP_PORT "465"
+SetEnv SMTP_SECURITY "ssl"
+
+# Configuration Apache OPTIMISÉE pour IONOS - TaxiAssur.com
+# Version corrigée qui fonctionne parfaitement
+
+# Activation du module de réécriture
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    
+    # Gestion des erreurs personnalisées
+    ErrorDocument 404 /index.html
+    ErrorDocument 403 /index.html
+    
+    # Redirection pour React Router - IONOS Compatible
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_URI} !^/api/
+    RewriteCond %{REQUEST_URI} !^/webhooks/
+    RewriteCond %{REQUEST_URI} !^/content/
+    RewriteCond %{REQUEST_URI} !^/feeds/
+    RewriteCond %{REQUEST_URI} !\.php$
+    RewriteCond %{REQUEST_URI} !\.json$
+    RewriteCond %{REQUEST_URI} !\.xml$
+    RewriteCond %{REQUEST_URI} !\.txt$
+    RewriteCond %{REQUEST_URI} !\.ico$
+    RewriteCond %{REQUEST_URI} !\.png$
+    RewriteCond %{REQUEST_URI} !\.jpg$
+    RewriteCond %{REQUEST_URI} !\.css$
+    RewriteCond %{REQUEST_URI} !\.js$
+    RewriteRule ^(.*)$ /index.html [L,QSA]
+</IfModule>
+
+# Headers de sécurité (si mod_headers disponible)
+<IfModule mod_headers.c>
+    # Sécurité de base
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set X-XSS-Protection "1; mode=block"
+    
+    # CORS pour API
+    Header always set Access-Control-Allow-Origin "*"
+    Header always set Access-Control-Allow-Methods "GET, POST, OPTIONS"
+    Header always set Access-Control-Allow-Headers "Content-Type, X-Requested-With, X-MAKE-SECRET"
+    
+    # Cache pour les assets
+    Header always set Cache-Control "public, max-age=31536000" "expr=%{REQUEST_URI} =~ m#\.(css|js|png|jpg|jpeg|gif|ico|svg|woff|woff2)$#"
+</IfModule>
+
+# Configuration PHP (si mod_php disponible)
+<IfModule mod_php.c>
+    # Configuration PHP sécurisée
+    php_flag display_errors Off
+    php_flag display_startup_errors Off
+    php_flag log_errors On
+    
+    # Limites raisonnables
+    php_value max_execution_time 30
+    php_value memory_limit "256M"
+    php_value post_max_size "10M"
+    php_value upload_max_filesize "5M"
+</IfModule>
+
+# Cache (si mod_expires disponible)
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType text/css "access plus 1 month"
+    ExpiresByType application/javascript "access plus 1 month"
+    ExpiresByType image/png "access plus 1 month"
+    ExpiresByType image/jpg "access plus 1 month"
+    ExpiresByType image/jpeg "access plus 1 month"
+    ExpiresByType text/html "access plus 1 hour"
+</IfModule>
+
+# Compression (si mod_deflate disponible)
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html
+    AddOutputFilterByType DEFLATE text/css
+    AddOutputFilterByType DEFLATE application/javascript
+    AddOutputFilterByType DEFLATE application/json
+</IfModule>
+
+# Protection des fichiers sensibles
+<Files "*.log">
+    Require all denied
+</Files>
+
+<Files ".env*">
+    Require all denied
+</Files>
+
+# Variables d'environnement IONOS
+<IfModule mod_env.c>
+    SetEnv MAKE_SECRET "change_me_secure_token_2024"
+    SetEnv ADMIN_EMAIL "commercial@xcr.fr"
+    SetEnv SITE_URL "https://taxiassur.com"
+    
+    # Clés API secrètes (côté serveur)
+    SetEnv OPENAI_SECRET_KEY "sk-..."
+    SetEnv ANTHROPIC_SECRET_KEY "sk-ant-..."
+    SetEnv SENDGRID_SECRET_KEY "SG...."
+    SetEnv GOOGLE_CSE_API_KEY "AIza..."
+    SetEnv STRIPE_SECRET_KEY "sk_live_..."
+</IfModule>

@@ -1,0 +1,58 @@
+# Configuration Apache ULTRA-SÉCURISÉE pour IONOS
+# Version sans erreur 500 garantie
+
+# Activation du module de réécriture SEULEMENT si disponible
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    
+    # Redirection vers React App pour toutes les routes
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_URI} !^/api/
+    RewriteCond %{REQUEST_URI} !^/webhooks/
+    RewriteCond %{REQUEST_URI} !\.php$
+    RewriteRule ^(.*)$ /index.html [L]
+    
+    # Gestion des erreurs
+    ErrorDocument 404 /index.html
+</IfModule>
+
+# Headers de sécurité SEULEMENT si mod_headers disponible
+<IfModule mod_headers.c>
+    # Sécurité de base
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "SAMEORIGIN"
+    
+    # CORS pour API
+    Header always set Access-Control-Allow-Origin "*"
+    Header always set Access-Control-Allow-Methods "GET, POST, OPTIONS"
+    Header always set Access-Control-Allow-Headers "Content-Type, X-Requested-With, X-MAKE-SECRET"
+</IfModule>
+
+# Configuration PHP SEULEMENT si mod_php disponible
+<IfModule mod_php.c>
+    # Configuration PHP sécurisée
+    php_flag display_errors Off
+    php_flag display_startup_errors Off
+    php_flag log_errors On
+    
+    # Limites raisonnables
+    php_value max_execution_time 30
+    php_value memory_limit "256M"
+</IfModule>
+
+# Protection des fichiers sensibles
+<Files "*.log">
+    Require all denied
+</Files>
+
+<Files ".env*">
+    Require all denied
+</Files>
+
+# Variables d'environnement IONOS
+<IfModule mod_env.c>
+    SetEnv MAKE_SECRET "change_me_secure_token_2024"
+    SetEnv ADMIN_EMAIL "commercial@xcr.fr"
+    SetEnv SITE_URL "https://taxiassur.com"
+</IfModule>

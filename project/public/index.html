@@ -1,0 +1,2129 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaxiAssur - Devis Assurance Taxi Gratuit & Personnalisé</title>
+    <meta name="description" content="Devis d'assurance taxi gratuit et personnalisé. Courtier spécialiste avec tarifs négociés. Service professionnel et réponse rapide.">
+    <meta name="keywords" content="assurance taxi, devis assurance taxi, assurance taxi gratuit, RC Pro taxi, courtier assurance taxi, TaxiAssur">
+    
+    <!-- Favicon intégré -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚖</text></svg>">
+    
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://taxiassur.com/">
+    <meta property="og:title" content="TaxiAssur - Devis Assurance Taxi Gratuit & Personnalisé">
+    <meta property="og:description" content="Courtier spécialiste taxi ! Devis gratuit et sur-mesure, réponse rapide, service professionnel.">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 50%, #0f0f0f 100%);
+            color: #ffffff;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        /* Header */
+        .header {
+            background: rgba(15, 15, 15, 0.98);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(251, 191, 36, 0.3);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+        }
+        
+        .header-top {
+            background: linear-gradient(90deg, #f59e0b, #eab308);
+            color: #000;
+            padding: 12px 0;
+            text-align: center;
+            font-size: 14px;
+            font-weight: 600;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .header-top::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            animation: scan 3s ease-in-out infinite;
+        }
+        
+        .header-main {
+            padding: 24px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        
+        .logo {
+            font-size: 32px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #f59e0b, #eab308);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 30px rgba(251, 191, 36, 0.5);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .nav-menu {
+            display: flex;
+            gap: 32px;
+            align-items: center;
+        }
+        
+        .nav-link {
+            color: #e5e7eb;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            position: relative;
+            padding: 8px 0;
+        }
+        
+        .nav-link:hover {
+            color: #fbbf24;
+            transform: translateY(-2px);
+        }
+        
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #f59e0b, #eab308);
+            transition: width 0.3s ease;
+        }
+        
+        .nav-link:hover::after {
+            width: 100%;
+        }
+        
+        .cta-header {
+            background: linear-gradient(135deg, #fbbf24, #f59e0b, #d97706);
+            color: #000;
+            padding: 14px 28px;
+            border-radius: 12px;
+            font-weight: 700;
+            text-decoration: none;
+            transition: all 0.5s ease;
+            border: 2px solid rgba(217, 119, 6, 0.3);
+            box-shadow: 
+                0 12px 35px rgba(251, 191, 36, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2),
+                inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .cta-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.8s ease;
+        }
+        
+        .cta-header:hover::before {
+            left: 100%;
+        }
+        
+        .cta-header:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 
+                0 20px 50px rgba(251, 191, 36, 0.5),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3),
+                inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+            border-color: rgba(217, 119, 6, 0.5);
+        }
+        
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            background: linear-gradient(135deg, rgba(0,0,0,0.95), rgba(26,26,26,0.85)), 
+                        url('https://images.pexels.com/photos/1545743/pexels-photo-1545743.jpeg?auto=compress&cs=tinysrgb&w=1920&h=1080&fit=crop');
+            background-size: cover;
+            background-position: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, #f59e0b, #eab308, #f59e0b, transparent);
+            animation: scan 4s ease-in-out infinite;
+        }
+        
+        .hero::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at 30% 70%, rgba(251, 191, 36, 0.1) 0%, transparent 50%),
+                        radial-gradient(circle at 70% 30%, rgba(234, 179, 8, 0.08) 0%, transparent 50%);
+            animation: pulse 6s ease-in-out infinite;
+        }
+        
+        .hero-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 80px;
+            align-items: center;
+            padding: 100px 0;
+            position: relative;
+            z-index: 10;
+        }
+        
+        .hero-text h1 {
+            font-size: 4rem;
+            font-weight: 900;
+            line-height: 1.1;
+            margin-bottom: 32px;
+            text-shadow: 2px 2px 8px rgba(0,0,0,0.7);
+            animation: fadeInUp 1s ease-out;
+        }
+        
+        .hero-text .gradient-text {
+            background: linear-gradient(135deg, #f59e0b 0%, #eab308 50%, #f59e0b 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradientShift 4s ease-in-out infinite;
+        }
+        
+        .hero-text p {
+            font-size: 1.375rem;
+            color: #e5e7eb;
+            margin-bottom: 40px;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.6);
+            animation: fadeInUp 1s ease-out 0.3s both;
+        }
+        
+        .trust-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-bottom: 40px;
+            animation: fadeInUp 1s ease-out 0.6s both;
+        }
+        
+        .trust-item {
+            background: rgba(26, 26, 26, 0.9);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(107, 114, 128, 0.4);
+            border-radius: 20px;
+            padding: 24px;
+            text-align: center;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .trust-item::before {
+            content: '';
+            position: absolute;
+            inset: -2px;
+            background: linear-gradient(45deg, transparent, rgba(251, 191, 36, 0.3), transparent);
+            border-radius: 20px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: -1;
+        }
+        
+        .trust-item:hover::before {
+            opacity: 1;
+            animation: pulse 2s ease-in-out infinite;
+        }
+        
+        .trust-item:hover {
+            border-color: rgba(251, 191, 36, 0.6);
+            box-shadow: 0 12px 35px rgba(251, 191, 36, 0.25);
+            transform: translateY(-5px) scale(1.02);
+        }
+        
+        .trust-icon {
+            font-size: 2.5rem;
+            margin-bottom: 12px;
+            display: block;
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+        }
+        
+        .trust-text {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #f3f4f6;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+        
+        .cta-buttons {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            animation: fadeInUp 1s ease-out 0.9s both;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #f59e0b, #eab308);
+            color: #000;
+            padding: 18px 36px;
+            border-radius: 16px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            text-decoration: none;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 10px 30px rgba(251, 191, 36, 0.4);
+            border: none;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+        }
+        
+        .btn-primary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: left 0.6s ease;
+        }
+        
+        .btn-primary:hover::before {
+            left: 100%;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 15px 40px rgba(251, 191, 36, 0.5);
+        }
+        
+        .btn-outline {
+            border: 2px solid #fbbf24;
+            color: #f59e0b;
+            background: rgba(26, 26, 26, 0.8);
+            padding: 16px 34px;
+            border-radius: 16px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            text-decoration: none;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: blur(10px);
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+        }
+        
+        .btn-outline:hover {
+            background: #f59e0b;
+            color: #000;
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 10px 30px rgba(251, 191, 36, 0.4);
+        }
+        
+        .hero-card {
+            animation: fadeInUp 1s ease-out 0.5s both;
+        }
+        
+        .info-card {
+            background: rgba(26, 26, 26, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(251, 191, 36, 0.3);
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: 0 20px 50px rgba(251, 191, 36, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .info-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #f59e0b, transparent);
+            animation: scan 5s ease-in-out infinite;
+        }
+        
+        .info-card h3 {
+            color: #fbbf24;
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-bottom: 24px;
+            text-align: center;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .benefit-item {
+            display: flex;
+            border-radius: 12px;
+            gap: 16px;
+            margin-bottom: 24px;
+            transition: all 0.5s ease;
+            padding: 16px;
+            border-radius: 12px;
+        }
+        
+        .benefit-item:hover {
+            background: rgba(251, 191, 36, 0.1);
+            transform: translateX(8px);
+        }
+        
+        .benefit-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            font-size: 1.5rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        
+        .benefit-content h4 {
+            color: #f3f4f6;
+            font-weight: 600;
+            margin-bottom: 6px;
+            font-size: 1.1rem;
+        }
+        
+        .benefit-content p {
+            color: #d1d5db;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+        
+        .certification-badge {
+            background: rgba(251, 191, 36, 0.15);
+            padding: 20px;
+            border-radius: 16px;
+            border: 1px solid rgba(251, 191, 36, 0.3);
+            margin-top: 32px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .certification-badge::before {
+            content: '';
+            position: absolute;
+            inset: -2px;
+            background: linear-gradient(45deg, transparent, rgba(251, 191, 36, 0.2), transparent);
+            border-radius: 16px;
+            animation: pulse 3s ease-in-out infinite;
+            z-index: -1;
+        }
+        
+        .certification-badge p:first-child {
+            font-weight: 700;
+            color: #fbbf24;
+            margin-bottom: 4px;
+            font-size: 1.1rem;
+        }
+        
+        .certification-badge p:last-child {
+            font-size: 0.9rem;
+            color: #d1d5db;
+        }
+        
+        /* Steps Section */
+        .steps-section {
+            padding: 100px 0;
+            background: linear-gradient(135deg, #111827, #1f2937, #111827);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .steps-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, #f59e0b, #eab308, #f59e0b, transparent);
+            animation: scan 4s ease-in-out infinite;
+        }
+        
+        .steps-section::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at 20% 80%, rgba(251, 191, 36, 0.08) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 20%, rgba(234, 179, 8, 0.06) 0%, transparent 50%);
+            animation: pulse 8s ease-in-out infinite;
+        }
+        
+        .section-title {
+            text-align: center;
+            margin-bottom: 80px;
+            position: relative;
+            z-index: 10;
+        }
+        
+        .section-title h2 {
+            font-size: 3rem;
+            font-weight: 800;
+            color: white;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 8px rgba(0,0,0,0.5);
+            animation: fadeInUp 1s ease-out;
+        }
+        
+        .section-title p {
+            font-size: 1.375rem;
+            color: #e5e7eb;
+            max-width: 700px;
+            margin: 0 auto;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+            animation: fadeInUp 1s ease-out 0.3s both;
+        }
+        
+        .steps-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 50px;
+            position: relative;
+            z-index: 10;
+        }
+        
+        .step-card {
+            background: rgba(26, 26, 26, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(107, 114, 128, 0.4);
+            border-radius: 24px;
+            padding: 50px;
+            text-align: center;
+            position: relative;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+        }
+        
+        .step-card::before {
+            content: '';
+            position: absolute;
+            inset: -2px;
+            background: linear-gradient(45deg, transparent, rgba(251, 191, 36, 0.3), transparent);
+            border-radius: 24px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: -1;
+        }
+        
+        .step-card:hover::before {
+            opacity: 1;
+            animation: pulse 2s ease-in-out infinite;
+        }
+        
+        .step-card:hover {
+            border-color: rgba(251, 191, 36, 0.6);
+            box-shadow: 0 25px 60px rgba(251, 191, 36, 0.25);
+            transform: translateY(-8px) scale(1.02);
+        }
+        
+        .step-number {
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #f59e0b, #eab308);
+            color: #000;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 1.25rem;
+            box-shadow: 0 8px 25px rgba(251, 191, 36, 0.5);
+            animation: numberPop 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55) both;
+        }
+        
+        .step-icon {
+            font-size: 4rem;
+            margin-bottom: 24px;
+            display: block;
+            filter: drop-shadow(0 4px 12px rgba(0,0,0,0.4));
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        .step-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 20px;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+        }
+        
+        .step-description {
+            color: #d1d5db;
+            margin-bottom: 20px;
+            font-size: 1.05rem;
+            line-height: 1.6;
+        }
+        
+        .step-duration {
+            background: rgba(251, 191, 36, 0.2);
+            color: #fbbf24;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            display: inline-block;
+            border: 1px solid rgba(251, 191, 36, 0.4);
+            box-shadow: 0 4px 12px rgba(251, 191, 36, 0.2);
+        }
+
+        /* Enhanced Progress Section with Taxi Vehicle Animation */
+        .enhanced-progress {
+            position: relative;
+            margin-bottom: 64px;
+        }
+
+        .enhanced-progress .absolute.inset-0.opacity-20 {
+            position: absolute;
+            inset: 0;
+            opacity: 0.2;
+        }
+
+        .enhanced-progress .grid.grid-cols-12.gap-1.h-full {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 4px;
+            height: 100%;
+        }
+
+        .enhanced-progress .bg-amber-400.rounded-full.animate-ai-matrix {
+            background-color: #fbbf24;
+            border-radius: 50%;
+            animation: ai-matrix 6s ease-in-out infinite;
+        }
+
+        .enhanced-progress .relative.max-w-4xl.mx-auto {
+            position: relative;
+            max-width: 896px;
+            margin: 0 auto;
+        }
+
+        .enhanced-progress .absolute.top-1\/2.left-0.right-0.transform.-translate-y-1\/2.h-2 {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            transform: translateY(-50%);
+            height: 8px;
+        }
+
+        .enhanced-progress .relative.h-full.bg-gray-800.rounded-full.overflow-hidden.border.border-gray-700 {
+            position: relative;
+            height: 100%;
+            background-color: #1f2937;
+            border-radius: 50px;
+            overflow: hidden;
+            border: 1px solid #374151;
+        }
+
+        .enhanced-progress .absolute.inset-0.bg-gradient-to-r.from-transparent.via-amber-500\/60.to-transparent.animate-ai-scan-ultra-slow {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(90deg, transparent, rgba(245, 158, 11, 0.6), transparent);
+            animation: ai-scan-ultra-slow 8s ease-in-out infinite;
+        }
+
+        .enhanced-progress .absolute.inset-0.bg-gradient-to-r.from-amber-500.via-yellow-500.to-amber-600.rounded-full.taxi-progress-animated {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(90deg, #f59e0b, #eab308, #d97706);
+            border-radius: 50px;
+            animation: taxi-progress-animated 3s ease-in-out infinite;
+        }
+
+        .enhanced-progress .absolute.top-1\/2.transform.-translate-y-1\/2.-translate-x-1\/2.taxi-vehicle-moving {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%) translateX(-50%);
+            animation: taxi-vehicle-moving 4s ease-in-out infinite;
+        }
+
+        .enhanced-progress .animate-taxi-drive {
+            animation: taxi-drive 2s ease-in-out infinite;
+        }
+
+        .enhanced-progress .animate-exhaust-1,
+        .enhanced-progress .animate-exhaust-2,
+        .enhanced-progress .animate-exhaust-3 {
+            animation: exhaust 1.5s ease-in-out infinite;
+        }
+
+        .enhanced-progress .grid.grid-cols-1.md\:grid-cols-3.gap-8.relative.z-10 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 32px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .step-card-enhanced {
+            background: rgba(26, 26, 26, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(107, 114, 128, 0.4);
+            border-radius: 24px;
+            padding: 40px;
+            text-align: center;
+            position: relative;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+            animation: fadeInUp 1s ease-out both;
+        }
+
+        .step-card-enhanced:hover {
+            border-color: rgba(251, 191, 36, 0.6);
+            box-shadow: 0 25px 60px rgba(251, 191, 36, 0.25);
+            transform: translateY(-8px) scale(1.02);
+        }
+
+        .step-number-enhanced {
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #f59e0b, #eab308);
+            color: #000;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 1.25rem;
+            box-shadow: 0 8px 25px rgba(251, 191, 36, 0.5);
+        }
+
+        .step-icon-container {
+            margin-bottom: 24px;
+        }
+
+        .step-icon {
+            color: #fbbf24;
+            filter: drop-shadow(0 4px 12px rgba(0,0,0,0.4));
+        }
+
+        .animate-step-icon-1 {
+            animation: step-icon-1 3s ease-in-out infinite;
+        }
+
+        .animate-step-icon-2 {
+            animation: step-icon-2 3s ease-in-out infinite;
+        }
+
+        .animate-step-icon-3 {
+            animation: step-icon-3 3s ease-in-out infinite;
+        }
+
+        .step-benefit {
+            background: rgba(251, 191, 36, 0.2);
+            color: #fbbf24;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: inline-block;
+            border: 1px solid rgba(251, 191, 36, 0.4);
+            margin-top: 16px;
+        }
+        
+        /* Form Section */
+        .form-section {
+            background: linear-gradient(135deg, #0f0f0f, #1a1a1a, #0f0f0f);
+            padding: 100px 0;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .form-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, #f59e0b, #eab308, #f59e0b, transparent);
+            animation: scan 4s ease-in-out infinite;
+        }
+        
+        .form-section::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at 50% 50%, rgba(251, 191, 36, 0.05) 0%, transparent 70%);
+            animation: pulse 6s ease-in-out infinite;
+        }
+        
+        .form-card {
+            background: rgba(26, 26, 26, 0.98);
+            backdrop-filter: blur(25px);
+            border: 1px solid rgba(251, 191, 36, 0.4);
+            border-radius: 28px;
+            padding: 50px;
+            max-width: 700px;
+            margin: 0 auto;
+            box-shadow: 0 25px 60px rgba(251, 191, 36, 0.25);
+            position: relative;
+            overflow: hidden;
+            animation: fadeInUp 1s ease-out;
+        }
+        
+        .form-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #f59e0b, transparent);
+            animation: scan 6s ease-in-out infinite;
+        }
+        
+        .form-title {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .form-title h2 {
+            font-size: 2.75rem;
+            font-weight: 800;
+            margin-bottom: 16px;
+            background: linear-gradient(135deg, #f59e0b, #eab308);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .form-title p {
+            font-size: 1.25rem;
+            color: #e5e7eb;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+        
+        .trust-indicators {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+        }
+        
+        .trust-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #e5e7eb;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+        
+        .trust-indicator-icon {
+            font-size: 1.25rem;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+        }
+        
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+        
+        .form-group {
+            position: relative;
+        }
+        
+        .form-group label {
+            display: block;
+            color: #f3f4f6;
+            font-weight: 600;
+            margin-bottom: 10px;
+            font-size: 0.95rem;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 18px;
+            background: rgba(17, 24, 39, 0.9);
+            border: 2px solid rgba(107, 114, 128, 0.5);
+            border-radius: 14px;
+            color: #fff;
+            font-size: 16px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: blur(10px);
+            position: relative;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: #f59e0b;
+            box-shadow: 0 0 0 4px rgba(251, 191, 36, 0.2), 0 8px 25px rgba(0,0,0,0.3);
+            background: rgba(17, 24, 39, 0.95);
+            transform: translateY(-2px);
+        }
+        
+        .form-input::placeholder {
+            color: #9ca3af;
+        }
+        
+        .submit-btn {
+            width: 100%;
+            padding: 22px;
+            background: linear-gradient(135deg, #f59e0b, #eab308);
+            color: #000;
+            border: none;
+            border-radius: 16px;
+            font-size: 1.25rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 10px 30px rgba(251, 191, 36, 0.4);
+            position: relative;
+            overflow: hidden;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+            margin-top: 24px;
+        }
+        
+        .submit-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: left 0.6s ease;
+        }
+        
+        .submit-btn:hover::before {
+            left: 100%;
+        }
+        
+        .submit-btn:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 15px 40px rgba(251, 191, 36, 0.5);
+        }
+        
+        .submit-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: 0 5px 15px rgba(251, 191, 36, 0.2);
+        }
+        
+        .legal-text {
+            background: rgba(17, 24, 39, 0.7);
+            padding: 20px;
+            border-radius: 14px;
+            border: 1px solid rgba(107, 114, 128, 0.3);
+            margin-top: 24px;
+            backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 
+                0 8px 25px rgba(251, 191, 36, 0.2),
+                inset 0 1px 0 rgba(251, 191, 36, 0.1);
+        }
+        
+        .legal-text p {
+            font-size: 0.8rem;
+            color: #9ca3af;
+            text-align: center;
+            line-height: 1.5;
+        }
+        
+        .legal-text a {
+            color: #f59e0b;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .legal-text a:hover {
+            text-decoration: underline;
+            color: #fbbf24;
+        }
+        
+        /* Footer */
+        .footer {
+            background: linear-gradient(135deg, rgba(26, 26, 26, 0.95), rgba(38, 38, 38, 0.95));
+            border: 2px solid rgba(251, 191, 36, 0.3);
+            border-radius: 16px;
+            background: #0f0f0f;
+            box-shadow: 
+                0 20px 50px rgba(0, 0, 0, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.05),
+                0 0 0 1px rgba(251, 191, 36, 0.1);
+            transition: all 0.5s ease;
+            position: relative;
+        }
+        
+        .footer::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, #f59e0b, transparent);
+            animation: scan 5s ease-in-out infinite;
+        }
+        
+        .footer:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 
+                0 30px 70px rgba(0, 0, 0, 0.5),
+                0 0 40px rgba(251, 191, 36, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.08);
+        }
+        
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 50px;
+            margin-bottom: 50px;
+        }
+        
+        .footer-section h4 {
+            background: linear-gradient(135deg, rgba(26, 26, 26, 0.8), rgba(38, 38, 38, 0.8));
+            border: 2px solid rgba(107, 114, 128, 0.6);
+            color: #fff;
+            font-weight: 700;
+            margin-bottom: 20px;
+            font-size: 1.2rem;
+            background: linear-gradient(135deg, #f59e0b, #eab308);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .footer-section p,
+        .footer-section a {
+            color: #d1d5db;
+            text-decoration: none;
+            transition: color 0.3s ease;
+            margin-bottom: 8px;
+            display: block;
+        }
+        
+        .footer-section a:hover {
+            color: #f59e0b;
+            transform: translateX(4px);
+        }
+        
+        .footer-bottom {
+            border-top: 1px solid rgba(107, 114, 128, 0.3);
+            padding-top: 30px;
+            text-align: center;
+            font-size: 0.9rem;
+            color: #9ca3af;
+        }
+        
+        /* Success/Error Messages */
+        .success-message {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            padding: 20px;
+            border-radius: 14px;
+            text-align: center;
+            margin-bottom: 24px;
+            display: none;
+            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3);
+            animation: slideInDown 0.5s ease-out;
+        }
+        
+        .error-message {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+            padding: 20px;
+            border-radius: 14px;
+            text-align: center;
+            margin-bottom: 24px;
+            display: none;
+            box-shadow: 0 8px 25px rgba(239, 68, 68, 0.3);
+            animation: slideInDown 0.5s ease-out;
+        }
+        
+        /* Loading Animation */
+        .loading {
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            border: 3px solid rgba(0,0,0,0.3);
+            border-radius: 50%;
+            border-top-color: #000;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        /* Animations */
+        @keyframes scan {
+            0% { transform: translateX(-100%); opacity: 0; }
+            50% { transform: translateX(0); opacity: 1; }
+            100% { transform: translateX(100%); opacity: 0; }
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.9; }
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(40px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes slideInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes numberPop {
+            0% {
+                transform: translateX(-50%) scale(0) rotate(-180deg);
+                opacity: 0;
+            }
+            50% {
+                transform: translateX(-50%) scale(1.2) rotate(-90deg);
+                opacity: 0.8;
+            }
+            100% {
+                transform: translateX(-50%) scale(1) rotate(0deg);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        @keyframes ai-matrix {
+            0%, 100% { opacity: 0.2; transform: scale(1); }
+            50% { opacity: 0.8; transform: scale(1.2); }
+        }
+
+        @keyframes ai-scan-ultra-slow {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        @keyframes taxi-progress-animated {
+            0% { width: 0%; }
+            100% { width: 33%; }
+        }
+
+        @keyframes taxi-vehicle-moving {
+            0%, 100% { left: 10%; }
+            50% { left: 33%; }
+        }
+
+        @keyframes taxi-drive {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-2px); }
+        }
+
+        @keyframes exhaust {
+            0% { opacity: 0.8; transform: translateX(0) scale(1); }
+            100% { opacity: 0; transform: translateX(-20px) scale(0.5); }
+        }
+
+        @keyframes step-icon-1 {
+            0%, 100% { transform: rotate(0deg) scale(1); }
+            50% { transform: rotate(5deg) scale(1.1); }
+        }
+
+        @keyframes step-icon-2 {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+
+        @keyframes step-icon-3 {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-5px); }
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero-content {
+                grid-template-columns: 1fr;
+                gap: 50px;
+                text-align: center;
+                padding: 60px 0;
+            }
+            
+            .hero-text h1 {
+                font-size: 2.75rem;
+            }
+            
+            .header-main {
+                flex-direction: column;
+                gap: 20px;
+            }
+            
+            .nav-menu {
+                display: none;
+            }
+            
+            .trust-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 16px;
+            }
+            
+            .cta-buttons {
+                flex-direction: column;
+                width: 100%;
+            }
+            
+            .btn-primary,
+            .btn-outline {
+                width: 100%;
+                text-align: center;
+            }
+            
+            .trust-indicators {
+                flex-direction: column;
+                gap: 20px;
+            }
+            
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .section-title h2 {
+                font-size: 2.25rem;
+            }
+            
+            .form-title h2 {
+                font-size: 2.25rem;
+            }
+            
+            .steps-grid {
+                grid-template-columns: 1fr;
+                gap: 40px;
+            }
+            
+            .step-card {
+                padding: 40px 30px;
+            }
+
+            .enhanced-progress .grid.grid-cols-1.md\:grid-cols-3.gap-8.relative.z-10 {
+                grid-template-columns: 1fr;
+                gap: 24px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .hero-text h1 {
+                font-size: 2.25rem;
+            }
+            
+            .form-card {
+                padding: 30px 20px;
+            }
+            
+            .trust-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-top">
+            📞 01 80 85 57 86 • 📧 team@taxiassur.com • 🏛️ ORIAS 11 061 425 • Melun, France
+        </div>
+        <div class="container">
+            <div class="header-main">
+                <div class="logo">🚖 TaxiAssur</div>
+                <nav class="nav-menu">
+                    <a href="#accueil" class="nav-link">Accueil</a>
+                    <a href="#avantages" class="nav-link">Avantages</a>
+                    <a href="#devis" class="nav-link">Devis</a>
+                    <a href="#contact" class="nav-link">Contact</a>
+                </nav>
+                <a href="#devis" class="cta-header">Devis Gratuit</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section id="accueil" class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <div class="hero-text">
+                    <h1>
+                        Devis Assurance Taxi<br>
+                        <span class="gradient-text">Gratuit & Sur-Mesure</span>
+                    </h1>
+                    <p>
+                        <strong>TAXI Assur</strong>, courtier spécialiste Taxi & RC Pro. 
+                        Solutions fiables, service professionnel, réponse rapide, 
+                        <strong style="color: #fbbf24;">tranquillité garantie</strong>.
+                    </p>
+                    
+                    <div class="trust-grid">
+                        <div class="trust-item">
+                            <span class="trust-icon">✅</span>
+                            <div class="trust-text">Devis<br>Sur-Mesure</div>
+                        </div>
+                        <div class="trust-item">
+                            <span class="trust-icon">⚡</span>
+                            <div class="trust-text">Réponse<br>Rapide</div>
+                        </div>
+                        <div class="trust-item">
+                            <span class="trust-icon">👥</span>
+                            <div class="trust-text">Service<br>Pro</div>
+                        </div>
+                        <div class="trust-item">
+                            <span class="trust-icon">🏆</span>
+                            <div class="trust-text">Expertise<br>Reconnue</div>
+                        </div>
+                    </div>
+                    
+                    <div class="cta-buttons">
+                        <a href="#devis" class="btn-primary">🚀 Lancer Mon Analyse IA</a>
+                        <a href="tel:0180855786" class="btn-outline">📞 01 80 85 57 86</a>
+                    </div>
+                </div>
+                
+                <div class="hero-card">
+                    <div class="info-card">
+                        <h3>Pourquoi Choisir TaxiAssur ?</h3>
+                        
+                        <div class="benefit-item">
+                            <div class="benefit-icon" style="background: linear-gradient(135deg, #10b981, #059669);">
+                                ✅
+                            </div>
+                            <div class="benefit-content">
+                                <h4>Solutions Sur-Mesure</h4>
+                                <p>Devis personnalisé selon votre activité et vos besoins spécifiques</p>
+                            </div>
+                        </div>
+                        
+                        <div class="benefit-item">
+                            <div class="benefit-icon" style="background: linear-gradient(135deg, #f59e0b, #eab308);">
+                                ⚡
+                            </div>
+                            <div class="benefit-content">
+                                <h4>Service Réactif</h4>
+                                <p>Réponse rapide et accompagnement personnalisé</p>
+                            </div>
+                        </div>
+                        
+                        <div class="benefit-item">
+                            <div class="benefit-icon" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);">
+                                🏆
+                            </div>
+                            <div class="benefit-content">
+                                <h4>Expertise Reconnue</h4>
+                                <p>Spécialistes taxi depuis des années</p>
+                            </div>
+                        </div>
+                        
+                        <div class="certification-badge">
+                            <p><strong>Courtier Agréé ORIAS 11 061 425</strong></p>
+                            <p>Tranquillité et sérénité garanties</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Steps Section -->
+    <section id="avantages" class="steps-section">
+        <div class="container">
+            <div class="section-title">
+                <h2>🎯 3 étapes EXPRESS pour votre devis</h2>
+                <p>
+                    Processus ultra-optimisé : de votre demande à votre contrat en moins d'1 heure !
+                </p>
+            </div>
+            
+            <!-- Enhanced Progress Section with Taxi Vehicle Animation -->
+            <div class="enhanced-progress">
+              <!-- Animated background grid -->
+              <div class="absolute inset-0 opacity-20">
+                <div class="grid grid-cols-12 gap-1 h-full">
+                  <div class="bg-amber-400 rounded-full animate-ai-matrix" style="animation-delay: 0s;"></div>
+                  <div class="bg-amber-400 rounded-full animate-ai-matrix" style="animation-delay: 0.5s;"></div>
+                  <div class="bg-amber-400 rounded-full animate-ai-matrix" style="animation-delay: 1s;"></div>
+                  <div class="bg-amber-400 rounded-full animate-ai-matrix" style="animation-delay: 1.5s;"></div>
+                  <div class="bg-amber-400 rounded-full animate-ai-matrix" style="animation-delay: 2s;"></div>
+                  <div class="bg-amber-400 rounded-full animate-ai-matrix" style="animation-delay: 2.5s;"></div>
+                  <div class="bg-amber-400 rounded-full animate-ai-matrix" style="animation-delay: 3s;"></div>
+                  <div class="bg-amber-400 rounded-full animate-ai-matrix" style="animation-delay: 3.5s;"></div>
+                  <div class="bg-amber-400 rounded-full animate-ai-matrix" style="animation-delay: 4s;"></div>
+                  <div class="bg-amber-400 rounded-full animate-ai-matrix" style="animation-delay: 4.5s;"></div>
+                  <div class="bg-amber-400 rounded-full animate-ai-matrix" style="animation-delay: 5s;"></div>
+                  <div class="bg-amber-400 rounded-full animate-ai-matrix" style="animation-delay: 5.5s;"></div>
+                </div>
+              </div>
+              
+              <!-- Enhanced Step Progress with Taxi Vehicle -->
+              <div class="relative max-w-4xl mx-auto">
+                <!-- Connection Path -->
+                <div class="absolute top-1/2 left-0 right-0 transform -translate-y-1/2 h-2">
+                  <div class="relative h-full bg-gray-800 rounded-full overflow-hidden border border-gray-700">
+                    <!-- AI scan line -->
+                    <div class="absolute inset-0 bg-gradient-to-r from-transparent via-amber-500/60 to-transparent animate-ai-scan-ultra-slow"></div>
+                    <!-- Progress fill -->
+                    <div class="absolute inset-0 bg-gradient-to-r from-amber-500 via-yellow-500 to-amber-600 rounded-full taxi-progress-animated" style="width: 33%;"></div>
+                  </div>
+                  
+                  <!-- Animated Taxi Vehicle -->
+                  <div class="absolute top-1/2 transform -translate-y-1/2 -translate-x-1/2 taxi-vehicle-moving" style="left: 33%;">
+                    <div class="relative">
+                      <!-- Taxi vehicle SVG -->
+                      <svg width="40" height="24" viewBox="0 0 40 24" class="animate-taxi-drive">
+                        <defs>
+                          <linearGradient id="taxiGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" style="stop-color:#fbbf24"/>
+                            <stop offset="50%" style="stop-color:#f59e0b"/>
+                            <stop offset="100%" style="stop-color:#d97706"/>
+                          </linearGradient>
+                        </defs>
+                        <!-- Car body -->
+                        <rect x="2" y="8" width="32" height="12" rx="3" ry="3" fill="url(#taxiGradient)" stroke="#d97706" stroke-width="1"/>
+                        <!-- Windshield -->
+                        <rect x="6" y="6" width="8" height="4" rx="1" fill="#1f2937" opacity="0.8"/>
+                        <rect x="22" y="6" width="8" height="4" rx="1" fill="#1f2937" opacity="0.8"/>
+                        <!-- Wheels -->
+                        <circle cx="8" cy="20" r="3" fill="#374151" stroke="#1f2937" stroke-width="1"/>
+                        <circle cx="28" cy="20" r="3" fill="#374151" stroke="#1f2937" stroke-width="1"/>
+                        <!-- Taxi sign -->
+                        <rect x="14" y="4" width="8" height="4" rx="1" fill="#000" opacity="0.9"/>
+                        <text x="18" y="7" font-family="Arial" font-size="3" font-weight="bold" text-anchor="middle" fill="#fbbf24">TAXI</text>
+                        <!-- Headlights -->
+                        <circle cx="35" cy="12" r="1.5" fill="#fef3c7" opacity="0.9"/>
+                        <circle cx="35" cy="16" r="1.5" fill="#fef3c7" opacity="0.9"/>
+                      </svg>
+                      
+                      <!-- Exhaust particles -->
+                      <div class="absolute -left-2 top-1/2 transform -translate-y-1/2">
+                        <div class="w-1 h-1 bg-gray-400 rounded-full animate-exhaust-1"></div>
+                        <div class="w-1 h-1 bg-gray-400 rounded-full animate-exhaust-2" style="animation-delay: 0.3s;"></div>
+                        <div class="w-1 h-1 bg-gray-400 rounded-full animate-exhaust-3" style="animation-delay: 0.6s;"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Enhanced Step Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8 relative z-10">
+                  <!-- Step 1: Devis Sur-Mesure -->
+                  <div class="step-card-enhanced group" style="animation-delay: 0.2s;">
+                    <div class="step-number-enhanced">1</div>
+                    <div class="step-icon-container">
+                      <svg class="step-icon animate-step-icon-1" width="32" height="32" viewBox="0 0 24 24" fill="none">
+                        <path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/>
+                      </svg>
+                    </div>
+                    <h3 class="step-title">Devis Sur-Mesure</h3>
+                    <p class="step-description">Analyse IA de votre profil pour un devis ultra-personnalisé</p>
+                    <div class="step-benefit">✨ 100% Gratuit</div>
+                  </div>
+                  
+                  <!-- Step 2: Réponse Rapide -->
+                  <div class="step-card-enhanced group" style="animation-delay: 0.4s;">
+                    <div class="step-number-enhanced">2</div>
+                    <div class="step-icon-container">
+                      <svg class="step-icon animate-step-icon-2" width="32" height="32" viewBox="0 0 24 24" fill="none">
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                        <polyline points="12,6 12,12 16,14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                    </div>
+                    <h3 class="step-title">Réponse Rapide</h3>
+                    <p class="step-description">Votre expert vous rappelle sous 15 minutes garanties</p>
+                    <div class="step-benefit">⚡ Service Express</div>
+                  </div>
+                  
+                  <!-- Step 3: Service Pro -->
+                  <div class="step-card-enhanced group" style="animation-delay: 0.6s;">
+                    <div class="step-number-enhanced">3</div>
+                    <div class="step-icon-container">
+                      <svg class="step-icon animate-step-icon-3" width="32" height="32" viewBox="0 0 24 24" fill="none">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke="currentColor" stroke-width="2"/>
+                        <circle cx="9" cy="7" r="4" stroke="currentColor" stroke-width="2"/>
+                        <path d="m22 21-3-3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <circle cx="19" cy="19" r="2" stroke="currentColor" stroke-width="2"/>
+                      </svg>
+                    </div>
+                    <h3 class="step-title">Expertise Reconnue</h3>
+                    <p class="step-description">Accompagnement par nos experts spécialisés taxi</p>
+                    <div class="step-benefit">🏆 ORIAS 11 061 425</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="steps-grid">
+                <div class="step-card" style="animation-delay: 0.2s;">
+                    <div class="step-number" style="animation-delay: 0.2s;">1</div>
+                    <span class="step-icon">📝</span>
+                    <h3 class="step-title">Formulaire express</h3>
+                    <p class="step-description">
+                        Remplissez notre formulaire optimisé en 30 secondes : nom, contact, ville, statut.
+                    </p>
+                    <span class="step-duration">⏱️ 30 secondes</span>
+                </div>
+                
+                <div class="step-card" style="animation-delay: 0.4s;">
+                    <div class="step-number" style="animation-delay: 0.4s;">2</div>
+                    <span class="step-icon">📞</span>
+                    <h3 class="step-title">Rappel GARANTI</h3>
+                    <p class="step-description">
+                        Votre expert TAXI vous rappelle sous 15 minutes pour personnaliser votre offre.
+                    </p>
+                    <span class="step-duration">⏱️ 15 minutes</span>
+                </div>
+                
+                <div class="step-card" style="animation-delay: 0.6s;">
+                    <div class="step-number" style="animation-delay: 0.6s;">3</div>
+                    <span class="step-icon">🎁</span>
+                    <h3 class="step-title">Offre personnalisée</h3>
+                    <p class="step-description">
+                        Recevez votre devis EXCLUSIF avec -35% + attestation immédiate + conseiller dédié.
+                    </p>
+                    <span class="step-duration">⏱️ Immédiat</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Form Section -->
+    <section id="devis" class="form-section">
+        <div class="container">
+            <div class="form-title">
+                <h2>Demandez Votre Devis Gratuit</h2>
+                <p>🤖 Formulaire IA express → Analyse personnalisée → Offre sur-mesure</p>
+            </div>
+            
+            <div class="trust-indicators">
+                <div class="trust-indicator">
+                    <span class="trust-indicator-icon">🛡️</span>
+                    <span>100% Gratuit</span>
+                </div>
+                <div class="trust-indicator">
+                    <span class="trust-indicator-icon">📞</span>
+                    <span>Réponse Rapide</span>
+                </div>
+                <div class="trust-indicator">
+                    <span class="trust-indicator-icon">⚡</span>
+                    <span>Service Pro</span>
+                </div>
+            </div>
+            
+            <div class="form-card">
+                <div id="success-message" class="success-message">
+                    ✅ Demande envoyée avec succès ! Vous allez être redirigé...
+                </div>
+                <div id="error-message" class="error-message">
+                    ❌ Erreur lors de l'envoi. Veuillez réessayer.
+                </div>
+                
+                <form id="lead-form">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="name">Nom et prénom *</label>
+                            <input type="text" id="name" name="name" class="form-input" placeholder="Ex: Jean Dupont" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="phone">Téléphone *</label>
+                            <input type="tel" id="phone" name="phone" class="form-input" placeholder="Ex: 06 12 34 56 78" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="email">Email *</label>
+                            <input type="email" id="email" name="email" class="form-input" placeholder="Ex: jean@email.com" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="city">Ville *</label>
+                            <input type="text" id="city" name="city" class="form-input" placeholder="Ex: Paris" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="status">Statut professionnel *</label>
+                        <select id="status" name="status" class="form-input" required>
+                            <option value="taxi">🚖 Taxi (licence préfecture)</option>
+                            <option value="vtc">🚗 VTC (carte professionnelle)</option>
+                            <option value="autre">🚐 Autre transport de personnes</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="immatriculation">Immatriculation véhicule (optionnel)</label>
+                        <input type="text" id="immatriculation" name="immatriculation" class="form-input" placeholder="Ex: AB-123-CD">
+                    </div>
+                    
+                    <!-- Honeypot anti-spam -->
+                    <input type="text" name="company" style="display: none;" tabindex="-1" autocomplete="off">
+                    
+                    <button type="submit" class="submit-btn" id="submit-btn">
+                        <span id="btn-text">🚀 DEMANDER MON DEVIS PERSONNALISÉ</span>
+                        <span id="btn-loading" style="display: none;">
+                            <span class="loading"></span> Envoi en cours...
+                        </span>
+                    </button>
+                    
+                    <div class="legal-text">
+                        <p>
+                            En soumettant ce formulaire, j'accepte d'être recontacté par TaxiAssur.com 
+                            pour recevoir mon devis personnalisé. Données sécurisées selon notre 
+                            <a href="/politique-confidentialite">politique de confidentialité</a>.
+                        </p>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer id="contact" class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>🚖 TaxiAssur</h4>
+                    <p>Excellence Coverage Risks</p>
+                    <p>Courtier ORIAS 11 061 425</p>
+                    <p>Melun, France</p>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Contact</h4>
+                    <a href="tel:0180855786">📞 01 80 85 57 86</a>
+                    <a href="mailto:team@taxiassur.com">📧 team@taxiassur.com</a>
+                    <p>📍 Melun, France</p>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Services</h4>
+                    <p>Assurance Taxi</p>
+                    <p>RC Professionnelle</p>
+                    <p>Flotte de Véhicules</p>
+                    <p>Conseil Personnalisé</p>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Informations</h4>
+                    <a href="/mentions-legales">Mentions Légales</a>
+                    <a href="/politique-confidentialite">Confidentialité</a>
+                    <a href="/conditions-generales">Conditions</a>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>© 2025 TaxiAssur.com - Tous droits réservés • Une marque XCR - Excellence Coverage Risks</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Variables globales
+        const startTime = Date.now();
+        let isSubmitting = false;
+        let formStartTime = Date.now();
+        let timeRemaining = 15 * 60; // 15 minutes
+        let limitedSpots = 47;
+
+        // Initialize conversion optimizations
+        document.addEventListener('DOMContentLoaded', function() {
+          startCountdown();
+          animateStats();
+          showRecentTestimonials();
+          trackFormBehavior();
+        });
+
+        // Form Progress Tracking
+        function updateProgress() {
+          const fields = ['name', 'phone', 'email', 'city', 'status'];
+          let completed = 0;
+          
+          fields.forEach(field => {
+            const input = document.getElementById(field);
+            if (input && input.value.trim()) {
+              completed++;
+            }
+          });
+          
+          const progress = (completed / fields.length) * 100;
+          const progressBar = document.getElementById('progress-bar');
+          const progressText = document.getElementById('form-progress');
+          
+          if (progressBar) {
+            progressBar.style.width = progress + '%';
+          }
+          
+          if (progressText) {
+            progressText.textContent = Math.round(progress) + '%';
+          }
+          
+          // Show benefits when 60% complete
+          if (progress >= 60) {
+            const benefitsDisplay = document.getElementById('benefits-display');
+            if (benefitsDisplay) {
+              benefitsDisplay.style.opacity = '1';
+              benefitsDisplay.style.transform = 'translateY(0)';
+            }
+          }
+          
+          // Update estimated savings based on city
+          const cityInput = document.getElementById('city');
+          if (cityInput && cityInput.value) {
+            updateEstimatedSavings(cityInput.value);
+          }
+        }
+
+        // Field Animation on Focus
+        function animateField(field) {
+          field.style.transform = 'translateY(-2px) scale(1.02)';
+          field.style.boxShadow = '0 0 30px rgba(251, 191, 36, 0.4), 0 8px 25px rgba(0, 0, 0, 0.3)';
+          
+          setTimeout(() => {
+            field.style.transform = 'translateY(0) scale(1)';
+          }, 200);
+        }
+
+        // Countdown Timer for Urgency
+        function startCountdown() {
+          const timer = setInterval(() => {
+            timeRemaining--;
+            
+            const minutes = Math.floor(timeRemaining / 60);
+            const seconds = timeRemaining % 60;
+            const timeDisplay = document.getElementById('time-remaining');
+            
+            if (timeDisplay) {
+              timeDisplay.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            }
+            
+            // Update limited spots occasionally
+            if (timeRemaining % 120 === 0 && limitedSpots > 20) {
+              limitedSpots--;
+              const spotsDisplay = document.getElementById('limited-spots');
+              if (spotsDisplay) {
+                spotsDisplay.textContent = limitedSpots;
+                spotsDisplay.style.animation = 'none';
+                setTimeout(() => {
+                  spotsDisplay.style.animation = 'pulse 2s infinite';
+                }, 100);
+              }
+            }
+            
+            if (timeRemaining <= 0) {
+              clearInterval(timer);
+            }
+          }, 1000);
+        }
+
+        // Animate Statistics
+        function animateStats() {
+          const stats = document.querySelectorAll('.animate-count-up');
+          stats.forEach(stat => {
+            const target = stat.textContent;
+            const isNumber = !isNaN(parseFloat(target));
+            
+            if (isNumber) {
+              const finalValue = parseFloat(target);
+              let current = 0;
+              const increment = finalValue / 50;
+              
+              const counter = setInterval(() => {
+                current += increment;
+                if (current >= finalValue) {
+                  stat.textContent = target;
+                  clearInterval(counter);
+                } else {
+                  stat.textContent = Math.floor(current) + (target.includes('+') ? '+' : '');
+                }
+              }, 50);
+            }
+          });
+        }
+
+        // Show Recent Testimonials
+        function showRecentTestimonials() {
+          const testimonials = [
+            { name: 'Mohammed B.', city: 'Paris', savings: '580€', time: '2 min' },
+            { name: 'Fatima R.', city: 'Lyon', savings: '720€', time: '5 min' },
+            { name: 'Ahmed K.', city: 'Marseille', savings: '450€', time: '8 min' }
+          ];
+          
+          const container = document.getElementById('recent-testimonials');
+          if (container) {
+            container.innerHTML = testimonials.map(t => `
+              <div class="bg-gray-800/60 rounded-xl p-4 border border-gray-600/50 animate-fade-in-up">
+                <div class="text-sm font-semibold text-white">${t.name}</div>
+                <div class="text-xs text-gray-400">${t.city}</div>
+                <div class="text-sm text-green-400 font-bold mt-1">-${t.savings}</div>
+                <div class="text-xs text-amber-400">Il y a ${t.time}</div>
+              </div>
+            `).join('');
+          }
+        }
+
+        // Update Estimated Savings Based on City
+        function updateEstimatedSavings(city) {
+          const cityMultipliers = {
+            'paris': 650,
+            'lyon': 580,
+            'marseille': 520,
+            'toulouse': 480,
+            'nice': 510
+          };
+          
+          const baseAmount = 580;
+          const cityKey = city.toLowerCase();
+          const estimated = cityMultipliers[cityKey] || baseAmount;
+          
+          const savingsDisplay = document.getElementById('estimated-savings');
+          if (savingsDisplay) {
+            savingsDisplay.textContent = `${estimated}€/an`;
+            savingsDisplay.style.animation = 'none';
+            setTimeout(() => {
+              savingsDisplay.style.animation = 'pulse 2s infinite';
+            }, 100);
+          }
+        }
+
+        // Track Form Behavior for Optimization
+        function trackFormBehavior() {
+          const fields = document.querySelectorAll('input, select');
+          
+          fields.forEach(field => {
+            field.addEventListener('focus', () => {
+              // Track field focus for analytics
+              if (typeof gtag !== 'undefined') {
+                gtag('event', 'form_field_focus', {
+                  event_category: 'form_interaction',
+                  event_label: field.name
+                });
+              }
+            });
+            
+            field.addEventListener('blur', () => {
+              // Validate field on blur
+              if (field.required && !field.value.trim()) {
+                field.style.borderColor = '#ef4444';
+                field.style.boxShadow = '0 0 10px rgba(239, 68, 68, 0.3)';
+              } else {
+                field.style.borderColor = '#16a34a';
+                field.style.boxShadow = '0 0 10px rgba(22, 163, 74, 0.3)';
+              }
+            });
+          });
+        }
+
+        async function handleSubmit(event) {
+          event.preventDefault();
+          
+          if (isSubmitting) return;
+          
+          // Track form submission attempt
+          if (typeof gtag !== 'undefined') {
+            gtag('event', 'form_submit_attempt', {
+              event_category: 'conversion',
+              event_label: 'lead_form'
+            });
+          }
+          
+          isSubmitting = true;
+          const submitBtn = event.target.querySelector('button[type="submit"]');
+          const originalText = submitBtn.innerHTML;
+          
+          // Enhanced loading state
+          submitBtn.innerHTML = `
+            <div class="relative z-10 flex items-center space-x-3">
+              <div class="w-6 h-6 border-3 border-black/30 border-t-black rounded-full animate-spin"></div>
+              <span class="text-black">Analyse IA en cours...</span>
+              <div class="flex space-x-1">
+                <div class="w-1 h-1 bg-black rounded-full animate-pulse"></div>
+                <div class="w-1 h-1 bg-black rounded-full animate-pulse" style="animation-delay: 0.2s;"></div>
+                <div class="w-1 h-1 bg-black rounded-full animate-pulse" style="animation-delay: 0.4s;"></div>
+              </div>
+            </div>
+          `;
+          submitBtn.disabled = true;
+          submitBtn.style.transform = 'scale(0.98)';
+          
+          const formData = new FormData(event.target);
+          const data = Object.fromEntries(formData.entries());
+        
+        // Form handling avec triple fallback
+        document.getElementById('lead-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('submit-btn');
+            const btnText = document.getElementById('btn-text');
+            const btnLoading = document.getElementById('btn-loading');
+            const successMsg = document.getElementById('success-message');
+            const errorMsg = document.getElementById('error-message');
+            
+            // Anti-spam check
+            const timeTaken = Date.now() - startTime;
+            if (timeTaken < 2000) {
+                console.log('Soumission trop rapide, ignorée');
+                return;
+            }
+            
+            // Hide messages
+            successMsg.style.display = 'none';
+            errorMsg.style.display = 'none';
+            
+            // Show loading
+            submitBtn.disabled = true;
+            btnText.style.display = 'none';
+            btnLoading.style.display = 'inline-flex';
+            
+            // Get form data
+            const formData = new FormData(this);
+            const data = Object.fromEntries(formData.entries());
+            
+            // Anti-spam honeypot check
+            if (data.company) {
+                console.log('Honeypot triggered, spam detected');
+                return;
+            }
+            
+            // Validation basique
+            if (!data.name || data.name.length < 2) {
+                showError('Nom requis (minimum 2 caractères)');
+                return;
+            }
+            
+            if (!data.email || !data.email.includes('@')) {
+                showError('Email valide requis');
+                return;
+            }
+            
+            if (!data.phone || data.phone.length < 10) {
+                showError('Téléphone valide requis');
+                return;
+            }
+            
+            if (!data.city || data.city.length < 2) {
+                showError('Ville requise');
+                return;
+            }
+            
+            try {
+                // Méthode 1: Essayer l'API PHP
+                let response = await fetch('/api/lead.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result.success) {
+                        showSuccess();
+                        this.reset();
+                        
+                        // Redirection vers page de remerciement
+                        setTimeout(() => {
+                            window.location.href = '/merci.html';
+                        }, 2000);
+                        return;
+                    }
+                }
+                
+                // Méthode 2: Fallback vers webhook
+                response = await fetch('/webhooks/make.php?action=lead', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result.ok) {
+                        showSuccess();
+                        this.reset();
+                        
+                        setTimeout(() => {
+                            window.location.href = '/merci.html';
+                        }, 2000);
+                        return;
+                    }
+                }
+                
+                throw new Error('API non disponible');
+                
+            } catch (error) {
+                console.error('API Error:', error);
+                
+                // Méthode 3: Fallback mailto (toujours fonctionnel)
+                const subject = encodeURIComponent(`[TAXIASSUR] Nouveau lead - ${data.name} - ${data.city}`);
+                const body = encodeURIComponent(`NOUVELLE DEMANDE DE DEVIS TAXIASSUR
+
+Informations client :
+- Nom : ${data.name}
+- Email : ${data.email}
+- Téléphone : ${data.phone}
+- Ville : ${data.city}
+- Statut : ${data.status}
+- Immatriculation : ${data.immatriculation || 'Non renseignée'}
+
+Date de la demande : ${new Date().toLocaleString('fr-FR')}
+
+--
+TaxiAssur.com - Système de leads automatique`);
+                
+                // Ouvrir le client email
+                window.location.href = `mailto:commercial@xcr.fr?subject=${subject}&body=${body}`;
+                
+                // Afficher message de succès
+                showSuccess('Votre demande va être envoyée par email. Merci !');
+                this.reset();
+            } finally {
+                // Reset button state
+                setTimeout(() => {
+                    submitBtn.disabled = false;
+                    btnText.style.display = 'inline';
+                    btnLoading.style.display = 'none';
+                }, 1000);
+            }
+        });
+        
+        function showSuccess(message = '✅ Demande envoyée avec succès ! Vous allez être redirigé...') {
+            const successMsg = document.getElementById('success-message');
+            successMsg.innerHTML = message;
+            successMsg.style.display = 'block';
+            successMsg.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        
+        function showError(message) {
+            const errorMsg = document.getElementById('error-message');
+            errorMsg.innerHTML = `❌ ${message}`;
+            errorMsg.style.display = 'block';
+            errorMsg.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            
+            // Reset button
+            const submitBtn = document.getElementById('submit-btn');
+            const btnText = document.getElementById('btn-text');
+            const btnLoading = document.getElementById('btn-loading');
+            
+            submitBtn.disabled = false;
+            btnText.style.display = 'inline';
+            btnLoading.style.display = 'none';
+        }
+        
+        // Smooth scrolling pour les ancres
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+        
+        // Track visitor
+        localStorage.setItem('taxiassur_visited', 'true');
+        
+        // Animation on scroll
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+        
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.animationPlayState = 'running';
+                }
+            });
+        }, observerOptions);
+        
+        // Observe animated elements
+        document.querySelectorAll('.step-card, .trust-item, .benefit-item').forEach(el => {
+            observer.observe(el);
+        });
+    </script>
+</body>
+</html>

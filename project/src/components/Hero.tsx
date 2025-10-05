@@ -1,0 +1,376 @@
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { CheckCircle, Phone, Send, Shield, Clock, Award, TrendingDown, Zap, Target, Star, FileText, MapPin, Users, User, Mail } from 'lucide-react';
+import AITaxiBackground from './AITaxiBackground';
+
+const Hero: React.FC = () => {
+  const navigate = useNavigate();
+  const [formData, setFormData] = useState({
+    name: '',
+    phone: '',
+    email: '',
+    city: '',
+    status: 'taxi',
+    immatriculation: '',
+    company_website: '' // honeypot
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errors, setErrors] = useState<string[]>([]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setErrors([]);
+
+    // Basic validation
+    const newErrors: string[] = [];
+    if (!formData.name) newErrors.push('Le nom est requis');
+    if (!formData.email) newErrors.push('L\'email est requis');
+    if (!formData.phone) newErrors.push('Le téléphone est requis');
+    if (!formData.city) newErrors.push('La ville est requise');
+
+    if (newErrors.length > 0) {
+      setErrors(newErrors);
+      setIsSubmitting(false);
+      return;
+    }
+
+    // Anti-spam check
+    if (formData.company_website) {
+      // Silent fail for bots
+      window.location.href = '/merci';
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/lead.php', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          city: formData.city,
+          status: formData.status,
+          immatriculation: formData.immatriculation
+        })
+      });
+
+      const result = await response.json();
+      
+      if (result.success || result.ok) {
+        window.location.href = '/merci';
+      } else {
+        setErrors([result.error || 'Erreur lors de l\'envoi. Veuillez réessayer.']);
+      }
+    } catch (error) {
+      console.error('Erreur:', error);
+      setErrors(['Erreur de connexion. Veuillez réessayer.']);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <section className="relative bg-gradient-to-br from-gray-950 via-gray-900 to-black text-white py-20 overflow-hidden">
+      <AITaxiBackground section="hero" intensity="medium" />
+      
+      <div className="container-max relative z-20">
+        <div className="lg:flex lg:items-center lg:space-x-12">
+          {/* Left Column: Content */}
+          <div className="lg:w-1/2 mb-12 lg:mb-0">
+            {/* Badge ORIAS */}
+            <div className="mb-8">
+              <div className="inline-flex items-center space-x-3 bg-gradient-to-r from-amber-500/20 to-yellow-500/20 px-6 py-3 rounded-2xl border border-amber-500/40 backdrop-blur-sm">
+                <Shield className="text-amber-400 drop-shadow-lg" size={20} />
+                <span className="text-amber-300 font-bold text-sm tracking-wide drop-shadow-md">COURTIER AGRÉÉ ORIAS 11 061 425</span>
+                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+              </div>
+            </div>
+            
+            {/* Main Title */}
+            <h1 className="text-4xl md:text-5xl font-bold mb-6 drop-shadow-lg leading-tight">
+              <span className="text-3xl md:text-4xl">Assurance Taxi</span> <span className="text-gradient text-3xl md:text-4xl">Pas Cher</span>
+              <br />
+              <span className="text-amber-400 text-3xl md:text-4xl">Devis Gratuit 2 min</span>
+            </h1>
+            
+            {/* Subtitle with benefits */}
+            <p className="text-base text-amber-300 font-bold mb-6 drop-shadow-md">
+              Courtier ORIAS • -35% Garanti • RC Pro Incluse • Réponse 15min
+            </p>
+
+            {/* SEO Description */}
+            <div className="mb-8 space-y-4">
+              <p className="text-sm text-gray-200 leading-relaxed drop-shadow-md">
+                <strong className="text-amber-400">Assurance taxi pas cher</strong> avec TaxiAssur, 
+                <strong className="text-blue-400">courtier assurance taxi</strong> agréé ORIAS.
+                <strong className="text-green-400">Devis assurance taxi gratuit</strong> en 2 min. 
+                <strong className="text-purple-400">RC professionnelle taxi</strong> incluse.
+                <strong className="text-red-400">Prix assurance taxi</strong> négociés : 
+                économisez 35% ! <strong className="text-cyan-400">Service expert</strong> depuis septembre 2025.
+              </p>
+            </div>
+
+            {/* Quick Links */}
+            <div className="grid grid-cols-2 gap-3 mb-6">
+              <button className="flex items-center space-x-2 text-xs text-gray-300 hover:text-amber-400 transition-colors bg-gray-800/50 hover:bg-gray-700/50 px-3 py-2 rounded-lg border border-gray-600 hover:border-amber-500/50">
+                <FileText className="text-amber-400" size={16} />
+                <span>Guide Complet Assurance Taxi</span>
+              </button>
+              <button className="flex items-center space-x-2 text-xs text-gray-300 hover:text-blue-400 transition-colors bg-gray-800/50 hover:bg-gray-700/50 px-3 py-2 rounded-lg border border-gray-600 hover:border-blue-500/50">
+                <Shield className="text-blue-400" size={16} />
+                <span>RC Professionnelle</span>
+              </button>
+              <button className="flex items-center space-x-2 text-xs text-gray-300 hover:text-green-400 transition-colors bg-gray-800/50 hover:bg-gray-700/50 px-3 py-2 rounded-lg border border-gray-600 hover:border-green-500/50">
+                <MapPin className="text-green-400" size={16} />
+                <span>Toutes les Villes</span>
+              </button>
+              <button className="flex items-center space-x-2 text-xs text-gray-300 hover:text-purple-400 transition-colors bg-gray-800/50 hover:bg-gray-700/50 px-3 py-2 rounded-lg border border-gray-600 hover:border-purple-500/50">
+                <Users className="text-purple-400" size={16} />
+                <span>Actualités & Conseils</span>
+              </button>
+            </div>
+
+            {/* Stats Row */}
+            <div className="grid grid-cols-3 gap-4 mb-6">
+              <div className="text-center bg-green-600 hover:bg-green-700 rounded-xl p-4 border-2 border-green-500 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer">
+                <TrendingDown className="mx-auto mb-2 text-white drop-shadow-lg" size={20} />
+                <div className="text-2xl font-bold text-green-400 drop-shadow-lg">-35%</div>
+                <div className="text-xs text-white font-medium drop-shadow-md">Économies</div>
+              </div>
+              <div className="text-center bg-amber-600 hover:bg-amber-700 rounded-xl p-4 border-2 border-amber-500 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer">
+                <Star className="mx-auto mb-2 text-white fill-current drop-shadow-lg" size={20} />
+                <div className="text-2xl font-bold text-amber-400 drop-shadow-lg">4.9/5</div>
+                <div className="text-xs text-white font-medium drop-shadow-md">Note clients</div>
+              </div>
+              <div className="text-center bg-blue-600 hover:bg-blue-700 rounded-xl p-4 border-2 border-blue-500 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer">
+                <Zap className="mx-auto mb-2 text-white drop-shadow-lg" size={20} />
+                <div className="text-2xl font-bold text-blue-400 drop-shadow-lg">15min</div>
+                <div className="text-xs text-white font-medium drop-shadow-md">Réponse</div>
+              </div>
+            </div>
+
+            {/* Phone CTA */}
+            <div className="text-center mt-6">
+              <button 
+                href="tel:0180855786" 
+                onClick={() => window.open('tel:0180855786')}
+                className="inline-flex items-center space-x-3 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-black font-bold py-3 px-6 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl border-2 border-yellow-400 hover:scale-105"
+              >
+                📞
+                <div className="text-left">
+                  <div className="text-lg font-bold">01 80 85 57 86</div>
+                  <div className="text-xs opacity-90">Ligne directe expert</div>
+                </div>
+              </button>
+            </div>
+          </div>
+
+          {/* Right Column: Form */}
+          <div className="lg:w-1/2">
+            <div className="bg-gray-900/95 backdrop-blur-lg rounded-2xl p-8 shadow-2xl border border-amber-500/60" data-form="devis">
+                {/* Form Header */}
+                <div className="text-center mb-6">
+                  <h2 className="text-2xl font-bold text-gradient mb-4">
+                      Devis Assurance Taxi Gratuit
+                    </h2>
+                  <p className="text-sm text-gray-300 drop-shadow-md">
+                    Courtier spécialisé • Tarifs négociés • Réponse 15min
+                  </p>
+                </div>
+                
+                <form onSubmit={handleSubmit} className="space-y-4 lead-form">
+                  {/* Honeypot field - hidden */}
+                  <input
+                    type="text"
+                    name="company_website"
+                    value={formData.company_website}
+                    onChange={handleChange}
+                    style={{ display: 'none' }}
+                    tabIndex={-1}
+                    autoComplete="off"
+                  />
+
+                  {/* Error display */}
+                  {errors.length > 0 && (
+                    <div className="bg-red-50 border-2 border-red-500 rounded-lg p-3">
+                      {errors.map((error, index) => (
+                        <p key={index} className="text-red-700 text-sm font-medium">{error}</p>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label htmlFor="name" className="block text-sm font-semibold text-white mb-2">
+                        Nom et prénom *
+                      </label>
+                      <input
+                        type="text"
+                        id="name"
+                        name="name"
+                        value={formData.name}
+                        onChange={handleChange}
+                        required
+                        className="w-full px-4 py-3 bg-gray-800/70 border border-gray-600 rounded-lg focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-white placeholder-gray-400 transition-all duration-300"
+                        placeholder="Jean Dupont"
+                      />
+                    </div>
+
+                    <div>
+                      <label htmlFor="phone" className="block text-sm font-semibold text-white mb-2">
+                        Téléphone *
+                      </label>
+                      <input
+                        type="tel"
+                        id="phone"
+                        name="phone"
+                        value={formData.phone}
+                        onChange={handleChange}
+                        required
+                        className="w-full px-4 py-3 bg-gray-800/70 border border-gray-600 rounded-lg focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-white placeholder-gray-400 transition-all duration-300"
+                        placeholder="06 12 34 56 78"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label htmlFor="email" className="block text-sm font-semibold text-white mb-2">
+                        Email *
+                      </label>
+                      <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        value={formData.email}
+                        onChange={handleChange}
+                        required
+                        className="w-full px-4 py-3 bg-gray-800/70 border border-gray-600 rounded-lg focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-white placeholder-gray-400 transition-all duration-300"
+                        placeholder="jean@email.com"
+                      />
+                    </div>
+
+                    <div>
+                      <label htmlFor="city" className="block text-sm font-semibold text-white mb-2">
+                        Ville *
+                      </label>
+                      <input
+                        type="text"
+                        id="city"
+                        name="city"
+                        value={formData.city}
+                        onChange={handleChange}
+                        required
+                        className="w-full px-4 py-3 bg-gray-800/70 border border-gray-600 rounded-lg focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-white placeholder-gray-400 transition-all duration-300"
+                        placeholder="Paris"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label htmlFor="status" className="block text-sm font-semibold text-white mb-2">
+                        Statut *
+                      </label>
+                      <select
+                        id="status"
+                        name="status"
+                        value={formData.status}
+                        onChange={handleChange}
+                        required
+                        className="w-full px-4 py-3 bg-gray-800/70 border border-gray-600 rounded-lg focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-white transition-all duration-300"
+                      >
+                        <option value="taxi">Taxi</option>
+                        <option value="vtc">VTC</option>
+                        <option value="autre">Autre</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label htmlFor="immatriculation" className="block text-sm font-semibold text-white mb-2">
+                        Immatriculation (optionnel)
+                      </label>
+                      <input
+                        type="text"
+                        id="immatriculation"
+                        name="immatriculation"
+                        value={formData.immatriculation}
+                        onChange={handleChange}
+                        className="w-full px-4 py-3 bg-gray-800/70 border border-gray-600 rounded-lg focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-white placeholder-gray-400 transition-all duration-300"
+                        placeholder="AB-123-CD"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Legal consent */}
+                  <div className="bg-gray-800/50 p-4 rounded-lg border border-gray-700">
+                    <p className="text-xs text-gray-400">
+                      En soumettant ce formulaire, j'accepte d'être recontacté par TaxiAssur.com 
+                      pour recevoir mon devis personnalisé. Données sécurisées selon notre 
+                      <a href="/politique-confidentialite" className="text-amber-600 hover:underline"> politique de confidentialité</a>.
+                    </p>
+                  </div>
+
+                  {/* Submit button */}
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="w-full py-4 px-6 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-black font-bold text-lg rounded-xl transition-all duration-200 shadow-xl hover:shadow-2xl flex items-center justify-center space-x-2"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-black"></div>
+                        <span>ENVOI EN COURS...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Send size={20} />
+                        <span>🎯 OBTENIR MON DEVIS TAXI GRATUIT</span>
+                      </>
+                    )}
+                  </button>
+
+                  <p className="text-center text-sm text-gray-400 drop-shadow-md">
+                    Réponse rapide de votre conseiller dédié
+                  </p>
+                </form>
+
+                {/* Trust indicators */}
+                <div className="mt-6 pt-4 border-t border-gray-700">
+                  <div className="flex justify-center space-x-6 text-xs text-gray-400">
+                    <div className="flex items-center space-x-1">
+                      <CheckCircle className="text-green-400" size={12} />
+                      <span>100% Gratuit</span>
+                    </div>
+                    <div className="flex items-center space-x-1">
+                      <Clock className="text-amber-400" size={12} />
+                      <span>Réponse 15min</span>
+                    </div>
+                    <div className="flex items-center space-x-1">
+                      <Shield className="text-blue-400" size={12} />
+                      <span>Sécurisé</span>
+                    </div>
+                  </div>
+                </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+export default Hero;

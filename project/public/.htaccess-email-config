@@ -1,0 +1,32 @@
+# Configuration Email via .htaccess (Méthode 1 - Recommandée)
+# Copiez ces lignes dans votre .htaccess principal
+
+# ========================================
+# VARIABLES EMAIL IONOS
+# ========================================
+
+# Configuration SMTP IONOS
+SetEnv SMTP_HOST "smtp.ionos.fr"
+SetEnv SMTP_PORT "587"
+SetEnv SMTP_USER "noreply@taxiassur.com"
+SetEnv SMTP_PASS "VOTRE_MOT_DE_PASSE_EMAIL"
+
+# Emails de notification
+SetEnv ADMIN_EMAIL_1 "commercial@xcr.fr"
+SetEnv ADMIN_EMAIL_2 "tcerda@xcr.fr"
+SetEnv CONTACT_EMAIL "team@taxiassur.com"
+
+# Configuration générale
+SetEnv FROM_EMAIL "noreply@taxiassur.com"
+SetEnv FROM_NAME "TaxiAssur.com"
+
+# Mode debug (true/false)
+SetEnv EMAIL_DEBUG "false"
+
+# ========================================
+# INSTRUCTIONS
+# ========================================
+
+# 1. Remplacez "VOTRE_MOT_DE_PASSE_EMAIL" par votre vrai mot de passe
+# 2. Ajoutez ces lignes à votre .htaccess principal
+# 3. Ou configurez via le panneau IONOS (Variables d'environnement)

@@ -1,0 +1,91 @@
+// Fonctions pour ping des moteurs de recherche et gestion des backlinks
+export async function pingSearchEngines(sitemapUrl: string): Promise<{ success: boolean; results: any[] }> {
+  const engines = [
+    {
+      name: 'Google',
+      url: `https://www.google.com/ping?sitemap=${encodeURIComponent(sitemapUrl)}`
+    },
+    {
+      name: 'Bing',
+      url: `https://www.bing.com/ping?sitemap=${encodeURIComponent(sitemapUrl)}`
+    }
+  ];
+
+  const results = [];
+  let allSuccess = true;
+
+  for (const engine of engines) {
+    try {
+      const response = await fetch(engine.url, { method: 'GET' });
+      results.push({
+        engine: engine.name,
+        success: response.ok,
+        status: response.status
+      });
+      
+      if (!response.ok) allSuccess = false;
+    } catch (error) {
+      results.push({
+        engine: engine.name,
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+      allSuccess = false;
+    }
+  }
+
+  return { success: allSuccess, results };
+}
+
+export async function verifyBacklink(url: string): Promise<{ exists: boolean; status?: number; error?: string }> {
+  try {
+    const response = await fetch(url, { 
+      method: 'HEAD',
+      mode: 'no-cors' // Pour éviter les problèmes CORS
+    });
+    
+    return {
+      exists: response.ok,
+      status: response.status
+    };
+  } catch (error) {
+    return {
+      exists: false,
+      error: error instanceof Error ? error.message : 'Network error'
+    };
+  }
+}
+
+export function generateCityPages(): Array<{ city: string; slug: string; title: string; description: string }> {
+  const cities = [
+    { name: 'Paris', dept: '75', region: 'Île-de-France' },
+    { name: 'Lyon', dept: '69', region: 'Auvergne-Rhône-Alpes' },
+    { name: 'Marseille', dept: '13', region: 'Provence-Alpes-Côte d\'Azur' },
+    { name: 'Toulouse', dept: '31', region: 'Occitanie' },
+    { name: 'Nice', dept: '06', region: 'Provence-Alpes-Côte d\'Azur' },
+    { name: 'Nantes', dept: '44', region: 'Pays de la Loire' },
+    { name: 'Montpellier', dept: '34', region: 'Occitanie' },
+    { name: 'Strasbourg', dept: '67', region: 'Grand Est' },
+    { name: 'Bordeaux', dept: '33', region: 'Nouvelle-Aquitaine' },
+    { name: 'Lille', dept: '59', region: 'Hauts-de-France' },
+    { name: 'Rennes', dept: '35', region: 'Bretagne' },
+    { name: 'Reims', dept: '51', region: 'Grand Est' },
+    { name: 'Saint-Étienne', dept: '42', region: 'Auvergne-Rhône-Alpes' },
+    { name: 'Toulon', dept: '83', region: 'Provence-Alpes-Côte d\'Azur' },
+    { name: 'Le Havre', dept: '76', region: 'Normandie' },
+    { name: 'Grenoble', dept: '38', region: 'Auvergne-Rhône-Alpes' },
+    { name: 'Dijon', dept: '21', region: 'Bourgogne-Franche-Comté' },
+    { name: 'Angers', dept: '49', region: 'Pays de la Loire' },
+    { name: 'Nîmes', dept: '30', region: 'Occitanie' },
+    { name: 'Villeurbanne', dept: '69', region: 'Auvergne-Rhône-Alpes' }
+  ];
+
+  return cities.map(cityInfo => ({
+    city: cityInfo.name,
+    slug: cityInfo.name.toLowerCase().replace(/[^a-z0-9]/g, '-'),
+    title: `Assurance Taxi ${cityInfo.name} (${cityInfo.dept}) - Devis Gratuit & Rapide`,
+    description: `Trouvez la meilleure assurance taxi à ${cityInfo.name} (${cityInfo.dept}). Devis gratuit, tarifs négociés, service professionnel. TaxiAssur, spécialiste assurance taxi ${cityInfo.region}.`,
+    department: cityInfo.dept,
+    region: cityInfo.region
+  }));
+}

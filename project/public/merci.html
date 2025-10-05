@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>✅ Merci ! Votre Demande de Devis Taxi a été Reçue - TaxiAssur</title>
+    <meta name="description" content="Demande reçue ! Votre expert TaxiAssur vous recontacte rapidement. Préparez vos documents pour accélérer votre devis.">
+    
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚖</text></svg>">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 50%, #0f0f0f 100%);
+            color: #ffffff;
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            width: 100%;
+            text-align: center;
+        }
+        
+        .success-card {
+            background: rgba(26, 26, 26, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(251, 191, 36, 0.3);
+            border-radius: 24px;
+            padding: 60px 40px;
+            box-shadow: 0 20px 50px rgba(251, 191, 36, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .success-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #f59e0b, transparent);
+            animation: scan 3s ease-in-out infinite;
+        }
+        
+        .success-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #10b981, #059669);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 32px;
+            font-size: 2.5rem;
+            animation: pulse 2s ease-in-out infinite;
+            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
+        }
+        
+        .success-title {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 16px;
+            background: linear-gradient(135deg, #f59e0b, #eab308);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .success-subtitle {
+            font-size: 1.25rem;
+            color: #e5e7eb;
+            margin-bottom: 40px;
+        }
+        
+        .next-steps {
+            background: rgba(17, 24, 39, 0.6);
+            border: 1px solid rgba(107, 114, 128, 0.3);
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 40px;
+            text-align: left;
+        }
+        
+        .next-steps h3 {
+            color: #fbbf24;
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 24px;
+            text-align: center;
+        }
+        
+        .step-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+        
+        .step-number {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #f59e0b, #eab308);
+            color: #000;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+        
+        .step-content h4 {
+            color: #fff;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        
+        .step-content p {
+            color: #d1d5db;
+            font-size: 0.875rem;
+        }
+        
+        .documents-list {
+            background: rgba(251, 191, 36, 0.1);
+            border: 1px solid rgba(251, 191, 36, 0.2);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 40px;
+        }
+        
+        .documents-list h4 {
+            color: #fbbf24;
+            font-weight: 700;
+            margin-bottom: 16px;
+        }
+        
+        .documents-list ul {
+            list-style: none;
+            text-align: left;
+        }
+        
+        .documents-list li {
+            color: #e5e7eb;
+            margin-bottom: 8px;
+            padding-left: 24px;
+            position: relative;
+        }
+        
+        .documents-list li::before {
+            content: '📄';
+            position: absolute;
+            left: 0;
+        }
+        
+        .contact-buttons {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 40px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #f59e0b, #eab308);
+            color: #000;
+            padding: 16px 32px;
+            border-radius: 12px;
+            font-weight: 700;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 25px rgba(251, 191, 36, 0.3);
+            border: none;
+            cursor: pointer;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px) scale(1.05);
+            box-shadow: 0 12px 35px rgba(251, 191, 36, 0.4);
+        }
+        
+        .btn-outline {
+            border: 2px solid #f59e0b;
+            color: #f59e0b;
+            background: transparent;
+            padding: 14px 30px;
+            border-radius: 12px;
+            font-weight: 700;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+        
+        .btn-outline:hover {
+            background: #f59e0b;
+            color: #000;
+            transform: translateY(-2px);
+        }
+        
+        .back-link {
+            color: #fbbf24;
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.3s ease;
+        }
+        
+        .back-link:hover {
+            color: #f59e0b;
+            text-decoration: underline;
+        }
+        
+        @keyframes scan {
+            0% { transform: translateX(-100%); opacity: 0; }
+            50% { opacity: 1; }
+            100% { transform: translateX(100%); opacity: 0; }
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        
+        @media (max-width: 768px) {
+            .success-card {
+                padding: 40px 20px;
+            }
+            
+            .success-title {
+                font-size: 2rem;
+            }
+            
+            .contact-buttons {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="success-card">
+            <div class="success-icon">✅</div>
+            
+            <h1 class="success-title">🎉 Félicitations ! Votre Demande de Devis Assurance Taxi est Confirmée</h1>
+            
+            <p class="success-subtitle">
+                🚀 EXCELLENTE NOUVELLE ! Votre demande de devis d'assurance taxi a été <strong style="color: #fbbf24;">confirmée avec succès</strong> ! 
+                Votre expert TaxiAssur spécialisé vous recontacte <strong style="color: #10b981;">GARANTIE sous 15 minutes</strong>.
+            </p>
+            
+            <div class="next-steps">
+                <h3>🎯 Ce Qui Va Se Passer Maintenant</h3>
+                
+                <div class="step-item">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h4>📞 Appel de votre expert (sous 15 minutes)</h4>
+                        <p>Votre conseiller TaxiAssur spécialisé taxi vous contacte pour analyser vos besoins précis</p>
+                    </div>
+                </div>
+                
+                <div class="step-item">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h4>🎯 Devis personnalisé sur-mesure</h4>
+                        <p>Calcul de votre devis optimal avec les meilleures conditions du marché (économies jusqu'à 35%)</p>
+                    </div>
+                </div>
+                
+                <div class="step-item">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h4>📧 Envoi de votre proposition (même jour)</h4>
+                        <p>Réception par email de votre devis détaillé avec toutes les garanties et tarifs négociés</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="documents-list">
+                <h4>📋 Documents à Préparer (pour accélérer votre dossier)</h4>
+                <ul>
+                    <li>Licence de taxi professionnelle en cours de validité</li>
+                    <li>Permis de conduire (recto-verso)</li>
+                    <li>Pièce d'identité (carte nationale ou passeport)</li>
+                    <li>Certificat d'immatriculation du véhicule taxi</li>
+                    <li>Relevé d'information de votre assureur précédent</li>
+                </ul>
+                <p style="margin-top: 16px; color: #fbbf24; font-weight: 600; text-align: center; background: rgba(251, 191, 36, 0.1); padding: 12px; border-radius: 8px; border: 1px solid rgba(251, 191, 36, 0.3);">
+                    💡 <strong>ASTUCE PRO :</strong> Envoyez ces pièces par email à <strong>team@taxiassur.com</strong> 
+                    dès maintenant pour un traitement PRIORITAIRE et des conditions OPTIMALES !
+                </p>
+            </div>
+            
+            <div class="contact-buttons">
+                <a href="tel:0180855786" class="btn-primary">📞 01 80 85 57 86</a>
+                <a href="mailto:team@taxiassur.com" class="btn-outline">📧 team@taxiassur.com</a>
+            </div>
+            
+            <div style="background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 20px; border-radius: 16px; margin: 24px 0; text-align: center; box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3);">
+                <h4 style="margin: 0 0 12px 0; font-size: 18px; font-weight: bold;">🏆 Pourquoi TaxiAssur ?</h4>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-top: 16px;">
+                    <div>
+                        <div style="font-size: 24px; font-weight: bold;">-35%</div>
+                        <div style="font-size: 14px; opacity: 0.9;">Économies moyennes</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 24px; font-weight: bold;">4.9/5</div>
+                        <div style="font-size: 14px; opacity: 0.9;">Note clients</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 24px; font-weight: bold;">100+</div>
+                        <div style="font-size: 14px; opacity: 0.9;">Clients satisfaits</div>
+                    </div>
+                </div>
+            </div>
+            
+            <a href="/" class="back-link">← Retourner à l'accueil</a>
+        </div>
+    </div>
+</body>
+</html>
