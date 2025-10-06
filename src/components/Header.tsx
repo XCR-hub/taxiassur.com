@@ -34,8 +34,8 @@ const Header: React.FC = () => {
           <div className="flex flex-col sm:flex-row justify-between items-center text-sm font-bold">
             <div className="flex items-center space-x-6 mb-2 sm:mb-0">
               <div className="flex items-center space-x-2">
-                <Phone size={14} />
-                <a href="tel:0180855786" className="hover:text-gray-800 transition-colors">
+                <Phone size={14} aria-hidden="true" />
+                <a href="tel:0180855786" className="hover:text-gray-900 transition-colors" aria-label="Téléphone 01 80 85 57 86">
                   01 80 85 57 86
                 </a>
               </div>
@@ -44,7 +44,7 @@ const Header: React.FC = () => {
               </div>
             </div>
             <div className="flex items-center space-x-2">
-              <Shield size={14} />
+              <Shield size={14} aria-hidden="true" />
               <span>ORIAS 11 061 425 • Courtier Agréé</span>
             </div>
           </div>
@@ -118,6 +118,8 @@ const Header: React.FC = () => {
           <button
             className="lg:hidden text-gray-200 hover:text-yellow-300 transition-colors"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
+            aria-label={isMenuOpen ? 'Fermer le menu' : 'Ouvrir le menu'}
+            aria-expanded={isMenuOpen}
           >
             {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>

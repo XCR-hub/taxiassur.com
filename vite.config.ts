@@ -14,15 +14,31 @@ export default defineConfig({
     outDir: 'dist',
     assetsDir: 'assets',
     sourcemap: false,
-    minify: 'esbuild',
+    minify: 'terser',
     target: 'es2015',
-    chunkSizeWarningLimit: 1000,
+    chunkSizeWarningLimit: 500,
     rollupOptions: {
       output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom'],
-          router: ['react-router-dom'],
-          ui: ['lucide-react', 'clsx', 'tailwind-merge']
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('react')) {
+              return 'vendor-react';
+            }
+            if (id.includes('router')) {
+              return 'vendor-router';
+            }
+            if (id.includes('lucide')) {
+              return 'vendor-icons';
+            }
+            return 'vendor';
+          }
+          if (id.includes('/backoffice/')) {
+            return 'backoffice';
+          }
+          if (id.includes('/pages/')) {
+            const match = id.match(/pages\/([^/]+)/);
+            if (match) return `page-${match[1].toLowerCase().replace('.tsx', '')}`;
+          }
         },
         assetFileNames: 'assets/[name]-[hash][extname]',
         chunkFileNames: 'assets/[name]-[hash].js',
@@ -31,7 +47,15 @@ export default defineConfig({
     },
     copyPublicDir: true,
     emptyOutDir: true,
-    assetsInlineLimit: 0
+    assetsInlineLimit: 4096,
+    cssCodeSplit: true,
+    terserOptions: {
+      compress: {
+        drop_console: true,
+        drop_debugger: true,
+        pure_funcs: ['console.log', 'console.info']
+      }
+    }
   },
   server: {
     port: 5173,

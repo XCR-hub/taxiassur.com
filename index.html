@@ -29,10 +29,9 @@
     <link rel="preconnect" href="https://images.pexels.com">
     
     <!-- Preload critical resources -->
-    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" as="style">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
-    <link rel="preload" href="https://images.pexels.com/photos/1545743/pexels-photo-1545743.jpeg?auto=compress&cs=tinysrgb&w=1920&h=1080&fit=crop" as="image">
     <link rel="preload" href="/src/index.css" as="style">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"></noscript>
     
     <!-- DNS prefetch for external resources -->
     <link rel="dns-prefetch" href="//www.google-analytics.com">
@@ -79,20 +78,21 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
-    
+
     <!-- Analytics (if configured) -->
-    <script>
+    <script defer>
       // Initialize analytics based on environment
       const analyticsProvider = 'none'; // Will be replaced by env var
       const gtagId = ''; // Will be replaced by env var
-      
+
       if (analyticsProvider === 'ga4' && gtagId) {
         // Google Analytics 4
         const script = document.createElement('script');
         script.async = true;
+        script.defer = true;
         script.src = `https://www.googletagmanager.com/gtag/js?id=${gtagId}`;
         document.head.appendChild(script);
-        
+
         window.dataLayer = window.dataLayer || [];
         function gtag(){dataLayer.push(arguments);}
         gtag('js', new Date());
@@ -100,7 +100,7 @@
           page_title: document.title,
           page_location: window.location.href
         });
-        
+
         window.gtag = gtag;
       }
     </script>

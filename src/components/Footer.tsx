@@ -40,7 +40,7 @@ const Footer: React.FC = () => {
               </div>
               <div>
                 <h3 className="text-xl font-bold text-white">TaxiAssur</h3>
-                <p className="text-sm text-gray-400">Excellence Coverage Risks</p>
+                <p className="text-sm text-gray-300">Excellence Coverage Risks</p>
               </div>
             </div>
             <p className="text-gray-300 text-sm mb-4 leading-relaxed">
@@ -48,11 +48,11 @@ const Footer: React.FC = () => {
               Expertise reconnue, tarifs négociés, service premium.
             </p>
             <div className="space-y-2 text-sm">
-              <div className="flex items-center space-x-2 text-gray-400">
-                <Shield size={14} />
+              <div className="flex items-center space-x-2 text-gray-300">
+                <Shield size={14} aria-hidden="true" />
                 <span>Courtier agréé ORIAS 11 061 425</span>
               </div>
-              <div className="flex items-center space-x-2 text-gray-400">
+              <div className="flex items-center space-x-2 text-gray-300">
                 <span>Spécialiste taxi depuis septembre 2025</span>
               </div>
             </div>
@@ -64,10 +64,10 @@ const Footer: React.FC = () => {
             <div className="space-y-4 text-sm">
               <div className="flex items-center space-x-3">
                 <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-red-500 rounded-lg flex items-center justify-center">
-                  <Phone className="text-white" size={14} />
+                  <Phone className="text-white" size={14} aria-hidden="true" />
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500">Ligne directe</p>
+                  <p className="text-xs text-gray-400">Ligne directe</p>
                   <a href="tel:0180855786" className="text-orange-300 font-semibold hover:text-orange-200 transition-colors">
                     01 80 85 57 86
                   </a>
@@ -75,10 +75,10 @@ const Footer: React.FC = () => {
               </div>
               <div className="flex items-center space-x-3">
                 <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-red-500 rounded-lg flex items-center justify-center">
-                  <Mail className="text-white" size={14} />
+                  <Mail className="text-white" size={14} aria-hidden="true" />
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500">Email</p>
+                  <p className="text-xs text-gray-400">Email</p>
                   <a href="mailto:team@taxiassur.com" className="text-orange-300 font-semibold hover:text-orange-200 transition-colors">
                     team@taxiassur.com
                   </a>
@@ -86,10 +86,10 @@ const Footer: React.FC = () => {
               </div>
               <div className="flex items-center space-x-3">
                 <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-red-500 rounded-lg flex items-center justify-center">
-                  <MapPin className="text-white" size={14} />
+                  <MapPin className="text-white" size={14} aria-hidden="true" />
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500">Siège social</p>
+                  <p className="text-xs text-gray-400">Siège social</p>
                   <p className="text-orange-300 font-semibold">Melun, France</p>
                 </div>
               </div>
@@ -104,7 +104,7 @@ const Footer: React.FC = () => {
                 <li key={index}>
                   <Link
                     to={service.href}
-                    className="text-gray-400 hover:text-orange-300 transition-colors"
+                    className="text-gray-300 hover:text-orange-300 transition-colors"
                   >
                     {service.name}
                   </Link>
@@ -118,7 +118,7 @@ const Footer: React.FC = () => {
                 <li key={index}>
                   <Link 
                     to={page.href}
-                    className="text-gray-400 hover:text-orange-300 transition-colors"
+                    className="text-gray-300 hover:text-orange-300 transition-colors"
                   >
                     {page.name}
                   </Link>
@@ -135,7 +135,7 @@ const Footer: React.FC = () => {
                 <li key={index}>
                   <Link 
                     to={item.href}
-                    className="text-gray-400 hover:text-orange-300 transition-colors"
+                    className="text-gray-300 hover:text-orange-300 transition-colors"
                   >
                     {item.name}
                   </Link>
@@ -149,7 +149,7 @@ const Footer: React.FC = () => {
                 <li key={index}>
                   <Link 
                     to={page.href}
-                    className="text-gray-400 hover:text-orange-300 transition-colors"
+                    className="text-gray-300 hover:text-orange-300 transition-colors"
                   >
                     {page.name}
                   </Link>

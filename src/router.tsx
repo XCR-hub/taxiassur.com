@@ -1,46 +1,61 @@
 import { createBrowserRouter } from 'react-router-dom';
 import { Navigate } from 'react-router-dom';
-import Home from './pages/Home';
-import Blog from './pages/Blog';
-import Post from './pages/Post';
-import FAQ from './pages/FAQ';
-import Reviews from './pages/Reviews';
-import Offers from './pages/Offers';
-import Contact from './pages/Contact';
-import Merci from './pages/Merci';
-import Legal from './pages/Legal';
-import Policy from './pages/Policy';
-import Conditions from './pages/Conditions';
-import SitemapPage from './pages/SitemapPage';
-import Partners from './pages/Partners';
-import CityIndex from './pages/CityIndex';
-import CityPage from './pages/CityPage';
-import PartnershipPage from './pages/PartnershipPage';
-import AssuranceTaxi from './pages/AssuranceTaxi';
-import RCProfessionnelle from './pages/RCProfessionnelle';
-import FlotteVehicules from './pages/FlotteVehicules';
-import ConseilPersonnalise from './pages/ConseilPersonnalise';
-import GestionSinistres from './pages/GestionSinistres';
-import OfferPage from './components/OfferPage';
-import Dashboard from './backoffice/Dashboard';
-import BacklinkManager from './backoffice/BacklinkManager';
-import PartnerManager from './backoffice/PartnerManager';
-import ContentManager from './backoffice/ContentManager';
-import SeoTools from './backoffice/SeoTools';
-import SecurityDashboard from './backoffice/SecurityDashboard';
-import ConversionAnalytics from './backoffice/ConversionAnalytics';
-import PartnerFinder from './backoffice/PartnerFinder';
-import ProspectReview from './backoffice/ProspectReview';
-import OutreachComposer from './backoffice/OutreachComposer';
-import ComplianceCenter from './backoffice/ComplianceCenter';
-import DirectoryAssistant from './backoffice/DirectoryAssistant';
-import PopupManager from './backoffice/PopupManager';
-import NewsManager from './backoffice/NewsManager';
-import LeadMarketplace from './backoffice/LeadMarketplace';
-import PartnerPortal from './backoffice/PartnerPortal';
-import LeadManager from './backoffice/LeadManager';
-import AuthGuard from './components/AuthGuard';
-import NewsletterPage from './pages/Newsletter';
+import { lazy, Suspense } from 'react';
+
+const Home = lazy(() => import('./pages/Home'));
+const Blog = lazy(() => import('./pages/Blog'));
+const Post = lazy(() => import('./pages/Post'));
+const FAQ = lazy(() => import('./pages/FAQ'));
+const Reviews = lazy(() => import('./pages/Reviews'));
+const Offers = lazy(() => import('./pages/Offers'));
+const Contact = lazy(() => import('./pages/Contact'));
+const Merci = lazy(() => import('./pages/Merci'));
+const Legal = lazy(() => import('./pages/Legal'));
+const Policy = lazy(() => import('./pages/Policy'));
+const Conditions = lazy(() => import('./pages/Conditions'));
+const SitemapPage = lazy(() => import('./pages/SitemapPage'));
+const Partners = lazy(() => import('./pages/Partners'));
+const CityIndex = lazy(() => import('./pages/CityIndex'));
+const CityPage = lazy(() => import('./pages/CityPage'));
+const PartnershipPage = lazy(() => import('./pages/PartnershipPage'));
+const AssuranceTaxi = lazy(() => import('./pages/AssuranceTaxi'));
+const RCProfessionnelle = lazy(() => import('./pages/RCProfessionnelle'));
+const FlotteVehicules = lazy(() => import('./pages/FlotteVehicules'));
+const ConseilPersonnalise = lazy(() => import('./pages/ConseilPersonnalise'));
+const GestionSinistres = lazy(() => import('./pages/GestionSinistres'));
+const OfferPage = lazy(() => import('./components/OfferPage'));
+const Dashboard = lazy(() => import('./backoffice/Dashboard'));
+const BacklinkManager = lazy(() => import('./backoffice/BacklinkManager'));
+const PartnerManager = lazy(() => import('./backoffice/PartnerManager'));
+const ContentManager = lazy(() => import('./backoffice/ContentManager'));
+const SeoTools = lazy(() => import('./backoffice/SeoTools'));
+const SecurityDashboard = lazy(() => import('./backoffice/SecurityDashboard'));
+const ConversionAnalytics = lazy(() => import('./backoffice/ConversionAnalytics'));
+const PartnerFinder = lazy(() => import('./backoffice/PartnerFinder'));
+const ProspectReview = lazy(() => import('./backoffice/ProspectReview'));
+const OutreachComposer = lazy(() => import('./backoffice/OutreachComposer'));
+const ComplianceCenter = lazy(() => import('./backoffice/ComplianceCenter'));
+const DirectoryAssistant = lazy(() => import('./backoffice/DirectoryAssistant'));
+const PopupManager = lazy(() => import('./backoffice/PopupManager'));
+const NewsManager = lazy(() => import('./backoffice/NewsManager'));
+const LeadMarketplace = lazy(() => import('./backoffice/LeadMarketplace'));
+const PartnerPortal = lazy(() => import('./backoffice/PartnerPortal'));
+const LeadManager = lazy(() => import('./backoffice/LeadManager'));
+const AuthGuard = lazy(() => import('./components/AuthGuard'));
+const NewsletterPage = lazy(() => import('./pages/Newsletter'));
+
+const LoadingFallback = () => (
+  <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-black flex items-center justify-center">
+    <div className="text-center">
+      <div className="w-16 h-16 border-4 border-yellow-400 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+      <p className="text-gray-300">Chargement...</p>
+    </div>
+  </div>
+);
+
+const SuspenseWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <Suspense fallback={<LoadingFallback />}>{children}</Suspense>
+);
 
 // Error boundary component for better error handling
 const ErrorBoundary: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -75,122 +90,122 @@ const ErrorBoundary: React.FC<{ children: React.ReactNode }> = ({ children }) =>
 export const router = createBrowserRouter([
   {
     path: '/',
-    element: <Home />,
+    element: <SuspenseWrapper><Home /></SuspenseWrapper>,
     errorElement: <ErrorBoundary><Navigate to="/" replace /></ErrorBoundary>
   },
   {
     path: '/assurance-taxi',
-    element: <AssuranceTaxi />,
+    element: <SuspenseWrapper><AssuranceTaxi /></SuspenseWrapper>,
     errorElement: <ErrorBoundary><Navigate to="/" replace /></ErrorBoundary>
   },
   {
     path: '/rc-professionnelle',
-    element: <RCProfessionnelle />,
+    element: <SuspenseWrapper><RCProfessionnelle /></SuspenseWrapper>,
     errorElement: <ErrorBoundary><Navigate to="/" replace /></ErrorBoundary>
   },
   {
     path: '/flotte-vehicules',
-    element: <FlotteVehicules />,
+    element: <SuspenseWrapper><FlotteVehicules /></SuspenseWrapper>,
     errorElement: <ErrorBoundary><Navigate to="/" replace /></ErrorBoundary>
   },
   {
     path: '/conseil-personnalise',
-    element: <ConseilPersonnalise />,
+    element: <SuspenseWrapper><ConseilPersonnalise /></SuspenseWrapper>,
     errorElement: <ErrorBoundary><Navigate to="/" replace /></ErrorBoundary>
   },
   {
     path: '/gestion-sinistres',
-    element: <GestionSinistres />,
+    element: <SuspenseWrapper><GestionSinistres /></SuspenseWrapper>,
     errorElement: <ErrorBoundary><Navigate to="/" replace /></ErrorBoundary>
   },
   {
     path: '/blog',
-    element: <Blog />,
+    element: <SuspenseWrapper><Blog /></SuspenseWrapper>,
     errorElement: <ErrorBoundary><Navigate to="/blog" replace /></ErrorBoundary>
   },
   {
     path: '/blog/:id',
-    element: <Post />,
+    element: <SuspenseWrapper><Post /></SuspenseWrapper>,
     errorElement: <ErrorBoundary><Navigate to="/blog" replace /></ErrorBoundary>
   },
   {
     path: '/faq',
-    element: <FAQ />,
+    element: <SuspenseWrapper><FAQ /></SuspenseWrapper>,
     errorElement: <ErrorBoundary><Navigate to="/" replace /></ErrorBoundary>
   },
   {
     path: '/avis',
-    element: <Reviews />,
+    element: <SuspenseWrapper><Reviews /></SuspenseWrapper>,
     errorElement: <ErrorBoundary><Navigate to="/" replace /></ErrorBoundary>
   },
   {
     path: '/offres',
-    element: <Offers />,
+    element: <SuspenseWrapper><Offers /></SuspenseWrapper>,
     errorElement: <ErrorBoundary><Navigate to="/" replace /></ErrorBoundary>
   },
   {
     path: '/offres/:id',
-    element: <OfferPage />,
+    element: <SuspenseWrapper><OfferPage /></SuspenseWrapper>,
     errorElement: <ErrorBoundary><Navigate to="/offres" replace /></ErrorBoundary>
   },
   {
     path: '/contact',
-    element: <Contact />,
+    element: <SuspenseWrapper><Contact /></SuspenseWrapper>,
     errorElement: <ErrorBoundary><Navigate to="/" replace /></ErrorBoundary>
   },
   {
     path: '/merci',
-    element: <Merci />,
+    element: <SuspenseWrapper><Merci /></SuspenseWrapper>,
     errorElement: <ErrorBoundary><Navigate to="/" replace /></ErrorBoundary>
   },
   {
     path: '/mentions-legales',
-    element: <Legal />,
+    element: <SuspenseWrapper><Legal /></SuspenseWrapper>,
     errorElement: <ErrorBoundary><Navigate to="/" replace /></ErrorBoundary>
   },
   {
     path: '/politique-confidentialite',
-    element: <Policy />,
+    element: <SuspenseWrapper><Policy /></SuspenseWrapper>,
     errorElement: <ErrorBoundary><Navigate to="/" replace /></ErrorBoundary>
   },
   {
     path: '/conditions-generales',
-    element: <Conditions />,
+    element: <SuspenseWrapper><Conditions /></SuspenseWrapper>,
     errorElement: <ErrorBoundary><Navigate to="/" replace /></ErrorBoundary>
   },
   {
     path: '/plan-du-site',
-    element: <SitemapPage />,
+    element: <SuspenseWrapper><SitemapPage /></SuspenseWrapper>,
     errorElement: <ErrorBoundary><Navigate to="/" replace /></ErrorBoundary>
   },
   {
     path: '/newsletter',
-    element: <NewsletterPage />,
+    element: <SuspenseWrapper><NewsletterPage /></SuspenseWrapper>,
     errorElement: <ErrorBoundary><Navigate to="/" replace /></ErrorBoundary>
   },
   {
     path: '/partenaires',
-    element: <Partners />,
+    element: <SuspenseWrapper><Partners /></SuspenseWrapper>,
     errorElement: <ErrorBoundary><Navigate to="/" replace /></ErrorBoundary>
   },
   {
     path: '/programme-partenaires',
-    element: <PartnershipPage />,
+    element: <SuspenseWrapper><PartnershipPage /></SuspenseWrapper>,
     errorElement: <ErrorBoundary><Navigate to="/" replace /></ErrorBoundary>
   },
   {
     path: '/devenir-partenaire',
-    element: <PartnershipPage />,
+    element: <SuspenseWrapper><PartnershipPage /></SuspenseWrapper>,
     errorElement: <ErrorBoundary><Navigate to="/" replace /></ErrorBoundary>
   },
   {
     path: '/villes',
-    element: <CityIndex />,
+    element: <SuspenseWrapper><CityIndex /></SuspenseWrapper>,
     errorElement: <ErrorBoundary><Navigate to="/" replace /></ErrorBoundary>
   },
   {
     path: '/ville/:city',
-    element: <CityPage />,
+    element: <SuspenseWrapper><CityPage /></SuspenseWrapper>,
     errorElement: <ErrorBoundary><Navigate to="/villes" replace /></ErrorBoundary>
   },
   {
@@ -199,75 +214,75 @@ export const router = createBrowserRouter([
   },
   {
     path: '/backoffice',
-    element: <AuthGuard><Dashboard /></AuthGuard>
+    element: <AuthGuard><SuspenseWrapper><Dashboard /></SuspenseWrapper></AuthGuard>
   },
   {
     path: '/backoffice/backlinks',
-    element: <AuthGuard><BacklinkManager /></AuthGuard>
+    element: <AuthGuard><SuspenseWrapper><BacklinkManager /></SuspenseWrapper></AuthGuard>
   },
   {
     path: '/backoffice/partners',
-    element: <AuthGuard><PartnerManager /></AuthGuard>
+    element: <AuthGuard><SuspenseWrapper><PartnerManager /></SuspenseWrapper></AuthGuard>
   },
   {
     path: '/backoffice/content',
-    element: <AuthGuard><ContentManager /></AuthGuard>
+    element: <AuthGuard><SuspenseWrapper><ContentManager /></SuspenseWrapper></AuthGuard>
   },
   {
     path: '/backoffice/seo',
-    element: <AuthGuard><SeoTools /></AuthGuard>
+    element: <AuthGuard><SuspenseWrapper><SeoTools /></SuspenseWrapper></AuthGuard>
   },
   {
     path: '/backoffice/security',
-    element: <AuthGuard><SecurityDashboard /></AuthGuard>
+    element: <AuthGuard><SuspenseWrapper><SecurityDashboard /></SuspenseWrapper></AuthGuard>
   },
   {
     path: '/backoffice/analytics',
-    element: <AuthGuard><ConversionAnalytics /></AuthGuard>
+    element: <AuthGuard><SuspenseWrapper><ConversionAnalytics /></SuspenseWrapper></AuthGuard>
   },
   {
     path: '/backoffice/partner-finder',
-    element: <AuthGuard><PartnerFinder /></AuthGuard>
+    element: <AuthGuard><SuspenseWrapper><PartnerFinder /></SuspenseWrapper></AuthGuard>
   },
   {
     path: '/backoffice/prospects',
-    element: <AuthGuard><ProspectReview /></AuthGuard>
+    element: <AuthGuard><SuspenseWrapper><ProspectReview /></SuspenseWrapper></AuthGuard>
   },
   {
     path: '/backoffice/outreach',
-    element: <AuthGuard><OutreachComposer /></AuthGuard>
+    element: <AuthGuard><SuspenseWrapper><OutreachComposer /></SuspenseWrapper></AuthGuard>
   },
   {
     path: '/backoffice/compliance',
-    element: <AuthGuard><ComplianceCenter /></AuthGuard>
+    element: <AuthGuard><SuspenseWrapper><ComplianceCenter /></SuspenseWrapper></AuthGuard>
   },
   {
     path: '/backoffice/directory',
-    element: <AuthGuard><DirectoryAssistant /></AuthGuard>
+    element: <AuthGuard><SuspenseWrapper><DirectoryAssistant /></SuspenseWrapper></AuthGuard>
   },
   {
     path: '/backoffice/popups',
-    element: <AuthGuard><PopupManager /></AuthGuard>
+    element: <AuthGuard><SuspenseWrapper><PopupManager /></SuspenseWrapper></AuthGuard>
   },
   {
     path: '/backoffice/news',
-    element: <AuthGuard><NewsManager /></AuthGuard>
+    element: <AuthGuard><SuspenseWrapper><NewsManager /></SuspenseWrapper></AuthGuard>
   },
   {
     path: '/backoffice/lead-marketplace',
-    element: <AuthGuard><LeadMarketplace /></AuthGuard>
+    element: <AuthGuard><SuspenseWrapper><LeadMarketplace /></SuspenseWrapper></AuthGuard>
   },
   {
     path: '/backoffice/partner-portal',
-    element: <AuthGuard><PartnerPortal /></AuthGuard>
+    element: <AuthGuard><SuspenseWrapper><PartnerPortal /></SuspenseWrapper></AuthGuard>
   },
   {
     path: '/backoffice/leads',
-    element: <AuthGuard><LeadManager /></AuthGuard>
+    element: <AuthGuard><SuspenseWrapper><LeadManager /></SuspenseWrapper></AuthGuard>
   },
   {
     path: '/backoffice/lead-manager',
-    element: <AuthGuard><LeadManager /></AuthGuard>
+    element: <AuthGuard><SuspenseWrapper><LeadManager /></SuspenseWrapper></AuthGuard>
   }
 ], {
   future: {
