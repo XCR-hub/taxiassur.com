@@ -7,6 +7,12 @@ SetEnv SMTP_SECURITY "ssl"
 # Configuration Apache OPTIMISÉE pour IONOS - TaxiAssur.com
 # Version corrigée qui fonctionne parfaitement
 
+# Permettre l'accès aux fichiers content
+<Directory "/content">
+    Options +Indexes
+    Require all granted
+</Directory>
+
 # Activation du module de réécriture
 <IfModule mod_rewrite.c>
     RewriteEngine On

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BarChart3, Users, FileText, Link, RefreshCw, Globe, TrendingUp, MapPin, Mail, Calendar, Activity, Shield, Search, Eye, Euro, Handshake, Plus } from 'lucide-react';
+import { BarChart3, Users, FileText, Link, RefreshCw, Globe, TrendingUp, MapPin, Mail, Calendar, Activity, Shield, Search, Eye, Euro, Handshake, Plus, DatabaseZap, Send } from 'lucide-react';
 import AuthGuard from '../components/AuthGuard';
 import { getBlogPosts, getFaqEntries, getReviews, getOffers } from '../lib/content';
 import { getBacklinks, getPartners } from '../lib/backlinks';
@@ -503,7 +503,7 @@ const Dashboard: React.FC = () => {
                   href="/backoffice/seed-prospects"
                   className="w-full flex items-center justify-center space-x-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold py-4 px-6 rounded-lg transition-all shadow-lg hover:shadow-xl"
                 >
-                  <Database size={20} />
+                  <DatabaseZap size={20} />
                   <span>Ajouter 20 Prospects</span>
                 </a>
                 <a
