@@ -39,7 +39,7 @@ const Home: React.FC = () => {
       <SEOHead
         title="Assurance Taxi Pas Cher - Devis Gratuit 2 min | TaxiAssur Courtier ORIAS"
         description="🚖 ASSURANCE TAXI PAS CHER : Devis GRATUIT 2 min ✓ Économisez 35% ✓ RC Pro incluse ✓ Courtier ORIAS ✓ Réponse 15min ✓ Tarifs négociés ✓ Service expert taxi"
-        keywords="assurance taxi, assurance taxi pas cher, devis assurance taxi gratuit, courtier assurance taxi, RC professionnelle taxi, tarifs assurance taxi, prix assurance taxi, assurance taxi professionnel, courtier taxi spécialisé, assurance taxi paris, assurance taxi lyon, assurance taxi marseille"
+        keywords="assurance taxi, insurance for taxi, assurance taxi pas cher, taxi insurance cheap, courtier assurance taxi, devis assurance taxi gratuit, prix assurance taxi, taxi insurance cost, insurance for taxi drivers, rc professionnelle taxi, assurance taxi professionnel, insurance for taxi company, taxi insurance near me, how much is taxi insurance, assurance taxi france, assurance taxi paris, assurance taxi lyon, assurance taxi marseille"
         canonical="/"
       />
       <JsonLd type="organization" />
@@ -50,6 +50,14 @@ const Home: React.FC = () => {
         {
           question: "Quel est le prix d'une assurance taxi ?",
           answer: "Le prix d'une assurance taxi varie entre 1200€ et 3500€ par an selon votre profil, votre véhicule et vos garanties. Avec TaxiAssur, économisez en moyenne 35% grâce à nos tarifs négociés."
+        },
+        {
+          question: "How much is taxi insurance in France?",
+          answer: "The average cost of taxi insurance in France ranges from €1,200 to €3,500 per year, depending on factors like location, driving experience, vehicle type, and coverage level. TaxiAssur offers cheap taxi insurance with up to 35% savings through our negotiated rates with 15+ insurers."
+        },
+        {
+          question: "What insurance is required for taxi drivers?",
+          answer: "Taxi drivers in France must have: 1) Third-party liability insurance (RC Pro - Responsabilité Civile Professionnelle), 2) Comprehensive vehicle insurance, 3) Passenger coverage. TaxiAssur provides all-in-one insurance packages for taxi drivers with RC Pro included."
         },
         {
           question: "Combien de temps pour recevoir mon devis ?",

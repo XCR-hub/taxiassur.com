@@ -133,6 +133,12 @@ const Hero: React.FC = () => {
                 <strong className="text-yellow-400">Prix assurance taxi</strong> transparents : économisez en moyenne 35% par rapport aux tarifs directs assureurs.
                 Réponse personnalisée sous 15 minutes par nos experts taxi. Service gratuit, sans engagement.
               </p>
+
+              <p className="text-sm text-gray-200 leading-relaxed">
+                <strong className="text-pink-400">Insurance for taxi drivers</strong>: TaxiAssur is the leading <strong className="text-indigo-400">insurance broker for taxi</strong> in France.
+                We offer <strong className="text-teal-400">cheap taxi insurance</strong> with comprehensive coverage including RC Pro, legal protection, and 24/7 roadside assistance.
+                Get your <strong className="text-rose-400">free taxi insurance quote</strong> in 2 minutes.
+              </p>
             </div>
 
             {/* Quick Links - Internal Links for SEO */}

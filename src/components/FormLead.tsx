@@ -37,7 +37,6 @@ const FormLead: React.FC = () => {
         headers: {
           'Content-Type': 'application/json',
           'X-Requested-With': 'XMLHttpRequest'
-          'X-Requested-With': 'XMLHttpRequest'
         },
         body: JSON.stringify(formData)
       });
