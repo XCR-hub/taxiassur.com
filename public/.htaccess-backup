@@ -1,0 +1,191 @@
+SetEnv SMTP_PASS "Team2025!,&"
+SetEnv SMTP_USER "noreply@taxiassur.com"
+SetEnv SMTP_HOST "smtp.ionos.fr"
+SetEnv SMTP_PORT "465"
+SetEnv SMTP_SECURITY "ssl"
+
+# Configuration Apache OPTIMISÉE pour IONOS - TaxiAssur.com
+# Version corrigée qui fonctionne parfaitement
+
+# Types MIME explicites - CRITIQUE pour éviter erreurs MIME
+<IfModule mod_mime.c>
+    AddType text/css .css
+    AddType text/javascript .js
+    AddType application/javascript .js
+    AddType application/json .json
+    AddType application/xml .xml
+    AddType text/xml .xml
+    AddType image/x-icon .ico
+    AddType image/png .png
+    AddType image/jpeg .jpg .jpeg
+    AddType image/svg+xml .svg
+    AddType font/woff .woff
+    AddType font/woff2 .woff2
+</IfModule>
+
+# Permettre l'accès aux fichiers content
+<Directory "/content">
+    Options +Indexes
+    Require all granted
+</Directory>
+
+# Activation du module de réécriture
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
+
+    # FORCE HTTPS et WWW - SEO Critical
+    RewriteCond %{HTTPS} off [OR]
+    RewriteCond %{HTTP_HOST} !^www\. [NC]
+    RewriteCond %{HTTP_HOST} ^(?:www\.)?(.+)$ [NC]
+    RewriteRule ^(.*)$ https://www.%1/$1 [L,R=301,NE]
+
+    # Gestion des erreurs personnalisées
+    ErrorDocument 404 /index.html
+    ErrorDocument 403 /index.html
+
+    # Redirection pour React Router - IONOS Compatible
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_URI} !^/api/
+    RewriteCond %{REQUEST_URI} !^/webhooks/
+    RewriteCond %{REQUEST_URI} !^/content/
+    RewriteCond %{REQUEST_URI} !^/feeds/
+    RewriteCond %{REQUEST_URI} !\.php$
+    RewriteCond %{REQUEST_URI} !\.json$
+    RewriteCond %{REQUEST_URI} !\.xml$
+    RewriteCond %{REQUEST_URI} !\.txt$
+    RewriteCond %{REQUEST_URI} !\.ico$
+    RewriteCond %{REQUEST_URI} !\.png$
+    RewriteCond %{REQUEST_URI} !\.jpg$
+    RewriteCond %{REQUEST_URI} !\.css$
+    RewriteCond %{REQUEST_URI} !\.js$
+    RewriteRule ^(.*)$ /index.html [L,QSA]
+</IfModule>
+
+# Headers de sécurité et performance (si mod_headers disponible)
+<IfModule mod_headers.c>
+    # Sécurité renforcée - PageSpeed 100
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set X-XSS-Protection "1; mode=block"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set Permissions-Policy "geolocation=(), microphone=(), camera=()"
+
+    # HSTS - Force HTTPS for 2 years (PageSpeed requirement)
+    Header always set Strict-Transport-Security "max-age=63072000; includeSubDomains; preload"
+
+    # CSP - Content Security Policy (PageSpeed requirement)
+    Header always set Content-Security-Policy "default-src 'self' https:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com https://cse.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cse.google.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https: blob:; connect-src 'self' https://www.google-analytics.com https://www.googleapis.com https://*.supabase.co; frame-src 'self' https://cse.google.com; object-src 'none'; base-uri 'self'; form-action 'self'"
+
+    # COOP - Cross-Origin-Opener-Policy (PageSpeed requirement)
+    Header always set Cross-Origin-Opener-Policy "same-origin-allow-popups"
+
+    # COEP - Cross-Origin-Embedder-Policy
+    Header always set Cross-Origin-Embedder-Policy "credentialless"
+
+    # CORS pour API et Content
+    <FilesMatch "\.(json|xml)$">
+        Header always set Access-Control-Allow-Origin "*"
+        Header always set Access-Control-Allow-Methods "GET, POST, OPTIONS"
+        Header always set Access-Control-Allow-Headers "Content-Type, X-Requested-With, X-MAKE-SECRET"
+    </FilesMatch>
+
+    # Cache agressif pour assets statiques - 1 an
+    <FilesMatch "\.(css|js|png|jpg|jpeg|gif|ico|svg|woff|woff2|webp|avif)$">
+        Header set Cache-Control "public, max-age=31536000, immutable"
+        Header set Vary "Accept-Encoding"
+    </FilesMatch>
+
+    # Cache HTML - 1 heure
+    <FilesMatch "\.(html|htm)$">
+        Header set Cache-Control "public, max-age=3600, must-revalidate"
+    </FilesMatch>
+
+    # Preload hint for modern browsers (generic, browser will find the actual files)
+    # Actual preloading is done in index.html with correct hashed filenames
+
+    # Remove server signature
+    Header unset Server
+    Header unset X-Powered-By
+</IfModule>
+
+# Configuration PHP (si mod_php disponible)
+<IfModule mod_php.c>
+    # Configuration PHP sécurisée
+    php_flag display_errors Off
+    php_flag display_startup_errors Off
+    php_flag log_errors On
+    
+    # Limites raisonnables
+    php_value max_execution_time 30
+    php_value memory_limit "256M"
+    php_value post_max_size "10M"
+    php_value upload_max_filesize "5M"
+</IfModule>
+
+# Cache (si mod_expires disponible)
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType text/css "access plus 1 month"
+    ExpiresByType application/javascript "access plus 1 month"
+    ExpiresByType image/png "access plus 1 month"
+    ExpiresByType image/jpg "access plus 1 month"
+    ExpiresByType image/jpeg "access plus 1 month"
+    ExpiresByType text/html "access plus 1 hour"
+</IfModule>
+
+# Compression GZIP + Brotli (si disponible)
+<IfModule mod_deflate.c>
+    # Force compression for mangled accept-encoding headers
+    <IfModule mod_setenvif.c>
+        SetEnvIfNoCase ^(Accept-EncodXng|X-cept-Encoding|X{15}|~{15}|-{15})$ ^((gzip|deflate)\s*,?\s*)+|[X~-]{4,13}$ HAVE_Accept-Encoding
+        RequestHeader append Accept-Encoding "gzip,deflate" env=HAVE_Accept-Encoding
+    </IfModule>
+
+    # Compress HTML, CSS, JavaScript, JSON, XML, fonts
+    AddOutputFilterByType DEFLATE text/html text/plain text/xml
+    AddOutputFilterByType DEFLATE text/css
+    AddOutputFilterByType DEFLATE application/javascript application/x-javascript text/javascript
+    AddOutputFilterByType DEFLATE application/json application/ld+json
+    AddOutputFilterByType DEFLATE application/xml text/xml
+    AddOutputFilterByType DEFLATE application/rss+xml
+    AddOutputFilterByType DEFLATE application/vnd.ms-fontobject
+    AddOutputFilterByType DEFLATE font/ttf font/otf font/woff font/woff2
+    AddOutputFilterByType DEFLATE image/svg+xml
+
+    # Remove browser bugs (IE6)
+    BrowserMatch ^Mozilla/4 gzip-only-text/html
+    BrowserMatch ^Mozilla/4\.0[678] no-gzip
+    BrowserMatch \bMSIE !no-gzip !gzip-only-text/html
+</IfModule>
+
+# Brotli compression (si mod_brotli disponible - IONOS Pro)
+<IfModule mod_brotli.c>
+    AddOutputFilterByType BROTLI_COMPRESS text/html text/plain text/xml text/css
+    AddOutputFilterByType BROTLI_COMPRESS application/javascript application/json
+    AddOutputFilterByType BROTLI_COMPRESS image/svg+xml
+</IfModule>
+
+# Protection des fichiers sensibles
+<Files "*.log">
+    Require all denied
+</Files>
+
+<Files ".env*">
+    Require all denied
+</Files>
+
+# Variables d'environnement IONOS
+<IfModule mod_env.c>
+    SetEnv MAKE_SECRET "change_me_secure_token_2024"
+    SetEnv ADMIN_EMAIL "commercial@xcr.fr"
+    SetEnv SITE_URL "https://taxiassur.com"
+    
+    # Clés API secrètes (côté serveur)
+    SetEnv OPENAI_SECRET_KEY "sk-..."
+    SetEnv ANTHROPIC_SECRET_KEY "sk-ant-..."
+    SetEnv SENDGRID_SECRET_KEY "SG...."
+    SetEnv GOOGLE_CSE_API_KEY "AIza..."
+    SetEnv STRIPE_SECRET_KEY "sk_live_..."
+</IfModule>
