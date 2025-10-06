@@ -15,6 +15,10 @@ import PerformanceOptimizer from '../components/PerformanceOptimizer';
 import Newsletter from '../components/Newsletter';
 import LocalSEO from '../components/LocalSEO';
 import UltimateConversion from '../components/UltimateConversion';
+import InstantQuoteCalculator from '../components/InstantQuoteCalculator';
+import DynamicReviews from '../components/DynamicReviews';
+import ExitIntentLeadCapture from '../components/ExitIntentLeadCapture';
+import InteractiveQuiz from '../components/InteractiveQuiz';
 
 const Home: React.FC = () => {
   useEffect(() => {
@@ -92,17 +96,37 @@ const Home: React.FC = () => {
             {/* 5. FAQ essentielles - Featured snippets */}
             <FAQ />
             
-            {/* 6. Avis clients - Social proof */}
+            {/* 6. Calculateur devis instantané - Engagement */}
+            <InstantQuoteCalculator />
+
+            {/* 7. Avis clients dynamiques - Social proof */}
+            <DynamicReviews />
+
+            {/* 8. Quiz interactif - Lead gen ludique */}
+            <section className="py-16 bg-gray-50">
+              <div className="container mx-auto px-4">
+                <div className="text-center mb-12">
+                  <h2 className="text-4xl font-black mb-4">Testez Vos Connaissances !</h2>
+                  <p className="text-xl text-gray-600">5 questions pour devenir expert assurance taxi</p>
+                </div>
+                <InteractiveQuiz />
+              </div>
+            </section>
+
+            {/* 9. Avis clients classiques - Social proof */}
             <Avis />
-            
-            {/* 7. SEO local - Pages villes */}
+
+            {/* 10. SEO local - Pages villes */}
             <LocalSEO />
-            
-            {/* 8. Signaux de confiance - Autorité */}
+
+            {/* 11. Signaux de confiance - Autorité */}
             <TrustSignals />
-            
-            {/* 9. Newsletter - Engagement */}
+
+            {/* 12. Newsletter - Engagement */}
             <Newsletter />
+
+            {/* 13. Exit intent popup - Last chance lead capture */}
+            <ExitIntentLeadCapture />
             
             {/* 10. Conversion ultime - CTA final */}
             <UltimateConversion />
