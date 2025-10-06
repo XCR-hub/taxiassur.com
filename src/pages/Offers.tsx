@@ -124,7 +124,7 @@ const Offers: React.FC = () => {
                               </li>
                             ))}
                             {offer.benefits.length > 3 && (
-                              <li className="text-sm text-gray-400 italic">
+                              <li className="text-sm text-gray-600 italic">
                                 +{offer.benefits.length - 3} autres avantages
                               </li>
                             )}
@@ -147,7 +147,7 @@ const Offers: React.FC = () => {
               {/* Empty State */}
               {!loading && offers.length === 0 && (
                 <div className="text-center py-12">
-                  <p className="text-gray-400 text-lg">Aucune offre disponible pour le moment.</p>
+                  <p className="text-gray-600 text-lg">Aucune offre disponible pour le moment.</p>
                 </div>
               )}
             </div>

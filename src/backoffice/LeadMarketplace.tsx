@@ -340,7 +340,7 @@ const LeadMarketplace: React.FC = () => {
           {/* Empty State */}
           {filteredLeads.length === 0 && !loading && (
             <Card className="text-center py-12">
-              <Users className="mx-auto mb-4 text-gray-400" size={48} />
+              <Users className="mx-auto mb-4 text-gray-600" size={48} />
               <h3 className="text-lg font-medium text-gray-900 mb-2">
                 Aucun lead disponible
               </h3>

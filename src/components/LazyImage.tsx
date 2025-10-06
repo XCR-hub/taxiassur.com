@@ -75,7 +75,7 @@ const LazyImage: React.FC<LazyImageProps> = ({
           }}
         >
           {!placeholder && (
-            <div className="text-gray-400 text-sm">Chargement...</div>
+            <div className="text-gray-600 text-sm">Chargement...</div>
           )}
         </div>
       )}

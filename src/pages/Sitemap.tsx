@@ -99,7 +99,7 @@ const Sitemap: React.FC = () => {
                           {page.title}
                         </h3>
                       </div>
-                      <p className="text-gray-400 text-sm">
+                      <p className="text-gray-600 text-sm">
                         {page.description}
                       </p>
                     </Link>
@@ -121,7 +121,7 @@ const Sitemap: React.FC = () => {
                     <h3 className="text-lg font-bold text-white mb-3 group-hover:text-amber-400 transition-colors">
                       {page.title}
                     </h3>
-                    <p className="text-gray-400 text-sm">
+                    <p className="text-gray-600 text-sm">
                       {page.description}
                     </p>
                   </Link>

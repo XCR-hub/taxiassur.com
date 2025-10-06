@@ -325,7 +325,7 @@ Que vous soyez taxi indépendant, compagnie de taxi ou gestionnaire de flotte, n
                 </h2>
                 <button
                   onClick={() => setSelectedDirectory(null)}
-                  className="text-gray-400 hover:text-gray-600"
+                  className="text-gray-600 hover:text-gray-600"
                 >
                   ✕
                 </button>
@@ -385,7 +385,7 @@ Que vous soyez taxi indépendant, compagnie de taxi ou gestionnaire de flotte, n
                           </label>
                           <button
                             onClick={() => copyToClipboard(value)}
-                            className="text-gray-400 hover:text-gray-600"
+                            className="text-gray-600 hover:text-gray-600"
                           >
                             <Copy size={14} />
                           </button>

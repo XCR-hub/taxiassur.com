@@ -89,7 +89,7 @@ const BacklinkManager: React.FC = () => {
       case 'pending':
         return <Clock className="text-yellow-600" size={16} />;
       default:
-        return <Clock className="text-gray-400" size={16} />;
+        return <Clock className="text-gray-600" size={16} />;
     }
   };
 
@@ -175,7 +175,7 @@ const BacklinkManager: React.FC = () => {
                 </h2>
                 <button
                   onClick={() => setShowAddForm(false)}
-                  className="text-gray-400 hover:text-gray-600"
+                  className="text-gray-600 hover:text-gray-600"
                 >
                   ✕
                 </button>
@@ -324,7 +324,7 @@ const BacklinkManager: React.FC = () => {
                     >
                       {backlink.domain}
                     </a>
-                    <ExternalLink size={14} className="text-gray-400" />
+                    <ExternalLink size={14} className="text-gray-600" />
                   </div>
                   
                   <div className="flex items-center space-x-4 text-sm text-gray-600">
@@ -374,7 +374,7 @@ const BacklinkManager: React.FC = () => {
 
         {backlinks.length === 0 && (
           <Card className="text-center py-12">
-            <Link className="mx-auto mb-4 text-gray-400" size={48} />
+            <Link className="mx-auto mb-4 text-gray-600" size={48} />
             <h3 className="text-lg font-medium text-gray-900 mb-2">
               Aucun backlink enregistré
             </h3>

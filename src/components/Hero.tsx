@@ -335,7 +335,7 @@ const Hero: React.FC = () => {
 
                   {/* Legal consent */}
                   <div className="bg-gray-800/50 p-4 rounded-lg border border-gray-700">
-                    <p className="text-xs text-gray-400">
+                    <p className="text-xs text-gray-600">
                       En soumettant ce formulaire, j'accepte d'être recontacté par TaxiAssur.com 
                       pour recevoir mon devis personnalisé. Données sécurisées selon notre 
                       <a href="/politique-confidentialite" className="text-amber-600 hover:underline"> politique de confidentialité</a>.
@@ -361,14 +361,14 @@ const Hero: React.FC = () => {
                     )}
                   </button>
 
-                  <p className="text-center text-sm text-gray-400 drop-shadow-md">
+                  <p className="text-center text-sm text-gray-600 drop-shadow-md">
                     Réponse rapide de votre conseiller dédié
                   </p>
                 </form>
 
                 {/* Trust indicators */}
                 <div className="mt-6 pt-4 border-t border-gray-700">
-                  <div className="flex justify-center space-x-6 text-xs text-gray-400">
+                  <div className="flex justify-center space-x-6 text-xs text-gray-600">
                     <div className="flex items-center space-x-1">
                       <CheckCircle className="text-green-400" size={12} />
                       <span>100% Gratuit</span>

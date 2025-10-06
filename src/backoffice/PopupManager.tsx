@@ -239,7 +239,7 @@ const PopupManagerBackoffice: React.FC = () => {
                 </button>
                 <button
                   onClick={() => setEditingPopup(null)}
-                  className="text-gray-400 hover:text-gray-600"
+                  className="text-gray-600 hover:text-gray-600"
                 >
                   <X size={24} />
                 </button>
@@ -806,7 +806,7 @@ const PopupManagerBackoffice: React.FC = () => {
                       </span>
                       <button
                         onClick={() => togglePopup(popup.id)}
-                        className={`p-1 rounded ${popup.enabled ? 'text-green-600' : 'text-gray-400'}`}
+                        className={`p-1 rounded ${popup.enabled ? 'text-green-600' : 'text-gray-600'}`}
                       >
                         {popup.enabled ? <EyeOff size={16} /> : <Eye size={16} />}
                       </button>
@@ -821,15 +821,15 @@ const PopupManagerBackoffice: React.FC = () => {
                   <div className="grid grid-cols-3 gap-2 mb-4 text-center">
                     <div>
                       <div className="text-lg font-bold text-blue-600">{views}</div>
-                      <div className="text-xs text-gray-500">Vues</div>
+                      <div className="text-xs text-gray-600">Vues</div>
                     </div>
                     <div>
                       <div className="text-lg font-bold text-green-600">{clicks}</div>
-                      <div className="text-xs text-gray-500">Clics</div>
+                      <div className="text-xs text-gray-600">Clics</div>
                     </div>
                     <div>
                       <div className="text-lg font-bold text-purple-600">{conversionRate}%</div>
-                      <div className="text-xs text-gray-500">Conv.</div>
+                      <div className="text-xs text-gray-600">Conv.</div>
                     </div>
                   </div>
 
@@ -864,7 +864,7 @@ const PopupManagerBackoffice: React.FC = () => {
           {/* Empty State */}
           {popups.length === 0 && (
             <Card className="text-center py-12">
-              <Eye className="mx-auto mb-4 text-gray-400" size={48} />
+              <Eye className="mx-auto mb-4 text-gray-600" size={48} />
               <h3 className="text-lg font-medium text-gray-900 mb-2">
                 Aucune popup configurée
               </h3>

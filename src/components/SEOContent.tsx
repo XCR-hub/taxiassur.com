@@ -215,7 +215,7 @@ const SEOContent: React.FC = () => {
                   >
                     🎯 DEMANDER MON DEVIS ASSURANCE TAXI GRATUIT
                   </a>
-                  <p className="text-sm text-gray-400 mt-3 drop-shadow-md">
+                  <p className="text-sm text-gray-600 mt-3 drop-shadow-md">
                     ⚡ Réponse sous 15min • 🏆 Courtier ORIAS • 💰 Économisez 35%
                   </p>
                 </div>
@@ -305,7 +305,7 @@ const SEOContent: React.FC = () => {
                   🎯 DEMANDER MON DEVIS GRATUIT
                 </a>
                 
-                <div className="flex items-center justify-center space-x-4 text-sm text-gray-400">
+                <div className="flex items-center justify-center space-x-4 text-sm text-gray-600">
                   <div className="flex items-center space-x-1">
                     <Phone size={14} />
                     <span>01 80 85 57 86</span>
@@ -338,8 +338,8 @@ const SEOContent: React.FC = () => {
                   className="ai-card text-center p-4 hover:shadow-amber-500/40 hover:border-amber-500/50 transition-all duration-300 group"
                 >
                   <div className="font-medium text-white group-hover:text-amber-300 transition-colors drop-shadow-lg">{city}</div>
-                  <div className="text-xs text-gray-400 group-hover:text-amber-400 transition-colors drop-shadow-md">Assurance taxi</div>
-                  <div className="text-xs text-gray-400 group-hover:text-amber-400 transition-colors drop-shadow-md">Devis gratuit</div>
+                  <div className="text-xs text-gray-600 group-hover:text-amber-400 transition-colors drop-shadow-md">Assurance taxi</div>
+                  <div className="text-xs text-gray-600 group-hover:text-amber-400 transition-colors drop-shadow-md">Devis gratuit</div>
                 </a>
               ))}
             </div>

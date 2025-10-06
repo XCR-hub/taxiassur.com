@@ -43,12 +43,24 @@ SetEnv SMTP_SECURITY "ssl"
 
 # Headers de sécurité et performance (si mod_headers disponible)
 <IfModule mod_headers.c>
-    # Sécurité de base
+    # Sécurité renforcée - PageSpeed 100
     Header always set X-Content-Type-Options "nosniff"
     Header always set X-Frame-Options "SAMEORIGIN"
     Header always set X-XSS-Protection "1; mode=block"
     Header always set Referrer-Policy "strict-origin-when-cross-origin"
     Header always set Permissions-Policy "geolocation=(), microphone=(), camera=()"
+
+    # HSTS - Force HTTPS for 2 years (PageSpeed requirement)
+    Header always set Strict-Transport-Security "max-age=63072000; includeSubDomains; preload"
+
+    # CSP - Content Security Policy (PageSpeed requirement)
+    Header always set Content-Security-Policy "default-src 'self' https:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com https://cse.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cse.google.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https: blob:; connect-src 'self' https://www.google-analytics.com https://www.googleapis.com https://*.supabase.co; frame-src 'self' https://cse.google.com; object-src 'none'; base-uri 'self'; form-action 'self'"
+
+    # COOP - Cross-Origin-Opener-Policy (PageSpeed requirement)
+    Header always set Cross-Origin-Opener-Policy "same-origin-allow-popups"
+
+    # COEP - Cross-Origin-Embedder-Policy
+    Header always set Cross-Origin-Embedder-Policy "credentialless"
 
     # CORS pour API
     Header always set Access-Control-Allow-Origin "*"

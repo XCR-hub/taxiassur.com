@@ -219,14 +219,14 @@ const Newsletter: React.FC = () => {
                   )}
                 </button>
 
-                <div className="text-xs text-gray-400 text-center drop-shadow-md">
+                <div className="text-xs text-gray-600 text-center drop-shadow-md">
                   ✅ Gratuit • ❌ Pas de spam • 🔒 Données sécurisées • ✉️ Désinscription facile
                 </div>
               </form>
 
               {/* Social proof */}
               <div className="mt-6 pt-6 border-t border-gray-700">
-                <div className="flex items-center justify-center space-x-4 text-sm text-gray-400">
+                <div className="flex items-center justify-center space-x-4 text-sm text-gray-600">
                   <div className="flex items-center space-x-1">
                     <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
                     <span>2500+ abonnés</span>

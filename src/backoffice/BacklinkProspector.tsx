@@ -346,7 +346,7 @@ www.taxiassur.com
               <Mail className="text-yellow-600" size={20} />
             </div>
             <div className="text-3xl font-bold text-gray-900">{stats.contacted}</div>
-            <div className="text-xs text-gray-500 mt-1">
+            <div className="text-xs text-gray-600 mt-1">
               {stats.total > 0 ? Math.round((stats.contacted / stats.total) * 100) : 0}% du total
             </div>
           </div>
@@ -357,7 +357,7 @@ www.taxiassur.com
               <CheckCircle className="text-green-600" size={20} />
             </div>
             <div className="text-3xl font-bold text-gray-900">{stats.accepted}</div>
-            <div className="text-xs text-gray-500 mt-1">
+            <div className="text-xs text-gray-600 mt-1">
               {stats.contacted > 0 ? Math.round((stats.accepted / stats.contacted) * 100) : 0}% taux conversion
             </div>
           </div>
@@ -368,7 +368,7 @@ www.taxiassur.com
               <BarChart3 className="text-purple-600" size={20} />
             </div>
             <div className="text-3xl font-bold text-gray-900">{stats.avgDA}</div>
-            <div className="text-xs text-gray-500 mt-1">Domain Authority</div>
+            <div className="text-xs text-gray-600 mt-1">Domain Authority</div>
           </div>
 
           <div className="bg-white rounded-lg shadow p-6">
@@ -377,7 +377,7 @@ www.taxiassur.com
               <TrendingUp className="text-orange-600" size={20} />
             </div>
             <div className="text-3xl font-bold text-gray-900">{stats.avgPA}</div>
-            <div className="text-xs text-gray-500 mt-1">Page Authority</div>
+            <div className="text-xs text-gray-600 mt-1">Page Authority</div>
           </div>
         </div>
 
@@ -386,7 +386,7 @@ www.taxiassur.com
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
             {/* Search */}
             <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-600" size={20} />
               <input
                 type="text"
                 placeholder="Rechercher par domaine ou titre..."
@@ -452,22 +452,22 @@ www.taxiassur.com
             <table className="w-full">
               <thead className="bg-gray-50 border-b">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
                     Site
                   </th>
-                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-600 uppercase tracking-wider">
                     DA / PA
                   </th>
-                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-600 uppercase tracking-wider">
                     Trafic Est.
                   </th>
-                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-600 uppercase tracking-wider">
                     Pertinence
                   </th>
-                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-600 uppercase tracking-wider">
                     Statut
                   </th>
-                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-600 uppercase tracking-wider">
                     Actions
                   </th>
                 </tr>
@@ -481,7 +481,7 @@ www.taxiassur.com
                         <div>
                           <div className="font-medium text-gray-900">{opp.domain}</div>
                           <div className="text-sm text-gray-600 line-clamp-1">{opp.pageTitle}</div>
-                          <div className="text-xs text-gray-500 mt-1">
+                          <div className="text-xs text-gray-600 mt-1">
                             <span className="bg-blue-100 text-blue-800 px-2 py-0.5 rounded">
                               {opp.category}
                             </span>
@@ -495,7 +495,7 @@ www.taxiassur.com
                         <span className={`text-lg font-bold ${opp.domainAuthority >= 30 ? 'text-green-600' : opp.domainAuthority >= 20 ? 'text-yellow-600' : 'text-gray-600'}`}>
                           {opp.domainAuthority}
                         </span>
-                        <span className="text-xs text-gray-500">DA</span>
+                        <span className="text-xs text-gray-600">DA</span>
                         <span className="text-sm text-gray-700 mt-1">{opp.pageAuthority} PA</span>
                       </div>
                     </td>
@@ -504,7 +504,7 @@ www.taxiassur.com
                       <div className="text-sm font-medium text-gray-900">
                         {opp.estimatedTraffic.toLocaleString()}
                       </div>
-                      <div className="text-xs text-gray-500">visites/mois</div>
+                      <div className="text-xs text-gray-600">visites/mois</div>
                     </td>
 
                     <td className="px-6 py-4 text-center">
@@ -573,9 +573,9 @@ www.taxiassur.com
 
           {filteredOpportunities.length === 0 && (
             <div className="text-center py-12">
-              <AlertCircle className="mx-auto text-gray-400 mb-4" size={48} />
+              <AlertCircle className="mx-auto text-gray-600 mb-4" size={48} />
               <p className="text-gray-600 text-lg">Aucune opportunité trouvée</p>
-              <p className="text-gray-500 text-sm mt-2">Essayez de modifier vos filtres</p>
+              <p className="text-gray-600 text-sm mt-2">Essayez de modifier vos filtres</p>
             </div>
           )}
         </div>
@@ -592,7 +592,7 @@ www.taxiassur.com
                   </h3>
                   <button
                     onClick={() => setShowEmailModal(false)}
-                    className="text-gray-400 hover:text-gray-600"
+                    className="text-gray-600 hover:text-gray-600"
                   >
                     <XCircle size={24} />
                   </button>

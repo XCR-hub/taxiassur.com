@@ -32,7 +32,7 @@ const FormStepper: React.FC<FormStepperProps> = ({
                   ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg' 
                   : isCurrent 
                     ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-black shadow-lg animate-pulse' 
-                    : 'bg-gray-600 text-gray-400'
+                    : 'bg-gray-600 text-gray-600'
                 }
               `}>
                 {isCompleted ? (
@@ -45,7 +45,7 @@ const FormStepper: React.FC<FormStepperProps> = ({
               {/* Step Label */}
               <span className={`
                 text-xs mt-1 font-medium transition-colors duration-300
-                ${isCurrent ? 'text-amber-400' : isCompleted ? 'text-green-400' : 'text-gray-500'}
+                ${isCurrent ? 'text-amber-400' : isCompleted ? 'text-green-400' : 'text-gray-600'}
               `}>
                 {stepLabels[index]}
               </span>

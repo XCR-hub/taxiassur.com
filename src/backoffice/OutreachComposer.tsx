@@ -415,7 +415,7 @@ const OutreachComposer: React.FC = () => {
                         <label className="text-sm font-medium text-gray-700">Sujet</label>
                         <button
                           onClick={() => navigator.clipboard.writeText(preview.subject)}
-                          className="text-gray-400 hover:text-gray-600"
+                          className="text-gray-600 hover:text-gray-600"
                         >
                           <Copy size={14} />
                         </button>
@@ -431,7 +431,7 @@ const OutreachComposer: React.FC = () => {
                         <label className="text-sm font-medium text-gray-700">Corps du message</label>
                         <button
                           onClick={() => navigator.clipboard.writeText(preview.body)}
-                          className="text-gray-400 hover:text-gray-600"
+                          className="text-gray-600 hover:text-gray-600"
                         >
                           <Copy size={14} />
                         </button>

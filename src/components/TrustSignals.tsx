@@ -73,7 +73,7 @@ const TrustSignals: React.FC = () => {
               <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse mr-3 shadow-lg"></div>
               Activité en Temps Réel
             </h3>
-            <span className="text-sm text-gray-400 drop-shadow-md">🕐 Dernières 30 minutes</span>
+            <span className="text-sm text-gray-600 drop-shadow-md">🕐 Dernières 30 minutes</span>
           </div>
           
           <div className="space-y-3">
@@ -82,7 +82,7 @@ const TrustSignals: React.FC = () => {
                 <div className="flex items-center space-x-3">
                   <CheckCircle className="text-green-400" size={16} />
                   <span className="text-sm font-medium text-white drop-shadow-md">{activity.action}</span>
-                  <span className="text-xs text-gray-400 drop-shadow-md">• {activity.location}</span>
+                  <span className="text-xs text-gray-600 drop-shadow-md">• {activity.location}</span>
                 </div>
                 <span className="text-xs text-amber-400 font-medium drop-shadow-md">Il y a {activity.time}</span>
               </div>

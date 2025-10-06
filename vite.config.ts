@@ -53,7 +53,18 @@ export default defineConfig({
       compress: {
         drop_console: true,
         drop_debugger: true,
-        pure_funcs: ['console.log', 'console.info']
+        pure_funcs: ['console.log', 'console.info'],
+        passes: 2,
+        unsafe: true,
+        unsafe_comps: true,
+        unsafe_math: true,
+        unsafe_proto: true
+      },
+      mangle: {
+        safari10: true
+      },
+      format: {
+        comments: false
       }
     }
   },

@@ -244,7 +244,7 @@ const EnhancedLeadForm: React.FC<EnhancedLeadFormProps> = ({
             <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-300 ${
               step <= currentStep 
                 ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-black' 
-                : 'bg-gray-200 text-gray-500'
+                : 'bg-gray-200 text-gray-600'
             }`}>
               {step < currentStep ? <CheckCircle size={16} /> : step}
             </div>
@@ -488,7 +488,7 @@ const EnhancedLeadForm: React.FC<EnhancedLeadFormProps> = ({
             </button>
             <button
               onClick={() => setShowExitIntent(false)}
-              className="text-gray-500 hover:text-gray-700 text-sm"
+              className="text-gray-600 hover:text-gray-700 text-sm"
             >
               Continuer sans devis
             </button>
@@ -628,7 +628,7 @@ const EnhancedLeadForm: React.FC<EnhancedLeadFormProps> = ({
                   </p>
                 </div>
 
-                <p className="text-center text-sm text-gray-500 mt-4">
+                <p className="text-center text-sm text-gray-600 mt-4">
                   🔒 Formulaire sécurisé • ⚡ Réponse sous 15min • 🎯 Devis sur-mesure
                 </p>
               </form>

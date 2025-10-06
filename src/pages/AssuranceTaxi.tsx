@@ -124,7 +124,7 @@ const AssuranceTaxi: React.FC = () => {
                     <h3 className="text-xl font-bold text-white mb-3">
                       {advantage.title}
                     </h3>
-                    <p className="text-gray-400">
+                    <p className="text-gray-600">
                       {advantage.description}
                     </p>
                   </div>

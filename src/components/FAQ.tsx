@@ -80,7 +80,7 @@ const FAQ: React.FC = () => {
                   {openIndex === index ? (
                     <Minus className="text-amber-400 flex-shrink-0" size={20} />
                   ) : (
-                    <Plus className="text-gray-500 flex-shrink-0" size={20} />
+                    <Plus className="text-gray-600 flex-shrink-0" size={20} />
                   )}
                 </button>
                 

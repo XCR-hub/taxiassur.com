@@ -247,7 +247,7 @@ const SeoTools: React.FC = () => {
                   <div className="text-sm font-medium text-gray-900 group-hover:text-amber-600">
                     {city.city}
                   </div>
-                  <div className="text-xs text-gray-500">({city.department})</div>
+                  <div className="text-xs text-gray-600">({city.department})</div>
                 </a>
               ))}
               {cities.length > 12 && (

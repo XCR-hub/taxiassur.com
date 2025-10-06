@@ -278,7 +278,7 @@ const PartnerFinder: React.FC = () => {
 
               {/* Filters */}
               <div className="flex items-center space-x-4">
-                <Filter size={16} className="text-gray-400" />
+                <Filter size={16} className="text-gray-600" />
                 
                 <select
                   value={filterType}
@@ -411,7 +411,7 @@ const PartnerFinder: React.FC = () => {
           {/* Empty State */}
           {dedupedCandidates.length === 0 && !loading && (
             <div className="bg-white rounded-xl shadow-lg border border-gray-200 text-center py-12 px-8">
-              <Search className="mx-auto mb-4 text-gray-400" size={48} />
+              <Search className="mx-auto mb-4 text-gray-600" size={48} />
               <h3 className="text-xl font-bold text-gray-900 mb-3">
                 Aucun résultat
               </h3>

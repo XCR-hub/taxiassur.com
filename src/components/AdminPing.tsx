@@ -33,7 +33,7 @@ const AdminPing: React.FC = () => {
       case 'error':
         return <XCircle className="text-red-500" size={16} />;
       default:
-        return <AlertCircle className="text-gray-400" size={16} />;
+        return <AlertCircle className="text-gray-600" size={16} />;
     }
   };
 
@@ -60,7 +60,7 @@ const AdminPing: React.FC = () => {
         {getStatusText()}
       </span>
       {lastCheck && (
-        <span className="text-gray-500 text-sm font-medium">
+        <span className="text-gray-600 text-sm font-medium">
           {lastCheck}
         </span>
       )}

@@ -155,7 +155,7 @@ const DynamicReviews: React.FC = () => {
                 <div className="flex items-start justify-between mb-4">
                   <div>
                     <div className="font-bold text-lg text-white">{review.name}</div>
-                    <div className="flex items-center text-sm text-gray-400">
+                    <div className="flex items-center text-sm text-gray-600">
                       <MapPin size={14} className="mr-1" />
                       {review.city}
                     </div>
@@ -180,7 +180,7 @@ const DynamicReviews: React.FC = () => {
                       }`}
                     />
                   ))}
-                  <span className="ml-2 text-sm text-gray-400">{review.date}</span>
+                  <span className="ml-2 text-sm text-gray-600">{review.date}</span>
                 </div>
 
                 <p className="text-gray-300 italic mb-4 text-sm leading-relaxed">

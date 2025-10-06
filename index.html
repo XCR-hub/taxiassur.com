@@ -31,20 +31,32 @@
     <meta name="twitter:description" content="Devis assurance taxi gratuit 2 min. Économisez 35%, RC Pro incluse. Courtier ORIAS agréé." />
     <meta name="twitter:image" content="https://www.taxiassur.com/logo-600x300.png" />
     
-    <!-- Preconnect for performance -->
+    <!-- Preconnect for performance - Critical -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="preconnect" href="https://images.pexels.com">
-    
+    <link rel="dns-prefetch" href="//images.pexels.com">
+    <link rel="dns-prefetch" href="//www.google-analytics.com">
+    <link rel="dns-prefetch" href="//www.googletagmanager.com">
+
     <!-- Preload critical resources -->
     <link rel="preload" href="/src/index.css" as="style">
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" as="style">
+
+    <!-- Load fonts async -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" media="print" onload="this.media='all'">
     <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"></noscript>
     
-    <!-- DNS prefetch for external resources -->
-    <link rel="dns-prefetch" href="//www.google-analytics.com">
-    <link rel="dns-prefetch" href="//www.googletagmanager.com">
-    
+    <!-- Critical CSS Inline - PageSpeed Optimization -->
+    <style>
+      *{box-sizing:border-box;margin:0;padding:0}
+      body{font-family:Inter,-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+      #root{min-height:100vh;display:flex;flex-direction:column}
+      .bg-gradient-to-r{background-image:linear-gradient(to right,var(--tw-gradient-stops))}
+      .from-orange-500{--tw-gradient-from:#f97316}
+      .to-amber-500{--tw-gradient-to:#f59e0b}
+      @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+    </style>
+
     <!-- Theme and manifest -->
     <meta name="theme-color" content="#f59e0b">
     <link rel="manifest" href="/manifest.json">

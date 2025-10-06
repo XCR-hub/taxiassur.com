@@ -214,7 +214,7 @@ const FormLead: React.FC = () => {
 
               {/* Legal consent */}
               <div className="bg-gray-800/50 p-4 rounded-lg border border-gray-700 backdrop-blur-sm">
-                <p className="text-xs text-gray-400">
+                <p className="text-xs text-gray-600">
                   En soumettant ce formulaire, j'accepte d'être recontacté par TaxiAssur.com 
                   pour recevoir mon devis personnalisé. Données sécurisées selon notre 
                   <a href="/politique-confidentialite" className="text-amber-600 hover:underline"> politique de confidentialité</a>.
@@ -227,7 +227,7 @@ const FormLead: React.FC = () => {
                 disabled={isSubmitting}
                 className={`w-full py-4 px-6 rounded-lg font-bold text-lg transition-all duration-200 flex items-center justify-center space-x-2 ${
                   isSubmitting 
-                    ? 'bg-gray-700 cursor-not-allowed text-gray-500' 
+                    ? 'bg-gray-700 cursor-not-allowed text-gray-600' 
                     : 'bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-black shadow-xl hover:shadow-amber-500/25 transform hover:scale-105'
                 }`}
               >
@@ -244,7 +244,7 @@ const FormLead: React.FC = () => {
                 )}
               </button>
 
-              <p className="text-center text-sm text-gray-400">
+              <p className="text-center text-sm text-gray-600">
                 Réponse rapide de votre conseiller dédié
               </p>
             </form>

@@ -55,7 +55,7 @@ const Steps: React.FC = () => {
                 <h3 className="text-xl font-bold text-white mb-3">
                   {step.title}
                 </h3>
-                <p className="text-gray-400 mb-4 leading-relaxed">
+                <p className="text-gray-600 mb-4 leading-relaxed">
                   {step.description}
                 </p>
               </div>

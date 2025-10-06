@@ -129,7 +129,7 @@ const BlogList: React.FC<BlogListProps> = ({
             
             <div className="space-y-3">
               {/* Meta */}
-              <div className="flex items-center space-x-4 text-sm text-gray-400">
+              <div className="flex items-center space-x-4 text-sm text-gray-600">
                 <div className="flex items-center space-x-1">
                   <Calendar size={14} />
                   <span>{formatDate(post.createdAt)}</span>
@@ -155,7 +155,7 @@ const BlogList: React.FC<BlogListProps> = ({
               {/* Tags */}
               {post.tags.length > 0 && (
                 <div className="flex items-center space-x-2">
-                  <Tag size={14} className="text-gray-400" />
+                  <Tag size={14} className="text-gray-600" />
                   <div className="flex flex-wrap gap-1">
                     {post.tags.slice(0, 3).map(tag => (
                       <span
@@ -204,7 +204,7 @@ const BlogList: React.FC<BlogListProps> = ({
       {/* Empty State */}
       {paginatedPosts.length === 0 && !loading && (
         <div className="text-center py-12">
-          <p className="text-gray-400 text-lg">Aucun article trouvé.</p>
+          <p className="text-gray-600 text-lg">Aucun article trouvé.</p>
         </div>
       )}
     </div>

@@ -152,7 +152,7 @@ const ExitIntentLeadCapture: React.FC<ExitIntentLeadCaptureProps> = ({ onClose }
               <div className="mt-4 text-center">
                 <button
                   onClick={handleClose}
-                  className="text-sm text-gray-500 hover:text-gray-700 underline"
+                  className="text-sm text-gray-600 hover:text-gray-700 underline"
                 >
                   Non merci, retourner au site
                 </button>

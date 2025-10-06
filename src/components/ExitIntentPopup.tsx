@@ -147,7 +147,7 @@ const ExitIntentPopup: React.FC<ExitIntentPopupProps> = ({ isVisible, onClose, o
             
             <button
               onClick={handleClose}
-              className="w-full text-gray-500 hover:text-gray-700 text-sm transition-colors"
+              className="w-full text-gray-600 hover:text-gray-700 text-sm transition-colors"
             >
               Non merci, je préfère payer plus cher
             </button>
@@ -155,7 +155,7 @@ const ExitIntentPopup: React.FC<ExitIntentPopupProps> = ({ isVisible, onClose, o
 
           {/* Social proof */}
           <div className="mt-4 text-center">
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-gray-600">
               Rejoint par 100+ chauffeurs satisfaits • Note 4.9/5
             </p>
           </div>

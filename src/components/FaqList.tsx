@@ -86,7 +86,7 @@ const FaqList: React.FC<FaqListProps> = ({
           {/* Search */}
           {showSearch && (
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-600" size={20} />
               <input
                 type="text"
                 placeholder="Rechercher dans la FAQ..."
@@ -142,7 +142,7 @@ const FaqList: React.FC<FaqListProps> = ({
               {openIndex === index ? (
                 <Minus className="text-amber-600 flex-shrink-0" size={20} />
               ) : (
-                <Plus className="text-gray-500 flex-shrink-0" size={20} />
+                <Plus className="text-gray-600 flex-shrink-0" size={20} />
               )}
             </button>
             
@@ -154,12 +154,12 @@ const FaqList: React.FC<FaqListProps> = ({
                 
                 {faq.tags.length > 0 && (
                   <div className="flex items-center space-x-2">
-                    <Tag size={14} className="text-gray-400" />
+                    <Tag size={14} className="text-gray-600" />
                     <div className="flex flex-wrap gap-1">
                       {faq.tags.map(tag => (
                         <span
                           key={tag}
-                          className="px-2 py-1 bg-gray-800 text-gray-400 text-xs rounded-full border border-gray-700"
+                          className="px-2 py-1 bg-gray-800 text-gray-600 text-xs rounded-full border border-gray-700"
                         >
                           {tag}
                         </span>
@@ -176,7 +176,7 @@ const FaqList: React.FC<FaqListProps> = ({
       {/* Empty State */}
       {filteredFaqs.length === 0 && !loading && (
         <div className="text-center py-12">
-          <p className="text-gray-400 text-lg">
+          <p className="text-gray-600 text-lg">
             {searchTerm || selectedTag 
               ? 'Aucune question trouvée pour votre recherche.' 
               : 'Aucune question disponible.'

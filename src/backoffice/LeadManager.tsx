@@ -313,7 +313,7 @@ const LeadManager: React.FC = () => {
           <Card className="mb-8">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-600" size={16} />
                 <input
                   type="text"
                   placeholder="Rechercher..."
@@ -377,7 +377,7 @@ const LeadManager: React.FC = () => {
                         <div>
                           <div className="font-medium text-gray-900">{lead.name}</div>
                           {lead.immatriculation && (
-                            <div className="text-xs text-gray-500">{lead.immatriculation}</div>
+                            <div className="text-xs text-gray-600">{lead.immatriculation}</div>
                           )}
                         </div>
                       </td>
@@ -404,7 +404,7 @@ const LeadManager: React.FC = () => {
                         {lead.primeRealisee ? (
                           <span className="font-bold text-green-600">{lead.primeRealisee}€</span>
                         ) : (
-                          <span className="text-gray-400">-</span>
+                          <span className="text-gray-600">-</span>
                         )}
                       </td>
                       <td className="py-3 px-4">
@@ -484,7 +484,7 @@ const LeadManager: React.FC = () => {
           {/* Empty State */}
           {filteredLeads.length === 0 && !loading && (
             <Card className="text-center py-12">
-              <Users className="mx-auto mb-4 text-gray-400" size={48} />
+              <Users className="mx-auto mb-4 text-gray-600" size={48} />
               <h3 className="text-lg font-medium text-gray-900 mb-2">
                 Aucun lead trouvé
               </h3>
@@ -508,7 +508,7 @@ const LeadManager: React.FC = () => {
                 </h2>
                 <button
                   onClick={() => setShowDetailModal(false)}
-                  className="text-gray-400 hover:text-gray-600"
+                  className="text-gray-600 hover:text-gray-600"
                 >
                   ✕
                 </button>
@@ -770,7 +770,7 @@ const LeadManager: React.FC = () => {
                 </h2>
                 <button
                   onClick={() => setShowReviewRequest(false)}
-                  className="text-gray-400 hover:text-gray-600"
+                  className="text-gray-600 hover:text-gray-600"
                 >
                   ✕
                 </button>
@@ -832,7 +832,7 @@ const LeadManager: React.FC = () => {
                 </h2>
                 <button
                   onClick={() => setShowStatusModal(false)}
-                  className="text-gray-400 hover:text-gray-600"
+                  className="text-gray-600 hover:text-gray-600"
                 >
                   ✕
                 </button>

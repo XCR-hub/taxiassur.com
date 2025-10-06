@@ -170,7 +170,7 @@ const PartnerManager: React.FC = () => {
                 </h2>
                 <button
                   onClick={() => setShowAddForm(false)}
-                  className="text-gray-400 hover:text-gray-600"
+                  className="text-gray-600 hover:text-gray-600"
                 >
                   ✕
                 </button>
@@ -378,7 +378,7 @@ const PartnerManager: React.FC = () => {
                     />
                   ) : (
                     <div className="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center">
-                      <Globe className="text-gray-400" size={20} />
+                      <Globe className="text-gray-600" size={20} />
                     </div>
                   )}
                   <div>
@@ -400,7 +400,7 @@ const PartnerManager: React.FC = () => {
                 {partner.description}
               </p>
 
-              <div className="space-y-2 text-sm text-gray-500">
+              <div className="space-y-2 text-sm text-gray-600">
                 {partner.location && (
                   <div className="flex items-center space-x-2">
                     <MapPin size={14} />
@@ -454,7 +454,7 @@ const PartnerManager: React.FC = () => {
 
         {partners.length === 0 && (
           <Card className="text-center py-12">
-            <Globe className="mx-auto mb-4 text-gray-400" size={48} />
+            <Globe className="mx-auto mb-4 text-gray-600" size={48} />
             <h3 className="text-lg font-medium text-gray-900 mb-2">
               Aucun partenaire enregistré
             </h3>

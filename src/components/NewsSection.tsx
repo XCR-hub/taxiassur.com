@@ -74,7 +74,7 @@ const NewsSection: React.FC<NewsSectionProps> = ({
   if (news.length === 0) {
     return (
       <Card className="text-center py-8">
-        <TrendingUp className="mx-auto mb-4 text-gray-400" size={48} />
+        <TrendingUp className="mx-auto mb-4 text-gray-600" size={48} />
         <h3 className="text-lg font-medium text-gray-900 mb-2">
           Actualités en cours de chargement
         </h3>
@@ -99,7 +99,7 @@ const NewsSection: React.FC<NewsSectionProps> = ({
               {currentNews.synthesizedTitle}
             </h4>
           </div>
-          <div className="text-xs text-gray-500">
+          <div className="text-xs text-gray-600">
             {formatDate(currentNews.publishedAt)}
           </div>
         </div>
@@ -121,7 +121,7 @@ const NewsSection: React.FC<NewsSectionProps> = ({
             <div className="flex-1 h-px bg-gradient-to-r from-amber-500 via-yellow-500 to-transparent"></div>
             <div className="flex items-center space-x-2">
               <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-              <span className="text-sm text-gray-500 font-medium">Synthèse automatique</span>
+              <span className="text-sm text-gray-600 font-medium">Synthèse automatique</span>
             </div>
           </div>
         )}
@@ -139,7 +139,7 @@ const NewsSection: React.FC<NewsSectionProps> = ({
                 <span className="text-xs text-amber-600 font-bold uppercase tracking-wide">
                   {item.taxiAngle.split(' ')[0]}
                 </span>
-                <span className="text-xs text-gray-400">
+                <span className="text-xs text-gray-600">
                   {formatDate(item.publishedAt)}
                 </span>
               </div>
@@ -160,7 +160,7 @@ const NewsSection: React.FC<NewsSectionProps> = ({
                     </span>
                   ))}
                 </div>
-                <div className="flex items-center space-x-1 text-gray-400 group-hover:text-amber-500 transition-colors">
+                <div className="flex items-center space-x-1 text-gray-600 group-hover:text-amber-500 transition-colors">
                   <span className="text-xs">Lire</span>
                   <ArrowRight size={12} />
                 </div>
@@ -270,8 +270,8 @@ const NewsSection: React.FC<NewsSectionProps> = ({
                       {item.taxiAngle}
                     </span>
                   </div>
-                  <div className="flex items-center space-x-3 text-sm text-gray-500">
-                    <Calendar size={16} className="text-gray-400" />
+                  <div className="flex items-center space-x-3 text-sm text-gray-600">
+                    <Calendar size={16} className="text-gray-600" />
                     <span className="font-medium group-hover:text-gray-700 transition-colors">{formatDate(item.publishedAt)}</span>
                   </div>
                 </div>

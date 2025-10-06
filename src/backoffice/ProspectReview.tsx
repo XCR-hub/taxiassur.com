@@ -311,7 +311,7 @@ const ProspectReview: React.FC = () => {
           {/* Empty State */}
           {filteredProspects.length === 0 && !loading && (
             <Card className="text-center py-12">
-              <User className="mx-auto mb-4 text-gray-400" size={48} />
+              <User className="mx-auto mb-4 text-gray-600" size={48} />
               <h3 className="text-lg font-medium text-gray-900 mb-2">
                 Aucun prospect à reviewer
               </h3>
@@ -332,7 +332,7 @@ const ProspectReview: React.FC = () => {
                 </h2>
                 <button
                   onClick={() => setShowConsentModal(false)}
-                  className="text-gray-400 hover:text-gray-600"
+                  className="text-gray-600 hover:text-gray-600"
                 >
                   ✕
                 </button>

@@ -308,7 +308,7 @@ const NewsManager: React.FC = () => {
                       }`}>
                         {news.status}
                       </span>
-                      <span className="text-xs text-gray-500">
+                      <span className="text-xs text-gray-600">
                         Score: {news.relevanceScore}/100
                       </span>
                     </div>
@@ -321,7 +321,7 @@ const NewsManager: React.FC = () => {
                       {news.synthesizedContent.replace(/<[^>]*>/g, '').substring(0, 200)}...
                     </p>
                     
-                    <div className="flex items-center space-x-4 text-xs text-gray-500">
+                    <div className="flex items-center space-x-4 text-xs text-gray-600">
                       <span>Sources: {news.sources.join(', ')}</span>
                       <span>Créé: {new Date(news.createdAt).toLocaleDateString('fr-FR')}</span>
                       <span>Publié: {new Date(news.publishedAt).toLocaleDateString('fr-FR')}</span>
@@ -364,7 +364,7 @@ const NewsManager: React.FC = () => {
           {/* Empty State */}
           {processedNews.length === 0 && !loading && (
             <Card className="text-center py-12">
-              <TrendingUp className="mx-auto mb-4 text-gray-400" size={48} />
+              <TrendingUp className="mx-auto mb-4 text-gray-600" size={48} />
               <h3 className="text-lg font-medium text-gray-900 mb-2">
                 Aucune actualité traitée
               </h3>

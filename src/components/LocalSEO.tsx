@@ -68,11 +68,11 @@ const LocalSEO: React.FC = () => {
                 <div className="grid grid-cols-2 gap-1 text-xs">
                   <div>
                     <div className="text-blue-400 font-bold">{city.clients}</div>
-                    <div className="text-gray-400">Clients</div>
+                    <div className="text-gray-600">Clients</div>
                   </div>
                   <div>
                     <div className="text-green-400 font-bold">{city.savings}</div>
-                    <div className="text-gray-400">Éco.</div>
+                    <div className="text-gray-600">Éco.</div>
                   </div>
                 </div>
               </div>

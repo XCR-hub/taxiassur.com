@@ -211,7 +211,7 @@ const ReviewsList: React.FC<ReviewsListProps> = ({
                   {renderStars(review.rating)}
                 </div>
                 {review.source && (
-                  <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+                  <span className="text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded-full">
                     {review.source}
                   </span>
                 )}
@@ -233,7 +233,7 @@ const ReviewsList: React.FC<ReviewsListProps> = ({
       {/* Empty State */}
       {filteredReviews.length === 0 && !loading && (
         <div className="text-center py-12">
-          <p className="text-gray-500 text-lg">
+          <p className="text-gray-600 text-lg">
             {selectedRating 
               ? `Aucun avis ${selectedRating} étoile${selectedRating > 1 ? 's' : ''} trouvé.`
               : 'Aucun avis disponible.'

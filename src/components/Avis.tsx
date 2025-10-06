@@ -64,7 +64,7 @@ const Avis: React.FC = () => {
             <div className="bg-gray-900/90 border border-green-500/50 rounded-xl p-4 text-center">
               <div className="text-3xl font-bold text-green-400">100+</div>
               <p className="text-sm text-gray-300">Taxis clients</p>
-              <p className="text-xs text-gray-400">Depuis Sept 2025</p>
+              <p className="text-xs text-gray-600">Depuis Sept 2025</p>
             </div>
             <div className="bg-gray-900/90 border border-blue-500/50 rounded-xl p-4 text-center">
               <div className="text-3xl font-bold text-blue-400">-35%</div>

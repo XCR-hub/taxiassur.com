@@ -277,7 +277,7 @@ const AssuranceTaxiVTC: React.FC = () => {
                   <div className="mb-6">
                     <h3 className="text-2xl font-bold mb-2">Formule VTC</h3>
                     <div className="flex items-baseline">
-                      <span className="text-gray-400 line-through text-2xl mr-2">1,800€</span>
+                      <span className="text-gray-600 line-through text-2xl mr-2">1,800€</span>
                       <span className="text-4xl font-black text-green-600">1,170€</span>
                       <span className="text-gray-600 ml-2">/an</span>
                     </div>
@@ -320,7 +320,7 @@ const AssuranceTaxiVTC: React.FC = () => {
                   <div className="mb-6">
                     <h3 className="text-2xl font-bold mb-2">Formule TAXI</h3>
                     <div className="flex items-baseline">
-                      <span className="text-gray-400 line-through text-2xl mr-2">2,200€</span>
+                      <span className="text-gray-600 line-through text-2xl mr-2">2,200€</span>
                       <span className="text-4xl font-black text-blue-600">1,430€</span>
                       <span className="text-gray-600 ml-2">/an</span>
                     </div>

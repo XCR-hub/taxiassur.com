@@ -324,14 +324,14 @@ const CityPage: React.FC = () => {
                           <Phone className="text-amber-400" size={20} />
                           <div>
                             <p className="font-bold text-white text-lg">01 80 85 57 86</p>
-                            <p className="text-sm text-gray-400">Ligne directe expert {cityData.city}</p>
+                            <p className="text-sm text-gray-600">Ligne directe expert {cityData.city}</p>
                           </div>
                         </div>
                         <div className="flex items-center space-x-3 p-4 bg-gray-800/50 rounded-lg border border-gray-700/50">
                           <MapPin className="text-amber-400" size={20} />
                           <div>
                             <p className="font-bold text-white">Service {cityData.city}</p>
-                            <p className="text-sm text-gray-400">Expertise locale garantie • Réponse 15min</p>
+                            <p className="text-sm text-gray-600">Expertise locale garantie • Réponse 15min</p>
                           </div>
                         </div>
                       </div>

@@ -166,7 +166,7 @@ const NewsletterPage: React.FC = () => {
                         <h3 className="text-xl font-bold text-gray-900 flex-1">
                           {article.title}
                         </h3>
-                        <div className="flex items-center space-x-2 text-sm text-gray-500 ml-4">
+                        <div className="flex items-center space-x-2 text-sm text-gray-600 ml-4">
                           <Clock size={14} />
                           <span>{article.readTime}</span>
                         </div>
@@ -175,7 +175,7 @@ const NewsletterPage: React.FC = () => {
                         {article.excerpt}
                       </p>
                       <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-500">
+                        <span className="text-sm text-gray-600">
                           {new Date(article.date).toLocaleDateString('fr-FR')}
                         </span>
                         <span className="text-blue-600 hover:text-blue-700 font-medium text-sm">

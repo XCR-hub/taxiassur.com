@@ -70,7 +70,7 @@ const Merci: React.FC = () => {
                     </div>
                     <div>
                       <h3 className="font-semibold text-white">Analyse de votre demande</h3>
-                      <p className="text-gray-400 text-sm">Notre équipe étudie votre profil et vos besoins spécifiques</p>
+                      <p className="text-gray-600 text-sm">Notre équipe étudie votre profil et vos besoins spécifiques</p>
                     </div>
                   </div>
                   
@@ -80,7 +80,7 @@ const Merci: React.FC = () => {
                     </div>
                     <div>
                       <h3 className="font-semibold text-white">Contact personnalisé</h3>
-                      <p className="text-gray-400 text-sm">Votre conseiller dédié vous contacte pour affiner votre devis</p>
+                      <p className="text-gray-600 text-sm">Votre conseiller dédié vous contacte pour affiner votre devis</p>
                     </div>
                   </div>
                   
@@ -90,7 +90,7 @@ const Merci: React.FC = () => {
                     </div>
                     <div>
                       <h3 className="font-semibold text-white">Proposition sur-mesure</h3>
-                      <p className="text-gray-400 text-sm">Réception de votre devis personnalisé avec les meilleures conditions</p>
+                      <p className="text-gray-600 text-sm">Réception de votre devis personnalisé avec les meilleures conditions</p>
                     </div>
                   </div>
                 </div>

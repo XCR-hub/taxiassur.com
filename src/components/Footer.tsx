@@ -67,7 +67,7 @@ const Footer: React.FC = () => {
                   <Phone className="text-white" size={14} aria-hidden="true" />
                 </div>
                 <div>
-                  <p className="text-xs text-gray-400">Ligne directe</p>
+                  <p className="text-xs text-gray-600">Ligne directe</p>
                   <a href="tel:0180855786" className="text-orange-300 font-semibold hover:text-orange-200 transition-colors">
                     01 80 85 57 86
                   </a>
@@ -78,7 +78,7 @@ const Footer: React.FC = () => {
                   <Mail className="text-white" size={14} aria-hidden="true" />
                 </div>
                 <div>
-                  <p className="text-xs text-gray-400">Email</p>
+                  <p className="text-xs text-gray-600">Email</p>
                   <a href="mailto:team@taxiassur.com" className="text-orange-300 font-semibold hover:text-orange-200 transition-colors">
                     team@taxiassur.com
                   </a>
@@ -89,7 +89,7 @@ const Footer: React.FC = () => {
                   <MapPin className="text-white" size={14} aria-hidden="true" />
                 </div>
                 <div>
-                  <p className="text-xs text-gray-400">Siège social</p>
+                  <p className="text-xs text-gray-600">Siège social</p>
                   <p className="text-orange-300 font-semibold">Melun, France</p>
                 </div>
               </div>
@@ -187,16 +187,16 @@ const Footer: React.FC = () => {
         <div className="border-t border-gray-800 mt-8 pt-6">
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
             <div className="text-center md:text-left">
-              <p className="text-sm text-gray-400 mb-2">
+              <p className="text-sm text-gray-600 mb-2">
                 © 2025 TaxiAssur.com - Tous droits réservés • Excellence Coverage Risks
               </p>
               <div className="flex items-center justify-center md:justify-start space-x-3">
-                <span className="text-xs text-gray-500">Suivez-nous :</span>
+                <span className="text-xs text-gray-600">Suivez-nous :</span>
                 <a
                   href="https://facebook.com/taxiassur"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-gray-400 hover:text-blue-500 transition-colors"
+                  className="text-gray-600 hover:text-blue-500 transition-colors"
                   aria-label="Suivez-nous sur Facebook"
                 >
                   <Facebook size={18} />
@@ -205,7 +205,7 @@ const Footer: React.FC = () => {
                   href="https://twitter.com/taxiassur"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-gray-400 hover:text-blue-400 transition-colors"
+                  className="text-gray-600 hover:text-blue-400 transition-colors"
                   aria-label="Suivez-nous sur Twitter"
                 >
                   <Twitter size={18} />
@@ -214,7 +214,7 @@ const Footer: React.FC = () => {
                   href="https://linkedin.com/company/taxiassur"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-gray-400 hover:text-blue-600 transition-colors"
+                  className="text-gray-600 hover:text-blue-600 transition-colors"
                   aria-label="Suivez-nous sur LinkedIn"
                 >
                   <Linkedin size={18} />
@@ -229,7 +229,7 @@ const Footer: React.FC = () => {
                       });
                     }
                   }}
-                  className="text-gray-400 hover:text-orange-400 transition-colors"
+                  className="text-gray-600 hover:text-orange-400 transition-colors"
                   aria-label="Partager TaxiAssur"
                 >
                   <Share2 size={18} />
@@ -237,16 +237,16 @@ const Footer: React.FC = () => {
               </div>
             </div>
             <div className="flex items-center flex-wrap gap-4 text-sm justify-center md:justify-end">
-              <a href="/sitemap.xml" className="text-gray-500 hover:text-orange-300 transition-colors" target="_blank" rel="noopener noreferrer">
+              <a href="/sitemap.xml" className="text-gray-600 hover:text-orange-300 transition-colors" target="_blank" rel="noopener noreferrer">
                 Sitemap XML
               </a>
-              <a href="/feeds/rss.xml" className="text-gray-500 hover:text-orange-300 transition-colors" target="_blank" rel="noopener noreferrer">
+              <a href="/feeds/rss.xml" className="text-gray-600 hover:text-orange-300 transition-colors" target="_blank" rel="noopener noreferrer">
                 Flux RSS
               </a>
-              <Link to="/plan-du-site" className="text-gray-500 hover:text-orange-300 transition-colors">
+              <Link to="/plan-du-site" className="text-gray-600 hover:text-orange-300 transition-colors">
                 Plan du Site
               </Link>
-              <Link to="/contact" className="text-gray-500 hover:text-orange-300 transition-colors">
+              <Link to="/contact" className="text-gray-600 hover:text-orange-300 transition-colors">
                 Contact
               </Link>
             </div>

@@ -91,7 +91,7 @@ const PartnerDirectory: React.FC<PartnerDirectoryProps> = ({
       {/* Filters */}
       {showFilters && allCategories.length > 0 && (
         <div className="flex items-center space-x-4">
-          <Filter size={20} className="text-gray-400" />
+          <Filter size={20} className="text-gray-600" />
           <div className="flex flex-wrap gap-2">
             <button
               onClick={() => setSelectedCategory('')}
@@ -155,7 +155,7 @@ const PartnerDirectory: React.FC<PartnerDirectoryProps> = ({
               {partner.description}
             </p>
 
-            <div className="space-y-2 text-sm text-gray-500 mb-4">
+            <div className="space-y-2 text-sm text-gray-600 mb-4">
               {partner.location && (
                 <div className="flex items-center space-x-2">
                   <MapPin size={14} />
@@ -197,7 +197,7 @@ const PartnerDirectory: React.FC<PartnerDirectoryProps> = ({
       {/* Empty State */}
       {filteredPartners.length === 0 && !loading && (
         <div className="text-center py-12">
-          <Globe className="mx-auto mb-4 text-gray-400" size={48} />
+          <Globe className="mx-auto mb-4 text-gray-600" size={48} />
           <h3 className="text-lg font-medium text-gray-900 mb-2">
             {selectedCategory 
               ? `Aucun partenaire dans la catégorie "${getCategoryLabel(selectedCategory)}"`

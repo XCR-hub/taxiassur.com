@@ -311,7 +311,7 @@ const SecurityDashboard: React.FC = () => {
                       </span>
                       <span className="text-sm font-medium text-gray-900">{log.message}</span>
                     </div>
-                    <span className="text-xs text-gray-500">
+                    <span className="text-xs text-gray-600">
                       {new Date(log.timestamp).toLocaleTimeString('fr-FR')}
                     </span>
                   </div>

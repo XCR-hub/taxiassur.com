@@ -332,7 +332,7 @@ const ComplianceCenter: React.FC = () => {
                 </h2>
                 <button
                   onClick={() => setShowDSRModal(false)}
-                  className="text-gray-400 hover:text-gray-600"
+                  className="text-gray-600 hover:text-gray-600"
                 >
                   ✕
                 </button>
@@ -416,7 +416,7 @@ const ComplianceCenter: React.FC = () => {
                 </h2>
                 <button
                   onClick={() => setSelectedConsent(null)}
-                  className="text-gray-400 hover:text-gray-600"
+                  className="text-gray-600 hover:text-gray-600"
                 >
                   ✕
                 </button>
@@ -457,7 +457,7 @@ const ComplianceCenter: React.FC = () => {
                     />
                     <button
                       onClick={() => navigator.clipboard.writeText(selectedConsent.optOutUrl)}
-                      className="text-gray-400 hover:text-gray-600"
+                      className="text-gray-600 hover:text-gray-600"
                     >
                       <Copy size={16} />
                     </button>

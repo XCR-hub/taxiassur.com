@@ -69,11 +69,11 @@ const SEOBooster: React.FC = () => {
                 
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-gray-400">Volume :</span>
+                    <span className="text-gray-600">Volume :</span>
                     <span className="font-bold text-amber-400">{kw.volume}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-400">Objectif :</span>
+                    <span className="text-gray-600">Objectif :</span>
                     <span className="font-bold text-green-400">{kw.position}</span>
                   </div>
                 </div>
@@ -110,7 +110,7 @@ const SEOBooster: React.FC = () => {
                     </div>
                   ))}
                 </div>
-                <p className="text-xs text-gray-500 mt-3">+12 autres villes configurées</p>
+                <p className="text-xs text-gray-600 mt-3">+12 autres villes configurées</p>
               </div>
             </div>
           </div>

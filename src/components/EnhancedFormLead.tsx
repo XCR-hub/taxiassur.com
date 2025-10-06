@@ -136,7 +136,7 @@ const EnhancedFormLead: React.FC = () => {
             <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ${
               step <= currentStep 
                 ? 'bg-amber-500 text-black' 
-                : 'bg-gray-600 text-gray-400'
+                : 'bg-gray-600 text-gray-600'
             }`}>
               {step < currentStep ? <CheckCircle size={12} /> : step}
             </div>
@@ -167,7 +167,7 @@ const EnhancedFormLead: React.FC = () => {
       {renderStepIndicator()}
       
       <div className="text-center mb-4">
-        <span className="text-xs text-gray-400">
+        <span className="text-xs text-gray-600">
           Étape {currentStep}/3 : {stepLabels[currentStep - 1]}
         </span>
       </div>
@@ -303,19 +303,19 @@ const EnhancedFormLead: React.FC = () => {
               <h4 className="text-sm font-medium text-white mb-3">Récapitulatif</h4>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-gray-400">Nom :</span>
+                  <span className="text-gray-600">Nom :</span>
                   <span className="text-white">{formData.name}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-400">Téléphone :</span>
+                  <span className="text-gray-600">Téléphone :</span>
                   <span className="text-white">{formData.phone}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-400">Email :</span>
+                  <span className="text-gray-600">Email :</span>
                   <span className="text-white">{formData.email}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-400">Ville :</span>
+                  <span className="text-gray-600">Ville :</span>
                   <span className="text-white">{formData.city}</span>
                 </div>
               </div>
@@ -347,7 +347,7 @@ const EnhancedFormLead: React.FC = () => {
               type="button"
               onClick={nextStep}
               disabled={!validateStep(currentStep)}
-              className="ml-auto px-4 py-2 bg-amber-500 hover:bg-amber-600 disabled:bg-gray-700 disabled:text-gray-500 text-black font-medium rounded-lg transition-colors text-sm"
+              className="ml-auto px-4 py-2 bg-amber-500 hover:bg-amber-600 disabled:bg-gray-700 disabled:text-gray-600 text-black font-medium rounded-lg transition-colors text-sm"
             >
               Suivant
             </button>
@@ -355,7 +355,7 @@ const EnhancedFormLead: React.FC = () => {
             <button
               type="submit"
               disabled={isSubmitting || rateLimitState.blocked}
-              className="ml-auto px-6 py-2 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 disabled:bg-gray-700 disabled:text-gray-500 text-black font-bold rounded-lg transition-all duration-300 flex items-center space-x-2 text-sm"
+              className="ml-auto px-6 py-2 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 disabled:bg-gray-700 disabled:text-gray-600 text-black font-bold rounded-lg transition-all duration-300 flex items-center space-x-2 text-sm"
             >
               {isSubmitting ? (
                 <>
@@ -373,7 +373,7 @@ const EnhancedFormLead: React.FC = () => {
         </div>
 
         {/* Legal notice */}
-        <div className="mt-4 text-xs text-gray-400 text-center">
+        <div className="mt-4 text-xs text-gray-600 text-center">
           En soumettant ce formulaire, j'accepte d'être recontacté pour mon devis.
           <br />
           <a href="/politique-confidentialite" className="text-amber-600 hover:underline">
@@ -384,7 +384,7 @@ const EnhancedFormLead: React.FC = () => {
 
       {/* Trust indicators */}
       <div className="mt-4 pt-4 border-t border-gray-700">
-        <div className="flex justify-center space-x-4 text-xs text-gray-400">
+        <div className="flex justify-center space-x-4 text-xs text-gray-600">
           <div className="flex items-center space-x-1">
             <CheckCircle size={12} className="text-green-400" />
             <span>Gratuit</span>

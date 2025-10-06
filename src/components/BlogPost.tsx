@@ -108,7 +108,7 @@ const BlogPost: React.FC = () => {
           <div className="max-w-4xl mx-auto">
             {/* Breadcrumb */}
             <nav className="mb-8">
-              <ol className="flex items-center space-x-2 text-sm text-gray-500">
+              <ol className="flex items-center space-x-2 text-sm text-gray-600">
                 {breadcrumbs.map((crumb, index) => (
                   <li key={crumb.url} className="flex items-center">
                     {index > 0 && <span className="mx-2">/</span>}
@@ -130,7 +130,7 @@ const BlogPost: React.FC = () => {
                 {post.title}
               </h1>
               
-              <div className="flex flex-wrap items-center gap-6 text-sm text-gray-500 mb-6">
+              <div className="flex flex-wrap items-center gap-6 text-sm text-gray-600 mb-6">
                 <div className="flex items-center space-x-2">
                   <User size={16} />
                   <span>{post.author}</span>
@@ -147,7 +147,7 @@ const BlogPost: React.FC = () => {
 
               {post.tags.length > 0 && (
                 <div className="flex items-center space-x-2 mb-6">
-                  <Tag size={16} className="text-gray-400" />
+                  <Tag size={16} className="text-gray-600" />
                   <div className="flex flex-wrap gap-2">
                     {post.tags.map(tag => (
                       <span
