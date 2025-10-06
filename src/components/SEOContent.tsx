@@ -157,7 +157,7 @@ const SEOContent: React.FC = () => {
                   Notre <strong className="text-amber-400">comparateur assurance taxi</strong> analyse en temps réel les offres de 15+ assureurs partenaires.
                   Contrairement aux comparateurs généralistes, TaxiAssur est spécialisé exclusivement dans
                   l'<strong className="text-blue-400">assurance VTC</strong> et l'<strong className="text-green-400">assurance chauffeur</strong>.
-                  Cette expertise nous permet d'obtenir des tarifs jusqu'à 40% moins chers pour une
+                  Cette expertise nous permet d'obtenir des tarifs jusqu\'à 40% moins chers pour une
                   <strong className="text-amber-400">assurance flotte taxi</strong> ou un véhicule unique.
                 </p>
 
@@ -166,7 +166,7 @@ const SEOContent: React.FC = () => {
                 </h4>
                 <p className="text-gray-300 leading-relaxed mb-6 drop-shadow-md">
                   Souscrire une <strong className="text-amber-400">assurance taxi en ligne</strong> avec TaxiAssur est simple et 100% sécurisé.
-                  Notre processus digital vous permet d'obtenir votre attestation d'assurance en quelques clics, sans rendez-vous physique.
+                  Notre processus digital vous permet d'obtenir votre attestation d\'assurance en quelques clics, sans rendez-vous physique.
                   Nos <strong className="text-blue-400">courtiers assurance taxi</strong> restent disponibles 7j/7 pour vous accompagner à chaque étape.
                 </p>
 
