@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { CheckCircle, Phone, Send, Shield, Clock, Award, TrendingDown, Zap, Target, Star, FileText, MapPin, Users, User, Mail } from 'lucide-react';
 import AITaxiBackground from './AITaxiBackground';
 
@@ -123,24 +123,24 @@ const Hero: React.FC = () => {
               </p>
             </div>
 
-            {/* Quick Links */}
+            {/* Quick Links - Internal Links for SEO */}
             <div className="grid grid-cols-2 gap-3 mb-6">
-              <button className="flex items-center space-x-2 text-xs text-gray-300 hover:text-amber-400 transition-colors bg-gray-800/50 hover:bg-gray-700/50 px-3 py-2 rounded-lg border border-gray-600 hover:border-amber-500/50">
-                <FileText className="text-amber-400" size={16} />
+              <Link to="/assurance-taxi" className="flex items-center space-x-2 text-xs text-gray-300 hover:text-amber-400 transition-colors bg-gray-800/50 hover:bg-gray-700/50 px-3 py-2 rounded-lg border border-gray-600 hover:border-amber-500/50">
+                <FileText className="text-amber-400" size={16} aria-hidden="true" />
                 <span>Guide Complet Assurance Taxi</span>
-              </button>
-              <button className="flex items-center space-x-2 text-xs text-gray-300 hover:text-blue-400 transition-colors bg-gray-800/50 hover:bg-gray-700/50 px-3 py-2 rounded-lg border border-gray-600 hover:border-blue-500/50">
-                <Shield className="text-blue-400" size={16} />
+              </Link>
+              <Link to="/rc-professionnelle" className="flex items-center space-x-2 text-xs text-gray-300 hover:text-blue-400 transition-colors bg-gray-800/50 hover:bg-gray-700/50 px-3 py-2 rounded-lg border border-gray-600 hover:border-blue-500/50">
+                <Shield className="text-blue-400" size={16} aria-hidden="true" />
                 <span>RC Professionnelle</span>
-              </button>
-              <button className="flex items-center space-x-2 text-xs text-gray-300 hover:text-green-400 transition-colors bg-gray-800/50 hover:bg-gray-700/50 px-3 py-2 rounded-lg border border-gray-600 hover:border-green-500/50">
-                <MapPin className="text-green-400" size={16} />
+              </Link>
+              <Link to="/villes" className="flex items-center space-x-2 text-xs text-gray-300 hover:text-green-400 transition-colors bg-gray-800/50 hover:bg-gray-700/50 px-3 py-2 rounded-lg border border-gray-600 hover:border-green-500/50">
+                <MapPin className="text-green-400" size={16} aria-hidden="true" />
                 <span>Toutes les Villes</span>
-              </button>
-              <button className="flex items-center space-x-2 text-xs text-gray-300 hover:text-purple-400 transition-colors bg-gray-800/50 hover:bg-gray-700/50 px-3 py-2 rounded-lg border border-gray-600 hover:border-purple-500/50">
-                <Users className="text-purple-400" size={16} />
+              </Link>
+              <Link to="/blog" className="flex items-center space-x-2 text-xs text-gray-300 hover:text-purple-400 transition-colors bg-gray-800/50 hover:bg-gray-700/50 px-3 py-2 rounded-lg border border-gray-600 hover:border-purple-500/50">
+                <Users className="text-purple-400" size={16} aria-hidden="true" />
                 <span>Actualités & Conseils</span>
-              </button>
+              </Link>
             </div>
 
             {/* Stats Row */}

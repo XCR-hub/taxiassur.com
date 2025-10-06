@@ -10,11 +10,18 @@ SetEnv SMTP_SECURITY "ssl"
 # Activation du module de réécriture
 <IfModule mod_rewrite.c>
     RewriteEngine On
-    
+    RewriteBase /
+
+    # FORCE HTTPS et WWW - SEO Critical
+    RewriteCond %{HTTPS} off [OR]
+    RewriteCond %{HTTP_HOST} !^www\. [NC]
+    RewriteCond %{HTTP_HOST} ^(?:www\.)?(.+)$ [NC]
+    RewriteRule ^(.*)$ https://www.%1/$1 [L,R=301,NE]
+
     # Gestion des erreurs personnalisées
     ErrorDocument 404 /index.html
     ErrorDocument 403 /index.html
-    
+
     # Redirection pour React Router - IONOS Compatible
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteCond %{REQUEST_FILENAME} !-d

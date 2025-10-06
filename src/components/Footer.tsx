@@ -1,5 +1,5 @@
 import React from 'react';
-import { Shield, Phone, Mail, MapPin } from 'lucide-react';
+import { Shield, Phone, Mail, MapPin, Facebook, Twitter, Linkedin, Share2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const Footer: React.FC = () => {
@@ -169,18 +169,65 @@ const Footer: React.FC = () => {
         </div>
 
         <div className="border-t border-gray-800 mt-8 pt-6">
-          <div className="flex flex-col md:flex-row justify-between items-center">
-            <p className="text-sm text-gray-400 mb-4 md:mb-0">
-              © 2025 TaxiAssur.com - Tous droits réservés • Excellence Coverage Risks
-            </p>
+          <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
+            <div className="text-center md:text-left">
+              <p className="text-sm text-gray-400 mb-2">
+                © 2025 TaxiAssur.com - Tous droits réservés • Excellence Coverage Risks
+              </p>
+              <div className="flex items-center justify-center md:justify-start space-x-3">
+                <span className="text-xs text-gray-500">Suivez-nous :</span>
+                <a
+                  href="https://facebook.com/taxiassur"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-gray-400 hover:text-blue-500 transition-colors"
+                  aria-label="Suivez-nous sur Facebook"
+                >
+                  <Facebook size={18} />
+                </a>
+                <a
+                  href="https://twitter.com/taxiassur"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-gray-400 hover:text-blue-400 transition-colors"
+                  aria-label="Suivez-nous sur Twitter"
+                >
+                  <Twitter size={18} />
+                </a>
+                <a
+                  href="https://linkedin.com/company/taxiassur"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-gray-400 hover:text-blue-600 transition-colors"
+                  aria-label="Suivez-nous sur LinkedIn"
+                >
+                  <Linkedin size={18} />
+                </a>
+                <button
+                  onClick={() => {
+                    if (navigator.share) {
+                      navigator.share({
+                        title: 'TaxiAssur - Assurance Taxi Pas Cher',
+                        text: 'Découvrez TaxiAssur : devis gratuit en 2min, économisez 35%',
+                        url: 'https://www.taxiassur.com'
+                      });
+                    }
+                  }}
+                  className="text-gray-400 hover:text-orange-400 transition-colors"
+                  aria-label="Partager TaxiAssur"
+                >
+                  <Share2 size={18} />
+                </button>
+              </div>
+            </div>
             <div className="flex items-center space-x-4 text-sm">
               <Link to="/backoffice" className="text-gray-500 hover:text-orange-300 transition-colors">
                 Admin
               </Link>
-              <a href="/feeds/sitemap.xml" className="text-gray-500 hover:text-orange-300 transition-colors">
+              <a href="/feeds/sitemap.xml" className="text-gray-500 hover:text-orange-300 transition-colors" target="_blank" rel="noopener noreferrer">
                 Sitemap
               </a>
-              <a href="/feeds/rss.xml" className="text-gray-500 hover:text-orange-300 transition-colors">
+              <a href="/feeds/rss.xml" className="text-gray-500 hover:text-orange-300 transition-colors" target="_blank" rel="noopener noreferrer">
                 RSS
               </a>
             </div>
