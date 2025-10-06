@@ -27,6 +27,13 @@ const PrixAssuranceTaxi = lazy(() => import('./pages/PrixAssuranceTaxi'));
 const AssuranceTaxiVTC = lazy(() => import('./pages/AssuranceTaxiVTC'));
 const AssuranceTaxiParis = lazy(() => import('./pages/AssuranceTaxiParis'));
 const AssuranceMotoTaxi = lazy(() => import('./pages/AssuranceMotoTaxi'));
+const QuelleAssuranceTaxi = lazy(() => import('./pages/QuelleAssuranceTaxi'));
+const AssuranceObligatoireTaxi = lazy(() => import('./pages/AssuranceObligatoireTaxi'));
+const AssuranceTaxiLyon = lazy(() => import('./pages/AssuranceTaxiLyon'));
+const AssuranceTaxiMarseille = lazy(() => import('./pages/AssuranceTaxiMarseille'));
+const AssuranceTaxiToulouse = lazy(() => import('./pages/AssuranceTaxiToulouse'));
+const AssuranceTaxiNice = lazy(() => import('./pages/AssuranceTaxiNice'));
+const AssuranceTaxiBordeaux = lazy(() => import('./pages/AssuranceTaxiBordeaux'));
 const OfferPage = lazy(() => import('./components/OfferPage'));
 const Dashboard = lazy(() => import('./backoffice/Dashboard'));
 const BacklinkManager = lazy(() => import('./backoffice/BacklinkManager'));
@@ -141,6 +148,41 @@ export const router = createBrowserRouter([
   {
     path: '/assurance-moto-taxi',
     element: <SuspenseWrapper><AssuranceMotoTaxi /></SuspenseWrapper>,
+    errorElement: <ErrorBoundary><Navigate to="/" replace /></ErrorBoundary>
+  },
+  {
+    path: '/quelle-assurance-pour-taxi',
+    element: <SuspenseWrapper><QuelleAssuranceTaxi /></SuspenseWrapper>,
+    errorElement: <ErrorBoundary><Navigate to="/" replace /></ErrorBoundary>
+  },
+  {
+    path: '/assurance-obligatoire-taxi',
+    element: <SuspenseWrapper><AssuranceObligatoireTaxi /></SuspenseWrapper>,
+    errorElement: <ErrorBoundary><Navigate to="/" replace /></ErrorBoundary>
+  },
+  {
+    path: '/assurance-taxi-lyon',
+    element: <SuspenseWrapper><AssuranceTaxiLyon /></SuspenseWrapper>,
+    errorElement: <ErrorBoundary><Navigate to="/" replace /></ErrorBoundary>
+  },
+  {
+    path: '/assurance-taxi-marseille',
+    element: <SuspenseWrapper><AssuranceTaxiMarseille /></SuspenseWrapper>,
+    errorElement: <ErrorBoundary><Navigate to="/" replace /></ErrorBoundary>
+  },
+  {
+    path: '/assurance-taxi-toulouse',
+    element: <SuspenseWrapper><AssuranceTaxiToulouse /></SuspenseWrapper>,
+    errorElement: <ErrorBoundary><Navigate to="/" replace /></ErrorBoundary>
+  },
+  {
+    path: '/assurance-taxi-nice',
+    element: <SuspenseWrapper><AssuranceTaxiNice /></SuspenseWrapper>,
+    errorElement: <ErrorBoundary><Navigate to="/" replace /></ErrorBoundary>
+  },
+  {
+    path: '/assurance-taxi-bordeaux',
+    element: <SuspenseWrapper><AssuranceTaxiBordeaux /></SuspenseWrapper>,
     errorElement: <ErrorBoundary><Navigate to="/" replace /></ErrorBoundary>
   },
   {
