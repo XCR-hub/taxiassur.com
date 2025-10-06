@@ -172,8 +172,8 @@ const EnhancedLeadForm: React.FC<EnhancedLeadFormProps> = ({
       return;
     }
     
-    // Anti-spam final check
-    if (formData.honeypot || !behaviorAnalyzer.isHumanBehavior()) {
+    // Anti-spam final check (honeypot uniquement)
+    if (formData.honeypot) {
       ConversionTracker.track('spam_blocked');
       return;
     }

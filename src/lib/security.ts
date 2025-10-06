@@ -234,8 +234,8 @@ export const SecureLeadSchema = z.object({
     .refine(val => !val || /^[A-Z]{2}-[0-9]{3}-[A-Z]{2}$/.test(val), 'Format immatriculation invalide'),
   honeypot: z.string().max(0, 'Spam détecté'),
   fingerprint: z.string().min(10, 'Empreinte requise'),
-  behaviorScore: z.number().min(30, 'Comportement suspect'),
-  timeOnPage: z.number().min(5000, 'Soumission trop rapide')
+  behaviorScore: z.number().min(0, 'Comportement suspect'),
+  timeOnPage: z.number().min(0, 'Soumission trop rapide')
 });
 
 export type SecureLead = z.infer<typeof SecureLeadSchema>;
