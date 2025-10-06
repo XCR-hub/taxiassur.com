@@ -127,7 +127,7 @@ const InstantQuoteCalculator: React.FC = () => {
       case 1:
         return (
           <div>
-            <h3 className="text-2xl font-bold mb-6 text-center">Type de véhicule taxi ?</h3>
+            <h3 className="text-2xl font-bold mb-6 text-center text-gray-900">Type de véhicule taxi ?</h3>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               {vehicleTypes.map(type => (
                 <button
@@ -150,7 +150,7 @@ const InstantQuoteCalculator: React.FC = () => {
       case 2:
         return (
           <div>
-            <h3 className="text-2xl font-bold mb-6 text-center">Ville d'activité principale ?</h3>
+            <h3 className="text-2xl font-bold mb-6 text-center text-gray-900">Ville d'activité principale ?</h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {cities.map(city => (
                 <button
@@ -172,7 +172,7 @@ const InstantQuoteCalculator: React.FC = () => {
       case 3:
         return (
           <div>
-            <h3 className="text-2xl font-bold mb-6 text-center">Années d'expérience taxi ?</h3>
+            <h3 className="text-2xl font-bold mb-6 text-center text-gray-900">Années d'expérience taxi ?</h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {[
                 { value: '0-2', label: '0-2 ans' },
@@ -199,7 +199,7 @@ const InstantQuoteCalculator: React.FC = () => {
       case 4:
         return (
           <div>
-            <h3 className="text-2xl font-bold mb-6 text-center">Sinistres 3 dernières années ?</h3>
+            <h3 className="text-2xl font-bold mb-6 text-center text-gray-900">Sinistres 3 dernières années ?</h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {[
                 { value: '0', label: '0 sinistre', emoji: '✅' },
@@ -227,7 +227,7 @@ const InstantQuoteCalculator: React.FC = () => {
       case 5:
         return (
           <div>
-            <h3 className="text-2xl font-bold mb-6 text-center">Niveau de couverture souhaité ?</h3>
+            <h3 className="text-2xl font-bold mb-6 text-center text-gray-900">Niveau de couverture souhaité ?</h3>
             <div className="grid md:grid-cols-3 gap-6">
               <button
                 onClick={() => setFormData({ ...formData, coverage: 'tiers' })}
@@ -292,36 +292,36 @@ const InstantQuoteCalculator: React.FC = () => {
         return quote ? (
           <div className="text-center">
             <div className="mb-8">
-              <Calculator className="mx-auto text-green-600 mb-4" size={64} />
-              <h3 className="text-3xl font-black mb-2">Votre Devis Instantané</h3>
-              <p className="text-gray-600">Estimation basée sur vos réponses</p>
+              <Calculator className="mx-auto text-yellow-600 mb-4" size={64} />
+              <h3 className="text-3xl font-black mb-2 text-gray-900">Votre Devis Instantané</h3>
+              <p className="text-gray-700 font-semibold">Estimation basée sur vos réponses</p>
             </div>
 
             <div className="grid md:grid-cols-2 gap-6 mb-8">
-              <div className="bg-red-50 border-2 border-red-200 rounded-2xl p-8">
-                <div className="text-sm text-red-600 font-semibold mb-2">Prix Marché</div>
-                <div className="text-4xl font-black text-red-600 mb-2">{quote.basePrice}€</div>
-                <div className="text-sm text-gray-600">par an</div>
+              <div className="bg-gray-100 border-2 border-gray-400 rounded-2xl p-8">
+                <div className="text-sm text-gray-700 font-semibold mb-2">Prix Marché</div>
+                <div className="text-4xl font-black text-gray-900 mb-2 line-through">{quote.basePrice}€</div>
+                <div className="text-sm text-gray-700 font-medium">par an</div>
               </div>
 
-              <div className="bg-green-50 border-2 border-green-600 rounded-2xl p-8 relative">
-                <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-green-600 text-white px-4 py-1 rounded-full text-sm font-bold">
+              <div className="bg-yellow-50 border-2 border-yellow-500 rounded-2xl p-8 relative shadow-lg">
+                <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-yellow-500 text-gray-900 px-4 py-1 rounded-full text-sm font-bold">
                   -35% TaxiAssur
                 </div>
-                <div className="text-sm text-green-600 font-semibold mb-2">Votre Prix</div>
-                <div className="text-5xl font-black text-green-600 mb-2">{quote.finalPrice}€</div>
-                <div className="text-sm text-gray-600">par an</div>
+                <div className="text-sm text-orange-600 font-semibold mb-2">Votre Prix</div>
+                <div className="text-5xl font-black text-orange-600 mb-2">{quote.finalPrice}€</div>
+                <div className="text-sm text-gray-900 font-medium">par an</div>
               </div>
             </div>
 
-            <div className="bg-yellow-50 border-l-4 border-yellow-500 p-6 rounded-r-xl mb-8">
+            <div className="bg-orange-50 border-2 border-orange-400 p-6 rounded-xl mb-8">
               <div className="flex items-center justify-center">
-                <TrendingDown className="text-yellow-600 mr-3" size={32} />
+                <TrendingDown className="text-orange-600 mr-3" size={32} />
                 <div>
-                  <div className="text-2xl font-black text-yellow-900">
+                  <div className="text-2xl font-black text-orange-900">
                     Économie : {quote.savings}€/an
                   </div>
-                  <div className="text-sm text-gray-700">
+                  <div className="text-sm text-gray-900 font-semibold">
                     Soit {Math.round(quote.savings / 12)}€/mois économisés
                   </div>
                 </div>
@@ -330,30 +330,30 @@ const InstantQuoteCalculator: React.FC = () => {
 
             <div className="bg-white rounded-2xl shadow-xl p-8 mb-8 text-left">
               <div className="flex items-center mb-4">
-                <Shield className="text-blue-600 mr-3" size={32} />
-                <h4 className="text-xl font-bold">Garanties Incluses</h4>
+                <Shield className="text-yellow-600 mr-3" size={32} />
+                <h4 className="text-xl font-bold text-gray-900">Garanties Incluses</h4>
               </div>
               <div className="grid md:grid-cols-2 gap-3">
                 {quote.guarantees.map((guarantee, idx) => (
                   <div key={idx} className="flex items-start">
                     <Check className="text-green-600 mr-2 flex-shrink-0 mt-1" size={20} />
-                    <span className="text-gray-700">{guarantee}</span>
+                    <span className="text-gray-900 font-medium">{guarantee}</span>
                   </div>
                 ))}
               </div>
             </div>
 
-            <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-2xl p-8">
-              <h4 className="text-2xl font-bold mb-4">Obtenez ce Tarif Maintenant</h4>
-              <p className="mb-6">Souscription 100% en ligne • Attestation en 10 min</p>
+            <div className="bg-gradient-to-r from-yellow-500 to-orange-500 text-gray-900 rounded-2xl p-8 shadow-2xl">
+              <h4 className="text-2xl font-bold mb-4 text-gray-900">Obtenez ce Tarif Maintenant</h4>
+              <p className="mb-6 font-semibold">Souscription 100% en ligne • Attestation en 10 min</p>
               <a
                 href="#devis-final"
-                className="inline-flex items-center bg-yellow-400 hover:bg-yellow-500 text-blue-900 font-bold px-8 py-4 rounded-xl transition-all"
+                className="inline-flex items-center bg-white hover:bg-gray-100 text-gray-900 font-bold px-8 py-4 rounded-xl transition-all shadow-lg"
               >
                 Souscrire à {quote.finalPrice}€/an
                 <ArrowRight className="ml-2" size={20} />
               </a>
-              <p className="text-sm mt-4 text-blue-100">Aucun engagement • Sans frais cachés</p>
+              <p className="text-sm mt-4 font-medium">Aucun engagement • Sans frais cachés</p>
             </div>
 
             <button
@@ -368,7 +368,7 @@ const InstantQuoteCalculator: React.FC = () => {
                   coverage: ''
                 });
               }}
-              className="mt-6 text-blue-600 hover:underline"
+              className="mt-6 text-orange-600 hover:underline font-semibold"
             >
               ← Recommencer le calcul
             </button>
