@@ -457,7 +457,15 @@ const Dashboard: React.FC = () => {
                 <Users className="mr-2 text-blue-700" size={20} />
                 Acquisition Partenaires
               </h3>
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-4 gap-4">
+                <a
+                  href="/backoffice/backlink-prospector"
+                  className="text-center p-4 bg-red-100 border-2 border-red-300 rounded-lg hover:bg-red-200 transition-colors group shadow-lg hover:shadow-xl"
+                >
+                  <Link className="mx-auto mb-2 text-red-700 group-hover:scale-110 transition-transform" size={20} />
+                  <div className="text-sm font-bold text-red-900">Backlink AI</div>
+                </a>
+
                 <a
                   href="/backoffice/partner-finder"
                   className="text-center p-4 bg-blue-100 border-2 border-blue-300 rounded-lg hover:bg-blue-200 transition-colors group shadow-lg hover:shadow-xl"
@@ -465,7 +473,7 @@ const Dashboard: React.FC = () => {
                   <Search className="mx-auto mb-2 text-blue-700 group-hover:scale-110 transition-transform" size={20} />
                   <div className="text-sm font-bold text-blue-900">Partner Finder</div>
                 </a>
-                
+
                 <a
                   href="/backoffice/prospect-review"
                   className="text-center p-4 bg-green-100 border-2 border-green-300 rounded-lg hover:bg-green-200 transition-colors group shadow-lg hover:shadow-xl"
@@ -473,7 +481,7 @@ const Dashboard: React.FC = () => {
                   <Eye className="mx-auto mb-2 text-green-700 group-hover:scale-110 transition-transform" size={20} />
                   <div className="text-sm font-bold text-green-900">Review</div>
                 </a>
-                
+
                 <a
                   href="/backoffice/outreach"
                   className="text-center p-4 bg-purple-100 border-2 border-purple-300 rounded-lg hover:bg-purple-200 transition-colors group shadow-lg hover:shadow-xl"
