@@ -16,7 +16,24 @@
     RewriteEngine On
     RewriteBase /
 
-    # Redirection pour React Router (SPA)
+    # Exclure les fichiers assets (CSS, JS, images, fonts)
+    RewriteCond %{REQUEST_URI} !^/assets/
+    RewriteCond %{REQUEST_URI} !^/content/
+    RewriteCond %{REQUEST_URI} !^/feeds/
+    RewriteCond %{REQUEST_URI} !\.css$
+    RewriteCond %{REQUEST_URI} !\.js$
+    RewriteCond %{REQUEST_URI} !\.json$
+    RewriteCond %{REQUEST_URI} !\.xml$
+    RewriteCond %{REQUEST_URI} !\.txt$
+    RewriteCond %{REQUEST_URI} !\.ico$
+    RewriteCond %{REQUEST_URI} !\.png$
+    RewriteCond %{REQUEST_URI} !\.jpg$
+    RewriteCond %{REQUEST_URI} !\.jpeg$
+    RewriteCond %{REQUEST_URI} !\.svg$
+    RewriteCond %{REQUEST_URI} !\.woff$
+    RewriteCond %{REQUEST_URI} !\.woff2$
+
+    # Redirection pour React Router (SPA) seulement si pas un fichier
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteRule ^(.*)$ /index.html [L,QSA]
