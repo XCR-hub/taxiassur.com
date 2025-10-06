@@ -185,11 +185,11 @@ const InstantQuoteCalculator: React.FC = () => {
                   onClick={() => setFormData({ ...formData, experience: exp.value })}
                   className={`p-6 rounded-xl border-2 transition-all hover:scale-105 ${
                     formData.experience === exp.value
-                      ? 'border-yellow-500 bg-yellow-50 shadow-lg text-gray-900'
-                      : 'border-gray-600 hover:border-yellow-400 bg-gray-700 text-white'
+                      ? 'border-yellow-500 bg-yellow-500/20 shadow-lg'
+                      : 'border-gray-600 hover:border-yellow-400 bg-gray-700'
                   }`}
                 >
-                  <div className="font-bold text-xl text-gray-900">{exp.label}</div>
+                  <div className="font-bold text-xl text-white">{exp.label}</div>
                 </button>
               ))}
             </div>
@@ -212,12 +212,12 @@ const InstantQuoteCalculator: React.FC = () => {
                   onClick={() => setFormData({ ...formData, claims: claim.value })}
                   className={`p-6 rounded-xl border-2 transition-all hover:scale-105 ${
                     formData.claims === claim.value
-                      ? 'border-yellow-500 bg-yellow-50 shadow-lg text-gray-900'
-                      : 'border-gray-600 hover:border-yellow-400 bg-gray-700 text-white'
+                      ? 'border-yellow-500 bg-yellow-500/20 shadow-lg'
+                      : 'border-gray-600 hover:border-yellow-400 bg-gray-700'
                   }`}
                 >
                   <div className="text-3xl mb-2">{claim.emoji}</div>
-                  <div className="font-bold text-gray-900">{claim.label}</div>
+                  <div className="font-bold text-white">{claim.label}</div>
                 </button>
               ))}
             </div>
@@ -308,20 +308,20 @@ const InstantQuoteCalculator: React.FC = () => {
                 <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-yellow-500 text-gray-900 px-4 py-1 rounded-full text-sm font-bold shadow-lg">
                   -35% TaxiAssur
                 </div>
-                <div className="text-sm text-orange-600 font-semibold mb-2">Votre Prix</div>
-                <div className="text-5xl font-black text-orange-600 mb-2">{quote.finalPrice}€</div>
+                <div className="text-sm text-orange-400 font-semibold mb-2">Votre Prix</div>
+                <div className="text-5xl font-black text-orange-400 mb-2">{quote.finalPrice}€</div>
                 <div className="text-sm text-white font-medium">par an</div>
               </div>
             </div>
 
-            <div className="bg-orange-50 border-2 border-orange-400 p-6 rounded-xl mb-8">
+            <div className="bg-orange-500/20 border-2 border-orange-500 p-6 rounded-xl mb-8">
               <div className="flex items-center justify-center">
-                <TrendingDown className="text-orange-600 mr-3" size={32} />
+                <TrendingDown className="text-orange-400 mr-3" size={32} />
                 <div>
-                  <div className="text-2xl font-black text-orange-900">
+                  <div className="text-2xl font-black text-orange-400">
                     Économie : {quote.savings}€/an
                   </div>
-                  <div className="text-sm text-gray-900 font-semibold">
+                  <div className="text-sm text-white font-semibold">
                     Soit {Math.round(quote.savings / 12)}€/mois économisés
                   </div>
                 </div>
