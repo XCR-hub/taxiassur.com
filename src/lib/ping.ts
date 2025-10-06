@@ -77,7 +77,21 @@ export function generateCityPages(): Array<{ city: string; slug: string; title: 
     { name: 'Dijon', dept: '21', region: 'Bourgogne-Franche-Comté' },
     { name: 'Angers', dept: '49', region: 'Pays de la Loire' },
     { name: 'Nîmes', dept: '30', region: 'Occitanie' },
-    { name: 'Villeurbanne', dept: '69', region: 'Auvergne-Rhône-Alpes' }
+    { name: 'Villeurbanne', dept: '69', region: 'Auvergne-Rhône-Alpes' },
+    { name: 'Le Mans', dept: '72', region: 'Pays de la Loire' },
+    { name: 'Aix-en-Provence', dept: '13', region: 'Provence-Alpes-Côte d\'Azur' },
+    { name: 'Clermont-Ferrand', dept: '63', region: 'Auvergne-Rhône-Alpes' },
+    { name: 'Brest', dept: '29', region: 'Bretagne' },
+    { name: 'Tours', dept: '37', region: 'Centre-Val de Loire' },
+    { name: 'Amiens', dept: '80', region: 'Hauts-de-France' },
+    { name: 'Limoges', dept: '87', region: 'Nouvelle-Aquitaine' },
+    { name: 'Annecy', dept: '74', region: 'Auvergne-Rhône-Alpes' },
+    { name: 'Perpignan', dept: '66', region: 'Occitanie' },
+    { name: 'Boulogne-Billancourt', dept: '92', region: 'Île-de-France' },
+    { name: 'Metz', dept: '57', region: 'Grand Est' },
+    { name: 'Besançon', dept: '25', region: 'Bourgogne-Franche-Comté' },
+    { name: 'Orléans', dept: '45', region: 'Centre-Val de Loire' },
+    { name: 'Mulhouse', dept: '68', region: 'Grand Est' }
   ];
 
   return cities.map(cityInfo => ({

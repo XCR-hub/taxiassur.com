@@ -4,11 +4,11 @@ import { Link } from 'react-router-dom';
 
 const Footer: React.FC = () => {
   const services = [
-    'Assurance Taxi',
-    'RC Professionnelle', 
-    'Flotte Véhicules',
-    'Conseil Personnalisé',
-    'Gestion Sinistres'
+    { name: 'Assurance Taxi', href: '/assurance-taxi' },
+    { name: 'RC Professionnelle', href: '/rc-professionnelle' },
+    { name: 'Flotte Véhicules', href: '/flotte-vehicules' },
+    { name: 'Conseil Personnalisé', href: '/conseil-personnalise' },
+    { name: 'Gestion Sinistres', href: '/gestion-sinistres' }
   ];
 
   const pages = [
@@ -102,9 +102,12 @@ const Footer: React.FC = () => {
             <ul className="space-y-2 text-sm">
               {services.map((service, index) => (
                 <li key={index}>
-                  <span className="text-gray-400 hover:text-orange-300 transition-colors cursor-pointer">
-                    {service}
-                  </span>
+                  <Link
+                    to={service.href}
+                    className="text-gray-400 hover:text-orange-300 transition-colors"
+                  >
+                    {service.name}
+                  </Link>
                 </li>
               ))}
             </ul>
