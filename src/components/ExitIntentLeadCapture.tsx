@@ -59,12 +59,13 @@ const ExitIntentLeadCapture: React.FC<ExitIntentLeadCaptureProps> = ({ onClose }
   if (!isVisible) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm animate-fadeIn">
-      <div className="relative bg-white rounded-2xl shadow-2xl max-w-2xl w-full m-4 overflow-hidden animate-slideUp">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm animate-fadeIn" onClick={handleClose}>
+      <div className="relative bg-white rounded-2xl shadow-2xl max-w-lg w-full m-4 overflow-hidden animate-slideUp max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         {/* Close button */}
         <button
           onClick={handleClose}
-          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 z-10"
+          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 z-10 bg-white rounded-full p-2 shadow-lg hover:bg-gray-100 transition-colors"
+          aria-label="Fermer"
         >
           <X size={24} />
         </button>
@@ -72,67 +73,67 @@ const ExitIntentLeadCapture: React.FC<ExitIntentLeadCaptureProps> = ({ onClose }
         {!isSubmitted ? (
           <>
             {/* Header with urgency */}
-            <div className="bg-gradient-to-r from-red-600 to-orange-600 text-white p-6 text-center">
-              <AlertCircle className="mx-auto mb-3 animate-bounce" size={48} />
-              <h2 className="text-3xl font-black mb-2">Attendez !</h2>
-              <p className="text-xl">Ne partez pas sans votre tarif personnalisé</p>
+            <div className="bg-gradient-to-r from-red-600 to-orange-600 text-white p-4 text-center">
+              <AlertCircle className="mx-auto mb-2 animate-bounce" size={40} />
+              <h2 className="text-2xl font-black mb-1">Attendez !</h2>
+              <p className="text-base">Ne partez pas sans votre tarif personnalisé</p>
             </div>
 
             {/* Content */}
-            <div className="p-8">
-              <div className="grid md:grid-cols-3 gap-4 mb-8">
-                <div className="text-center p-4 bg-green-50 rounded-xl">
-                  <div className="text-3xl font-black text-green-600 mb-1">-35%</div>
-                  <div className="text-sm text-gray-600">Économie garantie</div>
+            <div className="p-6">
+              <div className="grid grid-cols-3 gap-3 mb-6">
+                <div className="text-center p-3 bg-green-50 rounded-lg">
+                  <div className="text-2xl font-black text-green-600 mb-1">-35%</div>
+                  <div className="text-xs text-gray-600">Économie</div>
                 </div>
-                <div className="text-center p-4 bg-blue-50 rounded-xl">
-                  <div className="text-3xl font-black text-blue-600 mb-1">2 min</div>
-                  <div className="text-sm text-gray-600">Devis gratuit</div>
+                <div className="text-center p-3 bg-blue-50 rounded-lg">
+                  <div className="text-2xl font-black text-blue-600 mb-1">2 min</div>
+                  <div className="text-xs text-gray-600">Devis gratuit</div>
                 </div>
-                <div className="text-center p-4 bg-orange-50 rounded-xl">
-                  <div className="text-3xl font-black text-orange-600 mb-1">10 min</div>
-                  <div className="text-sm text-gray-600">Attestation</div>
+                <div className="text-center p-3 bg-orange-50 rounded-lg">
+                  <div className="text-2xl font-black text-orange-600 mb-1">10 min</div>
+                  <div className="text-xs text-gray-600">Attestation</div>
                 </div>
               </div>
 
-              <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded-r-xl mb-6">
+              <div className="bg-yellow-50 border-l-4 border-yellow-500 p-3 rounded-r-lg mb-4">
                 <div className="flex items-center">
-                  <TrendingDown className="text-yellow-600 mr-3 flex-shrink-0" size={32} />
+                  <TrendingDown className="text-yellow-600 mr-2 flex-shrink-0" size={24} />
                   <div>
-                    <div className="font-bold text-yellow-900">Offre Spéciale : -100€ supplémentaires</div>
-                    <div className="text-sm text-gray-700">Pour les 50 prochaines souscriptions aujourd'hui</div>
+                    <div className="font-bold text-yellow-900 text-sm">Offre : -100€ supplémentaires</div>
+                    <div className="text-xs text-gray-700">50 prochaines souscriptions</div>
                   </div>
                 </div>
               </div>
 
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <form onSubmit={handleSubmit} className="space-y-3">
                 <div>
-                  <label className="block text-sm font-semibold mb-2">Email</label>
+                  <label className="block text-xs font-semibold mb-1">Email</label>
                   <input
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
                     placeholder="votre@email.com"
-                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-blue-600 focus:outline-none text-lg"
+                    className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:border-blue-600 focus:outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold mb-2">Téléphone</label>
+                  <label className="block text-xs font-semibold mb-1">Téléphone</label>
                   <input
                     type="tel"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     required
                     placeholder="06 12 34 56 78"
-                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-blue-600 focus:outline-none text-lg"
+                    className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:border-blue-600 focus:outline-none"
                   />
                 </div>
 
                 <button
                   type="submit"
-                  className="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-bold py-4 px-8 rounded-xl transition-all text-lg"
+                  className="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-bold py-3 px-6 rounded-lg transition-all"
                 >
                   Recevoir Mon Tarif Préférentiel →
                 </button>
@@ -142,8 +143,8 @@ const ExitIntentLeadCapture: React.FC<ExitIntentLeadCaptureProps> = ({ onClose }
                 </p>
               </form>
 
-              <div className="mt-6 flex items-center justify-center text-sm text-gray-600">
-                <Clock size={16} className="mr-2" />
+              <div className="mt-4 flex items-center justify-center text-xs text-gray-600">
+                <Clock size={14} className="mr-1" />
                 <span>Offre valable uniquement aujourd'hui</span>
               </div>
             </div>

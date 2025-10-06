@@ -150,10 +150,8 @@ const Header: React.FC = () => {
           </nav>
 
           <div className="hidden lg:flex items-center space-x-3">
-            <a
-              href="#devis"
-              onClick={(e) => {
-                e.preventDefault();
+            <button
+              onClick={() => {
                 const devisSection = document.getElementById('devis');
                 if (devisSection) {
                   devisSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -161,12 +159,14 @@ const Header: React.FC = () => {
                     const nameInput = document.getElementById('name') as HTMLInputElement;
                     if (nameInput) nameInput.focus();
                   }, 800);
+                } else {
+                  window.location.href = '/#devis';
                 }
               }}
               className="bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-500 hover:to-yellow-400 text-black font-bold py-2 px-6 rounded-lg transition-all duration-300 text-sm whitespace-nowrap shadow-lg"
             >
               Devis Gratuit
-            </a>
+            </button>
           </div>
 
           {/* Mobile menu button */}
@@ -200,11 +200,9 @@ const Header: React.FC = () => {
                   {item.name}
                 </Link>
               ))}
-              <a
-                href="#devis"
-                className="bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-500 hover:to-yellow-400 text-black font-bold py-3 px-6 rounded-lg transition-all duration-300 text-center mx-4 mt-4"
-                onClick={(e) => {
-                  e.preventDefault();
+              <button
+                className="bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-500 hover:to-yellow-400 text-black font-bold py-3 px-6 rounded-lg transition-all duration-300 text-center mx-4 mt-4 w-[calc(100%-2rem)]"
+                onClick={() => {
                   setIsMenuOpen(false);
                   setTimeout(() => {
                     const devisSection = document.getElementById('devis');
@@ -214,12 +212,14 @@ const Header: React.FC = () => {
                         const nameInput = document.getElementById('name') as HTMLInputElement;
                         if (nameInput) nameInput.focus();
                       }, 800);
+                    } else {
+                      window.location.href = '/#devis';
                     }
                   }, 300);
                 }}
               >
                 Devis Gratuit
-              </a>
+              </button>
             </div>
           </nav>
         )}
