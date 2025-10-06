@@ -160,6 +160,17 @@ const InteractiveQuiz: React.FC = () => {
           <p className="text-lg font-semibold text-gray-800 mb-4">{ctaMessage}</p>
           <a
             href="#devis"
+            onClick={(e) => {
+              e.preventDefault();
+              const devisSection = document.getElementById('devis');
+              if (devisSection) {
+                devisSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                setTimeout(() => {
+                  const nameInput = document.getElementById('name') as HTMLInputElement;
+                  if (nameInput) nameInput.focus();
+                }, 800);
+              }
+            }}
             className="inline-flex items-center bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-bold px-8 py-4 rounded-xl transition-all shadow-lg"
           >
             Économiser 35% Maintenant

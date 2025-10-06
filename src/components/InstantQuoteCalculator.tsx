@@ -347,7 +347,18 @@ const InstantQuoteCalculator: React.FC = () => {
               <h4 className="text-2xl font-bold mb-4 text-gray-900">Obtenez ce Tarif Maintenant</h4>
               <p className="mb-6 font-semibold">Souscription 100% en ligne • Attestation en 10 min</p>
               <a
-                href="#devis-final"
+                href="#devis"
+                onClick={(e) => {
+                  e.preventDefault();
+                  const devisSection = document.getElementById('devis');
+                  if (devisSection) {
+                    devisSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    setTimeout(() => {
+                      const nameInput = document.getElementById('name') as HTMLInputElement;
+                      if (nameInput) nameInput.focus();
+                    }, 800);
+                  }
+                }}
                 className="inline-flex items-center bg-white hover:bg-gray-100 text-gray-900 font-bold px-8 py-4 rounded-xl transition-all shadow-lg"
               >
                 Souscrire à {quote.finalPrice}€/an
