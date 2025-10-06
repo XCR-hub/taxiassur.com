@@ -145,9 +145,66 @@ const SEOContent: React.FC = () => {
                   Devis Assurance Taxi Gratuit en 2 Minutes
                 </h4>
                 <p className="text-gray-300 leading-relaxed mb-6 drop-shadow-md">
-                  Obtenez votre <strong className="text-amber-400">devis assurance taxi gratuit</strong> personnalisé en moins de 2 minutes. 
-                  Notre formulaire optimisé vous permet de comparer instantanément les meilleures offres 
-                  du marché. Réponse garantie sous 15 minutes par nos experts.
+                  Obtenez votre <strong className="text-amber-400">devis assurance taxi</strong> gratuit personnalisé en moins de 2 minutes.
+                  Notre <strong className="text-blue-400">comparateur assurance taxi</strong> optimisé vous permet de comparer instantanément les meilleures offres
+                  du marché. Réponse garantie sous 15 minutes par nos experts en <strong className="text-green-400">assurance chauffeur</strong>.
+                </p>
+
+                <h4 className="text-xl font-bold text-white mb-4 mt-8 drop-shadow-lg">
+                  Comparateur Assurance Taxi : Trouvez la Meilleure Offre
+                </h4>
+                <p className="text-gray-300 leading-relaxed mb-6 drop-shadow-md">
+                  Notre <strong className="text-amber-400">comparateur assurance taxi</strong> analyse en temps réel les offres de 15+ assureurs partenaires.
+                  Contrairement aux comparateurs généralistes, TaxiAssur est spécialisé exclusivement dans
+                  l'<strong className="text-blue-400">assurance VTC</strong> et l'<strong className="text-green-400">assurance chauffeur</strong>.
+                  Cette expertise nous permet d'obtenir des tarifs jusqu'à 40% moins chers pour une
+                  <strong className="text-amber-400">assurance flotte taxi</strong> ou un véhicule unique.
+                </p>
+
+                <h4 className="text-xl font-bold text-white mb-4 mt-8 drop-shadow-lg">
+                  Assurance Taxi en Ligne : Rapide et Sécurisé
+                </h4>
+                <p className="text-gray-300 leading-relaxed mb-6 drop-shadow-md">
+                  Souscrire une <strong className="text-amber-400">assurance taxi en ligne</strong> avec TaxiAssur est simple et 100% sécurisé.
+                  Notre processus digital vous permet d'obtenir votre attestation d'assurance en quelques clics, sans rendez-vous physique.
+                  Nos <strong className="text-blue-400">courtiers assurance taxi</strong> restent disponibles 7j/7 pour vous accompagner à chaque étape.
+                </p>
+
+                <div className="bg-gradient-to-r from-purple-500/20 to-pink-500/20 p-6 rounded-xl border border-purple-500/40 mb-8 backdrop-blur-sm">
+                  <h5 className="font-bold text-purple-300 mb-3 drop-shadow-md">🌟 Assurance Flotte Taxi : Offre Spéciale</h5>
+                  <p className="text-purple-200 text-sm leading-relaxed drop-shadow-md mb-3">
+                    Vous gérez plusieurs véhicules ? Notre <strong>assurance flotte taxi</strong> vous fait économiser jusqu'à
+                    45% par rapport à des contrats individuels. Avantages exclusifs pour flottes de 3+ véhicules :
+                  </p>
+                  <ul className="text-purple-200 text-sm space-y-2">
+                    <li className="flex items-center space-x-2">
+                      <CheckCircle className="text-purple-300" size={14} />
+                      <span>Gestion centralisée de tous vos véhicules</span>
+                    </li>
+                    <li className="flex items-center space-x-2">
+                      <CheckCircle className="text-purple-300" size={14} />
+                      <span>Tarifs dégressifs selon nombre de taxis</span>
+                    </li>
+                    <li className="flex items-center space-x-2">
+                      <CheckCircle className="text-purple-300" size={14} />
+                      <span>Véhicules de remplacement prioritaires</span>
+                    </li>
+                    <li className="flex items-center space-x-2">
+                      <CheckCircle className="text-purple-300" size={14} />
+                      <span>Conseiller dédié disponible 24/7</span>
+                    </li>
+                  </ul>
+                </div>
+
+                <h4 className="text-xl font-bold text-white mb-4 mt-8 drop-shadow-lg">
+                  Assurance VTC et Assurance Chauffeur : Notre Expertise
+                </h4>
+                <p className="text-gray-300 leading-relaxed mb-6 drop-shadow-md">
+                  Au-delà de l'<strong className="text-amber-400">assurance taxi</strong>, TaxiAssur est également spécialiste de
+                  l'<strong className="text-blue-400">assurance VTC</strong> et de toutes formes d'<strong className="text-green-400">assurance chauffeur</strong> professionnel.
+                  Que vous soyez chauffeur de taxi traditionnel, conducteur VTC, ou exploitant d'une flotte mixte,
+                  nos solutions s'adaptent parfaitement à votre activité. Notre statut de <strong className="text-amber-400">courtier assurance taxi</strong>
+                  certifié ORIAS nous permet de négocier les meilleures conditions pour tous types de transport de personnes.
                 </p>
 
                 {/* CTA intégré dans le contenu SEO */}

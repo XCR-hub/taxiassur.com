@@ -43,10 +43,10 @@ const AssuranceTaxi: React.FC = () => {
   return (
     <>
       <SEOHead
-        title="Assurance Taxi Professionnelle Pas Cher - Devis Gratuit 2 min | TaxiAssur"
-        description="🚖 Assurance taxi professionnelle pas cher avec TaxiAssur. Devis gratuit 2 min ✓ RC Pro incluse ✓ Économisez 35% ✓ Courtier ORIAS ✓ Couverture complète ✓ Service expert"
+        title="Assurance Taxi Pas Cher | Devis Gratuit 2min | Comparateur | TaxiAssur"
+        description="🚖 Assurance taxi professionnelle avec TaxiAssur, courtier spécialisé. Devis assurance taxi gratuit 2min ✓ Comparateur assurance taxi ✓ Assurance VTC ✓ Assurance chauffeur ✓ Assurance flotte taxi ✓ RC pro taxi ✓ Assurance taxi en ligne ✓ Économisez 35% ✓ ORIAS"
         canonical="/assurance-taxi"
-        keywords="assurance taxi professionnelle, assurance taxi pas cher, RC professionnelle taxi, couverture taxi complète, devis assurance taxi, courtier taxi spécialisé"
+        keywords="assurance taxi, assurance VTC, assurance chauffeur, assurance taxi pas cher, rc pro taxi, devis assurance taxi, comparateur assurance taxi, assurance taxi en ligne, assurance flotte taxi, courtier assurance taxi"
       />
       <JsonLd type="breadcrumb" data={breadcrumbs} />
       <JsonLd type="organization" />
@@ -69,9 +69,9 @@ const AssuranceTaxi: React.FC = () => {
                 Assurance Taxi <span className="text-gradient">Professionnelle Pas Cher</span>
               </h1>
               <p className="text-2xl text-gray-200 mb-8 leading-relaxed drop-shadow-md">
-                🛡️ <strong className="text-blue-400">Protégez votre activité taxi</strong> avec une assurance professionnelle adaptée. 
-                <strong className="text-amber-400">Devis assurance taxi gratuit</strong> en 2 min par nos 
-                <strong className="text-green-400">experts courtiers spécialisés</strong>. Économisez 35% garantis !
+                🛡️ <strong className="text-blue-400">Comparateur assurance taxi</strong> et <strong className="text-green-400">assurance VTC</strong>.
+                <strong className="text-amber-400">Devis assurance taxi gratuit</strong> en 2min par nos
+                <strong className="text-green-400">courtiers assurance taxi</strong> experts. <strong className="text-blue-400">Assurance taxi en ligne</strong> • Économisez 35% !
               </p>
               
               <div className="grid grid-cols-3 gap-6 max-w-md mx-auto mb-8">

@@ -4,13 +4,16 @@ import { BlogPost, FaqEntry, Offer } from './schema';
 // Keyword density analyzer
 export class KeywordAnalyzer {
   private static primaryKeywords = [
-    'assurance taxi', 'rc professionnelle taxi', 'devis assurance taxi',
-    'courtier assurance taxi', 'assurance taxi pas cher', 'assurance taxi professionnel'
+    'assurance taxi', 'assurance VTC', 'assurance chauffeur', 'assurance taxi pas cher', 'rc pro taxi',
+    'devis assurance taxi', 'comparateur assurance taxi', 'assurance taxi en ligne',
+    'assurance flotte taxi', 'courtier assurance taxi'
   ];
 
   private static secondaryKeywords = [
-    'taxi assurance', 'assurance vtc', 'rc pro taxi', 'assurance flotte taxi',
-    'assurance taxi paris', 'assurance taxi lyon', 'assurance taxi marseille'
+    'taxi assurance', 'rc professionnelle taxi', 'assurance taxi professionnel',
+    'prix assurance taxi', 'tarifs assurance taxi', 'assurance taxi paris',
+    'assurance taxi lyon', 'assurance taxi marseille', 'meilleure assurance taxi',
+    'assurance chauffeur vtc', 'assurance transport personnes', 'comparateur taxi'
   ];
 
   static analyzeContent(content: string): {
