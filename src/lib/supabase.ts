@@ -1,7 +1,13 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://placeholder.supabase.co';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'placeholder-key';
+// Try window.ENV first (production), then import.meta.env (development)
+const supabaseUrl = (typeof window !== 'undefined' && (window as any).ENV?.VITE_SUPABASE_URL)
+  || import.meta.env.VITE_SUPABASE_URL
+  || 'https://viuuznfqkauatkjcegcj.supabase.co';
+
+const supabaseAnonKey = (typeof window !== 'undefined' && (window as any).ENV?.VITE_SUPABASE_ANON_KEY)
+  || import.meta.env.VITE_SUPABASE_ANON_KEY
+  || 'placeholder-key';
 
 // Supabase client with fallback for development
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
