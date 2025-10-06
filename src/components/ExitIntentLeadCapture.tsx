@@ -61,19 +61,20 @@ const ExitIntentLeadCapture: React.FC<ExitIntentLeadCaptureProps> = ({ onClose }
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm animate-fadeIn" onClick={handleClose}>
       <div className="relative bg-white rounded-2xl shadow-2xl max-w-lg w-full m-4 overflow-hidden animate-slideUp max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-        {/* Close button */}
+        {/* Close button - ALWAYS VISIBLE */}
         <button
           onClick={handleClose}
-          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 z-10 bg-white rounded-full p-2 shadow-lg hover:bg-gray-100 transition-colors"
+          className="absolute top-2 right-2 text-white hover:text-gray-200 z-[100] bg-black/30 hover:bg-black/50 rounded-full p-2 shadow-2xl transition-all"
           aria-label="Fermer"
+          title="Fermer"
         >
-          <X size={24} />
+          <X size={28} strokeWidth={3} />
         </button>
 
         {!isSubmitted ? (
           <>
             {/* Header with urgency */}
-            <div className="bg-gradient-to-r from-red-600 to-orange-600 text-white p-4 text-center">
+            <div className="bg-gradient-to-r from-red-600 to-orange-600 text-white p-4 text-center relative">
               <AlertCircle className="mx-auto mb-2 animate-bounce" size={40} />
               <h2 className="text-2xl font-black mb-1">Attendez !</h2>
               <p className="text-base">Ne partez pas sans votre tarif personnalisé</p>
@@ -146,6 +147,15 @@ const ExitIntentLeadCapture: React.FC<ExitIntentLeadCaptureProps> = ({ onClose }
               <div className="mt-4 flex items-center justify-center text-xs text-gray-600">
                 <Clock size={14} className="mr-1" />
                 <span>Offre valable uniquement aujourd'hui</span>
+              </div>
+
+              <div className="mt-4 text-center">
+                <button
+                  onClick={handleClose}
+                  className="text-sm text-gray-500 hover:text-gray-700 underline"
+                >
+                  Non merci, retourner au site
+                </button>
               </div>
             </div>
           </>
