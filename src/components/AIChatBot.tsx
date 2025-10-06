@@ -52,6 +52,11 @@ export default function AIChatBot() {
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
       const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
+      // Check if Supabase is configured
+      if (!supabaseUrl || !supabaseKey || supabaseUrl.includes('placeholder')) {
+        throw new Error('Supabase not configured');
+      }
+
       const response = await fetch(`${supabaseUrl}/functions/v1/chatbot`, {
         method: 'POST',
         headers: {
@@ -83,7 +88,7 @@ export default function AIChatBot() {
       console.error('Error:', error);
       const errorMessage: Message = {
         role: 'assistant',
-        content: "Désolé, une erreur s'est produite. Pouvez-vous réessayer ?",
+        content: "Le chatbot AI nécessite une configuration Supabase. Pour l'instant, contactez-nous au 01 80 85 57 86 ou via notre formulaire de contact.",
         timestamp: new Date()
       };
       setMessages(prev => [...prev, errorMessage]);
