@@ -117,11 +117,11 @@ const DynamicReviews: React.FC = () => {
   const averageRating = 4.8;
 
   return (
-    <section className="py-16 bg-gradient-to-br from-blue-50 to-white">
+    <section className="py-16 bg-gradient-to-br from-gray-950 via-gray-900 to-black">
       <div className="container mx-auto px-4">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-12">
-            <h2 className="text-4xl md:text-5xl font-black mb-4">
+            <h2 className="text-4xl md:text-5xl font-black mb-4 text-white">
               Ce Que Disent Les Chauffeurs Taxi
             </h2>
             <div className="flex items-center justify-center gap-6 mb-6">
@@ -129,14 +129,14 @@ const DynamicReviews: React.FC = () => {
                 {[...Array(5)].map((_, i) => (
                   <Star key={i} size={24} className="fill-yellow-400 text-yellow-400" />
                 ))}
-                <span className="ml-2 text-2xl font-bold">{averageRating}/5</span>
+                <span className="ml-2 text-2xl font-bold text-white">{averageRating}/5</span>
               </div>
-              <div className="text-gray-600">
+              <div className="text-gray-300">
                 <span className="font-bold">{totalReviews}</span> avis vérifiés
               </div>
             </div>
-            <p className="text-xl text-gray-600">
-              Économie moyenne : <span className="font-bold text-green-600">1,050€/an</span>
+            <p className="text-xl text-gray-300">
+              Économie moyenne : <span className="font-bold text-yellow-400">1,050€/an</span>
             </p>
           </div>
 
@@ -144,18 +144,18 @@ const DynamicReviews: React.FC = () => {
             {currentReviews.map((review) => (
               <div
                 key={review.id}
-                className={`bg-white rounded-2xl shadow-lg p-6 border-2 transition-all duration-300 ${
+                className={`bg-gray-800 rounded-2xl shadow-lg p-6 border-2 transition-all duration-300 ${
                   hoveredReview === review.id
-                    ? 'border-blue-600 scale-105 shadow-2xl'
-                    : 'border-gray-200 hover:border-blue-300'
+                    ? 'border-yellow-500 scale-105 shadow-2xl'
+                    : 'border-gray-700 hover:border-yellow-400'
                 }`}
                 onMouseEnter={() => setHoveredReview(review.id)}
                 onMouseLeave={() => setHoveredReview(null)}
               >
                 <div className="flex items-start justify-between mb-4">
                   <div>
-                    <div className="font-bold text-lg">{review.name}</div>
-                    <div className="flex items-center text-sm text-gray-600">
+                    <div className="font-bold text-lg text-white">{review.name}</div>
+                    <div className="flex items-center text-sm text-gray-400">
                       <MapPin size={14} className="mr-1" />
                       {review.city}
                     </div>
@@ -180,19 +180,19 @@ const DynamicReviews: React.FC = () => {
                       }`}
                     />
                   ))}
-                  <span className="ml-2 text-sm text-gray-600">{review.date}</span>
+                  <span className="ml-2 text-sm text-gray-400">{review.date}</span>
                 </div>
 
-                <p className="text-gray-700 italic mb-4 text-sm leading-relaxed">
+                <p className="text-gray-300 italic mb-4 text-sm leading-relaxed">
                   "{review.text}"
                 </p>
 
-                <div className="pt-4 border-t border-gray-200">
-                  <div className="bg-green-50 rounded-lg p-3 text-center">
-                    <div className="text-2xl font-black text-green-600">
+                <div className="pt-4 border-t border-gray-700">
+                  <div className="bg-yellow-50 rounded-lg p-3 text-center">
+                    <div className="text-2xl font-black text-orange-600">
                       -{review.savings}€/an
                     </div>
-                    <div className="text-xs text-gray-600">économisés</div>
+                    <div className="text-xs text-gray-900 font-semibold">économisés</div>
                   </div>
                 </div>
               </div>
@@ -200,17 +200,28 @@ const DynamicReviews: React.FC = () => {
           </div>
 
           <div className="mt-12 text-center">
-            <div className="inline-flex items-center bg-blue-100 text-blue-900 px-6 py-3 rounded-full">
+            <div className="inline-flex items-center bg-yellow-500/20 text-yellow-400 border border-yellow-500/40 px-6 py-3 rounded-full">
               <span className="font-semibold">💡 Les avis changent automatiquement toutes les 15s</span>
             </div>
           </div>
 
-          <div className="mt-12 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-2xl p-8 text-center">
-            <h3 className="text-2xl font-bold mb-4">Rejoignez {totalReviews}+ Chauffeurs Satisfaits</h3>
-            <p className="text-xl mb-6">Économisez en moyenne 1,050€/an en 5 minutes</p>
+          <div className="mt-12 bg-gradient-to-r from-yellow-500 to-orange-500 text-gray-900 rounded-2xl p-8 text-center shadow-2xl">
+            <h3 className="text-2xl font-bold mb-4 text-gray-900">Rejoignez {totalReviews}+ Chauffeurs Satisfaits</h3>
+            <p className="text-xl mb-6 font-semibold">Économisez en moyenne 1,050€/an en 5 minutes</p>
             <a
               href="#devis"
-              className="inline-block bg-yellow-400 hover:bg-yellow-500 text-blue-900 font-bold px-8 py-4 rounded-xl transition-all"
+              onClick={(e) => {
+                e.preventDefault();
+                const devisSection = document.getElementById('devis');
+                if (devisSection) {
+                  devisSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  setTimeout(() => {
+                    const nameInput = document.getElementById('name') as HTMLInputElement;
+                    if (nameInput) nameInput.focus();
+                  }, 800);
+                }
+              }}
+              className="inline-block bg-white hover:bg-gray-100 text-gray-900 font-bold px-8 py-4 rounded-xl transition-all shadow-lg"
             >
               Calculer Mon Économie →
             </a>

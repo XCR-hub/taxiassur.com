@@ -103,11 +103,11 @@ const Home: React.FC = () => {
             <DynamicReviews />
 
             {/* 8. Quiz interactif - Lead gen ludique */}
-            <section className="py-16 bg-gray-50">
+            <section className="py-16 bg-gradient-to-br from-gray-950 via-gray-900 to-black">
               <div className="container mx-auto px-4">
                 <div className="text-center mb-12">
-                  <h2 className="text-4xl font-black mb-4">Testez Vos Connaissances !</h2>
-                  <p className="text-xl text-gray-600">5 questions pour devenir expert assurance taxi</p>
+                  <h2 className="text-4xl font-black mb-4 text-white">Testez Vos Connaissances !</h2>
+                  <p className="text-xl text-gray-300 font-semibold">5 questions pour devenir expert assurance taxi</p>
                 </div>
                 <InteractiveQuiz />
               </div>
