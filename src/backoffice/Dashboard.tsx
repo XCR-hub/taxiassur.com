@@ -491,13 +491,20 @@ const Dashboard: React.FC = () => {
                 </a>
               </div>
 
-              <div className="mt-4">
+              <div className="mt-4 space-y-3">
                 <a
                   href="/backoffice/ai-generator"
-                  className="w-full flex items-center justify-center space-x-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-bold py-4 px-6 rounded-lg transition-all shadow-lg hover:shadow-xl animate-pulse"
+                  className="w-full flex items-center justify-center space-x-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-bold py-4 px-6 rounded-lg transition-all shadow-lg hover:shadow-xl"
                 >
                   <Plus size={20} />
                   <span>Générateur de Contenu IA</span>
+                </a>
+                <a
+                  href="/backoffice/seed-prospects"
+                  className="w-full flex items-center justify-center space-x-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold py-4 px-6 rounded-lg transition-all shadow-lg hover:shadow-xl animate-pulse"
+                >
+                  <Database size={20} />
+                  <span>Ajouter 20 Prospects</span>
                 </a>
               </div>
             </div>

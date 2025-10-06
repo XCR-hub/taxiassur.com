@@ -55,6 +55,7 @@ const PartnerPortal = lazy(() => import('./backoffice/PartnerPortal'));
 const LeadManager = lazy(() => import('./backoffice/LeadManager'));
 const BacklinkProspector = lazy(() => import('./backoffice/BacklinkProspector'));
 const AIContentGenerator = lazy(() => import('./backoffice/AIContentGenerator'));
+const ProspectSeeder = lazy(() => import('./backoffice/ProspectSeeder'));
 const AuthGuard = lazy(() => import('./components/AuthGuard'));
 const NewsletterPage = lazy(() => import('./pages/Newsletter'));
 
@@ -363,6 +364,10 @@ export const router = createBrowserRouter([
   {
     path: '/backoffice/ai-generator',
     element: <AuthGuard><SuspenseWrapper><AIContentGenerator /></SuspenseWrapper></AuthGuard>
+  },
+  {
+    path: '/backoffice/seed-prospects',
+    element: <AuthGuard><SuspenseWrapper><ProspectSeeder /></SuspenseWrapper></AuthGuard>
   }
 ], {
   future: {
