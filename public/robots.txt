@@ -34,7 +34,8 @@ Disallow: /config.php
 Disallow: /.env
 
 # SEO optimizations
-Sitemap: https://taxiassur.com/feeds/sitemap.xml
+Sitemap: https://www.taxiassur.com/feeds/sitemap.xml
+Sitemap: https://www.taxiassur.com/sitemap.xml
 
 # Crawl delay for better indexing
 Crawl-delay: 1

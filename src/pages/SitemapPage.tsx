@@ -142,16 +142,122 @@ const SitemapPage: React.FC = () => {
                   ))}
                 </div>
 
-                {/* External Links */}
-                <h2 className="text-3xl font-bold text-gray-900 mb-8">Liens Utiles</h2>
+                {/* Services Pages */}
+                <h2 className="text-3xl font-bold text-gray-900 mb-8">Nos Services</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-16">
+                  <Link to="/assurance-taxi" className="block">
+                    <Card hover className="group h-full">
+                      <h3 className="text-lg font-bold text-gray-900 mb-3 group-hover:text-amber-600 transition-colors">
+                        Assurance Taxi
+                      </h3>
+                      <p className="text-gray-600 text-sm">
+                        Guide complet et devis assurance taxi professionnel
+                      </p>
+                    </Card>
+                  </Link>
+                  <Link to="/rc-professionnelle" className="block">
+                    <Card hover className="group h-full">
+                      <h3 className="text-lg font-bold text-gray-900 mb-3 group-hover:text-amber-600 transition-colors">
+                        RC Professionnelle
+                      </h3>
+                      <p className="text-gray-600 text-sm">
+                        Responsabilité civile pro obligatoire pour taxis et VTC
+                      </p>
+                    </Card>
+                  </Link>
+                  <Link to="/flotte-vehicules" className="block">
+                    <Card hover className="group h-full">
+                      <h3 className="text-lg font-bold text-gray-900 mb-3 group-hover:text-amber-600 transition-colors">
+                        Assurance Flotte
+                      </h3>
+                      <p className="text-gray-600 text-sm">
+                        Solutions pour flottes de taxis et VTC
+                      </p>
+                    </Card>
+                  </Link>
+                  <Link to="/gestion-sinistres" className="block">
+                    <Card hover className="group h-full">
+                      <h3 className="text-lg font-bold text-gray-900 mb-3 group-hover:text-amber-600 transition-colors">
+                        Gestion Sinistres
+                      </h3>
+                      <p className="text-gray-600 text-sm">
+                        Accompagnement expert dans vos démarches sinistres
+                      </p>
+                    </Card>
+                  </Link>
+                </div>
+
+                {/* External Resources - SEO Backlinks */}
+                <h2 className="text-3xl font-bold text-gray-900 mb-8">Ressources Externes</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-16">
+                  <Card>
+                    <h3 className="text-lg font-bold text-gray-900 mb-3">ORIAS - Registre des Intermédiaires</h3>
+                    <p className="text-gray-600 text-sm mb-3">
+                      Vérifiez notre agrément courtier ORIAS 11 061 425
+                    </p>
+                    <a
+                      href="https://www.orias.fr/search"
+                      className="text-amber-600 hover:text-amber-700 font-medium transition-colors"
+                      target="_blank"
+                      rel="nofollow noopener noreferrer"
+                    >
+                      Consulter ORIAS →
+                    </a>
+                  </Card>
+                  <Card>
+                    <h3 className="text-lg font-bold text-gray-900 mb-3">Service Public - Taxi</h3>
+                    <p className="text-gray-600 text-sm mb-3">
+                      Réglementation officielle des taxis en France
+                    </p>
+                    <a
+                      href="https://www.service-public.fr/professionnels-entreprises/vosdroits/F22550"
+                      className="text-amber-600 hover:text-amber-700 font-medium transition-colors"
+                      target="_blank"
+                      rel="nofollow noopener noreferrer"
+                    >
+                      En savoir plus →
+                    </a>
+                  </Card>
+                  <Card>
+                    <h3 className="text-lg font-bold text-gray-900 mb-3">Légifrance - Code des Assurances</h3>
+                    <p className="text-gray-600 text-sm mb-3">
+                      Textes de loi régissant l'assurance en France
+                    </p>
+                    <a
+                      href="https://www.legifrance.gouv.fr/codes/id/LEGITEXT000006073984/"
+                      className="text-amber-600 hover:text-amber-700 font-medium transition-colors"
+                      target="_blank"
+                      rel="nofollow noopener noreferrer"
+                    >
+                      Consulter Légifrance →
+                    </a>
+                  </Card>
+                  <Card>
+                    <h3 className="text-lg font-bold text-gray-900 mb-3">FFA - Fédération Française Assurance</h3>
+                    <p className="text-gray-600 text-sm mb-3">
+                      Informations officielles sur l'assurance en France
+                    </p>
+                    <a
+                      href="https://www.ffa-assurance.fr/"
+                      className="text-amber-600 hover:text-amber-700 font-medium transition-colors"
+                      target="_blank"
+                      rel="nofollow noopener noreferrer"
+                    >
+                      Visiter FFA →
+                    </a>
+                  </Card>
+                </div>
+
+                {/* Technical Links */}
+                <h2 className="text-3xl font-bold text-gray-900 mb-8">Liens Techniques</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <Card>
                     <h3 className="text-lg font-bold text-gray-900 mb-3">Flux RSS</h3>
                     <p className="text-gray-600 text-sm mb-3">
                       Suivez nos derniers articles de blog
                     </p>
-                    <a 
-                      href="/feeds/rss.xml" 
+                    <a
+                      href="/feeds/rss.xml"
                       className="text-amber-600 hover:text-amber-700 font-medium transition-colors"
                       target="_blank"
                       rel="noopener noreferrer"
@@ -165,8 +271,8 @@ const SitemapPage: React.FC = () => {
                     <p className="text-gray-600 text-sm mb-3">
                       Plan du site pour les moteurs de recherche
                     </p>
-                    <a 
-                      href="/feeds/sitemap.xml" 
+                    <a
+                      href="/feeds/sitemap.xml"
                       className="text-amber-600 hover:text-amber-700 font-medium transition-colors"
                       target="_blank"
                       rel="noopener noreferrer"

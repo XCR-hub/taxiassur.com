@@ -43,6 +43,27 @@ const Home: React.FC = () => {
         canonical="/"
       />
       <JsonLd type="organization" />
+      <JsonLd type="breadcrumb" data={[
+        { name: 'Accueil', url: '/' }
+      ]} />
+      <JsonLd type="faq" data={[
+        {
+          question: "Quel est le prix d'une assurance taxi ?",
+          answer: "Le prix d'une assurance taxi varie entre 1200€ et 3500€ par an selon votre profil, votre véhicule et vos garanties. Avec TaxiAssur, économisez en moyenne 35% grâce à nos tarifs négociés."
+        },
+        {
+          question: "Combien de temps pour recevoir mon devis ?",
+          answer: "Votre devis personnalisé est généré instantanément en ligne. Notre équipe vous contacte sous 15 minutes maximum pour finaliser votre dossier."
+        },
+        {
+          question: "La RC Pro est-elle obligatoire pour les taxis ?",
+          answer: "Oui, la RC Professionnelle est obligatoire pour tous les taxis et VTC. Elle couvre les dommages causés aux tiers dans le cadre de votre activité professionnelle. Nos contrats l'incluent systématiquement."
+        },
+        {
+          question: "Puis-je changer d'assurance taxi en cours d'année ?",
+          answer: "Oui, grâce à la loi Hamon, vous pouvez résilier votre assurance taxi à tout moment après la première année. Nous gérons gratuitement toutes vos démarches de résiliation."
+        }
+      ]} />
       
       <PerformanceOptimizer>
         <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-black">
