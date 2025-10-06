@@ -6,6 +6,7 @@ interface NavItem {
   name: string;
   href: string;
   separator?: boolean;
+  highlight?: boolean;
 }
 
 const Header: React.FC = () => {
@@ -28,7 +29,7 @@ const Header: React.FC = () => {
     { name: 'Conseil Personnalisé', href: '/conseil-personnalise' },
     { name: 'Gestion Sinistres', href: '/gestion-sinistres' },
     { name: 'Partenaires', href: '/programme-partenaires' },
-    { name: 'Backoffice Admin', href: '/backoffice', separator: true },
+    { name: '🔒 Backoffice Admin', href: '/backoffice', separator: true, highlight: true },
     { name: 'Portail Partenaires', href: '/backoffice/partner-portal' }
   ];
 
@@ -104,7 +105,11 @@ const Header: React.FC = () => {
                       {item.separator && <div className="my-2 border-t border-yellow-500/30"></div>}
                       <Link
                         to={item.href}
-                        className="block px-4 py-2 text-sm text-gray-200 hover:bg-gray-800 hover:text-orange-300 transition-colors"
+                        className={`block px-4 py-2 text-sm transition-colors ${
+                          item.highlight
+                            ? 'text-yellow-400 font-semibold hover:bg-yellow-500/20 hover:text-yellow-300'
+                            : 'text-gray-200 hover:bg-gray-800 hover:text-orange-300'
+                        }`}
                       >
                         {item.name}
                       </Link>
@@ -117,7 +122,18 @@ const Header: React.FC = () => {
 
           <div className="hidden lg:flex items-center space-x-3">
             <a
-              href="/#devis"
+              href="#devis"
+              onClick={(e) => {
+                e.preventDefault();
+                const devisSection = document.getElementById('devis');
+                if (devisSection) {
+                  devisSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  setTimeout(() => {
+                    const nameInput = document.getElementById('name') as HTMLInputElement;
+                    if (nameInput) nameInput.focus();
+                  }, 800);
+                }
+              }}
               className="bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-500 hover:to-yellow-400 text-black font-bold py-2 px-6 rounded-lg transition-all duration-300 text-sm whitespace-nowrap shadow-lg"
             >
               Devis Gratuit
@@ -143,8 +159,12 @@ const Header: React.FC = () => {
                 <Link
                   key={item.name}
                   to={item.href}
-                  className={`text-sm font-medium transition-colors duration-200 hover:text-orange-300 px-4 py-2 rounded-lg hover:bg-gray-800/50 ${
-                    location.pathname === item.href ? 'text-yellow-400 bg-gray-800/30' : 'text-gray-200'
+                  className={`text-sm font-medium transition-colors duration-200 px-4 py-2 rounded-lg ${
+                    item.highlight
+                      ? 'text-yellow-400 font-bold hover:bg-yellow-500/20'
+                      : location.pathname === item.href
+                      ? 'text-yellow-400 bg-gray-800/30 hover:text-orange-300'
+                      : 'text-gray-200 hover:text-orange-300 hover:bg-gray-800/50'
                   }`}
                   onClick={() => setIsMenuOpen(false)}
                 >
@@ -154,7 +174,20 @@ const Header: React.FC = () => {
               <a
                 href="#devis"
                 className="bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-500 hover:to-yellow-400 text-black font-bold py-3 px-6 rounded-lg transition-all duration-300 text-center mx-4 mt-4"
-                onClick={() => setIsMenuOpen(false)}
+                onClick={(e) => {
+                  e.preventDefault();
+                  setIsMenuOpen(false);
+                  setTimeout(() => {
+                    const devisSection = document.getElementById('devis');
+                    if (devisSection) {
+                      devisSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                      setTimeout(() => {
+                        const nameInput = document.getElementById('name') as HTMLInputElement;
+                        if (nameInput) nameInput.focus();
+                      }, 800);
+                    }
+                  }, 300);
+                }}
               >
                 Devis Gratuit
               </a>

@@ -147,7 +147,7 @@ const Footer: React.FC = () => {
             <ul className="space-y-2 text-sm">
               {pages.slice(4).map((page, index) => (
                 <li key={index}>
-                  <Link 
+                  <Link
                     to={page.href}
                     className="text-gray-300 hover:text-orange-300 transition-colors"
                   >
@@ -155,11 +155,27 @@ const Footer: React.FC = () => {
                   </Link>
                 </li>
               ))}
+              <li>
+                <Link
+                  to="/backoffice"
+                  className="text-yellow-400 hover:text-yellow-300 transition-colors font-semibold flex items-center"
+                >
+                  <Shield className="mr-1" size={14} />
+                  Administrateur
+                </Link>
+              </li>
             </ul>
-            
+
             <div className="mt-6">
-              <a 
-                href="#devis" 
+              <a
+                href="#devis"
+                onClick={(e) => {
+                  e.preventDefault();
+                  const devisSection = document.getElementById('devis');
+                  if (devisSection) {
+                    devisSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  }
+                }}
                 className="btn-primary inline-block w-full text-center text-sm"
               >
                 Devis Gratuit
@@ -220,16 +236,19 @@ const Footer: React.FC = () => {
                 </button>
               </div>
             </div>
-            <div className="flex items-center space-x-4 text-sm">
-              <Link to="/backoffice" className="text-gray-500 hover:text-orange-300 transition-colors">
-                Admin
-              </Link>
-              <a href="/feeds/sitemap.xml" className="text-gray-500 hover:text-orange-300 transition-colors" target="_blank" rel="noopener noreferrer">
-                Sitemap
+            <div className="flex items-center flex-wrap gap-4 text-sm justify-center md:justify-end">
+              <a href="/sitemap.xml" className="text-gray-500 hover:text-orange-300 transition-colors" target="_blank" rel="noopener noreferrer">
+                Sitemap XML
               </a>
               <a href="/feeds/rss.xml" className="text-gray-500 hover:text-orange-300 transition-colors" target="_blank" rel="noopener noreferrer">
-                RSS
+                Flux RSS
               </a>
+              <Link to="/plan-du-site" className="text-gray-500 hover:text-orange-300 transition-colors">
+                Plan du Site
+              </Link>
+              <Link to="/contact" className="text-gray-500 hover:text-orange-300 transition-colors">
+                Contact
+              </Link>
             </div>
           </div>
         </div>
