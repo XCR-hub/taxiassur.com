@@ -490,6 +490,16 @@ const Dashboard: React.FC = () => {
                   <div className="text-sm font-bold text-purple-900">Outreach</div>
                 </a>
               </div>
+
+              <div className="mt-4">
+                <a
+                  href="/backoffice/ai-generator"
+                  className="w-full flex items-center justify-center space-x-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-bold py-4 px-6 rounded-lg transition-all shadow-lg hover:shadow-xl animate-pulse"
+                >
+                  <Plus size={20} />
+                  <span>Générateur de Contenu IA</span>
+                </a>
+              </div>
             </div>
 
             <div className="bg-gradient-to-br from-green-50 to-emerald-100 rounded-xl shadow-lg border-2 border-green-300 p-6">

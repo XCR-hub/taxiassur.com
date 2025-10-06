@@ -3,6 +3,7 @@ import { RouterProvider } from 'react-router-dom';
 import { router } from './router';
 import PerformanceOptimizer from './components/PerformanceOptimizer';
 import AITaxiBackground from './components/AITaxiBackground';
+import AIChatBot from './components/AIChatBot';
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
       }>
         <RouterProvider router={router} />
       </React.Suspense>
+      <AIChatBot />
     </PerformanceOptimizer>
   );
 }
