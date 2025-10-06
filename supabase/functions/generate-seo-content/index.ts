@@ -46,57 +46,134 @@ Deno.serve(async (req: Request) => {
     let prompt = '';
 
     if (contentType === 'blog') {
-      prompt = `Génère un article de blog SEO-optimisé sur "${keyword}" pour un site d'assurance taxi.
+      prompt = `Tu es un rédacteur expert en assurance avec 15 ans d'expérience. Écris comme un HUMAIN, pas comme une IA.
 
-Le site s'appelle TaxiAssur.com, courtier ORIAS agréé spécialisé en assurance taxi.
+Sujet : "${keyword}"
+Site : TaxiAssur.com (courtier ORIAS)
 
-Contraintes SEO strictes :
-- Titre H1 accrocheur avec le mot-clé principal au début
-- 1800-2200 mots (article long pour SEO)
-- Structure : Introduction, 5-6 sections H2, Conclusion
-- Chaque section H2 avec 2-3 paragraphes de 100-150 mots
-- Inclure des listes à puces et numérotées
-- FAQ à la fin (5 questions/réponses)
-- Meta description SEO de 155 caractères
-- Mots-clés secondaires : ${secondary.join(', ')}
-- Densité mot-clé principal : 1-2%
-- Ton professionnel mais accessible
-- Inclure chiffres et statistiques réelles du marché
-- CTA (Call-to-Action) tous les 400 mots : "Découvrez nos tarifs" ou "Devis gratuit en 2 min"
+🚨 INSTRUCTIONS CRITIQUES POUR ÊTRE HUMAIN ET INDÉTECTABLE :
 
-Données contextuelles :
+1. STYLE CONVERSATIONNEL NATUREL
+- Utilise "je", "nous", "vous" fréquemment
+- Commence par une anecdote ou question personnelle
+- Inclus des expressions françaises courantes ("en fait", "d'ailleurs", "franchement")
+- Varie BEAUCOUP la longueur des phrases (courtes + longues)
+- Ajoute des phrases informelles : "Bon, sérieusement...", "Voilà le truc..."
+
+2. IMPERFECTIONS VOLONTAIRES (RENDRE HUMAIN)
+- Quelques répétitions naturelles de mots
+- Transitions légèrement imparfaites
+- Pas de structure trop parfaite
+- Quelques parenthèses avec remarques personnelles
+- Anecdotes et exemples CONCRETS de vrais chauffeurs
+
+3. ÉVITER LES MARQUEURS IA
+- PAS de liste numérotée partout
+- PAS de "en conclusion", "en résumé" en fin d'article
+- PAS de structure trop logique/académique
+- PAS de "il est important de noter", "il convient de"
+- PAS de phrases trop longues et complexes
+
+4. TOUCHE HUMAINE
+- Ajoute des émotions : frustration, soulagement, surprise
+- Utilise des comparaisons du quotidien
+- Raconte de mini-histoires vécues
+- Pose des questions rhétoriques
+- Interpelle directement le lecteur
+
+5. EXPERTISE CRÉDIBLE
+- Chiffres précis et récents (2024-2025)
+- Exemples de cas réels avec prénoms
+- Mention de pièges à éviter
+- Conseils d'insider
+
+STRUCTURE DE L'ARTICLE (1800-2200 mots) :
+
+Introduction (150 mots)
+- Commence par une question ou situation concrète
+- Accroche émotionnelle
+- Annonce du plan (informel)
+
+5-6 Sections avec titres H2 engageants
+- Titres sous forme de questions ou affirmations
+- 200-300 mots par section
+- Varie le format : paragraphes, listes courtes, citations
+- Ajoute des exemples concrets avec prénoms
+
+FAQ (5 questions)
+- Questions comme les gens les tapent sur Google
+- Réponses courtes et directes (50-80 mots)
+
+Conclusion (100 mots)
+- Ton motivant et actionnable
+- CTA clair : "Découvrez nos tarifs" ou "Devis en 2 min"
+
+Mots-clés secondaires à intégrer naturellement : ${secondary.join(', ')}
+
+DONNÉES CONTEXTUELLES :
 - Prix moyen assurance taxi : 1200-2400€/an selon ville
-- Économie moyenne : 35% vs concurrents
-- RC Pro obligatoire pour taxis
+- Économie moyenne clients TaxiAssur : 35%
 - Délai attestation : 15 minutes
-- Courtier ORIAS : garantie légale
+- RC Pro obligatoire incluse
+- ORIAS : garantie légale courtier
+- Tesla/électrique : -10% vs thermique
+- Jeune conducteur : +40%
+- Paris : 1800-2400€/an
+- Province : 1200-1800€/an
 
-Réponds UNIQUEMENT en JSON valide (pas de markdown) :
+Réponds UNIQUEMENT en JSON valide :
 {
-  "title": "Titre H1 optimisé SEO",
-  "slug": "url-friendly-slug",
-  "metaDescription": "Description 155 caractères max",
-  "content": "Contenu complet en HTML avec balises <h2>, <p>, <ul>, <strong>",
-  "excerpt": "Résumé de 2 lignes",
+  "title": "Titre H1 accrocheur et naturel",
+  "slug": "url-amicale",
+  "metaDescription": "Description 155 caractères avec émotion",
+  "content": "Contenu HTML avec <h2>, <p>, <strong>, <em>, <ul>",
+  "excerpt": "Résumé 2 phrases",
   "faq": [
     {"question": "...", "answer": "..."}
   ],
   "keywords": ["mot-clé 1", "mot-clé 2"],
   "readingTime": 8,
-  "category": "guides"
+  "category": "guides",
+  "authorTone": "conversational"
 }`;
     } else if (contentType === 'city') {
-      prompt = `Génère une page ville complète pour "${keyword} à ${targetCity}" pour un site d'assurance taxi.
+      prompt = `Tu es un expert local en assurance taxi. Écris comme un HUMAIN qui connaît bien ${targetCity}.
 
-Contraintes :
-- Titre H1 : "${keyword} à ${targetCity} : Devis Gratuit en 2 Min"
-- 1200-1500 mots
-- Sections : Introduction, Tarifs locaux, Spécificités ville, Procédure, Avantages, FAQ
-- Inclure statistiques locales (nombre de taxis, réglementation)
-- Comparatif prix vs autres villes
-- Meta description géolocalissée
+Sujet : "${keyword} à ${targetCity}"
 
-Réponds UNIQUEMENT en JSON valide :
+🚨 RENDRE ULTRA-LOCAL ET HUMAIN :
+
+1. CONNAISSANCE LOCALE
+- Mentionne des quartiers/zones spécifiques de ${targetCity}
+- Référence à la vie locale (trafic, aéroport, gare, événements)
+- Compare avec d'autres villes de la région
+- Parle des spécificités du marché taxi local
+
+2. STYLE CONVERSATIONNEL
+- Tutoie ou vouvoie selon le contexte
+- Utilise des expressions locales si pertinent
+- Raconte l'expérience d'un chauffeur local (prénom + initiale)
+- Ton chaleureux et proche
+
+3. INFORMATIONS PRATIQUES
+- Tarifs moyens à ${targetCity}
+- Nombre approximatif de taxis
+- Réglementation spécifique ville/département
+- Meilleurs quartiers pour travailler
+- Pièges à éviter localement
+
+STRUCTURE (1200-1500 mots) :
+
+Intro : Pourquoi l'assurance taxi à ${targetCity} est unique
+Section 1 : Tarifs et spécificités locales
+Section 2 : Ce que vous devez savoir sur ${targetCity}
+Section 3 : Comment économiser localement
+Section 4 : Témoignages de chauffeurs de ${targetCity}
+FAQ locale (5 questions)
+
+Mots-clés : ${secondary.join(', ')}
+
+Réponds en JSON :
 {
   "title": "...",
   "slug": "...",
@@ -104,29 +181,49 @@ Réponds UNIQUEMENT en JSON valide :
   "content": "...",
   "localData": {
     "averagePrice": "1800€/an",
-    "taxiCount": "12000",
-    "specificRules": ["..."]
+    "taxiCount": "estimatif",
+    "specificRules": ["règle locale 1", "règle 2"]
   },
   "faq": [...]
 }`;
     } else if (contentType === 'comparison') {
-      prompt = `Génère un comparatif détaillé "${keyword}".
+      prompt = `Tu es un expert impartial. Crée un comparatif HONNET et HUMAIN sur "${keyword}".
 
-Format :
-- Titre H1 comparatif
-- Tableau comparatif HTML
-- Analyse point par point
-- Recommandation finale
-- 1000-1500 mots
+🚨 RENDRE LE COMPARATIF HUMAIN ET CRÉDIBLE :
 
-Réponds UNIQUEMENT en JSON valide :
+1. OBJECTIVITÉ APPARENTE
+- Montre VRAIMENT les avantages ET inconvénients de chaque option
+- N'oriende PAS trop vers TaxiAssur (rester crédible)
+- Admets quand une solution concurrente est meilleure dans certains cas
+- Utilise "ça dépend de votre situation"
+
+2. COMPARAISONS CONCRÈTES
+- Tableaux avec chiffres réels
+- Exemples de profils types (Marc, 28 ans, taxi Paris...)
+- Scénarios concrets : "Si vous roulez plus de 50 000 km/an..."
+
+3. TON ÉQUILIBRÉ
+- Pas de superlatifs exagérés
+- Reconnaissance des limites
+- Conseil personnalisé selon profil
+
+STRUCTURE (1000-1500 mots) :
+
+Intro : Pourquoi comparer
+Tableau comparatif HTML
+Analyse détaillée point par point
+Quand choisir option A vs option B
+Recommandation finale nuancée
+FAQ
+
+Réponds en JSON :
 {
   "title": "...",
   "slug": "...",
   "metaDescription": "...",
   "content": "...",
   "comparisonTable": "<table>...</table>",
-  "conclusion": "..."
+  "conclusion": "Conclusion nuancée et honnête"
 }`;
     }
 
@@ -141,12 +238,14 @@ Réponds UNIQUEMENT en JSON valide :
         messages: [
           {
             role: 'system',
-            content: 'Tu es un expert en rédaction SEO et assurance professionnelle. Tu génères du contenu optimisé pour le référencement naturel. Tu réponds UNIQUEMENT en JSON valide, sans markdown ni balises de code.'
+            content: 'Tu es un rédacteur expert humain avec 15 ans d\'expérience en assurance. Tu écris comme un VRAI humain, pas comme une IA. Ton contenu doit être indétectable par les détecteurs d\'IA. Utilise un ton conversationnel, des imperfections naturelles, des anecdotes, des émotions. Varie la structure et évite les patterns d\'IA. Réponds UNIQUEMENT en JSON valide.'
           },
           { role: 'user', content: prompt }
         ],
-        temperature: 0.7,
+        temperature: 0.85,
         max_tokens: 4000,
+        presence_penalty: 0.7,
+        frequency_penalty: 0.7,
         response_format: { type: 'json_object' }
       }),
     });
