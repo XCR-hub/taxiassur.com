@@ -155,12 +155,12 @@ const InteractiveQuiz: React.FC = () => {
         </div>
         <p className="text-xl text-gray-600 mb-8">{percentage}% de bonnes réponses</p>
 
-        <div className="bg-gradient-to-r from-blue-50 to-purple-50 border-2 border-blue-300 rounded-xl p-6 mb-8">
+        <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-400 rounded-xl p-6 mb-8">
           <Trophy className="mx-auto mb-4 text-yellow-500" size={48} />
           <p className="text-lg font-semibold text-gray-800 mb-4">{ctaMessage}</p>
           <a
             href="#devis"
-            className="inline-flex items-center bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-bold px-8 py-4 rounded-xl transition-all"
+            className="inline-flex items-center bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-bold px-8 py-4 rounded-xl transition-all shadow-lg"
           >
             Économiser 35% Maintenant
             <ArrowRight className="ml-2" size={20} />
@@ -169,7 +169,7 @@ const InteractiveQuiz: React.FC = () => {
 
         <button
           onClick={restartQuiz}
-          className="text-blue-600 hover:underline font-semibold"
+          className="text-orange-600 hover:underline font-semibold"
         >
           ← Refaire le quiz
         </button>
@@ -188,7 +188,7 @@ const InteractiveQuiz: React.FC = () => {
                   <div className="font-semibold mb-1">Question {index + 1}</div>
                   <div className="text-sm text-gray-600">{q.question}</div>
                   {!answers[index] && (
-                    <div className="mt-2 text-sm text-blue-600">
+                    <div className="mt-2 text-sm text-orange-600 font-semibold">
                       ✓ Réponse : {q.options[q.correctAnswer]}
                     </div>
                   )}
@@ -205,10 +205,10 @@ const InteractiveQuiz: React.FC = () => {
     <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-2xl p-8">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center">
-          <HelpCircle className="text-blue-600 mr-2" size={24} />
-          <span className="font-bold text-lg">Quiz Assurance Taxi</span>
+          <HelpCircle className="text-orange-600 mr-2" size={24} />
+          <span className="font-bold text-lg text-gray-900">Quiz Assurance Taxi</span>
         </div>
-        <div className="text-sm font-semibold text-gray-600">
+        <div className="text-sm font-semibold text-gray-900">
           {currentQuestion + 1}/{questions.length}
         </div>
       </div>
@@ -216,15 +216,15 @@ const InteractiveQuiz: React.FC = () => {
       <div className="mb-8">
         <div className="w-full bg-gray-200 rounded-full h-3 mb-2">
           <div
-            className="bg-blue-600 h-3 rounded-full transition-all duration-300"
+            className="bg-yellow-500 h-3 rounded-full transition-all duration-300 shadow-inner"
             style={{ width: `${progress}%` }}
           />
         </div>
-        <div className="text-right text-sm text-gray-600">{Math.round(progress)}% complété</div>
+        <div className="text-right text-sm text-gray-900 font-semibold">{Math.round(progress)}% complété</div>
       </div>
 
       <div className="mb-8">
-        <h3 className="text-2xl font-bold mb-6">{currentQ.question}</h3>
+        <h3 className="text-2xl font-bold mb-6 text-gray-900">{currentQ.question}</h3>
 
         <div className="space-y-3">
           {currentQ.options.map((option, index) => {
@@ -248,7 +248,7 @@ const InteractiveQuiz: React.FC = () => {
                 className={`w-full text-left p-4 rounded-xl border-2 transition-all ${bgColor} ${cursor}`}
               >
                 <div className="flex items-center justify-between">
-                  <span className="font-semibold">{option}</span>
+                  <span className="font-semibold text-gray-900">{option}</span>
                   {showResult && index === currentQ.correctAnswer && (
                     <CheckCircle className="text-green-600" size={24} />
                   )}
@@ -280,8 +280,8 @@ const InteractiveQuiz: React.FC = () => {
               </div>
               <p className="text-gray-700 mb-3">{currentQ.explanation}</p>
               <div className="bg-white p-3 rounded-lg">
-                <div className="text-sm font-semibold text-blue-900 mb-1">💡 Astuce :</div>
-                <div className="text-sm text-gray-700">{currentQ.tips}</div>
+                <div className="text-sm font-semibold text-orange-900 mb-1">💡 Astuce :</div>
+                <div className="text-sm text-gray-900">{currentQ.tips}</div>
               </div>
             </div>
           </div>
@@ -291,7 +291,7 @@ const InteractiveQuiz: React.FC = () => {
       {showResult && (
         <button
           onClick={handleNext}
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-8 rounded-xl transition-all flex items-center justify-center"
+          className="w-full bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-bold py-4 px-8 rounded-xl transition-all flex items-center justify-center shadow-lg"
         >
           {currentQuestion < questions.length - 1 ? "Question Suivante" : "Voir Mon Score"}
           <ArrowRight className="ml-2" size={20} />

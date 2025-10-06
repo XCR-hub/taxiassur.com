@@ -2,6 +2,12 @@ import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Phone, Menu, X, Shield, ChevronDown } from 'lucide-react';
 
+interface NavItem {
+  name: string;
+  href: string;
+  separator?: boolean;
+}
+
 const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isServicesOpen, setIsServicesOpen] = useState(false);
@@ -21,7 +27,9 @@ const Header: React.FC = () => {
     { name: 'Flotte Véhicules', href: '/flotte-vehicules' },
     { name: 'Conseil Personnalisé', href: '/conseil-personnalise' },
     { name: 'Gestion Sinistres', href: '/gestion-sinistres' },
-    { name: 'Partenaires', href: '/programme-partenaires' }
+    { name: 'Partenaires', href: '/programme-partenaires' },
+    { name: 'Backoffice Admin', href: '/backoffice', separator: true },
+    { name: 'Portail Partenaires', href: '/backoffice/partner-portal' }
   ];
 
   const allNavigation = [...mainNavigation, ...servicesDropdown];
@@ -92,13 +100,15 @@ const Header: React.FC = () => {
               {isServicesOpen && (
                 <div className="absolute top-full left-0 mt-2 w-56 bg-gray-900 border border-gray-700 rounded-lg shadow-2xl py-2 z-50">
                   {servicesDropdown.map((item) => (
-                    <Link
-                      key={item.name}
-                      to={item.href}
-                      className="block px-4 py-2 text-sm text-gray-200 hover:bg-gray-800 hover:text-orange-300 transition-colors"
-                    >
-                      {item.name}
-                    </Link>
+                    <React.Fragment key={item.name}>
+                      {item.separator && <div className="my-2 border-t border-yellow-500/30"></div>}
+                      <Link
+                        to={item.href}
+                        className="block px-4 py-2 text-sm text-gray-200 hover:bg-gray-800 hover:text-orange-300 transition-colors"
+                      >
+                        {item.name}
+                      </Link>
+                    </React.Fragment>
                   ))}
                 </div>
               )}
