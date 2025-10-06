@@ -1,6 +1,7 @@
 import { createBrowserRouter } from 'react-router-dom';
 import { Navigate } from 'react-router-dom';
 import { lazy, Suspense } from 'react';
+import ScrollToTop from './components/ScrollToTop';
 
 const Home = lazy(() => import('./pages/Home'));
 const Blog = lazy(() => import('./pages/Blog'));
@@ -66,7 +67,10 @@ const LoadingFallback = () => (
 );
 
 const SuspenseWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <Suspense fallback={<LoadingFallback />}>{children}</Suspense>
+  <Suspense fallback={<LoadingFallback />}>
+    <ScrollToTop />
+    {children}
+  </Suspense>
 );
 
 // Error boundary component for better error handling
