@@ -62,10 +62,12 @@ SetEnv SMTP_SECURITY "ssl"
     # COEP - Cross-Origin-Embedder-Policy
     Header always set Cross-Origin-Embedder-Policy "credentialless"
 
-    # CORS pour API
-    Header always set Access-Control-Allow-Origin "*"
-    Header always set Access-Control-Allow-Methods "GET, POST, OPTIONS"
-    Header always set Access-Control-Allow-Headers "Content-Type, X-Requested-With, X-MAKE-SECRET"
+    # CORS pour API et Content
+    <FilesMatch "\.(json|xml)$">
+        Header always set Access-Control-Allow-Origin "*"
+        Header always set Access-Control-Allow-Methods "GET, POST, OPTIONS"
+        Header always set Access-Control-Allow-Headers "Content-Type, X-Requested-With, X-MAKE-SECRET"
+    </FilesMatch>
 
     # Cache agressif pour assets statiques - 1 an
     <FilesMatch "\.(css|js|png|jpg|jpeg|gif|ico|svg|woff|woff2|webp|avif)$">
@@ -78,9 +80,8 @@ SetEnv SMTP_SECURITY "ssl"
         Header set Cache-Control "public, max-age=3600, must-revalidate"
     </FilesMatch>
 
-    # Preload + Push HTTP/2 assets critiques
-    Header add Link "</assets/index.css>; rel=preload; as=style"
-    Header add Link "</assets/index.js>; rel=preload; as=script"
+    # Preload hint for modern browsers (generic, browser will find the actual files)
+    # Actual preloading is done in index.html with correct hashed filenames
 
     # Remove server signature
     Header unset Server
