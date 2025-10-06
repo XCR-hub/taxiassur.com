@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Database, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { DatabaseZap, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 const PROSPECTS = [
@@ -239,7 +239,7 @@ export default function ProspectSeeder() {
     <div className="max-w-4xl mx-auto p-6">
       <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl p-6 mb-6 text-white">
         <div className="flex items-center space-x-3 mb-2">
-          <Database size={32} />
+          <DatabaseZap size={32} />
           <h2 className="text-2xl font-bold">Seeding Prospects Partenaires</h2>
         </div>
         <p className="text-blue-100">
@@ -277,7 +277,7 @@ export default function ProspectSeeder() {
             </>
           ) : (
             <>
-              <Database size={20} />
+              <DatabaseZap size={20} />
               <span>Ajouter les 20 Prospects</span>
             </>
           )}
