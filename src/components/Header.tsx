@@ -1,24 +1,30 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Phone, Menu, X, Shield } from 'lucide-react';
+import { Phone, Menu, X, Shield, ChevronDown } from 'lucide-react';
 
 const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isServicesOpen, setIsServicesOpen] = useState(false);
   const location = useLocation();
 
-  const navigation = [
+  const mainNavigation = [
     { name: 'Accueil', href: '/' },
     { name: 'Assurance Taxi', href: '/assurance-taxi' },
+    { name: 'Blog', href: '/blog' },
+    { name: 'FAQ', href: '/faq' },
+    { name: 'Avis', href: '/avis' },
+    { name: 'Contact', href: '/contact' }
+  ];
+
+  const servicesDropdown = [
     { name: 'RC Professionnelle', href: '/rc-professionnelle' },
     { name: 'Flotte Véhicules', href: '/flotte-vehicules' },
     { name: 'Conseil Personnalisé', href: '/conseil-personnalise' },
     { name: 'Gestion Sinistres', href: '/gestion-sinistres' },
-    { name: 'Blog', href: '/blog' },
-    { name: 'FAQ', href: '/faq' },
-    { name: 'Avis', href: '/avis' },
-    { name: 'Partenaires', href: '/programme-partenaires' },
-    { name: 'Contact', href: '/contact' }
+    { name: 'Partenaires', href: '/programme-partenaires' }
   ];
+
+  const allNavigation = [...mainNavigation, ...servicesDropdown];
 
   return (
     <header className="bg-black/95 backdrop-blur-lg border-b border-gray-800 sticky top-0 z-50 shadow-lg">
@@ -59,40 +65,53 @@ const Header: React.FC = () => {
           </Link>
           
           {/* Desktop Navigation */}
-          <nav className="hidden lg:flex items-center space-x-6">
-            {navigation.map((item) => (
+          <nav className="hidden lg:flex items-center space-x-4 xl:space-x-6">
+            {mainNavigation.map((item) => (
               <Link
                 key={item.name}
                 to={item.href}
-                className={`text-sm font-medium transition-colors duration-200 hover:text-orange-300 ${
+                className={`text-sm font-medium transition-colors duration-200 hover:text-orange-300 whitespace-nowrap ${
                   location.pathname === item.href ? 'text-yellow-400' : 'text-gray-200'
                 }`}
               >
                 {item.name}
               </Link>
             ))}
+
+            {/* Services Dropdown */}
+            <div
+              className="relative"
+              onMouseEnter={() => setIsServicesOpen(true)}
+              onMouseLeave={() => setIsServicesOpen(false)}
+            >
+              <button className="flex items-center space-x-1 text-sm font-medium text-gray-200 hover:text-orange-300 transition-colors whitespace-nowrap">
+                <span>Services</span>
+                <ChevronDown size={14} className={`transition-transform ${isServicesOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              {isServicesOpen && (
+                <div className="absolute top-full left-0 mt-2 w-56 bg-gray-900 border border-gray-700 rounded-lg shadow-2xl py-2 z-50">
+                  {servicesDropdown.map((item) => (
+                    <Link
+                      key={item.name}
+                      to={item.href}
+                      className="block px-4 py-2 text-sm text-gray-200 hover:bg-gray-800 hover:text-orange-300 transition-colors"
+                    >
+                      {item.name}
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
           </nav>
 
-          <div className="hidden md:flex items-center space-x-4">
-            <div className="text-right">
-              <p className="text-sm text-gray-300">Devis IA gratuit</p>
-              <p className="font-bold text-yellow-300">01 80 85 57 86</p>
-            </div>
-            <div className="flex flex-col">
-              <a 
-                href="/#devis" 
-                className="bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-500 hover:to-yellow-400 text-black font-bold py-2 px-4 rounded-lg transition-all duration-300 text-sm"
-              >
-                Devis IA
-              </a>
-              <Link
-                to="/backoffice"
-                className="text-xs text-gray-400 hover:text-yellow-300 transition-colors mt-1 text-center"
-                title="Accès backoffice"
-              >
-                Admin
-              </Link>
-            </div>
+          <div className="hidden lg:flex items-center space-x-3">
+            <a
+              href="/#devis"
+              className="bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-500 hover:to-yellow-400 text-black font-bold py-2 px-6 rounded-lg transition-all duration-300 text-sm whitespace-nowrap shadow-lg"
+            >
+              Devis Gratuit
+            </a>
           </div>
 
           {/* Mobile menu button */}
@@ -108,7 +127,7 @@ const Header: React.FC = () => {
         {isMenuOpen && (
           <nav className="lg:hidden mt-4 pb-4 border-t border-gray-700 bg-gray-900/95 backdrop-blur-lg rounded-lg">
             <div className="flex flex-col space-y-2 pt-4">
-              {navigation.map((item) => (
+              {allNavigation.map((item) => (
                 <Link
                   key={item.name}
                   to={item.href}
@@ -120,12 +139,12 @@ const Header: React.FC = () => {
                   {item.name}
                 </Link>
               ))}
-              <a 
-                href="#devis" 
+              <a
+                href="#devis"
                 className="bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-500 hover:to-yellow-400 text-black font-bold py-3 px-6 rounded-lg transition-all duration-300 text-center mx-4 mt-4"
                 onClick={() => setIsMenuOpen(false)}
               >
-                Devis IA Gratuit
+                Devis Gratuit
               </a>
             </div>
           </nav>
