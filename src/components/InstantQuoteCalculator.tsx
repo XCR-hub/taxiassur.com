@@ -135,8 +135,8 @@ const InstantQuoteCalculator: React.FC = () => {
                   onClick={() => setFormData({ ...formData, vehicleType: type.value })}
                   className={`p-6 rounded-xl border-2 transition-all hover:scale-105 ${
                     formData.vehicleType === type.value
-                      ? 'border-blue-600 bg-blue-50'
-                      : 'border-gray-200 hover:border-blue-300'
+                      ? 'border-yellow-500 bg-yellow-50 shadow-lg'
+                      : 'border-gray-300 hover:border-yellow-400 bg-white'
                   }`}
                 >
                   <div className="text-4xl mb-2">{type.icon}</div>
@@ -158,8 +158,8 @@ const InstantQuoteCalculator: React.FC = () => {
                   onClick={() => setFormData({ ...formData, city: city.value })}
                   className={`p-4 rounded-xl border-2 transition-all hover:scale-105 ${
                     formData.city === city.value
-                      ? 'border-blue-600 bg-blue-50'
-                      : 'border-gray-200 hover:border-blue-300'
+                      ? 'border-yellow-500 bg-yellow-50 shadow-lg'
+                      : 'border-gray-300 hover:border-yellow-400 bg-white'
                   }`}
                 >
                   <div className="font-bold text-lg">{city.label}</div>
@@ -185,8 +185,8 @@ const InstantQuoteCalculator: React.FC = () => {
                   onClick={() => setFormData({ ...formData, experience: exp.value })}
                   className={`p-6 rounded-xl border-2 transition-all hover:scale-105 ${
                     formData.experience === exp.value
-                      ? 'border-blue-600 bg-blue-50'
-                      : 'border-gray-200 hover:border-blue-300'
+                      ? 'border-yellow-500 bg-yellow-50 shadow-lg'
+                      : 'border-gray-300 hover:border-yellow-400 bg-white'
                   }`}
                 >
                   <div className="font-bold text-xl">{exp.label}</div>
@@ -212,8 +212,8 @@ const InstantQuoteCalculator: React.FC = () => {
                   onClick={() => setFormData({ ...formData, claims: claim.value })}
                   className={`p-6 rounded-xl border-2 transition-all hover:scale-105 ${
                     formData.claims === claim.value
-                      ? 'border-blue-600 bg-blue-50'
-                      : 'border-gray-200 hover:border-blue-300'
+                      ? 'border-yellow-500 bg-yellow-50 shadow-lg'
+                      : 'border-gray-300 hover:border-yellow-400 bg-white'
                   }`}
                 >
                   <div className="text-3xl mb-2">{claim.emoji}</div>
@@ -386,27 +386,27 @@ const InstantQuoteCalculator: React.FC = () => {
         <div className="max-w-5xl mx-auto">
           {step < 6 && (
             <>
-              <div className="text-center mb-12">
-                <div className="inline-flex items-center bg-blue-100 text-blue-900 px-4 py-2 rounded-full mb-4">
-                  <Calculator size={20} className="mr-2" />
+              <div className="text-center mb-8 md:mb-12">
+                <div className="inline-flex items-center bg-yellow-400 text-gray-900 px-6 py-3 rounded-full mb-4 shadow-lg text-base md:text-lg font-bold">
+                  <Calculator size={24} className="mr-2" />
                   Calculateur Gratuit
                 </div>
-                <h2 className="text-4xl md:text-5xl font-black mb-4">
+                <h2 className="text-3xl md:text-5xl font-black mb-4 text-gray-900 leading-tight px-4">
                   Calculez Votre Tarif en 2 Minutes
                 </h2>
-                <p className="text-xl text-gray-600">
+                <p className="text-lg md:text-xl text-gray-700 px-4 font-semibold">
                   Devis instantané personnalisé • 100% gratuit • Sans engagement
                 </p>
               </div>
 
-              <div className="mb-8">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-sm font-semibold text-gray-600">Étape {step}/5</span>
-                  <span className="text-sm font-semibold text-blue-600">{Math.round((step / 5) * 100)}%</span>
+              <div className="mb-6 md:mb-8 px-4 md:px-0">
+                <div className="flex justify-between items-center mb-3">
+                  <span className="text-sm md:text-base font-bold text-gray-900">Étape {step}/5</span>
+                  <span className="text-sm md:text-base font-bold text-yellow-600">{Math.round((step / 5) * 100)}%</span>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-3">
+                <div className="w-full bg-gray-300 rounded-full h-4">
                   <div
-                    className="bg-blue-600 h-3 rounded-full transition-all duration-300"
+                    className="bg-yellow-500 h-4 rounded-full transition-all duration-300 shadow-inner"
                     style={{ width: `${(step / 5) * 100}%` }}
                   />
                 </div>
@@ -419,11 +419,11 @@ const InstantQuoteCalculator: React.FC = () => {
           </div>
 
           {step < 6 && (
-            <div className="mt-8 flex justify-between">
+            <div className="mt-6 md:mt-8 flex justify-between px-4 md:px-0 gap-4">
               {step > 1 && (
                 <button
                   onClick={() => setStep(step - 1)}
-                  className="px-6 py-3 border-2 border-gray-300 rounded-xl font-bold hover:bg-gray-50 transition-colors"
+                  className="px-6 py-4 border-2 border-gray-400 rounded-xl font-bold hover:bg-gray-100 transition-colors text-base md:text-lg text-gray-900"
                 >
                   ← Retour
                 </button>
@@ -431,10 +431,10 @@ const InstantQuoteCalculator: React.FC = () => {
               <button
                 onClick={handleNext}
                 disabled={!isStepValid()}
-                className={`ml-auto px-8 py-3 rounded-xl font-bold transition-all ${
+                className={`ml-auto px-8 py-4 rounded-xl font-bold transition-all text-base md:text-lg shadow-lg ${
                   isStepValid()
-                    ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                    : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                    ? 'bg-yellow-400 hover:bg-yellow-500 text-gray-900 hover:scale-105'
+                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                 }`}
               >
                 {step === 5 ? 'Calculer mon devis →' : 'Suivant →'}
