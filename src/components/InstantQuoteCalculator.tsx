@@ -135,12 +135,12 @@ const InstantQuoteCalculator: React.FC = () => {
                   onClick={() => setFormData({ ...formData, vehicleType: type.value })}
                   className={`p-6 rounded-xl border-2 transition-all hover:scale-105 ${
                     formData.vehicleType === type.value
-                      ? 'border-yellow-500 bg-yellow-50 shadow-lg'
-                      : 'border-gray-300 hover:border-yellow-400 bg-white'
+                      ? 'border-yellow-500 bg-yellow-50 shadow-lg text-gray-900'
+                      : 'border-gray-300 hover:border-yellow-400 bg-white text-gray-900'
                   }`}
                 >
                   <div className="text-4xl mb-2">{type.icon}</div>
-                  <div className="font-bold">{type.label}</div>
+                  <div className="font-bold text-gray-900">{type.label}</div>
                 </button>
               ))}
             </div>
@@ -158,11 +158,11 @@ const InstantQuoteCalculator: React.FC = () => {
                   onClick={() => setFormData({ ...formData, city: city.value })}
                   className={`p-4 rounded-xl border-2 transition-all hover:scale-105 ${
                     formData.city === city.value
-                      ? 'border-yellow-500 bg-yellow-50 shadow-lg'
-                      : 'border-gray-300 hover:border-yellow-400 bg-white'
+                      ? 'border-yellow-500 bg-yellow-50 shadow-lg text-gray-900'
+                      : 'border-gray-300 hover:border-yellow-400 bg-white text-gray-900'
                   }`}
                 >
-                  <div className="font-bold text-lg">{city.label}</div>
+                  <div className="font-bold text-lg text-gray-900">{city.label}</div>
                 </button>
               ))}
             </div>
@@ -185,11 +185,11 @@ const InstantQuoteCalculator: React.FC = () => {
                   onClick={() => setFormData({ ...formData, experience: exp.value })}
                   className={`p-6 rounded-xl border-2 transition-all hover:scale-105 ${
                     formData.experience === exp.value
-                      ? 'border-yellow-500 bg-yellow-50 shadow-lg'
-                      : 'border-gray-300 hover:border-yellow-400 bg-white'
+                      ? 'border-yellow-500 bg-yellow-50 shadow-lg text-gray-900'
+                      : 'border-gray-300 hover:border-yellow-400 bg-white text-gray-900'
                   }`}
                 >
-                  <div className="font-bold text-xl">{exp.label}</div>
+                  <div className="font-bold text-xl text-gray-900">{exp.label}</div>
                 </button>
               ))}
             </div>
@@ -212,12 +212,12 @@ const InstantQuoteCalculator: React.FC = () => {
                   onClick={() => setFormData({ ...formData, claims: claim.value })}
                   className={`p-6 rounded-xl border-2 transition-all hover:scale-105 ${
                     formData.claims === claim.value
-                      ? 'border-yellow-500 bg-yellow-50 shadow-lg'
-                      : 'border-gray-300 hover:border-yellow-400 bg-white'
+                      ? 'border-yellow-500 bg-yellow-50 shadow-lg text-gray-900'
+                      : 'border-gray-300 hover:border-yellow-400 bg-white text-gray-900'
                   }`}
                 >
                   <div className="text-3xl mb-2">{claim.emoji}</div>
-                  <div className="font-bold">{claim.label}</div>
+                  <div className="font-bold text-gray-900">{claim.label}</div>
                 </button>
               ))}
             </div>
@@ -233,13 +233,13 @@ const InstantQuoteCalculator: React.FC = () => {
                 onClick={() => setFormData({ ...formData, coverage: 'tiers' })}
                 className={`p-8 rounded-xl border-2 transition-all hover:scale-105 ${
                   formData.coverage === 'tiers'
-                    ? 'border-green-600 bg-green-50'
-                    : 'border-gray-200 hover:border-green-300'
+                    ? 'border-green-600 bg-green-50 shadow-lg'
+                    : 'border-gray-300 hover:border-green-300 bg-white'
                 }`}
               >
-                <div className="text-3xl font-black text-green-600 mb-2">ECO</div>
-                <div className="font-bold text-lg mb-4">Au Tiers</div>
-                <ul className="text-sm text-left space-y-2">
+                <div className="text-3xl font-black text-green-700 mb-2">ECO</div>
+                <div className="font-bold text-lg mb-4 text-gray-900">Au Tiers</div>
+                <ul className="text-sm text-left space-y-2 text-gray-800">
                   <li>✓ RC Pro incluse</li>
                   <li>✓ Assistance basique</li>
                   <li>✓ Protection juridique</li>
@@ -250,16 +250,16 @@ const InstantQuoteCalculator: React.FC = () => {
                 onClick={() => setFormData({ ...formData, coverage: 'intermediaire' })}
                 className={`p-8 rounded-xl border-2 transition-all hover:scale-105 relative ${
                   formData.coverage === 'intermediaire'
-                    ? 'border-blue-600 bg-blue-50'
-                    : 'border-gray-200 hover:border-blue-300'
+                    ? 'border-yellow-500 bg-yellow-50 shadow-lg'
+                    : 'border-gray-300 hover:border-yellow-400 bg-white'
                 }`}
               >
-                <div className="absolute top-2 right-2 bg-blue-600 text-white text-xs px-2 py-1 rounded-full">
+                <div className="absolute top-2 right-2 bg-yellow-500 text-gray-900 text-xs px-2 py-1 rounded-full font-bold">
                   Populaire
                 </div>
-                <div className="text-3xl font-black text-blue-600 mb-2">CONFORT</div>
-                <div className="font-bold text-lg mb-4">Intermédiaire</div>
-                <ul className="text-sm text-left space-y-2">
+                <div className="text-3xl font-black text-yellow-700 mb-2">CONFORT</div>
+                <div className="font-bold text-lg mb-4 text-gray-900">Intermédiaire</div>
+                <ul className="text-sm text-left space-y-2 text-gray-800">
                   <li>✓ Tout ECO +</li>
                   <li>✓ Vol + Incendie</li>
                   <li>✓ Bris de glace</li>
@@ -271,13 +271,13 @@ const InstantQuoteCalculator: React.FC = () => {
                 onClick={() => setFormData({ ...formData, coverage: 'tous-risques' })}
                 className={`p-8 rounded-xl border-2 transition-all hover:scale-105 ${
                   formData.coverage === 'tous-risques'
-                    ? 'border-orange-600 bg-orange-50'
-                    : 'border-gray-200 hover:border-orange-300'
+                    ? 'border-orange-600 bg-orange-50 shadow-lg'
+                    : 'border-gray-300 hover:border-orange-300 bg-white'
                 }`}
               >
-                <div className="text-3xl font-black text-orange-600 mb-2">PREMIUM</div>
-                <div className="font-bold text-lg mb-4">Tous Risques</div>
-                <ul className="text-sm text-left space-y-2">
+                <div className="text-3xl font-black text-orange-700 mb-2">PREMIUM</div>
+                <div className="font-bold text-lg mb-4 text-gray-900">Tous Risques</div>
+                <ul className="text-sm text-left space-y-2 text-gray-800">
                   <li>✓ Tout CONFORT +</li>
                   <li>✓ Tous accidents</li>
                   <li>✓ Véhicule remplacement</li>
