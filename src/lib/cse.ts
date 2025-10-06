@@ -24,8 +24,8 @@ export const CseResultSchema = z.object({
 export type CseItem = z.infer<typeof CseItemSchema>;
 export type CseResult = z.infer<typeof CseResultSchema>;
 
-const API_KEY = import.meta.env.VITE_CSE_API_KEY as string;
-const CX = import.meta.env.VITE_CSE_CX as string;
+const API_KEY = import.meta.env.VITE_GOOGLE_CSE_API_KEY as string;
+const CX = import.meta.env.VITE_GOOGLE_CSE_CX as string;
 
 // Rate limiting for CSE API
 class CSERateLimiter {

@@ -110,13 +110,24 @@
     </div>
 
     <script>
-        // Afficher la config (masquer l'API key pour sécurité)
-        const apiKey = 'AIzaSyBMdJggXK49R_h8x__U6lIxiWEE8Gbjesk';
-        const cx = '73ba86b5aae9b4add';
+        // SÉCURITÉ: Les clés API sont maintenant dans les variables d'environnement
+        // Ces valeurs seront injectées automatiquement par Vite
+        const apiKey = import.meta.env.VITE_GOOGLE_CSE_API_KEY;
+        const cx = import.meta.env.VITE_GOOGLE_CSE_CX;
 
-        document.getElementById('config').textContent =
-            `API Key: ${apiKey.substring(0, 10)}...${apiKey.substring(apiKey.length - 4)}\n` +
-            `CX: ${cx}`;
+        // Vérifier que les variables sont définies
+        if (!apiKey || !cx) {
+            document.getElementById('config').textContent =
+                '❌ ERREUR: Variables d\'environnement manquantes\n\n' +
+                'Assurez-vous que .env contient:\n' +
+                'VITE_GOOGLE_CSE_API_KEY=votre_clé\n' +
+                'VITE_GOOGLE_CSE_CX=votre_cx';
+            document.getElementById('testBtn').disabled = true;
+        } else {
+            document.getElementById('config').textContent =
+                `API Key: ${apiKey.substring(0, 10)}...${apiKey.substring(apiKey.length - 4)}\n` +
+                `CX: ${cx}`;
+        }
 
         async function testCSE() {
             const btn = document.getElementById('testBtn');
