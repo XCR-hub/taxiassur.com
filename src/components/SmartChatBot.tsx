@@ -283,7 +283,11 @@ const SmartChatBot: React.FC = () => {
                         <button
                           key={index}
                           onClick={() => handleOptionClick(option.action, option.value)}
-                          className="block w-full text-left p-2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded text-xs transition-colors"
+                          className={`block w-full text-left p-2 rounded text-xs font-medium transition-colors ${
+                            message.type === 'user'
+                              ? 'bg-white bg-opacity-20 hover:bg-opacity-30 text-white'
+                              : 'bg-blue-500 hover:bg-blue-600 text-white'
+                          }`}
                         >
                           {option.text}
                         </button>
@@ -308,7 +312,7 @@ const SmartChatBot: React.FC = () => {
           </div>
 
           {/* Input */}
-          <div className="p-4 border-t border-gray-200">
+          <div className="p-4 border-t border-gray-200 bg-white">
             <div className="flex space-x-2">
               <input
                 type="text"
@@ -316,12 +320,12 @@ const SmartChatBot: React.FC = () => {
                 onChange={(e) => setCurrentInput(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
                 placeholder="Tapez votre message..."
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm text-gray-900 bg-white placeholder-gray-500"
               />
               <button
                 onClick={handleSendMessage}
                 disabled={!currentInput.trim()}
-                className="bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 text-white p-2 rounded-lg transition-colors"
+                className="bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white p-2 rounded-lg transition-colors"
               >
                 <Send size={16} />
               </button>
