@@ -24,6 +24,7 @@ const FlotteVehicules = lazy(() => import('./pages/FlotteVehicules'));
 const ConseilPersonnalise = lazy(() => import('./pages/ConseilPersonnalise'));
 const GestionSinistres = lazy(() => import('./pages/GestionSinistres'));
 const PrixAssuranceTaxi = lazy(() => import('./pages/PrixAssuranceTaxi'));
+const AssuranceTaxiVTC = lazy(() => import('./pages/AssuranceTaxiVTC'));
 const OfferPage = lazy(() => import('./components/OfferPage'));
 const Dashboard = lazy(() => import('./backoffice/Dashboard'));
 const BacklinkManager = lazy(() => import('./backoffice/BacklinkManager'));
@@ -123,6 +124,11 @@ export const router = createBrowserRouter([
   {
     path: '/prix-assurance-taxi',
     element: <SuspenseWrapper><PrixAssuranceTaxi /></SuspenseWrapper>,
+    errorElement: <ErrorBoundary><Navigate to="/" replace /></ErrorBoundary>
+  },
+  {
+    path: '/assurance-taxi-vtc',
+    element: <SuspenseWrapper><AssuranceTaxiVTC /></SuspenseWrapper>,
     errorElement: <ErrorBoundary><Navigate to="/" replace /></ErrorBoundary>
   },
   {
