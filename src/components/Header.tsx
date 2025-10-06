@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Phone, Menu, X, Shield, ChevronDown } from 'lucide-react';
 
@@ -12,6 +12,7 @@ interface NavItem {
 const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isServicesOpen, setIsServicesOpen] = useState(false);
+  const [closeTimer, setCloseTimer] = useState<NodeJS.Timeout | null>(null);
   const location = useLocation();
 
   const mainNavigation = [
@@ -34,6 +35,30 @@ const Header: React.FC = () => {
   ];
 
   const allNavigation = [...mainNavigation, ...servicesDropdown];
+
+  const handleServicesMouseEnter = () => {
+    if (closeTimer) {
+      clearTimeout(closeTimer);
+      setCloseTimer(null);
+    }
+    setIsServicesOpen(true);
+  };
+
+  const handleServicesMouseLeave = () => {
+    const timer = setTimeout(() => {
+      setIsServicesOpen(false);
+    }, 400); // Délai de 400ms avant fermeture
+    setCloseTimer(timer);
+  };
+
+  // Nettoyer le timer au démontage du composant
+  useEffect(() => {
+    return () => {
+      if (closeTimer) {
+        clearTimeout(closeTimer);
+      }
+    };
+  }, [closeTimer]);
 
   return (
     <header className="bg-black/95 backdrop-blur-lg border-b border-gray-800 sticky top-0 z-50 shadow-lg">
@@ -90,8 +115,8 @@ const Header: React.FC = () => {
             {/* Services Dropdown */}
             <div
               className="relative"
-              onMouseEnter={() => setIsServicesOpen(true)}
-              onMouseLeave={() => setIsServicesOpen(false)}
+              onMouseEnter={handleServicesMouseEnter}
+              onMouseLeave={handleServicesMouseLeave}
             >
               <button className="flex items-center space-x-1 text-sm font-medium text-gray-200 hover:text-orange-300 transition-colors whitespace-nowrap">
                 <span>Services</span>
@@ -99,7 +124,11 @@ const Header: React.FC = () => {
               </button>
 
               {isServicesOpen && (
-                <div className="absolute top-full left-0 mt-2 w-56 bg-gray-900 border border-gray-700 rounded-lg shadow-2xl py-2 z-50">
+                <div
+                  className="absolute top-full left-0 mt-1 w-56 bg-gray-900 border border-gray-700 rounded-lg shadow-2xl py-2 z-50"
+                  onMouseEnter={handleServicesMouseEnter}
+                  onMouseLeave={handleServicesMouseLeave}
+                >
                   {servicesDropdown.map((item) => (
                     <React.Fragment key={item.name}>
                       {item.separator && <div className="my-2 border-t border-yellow-500/30"></div>}
