@@ -1,19 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  FileText, 
-  Mail, 
-  HelpCircle, 
-  Plus, 
-  Edit, 
-  Trash2, 
-  Send, 
-  Users, 
-  Calendar,
-  Save,
-  Eye,
-  EyeOff,
-  Home
-} from 'lucide-react';
+import { FileText, Mail, HelpCircle, Plus, CreditCard as Edit, Trash2, Send, Users, Calendar, Save, Eye, EyeOff, Home } from 'lucide-react';
 import AuthGuard from '../components/AuthGuard';
 
 interface Article {

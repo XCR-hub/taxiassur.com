@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Eye, Phone, Mail, FileText, CheckCircle, XCircle, Euro, Calendar, Search, Filter, Download, Upload, Send, Edit, Trash2, Star, MessageSquare, Home } from 'lucide-react';
+import { Users, Eye, Phone, Mail, FileText, CheckCircle, XCircle, Euro, Calendar, Search, Filter, Download, Upload, Send, CreditCard as Edit, Trash2, Star, MessageSquare, Home } from 'lucide-react';
 import AuthGuard from '../components/AuthGuard';
 import { getLeads, updateLeadStatus, sendDevisEmail, sendContractEmail, getLeadStatusColor, getLeadStatusLabel, type Lead, type LeadStatus } from '../lib/leads';
 import { formatDate } from '../lib/utils';
