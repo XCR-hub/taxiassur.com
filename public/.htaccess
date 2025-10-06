@@ -7,6 +7,22 @@ SetEnv SMTP_SECURITY "ssl"
 # Configuration Apache OPTIMISÉE pour IONOS - TaxiAssur.com
 # Version corrigée qui fonctionne parfaitement
 
+# Types MIME explicites - CRITIQUE pour éviter erreurs MIME
+<IfModule mod_mime.c>
+    AddType text/css .css
+    AddType text/javascript .js
+    AddType application/javascript .js
+    AddType application/json .json
+    AddType application/xml .xml
+    AddType text/xml .xml
+    AddType image/x-icon .ico
+    AddType image/png .png
+    AddType image/jpeg .jpg .jpeg
+    AddType image/svg+xml .svg
+    AddType font/woff .woff
+    AddType font/woff2 .woff2
+</IfModule>
+
 # Permettre l'accès aux fichiers content
 <Directory "/content">
     Options +Indexes
