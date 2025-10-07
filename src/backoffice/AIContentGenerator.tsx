@@ -205,7 +205,7 @@ ${generatedContent.faq?.map(f => `**${f.question}**\n${f.answer}`).join('\n\n')}
                 value={keyword}
                 onChange={(e) => setKeyword(e.target.value)}
                 placeholder="Ex: assurance taxi pas cher"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900 placeholder-gray-400"
               />
             </div>
 
@@ -219,7 +219,7 @@ ${generatedContent.faq?.map(f => `**${f.question}**\n${f.answer}`).join('\n\n')}
                   value={city}
                   onChange={(e) => setCity(e.target.value)}
                   placeholder="Ex: Paris, Lyon, Marseille"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900 placeholder-gray-400"
                 />
               </div>
             )}
@@ -233,7 +233,7 @@ ${generatedContent.faq?.map(f => `**${f.question}**\n${f.answer}`).join('\n\n')}
                 value={secondaryKeywords}
                 onChange={(e) => setSecondaryKeywords(e.target.value)}
                 placeholder="Séparés par des virgules"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900 placeholder-gray-400"
               />
               <p className="text-xs text-gray-600 mt-1">
                 Ex: RC professionnelle, devis gratuit, courtier ORIAS

@@ -16,8 +16,11 @@
     - Copy and paste this SQL and click "Run"
 */
 
+-- Drop policy if it exists (to make migration idempotent)
+DROP POLICY IF EXISTS "Allow anonymous users to submit leads" ON leads;
+
 -- Create policy for anonymous INSERT on leads
-CREATE POLICY IF NOT EXISTS "Allow anonymous users to submit leads"
+CREATE POLICY "Allow anonymous users to submit leads"
   ON leads
   FOR INSERT
   TO anon
