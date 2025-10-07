@@ -14,7 +14,7 @@ Deno.serve(async (req: Request) => {
       status: 200,
       headers: corsHeaders,
     });
-  }<
+  }
 
   try {
     const { keyword, type, city, secondaryKeywords } = await req.json();
