@@ -14,24 +14,22 @@ window.ENV = {
   // Ancienne clé révoquée: AIzaSyBMdJggXK49R_h8x__U6lIxiWEE8Gbjesk
   // Créer nouvelle clé: https://console.cloud.google.com/apis/credentials
   // ========================================
-  VITE_GOOGLE_CSE_API_KEY: 'NOUVELLE_CLE_GOOGLE_CSE_ICI',
+  VITE_GOOGLE_CSE_API_KEY: 'AIzaSyB1wcpdbB3AJW0Mxx6tihEVVjPsIIFY-9o',
   VITE_GOOGLE_CSE_CX: '73ba86b5aae9b4add',
 
   // ========================================
-  // GOOGLE ANALYTICS 4 - ✅ À CONFIGURER
+  // GOOGLE ANALYTICS 4 - ⚠️ À CONFIGURER
   // Créer sur: https://analytics.google.com/
   // Format: G-XXXXXXXXXX
-  // Remplacez G-XXXXXXXXXX par votre vrai ID
   // ========================================
-  VITE_GTAG_ID: 'G-XXXXXXXXXX',
+  VITE_GTAG_ID: 'G-VDR9C5QDLD',
 
   // ========================================
-  // GOOGLE TAG MANAGER - ✅ À CONFIGURER
+  // GOOGLE TAG MANAGER - ⚠️ À CONFIGURER
   // Créer sur: https://tagmanager.google.com/
   // Format: GTM-XXXXXXX
-  // Remplacez GTM-XXXXXXX par votre vrai ID
   // ========================================
-  VITE_GTM_ID: 'GTM-XXXXXXX',
+  VITE_GTM_ID: 'GTM-52JDP8VB',
 
   // ========================================
   // META PIXEL - ⚪ OPTIONNEL
