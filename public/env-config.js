@@ -26,11 +26,12 @@ window.ENV = {
   VITE_GTAG_ID: 'G-XXXXXXXXXX',
 
   // ========================================
-  // GOOGLE TAG MANAGER - ⚠️ À CONFIGURER
+  // GOOGLE TAG MANAGER - ✅ À CONFIGURER
   // Créer sur: https://tagmanager.google.com/
   // Format: GTM-XXXXXXX
+  // Remplacez GTM-XXXXXXX par votre vrai ID
   // ========================================
-  VITE_GTM_ID: 'VOTRE_GTM_ID_ICI',
+  VITE_GTM_ID: 'GTM-XXXXXXX',
 
   // ========================================
   // META PIXEL - ⚪ OPTIONNEL
