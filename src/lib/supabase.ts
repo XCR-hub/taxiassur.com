@@ -3,11 +3,11 @@ import { createClient } from '@supabase/supabase-js';
 // Try window.ENV first (production), then import.meta.env (development)
 const supabaseUrl = (typeof window !== 'undefined' && (window as any).ENV?.VITE_SUPABASE_URL)
   || import.meta.env.VITE_SUPABASE_URL
-  || 'https://viuuznfqkauatkjcegcj.supabase.co';
+  || 'https://drohhxrkoequjphvabvq.supabase.co';
 
 const supabaseAnonKey = (typeof window !== 'undefined' && (window as any).ENV?.VITE_SUPABASE_ANON_KEY)
   || import.meta.env.VITE_SUPABASE_ANON_KEY
-  || 'placeholder-key';
+  || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRyb2hoeHJrb2VxdWpwaHZhYnZxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk3ODM3NjAsImV4cCI6MjA3NTM1OTc2MH0.LP9fh10fY0nRDjpG4VW2yGZ5sT4BkiDalox8ToMbMlg';
 
 // Supabase client with fallback for development
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
