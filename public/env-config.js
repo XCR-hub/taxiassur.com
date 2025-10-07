@@ -18,11 +18,12 @@ window.ENV = {
   VITE_GOOGLE_CSE_CX: '73ba86b5aae9b4add',
 
   // ========================================
-  // GOOGLE ANALYTICS 4 - ⚠️ À CONFIGURER
+  // GOOGLE ANALYTICS 4 - ✅ À CONFIGURER
   // Créer sur: https://analytics.google.com/
   // Format: G-XXXXXXXXXX
+  // Remplacez G-XXXXXXXXXX par votre vrai ID
   // ========================================
-  VITE_GTAG_ID: 'VOTRE_GA4_ID_ICI',
+  VITE_GTAG_ID: 'G-XXXXXXXXXX',
 
   // ========================================
   // GOOGLE TAG MANAGER - ⚠️ À CONFIGURER
