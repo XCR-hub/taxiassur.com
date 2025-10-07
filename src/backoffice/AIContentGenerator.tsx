@@ -53,7 +53,14 @@ export default function AIContentGenerator() {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
+        const text = await response.text();
+        let errorData;
+        try {
+          errorData = JSON.parse(text);
+        } catch {
+          // La réponse n'est pas du JSON (probablement HTML d'erreur)
+          throw new Error('La fonction Edge n\'est pas déployée ou ne répond pas correctement. Vérifiez que la fonction "generate-seo-content" est bien déployée dans Supabase.');
+        }
         throw new Error(errorData.error || 'Erreur lors de la génération');
       }
 
@@ -323,8 +330,8 @@ ${generatedContent.faq?.map(f => `**${f.question}**\n${f.answer}`).join('\n\n')}
                 </p>
               </div>
 
-              <div className="prose prose-sm max-w-none">
-                <div dangerouslySetInnerHTML={{ __html: generatedContent.content }} />
+              <div className="prose prose-sm max-w-none bg-white text-gray-900 rounded-lg p-4">
+                <div className="[&>*]:text-gray-900 [&>h1]:text-gray-900 [&>h2]:text-gray-900 [&>h3]:text-gray-900 [&>p]:text-gray-900 [&>ul]:text-gray-900 [&>li]:text-gray-900" dangerouslySetInnerHTML={{ __html: generatedContent.content }} />
               </div>
 
               {generatedContent.faq && generatedContent.faq.length > 0 && (
