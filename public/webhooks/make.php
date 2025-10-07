@@ -103,14 +103,26 @@ function validateLead($data) {
 // Router principal ULTRA-SIMPLIFIÉ
 try {
     $action = $_GET['action'] ?? 'ping';
-    
+
     switch ($action) {
         case 'ping':
+            $permissions = [
+                'content_dir_exists' => is_dir(CONTENT_DIR),
+                'content_dir_writable' => is_writable(CONTENT_DIR),
+                'feeds_dir_exists' => is_dir(FEEDS_DIR),
+                'feeds_dir_writable' => is_writable(FEEDS_DIR),
+                'log_dir_exists' => is_dir(LOG_DIR),
+                'log_dir_writable' => is_writable(LOG_DIR),
+                'php_version' => PHP_VERSION,
+                'mail_available' => function_exists('mail')
+            ];
+
             echo json_encode([
                 'ok' => true,
                 'message' => 'Webhook accessible',
                 'timestamp' => date('c'),
-                'version' => '1.0'
+                'version' => '1.0',
+                'diagnostics' => $permissions
             ]);
             break;
             

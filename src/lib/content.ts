@@ -9,58 +9,102 @@ const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabase
 // Fonction utilitaire pour lire les fichiers JSON locaux
 async function fetchLocalContent<T>(type: string, schema: any): Promise<T[]> {
   try {
-    const response = await fetch(`/content/${type}/`);
-    if (!response.ok) {
-      // Si le dossier n'existe pas, essayer de lire les fichiers individuels
-      const items: T[] = [];
-      let index = 0;
-      
-      while (true) {
-        try {
-          const fileResponse = await fetch(`/content/${type}/index-${index}.json`);
-          if (!fileResponse.ok) break;
-          
-          const data = await fileResponse.json();
-          const validated = schema.parse(data);
-          if (validated.status === 'published') {
-            items.push(validated);
+    // Ne pas essayer de lister le répertoire (403 sur IONOS)
+    // Lire directement les fichiers index-N.json
+    const items: T[] = [];
+    let index = 0;
+
+    while (index < 100) { // Limite de sécurité
+      try {
+        const fileResponse = await fetch(`/content/${type}/index-${index}.json`);
+        if (!fileResponse.ok) {
+          // Si index-0 n'existe pas, essayer de charger les fichiers individuels connus
+          if (index === 0) {
+            // Charger tous les fichiers JSON du répertoire (sans listing)
+            const knownFiles = await loadKnownFiles(type);
+            return knownFiles.map(f => schema.parse(f)).filter((item: any) => item.status === 'published');
           }
-          index++;
-        } catch {
           break;
         }
-      }
-      
-      return items;
-    }
-    
-    const html = await response.text();
-    const fileLinks = html.match(/href="([^"]*\.json)"/g) || [];
-    const items: T[] = [];
-    
-    for (const link of fileLinks) {
-      const filename = link.match(/href="([^"]*)"/)?.[1];
-      if (filename) {
-        try {
-          const fileResponse = await fetch(`/content/${type}/${filename}`);
-          if (fileResponse.ok) {
-            const data = await fileResponse.json();
-            const validated = schema.parse(data);
-            if (validated.status === 'published') {
-              items.push(validated);
-            }
-          }
-        } catch (error) {
-          console.warn(`Failed to load ${filename}:`, error);
+
+        const data = await fileResponse.json();
+        const validated = schema.parse(data);
+        if (validated.status === 'published') {
+          items.push(validated);
         }
+        index++;
+      } catch (err) {
+        console.warn(`Error loading ${type}/index-${index}.json:`, err);
+        break;
       }
     }
-    
+
     return items;
   } catch (error) {
     console.warn(`Failed to load ${type} content:`, error);
     return [];
   }
+}
+
+// Liste des fichiers connus (fallback si pas de index-N.json)
+async function loadKnownFiles(type: string): Promise<any[]> {
+  const knownFiles: Record<string, string[]> = {
+    'blog': [
+      'assurance-taxi-2024',
+      'assurance-taxi-jeune-conducteur',
+      'assurance-taxi-resilié',
+      'assurance-vtc-vs-taxi-differences-2025',
+      'choisir-vehicule-taxi-2024',
+      'comparateur-assurance-taxi-guide-2025',
+      'comparatif-assurances-taxi-2024',
+      'cout-assurance-taxi-par-ville',
+      'devenir-chauffeur-taxi-2024',
+      'economiser-assurance-taxi-2024',
+      'flotte-taxis-assurance',
+      'reglementation-taxi-2024',
+      'sinistre-taxi-que-faire',
+      'vehicules-electriques-taxi'
+    ],
+    'faq': [
+      'couverture-france',
+      'delai-attestation',
+      'frais-caches',
+      'garanties-incluses',
+      'pieces-necessaires',
+      'resiliation-assurance',
+      'sinistre-procedure',
+      'tarifs-assurance'
+    ],
+    'reviews': [
+      'ahmed-k',
+      'david-r',
+      'fatima-r',
+      'jean-pierre-m',
+      'marie-l',
+      'mohammed-b'
+    ],
+    'offers': [
+      'flotte-vehicules',
+      'rc-professionnelle'
+    ]
+  };
+
+  const files = knownFiles[type] || [];
+  const items: any[] = [];
+
+  for (const file of files) {
+    try {
+      const response = await fetch(`/content/${type}/${file}.json`);
+      if (response.ok) {
+        const data = await response.json();
+        items.push(data);
+      }
+    } catch (err) {
+      console.warn(`Failed to load ${type}/${file}.json:`, err);
+    }
+  }
+
+  return items;
 }
 
 // Fonction pour lire un fichier spécifique
