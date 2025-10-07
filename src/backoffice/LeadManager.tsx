@@ -319,14 +319,14 @@ const LeadManager: React.FC = () => {
                   placeholder="Rechercher..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white placeholder-gray-400"
                 />
               </div>
 
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
               >
                 <option value="all">Tous les statuts</option>
                 <option value="nouveau">Nouveaux</option>
@@ -339,7 +339,7 @@ const LeadManager: React.FC = () => {
               <select
                 value={filterCity}
                 onChange={(e) => setFilterCity(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
               >
                 <option value="all">Toutes les villes</option>
                 {uniqueCities.map(city => (
@@ -853,7 +853,7 @@ const LeadManager: React.FC = () => {
                   <select
                     value={statusUpdate.newStatus}
                     onChange={(e) => setStatusUpdate(prev => ({ ...prev, newStatus: e.target.value as LeadStatus }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
                   >
                     <option value="nouveau">🆕 Nouveau</option>
                     <option value="contacte">📞 Contacté</option>
@@ -873,7 +873,7 @@ const LeadManager: React.FC = () => {
                       value={statusUpdate.primeRealisee}
                       onChange={(e) => setStatusUpdate(prev => ({ ...prev, primeRealisee: e.target.value }))}
                       placeholder="1500"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white placeholder-gray-400"
                     />
                   </div>
                 )}
@@ -887,7 +887,7 @@ const LeadManager: React.FC = () => {
                     onChange={(e) => setStatusUpdate(prev => ({ ...prev, notes: e.target.value }))}
                     rows={3}
                     placeholder="Commentaires sur ce lead..."
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white placeholder-gray-400"
                   />
                 </div>
 

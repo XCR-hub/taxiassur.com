@@ -1,200 +1,132 @@
-# ACTIONS FINALES À FAIRE - TaxiAssur Configuration
+# ✅ FIX COMPLET - ACTIONS FINALES
 
-## ✅ CE QUI A ÉTÉ FAIT
+## 🎯 PROBLÈMES RÉSOLUS
 
-1. **Sécurité automation_schedule** : RLS activé avec succès ✅
-2. **Variables Supabase** : SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY déjà configurées ✅
-3. **Fichier .env local** : Mis à jour avec la bonne URL Supabase ✅
-4. **11 Edge Functions** : Code prêt au déploiement ✅
-5. **Build vérifié** : Projet compile sans erreur ✅
+### 1. Select "Nouveau statut" invisible ✅
+**Avant :** Texte blanc sur blanc dans le dropdown
+**Après :** Texte noir visible avec `text-gray-900 bg-white`
+
+### 2. Tous les inputs/selects invisibles ✅
+**Corrigés dans LeadManager.tsx :**
+- Input recherche
+- Select filtre statut
+- Select filtre ville
+- Select nouveau statut
+- Input prime réalisée
+- Textarea notes
+
+### 3. Erreur migration "snippet not found" ✅
+**Problème :** Supabase ne trouve pas le snippet de migration
+**Solution :** Nouveau fichier SQL simplifié créé
 
 ---
 
-## 🔴 ACTIONS CRITIQUES À FAIRE MAINTENANT
+## 🚀 ACTIONS IMMÉDIATES (5 MINUTES)
 
-### ACTION 1 : Récupérer vos clés API Supabase
+### ÉTAPE 1 : Migration Supabase (2 min)
 
-**Vous devez mettre à jour le fichier `.env` avec vos vraies clés.**
+**N'utilisez PAS le système de migrations !**
 
-1. Allez sur : https://supabase.com/dashboard/project/viuuznfqkauatkjcegcj/settings/api
+À la place :
 
-2. Copiez ces valeurs :
-   - **Project URL** (commence par `https://viuuznfqkauatkjcegcj.supabase.co`)
-   - **anon public** (clé publique)
-   - **service_role** (clé secrète - ATTENTION : à ne jamais exposer)
+1. **Dashboard Supabase** → **SQL Editor**
+2. **New Query**
+3. **Copiez-collez** : `MIGRATION-SIMPLE-LEADS.sql`
+4. **Run**
+5. ✅ Vérifiez : Dernière ligne doit afficher 4 politiques
 
-3. Ouvrez le fichier `.env` dans votre projet et remplacez :
+**Ce fichier fait :**
+- Crée la table leads
+- Active RLS
+- Supprime anciennes politiques
+- Crée 4 nouvelles politiques
+- Crée index + trigger
 
-```env
-VITE_SUPABASE_URL=https://viuuznfqkauatkjcegcj.supabase.co
-VITE_SUPABASE_ANON_KEY=eyJhbGciOi... [VOTRE VRAIE CLÉ ANON]
-VITE_SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOi... [VOTRE VRAIE CLÉ SERVICE_ROLE]
+---
+
+### ÉTAPE 2 : Upload build (2 min)
+
+**Sur IONOS :**
+```
+/dist/* → Racine du site
 ```
 
----
-
-### ACTION 2 : Configurer les secrets pour Edge Functions
-
-**Vos Edge Functions ont besoin de 3 secrets :**
-
-1. Allez sur : https://supabase.com/dashboard/project/viuuznfqkauatkjcegcj/settings/functions
-
-2. Dans la section **"Secrets"**, cliquez sur **"Add new secret"** et ajoutez :
-
-| Clé | Valeur | Pourquoi |
-|-----|--------|----------|
-| `SENDGRID_API_KEY` | Votre clé SendGrid | Envoi automatique d'emails (lead, outreach, etc.) |
-| `OPENAI_API_KEY` | Votre clé OpenAI | Chatbot IA et génération contenu SEO |
-| `FROM_EMAIL` | `contact@taxiassur.com` | Adresse expéditeur des emails |
-
-**Comment obtenir ces clés :**
-
-- **SendGrid** : https://sendgrid.com → API Keys → Create API Key (choisir "Full Access")
-- **OpenAI** : https://platform.openai.com/api-keys → Create new secret key
+**Fichier clé :**
+- `assets/backoffice-CubLxHNM.js` (tous les fix CSS)
 
 ---
 
-### ACTION 3 : Déployer les Edge Functions
+### ÉTAPE 3 : Test (1 min)
 
-**Les 11 fonctions à déployer :**
+1. **Videz cache** : Ctrl+F5
 
-Je ne peux pas les déployer directement, mais vous avez 2 options :
+2. **Test gestion leads :**
+   - Backoffice → Gestion des Leads
+   - Cliquez sur un lead
+   - Cliquez "Modifier le Statut"
+   - ✅ Vous devez VOIR les options du select en noir
 
-#### Option A : Via l'interface Supabase (Recommandé)
-
-1. Allez sur : https://supabase.com/dashboard/project/viuuznfqkauatkjcegcj/functions
-2. Cliquez sur **"Deploy new function"**
-3. Pour chaque fonction, uploadez le dossier correspondant :
-   - `supabase/functions/chatbot/`
-   - `supabase/functions/send-email/`
-   - `supabase/functions/auto-followup/`
-   - etc. (les 11 fonctions listées)
-
-#### Option B : Via Supabase CLI
-
-```bash
-# Installer Supabase CLI
-npm install -g supabase
-
-# Se connecter
-supabase login
-
-# Lier le projet
-supabase link --project-ref viuuznfqkauatkjcegcj
-
-# Déployer toutes les fonctions
-supabase functions deploy chatbot
-supabase functions deploy send-email
-supabase functions deploy auto-followup
-supabase functions deploy webhook-email-receiver
-supabase functions deploy generate-seo-content
-supabase functions deploy cron-orchestrator
-supabase functions deploy send-outreach-emails
-supabase functions deploy email-auto-responder
-supabase functions deploy scan-backlinks
-supabase functions deploy automation-dashboard-api
-supabase functions deploy partner-scraper-outreach
-```
+3. **Test recherche :**
+   - Tapez dans "Rechercher..."
+   - ✅ Texte visible en noir
 
 ---
 
-### ACTION 4 : Vérifier RLS sur toutes les tables
+## ✅ RÉSULTAT ATTENDU
 
-1. Allez dans **SQL Editor** : https://supabase.com/dashboard/project/viuuznfqkauatkjcegcj/sql/new
-
-2. Exécutez cette requête pour vérifier l'état RLS :
-
-```sql
-SELECT
-  tablename,
-  rowsecurity as rls_enabled
-FROM pg_tables
-WHERE schemaname = 'public'
-ORDER BY tablename;
-```
-
-3. **Vérifiez que TOUTES les tables ont `rls_enabled = true`**
-
-4. Si une table n'a pas RLS, activez-le avec :
-
-```sql
-ALTER TABLE nom_de_la_table ENABLE ROW LEVEL SECURITY;
-
--- Puis créez les policies appropriées
-CREATE POLICY "Service role full access"
-  ON nom_de_la_table FOR ALL TO service_role
-  USING (true) WITH CHECK (true);
-```
+**Tous les champs sont maintenant visibles :**
+- ✅ Input recherche
+- ✅ Select statut
+- ✅ Select ville
+- ✅ Select nouveau statut (dans modal)
+- ✅ Input prime
+- ✅ Textarea notes
+- ✅ Générateur IA (inputs)
 
 ---
 
-### ACTION 5 : Tester le formulaire de devis
+## 📁 FICHIERS
 
-1. **Démarrez le serveur dev** (normalement déjà démarré automatiquement)
+**À exécuter dans Supabase :**
+- `MIGRATION-SIMPLE-LEADS.sql` ⭐
 
-2. Allez sur : http://localhost:5173
+**À uploader sur IONOS :**
+- `/dist/*` (tout)
 
-3. Remplissez le formulaire de devis avec des données de test :
-   - Nom : "Test Lead"
-   - Email : "test@example.com"
-   - Téléphone : "0612345678"
-   - Ville : "Paris"
-
-4. Vérifiez dans Supabase que le lead est bien enregistré :
-   - https://supabase.com/dashboard/project/viuuznfqkauatkjcegcj/editor
-   - Table : `leads`
-   - Vous devriez voir votre nouveau lead
+**Fichiers corrigés :**
+1. `src/backoffice/LeadManager.tsx` (6 champs)
+2. `src/backoffice/AIContentGenerator.tsx` (3 champs)
+3. Build : `backoffice-CubLxHNM.js`
 
 ---
 
-## 📊 CHECKLIST FINALE
+## 🆘 SI PROBLÈME PERSISTE
 
-Cochez au fur et à mesure :
+**Select toujours invisible :**
+1. Vérifiez que le nouveau build est chargé
+2. F12 → Network → Cherchez `backoffice-CubLxHNM.js`
+3. Ctrl+F5 pour vider le cache
 
-- [ ] `.env` mis à jour avec les vraies clés API Supabase
-- [ ] Secrets Edge Functions configurés (SENDGRID_API_KEY, OPENAI_API_KEY, FROM_EMAIL)
-- [ ] 11 Edge Functions déployées
-- [ ] RLS vérifié sur toutes les tables (toutes à `true`)
-- [ ] Formulaire de devis testé et lead enregistré dans Supabase
-
----
-
-## 🚀 APRÈS CONFIGURATION
-
-Une fois tout fait, vous aurez :
-
-1. ✅ Un système de leads 100% fonctionnel
-2. ✅ Un chatbot IA opérationnel
-3. ✅ L'envoi d'emails automatiques
-4. ✅ La prospection backlinks automatisée
-5. ✅ Le suivi et la relance des leads
-6. ✅ La génération de contenu SEO automatique
-7. ✅ Un tableau de bord d'automatisation
+**Migration échoue encore :**
+1. N'utilisez PAS le système de migrations
+2. Utilisez UNIQUEMENT SQL Editor
+3. Copiez-collez `MIGRATION-SIMPLE-LEADS.sql` directement
 
 ---
 
-## 🆘 BESOIN D'AIDE ?
+## ✅ CHECKLIST
 
-Si vous rencontrez un problème :
-
-1. **Clés API manquantes** : Vérifiez que vous avez bien copié les clés complètes (elles sont longues !)
-2. **Edge Functions qui ne se déploient pas** : Vérifiez que les secrets sont bien configurés
-3. **Formulaire qui ne fonctionne pas** : Vérifiez la console navigateur (F12) pour voir les erreurs
-4. **RLS qui bloque** : Vérifiez que la policy `service_role` existe sur la table
-
----
-
-## 📝 NOTES IMPORTANTES
-
-- **SÉCURITÉ** : Ne partagez JAMAIS votre `service_role` key publiquement
-- **COÛTS** :
-  - Supabase : Gratuit jusqu'à 500 MB DB + 2 GB bande passante
-  - SendGrid : Gratuit jusqu'à 100 emails/jour
-  - OpenAI : ~$0.002 par conversation chatbot
-- **PRODUCTION** : Quand vous passerez en production, pensez à mettre à jour les CORS dans les Edge Functions
+- [ ] Migration SQL exécutée (SQL Editor)
+- [ ] 4 politiques affichées dans résultat
+- [ ] Build uploadé sur IONOS
+- [ ] Cache vidé (Ctrl+F5)
+- [ ] Select statut : texte noir visible
+- [ ] Input recherche : texte noir visible
+- [ ] Générateur IA : inputs visibles
 
 ---
 
-**Dernière mise à jour** : Suite à votre configuration Supabase actuelle
-**Projet ID** : viuuznfqkauatkjcegcj
-**Status** : ✅ Prêt pour déploiement final
+**TOUT EST PRÊT ! 🚀**
+
+**Durée totale : 5 minutes**
+**Résultat : Tous les champs visibles en noir**
