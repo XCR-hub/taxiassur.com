@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { supabase } from './supabase';
 
 export const LeadStatusSchema = z.enum(['nouveau', 'contacte', 'devis_envoye', 'client', 'perdu']);
 
@@ -28,38 +29,39 @@ export type LeadStatus = z.infer<typeof LeadStatusSchema>;
 // Gestion des leads
 export async function getLeads(): Promise<Lead[]> {
   try {
-    const response = await fetch('/api/lead-manager.php?action=list');
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    const { data, error } = await supabase
+      .from('leads')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Supabase error:', error);
+      return [];
     }
-    
-    const result = await response.json();
-    if (result.success) {
-      return result.leads.map((lead: any) => {
-        // Convertir l'ancien format vers le nouveau si nécessaire
-        return {
-          id: lead.id || `lead-${Date.now()}`,
-          name: lead.name || 'Lead anonyme',
-          email: lead.email || '',
-          phone: lead.phone || '',
-          city: lead.city || '',
-          status: lead.status || 'taxi',
-          immatriculation: lead.immatriculation,
-          leadStatus: lead.leadStatus || 'nouveau',
-          createdAt: lead.createdAt || lead.timestamp || new Date().toISOString(),
-          updatedAt: lead.updatedAt,
-          contactedAt: lead.contactedAt,
-          devisEnvoyeAt: lead.devisEnvoyeAt,
-          clientAt: lead.clientAt,
-          primeRealisee: lead.primeRealisee,
-          notes: lead.notes,
-          source: lead.source || 'website',
-          assignedTo: lead.assignedTo
-        };
-      });
+
+    if (!data || data.length === 0) {
+      return [];
     }
-    
-    return [];
+
+    return data.map((lead: any) => ({
+      id: lead.id || `lead-${Date.now()}`,
+      name: lead.name || 'Lead anonyme',
+      email: lead.email || '',
+      phone: lead.phone || '',
+      city: lead.city || '',
+      status: lead.status || 'taxi',
+      immatriculation: lead.immatriculation || 'Non renseignée',
+      leadStatus: lead.lead_status || 'nouveau',
+      createdAt: lead.created_at || new Date().toISOString(),
+      updatedAt: lead.updated_at,
+      contactedAt: lead.contacted_at,
+      devisEnvoyeAt: lead.devis_envoye_at,
+      clientAt: lead.client_at,
+      primeRealisee: lead.prime_realisee,
+      notes: lead.notes,
+      source: lead.source || 'website',
+      assignedTo: lead.assigned_to
+    }));
   } catch (error) {
     console.error('Failed to load leads:', error);
     return [];
@@ -126,28 +128,46 @@ function getMockLeads(): Lead[] {
 }
 
 export async function updateLeadStatus(
-  leadId: string, 
-  newStatus: LeadStatus, 
+  leadId: string,
+  newStatus: LeadStatus,
   additionalData?: {
     primeRealisee?: number;
     notes?: string;
   }
 ): Promise<boolean> {
   try {
-    const response = await fetch('/api/lead-manager.php?action=update', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        id: leadId,
-        leadStatus: newStatus,
-        ...additionalData
-      })
-    });
+    const updateData: any = {
+      lead_status: newStatus,
+      updated_at: new Date().toISOString()
+    };
 
-    const result = await response.json();
-    return result.success === true;
+    if (newStatus === 'contacte') {
+      updateData.contacted_at = new Date().toISOString();
+    } else if (newStatus === 'devis_envoye') {
+      updateData.devis_envoye_at = new Date().toISOString();
+    } else if (newStatus === 'client') {
+      updateData.client_at = new Date().toISOString();
+    }
+
+    if (additionalData?.primeRealisee) {
+      updateData.prime_realisee = additionalData.primeRealisee;
+    }
+
+    if (additionalData?.notes) {
+      updateData.notes = additionalData.notes;
+    }
+
+    const { error } = await supabase
+      .from('leads')
+      .update(updateData)
+      .eq('id', leadId);
+
+    if (error) {
+      console.error('Supabase update error:', error);
+      return false;
+    }
+
+    return true;
   } catch (error) {
     console.error('Failed to update lead status:', error);
     return false;
