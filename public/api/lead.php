@@ -320,7 +320,50 @@ try {
         logEmail('Invalid client email', ['email' => $email]);
     }
 
-    // Sauvegarde lead anonymisé
+    // === INSERTION SUPABASE ===
+    $supabaseInserted = false;
+    try {
+        $supabaseUrl = 'https://drohhxrkoequjphvabvq.supabase.co';
+        $supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRyb2hoeHJrb2VxdWpwaHZhYnZxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk3ODM3NjAsImV4cCI6MjA3NTM1OTc2MH0.LP9fh10fY0nRDjpG4VW2yGZ5sT4BkiDalox8ToMbMlg';
+
+        $leadPayload = json_encode([
+            'name' => $name,
+            'email' => $email,
+            'phone' => $phone,
+            'city' => $city,
+            'status' => $status,
+            'immatriculation' => $immatriculation ?: null,
+            'source' => 'website_form'
+        ]);
+
+        $ch = curl_init($supabaseUrl . '/rest/v1/leads');
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $leadPayload);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Content-Type: application/json',
+            'apikey: ' . $supabaseKey,
+            'Authorization: Bearer ' . $supabaseKey,
+            'Prefer: return=minimal'
+        ]);
+
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        $supabaseInserted = ($httpCode >= 200 && $httpCode < 300);
+
+        logEmail('Supabase insert', [
+            'success' => $supabaseInserted,
+            'http_code' => $httpCode,
+            'response' => $response
+        ]);
+
+    } catch (Throwable $e) {
+        logEmail('Supabase error', ['error' => $e->getMessage()]);
+    }
+
+    // Sauvegarde lead anonymisé (backup)
     try {
         $leadData = [
             'id' => uniqid('lead_', true),
@@ -328,18 +371,19 @@ try {
             'city' => $city,
             'timestamp' => date('c'),
             'source' => 'website_form',
+            'supabase_inserted' => $supabaseInserted,
             'emails_sent' => [
                 'commercial' => $commercialSent,
                 'tcerda' => $tcerdaSent,
                 'client' => $clientSent
             ]
         ];
-        
+
         $leadDir = dirname(__DIR__) . '/content/leads/' . date('Ym');
         if (!is_dir($leadDir)) {
             @mkdir($leadDir, 0755, true);
         }
-        
+
         $leadFile = $leadDir . '/lead-' . $leadData['id'] . '.json';
         @file_put_contents($leadFile, json_encode($leadData, JSON_PRETTY_PRINT), LOCK_EX);
     } catch (Throwable $e) {
@@ -351,6 +395,7 @@ try {
         'success' => true,
         'ok' => true,
         'message' => 'Demande traitée avec succès - IONOS 2024',
+        'supabase_inserted' => $supabaseInserted,
         'email_status' => [
             'commercial_sent' => $commercialSent,
             'tcerda_sent' => $tcerdaSent,
@@ -367,6 +412,7 @@ try {
         'debug_info' => [
             'total_emails_attempted' => 3,
             'total_emails_sent' => ($commercialSent ? 1 : 0) + ($tcerdaSent ? 1 : 0) + ($clientSent ? 1 : 0),
+            'supabase_status' => $supabaseInserted ? 'inserted' : 'failed',
             'timestamp' => date('c')
         ]
     ], JSON_PRETTY_PRINT);
@@ -376,6 +422,7 @@ try {
         'commercial_sent' => $commercialSent,
         'tcerda_sent' => $tcerdaSent,
         'client_sent' => $clientSent,
+        'supabase_inserted' => $supabaseInserted,
         'from_email_used' => FROM_EMAIL,
         'ionos_compliant' => true
     ]);
