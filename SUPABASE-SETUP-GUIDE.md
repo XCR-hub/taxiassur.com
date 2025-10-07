@@ -1,27 +1,235 @@
-# 🚀 GUIDE CONFIGURATION SUPABASE - TAXIASSUR
+# 🚀 GUIDE CONFIGURATION SUPABASE - TAXIASSUR (NOUVEAU PROJET)
 
-## ✅ ÉTAPE 1 : Connexion configurée !
+## 📋 ÉTAPE 1 : CRÉER UN NOUVEAU PROJET SUPABASE
 
-Vos clés sont maintenant dans `.env` :
+### 1.1 Créer le projet
+
+1. Allez sur https://supabase.com/dashboard
+2. Cliquez sur **"New Project"**
+3. Remplissez les informations :
+   - **Name** : `taxiassur-production`
+   - **Database Password** : Choisissez un mot de passe FORT (sauvegardez-le !)
+   - **Region** : `West EU (Ireland)` (le plus proche de la France)
+   - **Pricing Plan** : Free
+4. Cliquez sur **"Create new project"**
+
+⏱️ **Attendez 2-3 minutes** que le projet soit créé.
+
+---
+
+## 📋 ÉTAPE 2 : RÉCUPÉRER VOS NOUVELLES CLÉS API
+
+### 2.1 Accéder aux clés
+
+1. Dans votre nouveau projet Supabase, cliquez sur **"Project Settings"** (icône engrenage)
+2. Cliquez sur **"API"** dans le menu de gauche
+3. Vous verrez :
+
 ```
-VITE_SUPABASE_URL=https://viuuznfqkauatkjcegcj.supabase.co
-VITE_SUPABASE_ANON_KEY=eyJhbGciOiJI...
+Project URL: https://xxxxxxxxxxxxx.supabase.co
+anon public: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+service_role: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+### 2.2 Notez ces valeurs
+
+**IMPORTANT :** Gardez ces valeurs, vous allez les utiliser !
+
+---
+
+## 📋 ÉTAPE 3 : EXÉCUTER LA MIGRATION SQL COMPLÈTE
+
+### 3.1 Ouvrir le SQL Editor
+
+1. Dans votre projet Supabase, cliquez sur **"SQL Editor"** dans le menu
+2. Cliquez sur **"New query"**
+
+### 3.2 Exécuter la migration initiale
+
+**Copiez TOUT le contenu du fichier** `supabase/migrations/00_initial_setup.sql`
+
+Ou utilisez le lien direct de votre SQL Editor :
+**👉 https://supabase.com/dashboard/project/VOTRE_REF/sql/new**
+
+Collez le code et cliquez **"RUN"** (ou Ctrl + Entrée)
+
+✅ Vous devriez voir : **"Success. No rows returned"**
+
+### 3.3 Vérifier que tout est créé
+
+Exécutez cette requête :
+
+```sql
+-- Vérifier la table leads
+SELECT COUNT(*) FROM leads;
+
+-- Vérifier les politiques RLS
+SELECT tablename, policyname, roles, cmd
+FROM pg_policies
+WHERE tablename = 'leads';
+
+-- Vérifier les vues
+SELECT * FROM leads_stats;
+```
+
+**Résultat attendu :**
+- Table `leads` avec 0 lignes ✅
+- 3 politiques RLS actives ✅
+- Vue `leads_stats` fonctionnelle ✅
+
+---
+
+## 📋 ÉTAPE 4 : CONFIGURER LES VARIABLES D'ENVIRONNEMENT
+
+### 4.1 Mettre à jour `.env` (développement local)
+
+Éditez le fichier `.env` à la racine du projet avec VOS NOUVELLES clés :
+
+```env
+VITE_SUPABASE_URL=https://VOTRE_NOUVELLE_URL.supabase.co
+VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.VOTRE_NOUVELLE_CLE
+```
+
+### 4.2 Mettre à jour `public/env-config.js` (production IONOS)
+
+Éditez le fichier `public/env-config.js` avec VOS NOUVELLES clés :
+
+```javascript
+// Configuration Supabase pour la production
+window.ENV = {
+  VITE_SUPABASE_URL: 'https://VOTRE_NOUVELLE_URL.supabase.co',
+  VITE_SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.VOTRE_NOUVELLE_CLE'
+};
 ```
 
 ---
 
-## 📊 ÉTAPE 2 : Appliquer les 4 migrations SQL
+## 📋 ÉTAPE 5 : DÉPLOYER L'EDGE FUNCTION SEND-EMAIL
 
-Vous devez copier-coller chaque fichier SQL dans Supabase Dashboard.
+### 5.1 Installer Supabase CLI
 
-### 🔗 URL Supabase SQL Editor :
-**👉 https://viuuznfqkauatkjcegcj.supabase.co/project/_/sql/new**
+```bash
+npm install -g supabase
+```
+
+### 5.2 Se connecter à Supabase
+
+```bash
+supabase login
+```
+
+### 5.3 Lier votre projet
+
+```bash
+supabase link --project-ref VOTRE_REF_PROJET
+```
+
+(Remplacez VOTRE_REF_PROJET par les lettres dans votre URL Supabase)
+
+### 5.4 Déployer la fonction send-email
+
+```bash
+supabase functions deploy send-email
+```
+
+### 5.5 Ajouter le secret SendGrid
+
+1. Allez dans **Project Settings** > **Edge Functions** > **Secrets**
+2. Cliquez **"Add secret"**
+3. Name : `SENDGRID_API_KEY`
+4. Value : Votre clé API SendGrid (commence par `SG.`)
+5. Cliquez **"Save"**
 
 ---
 
-### Migration 1/4 : Système Backlinks
+## 📋 ÉTAPE 6 : TESTER LE FORMULAIRE EN LOCAL
 
-**Fichier :** `supabase/migrations/20251006014504_create_backlink_opportunities_system.sql`
+### 6.1 Rebuild le projet
+
+```bash
+npm run build
+```
+
+### 6.2 Lancer le serveur dev
+
+```bash
+npm run dev
+```
+
+### 6.3 Tester la soumission
+
+1. Ouvrez http://localhost:5173
+2. Remplissez le formulaire
+3. Soumettez
+
+### 6.4 Vérifier dans Supabase
+
+1. Allez dans **"Table Editor"** > **"leads"**
+2. Vous devriez voir votre nouveau lead !
+
+---
+
+## 📋 ÉTAPE 7 : DÉPLOYER EN PRODUCTION
+
+### 7.1 Rebuild final
+
+```bash
+npm run build
+```
+
+### 7.2 Upload sur IONOS
+
+1. Connectez-vous à votre serveur IONOS via FileZilla
+2. Uploadez **tout le contenu du dossier `/dist`** vers la racine
+3. Vérifiez que `env-config.js` est bien présent
+
+### 7.3 Tester en production
+
+1. Allez sur https://taxiassur.com
+2. Testez le formulaire
+3. Vérifiez dans Supabase que le lead apparaît
+
+---
+
+## ✅ VÉRIFICATION COMPLÈTE
+
+### Test 1 : Insertion directe (console navigateur)
+
+```javascript
+// Sur taxiassur.com, console (F12)
+fetch('https://VOTRE_URL.supabase.co/rest/v1/leads', {
+  method: 'POST',
+  headers: {
+    'apikey': 'VOTRE_ANON_KEY',
+    'Authorization': 'Bearer VOTRE_ANON_KEY',
+    'Content-Type': 'application/json',
+    'Prefer': 'return=representation'
+  },
+  body: JSON.stringify({
+    name: 'Test Console',
+    email: 'test@console.com',
+    phone: '0612345678',
+    city: 'Paris',
+    status: 'taxi'
+  })
+}).then(r => r.json()).then(console.log);
+```
+
+**Résultat attendu :** Un objet avec l'ID créé ✅
+
+### Test 2 : Statistiques
+
+```sql
+SELECT * FROM leads_stats;
+```
+
+**Résultat attendu :** Une ligne avec vos statistiques ✅
+
+---
+
+## 📊 MIGRATIONS OPTIONNELLES (Système Backlinks)
+
+Si vous voulez activer le système de backlinks automatique
 
 **Ce que ça crée :**
 - ✅ Table `backlink_opportunities` (10 prospects pré-chargés)
