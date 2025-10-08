@@ -23,8 +23,8 @@ window.ENV = {
   // Format: G-XXXXXXXXXX
   // ========================================
   VITE_GTAG_ID: 'G-VDR9C5QDLD',
-  VITE_GA_MEASUREMENT_ID=G-VDR9C5QDLD
-  VITE_PAGESPEED_API_KEY=AIzaSyB1wcpdbB3AJW0Mxx6tihEVVjPsIIFY-9o
+  VITE_GA_MEASUREMENT_ID: 'G-VDR9C5QDLD',
+  VITE_PAGESPEED_API_KEY: 'AIzaSyB1wcpdbB3AJW0Mxx6tihEVVjPsIIFY-9o',
 
   // ========================================
   // GOOGLE TAG MANAGER - ⚠️ À CONFIGURER
@@ -47,7 +47,17 @@ window.ENV = {
   //------------------------------------------
   // SerpAPI (Analyseur Tendances) - Optionnel
   //==========================================
-VITE_SERP_API_KEY='420c1db639f7961f89b578da9be23a76cd16795664103b95019a432026555202'
+  VITE_SERP_API_KEY: '420c1db639f7961f89b578da9be23a76cd16795664103b95019a432026555202',
+
+  //------------------------------------------
+  // Make.com API Token - Automations Webhooks
+  //==========================================
+  VITE_MAKE_API_TOKEN: '507a717b-3a95-483e-8fa0-215cff5c48f2',
+
+  //------------------------------------------
+  // OpenAI API Key - Générateur IA & ChatBot
+  //==========================================
+  VITE_OPENAI_API_KEY: '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'
 
 };
 
