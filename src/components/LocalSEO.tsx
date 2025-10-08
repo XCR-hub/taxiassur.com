@@ -37,42 +37,41 @@ const LocalSEO: React.FC = () => {
   return (
     <section className="section-padding bg-gradient-to-br from-gray-950 via-gray-900 to-black text-white relative overflow-hidden">
       <div className="container-max">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4 relative z-10">
-            🗺️ Assurance Taxi <span className="text-gradient">dans Toute la France</span>
+        <div className="text-center mb-8 sm:mb-12 px-4">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 sm:mb-4 relative z-10 leading-tight">
+            🗺️ Assurance Taxi <span className="text-gradient">en France</span>
           </h2>
-          <p className="text-lg text-gray-200 max-w-2xl mx-auto relative z-10">
-            Courtier assurance taxi présent dans toute la France. Tarifs assurance taxi adaptés par région, 
-            expertise locale et service de proximité garanti.
+          <p className="text-sm sm:text-base md:text-lg text-gray-200 max-w-2xl mx-auto relative z-10">
+            Courtier présent partout en France. Tarifs adaptés par région.
           </p>
         </div>
 
         {/* Top cities grid */}
-        <div className="grid grid-cols-5 gap-3 mb-12 relative z-10 max-w-5xl mx-auto">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-3 mb-8 sm:mb-12 relative z-10 max-w-5xl mx-auto px-4">
           {topCities.slice(0, 20).map((city, index) => (
             <Link
               key={index}
               to={`/ville/${city.slug}`}
-              className="group bg-gray-800 hover:bg-gray-700 border-2 border-amber-500 hover:border-amber-400 rounded-lg p-4 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+              className="group bg-gray-800 hover:bg-gray-700 border-2 border-amber-500 hover:border-amber-400 rounded-lg p-2 sm:p-3 md:p-4 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
             >
               <div className="text-center">
-                <div className="w-6 h-6 bg-amber-500 rounded-lg flex items-center justify-center mx-auto mb-2 shadow-lg">
-                  <MapPin className="text-black" size={12} />
+                <div className="w-5 h-5 sm:w-6 sm:h-6 bg-amber-500 rounded-lg flex items-center justify-center mx-auto mb-1 sm:mb-2 shadow-lg">
+                  <MapPin className="text-black" size={10} />
                 </div>
-                <h3 className="text-sm font-bold text-white group-hover:text-amber-300 transition-colors mb-1">
+                <h3 className="text-xs sm:text-sm font-bold text-white group-hover:text-amber-300 transition-colors mb-1">
                   {city.name}
                 </h3>
-                <div className="text-xs text-amber-400 group-hover:text-amber-300 transition-colors font-medium mb-2">
-                  Devis gratuit →
+                <div className="text-xs text-amber-400 group-hover:text-amber-300 transition-colors font-medium mb-1 sm:mb-2">
+                  Devis →
                 </div>
                 <div className="grid grid-cols-2 gap-1 text-xs">
                   <div>
-                    <div className="text-blue-400 font-bold">{city.clients}</div>
-                    <div className="text-gray-600">Clients</div>
+                    <div className="text-blue-400 font-bold text-xs">{city.clients}</div>
+                    <div className="text-gray-600 text-xs hidden sm:block">Clients</div>
                   </div>
                   <div>
-                    <div className="text-green-400 font-bold">{city.savings}</div>
-                    <div className="text-gray-600">Éco.</div>
+                    <div className="text-green-400 font-bold text-xs">{city.savings}</div>
+                    <div className="text-gray-600 text-xs hidden sm:block">Éco.</div>
                   </div>
                 </div>
               </div>

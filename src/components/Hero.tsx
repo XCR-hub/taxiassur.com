@@ -89,31 +89,31 @@ const Hero: React.FC = () => {
       <div className="container-max relative z-20">
         <div className="lg:flex lg:items-center lg:space-x-12">
           {/* Left Column: Content */}
-          <div className="lg:w-1/2 mb-12 lg:mb-0">
+          <div className="lg:w-1/2 mb-8 lg:mb-0 px-4">
             {/* Badge ORIAS */}
-            <div className="mb-8">
-              <div className="inline-flex items-center space-x-3 bg-gradient-to-r from-amber-500/20 to-yellow-500/20 px-6 py-3 rounded-2xl border border-amber-500/40 backdrop-blur-sm">
-                <Shield className="text-amber-400 drop-shadow-lg" size={20} />
-                <span className="text-amber-300 font-bold text-sm tracking-wide drop-shadow-md">COURTIER AGRÉÉ ORIAS 11 061 425</span>
+            <div className="mb-6 sm:mb-8">
+              <div className="inline-flex items-center space-x-2 sm:space-x-3 bg-gradient-to-r from-amber-500/20 to-yellow-500/20 px-3 sm:px-6 py-2 sm:py-3 rounded-2xl border border-amber-500/40 backdrop-blur-sm">
+                <Shield className="text-amber-400 drop-shadow-lg" size={16} />
+                <span className="text-amber-300 font-bold text-xs sm:text-sm tracking-wide drop-shadow-md">COURTIER ORIAS</span>
                 <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
               </div>
             </div>
-            
+
             {/* Main Title */}
-            <h1 className="text-4xl md:text-5xl font-bold mb-6 drop-shadow-lg leading-tight">
-              <span className="text-3xl md:text-4xl">Assurance Taxi</span> <span className="text-gradient text-3xl md:text-4xl">Pas Cher</span>
+            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-4 sm:mb-6 drop-shadow-lg leading-tight">
+              <span>Assurance Taxi</span> <span className="text-gradient">Pas Cher</span>
               <br />
-              <span className="text-amber-400 text-3xl md:text-4xl">Devis Gratuit 2 min</span>
+              <span className="text-amber-400">Devis Gratuit 2 min</span>
             </h1>
-            
+
             {/* Subtitle with benefits */}
-            <p className="text-base text-amber-300 font-bold mb-6 drop-shadow-md">
-              Courtier ORIAS • -35% Garanti • RC Pro Incluse • Réponse 15min
+            <p className="text-xs sm:text-sm md:text-base text-amber-300 font-bold mb-4 sm:mb-6 drop-shadow-md">
+              ORIAS • -35% • RC Pro • 15min
             </p>
 
             {/* SEO Rich Content - 250+ words */}
-            <div className="mb-8 space-y-3 bg-gray-900/40 backdrop-blur-sm rounded-xl p-5 border border-gray-700/50">
-              <p className="text-sm text-gray-200 leading-relaxed">
+            <div className="mb-6 sm:mb-8 space-y-2 sm:space-y-3 bg-gray-900/40 backdrop-blur-sm rounded-xl p-3 sm:p-5 border border-gray-700/50">
+              <p className="text-xs sm:text-sm text-gray-200 leading-relaxed">
                 <strong className="text-amber-400">TaxiAssur</strong> est le <strong className="text-blue-400">courtier spécialisé en assurance taxi</strong> leader en France.
                 Notre expertise unique depuis septembre 2025 nous permet de négocier les <strong className="text-green-400">meilleurs tarifs d'assurance taxi</strong> du marché.
               </p>
@@ -162,35 +162,35 @@ const Hero: React.FC = () => {
             </div>
 
             {/* Stats Row */}
-            <div className="grid grid-cols-3 gap-4 mb-6">
-              <div className="text-center bg-green-600 hover:bg-green-700 rounded-xl p-4 border-2 border-green-500 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer">
-                <TrendingDown className="mx-auto mb-2 text-white drop-shadow-lg" size={20} />
-                <div className="text-2xl font-bold text-green-400 drop-shadow-lg">-35%</div>
-                <div className="text-xs text-white font-medium drop-shadow-md">Économies</div>
+            <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-4 sm:mb-6">
+              <div className="text-center bg-green-600 hover:bg-green-700 rounded-lg sm:rounded-xl p-2 sm:p-4 border-2 border-green-500 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer">
+                <TrendingDown className="mx-auto mb-1 sm:mb-2 text-white drop-shadow-lg" size={16} />
+                <div className="text-lg sm:text-2xl font-bold text-green-400 drop-shadow-lg">-35%</div>
+                <div className="text-xs text-white font-medium drop-shadow-md hidden sm:block">Économies</div>
               </div>
-              <div className="text-center bg-amber-600 hover:bg-amber-700 rounded-xl p-4 border-2 border-amber-500 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer">
-                <Star className="mx-auto mb-2 text-white fill-current drop-shadow-lg" size={20} />
-                <div className="text-2xl font-bold text-amber-400 drop-shadow-lg">100+</div>
-                <div className="text-xs text-white font-medium drop-shadow-md">Clients actifs</div>
+              <div className="text-center bg-amber-600 hover:bg-amber-700 rounded-lg sm:rounded-xl p-2 sm:p-4 border-2 border-amber-500 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer">
+                <Star className="mx-auto mb-1 sm:mb-2 text-white fill-current drop-shadow-lg" size={16} />
+                <div className="text-lg sm:text-2xl font-bold text-amber-400 drop-shadow-lg">100+</div>
+                <div className="text-xs text-white font-medium drop-shadow-md hidden sm:block">Clients</div>
               </div>
-              <div className="text-center bg-blue-600 hover:bg-blue-700 rounded-xl p-4 border-2 border-blue-500 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer">
-                <Zap className="mx-auto mb-2 text-white drop-shadow-lg" size={20} />
-                <div className="text-2xl font-bold text-blue-400 drop-shadow-lg">15min</div>
-                <div className="text-xs text-white font-medium drop-shadow-md">Réponse</div>
+              <div className="text-center bg-blue-600 hover:bg-blue-700 rounded-lg sm:rounded-xl p-2 sm:p-4 border-2 border-blue-500 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer">
+                <Zap className="mx-auto mb-1 sm:mb-2 text-white drop-shadow-lg" size={16} />
+                <div className="text-lg sm:text-2xl font-bold text-blue-400 drop-shadow-lg">15min</div>
+                <div className="text-xs text-white font-medium drop-shadow-md hidden sm:block">Réponse</div>
               </div>
             </div>
 
             {/* Phone CTA */}
-            <div className="text-center mt-6">
-              <button 
-                href="tel:0180855786" 
+            <div className="text-center mt-4 sm:mt-6">
+              <button
+                href="tel:0180855786"
                 onClick={() => window.open('tel:0180855786')}
-                className="inline-flex items-center space-x-3 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-black font-bold py-3 px-6 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl border-2 border-yellow-400 hover:scale-105"
+                className="inline-flex items-center space-x-2 sm:space-x-3 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-black font-bold py-2 sm:py-3 px-4 sm:px-6 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl border-2 border-yellow-400 hover:scale-105"
               >
                 📞
                 <div className="text-left">
-                  <div className="text-lg font-bold">01 80 85 57 86</div>
-                  <div className="text-xs opacity-90">Ligne directe expert</div>
+                  <div className="text-base sm:text-lg font-bold">01 80 85 57 86</div>
+                  <div className="text-xs opacity-90 hidden sm:block">Ligne directe expert</div>
                 </div>
               </button>
             </div>

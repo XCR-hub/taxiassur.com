@@ -149,11 +149,11 @@ const CityPage: React.FC = () => {
                   </div>
                 </div>
                 
-                <h1 className="text-4xl md:text-6xl font-bold mb-6 drop-shadow-lg">
+                <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 sm:mb-6 drop-shadow-lg leading-tight">
                   Assurance Taxi <span className="text-gradient">{cityData.city}</span>
                 </h1>
                 
-                <p className="text-2xl text-gray-200 mb-8 leading-relaxed drop-shadow-md">
+                <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-gray-200 mb-6 sm:mb-8 leading-relaxed drop-shadow-md px-4">
                   🚖 <strong className="text-blue-400">Trouvez la meilleure assurance taxi à {cityData.city}</strong> avec TaxiAssur. 
                   <strong className="text-amber-400">Devis gratuit personnalisé</strong>, 
                   <strong className="text-green-400">tarifs négociés exclusifs</strong> et 
@@ -161,30 +161,30 @@ const CityPage: React.FC = () => {
                 </p>
                 
                 {/* Enhanced Stats locales */}
-                <div className="grid grid-cols-3 gap-6 max-w-lg mx-auto mb-8">
-                  <div className="ai-card p-6 hover:shadow-amber-500/40 transition-all duration-300 group">
-                    <div className="text-3xl font-bold text-amber-400 mb-2 drop-shadow-lg group-hover:scale-110 transition-transform">{cityStats.taxis}</div>
-                    <div className="text-sm text-gray-300 drop-shadow-md">Taxis actifs</div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 md:gap-6 max-w-lg mx-auto mb-6 sm:mb-8 px-4">
+                  <div className="ai-card p-4 sm:p-6 hover:shadow-amber-500/40 transition-all duration-300 group">
+                    <div className="text-2xl sm:text-3xl font-bold text-amber-400 mb-1 sm:mb-2 drop-shadow-lg group-hover:scale-110 transition-transform">{cityStats.taxis}</div>
+                    <div className="text-xs sm:text-sm text-gray-300 drop-shadow-md">Taxis actifs</div>
                     <div className="text-xs text-amber-400 drop-shadow-md">Marché local</div>
                   </div>
-                  <div className="ai-card p-6 hover:shadow-green-500/40 transition-all duration-300 group">
-                    <div className="text-3xl font-bold text-green-400 mb-2 drop-shadow-lg group-hover:scale-110 transition-transform">{cityStats.clients}+</div>
-                    <div className="text-sm text-gray-300 drop-shadow-md">Clients TaxiAssur</div>
+                  <div className="ai-card p-4 sm:p-6 hover:shadow-green-500/40 transition-all duration-300 group">
+                    <div className="text-2xl sm:text-3xl font-bold text-green-400 mb-1 sm:mb-2 drop-shadow-lg group-hover:scale-110 transition-transform">{cityStats.clients}+</div>
+                    <div className="text-xs sm:text-sm text-gray-300 drop-shadow-md">Clients TaxiAssur</div>
                     <div className="text-xs text-green-400 drop-shadow-md">Depuis Sept 2025</div>
                   </div>
-                  <div className="ai-card p-6 hover:shadow-blue-500/40 transition-all duration-300 group">
-                    <div className="text-3xl font-bold text-blue-400 mb-2 drop-shadow-lg group-hover:scale-110 transition-transform">-{cityStats.savings}</div>
-                    <div className="text-sm text-gray-300 drop-shadow-md">Économie moy.</div>
+                  <div className="ai-card p-4 sm:p-6 hover:shadow-blue-500/40 transition-all duration-300 group">
+                    <div className="text-2xl sm:text-3xl font-bold text-blue-400 mb-1 sm:mb-2 drop-shadow-lg group-hover:scale-110 transition-transform">-{cityStats.savings}</div>
+                    <div className="text-xs sm:text-sm text-gray-300 drop-shadow-md">Économie moy.</div>
                     <div className="text-xs text-blue-400 drop-shadow-md">{cityStats.avgSaving}/an</div>
                   </div>
                 </div>
                 
-                <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                  <a href="#devis" className="btn-primary">
-                    🎯 Devis Assurance Taxi {cityData.city} Gratuit
+                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center px-4">
+                  <a href="#devis" className="btn-primary text-sm sm:text-base">
+                    🎯 Devis {cityData.city} Gratuit
                   </a>
-                  <a href="tel:0180855786" className="btn-outline">
-                    📞 Expert {cityData.city} : 01 80 85 57 86
+                  <a href="tel:0180855786" className="btn-outline text-sm sm:text-base">
+                    📞 01 80 85 57 86
                   </a>
                 </div>
                 
@@ -199,33 +199,33 @@ const CityPage: React.FC = () => {
           <section className="section-padding bg-gradient-to-br from-gray-900 to-gray-800 relative overflow-hidden">
             <AITaxiBackground section="content" intensity="medium" />
             <div className="container-max">
-              <div className="text-center mb-16">
-                <div className="flex items-center justify-center space-x-3 mb-6">
-                  <Crown className="text-amber-400 animate-bounce drop-shadow-lg" size={32} />
-                  <h2 className="text-3xl md:text-4xl font-bold text-white drop-shadow-lg">
-                    Pourquoi Choisir TaxiAssur à <span className="text-gradient">{cityData.city}</span> ?
+              <div className="text-center mb-12 sm:mb-16 px-4">
+                <div className="flex items-center justify-center space-x-2 sm:space-x-3 mb-4 sm:mb-6">
+                  <Crown className="text-amber-400 animate-bounce drop-shadow-lg" size={24} />
+                  <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white drop-shadow-lg leading-tight">
+                    Pourquoi TaxiAssur à <span className="text-gradient">{cityData.city}</span> ?
                   </h2>
-                  <Gift className="text-amber-400 animate-pulse drop-shadow-lg" size={32} />
+                  <Gift className="text-amber-400 animate-pulse drop-shadow-lg" size={24} />
                 </div>
-                <p className="text-xl text-gray-200 max-w-3xl mx-auto drop-shadow-md">
+                <p className="text-base sm:text-lg md:text-xl text-gray-200 max-w-3xl mx-auto drop-shadow-md">
                   🎯 <strong className="text-amber-400">Expertise locale reconnue</strong> et 
                   <strong className="text-green-400">solutions sur-mesure</strong> adaptées aux spécificités 
                   du marché taxi de <strong className="text-blue-400">{cityData.city}</strong>.
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-16">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 md:gap-8 mb-12 sm:mb-16 px-4">
                 {localBenefits.map((benefit, index) => {
                   const IconComponent = benefit.icon;
                   return (
-                    <div key={index} className="ai-card p-8 text-center hover:shadow-amber-500/40 hover:border-amber-500/50 transition-all duration-300 group">
-                      <div className={`inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br ${benefit.color} mb-6 shadow-2xl group-hover:scale-110 transition-transform taxi-glow`}>
-                        <IconComponent className="text-white drop-shadow-md" size={32} />
+                    <div key={index} className="ai-card p-4 sm:p-6 md:p-8 text-center hover:shadow-amber-500/40 hover:border-amber-500/50 transition-all duration-300 group">
+                      <div className={`inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-br ${benefit.color} mb-4 sm:mb-6 shadow-2xl group-hover:scale-110 transition-transform taxi-glow`}>
+                        <IconComponent className="text-white drop-shadow-md" size={28} />
                       </div>
-                      <h3 className="text-xl font-bold text-white mb-4 group-hover:text-amber-300 transition-colors drop-shadow-lg">
+                      <h3 className="text-base sm:text-lg md:text-xl font-bold text-white mb-2 sm:mb-4 group-hover:text-amber-300 transition-colors drop-shadow-lg">
                         {benefit.title}
                       </h3>
-                      <p className="text-gray-300 leading-relaxed drop-shadow-md">
+                      <p className="text-sm sm:text-base text-gray-300 leading-relaxed drop-shadow-md">
                         {benefit.description}
                       </p>
                     </div>
@@ -234,17 +234,17 @@ const CityPage: React.FC = () => {
               </div>
 
               {/* Enhanced CTA Section */}
-              <div className="text-center">
-                <div className="ai-card p-8 max-w-3xl mx-auto taxi-glow">
-                  <h3 className="text-2xl font-bold text-gradient mb-4 drop-shadow-lg">
-                    🚀 Rejoignez les Chauffeurs Taxi de {cityData.city} qui Économisent avec TaxiAssur
+              <div className="text-center px-4">
+                <div className="ai-card p-4 sm:p-6 md:p-8 max-w-3xl mx-auto taxi-glow">
+                  <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-gradient mb-3 sm:mb-4 drop-shadow-lg">
+                    🚀 Rejoignez les Chauffeurs de {cityData.city}
                   </h3>
-                  <p className="text-gray-200 mb-6 text-lg drop-shadow-md">
-                    Découvrez pourquoi nos clients de {cityData.city} nous recommandent et 
-                    obtenez votre devis personnalisé dès maintenant.
+                  <p className="text-sm sm:text-base md:text-lg text-gray-200 mb-4 sm:mb-6 drop-shadow-md">
+                    Découvrez pourquoi nos clients de {cityData.city} nous recommandent et
+                    obtenez votre devis personnalisé gratuitement.
                   </p>
-                  <a href="#devis" className="btn-primary">
-                    🎯 OBTENIR MON DEVIS TAXI {cityData.city.toUpperCase()} GRATUIT
+                  <a href="#devis" className="btn-primary text-sm sm:text-base">
+                    🎯 Devis {cityData.city} Gratuit
                   </a>
                 </div>
               </div>
@@ -256,19 +256,19 @@ const CityPage: React.FC = () => {
             <AITaxiBackground section="content" intensity="low" />
             <div className="container-max">
               <div className="max-w-6xl mx-auto">
-                <div className="text-center mb-16">
-                  <h2 className="text-3xl md:text-4xl font-bold text-white mb-4 drop-shadow-lg">
-                    🎯 Spécificités Assurance Taxi <span className="text-gradient">{cityData.city}</span>
+                <div className="text-center mb-12 sm:mb-16 px-4">
+                  <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-3 sm:mb-4 drop-shadow-lg leading-tight">
+                    🎯 Spécificités {cityData.city}
                   </h2>
-                  <p className="text-xl text-gray-200 max-w-3xl mx-auto drop-shadow-md">
-                    Des services pensés spécialement pour les professionnels du taxi de {cityData.city} et sa région.
+                  <p className="text-base sm:text-lg md:text-xl text-gray-200 max-w-3xl mx-auto drop-shadow-md">
+                    Services pensés pour les taxis de {cityData.city}.
                   </p>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-                  <div className="ai-card p-8 hover:shadow-green-500/40 transition-all duration-300">
-                    <h3 className="text-2xl font-bold text-white mb-6 drop-shadow-lg">
-                      🛡️ Services Inclus à {cityData.city}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 md:gap-12 px-4">
+                  <div className="ai-card p-4 sm:p-6 md:p-8 hover:shadow-green-500/40 transition-all duration-300">
+                    <h3 className="text-xl sm:text-2xl font-bold text-white mb-4 sm:mb-6 drop-shadow-lg">
+                      🛡️ Services {cityData.city}
                     </h3>
                     <div className="space-y-4">
                       {localFeatures.map((feature, index) => (

@@ -9,19 +9,19 @@ const SEOContent: React.FC = () => {
       <div className="container-max">
         <div className="max-w-6xl mx-auto">
           {/* Enhanced SEO Header */}
-          <div className="text-center mb-16">
-            <div className="flex items-center justify-center space-x-3 mb-6">
-              <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-yellow-500 rounded-xl flex items-center justify-center shadow-2xl taxi-glow">
-                <Shield className="text-black drop-shadow-md" size={24} />
+          <div className="text-center mb-12 sm:mb-16 px-4">
+            <div className="flex items-center justify-center space-x-2 sm:space-x-3 mb-4 sm:mb-6">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-amber-500 to-yellow-500 rounded-xl flex items-center justify-center shadow-2xl taxi-glow">
+                <Shield className="text-black drop-shadow-md" size={20} />
               </div>
-              <h2 className="text-3xl md:text-4xl font-bold text-white drop-shadow-lg">
-                Assurance Taxi <span className="text-gradient">Professionnelle</span>
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white drop-shadow-lg leading-tight">
+                Assurance Taxi <span className="text-gradient">Pro</span>
               </h2>
-              <div className="w-12 h-12 bg-gradient-to-br from-yellow-500 to-amber-500 rounded-xl flex items-center justify-center shadow-2xl taxi-glow">
-                <Award className="text-black animate-pulse drop-shadow-md" size={24} />
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-yellow-500 to-amber-500 rounded-xl flex items-center justify-center shadow-2xl taxi-glow">
+                <Award className="text-black animate-pulse drop-shadow-md" size={20} />
               </div>
             </div>
-            <p className="text-xl text-gray-200 max-w-3xl mx-auto leading-relaxed drop-shadow-md">
+            <p className="text-sm sm:text-base md:text-lg lg:text-xl text-gray-200 max-w-3xl mx-auto leading-relaxed drop-shadow-md">
               🎯 <strong className="text-amber-400">Guide complet 2025</strong> pour choisir la meilleure 
               <strong className="text-blue-400">assurance taxi professionnelle</strong>. 
               <strong className="text-green-400">Conseils d'experts</strong> et comparatifs détaillés.
@@ -29,23 +29,23 @@ const SEOContent: React.FC = () => {
           </div>
 
           {/* Main SEO content */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 mb-16">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8 md:gap-12 mb-12 sm:mb-16 px-4">
             {/* Primary content */}
             <div className="lg:col-span-2 space-y-8">
-              <div className="ai-card p-8 hover:shadow-amber-500/40 transition-all duration-300">
-                <h3 className="text-2xl font-bold text-white mb-6 drop-shadow-lg">
-                  Assurance Taxi Professionnelle : Guide Complet 2025
+              <div className="ai-card p-4 sm:p-6 md:p-8 hover:shadow-amber-500/40 transition-all duration-300">
+                <h3 className="text-xl sm:text-2xl font-bold text-white mb-4 sm:mb-6 drop-shadow-lg leading-tight">
+                  Guide Complet 2025
                 </h3>
-                <p className="text-lg text-gray-300 leading-relaxed mb-6 drop-shadow-md">
+                <p className="text-sm sm:text-base md:text-lg text-gray-300 leading-relaxed mb-4 sm:mb-6 drop-shadow-md">
                   L'<strong className="text-amber-400">assurance taxi</strong> est obligatoire pour exercer votre activité de chauffeur de taxi en France. 
                   En tant que <strong className="text-blue-400">courtier assurance taxi</strong> spécialisé depuis 15 ans, TaxiAssur vous accompagne 
                   pour trouver la meilleure <strong className="text-green-400">assurance taxi pas cher</strong> adaptée à vos besoins professionnels.
                 </p>
                 
-                <h4 className="text-xl font-bold text-white mb-4 drop-shadow-lg">
-                  Pourquoi Choisir un Courtier Assurance Taxi ?
+                <h4 className="text-lg sm:text-xl font-bold text-white mb-3 sm:mb-4 drop-shadow-lg">
+                  Pourquoi un Courtier ?
                 </h4>
-                <p className="text-gray-300 leading-relaxed mb-6 drop-shadow-md">
+                <p className="text-sm sm:text-base text-gray-300 leading-relaxed mb-4 sm:mb-6 drop-shadow-md">
                   Un <strong className="text-amber-400">courtier assurance taxi</strong> comme TaxiAssur négocie pour vous les meilleures conditions 
                   auprès de multiples assureurs. Notre expertise du secteur taxi nous permet d'obtenir des 
                   <strong className="text-green-400">tarifs assurance taxi</strong> jusqu'à 35% moins chers que les assureurs traditionnels.
