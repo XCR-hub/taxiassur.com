@@ -471,6 +471,14 @@ const Dashboard: React.FC = () => {
                 </a>
 
                 <a
+                  href="/backoffice/backlink-automation"
+                  className="text-center p-4 bg-orange-100 border-2 border-orange-300 rounded-lg hover:bg-orange-200 transition-colors group shadow-lg hover:shadow-xl"
+                >
+                  <Activity className="mx-auto mb-2 text-orange-700 group-hover:scale-110 transition-transform" size={20} />
+                  <div className="text-sm font-bold text-orange-900">Auto Backlinks</div>
+                </a>
+
+                <a
                   href="/backoffice/partner-finder"
                   className="text-center p-4 bg-blue-100 border-2 border-blue-300 rounded-lg hover:bg-blue-200 transition-colors group shadow-lg hover:shadow-xl"
                 >

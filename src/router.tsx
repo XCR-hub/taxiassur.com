@@ -54,6 +54,7 @@ const LeadMarketplace = lazy(() => import('./backoffice/LeadMarketplace'));
 const PartnerPortal = lazy(() => import('./backoffice/PartnerPortal'));
 const LeadManager = lazy(() => import('./backoffice/LeadManager'));
 const BacklinkProspector = lazy(() => import('./backoffice/BacklinkProspector'));
+const BacklinkAutomationDashboard = lazy(() => import('./backoffice/BacklinkAutomationDashboard'));
 const AIContentGenerator = lazy(() => import('./backoffice/AIContentGenerator'));
 const AutomationScheduler = lazy(() => import('./backoffice/AutomationScheduler'));
 const TrendAnalyzer = lazy(() => import('./backoffice/TrendAnalyzer'));
@@ -363,6 +364,10 @@ export const router = createBrowserRouter([
   {
     path: '/backoffice/backlink-prospector',
     element: <AuthGuard><SuspenseWrapper><BacklinkProspector /></SuspenseWrapper></AuthGuard>
+  },
+  {
+    path: '/backoffice/backlink-automation',
+    element: <AuthGuard><SuspenseWrapper><BacklinkAutomationDashboard /></SuspenseWrapper></AuthGuard>
   },
   {
     path: '/backoffice/ai-generator',

@@ -36,21 +36,25 @@ export async function regenerateFeeds(): Promise<boolean> {
 // Fonction pour tester la connectivité du webhook
 export async function pingWebhook(): Promise<{ ok: boolean; message?: string; error?: string }> {
   try {
-    // In development, use the PHP server endpoint instead of the static file
+    // Import env helper
+    const { getEnv } = await import('./env');
+
     const isDev = import.meta.env.DEV;
-    const endpoint = isDev 
-      ? '/api/webhook.php?action=ping'  // Use API endpoint that can be proxied
+    const endpoint = isDev
+      ? '/api/webhook.php?action=ping'
       : '/webhooks/make.php?action=ping';
-    
+
+    const makeSecret = getEnv('VITE_MAKE_SECRET') || 'taxiassur_webhook_secret_2024';
+
     const response = await fetch(endpoint, {
       method: 'GET',
       headers: {
-        'X-MAKE-SECRET': import.meta.env.VITE_MAKE_SECRET || 'change_me_secure_token_2024'
+        'X-MAKE-SECRET': makeSecret
       }
     });
-    
+
     const result = await response.json();
-    
+
     if (response.ok) {
       return { ok: true, message: result.message };
     } else {

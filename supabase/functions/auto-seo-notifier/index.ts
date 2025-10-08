@@ -58,7 +58,7 @@ Deno.serve(async (req: Request) => {
     return new Response(
       JSON.stringify({
         ok: false,
-        error: error.message
+        error: error instanceof Error ? error.message : "Unknown error"
       }),
       {
         status: 500,
@@ -198,7 +198,7 @@ async function notifySearchEngines(siteUrl: string) {
     results.push({
       engine: "IndexNow",
       success: false,
-      error: error.message,
+      error: error instanceof Error ? error.message : "Unknown error",
       note: "Configuration IndexNow requise (optionnel)"
     });
   }
@@ -217,6 +217,22 @@ async function notifySearchEngines(siteUrl: string) {
     success: true,
     method: "Automatic crawling",
     note: "Bing crawle automatiquement. Soumettez dans Bing Webmaster Tools pour accélérer."
+  });
+
+  // Yandex Webmaster
+  results.push({
+    engine: "Yandex",
+    success: true,
+    method: "Automatic crawling",
+    note: "Yandex découvre automatiquement le contenu. Soumission manuelle via Yandex Webmaster recommandée."
+  });
+
+  // DuckDuckGo
+  results.push({
+    engine: "DuckDuckGo",
+    success: true,
+    method: "Automatic crawling",
+    note: "DuckDuckGo utilise les résultats Bing. Indexation automatique via Bing."
   });
 
   return results;

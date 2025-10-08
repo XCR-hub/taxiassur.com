@@ -18,7 +18,11 @@ window.ENV_CONFIG = {
   VITE_SMTP_USER: 'team@taxiassur.com',
   VITE_CONTACT_EMAIL: 'team@taxiassur.com',
   VITE_SMTP_FROM: 'team@taxiassur.com',
-  
+
+  // Make.com Webhook
+  VITE_MAKE_API_TOKEN: '507a717b-3a95-483e-8fa0-215cff5c48f2',
+  VITE_MAKE_SECRET: 'taxiassur_webhook_secret_2024',
+
   // OpenAI (utilisé côté serveur uniquement)
   VITE_OPENAI_API_KEY: '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'
 };
