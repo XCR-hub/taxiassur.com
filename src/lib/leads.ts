@@ -176,42 +176,123 @@ export async function updateLeadStatus(
 
 export async function sendDevisEmail(leadId: string, devisFile?: File): Promise<boolean> {
   try {
-    const formData = new FormData();
-    formData.append('leadId', leadId);
-    
-    if (devisFile) {
-      formData.append('devis', devisFile);
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+    if (!supabaseUrl || !supabaseKey) {
+      console.error('Supabase configuration missing');
+      return false;
     }
 
-    const response = await fetch('/api/lead-manager.php?action=send_devis', {
+    // Récupérer le lead
+    const { data: lead, error: leadError } = await supabase
+      .from('leads')
+      .select('*')
+      .eq('id', leadId)
+      .single();
+
+    if (leadError || !lead) {
+      console.error('Lead not found:', leadError);
+      return false;
+    }
+
+    // Envoyer email via edge function
+    const response = await fetch(`${supabaseUrl}/functions/v1/send-email`, {
       method: 'POST',
-      body: formData
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${supabaseKey}`
+      },
+      body: JSON.stringify({
+        to: lead.email,
+        subject: `Votre devis d'assurance taxi - TaxiAssur`,
+        html: `
+          <h2>Bonjour ${lead.name},</h2>
+          <p>Nous avons le plaisir de vous transmettre votre devis personnalisé pour votre assurance taxi.</p>
+          <p>Notre équipe reste à votre disposition pour toute question au <strong>01 XX XX XX XX</strong>.</p>
+          <p>Cordialement,<br>L'équipe TaxiAssur</p>
+        `,
+        attachments: devisFile ? [await fileToBase64(devisFile)] : undefined
+      })
     });
 
-    const result = await response.json();
-    return result.success === true;
+    if (!response.ok) {
+      throw new Error('Email sending failed');
+    }
+
+    // Mettre à jour le statut
+    await updateLeadStatus(leadId, 'devis_envoye');
+
+    return true;
   } catch (error) {
     console.error('Failed to send devis:', error);
     return false;
   }
 }
 
+async function fileToBase64(file: File): Promise<{ filename: string; content: string }> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const base64 = (reader.result as string).split(',')[1];
+      resolve({ filename: file.name, content: base64 });
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
 export async function sendContractEmail(leadId: string, contractFile?: File): Promise<boolean> {
   try {
-    const formData = new FormData();
-    formData.append('leadId', leadId);
-    
-    if (contractFile) {
-      formData.append('contract', contractFile);
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+    if (!supabaseUrl || !supabaseKey) {
+      console.error('Supabase configuration missing');
+      return false;
     }
 
-    const response = await fetch('/api/lead-manager.php?action=send_contract', {
+    // Récupérer le lead
+    const { data: lead, error: leadError } = await supabase
+      .from('leads')
+      .select('*')
+      .eq('id', leadId)
+      .single();
+
+    if (leadError || !lead) {
+      console.error('Lead not found:', leadError);
+      return false;
+    }
+
+    // Envoyer email via edge function
+    const response = await fetch(`${supabaseUrl}/functions/v1/send-email`, {
       method: 'POST',
-      body: formData
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${supabaseKey}`
+      },
+      body: JSON.stringify({
+        to: lead.email,
+        subject: `Votre contrat d'assurance taxi - TaxiAssur`,
+        html: `
+          <h2>Bonjour ${lead.name},</h2>
+          <p>Félicitations ! Votre contrat d'assurance taxi est prêt.</p>
+          <p>Vous trouverez en pièce jointe votre contrat à signer et à nous retourner.</p>
+          <p>Notre équipe reste à votre disposition au <strong>01 XX XX XX XX</strong>.</p>
+          <p>Cordialement,<br>L'équipe TaxiAssur</p>
+        `,
+        attachments: contractFile ? [await fileToBase64(contractFile)] : undefined
+      })
     });
 
-    const result = await response.json();
-    return result.success === true;
+    if (!response.ok) {
+      throw new Error('Email sending failed');
+    }
+
+    // Mettre à jour le statut
+    await updateLeadStatus(leadId, 'client');
+
+    return true;
   } catch (error) {
     console.error('Failed to send contract:', error);
     return false;
