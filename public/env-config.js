@@ -1,8 +1,8 @@
 // Configuration des variables d'environnement
 window.ENV_CONFIG = {
   // Supabase
-  VITE_SUPABASE_URL: 'https://bqtdiwqrjvptwzdvyaqp.supabase.co',
-  VITE_SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJxdGRpd3FyanZwdHd6ZHZ5YXFwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mjg0Mzg0MDUsImV4cCI6MjA0NDAxNDQwNX0.HvYcFTxCWV0hg4cePHxUFnzlz8T9x0lK_z5dYXdUKQQ',
+  VITE_SUPABASE_URL: 'https://drohhxrkoequjphvabvq.supabase.co',
+  VITE_SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRyb2hoeHJrb2VxdWpwaHZhYnZxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk3ODM3NjAsImV4cCI6MjA3NTM1OTc2MH0.LP9fh10fY0nRDjpG4VW2yGZ5sT4BkiDalox8ToMbMlg',
   
   // Google Services
   VITE_GTAG_ID: 'G-VDR9C5QDLD',
