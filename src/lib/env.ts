@@ -3,9 +3,9 @@
 // In development, variables are loaded from import.meta.env (via Vite)
 
 export function getEnv(key: string): string | undefined {
-  // Try window.ENV first (production)
-  if (typeof window !== 'undefined' && (window as any).ENV) {
-    return (window as any).ENV[key];
+  // Try window.ENV_CONFIG first (production)
+  if (typeof window !== 'undefined' && (window as any).ENV_CONFIG) {
+    return (window as any).ENV_CONFIG[key];
   }
 
   // Fallback to import.meta.env (development)

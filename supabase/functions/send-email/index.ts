@@ -18,6 +18,12 @@ interface EmailRequest {
   replyTo?: string;
   templateId?: string;
   dynamicTemplateData?: Record<string, any>;
+  attachments?: Array<{
+    filename: string;
+    content: string;
+    type?: string;
+    disposition?: string;
+  }>;
 }
 
 interface SendGridResponse {
@@ -119,6 +125,16 @@ Deno.serve(async (req: Request) => {
           value: emailRequest.html,
         });
       }
+    }
+
+    // Add attachments if provided
+    if (emailRequest.attachments && emailRequest.attachments.length > 0) {
+      sendGridPayload.attachments = emailRequest.attachments.map((att) => ({
+        filename: att.filename,
+        content: att.content,
+        type: att.type || "application/pdf",
+        disposition: att.disposition || "attachment",
+      }));
     }
 
     // Send via SendGrid API
