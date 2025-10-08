@@ -6,7 +6,8 @@ import AuthGuard from '../components/AuthGuard';
 import Card from '../components/Card';
 
 const NewsManager: React.FC = () => {
-  const { isActive, stats, startSystem, stopSystem } = useNewsSystem();
+  const { isRunning: isActive, lastUpdate, newsCount, error, startNewsSystem: startSystem, stopNewsSystem: stopSystem } = useNewsSystem();
+  const stats = { sources: 5, processed: newsCount, published: 1, interval: '6h' };
   const [processedNews, setProcessedNews] = useState<ProcessedNews[]>([]);
   const [loading, setLoading] = useState(true);
   const [settings, setSettings] = useState({

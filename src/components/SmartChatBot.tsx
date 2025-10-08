@@ -212,15 +212,55 @@ const SmartChatBot: React.FC = () => {
     }
   };
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!currentInput.trim()) return;
 
-    addMessage({ type: 'user', message: currentInput });
+    const userMessage = currentInput;
+    addMessage({ type: 'user', message: userMessage });
     setCurrentInput('');
-    
-    // Simple AI response simulation
+
+    // Appeler ChatGPT via edge function
     simulateTyping();
-    setTimeout(() => {
+
+    try {
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+      if (!supabaseUrl || !supabaseKey) {
+        throw new Error('Configuration manquante');
+      }
+
+      const response = await fetch(`${supabaseUrl}/functions/v1/chatbot`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabaseKey}`
+        },
+        body: JSON.stringify({
+          message: userMessage,
+          context: {
+            userContext,
+            previousMessages: messages.slice(-5).map(m => ({ role: m.type === 'user' ? 'user' : 'assistant', content: m.message }))
+          }
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('API error');
+      }
+
+      const data = await response.json();
+
+      addMessage({
+        type: 'bot',
+        message: data.response || "Merci pour votre message ! Un expert peut vous répondre pour plus de précisions.",
+        options: [
+          { text: "📞 Appeler un expert", action: "call" },
+          { text: "📝 Demander un devis", action: "convert" }
+        ]
+      });
+    } catch (error) {
+      console.error('ChatGPT error:', error);
       addMessage({
         type: 'bot',
         message: "Merci pour votre message ! Pour une réponse personnalisée, je vous recommande de parler directement avec un de nos experts.",
@@ -229,7 +269,7 @@ const SmartChatBot: React.FC = () => {
           { text: "📝 Demander un devis", action: "convert" }
         ]
       });
-    }, 1500);
+    }
   };
 
   return (
@@ -283,10 +323,10 @@ const SmartChatBot: React.FC = () => {
                         <button
                           key={index}
                           onClick={() => handleOptionClick(option.action, option.value)}
-                          className={`block w-full text-left p-2 rounded text-xs font-medium transition-colors ${
+                          className={`block w-full text-left p-3 rounded-lg text-sm font-semibold transition-all shadow-sm hover:shadow-md ${
                             message.type === 'user'
-                              ? 'bg-white bg-opacity-20 hover:bg-opacity-30 text-white'
-                              : 'bg-blue-500 hover:bg-blue-600 text-white'
+                              ? 'bg-white bg-opacity-20 hover:bg-opacity-30 text-white border border-white border-opacity-30'
+                              : 'bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-black border border-amber-600'
                           }`}
                         >
                           {option.text}
