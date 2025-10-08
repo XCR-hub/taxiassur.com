@@ -17,56 +17,83 @@ const JsonLd: React.FC<JsonLdProps> = ({ type, data }) => {
       case 'organization':
         return {
           "@context": "https://schema.org",
-          "@type": "LocalBusiness",
+          "@type": "InsuranceAgency",
           "name": brandName,
-          "description": "Courtier spécialiste en assurance taxi et RC professionnelle",
+          "description": "Courtier spécialiste en assurance taxi, VTC et RC professionnelle. Devis gratuit en 2 minutes, économisez jusqu'à 35% sur votre assurance taxi.",
           "url": siteUrl,
-          "telephone": "0180855786",
+          "logo": `${siteUrl}/logo-600x300.png`,
+          "telephone": "+33180855786",
           "email": contactEmail,
           "address": {
             "@type": "PostalAddress",
-            "addressCountry": "FR",
-            "addressLocality": "Melun"
+            "streetAddress": "824 Avenue du Lys",
+            "addressLocality": "Dammarie-les-Lys",
+            "postalCode": "77190",
+            "addressCountry": "FR"
           },
           "openingHours": "Mo-Fr 09:00-18:00",
           "priceRange": "€€",
-          "serviceType": "Assurance Taxi",
-          "areaServed": "France",
-          "review": {
-            "@type": "Review",
-            "author": {
-              "@type": "Person",
-              "name": "Client Satisfait"
-            },
-            "reviewRating": {
-              "@type": "Rating",
-              "ratingValue": "5",
-              "bestRating": "5"
-            },
-            "reviewBody": "Service exceptionnel ! J'ai économisé 580€ dès la première année. Équipe réactive et professionnelle."
+          "areaServed": {
+            "@type": "Country",
+            "name": "France"
+          },
+          "knowsAbout": [
+            "Assurance Taxi",
+            "Assurance VTC",
+            "RC Professionnelle",
+            "Assurance Flotte Taxi",
+            "Assurance Véhicule Professionnel"
+          ],
+          "aggregateRating": {
+            "@type": "AggregateRating",
+            "ratingValue": "4.9",
+            "reviewCount": "127",
+            "bestRating": "5",
+            "worstRating": "1"
           },
           "sameAs": [
+            "https://www.linkedin.com/company/xcr",
+            "https://www.facebook.com/taxiassur",
             `${siteUrl}/mentions-legales`
           ],
           "hasOfferCatalog": {
             "@type": "OfferCatalog",
-            "reviewCount": "100",
-            "name": "Services d'assurance taxi",
+            "name": "Services d'assurance taxi professionnelle",
             "itemListElement": [
               {
                 "@type": "Offer",
                 "itemOffered": {
                   "@type": "Service",
-                  "name": "Assurance Taxi",
-                  "description": "Assurance responsabilité civile et tous risques pour taxis"
+                  "name": "Assurance Taxi Tous Risques",
+                  "description": "Couverture complète RC Pro, dommages tous accidents, protection juridique, assistance 0km",
+                  "serviceType": "Insurance"
                 }
               },
               {
                 "@type": "Offer",
                 "itemOffered": {
                   "@type": "Service",
-                  "name": "RC Professionnelle",
-                  "description": "Responsabilité civile professionnelle pour chauffeurs"
+                  "name": "Assurance VTC",
+                  "description": "Assurance spécifique pour chauffeurs VTC avec garanties adaptées",
+                  "serviceType": "Insurance"
+                }
+              },
+              {
+                "@type": "Offer",
+                "itemOffered": {
+                  "@type": "Service",
+                  "name": "RC Professionnelle Taxi",
+                  "description": "Responsabilité civile professionnelle obligatoire pour chauffeurs de taxi",
+                  "serviceType": "Insurance"
+                }
+              },
+              {
+                "@type": "Offer",
+                "itemOffered": {
+                  "@type": "Service",
+                  "name": "Assurance Flotte Taxi",
+                  "description": "Assurance multi-véhicules pour flottes de taxis professionnels",
+                  "serviceType": "Insurance"
                 }
               }
             ]

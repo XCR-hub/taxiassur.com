@@ -9,13 +9,23 @@ import AITaxiBackground from '../components/AITaxiBackground';
 import SEOContent from '../components/SEOContent';
 import CompetitorComparison from '../components/CompetitorComparison';
 import LocalSEO from '../components/LocalSEO';
+import SEOInternalLinks from '../components/SEOInternalLinks';
+import UltraConversionCTA from '../components/UltraConversionCTA';
 import { Shield, CheckCircle, Clock, Users } from 'lucide-react';
+import { useEffect } from 'react';
+import { initBehavioralTracking } from '../lib/behavioral-tracking';
+import { autoSubmitPage } from '../lib/indexnow';
 
 const AssuranceTaxi: React.FC = () => {
   const breadcrumbs = [
     { name: 'Accueil', url: '/' },
     { name: 'Assurance Taxi', url: '/assurance-taxi' }
   ];
+
+  useEffect(() => {
+    initBehavioralTracking();
+    autoSubmitPage('/assurance-taxi');
+  }, []);
 
   const advantages = [
     {
@@ -191,14 +201,46 @@ const AssuranceTaxi: React.FC = () => {
           </div>
         </section>
 
-        {/* Contenu SEO détaillé déplacé ici */}
-        <SEOContent />
-        
+        {/* CTA Ultra-Conversion */}
+        <section className="py-12 bg-gradient-to-br from-gray-900 to-black">
+          <div className="container-max">
+            <UltraConversionCTA variant="value" position="inline" />
+          </div>
+        </section>
+
+        {/* Contenu SEO + Navigation Interne */}
+        <section className="py-16 bg-gradient-to-br from-gray-950 via-gray-900 to-black">
+          <div className="container-max">
+            <div className="grid lg:grid-cols-3 gap-8">
+              <div className="lg:col-span-2">
+                <SEOContent />
+              </div>
+              <div className="lg:col-span-1">
+                <SEOInternalLinks currentUrl="/assurance-taxi" variant="sidebar" />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* CTA Signal de Confiance */}
+        <section className="py-12 bg-gradient-to-br from-gray-900 to-black">
+          <div className="container-max">
+            <UltraConversionCTA variant="trust" position="inline" />
+          </div>
+        </section>
+
         {/* Comparaison concurrence */}
         <CompetitorComparison />
-        
+
         {/* SEO local */}
         <LocalSEO />
+
+        {/* Liens internes inline */}
+        <section className="py-8 bg-gradient-to-br from-gray-950 to-black">
+          <div className="container-max">
+            <SEOInternalLinks currentUrl="/assurance-taxi" variant="inline" title="Découvrez aussi nos autres services" />
+          </div>
+        </section>
 
         <LeadForm />
       </main>
