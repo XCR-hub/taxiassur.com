@@ -625,7 +625,7 @@ www.taxiassur.com
                   <textarea
                     rows={16}
                     defaultValue={generateEmail(selectedOpportunity)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 font-mono text-sm"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 font-mono text-sm text-gray-900 bg-white"
                   />
                 </div>
 

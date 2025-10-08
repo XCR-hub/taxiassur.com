@@ -116,21 +116,33 @@ export async function cseSearch(query: string, start = 1): Promise<{
 
   try {
     const response = await fetch(url.toString());
-    
+
     if (!response.ok) {
-      if (response.status === 429) {
-        throw new Error('Limite de taux CSE atteinte');
+      const errorData = await response.json().catch(() => ({}));
+
+      if (response.status === 400) {
+        const errorMessage = errorData.error?.message || 'Requête invalide';
+        throw new Error(`❌ Erreur API Google (400): ${errorMessage}. Vérifiez vos clés API dans .env (VITE_GOOGLE_CSE_API_KEY et VITE_GOOGLE_CSE_CX)`);
       }
-      throw new Error(`Erreur CSE: ${response.status}`);
+
+      if (response.status === 429) {
+        throw new Error('⏱️ Limite de taux CSE atteinte. Attendez quelques minutes.');
+      }
+
+      if (response.status === 403) {
+        throw new Error('🔑 Clés API invalides ou quota dépassé. Vérifiez votre console Google Cloud.');
+      }
+
+      throw new Error(`❌ Erreur CSE ${response.status}: ${errorData.error?.message || 'Erreur inconnue'}`);
     }
-    
+
     const data = await response.json();
     const result = CseResultSchema.parse(data);
-    
+
     const items = result.items || [];
     const totalResults = parseInt(result.searchInformation?.totalResults || '0');
     const hasNextPage = (result.queries?.nextPage?.length || 0) > 0;
-    
+
     return {
       items,
       totalResults,
