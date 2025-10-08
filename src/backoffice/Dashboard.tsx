@@ -500,6 +500,13 @@ const Dashboard: React.FC = () => {
                   <span>Générateur de Contenu IA</span>
                 </a>
                 <a
+                  href="/backoffice/automation-scheduler"
+                  className="w-full flex items-center justify-center space-x-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold py-4 px-6 rounded-lg transition-all shadow-lg hover:shadow-xl"
+                >
+                  <Clock size={20} />
+                  <span>⚡ Planification Automatique</span>
+                </a>
+                <a
                   href="/backoffice/seed-prospects"
                   className="w-full flex items-center justify-center space-x-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold py-4 px-6 rounded-lg transition-all shadow-lg hover:shadow-xl"
                 >

@@ -1,6 +1,8 @@
 import { useState } from 'react';
-import { Sparkles, Loader2, FileText, MapPin, GitCompare, Copy, Check, Download } from 'lucide-react';
+import { Sparkles, Loader2, FileText, MapPin, GitCompare, Copy, Check, Download, Home, Save } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { getSupabaseUrl, getSupabaseAnonKey } from '../lib/env';
+import { supabase } from '../lib/supabase';
 
 interface GeneratedContent {
   title: string;
@@ -15,13 +17,16 @@ interface GeneratedContent {
 }
 
 export default function AIContentGenerator() {
+  const navigate = useNavigate();
   const [contentType, setContentType] = useState<'blog' | 'city' | 'comparison'>('blog');
   const [keyword, setKeyword] = useState('');
   const [city, setCity] = useState('');
   const [secondaryKeywords, setSecondaryKeywords] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [generatedContent, setGeneratedContent] = useState<GeneratedContent | null>(null);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [copied, setCopied] = useState(false);
   const [usage, setUsage] = useState<{ tokens: number; cost: number } | null>(null);
 
@@ -146,6 +151,74 @@ ${generatedContent.faq?.map(f => `**${f.question}**\n${f.answer}`).join('\n\n')}
     URL.revokeObjectURL(url);
   };
 
+  const publishContent = async (status: 'draft' | 'published') => {
+    if (!generatedContent) return;
+
+    setIsSaving(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      // Publish as blog post
+      const { data, error: publishError } = await supabase
+        .from('blog_posts')
+        .insert({
+          title: generatedContent.title,
+          slug: generatedContent.slug,
+          excerpt: generatedContent.excerpt || generatedContent.metaDescription,
+          content: generatedContent.content,
+          meta_description: generatedContent.metaDescription,
+          tags: generatedContent.keywords || [],
+          reading_time: generatedContent.readingTime || 5,
+          status: status,
+          published_at: status === 'published' ? new Date().toISOString() : null,
+        })
+        .select()
+        .single();
+
+      if (publishError) throw publishError;
+
+      // If FAQ exists, publish each FAQ entry
+      if (generatedContent.faq && generatedContent.faq.length > 0) {
+        const faqEntries = generatedContent.faq.map(faq => ({
+          question: faq.question,
+          answer: faq.answer,
+          tags: generatedContent.keywords || [],
+          status: status,
+        }));
+
+        const { error: faqError } = await supabase
+          .from('faq_entries')
+          .insert(faqEntries);
+
+        if (faqError) {
+          console.error('FAQ publication error:', faqError);
+          // Don't fail the whole operation if FAQ fails
+        }
+      }
+
+      setSuccess(
+        status === 'published'
+          ? '✅ Contenu publié avec succès !'
+          : '✅ Contenu sauvegardé comme brouillon !'
+      );
+
+      // Reset form after 2 seconds
+      setTimeout(() => {
+        setGeneratedContent(null);
+        setKeyword('');
+        setSecondaryKeywords('');
+        setCity('');
+        setSuccess('');
+      }, 2000);
+    } catch (err) {
+      console.error('Publication error:', err);
+      setError(err instanceof Error ? err.message : 'Erreur lors de la publication');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const contentTypeOptions = [
     { value: 'blog', label: 'Article de Blog', icon: FileText, description: '1800-2200 mots, optimisé SEO' },
     { value: 'city', label: 'Page Ville', icon: MapPin, description: '1200-1500 mots, géolocalisé' },
@@ -155,9 +228,18 @@ ${generatedContent.faq?.map(f => `**${f.question}**\n${f.answer}`).join('\n\n')}
   return (
     <div className="max-w-6xl mx-auto">
       <div className="bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl p-6 mb-6 text-white">
-        <div className="flex items-center space-x-3 mb-2">
-          <Sparkles size={32} className="animate-pulse" />
-          <h2 className="text-2xl font-bold">Générateur de Contenu SEO IA</h2>
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center space-x-3">
+            <Sparkles size={32} className="animate-pulse" />
+            <h2 className="text-2xl font-bold">Générateur de Contenu SEO IA</h2>
+          </div>
+          <button
+            onClick={() => navigate('/backoffice')}
+            className="flex items-center space-x-2 px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors"
+          >
+            <Home size={20} />
+            <span>Retour</span>
+          </button>
         </div>
         <p className="text-purple-100">
           Créez des articles optimisés pour Google en 30 secondes avec ChatGPT-4
@@ -247,6 +329,12 @@ ${generatedContent.faq?.map(f => `**${f.question}**\n${f.answer}`).join('\n\n')}
               </div>
             )}
 
+            {success && (
+              <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                <p className="text-sm text-green-600">{success}</p>
+              </div>
+            )}
+
             <button
               onClick={handleGenerate}
               disabled={isGenerating || !keyword.trim()}
@@ -279,13 +367,29 @@ ${generatedContent.faq?.map(f => `**${f.question}**\n${f.answer}`).join('\n\n')}
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-xl font-bold text-gray-800">Aperçu du Contenu</h3>
             {generatedContent && (
-              <div className="flex space-x-2">
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={() => publishContent('published')}
+                  disabled={isSaving}
+                  className="flex items-center space-x-1 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm font-medium disabled:opacity-50"
+                >
+                  {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+                  <span>Publier</span>
+                </button>
+                <button
+                  onClick={() => publishContent('draft')}
+                  disabled={isSaving}
+                  className="flex items-center space-x-1 px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors text-sm font-medium disabled:opacity-50"
+                >
+                  {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+                  <span>Brouillon</span>
+                </button>
                 <button
                   onClick={copyToClipboard}
                   className="flex items-center space-x-1 px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors text-sm"
                 >
                   {copied ? <Check size={16} className="text-green-600" /> : <Copy size={16} />}
-                  <span>{copied ? 'Copié !' : 'Copier'}</span>
+                  <span>{copied ? 'Copié' : 'Copier'}</span>
                 </button>
                 <button
                   onClick={downloadAsHTML}
