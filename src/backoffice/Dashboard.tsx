@@ -507,6 +507,13 @@ const Dashboard: React.FC = () => {
                   <span>⚡ Planification Automatique</span>
                 </a>
                 <a
+                  href="/backoffice/trend-analyzer"
+                  className="w-full flex items-center justify-center space-x-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold py-4 px-6 rounded-lg transition-all shadow-lg hover:shadow-xl"
+                >
+                  <TrendingUp size={20} />
+                  <span>📊 Analyse des Tendances</span>
+                </a>
+                <a
                   href="/backoffice/seed-prospects"
                   className="w-full flex items-center justify-center space-x-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold py-4 px-6 rounded-lg transition-all shadow-lg hover:shadow-xl"
                 >
