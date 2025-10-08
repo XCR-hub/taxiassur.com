@@ -191,7 +191,7 @@ Réponses : 50-80 mots, directes, avec chiffres
   "category": "guides"
 }
 
-⚠️ RAPPEL : Écris comme si tu racontais ça à un pote autour d'un café. Naturel, direct, utile.``;
+⚠️ RAPPEL : Écris comme si tu racontais ça à un pote autour d'un café. Naturel, direct, utile.`;
     } else if (contentType === 'city') {
       prompt = `Page ville HYPER-LOCALE pour "${keyword} à ${targetCity}"
 
@@ -301,7 +301,7 @@ JSON ATTENDU :
   "category": "local"
 }
 
-⚠️ CRITIQUE : Prouve que tu connais VRAIMENT ${targetCity}. Cite quartiers, rues, lieux précis.`;`;
+⚠️ CRITIQUE : Prouve que tu connais VRAIMENT ${targetCity}. Cite quartiers, rues, lieux précis.`;
     } else if (contentType === 'comparison') {
       prompt = `Tu es un expert impartial. Crée un comparatif HONNET et HUMAIN sur "${keyword}".
 
