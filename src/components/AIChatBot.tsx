@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { MessageCircle, X, Send, Loader2, Sparkles } from 'lucide-react';
+import { getSupabaseUrl, getSupabaseAnonKey } from '../lib/env';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -49,14 +50,8 @@ export default function AIChatBot() {
     setIsLoading(true);
 
     try {
-      // Try window.ENV first (production), then import.meta.env (development)
-      const supabaseUrl = (typeof window !== 'undefined' && (window as any).ENV?.VITE_SUPABASE_URL)
-        || import.meta.env.VITE_SUPABASE_URL
-        || 'https://drohhxrkoequjphvabvq.supabase.co';
-
-      const supabaseKey = (typeof window !== 'undefined' && (window as any).ENV?.VITE_SUPABASE_ANON_KEY)
-        || import.meta.env.VITE_SUPABASE_ANON_KEY
-        || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRyb2hoeHJrb2VxdWpwaHZhYnZxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk3ODM3NjAsImV4cCI6MjA3NTM1OTc2MH0.LP9fh10fY0nRDjpG4VW2yGZ5sT4BkiDalox8ToMbMlg';
+      const supabaseUrl = getSupabaseUrl();
+      const supabaseKey = getSupabaseAnonKey();
 
       // Check if Supabase is configured
       if (!supabaseUrl || !supabaseKey || supabaseUrl.includes('placeholder')) {
