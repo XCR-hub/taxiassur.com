@@ -23,6 +23,8 @@ window.ENV = {
   // Format: G-XXXXXXXXXX
   // ========================================
   VITE_GTAG_ID: 'G-VDR9C5QDLD',
+  VITE_GA_MEASUREMENT_ID=G-VDR9C5QDLD
+  VITE_PAGESPEED_API_KEY=AIzaSyB1wcpdbB3AJW0Mxx6tihEVVjPsIIFY-9o
 
   // ========================================
   // GOOGLE TAG MANAGER - ⚠️ À CONFIGURER
