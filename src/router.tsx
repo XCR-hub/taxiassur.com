@@ -63,6 +63,8 @@ const ProspectSeeder = lazy(() => import('./backoffice/ProspectSeeder'));
 const CampaignLauncher = lazy(() => import('./backoffice/CampaignLauncher'));
 const AuthGuard = lazy(() => import('./components/AuthGuard'));
 const NewsletterPage = lazy(() => import('./pages/Newsletter'));
+const MirrorPage = lazy(() => import('./pages/MirrorPage'));
+const MasterDashboard = lazy(() => import('./backoffice/MasterDashboard'));
 
 const LoadingFallback = () => (
   <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-black flex items-center justify-center">
@@ -292,6 +294,10 @@ export const router = createBrowserRouter([
   },
   {
     path: '/backoffice',
+    element: <AuthGuard><SuspenseWrapper><MasterDashboard /></SuspenseWrapper></AuthGuard>
+  },
+  {
+    path: '/backoffice/old-dashboard',
     element: <AuthGuard><SuspenseWrapper><Dashboard /></SuspenseWrapper></AuthGuard>
   },
   {
@@ -393,7 +399,25 @@ export const router = createBrowserRouter([
   {
     path: '/backoffice/launch-campaign',
     element: <AuthGuard><SuspenseWrapper><CampaignLauncher /></SuspenseWrapper></AuthGuard>
-  }
+  },
+  // Pages miroirs longue traîne (17 routes)
+  { path: '/assurance-taxi-pas-cher', element: <SuspenseWrapper><MirrorPage /></SuspenseWrapper> },
+  { path: '/tarif-assurance-taxi-2025', element: <SuspenseWrapper><MirrorPage /></SuspenseWrapper> },
+  { path: '/devis-assurance-taxi-gratuit-2025', element: <SuspenseWrapper><MirrorPage /></SuspenseWrapper> },
+  { path: '/comparateur-assurance-taxi-2025', element: <SuspenseWrapper><MirrorPage /></SuspenseWrapper> },
+  { path: '/assurance-taxi-axa-vs-generali', element: <SuspenseWrapper><MirrorPage /></SuspenseWrapper> },
+  { path: '/assurance-taxi-urgence-24h', element: <SuspenseWrapper><MirrorPage /></SuspenseWrapper> },
+  { path: '/assurance-taxi-immediat', element: <SuspenseWrapper><MirrorPage /></SuspenseWrapper> },
+  { path: '/assurance-taxi-jeune-conducteur-moins-25-ans', element: <SuspenseWrapper><MirrorPage /></SuspenseWrapper> },
+  { path: '/assurance-taxi-resilié-malussé', element: <SuspenseWrapper><MirrorPage /></SuspenseWrapper> },
+  { path: '/assurance-taxi-auto-entrepreneur', element: <SuspenseWrapper><MirrorPage /></SuspenseWrapper> },
+  { path: '/assurance-taxi-electrique-hybride', element: <SuspenseWrapper><MirrorPage /></SuspenseWrapper> },
+  { path: '/assurance-taxi-tesla-model-3', element: <SuspenseWrapper><MirrorPage /></SuspenseWrapper> },
+  { path: '/assurance-taxi-et-vtc-combine', element: <SuspenseWrapper><MirrorPage /></SuspenseWrapper> },
+  { path: '/rc-pro-taxi-obligatoire', element: <SuspenseWrapper><MirrorPage /></SuspenseWrapper> },
+  { path: '/assurance-taxi-tous-risques-vs-tiers', element: <SuspenseWrapper><MirrorPage /></SuspenseWrapper> },
+  { path: '/assurance-taxi-rennes-35', element: <SuspenseWrapper><MirrorPage /></SuspenseWrapper> },
+  { path: '/assurance-taxi-reims-51', element: <SuspenseWrapper><MirrorPage /></SuspenseWrapper> }
 ], {
   future: {
     v7_startTransition: true,

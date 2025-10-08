@@ -245,40 +245,6 @@ export function getSavedTrafficSource(): TrafficSource | null {
   return null;
 }
 
-/**
- * Composant React pour afficher du contenu adaptatif
- */
-export const AdaptiveHero: React.FC = () => {
-  const { content, isReady } = useAdaptiveContent();
-
-  if (!isReady) {
-    // Placeholder pendant détection
-    return null;
-  }
-
-  return (
-    <div className="adaptive-hero">
-      <h1 className="text-4xl md:text-6xl font-bold text-white mb-6">
-        {content.hero.title}
-      </h1>
-      <p className="text-xl text-gray-300 mb-8">
-        {content.hero.subtitle}
-      </p>
-      <div className="flex flex-col gap-4 items-center mb-6">
-        <a href="#devis" className="btn-primary text-lg px-8 py-4">
-          {content.hero.cta}
-        </a>
-        <p className="text-sm text-green-400 font-semibold">
-          {content.trustSignal}
-        </p>
-        <p className="text-sm text-gray-400">
-          {content.socialProof}
-        </p>
-      </div>
-    </div>
-  );
-};
-
 declare global {
   const React: typeof import('react');
 }
