@@ -46,146 +46,262 @@ Deno.serve(async (req: Request) => {
     let prompt = '';
 
     if (contentType === 'blog') {
-      prompt = `Tu es un rédacteur expert en assurance avec 15 ans d'expérience. Écris comme un HUMAIN, pas comme une IA.
+      prompt = `Écris un article de blog NATUREL sur "${keyword}" pour TaxiAssur.com
 
-Sujet : "${keyword}"
-Site : TaxiAssur.com (courtier ORIAS)
+🎯 OBJECTIF : Contenu 100% humain + SEO maximal + Indétectable par IA detectors
 
-🚨 INSTRUCTIONS CRITIQUES POUR ÊTRE HUMAIN ET INDÉTECTABLE :
+━━━ ÉCRITURE HUMAINE OBLIGATOIRE ━━━
 
-1. STYLE CONVERSATIONNEL NATUREL
-- Utilise "je", "nous", "vous" fréquemment
-- Commence par une anecdote ou question personnelle
-- Inclus des expressions françaises courantes ("en fait", "d'ailleurs", "franchement")
-- Varie BEAUCOUP la longueur des phrases (courtes + longues)
-- Ajoute des phrases informelles : "Bon, sérieusement...", "Voilà le truc..."
+DÉBUTE L'ARTICLE avec une de ces accroches :
+- "Bon, je vais être franc avec vous..."
+- "L'autre jour, un chauffeur m'a appelé en panique..."
+- "Si vous cherchez [mot-clé], vous êtes au bon endroit."
+- "Franchement, j'en ai marre de voir des chauffeurs se faire avoir..."
 
-2. IMPERFECTIONS VOLONTAIRES (RENDRE HUMAIN)
-- Quelques répétitions naturelles de mots
-- Transitions légèrement imparfaites
-- Pas de structure trop parfaite
-- Quelques parenthèses avec remarques personnelles
-- Anecdotes et exemples CONCRETS de vrais chauffeurs
+STYLE CONVERSATIONNEL :
+✅ Tutoiement ou vouvoiement cohérent
+✅ "Je" (15x), "nous" (10x), "vous" (20x minimum)
+✅ Phrases courtes. Parfois très courtes. Genre 5 mots.
+✅ Puis une phrase normale avec plusieurs éléments qui s'enchaînent naturellement.
+✅ Questions directes : "Vous vous demandez combien ça coûte ?"
+✅ Réponds : "Écoutez, voilà la vérité..."
 
-3. ÉVITER LES MARQUEURS IA
-- PAS de liste numérotée partout
-- PAS de "en conclusion", "en résumé" en fin d'article
-- PAS de structure trop logique/académique
-- PAS de "il est important de noter", "il convient de"
-- PAS de phrases trop longues et complexes
+ANECDOTES OBLIGATOIRES (2 minimum) :
+- "J'avais un client, Ahmed, taxi à Lyon..."
+- "Marie, qui bosse à Marseille, m'a raconté..."
+- "Un chauffeur VTC m'a appelé la semaine dernière..."
 
-4. TOUCHE HUMAINE
-- Ajoute des émotions : frustration, soulagement, surprise
-- Utilise des comparaisons du quotidien
-- Raconte de mini-histoires vécues
-- Pose des questions rhétoriques
-- Interpelle directement le lecteur
+ÉMOTIONS & OPINIONS :
+😤 "Ça m'énerve de voir que..."
+😅 "Bon, je vous l'avoue, au début j'y comprenais rien non plus"
+💡 "Le truc que personne ne vous dit, c'est que..."
+⚠️ "Attention, c'est là que ça devient chaud"
 
-5. EXPERTISE CRÉDIBLE
-- Chiffres précis et récents (2024-2025)
-- Exemples de cas réels avec prénoms
-- Mention de pièges à éviter
-- Conseils d'insider
+IMPERFECTIONS NATURELLES :
+- Répète certains mots (naturel en parlant)
+- Parenthèses avec remarques : "(oui oui, véridique !)"
+- Incises : "- et croyez-moi j'en ai vu -"
+- Hésitations écrites : "enfin, je veux dire..."
 
-STRUCTURE DE L'ARTICLE (1800-2200 mots) :
+━━━ SEO ULTRA-PUISSANT ━━━
 
-Introduction (150 mots)
-- Commence par une question ou situation concrète
-- Accroche émotionnelle
-- Annonce du plan (informel)
+MOT-CLÉ EXACT "${keyword}" :
+✅ Dans le H1 (titre principal)
+✅ Dans les 100 premiers mots
+✅ Dans 2-3 sous-titres H2
+✅ Dans la meta description
+✅ 5-7 fois dans l'article (densité 1-2%)
 
-5-6 Sections avec titres H2 engageants
-- Titres sous forme de questions ou affirmations
-- 200-300 mots par section
-- Varie le format : paragraphes, listes courtes, citations
-- Ajoute des exemples concrets avec prénoms
+LSI KEYWORDS (synonymes naturels) :
+${secondary.length > 0 ? secondary.join(', ') + ' +' : ''}
+Protection professionnelle, garantie obligatoire, courtier agréé, devis rapide, attestation immédiate, sans engagement
 
-FAQ (5 questions)
-- Questions comme les gens les tapent sur Google
-- Réponses courtes et directes (50-80 mots)
+MOTS-CLÉS LONGUE TRAÎNE (pour ranking rapide) :
+- "combien coûte [mot-clé]"
+- "[mot-clé] pas cher"
+- "meilleure [mot-clé]"
+- "[mot-clé] en ligne"
 
-Conclusion (100 mots)
-- Ton motivant et actionnable
-- CTA clair : "Découvrez nos tarifs" ou "Devis en 2 min"
+OPTIMISATION FEATURED SNIPPET :
+Inclus une réponse directe 40-60 mots qui commence par : "Pour [mot-clé], il faut..."
 
-Mots-clés secondaires à intégrer naturellement : ${secondary.join(', ')}
+━━━ STRUCTURE ARTICLE (1800-2200 mots) ━━━
 
-DONNÉES CONTEXTUELLES :
-- Prix moyen assurance taxi : 1200-2400€/an selon ville
-- Économie moyenne clients TaxiAssur : 35%
-- Délai attestation : 15 minutes
-- RC Pro obligatoire incluse
-- ORIAS : garantie légale courtier
-- Tesla/électrique : -10% vs thermique
-- Jeune conducteur : +40%
+📌 INTRO (150 mots) - ACCROCHE FORTE
+- Démarre avec anecdote/question/stat choc
+- Inclus "${keyword}" dans les 30 premiers mots
+- Promesse claire : "Dans cet article, je vais vous montrer..."
+
+📌 CORPS (5-6 sections H2)
+
+Section 1 : "Pourquoi [mot-clé] est crucial" (250 mots)
+→ Problème concret + conséquences
+→ Anecdote client avec prénom
+
+Section 2 : "Ce que vous devez absolument savoir" (300 mots)
+→ 3-4 points essentiels
+→ Chiffres précis : "1847€ en moyenne", "délai de 72h"
+→ Inclus LSI keywords naturellement
+
+Section 3 : "Les pièges à éviter" (250 mots)
+→ Erreurs courantes
+→ "Ne faites JAMAIS ça..."
+→ Ton direct et cash
+
+Section 4 : "Comment économiser (vraiment)" (300 mots)
+→ Astuces concrètes numérotées 1-2-3
+→ Comparaison de prix réels
+→ "Chez nous, nos clients économisent 35% en moyenne"
+
+Section 5 : "Témoignages et retours d'expérience" (200 mots)
+→ 2-3 mini-témoignages avec prénoms
+→ Avant/après concret
+
+📌 FAQ (5 questions SEO-optimisées)
+Questions exactes de Google Suggest :
+"Combien coûte [mot-clé] ?"
+"Est-ce que [mot-clé] est obligatoire ?"
+"[Mot-clé] : quelle différence avec [alternative] ?"
+"Puis-je obtenir [mot-clé] immédiatement ?"
+"[Mot-clé] pas cher : comment faire ?"
+
+Réponses : 50-80 mots, directes, avec chiffres
+
+📌 CONCLUSION (100 mots) - CALL TO ACTION
+- Récap 2 phrases max
+- CTA motivant : "Obtenez votre devis en 2 minutes"
+- Lien vers devis : "Découvrez nos tarifs"
+
+━━━ DONNÉES À INTÉGRER ━━━
+
+💰 PRIX (citez précisément) :
 - Paris : 1800-2400€/an
+- Lyon/Marseille : 1500-2000€/an
 - Province : 1200-1800€/an
+- Véhicules électriques : -10% vs thermique
+- Jeunes conducteurs : +40% majoration
+- Économie TaxiAssur : 35% en moyenne
 
-Réponds UNIQUEMENT en JSON valide :
+📋 LÉGAL :
+- RC Pro obligatoire (minimum 1 500 000€)
+- Agrément ORIAS obligatoire pour courtiers
+- Attestation délivrée en 15 minutes
+- Carte pro taxi nécessaire
+
+🚀 AVANTAGES TAXIASSUR :
+- Devis en 2 minutes
+- Attestation immédiate
+- Sans engagement
+- Comparaison automatique
+- Support 7j/7
+
+━━━ FORMAT JSON ATTENDU ━━━
+
 {
-  "title": "Titre H1 accrocheur et naturel",
-  "slug": "url-amicale",
-  "metaDescription": "Description 155 caractères avec émotion",
-  "content": "Contenu HTML avec <h2>, <p>, <strong>, <em>, <ul>",
-  "excerpt": "Résumé 2 phrases",
+  "title": "Titre H1 naturel avec mot-clé (max 60 caractères)",
+  "slug": "url-seo-friendly-avec-tirets",
+  "metaDescription": "Description 155 caractères max, avec ${keyword}, émotion, CTA",
+  "content": "HTML complet avec <h2>, <p>, <strong>, <em>, <ul>, <li>. Minimum 1800 mots.",
+  "excerpt": "Résumé engageant 2 phrases (150 caractères)",
   "faq": [
-    {"question": "...", "answer": "..."}
+    {"question": "Question naturelle ?", "answer": "Réponse directe 50-80 mots"}
   ],
-  "keywords": ["mot-clé 1", "mot-clé 2"],
+  "keywords": ["${keyword}", ...autres mots-clés identifiés],
   "readingTime": 8,
-  "category": "guides",
-  "authorTone": "conversational"
-}`;
+  "category": "guides"
+}
+
+⚠️ RAPPEL : Écris comme si tu racontais ça à un pote autour d'un café. Naturel, direct, utile.``;
     } else if (contentType === 'city') {
-      prompt = `Tu es un expert local en assurance taxi. Écris comme un HUMAIN qui connaît bien ${targetCity}.
+      prompt = `Page ville HYPER-LOCALE pour "${keyword} à ${targetCity}"
 
-Sujet : "${keyword} à ${targetCity}"
+🎯 OBJECTIF : Contenu local expert + SEO local maximal + Ton natif de ${targetCity}
 
-🚨 RENDRE ULTRA-LOCAL ET HUMAIN :
+━━━ EXPERTISE LOCALE CRÉDIBLE ━━━
 
-1. CONNAISSANCE LOCALE
-- Mentionne des quartiers/zones spécifiques de ${targetCity}
-- Référence à la vie locale (trafic, aéroport, gare, événements)
-- Compare avec d'autres villes de la région
-- Parle des spécificités du marché taxi local
+DÉMARRE avec :
+"À ${targetCity}, [situation locale spécifique]..."
+"Les chauffeurs de taxi de ${targetCity} le savent bien : [problème local]..."
+"Si vous roulez sur ${targetCity}, vous avez remarqué que [observation locale]..."
 
-2. STYLE CONVERSATIONNEL
-- Tutoie ou vouvoie selon le contexte
-- Utilise des expressions locales si pertinent
-- Raconte l'expérience d'un chauffeur local (prénom + initiale)
-- Ton chaleureux et proche
+CONNAISSANCE ULTRA-LOCALE (OBLIGATOIRE) :
+✅ Quartiers/zones : "à Bellecour", "côté Gerland", "dans le 8ème"
+✅ Points de référence : gare, aéroport, centre-ville, zones sensibles
+✅ Trafic local : "les heures de pointe sur le périph", "la circulation vers Part-Dieu"
+✅ Événements : "pendant les Lumières", "les jours de match", "en période Fête des Lumières"
+✅ Comparez avec villes proches : "contrairement à Villeurbanne...", "comme à Saint-Priest..."
 
-3. INFORMATIONS PRATIQUES
-- Tarifs moyens à ${targetCity}
-- Nombre approximatif de taxis
-- Réglementation spécifique ville/département
-- Meilleurs quartiers pour travailler
-- Pièges à éviter localement
+ANECDOTES LOCALES (2 minimum) :
+"Ahmed, taxi à ${targetCity} depuis 8 ans, m'a raconté..."
+"Une chauffeure de [quartier], Sophie, m'expliquait que..."
+"Un collègue qui bosse principalement [zone locale]..."
 
-STRUCTURE (1200-1500 mots) :
+━━━ SEO LOCAL PUISSANT ━━━
 
-Intro : Pourquoi l'assurance taxi à ${targetCity} est unique
-Section 1 : Tarifs et spécificités locales
-Section 2 : Ce que vous devez savoir sur ${targetCity}
-Section 3 : Comment économiser localement
-Section 4 : Témoignages de chauffeurs de ${targetCity}
-FAQ locale (5 questions)
+MOT-CLÉ LOCAL "${keyword} ${targetCity}" :
+✅ Dans H1 : "[Keyword] à ${targetCity} : Guide Complet 2024"
+✅ Dans premiers 50 mots
+✅ Dans 3 H2 différents
+✅ Dans meta description
+✅ Variantes : "à ${targetCity}", "sur ${targetCity}", "${targetCity} [keyword]"
 
-Mots-clés : ${secondary.join(', ')}
+LSI KEYWORDS LOCAUX :
+- "[keyword] [département]"
+- "chauffeur taxi ${targetCity}"
+- "assurance professionnelle ${targetCity}"
+- "[keyword] pas cher ${targetCity}"
+- "devis ${targetCity}"
 
-Réponds en JSON :
+LONG TAIL LOCAL :
+- "combien coûte [keyword] à ${targetCity}"
+- "[keyword] ${targetCity} prix"
+- "meilleure [keyword] ${targetCity}"
+- "[keyword] ${targetCity} comparatif"
+
+━━━ STRUCTURE (1200-1500 mots) ━━━
+
+📌 INTRO (120 mots)
+- Problème/situation spécifique à ${targetCity}
+- Chiffre local si dispo : "À ${targetCity}, environ [X] taxis..."
+- Promesse : "Ce guide vous montre exactement..."
+
+📌 Section 1 : "${keyword} à ${targetCity} : Spécificités et tarifs" (300 mots)
+- Prix moyen local précis
+- Comparaison avec villes voisines
+- Facteurs qui influencent prix localement
+- "À ${targetCity}, comptez entre X et Y euros..."
+
+📌 Section 2 : "Ce qu'il faut savoir pour rouler à ${targetCity}" (250 mots)
+- Zones à fort trafic
+- Quartiers lucratifs
+- Réglementations locales
+- Points d'attention spécifiques
+
+📌 Section 3 : "Comment économiser sur votre ${keyword} à ${targetCity}" (300 mots)
+- 3-4 astuces locales concrètes
+- Exemples de tarifs réels
+- Économies possibles avec TaxiAssur
+- "Nos clients de ${targetCity} économisent en moyenne..."
+
+📌 Section 4 : "Témoignages de chauffeurs de ${targetCity}" (200 mots)
+- 2-3 vrais retours avec prénoms
+- Situations concrètes locales
+- Avant/après
+
+📌 FAQ LOCALE (5 questions)
+"Combien coûte [keyword] à ${targetCity} ?"
+"[Keyword] ${targetCity} : quelles garanties obligatoires ?"
+"Puis-je avoir mon [keyword] immédiatement à ${targetCity} ?"
+"${targetCity} : quelle différence avec [ville proche] ?"
+"[Keyword] à ${targetCity} pour jeune conducteur : c'est possible ?"
+
+━━━ DONNÉES LOCALES À INTÉGRER ━━━
+
+💰 PRIX ESTIMATIFS ${targetCity} :
+- Grande ville (Paris, Lyon, Marseille) : 1800-2400€/an
+- Ville moyenne (Toulouse, Nice, Nantes) : 1500-2000€/an
+- Petite ville : 1200-1600€/an
+
+🚕 CONTEXTE LOCAL :
+- Nombre de taxis approximatif
+- Zones à fort trafic
+- Aéroport/Gare principale
+- Réglementation départementale
+
+JSON ATTENDU :
 {
-  "title": "...",
-  "slug": "...",
-  "metaDescription": "...",
-  "content": "...",
-  "localData": {
-    "averagePrice": "1800€/an",
-    "taxiCount": "estimatif",
-    "specificRules": ["règle locale 1", "règle 2"]
-  },
-  "faq": [...]
-}`;
+  "title": "[Keyword] à ${targetCity} : Guide & Tarifs 2024",
+  "slug": "keyword-ville-departement",
+  "metaDescription": "[Keyword] à ${targetCity} ✓ Prix, garanties, devis. Guide local complet par expert.",
+  "content": "HTML complet 1200+ mots avec références locales précises",
+  "excerpt": "Tout savoir sur [keyword] à ${targetCity} : tarifs, spécificités, conseils.",
+  "faq": [...],
+  "keywords": ["${keyword} ${targetCity}", "${keyword} [département]", ...],
+  "readingTime": 6,
+  "category": "local"
+}
+
+⚠️ CRITIQUE : Prouve que tu connais VRAIMENT ${targetCity}. Cite quartiers, rues, lieux précis.`;`;
     } else if (contentType === 'comparison') {
       prompt = `Tu es un expert impartial. Crée un comparatif HONNET et HUMAIN sur "${keyword}".
 
@@ -238,14 +354,47 @@ Réponds en JSON :
         messages: [
           {
             role: 'system',
-            content: 'Tu es un rédacteur expert humain avec 15 ans d\'expérience en assurance. Tu écris comme un VRAI humain, pas comme une IA. Ton contenu doit être indétectable par les détecteurs d\'IA. Utilise un ton conversationnel, des imperfections naturelles, des anecdotes, des émotions. Varie la structure et évite les patterns d\'IA. Réponds UNIQUEMENT en JSON valide.'
+            content: `Tu es Jean-Marc, courtier en assurance avec 15 ans d'expérience terrain. Tu écris sur ton blog perso.
+
+🎯 MISSION : Écrire du contenu 100% INDÉTECTABLE comme contenu IA.
+
+❌ INTERDICTIONS STRICTES (détection IA) :
+- Mots/expressions IA : "en conclusion", "en résumé", "il est important de", "il convient de", "optimiser", "maximiser"
+- Structure trop logique (intro/corps/conclusion parfaite)
+- Phrases trop longues et complexes
+- Listes numérotées partout
+- Ton corporate/académique
+- Transitions parfaites
+
+✅ OBLIGATIONS (écriture humaine) :
+- Commence par "Bon alors...", "Franchement...", "L'autre jour..."
+- Utilise JE/NOUS/VOUS constamment
+- Anecdotes perso : "J'avais un client, Karim, qui..."
+- Phrases courtes. Très courtes parfois. Puis une plus longue avec plusieurs idées.
+- Répète naturellement certains mots (humain)
+- Ajoute parenthèses avec remarques perso (et oui, c'est du vécu !)
+- Questions rhétoriques : "Vous vous demandez pourquoi ?"
+- Émotions : frustration, soulagement, surprise
+- Familiarités : "le truc", "pas mal", "carrément"
+
+🔥 SEO ULTRA-PERFORMANT :
+- Mot-clé exact dans H1, premier paragraphe, 1-2 H2, meta
+- LSI keywords (synonymes) partout naturellement
+- Mots-clés longue traîne dans FAQ
+- Internal linking : "comme je l'explique dans..."
+- Chiffres précis : 1847€, 23%, 48h
+- Featured snippet ready : réponses directes 40-60 mots
+- Schema.org ready (FAQ, Article)
+
+Réponds UNIQUEMENT en JSON valide sans markdown.`
           },
           { role: 'user', content: prompt }
         ],
-        temperature: 0.85,
+        temperature: 0.9,
         max_tokens: 4000,
-        presence_penalty: 0.7,
-        frequency_penalty: 0.7,
+        presence_penalty: 0.8,
+        frequency_penalty: 0.6,
+        top_p: 0.95,
         response_format: { type: 'json_object' }
       }),
     });
