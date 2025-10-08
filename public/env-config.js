@@ -25,6 +25,8 @@ window.ENV_CONFIG = {
 
   // OpenAI (utilisé côté serveur uniquement)
   VITE_OPENAI_API_KEY: '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'
+  VITE_INDEXNOW_KEY=q38enouostqixbz513fb359ujcosvn4k
+
 };
 
 console.log('✅ Configuration chargée depuis env-config.js');
