@@ -159,42 +159,101 @@ ${generatedContent.faq?.map(f => `**${f.question}**\n${f.answer}`).join('\n\n')}
     setSuccess('');
 
     try {
-      // Publish as blog post
-      const { data, error: publishError } = await supabase
-        .from('blog_posts')
-        .insert({
-          title: generatedContent.title,
-          slug: generatedContent.slug,
-          excerpt: generatedContent.excerpt || generatedContent.metaDescription,
-          content: generatedContent.content,
-          meta_description: generatedContent.metaDescription,
-          tags: generatedContent.keywords || [],
-          reading_time: generatedContent.readingTime || 5,
-          status: status,
-          published_at: status === 'published' ? new Date().toISOString() : null,
-        })
-        .select()
-        .single();
+      // Publish based on content type
+      if (contentType === 'blog') {
+        // Publish as blog post
+        const { data, error: publishError } = await supabase
+          .from('blog_posts')
+          .insert({
+            title: generatedContent.title,
+            slug: generatedContent.slug,
+            excerpt: generatedContent.excerpt || generatedContent.metaDescription,
+            content: generatedContent.content,
+            meta_description: generatedContent.metaDescription,
+            tags: generatedContent.keywords || [],
+            reading_time: generatedContent.readingTime || 5,
+            status: status,
+            published_at: status === 'published' ? new Date().toISOString() : null,
+          })
+          .select()
+          .single();
 
-      if (publishError) throw publishError;
+        if (publishError) throw publishError;
 
-      // If FAQ exists, publish each FAQ entry
-      if (generatedContent.faq && generatedContent.faq.length > 0) {
-        const faqEntries = generatedContent.faq.map(faq => ({
-          question: faq.question,
-          answer: faq.answer,
-          tags: generatedContent.keywords || [],
-          status: status,
-        }));
+        // If FAQ exists, publish each FAQ entry
+        if (generatedContent.faq && generatedContent.faq.length > 0) {
+          const faqEntries = generatedContent.faq.map(faq => ({
+            question: faq.question,
+            answer: faq.answer,
+            tags: generatedContent.keywords || [],
+            category: generatedContent.category || 'Général',
+            status: status,
+          }));
 
-        const { error: faqError } = await supabase
-          .from('faq_entries')
-          .insert(faqEntries);
+          const { error: faqError } = await supabase
+            .from('faq_entries')
+            .insert(faqEntries);
 
-        if (faqError) {
-          console.error('FAQ publication error:', faqError);
-          // Don't fail the whole operation if FAQ fails
+          if (faqError) {
+            console.error('FAQ publication error:', faqError);
+          }
         }
+      } else if (contentType === 'city') {
+        // Publish as city page
+        const { data, error: cityError } = await supabase
+          .from('city_pages')
+          .insert({
+            city: city.trim(),
+            title: generatedContent.title,
+            slug: generatedContent.slug,
+            content: generatedContent.content,
+            meta_description: generatedContent.metaDescription,
+            keywords: generatedContent.keywords || [],
+            status: status,
+            published_at: status === 'published' ? new Date().toISOString() : null,
+          })
+          .select()
+          .single();
+
+        if (cityError) throw cityError;
+
+        // If FAQ exists for city page, publish them too
+        if (generatedContent.faq && generatedContent.faq.length > 0) {
+          const faqEntries = generatedContent.faq.map(faq => ({
+            question: faq.question,
+            answer: faq.answer,
+            tags: generatedContent.keywords || [],
+            category: `Ville - ${city.trim()}`,
+            status: status,
+          }));
+
+          const { error: faqError } = await supabase
+            .from('faq_entries')
+            .insert(faqEntries);
+
+          if (faqError) {
+            console.error('FAQ publication error:', faqError);
+          }
+        }
+      } else if (contentType === 'comparison') {
+        // Publish comparison as blog post with special category
+        const { data, error: compError } = await supabase
+          .from('blog_posts')
+          .insert({
+            title: generatedContent.title,
+            slug: generatedContent.slug,
+            excerpt: generatedContent.excerpt || generatedContent.metaDescription,
+            content: generatedContent.content,
+            meta_description: generatedContent.metaDescription,
+            tags: [...(generatedContent.keywords || []), 'comparaison'],
+            reading_time: generatedContent.readingTime || 7,
+            status: status,
+            published_at: status === 'published' ? new Date().toISOString() : null,
+          })
+          .select()
+          .single();
+
+        if (compError) throw compError;
       }
 
       setSuccess(
