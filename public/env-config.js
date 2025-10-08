@@ -43,6 +43,8 @@ window.ENV = {
   VITE_ADMIN_PASSWORD: 'taxiassur2024'
 };
 
+
+VITE_SERP_API_KEY='420c1db639f7961f89b578da9be23a76cd16795664103b95019a432026555202'
 // ========================================
 // INSTRUCTIONS DE CONFIGURATION
 // ========================================
