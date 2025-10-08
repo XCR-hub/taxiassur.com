@@ -156,7 +156,7 @@ const ExitIntentPopup: React.FC<ExitIntentPopupProps> = ({ isVisible, onClose, o
           {/* Social proof */}
           <div className="mt-4 text-center">
             <p className="text-xs text-gray-600">
-              Rejoint par 100+ chauffeurs satisfaits • Note 4.9/5
+              Rejoint par 100+ chauffeurs satisfaits • Objectif excellence
             </p>
           </div>
         </div>

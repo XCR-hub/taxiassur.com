@@ -46,9 +46,9 @@ Nos services :
 
 Nos atouts :
 • Tarifs négociés jusqu'à 35% moins cher
-• Plus de 5000 clients satisfaits (note 4.9/5)
+• 100+ clients satisfaits depuis 2025
 • Réponse rapide garantie sous 15 minutes
-• Expertise reconnue depuis 15 ans
+• Courtier agréé ORIAS professionnel
 • Accompagnement complet de A à Z
 
 Que vous soyez taxi indépendant, compagnie de taxi ou gestionnaire de flotte, nous avons la solution d'assurance adaptée à votre activité et votre budget.`,

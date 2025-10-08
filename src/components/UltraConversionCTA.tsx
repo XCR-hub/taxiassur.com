@@ -98,7 +98,7 @@ const UltraConversionCTA: React.FC<UltraConversionCTAProps> = ({
             <div className="flex items-center gap-2 mb-4">
               <Shield className="w-8 h-8 text-green-400" />
               <h3 className="text-2xl font-bold text-white">
-                + de 10 000 chauffeurs nous font confiance
+                100+ chauffeurs nous font déjà confiance
               </h3>
             </div>
             <ul className="space-y-3 mb-6">
@@ -112,7 +112,7 @@ const UltraConversionCTA: React.FC<UltraConversionCTAProps> = ({
               </li>
               <li className="flex items-center gap-2 text-gray-300">
                 <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0" />
-                <span>Note moyenne 4.9/5 sur 127 avis</span>
+                <span>Objectif satisfaction : excellence de service</span>
               </li>
               <li className="flex items-center gap-2 text-gray-300">
                 <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0" />

@@ -261,8 +261,8 @@ const SEOContent: React.FC = () => {
                     <span className="font-bold text-green-400">-35%</span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-gray-300">Note satisfaction</span>
-                    <span className="font-bold text-amber-400">4.9/5</span>
+                    <span className="text-gray-300">Objectif qualité</span>
+                    <span className="font-bold text-amber-400">Excellence</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-gray-300">Délai de réponse</span>

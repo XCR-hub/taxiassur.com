@@ -415,13 +415,13 @@ const CityPage: React.FC = () => {
                       <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
                         <Star className="text-white drop-shadow-md" size={32} />
                       </div>
-                      <div className="text-4xl font-bold text-green-400 mb-2 drop-shadow-lg">4.9/5</div>
+                      <div className="text-4xl font-bold text-green-400 mb-2 drop-shadow-lg">100+</div>
                       <div className="flex justify-center mb-3">
                         {[...Array(5)].map((_, i) => (
                           <Star key={i} className="text-yellow-400 fill-current" size={20} />
                         ))}
                       </div>
-                      <p className="text-lg font-bold text-white mb-2 drop-shadow-lg">Note moyenne à {cityData.city}</p>
+                      <p className="text-lg font-bold text-white mb-2 drop-shadow-lg">Clients satisfaits à {cityData.city}</p>
                       <p className="text-sm text-gray-300 mb-4 drop-shadow-md">Basé sur {cityStats.clients}+ clients locaux</p>
                       <div className="bg-gradient-to-r from-amber-500/20 to-yellow-500/20 p-3 rounded-lg border border-amber-500/40">
                         <p className="text-amber-300 font-medium text-sm drop-shadow-md">

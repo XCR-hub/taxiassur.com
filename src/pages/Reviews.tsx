@@ -16,8 +16,8 @@ const Reviews: React.FC = () => {
   return (
     <>
       <Seo
-        title="Avis Clients TaxiAssur - Témoignages Authentiques Taxi | Note 4.9/5"
-        description="⭐ Avis clients TaxiAssur authentiques : note 4.9/5 ✓ +100 témoignages taxi ✓ Économies réelles ✓ Service expert ✓ Satisfaction garantie ✓ Courtier spécialisé depuis septembre 2025"
+        title="Avis Clients TaxiAssur - Témoignages Authentiques Taxi | 100+ Clients"
+        description="⭐ Avis clients TaxiAssur authentiques : 100+ clients satisfaits ✓ Témoignages taxi réels ✓ Économies réelles ✓ Service expert ✓ Satisfaction garantie ✓ Courtier spécialisé depuis septembre 2025"
         canonical="/avis"
         keywords="avis clients TaxiAssur, témoignages taxi authentiques, satisfaction client taxi, note avis taxi, retour expérience assurance taxi, clients satisfaits taxi"
       />
@@ -38,18 +38,18 @@ const Reviews: React.FC = () => {
                 </h1>
                 <p className="text-2xl text-gray-200 mb-8 leading-relaxed drop-shadow-md">
                   ⭐ <strong className="text-amber-400">Découvrez pourquoi +100 professionnels du taxi</strong> 
-                  nous font confiance pour leur assurance. <strong className="text-green-400">Note 4.9/5</strong>, 
+                  nous font confiance pour leur assurance. <strong className="text-green-400">Clients satisfaits</strong>, 
                   <strong className="text-blue-400">témoignages authentiques</strong> et économies réelles.
                 </p>
                 
                 <div className="grid grid-cols-3 gap-6 max-w-md mx-auto mb-8">
                   <div className="ai-card p-4 hover:shadow-amber-500/40 transition-all duration-300">
-                    <div className="text-2xl font-bold text-amber-400 drop-shadow-lg">4.9/5</div>
-                    <div className="text-xs text-gray-300 drop-shadow-md">Note moyenne</div>
+                    <div className="text-2xl font-bold text-amber-400 drop-shadow-lg">100+</div>
+                    <div className="text-xs text-gray-300 drop-shadow-md">Clients actifs</div>
                   </div>
                   <div className="ai-card p-4 hover:shadow-green-500/40 transition-all duration-300">
-                    <div className="text-2xl font-bold text-green-400 drop-shadow-lg">100+</div>
-                    <div className="text-xs text-gray-300 drop-shadow-md">Avis clients</div>
+                    <div className="text-2xl font-bold text-green-400 drop-shadow-lg">50+</div>
+                    <div className="text-xs text-gray-300 drop-shadow-md">Avis réels</div>
                   </div>
                   <div className="ai-card p-4 hover:shadow-blue-500/40 transition-all duration-300">
                     <div className="text-2xl font-bold text-blue-400 drop-shadow-lg">580€</div>

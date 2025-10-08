@@ -105,8 +105,8 @@ const LocalSEO: React.FC = () => {
                 <div className="w-20 h-20 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-2xl">
                   <Award className="text-white" size={24} />
                 </div>
-                <div className="text-4xl font-bold text-white">4.9/5</div>
-                <div className="text-sm text-gray-200 font-medium">Satisfaction moyenne</div>
+                <div className="text-4xl font-bold text-white">100+</div>
+                <div className="text-sm text-gray-200 font-medium">Clients satisfaits</div>
               </div>
             </div>
             <Link to="/villes" className="btn-primary">

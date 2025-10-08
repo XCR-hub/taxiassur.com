@@ -53,13 +53,13 @@ const Avis: React.FC = () => {
           {/* Trust indicators */}
           <div className="flex justify-center items-center space-x-8">
             <div className="bg-gray-900/90 border border-amber-500/50 rounded-xl p-4 text-center">
-              <div className="text-3xl font-bold text-amber-400">4.9/5</div>
+              <div className="text-3xl font-bold text-amber-400">100+</div>
               <div className="flex justify-center mb-1">
                 {[...Array(5)].map((_, i) => (
                   <Star key={i} size={16} className="text-yellow-400 fill-current" />
                 ))}
               </div>
-              <p className="text-sm text-gray-300">Note moyenne</p>
+              <p className="text-sm text-gray-300">Clients actifs</p>
             </div>
             <div className="bg-gray-900/90 border border-green-500/50 rounded-xl p-4 text-center">
               <div className="text-3xl font-bold text-green-400">100+</div>

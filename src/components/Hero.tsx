@@ -170,8 +170,8 @@ const Hero: React.FC = () => {
               </div>
               <div className="text-center bg-amber-600 hover:bg-amber-700 rounded-xl p-4 border-2 border-amber-500 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer">
                 <Star className="mx-auto mb-2 text-white fill-current drop-shadow-lg" size={20} />
-                <div className="text-2xl font-bold text-amber-400 drop-shadow-lg">4.9/5</div>
-                <div className="text-xs text-white font-medium drop-shadow-md">Note clients</div>
+                <div className="text-2xl font-bold text-amber-400 drop-shadow-lg">100+</div>
+                <div className="text-xs text-white font-medium drop-shadow-md">Clients actifs</div>
               </div>
               <div className="text-center bg-blue-600 hover:bg-blue-700 rounded-xl p-4 border-2 border-blue-500 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer">
                 <Zap className="mx-auto mb-2 text-white drop-shadow-lg" size={20} />
