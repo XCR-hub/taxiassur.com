@@ -24,6 +24,24 @@ OPENAI_API_KEY=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
 
 ---
 
+### 1.5. Make.com API Token (Automations)
+```bash
+MAKE_API_TOKEN=507a717b-3a95-483e-8fa0-215cff5c48f2
+```
+**Utilisé par** :
+- Automations Make.com (webhooks)
+- Synchronisation données automatique
+- Workflows orchestration
+
+**Comment obtenir** :
+1. https://www.make.com/
+2. Organization → API → Create new token
+3. Copier le token généré
+
+**Coût** : Plan gratuit (1000 opérations/mois)
+
+---
+
 ### 2. SendGrid API Key (Emails)
 ```bash
 SENDGRID_API_KEY=VOTRE_CLE_SENDGRID_ICI
@@ -91,15 +109,16 @@ SUPABASE_DB_URL=postgresql://postgres:...
 ## Priorités Configuration
 
 ### Immédiat (Critique)
-1. ✅ **OPENAI_API_KEY** - Pour générateur IA
+1. ⚠️ **OPENAI_API_KEY** - Pour générateur IA & ChatBot
 2. ⚠️ **SENDGRID_API_KEY** - Pour emails devis/contrats
 
 ### Important
-3. ✅ **SERPAPI_KEY** - Déjà configuré
-4. ⚠️ **SMTP_HOST/USER/PASS** - Si pas SendGrid
+3. ✅ **MAKE_API_TOKEN** - Déjà configuré
+4. ✅ **SERPAPI_KEY** - Déjà configuré
+5. ⚠️ **SMTP_HOST/USER/PASS** - Si pas SendGrid
 
 ### Optionnel
-5. ✅ **GOOGLE_CSE_API_KEY** - Déjà configuré
+6. ✅ **GOOGLE_CSE_API_KEY** - Déjà configuré
 
 ---
 
@@ -119,6 +138,7 @@ SUPABASE_DB_URL=postgresql://postgres:...
 ### Via CLI (Alternative)
 ```bash
 npx supabase secrets set OPENAI_API_KEY=sk-nymqmTY1...
+npx supabase secrets set MAKE_API_TOKEN=507a717b-3a95-483e-8fa0-215cff5c48f2
 npx supabase secrets set SENDGRID_API_KEY=SG.xxx...
 npx supabase secrets set SERPAPI_KEY=420c1db6...
 ```
@@ -189,6 +209,7 @@ npx supabase secrets set SENDGRID_API_KEY=SG.new-key...
 | Secret | Statut | Urgence |
 |--------|--------|---------|
 | OPENAI_API_KEY | ⚠️ À configurer | 🔴 Critique |
+| MAKE_API_TOKEN | ✅ Configuré | ✅ OK |
 | SENDGRID_API_KEY | ⚠️ À configurer | 🔴 Critique |
 | SERPAPI_KEY | ✅ Configuré | ✅ OK |
 | GOOGLE_CSE_API_KEY | ✅ Configuré | ✅ OK |
