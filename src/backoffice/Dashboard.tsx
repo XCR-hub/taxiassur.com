@@ -425,7 +425,15 @@ const Dashboard: React.FC = () => {
                   <Globe size={16} />
                   <span>Ping Moteurs</span>
                 </button>
-                
+
+                <a
+                  href="/backoffice/seo-strategy"
+                  className="w-full flex items-center justify-center space-x-2 bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-3 px-4 rounded-lg transition-colors shadow-lg hover:shadow-xl"
+                >
+                  <Award size={16} />
+                  <span>Stratégie n°1 SEO</span>
+                </a>
+
                 <button
                   onClick={loadDashboardData}
                   className="w-full flex items-center justify-center space-x-2 bg-gray-700 hover:bg-gray-800 text-white font-bold py-3 px-4 rounded-lg transition-colors shadow-lg hover:shadow-xl"
