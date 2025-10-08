@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Send, Loader2, CheckCircle, AlertCircle, Mail, TrendingUp, Rocket } from 'lucide-react';
+import { Send, Loader2, CheckCircle, AlertCircle, Mail, TrendingUp, Rocket, Home } from 'lucide-react';
 import { getSupabaseUrl, getSupabaseAnonKey } from '../lib/env';
 
 export default function CampaignLauncher() {
@@ -89,9 +89,18 @@ export default function CampaignLauncher() {
   return (
     <div className="max-w-4xl mx-auto p-6">
       <div className="bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl p-6 mb-6 text-white">
-        <div className="flex items-center space-x-3 mb-2">
-          <Rocket size={32} />
-          <h2 className="text-2xl font-bold">Lancement de Campagne Automatique</h2>
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center space-x-3">
+            <Rocket size={32} />
+            <h2 className="text-2xl font-bold">Lancement de Campagne Automatique</h2>
+          </div>
+          <a
+            href="/backoffice"
+            className="flex items-center space-x-2 px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors"
+          >
+            <Home size={20} />
+            <span>Retour</span>
+          </a>
         </div>
         <p className="text-blue-100">
           Générez et envoyez des emails ultra-personnalisés en 2 clics

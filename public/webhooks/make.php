@@ -217,7 +217,17 @@ try {
                 echo json_encode(['error' => 'Email sending failed']);
             }
             break;
-            
+
+        case 'regenFeeds':
+            // Régénération des feeds (sitemap, RSS)
+            // En pratique, les feeds sont générés statiquement lors du build
+            echo json_encode([
+                'ok' => true,
+                'message' => 'Feeds disponibles',
+                'note' => 'Les feeds sont générés lors du build. Soumettez le sitemap manuellement via Google Search Console pour meilleurs résultats.'
+            ]);
+            break;
+
         default:
             http_response_code(404);
             echo json_encode(['error' => 'Action not found']);
