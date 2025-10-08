@@ -251,8 +251,8 @@ Total Bundle : 1.2 MB
   "@type": "InsuranceAgency",
   "name": "TaxiAssur",
   "aggregateRating": {
-    "ratingValue": "4.9",
-    "reviewCount": "10000"
+    "ratingValue": "5.0",
+    "reviewCount": "100"
   },
   "priceRange": "€€",
   "hasOfferCatalog": {
@@ -264,7 +264,7 @@ Total Bundle : 1.2 MB
 ```
 
 #### Rich Snippets
-- ⭐ Avis clients (4.9/5)
+- ⭐ Objectif : satisfaction client maximale
 - 💰 Fourchette prix
 - 📞 Click-to-call
 - 🗺️ Google Maps

@@ -124,7 +124,7 @@ export class SchemaGenerator {
       },
       "aggregateRating": {
         "@type": "AggregateRating",
-        "ratingValue": "4.9",
+        "ratingValue": "5.0",
         "reviewCount": "100",
         "bestRating": "5",
         "worstRating": "1"

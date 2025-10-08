@@ -24,7 +24,7 @@ TaxiAssur est le courtier spécialisé N°1 en assurance taxi et VTC en France. 
 
 Notre expertise : RC Professionnelle obligatoire, Tous risques, Assurance flotte, Véhicules électriques (Tesla, Ioniq), Jeunes conducteurs, Résiliés, Double activité Taxi+VTC.
 
-Devis gratuit en 2 minutes, réponse sous 15 minutes, attestation 24h. Plus de 10 000 chauffeurs nous font confiance. Note moyenne 4.9/5.
+Devis gratuit en 2 minutes, réponse sous 15 minutes, attestation 24h. Notre objectif : devenir la référence pour 10 000+ chauffeurs. Engagement qualité maximale.
 
 Courtier agréé ORIAS n°20008210. Service professionnel, rapide et personnalisé depuis 2015.
 ```

@@ -59,11 +59,11 @@ export function getAdaptiveContent(source: TrafficSource): AdaptiveContent {
     google: {
       hero: {
         title: '🏆 N°1 sur Google : Assurance Taxi Professionnelle',
-        subtitle: 'Comparez les meilleures assurances taxi recommandées par Google. Plus de 10 000 chauffeurs nous font confiance.',
+        subtitle: 'Comparez les meilleures assurances taxi recommandées par Google. Notre ambition : accompagner 10 000+ chauffeurs.',
         cta: 'Comparaison Google Certifiée'
       },
       trustSignal: '✅ Classé #1 sur Google pour "assurance taxi"',
-      socialProof: 'Note moyenne 4.9/5 sur Google (127 avis)'
+      socialProof: 'Notre objectif : excellence et satisfaction client'
     },
 
     bing: {
@@ -118,12 +118,12 @@ export function getAdaptiveContent(source: TrafficSource): AdaptiveContent {
 
     facebook: {
       hero: {
-        title: 'Rejoignez 10 000+ Chauffeurs Satisfaits',
+        title: 'Notre objectif : Fédérer 10 000+ Chauffeurs',
         subtitle: 'Partagé par des centaines de taxis sur Facebook. Découvrez pourquoi la communauté nous fait confiance.',
         cta: 'Rejoindre la Communauté'
       },
-      trustSignal: '👥 Communauté active de 10 000+ chauffeurs',
-      socialProof: '4.9/5 - Note moyenne Facebook (312 avis)'
+      trustSignal: '👥 Notre ambition : bâtir une communauté de 10 000+ chauffeurs',
+      socialProof: 'Notre engagement : satisfaction client maximale'
     },
 
     linkedin: {
@@ -173,7 +173,7 @@ export function getAdaptiveContent(source: TrafficSource): AdaptiveContent {
         cta: 'Demander Mon Devis'
       },
       trustSignal: '✅ Courtier ORIAS n°20008210',
-      socialProof: '10 000+ chauffeurs assurés - Note 4.9/5'
+      socialProof: 'Notre vision : devenir le courtier de référence'
     }
   };
 

@@ -223,7 +223,7 @@ export function generateMirrorPageContent(page: MirrorPage): {
 
     comparison_table: `**70% des chauffeurs de taxi ne comparent jamais leur assurance.** C'est l'erreur la plus coûteuse ! Un comparatif peut vous faire économiser entre 300€ et 800€ par an.\n\nNotre comparateur analyse en temps réel les offres de tous les assureurs spécialisés taxi.`,
 
-    cta_heavy: `**Obtenez votre devis personnalisé en 2 minutes chrono.** Sans engagement, 100% gratuit, réponse immédiate par email.\n\nPlus de 10 000 chauffeurs nous font confiance pour trouver la meilleure assurance au meilleur prix.`,
+    cta_heavy: `**Obtenez votre devis personnalisé en 2 minutes chrono.** Sans engagement, 100% gratuit, réponse immédiate par email.\n\nNotre ambition : devenir le courtier de référence pour 10 000+ chauffeurs en quête de la meilleure assurance au meilleur prix.`,
 
     urgency_focused: `**Besoin d'une attestation d'assurance taxi rapidement ?** Nous comprenons l'urgence : contrôle imprévu, changement de véhicule, résiliation brutale...\n\nNotre service express vous garantit une attestation sous 24h maximum, 7j/7.`,
 
