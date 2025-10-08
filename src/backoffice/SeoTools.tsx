@@ -55,7 +55,7 @@ const SeoTools: React.FC = () => {
       const sitemapUrl = `${import.meta.env.VITE_SITE_URL || 'https://taxiassur.com'}/feeds/sitemap.xml`;
       const result = await pingSearchEngines(sitemapUrl);
       setPingResults(result.results);
-      
+
       if (result.success) {
         alert('✅ Moteurs de recherche notifiés !');
       } else {
@@ -63,6 +63,41 @@ const SeoTools: React.FC = () => {
       }
     } catch (error) {
       alert('❌ Erreur lors du ping');
+    } finally {
+      setIsWorking(false);
+    }
+  };
+
+  const handleOptimizeLeads = async () => {
+    setIsWorking(true);
+    try {
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+      if (!supabaseUrl || !supabaseKey) {
+        alert('❌ Configuration Supabase manquante');
+        return;
+      }
+
+      const endpoint = `${supabaseUrl}/functions/v1/serp-lead-optimizer`;
+
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabaseKey}`
+        }
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        alert(`✅ Optimisation terminée !\n\nOpportunités détectées: ${result.analyzed}\n\nStratégie: ${result.strategy?.focus}\n\nVoir table content_opportunities pour détails`);
+      } else {
+        const error = await response.json();
+        alert(`❌ Erreur: ${error.error || 'Configuration SerpAPI requise'}`);
+      }
+    } catch (error) {
+      alert('❌ Erreur lors de l\'optimisation');
     } finally {
       setIsWorking(false);
     }
@@ -173,6 +208,15 @@ const SeoTools: React.FC = () => {
                   <ExternalLink size={16} />
                   <span>Tester Webhook</span>
                 </a>
+
+                <button
+                  onClick={handleOptimizeLeads}
+                  disabled={isWorking}
+                  className="w-full flex items-center justify-center space-x-2 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 disabled:bg-gray-400 text-black font-bold py-3 px-4 rounded-lg transition-colors shadow-lg"
+                >
+                  <TrendingUp size={16} />
+                  <span>🚀 Optimiser Leads (SerpAPI)</span>
+                </button>
               </div>
             </Card>
 
