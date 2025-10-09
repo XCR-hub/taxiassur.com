@@ -18,6 +18,9 @@
     - Apprentissage continu
 */
 
+-- Activer extension pgvector pour embeddings (optionnel)
+CREATE EXTENSION IF NOT EXISTS vector;
+
 -- Table Données d'Entraînement IA
 CREATE TABLE IF NOT EXISTS ai_training_data (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -29,7 +32,7 @@ CREATE TABLE IF NOT EXISTS ai_training_data (
   sentiment text CHECK (sentiment IN ('positive', 'negative', 'neutral')),
   quality_score decimal DEFAULT 0,
   used_for_training boolean DEFAULT false,
-  embedding vector(1536), -- OpenAI embeddings
+  embedding_text text, -- Stockage texte embeddings (alternative à vector)
   metadata jsonb DEFAULT '{}'::jsonb,
   created_at timestamptz DEFAULT now()
 );
@@ -148,7 +151,7 @@ CREATE TABLE IF NOT EXISTS ai_knowledge_base (
   usage_count integer DEFAULT 0,
   last_used_at timestamptz,
   keywords text[],
-  embedding vector(1536),
+  embedding_text text, -- Stockage texte embeddings (alternative à vector)
   verified boolean DEFAULT false,
   verified_by uuid,
   created_at timestamptz DEFAULT now(),
