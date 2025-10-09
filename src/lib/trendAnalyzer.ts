@@ -20,32 +20,28 @@ interface TrendData {
 
 /**
  * Analyse les tendances via Google Trends
- * API gratuite : https://serpapi.com (100 requêtes/mois gratuit)
+ * Utilise une Edge Function Supabase pour contourner CORS
  */
 export async function analyzeGoogleTrends(keyword: string): Promise<TrendData | null> {
-  // API bloquée par CORS depuis le navigateur
-  // TODO: Créer une Edge Function Supabase pour proxy les requêtes API
-  console.warn('⚠️ Google Trends API désactivée (problème CORS) - utilisation de données simulées');
-  return getMockTrendData(keyword);
-
-  /* Code désactivé temporairement
-  const SERP_API_KEY = import.meta.env.VITE_SERP_API_KEY;
-
-  if (!SERP_API_KEY) {
-    console.log('⚠️ SERP API key not configured - using mock data');
-    return getMockTrendData(keyword);
-  }
-
   try {
-    const response = await fetch(
-      `https://serpapi.com/search.json?engine=google_trends&q=${encodeURIComponent(keyword)}&data_type=TIMESERIES&geo=FR&api_key=${SERP_API_KEY}`
-    );
+    // Appel via Edge Function pour contourner CORS
+    const { data, error } = await supabase.functions.invoke('trend-analyzer-proxy', {
+      body: {
+        type: 'google_trends',
+        keyword: keyword
+      }
+    });
 
-    if (!response.ok) {
-      throw new Error(`Serp API error: ${response.status}`);
+    if (error) {
+      console.error('Edge Function error:', error);
+      return getMockTrendData(keyword);
     }
 
-    const data = await response.json();
+    // Si aucune donnée ou erreur API
+    if (!data || data.error) {
+      console.warn('No trend data available, using mock data');
+      return getMockTrendData(keyword);
+    }
 
     return {
       keyword,
@@ -59,7 +55,6 @@ export async function analyzeGoogleTrends(keyword: string): Promise<TrendData | 
     console.error('Google Trends error:', error);
     return getMockTrendData(keyword);
   }
-  */
 }
 
 // =====================================================
@@ -167,14 +162,39 @@ export async function getSearchConsoleData(): Promise<SearchConsoleData | null> 
 
 /**
  * Récupère les suggestions Google Autocomplete
- * API gratuite et sans clé
+ * Utilise une Edge Function Supabase pour contourner CORS
  */
 export async function getGoogleSuggestions(keyword: string): Promise<string[]> {
-  // API bloquée par CORS depuis le navigateur
-  // TODO: Créer une Edge Function Supabase pour proxy les requêtes
-  console.warn('⚠️ Google Suggest API désactivée (problème CORS) - utilisation de suggestions génériques');
+  try {
+    // Appel via Edge Function pour contourner CORS
+    const { data, error } = await supabase.functions.invoke('trend-analyzer-proxy', {
+      body: {
+        type: 'google_suggest',
+        keyword: keyword
+      }
+    });
 
-  // Retourne des suggestions génériques basées sur le keyword
+    if (error) {
+      console.error('Edge Function error:', error);
+      return generateFallbackSuggestions(keyword);
+    }
+
+    // Si aucune donnée ou erreur API
+    if (!data || data.error || !data.suggestions || data.suggestions.length === 0) {
+      return generateFallbackSuggestions(keyword);
+    }
+
+    return data.suggestions;
+  } catch (error) {
+    console.error('Google Suggest error:', error);
+    return generateFallbackSuggestions(keyword);
+  }
+}
+
+/**
+ * Génère des suggestions de secours si l'API échoue
+ */
+function generateFallbackSuggestions(keyword: string): string[] {
   return [
     `${keyword} pas cher`,
     `${keyword} en ligne`,
@@ -184,24 +204,6 @@ export async function getGoogleSuggestions(keyword: string): Promise<string[]> {
     `${keyword} avis`,
     `${keyword} 2024`
   ];
-
-  /* Code désactivé temporairement
-  try {
-    const response = await fetch(
-      `https://suggestqueries.google.com/complete/search?client=firefox&q=${encodeURIComponent(keyword)}&hl=fr&gl=fr`
-    );
-
-    if (!response.ok) {
-      throw new Error('Google Suggest API error');
-    }
-
-    const data = await response.json();
-    return data[1] || []; // Returns array of suggestions
-  } catch (error) {
-    console.error('Google Suggest error:', error);
-    return [];
-  }
-  */
 }
 
 // =====================================================
