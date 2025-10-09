@@ -3,7 +3,8 @@ import {
   Users, DollarSign, BarChart3, PieChart, Handshake,
   Zap, FileEdit, Newspaper, Package, TrendingUp, FileText,
   Search, Link2, Mail, Eye, Plus, Send,
-  UserCircle, Clock, Megaphone, Shield, Globe, Settings, BookOpen
+  UserCircle, Clock, Megaphone, Shield, Globe, Settings, BookOpen,
+  QrCode, MessageSquare
 } from 'lucide-react';
 
 export default function NavigationMenu() {
@@ -151,6 +152,14 @@ export default function NavigationMenu() {
           <Link to="/backoffice/social-media" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-teal-500 to-teal-600 hover:from-teal-600 hover:to-teal-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm">
             <Megaphone className="w-5 h-5" />
             <span>Réseaux Sociaux</span>
+          </Link>
+          <Link to="/backoffice/marketing-templates" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-pink-500 to-pink-600 hover:from-pink-600 hover:to-pink-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm">
+            <MessageSquare className="w-5 h-5" />
+            <span>Templates Marketing</span>
+          </Link>
+          <Link to="/backoffice/qr-codes" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-cyan-500 to-cyan-600 hover:from-cyan-600 hover:to-cyan-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm">
+            <QrCode className="w-5 h-5" />
+            <span>QR Codes</span>
           </Link>
           <Link to="/backoffice/security" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm">
             <Shield className="w-5 h-5" />
