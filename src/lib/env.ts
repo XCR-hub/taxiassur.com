@@ -35,3 +35,8 @@ export function getAdminPassword(): string {
 export function getSiteUrl(): string {
   return getEnv('VITE_SITE_URL') || 'https://taxiassur.com';
 }
+
+export function getNoIndex(): boolean {
+  const noindex = getEnv('VITE_NOINDEX');
+  return noindex === 'true';
+}

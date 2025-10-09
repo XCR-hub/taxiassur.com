@@ -1,5 +1,6 @@
 import React from 'react';
 import { Helmet } from 'react-helmet-async';
+import { getNoIndex } from '../lib/env';
 
 interface SEOHeadProps {
   title?: string;
@@ -26,6 +27,7 @@ const SEOHead: React.FC<SEOHeadProps> = ({
 }) => {
   const siteUrl = import.meta.env.VITE_SITE_URL || 'https://taxiassur.com';
   const brandName = 'TaxiAssur';
+  const globalNoIndex = getNoIndex();
   
   // Enhanced title with power words
   const enhancedTitle = title 
@@ -53,7 +55,7 @@ const SEOHead: React.FC<SEOHeadProps> = ({
       <link rel="canonical" href={canonicalUrl} />
       
       {/* Robots */}
-      <meta name="robots" content={noindex ? "noindex, nofollow" : "index, follow, max-snippet:-1, max-image-preview:large"} />
+      <meta name="robots" content={(noindex || globalNoIndex) ? "noindex, nofollow" : "index, follow, max-snippet:-1, max-image-preview:large"} />
       
       {/* Open Graph */}
       <meta property="og:type" content={ogType} />

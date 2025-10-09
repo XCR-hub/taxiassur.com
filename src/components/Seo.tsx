@@ -1,5 +1,6 @@
 import React from 'react';
 import { Helmet } from 'react-helmet-async';
+import { getNoIndex } from '../lib/env';
 
 interface SeoProps {
   title?: string;
@@ -24,6 +25,7 @@ const Seo: React.FC<SeoProps> = ({
 }) => {
   const siteUrl = import.meta.env.VITE_SITE_URL || 'https://taxiassur.com';
   const brandName = import.meta.env.VITE_BRAND_NAME || 'TaxiAssur';
+  const globalNoIndex = getNoIndex();
   
   const fullTitle = title ? `${title} | ${brandName}` : `${brandName} - Assurance Taxi Professionnelle`;
   const defaultDescription = 'Devis d\'assurance taxi gratuit et personnalisé. Courtier spécialiste avec tarifs négociés. Service professionnel et réponse rapide.';
@@ -41,7 +43,7 @@ const Seo: React.FC<SeoProps> = ({
       <link rel="canonical" href={canonicalUrl} />
       
       {/* Robots */}
-      {noindex && <meta name="robots" content="noindex, nofollow" />}
+      {(noindex || globalNoIndex) && <meta name="robots" content="noindex, nofollow" />}
       
       {/* Open Graph */}
       <meta property="og:type" content={ogType} />
