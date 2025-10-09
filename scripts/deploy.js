@@ -116,6 +116,7 @@ console.log('⚙️ Configuration IONOS...');
 const configFiles = [
   { src: 'public/.htaccess', dest: 'dist/.htaccess' },
   { src: 'public/config.php', dest: 'dist/config.php' },
+  { src: 'public/env-config.js', dest: 'dist/env-config.js' },
   { src: 'public/server-check.php', dest: 'dist/server-check.php' },
   { src: 'public/test-simple.php', dest: 'dist/test-simple.php' },
   { src: 'public/test-final.php', dest: 'dist/test-final.php' },
