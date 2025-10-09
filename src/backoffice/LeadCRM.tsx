@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Users, Calendar, Activity, TrendingUp, Database, ArrowRight } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 
 interface LeadStats {
   today: number;
@@ -39,7 +40,6 @@ export default function LeadCRM() {
       }
 
       // Sinon charger depuis Supabase
-      const { supabase } = await import('../lib/supabase');
       const { data: leads } = await supabase
         .from('leads')
         .select('created_at')
