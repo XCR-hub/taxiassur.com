@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Users, Euro, Clock, Target, TrendingUp, Eye, Download, Filter, Calendar, Home } from 'lucide-react';
 import AuthGuard from '../components/AuthGuard';
 import Card from '../components/Card';
+import { supabase } from '../lib/supabase';
 
 interface Lead {
   id: string;
@@ -42,57 +43,60 @@ const LeadMarketplace: React.FC = () => {
   const loadLeads = async () => {
     setLoading(true);
     try {
-      // Simulate lead data
-      const mockLeads: Lead[] = [
-        {
-          id: 'lead-001',
-          name: 'Jean D.',
-          email: 'jean.d@email.com',
-          phone: '06 12 34 56 78',
-          city: 'Paris',
-          status: 'taxi',
-          immatriculation: 'AB-123-CD',
-          createdAt: new Date().toISOString(),
-          price: 70,
-          type: 'exclusive',
-          sold: false,
-          buyers: []
-        },
-        {
-          id: 'lead-002',
-          name: 'Marie M.',
-          email: 'marie.m@email.com',
-          phone: '06 98 76 54 32',
-          city: 'Lyon',
-          status: 'taxi',
-          createdAt: new Date(Date.now() - 300000).toISOString(),
-          price: 20,
-          type: 'shared',
-          sold: false,
-          buyers: []
-        },
-        {
-          id: 'lead-003',
-          name: 'Ahmed B.',
-          email: 'ahmed.b@email.com',
-          phone: '06 11 22 33 44',
-          city: 'Marseille',
-          status: 'vtc',
-          createdAt: new Date(Date.now() - 600000).toISOString(),
-          price: 70,
-          type: 'exclusive',
-          sold: true,
-          buyers: ['courtier-abc']
-        }
-      ];
+      // Fetch real leads from Supabase
+      const { data, error } = await supabase
+        .from('leads')
+        .select('*')
+        .order('created_at', { ascending: false });
 
-      setLeads(mockLeads);
-      
+      if (error) {
+        console.error('Supabase error loading leads:', error);
+        setLeads([]);
+        setStats({ totalLeads: 0, soldToday: 0, revenue: 0, avgPrice: 0 });
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        console.log('No leads found in database');
+        setLeads([]);
+        setStats({ totalLeads: 0, soldToday: 0, revenue: 0, avgPrice: 0 });
+        return;
+      }
+
+      // Transform Supabase data to Lead format
+      const transformedLeads: Lead[] = data.map((lead: any) => ({
+        id: lead.id,
+        name: lead.name,
+        email: lead.email,
+        phone: lead.phone,
+        city: lead.city,
+        status: lead.status || 'taxi',
+        immatriculation: lead.immatriculation,
+        createdAt: lead.created_at,
+        price: lead.marketplace_price || (lead.status === 'vtc' ? 20 : 70),
+        type: lead.marketplace_type || 'shared',
+        sold: lead.marketplace_sold || false,
+        buyers: lead.marketplace_buyers || []
+      }));
+
+      setLeads(transformedLeads);
+
+      // Calculate real stats
+      const soldToday = transformedLeads.filter(l =>
+        l.sold && new Date(l.createdAt).toDateString() === new Date().toDateString()
+      ).length;
+
+      const soldLeads = transformedLeads.filter(l => l.sold);
+      const totalRevenue = soldLeads.reduce((sum, l) => sum + l.price, 0);
+      const avgPrice = transformedLeads.length > 0
+        ? transformedLeads.reduce((sum, l) => sum + l.price, 0) / transformedLeads.length
+        : 0;
+
       setStats({
-        totalLeads: mockLeads.length,
-        soldToday: mockLeads.filter(l => l.sold && new Date(l.createdAt).toDateString() === new Date().toDateString()).length,
-        revenue: mockLeads.filter(l => l.sold).reduce((sum, l) => sum + l.price, 0),
-        avgPrice: mockLeads.reduce((sum, l) => sum + l.price, 0) / mockLeads.length
+        totalLeads: transformedLeads.length,
+        soldToday,
+        revenue: totalRevenue,
+        avgPrice: Math.round(avgPrice)
       });
     } catch (error) {
       console.error('Failed to load leads:', error);

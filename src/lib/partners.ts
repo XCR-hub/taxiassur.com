@@ -1,12 +1,5 @@
 import { Prospect, Consent, Outreach, Directory, Backlink, Campaign } from './schema';
-import { createClient } from '@supabase/supabase-js';
-import { getSupabaseUrl, getSupabaseAnonKey } from './env';
-
-// Supabase client (optional)
-const supabaseUrl = getSupabaseUrl();
-const supabaseKey = getSupabaseAnonKey();
-
-const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null;
+import { supabase } from './supabase';
 
 // Generic CRUD operations for partnership data
 async function fetchLocalContent<T>(type: string, schema: any): Promise<T[]> {
