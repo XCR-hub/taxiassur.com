@@ -173,7 +173,7 @@ export default function NavigationMenu() {
           <BookOpen className="w-4 h-4" />
           DOCUMENTATION & GUIDES
         </h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
           <a
             href="/MENU-COMPLET-BACKOFFICE.md"
             target="_blank"
@@ -197,6 +197,14 @@ export default function NavigationMenu() {
           >
             <BookOpen className="w-5 h-5" />
             <span>Config API</span>
+          </a>
+          <a
+            href="/CONFIGURATION-OPENAI-KEY.md"
+            target="_blank"
+            className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm"
+          >
+            <BookOpen className="w-5 h-5" />
+            <span>Clé OpenAI</span>
           </a>
           <a
             href="/DEPLOIEMENT-FINAL-PRET.md"
