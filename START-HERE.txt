@@ -1,103 +1,108 @@
-╔══════════════════════════════════════════════════════════════╗
-║                                                              ║
-║              🚀 BIENVENUE DANS TAXIASSUR 2.0 🚀             ║
-║                                                              ║
-║          Votre Système SEO & Automatisation est PRÊT !       ║
-║                                                              ║
-╚══════════════════════════════════════════════════════════════╝
+╔════════════════════════════════════════════════════════════════╗
+║        🚨 FIX ÉCRAN NOIR - LECTURE OBLIGATOIRE 🚨              ║
+╚════════════════════════════════════════════════════════════════╝
+
+LE PROBLÈME
+-----------
+Votre site affiche un écran noir car le fichier "env-config.js"
+sur le serveur IONOS est au MAUVAIS FORMAT.
+
+SERVEUR ACTUEL (MAUVAIS) :
+  # Configuration TaxiAssur
+  VITE_SUPABASE_URL=https://...
+
+FORMAT REQUIS (BON) :
+  // Configuration des variables d'environnement pour TaxiAssur
+  window.ENV_CONFIG = {
+    VITE_SUPABASE_URL: 'https://...',
+  };
 
 
-✅ SYSTÈME 100% OPÉRATIONNEL
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+LA SOLUTION EN 3 ÉTAPES
+-----------------------
 
-📊 Métriques :
-   • 72 pages SEO optimisées
-   • 120+ mots-clés ciblés
-   • 7 moteurs de recherche
-   • 10 automatisations 24/7
-   • Système ambassadeurs viral
-   • Analytics temps réel
+1️⃣  IDENTIFIER LE BON FICHIER
+   └─> Aller dans : VotreProjet/dist/
+   └─> Clic droit sur : env-config.js
+   └─> Ouvrir avec : Notepad
+   └─> Vérifier : Première ligne = "//" (PAS "#")
 
+2️⃣  UPLOADER SUR IONOS
+   └─> https://www.ionos.fr → Login
+   └─> Hosting → Gérer → Gestionnaire de fichiers
+   └─> Supprimer l'ancien env-config.js
+   └─> Upload le nouveau depuis dist/env-config.js
 
-🎯 DÉMARRAGE RAPIDE (30 MINUTES)
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-📄 Lisez ce fichier en premier :
-   └─> DEMARRAGE-EXPRESS.md
-
-   Ce guide vous accompagne pas-à-pas pour :
-   ✓ Créer votre Google Business Profile (15 min)
-   ✓ Devenir votre 1er ambassadeur (2 min)
-   ✓ Poster le challenge Facebook (5 min)
-   ✓ Activer les automatisations (2 min)
+3️⃣  VÉRIFIER & TESTER
+   └─> Ouvrir : https://taxiassur.com/env-config.js
+   └─> Première ligne DOIT être : "// Configuration"
+   └─> Vider cache : CTRL+SHIFT+DEL
+   └─> Test : CTRL+SHIFT+N → taxiassur.com
 
 
-📚 DOCUMENTATION COMPLÈTE
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+COMMENT RECONNAÎTRE LE BON FICHIER ?
+------------------------------------
 
-1. START-HERE.txt (ce fichier)
-   └─> Point de départ, lisez-moi d'abord !
+✅ BON FICHIER :
+   // Configuration des variables d'environnement pour TaxiAssur
+   window.ENV_CONFIG = {
+     VITE_SUPABASE_URL: 'https://viuuznfqkauatkjcegcj.supabase.co',
+     VITE_SUPABASE_ANON_KEY: 'eyJhbG...',
 
-2. DEMARRAGE-EXPRESS.md
-   └─> Guide ultra-rapide 30 minutes
-
-3. ACTIONS-IMMEDIATES-AUJOURDHUI.md
-   └─> Guide détaillé 45 minutes avec toutes les infos
-
-4. TABLEAU-DE-BORD.md
-   └─> Vue d'ensemble des métriques et statut
-
-5. SYSTEME-COMPLET-RESUME.md
-   └─> Documentation technique complète
-
-6. CONFIRMATION-SYSTEME-PRET.md
-   └─> Confirmation système et valeur livrée
+❌ MAUVAIS FICHIER :
+   # Configuration TaxiAssur - Variables d'environnement
+   
+   VITE_SUPABASE_URL=https://viuuznfqkauatkjcegcj.supabase.co
+   VITE_SUPABASE_ANON_KEY=eyJhbG...
 
 
-🔑 ACCÈS RAPIDES
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+OÙ TROUVER LE BON FICHIER ?
+---------------------------
+VotreProjet/
+  └─ dist/
+      └─ env-config.js  ← UPLOADER CE FICHIER
 
-🌐 Site :         https://taxiassur.com
-
-🎛️  Backoffice :   https://taxiassur.com/backoffice
-                  Mot de passe : taxiassur2024
-
-👥 Ambassadeurs : https://taxiassur.com/devenir-ambassadeur
-
-📊 Google Biz :   https://business.google.com/create
-
-
-🎯 OBJECTIF : TOP 1 "ASSURANCE TAXI" EN 90 JOURS
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-Vous avez maintenant :
-   ✅ Un système équivalent à 14 collaborateurs
-   ✅ Une valeur de développement de 150 000€+
-   ✅ 10 automatisations qui travaillent 24/7
-   ✅ Un effet viral via ambassadeurs
-   ✅ Une machine à leads optimisée
+Si le dossier "dist/" n'existe pas :
+  → Ouvrir terminal dans le projet
+  → Exécuter : npm run build
+  → Le dossier dist/ sera créé
 
 
-📞 SUPPORT
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-📧 Email :     contact@taxiassur.com
-☎️  Téléphone : 01 80 85 57 86
-
-
-🚀 PROCHAINE ÉTAPE
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-👉 Ouvrez maintenant : DEMARRAGE-EXPRESS.md
-
-   Il vous guidera étape par étape pour activer votre
-   machine à leads en 30 minutes chrono !
+CHECKLIST RAPIDE
+----------------
+☐ Dossier dist/ existe (sinon: npm run build)
+☐ Fichier dist/env-config.js ouvert avec Notepad
+☐ Première ligne = "//" (pas "#")
+☐ Connexion IONOS
+☐ Ancien env-config.js supprimé
+☐ Nouveau uploadé depuis dist/
+☐ Vérification sur https://taxiassur.com/env-config.js
+☐ Cache vidé (CTRL+SHIFT+DEL)
+☐ Test navigation privée (CTRL+SHIFT+N)
+☐ Site fonctionne !
 
 
-╔══════════════════════════════════════════════════════════════╗
-║                                                              ║
-║              🎉 PRÊT À DOMINER LE MARCHÉ ! 🎉               ║
-║                                                              ║
-║           Suivez le guide et devenez N°1 ! 🏆               ║
-║                                                              ║
-╚══════════════════════════════════════════════════════════════╝
+GUIDES DÉTAILLÉS DISPONIBLES
+----------------------------
+→ QUEL-FICHIER-UPLOADER.md : Guide identification fichier
+→ UPLOAD-URGENT.md : Procédure upload détaillée
+→ UPLOAD-FICHIER-URGENT.md : Instructions pas-à-pas
+
+
+DURÉE TOTALE : 2 MINUTES
+-------------------------
+1. Trouver fichier : 30s
+2. Upload IONOS : 30s
+3. Vérification : 30s
+4. Test : 30s
+
+
+AIDE
+----
+Si problème après avoir suivi TOUTES les étapes :
+team@taxiassur.com (avec screenshots)
+
+
+═══════════════════════════════════════════════════════════════
+          🎯 RÈGLE N°1 : Vérifier avec Notepad AVANT upload !
+═══════════════════════════════════════════════════════════════
