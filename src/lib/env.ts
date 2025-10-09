@@ -31,3 +31,11 @@ export function getGoogleCseCx(): string | undefined {
 export function getAdminPassword(): string {
   return getEnv('VITE_ADMIN_PASSWORD') || 'taxiassur2024';
 }
+
+export function getIndexNowKey(): string {
+  return getEnv('VITE_INDEXNOW_KEY') || 'q38enouostqixbz513fb359ujcosvn4k';
+}
+
+export function getSiteUrl(): string {
+  return getEnv('VITE_SITE_URL') || 'https://taxiassur.com';
+}

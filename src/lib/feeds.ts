@@ -1,8 +1,10 @@
+import { getEnv, getSupabaseUrl, getSupabaseAnonKey } from './env';
+
 // Fonction pour déclencher la régénération des feeds via edge function
 export async function regenerateFeeds(): Promise<boolean> {
   try {
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-    const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+    const supabaseUrl = getSupabaseUrl();
+    const supabaseKey = getSupabaseAnonKey();
 
     if (!supabaseUrl || !supabaseKey) {
       console.error('Supabase configuration missing');
@@ -36,9 +38,6 @@ export async function regenerateFeeds(): Promise<boolean> {
 // Fonction pour tester la connectivité du webhook
 export async function pingWebhook(): Promise<{ ok: boolean; message?: string; error?: string }> {
   try {
-    // Import env helper
-    const { getEnv } = await import('./env');
-
     const isDev = import.meta.env.DEV;
     const endpoint = isDev
       ? '/api/webhook.php?action=ping'

@@ -3,6 +3,8 @@
  * Soumet automatiquement les nouvelles URLs à Bing, Yandex, Qwant, Ecosia, Seznam
  */
 
+import { getIndexNowKey, getSiteUrl } from './env';
+
 interface IndexNowConfig {
   host: string;
   key: string;
@@ -23,8 +25,8 @@ export async function submitToIndexNow(urls: string | string[]): Promise<{
   success: boolean;
   results: Array<{ endpoint: string; status: number; error?: string }>;
 }> {
-  const siteUrl = import.meta.env.VITE_SITE_URL || 'https://taxiassur.com';
-  const indexNowKey = import.meta.env.VITE_INDEXNOW_KEY || generateIndexNowKey();
+  const siteUrl = getSiteUrl();
+  const indexNowKey = getIndexNowKey();
 
   const urlArray = Array.isArray(urls) ? urls : [urls];
   const fullUrls = urlArray.map(url =>
@@ -122,7 +124,7 @@ function generateIndexNowKey(): string {
  * Vérifie si IndexNow est configuré
  */
 export function isIndexNowConfigured(): boolean {
-  return !!(import.meta.env.VITE_INDEXNOW_KEY);
+  return !!getIndexNowKey();
 }
 
 /**
@@ -148,7 +150,7 @@ export async function autoSubmitPage(pageUrl: string): Promise<boolean> {
  * Soumet le sitemap complet
  */
 export async function submitSitemap(): Promise<boolean> {
-  const siteUrl = import.meta.env.VITE_SITE_URL || 'https://taxiassur.com';
+  const siteUrl = getSiteUrl();
   const sitemapUrl = `${siteUrl}/sitemap.xml`;
 
   try {
