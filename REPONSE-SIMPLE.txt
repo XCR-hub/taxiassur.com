@@ -1,0 +1,66 @@
+╔═══════════════════════════════════════════════════════════════════╗
+║                                                                   ║
+║              ✅ OUI, LA CLÉ OPENAI EST BONNE !                   ║
+║                                                                   ║
+╚═══════════════════════════════════════════════════════════════════╝
+
+🧪 J'AI TESTÉ LA CLÉ : ELLE FONCTIONNE ET A DU CRÉDIT !
+
+Test réussi :
+  ✅ Clé valide
+  ✅ Crédit disponible  
+  ✅ Réponse générée : "Hello! How can I"
+  ✅ Modèles accessibles : GPT-4, GPT-3.5-turbo
+
+═══════════════════════════════════════════════════════════════════
+
+📍 OÙ EST LA CLÉ ?
+
+✅ Dans .env                    (OK)
+✅ Dans public/env-config.js    (OK)
+✅ Dans dist/env-config.js      (OK)
+❌ Dans Supabase Secrets        (MANQUANT) ← PROBLÈME ICI !
+
+═══════════════════════════════════════════════════════════════════
+
+⚠️ POURQUOI LE GÉNÉRATEUR IA NE MARCHE PAS ?
+
+Le générateur IA utilise une Edge Function (backend Supabase).
+Cette Edge Function cherche OPENAI_API_KEY dans Supabase Secrets.
+
+Si ce n'est pas configuré → Erreur "API key not found"
+
+═══════════════════════════════════════════════════════════════════
+
+🔧 SOLUTION (5 MINUTES)
+
+1. Aller sur : https://supabase.com/dashboard
+2. Projet : viuuznfqkauatkjcegcj
+3. Settings → Edge Functions → Secrets
+4. Cliquer "Add new secret"
+5. Remplir :
+   
+   Name:  OPENAI_API_KEY
+   
+   Value: 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
+
+6. Save
+
+═══════════════════════════════════════════════════════════════════
+
+✅ APRÈS CONFIGURATION
+
+Le générateur IA fonctionnera immédiatement !
+Plus besoin de charger de l'argent, la clé a déjà du crédit.
+
+═══════════════════════════════════════════════════════════════════
+
+📚 GUIDE DÉTAILLÉ
+
+Voir : DIAGNOSTIC-OPENAI.md
+
+═══════════════════════════════════════════════════════════════════
+
+RÉSUMÉ : La clé est bonne et a du crédit. Il faut juste la 
+         configurer dans Supabase Secrets pour que le générateur 
+         IA puisse l'utiliser.
