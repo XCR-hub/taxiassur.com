@@ -139,27 +139,32 @@ export class NewsAggregator {
 
   async fetchFromRSS(source: NewsSource): Promise<RawNewsItem[]> {
     try {
-      // Use a CORS proxy for RSS feeds
+      // CORS proxy désactivé temporairement car allorigins.win retourne des erreurs
+      // TODO: Utiliser une Edge Function Supabase pour récupérer les flux RSS
+      console.warn(`RSS fetch désactivé temporairement pour ${source.name} (problème CORS)`);
+      return [];
+
+      /* Ancienne implémentation avec allorigins.win
       const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(source.url)}`;
       const response = await fetch(proxyUrl);
-      
+
       if (!response.ok) return [];
-      
+
       const data = await response.json();
       const parser = new DOMParser();
       const xmlDoc = parser.parseFromString(data.contents, 'text/xml');
-      
+
       const items = xmlDoc.querySelectorAll('item');
       const newsItems: RawNewsItem[] = [];
-      
+
       items.forEach((item, index) => {
-        if (index >= 10) return; // Limit to 10 items per source
-        
+        if (index >= 10) return;
+
         const title = item.querySelector('title')?.textContent || '';
         const description = item.querySelector('description')?.textContent || '';
         const link = item.querySelector('link')?.textContent || '';
         const pubDate = item.querySelector('pubDate')?.textContent || new Date().toISOString();
-        
+
         if (title && link && this.isRelevantToTaxi(title, description)) {
           newsItems.push({
             id: `${source.id}-${Date.now()}-${index}`,
@@ -174,8 +179,9 @@ export class NewsAggregator {
           });
         }
       });
-      
+
       return newsItems;
+      */
     } catch (error) {
       console.error(`Failed to fetch RSS from ${source.name}:`, error);
       return [];

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Users, Eye, Phone, Mail, FileText, CheckCircle, XCircle, Euro, Calendar, Search, Filter, Download, Upload, Send, CreditCard as Edit, Trash2, Star, MessageSquare, Home } from 'lucide-react';
 import AuthGuard from '../components/AuthGuard';
-import { getLeads, updateLeadStatus, sendDevisEmail, sendContractEmail, getLeadStatusColor, getLeadStatusLabel, type Lead, type LeadStatus } from '../lib/leads';
+import { getLeads, updateLeadStatus, sendDevisEmail, sendContractEmail, getLeadStatusColor, getLeadStatusLabel, createTestLeads, type Lead, type LeadStatus } from '../lib/leads';
 import { formatDate } from '../lib/utils';
 import Card from '../components/Card';
 
@@ -47,6 +47,18 @@ const LeadManager: React.FC = () => {
       console.error('Failed to load leads:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleCreateTestLeads = async () => {
+    if (confirm('Voulez-vous créer 3 leads de test dans la base de données ?')) {
+      const success = await createTestLeads();
+      if (success) {
+        alert('✅ Leads de test créés avec succès !');
+        await loadLeads();
+      } else {
+        alert('❌ Erreur lors de la création des leads de test');
+      }
     }
   };
 
@@ -488,12 +500,20 @@ const LeadManager: React.FC = () => {
               <h3 className="text-lg font-medium text-gray-900 mb-2">
                 Aucun lead trouvé
               </h3>
-              <p className="text-gray-600">
+              <p className="text-gray-600 mb-4">
                 {searchTerm || filterStatus !== 'all' || filterCity !== 'all'
                   ? 'Aucun lead ne correspond à vos critères'
                   : 'Aucun lead enregistré pour le moment'
                 }
               </p>
+              {leads.length === 0 && (
+                <button
+                  onClick={handleCreateTestLeads}
+                  className="mt-4 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-lg transition-colors"
+                >
+                  🧪 Créer des leads de test
+                </button>
+              )}
             </Card>
           )}
         </div>

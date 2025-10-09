@@ -29,17 +29,25 @@ export type LeadStatus = z.infer<typeof LeadStatusSchema>;
 // Gestion des leads
 export async function getLeads(): Promise<Lead[]> {
   try {
+    console.log('🔍 Fetching leads from Supabase...');
+    console.log('Supabase URL:', import.meta.env.VITE_SUPABASE_URL);
+
     const { data, error } = await supabase
       .from('leads')
       .select('*')
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('Supabase error:', error);
+      console.error('❌ Supabase error:', error);
+      console.error('Error details:', JSON.stringify(error, null, 2));
       return [];
     }
 
+    console.log('✅ Supabase response received');
+    console.log(`📊 Found ${data?.length || 0} leads in database`);
+
     if (!data || data.length === 0) {
+      console.warn('⚠️ No leads found in database');
       return [];
     }
 
@@ -319,4 +327,65 @@ export function getLeadStatusLabel(status: LeadStatus): string {
     perdu: 'Perdu'
   };
   return labels[status];
+}
+
+// Function to create test leads if database is empty
+export async function createTestLeads(): Promise<boolean> {
+  try {
+    console.log('🧪 Creating test leads...');
+
+    const testLeads = [
+      {
+        name: 'Jean Dupont',
+        email: 'jean.dupont@example.com',
+        phone: '0612345678',
+        city: 'Paris',
+        status: 'taxi',
+        immatriculation: 'AB-123-CD',
+        lead_status: 'nouveau',
+        source: 'website',
+        created_at: new Date().toISOString()
+      },
+      {
+        name: 'Marie Martin',
+        email: 'marie.martin@example.com',
+        phone: '0698765432',
+        city: 'Lyon',
+        status: 'taxi',
+        immatriculation: 'EF-456-GH',
+        lead_status: 'contacte',
+        source: 'website',
+        created_at: new Date(Date.now() - 86400000).toISOString(),
+        contacted_at: new Date().toISOString()
+      },
+      {
+        name: 'Ahmed Benali',
+        email: 'ahmed.benali@example.com',
+        phone: '0123456789',
+        city: 'Marseille',
+        status: 'vtc',
+        lead_status: 'devis_envoye',
+        source: 'website',
+        created_at: new Date(Date.now() - 172800000).toISOString(),
+        contacted_at: new Date(Date.now() - 86400000).toISOString(),
+        devis_envoye_at: new Date().toISOString()
+      }
+    ];
+
+    const { data, error } = await supabase
+      .from('leads')
+      .insert(testLeads)
+      .select();
+
+    if (error) {
+      console.error('❌ Error creating test leads:', error);
+      return false;
+    }
+
+    console.log('✅ Test leads created successfully:', data?.length);
+    return true;
+  } catch (error) {
+    console.error('❌ Failed to create test leads:', error);
+    return false;
+  }
 }
