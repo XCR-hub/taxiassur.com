@@ -15,10 +15,10 @@ SELECT cron.schedule(
   '0 */6 * * *',
   $$
   SELECT net.http_post(
-    url := 'https://VOTRE_REF_PROJET.supabase.co/functions/v1/ai-social-scraper',
+    url := 'https://drohhxrkoequjphvabvq.supabase.co/functions/v1/ai-social-scraper',
     headers := jsonb_build_object(
       'Content-Type', 'application/json',
-      'Authorization', 'Bearer VOTRE_SERVICE_ROLE_KEY'
+      'Authorization', 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRyb2hoeHJrb2VxdWpwaHZhYnZxIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1OTc4Mzc2MCwiZXhwIjoyMDc1MzU5NzYwfQ.4VThS4e4E2YaSrRhuHxvrWICcYSn5su6UpQNJ0Ds4ik'
     )
   ) AS request_id;
   $$
@@ -30,10 +30,10 @@ SELECT cron.schedule(
   '*/30 * * * *',
   $$
   SELECT net.http_post(
-    url := 'https://VOTRE_REF_PROJET.supabase.co/functions/v1/ai-email-responder',
+    url := 'https://drohhxrkoequjphvabvq.supabase.co/functions/v1/ai-email-responder',
     headers := jsonb_build_object(
       'Content-Type', 'application/json',
-      'Authorization', 'Bearer VOTRE_SERVICE_ROLE_KEY'
+      'Authorization', 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRyb2hoeHJrb2VxdWpwaHZhYnZxIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1OTc4Mzc2MCwiZXhwIjoyMDc1MzU5NzYwfQ.4VThS4e4E2YaSrRhuHxvrWICcYSn5su6UpQNJ0Ds4ik'
     )
   ) AS request_id;
   $$
@@ -54,10 +54,10 @@ SELECT cron.schedule(
   '0 * * * *',
   $$
   SELECT net.http_post(
-    url := 'https://VOTRE_REF_PROJET.supabase.co/functions/v1/ai-engagement-monitor',
+    url := 'https://drohhxrkoequjphvabvq.supabase.co/functions/v1/ai-engagement-monitor',
     headers := jsonb_build_object(
       'Content-Type', 'application/json',
-      'Authorization', 'Bearer VOTRE_SERVICE_ROLE_KEY'
+      'Authorization', 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRyb2hoeHJrb2VxdWpwaHZhYnZxIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1OTc4Mzc2MCwiZXhwIjoyMDc1MzU5NzYwfQ.4VThS4e4E2YaSrRhuHxvrWICcYSn5su6UpQNJ0Ds4ik'
     )
   ) AS request_id;
   $$
