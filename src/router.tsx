@@ -246,12 +246,27 @@ export const router = createBrowserRouter([
     errorElement: <ErrorBoundary><Navigate to="/" replace /></ErrorBoundary>
   },
   {
+    path: '/legal',
+    element: <SuspenseWrapper><Legal /></SuspenseWrapper>,
+    errorElement: <ErrorBoundary><Navigate to="/" replace /></ErrorBoundary>
+  },
+  {
     path: '/politique-confidentialite',
     element: <SuspenseWrapper><Policy /></SuspenseWrapper>,
     errorElement: <ErrorBoundary><Navigate to="/" replace /></ErrorBoundary>
   },
   {
+    path: '/policy',
+    element: <SuspenseWrapper><Policy /></SuspenseWrapper>,
+    errorElement: <ErrorBoundary><Navigate to="/" replace /></ErrorBoundary>
+  },
+  {
     path: '/conditions-generales',
+    element: <SuspenseWrapper><Conditions /></SuspenseWrapper>,
+    errorElement: <ErrorBoundary><Navigate to="/" replace /></ErrorBoundary>
+  },
+  {
+    path: '/conditions',
     element: <SuspenseWrapper><Conditions /></SuspenseWrapper>,
     errorElement: <ErrorBoundary><Navigate to="/" replace /></ErrorBoundary>
   },
