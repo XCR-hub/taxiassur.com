@@ -175,7 +175,7 @@ async function notifySearchEngines(siteUrl: string) {
 
   // IndexNow API (Google, Bing, Yandex)
   try {
-    const indexNowKey = Deno.env.get("INDEXNOW_KEY") || "generate-your-key";
+    const indexNowKey = Deno.env.get("INDEXNOW_KEY") || "bee0a466b3054c6683f80a0efac280c9";
 
     const indexNowResponse = await fetch("https://api.indexnow.org/indexnow", {
       method: "POST",

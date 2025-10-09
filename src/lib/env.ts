@@ -33,7 +33,7 @@ export function getAdminPassword(): string {
 }
 
 export function getIndexNowKey(): string {
-  return getEnv('VITE_INDEXNOW_KEY') || 'q38enouostqixbz513fb359ujcosvn4k';
+  return getEnv('VITE_INDEXNOW_KEY') || 'bee0a466b3054c6683f80a0efac280c9';
 }
 
 export function getSiteUrl(): string {
