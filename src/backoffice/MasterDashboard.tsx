@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import {
   Activity, Users, TrendingUp, DollarSign, MapPin, Clock,
   CheckCircle, AlertCircle, Play, Square, RefreshCw, Settings,
   BarChart3, Zap, Globe, Mail, FileText, MessageSquare,
-  ArrowUp, ArrowDown, Minus, Home, UserCircle, Link2, FileEdit,
-  Shield, PieChart, Search, Newspaper, Package, Megaphone
+  ArrowUp, ArrowDown, Minus
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import NavigationMenu from './NavigationMenu';
 
 interface RealtimeStats {
   active_sessions: number;
@@ -242,106 +241,8 @@ const MasterDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Menu de Navigation */}
-      <div className="mb-8 bg-gray-800/50 border border-gray-700 rounded-lg p-4">
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
-          <Link
-            to="/backoffice/leads"
-            className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white rounded-lg font-semibold transition-all shadow-md"
-          >
-            <Users className="w-5 h-5" />
-            <span>Leads</span>
-          </Link>
-
-          <Link
-            to="/backoffice/old-dashboard"
-            className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-lg font-semibold transition-all shadow-md"
-          >
-            <Home className="w-5 h-5" />
-            <span>Dashboard</span>
-          </Link>
-
-          <Link
-            to="/backoffice/content"
-            className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white rounded-lg font-semibold transition-all shadow-md"
-          >
-            <FileEdit className="w-5 h-5" />
-            <span>Contenu</span>
-          </Link>
-
-          <Link
-            to="/backoffice/seo"
-            className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-lg font-semibold transition-all shadow-md"
-          >
-            <Search className="w-5 h-5" />
-            <span>SEO</span>
-          </Link>
-
-          <Link
-            to="/backoffice/backlinks"
-            className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white rounded-lg font-semibold transition-all shadow-md"
-          >
-            <Link2 className="w-5 h-5" />
-            <span>Backlinks</span>
-          </Link>
-
-          <Link
-            to="/backoffice/analytics"
-            className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-pink-500 to-pink-600 hover:from-pink-600 hover:to-pink-700 text-white rounded-lg font-semibold transition-all shadow-md"
-          >
-            <PieChart className="w-5 h-5" />
-            <span>Analytics</span>
-          </Link>
-
-          <Link
-            to="/backoffice/partners"
-            className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-cyan-500 to-cyan-600 hover:from-cyan-600 hover:to-cyan-700 text-white rounded-lg font-semibold transition-all shadow-md"
-          >
-            <UserCircle className="w-5 h-5" />
-            <span>Partenaires</span>
-          </Link>
-
-          <Link
-            to="/backoffice/security"
-            className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-lg font-semibold transition-all shadow-md"
-          >
-            <Shield className="w-5 h-5" />
-            <span>Sécurité</span>
-          </Link>
-
-          <Link
-            to="/backoffice/news"
-            className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-lg font-semibold transition-all shadow-md"
-          >
-            <Newspaper className="w-5 h-5" />
-            <span>Actualités</span>
-          </Link>
-
-          <Link
-            to="/backoffice/popups"
-            className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-white rounded-lg font-semibold transition-all shadow-md"
-          >
-            <Package className="w-5 h-5" />
-            <span>Popups</span>
-          </Link>
-
-          <Link
-            to="/backoffice/social-media"
-            className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-teal-500 to-teal-600 hover:from-teal-600 hover:to-teal-700 text-white rounded-lg font-semibold transition-all shadow-md"
-          >
-            <Megaphone className="w-5 h-5" />
-            <span>Réseaux</span>
-          </Link>
-
-          <Link
-            to="/"
-            className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white rounded-lg font-semibold transition-all shadow-md"
-          >
-            <Globe className="w-5 h-5" />
-            <span>Voir le site</span>
-          </Link>
-        </div>
-      </div>
+      {/* Menu de Navigation Complet */}
+      <NavigationMenu />
 
       {/* Stats Temps Réel */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
