@@ -295,8 +295,20 @@ export const router = createBrowserRouter([
     element: <Navigate to="/" replace />
   },
   {
+    path: '/admin',
+    element: <Navigate to="/backoffice" replace />
+  },
+  {
     path: '/backoffice',
     element: <AuthGuard><SuspenseWrapper><MasterDashboard /></SuspenseWrapper></AuthGuard>
+  },
+  {
+    path: '/admin/dashboard',
+    element: <Navigate to="/backoffice" replace />
+  },
+  {
+    path: '/admin/leads',
+    element: <Navigate to="/backoffice/leads" replace />
   },
   {
     path: '/backoffice/old-dashboard',
