@@ -97,9 +97,10 @@ const SecurityDashboard: React.FC = () => {
   const getSecurityScore = (): number => {
     const { totalRequests, blockedRequests } = stats;
     if (totalRequests === 0) return 100;
-    
+
     const blockRate = (blockedRequests / totalRequests) * 100;
-    return Math.max(0, 100 - blockRate * 2); // Lower score if too many blocks
+    const score = Math.max(0, 100 - blockRate * 2); // Lower score if too many blocks
+    return Math.round(score * 10) / 10; // Arrondir à 1 décimale
   };
 
   const getLevelColor = (level: string): string => {

@@ -9,26 +9,26 @@ import {
 
 interface SocialNetwork {
   id: string;
-  name: string;
-  category: string;
-  domain_authority: number;
-  is_dofollow: boolean;
-  api_available: boolean;
-  url: string;
-  icon: string;
-  priority: number;
+  platform: string;
+  account_name: string | null;
+  account_id: string | null;
   is_active: boolean;
-  posting_frequency: string;
-  character_limit: number;
-  hashtag_limit: number;
+  is_connected: boolean;
+  auto_publish: boolean;
+  last_post_at: string | null;
+  total_posts: number;
+  total_engagement: number;
+  metadata: any;
 }
 
 interface SocialPost {
   id: string;
   network_id: string;
+  platform: string;
   content: string;
-  hashtags: string[];
-  scheduled_at: string;
+  media_urls: string[];
+  post_url: string | null;
+  scheduled_at: string | null;
   published_at: string | null;
   status: 'draft' | 'scheduled' | 'published' | 'failed';
   views: number;
@@ -87,15 +87,16 @@ export default function SocialMediaManager() {
 
   const loadData = async () => {
     try {
-      const [networksRes, postsRes, groupsRes] = await Promise.all([
-        supabase.from('social_networks').select('*').order('priority', { ascending: false }),
-        supabase.from('social_posts').select('*').order('created_at', { ascending: false }).limit(50),
-        supabase.from('whatsapp_groups').select('*').order('created_at', { ascending: false })
+      const [networksRes, postsRes] = await Promise.all([
+        supabase.from('social_networks').select('*').order('platform'),
+        supabase.from('social_posts').select('*').order('created_at', { ascending: false }).limit(50)
       ]);
 
       if (networksRes.data) setNetworks(networksRes.data);
       if (postsRes.data) setPosts(postsRes.data);
-      if (groupsRes.data) setWhatsappGroups(groupsRes.data);
+
+      // WhatsApp groups - à implémenter plus tard
+      setWhatsappGroups([]);
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
@@ -276,7 +277,16 @@ export default function SocialMediaManager() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {networks.map((network) => {
-                  const Icon = iconMap[network.icon] || Globe;
+                  const platformLower = network.platform.toLowerCase();
+                  let Icon = Globe;
+
+                  if (platformLower.includes('facebook')) Icon = Facebook;
+                  else if (platformLower.includes('instagram')) Icon = Instagram;
+                  else if (platformLower.includes('twitter') || platformLower.includes('x')) Icon = Twitter;
+                  else if (platformLower.includes('linkedin')) Icon = Linkedin;
+                  else if (platformLower.includes('youtube')) Icon = Youtube;
+                  else if (platformLower.includes('whatsapp')) Icon = MessageSquare;
+
                   return (
                     <div
                       key={network.id}
@@ -284,45 +294,49 @@ export default function SocialMediaManager() {
                     >
                       <div className="flex items-start justify-between mb-3">
                         <div className="flex items-center space-x-3">
-                          <div className={`p-2 rounded-lg ${getCategoryColor(network.category)}`}>
-                            <Icon className="w-5 h-5 text-white" />
+                          <div className="p-2 rounded-lg bg-blue-500/20 border border-blue-500/30">
+                            <Icon className="w-5 h-5 text-blue-400" />
                           </div>
                           <div>
-                            <h3 className="font-semibold">{network.name}</h3>
-                            <p className="text-xs text-gray-400 capitalize">{network.category}</p>
+                            <h3 className="font-semibold text-white">{network.platform}</h3>
+                            {network.account_name && (
+                              <p className="text-xs text-gray-400">@{network.account_name}</p>
+                            )}
                           </div>
                         </div>
                         <button
                           onClick={() => toggleNetwork(network.id, network.is_active)}
                           className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
-                            network.is_active
+                            network.is_connected
                               ? 'bg-green-500/20 text-green-400 border border-green-500/50'
-                              : 'bg-gray-700 text-gray-400 border border-gray-600'
+                              : 'bg-gray-700 text-gray-300 border border-gray-600'
                           }`}
                         >
-                          {network.is_active ? 'Actif' : 'Inactif'}
+                          {network.is_connected ? 'Connecté' : 'Non connecté'}
                         </button>
                       </div>
 
                       <div className="space-y-2 text-sm">
                         <div className="flex justify-between">
-                          <span className="text-gray-400">Autorité:</span>
-                          <span className="font-medium">{network.domain_authority}/100</span>
+                          <span className="text-gray-400">Publications:</span>
+                          <span className="font-medium text-white">{network.total_posts}</span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-gray-400">Backlinks:</span>
-                          <span className={network.is_dofollow ? 'text-green-400' : 'text-gray-400'}>
-                            {network.is_dofollow ? 'DoFollow' : 'NoFollow'}
+                          <span className="text-gray-400">Engagement:</span>
+                          <span className="font-medium text-white">{network.total_engagement}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">Auto-publication:</span>
+                          <span className={network.auto_publish ? 'text-green-400' : 'text-gray-400'}>
+                            {network.auto_publish ? 'Activée' : 'Désactivée'}
                           </span>
                         </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-400">Fréquence:</span>
-                          <span className="font-medium capitalize">{network.posting_frequency}</span>
-                        </div>
-                        {network.api_available && (
-                          <div className="flex items-center space-x-2 text-blue-400">
-                            <Zap className="w-4 h-4" />
-                            <span className="text-xs">API disponible</span>
+                        {network.last_post_at && (
+                          <div className="flex justify-between">
+                            <span className="text-gray-400">Dernier post:</span>
+                            <span className="text-xs text-gray-400">
+                              {new Date(network.last_post_at).toLocaleDateString('fr-FR')}
+                            </span>
                           </div>
                         )}
                       </div>
