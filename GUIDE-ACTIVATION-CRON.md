@@ -1,358 +1,574 @@
-# 🤖 GUIDE D'ACTIVATION DES CRON - PILOTAGE AUTOMATIQUE
+# 🕐 GUIDE COMPLET - CONFIGURATION CRON JOBS SUPABASE
 
-## ✅ CE QUI EST CONFIGURÉ
-
-Votre système d'automatisation est **prêt à 95%** !
-
-### 1. Base de Données
-✅ Tables créées :
-- `automation_schedule` - Planification des tâches
-- `email_queue` - File d'attente emails sortants
-- `email_inbox` - Réception emails entrants
-- `cron_execution_history` - Historique des exécutions
-
-### 2. Edge Functions Déployées
-✅ 11 fonctions opérationnelles :
-- `/chatbot` - Chatbot IA
-- `/email-auto-responder` - Réponses automatiques
-- `/auto-followup` - Relances leads
-- `/generate-seo-content` - Génération contenu
-- `/partner-scraper-outreach` - Prospection partenaires
-- `/send-email` - Envoi emails
-- `/send-outreach-emails` - Campagnes outreach
-- `/scan-backlinks` - Scan opportunités
-- `/cron-orchestrator` - **Orchestrateur principal**
-- `/webhook-email-receiver` - Réception emails
-- `/automation-dashboard-api` - API monitoring
-
-### 3. Tâches Planifiées
-✅ 7 CRON jobs configurés :
-
-| Tâche | Fréquence | Heure | Description |
-|-------|-----------|-------|-------------|
-| **hourly_process_emails** | Toutes les heures | :00 | Traite emails entrants + réponses auto |
-| **daily_content_generation** | Tous les jours | 6h00 | Génère 5 articles SEO |
-| **daily_lead_followup** | Tous les jours | 9h00 | Relance leads J+2, J+5, J+14 |
-| **daily_email_batch** | Tous les jours | 14h00 | Envoie 100 emails en attente |
-| **twice_weekly_partner_outreach** | Lun & Jeu | 10h00 | Prospection 50 partenaires |
-| **daily_competitor_monitoring** | Tous les jours | 23h00 | Veille concurrence |
-| **weekly_performance_analysis** | Dimanche | 12h00 | Rapport hebdomadaire |
+## ✅ ACTIVATION EN 10 MINUTES
 
 ---
 
-## 🚨 ÉTAPE FINALE : ACTIVER LES CRON
+## MÉTHODE 1 : Via Supabase Dashboard (RECOMMANDÉ - Plus Simple)
 
-**IMPORTANT :** Les CRON sont configurés mais pas encore activés dans Supabase.
+### Étape 1 : Activer l'Extension pg_cron
 
-### Option A : Via Dashboard Supabase (Recommandé - 5 min)
+```
+1. Aller sur https://supabase.com/dashboard
+2. Sélectionner votre projet TaxiAssur
+3. Menu gauche → Database → Extensions
+4. Chercher "pg_cron" dans la liste
+5. Cliquer sur le toggle pour activer
+6. Attendre 10 secondes → Status "Active" (vert)
+```
 
-1. **Allez dans votre dashboard Supabase :**
-   https://supabase.com/dashboard/project/0ec90b57d6e95fcbda19832f
-
-2. **Database → Extensions**
-   - Vérifiez que `pg_cron` est activé ✅
-
-3. **SQL Editor → New query**
-
-   Copiez-collez ce script :
+**OU via SQL Editor :**
 
 ```sql
--- Activer les CRON automatiques via pg_cron
+CREATE EXTENSION IF NOT EXISTS pg_cron;
+```
 
--- 1. TOUTES LES HEURES : Traiter les emails entrants
+---
+
+### Étape 2 : Récupérer Vos Identifiants
+
+**2.1 - Project URL**
+```
+1. Menu gauche → Project Settings → API
+2. Copier "Project URL"
+   Exemple : https://abcdefghijklmnop.supabase.co
+3. Extraire le REF (partie avant .supabase.co)
+   REF = abcdefghijklmnop
+```
+
+**2.2 - Service Role Key**
+```
+1. Toujours dans Project Settings → API
+2. Section "Project API keys"
+3. Copier "service_role" (secret) key
+   ⚠️ ATTENTION : Ne jamais exposer publiquement cette clé !
+   
+Exemple : eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFiY2RlZmdoaWprbG1ub3AiLCJyb2xlIjoic2VydmljZV9yb2xlIiwiaWF0IjoxNjk1MDAwMDAwLCJleHAiOjE4NTI3NjY0MDB9.XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+```
+
+---
+
+### Étape 3 : Créer les Cron Jobs
+
+#### Cron Job 1 : Scraping Social (Toutes les 6h)
+
+**Dans SQL Editor, copier/coller :**
+
+```sql
 SELECT cron.schedule(
-  'hourly_process_emails',
+  'ai-social-scraper-6h',
+  '0 */6 * * *',
+  $$
+  SELECT net.http_post(
+    url := 'https://VOTRE_REF_PROJET.supabase.co/functions/v1/ai-social-scraper',
+    headers := jsonb_build_object(
+      'Content-Type', 'application/json',
+      'Authorization', 'Bearer VOTRE_SERVICE_ROLE_KEY'
+    )
+  ) AS request_id;
+  $$
+);
+```
+
+**⚠️ REMPLACER :**
+- `VOTRE_REF_PROJET` par votre ref (ex: `abcdefghijklmnop`)
+- `VOTRE_SERVICE_ROLE_KEY` par votre service_role key complète
+
+**Exemple concret :**
+```sql
+SELECT cron.schedule(
+  'ai-social-scraper-6h',
+  '0 */6 * * *',
+  $$
+  SELECT net.http_post(
+    url := 'https://abcdefghijklmnop.supabase.co/functions/v1/ai-social-scraper',
+    headers := jsonb_build_object(
+      'Content-Type', 'application/json',
+      'Authorization', 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFiY2RlZmdoaWprbG1ub3AiLCJyb2xlIjoic2VydmljZV9yb2xlIiwiaWF0IjoxNjk1MDAwMDAwLCJleHAiOjE4NTI3NjY0MDB9.XXXX'
+    )
+  ) AS request_id;
+  $$
+);
+```
+
+**Cliquer "Run"** → Devrait retourner : `Rows: 1` ou `Success`
+
+---
+
+#### Cron Job 2 : Email Auto-Responder (Toutes les 30 min)
+
+```sql
+SELECT cron.schedule(
+  'ai-email-responder-30min',
+  '*/30 * * * *',
+  $$
+  SELECT net.http_post(
+    url := 'https://VOTRE_REF_PROJET.supabase.co/functions/v1/ai-email-responder',
+    headers := jsonb_build_object(
+      'Content-Type', 'application/json',
+      'Authorization', 'Bearer VOTRE_SERVICE_ROLE_KEY'
+    ),
+    body := jsonb_build_object(
+      'action', 'process_pending'
+    )
+  ) AS request_id;
+  $$
+);
+```
+
+---
+
+#### Cron Job 3 : Calcul Stats Ambassadeurs (Quotidien à minuit)
+
+```sql
+SELECT cron.schedule(
+  'calculate-ambassador-rankings-daily',
+  '0 0 * * *',
+  $$
+  SELECT calculate_monthly_rankings();
+  $$
+);
+```
+
+---
+
+#### Cron Job 4 : Monitoring Engagement (Toutes les heures)
+
+```sql
+SELECT cron.schedule(
+  'engagement-monitoring-hourly',
   '0 * * * *',
   $$
   SELECT net.http_post(
-    url := current_setting('app.supabase_url') || '/functions/v1/cron-orchestrator',
-    body := '{"job": "hourly_process_incoming_emails"}',
-    headers := jsonb_build_object('Content-Type', 'application/json')
-  );
+    url := 'https://VOTRE_REF_PROJET.supabase.co/functions/v1/ai-engagement-monitor',
+    headers := jsonb_build_object(
+      'Content-Type', 'application/json',
+      'Authorization', 'Bearer VOTRE_SERVICE_ROLE_KEY'
+    )
+  ) AS request_id;
   $$
 );
-
--- 2. TOUS LES JOURS À 6H : Génération de contenu
-SELECT cron.schedule(
-  'daily_content_generation',
-  '0 6 * * *',
-  $$
-  SELECT net.http_post(
-    url := current_setting('app.supabase_url') || '/functions/v1/cron-orchestrator',
-    body := '{"job": "daily_content_generation"}',
-    headers := jsonb_build_object('Content-Type', 'application/json')
-  );
-  $$
-);
-
--- 3. TOUS LES JOURS À 9H : Relance des leads
-SELECT cron.schedule(
-  'daily_lead_followup',
-  '0 9 * * *',
-  $$
-  SELECT net.http_post(
-    url := current_setting('app.supabase_url') || '/functions/v1/cron-orchestrator',
-    body := '{"job": "daily_lead_followup"}',
-    headers := jsonb_build_object('Content-Type', 'application/json')
-  );
-  $$
-);
-
--- 4. TOUS LES JOURS À 14H : Envoi batch emails
-SELECT cron.schedule(
-  'daily_email_batch',
-  '0 14 * * *',
-  $$
-  SELECT net.http_post(
-    url := current_setting('app.supabase_url') || '/functions/v1/cron-orchestrator',
-    body := '{"job": "daily_email_batch"}',
-    headers := jsonb_build_object('Content-Type', 'application/json')
-  );
-  $$
-);
-
--- 5. LUNDI ET JEUDI À 10H : Prospection partenaires
-SELECT cron.schedule(
-  'twice_weekly_partner_outreach',
-  '0 10 * * 1,4',
-  $$
-  SELECT net.http_post(
-    url := current_setting('app.supabase_url') || '/functions/v1/cron-orchestrator',
-    body := '{"job": "twice_weekly_partner_outreach"}',
-    headers := jsonb_build_object('Content-Type', 'application/json')
-  );
-  $$
-);
-
--- 6. TOUS LES JOURS À 23H : Monitoring concurrence
-SELECT cron.schedule(
-  'daily_competitor_monitoring',
-  '0 23 * * *',
-  $$
-  SELECT net.http_post(
-    url := current_setting('app.supabase_url') || '/functions/v1/cron-orchestrator',
-    body := '{"job": "daily_competitor_monitoring"}',
-    headers := jsonb_build_object('Content-Type', 'application/json')
-  );
-  $$
-);
-
--- 7. DIMANCHE À 12H : Rapport hebdomadaire
-SELECT cron.schedule(
-  'weekly_performance_analysis',
-  '0 12 * * 0',
-  $$
-  SELECT net.http_post(
-    url := current_setting('app.supabase_url') || '/functions/v1/cron-orchestrator',
-    body := '{"job": "weekly_ai_performance_analysis"}',
-    headers := jsonb_build_object('Content-Type', 'application/json')
-  );
-  $$
-);
-
--- Vérifier que les CRON sont bien créés
-SELECT * FROM cron.job ORDER BY jobname;
 ```
 
-4. **Cliquez sur "RUN"** ✅
+---
 
-5. **Vérifiez l'activation :**
+### Étape 4 : Vérifier les Cron Jobs
+
 ```sql
-SELECT * FROM cron.job ORDER BY jobname;
+-- Voir tous les crons actifs
+SELECT 
+  jobid,
+  jobname,
+  schedule,
+  active,
+  database
+FROM cron.job
+ORDER BY jobid;
 ```
 
-Vous devriez voir vos 7 CRON listés !
-
----
-
-### Option B : Service Externe (Alternative - si pg_cron ne fonctionne pas)
-
-**Utiliser cron-job.org (gratuit) :**
-
-1. Créez un compte sur https://cron-job.org
-2. Ajoutez ces URLs à appeler :
-
+**Devrait retourner :**
 ```
-URL : https://0ec90b57d6e95fcbda19832f.supabase.co/functions/v1/cron-orchestrator
-Method : POST
-Headers : Content-Type: application/json
-Body : {"job": "hourly_process_incoming_emails"}
-Schedule : 0 * * * * (toutes les heures)
-```
-
-Répétez pour chaque job avec la bonne fréquence.
-
----
-
-## 🎯 CONNEXION EMAIL INBOX
-
-Pour que les emails entrants soient traités automatiquement :
-
-### Méthode 1 : Forward Gmail → Webhook
-
-1. **Paramètres Gmail** → Transfert et POP/IMAP
-2. **Ajouter une adresse de transfert :**
-   ```
-   Utiliser Zapier/Make.com pour:
-   Gmail → Webhook → https://0ec90b57d6e95fcbda19832f.supabase.co/functions/v1/webhook-email-receiver
-   ```
-
-### Méthode 2 : IONOS Forward
-
-Dans votre panel IONOS :
-1. **Email → Paramètres**
-2. **Règles de transfert**
-3. **Forward vers webhook** (via Zapier/Make.com)
-
-### Méthode 3 : Webhook Direct (Avancé)
-
-Si votre fournisseur email supporte les webhooks :
-```
-Webhook URL: https://0ec90b57d6e95fcbda19832f.supabase.co/functions/v1/webhook-email-receiver
-
-Format JSON attendu:
-{
-  "from_email": "client@example.com",
-  "from_name": "Marc Dupont",
-  "subject": "Demande de devis",
-  "body": "Bonjour, je souhaite un devis...",
-  "html_body": "<html>...</html>"
-}
+jobid | jobname                              | schedule     | active | database
+------|--------------------------------------|--------------|--------|----------
+1     | ai-social-scraper-6h                 | 0 */6 * * *  | true   | postgres
+2     | ai-email-responder-30min             | */30 * * * * | true   | postgres
+3     | calculate-ambassador-rankings-daily  | 0 0 * * *    | true   | postgres
+4     | engagement-monitoring-hourly         | 0 * * * *    | true   | postgres
 ```
 
 ---
 
-## 📊 DASHBOARD DE MONITORING
+### Étape 5 : Tester un Cron Manuellement
 
-**URL :** `/backoffice/automation-monitor` (à créer dans le front)
+**Forcer exécution immédiate (sans attendre schedule) :**
 
-**API Disponible :**
-```bash
-# Vue d'ensemble
-GET https://0ec90b57d6e95fcbda19832f.supabase.co/functions/v1/automation-dashboard-api?action=overview
+```sql
+-- Tester scraping social
+SELECT net.http_post(
+  url := 'https://VOTRE_REF_PROJET.supabase.co/functions/v1/ai-social-scraper',
+  headers := jsonb_build_object(
+    'Content-Type', 'application/json',
+    'Authorization', 'Bearer VOTRE_SERVICE_ROLE_KEY'
+  )
+);
+```
 
-# Statistiques hebdomadaires
-GET https://0ec90b57d6e95fcbda19832f.supabase.co/functions/v1/automation-dashboard-api?action=stats
+**Vérifier résultat :**
 
-# Déclencher un job manuellement
-POST https://0ec90b57d6e95fcbda19832f.supabase.co/functions/v1/automation-dashboard-api?action=trigger_job
-Body: {"job_name": "daily_lead_followup"}
-
-# Activer/Désactiver un job
-POST https://0ec90b57d6e95fcbda19832f.supabase.co/functions/v1/automation-dashboard-api?action=toggle_job
-Body: {"job_name": "daily_content_generation", "enabled": false}
+```sql
+-- Voir posts scrapés
+SELECT COUNT(*), platform 
+FROM social_posts_scraped 
+WHERE scraped_at > NOW() - INTERVAL '10 minutes'
+GROUP BY platform;
 ```
 
 ---
 
-## 🧪 TESTER LE SYSTÈME
+## MÉTHODE 2 : Via SQL Direct (Alternative)
 
-### Test 1 : Déclencher un job manuellement
+Si vous préférez tout configurer d'un coup, voici le script complet :
 
-```bash
-curl -X POST "https://0ec90b57d6e95fcbda19832f.supabase.co/functions/v1/cron-orchestrator" \
-  -H "Content-Type: application/json" \
-  -d '{"job": "daily_lead_followup"}'
+```sql
+-- 1. Activer extension
+CREATE EXTENSION IF NOT EXISTS pg_cron;
+
+-- 2. Définir vos variables (REMPLACER ICI)
+DO $$
+DECLARE
+  project_url TEXT := 'https://VOTRE_REF_PROJET.supabase.co';
+  service_key TEXT := 'VOTRE_SERVICE_ROLE_KEY';
+BEGIN
+
+  -- 3. Créer tous les cron jobs
+  
+  -- Scraping social (6h)
+  PERFORM cron.schedule(
+    'ai-social-scraper-6h',
+    '0 */6 * * *',
+    format(
+      'SELECT net.http_post(url := %L, headers := jsonb_build_object(''Content-Type'', ''application/json'', ''Authorization'', ''Bearer %s''))',
+      project_url || '/functions/v1/ai-social-scraper',
+      service_key
+    )
+  );
+
+  -- Email responder (30min)
+  PERFORM cron.schedule(
+    'ai-email-responder-30min',
+    '*/30 * * * *',
+    format(
+      'SELECT net.http_post(url := %L, headers := jsonb_build_object(''Content-Type'', ''application/json'', ''Authorization'', ''Bearer %s''))',
+      project_url || '/functions/v1/ai-email-responder',
+      service_key
+    )
+  );
+
+  -- Rankings (quotidien)
+  PERFORM cron.schedule(
+    'calculate-ambassador-rankings-daily',
+    '0 0 * * *',
+    'SELECT calculate_monthly_rankings()'
+  );
+
+  -- Monitoring (hourly)
+  PERFORM cron.schedule(
+    'engagement-monitoring-hourly',
+    '0 * * * *',
+    format(
+      'SELECT net.http_post(url := %L, headers := jsonb_build_object(''Content-Type'', ''application/json'', ''Authorization'', ''Bearer %s''))',
+      project_url || '/functions/v1/ai-engagement-monitor',
+      service_key
+    )
+  );
+
+END $$;
 ```
 
-### Test 2 : Envoyer un email test à traiter
+---
 
-```bash
-curl -X POST "https://0ec90b57d6e95fcbda19832f.supabase.co/functions/v1/webhook-email-receiver" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "from_email": "test@example.com",
-    "from_name": "Test User",
-    "subject": "Demande de devis",
-    "body": "Bonjour, combien coûte une assurance taxi à Paris ?"
-  }'
+## 📅 COMPRENDRE LA SYNTAXE CRON
+
+```
+Format : * * * * *
+         │ │ │ │ │
+         │ │ │ │ └─── Jour semaine (0-6, 0=Dimanche)
+         │ │ │ └───── Mois (1-12)
+         │ │ └─────── Jour du mois (1-31)
+         │ └───────── Heure (0-23)
+         └─────────── Minute (0-59)
 ```
 
-### Test 3 : Vérifier le dashboard
+**Exemples pratiques :**
 
-```bash
-curl "https://0ec90b57d6e95fcbda19832f.supabase.co/functions/v1/automation-dashboard-api?action=stats" \
-  -H "Authorization: Bearer VOTRE_ANON_KEY"
+```
+'0 */6 * * *'     → Toutes les 6 heures (00:00, 06:00, 12:00, 18:00)
+'*/30 * * * *'    → Toutes les 30 minutes
+'0 * * * *'       → Toutes les heures à :00
+'0 0 * * *'       → Tous les jours à minuit
+'0 9 * * 1'       → Tous les lundis à 9h
+'0 0 1 * *'       → 1er de chaque mois à minuit
+'*/15 9-17 * * 1-5' → Toutes les 15min, de 9h à 17h, lundi-vendredi
 ```
 
 ---
 
-## 📈 RÉSULTAT ATTENDU
+## 🔧 GESTION DES CRONS
 
-**Après activation complète, votre système va :**
+### Voir Historique Exécutions
 
-### Automatiquement et sans intervention :
+```sql
+SELECT 
+  runid,
+  jobid,
+  job_pid,
+  database,
+  username,
+  command,
+  status,
+  return_message,
+  start_time,
+  end_time
+FROM cron.job_run_details
+ORDER BY start_time DESC
+LIMIT 20;
+```
 
-✅ **Toutes les heures :**
-- Traiter les emails entrants
-- Répondre automatiquement avec personnalisation IA
-- Créer des leads dans la base
+### Voir Dernière Exécution Par Job
 
-✅ **Tous les jours à 6h :**
-- Générer 5 nouveaux articles SEO
-- Les publier sur le site
-- Soumettre le sitemap à Google
+```sql
+SELECT 
+  j.jobname,
+  j.schedule,
+  j.active,
+  MAX(r.start_time) as last_run,
+  MAX(r.status) as last_status
+FROM cron.job j
+LEFT JOIN cron.job_run_details r ON j.jobid = r.jobid
+GROUP BY j.jobid, j.jobname, j.schedule, j.active
+ORDER BY last_run DESC;
+```
 
-✅ **Tous les jours à 9h :**
-- Identifier les leads à relancer (J+2, J+5, J+14)
-- Envoyer des emails de relance personnalisés
-- Mettre à jour le statut des leads
+### Désactiver un Cron (sans le supprimer)
 
-✅ **Tous les jours à 14h :**
-- Envoyer les emails en attente (max 100/jour)
-- Respecter les quotas SendGrid
-- Tracker les ouvertures/clics
+```sql
+UPDATE cron.job 
+SET active = false 
+WHERE jobname = 'ai-social-scraper-6h';
+```
 
-✅ **Lundi et Jeudi à 10h :**
-- Trouver 50 nouveaux partenaires potentiels
-- Générer emails d'outreach personnalisés
-- Envoyer et tracker les réponses
+### Réactiver un Cron
 
-✅ **Tous les jours à 23h :**
-- Vérifier les prix concurrents
-- Scanner nouveaux backlinks
-- Analyser les performances
+```sql
+UPDATE cron.job 
+SET active = true 
+WHERE jobname = 'ai-social-scraper-6h';
+```
 
-✅ **Dimanche à 12h :**
-- Générer rapport hebdomadaire complet
-- Envoyer email récapitulatif à commercial@xcr.fr
-- Suggestions d'optimisation IA
+### Supprimer un Cron
+
+```sql
+SELECT cron.unschedule('ai-social-scraper-6h');
+```
+
+### Modifier Schedule d'un Cron
+
+```sql
+-- Supprimer ancien
+SELECT cron.unschedule('ai-social-scraper-6h');
+
+-- Recréer avec nouveau schedule (ex: toutes les 4h)
+SELECT cron.schedule(
+  'ai-social-scraper-4h',
+  '0 */4 * * *',
+  $$ ... $$
+);
+```
 
 ---
 
-## 💰 IMPACT FINANCIER
+## 🐛 TROUBLESHOOTING
 
-**Avec automatisation complète :**
+### Problème 1 : Cron ne s'exécute pas
 
-| Activité | Avant (manuel) | Après (auto) | Temps économisé |
-|----------|---------------|--------------|-----------------|
-| Réponses emails | 2h/jour | 0 min | 60h/mois |
-| Génération contenu | 10h/semaine | 0 min | 40h/mois |
-| Relances leads | 1h/jour | 0 min | 30h/mois |
-| Prospection partenaires | 5h/semaine | 0 min | 20h/mois |
-| **TOTAL** | **150h/mois** | **2h/mois** | **148h économisées** |
+**Vérifier si actif :**
+```sql
+SELECT * FROM cron.job WHERE jobname = 'ai-social-scraper-6h';
+```
 
-**ROI :**
-- Temps économisé : 148h/mois = 18,5 jours de travail
-- Coût système : 215€/mois
-- CA généré : 27 750€/mois
-- **Profit net : +27 535€/mois**
+Si `active = false` :
+```sql
+UPDATE cron.job SET active = true WHERE jobname = 'ai-social-scraper-6h';
+```
 
 ---
 
-## 🎉 PROCHAINE ÉTAPE
+### Problème 2 : Erreur "extension pg_cron does not exist"
 
-**Activez maintenant les CRON via Option A ci-dessus !**
+```sql
+-- Dans SQL Editor :
+CREATE EXTENSION IF NOT EXISTS pg_cron;
 
-Une fois fait, vous pouvez :
-1. ✅ Vérifier que les jobs tournent : `SELECT * FROM cron.job;`
-2. ✅ Tester un job manuellement
-3. ✅ Connecter votre email inbox
-4. ✅ **Regarder votre compte en banque grossir ! 💰**
+-- Ou via Dashboard :
+Database → Extensions → Activer "pg_cron"
+```
 
 ---
 
-**Support :** Si besoin d'aide, vérifiez les logs dans :
-- Dashboard Supabase → Edge Functions → Logs
-- Table `cron_execution_history`
-- Table `automation_logs`
+### Problème 3 : Cron s'exécute mais erreur
+
+**Voir erreurs :**
+```sql
+SELECT 
+  jobname,
+  status,
+  return_message,
+  start_time
+FROM cron.job_run_details
+WHERE status = 'failed'
+ORDER BY start_time DESC
+LIMIT 10;
+```
+
+**Causes fréquentes :**
+- ❌ URL Edge Function incorrecte
+- ❌ Service Role Key invalide
+- ❌ Edge Function non déployée
+- ❌ Timeout (fonction trop lente)
+
+---
+
+### Problème 4 : Edge Function timeout
+
+**Augmenter timeout (max 55s) :**
+
+Dans votre Edge Function :
+```typescript
+Deno.serve({
+  timeout: 55000, // 55 secondes max
+}, async (req: Request) => {
+  // ...
+});
+```
+
+---
+
+### Problème 5 : Trop d'exécutions (spam)
+
+**Vérifier schedule :**
+```sql
+SELECT jobname, schedule FROM cron.job;
+```
+
+Si schedule trop fréquent, modifier :
+```sql
+SELECT cron.unschedule('nom-du-job');
+-- Recréer avec schedule moins fréquent
+```
+
+---
+
+## 📊 MONITORING PRODUCTION
+
+### Dashboard SQL Custom
+
+```sql
+-- Stats Crons (à exécuter quotidiennement)
+WITH cron_stats AS (
+  SELECT 
+    j.jobname,
+    COUNT(r.runid) as total_runs,
+    COUNT(*) FILTER (WHERE r.status = 'succeeded') as success_count,
+    COUNT(*) FILTER (WHERE r.status = 'failed') as failed_count,
+    AVG(EXTRACT(EPOCH FROM (r.end_time - r.start_time))) as avg_duration_seconds
+  FROM cron.job j
+  LEFT JOIN cron.job_run_details r ON j.jobid = r.jobid
+  WHERE r.start_time > NOW() - INTERVAL '24 hours'
+  GROUP BY j.jobid, j.jobname
+)
+SELECT 
+  jobname,
+  total_runs,
+  success_count,
+  failed_count,
+  ROUND((success_count::decimal / NULLIF(total_runs, 0) * 100), 2) as success_rate_percent,
+  ROUND(avg_duration_seconds::numeric, 2) as avg_duration_sec
+FROM cron_stats
+ORDER BY failed_count DESC, jobname;
+```
+
+---
+
+## 🎯 CONFIGURATION RECOMMANDÉE
+
+### Mode Test (Semaine 1)
+
+```sql
+-- Scraping peu fréquent pour tester
+'0 */12 * * *'  -- Toutes les 12h
+
+-- Email responder manuel (pas de cron)
+-- Monitoring désactivé
+```
+
+### Mode Production (Après tests)
+
+```sql
+-- Scraping optimisé
+'0 */6 * * *'   -- Toutes les 6h (4x/jour)
+
+-- Email responder actif
+'*/30 * * * *'  -- Toutes les 30min
+
+-- Rankings quotidien
+'0 1 * * *'     -- 1h du matin (éviter minuit = trafic élevé)
+
+-- Monitoring hourly
+'0 * * * *'     -- Toutes les heures
+```
+
+### Mode Scale (3+ mois)
+
+```sql
+-- Scraping intensif
+'0 */4 * * *'   -- Toutes les 4h (6x/jour)
+
+-- Email instant
+'*/10 * * * *'  -- Toutes les 10min
+
+-- Monitoring fréquent
+'*/15 * * * *'  -- Toutes les 15min
+```
+
+---
+
+## ✅ CHECKLIST FINALE
+
+```
+□ Extension pg_cron activée
+□ Project REF récupéré
+□ Service Role Key récupérée
+□ Cron scraping créé (6h)
+□ Cron email créé (30min)
+□ Cron rankings créé (daily)
+□ Cron monitoring créé (hourly)
+□ Test manuel exécuté
+□ Historique vérifié
+□ Aucune erreur dans logs
+□ Posts scrapés confirmés (table)
+□ Stats mises à jour confirmées
+```
+
+---
+
+## 🚀 RÉSULTAT ATTENDU
+
+**Après 24h :**
+```
+✅ 4 exécutions scraping (toutes les 6h)
+✅ 48 exécutions email responder (toutes les 30min)
+✅ 1 exécution rankings (minuit)
+✅ 24 exécutions monitoring (hourly)
+✅ 50+ posts scrapés total
+✅ 15+ réponses générées
+✅ 0 erreurs
+```
+
+**Vérification SQL :**
+```sql
+-- Posts scrapés dernières 24h
+SELECT COUNT(*) FROM social_posts_scraped 
+WHERE scraped_at > NOW() - INTERVAL '24 hours';
+-- Devrait retourner : 40-60
+
+-- Réponses générées dernières 24h
+SELECT COUNT(*) FROM ai_responses_generated 
+WHERE generated_at > NOW() - INTERVAL '24 hours';
+-- Devrait retourner : 10-20
+```
+
+---
+
+**Vos Crons sont maintenant configurés ! Le système tourne en automatique 24/7.** ⏰🤖
+
+Besoin d'aide ? Voir section Troubleshooting ci-dessus.
