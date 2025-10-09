@@ -24,8 +24,8 @@ window.ENV_CONFIG = {
   VITE_MAKE_SECRET: 'taxiassur_webhook_secret_2024',
 
   // OpenAI (utilisé côté serveur uniquement)
-  VITE_OPENAI_API_KEY: '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'
-  VITE_INDEXNOW_KEY=q38enouostqixbz513fb359ujcosvn4k
+  VITE_OPENAI_API_KEY: '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',
+  VITE_INDEXNOW_KEY: 'q38enouostqixbz513fb359ujcosvn4k'
 
 };
 
