@@ -188,26 +188,26 @@ const ProspectReview: React.FC = () => {
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
               >
-                <option value="all">Tous statuts</option>
-                <option value="new">Nouveaux</option>
-                <option value="qualified">Qualifiés</option>
-                <option value="rejected">Rejetés</option>
-                <option value="contacted">Contactés</option>
-                <option value="partner">Partenaires</option>
+                <option value="all" className="bg-white text-gray-900">Tous statuts</option>
+                <option value="new" className="bg-white text-gray-900">Nouveaux</option>
+                <option value="qualified" className="bg-white text-gray-900">Qualifiés</option>
+                <option value="rejected" className="bg-white text-gray-900">Rejetés</option>
+                <option value="contacted" className="bg-white text-gray-900">Contactés</option>
+                <option value="partner" className="bg-white text-gray-900">Partenaires</option>
               </select>
               
               <select
                 value={filterType}
                 onChange={(e) => setFilterType(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
               >
-                <option value="all">Tous types</option>
-                <option value="annuaire">Annuaires</option>
-                <option value="asso">Associations</option>
-                <option value="blog">Blogs/Médias</option>
-                <option value="fleet">Flottes</option>
+                <option value="all" className="bg-white text-gray-900">Tous types</option>
+                <option value="annuaire" className="bg-white text-gray-900">Annuaires</option>
+                <option value="asso" className="bg-white text-gray-900">Associations</option>
+                <option value="blog" className="bg-white text-gray-900">Blogs/Médias</option>
+                <option value="fleet" className="bg-white text-gray-900">Flottes</option>
               </select>
             </div>
           </div>
