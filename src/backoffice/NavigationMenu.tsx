@@ -3,7 +3,7 @@ import {
   Users, DollarSign, BarChart3, PieChart, Handshake,
   Zap, FileEdit, Newspaper, Package, TrendingUp, FileText,
   Search, Link2, Mail, Eye, Plus, Send,
-  UserCircle, Clock, Megaphone, Shield, Globe, Settings
+  UserCircle, Clock, Megaphone, Shield, Globe, Settings, BookOpen
 } from 'lucide-react';
 
 export default function NavigationMenu() {
@@ -164,6 +164,48 @@ export default function NavigationMenu() {
             <Globe className="w-5 h-5" />
             <span>Voir le site</span>
           </Link>
+        </div>
+      </div>
+
+      {/* Documentation & Guides */}
+      <div className="bg-gray-800/50 border border-blue-500/30 rounded-lg p-4">
+        <h3 className="text-blue-400 font-bold text-sm mb-3 flex items-center gap-2">
+          <BookOpen className="w-4 h-4" />
+          DOCUMENTATION & GUIDES
+        </h3>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <a
+            href="/MENU-COMPLET-BACKOFFICE.md"
+            target="_blank"
+            className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm"
+          >
+            <BookOpen className="w-5 h-5" />
+            <span>Toutes les pages</span>
+          </a>
+          <a
+            href="/BACKOFFICE-README.md"
+            target="_blank"
+            className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm"
+          >
+            <BookOpen className="w-5 h-5" />
+            <span>Guide Backoffice</span>
+          </a>
+          <a
+            href="/API-SETUP-GUIDE.md"
+            target="_blank"
+            className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm"
+          >
+            <BookOpen className="w-5 h-5" />
+            <span>Config API</span>
+          </a>
+          <a
+            href="/DEPLOIEMENT-FINAL-PRET.md"
+            target="_blank"
+            className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-cyan-500 to-cyan-600 hover:from-cyan-600 hover:to-cyan-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm"
+          >
+            <BookOpen className="w-5 h-5" />
+            <span>Guide Déploiement</span>
+          </a>
         </div>
       </div>
     </div>

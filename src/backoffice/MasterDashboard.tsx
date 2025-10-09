@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import NavigationMenu from './NavigationMenu';
+import LeadCRM from './LeadCRM';
 
 interface RealtimeStats {
   active_sessions: number;
@@ -240,6 +241,9 @@ const MasterDashboard: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {/* CRM & Leads - Vue d'ensemble */}
+      <LeadCRM />
 
       {/* Menu de Navigation Complet */}
       <NavigationMenu />
