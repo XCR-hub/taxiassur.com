@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, CreditCard as Edit, Trash2, Eye, EyeOff, Copy, Save, X, Monitor, Smartphone, Tablet, Home } from 'lucide-react';
+import { Plus, CreditCard as Edit, Trash2, Eye, EyeOff, Copy, Save, X, Monitor, Smartphone, Tablet, Home, TrendingUp } from 'lucide-react';
 import AuthGuard from '../components/AuthGuard';
 import { PopupConfig, PopupConfigSchema, PopupManager } from '../lib/popup';
 import Card from '../components/Card';
