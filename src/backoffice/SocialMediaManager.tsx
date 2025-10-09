@@ -6,6 +6,8 @@ import {
   Calendar, TrendingUp, Users, CheckCircle, Clock, AlertCircle,
   Plus, Settings, BarChart3, Zap, Globe
 } from 'lucide-react';
+import HelpPanel from '../components/HelpPanel';
+import { getHelpConfig } from '../lib/help-configs';
 
 interface SocialNetwork {
   id: string;
@@ -615,6 +617,18 @@ export default function SocialMediaManager() {
           </div>
         )}
       </div>
+
+      {/* Help Panel */}
+      <HelpPanel
+        {...getHelpConfig('social-media')}
+        quickActions={[
+          {
+            label: 'Voir Templates Marketing',
+            action: () => window.location.href = '/backoffice/marketing-templates',
+            icon: <FileText className="w-4 h-4" />
+          }
+        ]}
+      />
     </div>
   );
 }

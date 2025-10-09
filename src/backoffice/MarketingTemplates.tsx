@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import { MessageSquare, Mail, FileText, Copy, CheckCircle, Download, ExternalLink } from 'lucide-react';
+import { MessageSquare, Mail, FileText, Copy, CheckCircle, Download, ExternalLink, QrCode } from 'lucide-react';
 import Card from '../components/Card';
 import marketingTemplates from '../data/marketing-templates.json';
+import HelpPanel from '../components/HelpPanel';
+import { getHelpConfig } from '../lib/help-configs';
 
 const MarketingTemplates: React.FC = () => {
   const [copied, setCopied] = useState<string>('');
@@ -396,6 +398,22 @@ const MarketingTemplates: React.FC = () => {
           </div>
         </Card>
       </div>
+      {/* Help Panel */}
+      <HelpPanel
+        {...getHelpConfig('marketing-templates')}
+        quickActions={[
+          {
+            label: 'Générer QR Codes',
+            action: () => window.location.href = '/backoffice/qr-codes',
+            icon: <QrCode className="w-4 h-4" />
+          },
+          {
+            label: 'Réseaux Sociaux',
+            action: () => window.location.href = '/backoffice/social-media',
+            icon: <MessageSquare className="w-4 h-4" />
+          }
+        ]}
+      />
     </div>
   );
 };
