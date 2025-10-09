@@ -18,7 +18,7 @@ window.ENV_CONFIG = {
   VITE_MAKE_API_TOKEN: '507a717b-3a95-483e-8fa0-215cff5c48f2',
   VITE_MAKE_SECRET: 'taxiassur_webhook_secret_2024',
   VITE_OPENAI_API_KEY: 'sk-proj-demo',
-  VITE_INDEXNOW_KEY: 'q38enouostqixbz513fb359ujcosvn4k',
+  VITE_INDEXNOW_KEY: 'bee0a466b3054c6683f80a0efac280c9',
   VITE_SERP_API_KEY: '420c1db639f7961f89b578da9be23a76cd16795664103b95019a432026555202',
   VITE_SITE_URL: 'https://taxiassur.com',
   VITE_BRAND_NAME: 'TaxiAssur',
