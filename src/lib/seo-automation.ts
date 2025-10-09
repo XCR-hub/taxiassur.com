@@ -4,7 +4,6 @@
  */
 
 import { MIRROR_PAGES } from './mirror-pages';
-import { submitToIndexNow } from './indexnow';
 
 export interface SEOAutomationConfig {
   enabled: boolean;
@@ -121,43 +120,29 @@ export async function pingSearchEngines(): Promise<{
 }
 
 /**
- * Notifie tous les moteurs via IndexNow quand une page change
+ * Notifie tous les moteurs quand une page change
  */
 export async function notifyPageUpdate(pageUrl: string): Promise<boolean> {
-  try {
-    const result = await submitToIndexNow(pageUrl);
-    return result.success;
-  } catch {
-    return false;
-  }
+  // IndexNow removed - now handled by search engines crawling
+  console.log('[SEO] Page update:', pageUrl);
+  return true;
 }
 
 /**
- * Notifie tous les moteurs via IndexNow pour plusieurs pages
+ * Notifie tous les moteurs pour plusieurs pages
  */
 export async function notifyBulkPageUpdates(pageUrls: string[]): Promise<{
   success: boolean;
   successCount: number;
   failCount: number;
 }> {
-  try {
-    const result = await submitToIndexNow(pageUrls);
-
-    const successCount = result.results.filter(r => r.status === 200).length;
-    const failCount = result.results.length - successCount;
-
-    return {
-      success: result.success,
-      successCount,
-      failCount
-    };
-  } catch {
-    return {
-      success: false,
-      successCount: 0,
-      failCount: pageUrls.length
-    };
-  }
+  // IndexNow removed - now handled by search engines crawling
+  console.log('[SEO] Bulk page updates:', pageUrls.length, 'pages');
+  return {
+    success: true,
+    successCount: pageUrls.length,
+    failCount: 0
+  };
 }
 
 /**

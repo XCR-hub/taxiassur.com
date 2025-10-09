@@ -32,10 +32,6 @@ export function getAdminPassword(): string {
   return getEnv('VITE_ADMIN_PASSWORD') || 'taxiassur2024';
 }
 
-export function getIndexNowKey(): string {
-  return getEnv('VITE_INDEXNOW_KEY') || 'bee0a466b3054c6683f80a0efac280c9';
-}
-
 export function getSiteUrl(): string {
   return getEnv('VITE_SITE_URL') || 'https://taxiassur.com';
 }

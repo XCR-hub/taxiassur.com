@@ -11,7 +11,6 @@ import UltraConversionCTA from '../components/UltraConversionCTA';
 import InstantQuoteCalculator from '../components/InstantQuoteCalculator';
 import { MIRROR_PAGES, generateMirrorPageContent } from '../lib/mirror-pages';
 import { initBehavioralTracking } from '../lib/behavioral-tracking';
-import { autoSubmitPage } from '../lib/indexnow';
 import { useAdaptiveContent } from '../lib/adaptive-content';
 import { CheckCircle, Shield, Clock, TrendingDown } from 'lucide-react';
 
@@ -25,7 +24,6 @@ const MirrorPage: React.FC = () => {
   useEffect(() => {
     if (page) {
       initBehavioralTracking();
-      autoSubmitPage(page.url);
     }
   }, [page]);
 

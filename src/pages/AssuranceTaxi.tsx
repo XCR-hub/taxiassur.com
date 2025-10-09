@@ -14,7 +14,6 @@ import UltraConversionCTA from '../components/UltraConversionCTA';
 import { Shield, CheckCircle, Clock, Users } from 'lucide-react';
 import { useEffect } from 'react';
 import { initBehavioralTracking } from '../lib/behavioral-tracking';
-import { autoSubmitPage } from '../lib/indexnow';
 
 const AssuranceTaxi: React.FC = () => {
   const breadcrumbs = [
@@ -24,7 +23,6 @@ const AssuranceTaxi: React.FC = () => {
 
   useEffect(() => {
     initBehavioralTracking();
-    autoSubmitPage('/assurance-taxi');
   }, []);
 
   const advantages = [
