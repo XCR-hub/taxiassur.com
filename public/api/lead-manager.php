@@ -15,6 +15,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 $supabaseUrl = env('VITE_SUPABASE_URL') ?: 'https://viuuznfqkauatkjcegcj.supabase.co';
 $supabaseKey = env('VITE_SUPABASE_ANON_KEY') ?: '';
 
+// Debug mode (retirer après tests)
+$debugMode = isset($_GET['debug']) && $_GET['debug'] === 'true';
+
+if ($debugMode) {
+    error_log("🔍 LeadManager Debug:");
+    error_log("Supabase URL: " . $supabaseUrl);
+    error_log("Supabase Key exists: " . (!empty($supabaseKey) ? 'YES (' . strlen($supabaseKey) . ' chars)' : 'NO'));
+}
+
 function supabaseRequest($method, $endpoint, $data = null) {
     global $supabaseUrl, $supabaseKey;
 
@@ -63,7 +72,26 @@ if (!$action) {
 try {
     switch ($action) {
         case 'list':
+            // Vérifier que Supabase est configuré
+            if (empty($supabaseKey)) {
+                echo json_encode([
+                    'success' => false,
+                    'error' => 'Supabase configuration missing',
+                    'debug' => [
+                        'supabase_url' => !empty($supabaseUrl),
+                        'supabase_key' => false,
+                        'message' => 'Check .env file and load-env.php'
+                    ]
+                ]);
+                break;
+            }
+
             $result = supabaseRequest('GET', 'leads?select=*&order=created_at.desc');
+
+            if ($debugMode) {
+                error_log("Supabase response code: " . $result['code']);
+                error_log("Supabase response: " . json_encode($result['data']));
+            }
 
             if ($result['code'] === 200) {
                 $leads = $result['data'];
@@ -93,13 +121,22 @@ try {
                 echo json_encode([
                     'success' => true,
                     'leads' => $formattedLeads,
-                    'count' => count($formattedLeads)
+                    'count' => count($formattedLeads),
+                    'debug' => $debugMode ? [
+                        'supabase_connected' => true,
+                        'raw_count' => count($leads)
+                    ] : null
                 ]);
             } else {
                 echo json_encode([
                     'success' => false,
-                    'error' => 'Failed to fetch leads',
-                    'details' => $result['data']
+                    'error' => 'Failed to fetch leads from Supabase',
+                    'http_code' => $result['code'],
+                    'details' => $result['data'],
+                    'debug' => $debugMode ? [
+                        'supabase_url' => substr($supabaseUrl, 0, 30) . '...',
+                        'key_length' => strlen($supabaseKey)
+                    ] : null
                 ]);
             }
             break;
