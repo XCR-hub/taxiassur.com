@@ -6,6 +6,7 @@ import { getBacklinks, getPartners } from '../lib/backlinks';
 import { pingSearchEngines } from '../lib/ping';
 import { regenerateFeeds, pingWebhook } from '../lib/feeds';
 import { checkUptime, getSEOScore } from '../lib/analytics';
+import { getLeads } from '../lib/leads';
 import AdminPing from '../components/AdminPing';
 import Card from '../components/Card';
 
@@ -44,32 +45,27 @@ const Dashboard: React.FC = () => {
   const loadDashboardData = async () => {
     setIsLoading(true);
     try {
-      // Charger les vraies données des leads
-      const leadsResponse = await fetch('/api/lead-manager.php?action=list');
-      let realLeads = [];
-      if (leadsResponse.ok) {
-        const leadsResult = await leadsResponse.json();
-        realLeads = leadsResult.success ? leadsResult.leads : [];
-      }
-      
+      // Charger les vrais leads depuis Supabase
+      const realLeads = await getLeads();
+
       // Calculer les stats réelles des leads
       const now = new Date();
       const today = now.toDateString();
       const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
       const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-      
-      const leadsToday = realLeads.filter((lead: any) => 
-        new Date(lead.createdAt || lead.timestamp).toDateString() === today
+
+      const leadsToday = realLeads.filter((lead) =>
+        new Date(lead.createdAt).toDateString() === today
       ).length;
-      
-      const leadsWeek = realLeads.filter((lead: any) => 
-        new Date(lead.createdAt || lead.timestamp) >= weekAgo
+
+      const leadsWeek = realLeads.filter((lead) =>
+        new Date(lead.createdAt) >= weekAgo
       ).length;
-      
-      const leadsMonth = realLeads.filter((lead: any) => 
-        new Date(lead.createdAt || lead.timestamp) >= monthAgo
+
+      const leadsMonth = realLeads.filter((lead) =>
+        new Date(lead.createdAt) >= monthAgo
       ).length;
-      
+
       setRealLeadStats({
         today: leadsToday,
         week: leadsWeek,
