@@ -16,15 +16,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 // Essayer avec et sans préfixe VITE_
 $openaiKey = env('VITE_OPENAI_API_KEY') ?: env('OPENAI_API_KEY') ?: '';
 
+// Debug complet si vide
 if (empty($openaiKey)) {
     http_response_code(500);
     echo json_encode([
         'success' => false,
-        'error' => 'OpenAI API key not configured. Please add VITE_OPENAI_API_KEY or OPENAI_API_KEY to your environment variables.',
+        'error' => 'OpenAI API key not configured',
         'debug' => [
-            'checked_vars' => ['VITE_OPENAI_API_KEY', 'OPENAI_API_KEY'],
-            'getenv_works' => getenv('PATH') ? 'yes' : 'no',
-            'suggestion' => 'Check your .env file or server configuration'
+            'env_function_exists' => function_exists('env'),
+            'vite_key_value' => env('VITE_OPENAI_API_KEY') ?: 'NOT_SET',
+            'openai_key_value' => env('OPENAI_API_KEY') ?: 'NOT_SET',
+            'getenv_vite' => getenv('VITE_OPENAI_API_KEY') ?: 'NOT_SET',
+            'getenv_openai' => getenv('OPENAI_API_KEY') ?: 'NOT_SET',
+            '_ENV_vite' => $_ENV['VITE_OPENAI_API_KEY'] ?? 'NOT_SET',
+            '_ENV_openai' => $_ENV['OPENAI_API_KEY'] ?? 'NOT_SET',
+            'config_file_exists' => file_exists(__DIR__ . '/config.php') ? 'yes' : 'no',
+            'config_file_readable' => is_readable(__DIR__ . '/config.php') ? 'yes' : 'no',
+            'suggestion' => 'Upload config.php to /api/ directory'
         ]
     ]);
     exit;
