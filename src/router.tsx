@@ -61,7 +61,7 @@ const AutomationScheduler = lazy(() => import('./backoffice/AutomationScheduler'
 const TrendAnalyzer = lazy(() => import('./backoffice/TrendAnalyzer'));
 const ProspectSeeder = lazy(() => import('./backoffice/ProspectSeeder'));
 const CampaignLauncher = lazy(() => import('./backoffice/CampaignLauncher'));
-// AuthGuard removed - backoffice is now public for full automation
+const AuthGuard = lazy(() => import('./components/AuthGuard'));
 const NewsletterPage = lazy(() => import('./pages/Newsletter'));
 const MirrorPage = lazy(() => import('./pages/MirrorPage'));
 const MasterDashboard = lazy(() => import('./backoffice/MasterDashboard'));
@@ -319,7 +319,7 @@ export const router = createBrowserRouter([
   },
   {
     path: '/backoffice',
-    element: <SuspenseWrapper><MasterDashboard /></SuspenseWrapper>
+    element: <AuthGuard><SuspenseWrapper><MasterDashboard /></SuspenseWrapper></AuthGuard>
   },
   {
     path: '/admin/dashboard',
@@ -331,127 +331,127 @@ export const router = createBrowserRouter([
   },
   {
     path: '/backoffice/old-dashboard',
-    element: <SuspenseWrapper><Dashboard /></SuspenseWrapper>
+    element: <AuthGuard><SuspenseWrapper><Dashboard /></SuspenseWrapper></AuthGuard>
   },
   {
     path: '/backoffice/backlinks',
-    element: <SuspenseWrapper><BacklinkManager /></SuspenseWrapper>
+    element: <AuthGuard><SuspenseWrapper><BacklinkManager /></SuspenseWrapper></AuthGuard>
   },
   {
     path: '/backoffice/partners',
-    element: <SuspenseWrapper><PartnerManager /></SuspenseWrapper>
+    element: <AuthGuard><SuspenseWrapper><PartnerManager /></SuspenseWrapper></AuthGuard>
   },
   {
     path: '/backoffice/content',
-    element: <SuspenseWrapper><ContentManager /></SuspenseWrapper>
+    element: <AuthGuard><SuspenseWrapper><ContentManager /></SuspenseWrapper></AuthGuard>
   },
   {
     path: '/backoffice/seo',
-    element: <SuspenseWrapper><SeoTools /></SuspenseWrapper>
+    element: <AuthGuard><SuspenseWrapper><SeoTools /></SuspenseWrapper></AuthGuard>
   },
   {
     path: '/backoffice/security',
-    element: <SuspenseWrapper><SecurityDashboard /></SuspenseWrapper>
+    element: <AuthGuard><SuspenseWrapper><SecurityDashboard /></SuspenseWrapper></AuthGuard>
   },
   {
     path: '/backoffice/analytics',
-    element: <SuspenseWrapper><ConversionAnalytics /></SuspenseWrapper>
+    element: <AuthGuard><SuspenseWrapper><ConversionAnalytics /></SuspenseWrapper></AuthGuard>
   },
   {
     path: '/backoffice/partner-finder',
-    element: <SuspenseWrapper><PartnerFinder /></SuspenseWrapper>
+    element: <AuthGuard><SuspenseWrapper><PartnerFinder /></SuspenseWrapper></AuthGuard>
   },
   {
     path: '/backoffice/prospects',
-    element: <SuspenseWrapper><ProspectReview /></SuspenseWrapper>
+    element: <AuthGuard><SuspenseWrapper><ProspectReview /></SuspenseWrapper></AuthGuard>
   },
   {
     path: '/backoffice/outreach',
-    element: <SuspenseWrapper><OutreachComposer /></SuspenseWrapper>
+    element: <AuthGuard><SuspenseWrapper><OutreachComposer /></SuspenseWrapper></AuthGuard>
   },
   {
     path: '/backoffice/compliance',
-    element: <SuspenseWrapper><ComplianceCenter /></SuspenseWrapper>
+    element: <AuthGuard><SuspenseWrapper><ComplianceCenter /></SuspenseWrapper></AuthGuard>
   },
   {
     path: '/backoffice/directory',
-    element: <SuspenseWrapper><DirectoryAssistant /></SuspenseWrapper>
+    element: <AuthGuard><SuspenseWrapper><DirectoryAssistant /></SuspenseWrapper></AuthGuard>
   },
   {
     path: '/backoffice/popups',
-    element: <SuspenseWrapper><PopupManager /></SuspenseWrapper>
+    element: <AuthGuard><SuspenseWrapper><PopupManager /></SuspenseWrapper></AuthGuard>
   },
   {
     path: '/backoffice/news',
-    element: <SuspenseWrapper><NewsManager /></SuspenseWrapper>
+    element: <AuthGuard><SuspenseWrapper><NewsManager /></SuspenseWrapper></AuthGuard>
   },
   {
     path: '/backoffice/lead-marketplace',
-    element: <SuspenseWrapper><LeadMarketplace /></SuspenseWrapper>
+    element: <AuthGuard><SuspenseWrapper><LeadMarketplace /></SuspenseWrapper></AuthGuard>
   },
   {
     path: '/backoffice/partner-portal',
-    element: <SuspenseWrapper><PartnerPortal /></SuspenseWrapper>
+    element: <AuthGuard><SuspenseWrapper><PartnerPortal /></SuspenseWrapper></AuthGuard>
   },
   {
     path: '/backoffice/leads',
-    element: <SuspenseWrapper><LeadManager /></SuspenseWrapper>
+    element: <AuthGuard><SuspenseWrapper><LeadManager /></SuspenseWrapper></AuthGuard>
   },
   {
     path: '/backoffice/lead-manager',
-    element: <SuspenseWrapper><LeadManager /></SuspenseWrapper>
+    element: <AuthGuard><SuspenseWrapper><LeadManager /></SuspenseWrapper></AuthGuard>
   },
   {
     path: '/backoffice/backlink-prospector',
-    element: <SuspenseWrapper><BacklinkProspector /></SuspenseWrapper>
+    element: <AuthGuard><SuspenseWrapper><BacklinkProspector /></SuspenseWrapper></AuthGuard>
   },
   {
     path: '/backoffice/backlink-automation',
-    element: <SuspenseWrapper><BacklinkAutomationDashboard /></SuspenseWrapper>
+    element: <AuthGuard><SuspenseWrapper><BacklinkAutomationDashboard /></SuspenseWrapper></AuthGuard>
   },
   {
     path: '/backoffice/seo-strategy',
-    element: <SuspenseWrapper><SEOStrategyDashboard /></SuspenseWrapper>
+    element: <AuthGuard><SuspenseWrapper><SEOStrategyDashboard /></SuspenseWrapper></AuthGuard>
   },
   {
     path: '/backoffice/ai-generator',
-    element: <SuspenseWrapper><AIContentGenerator /></SuspenseWrapper>
+    element: <AuthGuard><SuspenseWrapper><AIContentGenerator /></SuspenseWrapper></AuthGuard>
   },
   {
     path: '/backoffice/automation-scheduler',
-    element: <SuspenseWrapper><AutomationScheduler /></SuspenseWrapper>
+    element: <AuthGuard><SuspenseWrapper><AutomationScheduler /></SuspenseWrapper></AuthGuard>
   },
   {
     path: '/backoffice/trend-analyzer',
-    element: <SuspenseWrapper><TrendAnalyzer /></SuspenseWrapper>
+    element: <AuthGuard><SuspenseWrapper><TrendAnalyzer /></SuspenseWrapper></AuthGuard>
   },
   {
     path: '/backoffice/seed-prospects',
-    element: <SuspenseWrapper><ProspectSeeder /></SuspenseWrapper>
+    element: <AuthGuard><SuspenseWrapper><ProspectSeeder /></SuspenseWrapper></AuthGuard>
   },
   {
     path: '/backoffice/launch-campaign',
-    element: <SuspenseWrapper><CampaignLauncher /></SuspenseWrapper>
+    element: <AuthGuard><SuspenseWrapper><CampaignLauncher /></SuspenseWrapper></AuthGuard>
   },
   {
     path: '/backoffice/social-media',
-    element: <SuspenseWrapper><SocialMediaManager /></SuspenseWrapper>
+    element: <AuthGuard><SuspenseWrapper><SocialMediaManager /></SuspenseWrapper></AuthGuard>
   },
   {
     path: '/backoffice/marketing-templates',
-    element: <SuspenseWrapper><MarketingTemplates /></SuspenseWrapper>
+    element: <AuthGuard><SuspenseWrapper><MarketingTemplates /></SuspenseWrapper></AuthGuard>
   },
   {
     path: '/backoffice/qr-codes',
-    element: <SuspenseWrapper><QRCodeGenerator /></SuspenseWrapper>
+    element: <AuthGuard><SuspenseWrapper><QRCodeGenerator /></SuspenseWrapper></AuthGuard>
   },
   {
     path: '/backoffice/referral-program',
-    element: <SuspenseWrapper><ReferralProgramManager /></SuspenseWrapper>
+    element: <AuthGuard><SuspenseWrapper><ReferralProgramManager /></SuspenseWrapper></AuthGuard>
   },
   {
     path: '/backoffice/reviews-incentive',
-    element: <SuspenseWrapper><ReviewsIncentiveManager /></SuspenseWrapper>
+    element: <AuthGuard><SuspenseWrapper><ReviewsIncentiveManager /></SuspenseWrapper></AuthGuard>
   },
   // Pages miroirs longue traîne (17 routes)
   { path: '/assurance-taxi-pas-cher', element: <SuspenseWrapper><MirrorPage /></SuspenseWrapper> },
