@@ -26,49 +26,46 @@ export const LeadSchema = z.object({
 export type Lead = z.infer<typeof LeadSchema>;
 export type LeadStatus = z.infer<typeof LeadStatusSchema>;
 
-// Gestion des leads
+// Gestion des leads - Récupère depuis le système PHP actuel
 export async function getLeads(): Promise<Lead[]> {
   try {
-    console.log('🔍 Fetching leads from Supabase...');
-    console.log('Supabase URL:', import.meta.env.VITE_SUPABASE_URL);
+    console.log('🔍 Fetching leads from API...');
 
-    const { data, error } = await supabase
-      .from('leads')
-      .select('*')
-      .order('created_at', { ascending: false });
+    const response = await fetch('/api/lead-manager.php?action=list');
 
-    if (error) {
-      console.error('❌ Supabase error:', error);
-      console.error('Error details:', JSON.stringify(error, null, 2));
+    if (!response.ok) {
+      console.error('❌ API error:', response.status);
       return [];
     }
 
-    console.log('✅ Supabase response received');
-    console.log(`📊 Found ${data?.length || 0} leads in database`);
+    const result = await response.json();
 
-    if (!data || data.length === 0) {
-      console.warn('⚠️ No leads found in database');
+    if (!result.success) {
+      console.error('❌ API returned error:', result.error);
       return [];
     }
 
-    return data.map((lead: any) => ({
+    const leads = result.leads || [];
+    console.log(`✅ Found ${leads.length} leads from API`);
+
+    return leads.map((lead: any) => ({
       id: lead.id || `lead-${Date.now()}`,
       name: lead.name || 'Lead anonyme',
       email: lead.email || '',
       phone: lead.phone || '',
       city: lead.city || '',
       status: lead.status || 'taxi',
-      immatriculation: lead.immatriculation || 'Non renseignée',
-      leadStatus: lead.lead_status || 'nouveau',
-      createdAt: lead.created_at || new Date().toISOString(),
-      updatedAt: lead.updated_at,
-      contactedAt: lead.contacted_at,
-      devisEnvoyeAt: lead.devis_envoye_at,
-      clientAt: lead.client_at,
-      primeRealisee: lead.prime_realisee,
+      immatriculation: lead.immatriculation || lead.registration || 'Non renseignée',
+      leadStatus: (lead.leadStatus || lead.lead_status || 'nouveau') as LeadStatus,
+      createdAt: lead.createdAt || lead.timestamp || new Date().toISOString(),
+      updatedAt: lead.updatedAt || lead.updated_at,
+      contactedAt: lead.contactedAt || lead.contacted_at,
+      devisEnvoyeAt: lead.devisEnvoyeAt || lead.devis_envoye_at,
+      clientAt: lead.clientAt || lead.client_at,
+      primeRealisee: lead.primeRealisee || lead.prime_realisee,
       notes: lead.notes,
       source: lead.source || 'website',
-      assignedTo: lead.assigned_to
+      assignedTo: lead.assignedTo || lead.assigned_to
     }));
   } catch (error) {
     console.error('Failed to load leads:', error);
