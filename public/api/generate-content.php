@@ -1,4 +1,7 @@
 <?php
+// Charger les variables d'environnement depuis .env
+require_once __DIR__ . '/load-env.php';
+
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: POST, OPTIONS');
@@ -10,13 +13,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 // Récupérer la clé OpenAI depuis les variables d'environnement
-$openaiKey = getenv('OPENAI_API_KEY') ?: '';
+// Essayer avec et sans préfixe VITE_
+$openaiKey = env('VITE_OPENAI_API_KEY') ?: env('OPENAI_API_KEY') ?: '';
 
 if (empty($openaiKey)) {
     http_response_code(500);
     echo json_encode([
         'success' => false,
-        'error' => 'OpenAI API key not configured. Please add OPENAI_API_KEY to your environment variables.'
+        'error' => 'OpenAI API key not configured. Please add VITE_OPENAI_API_KEY or OPENAI_API_KEY to your environment variables.',
+        'debug' => [
+            'checked_vars' => ['VITE_OPENAI_API_KEY', 'OPENAI_API_KEY'],
+            'getenv_works' => getenv('PATH') ? 'yes' : 'no',
+            'suggestion' => 'Check your .env file or server configuration'
+        ]
     ]);
     exit;
 }

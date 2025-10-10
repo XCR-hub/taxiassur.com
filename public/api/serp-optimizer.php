@@ -1,4 +1,7 @@
 <?php
+// Charger les variables d'environnement depuis .env
+require_once __DIR__ . '/load-env.php';
+
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: POST, OPTIONS');
@@ -10,7 +13,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 // Récupérer la clé SerpAPI depuis les variables d'environnement
-$serpApiKey = getenv('VITE_SERP_API_KEY') ?: '';
+$serpApiKey = env('VITE_SERP_API_KEY') ?: env('SERP_API_KEY') ?: '';
 
 if (empty($serpApiKey)) {
     http_response_code(500);

@@ -1,4 +1,7 @@
 <?php
+// Charger les variables d'environnement depuis .env
+require_once __DIR__ . '/load-env.php';
+
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: POST, GET, OPTIONS');
@@ -9,8 +12,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }
 
-$supabaseUrl = getenv('VITE_SUPABASE_URL') ?: 'https://viuuznfqkauatkjcegcj.supabase.co';
-$supabaseKey = getenv('VITE_SUPABASE_ANON_KEY') ?: '';
+$supabaseUrl = env('VITE_SUPABASE_URL') ?: 'https://viuuznfqkauatkjcegcj.supabase.co';
+$supabaseKey = env('VITE_SUPABASE_ANON_KEY') ?: '';
 
 function supabaseRequest($method, $endpoint, $data = null) {
     global $supabaseUrl, $supabaseKey;
