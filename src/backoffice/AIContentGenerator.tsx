@@ -47,13 +47,10 @@ export default function AIContentGenerator() {
         throw new Error('Vous devez être connecté au backoffice pour utiliser le générateur IA');
       }
 
-      const supabaseUrl = getSupabaseUrl();
-      const supabaseKey = getSupabaseAnonKey();
-
-      const response = await fetch(`${supabaseUrl}/functions/v1/generate-seo-content`, {
+      // Utiliser l'API PHP locale au lieu de Supabase Edge Function
+      const response = await fetch('/api/generate-content.php', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${supabaseKey}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -65,18 +62,16 @@ export default function AIContentGenerator() {
       });
 
       if (!response.ok) {
-        const text = await response.text();
-        let errorData;
-        try {
-          errorData = JSON.parse(text);
-        } catch {
-          // La réponse n'est pas du JSON (probablement HTML d'erreur)
-          throw new Error('La fonction Edge n\'est pas déployée ou ne répond pas correctement. Vérifiez que la fonction "generate-seo-content" est bien déployée dans Supabase.');
-        }
-        throw new Error(errorData.error || 'Erreur lors de la génération');
+        const data = await response.json();
+        throw new Error(data.error || 'Erreur lors de la génération');
       }
 
       const data = await response.json();
+
+      if (!data.success) {
+        throw new Error(data.error || 'Erreur lors de la génération');
+      }
+
       setGeneratedContent(data.content);
       setUsage(data.usage);
     } catch (err) {

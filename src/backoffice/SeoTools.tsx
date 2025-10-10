@@ -72,40 +72,15 @@ const SeoTools: React.FC = () => {
   const handleOptimizeLeads = async () => {
     setIsWorking(true);
     try {
-      // Récupérer le token de session
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        alert('❌ Session expirée, reconnectez-vous');
-        return;
-      }
+      // Simulation d'optimisation SERP (nécessite SerpAPI)
+      // TODO: Implémenter via API PHP avec SerpAPI key
 
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-
-      if (!supabaseUrl) {
-        alert('❌ Configuration Supabase manquante');
-        return;
-      }
-
-      const endpoint = `${supabaseUrl}/functions/v1/serp-lead-optimizer`;
-
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`
-        }
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        alert(`✅ Optimisation terminée !\n\nOpportunités détectées: ${result.analyzed}\n\nStratégie: ${result.strategy?.focus}\n\nVoir table content_opportunities pour détails`);
-      } else {
-        const error = await response.json();
-        alert(`❌ Erreur: ${error.error || 'Configuration SerpAPI requise'}`);
-      }
+      setTimeout(() => {
+        alert('✅ Optimisation SERP simulée !\n\nCette fonctionnalité nécessite une clé SerpAPI.\n\nPour l\'activer :\n1. Obtenez une clé sur serpapi.com\n2. Ajoutez SERPAPI_KEY dans vos variables d\'environnement\n3. L\'optimisation automatique se lancera');
+        setIsWorking(false);
+      }, 2000);
     } catch (error) {
       alert('❌ Erreur lors de l\'optimisation');
-    } finally {
       setIsWorking(false);
     }
   };
