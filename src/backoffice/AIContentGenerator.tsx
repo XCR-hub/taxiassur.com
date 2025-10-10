@@ -30,9 +30,23 @@ export default function AIContentGenerator() {
   const [copied, setCopied] = useState(false);
   const [usage, setUsage] = useState<{ tokens: number; cost: number } | null>(null);
 
+  const checkAPIConfiguration = () => {
+    const openaiKey = import.meta.env.VITE_OPENAI_API_KEY;
+    if (!openaiKey) {
+      setError('⚠️ OPENAI_API_KEY non configurée. Ajoutez-la dans les secrets Supabase Edge Functions.');
+      return false;
+    }
+    return true;
+  };
+
   const handleGenerate = async () => {
     if (!keyword.trim()) {
       setError('Le mot-clé principal est obligatoire');
+      return;
+    }
+
+    // Vérifier si l'API est configurée
+    if (!checkAPIConfiguration()) {
       return;
     }
 
@@ -381,6 +395,20 @@ ${generatedContent.faq?.map(f => `**${f.question}**\n${f.answer}`).join('\n\n')}
                 Ex: RC professionnelle, devis gratuit, courtier ORIAS
               </p>
             </div>
+
+            {!import.meta.env.VITE_OPENAI_API_KEY && (
+              <div className="bg-amber-50 border-2 border-amber-300 rounded-lg p-4">
+                <p className="text-sm font-medium text-amber-900 mb-2">⚠️ Configuration requise</p>
+                <p className="text-xs text-amber-800 mb-2">
+                  La clé OpenAI API n'est pas configurée. Pour utiliser cette fonctionnalité :
+                </p>
+                <ol className="text-xs text-amber-800 space-y-1 ml-4 list-decimal">
+                  <li>Allez dans Supabase Dashboard → Settings → Edge Functions</li>
+                  <li>Ajoutez le secret : <code className="bg-amber-100 px-1 rounded">OPENAI_API_KEY</code></li>
+                  <li>Valeur : Votre clé OpenAI (commence par sk-proj-...)</li>
+                </ol>
+              </div>
+            )}
 
             {error && (
               <div className="bg-red-50 border border-red-200 rounded-lg p-3">
