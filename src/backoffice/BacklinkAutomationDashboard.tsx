@@ -128,14 +128,7 @@ const BacklinkAutomationDashboard: React.FC = () => {
     }
 
     try {
-      // Vérifier auth backoffice
-      const isAuth = sessionStorage.getItem('taxiassur_auth') === 'authenticated';
-      if (!isAuth) {
-        alert('Session expirée, reconnectez-vous');
-        navigate('/backoffice');
-        return;
-      }
-
+      // AuthGuard protège déjà la route
       // Scanner les opportunités d'abord
       const scanResponse = await fetch('/api/backlink-automation.php?action=scan', {
         method: 'POST',

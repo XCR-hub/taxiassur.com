@@ -41,12 +41,7 @@ export default function AIContentGenerator() {
     setGeneratedContent(null);
 
     try {
-      // Vérifier authentification backoffice simple
-      const isAuth = sessionStorage.getItem('taxiassur_auth') === 'authenticated';
-      if (!isAuth) {
-        throw new Error('Vous devez être connecté au backoffice pour utiliser le générateur IA');
-      }
-
+      // AuthGuard protège déjà la route, pas besoin de vérification supplémentaire
       // Utiliser l'API PHP locale au lieu de Supabase Edge Function
       const response = await fetch('/api/generate-content.php', {
         method: 'POST',
