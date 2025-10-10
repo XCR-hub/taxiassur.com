@@ -12,7 +12,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }
 
-$supabaseUrl = env('VITE_SUPABASE_URL') ?: 'https://viuuznfqkauatkjcegcj.supabase.co';
+$supabaseUrl = env('VITE_SUPABASE_URL') ?: 'https://drohhxrkoequjphvabvq.supabase.co';
 $supabaseKey = env('VITE_SUPABASE_ANON_KEY') ?: '';
 
 // Debug mode (retirer après tests)
