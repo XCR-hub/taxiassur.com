@@ -136,29 +136,47 @@ const BacklinkAutomationDashboard: React.FC = () => {
         return;
       }
 
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-      const response = await fetch(`${supabaseUrl}/functions/v1/backlink-auto-outreach`, {
+      // Scanner les opportunités d'abord
+      const scanResponse = await fetch('/api/backlink-automation.php?action=scan', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${supabaseKey}`
-        },
-        body: JSON.stringify({
-          campaignId: selectedCampaign,
-          maxEmailsPerRun: 10,
-          testMode: false
-        })
+          'Content-Type': 'application/json'
+        }
       });
 
-      const result = await response.json();
+      const scanResult = await scanResponse.json();
 
-      if (result.success) {
-        alert(`✅ ${result.sent} emails envoyés !`);
-        loadData();
+      if (!scanResult.success) {
+        alert(`❌ Erreur lors du scan: ${scanResult.error}`);
+        return;
+      }
+
+      // Lancer l'outreach sur la première opportunité trouvée
+      if (scanResult.opportunities && scanResult.opportunities.length > 0) {
+        const firstOpp = scanResult.opportunities[0];
+
+        const outreachResponse = await fetch('/api/backlink-automation.php?action=outreach', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            opportunityId: firstOpp.id || 1,
+            template: 'default'
+          })
+        });
+
+        const outreachResult = await outreachResponse.json();
+
+        if (outreachResult.success) {
+          alert(`✅ Automation lancée !\n\n${scanResult.scanned} opportunités détectées\nEmails envoyés: 1 (simulation)`);
+          loadData();
+        } else {
+          alert(`❌ Erreur: ${outreachResult.error}`);
+        }
       } else {
-        alert(`❌ Erreur: ${result.error}`);
+        alert(`✅ Scan terminé !\n\n${scanResult.scanned} opportunités trouvées`);
+        loadData();
       }
     } catch (error) {
       console.error('Erreur automation:', error);

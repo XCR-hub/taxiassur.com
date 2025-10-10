@@ -72,15 +72,43 @@ const SeoTools: React.FC = () => {
   const handleOptimizeLeads = async () => {
     setIsWorking(true);
     try {
-      // Simulation d'optimisation SERP (nécessite SerpAPI)
-      // TODO: Implémenter via API PHP avec SerpAPI key
+      const response = await fetch('/api/serp-optimizer.php', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          keywords: [
+            'assurance taxi',
+            'assurance taxi pas cher',
+            'devis assurance taxi',
+            'rc pro taxi',
+            'assurance vtc'
+          ],
+          location: 'France'
+        })
+      });
 
-      setTimeout(() => {
-        alert('✅ Optimisation SERP simulée !\n\nCette fonctionnalité nécessite une clé SerpAPI.\n\nPour l\'activer :\n1. Obtenez une clé sur serpapi.com\n2. Ajoutez SERPAPI_KEY dans vos variables d\'environnement\n3. L\'optimisation automatique se lancera');
-        setIsWorking(false);
-      }, 2000);
+      const result = await response.json();
+
+      if (result.success) {
+        alert(`✅ Optimisation SERP terminée !
+
+Opportunités détectées: ${result.analyzed}
+Volume de recherche total: ${result.total_search_volume}
+Concurrence moyenne: ${result.avg_competition}
+
+Stratégie recommandée: ${result.strategy.focus}
+
+Consultez le détail dans la console (F12)`);
+        console.log('SERP Optimization Results:', result);
+      } else {
+        alert(`❌ Erreur: ${result.error}`);
+      }
     } catch (error) {
-      alert('❌ Erreur lors de l\'optimisation');
+      console.error('SERP optimization error:', error);
+      alert('❌ Erreur lors de l\'optimisation SERP');
+    } finally {
       setIsWorking(false);
     }
   };
