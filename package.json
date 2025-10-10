@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "deploy": "npm run build && node scripts/deploy.js && echo 'Build terminé ! Uploadez le dossier /dist sur votre serveur IONOS'",
     "auto-deploy": "node scripts/auto-deploy.js",
-    "setup": "node scripts/setup.js"
+    "setup": "node scripts/setup.js",
+    "verify": "node scripts/verify-automations.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4",
