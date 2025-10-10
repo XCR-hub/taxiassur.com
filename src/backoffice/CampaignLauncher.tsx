@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Send, Loader2, CheckCircle, AlertCircle, Mail, TrendingUp, Rocket, Home } from 'lucide-react';
-import { getSupabaseUrl, getSupabaseAnonKey } from '../lib/env';
+import { getSupabaseUrl } from '../lib/env';
+import { supabase } from '../lib/supabase';
 
 export default function CampaignLauncher() {
   const [isGenerating, setIsGenerating] = useState(false);
@@ -14,13 +15,18 @@ export default function CampaignLauncher() {
     setResults(null);
 
     try {
+      // Récupérer le token de session
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('Session expirée, reconnectez-vous');
+      }
+
       const supabaseUrl = getSupabaseUrl();
-      const supabaseKey = getSupabaseAnonKey();
 
       const response = await fetch(`${supabaseUrl}/functions/v1/partner-scraper-outreach`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${supabaseKey}`,
+          'Authorization': `Bearer ${session.access_token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({

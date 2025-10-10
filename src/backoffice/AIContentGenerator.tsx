@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Sparkles, Loader2, FileText, MapPin, GitCompare, Copy, Check, Download, Home, Save } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { getSupabaseUrl, getSupabaseAnonKey } from '../lib/env';
+import { getSupabaseUrl } from '../lib/env';
 import { supabase } from '../lib/supabase';
 
 interface GeneratedContent {
@@ -55,13 +55,19 @@ export default function AIContentGenerator() {
     setGeneratedContent(null);
 
     try {
+      // Récupérer le token de session de l'utilisateur authentifié
+      const { data: { session } } = await supabase.auth.getSession();
+
+      if (!session) {
+        throw new Error('Vous devez être connecté pour utiliser le générateur IA');
+      }
+
       const supabaseUrl = getSupabaseUrl();
-      const supabaseKey = getSupabaseAnonKey();
 
       const response = await fetch(`${supabaseUrl}/functions/v1/generate-seo-content`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${supabaseKey}`,
+          'Authorization': `Bearer ${session.access_token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({

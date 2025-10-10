@@ -5,6 +5,7 @@ import { pingSearchEngines } from '../lib/ping';
 import { regenerateFeeds } from '../lib/feeds';
 import { generateCityPages } from '../lib/ping';
 import Card from '../components/Card';
+import { supabase } from '../lib/supabase';
 
 const SeoTools: React.FC = () => {
   const [seoData, setSeoData] = useState({
@@ -71,10 +72,16 @@ const SeoTools: React.FC = () => {
   const handleOptimizeLeads = async () => {
     setIsWorking(true);
     try {
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+      // Récupérer le token de session
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        alert('❌ Session expirée, reconnectez-vous');
+        return;
+      }
 
-      if (!supabaseUrl || !supabaseKey) {
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+
+      if (!supabaseUrl) {
         alert('❌ Configuration Supabase manquante');
         return;
       }
@@ -85,7 +92,7 @@ const SeoTools: React.FC = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${supabaseKey}`
+          'Authorization': `Bearer ${session.access_token}`
         }
       });
 
