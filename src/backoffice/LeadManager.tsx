@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Users, Eye, Phone, Mail, FileText, CheckCircle, XCircle, Euro, Calendar, Search, Filter, Download, Upload, Send, CreditCard as Edit, Trash2, Star, MessageSquare, Home } from 'lucide-react';
 import AuthGuard from '../components/AuthGuard';
-import { getLeads, updateLeadStatus, sendDevisEmail, sendContractEmail, getLeadStatusColor, getLeadStatusLabel, createTestLeads, type Lead, type LeadStatus } from '../lib/leads';
+import { getLeads, updateLeadStatus, sendDevisEmail, sendContractEmail, getLeadStatusColor, getLeadStatusLabel, type Lead, type LeadStatus } from '../lib/leads';
 import { formatDate } from '../lib/utils';
 import Card from '../components/Card';
 
@@ -50,17 +50,6 @@ const LeadManager: React.FC = () => {
     }
   };
 
-  const handleCreateTestLeads = async () => {
-    if (confirm('Voulez-vous créer 3 leads de test dans la base de données ?')) {
-      const success = await createTestLeads();
-      if (success) {
-        alert('✅ Leads de test créés avec succès !');
-        await loadLeads();
-      } else {
-        alert('❌ Erreur lors de la création des leads de test');
-      }
-    }
-  };
 
   const filterLeads = () => {
     let filtered = leads;
@@ -507,12 +496,10 @@ const LeadManager: React.FC = () => {
                 }
               </p>
               {leads.length === 0 && (
-                <button
-                  onClick={handleCreateTestLeads}
-                  className="mt-4 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-lg transition-colors"
-                >
-                  🧪 Créer des leads de test
-                </button>
+                <div className="mt-4 text-sm text-gray-600">
+                  <p>ℹ️ Les leads apparaîtront ici dès qu'un visiteur remplira le formulaire sur le site.</p>
+                  <p className="mt-2">En attente de la première soumission...</p>
+                </div>
               )}
             </Card>
           )}

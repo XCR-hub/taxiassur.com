@@ -13,19 +13,37 @@ export function getEnv(key: string): string | undefined {
 }
 
 export function getSupabaseUrl(): string {
-  return getEnv('VITE_SUPABASE_URL') || 'https://viuuznfqkauatkjcegcj.supabase.co';
+  const url = getEnv('VITE_SUPABASE_URL');
+  if (!url) {
+    throw new Error('VITE_SUPABASE_URL is not configured. Please check your environment variables.');
+  }
+  return url;
 }
 
 export function getSupabaseAnonKey(): string {
-  return getEnv('VITE_SUPABASE_ANON_KEY') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpdXV6bmZxa2F1YXRramNlZ2NqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk3MDQ4MDAsImV4cCI6MjA3NTI4MDgwMH0.D0wo88ypG2OiZL3wCiUGgMyA3OaqzIjKU2Nbo-oxOjA';
+  const key = getEnv('VITE_SUPABASE_ANON_KEY');
+  if (!key) {
+    throw new Error('VITE_SUPABASE_ANON_KEY is not configured. Please check your environment variables.');
+  }
+  return key;
 }
 
-export function getGoogleCseApiKey(): string | undefined {
-  return getEnv('VITE_GOOGLE_CSE_API_KEY');
+export function getGoogleCseApiKey(): string {
+  const key = getEnv('VITE_GOOGLE_CSE_API_KEY');
+  if (!key) {
+    console.warn('WARNING: VITE_GOOGLE_CSE_API_KEY is not configured. Search features will not work.');
+    return '';
+  }
+  return key;
 }
 
-export function getGoogleCseCx(): string | undefined {
-  return getEnv('VITE_GOOGLE_CSE_CX');
+export function getGoogleCseCx(): string {
+  const cx = getEnv('VITE_GOOGLE_CSE_CX');
+  if (!cx) {
+    console.warn('WARNING: VITE_GOOGLE_CSE_CX is not configured. Search features will not work.');
+    return '';
+  }
+  return cx;
 }
 
 export function getAdminPassword(): string {
