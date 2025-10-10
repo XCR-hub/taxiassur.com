@@ -83,35 +83,29 @@ export async function updateLeadStatus(
   }
 ): Promise<boolean> {
   try {
-    const updateData: any = {
-      lead_status: newStatus,
-      updated_at: new Date().toISOString()
-    };
+    // Utiliser l'API PHP
+    const response = await fetch('/api/lead-manager.php', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        action: 'update_status',
+        leadId,
+        status: newStatus,
+        primeRealisee: additionalData?.primeRealisee,
+        notes: additionalData?.notes
+      })
+    });
 
-    if (newStatus === 'contacte') {
-      updateData.contacted_at = new Date().toISOString();
-    } else if (newStatus === 'devis_envoye') {
-      updateData.devis_envoye_at = new Date().toISOString();
-    } else if (newStatus === 'client') {
-      updateData.client_at = new Date().toISOString();
+    if (!response.ok) {
+      throw new Error('Update failed');
     }
 
-    if (additionalData?.primeRealisee) {
-      updateData.prime_realisee = additionalData.primeRealisee;
-    }
+    const result = await response.json();
 
-    if (additionalData?.notes) {
-      updateData.notes = additionalData.notes;
-    }
-
-    const { error } = await supabase
-      .from('leads')
-      .update(updateData)
-      .eq('id', leadId);
-
-    if (error) {
-      console.error('Supabase update error:', error);
-      return false;
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to update status');
     }
 
     return true;
@@ -123,52 +117,28 @@ export async function updateLeadStatus(
 
 export async function sendDevisEmail(leadId: string, devisFile?: File): Promise<boolean> {
   try {
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-    const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-    if (!supabaseUrl || !supabaseKey) {
-      console.error('Supabase configuration missing');
-      return false;
+    // Envoyer via l'API PHP
+    const formData = new FormData();
+    formData.append('action', 'send_devis');
+    formData.append('leadId', leadId);
+    if (devisFile) {
+      formData.append('devis', devisFile);
     }
 
-    // Récupérer le lead
-    const { data: lead, error: leadError } = await supabase
-      .from('leads')
-      .select('*')
-      .eq('id', leadId)
-      .single();
-
-    if (leadError || !lead) {
-      console.error('Lead not found:', leadError);
-      return false;
-    }
-
-    // Envoyer email via edge function
-    const response = await fetch(`${supabaseUrl}/functions/v1/send-email`, {
+    const response = await fetch('/api/lead-manager.php', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${supabaseKey}`
-      },
-      body: JSON.stringify({
-        to: lead.email,
-        subject: `Votre devis d'assurance taxi - TaxiAssur`,
-        html: `
-          <h2>Bonjour ${lead.name},</h2>
-          <p>Nous avons le plaisir de vous transmettre votre devis personnalisé pour votre assurance taxi.</p>
-          <p>Notre équipe reste à votre disposition pour toute question au <strong>01 XX XX XX XX</strong>.</p>
-          <p>Cordialement,<br>L'équipe TaxiAssur</p>
-        `,
-        attachments: devisFile ? [await fileToBase64(devisFile)] : undefined
-      })
+      body: formData
     });
 
     if (!response.ok) {
       throw new Error('Email sending failed');
     }
 
-    // Mettre à jour le statut
-    await updateLeadStatus(leadId, 'devis_envoye');
+    const result = await response.json();
+
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to send devis');
+    }
 
     return true;
   } catch (error) {
@@ -191,53 +161,28 @@ async function fileToBase64(file: File): Promise<{ filename: string; content: st
 
 export async function sendContractEmail(leadId: string, contractFile?: File): Promise<boolean> {
   try {
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-    const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-    if (!supabaseUrl || !supabaseKey) {
-      console.error('Supabase configuration missing');
-      return false;
+    // Envoyer via l'API PHP
+    const formData = new FormData();
+    formData.append('action', 'send_contract');
+    formData.append('leadId', leadId);
+    if (contractFile) {
+      formData.append('contract', contractFile);
     }
 
-    // Récupérer le lead
-    const { data: lead, error: leadError } = await supabase
-      .from('leads')
-      .select('*')
-      .eq('id', leadId)
-      .single();
-
-    if (leadError || !lead) {
-      console.error('Lead not found:', leadError);
-      return false;
-    }
-
-    // Envoyer email via edge function
-    const response = await fetch(`${supabaseUrl}/functions/v1/send-email`, {
+    const response = await fetch('/api/lead-manager.php', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${supabaseKey}`
-      },
-      body: JSON.stringify({
-        to: lead.email,
-        subject: `Votre contrat d'assurance taxi - TaxiAssur`,
-        html: `
-          <h2>Bonjour ${lead.name},</h2>
-          <p>Félicitations ! Votre contrat d'assurance taxi est prêt.</p>
-          <p>Vous trouverez en pièce jointe votre contrat à signer et à nous retourner.</p>
-          <p>Notre équipe reste à votre disposition au <strong>01 XX XX XX XX</strong>.</p>
-          <p>Cordialement,<br>L'équipe TaxiAssur</p>
-        `,
-        attachments: contractFile ? [await fileToBase64(contractFile)] : undefined
-      })
+      body: formData
     });
 
     if (!response.ok) {
       throw new Error('Email sending failed');
     }
 
-    // Mettre à jour le statut
-    await updateLeadStatus(leadId, 'client');
+    const result = await response.json();
+
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to send contract');
+    }
 
     return true;
   } catch (error) {

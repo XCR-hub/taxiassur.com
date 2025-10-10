@@ -44,7 +44,18 @@ function supabaseRequest($method, $endpoint, $data = null) {
     ];
 }
 
-$action = $_GET['action'] ?? 'list';
+// Récupérer l'action depuis GET ou POST
+$action = $_GET['action'] ?? null;
+
+// Si pas dans GET, essayer dans POST (JSON)
+if (!$action && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    $input = json_decode(file_get_contents('php://input'), true);
+    $action = $input['action'] ?? ($_POST['action'] ?? 'list');
+}
+
+if (!$action) {
+    $action = 'list';
+}
 
 try {
     switch ($action) {
@@ -91,18 +102,20 @@ try {
             break;
 
         case 'update':
+        case 'update_status':
             $input = json_decode(file_get_contents('php://input'), true);
 
-            if (!isset($input['id']) || !isset($input['leadStatus'])) {
+            // Supporter les deux formats: id/leadStatus et leadId/status
+            $leadId = $input['leadId'] ?? $input['id'] ?? null;
+            $newStatus = $input['status'] ?? $input['leadStatus'] ?? null;
+
+            if (!$leadId || !$newStatus) {
                 echo json_encode([
                     'success' => false,
-                    'error' => 'Missing required fields: id and leadStatus'
+                    'error' => 'Missing required fields: leadId and status'
                 ]);
                 exit;
             }
-
-            $leadId = $input['id'];
-            $newStatus = $input['leadStatus'];
 
             $updateData = [
                 'lead_status' => $newStatus,
@@ -227,6 +240,47 @@ try {
                     'success' => false,
                     'error' => 'Failed to update lead status',
                     'details' => $updateResult['data']
+                ]);
+            }
+            break;
+
+        case 'request_review':
+            $input = json_decode(file_get_contents('php://input'), true);
+
+            $leadId = $input['leadId'] ?? null;
+            $name = $input['name'] ?? null;
+            $email = $input['email'] ?? null;
+            $city = $input['city'] ?? null;
+
+            if (!$leadId || !$name || !$email) {
+                echo json_encode([
+                    'success' => false,
+                    'error' => 'Missing required fields'
+                ]);
+                exit;
+            }
+
+            // TODO: Intégrer l'envoi d'email réel (SendGrid, etc.)
+            // Pour l'instant, on simule le succès
+
+            // Simuler l'envoi d'un email de demande d'avis
+            $emailSent = true; // Remplacer par l'envoi réel
+
+            if ($emailSent) {
+                echo json_encode([
+                    'success' => true,
+                    'message' => 'Review request sent successfully',
+                    'data' => [
+                        'leadId' => $leadId,
+                        'name' => $name,
+                        'email' => $email,
+                        'city' => $city
+                    ]
+                ]);
+            } else {
+                echo json_encode([
+                    'success' => false,
+                    'error' => 'Failed to send review request email'
                 ]);
             }
             break;
