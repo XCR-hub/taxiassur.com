@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Sparkles, Loader2, FileText, MapPin, GitCompare, Copy, Check, Download, Home, Save } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { getSupabaseUrl } from '../lib/env';
+import { getSupabaseUrl, getSupabaseAnonKey } from '../lib/env';
 import { supabase } from '../lib/supabase';
 
 interface GeneratedContent {
@@ -30,23 +30,9 @@ export default function AIContentGenerator() {
   const [copied, setCopied] = useState(false);
   const [usage, setUsage] = useState<{ tokens: number; cost: number } | null>(null);
 
-  const checkAPIConfiguration = () => {
-    const openaiKey = import.meta.env.VITE_OPENAI_API_KEY;
-    if (!openaiKey) {
-      setError('⚠️ OPENAI_API_KEY non configurée. Ajoutez-la dans les secrets Supabase Edge Functions.');
-      return false;
-    }
-    return true;
-  };
-
   const handleGenerate = async () => {
     if (!keyword.trim()) {
       setError('Le mot-clé principal est obligatoire');
-      return;
-    }
-
-    // Vérifier si l'API est configurée
-    if (!checkAPIConfiguration()) {
       return;
     }
 
@@ -55,19 +41,19 @@ export default function AIContentGenerator() {
     setGeneratedContent(null);
 
     try {
-      // Récupérer le token de session de l'utilisateur authentifié
-      const { data: { session } } = await supabase.auth.getSession();
-
-      if (!session) {
-        throw new Error('Vous devez être connecté pour utiliser le générateur IA');
+      // Vérifier authentification backoffice simple
+      const isAuth = sessionStorage.getItem('taxiassur_auth') === 'authenticated';
+      if (!isAuth) {
+        throw new Error('Vous devez être connecté au backoffice pour utiliser le générateur IA');
       }
 
       const supabaseUrl = getSupabaseUrl();
+      const supabaseKey = getSupabaseAnonKey();
 
       const response = await fetch(`${supabaseUrl}/functions/v1/generate-seo-content`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${session.access_token}`,
+          'Authorization': `Bearer ${supabaseKey}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
