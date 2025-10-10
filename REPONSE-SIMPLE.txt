@@ -1,66 +1,63 @@
-╔═══════════════════════════════════════════════════════════════════╗
-║                                                                   ║
-║              ✅ OUI, LA CLÉ OPENAI EST BONNE !                   ║
-║                                                                   ║
-╚═══════════════════════════════════════════════════════════════════╝
+╔═══════════════════════════════════════════════════════════════════════════╗
+║           🔑 PROBLÈME TROUVÉ : CLÉ OPENAI INVALIDE                        ║
+╚═══════════════════════════════════════════════════════════════════════════╝
 
-🧪 J'AI TESTÉ LA CLÉ : ELLE FONCTIONNE ET A DU CRÉDIT !
+✅ DIAGNOSTIC TERMINÉ
 
-Test réussi :
-  ✅ Clé valide
-  ✅ Crédit disponible  
-  ✅ Réponse générée : "Hello! How can I"
-  ✅ Modèles accessibles : GPT-4, GPT-3.5-turbo
+L'erreur 500 vient de votre clé OpenAI qui est INVALIDE.
 
-═══════════════════════════════════════════════════════════════════
+Preuve : J'ai testé directement avec OpenAI
+→ Error: "Incorrect API key provided"
 
-📍 OÙ EST LA CLÉ ?
+═══════════════════════════════════════════════════════════════════════════
 
-✅ Dans .env                    (OK)
-✅ Dans public/env-config.js    (OK)
-✅ Dans dist/env-config.js      (OK)
-❌ Dans Supabase Secrets        (MANQUANT) ← PROBLÈME ICI !
+🔑 SOLUTION RAPIDE (5 minutes)
 
-═══════════════════════════════════════════════════════════════════
+1. Allez sur : https://platform.openai.com/api-keys
 
-⚠️ POURQUOI LE GÉNÉRATEUR IA NE MARCHE PAS ?
+2. Créez une nouvelle clé :
+   - Cliquez "Create new secret key"
+   - Nom : TaxiAssur Production
+   - COPIEZ la clé (format: sk-proj-XXXX...)
 
-Le générateur IA utilise une Edge Function (backend Supabase).
-Cette Edge Function cherche OPENAI_API_KEY dans Supabase Secrets.
-
-Si ce n'est pas configuré → Erreur "API key not found"
-
-═══════════════════════════════════════════════════════════════════
-
-🔧 SOLUTION (5 MINUTES)
-
-1. Aller sur : https://supabase.com/dashboard
-2. Projet : viuuznfqkauatkjcegcj
-3. Settings → Edge Functions → Secrets
-4. Cliquer "Add new secret"
-5. Remplir :
+3. Remplacez dans /public/api/config.php :
    
-   Name:  OPENAI_API_KEY
-   
-   Value: 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
+   Ligne 33 et 34 :
+   setEnvIfNotExists('VITE_OPENAI_API_KEY', 'VOTRE_NOUVELLE_CLE');
+   setEnvIfNotExists('OPENAI_API_KEY', 'VOTRE_NOUVELLE_CLE');
 
-6. Save
+4. Uploadez config.php sur IONOS :
+   /public/api/config.php → /api/config.php
 
-═══════════════════════════════════════════════════════════════════
+5. Testez :
+   https://taxiassur.com/api/test-debug-complet.php
+   → Devrait afficher "✅ ALL OK"
 
-✅ APRÈS CONFIGURATION
+═══════════════════════════════════════════════════════════════════════════
 
-Le générateur IA fonctionnera immédiatement !
-Plus besoin de charger de l'argent, la clé a déjà du crédit.
+📖 GUIDE DÉTAILLÉ
 
-═══════════════════════════════════════════════════════════════════
+→ CLE-OPENAI-INVALIDE.md : Instructions complètes pas à pas
 
-📚 GUIDE DÉTAILLÉ
+═══════════════════════════════════════════════════════════════════════════
 
-Voir : DIAGNOSTIC-OPENAI.md
+💰 COÛT
 
-═══════════════════════════════════════════════════════════════════
+Modèle utilisé : gpt-4o-mini
+1 article blog : ~$0.003 (moins d'1 centime)
+100 articles : ~$0.30
 
-RÉSUMÉ : La clé est bonne et a du crédit. Il faut juste la 
-         configurer dans Supabase Secrets pour que le générateur 
-         IA puisse l'utiliser.
+Recommandation : Ajoutez 5-10$ de crédit sur OpenAI
+
+═══════════════════════════════════════════════════════════════════════════
+
+⚠️ ÉTAT ACTUEL
+
+Backend PHP      : ✅ Fonctionne
+Config chargée   : ✅ OK
+Clé OpenAI       : ❌ INVALIDE (cause de l'erreur 500)
+Frontend         : ⏳ Upload recommandé après fix clé
+
+ACTION REQUISE : Remplacer la clé OpenAI
+
+═══════════════════════════════════════════════════════════════════════════
