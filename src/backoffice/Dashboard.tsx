@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BarChart3, Users, FileText, Link, RefreshCw, Globe, TrendingUp, MapPin, Mail, Calendar, Activity, Shield, Search, Eye, Euro, Handshake, Plus, DatabaseZap, Send, Clock } from 'lucide-react';
+import { BarChart3, Users, FileText, Link, RefreshCw, Globe, TrendingUp, MapPin, Mail, Calendar, Activity, Shield, Search, Eye, Euro, Handshake, Plus, DatabaseZap, Send, Clock, Award } from 'lucide-react';
 import AuthGuard from '../components/AuthGuard';
 import { getBlogPosts, getFaqEntries, getReviews, getOffers } from '../lib/content';
 import { getBacklinks, getPartners } from '../lib/backlinks';

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Mail, Send, Eye, CheckCircle, XCircle, TrendingUp, Activity, BarChart3, Clock, Link2, Zap } from 'lucide-react';
+import { Mail, Send, Eye, CheckCircle, XCircle, TrendingUp, Activity, BarChart3, Clock, Link2, Zap, Home } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import Card from '../components/Card';
 
@@ -33,6 +34,7 @@ interface OutreachLog {
 }
 
 const BacklinkAutomationDashboard: React.FC = () => {
+  const navigate = useNavigate();
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [logs, setLogs] = useState<OutreachLog[]>([]);
   const [stats, setStats] = useState({
@@ -126,19 +128,22 @@ const BacklinkAutomationDashboard: React.FC = () => {
     }
 
     try {
-      // Récupérer le token de session
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        throw new Error('Session expirée, reconnectez-vous');
+      // Vérifier auth backoffice
+      const isAuth = sessionStorage.getItem('taxiassur_auth') === 'authenticated';
+      if (!isAuth) {
+        alert('Session expirée, reconnectez-vous');
+        navigate('/backoffice');
+        return;
       }
 
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
       const response = await fetch(`${supabaseUrl}/functions/v1/backlink-auto-outreach`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`
+          'Authorization': `Bearer ${supabaseKey}`
         },
         body: JSON.stringify({
           campaignId: selectedCampaign,
@@ -209,10 +214,19 @@ const BacklinkAutomationDashboard: React.FC = () => {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2 flex items-center">
-            <Zap className="mr-3 text-orange-500" size={32} />
-            Dashboard Automation Backlinks
-          </h1>
+          <div className="flex items-center justify-between mb-4">
+            <h1 className="text-3xl font-bold text-gray-900 flex items-center">
+              <Zap className="mr-3 text-orange-500" size={32} />
+              Dashboard Automation Backlinks
+            </h1>
+            <button
+              onClick={() => navigate('/backoffice')}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+            >
+              <Home size={18} />
+              Accueil Backoffice
+            </button>
+          </div>
           <p className="text-gray-600">
             Suivi en temps réel de vos campagnes d'acquisition de backlinks automatisées
           </p>
