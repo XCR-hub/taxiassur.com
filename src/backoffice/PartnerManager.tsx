@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Globe, Plus, Star, MapPin, Mail, Phone, Home } from 'lucide-react';
-import AuthGuard from '../components/AuthGuard';
 import { getPartners, addPartner, type Partner } from '../lib/backlinks';
 import Card from '../components/Card';
 
@@ -118,7 +117,7 @@ const PartnerManager: React.FC = () => {
   }
 
   return (
-    <AuthGuard>
+    
       <div className="min-h-screen bg-gray-50 p-8">
       {/* Header with Home Button */}
       <header className="bg-white border-b-2 border-gray-200 shadow-sm mb-8">
@@ -471,7 +470,7 @@ const PartnerManager: React.FC = () => {
         )}
       </div>
       </div>
-    </AuthGuard>
+    
   );
 };
 

@@ -3,7 +3,6 @@ import { Globe, ExternalLink, Copy, CheckCircle, Clock, AlertTriangle, Plus, Hom
 import { getDirectories, submitToDirectory } from '../lib/partners';
 import { Directory } from '../lib/schema';
 import Card from '../components/Card';
-import AuthGuard from '../components/AuthGuard';
 
 const DirectoryAssistant: React.FC = () => {
   const [directories, setDirectories] = useState<Directory[]>([]);
@@ -131,7 +130,7 @@ Que vous soyez taxi indépendant, compagnie de taxi ou gestionnaire de flotte, n
   }
 
   return (
-    <AuthGuard>
+    
       <div className="min-h-screen bg-gray-50 p-8">
         {/* Header with Home Button */}
         <header className="bg-white border-b-2 border-gray-200 shadow-sm mb-8">
@@ -415,7 +414,7 @@ Que vous soyez taxi indépendant, compagnie de taxi ou gestionnaire de flotte, n
           </div>
         )}
       </div>
-    </AuthGuard>
+    
   );
 };
 

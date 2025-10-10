@@ -61,7 +61,7 @@ const AutomationScheduler = lazy(() => import('./backoffice/AutomationScheduler'
 const TrendAnalyzer = lazy(() => import('./backoffice/TrendAnalyzer'));
 const ProspectSeeder = lazy(() => import('./backoffice/ProspectSeeder'));
 const CampaignLauncher = lazy(() => import('./backoffice/CampaignLauncher'));
-const AuthGuard = lazy(() => import('./components/AuthGuard'));
+// AuthGuard removed - backoffice is now public for full automation
 const NewsletterPage = lazy(() => import('./pages/Newsletter'));
 const MirrorPage = lazy(() => import('./pages/MirrorPage'));
 const MasterDashboard = lazy(() => import('./backoffice/MasterDashboard'));
@@ -69,6 +69,8 @@ const AmbassadorSignup = lazy(() => import('./pages/AmbassadorSignup'));
 const SocialMediaManager = lazy(() => import('./backoffice/SocialMediaManager'));
 const MarketingTemplates = lazy(() => import('./backoffice/MarketingTemplates'));
 const QRCodeGenerator = lazy(() => import('./backoffice/QRCodeGenerator'));
+const ReferralProgramManager = lazy(() => import('./backoffice/ReferralProgramManager'));
+const ReviewsIncentiveManager = lazy(() => import('./backoffice/ReviewsIncentiveManager'));
 
 const LoadingFallback = () => (
   <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-black flex items-center justify-center">
@@ -317,7 +319,7 @@ export const router = createBrowserRouter([
   },
   {
     path: '/backoffice',
-    element: <AuthGuard><SuspenseWrapper><MasterDashboard /></SuspenseWrapper></AuthGuard>
+    element: <SuspenseWrapper><MasterDashboard /></SuspenseWrapper>
   },
   {
     path: '/admin/dashboard',
@@ -329,119 +331,127 @@ export const router = createBrowserRouter([
   },
   {
     path: '/backoffice/old-dashboard',
-    element: <AuthGuard><SuspenseWrapper><Dashboard /></SuspenseWrapper></AuthGuard>
+    element: <SuspenseWrapper><Dashboard /></SuspenseWrapper>
   },
   {
     path: '/backoffice/backlinks',
-    element: <AuthGuard><SuspenseWrapper><BacklinkManager /></SuspenseWrapper></AuthGuard>
+    element: <SuspenseWrapper><BacklinkManager /></SuspenseWrapper>
   },
   {
     path: '/backoffice/partners',
-    element: <AuthGuard><SuspenseWrapper><PartnerManager /></SuspenseWrapper></AuthGuard>
+    element: <SuspenseWrapper><PartnerManager /></SuspenseWrapper>
   },
   {
     path: '/backoffice/content',
-    element: <AuthGuard><SuspenseWrapper><ContentManager /></SuspenseWrapper></AuthGuard>
+    element: <SuspenseWrapper><ContentManager /></SuspenseWrapper>
   },
   {
     path: '/backoffice/seo',
-    element: <AuthGuard><SuspenseWrapper><SeoTools /></SuspenseWrapper></AuthGuard>
+    element: <SuspenseWrapper><SeoTools /></SuspenseWrapper>
   },
   {
     path: '/backoffice/security',
-    element: <AuthGuard><SuspenseWrapper><SecurityDashboard /></SuspenseWrapper></AuthGuard>
+    element: <SuspenseWrapper><SecurityDashboard /></SuspenseWrapper>
   },
   {
     path: '/backoffice/analytics',
-    element: <AuthGuard><SuspenseWrapper><ConversionAnalytics /></SuspenseWrapper></AuthGuard>
+    element: <SuspenseWrapper><ConversionAnalytics /></SuspenseWrapper>
   },
   {
     path: '/backoffice/partner-finder',
-    element: <AuthGuard><SuspenseWrapper><PartnerFinder /></SuspenseWrapper></AuthGuard>
+    element: <SuspenseWrapper><PartnerFinder /></SuspenseWrapper>
   },
   {
     path: '/backoffice/prospects',
-    element: <AuthGuard><SuspenseWrapper><ProspectReview /></SuspenseWrapper></AuthGuard>
+    element: <SuspenseWrapper><ProspectReview /></SuspenseWrapper>
   },
   {
     path: '/backoffice/outreach',
-    element: <AuthGuard><SuspenseWrapper><OutreachComposer /></SuspenseWrapper></AuthGuard>
+    element: <SuspenseWrapper><OutreachComposer /></SuspenseWrapper>
   },
   {
     path: '/backoffice/compliance',
-    element: <AuthGuard><SuspenseWrapper><ComplianceCenter /></SuspenseWrapper></AuthGuard>
+    element: <SuspenseWrapper><ComplianceCenter /></SuspenseWrapper>
   },
   {
     path: '/backoffice/directory',
-    element: <AuthGuard><SuspenseWrapper><DirectoryAssistant /></SuspenseWrapper></AuthGuard>
+    element: <SuspenseWrapper><DirectoryAssistant /></SuspenseWrapper>
   },
   {
     path: '/backoffice/popups',
-    element: <AuthGuard><SuspenseWrapper><PopupManager /></SuspenseWrapper></AuthGuard>
+    element: <SuspenseWrapper><PopupManager /></SuspenseWrapper>
   },
   {
     path: '/backoffice/news',
-    element: <AuthGuard><SuspenseWrapper><NewsManager /></SuspenseWrapper></AuthGuard>
+    element: <SuspenseWrapper><NewsManager /></SuspenseWrapper>
   },
   {
     path: '/backoffice/lead-marketplace',
-    element: <AuthGuard><SuspenseWrapper><LeadMarketplace /></SuspenseWrapper></AuthGuard>
+    element: <SuspenseWrapper><LeadMarketplace /></SuspenseWrapper>
   },
   {
     path: '/backoffice/partner-portal',
-    element: <AuthGuard><SuspenseWrapper><PartnerPortal /></SuspenseWrapper></AuthGuard>
+    element: <SuspenseWrapper><PartnerPortal /></SuspenseWrapper>
   },
   {
     path: '/backoffice/leads',
-    element: <AuthGuard><SuspenseWrapper><LeadManager /></SuspenseWrapper></AuthGuard>
+    element: <SuspenseWrapper><LeadManager /></SuspenseWrapper>
   },
   {
     path: '/backoffice/lead-manager',
-    element: <AuthGuard><SuspenseWrapper><LeadManager /></SuspenseWrapper></AuthGuard>
+    element: <SuspenseWrapper><LeadManager /></SuspenseWrapper>
   },
   {
     path: '/backoffice/backlink-prospector',
-    element: <AuthGuard><SuspenseWrapper><BacklinkProspector /></SuspenseWrapper></AuthGuard>
+    element: <SuspenseWrapper><BacklinkProspector /></SuspenseWrapper>
   },
   {
     path: '/backoffice/backlink-automation',
-    element: <AuthGuard><SuspenseWrapper><BacklinkAutomationDashboard /></SuspenseWrapper></AuthGuard>
+    element: <SuspenseWrapper><BacklinkAutomationDashboard /></SuspenseWrapper>
   },
   {
     path: '/backoffice/seo-strategy',
-    element: <AuthGuard><SuspenseWrapper><SEOStrategyDashboard /></SuspenseWrapper></AuthGuard>
+    element: <SuspenseWrapper><SEOStrategyDashboard /></SuspenseWrapper>
   },
   {
     path: '/backoffice/ai-generator',
-    element: <AuthGuard><SuspenseWrapper><AIContentGenerator /></SuspenseWrapper></AuthGuard>
+    element: <SuspenseWrapper><AIContentGenerator /></SuspenseWrapper>
   },
   {
     path: '/backoffice/automation-scheduler',
-    element: <AuthGuard><SuspenseWrapper><AutomationScheduler /></SuspenseWrapper></AuthGuard>
+    element: <SuspenseWrapper><AutomationScheduler /></SuspenseWrapper>
   },
   {
     path: '/backoffice/trend-analyzer',
-    element: <AuthGuard><SuspenseWrapper><TrendAnalyzer /></SuspenseWrapper></AuthGuard>
+    element: <SuspenseWrapper><TrendAnalyzer /></SuspenseWrapper>
   },
   {
     path: '/backoffice/seed-prospects',
-    element: <AuthGuard><SuspenseWrapper><ProspectSeeder /></SuspenseWrapper></AuthGuard>
+    element: <SuspenseWrapper><ProspectSeeder /></SuspenseWrapper>
   },
   {
     path: '/backoffice/launch-campaign',
-    element: <AuthGuard><SuspenseWrapper><CampaignLauncher /></SuspenseWrapper></AuthGuard>
+    element: <SuspenseWrapper><CampaignLauncher /></SuspenseWrapper>
   },
   {
     path: '/backoffice/social-media',
-    element: <AuthGuard><SuspenseWrapper><SocialMediaManager /></SuspenseWrapper></AuthGuard>
+    element: <SuspenseWrapper><SocialMediaManager /></SuspenseWrapper>
   },
   {
     path: '/backoffice/marketing-templates',
-    element: <AuthGuard><SuspenseWrapper><MarketingTemplates /></SuspenseWrapper></AuthGuard>
+    element: <SuspenseWrapper><MarketingTemplates /></SuspenseWrapper>
   },
   {
     path: '/backoffice/qr-codes',
-    element: <AuthGuard><SuspenseWrapper><QRCodeGenerator /></SuspenseWrapper></AuthGuard>
+    element: <SuspenseWrapper><QRCodeGenerator /></SuspenseWrapper>
+  },
+  {
+    path: '/backoffice/referral-program',
+    element: <SuspenseWrapper><ReferralProgramManager /></SuspenseWrapper>
+  },
+  {
+    path: '/backoffice/reviews-incentive',
+    element: <SuspenseWrapper><ReviewsIncentiveManager /></SuspenseWrapper>
   },
   // Pages miroirs longue traîne (17 routes)
   { path: '/assurance-taxi-pas-cher', element: <SuspenseWrapper><MirrorPage /></SuspenseWrapper> },

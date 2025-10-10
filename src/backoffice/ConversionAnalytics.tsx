@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { TrendingUp, Users, Target, MousePointer, Clock, BarChart3, PieChart, Activity, Home } from 'lucide-react';
-import AuthGuard from '../components/AuthGuard';
 import Card from '../components/Card';
 import { supabase } from '../lib/supabase';
 
@@ -167,7 +166,7 @@ const ConversionAnalytics: React.FC = () => {
     : '0';
 
   return (
-    <AuthGuard>
+    
       <div className="min-h-screen bg-gray-50 p-8">
         {/* Header with Home Button */}
         <header className="bg-white border-b-2 border-gray-200 shadow-sm mb-8">
@@ -525,7 +524,7 @@ const ConversionAnalytics: React.FC = () => {
           </Card>
         </div>
       </div>
-    </AuthGuard>
+    
   );
 };
 

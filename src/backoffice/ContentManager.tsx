@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { FileText, Mail, HelpCircle, Plus, CreditCard as Edit, Trash2, Send, Users, Calendar, Save, Eye, EyeOff, Home } from 'lucide-react';
-import AuthGuard from '../components/AuthGuard';
 
 interface Article {
   id: string;
@@ -349,7 +348,7 @@ const ContentManager: React.FC = () => {
   };
 
   return (
-    <AuthGuard>
+    
     <div className="min-h-screen bg-gray-50">
       {/* Header with Home Button */}
       <header className="bg-white border-b-2 border-gray-200 shadow-sm">
@@ -888,7 +887,7 @@ const ContentManager: React.FC = () => {
         </div>
       </div>
     </div>
-    </AuthGuard>
+    
   );
 };
 

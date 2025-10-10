@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Globe, RefreshCw, TrendingUp, ExternalLink, CheckCircle, AlertCircle, Home } from 'lucide-react';
-import AuthGuard from '../components/AuthGuard';
 import { pingSearchEngines } from '../lib/ping';
 import { regenerateFeeds } from '../lib/feeds';
 import { generateCityPages } from '../lib/ping';
@@ -123,7 +122,7 @@ Consultez le détail dans la console (F12)`);
   ];
 
   return (
-    <AuthGuard>
+    
       <div className="min-h-screen bg-gray-50 p-8">
         {/* Header with Home Button */}
         <header className="bg-white border-b-2 border-gray-200 shadow-sm mb-8">
@@ -321,7 +320,7 @@ Consultez le détail dans la console (F12)`);
           </div>
         </div>
       </div>
-    </AuthGuard>
+    
   );
 };
 

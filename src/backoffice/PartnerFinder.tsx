@@ -5,7 +5,6 @@ import { batchSaveProspects } from '../lib/partners';
 import { Prospect } from '../lib/schema';
 import queries from '../data/queries.json';
 import Card from '../components/Card';
-import AuthGuard from '../components/AuthGuard';
 
 interface Candidate {
   id: string;
@@ -174,7 +173,7 @@ const PartnerFinder: React.FC = () => {
   };
 
   return (
-    <AuthGuard>
+    
       <div className="min-h-screen bg-gray-50 p-8">
         {/* Header */}
         <header className="bg-white border-b-2 border-gray-200 shadow-sm">
@@ -460,7 +459,7 @@ const PartnerFinder: React.FC = () => {
           )}
         </div>
       </div>
-    </AuthGuard>
+    
   );
 };
 

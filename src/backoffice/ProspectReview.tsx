@@ -4,7 +4,6 @@ import { getProspects, saveProspect, saveConsent } from '../lib/partners';
 import { generateUnsubscribeToken, generateUnsubscribeUrl } from '../lib/outreach';
 import { Prospect, Consent } from '../lib/schema';
 import Card from '../components/Card';
-import AuthGuard from '../components/AuthGuard';
 
 const ProspectReview: React.FC = () => {
   const [prospects, setProspects] = useState<Prospect[]>([]);
@@ -150,7 +149,7 @@ const ProspectReview: React.FC = () => {
   }
 
   return (
-    <AuthGuard>
+    
       <div className="min-h-screen bg-gray-50 p-8">
         {/* Header with Home Button */}
         <header className="bg-white border-b-2 border-gray-200 shadow-sm mb-8">
@@ -422,7 +421,7 @@ const ProspectReview: React.FC = () => {
           </div>
         )}
       </div>
-    </AuthGuard>
+    
   );
 };
 

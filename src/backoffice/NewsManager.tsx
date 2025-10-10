@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Play, Pause, RefreshCw, Eye, Settings, TrendingUp, Clock, Zap, Globe, Home } from 'lucide-react';
 import { useNewsSystem } from '../lib/newsAggregator';
 import { ProcessedNews } from '../lib/newsAggregator';
-import AuthGuard from '../components/AuthGuard';
 import Card from '../components/Card';
 
 const NewsManager: React.FC = () => {
@@ -129,7 +128,7 @@ const NewsManager: React.FC = () => {
   }
 
   return (
-    <AuthGuard>
+    
       <div className="min-h-screen bg-gray-50 p-8">
         {/* Header with Home Button */}
         <header className="bg-white border-b-2 border-gray-200 shadow-sm mb-8">
@@ -382,7 +381,7 @@ const NewsManager: React.FC = () => {
           )}
         </div>
       </div>
-    </AuthGuard>
+    
   );
 };
 

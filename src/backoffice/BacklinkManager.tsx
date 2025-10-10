@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Link, Plus, ExternalLink, CheckCircle, XCircle, Clock, Home } from 'lucide-react';
-import AuthGuard from '../components/AuthGuard';
 import { getBacklinks, addBacklink, type Backlink } from '../lib/backlinks';
 import { verifyBacklink } from '../lib/ping';
 import Card from '../components/Card';
@@ -123,7 +122,7 @@ const BacklinkManager: React.FC = () => {
   }
 
   return (
-    <AuthGuard>
+    
       <div className="min-h-screen bg-gray-50 p-8">
       {/* Header with Home Button */}
       <header className="bg-white border-b-2 border-gray-200 shadow-sm mb-8">
@@ -391,7 +390,7 @@ const BacklinkManager: React.FC = () => {
         )}
       </div>
       </div>
-    </AuthGuard>
+    
   );
 };
 

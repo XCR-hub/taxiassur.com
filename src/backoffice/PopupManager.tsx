@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, CreditCard as Edit, Trash2, Eye, EyeOff, Copy, Save, X, Monitor, Smartphone, Tablet, Home, TrendingUp } from 'lucide-react';
-import AuthGuard from '../components/AuthGuard';
 import { PopupConfig, PopupConfigSchema, PopupManager } from '../lib/popup';
 import Card from '../components/Card';
 
@@ -704,7 +703,7 @@ const PopupManagerBackoffice: React.FC = () => {
   }
 
   return (
-    <AuthGuard>
+    
       <div className="min-h-screen bg-gray-50 p-8">
         {/* Header with Home Button */}
         <header className="bg-white border-b-2 border-gray-200 shadow-sm mb-8">
@@ -884,7 +883,7 @@ const PopupManagerBackoffice: React.FC = () => {
         {/* Editor Modal */}
         {renderPopupEditor()}
       </div>
-    </AuthGuard>
+    
   );
 };
 

@@ -4,7 +4,6 @@ import { getProspects, getOutreaches, saveOutreach, sendOutreach } from '../lib/
 import { getTemplates, renderTemplate, generateUnsubscribeToken, validateEmailContent } from '../lib/outreach';
 import { Prospect, Outreach } from '../lib/schema';
 import Card from '../components/Card';
-import AuthGuard from '../components/AuthGuard';
 
 const OutreachComposer: React.FC = () => {
   const [prospects, setProspects] = useState<Prospect[]>([]);
@@ -175,7 +174,7 @@ const OutreachComposer: React.FC = () => {
   }
 
   return (
-    <AuthGuard>
+    
       <div className="min-h-screen bg-gray-50 p-8">
         {/* Header with Home Button */}
         <header className="bg-white border-b-2 border-gray-200 shadow-sm mb-8">
@@ -510,7 +509,7 @@ const OutreachComposer: React.FC = () => {
           </div>
         </div>
       </div>
-    </AuthGuard>
+    
   );
 };
 
