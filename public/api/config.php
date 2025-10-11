@@ -15,9 +15,9 @@ if (file_exists(__DIR__ . '/load-env.php')) {
     require_once __DIR__ . '/load-env.php';
 }
 
-// Fonction pour définir une variable si elle n'existe pas
+// Fonction pour définir une variable (FORCE l'écrasement)
 function setEnvIfNotExists($key, $value) {
-    if (!getenv($key) && !empty($value)) {
+    if (!empty($value)) {
         putenv("$key=$value");
         $_ENV[$key] = $value;
         $_SERVER[$key] = $value;
