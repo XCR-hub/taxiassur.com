@@ -176,13 +176,26 @@ curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode([
 
 $response = curl_exec($ch);
 $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+$curlError = curl_error($ch);
 curl_close($ch);
+
+// Vérifier les erreurs curl
+if ($response === false) {
+    http_response_code(500);
+    echo json_encode([
+        'success' => false,
+        'error' => 'cURL error',
+        'details' => $curlError
+    ]);
+    exit;
+}
 
 if ($httpCode !== 200) {
     http_response_code(500);
     echo json_encode([
         'success' => false,
         'error' => 'OpenAI API error',
+        'http_code' => $httpCode,
         'details' => json_decode($response, true)
     ]);
     exit;
