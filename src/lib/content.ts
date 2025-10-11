@@ -129,19 +129,24 @@ export async function getBlogPosts(): Promise<BlogPost[]> {
   if (supabase) {
     try {
       const { data, error } = await supabase
-        .from('blog')
+        .from('blog_posts')
         .select('*')
         .eq('status', 'published')
-        .order('createdAt', { ascending: false });
-      
+        .order('created_at', { ascending: false });
+
       if (!error && data) {
-        return data.map(item => BlogPostSchema.parse(item));
+        return data.map(item => ({
+          ...item,
+          createdAt: item.created_at,
+          updatedAt: item.updated_at,
+          coverImage: item.cover_image
+        })).map(item => BlogPostSchema.parse(item));
       }
     } catch (error) {
       console.warn('Supabase blog fetch failed, falling back to local:', error);
     }
   }
-  
+
   const posts = await fetchLocalContent<BlogPost>('blog', BlogPostSchema);
   return posts.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 }
@@ -150,20 +155,25 @@ export async function getBlogPost(id: string): Promise<BlogPost | null> {
   if (supabase) {
     try {
       const { data, error } = await supabase
-        .from('blog')
+        .from('blog_posts')
         .select('*')
         .eq('id', id)
         .eq('status', 'published')
-        .single();
-      
+        .maybeSingle();
+
       if (!error && data) {
-        return BlogPostSchema.parse(data);
+        return BlogPostSchema.parse({
+          ...data,
+          createdAt: data.created_at,
+          updatedAt: data.updated_at,
+          coverImage: data.cover_image
+        });
       }
     } catch (error) {
       console.warn('Supabase blog post fetch failed, falling back to local:', error);
     }
   }
-  
+
   return await fetchLocalItem<BlogPost>('blog', id, BlogPostSchema);
 }
 
