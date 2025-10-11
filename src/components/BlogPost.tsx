@@ -173,9 +173,9 @@ const BlogPost: React.FC = () => {
             </header>
 
             {/* Content */}
-            <article className="prose prose-lg max-w-none mb-12">
-              <div 
-                className="text-gray-700 leading-relaxed"
+            <article className="mb-12">
+              <div
+                className="blog-content text-gray-700 leading-relaxed space-y-6"
                 dangerouslySetInnerHTML={{ __html: post.content }}
               />
             </article>

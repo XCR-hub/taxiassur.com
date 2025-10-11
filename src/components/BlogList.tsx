@@ -141,7 +141,7 @@ const BlogList: React.FC<BlogListProps> = ({
               </div>
 
               {/* Title */}
-              <h3 className="text-xl font-bold text-gray-100 group-hover:text-amber-400 transition-colors">
+              <h3 className="text-xl font-bold text-white group-hover:text-amber-400 transition-colors">
                 <Link to={`/blog/${post.id}`}>
                   {post.title}
                 </Link>
@@ -155,12 +155,12 @@ const BlogList: React.FC<BlogListProps> = ({
               {/* Tags */}
               {post.tags.length > 0 && (
                 <div className="flex items-center space-x-2">
-                  <Tag size={14} className="text-gray-600" />
+                  <Tag size={14} className="text-amber-400" />
                   <div className="flex flex-wrap gap-1">
                     {post.tags.slice(0, 3).map(tag => (
                       <span
                         key={tag}
-                        className="px-2 py-1 bg-gray-800/60 text-gray-300 text-xs rounded-full border border-gray-600/50"
+                        className="px-3 py-1.5 bg-amber-500/20 text-amber-300 text-xs font-medium rounded-full border border-amber-500/30 hover:bg-amber-500/30 transition-colors"
                       >
                         {tag}
                       </span>
