@@ -17,7 +17,7 @@ window.ENV_CONFIG = {
   VITE_SMTP_FROM: 'team@taxiassur.com',
   VITE_MAKE_API_TOKEN: '507a717b-3a95-483e-8fa0-215cff5c48f2',
   VITE_MAKE_SECRET: 'taxiassur_webhook_secret_2024',
-  VITE_OPENAI_API_KEY: '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',
+  VITE_OPENAI_API_KEY: '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',
   VITE_SERP_API_KEY: '420c1db639f7961f89b578da9be23a76cd16795664103b95019a432026555202',
   VITE_SITE_URL: 'https://taxiassur.com',
   VITE_BRAND_NAME: 'TaxiAssur',

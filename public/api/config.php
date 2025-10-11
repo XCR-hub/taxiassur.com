@@ -41,6 +41,12 @@ setEnvIfNotExists('SERP_API_KEY', '420c1db639f7961f89b578da9be23a76cd16795664103
 setEnvIfNotExists('VITE_GOOGLE_CSE_API_KEY', 'AIzaSyB1wcpdbB3AJW0Mxx6tihEVVjPsIIFY-9o');
 setEnvIfNotExists('VITE_GOOGLE_CSE_CX', '73ba86b5aae9b4add');
 
+// Configuration Make.com
+setEnvIfNotExists('VITE_MAKE_API_TOKEN', '507a717b-3a95-483e-8fa0-215cff5c48f2');
+setEnvIfNotExists('MAKE_API_TOKEN', '507a717b-3a95-483e-8fa0-215cff5c48f2');
+setEnvIfNotExists('VITE_MAKE_SECRET', 'taxiassur_webhook_secret_2024');
+setEnvIfNotExists('MAKE_SECRET', 'taxiassur_webhook_secret_2024');
+
 // Fonction helper (redéfinir si load-env.php n'a pas été chargé)
 if (!function_exists('env')) {
     function env($key, $default = null) {
