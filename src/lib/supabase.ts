@@ -1,8 +1,18 @@
 import { createClient } from '@supabase/supabase-js';
 import { getSupabaseUrl, getSupabaseAnonKey } from './env';
 
-const supabaseUrl = getSupabaseUrl();
-const supabaseAnonKey = getSupabaseAnonKey();
+let supabaseUrl: string;
+let supabaseAnonKey: string;
+
+try {
+  supabaseUrl = getSupabaseUrl();
+  supabaseAnonKey = getSupabaseAnonKey();
+} catch (error) {
+  console.error('Supabase configuration error:', error);
+  // Fallback to avoid app crash
+  supabaseUrl = 'https://drohhxrkoequjphvabvq.supabase.co';
+  supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRyb2hoeHJrb2VxdWpwaHZhYnZxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk3ODM3NjAsImV4cCI6MjA3NTM1OTc2MH0.LP9fh10fY0nRDjpG4VW2yGZ5sT4BkiDalox8ToMbMlg';
+}
 
 // Supabase client with fallback for development
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
