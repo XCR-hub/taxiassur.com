@@ -179,8 +179,8 @@ export async function getBlogPost(id: string): Promise<BlogPost | null> {
       const { data, error } = await supabase
         .from('blog_posts')
         .select('*')
-        .or(`id.eq.${id},slug.eq.${id}`)
         .eq('published', true)
+        .or(`id.eq.${id},slug.eq.${id}`)
         .maybeSingle();
 
       if (!error && data) {
@@ -208,22 +208,7 @@ export async function getBlogPost(id: string): Promise<BlogPost | null> {
 
 // FAQ Entries
 export async function getFaqEntries(): Promise<FaqEntry[]> {
-  if (supabase) {
-    try {
-      const { data, error } = await supabase
-        .from('faq')
-        .select('*')
-        .eq('status', 'published')
-        .order('updatedAt', { ascending: false });
-      
-      if (!error && data) {
-        return data.map(item => FaqEntrySchema.parse(item));
-      }
-    } catch (error) {
-      console.warn('Supabase FAQ fetch failed, falling back to local:', error);
-    }
-  }
-  
+  // FAQ entries are local only for now
   return await fetchLocalContent<FaqEntry>('faq', FaqEntrySchema);
 }
 

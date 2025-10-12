@@ -178,6 +178,7 @@ ${generatedContent.faq?.map(f => `**${f.question}**\n${f.answer}`).join('\n\n')}
           .from('blog_posts')
           .upsert({
             id: finalSlug,
+            slug: finalSlug,
             title: generatedContent.title,
             excerpt: generatedContent.excerpt || generatedContent.metaDescription.substring(0, 150),
             content: generatedContent.content,
@@ -186,8 +187,6 @@ ${generatedContent.faq?.map(f => `**${f.question}**\n${f.answer}`).join('\n\n')}
             tags: generatedContent.keywords || [keyword],
             published: status === 'published',
             faq: generatedContent.faq || []
-          }, {
-            onConflict: 'id'
           })
           .select()
           .single();
@@ -252,6 +251,7 @@ ${generatedContent.faq?.map(f => `**${f.question}**\n${f.answer}`).join('\n\n')}
           .from('blog_posts')
           .upsert({
             id: finalSlug,
+            slug: finalSlug,
             title: generatedContent.title,
             excerpt: generatedContent.excerpt || generatedContent.metaDescription,
             content: generatedContent.content,
@@ -260,8 +260,6 @@ ${generatedContent.faq?.map(f => `**${f.question}**\n${f.answer}`).join('\n\n')}
             tags: [...(generatedContent.keywords || []), 'comparaison'],
             published: status === 'published',
             faq: generatedContent.faq || []
-          }, {
-            onConflict: 'id'
           })
           .select()
           .single();
