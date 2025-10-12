@@ -179,13 +179,13 @@ export async function getBlogPost(id: string): Promise<BlogPost | null> {
       const { data, error } = await supabase
         .from('blog_posts')
         .select('*')
-        .eq('id', id)
+        .or(`id.eq.${id},slug.eq.${id}`)
         .eq('published', true)
         .maybeSingle();
 
       if (!error && data) {
         return {
-          id: data.id,
+          id: data.slug || data.id,
           title: data.title,
           excerpt: data.excerpt,
           content: data.content,
