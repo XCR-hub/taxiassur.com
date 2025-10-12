@@ -136,7 +136,7 @@ export async function getBlogPosts(): Promise<BlogPost[]> {
       const { data, error } = await supabase
         .from('blog_posts')
         .select('*')
-        .eq('published', true)
+        .eq('status', 'published')
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -145,16 +145,16 @@ export async function getBlogPosts(): Promise<BlogPost[]> {
       } else if (data && data.length > 0) {
         console.log(`✅ Loaded ${data.length} blog posts from Supabase`);
         return data.map(item => ({
-          id: item.id,
+          id: item.slug || item.id,
           title: item.title,
           excerpt: item.excerpt,
           content: item.content,
-          author: item.author,
+          author: item.author || 'TaxiAssur',
           coverImage: item.cover_image,
           tags: item.tags || [],
           createdAt: item.created_at,
           updatedAt: item.updated_at || item.created_at,
-          faq: item.faq || [],
+          faq: [],
           status: 'published'
         }));
       } else {
