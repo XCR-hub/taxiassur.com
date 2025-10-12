@@ -108,17 +108,21 @@ const JsonLd: React.FC<JsonLdProps> = ({ type, data }) => {
           "@type": "Article",
           "headline": post.title,
           "description": post.excerpt,
-          "image": post.coverImage || `${siteUrl}/og-image.jpg`,
+          "image": post.coverImage || `${siteUrl}/logo-600x300.png`,
           "author": {
             "@type": "Organization",
-            "name": post.author
+            "name": post.author || brandName,
+            "url": siteUrl
           },
           "publisher": {
             "@type": "Organization",
             "name": brandName,
+            "url": siteUrl,
             "logo": {
               "@type": "ImageObject",
-              "url": `${siteUrl}/logo.png`
+              "url": `${siteUrl}/logo-600x300.png`,
+              "width": 600,
+              "height": 300
             }
           },
           "datePublished": post.createdAt,
@@ -127,7 +131,11 @@ const JsonLd: React.FC<JsonLdProps> = ({ type, data }) => {
             "@type": "WebPage",
             "@id": `${siteUrl}/blog/${post.id}`
           },
-          "keywords": post.tags.join(', ')
+          "keywords": post.tags.join(', '),
+          "wordCount": post.content?.replace(/<[^>]*>/g, '').split(/\s+/).length || 0,
+          "articleSection": "Assurance Taxi",
+          "inLanguage": "fr-FR",
+          "isAccessibleForFree": true
         };
 
       case 'faq':
