@@ -134,7 +134,11 @@ export async function getBlogPosts(): Promise<BlogPost[]> {
         .eq('published', true)
         .order('created_at', { ascending: false });
 
-      if (!error && data) {
+      if (error) {
+        console.error('❌ Supabase error:', error.message, error.code, error.details);
+        console.log('Falling back to local content...');
+      } else if (data && data.length > 0) {
+        console.log(`✅ Loaded ${data.length} blog posts from Supabase`);
         return data.map(item => ({
           id: item.id,
           title: item.title,
@@ -148,13 +152,19 @@ export async function getBlogPosts(): Promise<BlogPost[]> {
           faq: item.faq || [],
           status: 'published'
         }));
+      } else {
+        console.log('⚠️ No blog posts found in Supabase, trying local...');
       }
     } catch (error) {
-      console.warn('Supabase blog fetch failed, falling back to local:', error);
+      console.error('❌ Supabase blog fetch exception:', error);
     }
+  } else {
+    console.log('⚠️ Supabase not configured, using local content');
   }
 
+  console.log('📂 Loading blog posts from local files...');
   const posts = await fetchLocalContent<BlogPost>('blog', BlogPostSchema);
+  console.log(`✅ Loaded ${posts.length} blog posts from local files`);
   return posts.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 }
 
