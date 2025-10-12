@@ -174,7 +174,7 @@ ${generatedContent.faq?.map(f => `**${f.question}**\n${f.answer}`).join('\n\n')}
         }
 
         // Publish as blog post avec upsert
-        const { data, error: publishError } = await supabase
+        const { data, error: publishError} = await supabase
           .from('blog_posts')
           .upsert({
             id: finalSlug,
@@ -182,10 +182,10 @@ ${generatedContent.faq?.map(f => `**${f.question}**\n${f.answer}`).join('\n\n')}
             title: generatedContent.title,
             excerpt: generatedContent.excerpt || generatedContent.metaDescription.substring(0, 150),
             content: generatedContent.content,
-            author: 'TaxiAssur',
-            cover_image: null,
+            meta_description: generatedContent.metaDescription,
             tags: generatedContent.keywords || [keyword],
             published: status === 'published',
+            reading_time: generatedContent.readingTime || 5,
             faq: generatedContent.faq || []
           })
           .select()
