@@ -7,6 +7,10 @@ let supabaseAnonKey: string;
 try {
   supabaseUrl = getSupabaseUrl();
   supabaseAnonKey = getSupabaseAnonKey();
+  console.log('🔧 Supabase Config:', {
+    url: supabaseUrl,
+    keyPrefix: supabaseAnonKey.substring(0, 20) + '...'
+  });
 } catch (error) {
   console.error('Supabase configuration error:', error);
   // Fallback to avoid app crash
@@ -15,7 +19,12 @@ try {
 }
 
 // Supabase client with fallback for development
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    persistSession: false,
+    autoRefreshToken: false
+  }
+});
 
 // Helper to check if Supabase is properly configured
 export const isSupabaseConfigured = () => {
