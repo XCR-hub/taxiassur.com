@@ -48,33 +48,42 @@ Deno.serve(async (req: Request) => {
     const targetCity = city || 'France';
     const secondary = secondaryKeywords || [];
 
-    // Prompt pour génération blog (simplifié pour la limite de tokens)
-    const prompt = `Écris un article de blog professionnel et naturel sur "${keyword}" pour TaxiAssur.com
+    const prompt = `Écris un article de blog professionnel sur "${keyword}" pour TaxiAssur.com
 
-Style : Conversationnel, expert, avec anecdotes
+OBLIGATOIRE : Le contenu DOIT être en HTML complet et valide.
+
+Structure HTML requise :
+<h2>Titre de section</h2>
+<p>Paragraphe avec du texte. Utilise <strong>gras</strong> pour les mots importants.</p>
+<ul>
+  <li>Liste à puces</li>
+  <li>Autre élément</li>
+</ul>
+
+Ton : Conversationnel, expert, naturel
 Longueur : 1800-2200 mots
-Ton : Naturel, direct, humain
 
-Structure :
-- H1 : Titre avec "${keyword}"
-- 5-6 sections H2
-- FAQ (5 questions)
-- Conclusion avec CTA
+Sections à inclure :
+1. <h2>Pourquoi ${keyword} est crucial</h2>
+2. <h2>Ce que vous devez savoir</h2>
+3. <h2>Comment économiser</h2>
+4. <h2>Nos conseils d'expert</h2>
 
-Données à intégrer :
-- Prix Paris : 1800-2400€/an
-- RC Pro obligatoire
-- Devis TaxiAssur en 2 min
+Prix à mentionner :
+- Paris : 1800-2400€/an
+- Province : 1200-1800€/an
 
-Format JSON :
+FAQ : 5 questions avec réponses courtes
+
+Format JSON EXACT :
 {
-  "title": "Titre naturel avec ${keyword}",
-  "slug": "url-seo-friendly",
-  "metaDescription": "155 caractères max",
-  "content": "HTML complet avec <h2>, <p>, <strong>, <ul>",
-  "excerpt": "Résumé 150 caractères",
-  "faq": [{"question": "...", "answer": "..."}],
-  "keywords": ["${keyword}", ...],
+  "title": "Titre avec ${keyword} (60 caractères max)",
+  "slug": "mot-cle-separe-par-tirets",
+  "metaDescription": "Description 155 caractères avec ${keyword}",
+  "content": "<h2>Premier titre</h2><p>Premier paragraphe...</p>",
+  "excerpt": "Résumé court",
+  "faq": [{"question": "Question ?", "answer": "Réponse claire"}],
+  "keywords": ["${keyword}", "assurance taxi", "RC professionnelle"],
   "readingTime": 8
 }`;
 
@@ -89,7 +98,15 @@ Format JSON :
         messages: [
           {
             role: 'system',
-            content: `Tu es un expert courtier en assurance. Écris du contenu naturel, conversationnel et SEO-optimisé. Réponds UNIQUEMENT en JSON valide.`
+            content: `Tu es un expert rédacteur web spécialisé en assurance.
+
+RÈGLES ABSOLUES :
+1. Le contenu DOIT être en HTML valide (balises <h2>, <p>, <strong>, <ul>, <li>)
+2. JAMAIS de markdown (pas de ###, **, -, etc.)
+3. Chaque section commence par <h2>Titre</h2>
+4. Chaque paragraphe est dans <p>...</p>
+5. Les listes sont en <ul><li>...</li></ul>
+6. Réponds UNIQUEMENT en JSON valide sans markdown`
           },
           { role: 'user', content: prompt }
         ],
@@ -114,7 +131,6 @@ Format JSON :
     const data = await response.json();
     const generatedContent = JSON.parse(data.choices[0].message.content);
 
-    // Sauvegarder l'article dans blog_posts
     const blogPost = {
       id: generatedContent.slug || `article-${Date.now()}`,
       title: generatedContent.title,

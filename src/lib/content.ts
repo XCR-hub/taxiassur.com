@@ -131,16 +131,23 @@ export async function getBlogPosts(): Promise<BlogPost[]> {
       const { data, error } = await supabase
         .from('blog_posts')
         .select('*')
-        .eq('status', 'published')
+        .eq('published', true)
         .order('created_at', { ascending: false });
 
       if (!error && data) {
         return data.map(item => ({
-          ...item,
+          id: item.id,
+          title: item.title,
+          excerpt: item.excerpt,
+          content: item.content,
+          author: item.author,
+          coverImage: item.cover_image,
+          tags: item.tags || [],
           createdAt: item.created_at,
-          updatedAt: item.updated_at,
-          coverImage: item.cover_image
-        })).map(item => BlogPostSchema.parse(item));
+          updatedAt: item.updated_at || item.created_at,
+          faq: item.faq || [],
+          status: 'published'
+        }));
       }
     } catch (error) {
       console.warn('Supabase blog fetch failed, falling back to local:', error);
@@ -158,16 +165,23 @@ export async function getBlogPost(id: string): Promise<BlogPost | null> {
         .from('blog_posts')
         .select('*')
         .eq('id', id)
-        .eq('status', 'published')
+        .eq('published', true)
         .maybeSingle();
 
       if (!error && data) {
-        return BlogPostSchema.parse({
-          ...data,
+        return {
+          id: data.id,
+          title: data.title,
+          excerpt: data.excerpt,
+          content: data.content,
+          author: data.author,
+          coverImage: data.cover_image,
+          tags: data.tags || [],
           createdAt: data.created_at,
-          updatedAt: data.updated_at,
-          coverImage: data.cover_image
-        });
+          updatedAt: data.updated_at || data.created_at,
+          faq: data.faq || [],
+          status: 'published'
+        };
       }
     } catch (error) {
       console.warn('Supabase blog post fetch failed, falling back to local:', error);
