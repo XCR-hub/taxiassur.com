@@ -157,11 +157,27 @@ ${generatedContent.faq?.map(f => `**${f.question}**\n${f.answer}`).join('\n\n')}
     try {
       // Publish based on content type
       if (contentType === 'blog') {
-        // Publish as blog post
+        // Générer un slug unique avec timestamp si nécessaire
+        const baseSlug = generatedContent.slug;
+        let finalSlug = baseSlug;
+
+        // Vérifier si le slug existe déjà
+        const { data: existing } = await supabase
+          .from('blog_posts')
+          .select('id')
+          .eq('id', baseSlug)
+          .maybeSingle();
+
+        // Si existe, ajouter timestamp
+        if (existing) {
+          finalSlug = `${baseSlug}-${Date.now()}`;
+        }
+
+        // Publish as blog post avec upsert
         const { data, error: publishError } = await supabase
           .from('blog_posts')
-          .insert({
-            id: generatedContent.slug,
+          .upsert({
+            id: finalSlug,
             title: generatedContent.title,
             excerpt: generatedContent.excerpt || generatedContent.metaDescription.substring(0, 150),
             content: generatedContent.content,
@@ -170,6 +186,8 @@ ${generatedContent.faq?.map(f => `**${f.question}**\n${f.answer}`).join('\n\n')}
             tags: generatedContent.keywords || [keyword],
             published: status === 'published',
             faq: generatedContent.faq || []
+          }, {
+            onConflict: 'id'
           })
           .select()
           .single();
@@ -215,19 +233,35 @@ ${generatedContent.faq?.map(f => `**${f.question}**\n${f.answer}`).join('\n\n')}
           }
         }
       } else if (contentType === 'comparison') {
+        // Générer un slug unique
+        const baseSlug = generatedContent.slug;
+        let finalSlug = baseSlug;
+
+        const { data: existing } = await supabase
+          .from('blog_posts')
+          .select('id')
+          .eq('id', baseSlug)
+          .maybeSingle();
+
+        if (existing) {
+          finalSlug = `${baseSlug}-${Date.now()}`;
+        }
+
         // Publish comparison as blog post with special category
         const { data, error: compError } = await supabase
           .from('blog_posts')
-          .insert({
+          .upsert({
+            id: finalSlug,
             title: generatedContent.title,
-            slug: generatedContent.slug,
             excerpt: generatedContent.excerpt || generatedContent.metaDescription,
             content: generatedContent.content,
-            meta_description: generatedContent.metaDescription,
+            author: 'TaxiAssur',
+            cover_image: null,
             tags: [...(generatedContent.keywords || []), 'comparaison'],
-            reading_time: generatedContent.readingTime || 7,
-            status: status,
-            published_at: status === 'published' ? new Date().toISOString() : null,
+            published: status === 'published',
+            faq: generatedContent.faq || []
+          }, {
+            onConflict: 'id'
           })
           .select()
           .single();
