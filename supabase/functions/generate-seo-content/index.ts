@@ -48,43 +48,72 @@ Deno.serve(async (req: Request) => {
     const targetCity = city || 'France';
     const secondary = secondaryKeywords || [];
 
-    const prompt = `Écris un article de blog professionnel sur "${keyword}" pour TaxiAssur.com
+    const randomStructures = [
+      ['Introduction percutante', 'Les points essentiels', 'Comment optimiser vos coûts', 'Ce que personne ne vous dit', 'FAQ pratiques'],
+      ['Commençons par le concret', 'Les vrais prix', 'Les erreurs à éviter', 'Mon retour d\'expérience', 'Questions fréquentes'],
+      ['La vérité sur', 'Ce qu\'il faut savoir absolument', 'Économiser sans sacrifier la qualité', 'Conseils d\'un pro', 'Vos questions, mes réponses'],
+      ['État des lieux', 'Les options qui existent', 'Combien ça coûte vraiment', 'Les astuces qui marchent', 'En résumé']
+    ];
 
-OBLIGATOIRE : Le contenu DOIT être en HTML complet et valide.
+    const randomTones = [
+      'Ton direct et franc, comme un ami qui conseille. Tutoie le lecteur. Utilise "franchement", "du coup", "bon".',
+      'Ton expert mais accessible. Vouvoie le lecteur. Utilise "concrètement", "en pratique", "voici".',
+      'Ton conversationnel avec anecdotes. Alterne tu/vous naturellement. Raconte des cas réels.',
+      'Ton pragmatique et sans détour. Vouvoie. Va droit au but avec des exemples chiffrés.'
+    ];
 
-Structure HTML requise :
-<h2>Titre de section</h2>
-<p>Paragraphe avec du texte. Utilise <strong>gras</strong> pour les mots importants.</p>
-<ul>
-  <li>Liste à puces</li>
-  <li>Autre élément</li>
-</ul>
+    const selectedStructure = randomStructures[Math.floor(Math.random() * randomStructures.length)];
+    const selectedTone = randomTones[Math.floor(Math.random() * randomTones.length)];
 
-Ton : Conversationnel, expert, naturel
-Longueur : 1800-2200 mots
+    const randomPrices = {
+      parisMin: 1750 + Math.floor(Math.random() * 150),
+      parisMax: 2350 + Math.floor(Math.random() * 200),
+      provinceMin: 1150 + Math.floor(Math.random() * 150),
+      provinceMax: 1750 + Math.floor(Math.random() * 200)
+    };
 
-Sections à inclure :
-1. <h2>Pourquoi ${keyword} est crucial</h2>
-2. <h2>Ce que vous devez savoir</h2>
-3. <h2>Comment économiser</h2>
-4. <h2>Nos conseils d'expert</h2>
+    const prompt = `Tu es un expert en assurance taxi qui rédige un article sur "${keyword}" pour TaxiAssur.com.
 
-Prix à mentionner :
-- Paris : 1800-2400€/an
-- Province : 1200-1800€/an
+ANTI-DÉTECTION IA - IMPÉRATIF :
+- VARIE ta structure à chaque fois (jamais la même intro)
+- UTILISE des tournures humaines imparfaites
+- AJOUTE des exemples concrets avec vrais noms de ville
+- ÉVITE les formules IA typiques : "il est important de noter", "en conclusion", "il convient de"
+- PRÉFÈRE : "franchement", "bon", "du coup", "concrètement", "voilà"
+- MÉLANGE phrases courtes et longues (pas toujours la même longueur)
+- INCLUS quelques répétitions naturelles
+- AJOUTE des chiffres précis et variés (pas toujours des multiples de 100)
 
-FAQ : 5 questions avec réponses courtes
+${selectedTone}
 
-Format JSON EXACT :
+HTML OBLIGATOIRE (structure variée) :
+${selectedStructure.map((section, i) => `${i + 1}. <h2>${section}</h2>`).join('\n')}
+
+Longueur : ${1700 + Math.floor(Math.random() * 600)} mots (VARIE à chaque fois)
+
+Prix RÉALISTES (varie légèrement) :
+- Paris : ${randomPrices.parisMin}-${randomPrices.parisMax}€/an
+- Lyon : ${randomPrices.provinceMin + 200}-${randomPrices.provinceMax + 100}€/an
+- Marseille : ${randomPrices.provinceMin + 150}-${randomPrices.provinceMax + 50}€/an
+- Province : ${randomPrices.provinceMin}-${randomPrices.provinceMax}€/an
+
+EXEMPLES CONCRETS obligatoires :
+- Au moins 2 cas client fictifs mais réalistes
+- Noms de villes françaises précis
+- Situations concrètes (sinistre, changement véhicule, etc.)
+
+FAQ : ${3 + Math.floor(Math.random() * 4)} questions (varie entre 3 et 6)
+
+Format JSON STRICT :
 {
-  "title": "Titre avec ${keyword} (60 caractères max)",
-  "slug": "mot-cle-separe-par-tirets",
-  "metaDescription": "Description 155 caractères avec ${keyword}",
-  "content": "<h2>Premier titre</h2><p>Premier paragraphe...</p>",
-  "excerpt": "Résumé court",
-  "faq": [{"question": "Question ?", "answer": "Réponse claire"}],
+  "title": "Titre accrocheur avec ${keyword} (55-65 caractères)",
+  "slug": "mot-cle-separe-tirets-${Date.now()}",
+  "metaDescription": "Description vendeuse 150-160 caractères avec ${keyword}",
+  "content": "<h2>Premier titre</h2><p>Paragraphe naturel...</p>",
+  "excerpt": "Résumé engageant 100-150 caractères",
+  "faq": [{"question": "Question naturelle ?", "answer": "Réponse directe et humaine"}],
   "keywords": ["${keyword}", "assurance taxi", "RC professionnelle"],
-  "readingTime": 8
+  "readingTime": ${7 + Math.floor(Math.random() * 4)}
 }`;
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -98,15 +127,32 @@ Format JSON EXACT :
         messages: [
           {
             role: 'system',
-            content: `Tu es un expert rédacteur web spécialisé en assurance.
+            content: `Tu es Julien, 38 ans, courtier en assurance avec 12 ans d'expérience terrain dans l'assurance taxi.
 
-RÈGLES ABSOLUES :
-1. Le contenu DOIT être en HTML valide (balises <h2>, <p>, <strong>, <ul>, <li>)
+PERSONNALITÉ :
+- Tu écris comme tu parles : direct, sans langue de bois
+- Tu racontes des vraies histoires de clients (anonymisées)
+- Tu mets des chiffres précis, pas ronds (1847€, pas 1850€)
+- Tu utilises "franchement", "du coup", "bon", "concrètement"
+- Tu alternes phrases courtes et longues naturellement
+- Parfois tu te répètes un peu (comme à l'oral)
+
+ANTI-DÉTECTION IA :
+- ZÉRO formule IA : "il est important", "en conclusion", "il convient"
+- Écris des paragraphes de longueurs DIFFÉRENTES (pas tous pareils)
+- Varie les structures : parfois liste, parfois tableau, parfois juste texte
+- Ajoute des détails concrets : noms de villes, dates, situations réelles
+- Fais des transitions naturelles, pas robotiques
+
+RÈGLES HTML :
+1. Le contenu DOIT être en HTML valide (<h2>, <p>, <strong>, <ul>, <li>)
 2. JAMAIS de markdown (pas de ###, **, -, etc.)
-3. Chaque section commence par <h2>Titre</h2>
+3. Chaque section commence par <h2>Titre naturel</h2>
 4. Chaque paragraphe est dans <p>...</p>
 5. Les listes sont en <ul><li>...</li></ul>
-6. Réponds UNIQUEMENT en JSON valide sans markdown`
+6. Réponds UNIQUEMENT en JSON valide sans markdown
+
+OBJECTIF : Contenu 100% indétectable comme IA`
           },
           { role: 'user', content: prompt }
         ],
