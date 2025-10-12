@@ -145,7 +145,7 @@ export async function getBlogPosts(): Promise<BlogPost[]> {
       } else if (data && data.length > 0) {
         console.log(`✅ Loaded ${data.length} blog posts from Supabase`);
         return data.map(item => ({
-          id: item.slug,
+          id: item.slug || item.id,
           title: item.title,
           excerpt: item.excerpt,
           content: item.content,
@@ -179,13 +179,13 @@ export async function getBlogPost(id: string): Promise<BlogPost | null> {
       const { data, error } = await supabase
         .from('blog_posts')
         .select('*')
-        .eq('published', true)
         .or(`id.eq.${id},slug.eq.${id}`)
+        .eq('published', true)
         .maybeSingle();
 
       if (!error && data) {
         return {
-          id: data.slug,
+          id: data.slug || data.id,
           title: data.title,
           excerpt: data.excerpt,
           content: data.content,
@@ -208,7 +208,22 @@ export async function getBlogPost(id: string): Promise<BlogPost | null> {
 
 // FAQ Entries
 export async function getFaqEntries(): Promise<FaqEntry[]> {
-  // FAQ entries are local only for now
+  if (supabase) {
+    try {
+      const { data, error } = await supabase
+        .from('faq')
+        .select('*')
+        .eq('status', 'published')
+        .order('updatedAt', { ascending: false });
+      
+      if (!error && data) {
+        return data.map(item => FaqEntrySchema.parse(item));
+      }
+    } catch (error) {
+      console.warn('Supabase FAQ fetch failed, falling back to local:', error);
+    }
+  }
+  
   return await fetchLocalContent<FaqEntry>('faq', FaqEntrySchema);
 }
 

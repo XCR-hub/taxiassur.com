@@ -21,8 +21,8 @@ DROP POLICY IF EXISTS "Public can read published blog posts" ON blog_posts;
 
 -- 2. Sauvegarder les articles publiés
 CREATE TEMP TABLE temp_published_posts AS
-SELECT
-  id::uuid as id,
+SELECT 
+  COALESCE(slug, id) as id,
   title,
   excerpt,
   content,
@@ -31,11 +31,11 @@ SELECT
   tags,
   created_at,
   updated_at,
-  COALESCE(slug, 'article-' || id::text) as slug,
+  COALESCE(slug, id) as slug,
   meta_description,
   reading_time,
   COALESCE(faq, '[]'::jsonb) as faq
-FROM blog_posts
+FROM blog_posts 
 WHERE status = 'published' OR published = true;
 
 -- 3. Supprimer les colonnes en conflit
