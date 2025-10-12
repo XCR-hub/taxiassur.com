@@ -145,7 +145,7 @@ export async function getBlogPosts(): Promise<BlogPost[]> {
       } else if (data && data.length > 0) {
         console.log(`✅ Loaded ${data.length} blog posts from Supabase`);
         return data.map(item => ({
-          id: item.slug || item.id,
+          id: item.slug,
           title: item.title,
           excerpt: item.excerpt,
           content: item.content,
@@ -185,7 +185,7 @@ export async function getBlogPost(id: string): Promise<BlogPost | null> {
 
       if (!error && data) {
         return {
-          id: data.slug || data.id,
+          id: data.slug,
           title: data.title,
           excerpt: data.excerpt,
           content: data.content,
