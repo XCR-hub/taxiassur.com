@@ -127,7 +127,7 @@ Format JSON STRICT :
         messages: [
           {
             role: 'system',
-            content: `Tu es Julien, 38 ans, courtier en assurance avec 12 ans d'expérience terrain dans l'assurance taxi.
+            content: `Tu es Tony, 38 ans, courtier en assurance avec 12 ans d'expérience terrain dans l'assurance taxi.
 
 PERSONNALITÉ :
 - Tu écris comme tu parles : direct, sans langue de bois
