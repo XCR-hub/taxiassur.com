@@ -6,6 +6,11 @@ import { getSupabaseUrl, getSupabaseAnonKey } from './env';
 const supabaseUrl = getSupabaseUrl();
 const supabaseKey = getSupabaseAnonKey();
 
+console.log('🔧 Supabase Config:', {
+  url: supabaseUrl,
+  keyPrefix: supabaseKey?.substring(0, 20) + '...'
+});
+
 const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null;
 
 // Fonction utilitaire pour lire les fichiers JSON locaux
