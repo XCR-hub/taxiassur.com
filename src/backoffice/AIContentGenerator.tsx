@@ -164,8 +164,8 @@ ${generatedContent.faq?.map(f => `**${f.question}**\n${f.answer}`).join('\n\n')}
         // Vérifier si le slug existe déjà
         const { data: existing } = await supabase
           .from('blog_posts')
-          .select('id')
-          .eq('id', baseSlug)
+          .select('slug')
+          .eq('slug', baseSlug)
           .maybeSingle();
 
         // Si existe, ajouter timestamp
@@ -238,8 +238,8 @@ ${generatedContent.faq?.map(f => `**${f.question}**\n${f.answer}`).join('\n\n')}
 
         const { data: existing } = await supabase
           .from('blog_posts')
-          .select('id')
-          .eq('id', baseSlug)
+          .select('slug')
+          .eq('slug', baseSlug)
           .maybeSingle();
 
         if (existing) {

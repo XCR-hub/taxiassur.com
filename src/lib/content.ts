@@ -176,11 +176,12 @@ export async function getBlogPosts(): Promise<BlogPost[]> {
 export async function getBlogPost(id: string): Promise<BlogPost | null> {
   if (supabase) {
     try {
+      // Chercher d'abord par slug (plus courant)
       const { data, error } = await supabase
         .from('blog_posts')
         .select('*')
         .eq('published', true)
-        .or(`id.eq.${id},slug.eq.${id}`)
+        .eq('slug', id)
         .maybeSingle();
 
       if (!error && data) {
