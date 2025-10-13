@@ -69,8 +69,6 @@ const AmbassadorSignup = lazy(() => import('./pages/AmbassadorSignup'));
 const SocialMediaManager = lazy(() => import('./backoffice/SocialMediaManager'));
 const MarketingTemplates = lazy(() => import('./backoffice/MarketingTemplates'));
 const QRCodeGenerator = lazy(() => import('./backoffice/QRCodeGenerator'));
-const ReferralProgramManager = lazy(() => import('./backoffice/ReferralProgramManager'));
-const ReviewsIncentiveManager = lazy(() => import('./backoffice/ReviewsIncentiveManager'));
 
 const LoadingFallback = () => (
   <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-black flex items-center justify-center">
@@ -444,14 +442,6 @@ export const router = createBrowserRouter([
   {
     path: '/backoffice/qr-codes',
     element: <AuthGuard><SuspenseWrapper><QRCodeGenerator /></SuspenseWrapper></AuthGuard>
-  },
-  {
-    path: '/backoffice/referral-program',
-    element: <AuthGuard><SuspenseWrapper><ReferralProgramManager /></SuspenseWrapper></AuthGuard>
-  },
-  {
-    path: '/backoffice/reviews-incentive',
-    element: <AuthGuard><SuspenseWrapper><ReviewsIncentiveManager /></SuspenseWrapper></AuthGuard>
   },
   // Pages miroirs longue traîne (17 routes)
   { path: '/assurance-taxi-pas-cher', element: <SuspenseWrapper><MirrorPage /></SuspenseWrapper> },
