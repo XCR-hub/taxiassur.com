@@ -1,0 +1,92 @@
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                                                                              ║
+║                 ❌ ERREUR: "no field status" - RÉSOLUE ✅                   ║
+║                                                                              ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+🔴 ERREUR SQL:
+
+ERROR: record "new" has no field "status"
+CONTEXT: PL/pgSQL function update_blog_posts_updated_at()
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🟢 CAUSE:
+
+Un ANCIEN TRIGGER "update_blog_posts_updated_at()" existe dans la base.
+Il cherche une colonne "status" qui N'EXISTE PLUS.
+
+La table blog_posts utilise maintenant:
+  ✅ "published" (boolean: true/false)
+  ❌ PAS "status" (enum: draft/published)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ SOLUTION:
+
+J'ai mis à jour SUPABASE-REPAIR-FINAL.sql pour:
+
+ÉTAPE 5 (NOUVELLE):
+  DROP TRIGGER IF EXISTS update_blog_posts_updated_at_trigger
+  DROP FUNCTION IF EXISTS update_blog_posts_updated_at()
+  
+  → Supprime TOUS les anciens triggers avant d'en créer de nouveaux
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎯 QUE FAIRE MAINTENANT:
+
+1. Ouvre SUPABASE-REPAIR-FINAL.sql
+2. Copie TOUT (Ctrl+A, Ctrl+C)
+3. Supabase Dashboard → SQL Editor → New query
+4. Colle (Ctrl+V)
+5. RUN
+6. Vérifie en bas:
+   ✅ Articles créés: 2
+   ✅ FAQ extraites: 4
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📝 CHANGEMENTS DANS LE SCRIPT:
+
+AVANT (ÉTAPE 5):
+  DROP FUNCTION IF EXISTS get_blog_posts() CASCADE;
+  DROP FUNCTION IF EXISTS get_blog_post_by_slug(text) CASCADE;
+  ...
+
+APRÈS (ÉTAPE 5):
+  -- Supprimer TOUS les triggers
+  DROP TRIGGER IF EXISTS trigger_extract_faq ON blog_posts;
+  DROP TRIGGER IF EXISTS update_blog_posts_updated_at_trigger ON blog_posts;
+  DROP TRIGGER IF EXISTS set_timestamp ON blog_posts;
+  
+  -- Supprimer TOUTES les fonctions
+  DROP FUNCTION IF EXISTS get_blog_posts() CASCADE;
+  DROP FUNCTION IF EXISTS update_blog_posts_updated_at() CASCADE; ← NOUVEAU
+  DROP FUNCTION IF EXISTS update_timestamp() CASCADE;            ← NOUVEAU
+  ...
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔥 POURQUOI CETTE ERREUR:
+
+Tu avais probablement exécuté une ancienne migration qui créait:
+  - Une colonne "status" (enum: draft/published)
+  - Un trigger update_blog_posts_updated_at()
+
+Ensuite, une autre migration a:
+  - Supprimé la colonne "status"
+  - Ajouté la colonne "published" (boolean)
+  - MAIS N'A PAS supprimé l'ancien trigger
+
+Résultat: Le vieux trigger cherche "status" qui n'existe plus → ERREUR
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ MAINTENANT ÇA VA MARCHER:
+
+Le script supprime TOUS les triggers et fonctions obsolètes AVANT
+de créer les nouveaux.
+
+DURÉE: 2 MINUTES pour exécuter le script
+

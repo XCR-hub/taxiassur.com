@@ -175,14 +175,22 @@ DO $$ BEGIN
 END $$;
 
 -- ========================================
--- ÉTAPE 5: Supprimer anciennes fonctions
+-- ÉTAPE 5: Supprimer anciens triggers et fonctions
 -- ========================================
 
+-- Supprimer TOUS les triggers sur blog_posts
+DROP TRIGGER IF EXISTS trigger_extract_faq ON blog_posts;
+DROP TRIGGER IF EXISTS update_blog_posts_updated_at_trigger ON blog_posts;
+DROP TRIGGER IF EXISTS set_timestamp ON blog_posts;
+
+-- Supprimer TOUTES les fonctions obsolètes
 DROP FUNCTION IF EXISTS get_blog_posts() CASCADE;
 DROP FUNCTION IF EXISTS get_blog_post_by_slug(text) CASCADE;
 DROP FUNCTION IF EXISTS upsert_blog_post CASCADE;
 DROP FUNCTION IF EXISTS extract_faq_from_blog() CASCADE;
 DROP FUNCTION IF EXISTS get_faq_entries(text) CASCADE;
+DROP FUNCTION IF EXISTS update_blog_posts_updated_at() CASCADE;
+DROP FUNCTION IF EXISTS update_timestamp() CASCADE;
 
 -- ========================================
 -- ÉTAPE 6: Créer fonctions SQL
