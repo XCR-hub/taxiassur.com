@@ -1,0 +1,78 @@
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                                                                              ║
+║              🚨 ERREUR SQL RÉSOLUE - NOUVELLE SOLUTION 🚨                   ║
+║                                                                              ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+❌ ERREUR 1: "column priority does not exist"
+❌ ERREUR 2: "column published does not exist"
+
+✅ CAUSE: Tes tables existent déjà mais SANS certaines colonnes
+
+✅ SOLUTION FINALE: SUPABASE-REPAIR-FINAL.sql
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎯 ACTION IMMÉDIATE (2 MINUTES)
+
+ÉTAPE 1: Ouvre Supabase Dashboard
+        https://supabase.com/dashboard
+        Projet: drohhxrkoequjphvabvq
+
+ÉTAPE 2: SQL Editor → New query
+
+ÉTAPE 3: Copie TOUT le fichier: SUPABASE-REPAIR-FINAL.sql
+
+ÉTAPE 4: Colle dans l'éditeur et clique RUN
+
+ÉTAPE 5: Vérifie en bas de l'écran:
+        ✅ Articles créés: 2
+        ✅ FAQ extraites: 4
+        📝 2 articles affichés
+        ❓ 4 FAQ affichées
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔧 POURQUOI CE SCRIPT EST DIFFÉRENT
+
+Ce script:
+✅ Vérifie chaque colonne AVANT de l'ajouter
+✅ Ajoute SEULEMENT ce qui manque
+✅ Ne détruit RIEN
+✅ Crée les index de manière sécurisée
+✅ Utilise COALESCE pour gérer les NULL
+✅ Fonctionne même si les tables sont partiellement créées
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📋 APRÈS LE SQL (4 MINUTES)
+
+ÉTAPE 1: Redéployer Edge Function blog-articles
+        Dashboard → Edge Functions → blog-articles → Edit
+        Copie: supabase/functions/blog-articles/index.ts
+        Deploy
+
+ÉTAPE 2: Upload dist/ sur IONOS
+        FileZilla → Upload tout le dossier dist/
+
+ÉTAPE 3: Test
+        https://taxiassur.com/blog (Ctrl+Shift+R)
+        Console: "✅ Loaded 2 blog posts from Supabase"
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎉 RÉSULTAT
+
+Système de publication automatique fonctionnel:
+→ Tu publies un article via Edge Function
+→ FAQ extraites automatiquement
+→ Visible instantanément sur le site
+→ ZÉRO manipulation manuelle
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📁 FICHIER À UTILISER: SUPABASE-REPAIR-FINAL.sql
+
+DURÉE TOTALE: 6 MINUTES
+
+COMMENCE MAINTENANT ! 🚀
