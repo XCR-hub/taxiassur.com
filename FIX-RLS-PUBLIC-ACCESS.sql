@@ -129,3 +129,110 @@ GRANT EXECUTE ON FUNCTION get_realtime_stats() TO anon;
 GRANT EXECUTE ON FUNCTION get_realtime_stats() TO authenticated;
 GRANT EXECUTE ON FUNCTION get_top_pages_today() TO anon;
 GRANT EXECUTE ON FUNCTION get_top_pages_today() TO authenticated;
+
+-- ============================================================================
+-- RPC FUNCTIONS FOR BLOG & FAQ (CRITICAL FOR FRONTEND)
+-- ============================================================================
+
+-- Drop existing functions first to avoid conflicts
+DROP FUNCTION IF EXISTS get_blog_posts();
+DROP FUNCTION IF EXISTS get_blog_post_by_slug(text);
+DROP FUNCTION IF EXISTS get_faq_entries();
+
+-- Function to get all published blog posts
+CREATE OR REPLACE FUNCTION get_blog_posts()
+RETURNS TABLE(
+  slug text,
+  title text,
+  excerpt text,
+  content text,
+  tags text[],
+  created_at timestamptz,
+  updated_at timestamptz,
+  faq jsonb
+)
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+  RETURN QUERY
+  SELECT
+    bp.slug,
+    bp.title,
+    bp.excerpt,
+    bp.content,
+    bp.keywords as tags,
+    bp.created_at,
+    bp.updated_at,
+    '[]'::jsonb as faq
+  FROM blog_posts bp
+  WHERE bp.published = true
+  ORDER BY bp.created_at DESC;
+END;
+$$;
+
+-- Function to get a single blog post by slug
+CREATE OR REPLACE FUNCTION get_blog_post_by_slug(p_slug text)
+RETURNS TABLE(
+  slug text,
+  title text,
+  excerpt text,
+  content text,
+  tags text[],
+  created_at timestamptz,
+  updated_at timestamptz,
+  faq jsonb
+)
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+  RETURN QUERY
+  SELECT
+    bp.slug,
+    bp.title,
+    bp.excerpt,
+    bp.content,
+    bp.keywords as tags,
+    bp.created_at,
+    bp.updated_at,
+    '[]'::jsonb as faq
+  FROM blog_posts bp
+  WHERE bp.slug = p_slug
+    AND bp.published = true
+  LIMIT 1;
+END;
+$$;
+
+-- Function to get all FAQ entries
+CREATE OR REPLACE FUNCTION get_faq_entries()
+RETURNS TABLE(
+  id uuid,
+  question text,
+  answer text,
+  category text,
+  created_at timestamptz
+)
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+  RETURN QUERY
+  SELECT
+    faq.id,
+    faq.question,
+    faq.answer,
+    faq.category,
+    faq.created_at
+  FROM faq_entries faq
+  ORDER BY faq.order_index ASC, faq.created_at DESC;
+END;
+$$;
+
+-- Grant execute permissions on blog/FAQ RPC functions
+GRANT EXECUTE ON FUNCTION get_blog_posts() TO anon;
+GRANT EXECUTE ON FUNCTION get_blog_posts() TO authenticated;
+GRANT EXECUTE ON FUNCTION get_blog_post_by_slug(text) TO anon;
+GRANT EXECUTE ON FUNCTION get_blog_post_by_slug(text) TO authenticated;
+GRANT EXECUTE ON FUNCTION get_faq_entries() TO anon;
+GRANT EXECUTE ON FUNCTION get_faq_entries() TO authenticated;
