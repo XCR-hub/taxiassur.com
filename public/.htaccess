@@ -16,6 +16,15 @@
     RewriteEngine On
     RewriteBase /
 
+    # FORCER HTTPS - CRITIQUE POUR SEO
+    RewriteCond %{HTTPS} off
+    RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+    # Forcer www ou non-www (choisir une version canonique)
+    # Option 1: Sans www (RECOMMANDÉ pour taxiassur.com)
+    RewriteCond %{HTTP_HOST} ^www\.taxiassur\.com [NC]
+    RewriteRule ^(.*)$ https://taxiassur.com/$1 [L,R=301]
+
     # Exclure les fichiers assets (CSS, JS, images, fonts)
     RewriteCond %{REQUEST_URI} !^/assets/
     RewriteCond %{REQUEST_URI} !^/content/

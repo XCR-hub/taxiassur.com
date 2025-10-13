@@ -70,6 +70,7 @@ const AmbassadorSignup = lazy(() => import('./pages/AmbassadorSignup'));
 const SocialMediaManager = lazy(() => import('./backoffice/SocialMediaManager'));
 const MarketingTemplates = lazy(() => import('./backoffice/MarketingTemplates'));
 const QRCodeGenerator = lazy(() => import('./backoffice/QRCodeGenerator'));
+const TaxisSinistres = lazy(() => import('./pages/TaxisSinistres'));
 
 const LoadingFallback = () => (
   <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-black flex items-center justify-center">
@@ -146,6 +147,11 @@ export const router = createBrowserRouter([
   {
     path: '/gestion-sinistres',
     element: <SuspenseWrapper><GestionSinistres /></SuspenseWrapper>,
+    errorElement: <ErrorBoundary><Navigate to="/" replace /></ErrorBoundary>
+  },
+  {
+    path: '/taxis-sinistres',
+    element: <SuspenseWrapper><TaxisSinistres /></SuspenseWrapper>,
     errorElement: <ErrorBoundary><Navigate to="/" replace /></ErrorBoundary>
   },
   {
