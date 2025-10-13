@@ -1,90 +1,45 @@
-╔═══════════════════════════════════════════════════════════════════════════╗
-║                    🚨 UPLOAD URGENT - LISEZ CECI D'ABORD                  ║
-╚═══════════════════════════════════════════════════════════════════════════╝
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                                                                              ║
+║                    🚀 SOLUTION À TON ERREUR SQL 🚀                          ║
+║                                                                              ║
+╚══════════════════════════════════════════════════════════════════════════════╝
 
-✅ BONNE NOUVELLE : Les APIs PHP fonctionnent déjà sur IONOS !
+❌ ERREUR: "column priority does not exist"
 
-   Preuve : https://taxiassur.com/api/test-debug-complet.php
-   → Affiche "✅ ALL OK"
+✅ CAUSE: La table faq_entries existe déjà dans ta base sans la colonne priority
 
-❌ PROBLÈME : Le frontend /dist/ est une VIEILLE VERSION
+✅ SOLUTION: Utilise le nouveau script SUPABASE-SETUP-SIMPLE.sql
 
-   L'erreur 500 vient du JavaScript obsolète dans votre navigateur.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-═══════════════════════════════════════════════════════════════════════════
+📋 ÉTAPE 1: Exécuter le Bon Script SQL
 
-🎯 SOLUTION EN 3 ÉTAPES (5 MINUTES)
+1. Ouvre Supabase Dashboard → Projet drohhxrkoequjphvabvq
+2. SQL Editor → New query
+3. Copie TOUT: SUPABASE-SETUP-SIMPLE.sql
+4. Colle et RUN
+5. Vérifie: ✅ Articles créés: 2 + ✅ FAQ extraites: 4
 
-┌─────────────────────────────────────────────────────────────────────────┐
-│ ÉTAPE 1 : Supprimer l'ancien contenu sur IONOS                         │
-├─────────────────────────────────────────────────────────────────────────┤
-│ Via FTP, supprimez dans la RACINE :                                     │
-│   • /index.html (ancien)                                                │
-│   • /assets/ (ancien dossier)                                           │
-└─────────────────────────────────────────────────────────────────────────┘
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-┌─────────────────────────────────────────────────────────────────────────┐
-│ ÉTAPE 2 : Uploader le nouveau /dist/                                   │
-├─────────────────────────────────────────────────────────────────────────┤
-│ Uploadez TOUT depuis :                                                  │
-│   /dist/index.html    →  / (racine IONOS)                              │
-│   /dist/assets/*      →  /assets/ (racine IONOS)                       │
-│   /dist/favicon.ico   →  /favicon.ico                                  │
-│                                                                          │
-│ ⚠️ Important : RACINE = pas de sous-dossier !                          │
-└─────────────────────────────────────────────────────────────────────────┘
+📋 ÉTAPE 2: Redéployer Edge Function blog-articles
 
-┌─────────────────────────────────────────────────────────────────────────┐
-│ ÉTAPE 3 : Vider le cache et tester                                     │
-├─────────────────────────────────────────────────────────────────────────┤
-│ 1. Videz cache : Ctrl+Shift+R (ou Cmd+Shift+R sur Mac)                 │
-│ 2. Allez sur : https://taxiassur.com/backoffice                        │
-│ 3. Mot de passe : taxiassur2024                                        │
-│ 4. Cliquez "Générateur de Contenu IA"                                  │
-│ 5. Testez : "assurance taxi" → Cliquez "Générer"                      │
-│                                                                          │
-│ ✅ Résultat attendu : Article généré SANS erreur 500                   │
-└─────────────────────────────────────────────────────────────────────────┘
+Dashboard → Edge Functions → blog-articles → Edit
+Copie /supabase/functions/blog-articles/index.ts → Deploy
 
-═══════════════════════════════════════════════════════════════════════════
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-📁 Structure finale IONOS (après upload) :
+📋 ÉTAPE 3: Upload dist/ sur IONOS via FTP
 
-/ (racine)
-├── index.html              ← NOUVEAU
-├── assets/                 ← NOUVEAU
-│   ├── backoffice-cANKd5VF.js
-│   └── ... autres
-└── api/
-    ├── config.php          ✅ Déjà OK
-    └── generate-content.php ✅ Déjà OK
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-═══════════════════════════════════════════════════════════════════════════
+📋 ÉTAPE 4: Test
 
-❓ SI ERREUR PERSISTE :
+https://taxiassur.com/blog → Ctrl+Shift+R
+https://taxiassur.com/faq
 
-• Erreur 500 → Testez en navigation privée (cache pas vidé)
-• Page blanche → F12, regardez la console, envoyez-moi l'erreur
-• "OpenAI error" → Vous avez uploadé le mauvais /dist/
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-═══════════════════════════════════════════════════════════════════════════
+📁 FICHIER À UTILISER: SUPABASE-SETUP-SIMPLE.sql
 
-📊 ÉTAT ACTUEL :
-
-APIs Backend    : ✅ 100% fonctionnel (test OK)
-Frontend /dist/ : ❌ Ancien (à uploader)
-config.php      : ✅ Clés chargées (test OK)
-
-Build fait le : 10 Oct 2025 - 03:30 UTC
-Build time    : 12.94s
-Taille        : ~800 KB gzippé
-Erreurs       : 0
-
-═══════════════════════════════════════════════════════════════════════════
-
-📖 GUIDES DÉTAILLÉS (si besoin) :
-
-→ UPLOAD-1-FICHIER.md        : Guide upload complet
-→ CORRECTIONS-TRIPLE-URGENTES.md : Explications techniques
-
-═══════════════════════════════════════════════════════════════════════════
+DURÉE: 6 MINUTES MAX 🚀
