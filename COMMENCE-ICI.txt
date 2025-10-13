@@ -1,75 +1,102 @@
-╔══════════════════════════════════════════════════════════════════════════════╗
-║                       SOLUTION FINALE - ERREUR RÉSOLUE                       ║
-╚══════════════════════════════════════════════════════════════════════════════╝
 
-❌ ERREUR: "there is no unique constraint matching the ON CONFLICT"
+═══════════════════════════════════════════════════════════════════════
+         ✅ SUPABASE CONNECTÉE - IL MANQUE JUSTE LES DONNÉES
+═══════════════════════════════════════════════════════════════════════
 
-✅ SOLUTION: J'ai ajouté les contraintes UNIQUE manquantes dans le script
+SITUATION ACTUELLE:
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ Supabase connectée: https://drohhxrkoequjphvabvq.supabase.co
+✅ Clés API configurées dans .env
+✅ Build prêt dans dist/
+❌ Tables n'existent pas encore dans Supabase
+❌ 0 articles dans la base de données
 
-🎯 ÉTAPE 1: EXÉCUTER LE SQL (2 MINUTES)
+RÉSULTAT:
+Le site affiche "0 Articles Publiés" car Supabase est vide.
 
-1. Ouvre: SUPABASE-REPAIR-FINAL.sql
-2. Copie TOUT le contenu (Ctrl+A, Ctrl+C)
-3. Va sur: https://supabase.com/dashboard
-4. Sélectionne: Projet drohhxrkoequjphvabvq
-5. Menu gauche → SQL Editor
-6. Clique: New query
-7. Colle le SQL (Ctrl+V)
-8. Clique: RUN (ou Ctrl+Enter)
-9. Attends 3 secondes
-10. Vérifie en bas:
-    ✅ Articles créés: 2
-    ✅ FAQ extraites: 4
+═══════════════════════════════════════════════════════════════════════
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎯 SOLUTION EN 5 MINUTES (2 ÉTAPES)
 
-🎯 ÉTAPE 2: REDÉPLOYER EDGE FUNCTION (1 MINUTE)
+═══════════════════════════════════════════════════════════════════════
 
-1. Supabase Dashboard → Edge Functions
-2. Trouve: blog-articles
-3. Clique dessus
-4. Bouton: Edit Function
-5. Copie: supabase/functions/blog-articles/index.ts
-6. Colle dans l'éditeur
-7. Bouton: Deploy
-8. Attends: "Deployed successfully"
+ÉTAPE 1: CRÉER LES TABLES (2 MIN)
+──────────────────────────────────
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. Va sur: https://drohhxrkoequjphvabvq.supabase.co
 
-🎯 ÉTAPE 3: UPLOAD SUR IONOS (3 MINUTES)
+2. Clique sur "SQL Editor" dans le menu gauche
 
-1. Ouvre FileZilla
-2. Connecte-toi à taxiassur.com
-3. GAUCHE: navigue vers ton dossier /dist/
-4. DROITE: racine du site (/)
-5. Sélectionne TOUT dans dist/
-6. Glisse vers la droite
-7. Confirme "Écraser"
+3. Clique "New query"
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+4. Ouvre ce fichier dans un éditeur de texte:
+   SUPABASE-REPAIR-FINAL.sql
 
-🎯 ÉTAPE 4: TEST (30 SECONDES)
+5. Sélectionne TOUT (Ctrl+A)
 
-1. Va sur: https://taxiassur.com/blog
-2. Vide cache: Ctrl+Shift+R
-3. Ouvre console: F12
-4. Cherche: "✅ Loaded 2 blog posts from Supabase"
-5. Va sur: https://taxiassur.com/faq
-6. Cherche: "✅ Loaded 4 FAQ from Supabase"
+6. Copie (Ctrl+C)
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+7. Colle dans SQL Editor de Supabase (Ctrl+V)
 
-✅ CE QUE TU AURAS:
+8. Clique le bouton vert "RUN" (ou appuie sur F5)
 
-→ Blog fonctionnel avec 2 articles
-→ FAQ automatiquement remplie (4 questions)
-→ Système de publication automatique
-→ Publier article → FAQ extraites automatiquement !
+✅ Tu dois voir: "Success. No rows returned"
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+═══════════════════════════════════════════════════════════════════════
 
-🔥 DURÉE TOTALE: 6 MINUTES 30 SECONDES
+ÉTAPE 2: INSÉRER LES 24 ARTICLES (3 MIN)
+─────────────────────────────────────────
 
-COMMENCE MAINTENANT ! 🚀
+1. Toujours dans SQL Editor, clique "New query"
+
+2. Ouvre ce fichier dans un éditeur de texte:
+   INSERT-24-ARTICLES-BLOG.sql
+   (C'est un gros fichier: 1256 lignes, 81 KB)
+
+3. Sélectionne TOUT (Ctrl+A)
+
+4. Copie (Ctrl+C)
+
+5. Colle dans SQL Editor de Supabase (Ctrl+V)
+
+6. Clique "RUN" (peut prendre 20-30 secondes)
+
+✅ Tu dois voir: "Success. INSERT 0 24"
+
+═══════════════════════════════════════════════════════════════════════
+
+VÉRIFICATION:
+─────────────
+
+Dans SQL Editor, exécute cette requête:
+
+SELECT COUNT(*) FROM blog_posts;
+
+✅ Résultat attendu: 24
+
+═══════════════════════════════════════════════════════════════════════
+
+ENSUITE: UPLOAD DIST/ SUR IONOS
+────────────────────────────────
+
+1. Connecte-toi à IONOS via FTP
+2. Va dans public_html (ou www)
+3. Upload TOUT le contenu du dossier dist/
+4. Écrase les fichiers existants
+
+═══════════════════════════════════════════════════════════════════════
+
+TEST FINAL:
+───────────
+
+Visite: https://taxiassur.com/blog
+
+✅ Tu dois voir: "24 Articles Publiés"
+✅ Grille de 24 articles avec images
+
+═══════════════════════════════════════════════════════════════════════
+
+C'EST TOUT ! 🎉
+
+═══════════════════════════════════════════════════════════════════════
+
