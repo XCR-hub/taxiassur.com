@@ -1,109 +1,75 @@
 ╔══════════════════════════════════════════════════════════════════════════════╗
-║                                                                              ║
-║                    🚀 DÉPLOIEMENT FINAL TAXIASSUR 🚀                        ║
-║                                                                              ║
-║                         TOUT EST PRÊT POUR PRODUCTION                        ║
-║                                                                              ║
+║                       SOLUTION FINALE - ERREUR RÉSOLUE                       ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 
-📋 TU AS 3 FICHIERS IMPORTANTS:
+❌ ERREUR: "there is no unique constraint matching the ON CONFLICT"
 
-1️⃣  SUPABASE-FINAL-SETUP.sql
-    → À exécuter dans Supabase SQL Editor
-    → Configure blog_posts + faq_entries + fonctions SQL
-    → Crée 2 articles de test + 4 FAQ automatiques
-    → Durée: 30 secondes
-
-2️⃣  EDGE-FUNCTION-BLOG-GUIDE.md
-    → Guide d'utilisation de l'Edge Function blog-articles
-    → Comment publier un article automatiquement
-    → Exemples curl et code React
-    → La fonction est DÉJÀ déployée !
-
-3️⃣  DEPLOIEMENT-FINAL-COMPLET.md
-    → Guide étape par étape COMPLET
-    → Configuration Supabase → Build → Upload IONOS → Test
-    → Checklist finale
-    → Dépannage
+✅ SOLUTION: J'ai ajouté les contraintes UNIQUE manquantes dans le script
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-🎯 ORDRE DES OPÉRATIONS:
+🎯 ÉTAPE 1: EXÉCUTER LE SQL (2 MINUTES)
 
-ÉTAPE 1: Configuration Supabase (5 min)
-└─ Ouvre SUPABASE-FINAL-SETUP.sql
-└─ Copie TOUT le contenu
-└─ Va sur https://supabase.com/dashboard
-└─ Projet: drohhxrkoequjphvabvq
-└─ Menu: SQL Editor → New query
-└─ Colle et clique RUN
-└─ Vérifie: "Articles créés: 2" + "FAQ extraites: 4"
-
-ÉTAPE 2: Upload IONOS (3 min)
-└─ Ouvre FileZilla (FTP)
-└─ Connecte-toi à taxiassur.com
-└─ GAUCHE: dossier "dist/"
-└─ DROITE: racine du site "/"
-└─ Sélectionne TOUT dans dist/
-└─ Glisse-dépose vers la droite
-└─ Confirme "Écraser"
-
-ÉTAPE 3: Test Final (2 min)
-└─ Va sur https://taxiassur.com/blog
-└─ Vide le cache (Ctrl+Shift+R)
-└─ Ouvre console (F12)
-└─ Vérifie: "✅ Loaded 2 blog posts from Supabase"
-└─ Va sur https://taxiassur.com/faq
-└─ Vérifie: "✅ Loaded 4 FAQ from Supabase"
+1. Ouvre: SUPABASE-REPAIR-FINAL.sql
+2. Copie TOUT le contenu (Ctrl+A, Ctrl+C)
+3. Va sur: https://supabase.com/dashboard
+4. Sélectionne: Projet drohhxrkoequjphvabvq
+5. Menu gauche → SQL Editor
+6. Clique: New query
+7. Colle le SQL (Ctrl+V)
+8. Clique: RUN (ou Ctrl+Enter)
+9. Attends 3 secondes
+10. Vérifie en bas:
+    ✅ Articles créés: 2
+    ✅ FAQ extraites: 4
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-✅ CE QUI EST DÉJÀ FAIT:
+🎯 ÉTAPE 2: REDÉPLOYER EDGE FUNCTION (1 MINUTE)
 
-✔ Build production optimisé (dist/ prêt)
-✔ 24 articles JSON créés
-✔ Code blog + FAQ avec fallback
-✔ Configuration Supabase dans .env et env-config.js
-✔ Edge Function blog-articles déployée
-✔ Trigger SQL pour extraction automatique FAQ
-✔ Système de publication automatique complet
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-🎉 RÉSULTAT FINAL:
-
-Après avoir suivi les 3 étapes:
-
-1. Blog fonctionnel avec 2 articles depuis Supabase
-2. FAQ automatiquement remplie avec 4 questions
-3. Système de publication automatique opérationnel
-4. Tu pourras publier de nouveaux articles via Edge Function
-5. Les FAQ seront extraites automatiquement
-6. Tout apparaît instantanément sur le site
+1. Supabase Dashboard → Edge Functions
+2. Trouve: blog-articles
+3. Clique dessus
+4. Bouton: Edit Function
+5. Copie: supabase/functions/blog-articles/index.ts
+6. Colle dans l'éditeur
+7. Bouton: Deploy
+8. Attends: "Deployed successfully"
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-📞 EN CAS DE PROBLÈME:
+🎯 ÉTAPE 3: UPLOAD SUR IONOS (3 MINUTES)
 
-1. Lis DEPLOIEMENT-FINAL-COMPLET.md section "Dépannage"
-2. Vérifie la console du navigateur (F12)
-3. Copie le message d'erreur EXACT
-4. Note l'étape où tu es bloqué
-5. Demande de l'aide avec ces infos
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-🚀 COMMENCE PAR OUVRIR:
-
-   >>> DEPLOIEMENT-FINAL-COMPLET.md <<<
-
-   Tout y est expliqué étape par étape !
+1. Ouvre FileZilla
+2. Connecte-toi à taxiassur.com
+3. GAUCHE: navigue vers ton dossier /dist/
+4. DROITE: racine du site (/)
+5. Sélectionne TOUT dans dist/
+6. Glisse vers la droite
+7. Confirme "Écraser"
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Instance Supabase: drohhxrkoequjphvabvq.supabase.co
-Edge Function: blog-articles (DÉJÀ DÉPLOYÉE ✅)
-Dossier à uploader: dist/
-Site production: https://taxiassur.com
+🎯 ÉTAPE 4: TEST (30 SECONDES)
 
-TU ES À 10 MINUTES DU LANCEMENT ! 🔥
+1. Va sur: https://taxiassur.com/blog
+2. Vide cache: Ctrl+Shift+R
+3. Ouvre console: F12
+4. Cherche: "✅ Loaded 2 blog posts from Supabase"
+5. Va sur: https://taxiassur.com/faq
+6. Cherche: "✅ Loaded 4 FAQ from Supabase"
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ CE QUE TU AURAS:
+
+→ Blog fonctionnel avec 2 articles
+→ FAQ automatiquement remplie (4 questions)
+→ Système de publication automatique
+→ Publier article → FAQ extraites automatiquement !
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔥 DURÉE TOTALE: 6 MINUTES 30 SECONDES
+
+COMMENCE MAINTENANT ! 🚀

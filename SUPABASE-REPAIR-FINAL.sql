@@ -8,7 +8,33 @@
 */
 
 -- ========================================
--- ÉTAPE 1: Ajouter colonnes manquantes à blog_posts
+-- ÉTAPE 1: Ajouter contraintes UNIQUE (CRITIQUE)
+-- ========================================
+
+-- blog_posts: slug UNIQUE
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'blog_posts_slug_key'
+  ) THEN
+    ALTER TABLE blog_posts ADD CONSTRAINT blog_posts_slug_key UNIQUE (slug);
+    RAISE NOTICE '✅ Contrainte UNIQUE ajoutée sur blog_posts.slug';
+  END IF;
+END $$;
+
+-- faq_entries: question UNIQUE (CRITIQUE pour ON CONFLICT)
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'faq_entries_question_key'
+  ) THEN
+    ALTER TABLE faq_entries ADD CONSTRAINT faq_entries_question_key UNIQUE (question);
+    RAISE NOTICE '✅ Contrainte UNIQUE ajoutée sur faq_entries.question';
+  END IF;
+END $$;
+
+-- ========================================
+-- ÉTAPE 2: Ajouter colonnes manquantes à blog_posts
 -- ========================================
 
 -- Colonne published
@@ -49,7 +75,7 @@ BEGIN
 END $$;
 
 -- ========================================
--- ÉTAPE 2: Ajouter colonnes manquantes à faq_entries
+-- ÉTAPE 3: Ajouter colonnes manquantes à faq_entries
 -- ========================================
 
 -- Colonne published
@@ -107,7 +133,7 @@ BEGIN
 END $$;
 
 -- ========================================
--- ÉTAPE 3: Créer index SEULEMENT s'ils n'existent pas
+-- ÉTAPE 4: Créer index SEULEMENT s'ils n'existent pas
 -- ========================================
 
 -- Index blog_posts
@@ -149,7 +175,7 @@ DO $$ BEGIN
 END $$;
 
 -- ========================================
--- ÉTAPE 4: Supprimer anciennes fonctions
+-- ÉTAPE 5: Supprimer anciennes fonctions
 -- ========================================
 
 DROP FUNCTION IF EXISTS get_blog_posts() CASCADE;
@@ -159,7 +185,7 @@ DROP FUNCTION IF EXISTS extract_faq_from_blog() CASCADE;
 DROP FUNCTION IF EXISTS get_faq_entries(text) CASCADE;
 
 -- ========================================
--- ÉTAPE 5: Créer fonctions SQL
+-- ÉTAPE 6: Créer fonctions SQL
 -- ========================================
 
 -- Fonction GET BLOG POSTS
@@ -331,7 +357,7 @@ END;
 $$;
 
 -- ========================================
--- ÉTAPE 6: Créer trigger
+-- ÉTAPE 7: Créer trigger
 -- ========================================
 
 DROP TRIGGER IF EXISTS trigger_extract_faq ON blog_posts;
@@ -343,7 +369,7 @@ CREATE TRIGGER trigger_extract_faq
   EXECUTE FUNCTION extract_faq_from_blog();
 
 -- ========================================
--- ÉTAPE 7: Insérer articles de test
+-- ÉTAPE 8: Insérer articles de test
 -- ========================================
 
 SELECT upsert_blog_post(
