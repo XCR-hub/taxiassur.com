@@ -22,18 +22,25 @@ if (empty($openaiKey)) {
     echo json_encode([
         'success' => false,
         'error' => 'OpenAI API key not configured',
+        'solution' => 'Contactez l\'administrateur pour configurer la clé OpenAI',
         'debug' => [
             'env_function_exists' => function_exists('env'),
-            'vite_key_value' => env('VITE_OPENAI_API_KEY') ?: 'NOT_SET',
-            'openai_key_value' => env('OPENAI_API_KEY') ?: 'NOT_SET',
-            'getenv_vite' => getenv('VITE_OPENAI_API_KEY') ?: 'NOT_SET',
-            'getenv_openai' => getenv('OPENAI_API_KEY') ?: 'NOT_SET',
-            '_ENV_vite' => $_ENV['VITE_OPENAI_API_KEY'] ?? 'NOT_SET',
-            '_ENV_openai' => $_ENV['OPENAI_API_KEY'] ?? 'NOT_SET',
             'config_file_exists' => file_exists(__DIR__ . '/config.php') ? 'yes' : 'no',
             'config_file_readable' => is_readable(__DIR__ . '/config.php') ? 'yes' : 'no',
-            'suggestion' => 'Upload config.php to /api/ directory'
+            'suggestion' => 'Vérifiez que config.php contient VITE_OPENAI_API_KEY'
         ]
+    ]);
+    exit;
+}
+
+// Vérifier que la clé est valide (format basique)
+if (!preg_match('/^sk-[a-zA-Z0-9-_]+$/', $openaiKey)) {
+    http_response_code(500);
+    echo json_encode([
+        'success' => false,
+        'error' => 'Clé OpenAI invalide (format incorrect)',
+        'solution' => 'La clé doit commencer par "sk-" et contenir uniquement des caractères alphanumériques',
+        'key_preview' => substr($openaiKey, 0, 8) . '...'
     ]);
     exit;
 }
@@ -191,12 +198,30 @@ if ($response === false) {
 }
 
 if ($httpCode !== 200) {
+    $errorData = json_decode($response, true);
+    $errorMessage = 'OpenAI API error';
+    $solution = 'Erreur inconnue';
+
+    // Messages d'erreur personnalisés
+    if ($httpCode === 401) {
+        $errorMessage = 'Clé API OpenAI invalide ou expirée';
+        $solution = 'Vérifiez que votre clé API OpenAI est valide sur https://platform.openai.com/api-keys';
+    } elseif ($httpCode === 429) {
+        $errorMessage = 'Limite de requêtes atteinte';
+        $solution = 'Attendez quelques secondes et réessayez, ou augmentez votre quota OpenAI';
+    } elseif ($httpCode === 500) {
+        $errorMessage = 'Erreur serveur OpenAI';
+        $solution = 'Le service OpenAI est temporairement indisponible, réessayez dans quelques minutes';
+    }
+
     http_response_code(500);
     echo json_encode([
         'success' => false,
-        'error' => 'OpenAI API error',
+        'error' => $errorMessage,
+        'solution' => $solution,
         'http_code' => $httpCode,
-        'details' => json_decode($response, true)
+        'details' => $errorData,
+        'key_preview' => substr($openaiKey, 0, 10) . '...' . substr($openaiKey, -5)
     ]);
     exit;
 }
