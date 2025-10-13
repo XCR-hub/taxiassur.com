@@ -1,78 +1,63 @@
-╔══════════════════════════════════════════════════════════════════════════════╗
-║                                                                              ║
-║              🚨 ERREUR SQL RÉSOLUE - NOUVELLE SOLUTION 🚨                   ║
-║                                                                              ║
-╚══════════════════════════════════════════════════════════════════════════════╝
 
-❌ ERREUR 1: "column priority does not exist"
-❌ ERREUR 2: "column published does not exist"
+═══════════════════════════════════════════════════════════════════════
+                     📖 LIRE EN PREMIER 📖
+═══════════════════════════════════════════════════════════════════════
 
-✅ CAUSE: Tes tables existent déjà mais SANS certaines colonnes
+SITUATION:
+Le site https://taxiassur.com/blog affiche "0 Articles Publiés"
 
-✅ SOLUTION FINALE: SUPABASE-REPAIR-FINAL.sql
+RAISON:
+Les articles sont dans le projet (24 fichiers JSON) mais pas dans 
+Supabase (base de données vide).
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SOLUTION:
+Exécuter 2 fichiers SQL dans Supabase (5 minutes)
 
-🎯 ACTION IMMÉDIATE (2 MINUTES)
+═══════════════════════════════════════════════════════════════════════
 
-ÉTAPE 1: Ouvre Supabase Dashboard
-        https://supabase.com/dashboard
-        Projet: drohhxrkoequjphvabvq
+FICHIERS À EXÉCUTER (dans cet ordre):
 
-ÉTAPE 2: SQL Editor → New query
+1️⃣  SUPABASE-REPAIR-FINAL.sql
+    → Crée les tables blog_posts et faq_entries
+    → 200 lignes environ
+    → Durée: 2 secondes
 
-ÉTAPE 3: Copie TOUT le fichier: SUPABASE-REPAIR-FINAL.sql
+2️⃣  INSERT-24-ARTICLES-BLOG.sql
+    → Insère les 24 articles avec leurs FAQ
+    → 1256 lignes
+    → Durée: 20-30 secondes
 
-ÉTAPE 4: Colle dans l'éditeur et clique RUN
+═══════════════════════════════════════════════════════════════════════
 
-ÉTAPE 5: Vérifie en bas de l'écran:
-        ✅ Articles créés: 2
-        ✅ FAQ extraites: 4
-        📝 2 articles affichés
-        ❓ 4 FAQ affichées
+OÙ EXÉCUTER:
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Dashboard Supabase → SQL Editor → New query
+URL: https://drohhxrkoequjphvabvq.supabase.co
 
-🔧 POURQUOI CE SCRIPT EST DIFFÉRENT
+═══════════════════════════════════════════════════════════════════════
 
-Ce script:
-✅ Vérifie chaque colonne AVANT de l'ajouter
-✅ Ajoute SEULEMENT ce qui manque
-✅ Ne détruit RIEN
-✅ Crée les index de manière sécurisée
-✅ Utilise COALESCE pour gérer les NULL
-✅ Fonctionne même si les tables sont partiellement créées
+MÉTHODE:
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. Ouvre le fichier .sql dans un éditeur de texte
+2. Copie TOUT le contenu (Ctrl+A puis Ctrl+C)
+3. Colle dans SQL Editor Supabase (Ctrl+V)
+4. Clique RUN
+5. Attends "Success"
+6. Répète pour le 2e fichier
 
-📋 APRÈS LE SQL (4 MINUTES)
+═══════════════════════════════════════════════════════════════════════
 
-ÉTAPE 1: Redéployer Edge Function blog-articles
-        Dashboard → Edge Functions → blog-articles → Edit
-        Copie: supabase/functions/blog-articles/index.ts
-        Deploy
+APRÈS:
 
-ÉTAPE 2: Upload dist/ sur IONOS
-        FileZilla → Upload tout le dossier dist/
+Upload dist/ sur IONOS via FTP
+→ Le site affichera les 24 articles !
 
-ÉTAPE 3: Test
-        https://taxiassur.com/blog (Ctrl+Shift+R)
-        Console: "✅ Loaded 2 blog posts from Supabase"
+═══════════════════════════════════════════════════════════════════════
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+GUIDES DÉTAILLÉS DISPONIBLES:
 
-🎉 RÉSULTAT
+- ACTION-IMMEDIATE-FINAL.txt (ultra simple)
+- GUIDE-FINAL-SUPABASE-ARTICLES.md (détaillé)
+- RECAP-FINAL-COMPLET.md (récapitulatif complet)
 
-Système de publication automatique fonctionnel:
-→ Tu publies un article via Edge Function
-→ FAQ extraites automatiquement
-→ Visible instantanément sur le site
-→ ZÉRO manipulation manuelle
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-📁 FICHIER À UTILISER: SUPABASE-REPAIR-FINAL.sql
-
-DURÉE TOTALE: 6 MINUTES
-
-COMMENCE MAINTENANT ! 🚀
+═══════════════════════════════════════════════════════════════════════
