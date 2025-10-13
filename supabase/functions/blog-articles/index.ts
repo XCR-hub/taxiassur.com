@@ -94,9 +94,9 @@ Deno.serve(async (req: Request) => {
       const article = await req.json();
 
       // Validation
-      if (!article.id || !article.slug || !article.title || !article.excerpt || !article.content) {
+      if (!article.slug || !article.title || !article.excerpt || !article.content) {
         return new Response(
-          JSON.stringify({ error: 'Missing required fields: id, slug, title, excerpt, content' }),
+          JSON.stringify({ error: 'Missing required fields: slug, title, excerpt, content' }),
           {
             status: 400,
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -104,17 +104,13 @@ Deno.serve(async (req: Request) => {
         );
       }
 
-      // Utilise une fonction SQL pour contourner le cache PostgREST
+      // Utilise la fonction SQL upsert_blog_post
       const { data, error } = await supabase.rpc('upsert_blog_post', {
-        p_id: article.id,
         p_slug: article.slug,
         p_title: article.title,
         p_excerpt: article.excerpt,
         p_content: article.content,
-        p_meta_description: article.meta_description || null,
         p_tags: article.tags || [],
-        p_published: article.published || false,
-        p_reading_time: article.reading_time || 5,
         p_faq: article.faq || []
       });
 
@@ -129,8 +125,15 @@ Deno.serve(async (req: Request) => {
         );
       }
 
+      // Compter les FAQ extraites
+      const faqCount = article.faq ? article.faq.length : 0;
+
       return new Response(
-        JSON.stringify({ success: true, data }),
+        JSON.stringify({
+          success: true,
+          data,
+          faq_extracted: faqCount
+        }),
         {
           status: 200,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
