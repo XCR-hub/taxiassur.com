@@ -1,63 +1,119 @@
 
-═══════════════════════════════════════════════════════════════════════
-                     📖 LIRE EN PREMIER 📖
-═══════════════════════════════════════════════════════════════════════
+╔══════════════════════════════════════════════════════════════════════╗
+║                                                                      ║
+║             ✅ FICHIER SUPABASE-REPAIR-FINAL.sql RECRÉÉ             ║
+║                                                                      ║
+╚══════════════════════════════════════════════════════════════════════╝
 
-SITUATION:
-Le site https://taxiassur.com/blog affiche "0 Articles Publiés"
+FICHIER CRÉÉ:
+─────────────
 
-RAISON:
-Les articles sont dans le projet (24 fichiers JSON) mais pas dans 
-Supabase (base de données vide).
+✅ SUPABASE-REPAIR-FINAL.sql (complet et prêt)
 
-SOLUTION:
-Exécuter 2 fichiers SQL dans Supabase (5 minutes)
+CONTENU:
+────────
 
-═══════════════════════════════════════════════════════════════════════
+✅ Supprime les anciennes tables (DROP TABLE CASCADE)
+✅ Crée blog_posts (14 colonnes, structure complète)
+✅ Crée faq_entries (7 colonnes)
+✅ Crée les index pour performance
+✅ Active RLS sur toutes les tables
+✅ Configure les politiques de sécurité:
+   - Lecture publique pour contenu publié
+   - Écriture réservée aux authentifiés
+✅ Crée les triggers pour updated_at automatique
 
-FICHIERS À EXÉCUTER (dans cet ordre):
+══════════════════════════════════════════════════════════════════════
 
-1️⃣  SUPABASE-REPAIR-FINAL.sql
-    → Crée les tables blog_posts et faq_entries
-    → 200 lignes environ
-    → Durée: 2 secondes
+📋 PROCÉDURE COMPLÈTE (8 MINUTES):
 
-2️⃣  INSERT-24-ARTICLES-BLOG.sql
-    → Insère les 24 articles avec leurs FAQ
-    → 1256 lignes
-    → Durée: 20-30 secondes
+1️⃣  SUPABASE-REPAIR-FINAL.sql ⭐ RECRÉÉ
+    → https://drohhxrkoequjphvabvq.supabase.co
+    → SQL Editor → New query
+    → Copie-colle tout le fichier
+    → RUN
+    ✅ Supprime et recrée les tables proprement
 
-═══════════════════════════════════════════════════════════════════════
+2️⃣  FIX-RLS-PUBLIC-ACCESS.sql
+    → SQL Editor → New query
+    → Copie-colle tout le fichier
+    → RUN
+    ✅ Configure les permissions publiques
+    ✅ Crée les fonctions RPC pour stats
 
-OÙ EXÉCUTER:
+3️⃣  INSERT-24-ARTICLES-BLOG.sql
+    → SQL Editor → New query
+    → Copie-colle tout le fichier (1256 lignes)
+    → RUN (attends 30 secondes)
+    ✅ Insère 24 articles avec FAQ
 
-Dashboard Supabase → SQL Editor → New query
-URL: https://drohhxrkoequjphvabvq.supabase.co
+══════════════════════════════════════════════════════════════════════
 
-═══════════════════════════════════════════════════════════════════════
+VÉRIFICATION:
+─────────────
 
-MÉTHODE:
+Dans SQL Editor:
 
-1. Ouvre le fichier .sql dans un éditeur de texte
-2. Copie TOUT le contenu (Ctrl+A puis Ctrl+C)
-3. Colle dans SQL Editor Supabase (Ctrl+V)
-4. Clique RUN
-5. Attends "Success"
-6. Répète pour le 2e fichier
+-- Vérifier les tables
+SELECT table_name FROM information_schema.tables 
+WHERE table_name IN ('blog_posts', 'faq_entries');
 
-═══════════════════════════════════════════════════════════════════════
+-- Compter les articles
+SELECT COUNT(*) FROM blog_posts;
+→ Devrait retourner: 24
 
-APRÈS:
+-- Compter les FAQ
+SELECT COUNT(*) FROM faq_entries;
+→ Devrait retourner: 8+
 
-Upload dist/ sur IONOS via FTP
-→ Le site affichera les 24 articles !
+-- Tester un article
+SELECT title, slug, published FROM blog_posts LIMIT 1;
 
-═══════════════════════════════════════════════════════════════════════
+══════════════════════════════════════════════════════════════════════
 
-GUIDES DÉTAILLÉS DISPONIBLES:
+STRUCTURE blog_posts:
+─────────────────────
 
-- ACTION-IMMEDIATE-FINAL.txt (ultra simple)
-- GUIDE-FINAL-SUPABASE-ARTICLES.md (détaillé)
-- RECAP-FINAL-COMPLET.md (récapitulatif complet)
+- id (uuid, primary key)
+- title (text, requis)
+- slug (text, unique, requis)
+- excerpt (text)
+- content (text, requis)
+- author (text, défaut: 'TaxiAssur')
+- published (boolean, défaut: true)
+- featured_image (text)
+- meta_title (text)
+- meta_description (text)
+- keywords (text[])
+- read_time (integer, défaut: 5)
+- views (integer, défaut: 0)
+- created_at (timestamptz, auto)
+- updated_at (timestamptz, auto)
 
-═══════════════════════════════════════════════════════════════════════
+══════════════════════════════════════════════════════════════════════
+
+RÉSULTAT ATTENDU:
+─────────────────
+
+✅ Tables propres sans conflits
+✅ RLS configuré correctement
+✅ Triggers fonctionnels
+✅ Index pour performance
+✅ Prêt pour INSERT-24-ARTICLES-BLOG.sql
+
+══════════════════════════════════════════════════════════════════════
+
+ENSUITE:
+────────
+
+Après les 3 fichiers SQL:
+→ Upload dist/ sur IONOS
+→ Teste https://taxiassur.com/blog
+→ 24 articles visibles + FAQ
+
+══════════════════════════════════════════════════════════════════════
+
+⏱️ TEMPS TOTAL: 8 MINUTES
+
+══════════════════════════════════════════════════════════════════════
+
