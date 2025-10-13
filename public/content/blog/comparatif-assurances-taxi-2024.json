@@ -7,5 +7,27 @@
   "author": "Équipe TaxiAssur",
   "category": "Comparatifs",
   "image": "/image.png",
-  "readTime": "8 min"
+  "readTime": "8 min",
+  "faq": [
+    {
+      "q": "Quel est le meilleur assureur taxi en 2024 ?",
+      "a": "TaxiAssur offre le meilleur rapport qualité-prix avec des tarifs -35% inférieurs à la concurrence, RC Pro incluse, souscription en ligne en 5 minutes et attestation immédiate. Note client : 4.8/5."
+    },
+    {
+      "q": "Quelle différence de prix entre TaxiAssur et AXA Pro ?",
+      "a": "TaxiAssur coûte 1 430€/an en moyenne contre 2 400€/an chez AXA Pro, soit une économie de 970€ par an. De plus, la RC Pro est incluse chez TaxiAssur alors qu'elle est en option chez AXA (+400€)."
+    },
+    {
+      "q": "La RC Professionnelle est-elle obligatoire pour les taxis ?",
+      "a": "Oui, absolument ! Elle couvre les dommages causés aux clients pendant le transport. Elle coûte 300-600€/an en option chez la plupart des assureurs, mais est incluse gratuitement dans les offres TaxiAssur."
+    },
+    {
+      "q": "Puis-je souscrire une assurance taxi en ligne ?",
+      "a": "Oui, TaxiAssur propose une souscription 100% en ligne en 5 minutes avec attestation immédiate par email sous 10 minutes. Les assureurs traditionnels (AXA, Macif) nécessitent souvent un passage en agence."
+    },
+    {
+      "q": "Quels sont les critères pour choisir son assurance taxi ?",
+      "a": "Les 5 critères prioritaires sont : RC Pro incluse, prix total avec toutes options, souscription rapide, service sinistre 24/7, et avis clients indépendants. TaxiAssur excelle sur tous ces points."
+    }
+  ]
 }

@@ -7,5 +7,23 @@
   "author": "Équipe TaxiAssur",
   "category": "Guides",
   "image": "/image.png",
-  "readTime": "6 min"
+  "readTime": "6 min",
+  "faq": [
+    {
+      "q": "Quelle est la surprime pour un jeune conducteur de taxi ?",
+      "a": "La surprime peut aller de +60% à +100% la première année. Elle diminue progressivement : +50% la 2ème année, +25% la 3ème année, puis disparaît après 3 ans sans sinistre."
+    },
+    {
+      "q": "Comment réduire le coût de l'assurance taxi en tant que jeune conducteur ?",
+      "a": "Plusieurs solutions : formation AAC (-50% de surprime), stage de perfectionnement (-10%), assurance au kilomètre (si moins de 15 000 km/an), choisir un véhicule de moins de 100 CV, ou passer par TaxiAssur pour bénéficier de tarifs négociés (-35%)."
+    },
+    {
+      "q": "Puis-je obtenir une assurance taxi avec moins de 3 ans de permis ?",
+      "a": "Oui, absolument. Vous êtes considéré comme jeune conducteur mais pouvez obtenir une assurance. Le coût sera plus élevé (3 500-4 500€/an vs 2 200€ pour un conducteur confirmé) mais plusieurs solutions existent pour réduire la facture."
+    },
+    {
+      "q": "La conduite accompagnée réduit-elle la surprime jeune conducteur taxi ?",
+      "a": "Oui ! Avec la formation AAC, la surprime passe de +100% à +50% la première année, soit une économie d'environ 1 100€/an. C'est l'une des meilleures solutions pour les jeunes chauffeurs de taxi."
+    }
+  ]
 }
