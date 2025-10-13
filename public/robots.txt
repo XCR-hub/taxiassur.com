@@ -1,23 +1,14 @@
 User-agent: *
 Allow: /
-Disallow: /backoffice
+
+Sitemap: https://taxiassur.com/sitemap.xml
+
+# Optimisation crawl
+Crawl-delay: 1
+
+# Interdictions
+Disallow: /admin/
 Disallow: /api/
-Disallow: /webhooks/
-Disallow: /admin
-Disallow: /test-
-Disallow: /debug
-Disallow: /server-check
-Disallow: /*.log
-Disallow: /config.php
-Disallow: /.env
-
-Sitemap: https://www.taxiassur.com/sitemap.xml
-
-User-agent: facebookexternalhit
-Allow: /
-
-User-agent: Twitterbot
-Allow: /
-
-User-agent: LinkedInBot
-Allow: /
+Disallow: /backoffice/
+Disallow: /*.json$
+Disallow: /*?*utm_
