@@ -49,103 +49,60 @@ export async function pingAllSearchEngines(urls: string[]): Promise<{
   success: boolean;
   results: Array<{ engine: string; status: string; note?: string }>;
 }> {
-  const results = [];
-  const siteUrl = 'https://taxiassur.com';
-
-  // 1. IndexNow API (Google, Bing, Yandex)
   try {
-    const indexNowKey = 'taxiassur-indexnow-2024';
-    const indexNowEndpoints = [
-      'https://api.indexnow.org/indexnow',
-      'https://www.bing.com/indexnow',
-      'https://yandex.com/indexnow'
-    ];
+    // Use Supabase Edge Function to bypass CORS
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-    for (const endpoint of indexNowEndpoints) {
-      try {
-        const response = await fetch(endpoint, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            host: 'taxiassur.com',
-            key: indexNowKey,
-            keyLocation: `${siteUrl}/${indexNowKey}.txt`,
-            urlList: urls
-          })
-        });
-
-        const engineName = endpoint.includes('bing') ? 'Bing IndexNow' :
-                          endpoint.includes('yandex') ? 'Yandex IndexNow' :
-                          'IndexNow API';
-
-        results.push({
-          engine: engineName,
-          status: response.ok ? 'success' : 'partial',
-          note: response.ok ?
-            `${urls.length} URLs soumises` :
-            'Indexation progressive en cours'
-        });
-      } catch (err) {
-        // Continue même si un endpoint échoue
-      }
+    if (!supabaseUrl || !supabaseKey) {
+      console.error('Supabase credentials missing');
+      return { success: false, results: [] };
     }
+
+    const response = await fetch(`${supabaseUrl}/functions/v1/indexnow-ping`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${supabaseKey}`
+      },
+      body: JSON.stringify({ urls })
+    });
+
+    if (!response.ok) {
+      throw new Error(`Edge Function error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return {
+      success: data.success,
+      results: data.results || []
+    };
+
   } catch (error) {
-    console.error('IndexNow error:', error);
+    console.error('Ping error:', error);
+
+    // Fallback results if edge function fails
+    return {
+      success: false,
+      results: [
+        {
+          engine: 'IndexNow',
+          status: 'error',
+          note: 'Erreur: Edge Function indexnow-ping non déployée. Déployez-la depuis Supabase Dashboard.'
+        },
+        {
+          engine: 'Google',
+          status: 'monitoring',
+          note: 'Crawl automatique actif'
+        },
+        {
+          engine: 'DuckDuckGo',
+          status: 'monitoring',
+          note: 'Indexé via Bing'
+        }
+      ]
+    };
   }
-
-  // 2. Google - Search Console API (si configuré)
-  results.push({
-    engine: 'Google',
-    status: 'monitoring',
-    note: 'Crawl automatique actif. Soumettez via Search Console pour accélérer.'
-  });
-
-  // 3. Bing Webmaster
-  results.push({
-    engine: 'Bing Webmaster',
-    status: 'monitoring',
-    note: 'Crawl automatique. Soumettez sitemap via Bing Webmaster Tools.'
-  });
-
-  // 4. Yandex Webmaster
-  results.push({
-    engine: 'Yandex',
-    status: 'monitoring',
-    note: 'Découverte automatique. Inscription Yandex Webmaster recommandée.'
-  });
-
-  // 5. DuckDuckGo (utilise Bing)
-  results.push({
-    engine: 'DuckDuckGo',
-    status: 'success',
-    note: 'Indexé via Bing. Pas d\'action supplémentaire requise.'
-  });
-
-  // 6. Qwant
-  results.push({
-    engine: 'Qwant',
-    status: 'monitoring',
-    note: 'Moteur français. Indexation naturelle via liens et contenu FR.'
-  });
-
-  // 7. Ecosia (utilise Bing)
-  results.push({
-    engine: 'Ecosia',
-    status: 'success',
-    note: 'Indexé via Bing. Focus écologique = argument marketing.'
-  });
-
-  // 8. Brave Search
-  results.push({
-    engine: 'Brave Search',
-    status: 'monitoring',
-    note: 'Index indépendant. Soumission via Brave Search Webmaster.'
-  });
-
-  return {
-    success: results.some(r => r.status === 'success'),
-    results
-  };
 }
 
 /**

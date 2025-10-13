@@ -1,12 +1,15 @@
 /*
   # Create RPC function for FAQ entries
-  
+
   1. New Functions
     - get_faq_entries: Returns all published FAQ entries
-  
+
   2. Security
     - Function is accessible to anonymous users (for public FAQ page)
 */
+
+-- Drop existing function if exists (with any signature)
+DROP FUNCTION IF EXISTS get_faq_entries();
 
 -- Function to get FAQ entries
 CREATE OR REPLACE FUNCTION get_faq_entries()

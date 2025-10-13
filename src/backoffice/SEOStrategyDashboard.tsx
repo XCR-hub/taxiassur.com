@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import { TrendingUp, Target, Link2, FileText, MapPin, Zap, Award, CheckCircle, ExternalLink, Search, BarChart3 } from 'lucide-react';
+import { TrendingUp, Target, Link2, FileText, MapPin, Zap, Award, CheckCircle, ExternalLink, Search, BarChart3, Home } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import Card from '../components/Card';
 import { SEARCH_ENGINES, pingAllSearchEngines, getPriorityUrls, SEO_STRATEGY } from '../lib/universal-ping';
 
 const SEOStrategyDashboard: React.FC = () => {
+  const navigate = useNavigate();
   const [pingResults, setPingResults] = useState<any[]>([]);
   const [isPinging, setIsPinging] = useState(false);
   const [expandedSection, setExpandedSection] = useState<string | null>('engines');
@@ -31,14 +33,24 @@ const SEOStrategyDashboard: React.FC = () => {
     <div className="min-h-screen bg-gray-50 p-8">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2 flex items-center">
-            <Award className="mr-3 text-yellow-500" size={40} />
-            Stratégie SEO n°1 - Leads Assurance Taxi
-          </h1>
-          <p className="text-gray-600 text-lg">
-            Système complet pour devenir le leader en demandes de devis assurance taxi
-          </p>
+        <div className="mb-8 flex justify-between items-start">
+          <div>
+            <h1 className="text-4xl font-bold text-gray-900 mb-2 flex items-center">
+              <Award className="mr-3 text-yellow-500" size={40} />
+              Stratégie SEO n°1 - Leads Assurance Taxi
+            </h1>
+            <p className="text-gray-600 text-lg">
+              Système complet pour devenir le leader en demandes de devis assurance taxi
+            </p>
+          </div>
+
+          <button
+            onClick={() => navigate('/backoffice')}
+            className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
+          >
+            <Home size={16} />
+            <span>Accueil Backoffice</span>
+          </button>
         </div>
 
         {/* Action rapide */}
