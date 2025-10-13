@@ -58,3 +58,12 @@ export function getNoIndex(): boolean {
   const noindex = getEnv('VITE_NOINDEX');
   return noindex === 'true';
 }
+
+export function getSupabaseServiceRoleKey(): string {
+  const key = getEnv('VITE_SUPABASE_SERVICE_ROLE_KEY');
+  if (!key) {
+    console.warn('WARNING: VITE_SUPABASE_SERVICE_ROLE_KEY is not configured. Admin operations will fail.');
+    return '';
+  }
+  return key;
+}

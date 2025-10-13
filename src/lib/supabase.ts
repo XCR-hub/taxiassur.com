@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { getSupabaseUrl, getSupabaseAnonKey } from './env';
+import { getSupabaseUrl, getSupabaseAnonKey, getSupabaseServiceRoleKey } from './env';
 
 let supabaseUrl: string;
 let supabaseAnonKey: string;
@@ -18,13 +18,34 @@ try {
   supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRyb2hoeHJrb2VxdWpwaHZhYnZxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk3ODM3NjAsImV4cCI6MjA3NTM1OTc2MH0.LP9fh10fY0nRDjpG4VW2yGZ5sT4BkiDalox8ToMbMlg';
 }
 
-// Supabase client with fallback for development
+// Supabase client with fallback for development (READ operations)
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: false,
     autoRefreshToken: false
   }
 });
+
+// Supabase ADMIN client with Service Role Key (WRITE operations from backoffice)
+// Bypasses RLS - Use only for authenticated admin operations
+let supabaseAdmin: ReturnType<typeof createClient> | null = null;
+
+export const getSupabaseAdmin = () => {
+  if (!supabaseAdmin) {
+    const serviceRoleKey = getSupabaseServiceRoleKey();
+    if (!serviceRoleKey) {
+      throw new Error('Service Role Key not configured. Cannot perform admin operations.');
+    }
+    supabaseAdmin = createClient(supabaseUrl, serviceRoleKey, {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false
+      }
+    });
+    console.log('🔐 Supabase Admin client initialized with Service Role Key');
+  }
+  return supabaseAdmin;
+};
 
 // Helper to check if Supabase is properly configured
 export const isSupabaseConfigured = () => {
