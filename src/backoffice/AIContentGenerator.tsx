@@ -232,9 +232,8 @@ ${generatedContent.faq?.map(f => `**${f.question}**\n${f.answer}`).join('\n\n')}
           const faqEntries = generatedContent.faq.map(faq => ({
             question: faq.question,
             answer: faq.answer,
-            tags: generatedContent.keywords || [],
             category: `Ville - ${city.trim()}`,
-            status: status,
+            order_index: 0
           }));
 
           const { error: faqError } = await adminClient
