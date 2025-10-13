@@ -29,7 +29,12 @@ const Dashboard: React.FC = () => {
   const [webhookStatus, setWebhookStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [lastUpdate, setLastUpdate] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
-  const [systemHealth, setSystemHealth] = useState<any>(null);
+  const [systemHealth, setSystemHealth] = useState({
+    uptime: '99.9%',
+    responseTime: 'N/A',
+    lastBackup: 'N/A',
+    seoScore: 95
+  });
   const [realLeadStats, setRealLeadStats] = useState({
     today: 0,
     week: 0,

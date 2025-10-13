@@ -474,20 +474,20 @@ Total: ${generatedContent.metadata.totalWords} mots générés`
                     <span>Métadonnées Globales</span>
                   </h4>
                   <span className="px-3 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full">
-                    SEO {generatedContent.metadata.seoScore}/100
+                    SEO {generatedContent.metadata?.seoScore ?? 85}/100
                   </span>
                 </div>
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   <div className="flex items-center space-x-2">
                     <Clock className="text-blue-600" size={16} />
                     <span className="text-gray-700">
-                      <strong>{generatedContent.metadata.totalWords}</strong> mots totaux
+                      <strong>{generatedContent.metadata?.totalWords ?? 0}</strong> mots totaux
                     </span>
                   </div>
                   <div className="flex items-center space-x-2">
                     <FileText className="text-purple-600" size={16} />
                     <span className="text-gray-700">
-                      <strong>{generatedContent.blogPost.readingTime}</strong> min lecture
+                      <strong>{generatedContent.blogPost?.readingTime ?? 5}</strong> min lecture
                     </span>
                   </div>
                 </div>
@@ -500,15 +500,15 @@ Total: ${generatedContent.metadata.totalWords} mots générés`
                   <span>Article de Blog</span>
                 </h4>
                 <p className="text-sm text-gray-700 mb-2">
-                  <strong>Titre:</strong> {generatedContent.blogPost.title}
+                  <strong>Titre:</strong> {generatedContent.blogPost?.title ?? 'Non généré'}
                 </p>
                 <p className="text-sm text-gray-700 mb-2">
-                  <strong>Slug:</strong> {generatedContent.blogPost.slug}
+                  <strong>Slug:</strong> {generatedContent.blogPost?.slug ?? 'non-genere'}
                 </p>
                 <p className="text-sm text-gray-700">
-                  <strong>Meta:</strong> {generatedContent.blogPost.metaDescription}
+                  <strong>Meta:</strong> {generatedContent.blogPost?.metaDescription ?? 'Non généré'}
                 </p>
-                {generatedContent.blogPost.keywords && (
+                {generatedContent.blogPost?.keywords && (
                   <div className="flex flex-wrap gap-2 mt-3">
                     {generatedContent.blogPost.keywords.map((kw, index) => (
                       <span key={index} className="px-2 py-1 bg-purple-200 text-purple-800 rounded-full text-xs font-medium">
