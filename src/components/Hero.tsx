@@ -2,9 +2,11 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { CheckCircle, Phone, Send, Shield, Clock, Award, TrendingDown, Zap, Target, Star, FileText, MapPin, Users, User, Mail } from 'lucide-react';
 import AITaxiBackground from './AITaxiBackground';
+import { useRealStats } from '../hooks/useRealStats';
 
 const Hero: React.FC = () => {
   const navigate = useNavigate();
+  const { totalArticles, totalFaqs, totalCities } = useRealStats();
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -153,11 +155,11 @@ const Hero: React.FC = () => {
               </Link>
               <Link to="/villes" className="flex items-center space-x-2 text-xs text-gray-300 hover:text-green-400 transition-colors bg-gray-800/50 hover:bg-gray-700/50 px-3 py-2 rounded-lg border border-gray-600 hover:border-green-500/50">
                 <MapPin className="text-green-400" size={16} aria-hidden="true" />
-                <span>Toutes les Villes</span>
+                <span>{totalCities > 0 ? `${totalCities} Villes` : 'Toutes les Villes'}</span>
               </Link>
               <Link to="/blog" className="flex items-center space-x-2 text-xs text-gray-300 hover:text-purple-400 transition-colors bg-gray-800/50 hover:bg-gray-700/50 px-3 py-2 rounded-lg border border-gray-600 hover:border-purple-500/50">
                 <Users className="text-purple-400" size={16} aria-hidden="true" />
-                <span>Actualités & Conseils</span>
+                <span>{totalArticles > 0 ? `${totalArticles} Articles` : 'Actualités & Conseils'}</span>
               </Link>
             </div>
 

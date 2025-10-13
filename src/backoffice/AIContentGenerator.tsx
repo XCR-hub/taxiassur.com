@@ -24,6 +24,8 @@ export default function AIContentGenerator() {
   const [keyword, setKeyword] = useState('');
   const [city, setCity] = useState('');
   const [secondaryKeywords, setSecondaryKeywords] = useState('');
+  const [generateImage, setGenerateImage] = useState(false);
+  const [imagePrompt, setImagePrompt] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [generatedContent, setGeneratedContent] = useState<GeneratedContent | null>(null);
@@ -54,7 +56,9 @@ export default function AIContentGenerator() {
           keyword: keyword.trim(),
           type: contentType,
           city: city.trim() || undefined,
-          secondaryKeywords: secondaryKeywords.split(',').map(k => k.trim()).filter(Boolean)
+          secondaryKeywords: secondaryKeywords.split(',').map(k => k.trim()).filter(Boolean),
+          generateImage: generateImage,
+          imagePrompt: generateImage ? imagePrompt.trim() : undefined
         }),
       });
 
@@ -179,6 +183,7 @@ ${generatedContent.faq?.map(f => `**${f.question}**\n${f.answer}`).join('\n\n')}
             published: status === 'published',
             read_time: generatedContent.readingTime || 5,
             author: 'TaxiAssur',
+            featured_image: generatedContent.featuredImage || null,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           })
@@ -411,6 +416,40 @@ ${generatedContent.faq?.map(f => `**${f.question}**\n${f.answer}`).join('\n\n')}
               </p>
             </div>
 
+            <div className="border-2 border-gray-200 rounded-lg p-4 space-y-3">
+              <div className="flex items-center space-x-3">
+                <input
+                  type="checkbox"
+                  id="generateImage"
+                  checked={generateImage}
+                  onChange={(e) => setGenerateImage(e.target.checked)}
+                  className="w-5 h-5 text-purple-600 rounded focus:ring-2 focus:ring-purple-500"
+                />
+                <label htmlFor="generateImage" className="text-sm font-medium text-gray-700 flex items-center space-x-2">
+                  <ImageIcon size={20} className="text-purple-600" />
+                  <span>Générer une image d'illustration</span>
+                </label>
+              </div>
+
+              {generateImage && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Prompt pour l'image (optionnel)
+                  </label>
+                  <textarea
+                    value={imagePrompt}
+                    onChange={(e) => setImagePrompt(e.target.value)}
+                    placeholder="Ex: Photo professionnelle d'un taxi parisien moderne devant la Tour Eiffel, éclairage doré, haute qualité"
+                    rows={3}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900 placeholder-gray-400 resize-none"
+                  />
+                  <p className="text-xs text-gray-600 mt-1">
+                    💡 Si vide, un prompt sera généré automatiquement basé sur le contenu
+                  </p>
+                </div>
+              )}
+            </div>
+
             {!import.meta.env.VITE_OPENAI_API_KEY && (
               <div className="bg-amber-50 border-2 border-amber-300 rounded-lg p-4">
                 <p className="text-sm font-medium text-amber-900 mb-2">⚠️ Configuration requise</p>
@@ -536,6 +575,25 @@ ${generatedContent.faq?.map(f => `**${f.question}**\n${f.answer}`).join('\n\n')}
                   <strong>Meta:</strong> {generatedContent.metaDescription}
                 </p>
               </div>
+
+              {generatedContent.featuredImage && (
+                <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-lg p-4">
+                  <h4 className="font-bold text-gray-800 mb-3 flex items-center space-x-2">
+                    <ImageIcon size={20} className="text-purple-600" />
+                    <span>Image générée</span>
+                  </h4>
+                  <img
+                    src={generatedContent.featuredImage}
+                    alt={generatedContent.imageAlt || generatedContent.title}
+                    className="w-full h-auto rounded-lg shadow-lg border-2 border-purple-200"
+                  />
+                  {generatedContent.imageAlt && (
+                    <p className="text-xs text-gray-600 mt-2">
+                      <strong>Alt text:</strong> {generatedContent.imageAlt}
+                    </p>
+                  )}
+                </div>
+              )}
 
               <div className="prose prose-sm max-w-none bg-white text-gray-900 rounded-lg p-4">
                 <div className="[&>*]:text-gray-900 [&>h1]:text-gray-900 [&>h2]:text-gray-900 [&>h3]:text-gray-900 [&>p]:text-gray-900 [&>ul]:text-gray-900 [&>li]:text-gray-900" dangerouslySetInnerHTML={{ __html: generatedContent.content }} />
