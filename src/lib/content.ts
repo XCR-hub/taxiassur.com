@@ -133,14 +133,12 @@ async function fetchLocalItem<T>(type: string, id: string, schema: any): Promise
 export async function getBlogPosts(): Promise<BlogPost[]> {
   if (supabase) {
     try {
-      const { data, error } = await supabase
-        .from('blog_posts')
-        .select('*')
-        .eq('published', true)
-        .order('created_at', { ascending: false });
+      // Utiliser la fonction SQL pour contourner le cache PostgREST
+      console.log('🔍 Fetching blog posts via SQL function...');
+      const { data, error } = await supabase.rpc('get_blog_posts');
 
       if (error) {
-        console.error('❌ Supabase error:', error.message, error.code, error.details);
+        console.error('❌ Supabase RPC error:', error.message, error.code, error.details);
         console.log('Falling back to local content...');
       } else if (data && data.length > 0) {
         console.log(`✅ Loaded ${data.length} blog posts from Supabase`);
@@ -149,12 +147,12 @@ export async function getBlogPosts(): Promise<BlogPost[]> {
           title: item.title,
           excerpt: item.excerpt,
           content: item.content,
-          author: item.author || 'TaxiAssur',
-          coverImage: item.cover_image,
+          author: 'TaxiAssur',
+          coverImage: null,
           tags: item.tags || [],
           createdAt: item.created_at,
           updatedAt: item.updated_at || item.created_at,
-          faq: [],
+          faq: item.faq || [],
           status: 'published'
         }));
       } else {
@@ -176,26 +174,23 @@ export async function getBlogPosts(): Promise<BlogPost[]> {
 export async function getBlogPost(id: string): Promise<BlogPost | null> {
   if (supabase) {
     try {
-      // Chercher d'abord par slug (plus courant)
-      const { data, error } = await supabase
-        .from('blog_posts')
-        .select('*')
-        .eq('published', true)
-        .eq('slug', id)
-        .maybeSingle();
+      // Utiliser la fonction SQL pour contourner le cache PostgREST
+      console.log(`🔍 Fetching blog post "${id}" via SQL function...`);
+      const { data, error } = await supabase.rpc('get_blog_post_by_slug', { p_slug: id });
 
-      if (!error && data) {
+      if (!error && data && data.length > 0) {
+        const item = data[0];
         return {
-          id: data.slug,
-          title: data.title,
-          excerpt: data.excerpt,
-          content: data.content,
-          author: data.author,
-          coverImage: data.cover_image,
-          tags: data.tags || [],
-          createdAt: data.created_at,
-          updatedAt: data.updated_at || data.created_at,
-          faq: data.faq || [],
+          id: item.slug,
+          title: item.title,
+          excerpt: item.excerpt,
+          content: item.content,
+          author: 'TaxiAssur',
+          coverImage: null,
+          tags: item.tags || [],
+          createdAt: item.created_at,
+          updatedAt: item.updated_at || item.created_at,
+          faq: item.faq || [],
           status: 'published'
         };
       }

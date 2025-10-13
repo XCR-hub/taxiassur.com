@@ -157,26 +157,21 @@ ${generatedContent.faq?.map(f => `**${f.question}**\n${f.answer}`).join('\n\n')}
     try {
       // Publish based on content type
       if (contentType === 'blog') {
-        // Générer un slug unique avec timestamp si nécessaire
+        // Utiliser l'Edge Function pour contourner le cache PostgREST
         const baseSlug = generatedContent.slug;
-        let finalSlug = baseSlug;
+        const finalSlug = `${baseSlug}-${Date.now()}`;
 
-        // Vérifier si le slug existe déjà
-        const { data: existing } = await supabase
-          .from('blog_posts')
-          .select('slug')
-          .eq('slug', baseSlug)
-          .maybeSingle();
+        const supabaseUrl = getSupabaseUrl();
+        const supabaseKey = getSupabaseAnonKey();
 
-        // Si existe, ajouter timestamp
-        if (existing) {
-          finalSlug = `${baseSlug}-${Date.now()}`;
-        }
-
-        // Publish as blog post avec upsert
-        const { data, error: publishError} = await supabase
-          .from('blog_posts')
-          .upsert({
+        const response = await fetch(`${supabaseUrl}/functions/v1/blog-articles`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${supabaseKey}`,
+            'apikey': supabaseKey
+          },
+          body: JSON.stringify({
             id: finalSlug,
             slug: finalSlug,
             title: generatedContent.title,
@@ -188,10 +183,17 @@ ${generatedContent.faq?.map(f => `**${f.question}**\n${f.answer}`).join('\n\n')}
             reading_time: generatedContent.readingTime || 5,
             faq: generatedContent.faq || []
           })
-          .select()
-          .single();
+        });
 
-        if (publishError) throw publishError;
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to publish article');
+        }
+
+        const result = await response.json();
+        if (!result.success) {
+          throw new Error(result.error || 'Failed to publish article');
+        }
 
         // FAQ déjà incluse dans blog_posts.faq (jsonb)
       } else if (contentType === 'city') {
