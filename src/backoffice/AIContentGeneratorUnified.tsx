@@ -109,27 +109,27 @@ export default function AIContentGeneratorUnified() {
     if (!generatedContent) return;
 
     const fullContent = `# ARTICLE DE BLOG
-${generatedContent.blogPost.title}
+${generatedContent.blogPost?.title ?? 'N/A'}
 
-Slug: ${generatedContent.blogPost.slug}
-Meta: ${generatedContent.blogPost.metaDescription}
+Slug: ${generatedContent.blogPost?.slug ?? 'N/A'}
+Meta: ${generatedContent.blogPost?.metaDescription ?? 'N/A'}
 
-${generatedContent.blogPost.content}
+${generatedContent.blogPost?.content ?? 'N/A'}
 
 ---
 
 # PAGE VILLE
-${generatedContent.cityPage.title}
+${generatedContent.cityPage?.title ?? 'N/A'}
 
-Slug: ${generatedContent.cityPage.slug}
+Slug: ${generatedContent.cityPage?.slug ?? 'N/A'}
 
-${generatedContent.cityPage.content}
+${generatedContent.cityPage?.content ?? 'N/A'}
 
 ---
 
-# FAQ (${generatedContent.faq.length} questions)
+# FAQ (${generatedContent.faq?.length ?? 0} questions)
 
-${generatedContent.faq.map(f => `**${f.question}**\n${f.answer}`).join('\n\n')}
+${(generatedContent.faq || []).map(f => `**${f?.question ?? 'Q'}**\n${f?.answer ?? 'R'}`).join('\n\n')}
 `;
 
     try {
@@ -152,22 +152,22 @@ ${generatedContent.faq.map(f => `**${f.question}**\n${f.answer}`).join('\n\n')}
       const adminClient = getSupabaseAdmin();
 
       // 1. PUBLIER L'ARTICLE DE BLOG
-      const blogSlug = `${generatedContent.blogPost.slug}-${Date.now()}`;
+      const blogSlug = `${generatedContent.blogPost?.slug ?? 'article'}-${Date.now()}`;
 
       const { data: blogData, error: blogError } = await adminClient
         .from('blog_posts')
         .insert({
           slug: blogSlug,
-          title: generatedContent.blogPost.title,
-          excerpt: generatedContent.blogPost.excerpt,
-          content: generatedContent.blogPost.content,
-          meta_title: generatedContent.blogPost.title,
-          meta_description: generatedContent.blogPost.metaDescription,
-          keywords: generatedContent.blogPost.keywords,
+          title: generatedContent.blogPost?.title ?? 'Titre',
+          excerpt: generatedContent.blogPost?.excerpt ?? '',
+          content: generatedContent.blogPost?.content ?? '',
+          meta_title: generatedContent.blogPost?.title ?? 'Titre',
+          meta_description: generatedContent.blogPost?.metaDescription ?? '',
+          keywords: generatedContent.blogPost?.keywords ?? [],
           published: true,
-          read_time: generatedContent.blogPost.readingTime,
+          read_time: generatedContent.blogPost?.readingTime ?? 5,
           author: 'TaxiAssur',
-          featured_image: generatedContent.blogPost.featuredImage || null,
+          featured_image: generatedContent.blogPost?.featuredImage || null,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         })
@@ -183,12 +183,12 @@ ${generatedContent.faq.map(f => `**${f.question}**\n${f.answer}`).join('\n\n')}
       const { data: cityData, error: cityError } = await adminClient
         .from('city_pages')
         .insert({
-          city: generatedContent.cityPage.city,
-          title: generatedContent.cityPage.title,
-          slug: generatedContent.cityPage.slug,
-          content: generatedContent.cityPage.content,
-          meta_description: generatedContent.cityPage.metaDescription,
-          keywords: generatedContent.cityPage.keywords,
+          city: generatedContent.cityPage?.city ?? 'Paris',
+          title: generatedContent.cityPage?.title ?? 'Titre',
+          slug: generatedContent.cityPage?.slug ?? 'slug',
+          content: generatedContent.cityPage?.content ?? '',
+          meta_description: generatedContent.cityPage?.metaDescription ?? '',
+          keywords: generatedContent.cityPage?.keywords ?? [],
           status: 'published',
           published_at: new Date().toISOString(),
         })
@@ -205,10 +205,10 @@ ${generatedContent.faq.map(f => `**${f.question}**\n${f.answer}`).join('\n\n')}
 
       // 3. PUBLIER TOUTES LES FAQ
       if (generatedContent.faq && generatedContent.faq.length > 0) {
-        const faqEntries = generatedContent.faq.map((faq, index) => ({
-          question: faq.question,
-          answer: faq.answer,
-          category: faq.category,
+        const faqEntries = (generatedContent.faq || []).map((faq, index) => ({
+          question: faq?.question ?? 'Question',
+          answer: faq?.answer ?? 'Réponse',
+          category: faq?.category ?? 'Général',
           order_index: index
         }));
 
@@ -510,7 +510,7 @@ Total: ${generatedContent.metadata.totalWords} mots générés`
                 </p>
                 {generatedContent.blogPost?.keywords && (
                   <div className="flex flex-wrap gap-2 mt-3">
-                    {generatedContent.blogPost.keywords.map((kw, index) => (
+                    {(generatedContent.blogPost.keywords || []).map((kw, index) => (
                       <span key={index} className="px-2 py-1 bg-purple-200 text-purple-800 rounded-full text-xs font-medium">
                         #{kw}
                       </span>
@@ -520,7 +520,7 @@ Total: ${generatedContent.metadata.totalWords} mots générés`
               </div>
 
               {/* Image générée */}
-              {generatedContent.blogPost.featuredImage && (
+              {generatedContent.blogPost?.featuredImage && (
                 <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-4 border-2 border-blue-200">
                   <h4 className="font-bold text-gray-800 mb-3 flex items-center space-x-2">
                     <ImageIcon size={20} className="text-blue-600" />
@@ -528,12 +528,12 @@ Total: ${generatedContent.metadata.totalWords} mots générés`
                   </h4>
                   <img
                     src={generatedContent.blogPost.featuredImage}
-                    alt={generatedContent.blogPost.imageAlt || generatedContent.blogPost.title}
+                    alt={generatedContent.blogPost?.imageAlt || generatedContent.blogPost?.title || 'Image'}
                     className="w-full h-auto rounded-lg shadow-lg border-2 border-blue-300"
                   />
-                  {generatedContent.blogPost.imageAlt && (
+                  {generatedContent.blogPost?.imageAlt && (
                     <p className="text-xs text-gray-700 mt-2 bg-white px-3 py-2 rounded">
-                      <strong>Alt SEO:</strong> {generatedContent.blogPost.imageAlt}
+                      <strong>Alt SEO:</strong> {generatedContent.blogPost?.imageAlt}
                     </p>
                   )}
                 </div>
@@ -543,13 +543,13 @@ Total: ${generatedContent.metadata.totalWords} mots générés`
               <div className="bg-green-50 rounded-lg p-4 border-2 border-green-200">
                 <h4 className="font-bold text-lg text-gray-800 mb-2 flex items-center space-x-2">
                   <MapPin className="text-green-600" size={20} />
-                  <span>Page Ville: {generatedContent.cityPage.city}</span>
+                  <span>Page Ville: {generatedContent.cityPage?.city ?? 'N/A'}</span>
                 </h4>
                 <p className="text-sm text-gray-700 mb-2">
-                  <strong>Titre:</strong> {generatedContent.cityPage.title}
+                  <strong>Titre:</strong> {generatedContent.cityPage?.title ?? 'Non généré'}
                 </p>
                 <p className="text-sm text-gray-700">
-                  <strong>Slug:</strong> {generatedContent.cityPage.slug}
+                  <strong>Slug:</strong> {generatedContent.cityPage?.slug ?? 'non-genere'}
                 </p>
               </div>
 
@@ -557,21 +557,21 @@ Total: ${generatedContent.metadata.totalWords} mots générés`
               <div className="bg-yellow-50 rounded-lg p-4 border-2 border-yellow-200">
                 <h4 className="font-bold text-gray-800 mb-3 flex items-center space-x-2">
                   <HelpCircle className="text-yellow-600" size={20} />
-                  <span>FAQ Générées ({generatedContent.faq.length})</span>
+                  <span>FAQ Générées ({generatedContent.faq?.length ?? 0})</span>
                 </h4>
                 <div className="space-y-2">
-                  {generatedContent.faq.slice(0, 3).map((faq, index) => (
+                  {(generatedContent.faq || []).slice(0, 3).map((faq, index) => (
                     <div key={index} className="bg-white rounded-lg p-3 border border-yellow-300">
-                      <p className="font-medium text-gray-800 text-sm">{faq.question}</p>
-                      <p className="text-xs text-gray-600 mt-1">{faq.answer.substring(0, 100)}...</p>
+                      <p className="font-medium text-gray-800 text-sm">{faq?.question ?? 'Question'}</p>
+                      <p className="text-xs text-gray-600 mt-1">{(faq?.answer || '').substring(0, 100)}...</p>
                       <span className="text-xs text-yellow-700 font-medium">
-                        Catégorie: {faq.category}
+                        Catégorie: {faq?.category ?? 'Général'}
                       </span>
                     </div>
                   ))}
-                  {generatedContent.faq.length > 3 && (
+                  {(generatedContent.faq?.length ?? 0) > 3 && (
                     <p className="text-sm text-gray-600 italic text-center">
-                      + {generatedContent.faq.length - 3} autres FAQ...
+                      + {(generatedContent.faq?.length ?? 0) - 3} autres FAQ...
                     </p>
                   )}
                 </div>
