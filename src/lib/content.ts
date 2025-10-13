@@ -57,18 +57,28 @@ async function fetchLocalContent<T>(type: string, schema: any): Promise<T[]> {
 async function loadKnownFiles(type: string): Promise<any[]> {
   const knownFiles: Record<string, string[]> = {
     'blog': [
+      'assurance-flotte-taxi-guide-complet-2025',
       'assurance-taxi-2024',
+      'assurance-taxi-electrique-tesla-2025',
+      'assurance-taxi-jeune-conducteur-solutions-2025',
       'assurance-taxi-jeune-conducteur',
+      'assurance-taxi-paris-guide-local-2025',
       'assurance-taxi-resilié',
       'assurance-vtc-vs-taxi-differences-2025',
+      'changement-assurance-taxi-mode-emploi',
       'choisir-vehicule-taxi-2024',
+      'comment-payer-30-moins-cher-assurance-taxi-2025',
       'comparateur-assurance-taxi-guide-2025',
       'comparatif-assurances-taxi-2024',
+      'comparatif-assurances-taxi-2025-axa-generali-covea',
       'cout-assurance-taxi-par-ville',
       'devenir-chauffeur-taxi-2024',
+      'double-activite-taxi-vtc-assurance',
       'economiser-assurance-taxi-2024',
       'flotte-taxis-assurance',
+      'rc-pro-taxi-3-erreurs-eviter-2025',
       'reglementation-taxi-2024',
+      'sinistre-taxi-procedure-complete-2025',
       'sinistre-taxi-que-faire',
       'vehicules-electriques-taxi'
     ],
