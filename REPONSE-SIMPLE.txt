@@ -1,63 +1,60 @@
-╔═══════════════════════════════════════════════════════════════════════════╗
-║           🔑 PROBLÈME TROUVÉ : CLÉ OPENAI INVALIDE                        ║
-╚═══════════════════════════════════════════════════════════════════════════╝
 
-✅ DIAGNOSTIC TERMINÉ
+══════════════════════════════════════════════════════════════════════
+               🎯 RÉPONSE SIMPLE AUX ERREURS 401
+══════════════════════════════════════════════════════════════════════
 
-L'erreur 500 vient de votre clé OpenAI qui est INVALIDE.
+TU VOIS CES ERREURS:
+❌ 401 sur automation_status
+❌ 401 sur analytics_sessions  
+❌ 401 sur blog-articles
 
-Preuve : J'ai testé directement avec OpenAI
-→ Error: "Incorrect API key provided"
+CAUSE:
+Supabase bloque l'accès public (c'est pour la sécurité).
 
-═══════════════════════════════════════════════════════════════════════════
+SOLUTION:
+Exécuter 3 fichiers SQL dans ton Dashboard Supabase.
 
-🔑 SOLUTION RAPIDE (5 minutes)
+══════════════════════════════════════════════════════════════════════
 
-1. Allez sur : https://platform.openai.com/api-keys
+FICHIERS À EXÉCUTER (dans cet ordre):
 
-2. Créez une nouvelle clé :
-   - Cliquez "Create new secret key"
-   - Nom : TaxiAssur Production
-   - COPIEZ la clé (format: sk-proj-XXXX...)
+1️⃣  SUPABASE-REPAIR-FINAL.sql
+    Crée les tables
 
-3. Remplacez dans /public/api/config.php :
-   
-   Ligne 33 et 34 :
-   setEnvIfNotExists('VITE_OPENAI_API_KEY', 'VOTRE_NOUVELLE_CLE');
-   setEnvIfNotExists('OPENAI_API_KEY', 'VOTRE_NOUVELLE_CLE');
+2️⃣  FIX-RLS-PUBLIC-ACCESS.sql ⭐ NOUVEAU - IMPORTANT
+    Autorise la lecture publique (sans compromettre la sécurité)
 
-4. Uploadez config.php sur IONOS :
-   /public/api/config.php → /api/config.php
+3️⃣  INSERT-24-ARTICLES-BLOG.sql
+    Ajoute les 24 articles
 
-5. Testez :
-   https://taxiassur.com/api/test-debug-complet.php
-   → Devrait afficher "✅ ALL OK"
+══════════════════════════════════════════════════════════════════════
 
-═══════════════════════════════════════════════════════════════════════════
+MÉTHODE:
 
-📖 GUIDE DÉTAILLÉ
+Dashboard Supabase → SQL Editor → New query
+Copie-colle le fichier → RUN
+Répète pour les 3 fichiers
 
-→ CLE-OPENAI-INVALIDE.md : Instructions complètes pas à pas
+══════════════════════════════════════════════════════════════════════
 
-═══════════════════════════════════════════════════════════════════════════
+RÉSULTAT:
 
-💰 COÛT
+✅ Plus d'erreurs 401
+✅ Blog affiche 24 articles
+✅ Dashboard fonctionne
+✅ FAQ accessibles
 
-Modèle utilisé : gpt-4o-mini
-1 article blog : ~$0.003 (moins d'1 centime)
-100 articles : ~$0.30
+══════════════════════════════════════════════════════════════════════
 
-Recommandation : Ajoutez 5-10$ de crédit sur OpenAI
+ENSUITE:
 
-═══════════════════════════════════════════════════════════════════════════
+Upload dist/ sur IONOS
 
-⚠️ ÉTAT ACTUEL
+══════════════════════════════════════════════════════════════════════
 
-Backend PHP      : ✅ Fonctionne
-Config chargée   : ✅ OK
-Clé OpenAI       : ❌ INVALIDE (cause de l'erreur 500)
-Frontend         : ⏳ Upload recommandé après fix clé
+⏱️ 8 MINUTES
 
-ACTION REQUISE : Remplacer la clé OpenAI
+Guide détaillé: SOLUTION-COMPLETE.txt
 
-═══════════════════════════════════════════════════════════════════════════
+══════════════════════════════════════════════════════════════════════
+

@@ -1,10 +1,73 @@
-ERREUR: "there is no unique constraint matching the ON CONFLICT"
 
-CAUSE: La colonne "question" dans faq_entries n'a PAS de contrainte UNIQUE
+╔═════════════════════════════════════════════════════════════════════╗
+║                                                                     ║
+║           ✅ SOLUTION COMPLÈTE - ERREURS 401 SUPABASE              ║
+║                                                                     ║
+╚═════════════════════════════════════════════════════════════════════╝
 
-SOLUTION RAPIDE (Copie ça dans SQL Editor):
+PROBLÈME IDENTIFIÉ:
+───────────────────
 
-ALTER TABLE faq_entries DROP CONSTRAINT IF EXISTS faq_entries_question_key;
-ALTER TABLE faq_entries ADD CONSTRAINT faq_entries_question_key UNIQUE (question);
+Les erreurs 401 viennent des politiques RLS (Row Level Security) qui
+bloquent l'accès anonyme aux tables Supabase.
 
-Puis exécute SUPABASE-COMPLETE-SETUP.sql
+C'est normal pour la sécurité, mais il faut autoriser la LECTURE
+publique pour:
+- Les articles de blog publiés
+- Les FAQ
+- Les statistiques du dashboard
+
+═════════════════════════════════════════════════════════════════════
+
+🎯 FICHIERS SQL À EXÉCUTER (dans cet ordre):
+
+1️⃣  SUPABASE-REPAIR-FINAL.sql
+    → Crée les tables (blog_posts, faq_entries, etc.)
+    → 14 KB
+
+2️⃣  FIX-RLS-PUBLIC-ACCESS.sql  ⭐ NOUVEAU
+    → Configure les permissions de lecture publique
+    → Crée les fonctions RPC pour les stats
+    → Garde les écritures sécurisées
+    → 4 KB
+
+3️⃣  INSERT-24-ARTICLES-BLOG.sql
+    → Insère 24 articles avec FAQ
+    → 81 KB
+
+═════════════════════════════════════════════════════════════════════
+
+📋 PROCÉDURE (8 MINUTES):
+
+1. Va sur: https://drohhxrkoequjphvabvq.supabase.co
+
+2. Menu → SQL Editor
+
+3. Pour chaque fichier SQL:
+   - Clique "New query"
+   - Copie-colle TOUT le contenu du fichier
+   - Clique RUN (bouton vert)
+   - Attends "Success"
+
+4. Vérifie avec:
+   SELECT COUNT(*) FROM blog_posts;
+   → Devrait retourner: 24
+
+═════════════════════════════════════════════════════════════════════
+
+RÉSULTAT ATTENDU:
+
+✅ Blog: 24 articles visibles sur /blog
+✅ Dashboard: Plus d'erreurs 401 sur /backoffice
+✅ FAQ: Accessibles publiquement
+✅ Stats: Fonctions RPC opérationnelles
+✅ Sécurité: Écritures toujours protégées
+
+═════════════════════════════════════════════════════════════════════
+
+ENSUITE:
+
+Upload dist/ sur IONOS et teste le site !
+
+═════════════════════════════════════════════════════════════════════
+
