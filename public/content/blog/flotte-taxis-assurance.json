@@ -7,5 +7,19 @@
   "author": "Équipe TaxiAssur",
   "category": "Flottes",
   "image": "/image.png",
-  "readTime": "7 min"
+  "readTime": "7 min",
+  "faq": [
+    {
+      "q": "À partir de combien de véhicules puis-je avoir une assurance flotte ?",
+      "a": "Les assurances flotte sont généralement proposées à partir de 3 véhicules. Les économies d'échelle deviennent significatives à partir de 5 véhicules (-20 à -35%)."
+    },
+    {
+      "q": "Quelle économie avec une assurance flotte taxi ?",
+      "a": "Une assurance flotte permet d'économiser 20-35% par rapport à des contrats individuels. Pour 5 taxis, l'économie peut atteindre 3 000-5 000€/an."
+    },
+    {
+      "q": "Peut-on ajouter des véhicules en cours d'année ?",
+      "a": "Oui, les contrats flotte permettent d'ajouter ou retirer des véhicules en cours d'année avec ajustement proportionnel de la cotisation."
+    }
+  ]
 }

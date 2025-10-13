@@ -7,5 +7,19 @@
   "author": "Équipe TaxiAssur",
   "category": "Guide Véhicules",
   "image": "/image.png",
-  "readTime": "8 min"
+  "readTime": "8 min",
+  "faq": [
+    {
+      "q": "Quel est le meilleur véhicule pour débuter en taxi ?",
+      "a": "La Toyota Prius hybride reste le meilleur choix pour débuter : fiabilité reconnue, faible consommation, coûts d'entretien réduits et bonne côte de revente. Prix : 15 000-25 000€ d'occasion."
+    },
+    {
+      "q": "Faut-il acheter un véhicule neuf ou d'occasion ?",
+      "a": "Pour débuter, un véhicule de 2-4 ans est optimal : décote importante (-40%), encore sous garantie constructeur, et moins de risques de pannes qu'un véhicule plus ancien."
+    },
+    {
+      "q": "Quels critères pour choisir un véhicule taxi ?",
+      "a": "Les 5 critères prioritaires : fiabilité/entretien (Toyota, Skoda), consommation (hybride ou diesel récent), confort passagers (espace, climatisation), coût assurance, et facilité revente."
+    }
+  ]
 }

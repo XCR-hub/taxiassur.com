@@ -7,5 +7,23 @@
   "author": "Équipe TaxiAssur",
   "category": "Guide Métier",
   "image": "/image.png",
-  "readTime": "10 min"
+  "readTime": "10 min",
+  "faq": [
+    {
+      "q": "Combien de temps faut-il pour devenir chauffeur de taxi ?",
+      "a": "La formation dure 250 heures (2-3 mois), puis il faut compter 2-4 mois pour obtenir la carte professionnelle après réussite de l'examen. Au total, comptez 4-7 mois entre le début de la formation et l'exercice du métier."
+    },
+    {
+      "q": "Quel est le coût total pour devenir taxi ?",
+      "a": "Pour un salarié : 3 000-5 000€ (formation + examen). Pour un artisan locataire : 15 000-25 000€ (formation, véhicule, assurance). Pour un artisan propriétaire à Paris : 180 000-300 000€ (licence incluse)."
+    },
+    {
+      "q": "Quel est le taux de réussite à l'examen taxi ?",
+      "a": "Le taux de réussite moyen national est de 45-55%. À Paris, il tombe à 35-40% en raison de la difficulté accrue. En province, il est légèrement meilleur : 50-60%."
+    },
+    {
+      "q": "Quelle assurance est obligatoire pour les taxis ?",
+      "a": "La RC Professionnelle illimitée est obligatoire, ainsi qu'une assurance véhicule usage professionnel et la garantie passagers transportés. Budget : 1 430-3 500€/an selon la ville. TaxiAssur propose des tarifs négociés dès 1 430€/an."
+    }
+  ]
 }
