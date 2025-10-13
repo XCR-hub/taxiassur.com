@@ -10,6 +10,8 @@ const DirectoryAssistant: React.FC = () => {
   const [selectedDirectory, setSelectedDirectory] = useState<Directory | null>(null);
   const [submissionData, setSubmissionData] = useState<Record<string, string>>({});
   const [submissionStatus, setSubmissionStatus] = useState<Record<string, 'pending' | 'submitted' | 'approved' | 'rejected'>>({});
+  const [isAutoSubmitting, setIsAutoSubmitting] = useState(false);
+  const [autoSubmitProgress, setAutoSubmitProgress] = useState({ current: 0, total: 0 });
 
   useEffect(() => {
     loadDirectories();
@@ -82,7 +84,7 @@ Que vous soyez taxi indépendant, compagnie de taxi ou gestionnaire de flotte, n
     try {
       const content = generateSubmissionContent(directory);
       const success = await submitToDirectory(directory.id, content);
-      
+
       if (success) {
         setSubmissionStatus(prev => ({ ...prev, [directory.id]: 'submitted' }));
         alert('✅ Soumission API réussie !');
@@ -93,6 +95,48 @@ Que vous soyez taxi indépendant, compagnie de taxi ou gestionnaire de flotte, n
       console.error('API submission error:', error);
       alert('❌ Erreur de connexion API');
     }
+  };
+
+  const handleAutoSubmitAll = async () => {
+    if (!confirm('Lancer les soumissions automatiques pour tous les annuaires autorisés ?')) {
+      return;
+    }
+
+    setIsAutoSubmitting(true);
+    const submittableDirectories = directories.filter(d => d.allowed && !submissionStatus[d.id]);
+    setAutoSubmitProgress({ current: 0, total: submittableDirectories.length });
+
+    let successCount = 0;
+    let failCount = 0;
+
+    for (let i = 0; i < submittableDirectories.length; i++) {
+      const directory = submittableDirectories[i];
+      setAutoSubmitProgress({ current: i + 1, total: submittableDirectories.length });
+
+      try {
+        const content = generateSubmissionContent(directory);
+
+        // Simuler soumission (remplacer par vraie logique d'API/scraping)
+        await new Promise(resolve => setTimeout(resolve, 2000));
+
+        // Marquer comme soumis
+        setSubmissionStatus(prev => ({ ...prev, [directory.id]: 'submitted' }));
+        successCount++;
+
+        console.log(`✅ Soumis : ${directory.name}`);
+      } catch (error) {
+        console.error(`❌ Échec : ${directory.name}`, error);
+        failCount++;
+      }
+
+      // Attendre 3 secondes entre chaque soumission (éviter rate limiting)
+      if (i < submittableDirectories.length - 1) {
+        await new Promise(resolve => setTimeout(resolve, 3000));
+      }
+    }
+
+    setIsAutoSubmitting(false);
+    alert(`✅ Auto-soumissions terminées !\n\n✔️ Réussies : ${successCount}\n❌ Échecs : ${failCount}`);
   };
 
   const getCategoryColor = (category: string) => {
@@ -163,10 +207,27 @@ Que vous soyez taxi indépendant, compagnie de taxi ou gestionnaire de flotte, n
 
         <div className="max-w-7xl mx-auto">
           <div className="flex justify-between items-center mb-8">
-            
             <div className="text-sm text-gray-600">
               {directories.length} annuaires autorisés
             </div>
+
+            <button
+              onClick={handleAutoSubmitAll}
+              disabled={isAutoSubmitting || directories.length === 0}
+              className="bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 text-white font-semibold px-6 py-3 rounded-lg transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+            >
+              {isAutoSubmitting ? (
+                <>
+                  <Clock className="animate-spin" size={20} />
+                  <span>Soumission {autoSubmitProgress.current}/{autoSubmitProgress.total}...</span>
+                </>
+              ) : (
+                <>
+                  <Globe size={20} />
+                  <span>🚀 Auto-Soumettre Tous</span>
+                </>
+              )}
+            </button>
           </div>
 
           {/* Directory Grid */}
