@@ -22,7 +22,12 @@ export default function TrendAnalyzer() {
         .select('*')
         .order('estimated_traffic', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
+
+      console.log('Opportunités chargées depuis Supabase:', data?.length || 0);
 
       setOpportunities(
         (data || []).map(d => ({

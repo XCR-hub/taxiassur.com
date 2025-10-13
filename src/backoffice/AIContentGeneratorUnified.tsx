@@ -583,7 +583,7 @@ Total: ${generatedContent.metadata.totalWords} mots générés`
                   📄 Voir le contenu complet (cliquer pour déplier)
                 </summary>
                 <div className="mt-4 prose prose-sm max-w-none">
-                  <div dangerouslySetInnerHTML={{ __html: generatedContent.blogPost.content }} />
+                  <div dangerouslySetInnerHTML={{ __html: generatedContent.blogPost?.content ?? '<p>Contenu non disponible</p>' }} />
                 </div>
               </details>
             </div>

@@ -10,11 +10,13 @@ import { getFaqEntries } from '../lib/content';
 
 const FAQ: React.FC = () => {
   const [faqs, setFaqs] = React.useState([]);
+  const [faqCount, setFaqCount] = React.useState(50);
 
   React.useEffect(() => {
     const loadFaqs = async () => {
       const faqData = await getFaqEntries();
       setFaqs(faqData);
+      setFaqCount(faqData.length);
     };
     loadFaqs();
   }, []);
@@ -56,7 +58,7 @@ const FAQ: React.FC = () => {
                 
                 <div className="grid grid-cols-3 gap-6 max-w-md mx-auto mb-8">
                   <div className="ai-card p-4 hover:shadow-blue-500/40 transition-all duration-300">
-                    <div className="text-2xl font-bold text-blue-400 drop-shadow-lg">50+</div>
+                    <div className="text-2xl font-bold text-blue-400 drop-shadow-lg">{faqCount}+</div>
                     <div className="text-xs text-gray-300 drop-shadow-md">Questions</div>
                   </div>
                   <div className="ai-card p-4 hover:shadow-green-500/40 transition-all duration-300">
