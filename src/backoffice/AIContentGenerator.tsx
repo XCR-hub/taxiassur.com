@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Sparkles, Loader2, FileText, MapPin, GitCompare, Copy, Check, Download, Home, Save } from 'lucide-react';
+import { Sparkles, Loader2, FileText, MapPin, GitCompare, Copy, Check, Download, Home, Save, Image as ImageIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { getSupabaseUrl, getSupabaseAnonKey } from '../lib/env';
 import { supabase, getSupabaseAdmin } from '../lib/supabase';
@@ -14,6 +14,8 @@ interface GeneratedContent {
   keywords?: string[];
   readingTime?: number;
   category?: string;
+  featuredImage?: string;
+  imageAlt?: string;
 }
 
 export default function AIContentGenerator() {
