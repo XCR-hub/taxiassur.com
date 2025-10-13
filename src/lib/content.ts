@@ -214,7 +214,28 @@ export async function getBlogPost(id: string): Promise<BlogPost | null> {
 
 // FAQ Entries
 export async function getFaqEntries(): Promise<FaqEntry[]> {
-  // FAQ entries are local only for now
+  // Essayer d'abord Supabase
+  if (supabase) {
+    try {
+      const { data, error } = await supabase.rpc('get_faq_entries');
+
+      if (!error && data && data.length > 0) {
+        console.log('✅ Loaded', data.length, 'FAQ from Supabase');
+        return data.map((item: any) => ({
+          id: item.id,
+          question: item.question,
+          answer: item.answer,
+          updatedAt: item.created_at,
+          tags: [item.category || 'assurance-taxi'],
+          status: 'published' as const
+        }));
+      }
+    } catch (error) {
+      console.warn('⚠️ Supabase FAQ fetch failed, falling back to local:', error);
+    }
+  }
+
+  // Fallback vers fichiers locaux
   return await fetchLocalContent<FaqEntry>('faq', FaqEntrySchema);
 }
 

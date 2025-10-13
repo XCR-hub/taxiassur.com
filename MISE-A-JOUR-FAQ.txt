@@ -1,0 +1,85 @@
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                                                                              ║
+║                  ✅ FAQ + PAGES VILLES - CORRECTIONS ✅                      ║
+║                                                                              ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+🔧 CORRECTIONS APPLIQUÉES:
+
+1. ✅ FAQ maintenant connectée à Supabase
+   - getFaqEntries() appelle get_faq_entries() RPC
+   - Fallback vers fichiers JSON locaux si erreur
+   - Console affiche: "✅ Loaded X FAQ from Supabase"
+
+2. ✅ Pages villes déjà présentes
+   - Route /villes existe
+   - Composant CityIndex.tsx existe
+   - 34 villes configurées (Paris, Lyon, Marseille...)
+
+3. ✅ Build production avec corrections
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📋 ÉTAPES POUR VOIR LA FAQ:
+
+ÉTAPE 1: Exécuter SUPABASE-REPAIR-FINAL.sql (SI PAS DÉJÀ FAIT)
+        → Dashboard Supabase → SQL Editor
+        → Copie/colle tout le fichier
+        → RUN
+        → Vérifie: "✅ FAQ extraites: 4"
+
+ÉTAPE 2: Upload le nouveau build
+        → FileZilla → Upload dist/ vers racine IONOS
+
+ÉTAPE 3: Test
+        → https://taxiassur.com/faq (Ctrl+Shift+R)
+        → Console devrait afficher: "✅ Loaded 4 FAQ from Supabase"
+        → 4 questions doivent s'afficher
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📋 POUR VOIR LES PAGES VILLES:
+
+URL: https://taxiassur.com/villes
+
+Cette page liste les 34 villes avec liens vers chaque page locale:
+→ Paris, Lyon, Marseille, Toulouse, Nice...
+→ Chaque ville a sa propre page: /assurance-taxi-paris, etc.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔥 POURQUOI LA FAQ ÉTAIT VIDE:
+
+L'ancienne version de getFaqEntries():
+- Lisait SEULEMENT les fichiers JSON locaux
+- N'appelait PAS Supabase
+
+La nouvelle version:
+1. Appelle Supabase FIRST
+2. Si des FAQ existent dans Supabase → les affiche
+3. Si erreur → fallback vers JSON locaux
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📝 SECTION FAQ DANS ARTICLES BLOG:
+
+La section FAQ dans chaque article s'affiche SEULEMENT si:
+- L'article a un champ "faq" non vide dans Supabase
+- Les 2 articles de test ont chacun 2 FAQ
+
+Donc après upload, tu devrais voir:
+→ Blog: 3 nouveaux articles Supabase
+→ Chaque article avec 2 FAQ en bas
+→ Page /faq: 4 questions totales
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🚀 ACTION IMMÉDIATE:
+
+1. Upload dist/ sur IONOS
+2. Va sur taxiassur.com/faq (Ctrl+Shift+R)
+3. Va sur taxiassur.com/villes
+4. Console → Vérifie "✅ Loaded 4 FAQ from Supabase"
+
+DURÉE: 3 MINUTES
+
