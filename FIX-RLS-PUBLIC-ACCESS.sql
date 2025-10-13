@@ -72,6 +72,10 @@ BEGIN
   END IF;
 END $$;
 
+-- Drop existing functions first to avoid conflicts
+DROP FUNCTION IF EXISTS get_realtime_stats();
+DROP FUNCTION IF EXISTS get_top_pages_today();
+
 -- Create RPC functions with SECURITY DEFINER for stats
 CREATE OR REPLACE FUNCTION get_realtime_stats()
 RETURNS jsonb
@@ -81,12 +85,18 @@ AS $$
 DECLARE
   result jsonb;
 BEGIN
-  SELECT jsonb_build_object(
-    'active_sessions', COALESCE((SELECT COUNT(*) FROM analytics_sessions WHERE ended_at IS NULL), 0),
-    'total_views', COALESCE((SELECT COUNT(*) FROM page_views WHERE created_at > NOW() - INTERVAL '24 hours'), 0),
-    'bounce_rate', COALESCE((SELECT AVG(bounce_rate) FROM analytics_sessions WHERE started_at > NOW() - INTERVAL '24 hours'), 0)
-  ) INTO result;
-  
+  -- Check if tables exist before querying
+  IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'analytics_sessions') AND
+     EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'page_views') THEN
+    SELECT jsonb_build_object(
+      'active_sessions', COALESCE((SELECT COUNT(*) FROM analytics_sessions WHERE ended_at IS NULL), 0),
+      'total_views', COALESCE((SELECT COUNT(*) FROM page_views WHERE created_at > NOW() - INTERVAL '24 hours'), 0),
+      'bounce_rate', COALESCE((SELECT AVG(bounce_rate) FROM analytics_sessions WHERE started_at > NOW() - INTERVAL '24 hours'), 0)
+    ) INTO result;
+  ELSE
+    result := jsonb_build_object('active_sessions', 0, 'total_views', 0, 'bounce_rate', 0);
+  END IF;
+
   RETURN result;
 END;
 $$;
@@ -97,15 +107,20 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 AS $$
 BEGIN
-  RETURN QUERY
-  SELECT 
-    pv.page_path::text,
-    COUNT(*)::bigint as view_count
-  FROM page_views pv
-  WHERE pv.created_at > CURRENT_DATE
-  GROUP BY pv.page_path
-  ORDER BY view_count DESC
-  LIMIT 10;
+  -- Check if table exists before querying
+  IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'page_views') THEN
+    RETURN QUERY
+    SELECT
+      pv.page_path::text,
+      COUNT(*)::bigint as view_count
+    FROM page_views pv
+    WHERE pv.created_at > CURRENT_DATE
+    GROUP BY pv.page_path
+    ORDER BY view_count DESC
+    LIMIT 10;
+  ELSE
+    RETURN;
+  END IF;
 END;
 $$;
 
