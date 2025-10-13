@@ -157,45 +157,54 @@ ${generatedContent.faq?.map(f => `**${f.question}**\n${f.answer}`).join('\n\n')}
     try {
       // Publish based on content type
       if (contentType === 'blog') {
-        // Utiliser l'Edge Function pour contourner le cache PostgREST
+        // Insertion directe dans Supabase (plus simple et rapide)
         const baseSlug = generatedContent.slug;
         const finalSlug = `${baseSlug}-${Date.now()}`;
 
-        const supabaseUrl = getSupabaseUrl();
-        const supabaseKey = getSupabaseAnonKey();
-
-        const response = await fetch(`${supabaseUrl}/functions/v1/blog-articles`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${supabaseKey}`,
-            'apikey': supabaseKey
-          },
-          body: JSON.stringify({
-            id: finalSlug,
+        const { data, error } = await supabase
+          .from('blog_posts')
+          .insert({
             slug: finalSlug,
             title: generatedContent.title,
             excerpt: generatedContent.excerpt || generatedContent.metaDescription.substring(0, 150),
             content: generatedContent.content,
+            meta_title: generatedContent.title,
             meta_description: generatedContent.metaDescription,
-            tags: generatedContent.keywords || [keyword],
+            keywords: generatedContent.keywords || [keyword],
             published: status === 'published',
-            reading_time: generatedContent.readingTime || 5,
-            faq: generatedContent.faq || []
+            read_time: generatedContent.readingTime || 5,
+            author: 'TaxiAssur',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
           })
-        });
+          .select()
+          .single();
 
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || 'Failed to publish article');
+        if (error) {
+          console.error('Supabase insert error:', error);
+          throw new Error(error.message || 'Erreur lors de la publication');
         }
 
-        const result = await response.json();
-        if (!result.success) {
-          throw new Error(result.error || 'Failed to publish article');
-        }
+        console.log('Article publié:', data);
 
-        // FAQ déjà incluse dans blog_posts.faq (jsonb)
+        // Insérer les FAQ séparément si présentes
+        if (generatedContent.faq && generatedContent.faq.length > 0) {
+          const faqEntries = generatedContent.faq.map(faq => ({
+            question: faq.question,
+            answer: faq.answer,
+            category: 'assurance-taxi',
+            order_index: 0
+          }));
+
+          const { error: faqError } = await supabase
+            .from('faq_entries')
+            .insert(faqEntries);
+
+          if (faqError) {
+            console.warn('FAQ insert warning:', faqError);
+            // Ne pas bloquer si les FAQ échouent
+          }
+        }
       } else if (contentType === 'city') {
         // Publish as city page
         const { data, error: cityError } = await supabase
