@@ -1,0 +1,166 @@
+
+╔══════════════════════════════════════════════════════════════════════╗
+║                                                                      ║
+║        ✅ CONFIRMATION: BONNE DATABASE CONFIGURÉE                    ║
+║                                                                      ║
+╚══════════════════════════════════════════════════════════════════════╝
+
+🎯 OUI, C'EST LA BONNE DATABASE !
+
+URL Supabase configurée partout:
+https://drohhxrkoequjphvabvq.supabase.co
+
+Vérifications effectuées:
+✅ .env ligne 7 → https://drohhxrkoequjphvabvq.supabase.co
+✅ public/env-config.js ligne 3 → https://drohhxrkoequjphvabvq.supabase.co
+✅ src/lib/env.ts charge bien la config
+✅ ANON_KEY configurée et valide
+
+══════════════════════════════════════════════════════════════════════
+
+🔴 POURQUOI "0 ARTICLES PUBLIÉS" SUR /BLOG ?
+
+Le problème N'EST PAS la database URL.
+
+Le problème EST que les tables n'existent probablement PAS encore
+dans ta Supabase !
+
+Raison probable:
+❌ Les 3 fichiers SQL n'ont PAS été exécutés dans Supabase Dashboard
+❌ La table "blog_posts" n'existe pas
+❌ Les fonctions RPC n'existent pas
+→ Le frontend fait un fallback sur fichiers JSON locaux
+→ Mais les fichiers JSON ne sont pas dans dist/
+→ Résultat: 0 articles affichés
+
+══════════════════════════════════════════════════════════════════════
+
+🔍 VÉRIFICATION À FAIRE MAINTENANT:
+
+1. Va sur Dashboard Supabase:
+   https://drohhxrkoequjphvabvq.supabase.co
+
+2. Clique sur "Table Editor" (icône tableau à gauche)
+
+3. Regarde si tu vois ces tables:
+   - blog_posts ❓
+   - faq_entries ❓
+   - leads ❓
+   - automation_status ❓
+
+══════════════════════════════════════════════════════════════════════
+
+❓ SI TU VOIS LES TABLES:
+
+→ Les fichiers SQL ont été exécutés ✅
+
+Vérifie alors:
+1. Table Editor → blog_posts → Combien de lignes ?
+2. Si 0 lignes → Exécute INSERT-24-ARTICLES-BLOG.sql
+3. Si 24 lignes → Le problème est ailleurs (RPC functions)
+
+Action:
+- SQL Editor → New Query
+- Copie le contenu de INSERT-24-ARTICLES-BLOG.sql
+- Run
+- Rafraîchis /blog
+
+══════════════════════════════════════════════════════════════════════
+
+❌ SI TU NE VOIS PAS LES TABLES:
+
+→ Les fichiers SQL n'ont PAS été exécutés ❌
+
+Action IMMÉDIATE:
+1. SQL Editor → New Query
+2. Exécute dans l'ordre:
+
+   FICHIER 1 - SUPABASE-REPAIR-FINAL.sql
+   (Crée les tables blog_posts, faq_entries, leads, etc.)
+   
+   FICHIER 2 - FIX-RLS-PUBLIC-ACCESS.sql
+   (Crée les permissions RLS + fonctions RPC)
+   
+   FICHIER 3 - INSERT-24-ARTICLES-BLOG.sql
+   (Insère 24 articles + 8 FAQ)
+
+3. Rafraîchis /blog → Tu devrais voir 24 articles !
+
+══════════════════════════════════════════════════════════════════════
+
+🔧 COMMENT EXÉCUTER UN FICHIER SQL DANS SUPABASE:
+
+1. Ouvre le fichier SQL dans ton éditeur de texte
+2. Copie TOUT le contenu (Ctrl+A, Ctrl+C)
+3. Va sur Dashboard Supabase → SQL Editor
+4. Clique "New Query"
+5. Colle le SQL (Ctrl+V)
+6. Clique "Run" (ou Ctrl+Enter)
+7. Attends le message "Success"
+8. Recommence avec le fichier suivant
+
+══════════════════════════════════════════════════════════════════════
+
+🎯 ORDRE D'EXÉCUTION CRITIQUE:
+
+FICHIER 1 AVANT TOUT:
+SUPABASE-REPAIR-FINAL.sql
+├─ Crée les tables
+└─ Sans ce fichier → RIEN ne fonctionnera
+
+FICHIER 2 ENSUITE:
+FIX-RLS-PUBLIC-ACCESS.sql
+├─ Configure les permissions
+├─ Crée les fonctions RPC (get_blog_posts, etc.)
+└─ Sans ce fichier → Accès interdit aux données
+
+FICHIER 3 ENFIN:
+INSERT-24-ARTICLES-BLOG.sql
+├─ Insère les 24 articles
+├─ Insère les 8 FAQ
+└─ Sans ce fichier → Base vide mais fonctionnelle
+
+══════════════════════════════════════════════════════════════════════
+
+📊 RÉSULTAT ATTENDU APRÈS EXÉCUTION:
+
+Table Editor → blog_posts:
+✅ 24 lignes (articles)
+✅ Colonnes: slug, title, excerpt, content, keywords, published, etc.
+
+Table Editor → faq_entries:
+✅ 8 lignes (FAQ)
+✅ Colonnes: question, answer, category, order_index
+
+SQL Editor → Test RPC:
+SELECT * FROM get_blog_posts() LIMIT 1;
+✅ Retourne 1 article
+
+Site web → /blog:
+✅ Affiche 24 articles
+✅ "24 Articles Publiés" au lieu de "0"
+
+══════════════════════════════════════════════════════════════════════
+
+⚠️ SI TU AS DÉJÀ EXÉCUTÉ LES FICHIERS AVANT:
+
+Les fichiers SQL sont IDEMPOTENTS:
+- Ils utilisent "DROP IF EXISTS" et "IF NOT EXISTS"
+- Tu peux les exécuter plusieurs fois sans problème
+- Ils ne créeront pas de doublons
+
+Action:
+→ Exécute-les à nouveau pour être sûr !
+
+══════════════════════════════════════════════════════════════════════
+
+🚀 APRÈS AVOIR EXÉCUTÉ LES 3 FICHIERS SQL:
+
+1. Rafraîchis https://taxiassur.com/blog
+2. Tu devrais voir "24 Articles Publiés"
+3. Les articles se chargent en ~200ms (rapide ⚡)
+4. Clique sur un article → Il s'affiche
+5. Générateur IA → Publie un article → Ça fonctionne
+
+══════════════════════════════════════════════════════════════════════
+
