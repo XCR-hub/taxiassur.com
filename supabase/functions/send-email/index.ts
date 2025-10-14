@@ -16,6 +16,8 @@ interface EmailRequest {
     name: string;
   };
   replyTo?: string;
+  template?: string; // Template nom: "devis", "contract", "review_request"
+  data?: Record<string, any>; // Données pour le template
   templateId?: string;
   dynamicTemplateData?: Record<string, any>;
   attachments?: Array<{
@@ -30,6 +32,230 @@ interface SendGridResponse {
   success: boolean;
   messageId?: string;
   error?: string;
+}
+
+// Fonction pour générer le HTML des templates
+function generateEmailTemplate(template: string, data: Record<string, any>): { html: string; text: string } {
+  const baseStyle = `
+    <style>
+      body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; }
+      .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+      .header { background: linear-gradient(135deg, #1e40af 0%, #7c3aed 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+      .content { background: #ffffff; padding: 30px; border: 1px solid #e5e7eb; }
+      .button { display: inline-block; background: #2563eb; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: bold; margin: 20px 0; }
+      .footer { background: #f9fafb; padding: 20px; text-align: center; font-size: 14px; color: #6b7280; border-radius: 0 0 8px 8px; }
+      .highlight { background: #fef3c7; padding: 15px; border-left: 4px solid #f59e0b; margin: 20px 0; }
+    </style>
+  `;
+
+  switch (template) {
+    case "devis": {
+      const html = `
+        <!DOCTYPE html>
+        <html>
+        <head>${baseStyle}</head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>🚖 Votre Devis Assurance Taxi</h1>
+            </div>
+            <div class="content">
+              <p>Bonjour <strong>${data.name || 'cher client'}</strong>,</p>
+
+              <p>Nous avons le plaisir de vous transmettre votre devis personnalisé pour votre assurance taxi à <strong>${data.city || 'votre ville'}</strong>.</p>
+
+              <div class="highlight">
+                <p><strong>📄 Votre devis a été préparé avec soin</strong></p>
+                <p>Notre équipe d'experts a analysé votre profil et vous propose les meilleures garanties adaptées à votre activité.</p>
+              </div>
+
+              <p><strong>Prochaines étapes :</strong></p>
+              <ul>
+                <li>✅ Consultez attentivement votre devis</li>
+                <li>📞 Contactez-nous pour toute question au <strong>01 80 85 57 86</strong></li>
+                <li>✍️ Retournez votre accord signé</li>
+              </ul>
+
+              <p>Notre conseiller reste à votre disposition pour vous accompagner dans votre décision.</p>
+
+              <a href="https://taxiassur.com/contact" class="button">Nous Contacter</a>
+
+              <p>Cordialement,<br><strong>L'équipe TaxiAssur</strong></p>
+            </div>
+            <div class="footer">
+              <p>📧 team@taxiassur.com | 📞 01 80 85 57 86</p>
+              <p>ORIAS 11 061 425 - Courtier Agréé</p>
+              <p><a href="https://taxiassur.com">taxiassur.com</a></p>
+            </div>
+          </div>
+        </body>
+        </html>
+      `;
+
+      const text = `
+Bonjour ${data.name || 'cher client'},
+
+Nous avons le plaisir de vous transmettre votre devis personnalisé pour votre assurance taxi à ${data.city || 'votre ville'}.
+
+Votre devis a été préparé avec soin par notre équipe d'experts.
+
+Prochaines étapes :
+- Consultez attentivement votre devis
+- Contactez-nous au 01 80 85 57 86 pour toute question
+- Retournez votre accord signé
+
+Cordialement,
+L'équipe TaxiAssur
+team@taxiassur.com | 01 80 85 57 86
+      `;
+
+      return { html, text };
+    }
+
+    case "contract": {
+      const html = `
+        <!DOCTYPE html>
+        <html>
+        <head>${baseStyle}</head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>🎉 Bienvenue chez TaxiAssur !</h1>
+            </div>
+            <div class="content">
+              <p>Bonjour <strong>${data.name || 'cher client'}</strong>,</p>
+
+              <p>Félicitations ! Votre contrat d'assurance taxi est maintenant actif.</p>
+
+              <div class="highlight">
+                <p><strong>✅ Votre protection démarre immédiatement</strong></p>
+                <p>Vous êtes désormais couvert par l'une des meilleures assurances du marché pour votre activité de taxi à <strong>${data.city || 'votre ville'}</strong>.</p>
+              </div>
+
+              <p><strong>Documents importants :</strong></p>
+              <ul>
+                <li>📄 Contrat d'assurance signé</li>
+                <li>🛡️ Attestation d'assurance (à conserver dans votre véhicule)</li>
+                <li>📋 Conditions générales</li>
+              </ul>
+
+              <p><strong>En cas de sinistre :</strong></p>
+              <ul>
+                <li>📞 Contactez-nous immédiatement au <strong>01 80 85 57 86</strong></li>
+                <li>📧 Email : team@taxiassur.com</li>
+                <li>⏰ Assistance 24h/24, 7j/7</li>
+              </ul>
+
+              <a href="https://taxiassur.com/gestion-sinistres" class="button">Déclarer un Sinistre</a>
+
+              <p>Nous vous remercions de votre confiance et restons à votre écoute.</p>
+
+              <p>Cordialement,<br><strong>L'équipe TaxiAssur</strong></p>
+            </div>
+            <div class="footer">
+              <p>📧 team@taxiassur.com | 📞 01 80 85 57 86</p>
+              <p>ORIAS 11 061 425 - Courtier Agréé</p>
+              <p><a href="https://taxiassur.com">taxiassur.com</a></p>
+            </div>
+          </div>
+        </body>
+        </html>
+      `;
+
+      const text = `
+Bonjour ${data.name || 'cher client'},
+
+Félicitations ! Votre contrat d'assurance taxi est maintenant actif.
+
+Vous êtes désormais couvert à ${data.city || 'votre ville'}.
+
+En cas de sinistre :
+- Contactez-nous au 01 80 85 57 86
+- Email : team@taxiassur.com
+- Assistance 24h/24, 7j/7
+
+Merci de votre confiance.
+
+Cordialement,
+L'équipe TaxiAssur
+team@taxiassur.com | 01 80 85 57 86
+      `;
+
+      return { html, text };
+    }
+
+    case "review_request": {
+      const html = `
+        <!DOCTYPE html>
+        <html>
+        <head>${baseStyle}</head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>⭐ Votre Avis Compte pour Nous</h1>
+            </div>
+            <div class="content">
+              <p>Bonjour <strong>${data.name || 'cher client'}</strong>,</p>
+
+              <p>Nous espérons que vous êtes satisfait de nos services d'assurance taxi à <strong>${data.city || 'votre ville'}</strong>.</p>
+
+              <div class="highlight">
+                <p><strong>💙 Partagez votre expérience</strong></p>
+                <p>Votre avis nous aide à améliorer nos services et à accompagner d'autres professionnels du taxi dans leur recherche d'assurance.</p>
+              </div>
+
+              <p><strong>Pourquoi votre avis est important :</strong></p>
+              <ul>
+                <li>🎯 Aide d'autres chauffeurs à faire le bon choix</li>
+                <li>💪 Nous motive à maintenir notre excellence</li>
+                <li>📈 Améliore nos services continuellement</li>
+              </ul>
+
+              <p>Cela ne prendra que 2 minutes :</p>
+
+              <a href="${data.review_link || 'https://g.page/r/taxiassur/review'}" class="button">Laisser un Avis Google ⭐</a>
+
+              <p style="font-size: 14px; color: #6b7280; margin-top: 20px;">
+                <em>Votre retour d'expérience, qu'il soit positif ou qu'il suggère des améliorations, est précieux pour nous.</em>
+              </p>
+
+              <p>Merci infiniment pour votre temps et votre confiance.</p>
+
+              <p>Cordialement,<br><strong>L'équipe TaxiAssur</strong></p>
+            </div>
+            <div class="footer">
+              <p>📧 team@taxiassur.com | 📞 01 80 85 57 86</p>
+              <p>ORIAS 11 061 425 - Courtier Agréé</p>
+              <p><a href="https://taxiassur.com">taxiassur.com</a></p>
+            </div>
+          </div>
+        </body>
+        </html>
+      `;
+
+      const text = `
+Bonjour ${data.name || 'cher client'},
+
+Nous espérons que vous êtes satisfait de nos services d'assurance taxi à ${data.city || 'votre ville'}.
+
+Votre avis nous aide à améliorer nos services et à accompagner d'autres professionnels du taxi.
+
+Laissez-nous un avis sur Google (2 minutes) :
+${data.review_link || 'https://g.page/r/taxiassur/review'}
+
+Merci infiniment pour votre temps et votre confiance.
+
+Cordialement,
+L'équipe TaxiAssur
+team@taxiassur.com | 01 80 85 57 86
+      `;
+
+      return { html, text };
+    }
+
+    default:
+      throw new Error(`Unknown template: ${template}`);
+  }
 }
 
 Deno.serve(async (req: Request) => {
@@ -63,11 +289,31 @@ Deno.serve(async (req: Request) => {
       );
     }
 
+    // Générer le template si nécessaire
+    if (emailRequest.template && emailRequest.data) {
+      try {
+        const { html, text } = generateEmailTemplate(emailRequest.template, emailRequest.data);
+        emailRequest.html = html;
+        emailRequest.text = text;
+      } catch (error) {
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: `Template error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          }),
+          {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
+      }
+    }
+
     if (!emailRequest.text && !emailRequest.html && !emailRequest.templateId) {
       return new Response(
         JSON.stringify({
           success: false,
-          error: "Must provide text, html, or templateId",
+          error: "Must provide text, html, template, or templateId",
         }),
         {
           status: 400,
