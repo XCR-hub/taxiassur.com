@@ -112,8 +112,22 @@ const LeadManager: React.FC = () => {
 
       if (type === 'devis') {
         success = await sendDevisEmail(selectedLead.id, attachment);
+
+        // Auto-changement statut vers "Devis Envoyé"
+        if (success) {
+          await updateLeadStatus(selectedLead.id, 'devis_envoye', {
+            notes: `Devis envoyé le ${new Date().toLocaleDateString('fr-FR')}${attachment ? ' avec pièce jointe: ' + attachment.name : ''}`
+          });
+        }
       } else if (type === 'contract') {
         success = await sendContractEmail(selectedLead.id, attachment);
+
+        // Auto-changement statut vers "Client"
+        if (success) {
+          await updateLeadStatus(selectedLead.id, 'client', {
+            notes: `Contrat envoyé le ${new Date().toLocaleDateString('fr-FR')}${attachment ? ' avec pièce jointe: ' + attachment.name : ''}`
+          });
+        }
       }
 
       if (success) {
@@ -121,9 +135,8 @@ const LeadManager: React.FC = () => {
         setAttachments({ devis: null, contract: null });
         setShowDetailModal(false);
         const attachmentMsg = attachment ? '\n\nPièce jointe incluse : ' + attachment.name : '';
-        alert(`✅ ${type === 'devis' ? 'Devis' : 'Contrat'} envoyé avec succès !\n\nL'email a été envoyé à ${selectedLead.email}${attachmentMsg}`);
-      } else {
-        alert('❌ Erreur lors de l\'envoi de l\'email');
+        const statusMsg = type === 'devis' ? '\n\n✅ Statut automatiquement changé en "Devis Envoyé"' : '\n\n✅ Statut automatiquement changé en "Client"';
+        alert(`✅ ${type === 'devis' ? 'Devis' : 'Contrat'} envoyé avec succès !\n\nL'email a été envoyé à ${selectedLead.email}${attachmentMsg}${statusMsg}`);
       }
     } catch (error) {
       console.error('Email sending error:', error);
@@ -205,13 +218,13 @@ const LeadManager: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 p-8">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-8">
         <div className="max-w-7xl mx-auto">
           <div className="animate-pulse">
-            <div className="h-8 bg-gray-200 rounded mb-8"></div>
+            <div className="h-8 bg-slate-700 rounded mb-8"></div>
             <div className="grid grid-cols-5 gap-6 mb-8">
               {[...Array(5)].map((_, i) => (
-                <div key={i} className="h-32 bg-gray-200 rounded"></div>
+                <div key={i} className="h-32 bg-slate-800 rounded"></div>
               ))}
             </div>
           </div>
@@ -222,28 +235,28 @@ const LeadManager: React.FC = () => {
 
   return (
     
-      <div className="min-h-screen bg-gray-50 p-8">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-8">
         {/* Header with Home Button */}
-        <header className="bg-white border-b-2 border-gray-200 shadow-sm mb-8">
+        <header className="bg-slate-800 border-b-2 border-slate-700 shadow-xl mb-8 rounded-xl">
           <div className="max-w-7xl mx-auto px-6 py-4">
             <div className="flex justify-between items-center">
               <div className="flex items-center space-x-4">
-                <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-500 rounded-xl flex items-center justify-center shadow-lg">
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
                   <Users className="text-white" size={20} />
                 </div>
                 <div>
-                  <h1 className="text-2xl font-bold text-gray-900">
+                  <h1 className="text-2xl font-bold text-white">
                     Gestion des Leads
                   </h1>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-slate-300">
                     Suivi complet de vos prospects taxi
                   </p>
                 </div>
               </div>
-              
+
               <a
                 href="/backoffice"
-                className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
+                className="bg-blue-600 hover:bg-blue-500 text-white font-medium px-4 py-2 rounded-lg transition-colors flex items-center space-x-2 shadow-lg"
               >
                 <Home size={16} />
                 <span>Accueil Backoffice</span>
@@ -258,14 +271,14 @@ const LeadManager: React.FC = () => {
             <div className="flex items-center space-x-4">
               <button
                 onClick={exportLeads}
-                className="flex items-center space-x-2 bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+                className="flex items-center space-x-2 bg-green-600 hover:bg-green-500 text-white font-medium py-2 px-4 rounded-lg transition-colors shadow-lg"
               >
                 <Download size={16} />
                 <span>Export CSV</span>
               </button>
               <button
                 onClick={loadLeads}
-                className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+                className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-500 text-white font-medium py-2 px-4 rounded-lg transition-colors shadow-lg"
               >
                 <Users size={16} />
                 <span>Actualiser</span>
@@ -275,61 +288,61 @@ const LeadManager: React.FC = () => {
 
           {/* Statistics */}
           <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mb-8">
-            <Card className="text-center bg-gradient-to-br from-blue-50 to-indigo-50">
-              <Users className="mx-auto mb-2 text-blue-600" size={20} />
-              <div className="text-2xl font-bold text-gray-900">{stats.total}</div>
-              <div className="text-sm text-gray-600">Total</div>
+            <Card className="text-center bg-slate-800 border border-slate-700">
+              <Users className="mx-auto mb-2 text-blue-400" size={20} />
+              <div className="text-2xl font-bold text-white">{stats.total}</div>
+              <div className="text-sm text-slate-300">Total</div>
             </Card>
 
-            <Card className="text-center bg-gradient-to-br from-yellow-50 to-amber-50">
-              <Eye className="mx-auto mb-2 text-yellow-600" size={20} />
-              <div className="text-2xl font-bold text-gray-900">{stats.nouveau}</div>
-              <div className="text-sm text-gray-600">Nouveaux</div>
+            <Card className="text-center bg-slate-800 border border-slate-700">
+              <Eye className="mx-auto mb-2 text-amber-400" size={20} />
+              <div className="text-2xl font-bold text-white">{stats.nouveau}</div>
+              <div className="text-sm text-slate-300">Nouveaux</div>
             </Card>
 
-            <Card className="text-center bg-gradient-to-br from-orange-50 to-red-50">
-              <Phone className="mx-auto mb-2 text-orange-600" size={20} />
-              <div className="text-2xl font-bold text-gray-900">{stats.contacte}</div>
-              <div className="text-sm text-gray-600">Contactés</div>
+            <Card className="text-center bg-slate-800 border border-slate-700">
+              <Phone className="mx-auto mb-2 text-orange-400" size={20} />
+              <div className="text-2xl font-bold text-white">{stats.contacte}</div>
+              <div className="text-sm text-slate-300">Contactés</div>
             </Card>
 
-            <Card className="text-center bg-gradient-to-br from-purple-50 to-pink-50">
-              <FileText className="mx-auto mb-2 text-purple-600" size={20} />
-              <div className="text-2xl font-bold text-gray-900">{stats.devis_envoye}</div>
-              <div className="text-sm text-gray-600">Devis Envoyés</div>
+            <Card className="text-center bg-slate-800 border border-slate-700">
+              <FileText className="mx-auto mb-2 text-purple-400" size={20} />
+              <div className="text-2xl font-bold text-white">{stats.devis_envoye}</div>
+              <div className="text-sm text-slate-300">Devis Envoyés</div>
             </Card>
 
-            <Card className="text-center bg-gradient-to-br from-green-50 to-emerald-50">
-              <CheckCircle className="mx-auto mb-2 text-green-600" size={20} />
-              <div className="text-2xl font-bold text-gray-900">{stats.client}</div>
-              <div className="text-sm text-gray-600">Clients</div>
+            <Card className="text-center bg-slate-800 border border-slate-700">
+              <CheckCircle className="mx-auto mb-2 text-green-400" size={20} />
+              <div className="text-2xl font-bold text-white">{stats.client}</div>
+              <div className="text-sm text-slate-300">Clients</div>
             </Card>
 
-            <Card className="text-center bg-gradient-to-br from-gray-50 to-slate-50">
-              <Euro className="mx-auto mb-2 text-gray-600" size={20} />
-              <div className="text-2xl font-bold text-gray-900">{stats.totalPrimes.toLocaleString()}€</div>
-              <div className="text-sm text-gray-600">CA Réalisé</div>
+            <Card className="text-center bg-slate-800 border border-slate-700">
+              <Euro className="mx-auto mb-2 text-amber-400" size={20} />
+              <div className="text-2xl font-bold text-white">{stats.totalPrimes.toLocaleString()}€</div>
+              <div className="text-sm text-slate-300">CA Réalisé</div>
             </Card>
           </div>
 
           {/* Filters */}
-          <Card className="mb-8">
+          <Card className="mb-8 bg-slate-800 border-slate-700">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-600" size={16} />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={16} />
                 <input
                   type="text"
                   placeholder="Rechercher..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white placeholder-gray-400"
+                  className="w-full pl-10 pr-4 py-2 border border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 text-white bg-slate-700 placeholder-slate-400"
                 />
               </div>
 
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
+                className="px-3 py-2 border border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 text-white bg-slate-700"
               >
                 <option value="all">Tous les statuts</option>
                 <option value="nouveau">Nouveaux</option>
@@ -342,7 +355,7 @@ const LeadManager: React.FC = () => {
               <select
                 value={filterCity}
                 onChange={(e) => setFilterCity(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
+                className="px-3 py-2 border border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 text-white bg-slate-700"
               >
                 <option value="all">Toutes les villes</option>
                 {uniqueCities.map(city => (
@@ -350,7 +363,7 @@ const LeadManager: React.FC = () => {
                 ))}
               </select>
 
-              <div className="text-sm text-gray-600 flex items-center">
+              <div className="text-sm text-slate-300 flex items-center">
                 <Filter size={16} className="mr-2" />
                 {filteredLeads.length} résultats
               </div>
@@ -358,43 +371,43 @@ const LeadManager: React.FC = () => {
           </Card>
 
           {/* Leads Table */}
-          <Card>
+          <Card className="bg-slate-800 border-slate-700">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-gray-200">
-                    <th className="text-left py-3 px-4 font-medium text-gray-900">Client</th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-900">Contact</th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-900">Ville</th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-900">Statut</th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-900">État</th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-900">Prime</th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-900">Date</th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-900">Actions</th>
+                  <tr className="border-b border-slate-700">
+                    <th className="text-left py-3 px-4 font-medium text-white">Client</th>
+                    <th className="text-left py-3 px-4 font-medium text-white">Contact</th>
+                    <th className="text-left py-3 px-4 font-medium text-white">Ville</th>
+                    <th className="text-left py-3 px-4 font-medium text-white">Statut</th>
+                    <th className="text-left py-3 px-4 font-medium text-white">État</th>
+                    <th className="text-left py-3 px-4 font-medium text-white">Prime</th>
+                    <th className="text-left py-3 px-4 font-medium text-white">Date</th>
+                    <th className="text-left py-3 px-4 font-medium text-white">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredLeads.map(lead => (
-                    <tr key={lead.id} className="border-b border-gray-100 hover:bg-gray-50">
+                    <tr key={lead.id} className="border-b border-slate-700 hover:bg-slate-700/50">
                       <td className="py-3 px-4">
                         <div>
-                          <div className="font-medium text-gray-900">{lead.name}</div>
+                          <div className="font-medium text-white">{lead.name}</div>
                           {lead.immatriculation && (
-                            <div className="text-xs text-gray-600">{lead.immatriculation}</div>
+                            <div className="text-xs text-slate-400">{lead.immatriculation}</div>
                           )}
                         </div>
                       </td>
                       <td className="py-3 px-4">
                         <div className="space-y-1">
-                          <div className="text-sm text-gray-900">{lead.email}</div>
-                          <div className="text-sm text-gray-600">{lead.phone}</div>
+                          <div className="text-sm text-white">{lead.email}</div>
+                          <div className="text-sm text-slate-400">{lead.phone}</div>
                         </div>
                       </td>
                       <td className="py-3 px-4">
-                        <span className="font-medium text-gray-900">{lead.city}</span>
+                        <span className="font-medium text-white">{lead.city}</span>
                       </td>
                       <td className="py-3 px-4">
-                        <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
+                        <span className="px-2 py-1 bg-blue-600 text-white rounded-full text-xs font-medium">
                           {lead.status.toUpperCase()}
                         </span>
                       </td>
