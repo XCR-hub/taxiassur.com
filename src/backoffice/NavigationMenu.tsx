@@ -144,7 +144,11 @@ export default function NavigationMenu() {
           <Settings className="w-4 h-4" />
           AUTOMATISATION & SÉCURITÉ
         </h3>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+          <Link to="/backoffice/auto-optimizer" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm animate-pulse">
+            <Zap className="w-5 h-5" />
+            <span>Auto-Optimisation</span>
+          </Link>
           <Link to="/backoffice/automation-scheduler" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm">
             <Clock className="w-5 h-5" />
             <span>Scheduler</span>

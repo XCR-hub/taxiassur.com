@@ -59,6 +59,7 @@ const SEOStrategyDashboard = lazy(() => import('./backoffice/SEOStrategyDashboar
 const AIContentGenerator = lazy(() => import('./backoffice/AIContentGenerator'));
 const AIContentGeneratorUnified = lazy(() => import('./backoffice/AIContentGeneratorUnified'));
 const AutomationScheduler = lazy(() => import('./backoffice/AutomationScheduler'));
+const AutoOptimizer = lazy(() => import('./backoffice/AutoOptimizer'));
 const TrendAnalyzer = lazy(() => import('./backoffice/TrendAnalyzer'));
 const ProspectSeeder = lazy(() => import('./backoffice/ProspectSeeder'));
 const CampaignLauncher = lazy(() => import('./backoffice/CampaignLauncher'));
@@ -447,6 +448,10 @@ export const router = createBrowserRouter([
   {
     path: '/backoffice/automation-scheduler',
     element: <AuthGuard><SuspenseWrapper><AutomationScheduler /></SuspenseWrapper></AuthGuard>
+  },
+  {
+    path: '/backoffice/auto-optimizer',
+    element: <AuthGuard><SuspenseWrapper><AutoOptimizer /></SuspenseWrapper></AuthGuard>
   },
   {
     path: '/backoffice/trend-analyzer',
