@@ -50,7 +50,7 @@ const SOCIAL_NETWORKS: NetworkDefinition[] = [
     icon: Instagram,
     color: 'bg-pink-600',
     hasAPI: true,
-    apiStatus: 'ready',
+    apiStatus: 'pending',
     requiresAuth: true,
     description: 'Compte Instagram Business',
     setupGuide: 'Liez votre compte Instagram Business (via Facebook)'
@@ -61,7 +61,7 @@ const SOCIAL_NETWORKS: NetworkDefinition[] = [
     icon: Twitter,
     color: 'bg-sky-500',
     hasAPI: true,
-    apiStatus: 'ready',
+    apiStatus: 'pending',
     requiresAuth: true,
     description: 'Publications Twitter/X',
     setupGuide: 'Authentification OAuth 2.0 Twitter API v2'
@@ -83,7 +83,7 @@ const SOCIAL_NETWORKS: NetworkDefinition[] = [
     icon: Youtube,
     color: 'bg-red-600',
     hasAPI: true,
-    apiStatus: 'ready',
+    apiStatus: 'pending',
     requiresAuth: true,
     description: 'Chaîne YouTube',
     setupGuide: 'Authentification Google OAuth + YouTube Data API'

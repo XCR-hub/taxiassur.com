@@ -47,29 +47,20 @@ SELECT cron.schedule(
   'seo-ping-engines',
   '0 */6 * * *', -- Toutes les 6 heures
   $$
-  DO $$
-  DECLARE
-    v_config jsonb;
-    v_site_url text;
-  BEGIN
-    -- Récupérer la config
-    SELECT value INTO v_config
-    FROM seo_automation_config
-    WHERE key = 'auto_ping_on_publish' AND enabled = true;
-
-    IF v_config IS NOT NULL THEN
-      -- Récupérer l'URL du site
-      SELECT value->>'site_url' INTO v_site_url
-      FROM seo_automation_config
-      WHERE key = 'google_search_console';
-
-      -- Logger le ping
-      INSERT INTO seo_ping_history (engine, urls_pinged, method, success, response_message)
-      VALUES
-        ('google', ARRAY[CONCAT(v_site_url, '/feeds/sitemap.xml')], 'sitemap', true, 'Automated ping from cron'),
-        ('bing', ARRAY[CONCAT(v_site_url, '/feeds/sitemap.xml')], 'sitemap', true, 'Automated ping from cron');
-    END IF;
-  END $$;
+  INSERT INTO seo_ping_history (engine, urls_pinged, method, success, response_message)
+  SELECT
+    engine_name,
+    ARRAY['https://taxiassur.com/feeds/sitemap.xml'],
+    'sitemap',
+    true,
+    'Automated ping from cron'
+  FROM (
+    VALUES ('google'), ('bing'), ('yandex')
+  ) AS engines(engine_name)
+  WHERE EXISTS (
+    SELECT 1 FROM seo_automation_config
+    WHERE key = 'auto_ping_on_publish' AND enabled = true
+  );
   $$
 );
 
@@ -78,32 +69,20 @@ SELECT cron.schedule(
   'seo-check-unindexed',
   '0 10 * * *', -- Tous les jours à 10h
   $$
-  DO $$
-  DECLARE
-    v_unindexed_count int;
-  BEGIN
-    -- Compter les pages non indexées
-    SELECT COUNT(*) INTO v_unindexed_count
-    FROM seo_indexation_status
-    WHERE is_indexed = false
-      AND last_checked_at < NOW() - INTERVAL '7 days';
-
-    -- Si des pages non indexées depuis > 7 jours, déclencher une alerte
-    IF v_unindexed_count > 10 THEN
-      -- Logger dans les webhook events pour notification
-      INSERT INTO seo_webhook_events (source, event_type, payload, processed)
-      VALUES (
-        'system',
-        'unindexed_pages_alert',
-        jsonb_build_object(
-          'count', v_unindexed_count,
-          'message', CONCAT(v_unindexed_count, ' pages non indexées depuis plus de 7 jours'),
-          'timestamp', NOW()
-        ),
-        false
-      );
-    END IF;
-  END $$;
+  INSERT INTO seo_webhook_events (source, event_type, payload, processed)
+  SELECT
+    'system',
+    'unindexed_pages_alert',
+    jsonb_build_object(
+      'count', COUNT(*),
+      'message', CONCAT(COUNT(*), ' pages non indexées depuis plus de 7 jours'),
+      'timestamp', NOW()
+    ),
+    false
+  FROM seo_indexation_status
+  WHERE is_indexed = false
+    AND last_checked_at < NOW() - INTERVAL '7 days'
+  HAVING COUNT(*) > 10;
   $$
 );
 

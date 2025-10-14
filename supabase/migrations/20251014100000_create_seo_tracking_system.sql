@@ -167,22 +167,42 @@ CREATE POLICY "Anyone can view seo metrics"
   ON seo_metrics FOR SELECT
   USING (true);
 
-CREATE POLICY "Authenticated users can manage metrics"
-  ON seo_metrics FOR ALL
+CREATE POLICY "Authenticated users can insert metrics"
+  ON seo_metrics FOR INSERT
+  TO authenticated
+  WITH CHECK (true);
+
+CREATE POLICY "Authenticated users can update metrics"
+  ON seo_metrics FOR UPDATE
   TO authenticated
   USING (true)
   WITH CHECK (true);
+
+CREATE POLICY "Authenticated users can delete metrics"
+  ON seo_metrics FOR DELETE
+  TO authenticated
+  USING (true);
 
 -- Policies pour seo_indexation_status
 CREATE POLICY "Anyone can view indexation status"
   ON seo_indexation_status FOR SELECT
   USING (true);
 
+CREATE POLICY "Authenticated users can insert indexation status"
+  ON seo_indexation_status FOR INSERT
+  TO authenticated
+  WITH CHECK (true);
+
 CREATE POLICY "Authenticated users can update indexation status"
-  ON seo_indexation_status FOR ALL
+  ON seo_indexation_status FOR UPDATE
   TO authenticated
   USING (true)
   WITH CHECK (true);
+
+CREATE POLICY "Authenticated users can delete indexation status"
+  ON seo_indexation_status FOR DELETE
+  TO authenticated
+  USING (true);
 
 -- Policies pour seo_ping_history
 CREATE POLICY "Authenticated users can view ping history"
@@ -217,11 +237,21 @@ CREATE POLICY "Authenticated users can view config"
   TO authenticated
   USING (true);
 
-CREATE POLICY "Authenticated users can manage config"
-  ON seo_automation_config FOR ALL
+CREATE POLICY "Authenticated users can insert config"
+  ON seo_automation_config FOR INSERT
+  TO authenticated
+  WITH CHECK (true);
+
+CREATE POLICY "Authenticated users can update config"
+  ON seo_automation_config FOR UPDATE
   TO authenticated
   USING (true)
   WITH CHECK (true);
+
+CREATE POLICY "Authenticated users can delete config"
+  ON seo_automation_config FOR DELETE
+  TO authenticated
+  USING (true);
 
 -- Index pour performance
 CREATE INDEX IF NOT EXISTS idx_seo_metrics_date ON seo_metrics(date DESC);
