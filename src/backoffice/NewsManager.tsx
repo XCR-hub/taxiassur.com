@@ -36,65 +36,15 @@ const NewsManager: React.FC = () => {
   };
 
   const manualRefresh = async () => {
-    try {
-      const response = await fetch('/webhooks/make.php?action=aggregateNews', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-MAKE-SECRET': import.meta.env.VITE_MAKE_SECRET || 'change_me_secure_token_2024'
-        }
-      });
-      
-      if (response.ok) {
-        alert('✅ Veille actualités lancée manuellement');
-        setTimeout(loadProcessedNews, 5000); // Refresh after 5 seconds
-      } else {
-        alert('❌ Erreur lors du lancement manuel');
-      }
-    } catch (error) {
-      alert('❌ Erreur de connexion');
-    }
+    // Webhook make.php désactivé (fichier non disponible sur serveur)
+    // Utiliser les Edge Functions Supabase à la place
+    alert('⚠️ Fonctionnalité désactivée temporairement.\nUtilisez les Edge Functions Supabase pour l\'agrégation d\'actualités.');
   };
 
   const publishNews = async (newsId: string) => {
-    try {
-      const news = processedNews.find(n => n.id === newsId);
-      if (!news) return;
-
-      const blogPost = {
-        id: `actualite-${Date.now()}`,
-        title: news.synthesizedTitle,
-        excerpt: news.synthesizedContent.replace(/<[^>]*>/g, '').substring(0, 160),
-        content: news.synthesizedContent,
-        tags: news.seoKeywords.slice(0, 5),
-        coverImage: 'https://images.pexels.com/photos/1545743/pexels-photo-1545743.jpeg?auto=compress&cs=tinysrgb&w=800',
-        author: 'TaxiAssur',
-        createdAt: new Date().toISOString(),
-        status: 'published',
-        category: 'actualité'
-      };
-
-      const response = await fetch('/webhooks/make.php', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-MAKE-SECRET': import.meta.env.VITE_MAKE_SECRET || 'change_me_secure_token_2024'
-        },
-        body: JSON.stringify({
-          type: 'blog',
-          payload: blogPost
-        })
-      });
-
-      if (response.ok) {
-        alert('✅ Actualité publiée avec succès !');
-        loadProcessedNews();
-      } else {
-        alert('❌ Erreur lors de la publication');
-      }
-    } catch (error) {
-      alert('❌ Erreur de connexion');
-    }
+    // Webhook make.php désactivé (fichier non disponible sur serveur)
+    // Utiliser les Edge Functions Supabase à la place
+    alert('⚠️ Fonctionnalité désactivée temporairement.\nUtilisez les Edge Functions Supabase pour la publication d\'actualités.');
   };
 
   const getAngleColor = (angle: string): string => {
