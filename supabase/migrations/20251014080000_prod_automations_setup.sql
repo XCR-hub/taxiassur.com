@@ -124,8 +124,12 @@ CREATE INDEX IF NOT EXISTS idx_automation_status_enabled ON automation_status(is
 CREATE INDEX IF NOT EXISTS idx_social_networks_name ON social_networks(name);
 CREATE INDEX IF NOT EXISTS idx_social_networks_active ON social_networks(is_active);
 
+-- Supprimer les fonctions existantes si elles existent
+DROP FUNCTION IF EXISTS get_realtime_stats();
+DROP FUNCTION IF EXISTS get_top_pages_today();
+
 -- Fonction RPC pour stats temps réel (utilise vraies données uniquement)
-CREATE OR REPLACE FUNCTION get_realtime_stats()
+CREATE FUNCTION get_realtime_stats()
 RETURNS TABLE (
   active_sessions bigint,
   today_sessions bigint,
@@ -171,7 +175,7 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 GRANT EXECUTE ON FUNCTION get_realtime_stats() TO authenticated;
 
 -- Fonction pour top pages
-CREATE OR REPLACE FUNCTION get_top_pages_today()
+CREATE FUNCTION get_top_pages_today()
 RETURNS TABLE (
   page_url text,
   views bigint,
