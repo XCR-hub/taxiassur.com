@@ -78,12 +78,12 @@ export default function NewsSection({ limit = 3, showTitle = true }: NewsSection
   }
 
   return (
-    <section className="py-16 bg-gradient-to-br from-gray-50 to-blue-50">
+    <section className="py-16 bg-gradient-to-br from-gray-50 to-amber-50">
       <div className="container mx-auto px-4">
         {/* Section Header */}
         {showTitle && (
           <div className="text-center mb-12">
-            <div className="inline-flex items-center space-x-2 bg-blue-100 text-blue-700 px-4 py-2 rounded-full mb-4">
+            <div className="inline-flex items-center space-x-2 bg-amber-100 text-amber-700 px-4 py-2 rounded-full mb-4">
               <Newspaper size={20} />
               <span className="font-semibold">Actualités</span>
             </div>
@@ -106,19 +106,19 @@ export default function NewsSection({ limit = 3, showTitle = true }: NewsSection
               <div className="p-6">
                 {/* Meta */}
                 <div className="flex items-center justify-between mb-3">
-                  <span className="inline-block px-3 py-1 bg-blue-100 text-blue-700 text-xs font-semibold rounded-full">
+                  <span className="inline-block px-3 py-1 bg-amber-100 text-amber-700 text-xs font-semibold rounded-full">
                     {article.category}
                   </span>
                   {article.score > 0 && (
                     <div className="flex items-center space-x-1 text-sm text-gray-600">
-                      <TrendingUp size={14} className="text-blue-600" />
+                      <TrendingUp size={14} className="text-amber-600" />
                       <span className="font-semibold">{article.score}/100</span>
                     </div>
                   )}
                 </div>
 
                 {/* Title */}
-                <h3 className="text-xl font-bold text-gray-900 mb-3 line-clamp-2 hover:text-blue-600 transition-colors">
+                <h3 className="text-xl font-bold text-gray-900 mb-3 line-clamp-2 hover:text-amber-600 transition-colors">
                   <a href={`/actualites/${article.slug}`}>
                     {article.title}
                   </a>
@@ -137,7 +137,7 @@ export default function NewsSection({ limit = 3, showTitle = true }: NewsSection
                   </div>
                   <a
                     href={`/actualites/${article.slug}`}
-                    className="text-blue-600 font-semibold text-sm hover:text-blue-700 flex items-center space-x-1"
+                    className="text-amber-600 font-semibold text-sm hover:text-amber-700 flex items-center space-x-1"
                   >
                     <span>Lire</span>
                     <ArrowRight size={16} />
@@ -152,7 +152,7 @@ export default function NewsSection({ limit = 3, showTitle = true }: NewsSection
         <div className="text-center">
           <a
             href="/actualites"
-            className="inline-flex items-center space-x-2 px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg transition-colors shadow-lg hover:shadow-xl"
+            className="inline-flex items-center space-x-2 px-8 py-4 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-gray-900 font-bold rounded-lg transition-colors shadow-lg hover:shadow-xl"
           >
             <Newspaper size={20} />
             <span>Toutes les Actualités</span>

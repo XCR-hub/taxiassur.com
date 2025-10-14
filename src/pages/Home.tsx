@@ -134,7 +134,7 @@ const Home: React.FC = () => {
                 <div className="text-center mt-8">
                   <a
                     href="/confiance-certifications"
-                    className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-bold px-8 py-4 rounded-xl transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+                    className="inline-block bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-gray-900 font-bold px-8 py-4 rounded-xl transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-1"
                   >
                     En savoir plus sur nos certifications
                   </a>

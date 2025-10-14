@@ -1,4 +1,6 @@
 import React from 'react';
+import Header from '../components/Header';
+import Footer from '../components/Footer';
 import SEOHead from '../components/SEOHead';
 import TrustBadges from '../components/TrustBadges';
 
@@ -10,10 +12,11 @@ export default function ConfianceEtCertifications() {
         description="TaxiAssur est un courtier professionnel certifié : adhérent CSCA, EDI Courtage, EDI Signature, CRM EXCALIBUR, RC Pro CGPA, conformité LCB-FT totale."
         keywords="courtier certifié, CSCA, EDI Courtage, EDI Signature, CGPA, EXCALIBUR, LCB-FT, gel avoirs, PPE, conformité courtage"
       />
+      <Header />
 
       <div className="min-h-screen bg-gradient-to-b from-white via-gray-50 to-white">
         {/* Hero Section */}
-        <section className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white py-20">
+        <section className="bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500 text-gray-900 py-20">
           <div className="container-max text-center">
             <h1 className="text-5xl font-bold mb-6">
               🏆 Votre Confiance, Notre Engagement
@@ -23,13 +26,13 @@ export default function ConfianceEtCertifications() {
               organisations professionnelles du courtage d'assurance en France.
             </p>
             <div className="mt-8 flex flex-wrap justify-center gap-4">
-              <div className="bg-white/20 backdrop-blur-sm px-6 py-3 rounded-full text-lg font-semibold">
+              <div className="bg-gray-900 text-white px-6 py-3 rounded-full text-lg font-semibold">
                 ✅ Certifié ORIAS
               </div>
-              <div className="bg-white/20 backdrop-blur-sm px-6 py-3 rounded-full text-lg font-semibold">
+              <div className="bg-gray-900 text-white px-6 py-3 rounded-full text-lg font-semibold">
                 ✅ Assuré RC Pro
               </div>
-              <div className="bg-white/20 backdrop-blur-sm px-6 py-3 rounded-full text-lg font-semibold">
+              <div className="bg-gray-900 text-white px-6 py-3 rounded-full text-lg font-semibold">
                 ✅ Conforme LCB-FT
               </div>
             </div>
@@ -281,7 +284,7 @@ export default function ConfianceEtCertifications() {
 
         {/* CTA Final */}
         <section className="container-max py-16">
-          <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-3xl p-12 text-center text-white shadow-2xl">
+          <div className="bg-gradient-to-r from-orange-500 to-amber-500 rounded-3xl p-12 text-center text-gray-900 shadow-2xl">
             <h2 className="text-4xl font-bold mb-6">
               Prêt à Travailler avec un Courtier de Confiance ?
             </h2>
@@ -292,13 +295,13 @@ export default function ConfianceEtCertifications() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <a
                 href="/devis"
-                className="bg-white text-blue-600 px-8 py-4 rounded-xl font-bold text-lg hover:bg-blue-50 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+                className="bg-gray-900 text-white px-8 py-4 rounded-xl font-bold text-lg hover:bg-black transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-1"
               >
                 Demander un Devis Gratuit
               </a>
               <a
                 href="/contact"
-                className="bg-blue-700 text-white px-8 py-4 rounded-xl font-bold text-lg hover:bg-blue-800 transition-all border-2 border-white/30"
+                className="bg-white text-gray-900 px-8 py-4 rounded-xl font-bold text-lg hover:bg-gray-100 transition-all border-2 border-gray-900"
               >
                 Nous Contacter
               </a>
@@ -306,6 +309,7 @@ export default function ConfianceEtCertifications() {
           </div>
         </section>
       </div>
+      <Footer />
     </>
   );
 }
