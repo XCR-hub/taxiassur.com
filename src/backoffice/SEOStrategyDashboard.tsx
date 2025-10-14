@@ -30,23 +30,23 @@ const SEOStrategyDashboard: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100 p-8">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8 flex justify-between items-start">
           <div>
-            <h1 className="text-4xl font-bold text-gray-900 mb-2 flex items-center">
+            <h1 className="text-4xl font-bold text-slate-900 mb-2 flex items-center">
               <Award className="mr-3 text-yellow-500" size={40} />
               Stratégie SEO n°1 - Leads Assurance Taxi
             </h1>
-            <p className="text-gray-600 text-lg">
+            <p className="text-slate-600 text-lg">
               Système complet pour devenir le leader en demandes de devis assurance taxi
             </p>
           </div>
 
           <button
             onClick={() => navigate('/backoffice')}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
+            className="bg-gradient-to-r from-slate-600 to-blue-600 hover:from-slate-700 hover:to-blue-700 text-white font-medium px-4 py-2 rounded-lg transition-colors flex items-center space-x-2 shadow-md"
           >
             <Home size={16} />
             <span>Accueil Backoffice</span>
@@ -54,14 +54,14 @@ const SEOStrategyDashboard: React.FC = () => {
         </div>
 
         {/* Action rapide */}
-        <Card className="mb-8 bg-gradient-to-r from-orange-50 to-red-50 border-2 border-orange-200">
+        <Card className="mb-8 bg-gradient-to-r from-slate-100 to-blue-100 border-2 border-slate-300">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2 flex items-center">
-                <Zap className="mr-2 text-orange-600" size={28} />
+              <h2 className="text-2xl font-bold text-slate-900 mb-2 flex items-center">
+                <Zap className="mr-2 text-blue-600" size={28} />
                 Ping Universel Moteurs de Recherche
               </h2>
-              <p className="text-gray-700">
+              <p className="text-slate-700">
                 Notifier <strong>{SEARCH_ENGINES.filter(e => e.active).length} moteurs</strong> simultanément
                 (Google, Bing, Yandex, DuckDuckGo, Qwant, Ecosia, Brave...)
               </p>
@@ -69,7 +69,7 @@ const SEOStrategyDashboard: React.FC = () => {
             <button
               onClick={handleUniversalPing}
               disabled={isPinging}
-              className="flex items-center space-x-2 bg-orange-600 hover:bg-orange-700 disabled:bg-gray-400 text-white font-bold py-4 px-8 rounded-lg transition-colors shadow-lg"
+              className="flex items-center space-x-2 bg-gradient-to-r from-slate-600 to-blue-600 hover:from-slate-700 hover:to-blue-700 disabled:bg-gray-400 text-white font-bold py-4 px-8 rounded-lg transition-colors shadow-lg"
             >
               <Search size={20} />
               <span>{isPinging ? 'Ping en cours...' : 'Lancer Ping Universel'}</span>
@@ -78,14 +78,14 @@ const SEOStrategyDashboard: React.FC = () => {
 
           {pingResults.length > 0 && (
             <div className="mt-6 space-y-2">
-              <h3 className="font-bold text-gray-900 mb-3">Résultats du ping :</h3>
+              <h3 className="font-bold text-slate-900 mb-3">Résultats du ping :</h3>
               <div className="grid grid-cols-2 gap-3">
                 {pingResults.map((result, idx) => (
-                  <div key={idx} className="flex items-start space-x-2 p-3 bg-white rounded-lg">
+                  <div key={idx} className="flex items-start space-x-2 p-3 bg-white rounded-lg border border-slate-200">
                     <CheckCircle className={result.status === 'success' ? 'text-green-600' : 'text-blue-600'} size={20} />
                     <div className="flex-1">
-                      <p className="font-medium text-gray-900">{result.engine}</p>
-                      <p className="text-sm text-gray-600">{result.note}</p>
+                      <p className="font-medium text-slate-900">{result.engine}</p>
+                      <p className="text-sm text-slate-600">{result.note}</p>
                     </div>
                   </div>
                 ))}
@@ -95,12 +95,12 @@ const SEOStrategyDashboard: React.FC = () => {
         </Card>
 
         {/* Liste des moteurs */}
-        <Card className="mb-8">
+        <Card className="mb-8 bg-white border border-slate-300">
           <div
             className="flex items-center justify-between cursor-pointer"
             onClick={() => toggleSection('engines')}
           >
-            <h2 className="text-xl font-bold text-gray-900 flex items-center">
+            <h2 className="text-xl font-bold text-slate-900 flex items-center">
               <Search className="mr-2 text-blue-600" size={24} />
               Moteurs de Recherche Ciblés ({SEARCH_ENGINES.filter(e => e.active).length})
             </h2>
@@ -110,19 +110,19 @@ const SEOStrategyDashboard: React.FC = () => {
           {expandedSection === 'engines' && (
             <div className="mt-6 grid grid-cols-3 gap-4">
               {SEARCH_ENGINES.filter(e => e.active).map((engine) => (
-                <div key={engine.name} className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                <div key={engine.name} className="p-4 bg-slate-50 rounded-lg border border-slate-200">
                   <div className="flex items-center justify-between mb-2">
-                    <h3 className="font-bold text-gray-900">{engine.name}</h3>
+                    <h3 className="font-bold text-slate-900">{engine.name}</h3>
                     <span className={`px-2 py-1 rounded text-xs font-medium ${
                       engine.pingMethod === 'indexnow' ? 'bg-green-100 text-green-800' :
                       engine.pingMethod === 'sitemap' ? 'bg-blue-100 text-blue-800' :
-                      engine.pingMethod === 'api' ? 'bg-purple-100 text-purple-800' :
+                      engine.pingMethod === 'api' ? 'bg-slate-100 text-slate-800' :
                       'bg-gray-100 text-gray-800'
                     }`}>
                       {engine.pingMethod}
                     </span>
                   </div>
-                  <p className="text-sm text-gray-600">{engine.market}</p>
+                  <p className="text-sm text-slate-600">{engine.market}</p>
                 </div>
               ))}
             </div>
@@ -130,12 +130,12 @@ const SEOStrategyDashboard: React.FC = () => {
         </Card>
 
         {/* Mots-clés stratégiques */}
-        <Card className="mb-8">
+        <Card className="mb-8 bg-white border border-slate-300">
           <div
             className="flex items-center justify-between cursor-pointer"
             onClick={() => toggleSection('keywords')}
           >
-            <h2 className="text-xl font-bold text-gray-900 flex items-center">
+            <h2 className="text-xl font-bold text-slate-900 flex items-center">
               <Target className="mr-2 text-green-600" size={24} />
               Mots-Clés Stratégiques pour n°1
             </h2>
@@ -145,7 +145,7 @@ const SEOStrategyDashboard: React.FC = () => {
           {expandedSection === 'keywords' && (
             <div className="mt-6 space-y-6">
               <div>
-                <h3 className="font-bold text-gray-900 mb-3 flex items-center">
+                <h3 className="font-bold text-slate-900 mb-3 flex items-center">
                   <Award className="mr-2 text-yellow-600" size={20} />
                   Mots-clés primaires (fort volume)
                 </h3>
@@ -159,7 +159,7 @@ const SEOStrategyDashboard: React.FC = () => {
               </div>
 
               <div>
-                <h3 className="font-bold text-gray-900 mb-3">Longue traîne (conversion élevée)</h3>
+                <h3 className="font-bold text-slate-900 mb-3">Longue traîne (conversion élevée)</h3>
                 <div className="flex flex-wrap gap-2">
                   {SEO_STRATEGY.keywords.longTail.map((kw) => (
                     <span key={kw} className="px-3 py-1 bg-blue-100 text-blue-900 rounded-full text-sm">
@@ -170,7 +170,7 @@ const SEOStrategyDashboard: React.FC = () => {
               </div>
 
               <div>
-                <h3 className="font-bold text-gray-900 mb-3 flex items-center">
+                <h3 className="font-bold text-slate-900 mb-3 flex items-center">
                   <MapPin className="mr-2 text-red-600" size={20} />
                   SEO Local (par ville)
                 </h3>
@@ -187,12 +187,12 @@ const SEOStrategyDashboard: React.FC = () => {
         </Card>
 
         {/* Piliers de contenu */}
-        <Card className="mb-8">
+        <Card className="mb-8 bg-white border border-slate-300">
           <div
             className="flex items-center justify-between cursor-pointer"
             onClick={() => toggleSection('content')}
           >
-            <h2 className="text-xl font-bold text-gray-900 flex items-center">
+            <h2 className="text-xl font-bold text-slate-900 flex items-center">
               <FileText className="mr-2 text-purple-600" size={24} />
               Piliers de Contenu
             </h2>
@@ -202,8 +202,8 @@ const SEOStrategyDashboard: React.FC = () => {
           {expandedSection === 'content' && (
             <div className="mt-6 space-y-6">
               {SEO_STRATEGY.contentPillars.map((pillar, idx) => (
-                <div key={idx} className="p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg border border-purple-200">
-                  <h3 className="font-bold text-gray-900 mb-3 text-lg">{pillar.title}</h3>
+                <div key={idx} className="p-4 bg-gradient-to-r from-slate-50 to-blue-50 rounded-lg border border-slate-200">
+                  <h3 className="font-bold text-slate-900 mb-3 text-lg">{pillar.title}</h3>
                   {pillar.pages && (
                     <div className="space-y-2">
                       {pillar.pages.map((page) => (
@@ -212,7 +212,7 @@ const SEOStrategyDashboard: React.FC = () => {
                           href={page}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="flex items-center space-x-2 text-purple-700 hover:text-purple-900"
+                          className="flex items-center space-x-2 text-blue-700 hover:text-blue-900"
                         >
                           <ExternalLink size={16} />
                           <span>{page}</span>
@@ -221,19 +221,19 @@ const SEOStrategyDashboard: React.FC = () => {
                     </div>
                   )}
                   {pillar.strategy && (
-                    <p className="text-gray-700 mt-2">
+                    <p className="text-slate-700 mt-2">
                       <strong>Stratégie :</strong> {pillar.strategy}
                     </p>
                   )}
                   {pillar.frequency && (
-                    <p className="text-gray-700 mt-2">
+                    <p className="text-slate-700 mt-2">
                       <strong>Fréquence :</strong> {pillar.frequency}
                     </p>
                   )}
                   {pillar.topics && (
                     <div className="mt-3">
-                      <strong className="text-gray-900">Topics :</strong>
-                      <ul className="list-disc list-inside mt-2 space-y-1 text-gray-700">
+                      <strong className="text-slate-900">Topics :</strong>
+                      <ul className="list-disc list-inside mt-2 space-y-1 text-slate-700">
                         {pillar.topics.map((topic) => (
                           <li key={topic}>{topic}</li>
                         ))}
@@ -247,12 +247,12 @@ const SEOStrategyDashboard: React.FC = () => {
         </Card>
 
         {/* Stratégie backlinks */}
-        <Card className="mb-8">
+        <Card className="mb-8 bg-white border border-slate-300">
           <div
             className="flex items-center justify-between cursor-pointer"
             onClick={() => toggleSection('backlinks')}
           >
-            <h2 className="text-xl font-bold text-gray-900 flex items-center">
+            <h2 className="text-xl font-bold text-slate-900 flex items-center">
               <Link2 className="mr-2 text-orange-600" size={24} />
               Stratégie Backlinks
             </h2>
@@ -262,9 +262,9 @@ const SEOStrategyDashboard: React.FC = () => {
           {expandedSection === 'backlinks' && (
             <div className="mt-6 space-y-3">
               {SEO_STRATEGY.backlinkStrategy.map((strategy, idx) => (
-                <div key={idx} className="flex items-start space-x-3 p-4 bg-orange-50 rounded-lg">
-                  <CheckCircle className="text-orange-600 flex-shrink-0 mt-1" size={20} />
-                  <p className="text-gray-900">{strategy}</p>
+                <div key={idx} className="flex items-start space-x-3 p-4 bg-slate-50 rounded-lg border border-slate-200">
+                  <CheckCircle className="text-blue-600 flex-shrink-0 mt-1" size={20} />
+                  <p className="text-slate-900">{strategy}</p>
                 </div>
               ))}
             </div>
@@ -272,12 +272,12 @@ const SEOStrategyDashboard: React.FC = () => {
         </Card>
 
         {/* Optimisation conversion */}
-        <Card>
+        <Card className="bg-white border border-slate-300">
           <div
             className="flex items-center justify-between cursor-pointer"
             onClick={() => toggleSection('conversion')}
           >
-            <h2 className="text-xl font-bold text-gray-900 flex items-center">
+            <h2 className="text-xl font-bold text-slate-900 flex items-center">
               <BarChart3 className="mr-2 text-green-600" size={24} />
               Optimisation Conversion (Leads)
             </h2>
@@ -289,7 +289,7 @@ const SEOStrategyDashboard: React.FC = () => {
               {SEO_STRATEGY.conversionOptimization.map((opt, idx) => (
                 <div key={idx} className="flex items-center space-x-3 p-4 bg-green-50 rounded-lg border border-green-200">
                   <Zap className="text-green-600 flex-shrink-0" size={20} />
-                  <p className="text-gray-900 font-medium">{opt}</p>
+                  <p className="text-slate-900 font-medium">{opt}</p>
                 </div>
               ))}
             </div>

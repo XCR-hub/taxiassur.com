@@ -23,7 +23,6 @@ const SeoTools: React.FC = () => {
   }, []);
 
   const loadSeoData = async () => {
-    // Simulation des données SEO
     setSeoData({
       lastSitemapUpdate: new Date().toISOString(),
       totalUrls: 45 + cities.length,
@@ -123,28 +122,28 @@ Consultez le détail dans la console (F12)`);
 
   return (
     
-      <div className="min-h-screen bg-gray-50 p-8">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100 p-8">
         {/* Header with Home Button */}
-        <header className="bg-white border-b-2 border-gray-200 shadow-sm mb-8">
+        <header className="bg-gradient-to-r from-slate-700 via-slate-600 to-blue-700 border-b-2 border-slate-800 shadow-lg mb-8">
           <div className="max-w-7xl mx-auto px-6 py-4">
             <div className="flex justify-between items-center">
               <div className="flex items-center space-x-4">
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-xl flex items-center justify-center shadow-lg">
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
                   <Search className="text-white" size={20} />
                 </div>
                 <div>
-                  <h1 className="text-2xl font-bold text-gray-900">
+                  <h1 className="text-2xl font-bold text-white">
                     Outils SEO
                   </h1>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-slate-200">
                     Optimisation et suivi du référencement naturel
                   </p>
                 </div>
               </div>
-              
+
               <a
                 href="/backoffice"
-                className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
+                className="bg-white/20 hover:bg-white/30 text-white font-medium px-4 py-2 rounded-lg transition-colors flex items-center space-x-2 backdrop-blur-sm"
               >
                 <Home size={16} />
                 <span>Accueil Backoffice</span>
@@ -158,65 +157,61 @@ Consultez le détail dans la console (F12)`);
 
           {/* SEO Overview */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <Card className="text-center bg-gradient-to-br from-blue-50 to-indigo-50">
+            <Card className="text-center bg-gradient-to-br from-slate-100 to-blue-100 border border-slate-300">
               <Globe className="mx-auto mb-2 text-blue-600" size={24} />
-              <div className="text-2xl font-bold text-gray-900">{seoData.totalUrls}</div>
-              <div className="text-sm text-gray-600">URLs totales</div>
+              <div className="text-2xl font-bold text-slate-900">{seoData.totalUrls}</div>
+              <div className="text-sm text-slate-600">URLs totales</div>
             </Card>
 
-            <Card className="text-center bg-gradient-to-br from-green-50 to-emerald-50">
+            <Card className="text-center bg-gradient-to-br from-green-50 to-emerald-100 border border-green-300">
               <CheckCircle className="mx-auto mb-2 text-green-600" size={24} />
-              <div className="text-2xl font-bold text-gray-900">{seoData.indexedPages}</div>
-              <div className="text-sm text-gray-600">Pages indexées</div>
+              <div className="text-2xl font-bold text-slate-900">{seoData.indexedPages}</div>
+              <div className="text-sm text-slate-600">Pages indexées</div>
             </Card>
 
-            <Card className="text-center bg-gradient-to-br from-yellow-50 to-amber-50">
+            <Card className="text-center bg-gradient-to-br from-yellow-50 to-amber-100 border border-yellow-300">
               <AlertCircle className="mx-auto mb-2 text-yellow-600" size={24} />
-              <div className="text-2xl font-bold text-gray-900">{seoData.pendingPages}</div>
-              <div className="text-sm text-gray-600">En attente</div>
+              <div className="text-2xl font-bold text-slate-900">{seoData.pendingPages}</div>
+              <div className="text-sm text-slate-600">En attente</div>
             </Card>
 
-            <Card className="text-center bg-gradient-to-br from-purple-50 to-pink-50">
-              <TrendingUp className="mx-auto mb-2 text-purple-600" size={24} />
-              <div className="text-2xl font-bold text-gray-900">95</div>
-              <div className="text-sm text-gray-600">Score SEO</div>
+            <Card className="text-center bg-gradient-to-br from-slate-200 to-slate-100 border border-slate-400">
+              <TrendingUp className="mx-auto mb-2 text-slate-600" size={24} />
+              <div className="text-2xl font-bold text-slate-900">Simulé</div>
+              <div className="text-sm text-slate-600">⚠️ Données de test</div>
             </Card>
           </div>
 
           {/* Actions & Tools */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-            <Card>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                <RefreshCw className="mr-2 text-blue-600" size={20} />
+            <Card className="bg-white border border-slate-300">
+              <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center">
+                <RefreshCw className="mr-2 text-slate-600" size={20} />
                 Actions SEO
               </h3>
               <div className="space-y-3">
                 <button
                   onClick={handleRegenerateFeeds}
                   disabled={isWorking}
-                  className="w-full flex items-center justify-center space-x-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-medium py-3 px-4 rounded-lg transition-colors"
+                  className="w-full flex items-center justify-center space-x-2 bg-gradient-to-r from-slate-600 to-blue-600 hover:from-slate-700 hover:to-blue-700 disabled:bg-gray-400 text-white font-medium py-3 px-4 rounded-lg transition-colors shadow-md"
                 >
                   <RefreshCw size={16} className={isWorking ? 'animate-spin' : ''} />
                   <span>Régénérer Sitemap & RSS</span>
                 </button>
-                
+
                 <button
                   onClick={handlePingEngines}
                   disabled={isWorking}
-                  className="w-full flex items-center justify-center space-x-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white font-medium py-3 px-4 rounded-lg transition-colors"
+                  className="w-full flex items-center justify-center space-x-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 disabled:bg-gray-400 text-white font-medium py-3 px-4 rounded-lg transition-colors shadow-md"
                 >
                   <Globe size={16} />
-                  <span>Notifier les Moteurs</span>
+                  <span>Notifier les Moteurs (Simulé)</span>
                 </button>
-                
-                <a
-                  href="/test-webhook.html"
-                  target="_blank"
-                  className="w-full flex items-center justify-center space-x-2 bg-purple-600 hover:bg-purple-700 text-white font-medium py-3 px-4 rounded-lg transition-colors"
-                >
-                  <ExternalLink size={16} />
-                  <span>Tester Webhook</span>
-                </a>
+
+                <div className="w-full flex items-center justify-center space-x-2 bg-red-100 text-red-800 font-medium py-3 px-4 rounded-lg border-2 border-red-300">
+                  <AlertCircle size={16} />
+                  <span>⚠️ Webhook non configuré</span>
+                </div>
 
                 <button
                   onClick={handleOptimizeLeads}
@@ -229,8 +224,8 @@ Consultez le détail dans la console (F12)`);
               </div>
             </Card>
 
-            <Card>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+            <Card className="bg-white border border-slate-300">
+              <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center">
                 <CheckCircle className="mr-2 text-green-600" size={20} />
                 Checklist SEO
               </h3>
@@ -239,9 +234,9 @@ Consultez le détail dans la console (F12)`);
                   <div key={index} className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">
                       <div className={`w-2 h-2 rounded-full ${item.status ? 'bg-green-500' : 'bg-red-500'}`}></div>
-                      <span className="text-gray-700">{item.name}</span>
+                      <span className="text-slate-700">{item.name}</span>
                       {item.count && (
-                        <span className="text-xs bg-gray-100 px-2 py-1 rounded-full">
+                        <span className="text-xs bg-slate-100 px-2 py-1 rounded-full text-slate-700">
                           {item.count}
                         </span>
                       )}
@@ -264,29 +259,34 @@ Consultez le détail dans la console (F12)`);
 
           {/* Ping Results */}
           {pingResults.length > 0 && (
-            <Card className="mb-8">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                Résultats Ping Moteurs
+            <Card className="mb-8 bg-white border border-slate-300">
+              <h3 className="text-lg font-semibold text-slate-900 mb-4">
+                Résultats Ping Moteurs (Simulé)
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {pingResults.map((result, index) => (
-                  <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <span className="font-medium">{result.engine}</span>
+                  <div key={index} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-200">
+                    <span className="font-medium text-slate-900">{result.engine}</span>
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                       result.success ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                     }`}>
-                      {result.success ? 'Succès' : 'Erreur'}
+                      {result.success ? 'Simulé' : 'Erreur'}
                     </span>
                   </div>
                 ))}
+              </div>
+              <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <p className="text-sm text-yellow-800">
+                  ⚠️ <strong>Note:</strong> Les pings sont simulés. Pour un indexation réelle, soumettez votre sitemap via Google Search Console et Bing Webmaster Tools.
+                </p>
               </div>
             </Card>
           )}
 
           {/* City Pages Overview */}
-          <Card>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-              <Search className="mr-2 text-amber-600" size={20} />
+          <Card className="bg-white border border-slate-300">
+            <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center">
+              <Search className="mr-2 text-blue-600" size={20} />
               Pages Villes ({cities.length})
             </h3>
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
@@ -295,24 +295,24 @@ Consultez le détail dans la console (F12)`);
                   key={city.slug}
                   href={`/ville/${city.slug}`}
                   target="_blank"
-                  className="text-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors group"
+                  className="text-center p-3 bg-slate-50 rounded-lg hover:bg-blue-50 transition-colors group border border-slate-200"
                 >
-                  <div className="text-sm font-medium text-gray-900 group-hover:text-amber-600">
+                  <div className="text-sm font-medium text-slate-900 group-hover:text-blue-600">
                     {city.city}
                   </div>
-                  <div className="text-xs text-gray-600">({city.department})</div>
+                  <div className="text-xs text-slate-600">({city.department})</div>
                 </a>
               ))}
               {cities.length > 12 && (
                 <a
                   href="/villes"
                   target="_blank"
-                  className="text-center p-3 bg-amber-50 rounded-lg hover:bg-amber-100 transition-colors"
+                  className="text-center p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors border border-blue-200"
                 >
-                  <div className="text-sm font-medium text-amber-600">
+                  <div className="text-sm font-medium text-blue-600">
                     +{cities.length - 12} autres
                   </div>
-                  <div className="text-xs text-amber-500">Voir toutes</div>
+                  <div className="text-xs text-blue-500">Voir toutes</div>
                 </a>
               )}
             </div>
