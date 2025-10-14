@@ -340,10 +340,7 @@ BEGIN
   JOIN pg_namespace n ON p.pronamespace = n.oid
   WHERE n.nspname = 'public'
     AND p.prosecdef = true
-    AND NOT EXISTS (
-      SELECT 1 FROM pg_proc_config(p.oid)
-      WHERE proconfig::text LIKE '%search_path%'
-    );
+    AND (p.proconfig IS NULL OR NOT (p.proconfig::text LIKE '%search_path%'));
 
   -- Compter les fonctions sécurisées créées
   SELECT COUNT(*) INTO secure_functions
