@@ -16,16 +16,16 @@
 -- Si vous avez besoin de les stocker dans la base de données pour
 -- d'autres usages, utilisez la table seo_automation_config :
 
-INSERT INTO seo_automation_config (key, value, enabled, description)
+INSERT INTO seo_automation_config (key, value, enabled)
 VALUES
   (
     'supabase_connection',
     jsonb_build_object(
       'url', 'https://drohhxrkoequjphvabvq.supabase.co',
-      'project_ref', 'drohhxrkoequjphvabvq'
+      'project_ref', 'drohhxrkoequjphvabvq',
+      'description', 'Configuration de connexion Supabase'
     ),
-    true,
-    'Configuration de connexion Supabase'
+    true
   )
 ON CONFLICT (key) DO UPDATE SET
   value = EXCLUDED.value,
@@ -35,8 +35,7 @@ ON CONFLICT (key) DO UPDATE SET
 SELECT
   key,
   value,
-  enabled,
-  description
+  enabled
 FROM seo_automation_config
 WHERE key = 'supabase_connection';
 
