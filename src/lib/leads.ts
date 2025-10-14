@@ -83,31 +83,48 @@ export async function updateLeadStatus(
   }
 ): Promise<boolean> {
   try {
-    // Utiliser l'API PHP
-    const response = await fetch('/api/lead-manager.php', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        action: 'update_status',
-        leadId,
-        status: newStatus,
-        primeRealisee: additionalData?.primeRealisee,
-        notes: additionalData?.notes
-      })
-    });
+    console.log('🔄 Updating lead status:', { leadId, newStatus, additionalData });
 
-    if (!response.ok) {
-      throw new Error('Update failed');
+    // Préparer les champs de date basés sur le statut
+    const dateFields: Record<string, string> = {
+      updated_at: new Date().toISOString()
+    };
+
+    if (newStatus === 'contacte' && additionalData) {
+      dateFields.contacted_at = new Date().toISOString();
+    } else if (newStatus === 'devis_envoye') {
+      dateFields.devis_envoye_at = new Date().toISOString();
+    } else if (newStatus === 'client') {
+      dateFields.client_at = new Date().toISOString();
     }
 
-    const result = await response.json();
+    // Mise à jour via Supabase
+    const updateData: any = {
+      status: newStatus,
+      ...dateFields
+    };
 
-    if (!result.success) {
-      throw new Error(result.error || 'Failed to update status');
+    if (additionalData?.primeRealisee !== undefined) {
+      updateData.prime_realisee = additionalData.primeRealisee;
     }
 
+    if (additionalData?.notes) {
+      updateData.notes = additionalData.notes;
+    }
+
+    const { data, error } = await supabase
+      .from('leads')
+      .update(updateData)
+      .eq('id', leadId)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('❌ Supabase update error:', error);
+      throw error;
+    }
+
+    console.log('✅ Lead status updated successfully:', data);
     return true;
   } catch (error) {
     console.error('Failed to update lead status:', error);

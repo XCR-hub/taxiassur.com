@@ -4,6 +4,7 @@ import { getLeads, updateLeadStatus, sendDevisEmail, sendContractEmail, getLeadS
 import { formatDate } from '../lib/utils';
 import Card from '../components/Card';
 import ElectronicSignature from '../components/ElectronicSignature';
+import BackButton from './BackButton';
 
 const LeadManager: React.FC = () => {
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -234,19 +235,22 @@ const LeadManager: React.FC = () => {
   }
 
   return (
-    
+
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-8">
-        {/* Header with Home Button */}
-        <header className="bg-slate-800 border-b-2 border-slate-700 shadow-xl mb-8 rounded-xl">
-          <div className="max-w-7xl mx-auto px-6 py-4">
-            <div className="flex justify-between items-center">
-              <div className="flex items-center space-x-4">
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
-                  <Users className="text-white" size={20} />
-                </div>
-                <div>
-                  <h1 className="text-2xl font-bold text-white">
-                    Gestion des Leads
+        <div className="max-w-7xl mx-auto">
+          <BackButton />
+
+          {/* Header with Home Button */}
+          <header className="bg-slate-800 border-b-2 border-slate-700 shadow-xl mb-8 rounded-xl">
+            <div className="px-6 py-4">
+              <div className="flex justify-between items-center">
+                <div className="flex items-center space-x-4">
+                  <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
+                    <Users className="text-white" size={20} />
+                  </div>
+                  <div>
+                    <h1 className="text-2xl font-bold text-white">
+                      Gestion des Leads
                   </h1>
                   <p className="text-sm text-slate-300">
                     Suivi complet de vos prospects taxi
@@ -967,8 +971,8 @@ const LeadManager: React.FC = () => {
             </Card>
           </div>
         )}
+        </div>
       </div>
-    
   );
 };
 
