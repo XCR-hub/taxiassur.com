@@ -513,22 +513,22 @@ GRANT EXECUTE ON FUNCTION get_automation_status() TO authenticated, anon;
 -- PARTIE 8: ACTIVATION CRON JOBS (SI PAS DÉJÀ CRÉÉS)
 -- ================================================================
 
-DO $$
+DO $outer$
 BEGIN
   -- Cron 1: Scan site (15 min)
   IF NOT EXISTS (SELECT 1 FROM cron.job WHERE jobname = 'ai-scan-entire-site') THEN
-    PERFORM cron.schedule('ai-scan-entire-site', '*/15 * * * *', $$SELECT ai_scan_entire_site();$$);
+    PERFORM cron.schedule('ai-scan-entire-site', '*/15 * * * *', $inner$SELECT ai_scan_entire_site();$inner$);
   END IF;
 
   -- Cron 2: Détection opportunités (30 min)
   IF NOT EXISTS (SELECT 1 FROM cron.job WHERE jobname = 'ai-detect-opportunities') THEN
-    PERFORM cron.schedule('ai-detect-opportunities', '*/30 * * * *', $$SELECT ai_detect_opportunities();$$);
+    PERFORM cron.schedule('ai-detect-opportunities', '*/30 * * * *', $inner$SELECT ai_detect_opportunities();$inner$);
   END IF;
 
 EXCEPTION WHEN OTHERS THEN
   -- Si erreur (ex: cron extension pas activée), continuer
   NULL;
-END $$;
+END $outer$;
 
 -- ================================================================
 -- SUCCÈS
