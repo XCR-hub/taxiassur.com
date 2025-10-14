@@ -231,7 +231,13 @@ try {
             break;
 
         case 'send_devis':
-            $leadId = $_POST['leadId'] ?? null;
+            // Lire depuis JSON si envoyé en JSON
+            if ($_SERVER['CONTENT_TYPE'] === 'application/json' || strpos($_SERVER['CONTENT_TYPE'] ?? '', 'application/json') !== false) {
+                $jsonInput = json_decode(file_get_contents('php://input'), true);
+                $leadId = $jsonInput['leadId'] ?? null;
+            } else {
+                $leadId = $_POST['leadId'] ?? null;
+            }
 
             if (!$leadId) {
                 echo json_encode([
@@ -299,7 +305,13 @@ try {
             break;
 
         case 'send_contract':
-            $leadId = $_POST['leadId'] ?? null;
+            // Lire depuis JSON si envoyé en JSON
+            if ($_SERVER['CONTENT_TYPE'] === 'application/json' || strpos($_SERVER['CONTENT_TYPE'] ?? '', 'application/json') !== false) {
+                $jsonInput = json_decode(file_get_contents('php://input'), true);
+                $leadId = $jsonInput['leadId'] ?? null;
+            } else {
+                $leadId = $_POST['leadId'] ?? null;
+            }
 
             if (!$leadId) {
                 echo json_encode([

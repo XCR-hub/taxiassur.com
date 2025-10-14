@@ -21,10 +21,6 @@ const LeadManager: React.FC = () => {
     notes: ''
   });
 
-  const [fileUpload, setFileUpload] = useState<{
-    type: 'devis' | 'contract' | null;
-    file: File | null;
-  }>({ type: null, file: null });
 
   const [showReviewRequest, setShowReviewRequest] = useState(false);
   const [reviewRequestLead, setReviewRequestLead] = useState<Lead | null>(null);
@@ -102,29 +98,28 @@ const LeadManager: React.FC = () => {
     }
   };
 
-  const handleFileUpload = async (type: 'devis' | 'contract') => {
-    if (!selectedLead || !fileUpload.file) return;
+  const handleSendEmail = async (type: 'devis' | 'contract') => {
+    if (!selectedLead) return;
 
     try {
       let success = false;
-      
+
       if (type === 'devis') {
-        success = await sendDevisEmail(selectedLead.id, fileUpload.file);
+        success = await sendDevisEmail(selectedLead.id);
       } else if (type === 'contract') {
-        success = await sendContractEmail(selectedLead.id, fileUpload.file);
+        success = await sendContractEmail(selectedLead.id);
       }
 
       if (success) {
         await loadLeads();
-        setFileUpload({ type: null, file: null });
         setShowDetailModal(false);
-        alert(`✅ ${type === 'devis' ? 'Devis' : 'Contrat'} envoyé avec succès !`);
+        alert(`✅ ${type === 'devis' ? 'Devis' : 'Contrat'} envoyé avec succès !\n\nL'email a été envoyé à ${selectedLead.email}`);
       } else {
-        alert('❌ Erreur lors de l\'envoi');
+        alert('❌ Erreur lors de l\'envoi de l\'email');
       }
     } catch (error) {
-      console.error('File upload error:', error);
-      alert('❌ Erreur de connexion');
+      console.error('Email sending error:', error);
+      alert('❌ Erreur de connexion au serveur');
     }
   };
 
@@ -612,26 +607,20 @@ const LeadManager: React.FC = () => {
                         <FileText className="mr-2" size={16} />
                         Envoyer un Devis
                       </h4>
-                      
-                      <div className="space-y-3">
-                        <input
-                          type="file"
-                          accept=".pdf"
-                          onChange={(e) => setFileUpload({ type: 'devis', file: e.target.files?.[0] || null })}
-                          className="w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-purple-100 file:text-purple-700 hover:file:bg-purple-200"
-                        />
-                        
-                        <button
-                          onClick={() => handleFileUpload('devis')}
-                          disabled={!fileUpload.file || fileUpload.type !== 'devis'}
-                          className="w-full flex items-center justify-center space-x-2 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-400 text-white font-medium py-2 px-4 rounded-lg transition-colors"
-                        >
-                          <Send size={16} />
-                          <span>Envoyer le Devis</span>
-                        </button>
-                      </div>
-                      
-                      <p className="text-xs text-purple-700 mt-2">
+
+                      <p className="text-sm text-purple-800 mb-4">
+                        Un email professionnel avec votre offre de devis sera envoyé automatiquement au client.
+                      </p>
+
+                      <button
+                        onClick={() => handleSendEmail('devis')}
+                        className="w-full flex items-center justify-center space-x-2 bg-purple-600 hover:bg-purple-700 text-white font-medium py-3 px-4 rounded-lg transition-colors shadow-md hover:shadow-lg"
+                      >
+                        <Send size={18} />
+                        <span>Envoyer un Devis par Email</span>
+                      </button>
+
+                      <p className="text-xs text-purple-700 mt-3 text-center">
                         ✅ Passera automatiquement en "Devis Envoyé"
                       </p>
                     </div>
@@ -642,26 +631,20 @@ const LeadManager: React.FC = () => {
                         <CheckCircle className="mr-2" size={16} />
                         Envoyer un Contrat
                       </h4>
-                      
-                      <div className="space-y-3">
-                        <input
-                          type="file"
-                          accept=".pdf"
-                          onChange={(e) => setFileUpload({ type: 'contract', file: e.target.files?.[0] || null })}
-                          className="w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-green-100 file:text-green-700 hover:file:bg-green-200"
-                        />
-                        
-                        <button
-                          onClick={() => handleFileUpload('contract')}
-                          disabled={!fileUpload.file || fileUpload.type !== 'contract'}
-                          className="w-full flex items-center justify-center space-x-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white font-medium py-2 px-4 rounded-lg transition-colors"
-                        >
-                          <CheckCircle size={16} />
-                          <span>Envoyer le Contrat</span>
-                        </button>
-                      </div>
-                      
-                      <p className="text-xs text-green-700 mt-2">
+
+                      <p className="text-sm text-green-800 mb-4">
+                        Un email de confirmation de contrat sera envoyé automatiquement au client.
+                      </p>
+
+                      <button
+                        onClick={() => handleSendEmail('contract')}
+                        className="w-full flex items-center justify-center space-x-2 bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-4 rounded-lg transition-colors shadow-md hover:shadow-lg"
+                      >
+                        <CheckCircle size={18} />
+                        <span>Envoyer un Contrat par Email</span>
+                      </button>
+
+                      <p className="text-xs text-green-700 mt-3 text-center">
                         ✅ Passera automatiquement en "Client"
                       </p>
                     </div>

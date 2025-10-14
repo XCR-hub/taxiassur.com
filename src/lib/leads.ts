@@ -115,34 +115,35 @@ export async function updateLeadStatus(
   }
 }
 
-export async function sendDevisEmail(leadId: string, devisFile?: File): Promise<boolean> {
+export async function sendDevisEmail(leadId: string): Promise<boolean> {
   try {
-    // Envoyer via l'API PHP
-    const formData = new FormData();
-    formData.append('action', 'send_devis');
-    formData.append('leadId', leadId);
-    if (devisFile) {
-      formData.append('devis', devisFile);
-    }
-
     const response = await fetch('/api/lead-manager.php', {
       method: 'POST',
-      body: formData
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        action: 'send_devis',
+        leadId: leadId
+      })
     });
 
     if (!response.ok) {
+      console.error('HTTP error:', response.status);
       throw new Error('Email sending failed');
     }
 
     const result = await response.json();
 
     if (!result.success) {
+      console.error('API error:', result.error);
       throw new Error(result.error || 'Failed to send devis');
     }
 
+    console.log('✅ Devis email sent successfully');
     return true;
   } catch (error) {
-    console.error('Failed to send devis:', error);
+    console.error('❌ Failed to send devis:', error);
     return false;
   }
 }
@@ -159,34 +160,35 @@ async function fileToBase64(file: File): Promise<{ filename: string; content: st
   });
 }
 
-export async function sendContractEmail(leadId: string, contractFile?: File): Promise<boolean> {
+export async function sendContractEmail(leadId: string): Promise<boolean> {
   try {
-    // Envoyer via l'API PHP
-    const formData = new FormData();
-    formData.append('action', 'send_contract');
-    formData.append('leadId', leadId);
-    if (contractFile) {
-      formData.append('contract', contractFile);
-    }
-
     const response = await fetch('/api/lead-manager.php', {
       method: 'POST',
-      body: formData
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        action: 'send_contract',
+        leadId: leadId
+      })
     });
 
     if (!response.ok) {
+      console.error('HTTP error:', response.status);
       throw new Error('Email sending failed');
     }
 
     const result = await response.json();
 
     if (!result.success) {
+      console.error('API error:', result.error);
       throw new Error(result.error || 'Failed to send contract');
     }
 
+    console.log('✅ Contract email sent successfully');
     return true;
   } catch (error) {
-    console.error('Failed to send contract:', error);
+    console.error('❌ Failed to send contract:', error);
     return false;
   }
 }

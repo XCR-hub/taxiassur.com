@@ -53,11 +53,12 @@ Deno.serve(async (req: Request) => {
     if (isUnified) {
       const unifiedPrompt = `Tu dois générer un pack SEO COMPLET pour "${keyword}" à ${targetCity}.
 
-GÉNÈRE 3 CONTENUS EN UN SEUL JSON :
+GÉNÈRE 4 CONTENUS EN UN SEUL JSON :
 
 1. ARTICLE DE BLOG (1800-2200 mots)
 2. PAGE VILLE (1200-1500 mots)
 3. FAQ (5-10 questions)
+4. ACTUALITÉ (400-600 mots)
 
 ANTI-DÉTECTION IA OBLIGATOIRE :
 - Ton naturel, conversationnel, humain
@@ -96,8 +97,14 @@ FORMAT JSON STRICT (TOUS LES CHAMPS OBLIGATOIRES) :
       "category": "tarifs"
     }
   ],
+  "newsArticle": {
+    "title": "Titre actualité sur ${keyword} à ${targetCity}",
+    "content": "<p>Contenu HTML actualité 400-600 mots...</p>",
+    "category": "Réglementation",
+    "featured": false
+  },
   "metadata": {
-    "totalWords": 3500,
+    "totalWords": 4000,
     "seoScore": 92,
     "generatedAt": "${new Date().toISOString()}"
   }
@@ -112,6 +119,7 @@ CONTENU HTML OBLIGATOIRE :
 BLOG : Commence par intro accrocheuse, puis 4-5 sections H2, termine par FAQ intégrée
 VILLE : Structure locale avec tarifs ${targetCity}, conseils pratiques, comparatifs
 FAQ : 5-10 questions réelles que posent les taxis
+ACTUALITÉ : News récente sur ${keyword}, angle journalistique, 400-600 mots, catégories possibles : Réglementation, Tarifs, Innovation, Jurisprudence, Conseils
 
 Réponds UNIQUEMENT en JSON valide, aucun texte avant ou après.`;
 

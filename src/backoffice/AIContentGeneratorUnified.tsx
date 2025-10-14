@@ -34,6 +34,14 @@ interface UnifiedContent {
     category: string;
   }>;
 
+  // Actualité
+  newsArticle: {
+    title: string;
+    content: string;
+    category: string;
+    featured: boolean;
+  };
+
   // Métadonnées
   metadata: {
     totalWords: number;
@@ -228,12 +236,36 @@ ${(generatedContent.faq || []).map(f => `**${f?.question ?? 'Q'}**\n${f?.answer 
         }
       }
 
+      // 4. PUBLIER L'ACTUALITÉ
+      if (generatedContent.newsArticle) {
+        const { data: newsData, error: newsError } = await adminClient
+          .from('news')
+          .insert({
+            title: generatedContent.newsArticle.title,
+            content: generatedContent.newsArticle.content,
+            category: generatedContent.newsArticle.category || 'Réglementation',
+            featured: generatedContent.newsArticle.featured || false,
+            published_date: new Date().toISOString(),
+            created_at: new Date().toISOString()
+          })
+          .select()
+          .single();
+
+        if (newsError) {
+          console.warn('News insert warning:', newsError);
+          // Ne pas bloquer si l'actualité échoue
+        } else {
+          console.log('✅ Actualité publiée:', newsData);
+        }
+      }
+
       setSuccess(
         `✅ Publication réussie !
 
 📝 Article de blog publié
 🏙️ Page ville créée/mise à jour
 ❓ ${generatedContent.faq.length} FAQ ajoutées
+📰 Actualité publiée
 
 Total: ${generatedContent.metadata?.totalWords ?? 0} mots générés`
       );
@@ -273,9 +305,9 @@ Total: ${generatedContent.metadata?.totalWords ?? 0} mots générés`
           </button>
         </div>
         <p className="text-purple-100 mb-3">
-          🚀 Génère automatiquement : Article Blog + Page Ville + FAQ + Image SEO
+          🚀 Génère automatiquement : Article Blog + Page Ville + FAQ + Actualité + Image SEO
         </p>
-        <div className="flex items-center space-x-4 text-sm">
+        <div className="flex items-center space-x-4 text-sm flex-wrap gap-2">
           <div className="flex items-center space-x-2 bg-white/10 px-3 py-1.5 rounded-lg">
             <FileText size={16} />
             <span>Article 1800-2200 mots</span>
@@ -287,6 +319,10 @@ Total: ${generatedContent.metadata?.totalWords ?? 0} mots générés`
           <div className="flex items-center space-x-2 bg-white/10 px-3 py-1.5 rounded-lg">
             <HelpCircle size={16} />
             <span>5-10 FAQ</span>
+          </div>
+          <div className="flex items-center space-x-2 bg-white/10 px-3 py-1.5 rounded-lg">
+            <Tag size={16} />
+            <span>Actualité 400-600 mots</span>
           </div>
           <div className="flex items-center space-x-2 bg-white/10 px-3 py-1.5 rounded-lg">
             <ImageIcon size={16} />
@@ -582,6 +618,25 @@ Total: ${generatedContent.metadata?.totalWords ?? 0} mots générés`
                   )}
                 </div>
               </div>
+
+              {/* Actualité */}
+              {generatedContent.newsArticle && (
+                <div className="bg-blue-50 rounded-lg p-4 border-2 border-blue-200">
+                  <h4 className="font-bold text-lg text-gray-800 mb-2 flex items-center space-x-2">
+                    <Tag className="text-blue-600" size={20} />
+                    <span>Actualité</span>
+                  </h4>
+                  <p className="text-sm text-gray-700 mb-2">
+                    <strong>Titre:</strong> {generatedContent.newsArticle.title}
+                  </p>
+                  <p className="text-sm text-gray-700 mb-2">
+                    <strong>Catégorie:</strong> {generatedContent.newsArticle.category}
+                  </p>
+                  <p className="text-xs text-gray-600 mt-2 line-clamp-3">
+                    {generatedContent.newsArticle.content.replace(/<[^>]*>/g, '').substring(0, 200)}...
+                  </p>
+                </div>
+              )}
 
               {/* Contenu complet (replié) */}
               <details className="bg-gray-50 rounded-lg p-4 border-2 border-gray-200">
