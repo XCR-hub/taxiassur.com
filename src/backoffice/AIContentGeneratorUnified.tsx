@@ -229,7 +229,7 @@ ${(generatedContent.faq || []).map(f => `**${f?.question ?? 'Q'}**\n${f?.answer 
 🏙️ Page ville créée/mise à jour
 ❓ ${generatedContent.faq.length} FAQ ajoutées
 
-Total: ${generatedContent.metadata.totalWords} mots générés`
+Total: ${generatedContent.metadata?.totalWords ?? 0} mots générés`
       );
 
       // Reset après 3 secondes
