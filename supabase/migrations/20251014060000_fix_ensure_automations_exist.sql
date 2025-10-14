@@ -1,13 +1,13 @@
 /*
-  # Garantir que toutes les automatisations existent
+  # Garantir que toutes les automatisations existent - VERSION CORRIGÉE
 
   1. Tables
     - Vérifier/créer automation_status
-    - Vérifier/créer social_networks
+    - Utiliser la table social_networks existante
 
   2. Données
     - Insérer toutes les automatisations si elles n'existent pas
-    - Insérer tous les réseaux sociaux si ils n'existent pas
+    - Mettre à jour les réseaux sociaux existants
 
   3. Sécurité
     - RLS policies pour authenticated users
@@ -31,31 +31,15 @@ CREATE TABLE IF NOT EXISTS automation_status (
   updated_at timestamptz DEFAULT now()
 );
 
--- Créer la table social_networks si elle n'existe pas
-CREATE TABLE IF NOT EXISTS social_networks (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  name text UNIQUE NOT NULL,
-  description text NOT NULL,
-  is_active boolean DEFAULT false,
-  frequency text NOT NULL DEFAULT 'daily',
-  total_posts integer DEFAULT 0,
-  successful_posts integer DEFAULT 0,
-  last_post_at timestamptz,
-  created_at timestamptz DEFAULT now(),
-  updated_at timestamptz DEFAULT now()
-);
-
--- Enable RLS
+-- Enable RLS on automation_status
 ALTER TABLE automation_status ENABLE ROW LEVEL SECURITY;
-ALTER TABLE social_networks ENABLE ROW LEVEL SECURITY;
 
 -- Drop existing policies if any
 DROP POLICY IF EXISTS "Allow authenticated users to read automations" ON automation_status;
 DROP POLICY IF EXISTS "Allow authenticated users to update automations" ON automation_status;
-DROP POLICY IF EXISTS "Allow authenticated users to read social networks" ON social_networks;
-DROP POLICY IF EXISTS "Allow authenticated users to update social networks" ON social_networks;
+DROP POLICY IF EXISTS "Allow authenticated users to insert automations" ON automation_status;
 
--- Create policies
+-- Create policies for automation_status
 CREATE POLICY "Allow authenticated users to read automations"
   ON automation_status
   FOR SELECT
@@ -69,17 +53,10 @@ CREATE POLICY "Allow authenticated users to update automations"
   USING (true)
   WITH CHECK (true);
 
-CREATE POLICY "Allow authenticated users to read social networks"
-  ON social_networks
-  FOR SELECT
+CREATE POLICY "Allow authenticated users to insert automations"
+  ON automation_status
+  FOR INSERT
   TO authenticated
-  USING (true);
-
-CREATE POLICY "Allow authenticated users to update social networks"
-  ON social_networks
-  FOR UPDATE
-  TO authenticated
-  USING (true)
   WITH CHECK (true);
 
 -- Insert all automations if they don't exist
@@ -97,18 +74,45 @@ VALUES
   ('social_media_posting', 'Partage automatique sur réseaux sociaux', 'daily', false)
 ON CONFLICT (name) DO NOTHING;
 
--- Insert social networks if they don't exist
-INSERT INTO social_networks (name, description, frequency, is_active)
-VALUES
-  ('facebook', 'Publication automatique sur Facebook', 'daily', false),
-  ('twitter', 'Publication automatique sur Twitter/X', 'daily', false),
-  ('linkedin', 'Publication automatique sur LinkedIn', 'daily', false),
-  ('instagram', 'Publication automatique sur Instagram', 'daily', false),
-  ('pinterest', 'Publication automatique sur Pinterest', 'daily', false)
-ON CONFLICT (name) DO NOTHING;
+-- Ensure social_networks has the needed policies (table already exists from previous migration)
+DROP POLICY IF EXISTS "Allow authenticated users to read social networks" ON social_networks;
+DROP POLICY IF EXISTS "Allow authenticated users to update social networks" ON social_networks;
+DROP POLICY IF EXISTS "Allow authenticated users to insert social networks" ON social_networks;
 
--- Create function to update updated_at
-CREATE OR REPLACE FUNCTION update_updated_at_column()
+CREATE POLICY "Allow authenticated users to read social networks"
+  ON social_networks
+  FOR SELECT
+  TO authenticated
+  USING (true);
+
+CREATE POLICY "Allow authenticated users to update social networks"
+  ON social_networks
+  FOR UPDATE
+  TO authenticated
+  USING (true)
+  WITH CHECK (true);
+
+CREATE POLICY "Allow authenticated users to insert social networks"
+  ON social_networks
+  FOR INSERT
+  TO authenticated
+  WITH CHECK (true);
+
+-- Update or insert social networks with correct structure
+INSERT INTO social_networks (name, category, url, is_active, posting_frequency)
+VALUES
+  ('facebook', 'social', 'https://facebook.com', false, 'daily'),
+  ('twitter', 'social', 'https://twitter.com', false, 'daily'),
+  ('linkedin', 'professional', 'https://linkedin.com', false, 'daily'),
+  ('instagram', 'social', 'https://instagram.com', false, 'daily'),
+  ('pinterest', 'social', 'https://pinterest.com', false, 'daily')
+ON CONFLICT (name)
+DO UPDATE SET
+  is_active = EXCLUDED.is_active,
+  posting_frequency = EXCLUDED.posting_frequency;
+
+-- Create function to update updated_at (only for automation_status)
+CREATE OR REPLACE FUNCTION update_automation_status_timestamp()
 RETURNS TRIGGER AS $$
 BEGIN
   NEW.updated_at = now();
@@ -116,21 +120,15 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Create triggers for updated_at
+-- Create trigger for updated_at
 DROP TRIGGER IF EXISTS update_automation_status_updated_at ON automation_status;
 CREATE TRIGGER update_automation_status_updated_at
   BEFORE UPDATE ON automation_status
   FOR EACH ROW
-  EXECUTE FUNCTION update_updated_at_column();
+  EXECUTE FUNCTION update_automation_status_timestamp();
 
-DROP TRIGGER IF EXISTS update_social_networks_updated_at ON social_networks;
-CREATE TRIGGER update_social_networks_updated_at
-  BEFORE UPDATE ON social_networks
-  FOR EACH ROW
-  EXECUTE FUNCTION update_updated_at_column();
-
--- Create index on name for faster lookups
+-- Create indexes for faster lookups
 CREATE INDEX IF NOT EXISTS idx_automation_status_name ON automation_status(name);
-CREATE INDEX IF NOT EXISTS idx_social_networks_name ON social_networks(name);
 CREATE INDEX IF NOT EXISTS idx_automation_status_enabled ON automation_status(is_enabled);
+CREATE INDEX IF NOT EXISTS idx_social_networks_name ON social_networks(name);
 CREATE INDEX IF NOT EXISTS idx_social_networks_active ON social_networks(is_active);
