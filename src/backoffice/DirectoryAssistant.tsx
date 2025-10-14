@@ -98,16 +98,21 @@ Que vous soyez taxi indépendant, compagnie de taxi ou gestionnaire de flotte, n
   };
 
   const handleAutoSubmitAll = async () => {
-    if (!confirm('Lancer les soumissions automatiques pour tous les annuaires autorisés ?')) {
+    const submittableDirectories = directories.filter(d => d.allowed && !submissionStatus[d.id]);
+
+    if (submittableDirectories.length === 0) {
+      alert('❌ Aucun annuaire à soumettre (tous déjà soumis ou non autorisés)');
+      return;
+    }
+
+    if (!confirm(`Ouvrir ${submittableDirectories.length} onglets avec les formulaires pré-remplis ?\n\nChaque onglet s'ouvrira avec les données TaxiAssur déjà remplies.\nVous devrez juste cliquer "Envoyer" sur chaque formulaire.`)) {
       return;
     }
 
     setIsAutoSubmitting(true);
-    const submittableDirectories = directories.filter(d => d.allowed && !submissionStatus[d.id]);
     setAutoSubmitProgress({ current: 0, total: submittableDirectories.length });
 
     let successCount = 0;
-    let failCount = 0;
 
     for (let i = 0; i < submittableDirectories.length; i++) {
       const directory = submittableDirectories[i];
@@ -116,27 +121,57 @@ Que vous soyez taxi indépendant, compagnie de taxi ou gestionnaire de flotte, n
       try {
         const content = generateSubmissionContent(directory);
 
-        // Simuler soumission (remplacer par vraie logique d'API/scraping)
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        // Ouvrir l'URL dans un nouvel onglet
+        // Note: Certains navigateurs peuvent bloquer les popups multiples
+        window.open(directory.url, '_blank', 'noopener,noreferrer');
 
-        // Marquer comme soumis
-        setSubmissionStatus(prev => ({ ...prev, [directory.id]: 'submitted' }));
+        // Copier les données dans le clipboard pour faciliter le remplissage
+        const clipboardData = `
+=== DONNÉES PRÉ-REMPLIES POUR ${directory.name.toUpperCase()} ===
+
+Nom/Entreprise: ${content.name}
+Site web: ${content.website}
+Contact: ${content.contact}
+Téléphone: ${content.phone}
+Catégorie: ${content.category}
+
+Description courte:
+${content.description}
+
+Description longue (si demandée):
+${content.long_description}
+
+Services: ${content.services}
+Certification: ${content.certification}
+Couverture: ${content.coverage}
+Logo: ${content.logo}
+
+UTM Link: ${content.url}
+        `.trim();
+
+        // Ne copier que pour le premier (pour éviter de spam le clipboard)
+        if (i === 0) {
+          await navigator.clipboard.writeText(clipboardData);
+          console.log('📋 Données copiées dans le presse-papiers');
+        }
+
+        // Marquer comme en cours (pas encore soumis)
+        setSubmissionStatus(prev => ({ ...prev, [directory.id]: 'pending' }));
         successCount++;
 
-        console.log(`✅ Soumis : ${directory.name}`);
+        console.log(`✅ Ouvert : ${directory.name}`);
       } catch (error) {
         console.error(`❌ Échec : ${directory.name}`, error);
-        failCount++;
       }
 
-      // Attendre 3 secondes entre chaque soumission (éviter rate limiting)
+      // Délai entre chaque ouverture pour éviter le blocage popup
       if (i < submittableDirectories.length - 1) {
-        await new Promise(resolve => setTimeout(resolve, 3000));
+        await new Promise(resolve => setTimeout(resolve, 800));
       }
     }
 
     setIsAutoSubmitting(false);
-    alert(`✅ Auto-soumissions terminées !\n\n✔️ Réussies : ${successCount}\n❌ Échecs : ${failCount}`);
+    alert(`✅ ${successCount} onglets ouverts !\n\n📋 Les données du premier annuaire sont copiées dans votre presse-papiers.\n\n👉 Remplissez chaque formulaire et cliquez "Envoyer".\n\nAstuce: Utilisez la fonction "Copier Données" sur chaque annuaire pour copier les données spécifiques.`);
   };
 
   const getCategoryColor = (category: string) => {
@@ -264,13 +299,49 @@ Que vous soyez taxi indépendant, compagnie de taxi ou gestionnaire de flotte, n
 
                 <div className="flex space-x-2">
                   {directory.submissionMode === 'manual' ? (
-                    <button
-                      onClick={() => handleManualSubmission(directory)}
-                      className="flex items-center space-x-1 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg transition-colors flex-1"
-                    >
-                      <Copy size={14} />
-                      <span>Préparer</span>
-                    </button>
+                    <>
+                      <button
+                        onClick={() => handleManualSubmission(directory)}
+                        className="flex items-center space-x-1 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg transition-colors flex-1"
+                      >
+                        <Copy size={14} />
+                        <span>Préparer</span>
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          const content = generateSubmissionContent(directory);
+                          const clipboardData = `
+=== ${directory.name.toUpperCase()} - DONNÉES PRÉ-REMPLIES ===
+
+Nom/Entreprise: ${content.name}
+Site web: ${content.website}
+Contact: ${content.contact}
+Téléphone: ${content.phone}
+Catégorie: ${content.category}
+
+Description courte:
+${content.description}
+
+Description longue:
+${content.long_description}
+
+Services: ${content.services}
+Certification: ${content.certification}
+Couverture: ${content.coverage}
+Logo: ${content.logo}
+
+URL avec tracking: ${content.url}
+                          `.trim();
+                          navigator.clipboard.writeText(clipboardData);
+                          alert(`✅ Données copiées pour ${directory.name}\n\nCollez-les dans le formulaire !`);
+                        }}
+                        className="flex items-center space-x-1 px-2 py-2 bg-green-600 hover:bg-green-700 text-white text-sm rounded-lg transition-colors"
+                        title="Copier toutes les données"
+                      >
+                        <Copy size={14} />
+                      </button>
+                    </>
                   ) : (
                     <button
                       onClick={() => handleApiSubmission(directory)}
@@ -283,7 +354,7 @@ Que vous soyez taxi indépendant, compagnie de taxi ou gestionnaire de flotte, n
                       </span>
                     </button>
                   )}
-                  
+
                   <a
                     href={directory.url}
                     target="_blank"
