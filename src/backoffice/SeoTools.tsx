@@ -11,24 +11,87 @@ const SeoTools: React.FC = () => {
     lastSitemapUpdate: '',
     totalUrls: 0,
     indexedPages: 0,
-    pendingPages: 0
+    pendingPages: 0,
+    impressions30d: 0,
+    clicks30d: 0,
+    averagePosition: 0,
+    lastUpdate: null as string | null,
+    isRealData: false
   });
-  
+
   const [pingResults, setPingResults] = useState<any[]>([]);
   const [isWorking, setIsWorking] = useState(false);
+  const [cronJobsStatus, setCronJobsStatus] = useState<any[]>([]);
   const cities = generateCityPages();
 
   useEffect(() => {
     loadSeoData();
+    loadCronJobsStatus();
   }, []);
 
   const loadSeoData = async () => {
-    setSeoData({
-      lastSitemapUpdate: new Date().toISOString(),
-      totalUrls: 45 + cities.length,
-      indexedPages: Math.floor(Math.random() * 40) + 35,
-      pendingPages: Math.floor(Math.random() * 10) + 2
-    });
+    try {
+      // Récupérer les vraies métriques depuis Supabase
+      const { data, error } = await supabase.rpc('get_current_seo_metrics');
+
+      if (error) {
+        console.error('Error loading SEO metrics:', error);
+        // Fallback sur données estimées
+        setSeoData({
+          lastSitemapUpdate: new Date().toISOString(),
+          totalUrls: 45 + cities.length,
+          indexedPages: Math.floor((45 + cities.length) * 0.85),
+          pendingPages: Math.floor((45 + cities.length) * 0.15),
+          impressions30d: 0,
+          clicks30d: 0,
+          averagePosition: 0,
+          lastUpdate: null,
+          isRealData: false
+        });
+        return;
+      }
+
+      if (data && data.length > 0) {
+        const metrics = data[0];
+        setSeoData({
+          lastSitemapUpdate: metrics.last_update || new Date().toISOString(),
+          totalUrls: metrics.total_urls || (45 + cities.length),
+          indexedPages: metrics.indexed_pages || 0,
+          pendingPages: metrics.pending_pages || 0,
+          impressions30d: metrics.impressions_30d || 0,
+          clicks30d: metrics.clicks_30d || 0,
+          averagePosition: metrics.average_position || 0,
+          lastUpdate: metrics.last_update,
+          isRealData: metrics.last_update !== null
+        });
+      } else {
+        // Aucune métrique, utiliser estimations
+        setSeoData({
+          lastSitemapUpdate: new Date().toISOString(),
+          totalUrls: 45 + cities.length,
+          indexedPages: Math.floor((45 + cities.length) * 0.85),
+          pendingPages: Math.floor((45 + cities.length) * 0.15),
+          impressions30d: 0,
+          clicks30d: 0,
+          averagePosition: 0,
+          lastUpdate: null,
+          isRealData: false
+        });
+      }
+    } catch (error) {
+      console.error('Error in loadSeoData:', error);
+    }
+  };
+
+  const loadCronJobsStatus = async () => {
+    try {
+      const { data, error } = await supabase.rpc('get_seo_cron_stats');
+      if (!error && data) {
+        setCronJobsStatus(data);
+      }
+    } catch (error) {
+      console.error('Error loading cron jobs:', error);
+    }
   };
 
   const handleRegenerateFeeds = async () => {
@@ -155,6 +218,40 @@ Consultez le détail dans la console (F12)`);
         <div className="max-w-7xl mx-auto">
           <div className="mb-8">
 
+          {/* Info sur les données */}
+          {!seoData.isRealData && (
+            <div className="mb-6 p-4 bg-amber-50 border-2 border-amber-300 rounded-lg">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="text-amber-600 flex-shrink-0 mt-0.5" size={20} />
+                <div>
+                  <p className="text-sm font-medium text-amber-900">
+                    <strong>Données estimées</strong> - Configuration Google Search Console API requise
+                  </p>
+                  <p className="text-xs text-amber-700 mt-1">
+                    Pour obtenir les vraies données d'indexation, configurez votre clé API Google Search Console dans les paramètres.
+                    Le système effectue un rafraîchissement quotidien automatique à 2h du matin.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {seoData.isRealData && seoData.lastUpdate && (
+            <div className="mb-6 p-4 bg-green-50 border-2 border-green-300 rounded-lg">
+              <div className="flex items-start gap-3">
+                <CheckCircle className="text-green-600 flex-shrink-0 mt-0.5" size={20} />
+                <div>
+                  <p className="text-sm font-medium text-green-900">
+                    <strong>✅ Données réelles</strong> depuis Google Search Console
+                  </p>
+                  <p className="text-xs text-green-700 mt-1">
+                    Dernière mise à jour : {new Date(seoData.lastUpdate).toLocaleString('fr-FR')} • Prochaine mise à jour automatique dans la nuit
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* SEO Overview */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
             <Card className="text-center bg-gradient-to-br from-slate-100 to-blue-100 border border-slate-300">
@@ -167,6 +264,9 @@ Consultez le détail dans la console (F12)`);
               <CheckCircle className="mx-auto mb-2 text-green-600" size={24} />
               <div className="text-2xl font-bold text-slate-900">{seoData.indexedPages}</div>
               <div className="text-sm text-slate-600">Pages indexées</div>
+              {seoData.isRealData && (
+                <div className="text-xs text-green-600 mt-1">✅ Données réelles</div>
+              )}
             </Card>
 
             <Card className="text-center bg-gradient-to-br from-yellow-50 to-amber-100 border border-yellow-300">
@@ -177,10 +277,36 @@ Consultez le détail dans la console (F12)`);
 
             <Card className="text-center bg-gradient-to-br from-slate-200 to-slate-100 border border-slate-400">
               <TrendingUp className="mx-auto mb-2 text-slate-600" size={24} />
-              <div className="text-2xl font-bold text-slate-900">Simulé</div>
-              <div className="text-sm text-slate-600">⚠️ Données de test</div>
+              <div className="text-2xl font-bold text-slate-900">
+                {seoData.averagePosition > 0 ? seoData.averagePosition.toFixed(1) : 'N/A'}
+              </div>
+              <div className="text-sm text-slate-600">Position moyenne</div>
             </Card>
           </div>
+
+          {/* Métriques Google Search Console */}
+          {seoData.isRealData && (seoData.impressions30d > 0 || seoData.clicks30d > 0) && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+              <Card className="text-center bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-300">
+                <div className="text-3xl font-bold text-blue-900">{seoData.impressions30d.toLocaleString()}</div>
+                <div className="text-sm text-blue-700">Impressions (30j)</div>
+              </Card>
+
+              <Card className="text-center bg-gradient-to-br from-green-50 to-green-100 border border-green-300">
+                <div className="text-3xl font-bold text-green-900">{seoData.clicks30d.toLocaleString()}</div>
+                <div className="text-sm text-green-700">Clics (30j)</div>
+              </Card>
+
+              <Card className="text-center bg-gradient-to-br from-slate-50 to-slate-100 border border-slate-300">
+                <div className="text-3xl font-bold text-slate-900">
+                  {seoData.impressions30d > 0
+                    ? ((seoData.clicks30d / seoData.impressions30d) * 100).toFixed(2)
+                    : '0'}%
+                </div>
+                <div className="text-sm text-slate-700">CTR (30j)</div>
+              </Card>
+            </div>
+          )}
 
           {/* Actions & Tools */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
@@ -197,6 +323,27 @@ Consultez le détail dans la console (F12)`);
                 >
                   <RefreshCw size={16} className={isWorking ? 'animate-spin' : ''} />
                   <span>Régénérer Sitemap & RSS</span>
+                </button>
+
+                <button
+                  onClick={async () => {
+                    setIsWorking(true);
+                    try {
+                      const { data, error } = await supabase.rpc('trigger_seo_refresh');
+                      if (error) throw error;
+                      alert('✅ Rafraîchissement SEO lancé ! Les données seront mises à jour dans quelques instants.');
+                      setTimeout(loadSeoData, 3000); // Recharger après 3s
+                    } catch (error: any) {
+                      alert(`❌ Erreur: ${error.message}`);
+                    } finally {
+                      setIsWorking(false);
+                    }
+                  }}
+                  disabled={isWorking}
+                  className="w-full flex items-center justify-center space-x-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 disabled:bg-gray-400 text-white font-medium py-3 px-4 rounded-lg transition-colors shadow-md"
+                >
+                  <TrendingUp size={16} />
+                  <span>🔄 Rafraîchir Données SEO</span>
                 </button>
 
                 <button
@@ -278,6 +425,52 @@ Consultez le détail dans la console (F12)`);
               <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
                 <p className="text-sm text-yellow-800">
                   ⚠️ <strong>Note:</strong> Les pings sont simulés. Pour un indexation réelle, soumettez votre sitemap via Google Search Console et Bing Webmaster Tools.
+                </p>
+              </div>
+            </Card>
+          )}
+
+          {/* Statut des Automatisations */}
+          {cronJobsStatus.length > 0 && (
+            <Card className="bg-white border border-slate-300 mb-8">
+              <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center">
+                <Clock className="mr-2 text-blue-600" size={20} />
+                Automatisations SEO (Cron Jobs)
+              </h3>
+              <div className="space-y-3">
+                {cronJobsStatus.map((job, index) => (
+                  <div key={index} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-200">
+                    <div className="flex-1">
+                      <div className="font-medium text-slate-900">{job.job_name}</div>
+                      <div className="text-xs text-slate-600 mt-1">
+                        Planification: {job.schedule}
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      {job.is_active ? (
+                        <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
+                          ✅ Actif
+                        </span>
+                      ) : (
+                        <span className="px-2 py-1 bg-red-100 text-red-800 text-xs rounded-full">
+                          ❌ Inactif
+                        </span>
+                      )}
+                      {job.next_run && (
+                        <div className="text-xs text-slate-500 mt-1">
+                          Prochaine: {new Date(job.next_run).toLocaleString('fr-FR')}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+                <p className="text-sm text-blue-900">
+                  <strong>📅 Rafraîchissement automatique:</strong> Tous les jours à 2h du matin
+                </p>
+                <p className="text-xs text-blue-700 mt-1">
+                  Les métriques SEO sont mises à jour automatiquement chaque nuit avec les données réelles depuis Google Search Console.
                 </p>
               </div>
             </Card>
