@@ -21,6 +21,10 @@ const LeadManager: React.FC = () => {
     notes: ''
   });
 
+  const [attachments, setAttachments] = useState<{
+    devis: File | null;
+    contract: File | null;
+  }>({ devis: null, contract: null });
 
   const [showReviewRequest, setShowReviewRequest] = useState(false);
   const [reviewRequestLead, setReviewRequestLead] = useState<Lead | null>(null);
@@ -103,17 +107,20 @@ const LeadManager: React.FC = () => {
 
     try {
       let success = false;
+      const attachment = type === 'devis' ? attachments.devis : attachments.contract;
 
       if (type === 'devis') {
-        success = await sendDevisEmail(selectedLead.id);
+        success = await sendDevisEmail(selectedLead.id, attachment);
       } else if (type === 'contract') {
-        success = await sendContractEmail(selectedLead.id);
+        success = await sendContractEmail(selectedLead.id, attachment);
       }
 
       if (success) {
         await loadLeads();
+        setAttachments({ devis: null, contract: null });
         setShowDetailModal(false);
-        alert(`✅ ${type === 'devis' ? 'Devis' : 'Contrat'} envoyé avec succès !\n\nL'email a été envoyé à ${selectedLead.email}`);
+        const attachmentMsg = attachment ? '\n\nPièce jointe incluse : ' + attachment.name : '';
+        alert(`✅ ${type === 'devis' ? 'Devis' : 'Contrat'} envoyé avec succès !\n\nL'email a été envoyé à ${selectedLead.email}${attachmentMsg}`);
       } else {
         alert('❌ Erreur lors de l\'envoi de l\'email');
       }
@@ -608,17 +615,36 @@ const LeadManager: React.FC = () => {
                         Envoyer un Devis
                       </h4>
 
-                      <p className="text-sm text-purple-800 mb-4">
+                      <p className="text-sm text-purple-800 mb-3">
                         Un email professionnel avec votre offre de devis sera envoyé automatiquement au client.
                       </p>
 
-                      <button
-                        onClick={() => handleSendEmail('devis')}
-                        className="w-full flex items-center justify-center space-x-2 bg-purple-600 hover:bg-purple-700 text-white font-medium py-3 px-4 rounded-lg transition-colors shadow-md hover:shadow-lg"
-                      >
-                        <Send size={18} />
-                        <span>Envoyer un Devis par Email</span>
-                      </button>
+                      <div className="space-y-3">
+                        <div className="bg-white p-3 rounded-lg border border-purple-200">
+                          <label className="block text-xs font-medium text-purple-900 mb-2">
+                            📎 Pièce jointe (optionnel)
+                          </label>
+                          <input
+                            type="file"
+                            accept=".pdf"
+                            onChange={(e) => setAttachments({ ...attachments, devis: e.target.files?.[0] || null })}
+                            className="w-full text-xs text-gray-600 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-purple-100 file:text-purple-700 hover:file:bg-purple-200"
+                          />
+                          {attachments.devis && (
+                            <p className="text-xs text-purple-700 mt-1 flex items-center">
+                              ✅ {attachments.devis.name}
+                            </p>
+                          )}
+                        </div>
+
+                        <button
+                          onClick={() => handleSendEmail('devis')}
+                          className="w-full flex items-center justify-center space-x-2 bg-purple-600 hover:bg-purple-700 text-white font-medium py-3 px-4 rounded-lg transition-colors shadow-md hover:shadow-lg"
+                        >
+                          <Send size={18} />
+                          <span>Envoyer le Devis</span>
+                        </button>
+                      </div>
 
                       <p className="text-xs text-purple-700 mt-3 text-center">
                         ✅ Passera automatiquement en "Devis Envoyé"
@@ -632,17 +658,36 @@ const LeadManager: React.FC = () => {
                         Envoyer un Contrat
                       </h4>
 
-                      <p className="text-sm text-green-800 mb-4">
+                      <p className="text-sm text-green-800 mb-3">
                         Un email de confirmation de contrat sera envoyé automatiquement au client.
                       </p>
 
-                      <button
-                        onClick={() => handleSendEmail('contract')}
-                        className="w-full flex items-center justify-center space-x-2 bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-4 rounded-lg transition-colors shadow-md hover:shadow-lg"
-                      >
-                        <CheckCircle size={18} />
-                        <span>Envoyer un Contrat par Email</span>
-                      </button>
+                      <div className="space-y-3">
+                        <div className="bg-white p-3 rounded-lg border border-green-200">
+                          <label className="block text-xs font-medium text-green-900 mb-2">
+                            📎 Pièce jointe (optionnel)
+                          </label>
+                          <input
+                            type="file"
+                            accept=".pdf"
+                            onChange={(e) => setAttachments({ ...attachments, contract: e.target.files?.[0] || null })}
+                            className="w-full text-xs text-gray-600 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-green-100 file:text-green-700 hover:file:bg-green-200"
+                          />
+                          {attachments.contract && (
+                            <p className="text-xs text-green-700 mt-1 flex items-center">
+                              ✅ {attachments.contract.name}
+                            </p>
+                          )}
+                        </div>
+
+                        <button
+                          onClick={() => handleSendEmail('contract')}
+                          className="w-full flex items-center justify-center space-x-2 bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-4 rounded-lg transition-colors shadow-md hover:shadow-lg"
+                        >
+                          <CheckCircle size={18} />
+                          <span>Envoyer le Contrat</span>
+                        </button>
+                      </div>
 
                       <p className="text-xs text-green-700 mt-3 text-center">
                         ✅ Passera automatiquement en "Client"

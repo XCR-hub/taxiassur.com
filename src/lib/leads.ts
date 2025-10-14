@@ -115,33 +115,62 @@ export async function updateLeadStatus(
   }
 }
 
-export async function sendDevisEmail(leadId: string): Promise<boolean> {
+export async function sendDevisEmail(leadId: string, attachment?: File | null): Promise<boolean> {
   try {
-    const response = await fetch('/api/lead-manager.php', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        action: 'send_devis',
-        leadId: leadId
-      })
-    });
+    if (attachment) {
+      // Avec pièce jointe : utiliser FormData
+      const formData = new FormData();
+      formData.append('action', 'send_devis');
+      formData.append('leadId', leadId);
+      formData.append('devis', attachment);
 
-    if (!response.ok) {
-      console.error('HTTP error:', response.status);
-      throw new Error('Email sending failed');
+      const response = await fetch('/api/lead-manager.php', {
+        method: 'POST',
+        body: formData
+      });
+
+      if (!response.ok) {
+        console.error('HTTP error:', response.status);
+        throw new Error('Email sending failed');
+      }
+
+      const result = await response.json();
+
+      if (!result.success) {
+        console.error('API error:', result.error);
+        throw new Error(result.error || 'Failed to send devis');
+      }
+
+      console.log('✅ Devis email sent successfully with attachment');
+      return true;
+    } else {
+      // Sans pièce jointe : utiliser JSON
+      const response = await fetch('/api/lead-manager.php', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          action: 'send_devis',
+          leadId: leadId
+        })
+      });
+
+      if (!response.ok) {
+        console.error('HTTP error:', response.status);
+        throw new Error('Email sending failed');
+      }
+
+      const result = await response.json();
+
+      if (!result.success) {
+        console.error('API error:', result.error);
+        throw new Error(result.error || 'Failed to send devis');
+      }
+
+      console.log('✅ Devis email sent successfully');
+      return true;
     }
-
-    const result = await response.json();
-
-    if (!result.success) {
-      console.error('API error:', result.error);
-      throw new Error(result.error || 'Failed to send devis');
-    }
-
-    console.log('✅ Devis email sent successfully');
-    return true;
   } catch (error) {
     console.error('❌ Failed to send devis:', error);
     return false;
@@ -160,33 +189,62 @@ async function fileToBase64(file: File): Promise<{ filename: string; content: st
   });
 }
 
-export async function sendContractEmail(leadId: string): Promise<boolean> {
+export async function sendContractEmail(leadId: string, attachment?: File | null): Promise<boolean> {
   try {
-    const response = await fetch('/api/lead-manager.php', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        action: 'send_contract',
-        leadId: leadId
-      })
-    });
+    if (attachment) {
+      // Avec pièce jointe : utiliser FormData
+      const formData = new FormData();
+      formData.append('action', 'send_contract');
+      formData.append('leadId', leadId);
+      formData.append('contract', attachment);
 
-    if (!response.ok) {
-      console.error('HTTP error:', response.status);
-      throw new Error('Email sending failed');
+      const response = await fetch('/api/lead-manager.php', {
+        method: 'POST',
+        body: formData
+      });
+
+      if (!response.ok) {
+        console.error('HTTP error:', response.status);
+        throw new Error('Email sending failed');
+      }
+
+      const result = await response.json();
+
+      if (!result.success) {
+        console.error('API error:', result.error);
+        throw new Error(result.error || 'Failed to send contract');
+      }
+
+      console.log('✅ Contract email sent successfully with attachment');
+      return true;
+    } else {
+      // Sans pièce jointe : utiliser JSON
+      const response = await fetch('/api/lead-manager.php', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          action: 'send_contract',
+          leadId: leadId
+        })
+      });
+
+      if (!response.ok) {
+        console.error('HTTP error:', response.status);
+        throw new Error('Email sending failed');
+      }
+
+      const result = await response.json();
+
+      if (!result.success) {
+        console.error('API error:', result.error);
+        throw new Error(result.error || 'Failed to send contract');
+      }
+
+      console.log('✅ Contract email sent successfully');
+      return true;
     }
-
-    const result = await response.json();
-
-    if (!result.success) {
-      console.error('API error:', result.error);
-      throw new Error(result.error || 'Failed to send contract');
-    }
-
-    console.log('✅ Contract email sent successfully');
-    return true;
   } catch (error) {
     console.error('❌ Failed to send contract:', error);
     return false;
