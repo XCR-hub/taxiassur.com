@@ -187,41 +187,40 @@ export default function NavigationMenu() {
           DOCUMENTATION & GUIDES
         </h3>
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-          <a
-            href="/MENU-COMPLET-BACKOFFICE.md"
-            target="_blank"
+          <Link
+            to="/backoffice"
             className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm"
           >
             <BookOpen className="w-5 h-5" />
             <span>Toutes les pages</span>
-          </a>
+          </Link>
           <a
-            href="/BACKOFFICE-README.md"
+            href="https://github.com/yourusername/taxiassur"
             target="_blank"
+            rel="noopener noreferrer"
             className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm"
           >
             <BookOpen className="w-5 h-5" />
             <span>Guide Backoffice</span>
           </a>
-          <a
-            href="/API-SETUP-GUIDE.md"
-            target="_blank"
+          <Link
+            to="/backoffice"
             className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm"
           >
             <BookOpen className="w-5 h-5" />
             <span>Config API</span>
-          </a>
-          <a
-            href="/CONFIGURATION-OPENAI-KEY.md"
-            target="_blank"
+          </Link>
+          <Link
+            to="/backoffice"
             className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm"
           >
             <BookOpen className="w-5 h-5" />
             <span>Clé OpenAI</span>
-          </a>
+          </Link>
           <a
-            href="/DEPLOIEMENT-FINAL-PRET.md"
+            href="https://docs.taxiassur.com"
             target="_blank"
+            rel="noopener noreferrer"
             className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-cyan-500 to-cyan-600 hover:from-cyan-600 hover:to-cyan-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm"
           >
             <BookOpen className="w-5 h-5" />
