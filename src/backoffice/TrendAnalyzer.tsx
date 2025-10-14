@@ -225,19 +225,19 @@ export default function TrendAnalyzer() {
 
                   <div className="grid grid-cols-4 gap-4 text-sm">
                     <div>
-                      <span className="text-gray-500">Volume:</span>
+                      <span className="text-slate-500">Volume:</span>
                       <p className="font-bold text-gray-800">{opp.searchVolume.toLocaleString()}</p>
                     </div>
                     <div>
-                      <span className="text-gray-500">Compétition:</span>
+                      <span className="text-slate-500">Compétition:</span>
                       <p className="font-bold text-gray-800 capitalize">{opp.competition}</p>
                     </div>
                     <div>
-                      <span className="text-gray-500">Trafic Estimé:</span>
+                      <span className="text-slate-500">Trafic Estimé:</span>
                       <p className="font-bold text-green-600">{opp.estimatedTraffic.toLocaleString()}/mois</p>
                     </div>
                     <div>
-                      <span className="text-gray-500">Difficulté:</span>
+                      <span className="text-slate-500">Difficulté:</span>
                       <p className="font-bold text-gray-800">{opp.difficulty}/10</p>
                     </div>
                   </div>

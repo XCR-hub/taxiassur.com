@@ -260,7 +260,7 @@ const BacklinkAutomationDashboard: React.FC = () => {
               <div>
                 <p className="text-sm text-gray-600 mb-1">Emails Ouverts</p>
                 <p className="text-3xl font-bold text-gray-900">{stats.totalOpened}</p>
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-slate-500 mt-1">
                   {stats.totalSent > 0 ? ((stats.totalOpened / stats.totalSent) * 100).toFixed(1) : 0}% taux ouverture
                 </p>
               </div>
@@ -273,7 +273,7 @@ const BacklinkAutomationDashboard: React.FC = () => {
               <div>
                 <p className="text-sm text-gray-600 mb-1">Réponses Reçues</p>
                 <p className="text-3xl font-bold text-gray-900">{stats.totalReplied}</p>
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-slate-500 mt-1">
                   {stats.positiveRate.toFixed(1)}% positives
                 </p>
               </div>
@@ -288,7 +288,7 @@ const BacklinkAutomationDashboard: React.FC = () => {
                 <p className="text-3xl font-bold text-gray-900">
                   {campaigns.reduce((sum, c) => sum + c.backlinks_acquired, 0)}
                 </p>
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-slate-500 mt-1">
                   {stats.backlinkRate.toFixed(1)}% taux conversion
                 </p>
               </div>
@@ -344,7 +344,7 @@ const BacklinkAutomationDashboard: React.FC = () => {
                     </td>
                     <td className="py-3 px-4">
                       <div className="font-medium text-gray-900">{campaign.name}</div>
-                      <div className="text-xs text-gray-500">
+                      <div className="text-xs text-slate-500">
                         Créée le {new Date(campaign.created_at).toLocaleDateString('fr-FR')}
                       </div>
                     </td>
@@ -394,12 +394,12 @@ const BacklinkAutomationDashboard: React.FC = () => {
                     <p className="text-sm font-medium text-gray-900">
                       {log.action_type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
                     </p>
-                    <span className="text-xs text-gray-500">
+                    <span className="text-xs text-slate-500">
                       {new Date(log.created_at).toLocaleString('fr-FR')}
                     </span>
                   </div>
                   <p className="text-sm text-gray-600 truncate">{log.recipient_email}</p>
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-xs text-slate-500 mt-1">
                     {log.opportunity.domain} - {log.subject}
                   </p>
                   {log.sentiment && (

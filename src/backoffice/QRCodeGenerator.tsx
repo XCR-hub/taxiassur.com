@@ -332,7 +332,7 @@ const QRCodeGenerator: React.FC = () => {
             </div>
 
             <div className="space-y-3">
-              <h3 className="text-lg font-semibold text-purple-400">
+              <h3 className="text-lg font-semibold text-blue-400">
                 Outils Recommandés
               </h3>
               <ul className="space-y-2 text-slate-300 text-sm">

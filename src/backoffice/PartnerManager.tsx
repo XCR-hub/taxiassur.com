@@ -414,7 +414,7 @@ const PartnerManager: React.FC = () => {
                         <Star
                           key={i}
                           size={14}
-                          className={i < partner.rating! ? 'text-yellow-400 fill-current' : 'text-gray-300'}
+                          className={i < partner.rating! ? 'text-yellow-400 fill-current' : 'text-slate-300'}
                         />
                       ))}
                     </div>

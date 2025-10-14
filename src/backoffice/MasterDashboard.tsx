@@ -215,7 +215,7 @@ const MasterDashboard: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-black flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center">
         <div className="text-center">
           <RefreshCw className="w-12 h-12 text-amber-400 animate-spin mx-auto mb-4" />
           <p className="text-white text-lg">Chargement du dashboard...</p>
@@ -229,7 +229,7 @@ const MasterDashboard: React.FC = () => {
     : '0.0';
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-black p-6">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-6">
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center justify-between mb-4">
@@ -237,7 +237,7 @@ const MasterDashboard: React.FC = () => {
             <h1 className="text-4xl font-bold text-white mb-2">
               🚀 Master Dashboard TaxiAssur
             </h1>
-            <p className="text-gray-400">
+            <p className="text-slate-400">
               Pilotage complet en temps réel • Dernière màj : {new Date().toLocaleTimeString('fr-FR')}
             </p>
           </div>
@@ -248,7 +248,7 @@ const MasterDashboard: React.FC = () => {
               className={`px-4 py-2 rounded-lg font-semibold transition-all ${
                 autoRefresh
                   ? 'bg-green-500 text-white'
-                  : 'bg-gray-700 text-gray-300'
+                  : 'bg-gray-700 text-slate-300'
               }`}
             >
               <RefreshCw className={`w-5 h-5 ${autoRefresh ? 'animate-spin' : ''}`} />
@@ -328,7 +328,7 @@ const MasterDashboard: React.FC = () => {
 
         <div className="bg-gradient-to-br from-purple-900/40 to-purple-800/40 border border-purple-500/30 rounded-lg p-6">
           <div className="flex items-center justify-between mb-4">
-            <FileText className="w-8 h-8 text-purple-400" />
+            <FileText className="w-8 h-8 text-blue-400" />
             <span className="text-xs font-semibold text-purple-300 bg-purple-500/20 px-2 py-1 rounded">
               PENDING
             </span>
@@ -342,38 +342,38 @@ const MasterDashboard: React.FC = () => {
 
       {/* Stats Secondaires */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-4">
+        <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-4">
           <div className="flex items-center gap-3">
-            <Clock className="w-6 h-6 text-gray-400" />
+            <Clock className="w-6 h-6 text-slate-400" />
             <div>
               <p className="text-2xl font-bold text-white">
                 {Math.floor((stats?.avg_session_duration || 0) / 60)}:{String((stats?.avg_session_duration || 0) % 60).padStart(2, '0')}
               </p>
-              <p className="text-gray-400 text-sm">Temps moyen/session</p>
+              <p className="text-slate-400 text-sm">Temps moyen/session</p>
             </div>
           </div>
         </div>
 
-        <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-4">
+        <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-4">
           <div className="flex items-center gap-3">
-            <Globe className="w-6 h-6 text-gray-400" />
+            <Globe className="w-6 h-6 text-slate-400" />
             <div>
               <p className="text-2xl font-bold text-white">
                 {stats?.top_traffic_source || 'N/A'}
               </p>
-              <p className="text-gray-400 text-sm">Source #1 aujourd'hui</p>
+              <p className="text-slate-400 text-sm">Source #1 aujourd'hui</p>
             </div>
           </div>
         </div>
 
-        <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-4">
+        <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-4">
           <div className="flex items-center gap-3">
-            <MapPin className="w-6 h-6 text-gray-400" />
+            <MapPin className="w-6 h-6 text-slate-400" />
             <div>
               <p className="text-2xl font-bold text-white">
                 {stats?.top_city || 'N/A'}
               </p>
-              <p className="text-gray-400 text-sm">Ville #1 aujourd'hui</p>
+              <p className="text-slate-400 text-sm">Ville #1 aujourd'hui</p>
             </div>
           </div>
         </div>
@@ -393,7 +393,7 @@ const MasterDashboard: React.FC = () => {
               className={`border rounded-lg p-4 transition-all ${
                 auto.is_enabled
                   ? 'bg-green-900/20 border-green-500/30'
-                  : 'bg-gray-800/50 border-gray-700'
+                  : 'bg-slate-800/50 border-slate-700'
               }`}
             >
               <div className="flex items-start justify-between mb-3">
@@ -402,11 +402,11 @@ const MasterDashboard: React.FC = () => {
                     {auto.is_enabled ? (
                       <CheckCircle className="w-4 h-4 text-green-400" />
                     ) : (
-                      <AlertCircle className="w-4 h-4 text-gray-500" />
+                      <AlertCircle className="w-4 h-4 text-slate-500" />
                     )}
                     {auto.description}
                   </h3>
-                  <p className="text-xs text-gray-400">
+                  <p className="text-xs text-slate-400">
                     Fréquence : {auto.frequency} • Runs : {auto.successful_runs}/{auto.total_runs}
                   </p>
                 </div>
@@ -416,7 +416,7 @@ const MasterDashboard: React.FC = () => {
                   className={`px-3 py-1 rounded text-xs font-semibold transition-all ${
                     auto.is_enabled
                       ? 'bg-green-500 text-white hover:bg-green-600'
-                      : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                      : 'bg-gray-700 text-slate-300 hover:bg-gray-600'
                   }`}
                 >
                   {auto.is_enabled ? 'ON' : 'OFF'}
@@ -424,7 +424,7 @@ const MasterDashboard: React.FC = () => {
               </div>
 
               {auto.last_run_at && (
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-slate-500">
                   Dernier run : {new Date(auto.last_run_at).toLocaleString('fr-FR')}
                 </p>
               )}
@@ -440,29 +440,29 @@ const MasterDashboard: React.FC = () => {
           Top 10 Pages Aujourd'hui
         </h2>
 
-        <div className="bg-gray-800/50 border border-gray-700 rounded-lg overflow-hidden">
+        <div className="bg-slate-800/50 border border-slate-700 rounded-lg overflow-hidden">
           <table className="w-full">
-            <thead className="bg-gray-900">
+            <thead className="bg-slate-900">
               <tr>
-                <th className="px-4 py-3 text-left text-gray-400 text-sm font-semibold">Page</th>
-                <th className="px-4 py-3 text-left text-gray-400 text-sm font-semibold">Vues</th>
-                <th className="px-4 py-3 text-left text-gray-400 text-sm font-semibold">Visiteurs</th>
-                <th className="px-4 py-3 text-left text-gray-400 text-sm font-semibold">Conversion</th>
+                <th className="px-4 py-3 text-left text-slate-400 text-sm font-semibold">Page</th>
+                <th className="px-4 py-3 text-left text-slate-400 text-sm font-semibold">Vues</th>
+                <th className="px-4 py-3 text-left text-slate-400 text-sm font-semibold">Visiteurs</th>
+                <th className="px-4 py-3 text-left text-slate-400 text-sm font-semibold">Conversion</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-700">
               {topPages.map((page, index) => (
                 <tr key={index} className="hover:bg-gray-700/30">
                   <td className="px-4 py-3 text-white text-sm">{page.page_url}</td>
-                  <td className="px-4 py-3 text-gray-300 text-sm">{page.views}</td>
-                  <td className="px-4 py-3 text-gray-300 text-sm">{page.unique_visitors}</td>
+                  <td className="px-4 py-3 text-slate-300 text-sm">{page.views}</td>
+                  <td className="px-4 py-3 text-slate-300 text-sm">{page.unique_visitors}</td>
                   <td className="px-4 py-3">
                     <span className={`text-sm font-semibold ${
                       parseFloat(page.conversion_rate) > 10
                         ? 'text-green-400'
                         : parseFloat(page.conversion_rate) > 5
                         ? 'text-amber-400'
-                        : 'text-gray-400'
+                        : 'text-slate-400'
                     }`}>
                       {page.conversion_rate}%
                     </span>
@@ -477,20 +477,20 @@ const MasterDashboard: React.FC = () => {
       {/* Sessions Récentes */}
       <div>
         <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-2">
-          <Activity className="w-6 h-6 text-purple-400" />
+          <Activity className="w-6 h-6 text-blue-400" />
           Sessions Récentes (Live)
         </h2>
 
-        <div className="bg-gray-800/50 border border-gray-700 rounded-lg overflow-hidden">
+        <div className="bg-slate-800/50 border border-slate-700 rounded-lg overflow-hidden">
           <table className="w-full">
-            <thead className="bg-gray-900">
+            <thead className="bg-slate-900">
               <tr>
-                <th className="px-4 py-3 text-left text-gray-400 text-sm font-semibold">Heure</th>
-                <th className="px-4 py-3 text-left text-gray-400 text-sm font-semibold">Source</th>
-                <th className="px-4 py-3 text-left text-gray-400 text-sm font-semibold">Ville</th>
-                <th className="px-4 py-3 text-left text-gray-400 text-sm font-semibold">Device</th>
-                <th className="px-4 py-3 text-left text-gray-400 text-sm font-semibold">Pages</th>
-                <th className="px-4 py-3 text-left text-gray-400 text-sm font-semibold">Statut</th>
+                <th className="px-4 py-3 text-left text-slate-400 text-sm font-semibold">Heure</th>
+                <th className="px-4 py-3 text-left text-slate-400 text-sm font-semibold">Source</th>
+                <th className="px-4 py-3 text-left text-slate-400 text-sm font-semibold">Ville</th>
+                <th className="px-4 py-3 text-left text-slate-400 text-sm font-semibold">Device</th>
+                <th className="px-4 py-3 text-left text-slate-400 text-sm font-semibold">Pages</th>
+                <th className="px-4 py-3 text-left text-slate-400 text-sm font-semibold">Statut</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-700">
@@ -499,22 +499,22 @@ const MasterDashboard: React.FC = () => {
                   <td className="px-4 py-3 text-white text-sm">
                     {new Date(session.started_at).toLocaleTimeString('fr-FR')}
                   </td>
-                  <td className="px-4 py-3 text-gray-300 text-sm">{session.traffic_source || 'direct'}</td>
-                  <td className="px-4 py-3 text-gray-300 text-sm">
+                  <td className="px-4 py-3 text-slate-300 text-sm">{session.traffic_source || 'direct'}</td>
+                  <td className="px-4 py-3 text-slate-300 text-sm">
                     <span className="flex items-center gap-1">
                       <MapPin className="w-3 h-3" />
                       {session.city || 'N/A'}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-gray-300 text-sm">{session.device_type || 'desktop'}</td>
-                  <td className="px-4 py-3 text-gray-300 text-sm">{session.pages_viewed}</td>
+                  <td className="px-4 py-3 text-slate-300 text-sm">{session.device_type || 'desktop'}</td>
+                  <td className="px-4 py-3 text-slate-300 text-sm">{session.pages_viewed}</td>
                   <td className="px-4 py-3">
                     {session.converted ? (
                       <span className="text-xs bg-green-500/20 text-green-400 px-2 py-1 rounded font-semibold">
                         CONVERTI
                       </span>
                     ) : (
-                      <span className="text-xs bg-gray-700 text-gray-400 px-2 py-1 rounded">
+                      <span className="text-xs bg-gray-700 text-slate-400 px-2 py-1 rounded">
                         En cours
                       </span>
                     )}

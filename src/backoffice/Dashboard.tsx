@@ -436,7 +436,7 @@ const Dashboard: React.FC = () => {
 
                 <button
                   onClick={loadDashboardData}
-                  className="w-full flex items-center justify-center space-x-2 bg-gray-700 hover:bg-gray-800 text-white font-bold py-3 px-4 rounded-lg transition-colors shadow-lg hover:shadow-xl"
+                  className="w-full flex items-center justify-center space-x-2 bg-gray-700 hover:bg-slate-800 text-white font-bold py-3 px-4 rounded-lg transition-colors shadow-lg hover:shadow-xl"
                 >
                   <RefreshCw size={16} />
                   <span>Actualiser</span>
@@ -521,7 +521,7 @@ const Dashboard: React.FC = () => {
                 </a>
                 <a
                   href="/backoffice/automation-scheduler"
-                  className="w-full flex items-center justify-center space-x-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold py-4 px-6 rounded-lg transition-all shadow-lg hover:shadow-xl"
+                  className="w-full flex items-center justify-center space-x-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-indigo-700 hover:to-purple-700 text-white font-bold py-4 px-6 rounded-lg transition-all shadow-lg hover:shadow-xl"
                 >
                   <Clock size={20} />
                   <span>⚡ Planification Automatique</span>

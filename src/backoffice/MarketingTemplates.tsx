@@ -257,7 +257,7 @@ const MarketingTemplates: React.FC = () => {
         {/* Communiqué de Presse */}
         <Card className="bg-slate-800 border-slate-700">
           <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-            <FileText className="w-6 h-6 text-purple-400" />
+            <FileText className="w-6 h-6 text-blue-400" />
             Communiqué de Presse
           </h2>
 

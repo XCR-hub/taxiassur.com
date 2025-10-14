@@ -86,7 +86,7 @@ export default function LeadCRM() {
 
   if (loading) {
     return (
-      <div className="mb-8 bg-gray-800/50 border border-gray-700 rounded-lg p-6">
+      <div className="mb-8 bg-slate-800/50 border border-slate-700 rounded-lg p-6">
         <div className="animate-pulse flex space-x-4">
           <div className="flex-1 space-y-4 py-1">
             <div className="h-12 bg-gray-700 rounded"></div>
@@ -112,7 +112,7 @@ export default function LeadCRM() {
           </div>
           <div>
             <h2 className="text-2xl font-bold text-white">CRM & Leads</h2>
-            <p className="text-sm text-gray-400">Vue d'ensemble temps réel</p>
+            <p className="text-sm text-slate-400">Vue d'ensemble temps réel</p>
           </div>
         </div>
         <Link
@@ -178,18 +178,18 @@ export default function LeadCRM() {
           className="group bg-gradient-to-br from-purple-500/10 to-fuchsia-500/10 border-2 border-purple-500/30 rounded-xl p-6 hover:border-purple-500/60 hover:shadow-xl hover:shadow-purple-500/20 transition-all duration-300 hover:scale-105"
         >
           <div className="flex items-center justify-between mb-4">
-            <TrendingUp className="w-8 h-8 text-purple-400" />
-            <span className="text-xs font-semibold text-purple-400 bg-purple-500/20 px-2 py-1 rounded">
+            <TrendingUp className="w-8 h-8 text-blue-400" />
+            <span className="text-xs font-semibold text-blue-400 bg-purple-500/20 px-2 py-1 rounded">
               30 JOURS
             </span>
           </div>
-          <div className="text-4xl font-bold text-purple-400 mb-2">
+          <div className="text-4xl font-bold text-blue-400 mb-2">
             {stats.month}
           </div>
           <div className="text-sm font-semibold text-purple-300">
             Ce mois-ci
           </div>
-          <div className="mt-3 flex items-center gap-2 text-xs text-purple-400 opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="mt-3 flex items-center gap-2 text-xs text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity">
             <span>Voir détails</span>
             <ArrowRight className="w-3 h-3" />
           </div>

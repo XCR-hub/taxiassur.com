@@ -254,7 +254,7 @@ export default function AutoOptimizer() {
       case 'high': return 'text-red-500 bg-red-500/10 border-red-500/30';
       case 'medium': return 'text-amber-500 bg-amber-500/10 border-amber-500/30';
       case 'low': return 'text-blue-500 bg-blue-500/10 border-blue-500/30';
-      default: return 'text-gray-500 bg-gray-500/10 border-gray-500/30';
+      default: return 'text-slate-500 bg-gray-500/10 border-gray-500/30';
     }
   };
 
@@ -318,7 +318,7 @@ export default function AutoOptimizer() {
       </div>
 
       {/* Control Panel */}
-      <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
+      <div className="bg-slate-800 rounded-xl p-6 border border-slate-700">
         <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
           <Settings className="w-6 h-6" />
           Panneau de Contrôle
@@ -357,7 +357,7 @@ export default function AutoOptimizer() {
                 <Activity className="w-5 h-5" />
                 Optimisation Automatique Continue
               </div>
-              <div className="text-sm text-gray-400">
+              <div className="text-sm text-slate-400">
                 Applique automatiquement les optimisations haute priorité toutes les minutes
               </div>
             </div>
@@ -372,7 +372,7 @@ export default function AutoOptimizer() {
       </div>
 
       {/* Automations Status */}
-      <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
+      <div className="bg-slate-800 rounded-xl p-6 border border-slate-700">
         <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
           <Zap className="w-6 h-6 text-amber-400" />
           Automatisations ({activeCount}/{automations.length} actives)
@@ -385,7 +385,7 @@ export default function AutoOptimizer() {
               className={`border rounded-lg p-4 transition-all ${
                 auto.is_enabled
                   ? 'bg-green-900/20 border-green-500/30'
-                  : 'bg-gray-700/50 border-gray-600'
+                  : 'bg-gray-700/50 border-slate-600'
               }`}
             >
               <div className="flex items-start justify-between mb-2">
@@ -394,11 +394,11 @@ export default function AutoOptimizer() {
                     {auto.is_enabled ? (
                       <CheckCircle className="w-4 h-4 text-green-400" />
                     ) : (
-                      <AlertTriangle className="w-4 h-4 text-gray-500" />
+                      <AlertTriangle className="w-4 h-4 text-slate-500" />
                     )}
                     {auto.description}
                   </h3>
-                  <p className="text-xs text-gray-400">
+                  <p className="text-xs text-slate-400">
                     {auto.frequency} • {auto.successful_runs}/{auto.total_runs} runs
                   </p>
                 </div>
@@ -406,14 +406,14 @@ export default function AutoOptimizer() {
                 <span className={`px-2 py-1 rounded text-xs font-bold ${
                   auto.is_enabled
                     ? 'bg-green-500 text-white'
-                    : 'bg-gray-600 text-gray-300'
+                    : 'bg-gray-600 text-slate-300'
                 }`}>
                   {auto.is_enabled ? 'ON' : 'OFF'}
                 </span>
               </div>
 
               {auto.last_run_at && (
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-slate-500">
                   <Clock className="w-3 h-3 inline mr-1" />
                   {new Date(auto.last_run_at).toLocaleString('fr-FR')}
                 </p>
@@ -424,7 +424,7 @@ export default function AutoOptimizer() {
       </div>
 
       {/* Recommendations */}
-      <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
+      <div className="bg-slate-800 rounded-xl p-6 border border-slate-700">
         <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
           <Target className="w-6 h-6 text-amber-400" />
           Recommandations d'Optimisation
@@ -440,7 +440,7 @@ export default function AutoOptimizer() {
                 className={`border rounded-lg p-4 ${
                   rec.applied
                     ? 'bg-green-900/10 border-green-500/30'
-                    : 'bg-gray-700/30 border-gray-600'
+                    : 'bg-gray-700/30 border-slate-600'
                 }`}
               >
                 <div className="flex items-start gap-4">
@@ -457,7 +457,7 @@ export default function AutoOptimizer() {
                             <CheckCircle className="w-4 h-4 text-green-400" />
                           )}
                         </h3>
-                        <p className="text-sm text-gray-400 mt-1">
+                        <p className="text-sm text-slate-400 mt-1">
                           {rec.description}
                         </p>
                       </div>

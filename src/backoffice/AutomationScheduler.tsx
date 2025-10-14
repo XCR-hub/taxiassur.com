@@ -113,7 +113,7 @@ export default function AutomationScheduler() {
 
   return (
     <div className="max-w-4xl mx-auto">
-      <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl p-6 mb-6 text-white">
+      <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl p-6 mb-6 text-white">
         <div className="flex items-center space-x-3 mb-2">
           <Zap size={32} className="animate-pulse" />
           <h2 className="text-2xl font-bold">Planification Automatique</h2>

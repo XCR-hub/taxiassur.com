@@ -487,9 +487,9 @@ Total: ${generatedContent.metadata?.totalWords ?? 0} mots générés`
           {!generatedContent && !isGenerating && (
             <div className="h-[600px] flex items-center justify-center border-2 border-dashed border-gray-300 rounded-lg">
               <div className="text-center">
-                <Sparkles className="mx-auto text-gray-400 mb-3" size={48} />
+                <Sparkles className="mx-auto text-slate-400 mb-3" size={48} />
                 <p className="text-gray-600 font-medium">Le contenu complet apparaîtra ici</p>
-                <p className="text-sm text-gray-500 mt-2">
+                <p className="text-sm text-slate-500 mt-2">
                   Article + Page Ville + FAQ + Image
                 </p>
               </div>
@@ -501,7 +501,7 @@ Total: ${generatedContent.metadata?.totalWords ?? 0} mots générés`
               <div className="text-center">
                 <Loader2 className="animate-spin mx-auto text-purple-600 mb-3" size={48} />
                 <p className="text-gray-600 font-bold text-lg">Génération complète en cours...</p>
-                <p className="text-sm text-gray-500 mt-2">30-60 secondes estimées</p>
+                <p className="text-sm text-slate-500 mt-2">30-60 secondes estimées</p>
               </div>
             </div>
           )}

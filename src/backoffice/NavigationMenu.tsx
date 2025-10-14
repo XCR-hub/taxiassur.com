@@ -11,7 +11,7 @@ export default function NavigationMenu() {
   return (
     <div className="mb-8 space-y-6">
       {/* Leads & Marketplace */}
-      <div className="bg-gray-800/50 border border-amber-500/30 rounded-lg p-4">
+      <div className="bg-slate-800/50 border border-amber-500/30 rounded-lg p-4">
         <h3 className="text-amber-400 font-bold text-sm mb-3 flex items-center gap-2">
           <DollarSign className="w-4 h-4" />
           LEADS & MARKETPLACE
@@ -41,8 +41,8 @@ export default function NavigationMenu() {
       </div>
 
       {/* Contenu & IA */}
-      <div className="bg-gray-800/50 border border-purple-500/30 rounded-lg p-4">
-        <h3 className="text-purple-400 font-bold text-sm mb-3 flex items-center gap-2">
+      <div className="bg-slate-800/50 border border-purple-500/30 rounded-lg p-4">
+        <h3 className="text-blue-400 font-bold text-sm mb-3 flex items-center gap-2">
           <Zap className="w-4 h-4" />
           CONTENU & GÉNÉRATION IA
         </h3>
@@ -51,7 +51,7 @@ export default function NavigationMenu() {
             <Zap className="w-5 h-5" />
             <span>Générateur IA</span>
           </Link>
-          <Link to="/backoffice/content" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm">
+          <Link to="/backoffice/content" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-purple-600 hover:to-purple-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm">
             <FileEdit className="w-5 h-5" />
             <span>Contenu Manuel</span>
           </Link>
@@ -75,7 +75,7 @@ export default function NavigationMenu() {
       </div>
 
       {/* SEO & Backlinks */}
-      <div className="bg-gray-800/50 border border-green-500/30 rounded-lg p-4">
+      <div className="bg-slate-800/50 border border-green-500/30 rounded-lg p-4">
         <h3 className="text-green-400 font-bold text-sm mb-3 flex items-center gap-2">
           <Search className="w-4 h-4" />
           SEO & BACKLINKS
@@ -89,7 +89,7 @@ export default function NavigationMenu() {
             <TrendingUp className="w-5 h-5" />
             <span>Stratégie SEO</span>
           </Link>
-          <Link to="/backoffice/backlinks" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm">
+          <Link to="/backoffice/backlinks" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-indigo-600 hover:to-indigo-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm">
             <Link2 className="w-5 h-5" />
             <span>Backlinks</span>
           </Link>
@@ -109,7 +109,7 @@ export default function NavigationMenu() {
       </div>
 
       {/* Partenaires & Prospects */}
-      <div className="bg-gray-800/50 border border-cyan-500/30 rounded-lg p-4">
+      <div className="bg-slate-800/50 border border-cyan-500/30 rounded-lg p-4">
         <h3 className="text-cyan-400 font-bold text-sm mb-3 flex items-center gap-2">
           <UserCircle className="w-4 h-4" />
           PARTENAIRES & PROSPECTS
@@ -127,7 +127,7 @@ export default function NavigationMenu() {
             <Eye className="w-5 h-5" />
             <span>Prospects</span>
           </Link>
-          <Link to="/backoffice/seed-prospects" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm">
+          <Link to="/backoffice/seed-prospects" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-indigo-600 hover:to-indigo-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm">
             <Plus className="w-5 h-5" />
             <span>Seed DB</span>
           </Link>
@@ -139,7 +139,7 @@ export default function NavigationMenu() {
       </div>
 
       {/* Automatisation & Sécurité */}
-      <div className="bg-gray-800/50 border border-red-500/30 rounded-lg p-4">
+      <div className="bg-slate-800/50 border border-red-500/30 rounded-lg p-4">
         <h3 className="text-red-400 font-bold text-sm mb-3 flex items-center gap-2">
           <Settings className="w-4 h-4" />
           AUTOMATISATION & SÉCURITÉ
@@ -149,7 +149,7 @@ export default function NavigationMenu() {
             <Zap className="w-5 h-5" />
             <span>Auto-Optimisation</span>
           </Link>
-          <Link to="/backoffice/automation-scheduler" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm">
+          <Link to="/backoffice/automation-scheduler" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-purple-600 hover:to-purple-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm">
             <Clock className="w-5 h-5" />
             <span>Scheduler</span>
           </Link>
@@ -181,7 +181,7 @@ export default function NavigationMenu() {
       </div>
 
       {/* Documentation & Guides */}
-      <div className="bg-gray-800/50 border border-blue-500/30 rounded-lg p-4">
+      <div className="bg-slate-800/50 border border-blue-500/30 rounded-lg p-4">
         <h3 className="text-blue-400 font-bold text-sm mb-3 flex items-center gap-2">
           <BookOpen className="w-4 h-4" />
           DOCUMENTATION & GUIDES
@@ -198,14 +198,14 @@ export default function NavigationMenu() {
             href="https://github.com/yourusername/taxiassur"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm"
+            className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-indigo-600 hover:to-indigo-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm"
           >
             <BookOpen className="w-5 h-5" />
             <span>Guide Backoffice</span>
           </a>
           <Link
             to="/backoffice"
-            className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm"
+            className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-purple-600 hover:to-purple-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm"
           >
             <BookOpen className="w-5 h-5" />
             <span>Config API</span>
