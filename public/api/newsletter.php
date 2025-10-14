@@ -33,11 +33,69 @@ function logNewsletter($message, $data = []) {
 
 function sendWelcomeEmail($email) {
     try {
-        // Utiliser la fonction d'envoi robuste
-        return sendEmailRobust($email, "✅ Bienvenue dans la Newsletter TaxiAssur !", generateWelcomeMessage(), 'TaxiAssur Newsletter');
+        // Utiliser la fonction Supabase Edge Function pour envoyer avec pièces jointes
+        return sendWelcomeEmailViaSupabase($email);
     } catch (Throwable $e) {
         logNewsletter('Welcome email error', ['error' => $e->getMessage()]);
-        return false;
+        // Fallback: envoyer sans pièces jointes
+        return sendEmailRobust($email, "✅ Bienvenue dans la Newsletter TaxiAssur !", generateWelcomeMessage(), 'TaxiAssur Newsletter');
+    }
+}
+
+function sendWelcomeEmailViaSupabase($email) {
+    try {
+        $supabaseUrl = getenv('VITE_SUPABASE_URL') ?: 'https://drohhxrkoequjphvabvq.supabase.co';
+        $supabaseKey = getenv('VITE_SUPABASE_ANON_KEY');
+
+        if (!$supabaseKey) {
+            logNewsletter('Supabase key missing, using fallback');
+            return sendEmailRobust($email, "✅ Bienvenue dans la Newsletter TaxiAssur !", generateWelcomeMessage(), 'TaxiAssur Newsletter');
+        }
+
+        $emailData = [
+            'to' => $email,
+            'subject' => '✅ Bienvenue dans la Newsletter TaxiAssur !',
+            'text' => generateWelcomeMessage(),
+            'from' => [
+                'email' => 'newsletter@taxiassur.com',
+                'name' => 'TaxiAssur Newsletter'
+            ],
+            'replyTo' => 'team@taxiassur.com',
+            'attachments' => []
+        ];
+
+        // TODO: Ajouter les pièces jointes quand les PDF seront créés
+        // $emailData['attachments'][] = [
+        //     'filename' => 'Guide-Assurance-Taxi-2024.pdf',
+        //     'content' => base64_encode(file_get_contents(__DIR__ . '/../content/guides/guide-assurance-taxi-2024.pdf')),
+        //     'type' => 'application/pdf'
+        // ];
+
+        $url = $supabaseUrl . '/functions/v1/send-email';
+
+        $ch = curl_init($url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Authorization: Bearer ' . $supabaseKey,
+            'Content-Type: application/json'
+        ]);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($emailData));
+
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        if ($httpCode === 200) {
+            logNewsletter('Welcome email sent via Supabase', ['email' => $email]);
+            return true;
+        } else {
+            logNewsletter('Supabase email failed, using fallback', ['code' => $httpCode]);
+            return sendEmailRobust($email, "✅ Bienvenue dans la Newsletter TaxiAssur !", generateWelcomeMessage(), 'TaxiAssur Newsletter');
+        }
+    } catch (Throwable $e) {
+        logNewsletter('Supabase email error', ['error' => $e->getMessage()]);
+        return sendEmailRobust($email, "✅ Bienvenue dans la Newsletter TaxiAssur !", generateWelcomeMessage(), 'TaxiAssur Newsletter');
     }
 }
 
@@ -50,12 +108,12 @@ function generateWelcomeMessage(): string {
     $message .= "• Guides pratiques exclusifs (PDF téléchargeables)\n";
     $message .= "• Offres spéciales réservées aux abonnés\n";
     $message .= "• Alertes importantes du secteur taxi\n\n";
-    $message .= "🎁 BONUS D'INSCRIPTION :\n";
-    $message .= "• Guide PDF \"Assurance Taxi 2024 : Tout Savoir\" (20 pages)\n";
+    $message .= "🎁 BONUS D'INSCRIPTION (à venir dans prochain email) :\n";
+    $message .= "• Guide PDF \"Assurance Taxi 2024 : Tout Savoir\"\n";
     $message .= "• Checklist \"Documents Obligatoires Taxi\"\n";
     $message .= "• Calculateur d'économies personnalisé\n";
     $message .= "• Accès prioritaire aux conseils experts\n\n";
-    $message .= "📊 REJOIGNEZ +2500 PROFESSIONNELS qui optimisent déjà leur assurance taxi !\n\n";
+    $message .= "📊 Rejoignez notre communauté grandissante de professionnels du taxi !\n\n";
     $message .= "❓ Questions ? Répondez à cet email ou appelez le 01 80 85 57 86\n\n";
     $message .= "📧 Fréquence : 1 email par semaine (mardi 9h)\n";
     $message .= "🚫 Pas de spam, désinscription facile en 1 clic\n\n";
@@ -80,9 +138,9 @@ function sendEmailRobust(string $to, string $subject, string $message, string $f
     
     // Sanitisation
     $to = filter_var($to, FILTER_SANITIZE_EMAIL);
-    $subject = htmlspecialchars($subject, ENT_QUOTES, 'UTF-8');
-    $message = htmlspecialchars($message, ENT_QUOTES, 'UTF-8');
-    $fromName = htmlspecialchars($fromName, ENT_QUOTES, 'UTF-8');
+    $subject = mb_encode_mimeheader($subject, 'UTF-8');
+    // NE PAS htmlspecialchars le message - c'est du texte brut
+    $fromName = str_replace(['<', '>', '"', "'"], '', $fromName);
     
     try {
         $headers = "From: $fromName <newsletter@taxiassur.com>\r\n";
@@ -111,12 +169,12 @@ function sendWelcomeEmailOld($email) {
         $message .= "• Guides pratiques exclusifs (PDF téléchargeables)\n";
         $message .= "• Offres spéciales réservées aux abonnés\n";
         $message .= "• Alertes importantes du secteur taxi\n\n";
-        $message .= "🎁 BONUS D'INSCRIPTION :\n";
-        $message .= "• Guide PDF \"Assurance Taxi 2024 : Tout Savoir\" (20 pages)\n";
+        $message .= "🎁 BONUS D'INSCRIPTION (à venir dans prochain email) :\n";
+        $message .= "• Guide PDF \"Assurance Taxi 2024 : Tout Savoir\"\n";
         $message .= "• Checklist \"Documents Obligatoires Taxi\"\n";
         $message .= "• Calculateur d'économies personnalisé\n";
         $message .= "• Accès prioritaire aux conseils experts\n\n";
-        $message .= "📊 REJOIGNEZ +2500 PROFESSIONNELS qui optimisent déjà leur assurance taxi !\n\n";
+        $message .= "📊 Rejoignez notre communauté grandissante de professionnels du taxi !\n\n";
         $message .= "❓ Questions ? Répondez à cet email ou appelez le 01 80 85 57 86\n\n";
         $message .= "📧 Fréquence : 1 email par semaine (mardi 9h)\n";
         $message .= "🚫 Pas de spam, désinscription facile en 1 clic\n\n";
@@ -218,7 +276,7 @@ try {
     $adminMessage .= "Source : " . ($input['source'] ?? 'website') . "\n";
     $adminMessage .= "Date : " . date('d/m/Y H:i:s') . "\n";
     $adminMessage .= "IP : " . ($_SERVER['REMOTE_ADDR'] ?? 'unknown') . "\n\n";
-    $adminMessage .= "Total abonnés estimé : +2500\n\n";
+    $adminMessage .= "Communauté en croissance\n\n";
     $adminMessage .= "--\nTaxiAssur Newsletter System";
 
     // Notifier les deux adresses admin

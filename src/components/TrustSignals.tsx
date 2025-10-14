@@ -22,9 +22,9 @@ const TrustSignals: React.FC = () => {
     },
     {
       icon: Users,
-      title: '+1500 Clients',
-      subtitle: 'Satisfaits',
-      description: 'La plus grande communauté de chauffeurs taxi assurés',
+      title: 'Communauté Active',
+      subtitle: 'En Croissance',
+      description: 'Construisons ensemble la plus grande communauté de chauffeurs taxi assurés',
       color: 'text-green-600',
       bgColor: 'bg-green-50'
     },
@@ -38,12 +38,7 @@ const TrustSignals: React.FC = () => {
     }
   ];
 
-  const recentActivity = [
-    { action: 'Devis demandé', location: 'Paris', time: '2 min' },
-    { action: 'Contrat signé', location: 'Lyon', time: '8 min' },
-    { action: 'Devis demandé', location: 'Marseille', time: '12 min' },
-    { action: 'Économies réalisées', location: 'Toulouse', time: '15 min' }
-  ];
+  const recentActivity: never[] = [];
 
   return (
     <section className="section-padding bg-gradient-to-br from-gray-900 via-gray-800 to-gray-950 relative overflow-hidden">
@@ -66,29 +61,6 @@ const TrustSignals: React.FC = () => {
           })}
         </div>
 
-        {/* Recent activity */}
-        <div className="ai-card p-8 shadow-2xl border-2 border-amber-500/40 taxi-glow max-w-4xl mx-auto">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-xl font-bold text-white flex items-center drop-shadow-lg">
-              <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse mr-3 shadow-lg"></div>
-              Activité en Temps Réel
-            </h3>
-            <span className="text-sm text-gray-600 drop-shadow-md">🕐 Dernières 30 minutes</span>
-          </div>
-          
-          <div className="space-y-3">
-            {recentActivity.map((activity, index) => (
-              <div key={index} className="flex items-center justify-between p-4 bg-gray-800/50 rounded-xl border border-gray-700/50 hover:bg-gray-700/50 transition-colors backdrop-blur-sm">
-                <div className="flex items-center space-x-3">
-                  <CheckCircle className="text-green-400" size={16} />
-                  <span className="text-sm font-medium text-white drop-shadow-md">{activity.action}</span>
-                  <span className="text-xs text-gray-600 drop-shadow-md">• {activity.location}</span>
-                </div>
-                <span className="text-xs text-amber-400 font-medium drop-shadow-md">Il y a {activity.time}</span>
-              </div>
-            ))}
-          </div>
-        </div>
 
         {/* Contact urgency */}
         <div className="mt-8 text-center">
