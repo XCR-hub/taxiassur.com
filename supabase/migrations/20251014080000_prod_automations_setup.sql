@@ -140,35 +140,87 @@ RETURNS TABLE (
   top_traffic_source text,
   top_city text
 ) AS $$
+DECLARE
+  v_active_sessions bigint;
+  v_today_sessions bigint;
+  v_today_conversions bigint;
+  v_today_quote_requests bigint;
+  v_pending_quotes bigint;
+  v_avg_session_duration numeric;
+  v_top_traffic_source text;
+  v_top_city text;
 BEGIN
-  RETURN QUERY
-  SELECT
-    COUNT(DISTINCT CASE WHEN s.last_activity_at > now() - interval '5 minutes' THEN s.id END) as active_sessions,
-    COUNT(DISTINCT CASE WHEN s.started_at >= date_trunc('day', now()) THEN s.id END) as today_sessions,
-    COUNT(DISTINCT CASE WHEN s.is_converted AND s.started_at >= date_trunc('day', now()) THEN s.id END) as today_conversions,
-    COUNT(DISTINCT CASE WHEN e.event_name = 'quote_request' AND e.created_at >= date_trunc('day', now()) THEN e.id END) as today_quote_requests,
-    COUNT(DISTINCT CASE WHEN l.status IN ('nouveau', 'contacte') THEN l.id END) as pending_quotes,
-    COALESCE(ROUND(AVG(EXTRACT(EPOCH FROM (s.last_activity_at - s.started_at)) / 60), 1), 0) as avg_session_duration,
-    COALESCE((
-      SELECT s2.utm_source
-      FROM analytics_sessions s2
-      WHERE s2.started_at >= date_trunc('day', now())
-      AND s2.utm_source IS NOT NULL
-      GROUP BY s2.utm_source
-      ORDER BY COUNT(*) DESC
-      LIMIT 1
-    ), 'Direct') as top_traffic_source,
-    COALESCE((
-      SELECT s3.city
-      FROM analytics_sessions s3
-      WHERE s3.started_at >= date_trunc('day', now())
-      GROUP BY s3.city
-      ORDER BY COUNT(*) DESC
-      LIMIT 1
-    ), 'N/A') as top_city
-  FROM analytics_sessions s
-  LEFT JOIN analytics_events e ON e.session_id = s.id
-  LEFT JOIN leads l ON l.created_at >= date_trunc('day', now());
+  -- Vérifier si la table analytics_sessions existe
+  IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'analytics_sessions') THEN
+    -- Stats sessions
+    SELECT
+      COUNT(DISTINCT CASE WHEN last_activity_at > now() - interval '5 minutes' THEN id END),
+      COUNT(DISTINCT CASE WHEN started_at >= date_trunc('day', now()) THEN id END),
+      COUNT(DISTINCT CASE WHEN is_converted AND started_at >= date_trunc('day', now()) THEN id END),
+      COALESCE(ROUND(AVG(CASE
+        WHEN last_activity_at > started_at
+        THEN EXTRACT(EPOCH FROM (last_activity_at - started_at)) / 60
+        ELSE 0
+      END), 1), 0)
+    INTO v_active_sessions, v_today_sessions, v_today_conversions, v_avg_session_duration
+    FROM analytics_sessions;
+
+    -- Top source
+    SELECT COALESCE(utm_source, 'Direct')
+    INTO v_top_traffic_source
+    FROM analytics_sessions
+    WHERE started_at >= date_trunc('day', now())
+      AND utm_source IS NOT NULL
+    GROUP BY utm_source
+    ORDER BY COUNT(*) DESC
+    LIMIT 1;
+
+    -- Top city
+    SELECT COALESCE(city, 'N/A')
+    INTO v_top_city
+    FROM analytics_sessions
+    WHERE started_at >= date_trunc('day', now())
+    GROUP BY city
+    ORDER BY COUNT(*) DESC
+    LIMIT 1;
+  ELSE
+    -- Si la table n'existe pas, valeurs par défaut
+    v_active_sessions := 0;
+    v_today_sessions := 0;
+    v_today_conversions := 0;
+    v_avg_session_duration := 0;
+    v_top_traffic_source := 'Direct';
+    v_top_city := 'N/A';
+  END IF;
+
+  -- Quote requests depuis analytics_events si la table existe
+  IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'analytics_events') THEN
+    SELECT COUNT(DISTINCT id)
+    INTO v_today_quote_requests
+    FROM analytics_events
+    WHERE event_name = 'quote_request'
+      AND created_at >= date_trunc('day', now());
+  ELSE
+    v_today_quote_requests := 0;
+  END IF;
+
+  -- Pending quotes depuis leads
+  SELECT COUNT(*)
+  INTO v_pending_quotes
+  FROM leads
+  WHERE status IN ('nouveau', 'contacte')
+    AND created_at >= date_trunc('day', now());
+
+  -- Retourner les résultats
+  RETURN QUERY SELECT
+    v_active_sessions,
+    v_today_sessions,
+    v_today_conversions,
+    v_today_quote_requests,
+    v_pending_quotes,
+    v_avg_session_duration,
+    COALESCE(v_top_traffic_source, 'Direct'),
+    COALESCE(v_top_city, 'N/A');
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
@@ -183,22 +235,29 @@ RETURNS TABLE (
   conversion_rate numeric
 ) AS $$
 BEGIN
-  RETURN QUERY
-  SELECT
-    pv.page_url,
-    COUNT(pv.id) as views,
-    COUNT(DISTINCT pv.session_id) as unique_visitors,
-    ROUND(
-      (COUNT(DISTINCT CASE WHEN s.is_converted THEN s.id END)::numeric /
-       NULLIF(COUNT(DISTINCT s.id), 0) * 100),
-      1
-    ) as conversion_rate
-  FROM analytics_page_views pv
-  JOIN analytics_sessions s ON s.id = pv.session_id
-  WHERE pv.viewed_at >= date_trunc('day', now())
-  GROUP BY pv.page_url
-  ORDER BY views DESC
-  LIMIT 10;
+  -- Vérifier si les tables existent
+  IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'analytics_page_views')
+     AND EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'analytics_sessions') THEN
+    RETURN QUERY
+    SELECT
+      pv.page_url,
+      COUNT(pv.id) as views,
+      COUNT(DISTINCT pv.session_id) as unique_visitors,
+      ROUND(
+        (COUNT(DISTINCT CASE WHEN s.is_converted THEN s.id END)::numeric /
+         NULLIF(COUNT(DISTINCT s.id), 0) * 100),
+        1
+      ) as conversion_rate
+    FROM analytics_page_views pv
+    JOIN analytics_sessions s ON s.id = pv.session_id
+    WHERE pv.viewed_at >= date_trunc('day', now())
+    GROUP BY pv.page_url
+    ORDER BY views DESC
+    LIMIT 10;
+  ELSE
+    -- Si les tables n'existent pas, retourner vide
+    RETURN;
+  END IF;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
