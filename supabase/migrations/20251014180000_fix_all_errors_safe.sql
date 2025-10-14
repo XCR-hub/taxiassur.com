@@ -39,22 +39,38 @@ CREATE TABLE IF NOT EXISTS seo_automation_config (
 -- Table city_pages
 CREATE TABLE IF NOT EXISTS city_pages (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  city_name text NOT NULL,
-  slug text NOT NULL,
+  city_name text,
+  slug text,
   content jsonb DEFAULT '{}'::jsonb,
   published boolean DEFAULT false,
   created_at timestamptz DEFAULT NOW(),
   updated_at timestamptz DEFAULT NOW()
 );
 
--- Ajouter contraintes uniques si elles n'existent pas
+-- Ajouter colonnes manquantes
 DO $$
 BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'city_pages_city_name_key') THEN
-    ALTER TABLE city_pages ADD CONSTRAINT city_pages_city_name_key UNIQUE (city_name);
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'city_pages' AND column_name = 'city_name') THEN
+    ALTER TABLE city_pages ADD COLUMN city_name text;
   END IF;
-  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'city_pages_slug_key') THEN
-    ALTER TABLE city_pages ADD CONSTRAINT city_pages_slug_key UNIQUE (slug);
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'city_pages' AND column_name = 'slug') THEN
+    ALTER TABLE city_pages ADD COLUMN slug text;
+  END IF;
+END $$;
+
+-- Ajouter contraintes uniques si colonnes existent
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'city_pages' AND column_name = 'city_name') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'city_pages_city_name_key') THEN
+      ALTER TABLE city_pages ADD CONSTRAINT city_pages_city_name_key UNIQUE (city_name);
+    END IF;
+  END IF;
+
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'city_pages' AND column_name = 'slug') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'city_pages_slug_key') THEN
+      ALTER TABLE city_pages ADD CONSTRAINT city_pages_slug_key UNIQUE (slug);
+    END IF;
   END IF;
 END $$;
 
