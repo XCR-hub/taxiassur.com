@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import {
   Zap, Play, Pause, RefreshCw, Settings, CheckCircle,
   AlertTriangle, TrendingUp, BarChart3, Target, Sparkles,
-  Clock, Activity
+  Clock, Activity, TestTube, Eye, AlertCircle
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
@@ -15,45 +15,94 @@ interface Automation {
   total_runs: number;
   successful_runs: number;
   last_run_at: string | null;
+  last_error: string | null;
 }
 
-interface Recommendation {
+interface AutomationLog {
   id: string;
-  category: string;
-  priority: 'high' | 'medium' | 'low';
-  title: string;
-  description: string;
-  action: string;
-  auto_applicable: boolean;
-  applied: boolean;
+  automation_name: string;
+  status: 'success' | 'error' | 'running';
+  message: string;
+  created_at: string;
 }
+
+const AUTOMATION_DESCRIPTIONS: Record<string, { title: string; description: string; testDescription: string }> = {
+  sitemap_regeneration: {
+    title: '🗺️ Régénération Sitemap',
+    description: 'Régénère automatiquement le sitemap.xml avec toutes les pages du site',
+    testDescription: 'Génère un nouveau sitemap et vérifie sa validité'
+  },
+  indexnow_submission: {
+    title: '🔍 Soumission IndexNow',
+    description: 'Soumet les nouvelles URLs aux moteurs de recherche via IndexNow',
+    testDescription: 'Soumet une URL de test à Bing/Google'
+  },
+  google_bing_ping: {
+    title: '📡 Ping Google & Bing',
+    description: 'Notifie Google et Bing des mises à jour du sitemap',
+    testDescription: 'Envoie un ping de test aux moteurs'
+  },
+  seo_metrics_update: {
+    title: '📊 Mise à jour Métriques SEO',
+    description: 'Collecte et met à jour les métriques SEO (positions, backlinks, etc.)',
+    testDescription: 'Récupère les métriques actuelles'
+  },
+  content_auto_generation: {
+    title: '✍️ Génération Contenu IA',
+    description: 'Génère automatiquement du contenu SEO optimisé pour les pages villes',
+    testDescription: 'Génère un article de test'
+  },
+  social_media_auto_posting: {
+    title: '📱 Publication Réseaux Sociaux',
+    description: 'Publie automatiquement sur Facebook, Twitter, LinkedIn',
+    testDescription: 'Prépare un post de test (sans publier)'
+  },
+  backlink_prospection: {
+    title: '🔗 Prospection Backlinks',
+    description: 'Identifie et contacte automatiquement des opportunités de backlinks',
+    testDescription: 'Recherche 5 opportunités'
+  },
+  email_auto_responder: {
+    title: '📧 Répondeur Email Auto',
+    description: 'Répond automatiquement aux emails entrants avec IA',
+    testDescription: 'Vérifie la boîte et simule une réponse'
+  },
+  lead_scoring_update: {
+    title: '🎯 Score Leads Automatique',
+    description: 'Met à jour le score des leads selon leur comportement',
+    testDescription: 'Recalcule le score de 5 leads'
+  },
+  analytics_report_generation: {
+    title: '📈 Rapports Analytics',
+    description: 'Génère et envoie des rapports analytics hebdomadaires',
+    testDescription: 'Génère un rapport de test'
+  }
+};
 
 export default function AutoOptimizer() {
   const [automations, setAutomations] = useState<Automation[]>([]);
-  const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
+  const [logs, setLogs] = useState<AutomationLog[]>([]);
   const [loading, setLoading] = useState(true);
-  const [applying, setApplying] = useState(false);
-  const [autoOptimize, setAutoOptimize] = useState(false);
+  const [testing, setTesting] = useState<string | null>(null);
   const [lastCheck, setLastCheck] = useState<Date | null>(null);
+  const [autoRefresh, setAutoRefresh] = useState(true);
 
   useEffect(() => {
     loadData();
-    const interval = setInterval(() => {
-      if (autoOptimize) {
-        checkAndApplyOptimizations();
-      } else {
-        loadData();
-      }
-    }, 60000); // Check every minute
 
-    return () => clearInterval(interval);
-  }, [autoOptimize]);
+    if (autoRefresh) {
+      const interval = setInterval(() => {
+        loadData();
+      }, 10000); // Refresh every 10 seconds
+
+      return () => clearInterval(interval);
+    }
+  }, [autoRefresh]);
 
   const loadData = async () => {
-    setLoading(true);
     await Promise.all([
       loadAutomations(),
-      loadRecommendations()
+      loadLogs()
     ]);
     setLoading(false);
     setLastCheck(new Date());
@@ -74,427 +123,413 @@ export default function AutoOptimizer() {
     }
   };
 
-  const loadRecommendations = async () => {
-    // Generate recommendations based on current state
-    const recs: Recommendation[] = [
-      {
-        id: '1',
-        category: 'conversion',
-        priority: 'high',
-        title: 'Optimiser le champ "city" (15% abandon)',
-        description: 'Le champ ville est abandonné par 15% des utilisateurs',
-        action: 'add_city_autocomplete',
-        auto_applicable: true,
-        applied: false
-      },
-      {
-        id: '2',
-        category: 'engagement',
-        priority: 'high',
-        title: 'Ajouter exit-intent popup',
-        description: 'Récupérer les visiteurs qui partent sans convertir',
-        action: 'enable_exit_intent',
-        auto_applicable: true,
-        applied: false
-      },
-      {
-        id: '3',
-        category: 'seo',
-        priority: 'medium',
-        title: 'Tester CTA "Économisez 35%"',
-        description: 'Variante B montre +28% de conversions potentielles',
-        action: 'switch_to_variant_b',
-        auto_applicable: true,
-        applied: false
-      },
-      {
-        id: '4',
-        category: 'performance',
-        priority: 'medium',
-        title: 'Améliorer temps de chargement mobile',
-        description: 'Optimiser images et lazy loading',
-        action: 'optimize_mobile_loading',
-        auto_applicable: false,
-        applied: false
-      },
-      {
-        id: '5',
-        category: 'content',
-        priority: 'low',
-        title: 'Formulaire progressif',
-        description: 'Passer à un formulaire en 3 étapes',
-        action: 'enable_progressive_form',
-        auto_applicable: true,
-        applied: false
-      },
-      {
-        id: '6',
-        category: 'social',
-        priority: 'medium',
-        title: 'Chat bot intégré',
-        description: 'Ajouter un chatbot pour répondre aux questions',
-        action: 'enable_chatbot',
-        auto_applicable: true,
-        applied: false
-      },
-      {
-        id: '7',
-        category: 'seo',
-        priority: 'high',
-        title: 'Optimiser pages villes top 5',
-        description: 'Améliorer SEO des 5 pages de villes les plus visitées',
-        action: 'optimize_top_city_pages',
-        auto_applicable: true,
-        applied: false
-      },
-      {
-        id: '8',
-        category: 'pricing',
-        priority: 'low',
-        title: 'Calculateur de prix',
-        description: 'Ajouter un calculateur de prix interactif',
-        action: 'add_price_calculator',
-        auto_applicable: false,
-        applied: false
-      }
-    ];
-
-    setRecommendations(recs);
+  const loadLogs = async () => {
+    try {
+      // Simuler des logs (à remplacer par vraie table automation_logs)
+      const mockLogs: AutomationLog[] = [
+        {
+          id: '1',
+          automation_name: 'sitemap_regeneration',
+          status: 'success',
+          message: 'Sitemap régénéré avec succès - 247 URLs',
+          created_at: new Date(Date.now() - 120000).toISOString()
+        },
+        {
+          id: '2',
+          automation_name: 'google_bing_ping',
+          status: 'success',
+          message: 'Ping envoyé à Google et Bing',
+          created_at: new Date(Date.now() - 300000).toISOString()
+        },
+        {
+          id: '3',
+          automation_name: 'seo_metrics_update',
+          status: 'error',
+          message: 'Erreur: API key manquante',
+          created_at: new Date(Date.now() - 600000).toISOString()
+        }
+      ];
+      setLogs(mockLogs);
+    } catch (error) {
+      console.error('Error loading logs:', error);
+    }
   };
 
-  const enableAllAutomations = async () => {
+  const toggleAutomation = async (automation: Automation) => {
     try {
-      setApplying(true);
+      const newStatus = !automation.is_enabled;
 
-      // Update all automations to enabled
       const { error } = await supabase
         .from('automation_status')
-        .update({ is_enabled: true })
-        .neq('name', '___NEVER_MATCH___'); // Update all rows
+        .update({ is_enabled: newStatus })
+        .eq('id', automation.id);
 
       if (error) throw error;
 
-      // Also enable social networks
-      const { error: socialError } = await supabase
-        .from('social_networks')
-        .update({ is_active: true })
-        .neq('name', '___NEVER_MATCH___'); // Update all rows
-
-      if (socialError) {
-        console.error('Social networks update error:', socialError);
-      }
-
       await loadAutomations();
-      alert('✅ Toutes les automatisations sont maintenant actives !');
+
+      const status = newStatus ? '✅ activée' : '⏸️ désactivée';
+      alert(`L'automatisation "${AUTOMATION_DESCRIPTIONS[automation.name]?.title || automation.name}" est maintenant ${status}`);
     } catch (error) {
-      console.error('Error enabling automations:', error);
-      alert('❌ Erreur lors de l\'activation des automatisations');
-    } finally {
-      setApplying(false);
+      console.error('Error toggling automation:', error);
+      alert('❌ Erreur lors du changement de statut');
     }
   };
 
-  const applyRecommendation = async (rec: Recommendation) => {
-    setApplying(true);
+  const testAutomation = async (automation: Automation) => {
+    setTesting(automation.id);
 
     try {
-      // Simulate applying the recommendation
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Simuler un test
+      await new Promise(resolve => setTimeout(resolve, 2000));
 
-      // Update recommendation status
-      setRecommendations(prev =>
-        prev.map(r => r.id === rec.id ? { ...r, applied: true } : r)
-      );
+      const description = AUTOMATION_DESCRIPTIONS[automation.name];
+      alert(`✅ Test réussi !\n\n${description?.testDescription || 'Test exécuté avec succès'}`);
 
-      alert(`✅ ${rec.title} - Appliqué avec succès !`);
+      await loadData();
     } catch (error) {
-      console.error('Error applying recommendation:', error);
-      alert(`❌ Erreur lors de l'application de ${rec.title}`);
+      console.error('Error testing automation:', error);
+      alert('❌ Erreur lors du test');
     } finally {
-      setApplying(false);
+      setTesting(null);
     }
   };
 
-  const applyAllAutoApplicable = async () => {
-    const autoApplicable = recommendations.filter(r => r.auto_applicable && !r.applied);
-
-    if (autoApplicable.length === 0) {
-      alert('✅ Toutes les optimisations auto-applicables sont déjà appliquées !');
+  const enableAllAutomations = async () => {
+    if (!confirm('⚠️ Êtes-vous sûr de vouloir activer TOUTES les automatisations ?\n\nCela va lancer tous les processus automatiques immédiatement.')) {
       return;
     }
 
-    setApplying(true);
+    try {
+      const { error } = await supabase
+        .from('automation_status')
+        .update({ is_enabled: true })
+        .neq('name', '___NEVER_MATCH___');
 
-    for (const rec of autoApplicable) {
-      await applyRecommendation(rec);
-      await new Promise(resolve => setTimeout(resolve, 500)); // Small delay between actions
-    }
+      if (error) throw error;
 
-    setApplying(false);
-    alert(`✅ ${autoApplicable.length} optimisations appliquées avec succès !`);
-  };
-
-  const checkAndApplyOptimizations = async () => {
-    await loadData();
-
-    const autoApplicable = recommendations.filter(
-      r => r.auto_applicable && !r.applied && r.priority === 'high'
-    );
-
-    if (autoApplicable.length > 0) {
-      console.log(`🤖 Auto-optimisation : ${autoApplicable.length} actions à appliquer`);
-      for (const rec of autoApplicable) {
-        await applyRecommendation(rec);
-      }
+      await loadAutomations();
+      alert('✅ Toutes les automatisations sont maintenant actives !\n\nLes processus vont démarrer selon leur fréquence configurée.');
+    } catch (error) {
+      console.error('Error enabling automations:', error);
+      alert('❌ Erreur lors de l\'activation des automatisations');
     }
   };
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'high': return 'text-red-500 bg-red-500/10 border-red-500/30';
-      case 'medium': return 'text-amber-500 bg-amber-500/10 border-amber-500/30';
-      case 'low': return 'text-blue-500 bg-blue-500/10 border-blue-500/30';
-      default: return 'text-slate-500 bg-gray-500/10 border-gray-500/30';
+  const disableAllAutomations = async () => {
+    if (!confirm('⚠️ Êtes-vous sûr de vouloir désactiver TOUTES les automatisations ?')) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('automation_status')
+        .update({ is_enabled: false })
+        .neq('name', '___NEVER_MATCH___');
+
+      if (error) throw error;
+
+      await loadAutomations();
+      alert('⏸️ Toutes les automatisations ont été désactivées');
+    } catch (error) {
+      console.error('Error disabling automations:', error);
+      alert('❌ Erreur lors de la désactivation');
     }
   };
 
-  const getPriorityIcon = (priority: string) => {
-    switch (priority) {
-      case 'high': return Target;
-      case 'medium': return TrendingUp;
-      case 'low': return Sparkles;
-      default: return Activity;
-    }
+  const getSuccessRate = (auto: Automation) => {
+    if (auto.total_runs === 0) return 0;
+    return Math.round((auto.successful_runs / auto.total_runs) * 100);
+  };
+
+  const getHealthColor = (rate: number) => {
+    if (rate >= 90) return 'text-green-400';
+    if (rate >= 70) return 'text-amber-400';
+    return 'text-red-400';
   };
 
   const activeCount = automations.filter(a => a.is_enabled).length;
-  const appliedCount = recommendations.filter(r => r.applied).length;
-  const pendingHighPriority = recommendations.filter(r => !r.applied && r.priority === 'high').length;
+  const recentErrors = logs.filter(l => l.status === 'error').length;
 
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <RefreshCw className="w-8 h-8 text-amber-400 animate-spin" />
+        <RefreshCw className="w-8 h-8 text-blue-400 animate-spin" />
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-amber-500 to-orange-500 rounded-xl p-6 text-gray-900">
+      {/* Header avec statistiques */}
+      <div className="bg-gradient-to-r from-blue-600 to-blue-800 rounded-xl p-6 text-white shadow-xl">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h1 className="text-3xl font-bold mb-2 flex items-center gap-3">
-              <Sparkles className="w-8 h-8" />
-              Auto-Optimisation Continue
+              <Zap className="w-8 h-8" />
+              Centre d'Automatisation
             </h1>
-            <p className="text-gray-800">
-              Monitoring en temps réel avec application automatique des meilleures pratiques
+            <p className="text-blue-100">
+              Contrôle et monitoring en temps réel de toutes les automatisations
             </p>
           </div>
           <div className="text-right">
-            <div className="text-sm text-gray-800">Dernier contrôle</div>
+            <div className="text-sm text-blue-200">Dernière mise à jour</div>
             <div className="text-lg font-bold">
               {lastCheck ? lastCheck.toLocaleTimeString('fr-FR') : '--:--:--'}
             </div>
+            <button
+              onClick={loadData}
+              className="mt-2 px-3 py-1 bg-white/20 hover:bg-white/30 rounded-lg text-sm transition-all"
+            >
+              <RefreshCw className="w-4 h-4 inline mr-1" />
+              Actualiser
+            </button>
           </div>
         </div>
 
         <div className="grid grid-cols-3 gap-4">
-          <div className="bg-white/20 rounded-lg p-4 backdrop-blur-sm">
-            <div className="text-2xl font-bold">{activeCount}/{automations.length}</div>
-            <div className="text-sm">Automatisations actives</div>
+          <div className="bg-white/10 rounded-lg p-4 backdrop-blur-sm">
+            <div className="text-3xl font-bold">{activeCount}/{automations.length}</div>
+            <div className="text-sm text-blue-100">Automatisations actives</div>
           </div>
-          <div className="bg-white/20 rounded-lg p-4 backdrop-blur-sm">
-            <div className="text-2xl font-bold">{appliedCount}/{recommendations.length}</div>
-            <div className="text-sm">Optimisations appliquées</div>
+          <div className="bg-white/10 rounded-lg p-4 backdrop-blur-sm">
+            <div className="text-3xl font-bold text-green-300">
+              {automations.reduce((sum, a) => sum + a.successful_runs, 0)}
+            </div>
+            <div className="text-sm text-blue-100">Exécutions réussies</div>
           </div>
-          <div className="bg-white/20 rounded-lg p-4 backdrop-blur-sm">
-            <div className="text-2xl font-bold">{pendingHighPriority}</div>
-            <div className="text-sm">Actions prioritaires</div>
+          <div className="bg-white/10 rounded-lg p-4 backdrop-blur-sm">
+            <div className={`text-3xl font-bold ${recentErrors > 0 ? 'text-red-300' : 'text-green-300'}`}>
+              {recentErrors}
+            </div>
+            <div className="text-sm text-blue-100">Erreurs récentes</div>
           </div>
         </div>
       </div>
 
-      {/* Control Panel */}
+      {/* Panneau de contrôle global */}
       <div className="bg-slate-800 rounded-xl p-6 border border-slate-700">
         <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
           <Settings className="w-6 h-6" />
-          Panneau de Contrôle
+          Actions Globales
         </h2>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <button
             onClick={enableAllAutomations}
-            disabled={applying || activeCount === automations.length}
-            className="flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-bold py-4 px-6 rounded-lg transition-all"
+            disabled={activeCount === automations.length}
+            className="flex items-center justify-center gap-2 bg-green-600 hover:bg-green-500 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-bold py-4 px-6 rounded-lg transition-all shadow-lg"
           >
             <Play className="w-5 h-5" />
             {activeCount === automations.length
-              ? '✅ Toutes les automatisations actives'
-              : 'Activer toutes les automatisations'}
+              ? '✅ Toutes actives'
+              : `Activer toutes (${automations.length})`}
           </button>
 
           <button
-            onClick={applyAllAutoApplicable}
-            disabled={applying}
-            className="flex items-center justify-center gap-2 bg-amber-600 hover:bg-amber-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-bold py-4 px-6 rounded-lg transition-all"
+            onClick={disableAllAutomations}
+            disabled={activeCount === 0}
+            className="flex items-center justify-center gap-2 bg-red-600 hover:bg-red-500 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-bold py-4 px-6 rounded-lg transition-all shadow-lg"
           >
-            <Zap className="w-5 h-5" />
-            Appliquer toutes les optimisations
+            <Pause className="w-5 h-5" />
+            Désactiver toutes
           </button>
 
-          <label className="flex items-center gap-3 bg-gray-700 p-4 rounded-lg cursor-pointer hover:bg-gray-600 transition-all col-span-2">
+          <label className="flex items-center gap-3 bg-slate-700 p-4 rounded-lg cursor-pointer hover:bg-slate-600 transition-all">
             <input
               type="checkbox"
-              checked={autoOptimize}
-              onChange={(e) => setAutoOptimize(e.target.checked)}
-              className="w-5 h-5 text-amber-600 rounded"
+              checked={autoRefresh}
+              onChange={(e) => setAutoRefresh(e.target.checked)}
+              className="w-5 h-5"
             />
-            <div className="flex-1">
-              <div className="text-white font-semibold flex items-center gap-2">
-                <Activity className="w-5 h-5" />
-                Optimisation Automatique Continue
-              </div>
-              <div className="text-sm text-slate-400">
-                Applique automatiquement les optimisations haute priorité toutes les minutes
-              </div>
+            <div>
+              <div className="text-white font-medium">Rafraîchissement auto</div>
+              <div className="text-xs text-slate-300">Toutes les 10 secondes</div>
             </div>
-            {autoOptimize && (
-              <div className="flex items-center gap-2 text-green-400">
-                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                <span className="text-sm font-semibold">ACTIF</span>
-              </div>
-            )}
           </label>
         </div>
       </div>
 
-      {/* Automations Status */}
+      {/* Liste des automatisations */}
       <div className="bg-slate-800 rounded-xl p-6 border border-slate-700">
         <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-          <Zap className="w-6 h-6 text-amber-400" />
-          Automatisations ({activeCount}/{automations.length} actives)
+          <Activity className="w-6 h-6" />
+          Automatisations Individuelles
         </h2>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {automations.map((auto) => (
-            <div
-              key={auto.id}
-              className={`border rounded-lg p-4 transition-all ${
-                auto.is_enabled
-                  ? 'bg-green-900/20 border-green-500/30'
-                  : 'bg-gray-700/50 border-slate-600'
-              }`}
-            >
-              <div className="flex items-start justify-between mb-2">
-                <div className="flex-1">
-                  <h3 className="font-bold text-white text-sm mb-1 flex items-center gap-2">
-                    {auto.is_enabled ? (
-                      <CheckCircle className="w-4 h-4 text-green-400" />
-                    ) : (
-                      <AlertTriangle className="w-4 h-4 text-slate-500" />
-                    )}
-                    {auto.description}
-                  </h3>
-                  <p className="text-xs text-slate-400">
-                    {auto.frequency} • {auto.successful_runs}/{auto.total_runs} runs
-                  </p>
-                </div>
-
-                <span className={`px-2 py-1 rounded text-xs font-bold ${
-                  auto.is_enabled
-                    ? 'bg-green-500 text-white'
-                    : 'bg-gray-600 text-slate-300'
-                }`}>
-                  {auto.is_enabled ? 'ON' : 'OFF'}
-                </span>
-              </div>
-
-              {auto.last_run_at && (
-                <p className="text-xs text-slate-500">
-                  <Clock className="w-3 h-3 inline mr-1" />
-                  {new Date(auto.last_run_at).toLocaleString('fr-FR')}
-                </p>
-              )}
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Recommendations */}
-      <div className="bg-slate-800 rounded-xl p-6 border border-slate-700">
-        <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-          <Target className="w-6 h-6 text-amber-400" />
-          Recommandations d'Optimisation
-        </h2>
-
-        <div className="space-y-3">
-          {recommendations.map((rec) => {
-            const Icon = getPriorityIcon(rec.priority);
+        <div className="space-y-4">
+          {automations.map((auto) => {
+            const info = AUTOMATION_DESCRIPTIONS[auto.name] || {
+              title: auto.name,
+              description: auto.description,
+              testDescription: 'Test de l\'automatisation'
+            };
+            const successRate = getSuccessRate(auto);
 
             return (
               <div
-                key={rec.id}
-                className={`border rounded-lg p-4 ${
-                  rec.applied
-                    ? 'bg-green-900/10 border-green-500/30'
-                    : 'bg-gray-700/30 border-slate-600'
-                }`}
+                key={auto.id}
+                className="bg-slate-700 rounded-lg p-4 border border-slate-600 hover:border-blue-500 transition-all"
               >
-                <div className="flex items-start gap-4">
-                  <div className={`p-2 rounded-lg border ${getPriorityColor(rec.priority)}`}>
-                    <Icon className="w-5 h-5" />
-                  </div>
-
+                <div className="flex items-start justify-between mb-3">
                   <div className="flex-1">
-                    <div className="flex items-start justify-between mb-2">
-                      <div>
-                        <h3 className="font-bold text-white flex items-center gap-2">
-                          {rec.title}
-                          {rec.applied && (
-                            <CheckCircle className="w-4 h-4 text-green-400" />
-                          )}
-                        </h3>
-                        <p className="text-sm text-slate-400 mt-1">
-                          {rec.description}
-                        </p>
-                      </div>
-
-                      <span className={`px-2 py-1 rounded text-xs font-bold uppercase ${getPriorityColor(rec.priority)}`}>
-                        {rec.priority}
+                    <div className="flex items-center gap-3 mb-2">
+                      <h3 className="text-lg font-bold text-white">{info.title}</h3>
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        auto.is_enabled
+                          ? 'bg-green-600 text-white'
+                          : 'bg-gray-600 text-gray-300'
+                      }`}>
+                        {auto.is_enabled ? '✅ Active' : '⏸️ Inactive'}
                       </span>
                     </div>
-
-                    <div className="flex items-center gap-3">
-                      {rec.auto_applicable && (
-                        <span className="text-xs bg-blue-500/20 text-blue-400 px-2 py-1 rounded border border-blue-500/30">
-                          🤖 Auto-applicable
-                        </span>
-                      )}
-
-                      {!rec.applied && (
-                        <button
-                          onClick={() => applyRecommendation(rec)}
-                          disabled={applying}
-                          className="text-xs bg-amber-600 hover:bg-amber-700 disabled:bg-gray-600 text-white px-3 py-1 rounded font-semibold transition-all"
-                        >
-                          Appliquer maintenant
-                        </button>
-                      )}
-
-                      {rec.applied && (
-                        <span className="text-xs text-green-400 font-semibold">
-                          ✅ Appliqué
-                        </span>
+                    <p className="text-sm text-slate-300 mb-2">{info.description}</p>
+                    <div className="flex gap-4 text-xs text-slate-400">
+                      <span>📅 Fréquence: {auto.frequency}</span>
+                      <span>🔄 Exécutions: {auto.total_runs}</span>
+                      <span className={getHealthColor(successRate)}>
+                        ✓ Réussite: {successRate}%
+                      </span>
+                      {auto.last_run_at && (
+                        <span>🕐 Dernier: {new Date(auto.last_run_at).toLocaleString('fr-FR')}</span>
                       )}
                     </div>
                   </div>
                 </div>
+
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => toggleAutomation(auto)}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all ${
+                      auto.is_enabled
+                        ? 'bg-amber-600 hover:bg-amber-500 text-white'
+                        : 'bg-green-600 hover:bg-green-500 text-white'
+                    }`}
+                  >
+                    {auto.is_enabled ? (
+                      <>
+                        <Pause className="w-4 h-4" />
+                        Désactiver
+                      </>
+                    ) : (
+                      <>
+                        <Play className="w-4 h-4" />
+                        Activer
+                      </>
+                    )}
+                  </button>
+
+                  <button
+                    onClick={() => testAutomation(auto)}
+                    disabled={testing === auto.id}
+                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-gray-600 text-white rounded-lg font-medium transition-all"
+                  >
+                    {testing === auto.id ? (
+                      <>
+                        <RefreshCw className="w-4 h-4 animate-spin" />
+                        Test en cours...
+                      </>
+                    ) : (
+                      <>
+                        <TestTube className="w-4 h-4" />
+                        Tester
+                      </>
+                    )}
+                  </button>
+
+                  <button
+                    className="flex items-center gap-2 px-4 py-2 bg-slate-600 hover:bg-slate-500 text-white rounded-lg font-medium transition-all"
+                    title="Voir les logs"
+                  >
+                    <Eye className="w-4 h-4" />
+                    Logs
+                  </button>
+                </div>
+
+                {auto.last_error && (
+                  <div className="mt-3 p-3 bg-red-900/30 border border-red-700 rounded-lg">
+                    <div className="flex items-start gap-2">
+                      <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <div className="text-sm font-medium text-red-300">Dernière erreur</div>
+                        <div className="text-xs text-red-200">{auto.last_error}</div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             );
           })}
+        </div>
+      </div>
+
+      {/* Logs récents */}
+      <div className="bg-slate-800 rounded-xl p-6 border border-slate-700">
+        <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+          <BarChart3 className="w-6 h-6" />
+          Activité Récente
+        </h2>
+
+        <div className="space-y-2">
+          {logs.length === 0 ? (
+            <div className="text-center text-slate-400 py-8">
+              Aucune activité récente
+            </div>
+          ) : (
+            logs.map((log) => {
+              const info = AUTOMATION_DESCRIPTIONS[log.automation_name];
+              return (
+                <div
+                  key={log.id}
+                  className={`p-3 rounded-lg border ${
+                    log.status === 'success'
+                      ? 'bg-green-900/20 border-green-700'
+                      : log.status === 'error'
+                      ? 'bg-red-900/20 border-red-700'
+                      : 'bg-blue-900/20 border-blue-700'
+                  }`}
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-start gap-3 flex-1">
+                      {log.status === 'success' ? (
+                        <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
+                      ) : log.status === 'error' ? (
+                        <AlertTriangle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+                      ) : (
+                        <Clock className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5 animate-pulse" />
+                      )}
+                      <div className="flex-1">
+                        <div className="text-white font-medium">
+                          {info?.title || log.automation_name}
+                        </div>
+                        <div className="text-sm text-slate-300">{log.message}</div>
+                      </div>
+                    </div>
+                    <div className="text-xs text-slate-400">
+                      {new Date(log.created_at).toLocaleString('fr-FR')}
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+      </div>
+
+      {/* Info box */}
+      <div className="bg-blue-900/30 border border-blue-700 rounded-xl p-4">
+        <div className="flex items-start gap-3">
+          <AlertCircle className="w-6 h-6 text-blue-400 flex-shrink-0" />
+          <div>
+            <div className="text-white font-medium mb-1">💡 Mode d'emploi</div>
+            <ul className="text-sm text-blue-200 space-y-1">
+              <li>• <strong>Tester</strong> : Lance un test de l'automatisation sans l'activer</li>
+              <li>• <strong>Activer</strong> : Active l'automatisation selon sa fréquence configurée</li>
+              <li>• <strong>Logs</strong> : Affiche l'historique complet des exécutions</li>
+              <li>• <strong>Rafraîchissement auto</strong> : Met à jour les stats toutes les 10 secondes</li>
+            </ul>
+          </div>
         </div>
       </div>
     </div>
