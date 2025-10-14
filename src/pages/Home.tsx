@@ -19,6 +19,7 @@ import InstantQuoteCalculator from '../components/InstantQuoteCalculator';
 import DynamicReviews from '../components/DynamicReviews';
 import ExitIntentLeadCapture from '../components/ExitIntentLeadCapture';
 import InteractiveQuiz from '../components/InteractiveQuiz';
+import NewsSection from '../components/NewsSection';
 
 const Home: React.FC = () => {
   useEffect(() => {
@@ -115,6 +116,9 @@ const Home: React.FC = () => {
 
             {/* 9. Avis clients classiques - Social proof */}
             <Avis />
+
+            {/* 9.5. Actualités - News section */}
+            <NewsSection limit={3} showTitle={true} />
 
             {/* 10. SEO local - Pages villes */}
             <LocalSEO />

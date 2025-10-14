@@ -71,6 +71,7 @@ const SocialMediaManager = lazy(() => import('./backoffice/SocialMediaManager'))
 const MarketingTemplates = lazy(() => import('./backoffice/MarketingTemplates'));
 const QRCodeGenerator = lazy(() => import('./backoffice/QRCodeGenerator'));
 const TaxisSinistres = lazy(() => import('./pages/TaxisSinistres'));
+const Actualites = lazy(() => import('./pages/Actualites'));
 
 const LoadingFallback = () => (
   <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-black flex items-center justify-center">
@@ -218,6 +219,11 @@ export const router = createBrowserRouter([
     path: '/blog/:id',
     element: <SuspenseWrapper><Post /></SuspenseWrapper>,
     errorElement: <ErrorBoundary><Navigate to="/blog" replace /></ErrorBoundary>
+  },
+  {
+    path: '/actualites',
+    element: <SuspenseWrapper><Actualites /></SuspenseWrapper>,
+    errorElement: <ErrorBoundary><Navigate to="/" replace /></ErrorBoundary>
   },
   {
     path: '/faq',
