@@ -24,6 +24,42 @@ if ($debugMode) {
     error_log("Supabase Key exists: " . (!empty($supabaseKey) ? 'YES (' . strlen($supabaseKey) . ' chars)' : 'NO'));
 }
 
+function sendEmail($emailData) {
+    global $supabaseUrl, $supabaseKey;
+
+    $url = $supabaseUrl . '/functions/v1/send-email';
+
+    $ch = curl_init($url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_POST, true);
+
+    $headers = [
+        'Authorization: Bearer ' . $supabaseKey,
+        'Content-Type: application/json'
+    ];
+
+    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($emailData));
+
+    $response = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+
+    curl_close($ch);
+
+    if ($httpCode === 200) {
+        $result = json_decode($response, true);
+        return [
+            'success' => true,
+            'data' => $result
+        ];
+    } else {
+        return [
+            'success' => false,
+            'error' => 'HTTP ' . $httpCode . ': ' . $response
+        ];
+    }
+}
+
 function supabaseRequest($method, $endpoint, $data = null) {
     global $supabaseUrl, $supabaseKey;
 
@@ -217,6 +253,29 @@ try {
 
             $lead = $result['data'][0];
 
+            // Préparer l'email
+            $emailData = [
+                'to' => $lead['email'],
+                'subject' => 'Votre Devis Assurance Taxi - TaxiAssur',
+                'template' => 'devis',
+                'data' => [
+                    'name' => $lead['name'],
+                    'city' => $lead['city']
+                ]
+            ];
+
+            // Envoyer l'email via Supabase Edge Function
+            $emailResult = sendEmail($emailData);
+
+            if (!$emailResult['success']) {
+                echo json_encode([
+                    'success' => false,
+                    'error' => 'Failed to send email: ' . ($emailResult['error'] ?? 'Unknown error')
+                ]);
+                exit;
+            }
+
+            // Mettre à jour le statut du lead
             $updateData = [
                 'lead_status' => 'devis_envoye',
                 'devis_envoye_at' => date('c'),
@@ -262,6 +321,29 @@ try {
 
             $lead = $result['data'][0];
 
+            // Préparer l'email
+            $emailData = [
+                'to' => $lead['email'],
+                'subject' => 'Votre Contrat d\'Assurance Taxi - TaxiAssur',
+                'template' => 'contract',
+                'data' => [
+                    'name' => $lead['name'],
+                    'city' => $lead['city']
+                ]
+            ];
+
+            // Envoyer l'email via Supabase Edge Function
+            $emailResult = sendEmail($emailData);
+
+            if (!$emailResult['success']) {
+                echo json_encode([
+                    'success' => false,
+                    'error' => 'Failed to send email: ' . ($emailResult['error'] ?? 'Unknown error')
+                ]);
+                exit;
+            }
+
+            // Mettre à jour le statut du lead
             $updateData = [
                 'lead_status' => 'client',
                 'client_at' => date('c'),
@@ -300,13 +382,24 @@ try {
                 exit;
             }
 
-            // TODO: Intégrer l'envoi d'email réel (SendGrid, etc.)
-            // Pour l'instant, on simule le succès
+            // Préparer l'email de demande d'avis
+            $reviewLink = 'https://search.google.com/local/writereview?placeid=YOUR_GOOGLE_PLACE_ID';
 
-            // Simuler l'envoi d'un email de demande d'avis
-            $emailSent = true; // Remplacer par l'envoi réel
+            $emailData = [
+                'to' => $email,
+                'subject' => 'Votre avis compte pour nous - TaxiAssur',
+                'template' => 'review_request',
+                'data' => [
+                    'name' => $name,
+                    'city' => $city,
+                    'review_link' => $reviewLink
+                ]
+            ];
 
-            if ($emailSent) {
+            // Envoyer l'email via Supabase Edge Function
+            $emailResult = sendEmail($emailData);
+
+            if ($emailResult['success']) {
                 echo json_encode([
                     'success' => true,
                     'message' => 'Review request sent successfully',
@@ -320,7 +413,7 @@ try {
             } else {
                 echo json_encode([
                     'success' => false,
-                    'error' => 'Failed to send review request email'
+                    'error' => 'Failed to send review request email: ' . ($emailResult['error'] ?? 'Unknown error')
                 ]);
             }
             break;

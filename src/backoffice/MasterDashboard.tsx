@@ -47,9 +47,13 @@ const MasterDashboard: React.FC = () => {
       const { data, error } = await supabase.rpc('get_realtime_stats');
       if (!error && data) {
         setStats(data);
+      } else if (error) {
+        // Gérer silencieusement les erreurs 400 (fonction non disponible)
+        console.log('Stats temps réel non disponibles, utilisation des valeurs par défaut');
       }
     } catch (error) {
-      console.error('Error loading stats:', error);
+      // Ignorer les erreurs silencieusement
+      console.log('Stats temps réel non disponibles');
     }
   };
 
