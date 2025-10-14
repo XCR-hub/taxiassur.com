@@ -156,7 +156,7 @@ BEGIN
     SELECT
       COUNT(DISTINCT CASE WHEN last_activity_at > now() - interval '5 minutes' THEN id END),
       COUNT(DISTINCT CASE WHEN started_at >= date_trunc('day', now()) THEN id END),
-      COUNT(DISTINCT CASE WHEN is_converted AND started_at >= date_trunc('day', now()) THEN id END),
+      COUNT(DISTINCT CASE WHEN converted AND started_at >= date_trunc('day', now()) THEN id END),
       COALESCE(ROUND(AVG(CASE
         WHEN last_activity_at > started_at
         THEN EXTRACT(EPOCH FROM (last_activity_at - started_at)) / 60
@@ -244,7 +244,7 @@ BEGIN
       COUNT(pv.id) as views,
       COUNT(DISTINCT pv.session_id) as unique_visitors,
       ROUND(
-        (COUNT(DISTINCT CASE WHEN s.is_converted THEN s.id END)::numeric /
+        (COUNT(DISTINCT CASE WHEN s.converted THEN s.id END)::numeric /
          NULLIF(COUNT(DISTINCT s.id), 0) * 100),
         1
       ) as conversion_rate
