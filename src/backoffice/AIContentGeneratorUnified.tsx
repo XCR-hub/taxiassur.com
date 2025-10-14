@@ -71,17 +71,23 @@ export default function AIContentGeneratorUnified() {
     setGeneratedContent(null);
 
     try {
-      const response = await fetch('/api/generate-content.php', {
+      // Utiliser Edge Function Supabase au lieu de PHP
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+      const response = await fetch(`${supabaseUrl}/functions/v1/generate-seo-content`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabaseAnonKey}`,
         },
         body: JSON.stringify({
           keyword: keyword.trim(),
           city: city.trim(),
           secondaryKeywords: secondaryKeywords.split(',').map(k => k.trim()).filter(Boolean),
           imagePrompt: imagePrompt.trim() || undefined,
-          mode: 'unified' // Mode unifié : génère TOUT
+          type: 'unified', // Mode unifié : génère TOUT
+          mode: 'unified'
         }),
       });
 
