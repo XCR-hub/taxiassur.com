@@ -270,6 +270,22 @@ try {
                 ]
             ];
 
+            // Gérer la pièce jointe si présente
+            if (isset($_FILES['devis']) && $_FILES['devis']['error'] === UPLOAD_ERR_OK) {
+                $fileContent = file_get_contents($_FILES['devis']['tmp_name']);
+                $base64Content = base64_encode($fileContent);
+
+                $emailData['attachments'] = [
+                    [
+                        'filename' => $_FILES['devis']['name'],
+                        'content' => $base64Content,
+                        'type' => $_FILES['devis']['type'] ?: 'application/pdf'
+                    ]
+                ];
+
+                error_log('✅ Attachment added: ' . $_FILES['devis']['name'] . ' (' . strlen($base64Content) . ' bytes base64)');
+            }
+
             // Envoyer l'email via Supabase Edge Function
             $emailResult = sendEmail($emailData);
 
@@ -343,6 +359,22 @@ try {
                     'city' => $lead['city']
                 ]
             ];
+
+            // Gérer la pièce jointe si présente
+            if (isset($_FILES['contract']) && $_FILES['contract']['error'] === UPLOAD_ERR_OK) {
+                $fileContent = file_get_contents($_FILES['contract']['tmp_name']);
+                $base64Content = base64_encode($fileContent);
+
+                $emailData['attachments'] = [
+                    [
+                        'filename' => $_FILES['contract']['name'],
+                        'content' => $base64Content,
+                        'type' => $_FILES['contract']['type'] ?: 'application/pdf'
+                    ]
+                ];
+
+                error_log('✅ Attachment added: ' . $_FILES['contract']['name'] . ' (' . strlen($base64Content) . ' bytes base64)');
+            }
 
             // Envoyer l'email via Supabase Edge Function
             $emailResult = sendEmail($emailData);
