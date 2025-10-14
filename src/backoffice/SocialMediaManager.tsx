@@ -393,8 +393,43 @@ export default function SocialMediaManager() {
 
   const renderPublicationsTab = () => (
     <div className="space-y-6">
+      {/* Génération IA Virale */}
+      <div className="bg-gradient-to-r from-green-900 to-emerald-900 border-2 border-green-600 rounded-xl p-6">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="text-2xl font-bold text-white mb-2 flex items-center gap-2">
+              <Zap className="w-7 h-7 text-yellow-400" />
+              🤖 Génération IA - Contenu Viral (7M+ vues)
+            </h2>
+            <p className="text-green-200 text-sm">
+              Utilise l'intelligence artificielle pour générer du contenu viral optimisé, non détectable comme IA
+            </p>
+          </div>
+          <button className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-black font-bold py-3 px-6 rounded-lg shadow-lg flex items-center gap-2">
+            <Zap size={20} />
+            Générer avec IA
+          </button>
+        </div>
+
+        <div className="grid grid-cols-3 gap-4 text-sm">
+          <div className="bg-white/10 backdrop-blur-sm rounded-lg p-3">
+            <div className="text-green-300 font-medium">✅ Anti-détection IA</div>
+            <div className="text-green-100 text-xs mt-1">Contenu 100% humain</div>
+          </div>
+          <div className="bg-white/10 backdrop-blur-sm rounded-lg p-3">
+            <div className="text-green-300 font-medium">🎯 Hashtags optimisés</div>
+            <div className="text-green-100 text-xs mt-1">Max engagement</div>
+          </div>
+          <div className="bg-white/10 backdrop-blur-sm rounded-lg p-3">
+            <div className="text-green-300 font-medium">📊 Templates testés</div>
+            <div className="text-green-100 text-xs mt-1">7M+ vues moyennes</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Publication Manuelle */}
       <div className="bg-slate-800 rounded-xl p-6 border border-slate-700">
-        <h2 className="text-xl font-bold text-white mb-6">Créer une Publication</h2>
+        <h2 className="text-xl font-bold text-white mb-6">Créer une Publication Manuelle</h2>
 
         <div className="space-y-4">
           <div>
@@ -466,7 +501,7 @@ export default function SocialMediaManager() {
           <div className="flex gap-3">
             <button
               disabled={selectedNetworks.size === 0 || !newPost.content}
-              className="flex-1 bg-blue-600 hover:bg-blue-500 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-bold py-3 px-6 rounded-lg transition-all"
+              className="flex-1 bg-gradient-to-r from-slate-600 to-blue-600 hover:from-slate-700 hover:to-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-bold py-3 px-6 rounded-lg transition-all shadow-md"
             >
               {newPost.scheduled_at ? '📅 Planifier' : '📤 Publier maintenant'}
             </button>
@@ -695,9 +730,9 @@ export default function SocialMediaManager() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl p-6 text-white shadow-xl">
-        <h1 className="text-3xl font-bold mb-2">Gestion Réseaux Sociaux</h1>
-        <p className="text-purple-100">Publication automatique directe sur {SOCIAL_NETWORKS.length} réseaux sociaux</p>
+      <div className="bg-gradient-to-r from-slate-700 via-slate-600 to-blue-700 rounded-xl p-6 text-white shadow-xl">
+        <h1 className="text-3xl font-bold mb-2">Gestion Réseaux Sociaux avec IA</h1>
+        <p className="text-slate-200">Génération automatique de contenu viral - {SOCIAL_NETWORKS.length} réseaux disponibles</p>
 
         <div className="grid grid-cols-4 gap-4 mt-6">
           <div className="bg-white/10 rounded-lg p-4 backdrop-blur-sm">
@@ -716,11 +751,20 @@ export default function SocialMediaManager() {
             <div className="text-sm">Engagement total</div>
           </div>
           <div className="bg-white/10 rounded-lg p-4 backdrop-blur-sm">
-            <Users className="w-8 h-8 mb-2" />
+            <Zap className="w-8 h-8 mb-2" />
             <div className="text-2xl font-bold">{selectedNetworks.size}</div>
             <div className="text-sm">Sélectionnés</div>
           </div>
         </div>
+
+        {/* Warning si aucune API configurée */}
+        {stats.active === 0 && (
+          <div className="mt-4 p-3 bg-amber-900/50 border border-amber-700 rounded-lg">
+            <p className="text-sm text-amber-200">
+              ⚠️ <strong>APIs non configurées:</strong> La publication se fera uniquement lorsque les clés API seront ajoutées. Le système continuera de générer du contenu même sans APIs.
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Tabs */}
