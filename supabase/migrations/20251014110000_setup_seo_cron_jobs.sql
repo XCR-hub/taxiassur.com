@@ -135,15 +135,24 @@ BEGIN
 END;
 $$;
 
--- Log de l'activation des cron jobs
-INSERT INTO seo_webhook_events (source, event_type, payload, processed)
-VALUES (
-  'system',
-  'cron_jobs_activated',
-  jsonb_build_object(
-    'jobs', jsonb_build_array('seo-daily-refresh', 'seo-ping-engines', 'seo-check-unindexed'),
-    'activated_at', NOW(),
-    'message', 'Cron jobs SEO activés avec succès'
-  ),
-  true
-);
+-- Log de l'activation des cron jobs (seulement si la table existe)
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT FROM information_schema.tables
+    WHERE table_schema = 'public'
+    AND table_name = 'seo_webhook_events'
+  ) THEN
+    INSERT INTO seo_webhook_events (source, event_type, payload, processed)
+    VALUES (
+      'system',
+      'cron_jobs_activated',
+      jsonb_build_object(
+        'jobs', jsonb_build_array('seo-daily-refresh', 'seo-ping-engines', 'seo-check-unindexed'),
+        'activated_at', NOW(),
+        'message', 'Cron jobs SEO activés avec succès'
+      ),
+      true
+    );
+  END IF;
+END $$;

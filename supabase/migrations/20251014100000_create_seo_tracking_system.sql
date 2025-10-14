@@ -223,7 +223,7 @@ CREATE POLICY "Authenticated users can view webhook events"
 
 CREATE POLICY "Anyone can insert webhook events"
   ON seo_webhook_events FOR INSERT
-  USING (true);
+  WITH CHECK (true);
 
 CREATE POLICY "Authenticated users can update webhook events"
   ON seo_webhook_events FOR UPDATE
