@@ -1,122 +1,101 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { createClient } from "npm:@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
 };
 
-interface PingRequest {
-  urls: string[];
-}
+const SEARCH_ENGINES = [
+  { name: "Google", url: "https://www.google.com/ping?sitemap=", method: "sitemap" },
+  { name: "Bing", url: "https://www.bing.com/indexnow", method: "indexnow" },
+  { name: "Yandex", url: "https://yandex.com/indexnow", method: "indexnow" }
+];
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, {
-      status: 200,
-      headers: corsHeaders,
-    });
+    return new Response(null, { status: 200, headers: corsHeaders });
   }
 
   try {
-    const { urls }: PingRequest = await req.json();
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
 
-    if (!urls || !Array.isArray(urls) || urls.length === 0) {
-      return new Response(
-        JSON.stringify({ error: "URLs array required" }),
-        { 
-          status: 400, 
-          headers: { ...corsHeaders, "Content-Type": "application/json" } 
-        }
-      );
-    }
-
-    const siteUrl = 'https://taxiassur.com';
-    const indexNowKey = 'taxiassur-indexnow-2024';
-    
+    const { urls } = await req.json();
+    const siteUrl = "https://taxiassur.com";
+    const sitemapUrl = `${siteUrl}/feeds/sitemap.xml`;
     const results = [];
 
-    // Ping IndexNow API endpoints
-    const endpoints = [
-      { name: 'IndexNow API', url: 'https://api.indexnow.org/indexnow' },
-      { name: 'Bing IndexNow', url: 'https://www.bing.com/indexnow' },
-      { name: 'Yandex IndexNow', url: 'https://yandex.com/indexnow' }
-    ];
+    // Ping Google (sitemap)
+    try {
+      const googleUrl = `${SEARCH_ENGINES[0].url}${encodeURIComponent(sitemapUrl)}`;
+      const response = await fetch(googleUrl);
+      await supabase.rpc("log_seo_ping", {
+        p_engine: "google",
+        p_urls: [sitemapUrl],
+        p_method: "sitemap",
+        p_success: response.ok,
+        p_response_code: response.status,
+        p_response_message: "Sitemap submitted"
+      });
+      results.push({ engine: "Google", success: response.ok, status: response.status });
+    } catch (error) {
+      results.push({ engine: "Google", success: false, error: error.message });
+    }
 
-    for (const endpoint of endpoints) {
+    // Ping Bing et Yandex (IndexNow)
+    const indexNowKey = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
+    const indexNowEngines = SEARCH_ENGINES.slice(1);
+
+    for (const engine of indexNowEngines) {
       try {
-        const response = await fetch(endpoint.url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            host: 'taxiassur.com',
-            key: indexNowKey,
-            keyLocation: `${siteUrl}/${indexNowKey}.txt`,
-            urlList: urls
-          })
+        const payload = {
+          host: "taxiassur.com",
+          key: indexNowKey,
+          keyLocation: `${siteUrl}/indexnow-key.txt`,
+          urlList: urls || [siteUrl]
+        };
+
+        const response = await fetch(engine.url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
         });
 
-        results.push({
-          engine: endpoint.name,
-          status: response.ok ? 'success' : 'partial',
-          note: response.ok ? 
-            `${urls.length} URLs soumises` : 
-            'Indexation progressive en cours',
-          httpStatus: response.status
+        await supabase.rpc("log_seo_ping", {
+          p_engine: engine.name.toLowerCase(),
+          p_urls: payload.urlList,
+          p_method: "indexnow",
+          p_success: response.ok || response.status === 202,
+          p_response_code: response.status,
+          p_response_message: "IndexNow submitted"
         });
+
+        results.push({ engine: engine.name, success: response.ok || response.status === 202, status: response.status });
       } catch (error) {
-        results.push({
-          engine: endpoint.name,
-          status: 'error',
-          note: 'Erreur de connexion',
-          error: error.message
-        });
+        results.push({ engine: engine.name, success: false, error: error.message });
       }
     }
 
-    // Add passive monitoring engines
-    results.push(
-      {
-        engine: 'Google',
-        status: 'monitoring',
-        note: 'Crawl automatique actif'
-      },
-      {
-        engine: 'DuckDuckGo',
-        status: 'success',
-        note: 'Indexé via Bing'
-      },
-      {
-        engine: 'Qwant',
-        status: 'monitoring',
-        note: 'Indexation naturelle FR'
-      },
-      {
-        engine: 'Ecosia',
-        status: 'success',
-        note: 'Indexé via Bing'
-      }
-    );
+    const successCount = results.filter(r => r.success).length;
 
     return new Response(
-      JSON.stringify({ 
-        success: true, 
-        results,
-        urlsCount: urls.length
+      JSON.stringify({
+        success: true,
+        engines_pinged: results.length,
+        successful: successCount,
+        results: results,
+        message: `${successCount}/${results.length} moteurs notifiés`
       }),
-      { 
-        headers: { ...corsHeaders, "Content-Type": "application/json" } 
-      }
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
 
   } catch (error) {
-    console.error('IndexNow ping error:', error);
     return new Response(
-      JSON.stringify({ error: error.message }),
-      { 
-        status: 500, 
-        headers: { ...corsHeaders, "Content-Type": "application/json" } 
-      }
+      JSON.stringify({ success: false, error: error.message }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });
