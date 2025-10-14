@@ -67,6 +67,7 @@ const NewsletterPage = lazy(() => import('./pages/Newsletter'));
 const MirrorPage = lazy(() => import('./pages/MirrorPage'));
 const MasterDashboard = lazy(() => import('./backoffice/MasterDashboard'));
 const AmbassadorSignup = lazy(() => import('./pages/AmbassadorSignup'));
+const ConfianceEtCertifications = lazy(() => import('./pages/ConfianceEtCertifications'));
 const SocialMediaManager = lazy(() => import('./backoffice/SocialMediaManager'));
 const MarketingTemplates = lazy(() => import('./backoffice/MarketingTemplates'));
 const QRCodeGenerator = lazy(() => import('./backoffice/QRCodeGenerator'));
@@ -299,6 +300,11 @@ export const router = createBrowserRouter([
   {
     path: '/newsletter',
     element: <SuspenseWrapper><NewsletterPage /></SuspenseWrapper>,
+    errorElement: <ErrorBoundary><Navigate to="/" replace /></ErrorBoundary>
+  },
+  {
+    path: '/confiance-certifications',
+    element: <SuspenseWrapper><ConfianceEtCertifications /></SuspenseWrapper>,
     errorElement: <ErrorBoundary><Navigate to="/" replace /></ErrorBoundary>
   },
   {

@@ -25,7 +25,8 @@ const Footer: React.FC = () => {
   const legal = [
     { name: 'Mentions Légales', href: '/mentions-legales' },
     { name: 'Politique de Confidentialité', href: '/politique-confidentialite' },
-    { name: 'Conditions Générales', href: '/conditions-generales' }
+    { name: 'Conditions Générales', href: '/conditions-generales' },
+    { name: 'Confiance & Certifications', href: '/confiance-certifications' }
   ];
 
   return (
@@ -55,6 +56,30 @@ const Footer: React.FC = () => {
               <div className="flex items-center space-x-2 text-gray-300">
                 <span>Spécialiste taxi depuis septembre 2025</span>
               </div>
+            </div>
+
+            {/* Badges de confiance compacts */}
+            <div className="mt-4 pt-4 border-t border-gray-800">
+              <div className="flex flex-wrap gap-2">
+                <span className="px-2 py-1 bg-blue-900/30 text-blue-300 rounded text-xs font-medium border border-blue-800">
+                  CSCA
+                </span>
+                <span className="px-2 py-1 bg-indigo-900/30 text-indigo-300 rounded text-xs font-medium border border-indigo-800">
+                  EDI Courtage
+                </span>
+                <span className="px-2 py-1 bg-purple-900/30 text-purple-300 rounded text-xs font-medium border border-purple-800">
+                  EDI Signature
+                </span>
+                <span className="px-2 py-1 bg-green-900/30 text-green-300 rounded text-xs font-medium border border-green-800">
+                  RC Pro CGPA
+                </span>
+                <span className="px-2 py-1 bg-cyan-900/30 text-cyan-300 rounded text-xs font-medium border border-cyan-800">
+                  EXCALIBUR
+                </span>
+              </div>
+              <p className="text-xs text-gray-500 mt-2">
+                Courtier certifié, assuré et conforme LCB-FT
+              </p>
             </div>
           </div>
 

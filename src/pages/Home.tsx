@@ -15,6 +15,7 @@ import PerformanceOptimizer from '../components/PerformanceOptimizer';
 import Newsletter from '../components/Newsletter';
 import LocalSEO from '../components/LocalSEO';
 import UltimateConversion from '../components/UltimateConversion';
+import TrustBadges from '../components/TrustBadges';
 import InstantQuoteCalculator from '../components/InstantQuoteCalculator';
 import DynamicReviews from '../components/DynamicReviews';
 import ExitIntentLeadCapture from '../components/ExitIntentLeadCapture';
@@ -125,6 +126,21 @@ const Home: React.FC = () => {
 
             {/* 11. Signaux de confiance - Autorité */}
             <TrustSignals />
+
+            {/* 11.5. Badges de confiance professionnels */}
+            <section className="py-16 bg-gray-50">
+              <div className="container-max">
+                <TrustBadges variant="compact" showLogos={false} />
+                <div className="text-center mt-8">
+                  <a
+                    href="/confiance-certifications"
+                    className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-bold px-8 py-4 rounded-xl transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+                  >
+                    En savoir plus sur nos certifications
+                  </a>
+                </div>
+              </div>
+            </section>
 
             {/* 12. Newsletter - Engagement */}
             <Newsletter />
