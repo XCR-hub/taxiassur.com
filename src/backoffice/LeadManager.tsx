@@ -3,6 +3,7 @@ import { Users, Eye, Phone, Mail, FileText, CheckCircle, XCircle, Euro, Calendar
 import { getLeads, updateLeadStatus, sendDevisEmail, sendContractEmail, getLeadStatusColor, getLeadStatusLabel, type Lead, type LeadStatus } from '../lib/leads';
 import { formatDate } from '../lib/utils';
 import Card from '../components/Card';
+import ElectronicSignature from '../components/ElectronicSignature';
 
 const LeadManager: React.FC = () => {
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -694,6 +695,16 @@ const LeadManager: React.FC = () => {
                       </p>
                     </div>
                   </div>
+                </div>
+
+                {/* Signature Électronique */}
+                <div className="border-t pt-6">
+                  <ElectronicSignature
+                    leadId={selectedLead.id}
+                    leadName={selectedLead.name}
+                    leadEmail={selectedLead.email}
+                    leadPhone={selectedLead.phone}
+                  />
                 </div>
 
                 {/* Demande d'avis Google */}
