@@ -19,6 +19,7 @@ const Header: React.FC = () => {
     { name: 'Accueil', href: '/' },
     { name: 'Assurance Taxi', href: '/assurance-taxi' },
     { name: 'Blog', href: '/blog' },
+    { name: 'Actualités', href: '/actualites' },
     { name: 'FAQ', href: '/faq' },
     { name: 'Villes', href: '/villes' },
     { name: 'Avis', href: '/avis' },

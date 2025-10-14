@@ -119,7 +119,7 @@ export default function NewsSection({ limit = 3, showTitle = true }: NewsSection
 
                 {/* Title */}
                 <h3 className="text-xl font-bold text-gray-900 mb-3 line-clamp-2 hover:text-blue-600 transition-colors">
-                  <a href={`/actualites#${article.slug}`}>
+                  <a href={`/actualites/${article.slug}`}>
                     {article.title}
                   </a>
                 </h3>
@@ -136,7 +136,7 @@ export default function NewsSection({ limit = 3, showTitle = true }: NewsSection
                     <span>{timeAgo(article.published_at)}</span>
                   </div>
                   <a
-                    href="/actualites"
+                    href={`/actualites/${article.slug}`}
                     className="text-blue-600 font-semibold text-sm hover:text-blue-700 flex items-center space-x-1"
                   >
                     <span>Lire</span>
