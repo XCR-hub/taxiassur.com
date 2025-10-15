@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { supabase } from './supabase';
 
-export const LeadStatusSchema = z.enum(['nouveau', 'contacte', 'devis_envoye', 'client', 'perdu']);
+export const LeadStatusSchema = z.enum(['nouveau', 'contacté', 'devis envoyé', 'client', 'perdu']);
 
 export const LeadSchema = z.object({
   id: z.string(),
@@ -9,7 +9,7 @@ export const LeadSchema = z.object({
   email: z.string().email(),
   phone: z.string(),
   city: z.string(),
-  status: z.enum(['taxi', 'vtc', 'autre']),
+  status: z.enum(['taxi', 'vtc', 'rc-pro', 'autre']),
   immatriculation: z.string().optional(),
   leadStatus: LeadStatusSchema.default('nouveau'),
   createdAt: z.string(),
@@ -30,23 +30,27 @@ export type LeadStatus = z.infer<typeof LeadStatusSchema>;
 // IMPORTANT: Depuis la migration 20251015000000, la DB utilise les valeurs françaises
 const statusToDb: Record<LeadStatus, string> = {
   nouveau: 'nouveau',
-  contacte: 'contacte',
-  devis_envoye: 'devis_envoye',
+  'contacté': 'contacté',
+  'devis envoyé': 'devis envoyé',
   client: 'client',
   perdu: 'perdu'
 };
 
 const statusFromDb: Record<string, LeadStatus> = {
-  // Nouvelles valeurs françaises (depuis migration)
+  // Valeurs françaises avec espaces (depuis migration 20251015110000)
   nouveau: 'nouveau',
-  contacte: 'contacte',
-  devis_envoye: 'devis_envoye',
+  'contacté': 'contacté',
+  'devis envoyé': 'devis envoyé',
   client: 'client',
   perdu: 'perdu',
+  // Anciennes valeurs avec underscores (rétro-compatibilité)
+  contacte: 'contacté',
+  devis_envoye: 'devis envoyé',
   // Anciennes valeurs anglaises (rétro-compatibilité)
   new: 'nouveau',
-  contacted: 'contacte',
-  interested: 'devis_envoye',
+  contacted: 'contacté',
+  interested: 'devis envoyé',
+  quote_sent: 'devis envoyé',
   converted: 'client',
   lost: 'perdu'
 };
@@ -308,24 +312,24 @@ export async function sendContractEmail(leadId: string, attachment?: File | null
 }
 
 export function getLeadStatusColor(status: LeadStatus): string {
-  const colors = {
-    nouveau: 'bg-orange-100 text-orange-800',
-    contacte: 'bg-yellow-100 text-yellow-800',
-    devis_envoye: 'bg-orange-100 text-orange-800',
-    client: 'bg-green-100 text-green-800',
-    perdu: 'bg-red-100 text-red-800'
+  const colors: Record<LeadStatus, string> = {
+    'nouveau': 'bg-orange-100 text-orange-800',
+    'contacté': 'bg-yellow-100 text-yellow-800',
+    'devis envoyé': 'bg-blue-100 text-blue-800',
+    'client': 'bg-green-100 text-green-800',
+    'perdu': 'bg-red-100 text-red-800'
   };
-  return colors[status];
+  return colors[status] || 'bg-gray-100 text-gray-800';
 }
 
 export function getLeadStatusLabel(status: LeadStatus): string {
-  const labels = {
-    nouveau: 'Nouveau',
-    contacte: 'Contacté',
-    devis_envoye: 'Devis Envoyé',
-    client: 'Client',
-    perdu: 'Perdu'
+  const labels: Record<LeadStatus, string> = {
+    'nouveau': 'Nouveau',
+    'contacté': 'Contacté',
+    'devis envoyé': 'Devis Envoyé',
+    'client': 'Client',
+    'perdu': 'Perdu'
   };
-  return labels[status];
+  return labels[status] || status;
 }
 

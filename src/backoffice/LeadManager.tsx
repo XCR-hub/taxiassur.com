@@ -359,8 +359,8 @@ const LeadManager: React.FC = () => {
               >
                 <option value="all">Tous les statuts</option>
                 <option value="nouveau">Nouveaux</option>
-                <option value="contacte">Contactés</option>
-                <option value="devis_envoye">Devis Envoyés</option>
+                <option value="contacté">Contactés</option>
+                <option value="devis envoyé">Devis Envoyés</option>
                 <option value="client">Clients</option>
                 <option value="perdu">Perdus</option>
               </select>
@@ -931,8 +931,8 @@ const LeadManager: React.FC = () => {
                     className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 text-gray-900 bg-white font-medium transition-all"
                   >
                     <option value="nouveau">🆕 Nouveau</option>
-                    <option value="contacte">📞 Contacté</option>
-                    <option value="devis_envoye">📄 Devis Envoyé</option>
+                    <option value="contacté">📞 Contacté</option>
+                    <option value="devis envoyé">📄 Devis Envoyé</option>
                     <option value="client">✅ Client</option>
                     <option value="perdu">❌ Perdu</option>
                   </select>

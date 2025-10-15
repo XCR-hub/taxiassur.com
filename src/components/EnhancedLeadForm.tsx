@@ -381,6 +381,7 @@ const EnhancedLeadForm: React.FC<EnhancedLeadFormProps> = ({
           >
             <option value="taxi">Taxi (licence préfecture)</option>
             <option value="vtc">VTC (carte professionnelle)</option>
+            <option value="rc-pro">RC Professionnelle</option>
             <option value="autre">Autre transport de personnes</option>
           </select>
           {errors.status && <p className="text-red-500 text-sm mt-1">{errors.status}</p>}
