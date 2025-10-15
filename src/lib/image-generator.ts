@@ -189,7 +189,7 @@ export function generateImageHTML(
   />
   ${image.photographer !== 'TaxiAssur' ? `
   <figcaption class="text-sm text-gray-600 mt-2 text-center">
-    Photo par <a href="${image.photographerUrl}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">${image.photographer}</a>
+    Photo par <a href="${image.photographerUrl}" target="_blank" rel="noopener noreferrer" class="text-orange-600 hover:underline">${image.photographer}</a>
   </figcaption>
   ` : ''}
 </figure>`;

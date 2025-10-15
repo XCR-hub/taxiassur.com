@@ -21,7 +21,7 @@ const QuelleAssuranceTaxi: React.FC = () => {
       <Header />
 
       <main className="min-h-screen bg-gradient-to-br from-gray-50 to-white">
-        <section className="relative bg-gradient-to-br from-blue-900 via-blue-800 to-blue-900 text-white py-20">
+        <section className="relative bg-gradient-to-br from-orange-900 via-blue-800 to-orange-900 text-white py-20">
           <div className="container mx-auto px-4">
             <div className="max-w-4xl mx-auto text-center">
               <h1 className="text-4xl md:text-5xl font-black mb-6">
@@ -29,7 +29,7 @@ const QuelleAssuranceTaxi: React.FC = () => {
                 <span className="text-yellow-400">Guide Complet 2024</span>
               </h1>
               <p className="text-xl mb-8">RC Pro + Garanties • Comparatif • Devis 2 min</p>
-              <a href="#devis" className="inline-block bg-yellow-400 hover:bg-yellow-500 text-blue-900 font-bold text-lg px-8 py-4 rounded-xl transition-all">
+              <a href="#devis" className="inline-block bg-yellow-400 hover:bg-yellow-500 text-orange-900 font-bold text-lg px-8 py-4 rounded-xl transition-all">
                 Devis Gratuit →
               </a>
             </div>
@@ -144,7 +144,7 @@ const QuelleAssuranceTaxi: React.FC = () => {
           </div>
         </section>
 
-        <section id="devis" className="py-16 bg-gradient-to-br from-blue-900 to-blue-800 text-white">
+        <section id="devis" className="py-16 bg-gradient-to-br from-orange-900 to-orange-800 text-white">
           <div className="container mx-auto px-4">
             <div className="max-w-4xl mx-auto">
               <h2 className="text-3xl font-black text-center mb-8">Obtenez Votre Devis en 2 Minutes</h2>

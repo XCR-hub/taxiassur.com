@@ -92,7 +92,7 @@ const UltraConversionCTA: React.FC<UltraConversionCTAProps> = ({
 
   if (variant === 'trust') {
     return (
-      <div className="ai-card p-8 bg-gradient-to-br from-green-900/20 to-blue-900/20 border-green-500/30">
+      <div className="ai-card p-8 bg-gradient-to-br from-green-900/20 to-orange-900/20 border-green-500/30">
         <div className="grid md:grid-cols-2 gap-8 items-center">
           <div>
             <div className="flex items-center gap-2 mb-4">
@@ -144,7 +144,7 @@ const UltraConversionCTA: React.FC<UltraConversionCTAProps> = ({
                 "J'ai économisé 580€ dès la première année avec TaxiAssur. Service rapide et pro !"
               </p>
               <div className="flex items-center gap-2">
-                <div className="w-10 h-10 bg-gradient-to-br from-green-400 to-blue-400 rounded-full flex items-center justify-center text-white font-bold">
+                <div className="w-10 h-10 bg-gradient-to-br from-green-400 to-orange-400 rounded-full flex items-center justify-center text-white font-bold">
                   AK
                 </div>
                 <div>

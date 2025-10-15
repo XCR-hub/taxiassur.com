@@ -179,29 +179,29 @@ export default function ElectronicSignature({
       )}
 
       {/* Formulaire d'envoi */}
-      <div className="bg-indigo-50 p-4 rounded-lg border border-indigo-200">
-        <h4 className="font-medium text-indigo-900 mb-3 flex items-center">
+      <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+        <h4 className="font-medium text-yellow-900 mb-3 flex items-center">
           <FileSignature className="mr-2" size={16} />
           Envoyer pour Signature
         </h4>
 
-        <p className="text-sm text-indigo-800 mb-3">
+        <p className="text-sm text-yellow-800 mb-3">
           Le client recevra un email avec un lien sécurisé pour signer le contrat électroniquement.
         </p>
 
         <div className="space-y-3">
-          <div className="bg-white p-3 rounded-lg border border-indigo-200">
-            <label className="block text-xs font-medium text-indigo-900 mb-2">
+          <div className="bg-white p-3 rounded-lg border border-yellow-200">
+            <label className="block text-xs font-medium text-yellow-900 mb-2">
               📄 Contrat à signer (PDF)
             </label>
             <input
               type="file"
               accept=".pdf"
               onChange={(e) => setContractFile(e.target.files?.[0] || null)}
-              className="w-full text-xs text-gray-600 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-indigo-100 file:text-indigo-700 hover:file:bg-indigo-200"
+              className="w-full text-xs text-gray-600 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-yellow-100 file:text-yellow-700 hover:file:bg-yellow-200"
             />
             {contractFile && (
-              <p className="text-xs text-indigo-700 mt-1 flex items-center">
+              <p className="text-xs text-yellow-700 mt-1 flex items-center">
                 ✅ {contractFile.name}
               </p>
             )}
@@ -210,7 +210,7 @@ export default function ElectronicSignature({
           <button
             onClick={handleSendForSignature}
             disabled={!contractFile || sending}
-            className="w-full flex items-center justify-center space-x-2 bg-yellow-500 hover:bg-indigo-700 disabled:bg-gray-400 text-white font-medium py-3 px-4 rounded-lg transition-colors shadow-md hover:shadow-lg"
+            className="w-full flex items-center justify-center space-x-2 bg-yellow-500 hover:bg-yellow-700 disabled:bg-gray-400 text-white font-medium py-3 px-4 rounded-lg transition-colors shadow-md hover:shadow-lg"
           >
             {sending ? (
               <>
@@ -226,7 +226,7 @@ export default function ElectronicSignature({
           </button>
         </div>
 
-        <div className="mt-3 text-xs text-indigo-700 space-y-1">
+        <div className="mt-3 text-xs text-yellow-700 space-y-1">
           <p>✅ Signature 100% sécurisée (eIDAS)</p>
           <p>✅ Email automatique au client</p>
           <p>✅ Suivi en temps réel</p>
@@ -309,7 +309,7 @@ export default function ElectronicSignature({
                       href={request.signatureUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-xs bg-indigo-100 hover:bg-indigo-200 text-indigo-700 px-3 py-1.5 rounded font-medium transition-colors"
+                      className="text-xs bg-yellow-100 hover:bg-yellow-200 text-yellow-700 px-3 py-1.5 rounded font-medium transition-colors"
                     >
                       🔗 Lien de signature
                     </a>

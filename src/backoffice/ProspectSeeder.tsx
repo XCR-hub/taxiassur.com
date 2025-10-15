@@ -237,7 +237,7 @@ export default function ProspectSeeder() {
 
   return (
     <div className="max-w-4xl mx-auto p-6">
-      <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl p-6 mb-6 text-white">
+      <div className="bg-gradient-to-r from-orange-600 to-orange-600 rounded-xl p-6 mb-6 text-white">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center space-x-3">
             <DatabaseZap size={32} />
@@ -251,7 +251,7 @@ export default function ProspectSeeder() {
             <span>Retour</span>
           </a>
         </div>
-        <p className="text-blue-100">
+        <p className="text-orange-100">
           Ajouter 20 prospects de qualité dans la base de données pour lancer les campagnes d'outreach
         </p>
       </div>
@@ -272,7 +272,7 @@ export default function ProspectSeeder() {
         <button
           onClick={handleSeed}
           disabled={isSeeding || summary !== null}
-          className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-4 rounded-lg font-medium hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center space-x-2"
+          className="w-full bg-gradient-to-r from-orange-600 to-orange-600 text-white px-6 py-4 rounded-lg font-medium hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center space-x-2"
         >
           {isSeeding ? (
             <>
@@ -315,8 +315,8 @@ export default function ProspectSeeder() {
           </div>
 
           {summary && (
-            <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
-              <p className="text-sm font-medium text-blue-800">
+            <div className="mt-4 p-4 bg-orange-50 rounded-lg border border-orange-200">
+              <p className="text-sm font-medium text-orange-800">
                 ✅ Succès : {summary.success} | ❌ Erreurs : {summary.errors}
               </p>
             </div>
@@ -325,7 +325,7 @@ export default function ProspectSeeder() {
       )}
 
       {summary && summary.success > 0 && (
-        <div className="mt-6 bg-gradient-to-r from-green-50 to-blue-50 rounded-xl p-6 border-2 border-green-200">
+        <div className="mt-6 bg-gradient-to-r from-green-50 to-orange-50 rounded-xl p-6 border-2 border-green-200">
           <h3 className="text-lg font-bold text-green-800 mb-3">🎉 Prochaine Étape</h3>
           <p className="text-gray-700 mb-4">
             {summary.success} prospects ajoutés avec succès ! Vous pouvez maintenant :
@@ -339,7 +339,7 @@ export default function ProspectSeeder() {
             </a>
             <a
               href="/backoffice/prospects"
-              className="block bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-colors text-center"
+              className="block bg-orange-600 hover:bg-orange-700 text-white font-medium py-3 px-4 rounded-lg transition-colors text-center"
             >
               Voir les Prospects
             </a>

@@ -191,7 +191,7 @@ Consultez le détail dans la console (F12)`);
           <div className="max-w-7xl mx-auto px-6 py-4">
             <div className="flex justify-between items-center">
               <div className="flex items-center space-x-4">
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
+                <div className="w-10 h-10 bg-gradient-to-br from-orange-400 to-orange-600 rounded-xl flex items-center justify-center shadow-lg">
                   <Search className="text-white" size={20} />
                 </div>
                 <div>
@@ -254,8 +254,8 @@ Consultez le détail dans la console (F12)`);
 
           {/* SEO Overview */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <Card className="text-center bg-slate-800 border border-blue-500">
-              <Globe className="mx-auto mb-2 text-blue-400" size={24} />
+            <Card className="text-center bg-slate-800 border border-orange-500">
+              <Globe className="mx-auto mb-2 text-orange-400" size={24} />
               <div className="text-2xl font-bold text-white">{seoData.totalUrls}</div>
               <div className="text-sm text-slate-400">URLs totales</div>
             </Card>
@@ -287,9 +287,9 @@ Consultez le détail dans la console (F12)`);
           {/* Métriques Google Search Console */}
           {seoData.isRealData && (seoData.impressions30d > 0 || seoData.clicks30d > 0) && (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-              <Card className="text-center bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-300">
-                <div className="text-3xl font-bold text-blue-900">{seoData.impressions30d.toLocaleString()}</div>
-                <div className="text-sm text-blue-700">Impressions (30j)</div>
+              <Card className="text-center bg-gradient-to-br from-orange-50 to-orange-100 border border-orange-300">
+                <div className="text-3xl font-bold text-orange-900">{seoData.impressions30d.toLocaleString()}</div>
+                <div className="text-sm text-orange-700">Impressions (30j)</div>
               </Card>
 
               <Card className="text-center bg-gradient-to-br from-green-50 to-green-100 border border-green-300">
@@ -319,7 +319,7 @@ Consultez le détail dans la console (F12)`);
                 <button
                   onClick={handleRegenerateFeeds}
                   disabled={isWorking}
-                  className="w-full flex items-center justify-center space-x-2 bg-gradient-to-r from-slate-600 to-blue-600 hover:from-slate-700 hover:to-blue-700 disabled:bg-gray-400 text-white font-medium py-3 px-4 rounded-lg transition-colors shadow-md"
+                  className="w-full flex items-center justify-center space-x-2 bg-gradient-to-r from-slate-600 to-orange-600 hover:from-slate-700 hover:to-orange-700 disabled:bg-gray-400 text-white font-medium py-3 px-4 rounded-lg transition-colors shadow-md"
                 >
                   <RefreshCw size={16} className={isWorking ? 'animate-spin' : ''} />
                   <span>Régénérer Sitemap & RSS</span>
@@ -355,28 +355,28 @@ Consultez le détail dans la console (F12)`);
                   <span>Notifier les Moteurs (Simulé)</span>
                 </button>
 
-                <div className="w-full bg-blue-900/30 border-2 border-blue-500 rounded-lg p-4">
+                <div className="w-full bg-orange-900/30 border-2 border-orange-500 rounded-lg p-4">
                   <div className="flex items-start gap-3">
-                    <Settings className="text-blue-400 flex-shrink-0 mt-0.5" size={20} />
+                    <Settings className="text-orange-400 flex-shrink-0 mt-0.5" size={20} />
                     <div>
-                      <p className="text-sm font-bold text-blue-300 mb-2">
+                      <p className="text-sm font-bold text-orange-300 mb-2">
                         🔧 Configuration API Google Search Console
                       </p>
-                      <p className="text-xs text-blue-200 mb-3">
+                      <p className="text-xs text-orange-200 mb-3">
                         Pour obtenir les vraies données Google (pages indexées, performances, etc.) :
                       </p>
-                      <div className="text-xs text-blue-100 space-y-1 mb-3">
-                        <p><strong>1.</strong> Active l'API dans <a href="https://console.cloud.google.com/apis/library" target="_blank" className="underline hover:text-blue-200">Google Cloud Console</a></p>
-                        <p><strong>2.</strong> Crée une clé API dans <a href="https://console.cloud.google.com/apis/credentials" target="_blank" className="underline hover:text-blue-200">Credentials</a></p>
+                      <div className="text-xs text-orange-100 space-y-1 mb-3">
+                        <p><strong>1.</strong> Active l'API dans <a href="https://console.cloud.google.com/apis/library" target="_blank" className="underline hover:text-orange-200">Google Cloud Console</a></p>
+                        <p><strong>2.</strong> Crée une clé API dans <a href="https://console.cloud.google.com/apis/credentials" target="_blank" className="underline hover:text-orange-200">Credentials</a></p>
                         <p><strong>3.</strong> Ajoute la clé dans Supabase Secrets :</p>
                       </div>
-                      <div className="bg-slate-900 p-2 rounded border border-blue-500 mb-3">
+                      <div className="bg-slate-900 p-2 rounded border border-orange-500 mb-3">
                         <code className="text-xs text-amber-300">
                           GOOGLE_SEARCH_CONSOLE_API_KEY = ta_clé_ici
                         </code>
                       </div>
-                      <p className="text-xs text-blue-200">
-                        📚 <a href="/SOLUTION-GOOGLE-CSE-SANS-WEBHOOK.md" className="underline hover:text-blue-100 font-semibold" target="_blank">
+                      <p className="text-xs text-orange-200">
+                        📚 <a href="/SOLUTION-GOOGLE-CSE-SANS-WEBHOOK.md" className="underline hover:text-orange-100 font-semibold" target="_blank">
                           → Voir le guide complet étape par étape
                         </a>
                       </p>
@@ -417,7 +417,7 @@ Consultez le détail dans la console (F12)`);
                         href={item.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-blue-400 hover:text-blue-300"
+                        className="text-orange-400 hover:text-orange-300"
                       >
                         <ExternalLink size={14} />
                       </a>
@@ -458,7 +458,7 @@ Consultez le détail dans la console (F12)`);
           {cronJobsStatus.length > 0 && (
             <Card className="bg-slate-800 border border-slate-700 mb-8">
               <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
-                <Clock className="mr-2 text-blue-400" size={20} />
+                <Clock className="mr-2 text-orange-400" size={20} />
                 Automatisations SEO (Cron Jobs)
               </h3>
               <div className="space-y-3">
@@ -489,11 +489,11 @@ Consultez le détail dans la console (F12)`);
                   </div>
                 ))}
               </div>
-              <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-                <p className="text-sm text-blue-900">
+              <div className="mt-4 p-3 bg-orange-50 rounded-lg">
+                <p className="text-sm text-orange-900">
                   <strong>📅 Rafraîchissement automatique:</strong> Tous les jours à 2h du matin
                 </p>
-                <p className="text-xs text-blue-700 mt-1">
+                <p className="text-xs text-orange-700 mt-1">
                   Les métriques SEO sont mises à jour automatiquement chaque nuit avec les données réelles depuis Google Search Console.
                 </p>
               </div>
@@ -503,7 +503,7 @@ Consultez le détail dans la console (F12)`);
           {/* City Pages Overview */}
           <Card className="bg-white border border-slate-300">
             <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center">
-              <Search className="mr-2 text-blue-600" size={20} />
+              <Search className="mr-2 text-orange-600" size={20} />
               Pages Villes ({cities.length})
             </h3>
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
@@ -512,9 +512,9 @@ Consultez le détail dans la console (F12)`);
                   key={city.slug}
                   href={`/ville/${city.slug}`}
                   target="_blank"
-                  className="text-center p-3 bg-slate-50 rounded-lg hover:bg-blue-50 transition-colors group border border-slate-200"
+                  className="text-center p-3 bg-slate-50 rounded-lg hover:bg-orange-50 transition-colors group border border-slate-200"
                 >
-                  <div className="text-sm font-medium text-slate-900 group-hover:text-blue-600">
+                  <div className="text-sm font-medium text-slate-900 group-hover:text-orange-600">
                     {city.city}
                   </div>
                   <div className="text-xs text-slate-600">({city.department})</div>
@@ -524,12 +524,12 @@ Consultez le détail dans la console (F12)`);
                 <a
                   href="/villes"
                   target="_blank"
-                  className="text-center p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors border border-blue-200"
+                  className="text-center p-3 bg-orange-50 rounded-lg hover:bg-orange-100 transition-colors border border-orange-200"
                 >
-                  <div className="text-sm font-medium text-blue-600">
+                  <div className="text-sm font-medium text-orange-600">
                     +{cities.length - 12} autres
                   </div>
-                  <div className="text-xs text-blue-500">Voir toutes</div>
+                  <div className="text-xs text-orange-500">Voir toutes</div>
                 </a>
               )}
             </div>

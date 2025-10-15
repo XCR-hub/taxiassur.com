@@ -170,27 +170,27 @@ const SEOContent: React.FC = () => {
                   Nos <strong className="text-yellow-400">courtiers assurance taxi</strong> restent disponibles 7j/7 pour vous accompagner à chaque étape.
                 </p>
 
-                <div className="bg-gradient-to-r from-gray-800/20 to-pink-500/20 p-6 rounded-xl border border-purple-500/40 mb-8 backdrop-blur-sm">
-                  <h5 className="font-bold text-purple-300 mb-3 drop-shadow-md">🌟 Assurance Flotte Taxi : Offre Spéciale</h5>
-                  <p className="text-purple-200 text-sm leading-relaxed drop-shadow-md mb-3">
+                <div className="bg-gradient-to-r from-gray-800/20 to-pink-500/20 p-6 rounded-xl border border-orange-500/40 mb-8 backdrop-blur-sm">
+                  <h5 className="font-bold text-orange-300 mb-3 drop-shadow-md">🌟 Assurance Flotte Taxi : Offre Spéciale</h5>
+                  <p className="text-orange-200 text-sm leading-relaxed drop-shadow-md mb-3">
                     Vous gérez plusieurs véhicules ? Notre <strong>assurance flotte taxi</strong> vous fait économiser jusqu'à
                     45% par rapport à des contrats individuels. Avantages exclusifs pour flottes de 3+ véhicules :
                   </p>
-                  <ul className="text-purple-200 text-sm space-y-2">
+                  <ul className="text-orange-200 text-sm space-y-2">
                     <li className="flex items-center space-x-2">
-                      <CheckCircle className="text-purple-300" size={14} />
+                      <CheckCircle className="text-orange-300" size={14} />
                       <span>Gestion centralisée de tous vos véhicules</span>
                     </li>
                     <li className="flex items-center space-x-2">
-                      <CheckCircle className="text-purple-300" size={14} />
+                      <CheckCircle className="text-orange-300" size={14} />
                       <span>Tarifs dégressifs selon nombre de taxis</span>
                     </li>
                     <li className="flex items-center space-x-2">
-                      <CheckCircle className="text-purple-300" size={14} />
+                      <CheckCircle className="text-orange-300" size={14} />
                       <span>Véhicules de remplacement prioritaires</span>
                     </li>
                     <li className="flex items-center space-x-2">
-                      <CheckCircle className="text-purple-300" size={14} />
+                      <CheckCircle className="text-orange-300" size={14} />
                       <span>Conseiller dédié disponible 24/7</span>
                     </li>
                   </ul>
@@ -220,8 +220,8 @@ const SEOContent: React.FC = () => {
                   </p>
                 </div>
 
-                <div className="bg-gradient-to-r from-yellow-400/20 to-indigo-500/20 p-6 rounded-xl border border-yellow-500/40 backdrop-blur-sm">
-                  <h5 className="font-bold text-blue-300 mb-3 drop-shadow-md">🚀 Processus TaxiAssur</h5>
+                <div className="bg-gradient-to-r from-yellow-400/20 to-yellow-500/20 p-6 rounded-xl border border-yellow-500/40 backdrop-blur-sm">
+                  <h5 className="font-bold text-orange-300 mb-3 drop-shadow-md">🚀 Processus TaxiAssur</h5>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                     <div className="text-center">
                       <div className="w-8 h-8 bg-yellow-500 text-white rounded-full flex items-center justify-center mx-auto mb-2 font-bold shadow-lg">1</div>
@@ -293,7 +293,7 @@ const SEOContent: React.FC = () => {
                 </ul>
               </div>
 
-              <div className="ai-card p-6 bg-gradient-to-br from-yellow-400/10 to-indigo-500/10 border-2 border-yellow-500/40 hover:shadow-yellow-500/40 transition-all duration-300">
+              <div className="ai-card p-6 bg-gradient-to-br from-yellow-400/10 to-yellow-500/10 border-2 border-yellow-500/40 hover:shadow-yellow-500/40 transition-all duration-300">
                 <div className="flex justify-between items-center mb-4">
                   <span className="text-gray-300">Clients taxi</span>
                   <span className="font-bold text-yellow-500">100+</span>

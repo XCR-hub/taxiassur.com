@@ -26,11 +26,11 @@ const SocialProof: React.FC = () => {
               <Gift size={16} />
               <span>100% Gratuit</span>
             </div>
-            <div className="bg-blue-900/50 text-blue-300 px-4 py-3 rounded-lg text-center font-medium border border-blue-700 flex items-center justify-center space-x-2">
+            <div className="bg-orange-900/50 text-orange-300 px-4 py-3 rounded-lg text-center font-medium border border-orange-700 flex items-center justify-center space-x-2">
               <Zap size={16} />
               <span>Réponse Rapide</span>
             </div>
-            <div className="bg-purple-900/50 text-purple-300 px-4 py-3 rounded-lg text-center font-medium border border-purple-700 flex items-center justify-center space-x-2">
+            <div className="bg-orange-900/50 text-orange-300 px-4 py-3 rounded-lg text-center font-medium border border-orange-700 flex items-center justify-center space-x-2">
               <Award size={16} />
               <span>Service Expert</span>
             </div>

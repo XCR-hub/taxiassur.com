@@ -181,7 +181,7 @@ const OutreachComposer: React.FC = () => {
           <div className="max-w-7xl mx-auto px-6 py-4">
             <div className="flex justify-between items-center">
               <div className="flex items-center space-x-4">
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-xl flex items-center justify-center shadow-lg">
+                <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-yellow-500 rounded-xl flex items-center justify-center shadow-lg">
                   <Mail className="text-white" size={20} />
                 </div>
                 <div>
@@ -196,7 +196,7 @@ const OutreachComposer: React.FC = () => {
               
               <a
                 href="/backoffice"
-                className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
+                className="bg-orange-600 hover:bg-orange-700 text-white font-medium px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
               >
                 <Home size={16} />
                 <span>Accueil Backoffice</span>
@@ -215,7 +215,7 @@ const OutreachComposer: React.FC = () => {
               <button
                 onClick={sendCampaign}
                 disabled={sending || selectedProspects.length === 0 || !selectedTemplate}
-                className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+                className="flex items-center space-x-2 bg-orange-600 hover:bg-orange-700 disabled:bg-gray-400 text-white font-medium py-2 px-4 rounded-lg transition-colors"
               >
                 {sending ? (
                   <>
@@ -249,7 +249,7 @@ const OutreachComposer: React.FC = () => {
                         value={template.id}
                         checked={selectedTemplate === template.id}
                         onChange={(e) => handleTemplateChange(e.target.value)}
-                        className="text-blue-600"
+                        className="text-orange-600"
                       />
                       <div>
                         <div className="font-medium text-gray-900">{template.label}</div>
@@ -303,7 +303,7 @@ const OutreachComposer: React.FC = () => {
                   <div className="flex space-x-2">
                     <button
                       onClick={() => setSelectedProspects(qualifiedProspects.map(p => p.id))}
-                      className="text-sm text-blue-600 hover:text-blue-800"
+                      className="text-sm text-orange-600 hover:text-orange-800"
                     >
                       Tout sélectionner
                     </button>
@@ -329,7 +329,7 @@ const OutreachComposer: React.FC = () => {
                             setSelectedProspects(prev => prev.filter(id => id !== prospect.id));
                           }
                         }}
-                        className="text-blue-600"
+                        className="text-orange-600"
                       />
                       <div className="flex-1">
                         <div className="font-medium text-gray-900">{prospect.name}</div>
@@ -337,7 +337,7 @@ const OutreachComposer: React.FC = () => {
                       </div>
                       <button
                         onClick={() => setPreviewProspect(prospect)}
-                        className="text-blue-600 hover:text-blue-800"
+                        className="text-orange-600 hover:text-orange-800"
                       >
                         <Eye size={16} />
                       </button>
@@ -451,7 +451,7 @@ const OutreachComposer: React.FC = () => {
                 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-blue-600">{selectedProspects.length}</div>
+                    <div className="text-2xl font-bold text-orange-600">{selectedProspects.length}</div>
                     <div className="text-sm text-gray-600">Destinataires</div>
                   </div>
                   <div className="text-center">

@@ -126,23 +126,23 @@ const QRCodeGenerator: React.FC = () => {
 
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card className="bg-gradient-to-br from-blue-600 to-blue-700 text-white">
+          <Card className="bg-gradient-to-br from-orange-600 to-orange-700 text-white">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-blue-100 text-sm">Total Ambassadeurs</p>
+                <p className="text-orange-100 text-sm">Total Ambassadeurs</p>
                 <p className="text-3xl font-bold mt-2">{ambassadors.length}</p>
               </div>
-              <Users className="w-12 h-12 text-blue-200 opacity-50" />
+              <Users className="w-12 h-12 text-orange-200 opacity-50" />
             </div>
           </Card>
 
-          <Card className="bg-gradient-to-br from-purple-600 to-purple-700 text-white">
+          <Card className="bg-gradient-to-br from-orange-600 to-orange-700 text-white">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-purple-100 text-sm">QR Codes Générés</p>
+                <p className="text-orange-100 text-sm">QR Codes Générés</p>
                 <p className="text-3xl font-bold mt-2">{selectedAmbassador ? 1 : 0}</p>
               </div>
-              <QrCode className="w-12 h-12 text-purple-200 opacity-50" />
+              <QrCode className="w-12 h-12 text-orange-200 opacity-50" />
             </div>
           </Card>
 
@@ -173,7 +173,7 @@ const QRCodeGenerator: React.FC = () => {
                   onClick={() => handleAmbassadorSelect(ambassador.code)}
                   className={`w-full p-4 rounded-lg text-left transition ${
                     selectedAmbassador === ambassador.code
-                      ? 'bg-blue-600 text-white'
+                      ? 'bg-orange-600 text-white'
                       : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
                   }`}
                 >
@@ -239,7 +239,7 @@ const QRCodeGenerator: React.FC = () => {
                       />
                       <button
                         onClick={handleCopyUrl}
-                        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2"
+                        className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg flex items-center gap-2"
                       >
                         {copied ? (
                           <>
@@ -272,19 +272,19 @@ const QRCodeGenerator: React.FC = () => {
                   </h3>
                   <ul className="space-y-2 text-slate-300 text-sm">
                     <li className="flex items-start gap-2">
-                      <span className="text-blue-400 mt-1">•</span>
+                      <span className="text-orange-400 mt-1">•</span>
                       <span>Imprimez le QR code en taille minimum 3x3 cm</span>
                     </li>
                     <li className="flex items-start gap-2">
-                      <span className="text-blue-400 mt-1">•</span>
+                      <span className="text-orange-400 mt-1">•</span>
                       <span>Utilisez pour affichage sur véhicule (vitre arrière)</span>
                     </li>
                     <li className="flex items-start gap-2">
-                      <span className="text-blue-400 mt-1">•</span>
+                      <span className="text-orange-400 mt-1">•</span>
                       <span>Ajoutez sur cartes de visite, flyers, brochures</span>
                     </li>
                     <li className="flex items-start gap-2">
-                      <span className="text-blue-400 mt-1">•</span>
+                      <span className="text-orange-400 mt-1">•</span>
                       <span>Affichez en station taxi pour visibilité maximale</span>
                     </li>
                   </ul>
@@ -308,7 +308,7 @@ const QRCodeGenerator: React.FC = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="space-y-3">
-              <h3 className="text-lg font-semibold text-blue-400">
+              <h3 className="text-lg font-semibold text-orange-400">
                 Spécifications Techniques
               </h3>
               <ul className="space-y-2 text-slate-300 text-sm">
@@ -332,7 +332,7 @@ const QRCodeGenerator: React.FC = () => {
             </div>
 
             <div className="space-y-3">
-              <h3 className="text-lg font-semibold text-blue-400">
+              <h3 className="text-lg font-semibold text-orange-400">
                 Outils Recommandés
               </h3>
               <ul className="space-y-2 text-slate-300 text-sm">

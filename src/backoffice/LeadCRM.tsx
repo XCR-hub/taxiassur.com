@@ -152,21 +152,21 @@ export default function LeadCRM() {
         {/* Leads Cette Semaine */}
         <Link
           to="/backoffice/leads"
-          className="group bg-gradient-to-br from-blue-500/10 to-indigo-500/10 border-2 border-blue-500/30 rounded-xl p-6 hover:border-blue-500/60 hover:shadow-xl hover:shadow-blue-500/20 transition-all duration-300 hover:scale-105"
+          className="group bg-gradient-to-br from-orange-500/10 to-yellow-500/10 border-2 border-orange-500/30 rounded-xl p-6 hover:border-orange-500/60 hover:shadow-xl hover:shadow-blue-500/20 transition-all duration-300 hover:scale-105"
         >
           <div className="flex items-center justify-between mb-4">
-            <Activity className="w-8 h-8 text-blue-400" />
-            <span className="text-xs font-semibold text-blue-400 bg-blue-500/20 px-2 py-1 rounded">
+            <Activity className="w-8 h-8 text-orange-400" />
+            <span className="text-xs font-semibold text-orange-400 bg-orange-500/20 px-2 py-1 rounded">
               7 JOURS
             </span>
           </div>
-          <div className="text-4xl font-bold text-blue-400 mb-2">
+          <div className="text-4xl font-bold text-orange-400 mb-2">
             {stats.week}
           </div>
-          <div className="text-sm font-semibold text-blue-300">
+          <div className="text-sm font-semibold text-orange-300">
             Cette semaine
           </div>
-          <div className="mt-3 flex items-center gap-2 text-xs text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="mt-3 flex items-center gap-2 text-xs text-orange-400 opacity-0 group-hover:opacity-100 transition-opacity">
             <span>Voir détails</span>
             <ArrowRight className="w-3 h-3" />
           </div>
@@ -175,21 +175,21 @@ export default function LeadCRM() {
         {/* Leads Ce Mois */}
         <Link
           to="/backoffice/leads"
-          className="group bg-gradient-to-br from-purple-500/10 to-fuchsia-500/10 border-2 border-purple-500/30 rounded-xl p-6 hover:border-purple-500/60 hover:shadow-xl hover:shadow-purple-500/20 transition-all duration-300 hover:scale-105"
+          className="group bg-gradient-to-br from-orange-500/10 to-fuchsia-500/10 border-2 border-orange-500/30 rounded-xl p-6 hover:border-orange-500/60 hover:shadow-xl hover:shadow-purple-500/20 transition-all duration-300 hover:scale-105"
         >
           <div className="flex items-center justify-between mb-4">
-            <TrendingUp className="w-8 h-8 text-blue-400" />
-            <span className="text-xs font-semibold text-blue-400 bg-purple-500/20 px-2 py-1 rounded">
+            <TrendingUp className="w-8 h-8 text-orange-400" />
+            <span className="text-xs font-semibold text-orange-400 bg-orange-500/20 px-2 py-1 rounded">
               30 JOURS
             </span>
           </div>
-          <div className="text-4xl font-bold text-blue-400 mb-2">
+          <div className="text-4xl font-bold text-orange-400 mb-2">
             {stats.month}
           </div>
-          <div className="text-sm font-semibold text-purple-300">
+          <div className="text-sm font-semibold text-orange-300">
             Ce mois-ci
           </div>
-          <div className="mt-3 flex items-center gap-2 text-xs text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="mt-3 flex items-center gap-2 text-xs text-orange-400 opacity-0 group-hover:opacity-100 transition-opacity">
             <span>Voir détails</span>
             <ArrowRight className="w-3 h-3" />
           </div>

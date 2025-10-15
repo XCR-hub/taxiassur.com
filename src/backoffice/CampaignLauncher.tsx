@@ -94,7 +94,7 @@ export default function CampaignLauncher() {
 
   return (
     <div className="max-w-4xl mx-auto p-6">
-      <div className="bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl p-6 mb-6 text-white">
+      <div className="bg-gradient-to-r from-orange-600 to-orange-600 rounded-xl p-6 mb-6 text-white">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center space-x-3">
             <Rocket size={32} />
@@ -108,18 +108,18 @@ export default function CampaignLauncher() {
             <span>Retour</span>
           </a>
         </div>
-        <p className="text-blue-100">
+        <p className="text-orange-100">
           Générez et envoyez des emails ultra-personnalisés en 2 clics
         </p>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4 mb-6">
-        <div className="bg-white rounded-lg shadow p-4 border-l-4 border-purple-500">
+        <div className="bg-white rounded-lg shadow p-4 border-l-4 border-orange-500">
           <p className="text-sm text-gray-600 mb-1">Prospects Prêts</p>
           <p className="text-2xl font-bold text-gray-900">20</p>
         </div>
-        <div className="bg-white rounded-lg shadow p-4 border-l-4 border-blue-500">
+        <div className="bg-white rounded-lg shadow p-4 border-l-4 border-orange-500">
           <p className="text-sm text-gray-600 mb-1">Taux Réponse</p>
           <p className="text-2xl font-bold text-gray-900">18%</p>
         </div>
@@ -137,7 +137,7 @@ export default function CampaignLauncher() {
           {/* Étape 1 */}
           <div className="flex items-start space-x-4">
             <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center text-white font-bold ${
-              results?.phase ? 'bg-green-500' : 'bg-purple-600'
+              results?.phase ? 'bg-green-500' : 'bg-orange-600'
             }`}>
               {results?.phase ? <CheckCircle size={20} /> : '1'}
             </div>
@@ -149,7 +149,7 @@ export default function CampaignLauncher() {
               <button
                 onClick={generateOutreachEmails}
                 disabled={isGenerating || results?.phase}
-                className="bg-purple-600 hover:bg-purple-700 text-white font-medium px-6 py-3 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center space-x-2 shadow-lg hover:shadow-xl"
+                className="bg-orange-600 hover:bg-orange-700 text-white font-medium px-6 py-3 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center space-x-2 shadow-lg hover:shadow-xl"
               >
                 {isGenerating ? (
                   <>
@@ -174,7 +174,7 @@ export default function CampaignLauncher() {
           {/* Étape 2 */}
           <div className="flex items-start space-x-4">
             <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center text-white font-bold ${
-              results?.phase === 'sent' ? 'bg-green-500' : results?.phase ? 'bg-blue-600' : 'bg-gray-300'
+              results?.phase === 'sent' ? 'bg-green-500' : results?.phase ? 'bg-orange-600' : 'bg-gray-300'
             }`}>
               {results?.phase === 'sent' ? <CheckCircle size={20} /> : '2'}
             </div>
@@ -186,7 +186,7 @@ export default function CampaignLauncher() {
               <button
                 onClick={sendEmails}
                 disabled={isSending || !results?.phase || results?.phase === 'sent'}
-                className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-6 py-3 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center space-x-2 shadow-lg hover:shadow-xl"
+                className="bg-orange-600 hover:bg-orange-700 text-white font-medium px-6 py-3 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center space-x-2 shadow-lg hover:shadow-xl"
               >
                 {isSending ? (
                   <>
@@ -259,11 +259,11 @@ export default function CampaignLauncher() {
                   <span>Emails envoyés et trackés automatiquement</span>
                 </li>
                 <li className="flex items-center space-x-2">
-                  <span className="text-blue-600 text-lg">→</span>
+                  <span className="text-orange-600 text-lg">→</span>
                   <span>Ouvertures et clics enregistrés en temps réel</span>
                 </li>
                 <li className="flex items-center space-x-2">
-                  <span className="text-purple-600 text-lg">⏰</span>
+                  <span className="text-orange-600 text-lg">⏰</span>
                   <span>Réponses attendues dans 24-48h</span>
                 </li>
                 <li className="flex items-center space-x-2">
@@ -283,7 +283,7 @@ export default function CampaignLauncher() {
             </a>
             <a
               href="/backoffice/prospects"
-              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-colors text-center shadow-lg"
+              className="flex-1 bg-orange-600 hover:bg-orange-700 text-white font-medium py-3 px-4 rounded-lg transition-colors text-center shadow-lg"
             >
               Voir les Prospects →
             </a>
@@ -292,9 +292,9 @@ export default function CampaignLauncher() {
       )}
 
       {/* Info */}
-      <div className="mt-6 bg-blue-50 rounded-lg p-4 border border-blue-200">
-        <h4 className="font-bold text-blue-900 mb-2">💡 Informations</h4>
-        <ul className="space-y-1 text-sm text-blue-800">
+      <div className="mt-6 bg-orange-50 rounded-lg p-4 border border-orange-200">
+        <h4 className="font-bold text-orange-900 mb-2">💡 Informations</h4>
+        <ul className="space-y-1 text-sm text-orange-800">
           <li>• Meilleur moment : Mardi-Jeudi 10h-11h</li>
           <li>• Taux réponse moyen : 15-20%</li>
           <li>• Backlinks obtenus : 3-5 par campagne</li>

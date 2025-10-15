@@ -196,7 +196,7 @@ const AssuranceObligatoireTaxi: React.FC = () => {
           </div>
         </section>
 
-        <section id="devis" className="py-16 bg-gradient-to-br from-blue-900 to-blue-800 text-white">
+        <section id="devis" className="py-16 bg-gradient-to-br from-orange-900 to-orange-800 text-white">
           <div className="container mx-auto px-4">
             <div className="max-w-4xl mx-auto">
               <h2 className="text-3xl font-black text-center mb-8">Obtenez Votre Assurance Obligatoire Maintenant</h2>

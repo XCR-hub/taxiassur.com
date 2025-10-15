@@ -17,10 +17,10 @@ const AssuranceTaxiVTCCombine: React.FC = () => {
       <Header />
 
       <main className="min-h-screen bg-white">
-        <section className="bg-gradient-to-br from-purple-900 via-purple-800 to-indigo-900 text-white py-20">
+        <section className="bg-gradient-to-br from-orange-900 via-purple-800 to-yellow-900 text-white py-20">
           <div className="container mx-auto px-4">
             <div className="max-w-4xl mx-auto text-center">
-              <div className="inline-flex items-center bg-yellow-400 text-purple-900 px-6 py-3 rounded-full mb-6">
+              <div className="inline-flex items-center bg-yellow-400 text-orange-900 px-6 py-3 rounded-full mb-6">
                 <Users size={24} className="mr-2" />
                 <span className="font-bold">Double Activité</span>
               </div>
@@ -45,7 +45,7 @@ const AssuranceTaxiVTCCombine: React.FC = () => {
                 </div>
               </div>
 
-              <a href="#devis" className="inline-block bg-yellow-400 hover:bg-yellow-500 text-purple-900 font-bold text-xl px-12 py-5 rounded-xl transition-all">
+              <a href="#devis" className="inline-block bg-yellow-400 hover:bg-yellow-500 text-orange-900 font-bold text-xl px-12 py-5 rounded-xl transition-all">
                 Devis Combiné →
               </a>
             </div>
@@ -88,7 +88,7 @@ const AssuranceTaxiVTCCombine: React.FC = () => {
                   </ul>
                 </div>
 
-                <div className="bg-gradient-to-br from-purple-50 to-indigo-100 rounded-2xl shadow-lg p-8 border-2 border-purple-300">
+                <div className="bg-gradient-to-br from-orange-50 to-yellow-100 rounded-2xl shadow-lg p-8 border-2 border-orange-300">
                   <h3 className="text-2xl font-bold mb-6">Revenus Comparés</h3>
                   <div className="space-y-4">
                     <div>
@@ -113,17 +113,17 @@ const AssuranceTaxiVTCCombine: React.FC = () => {
 
                     <div>
                       <div className="flex justify-between mb-2">
-                        <span className="font-semibold text-purple-900">Taxi + VTC</span>
-                        <span className="font-bold text-purple-900">3,800€/mois</span>
+                        <span className="font-semibold text-orange-900">Taxi + VTC</span>
+                        <span className="font-bold text-orange-900">3,800€/mois</span>
                       </div>
                       <div className="w-full bg-gray-300 rounded-full h-3">
                         <div className="bg-gray-900 h-3 rounded-full" style={{ width: '95%' }}></div>
                       </div>
                     </div>
                   </div>
-                  <div className="mt-6 pt-6 border-t-2 border-purple-300">
+                  <div className="mt-6 pt-6 border-t-2 border-orange-300">
                     <div className="text-center">
-                      <div className="text-3xl font-black text-purple-900">+1,000€/mois</div>
+                      <div className="text-3xl font-black text-orange-900">+1,000€/mois</div>
                       <div className="text-sm text-gray-700">Gain moyen cumul</div>
                     </div>
                   </div>
@@ -241,7 +241,7 @@ const AssuranceTaxiVTCCombine: React.FC = () => {
                 </div>
               </div>
 
-              <div className="mt-8 bg-purple-50 border-2 border-purple-300 rounded-2xl p-8 text-center">
+              <div className="mt-8 bg-orange-50 border-2 border-orange-300 rounded-2xl p-8 text-center">
                 <h3 className="text-2xl font-bold mb-4">+ Garanties Communes</h3>
                 <div className="grid md:grid-cols-3 gap-4">
                   <div>✓ Tous risques véhicule</div>

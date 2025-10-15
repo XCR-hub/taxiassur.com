@@ -157,7 +157,7 @@ const SEOBooster: React.FC = () => {
             </div>
             
             <div className="text-center">
-              <div className="w-16 h-16 bg-gradient-to-br from-yellow-400 to-indigo-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+              <div className="w-16 h-16 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
                 <Users className="text-white" size={24} />
               </div>
               <div className="text-2xl font-bold text-yellow-600">5000+</div>

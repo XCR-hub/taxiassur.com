@@ -56,12 +56,12 @@ const AssuranceTaxiVTC: React.FC = () => {
 
       <main className="min-h-screen bg-gradient-to-br from-gray-50 to-white">
         {/* Hero Section */}
-        <section className="relative bg-gradient-to-br from-blue-900 via-blue-800 to-blue-900 text-white py-20 overflow-hidden">
+        <section className="relative bg-gradient-to-br from-orange-900 via-blue-800 to-orange-900 text-white py-20 overflow-hidden">
           <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PHBhdGggZD0iTTM2IDE2YzAtMi4yMS0xLjc5LTQtNC00cy00IDEuNzktNCA0IDEuNzkgNCA0IDQgNC0xLjc5IDQtNHptMCAwIi8+PC9nPjwvZz48L3N2Zz4=')] opacity-20"></div>
 
           <div className="container mx-auto px-4 relative z-10">
             <div className="max-w-4xl mx-auto text-center">
-              <div className="inline-block bg-yellow-400 text-blue-900 px-4 py-2 rounded-full text-sm font-bold mb-6">
+              <div className="inline-block bg-yellow-400 text-orange-900 px-4 py-2 rounded-full text-sm font-bold mb-6">
                 #1 Assurance Taxi VTC en France
               </div>
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-black mb-6 leading-tight">
@@ -89,7 +89,7 @@ const AssuranceTaxiVTC: React.FC = () => {
 
               <a
                 href="#devis"
-                className="inline-block bg-yellow-400 hover:bg-yellow-500 text-blue-900 font-bold text-lg px-8 py-4 rounded-xl transition-all transform hover:scale-105 shadow-xl"
+                className="inline-block bg-yellow-400 hover:bg-yellow-500 text-orange-900 font-bold text-lg px-8 py-4 rounded-xl transition-all transform hover:scale-105 shadow-xl"
               >
                 Obtenir mon Devis Gratuit →
               </a>
@@ -162,7 +162,7 @@ const AssuranceTaxiVTC: React.FC = () => {
               </div>
 
               <div className="mt-8 bg-yellow-50 border-l-4 border-yellow-500 p-6 rounded-r-xl">
-                <p className="text-lg font-semibold text-blue-900 mb-2">
+                <p className="text-lg font-semibold text-orange-900 mb-2">
                   💡 Bon à savoir
                 </p>
                 <p className="text-gray-700">
@@ -316,7 +316,7 @@ const AssuranceTaxiVTC: React.FC = () => {
                 </div>
 
                 {/* Offre Taxi */}
-                <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl shadow-xl p-8 border-2 border-blue-300">
+                <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-2xl shadow-xl p-8 border-2 border-orange-300">
                   <div className="mb-6">
                     <h3 className="text-2xl font-bold mb-2">Formule TAXI</h3>
                     <div className="flex items-baseline">
@@ -455,7 +455,7 @@ const AssuranceTaxiVTC: React.FC = () => {
         </section>
 
         {/* CTA Section */}
-        <section id="devis" className="py-16 bg-gradient-to-br from-blue-900 via-blue-800 to-blue-900 text-white">
+        <section id="devis" className="py-16 bg-gradient-to-br from-orange-900 via-blue-800 to-orange-900 text-white">
           <div className="container mx-auto px-4">
             <div className="max-w-6xl mx-auto">
               <div className="text-center mb-12">
@@ -475,7 +475,7 @@ const AssuranceTaxiVTC: React.FC = () => {
                 <div className="space-y-6">
                   <div className="flex items-start">
                     <div className="bg-yellow-400 rounded-full p-3 mr-4">
-                      <Check className="text-blue-900" size={24} />
+                      <Check className="text-orange-900" size={24} />
                     </div>
                     <div>
                       <h3 className="text-xl font-bold mb-2">Courtier Agréé ORIAS</h3>
@@ -485,7 +485,7 @@ const AssuranceTaxiVTC: React.FC = () => {
 
                   <div className="flex items-start">
                     <div className="bg-yellow-400 rounded-full p-3 mr-4">
-                      <TrendingDown className="text-blue-900" size={24} />
+                      <TrendingDown className="text-orange-900" size={24} />
                     </div>
                     <div>
                       <h3 className="text-xl font-bold mb-2">Économies Garanties</h3>
@@ -495,7 +495,7 @@ const AssuranceTaxiVTC: React.FC = () => {
 
                   <div className="flex items-start">
                     <div className="bg-yellow-400 rounded-full p-3 mr-4">
-                      <FileText className="text-blue-900" size={24} />
+                      <FileText className="text-orange-900" size={24} />
                     </div>
                     <div>
                       <h3 className="text-xl font-bold mb-2">Attestation Immédiate</h3>
@@ -505,7 +505,7 @@ const AssuranceTaxiVTC: React.FC = () => {
 
                   <div className="flex items-start">
                     <div className="bg-yellow-400 rounded-full p-3 mr-4">
-                      <Phone className="text-blue-900" size={24} />
+                      <Phone className="text-orange-900" size={24} />
                     </div>
                     <div>
                       <h3 className="text-xl font-bold mb-2">Support 7j/7</h3>

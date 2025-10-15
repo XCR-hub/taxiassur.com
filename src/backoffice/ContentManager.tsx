@@ -355,7 +355,7 @@ const ContentManager: React.FC = () => {
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex justify-between items-center">
             <div className="flex items-center space-x-4">
-              <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center shadow-lg">
+              <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-pink-500 rounded-xl flex items-center justify-center shadow-lg">
                 <FileText className="text-white" size={20} />
               </div>
               <div>
@@ -370,7 +370,7 @@ const ContentManager: React.FC = () => {
             
             <a
               href="/backoffice"
-              className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
+              className="bg-orange-600 hover:bg-orange-700 text-white font-medium px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
             >
               <Home size={16} />
               <span>Accueil Backoffice</span>
@@ -395,7 +395,7 @@ const ContentManager: React.FC = () => {
                   onClick={() => setActiveTab(id as any)}
                   className={`flex items-center space-x-2 py-4 px-1 border-b-2 font-medium text-sm ${
                     activeTab === id
-                      ? 'border-blue-500 text-blue-600'
+                      ? 'border-orange-500 text-orange-600'
                       : 'border-transparent text-gray-600 hover:text-gray-700 hover:border-gray-300'
                   }`}
                 >
@@ -414,7 +414,7 @@ const ContentManager: React.FC = () => {
                   <h2 className="text-xl font-semibold">Articles de Blog</h2>
                   <button
                     onClick={() => setShowArticleForm(true)}
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2"
+                    className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2"
                   >
                     <Plus className="w-4 h-4" />
                     <span>Nouvel Article</span>
@@ -437,7 +437,7 @@ const ContentManager: React.FC = () => {
                             required
                             value={articleForm.title}
                             onChange={(e) => setArticleForm(prev => ({ ...prev, title: e.target.value }))}
-                            className="w-full px-3 py-2 border-2 border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-white font-medium"
+                            className="w-full px-3 py-2 border-2 border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-orange-500 text-gray-900 bg-white font-medium"
                             placeholder="Ex: Assurance Taxi 2024 : Guide Complet"
                           />
                         </div>
@@ -448,7 +448,7 @@ const ContentManager: React.FC = () => {
                           <select
                             value={articleForm.status}
                             onChange={(e) => setArticleForm(prev => ({ ...prev, status: e.target.value as 'published' | 'draft' }))}
-                            className="w-full px-3 py-2 border-2 border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-white font-medium"
+                            className="w-full px-3 py-2 border-2 border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-orange-500 text-gray-900 bg-white font-medium"
                           >
                             <option value="draft">Brouillon</option>
                             <option value="published">Publié</option>
@@ -465,7 +465,7 @@ const ContentManager: React.FC = () => {
                           rows={3}
                           value={articleForm.summary}
                           onChange={(e) => setArticleForm(prev => ({ ...prev, summary: e.target.value }))}
-                          className="w-full px-3 py-2 border-2 border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-white font-medium"
+                          className="w-full px-3 py-2 border-2 border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-orange-500 text-gray-900 bg-white font-medium"
                           placeholder="Résumé de l'article en 2-3 phrases pour le SEO..."
                         />
                       </div>
@@ -479,7 +479,7 @@ const ContentManager: React.FC = () => {
                           rows={8}
                           value={articleForm.content}
                           onChange={(e) => setArticleForm(prev => ({ ...prev, content: e.target.value }))}
-                          className="w-full px-3 py-2 border-2 border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-white font-mono text-sm"
+                          className="w-full px-3 py-2 border-2 border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-orange-500 text-gray-900 bg-white font-mono text-sm"
                           placeholder="<p>Votre contenu HTML...</p>"
                         />
                       </div>
@@ -493,7 +493,7 @@ const ContentManager: React.FC = () => {
                             type="text"
                             value={articleForm.tags}
                             onChange={(e) => setArticleForm(prev => ({ ...prev, tags: e.target.value }))}
-                            className="w-full px-3 py-2 border-2 border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-white font-medium"
+                            className="w-full px-3 py-2 border-2 border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-orange-500 text-gray-900 bg-white font-medium"
                             placeholder="assurance, taxi, 2024"
                           />
                         </div>
@@ -505,7 +505,7 @@ const ContentManager: React.FC = () => {
                             type="url"
                             value={articleForm.image}
                             onChange={(e) => setArticleForm(prev => ({ ...prev, image: e.target.value }))}
-                            className="w-full px-3 py-2 border-2 border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-white font-medium"
+                            className="w-full px-3 py-2 border-2 border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-orange-500 text-gray-900 bg-white font-medium"
                             placeholder="https://images.pexels.com/..."
                           />
                         </div>
@@ -515,7 +515,7 @@ const ContentManager: React.FC = () => {
                         <button
                           type="submit"
                           disabled={loading}
-                          className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white px-6 py-2 rounded-lg flex items-center space-x-2"
+                          className="bg-orange-600 hover:bg-orange-700 disabled:opacity-50 text-white px-6 py-2 rounded-lg flex items-center space-x-2"
                         >
                           <Save className="w-4 h-4" />
                           <span>{loading ? 'Publication...' : 'Publier'}</span>
@@ -575,7 +575,7 @@ const ContentManager: React.FC = () => {
                         <div className="flex space-x-2 ml-4">
                           <button
                             onClick={() => editArticle(article)}
-                            className="text-blue-600 hover:text-blue-800"
+                            className="text-orange-600 hover:text-orange-800"
                           >
                             <Edit className="w-4 h-4" />
                           </button>
@@ -600,7 +600,7 @@ const ContentManager: React.FC = () => {
                   <h2 className="text-xl font-semibold">Questions Fréquentes</h2>
                   <button
                     onClick={() => setShowFaqForm(true)}
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2"
+                    className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2"
                   >
                     <Plus className="w-4 h-4" />
                     <span>Nouvelle FAQ</span>
@@ -623,7 +623,7 @@ const ContentManager: React.FC = () => {
                             required
                             value={faqForm.question}
                             onChange={(e) => setFaqForm(prev => ({ ...prev, question: e.target.value }))}
-                            className="w-full px-3 py-2 border-2 border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-white font-medium"
+                            className="w-full px-3 py-2 border-2 border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-orange-500 text-gray-900 bg-white font-medium"
                             placeholder="Ex: Combien coûte une assurance taxi ?"
                           />
                         </div>
@@ -634,7 +634,7 @@ const ContentManager: React.FC = () => {
                           <select
                             value={faqForm.category}
                             onChange={(e) => setFaqForm(prev => ({ ...prev, category: e.target.value }))}
-                            className="w-full px-3 py-2 border-2 border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-white font-medium"
+                            className="w-full px-3 py-2 border-2 border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-orange-500 text-gray-900 bg-white font-medium"
                           >
                             <option value="general">Général</option>
                             <option value="tarifs">Tarifs</option>
@@ -654,7 +654,7 @@ const ContentManager: React.FC = () => {
                           rows={5}
                           value={faqForm.answer}
                           onChange={(e) => setFaqForm(prev => ({ ...prev, answer: e.target.value }))}
-                          className="w-full px-3 py-2 border-2 border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-white font-medium"
+                          className="w-full px-3 py-2 border-2 border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-orange-500 text-gray-900 bg-white font-medium"
                           placeholder="Réponse détaillée à la question..."
                         />
                       </div>
@@ -669,7 +669,7 @@ const ContentManager: React.FC = () => {
                             min="1"
                             value={faqForm.order}
                             onChange={(e) => setFaqForm(prev => ({ ...prev, order: parseInt(e.target.value) }))}
-                            className="w-full px-3 py-2 border-2 border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-white font-medium"
+                            className="w-full px-3 py-2 border-2 border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-orange-500 text-gray-900 bg-white font-medium"
                           />
                         </div>
                         <div>
@@ -679,7 +679,7 @@ const ContentManager: React.FC = () => {
                           <select
                             value={faqForm.status}
                             onChange={(e) => setFaqForm(prev => ({ ...prev, status: e.target.value as 'published' | 'draft' }))}
-                            className="w-full px-3 py-2 border-2 border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-white font-medium"
+                            className="w-full px-3 py-2 border-2 border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-orange-500 text-gray-900 bg-white font-medium"
                           >
                             <option value="published">Publié</option>
                             <option value="draft">Brouillon</option>
@@ -691,7 +691,7 @@ const ContentManager: React.FC = () => {
                         <button
                           type="submit"
                           disabled={loading}
-                          className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white px-6 py-2 rounded-lg flex items-center space-x-2"
+                          className="bg-orange-600 hover:bg-orange-700 disabled:opacity-50 text-white px-6 py-2 rounded-lg flex items-center space-x-2"
                         >
                           <Save className="w-4 h-4" />
                           <span>{loading ? 'Ajout...' : 'Ajouter'}</span>
@@ -733,7 +733,7 @@ const ContentManager: React.FC = () => {
                             }`}>
                               {faq.status === 'published' ? 'Publié' : 'Brouillon'}
                             </span>
-                            <span className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">
+                            <span className="px-2 py-1 text-xs bg-orange-100 text-orange-800 rounded-full">
                               {faq.category}
                             </span>
                           </div>
@@ -746,7 +746,7 @@ const ContentManager: React.FC = () => {
                         <div className="flex space-x-2 ml-4">
                           <button
                             onClick={() => editFaq(faq)}
-                            className="text-blue-600 hover:text-blue-800"
+                            className="text-orange-600 hover:text-orange-800"
                           >
                             <Edit className="w-4 h-4" />
                           </button>
@@ -784,7 +784,7 @@ const ContentManager: React.FC = () => {
                       required
                       value={newsletterForm.subject}
                       onChange={(e) => setNewsletterForm(prev => ({ ...prev, subject: e.target.value }))}
-                      className="w-full px-4 py-3 border-2 border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-white font-medium text-lg"
+                      className="w-full px-4 py-3 border-2 border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-orange-500 text-gray-900 bg-white font-medium text-lg"
                       placeholder="Nouvelles offres assurance taxi - Janvier 2024"
                     />
                   </div>
@@ -798,7 +798,7 @@ const ContentManager: React.FC = () => {
                       rows={12}
                       value={newsletterForm.content}
                       onChange={(e) => setNewsletterForm(prev => ({ ...prev, content: e.target.value }))}
-                      className="w-full px-4 py-3 border-2 border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-white font-mono text-base"
+                      className="w-full px-4 py-3 border-2 border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-orange-500 text-gray-900 bg-white font-mono text-base"
                       placeholder="<h2>Bonjour,</h2><p>Votre contenu HTML...</p>"
                     />
                   </div>
@@ -811,7 +811,7 @@ const ContentManager: React.FC = () => {
                       <select
                         value={newsletterForm.recipients}
                         onChange={(e) => setNewsletterForm(prev => ({ ...prev, recipients: e.target.value as any }))}
-                        className="w-full px-4 py-3 border-2 border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-white font-medium"
+                        className="w-full px-4 py-3 border-2 border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-orange-500 text-gray-900 bg-white font-medium"
                       >
                         <option value="all">Tous les abonnés</option>
                         <option value="taxi">Taxi uniquement</option>
@@ -827,7 +827,7 @@ const ContentManager: React.FC = () => {
                         type="datetime-local"
                         value={newsletterForm.scheduledDate}
                         onChange={(e) => setNewsletterForm(prev => ({ ...prev, scheduledDate: e.target.value }))}
-                        className="w-full px-4 py-3 border-2 border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-white font-medium"
+                        className="w-full px-4 py-3 border-2 border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-orange-500 text-gray-900 bg-white font-medium"
                       />
                     </div>
                   </div>
@@ -841,15 +841,15 @@ const ContentManager: React.FC = () => {
                         rows={4}
                         value={newsletterForm.customEmails}
                         onChange={(e) => setNewsletterForm(prev => ({ ...prev, customEmails: e.target.value }))}
-                        className="w-full px-4 py-3 border-2 border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-white font-medium"
+                        className="w-full px-4 py-3 border-2 border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-orange-500 text-gray-900 bg-white font-medium"
                         placeholder="email1@example.com&#10;email2@example.com"
                       />
                     </div>
                   )}
 
-                  <div className="bg-blue-50 p-4 rounded-lg">
-                    <h3 className="font-medium text-blue-900 mb-2">💡 Bonnes Pratiques</h3>
-                    <ul className="text-sm text-blue-800 space-y-1">
+                  <div className="bg-orange-50 p-4 rounded-lg">
+                    <h3 className="font-medium text-orange-900 mb-2">💡 Bonnes Pratiques</h3>
+                    <ul className="text-sm text-orange-800 space-y-1">
                       <li>• Utilisez un sujet accrocheur et personnalisé</li>
                       <li>• Incluez un appel à l'action clair</li>
                       <li>• Testez votre HTML avant envoi</li>

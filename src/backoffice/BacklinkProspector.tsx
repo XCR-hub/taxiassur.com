@@ -322,7 +322,7 @@ www.taxiassur.com
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2 flex items-center">
-            <Target className="text-blue-600 mr-3" size={32} />
+            <Target className="text-orange-600 mr-3" size={32} />
             Backlink Prospector AI
           </h1>
           <p className="text-gray-600">
@@ -335,7 +335,7 @@ www.taxiassur.com
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm text-gray-600">Total Opportunités</span>
-              <Users className="text-blue-600" size={20} />
+              <Users className="text-orange-600" size={20} />
             </div>
             <div className="text-3xl font-bold text-gray-900">{stats.total}</div>
           </div>
@@ -365,7 +365,7 @@ www.taxiassur.com
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm text-gray-600">DA Moyen</span>
-              <BarChart3 className="text-purple-600" size={20} />
+              <BarChart3 className="text-orange-600" size={20} />
             </div>
             <div className="text-3xl font-bold text-gray-900">{stats.avgDA}</div>
             <div className="text-xs text-gray-600 mt-1">Domain Authority</div>
@@ -429,7 +429,7 @@ www.taxiassur.com
               <button
                 onClick={scanNewOpportunities}
                 disabled={isScanning}
-                className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50"
+                className="flex items-center space-x-2 bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50"
               >
                 <Zap size={18} />
                 <span>{isScanning ? 'Scan...' : 'Scan Auto'}</span>
@@ -477,12 +477,12 @@ www.taxiassur.com
                   <tr key={opp.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4">
                       <div className="flex items-start space-x-3">
-                        <Link2 className="text-blue-600 mt-1 flex-shrink-0" size={18} />
+                        <Link2 className="text-orange-600 mt-1 flex-shrink-0" size={18} />
                         <div>
                           <div className="font-medium text-gray-900">{opp.domain}</div>
                           <div className="text-sm text-gray-600 line-clamp-1">{opp.pageTitle}</div>
                           <div className="text-xs text-gray-600 mt-1">
-                            <span className="bg-blue-100 text-blue-800 px-2 py-0.5 rounded">
+                            <span className="bg-orange-100 text-orange-800 px-2 py-0.5 rounded">
                               {opp.category}
                             </span>
                           </div>
@@ -509,7 +509,7 @@ www.taxiassur.com
 
                     <td className="px-6 py-4 text-center">
                       <div className="flex flex-col items-center">
-                        <div className="text-lg font-bold text-purple-600">
+                        <div className="text-lg font-bold text-orange-600">
                           {opp.relevanceScore}%
                         </div>
                         <div className="w-16 bg-gray-200 rounded-full h-2 mt-1">
@@ -530,7 +530,7 @@ www.taxiassur.com
                           opp.status === 'contacted' ? 'bg-yellow-100 text-yellow-800 border-yellow-300' :
                           opp.status === 'rejected' ? 'bg-red-100 text-red-800 border-red-300' :
                           opp.status === 'ignored' ? 'bg-gray-100 text-gray-800 border-gray-300' :
-                          'bg-blue-100 text-blue-800 border-blue-300'
+                          'bg-orange-100 text-orange-800 border-orange-300'
                         }`}
                       >
                         <option value="pending">En attente</option>
@@ -548,7 +548,7 @@ www.taxiassur.com
                             setSelectedOpportunity(opp);
                             setShowEmailModal(true);
                           }}
-                          className="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors"
+                          className="p-2 bg-orange-600 hover:bg-orange-700 text-white rounded transition-colors"
                           title="Générer email"
                         >
                           <Mail size={16} />
@@ -587,7 +587,7 @@ www.taxiassur.com
               <div className="p-6">
                 <div className="flex items-center justify-between mb-6">
                   <h3 className="text-2xl font-bold text-gray-900 flex items-center">
-                    <Send className="text-blue-600 mr-3" size={28} />
+                    <Send className="text-orange-600 mr-3" size={28} />
                     Email de Prospection
                   </h3>
                   <button
@@ -598,11 +598,11 @@ www.taxiassur.com
                   </button>
                 </div>
 
-                <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <div className="text-sm font-medium text-blue-900 mb-2">
+                <div className="mb-6 bg-orange-50 border border-orange-200 rounded-lg p-4">
+                  <div className="text-sm font-medium text-orange-900 mb-2">
                     📧 {selectedOpportunity.contactEmail || 'Email non trouvé'}
                   </div>
-                  <div className="text-xs text-blue-700">
+                  <div className="text-xs text-orange-700">
                     <strong>Domaine:</strong> {selectedOpportunity.domain} (DA: {selectedOpportunity.domainAuthority})
                   </div>
                 </div>
@@ -647,7 +647,7 @@ www.taxiassur.com
                       updateOpportunityStatus(selectedOpportunity.id, 'contacted');
                       setShowEmailModal(false);
                     }}
-                    className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+                    className="flex items-center space-x-2 bg-orange-600 hover:bg-orange-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
                   >
                     <Send size={18} />
                     <span>Envoyer maintenant</span>

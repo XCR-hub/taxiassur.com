@@ -14,7 +14,7 @@ const ContentMarketing: React.FC = () => {
         'Optimiser son Assurance Taxi : 10 Conseils'
       ],
       seoValue: 'Longue traîne + Featured snippets',
-      color: 'from-yellow-400 to-indigo-500'
+      color: 'from-yellow-400 to-yellow-500'
     },
     {
       icon: TrendingUp,

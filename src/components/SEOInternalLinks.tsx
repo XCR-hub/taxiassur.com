@@ -23,7 +23,7 @@ const SEOInternalLinks: React.FC<SEOInternalLinksProps> = ({
 
   if (variant === 'inline') {
     return (
-      <div className="my-8 p-6 bg-gradient-to-br from-blue-900/20 to-purple-900/20 rounded-lg border border-yellow-500/30">
+      <div className="my-8 p-6 bg-gradient-to-br from-orange-900/20 to-orange-900/20 rounded-lg border border-yellow-500/30">
         <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
           <ExternalLink className="w-5 h-5 text-yellow-400" />
           {title}

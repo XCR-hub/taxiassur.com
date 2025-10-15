@@ -152,13 +152,13 @@ const PartnerFinder: React.FC = () => {
 
   const getTypeColor = (type: Prospect['type']) => {
     const colors = {
-      annuaire: 'bg-blue-100 text-blue-800',
+      annuaire: 'bg-orange-100 text-orange-800',
       asso: 'bg-green-100 text-green-800',
-      blog: 'bg-purple-100 text-purple-800',
+      blog: 'bg-orange-100 text-orange-800',
       media: 'bg-pink-100 text-pink-800',
       fleet: 'bg-orange-100 text-orange-800',
       garage: 'bg-gray-100 text-gray-800',
-      ecole: 'bg-indigo-100 text-indigo-800'
+      ecole: 'bg-yellow-100 text-yellow-800'
     };
     return colors[type] || colors.annuaire;
   };
@@ -196,13 +196,13 @@ const PartnerFinder: React.FC = () => {
               <div className="flex items-center space-x-4">
                 <a
                   href="/backoffice"
-                  className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
+                  className="bg-orange-600 hover:bg-orange-700 text-white font-medium px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
                 >
                   <Home size={16} />
                   <span>Accueil Admin</span>
                 </a>
                 <div className="text-sm text-gray-600">
-                  Quota restant: <span className="font-bold text-blue-600">{remainingQuota}</span>
+                  Quota restant: <span className="font-bold text-orange-600">{remainingQuota}</span>
                 </div>
                 <button
                   onClick={exportQualified}
@@ -229,7 +229,7 @@ const PartnerFinder: React.FC = () => {
                   <select
                     value={selectedQuery}
                     onChange={(e) => setSelectedQuery(e.target.value)}
-                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 font-medium"
+                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-orange-500 text-gray-900 font-medium"
                   >
                     {queries.map(query => (
                       <option key={query.q} value={query.q}>
@@ -248,7 +248,7 @@ const PartnerFinder: React.FC = () => {
                     value={customQuery}
                     onChange={(e) => setCustomQuery(e.target.value)}
                     placeholder='Ex: site:.fr "taxi" partenariat'
-                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 font-medium"
+                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-orange-500 text-gray-900 font-medium"
                   />
                 </div>
                 
@@ -256,7 +256,7 @@ const PartnerFinder: React.FC = () => {
                   <button
                     onClick={runSearch}
                     disabled={loading || remainingQuota <= 0}
-                    className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-bold py-3 px-6 rounded-lg transition-colors shadow-lg hover:shadow-xl"
+                    className="flex items-center space-x-2 bg-orange-600 hover:bg-orange-700 disabled:bg-gray-400 text-white font-bold py-3 px-6 rounded-lg transition-colors shadow-lg hover:shadow-xl"
                   >
                     {loading ? (
                       <RefreshCw size={16} className="animate-spin" />
@@ -313,12 +313,12 @@ const PartnerFinder: React.FC = () => {
           </div>
 
           {/* Instructions */}
-          <div className="bg-blue-100 border-2 border-blue-300 rounded-xl shadow-lg p-6 mb-8">
+          <div className="bg-orange-100 border-2 border-orange-300 rounded-xl shadow-lg p-6 mb-8">
             <div className="flex items-start space-x-3">
-              <Globe className="text-blue-800 flex-shrink-0 mt-1" size={20} />
+              <Globe className="text-orange-800 flex-shrink-0 mt-1" size={20} />
               <div>
-                <h3 className="font-bold text-blue-900 mb-3 text-lg">Instructions de Qualification</h3>
-                <ul className="text-sm font-medium text-blue-800 space-y-2">
+                <h3 className="font-bold text-orange-900 mb-3 text-lg">Instructions de Qualification</h3>
+                <ul className="text-sm font-medium text-orange-800 space-y-2">
                   <li>• Ouvrez chaque site pour vérifier manuellement la page Contact/Partenariat</li>
                   <li>• Marquez "Qualifié" seulement si contact public visible et partenariat autorisé</li>
                   <li>• Vérifiez que le site est actif et professionnel</li>
@@ -339,7 +339,7 @@ const PartnerFinder: React.FC = () => {
                         href={candidate.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-lg font-bold text-blue-700 hover:text-blue-900 transition-colors"
+                        className="text-lg font-bold text-orange-700 hover:text-orange-900 transition-colors"
                       >
                         {candidate.title}
                       </a>
@@ -420,7 +420,7 @@ const PartnerFinder: React.FC = () => {
               <button
                 onClick={runSearch}
                 disabled={remainingQuota <= 0}
-                className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-bold py-3 px-6 rounded-lg transition-colors shadow-lg hover:shadow-xl"
+                className="bg-orange-600 hover:bg-orange-700 disabled:bg-gray-400 text-white font-bold py-3 px-6 rounded-lg transition-colors shadow-lg hover:shadow-xl"
               >
                 Commencer la Recherche
               </button>
@@ -433,7 +433,7 @@ const PartnerFinder: React.FC = () => {
               <h3 className="text-xl font-bold text-gray-900 mb-6">Statistiques de Session</h3>
               <div className="grid grid-cols-4 gap-4 text-center">
                 <div>
-                  <div className="text-3xl font-bold text-blue-700">{candidates.length}</div>
+                  <div className="text-3xl font-bold text-orange-700">{candidates.length}</div>
                   <div className="text-sm font-bold text-gray-700">Total trouvés</div>
                 </div>
                 <div>

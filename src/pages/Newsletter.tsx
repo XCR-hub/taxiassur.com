@@ -89,7 +89,7 @@ const NewsletterPage: React.FC = () => {
         
         <main>
           {/* Hero Section */}
-          <section className="bg-gradient-to-br from-blue-900 to-indigo-900 text-white py-20">
+          <section className="bg-gradient-to-br from-orange-900 to-yellow-900 text-white py-20">
             <div className="container-max">
               <div className="max-w-4xl mx-auto text-center">
                 <h1 className="text-4xl md:text-5xl font-bold mb-6">
@@ -102,7 +102,7 @@ const NewsletterPage: React.FC = () => {
                 
                 <div className="grid grid-cols-3 gap-6 max-w-md mx-auto">
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-blue-300">{stats.subscribers.toLocaleString()}</div>
+                    <div className="text-2xl font-bold text-orange-300">{stats.subscribers.toLocaleString()}</div>
                     <div className="text-sm text-yellow-200">Abonnés</div>
                   </div>
                   <div className="text-center">
@@ -134,7 +134,7 @@ const NewsletterPage: React.FC = () => {
                     const IconComponent = benefit.icon;
                     return (
                       <div key={index} className="text-center">
-                        <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-yellow-400 to-indigo-500 rounded-2xl mb-4 shadow-lg">
+                        <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-2xl mb-4 shadow-lg">
                           <IconComponent className="text-white" size={24} />
                         </div>
                         <h3 className="text-xl font-bold text-gray-900 mb-3">

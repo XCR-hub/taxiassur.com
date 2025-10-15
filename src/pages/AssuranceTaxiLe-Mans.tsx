@@ -14,10 +14,10 @@ const AssuranceTaxiLe-Mans: React.FC = () => {
       </Helmet>
       <Header />
       <main>
-        <section className="bg-gradient-to-r from-indigo-900 to-purple-900 text-white py-20 text-center">
+        <section className="bg-gradient-to-r from-yellow-900 to-orange-900 text-white py-20 text-center">
           <div className="container mx-auto px-4">
             <h1 className="text-5xl font-black mb-6">Assurance Taxi Le-Mans<br/><span className="text-yellow-400">1400€/an</span></h1>
-            <a href="#devis" className="bg-yellow-400 text-indigo-900 font-bold px-8 py-4 rounded-xl inline-block">Devis →</a>
+            <a href="#devis" className="bg-yellow-400 text-yellow-900 font-bold px-8 py-4 rounded-xl inline-block">Devis →</a>
           </div>
         </section>
         <section className="py-16 bg-white text-center">
@@ -25,7 +25,7 @@ const AssuranceTaxiLe-Mans: React.FC = () => {
             <div className="text-5xl font-black text-yellow-600 mb-4">1400€/an</div>
           </div>
         </section>
-        <section id="devis" className="py-16 bg-indigo-900 text-white">
+        <section id="devis" className="py-16 bg-yellow-900 text-white">
           <div className="container mx-auto px-4 max-w-4xl">
             <h2 className="text-3xl font-black text-center mb-8">Devis Le-Mans</h2>
             <EnhancedLeadForm />

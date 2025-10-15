@@ -81,7 +81,7 @@ export function MobileSection({ children, className = '', bgColor = 'white' }: S
     white: 'bg-white',
     gray: 'bg-gray-50',
     blue: 'bg-yellow-50',
-    gradient: 'bg-gradient-to-br from-blue-50 to-white'
+    gradient: 'bg-gradient-to-br from-orange-50 to-white'
   };
 
   return (

@@ -109,13 +109,13 @@ const ProspectReview: React.FC = () => {
 
   const getTypeColor = (type: Prospect['type']) => {
     const colors = {
-      annuaire: 'bg-blue-100 text-blue-800',
+      annuaire: 'bg-orange-100 text-orange-800',
       asso: 'bg-green-100 text-green-800',
-      blog: 'bg-purple-100 text-purple-800',
+      blog: 'bg-orange-100 text-orange-800',
       media: 'bg-pink-100 text-pink-800',
       fleet: 'bg-orange-100 text-orange-800',
       garage: 'bg-gray-100 text-gray-800',
-      ecole: 'bg-indigo-100 text-indigo-800'
+      ecole: 'bg-yellow-100 text-yellow-800'
     };
     return colors[type] || colors.annuaire;
   };
@@ -125,8 +125,8 @@ const ProspectReview: React.FC = () => {
       new: 'bg-gray-100 text-gray-800',
       qualified: 'bg-green-100 text-green-800',
       rejected: 'bg-red-100 text-red-800',
-      contacted: 'bg-blue-100 text-blue-800',
-      partner: 'bg-purple-100 text-purple-800'
+      contacted: 'bg-orange-100 text-orange-800',
+      partner: 'bg-orange-100 text-orange-800'
     };
     return colors[status];
   };
@@ -171,7 +171,7 @@ const ProspectReview: React.FC = () => {
               
               <a
                 href="/backoffice"
-                className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
+                className="bg-orange-600 hover:bg-orange-700 text-white font-medium px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
               >
                 <Home size={16} />
                 <span>Accueil Backoffice</span>
@@ -265,7 +265,7 @@ const ProspectReview: React.FC = () => {
                         href={prospect.contactPageUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center space-x-1 text-blue-600 hover:text-blue-800 text-sm"
+                        className="inline-flex items-center space-x-1 text-orange-600 hover:text-orange-800 text-sm"
                       >
                         <Mail size={14} />
                         <span>Page contact</span>
@@ -391,9 +391,9 @@ const ProspectReview: React.FC = () => {
                   />
                 </div>
 
-                <div className="bg-blue-50 p-4 rounded-lg">
-                  <h4 className="font-medium text-blue-900 mb-2">Information RGPD</h4>
-                  <p className="text-sm text-blue-800">
+                <div className="bg-orange-50 p-4 rounded-lg">
+                  <h4 className="font-medium text-orange-900 mb-2">Information RGPD</h4>
+                  <p className="text-sm text-orange-800">
                     {consentData.lawfulBasis === 'legitimate_interest' 
                       ? 'Contact B2B basé sur l\'intérêt légitime. Droit d\'opposition garanti.'
                       : 'Consentement explicite requis avant tout contact.'
@@ -411,7 +411,7 @@ const ProspectReview: React.FC = () => {
                   <button
                     onClick={handleConsentSubmit}
                     disabled={!consentData.email}
-                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white rounded-lg transition-colors"
+                    className="px-4 py-2 bg-orange-600 hover:bg-orange-700 disabled:bg-gray-400 text-white rounded-lg transition-colors"
                   >
                     Enregistrer
                   </button>

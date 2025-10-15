@@ -106,7 +106,7 @@ const SecurityDashboard: React.FC = () => {
     switch (level.toLowerCase()) {
       case 'error': return 'text-red-600 bg-red-50';
       case 'warning': return 'text-yellow-600 bg-yellow-50';
-      case 'info': return 'text-blue-600 bg-blue-50';
+      case 'info': return 'text-orange-600 bg-orange-50';
       default: return 'text-gray-600 bg-gray-50';
     }
   };
@@ -151,7 +151,7 @@ const SecurityDashboard: React.FC = () => {
               
               <a
                 href="/backoffice"
-                className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
+                className="bg-orange-600 hover:bg-orange-700 text-white font-medium px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
               >
                 <Home size={16} />
                 <span>Accueil Backoffice</span>
@@ -177,7 +177,7 @@ const SecurityDashboard: React.FC = () => {
               
               <button
                 onClick={loadSecurityData}
-                className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+                className="flex items-center space-x-2 bg-orange-600 hover:bg-orange-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
               >
                 <Activity size={16} />
                 <span>Actualiser</span>
@@ -212,8 +212,8 @@ const SecurityDashboard: React.FC = () => {
 
           {/* Security Stats */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <Card className="text-center bg-gradient-to-br from-blue-50 to-indigo-50">
-              <Globe className="mx-auto mb-2 text-blue-600" size={24} />
+            <Card className="text-center bg-gradient-to-br from-orange-50 to-yellow-50">
+              <Globe className="mx-auto mb-2 text-orange-600" size={24} />
               <div className="text-2xl font-bold text-gray-900">{stats.totalRequests}</div>
               <div className="text-sm text-gray-600">Requêtes totales</div>
             </Card>
@@ -261,7 +261,7 @@ const SecurityDashboard: React.FC = () => {
 
             <Card>
               <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                <Globe className="mr-2 text-blue-600" size={20} />
+                <Globe className="mr-2 text-orange-600" size={20} />
                 Analyse IP Suspectes
               </h3>
               <div className="space-y-3">
@@ -302,7 +302,7 @@ const SecurityDashboard: React.FC = () => {
                 <div key={index} className={`p-3 rounded-lg border ${
                   log.level === 'ERROR' ? 'border-red-200 bg-red-50' :
                   log.level === 'WARNING' ? 'border-yellow-200 bg-yellow-50' :
-                  'border-blue-200 bg-blue-50'
+                  'border-orange-200 bg-orange-50'
                 }`}>
                   <div className="flex items-center justify-between mb-1">
                     <div className="flex items-center space-x-2">
@@ -331,7 +331,7 @@ const SecurityDashboard: React.FC = () => {
           <div className="mt-8">
             <Card>
               <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                <Lock className="mr-2 text-purple-600" size={20} />
+                <Lock className="mr-2 text-orange-600" size={20} />
                 Recommandations Sécurité
               </h3>
               
@@ -358,15 +358,15 @@ const SecurityDashboard: React.FC = () => {
                   <h4 className="font-medium text-gray-900">Optimisations</h4>
                   <ul className="space-y-2 text-sm text-gray-700">
                     <li className="flex items-center space-x-2">
-                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                      <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
                       <span>Implémenter WAF (Web Application Firewall)</span>
                     </li>
                     <li className="flex items-center space-x-2">
-                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                      <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
                       <span>Ajouter authentification 2FA</span>
                     </li>
                     <li className="flex items-center space-x-2">
-                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                      <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
                       <span>Backup automatique quotidien</span>
                     </li>
                   </ul>
@@ -384,7 +384,7 @@ const getLevelColor = (level: string): string => {
   switch (level.toLowerCase()) {
     case 'error': return 'text-red-600 bg-red-100';
     case 'warning': return 'text-yellow-600 bg-yellow-100';
-    case 'info': return 'text-blue-600 bg-blue-100';
+    case 'info': return 'text-orange-600 bg-orange-100';
     default: return 'text-gray-600 bg-gray-100';
   }
 };

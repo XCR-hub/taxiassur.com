@@ -49,9 +49,9 @@ const NewsManager: React.FC = () => {
 
   const getAngleColor = (angle: string): string => {
     const colors: Record<string, string> = {
-      'impact sur les assurances taxi': 'bg-blue-100 text-blue-800',
+      'impact sur les assurances taxi': 'bg-orange-100 text-orange-800',
       'nouvelles obligations réglementaires': 'bg-red-100 text-red-800',
-      'évolutions technologiques': 'bg-purple-100 text-purple-800',
+      'évolutions technologiques': 'bg-orange-100 text-orange-800',
       'opportunités d\'économies': 'bg-green-100 text-green-800',
       'formation et certification': 'bg-orange-100 text-orange-800',
       'sécurité et protection': 'bg-yellow-100 text-yellow-800',
@@ -100,7 +100,7 @@ const NewsManager: React.FC = () => {
               
               <a
                 href="/backoffice"
-                className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
+                className="bg-orange-600 hover:bg-orange-700 text-white font-medium px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
               >
                 <Home size={16} />
                 <span>Accueil Backoffice</span>
@@ -136,7 +136,7 @@ const NewsManager: React.FC = () => {
               
               <button
                 onClick={manualRefresh}
-                className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+                className="flex items-center space-x-2 bg-orange-600 hover:bg-orange-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
               >
                 <RefreshCw size={16} />
                 <span>Lancer Maintenant</span>
@@ -146,8 +146,8 @@ const NewsManager: React.FC = () => {
 
           {/* Statistics */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <Card className="text-center bg-gradient-to-br from-blue-50 to-indigo-50">
-              <Globe className="mx-auto mb-2 text-blue-600" size={24} />
+            <Card className="text-center bg-gradient-to-br from-orange-50 to-yellow-50">
+              <Globe className="mx-auto mb-2 text-orange-600" size={24} />
               <div className="text-2xl font-bold text-gray-900">5</div>
               <div className="text-sm text-gray-600">Sources actives</div>
             </Card>
@@ -158,8 +158,8 @@ const NewsManager: React.FC = () => {
               <div className="text-sm text-gray-600">News traitées</div>
             </Card>
 
-            <Card className="text-center bg-gradient-to-br from-purple-50 to-pink-50">
-              <Zap className="mx-auto mb-2 text-purple-600" size={24} />
+            <Card className="text-center bg-gradient-to-br from-orange-50 to-pink-50">
+              <Zap className="mx-auto mb-2 text-orange-600" size={24} />
               <div className="text-2xl font-bold text-gray-900">
                 {processedNews.filter(n => n.status === 'published').length}
               </div>
@@ -229,7 +229,7 @@ const NewsManager: React.FC = () => {
                     type="checkbox"
                     checked={settings.autoPublish}
                     onChange={(e) => setSettings(prev => ({ ...prev, autoPublish: e.target.checked }))}
-                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    className="rounded border-gray-300 text-orange-600 focus:ring-blue-500"
                   />
                   <span className="ml-2 text-sm text-gray-700">Publication auto</span>
                 </label>
@@ -253,7 +253,7 @@ const NewsManager: React.FC = () => {
                       </span>
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                         news.status === 'published' ? 'bg-green-100 text-green-800' :
-                        news.status === 'ready' ? 'bg-blue-100 text-blue-800' :
+                        news.status === 'ready' ? 'bg-orange-100 text-orange-800' :
                         'bg-gray-100 text-gray-800'
                       }`}>
                         {news.status}
@@ -284,7 +284,7 @@ const NewsManager: React.FC = () => {
                         // Show preview modal
                         alert('Aperçu : ' + news.synthesizedTitle);
                       }}
-                      className="text-blue-600 hover:text-blue-800"
+                      className="text-orange-600 hover:text-orange-800"
                     >
                       <Eye size={16} />
                     </button>
@@ -323,7 +323,7 @@ const NewsManager: React.FC = () => {
               </p>
               <button
                 onClick={manualRefresh}
-                className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+                className="bg-orange-600 hover:bg-orange-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
               >
                 Lancer la Première Veille
               </button>

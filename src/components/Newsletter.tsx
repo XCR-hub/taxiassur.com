@@ -137,7 +137,7 @@ const Newsletter: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="flex items-start space-x-4 p-4 bg-white rounded-xl shadow-lg border border-indigo-200">
+                <div className="flex items-start space-x-4 p-4 bg-white rounded-xl shadow-lg border border-yellow-200">
                   <FileText className="text-yellow-600 flex-shrink-0 mt-1" size={20} />
                   <div>
                     <h4 className="font-bold text-gray-900 mb-1">Guides Pratiques Exclusifs</h4>
@@ -145,7 +145,7 @@ const Newsletter: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="flex items-start space-x-4 p-4 bg-white rounded-xl shadow-lg border border-purple-200">
+                <div className="flex items-start space-x-4 p-4 bg-white rounded-xl shadow-lg border border-orange-200">
                   <Gift className="text-yellow-600 flex-shrink-0 mt-1" size={20} />
                   <div>
                     <h4 className="font-bold text-gray-900 mb-1">Offres Spéciales Abonnés</h4>

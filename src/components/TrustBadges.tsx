@@ -165,7 +165,7 @@ export default function TrustBadges({ variant = 'full', showLogos = true }: Trus
       </div>
 
       {/* Section conformité renforcée */}
-      <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-yellow-200 rounded-xl p-8">
+      <div className="bg-gradient-to-br from-orange-50 to-yellow-50 border-2 border-yellow-200 rounded-xl p-8">
         <div className="max-w-4xl mx-auto">
           <div className="flex items-start space-x-4 mb-6">
             <div className="p-3 rounded-xl bg-yellow-500 flex-shrink-0">

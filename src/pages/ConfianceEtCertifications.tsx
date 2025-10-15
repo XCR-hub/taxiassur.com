@@ -45,7 +45,7 @@ export default function ConfianceEtCertifications() {
         </section>
 
         {/* Section détaillée - Adhésions professionnelles */}
-        <section className="bg-gradient-to-br from-blue-50 to-indigo-50 py-16">
+        <section className="bg-gradient-to-br from-orange-50 to-yellow-50 py-16">
           <div className="container-max">
             <h2 className="text-4xl font-bold text-center text-gray-900 mb-12">
               🤝 Nos Adhésions Professionnelles
@@ -79,9 +79,9 @@ export default function ConfianceEtCertifications() {
               </div>
 
               {/* EDI Courtage */}
-              <div className="bg-white rounded-2xl p-8 shadow-xl border-2 border-indigo-200">
+              <div className="bg-white rounded-2xl p-8 shadow-xl border-2 border-yellow-200">
                 <div className="flex items-center space-x-4 mb-6">
-                  <div className="w-16 h-16 bg-indigo-100 rounded-xl flex items-center justify-center">
+                  <div className="w-16 h-16 bg-yellow-100 rounded-xl flex items-center justify-center">
                     <span className="text-2xl font-bold text-yellow-600">EDI</span>
                   </div>
                   <div>

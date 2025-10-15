@@ -37,7 +37,7 @@ const SOCIAL_NETWORKS: NetworkDefinition[] = [
     id: 'facebook',
     name: 'Facebook',
     icon: Facebook,
-    color: 'bg-blue-600',
+    color: 'bg-orange-600',
     hasAPI: true,
     apiStatus: 'ready',
     requiresAuth: true,
@@ -70,7 +70,7 @@ const SOCIAL_NETWORKS: NetworkDefinition[] = [
     id: 'linkedin',
     name: 'LinkedIn',
     icon: Linkedin,
-    color: 'bg-blue-700',
+    color: 'bg-orange-700',
     hasAPI: true,
     apiStatus: 'ready',
     requiresAuth: true,
@@ -114,7 +114,7 @@ const SOCIAL_NETWORKS: NetworkDefinition[] = [
     id: 'telegram',
     name: 'Telegram',
     icon: Send,
-    color: 'bg-blue-500',
+    color: 'bg-orange-500',
     hasAPI: true,
     apiStatus: 'missing',
     requiresAuth: true,
@@ -263,8 +263,8 @@ export default function SocialMediaManager() {
               <div
                 key={networkDef.id}
                 className={`bg-slate-700 rounded-lg p-4 border-2 transition-all cursor-pointer ${
-                  isSelected ? 'border-blue-500 bg-slate-600' : 'border-slate-600'
-                } hover:border-blue-400`}
+                  isSelected ? 'border-orange-500 bg-slate-600' : 'border-slate-600'
+                } hover:border-orange-400`}
                 onClick={() => toggleNetworkSelection(networkDef.id)}
               >
                 <div className="flex items-start justify-between mb-3">
@@ -353,11 +353,11 @@ export default function SocialMediaManager() {
         </div>
 
         {selectedNetworks.size > 0 && (
-          <div className="mt-6 p-4 bg-blue-900/30 border border-blue-700 rounded-lg">
+          <div className="mt-6 p-4 bg-orange-900/30 border border-orange-700 rounded-lg">
             <p className="text-white font-medium mb-2">
               ✅ {selectedNetworks.size} réseau(x) sélectionné(s)
             </p>
-            <p className="text-sm text-blue-200">
+            <p className="text-sm text-orange-200">
               Vous pouvez maintenant publier sur ces réseaux depuis l'onglet "Publications"
             </p>
           </div>
@@ -379,7 +379,7 @@ export default function SocialMediaManager() {
                 <div className="flex-1">
                   <h4 className="font-bold text-white mb-1">{network.name}</h4>
                   <p className="text-sm text-slate-300 mb-2">{network.setupGuide}</p>
-                  <button className="text-sm text-blue-400 hover:text-blue-300">
+                  <button className="text-sm text-orange-400 hover:text-orange-300">
                     📖 Voir le guide complet →
                   </button>
                 </div>
@@ -501,7 +501,7 @@ export default function SocialMediaManager() {
           <div className="flex gap-3">
             <button
               disabled={selectedNetworks.size === 0 || !newPost.content}
-              className="flex-1 bg-gradient-to-r from-slate-600 to-blue-600 hover:from-slate-700 hover:to-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-bold py-3 px-6 rounded-lg transition-all shadow-md"
+              className="flex-1 bg-gradient-to-r from-slate-600 to-orange-600 hover:from-slate-700 hover:to-orange-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-bold py-3 px-6 rounded-lg transition-all shadow-md"
             >
               {newPost.scheduled_at ? '📅 Planifier' : '📤 Publier maintenant'}
             </button>
@@ -531,7 +531,7 @@ export default function SocialMediaManager() {
         <h3 className="text-xl font-bold text-white mb-4">📱 Configuration WhatsApp Business</h3>
 
         <div className="space-y-6">
-          <div className="bg-blue-900/30 border border-blue-700 rounded-lg p-4">
+          <div className="bg-orange-900/30 border border-orange-700 rounded-lg p-4">
             <h4 className="font-bold text-white mb-3">Étape 1: Installer WhatsApp Business API</h4>
             <ol className="list-decimal list-inside space-y-2 text-slate-300 text-sm">
               <li>Télécharger WhatsApp Business sur votre téléphone</li>
@@ -541,7 +541,7 @@ export default function SocialMediaManager() {
             </ol>
           </div>
 
-          <div className="bg-blue-900/30 border border-blue-700 rounded-lg p-4">
+          <div className="bg-orange-900/30 border border-orange-700 rounded-lg p-4">
             <h4 className="font-bold text-white mb-3">Étape 2: Connecter votre téléphone</h4>
             <ol className="list-decimal list-inside space-y-2 text-slate-300 text-sm">
               <li>Scanner le QR Code depuis l'application WhatsApp Business</li>
@@ -560,7 +560,7 @@ export default function SocialMediaManager() {
             </div>
           </div>
 
-          <div className="bg-blue-900/30 border border-blue-700 rounded-lg p-4">
+          <div className="bg-orange-900/30 border border-orange-700 rounded-lg p-4">
             <h4 className="font-bold text-white mb-3">Étape 3: Créer et Gérer les Groupes</h4>
             <div className="space-y-3">
               <div>
@@ -623,7 +623,7 @@ export default function SocialMediaManager() {
                 placeholder="Access Token"
                 className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400"
               />
-              <button className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 rounded-lg">
+              <button className="w-full bg-orange-600 hover:bg-orange-500 text-white font-bold py-2 rounded-lg">
                 💾 Enregistrer la configuration
               </button>
             </div>
@@ -660,8 +660,8 @@ export default function SocialMediaManager() {
           </ul>
         </div>
 
-        <div className="bg-blue-900/30 border border-blue-700 rounded-lg p-4 mb-6">
-          <h3 className="font-bold text-blue-300 mb-3">🔧 Configuration Publication Auto</h3>
+        <div className="bg-orange-900/30 border border-orange-700 rounded-lg p-4 mb-6">
+          <h3 className="font-bold text-orange-300 mb-3">🔧 Configuration Publication Auto</h3>
 
           <div className="space-y-4">
             <label className="flex items-center justify-between p-3 bg-slate-700 rounded-lg cursor-pointer">
@@ -706,7 +706,7 @@ export default function SocialMediaManager() {
               <div className="text-sm text-slate-400">Publications auto</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-blue-400">12.5K</div>
+              <div className="text-2xl font-bold text-orange-400">12.5K</div>
               <div className="text-sm text-slate-400">Engagement total</div>
             </div>
             <div className="text-center">
@@ -722,7 +722,7 @@ export default function SocialMediaManager() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
       </div>
     );
   }
@@ -730,7 +730,7 @@ export default function SocialMediaManager() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-r from-slate-700 via-slate-600 to-blue-700 rounded-xl p-6 text-white shadow-xl">
+      <div className="bg-gradient-to-r from-slate-700 via-slate-600 to-orange-700 rounded-xl p-6 text-white shadow-xl">
         <h1 className="text-3xl font-bold mb-2">Gestion Réseaux Sociaux avec IA</h1>
         <p className="text-slate-200">Génération automatique de contenu viral - {SOCIAL_NETWORKS.length} réseaux disponibles</p>
 
@@ -774,7 +774,7 @@ export default function SocialMediaManager() {
             onClick={() => setActiveTab('networks')}
             className={`flex-1 px-6 py-4 font-medium transition-all ${
               activeTab === 'networks'
-                ? 'text-white border-b-2 border-blue-500'
+                ? 'text-white border-b-2 border-orange-500'
                 : 'text-slate-400 hover:text-white'
             }`}
           >
@@ -784,7 +784,7 @@ export default function SocialMediaManager() {
             onClick={() => setActiveTab('publications')}
             className={`flex-1 px-6 py-4 font-medium transition-all ${
               activeTab === 'publications'
-                ? 'text-white border-b-2 border-blue-500'
+                ? 'text-white border-b-2 border-orange-500'
                 : 'text-slate-400 hover:text-white'
             }`}
           >
@@ -794,7 +794,7 @@ export default function SocialMediaManager() {
             onClick={() => setActiveTab('whatsapp')}
             className={`flex-1 px-6 py-4 font-medium transition-all ${
               activeTab === 'whatsapp'
-                ? 'text-white border-b-2 border-blue-500'
+                ? 'text-white border-b-2 border-orange-500'
                 : 'text-slate-400 hover:text-white'
             }`}
           >
@@ -804,7 +804,7 @@ export default function SocialMediaManager() {
             onClick={() => setActiveTab('automation')}
             className={`flex-1 px-6 py-4 font-medium transition-all ${
               activeTab === 'automation'
-                ? 'text-white border-b-2 border-blue-500'
+                ? 'text-white border-b-2 border-orange-500'
                 : 'text-slate-400 hover:text-white'
             }`}
           >

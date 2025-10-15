@@ -176,19 +176,19 @@ UTM Link: ${content.url}
 
   const getCategoryColor = (category: string) => {
     const colors: Record<string, string> = {
-      'Annuaire': 'bg-blue-100 text-blue-800',
+      'Annuaire': 'bg-orange-100 text-orange-800',
       'Guide': 'bg-green-100 text-green-800',
-      'Média': 'bg-purple-100 text-purple-800',
+      'Média': 'bg-orange-100 text-orange-800',
       'Association': 'bg-orange-100 text-orange-800',
       'Marketplace': 'bg-pink-100 text-pink-800',
-      'B2B': 'bg-indigo-100 text-indigo-800',
+      'B2B': 'bg-yellow-100 text-yellow-800',
       'Forum': 'bg-yellow-100 text-yellow-800'
     };
     return colors[category] || 'bg-gray-100 text-gray-800';
   };
 
   const getSubmissionModeColor = (mode: string) => {
-    return mode === 'api' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800';
+    return mode === 'api' ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800';
   };
 
   if (loading) {
@@ -231,7 +231,7 @@ UTM Link: ${content.url}
               
               <a
                 href="/backoffice"
-                className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
+                className="bg-orange-600 hover:bg-orange-700 text-white font-medium px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
               >
                 <Home size={16} />
                 <span>Accueil Backoffice</span>
@@ -270,7 +270,7 @@ UTM Link: ${content.url}
             {directories.map(directory => (
               <Card key={directory.id} hover className="group">
                 <div className="flex justify-between items-start mb-3">
-                  <h3 className="font-bold text-gray-900 group-hover:text-blue-600 transition-colors">
+                  <h3 className="font-bold text-gray-900 group-hover:text-orange-600 transition-colors">
                     {directory.name}
                   </h3>
                   <div className="flex space-x-2">
@@ -302,7 +302,7 @@ UTM Link: ${content.url}
                     <>
                       <button
                         onClick={() => handleManualSubmission(directory)}
-                        className="flex items-center space-x-1 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg transition-colors flex-1"
+                        className="flex items-center space-x-1 px-3 py-2 bg-orange-600 hover:bg-orange-700 text-white text-sm rounded-lg transition-colors flex-1"
                       >
                         <Copy size={14} />
                         <span>Préparer</span>
@@ -415,7 +415,7 @@ URL avec tracking: ${content.url}
           {/* Statistics */}
           <div className="grid grid-cols-4 gap-4">
             <Card className="text-center">
-              <Globe className="mx-auto mb-2 text-blue-600" size={24} />
+              <Globe className="mx-auto mb-2 text-orange-600" size={24} />
               <div className="text-2xl font-bold text-gray-900">{directories.length}</div>
               <div className="text-sm text-gray-600">Annuaires autorisés</div>
             </Card>
@@ -437,7 +437,7 @@ URL avec tracking: ${content.url}
             </Card>
             
             <Card className="text-center">
-              <Plus className="mx-auto mb-2 text-purple-600" size={24} />
+              <Plus className="mx-auto mb-2 text-orange-600" size={24} />
               <div className="text-2xl font-bold text-gray-900">
                 {directories.filter(d => d.submissionMode === 'api').length}
               </div>
@@ -468,9 +468,9 @@ URL avec tracking: ${content.url}
                   <h3 className="font-semibold text-gray-900 mb-3">Instructions</h3>
                   
                   <div className="space-y-4">
-                    <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                      <h4 className="font-medium text-blue-900 mb-2">Étapes à suivre</h4>
-                      <ol className="text-sm text-blue-800 space-y-1">
+                    <div className="bg-orange-50 p-4 rounded-lg border border-orange-200">
+                      <h4 className="font-medium text-orange-900 mb-2">Étapes à suivre</h4>
+                      <ol className="text-sm text-orange-800 space-y-1">
                         <li>1. Ouvrir le formulaire de soumission</li>
                         <li>2. Copier les informations pré-remplies</li>
                         <li>3. Remplir le formulaire manuellement</li>
@@ -483,7 +483,7 @@ URL avec tracking: ${content.url}
                         href={selectedDirectory.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-colors w-full justify-center"
+                        className="flex items-center space-x-2 bg-orange-600 hover:bg-orange-700 text-white font-medium py-3 px-4 rounded-lg transition-colors w-full justify-center"
                       >
                         <ExternalLink size={16} />
                         <span>Ouvrir le Formulaire</span>

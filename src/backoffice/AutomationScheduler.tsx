@@ -106,19 +106,19 @@ export default function AutomationScheduler() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600"></div>
       </div>
     );
   }
 
   return (
     <div className="max-w-4xl mx-auto">
-      <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl p-6 mb-6 text-white">
+      <div className="bg-gradient-to-r from-orange-600 to-orange-700 rounded-xl p-6 mb-6 text-white">
         <div className="flex items-center space-x-3 mb-2">
           <Zap size={32} className="animate-pulse" />
           <h2 className="text-2xl font-bold">Planification Automatique</h2>
         </div>
-        <p className="text-indigo-100">
+        <p className="text-yellow-100">
           Configurez la génération automatique de contenu SEO chaque semaine
         </p>
       </div>
@@ -142,7 +142,7 @@ export default function AutomationScheduler() {
           return (
             <div
               key={schedule.id}
-              className="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-100 hover:border-purple-200 transition-colors"
+              className="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-100 hover:border-orange-200 transition-colors"
             >
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center space-x-3">
@@ -202,7 +202,7 @@ export default function AutomationScheduler() {
                     disabled={saving || !schedule.is_active}
                     className={`w-full px-4 py-2 rounded-lg border-2 transition-colors font-medium disabled:opacity-50 ${
                       schedule.auto_publish
-                        ? 'bg-purple-50 border-purple-500 text-purple-700'
+                        ? 'bg-orange-50 border-orange-500 text-orange-700'
                         : 'bg-gray-50 border-gray-300 text-gray-700 hover:border-gray-400'
                     }`}
                   >
@@ -230,9 +230,9 @@ export default function AutomationScheduler() {
         })}
       </div>
 
-      <div className="mt-6 bg-blue-50 rounded-xl p-6">
+      <div className="mt-6 bg-orange-50 rounded-xl p-6">
         <h3 className="text-lg font-bold text-gray-800 mb-3 flex items-center">
-          <Zap size={20} className="mr-2 text-blue-600" />
+          <Zap size={20} className="mr-2 text-orange-600" />
           Comment ça marche ?
         </h3>
         <ul className="space-y-2 text-sm text-gray-700">

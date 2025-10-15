@@ -67,12 +67,12 @@ const AssuranceTaxiParis: React.FC = () => {
 
       <main className="min-h-screen bg-gradient-to-br from-gray-50 to-white">
         {/* Hero Section */}
-        <section className="relative bg-gradient-to-br from-blue-900 via-blue-800 to-blue-900 text-white py-20 overflow-hidden">
+        <section className="relative bg-gradient-to-br from-orange-900 via-blue-800 to-orange-900 text-white py-20 overflow-hidden">
           <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PHBhdGggZD0iTTM2IDE2YzAtMi4yMS0xLjc5LTQtNC00cy00IDEuNzktNCA0IDEuNzkgNCA0IDQgNC0xLjc5IDQtNHptMCAwIi8+PC9nPjwvZz48L3N2Zz4=')] opacity-20"></div>
 
           <div className="container mx-auto px-4 relative z-10">
             <div className="max-w-4xl mx-auto text-center">
-              <div className="inline-flex items-center bg-yellow-400 text-blue-900 px-4 py-2 rounded-full text-sm font-bold mb-6">
+              <div className="inline-flex items-center bg-yellow-400 text-orange-900 px-4 py-2 rounded-full text-sm font-bold mb-6">
                 <MapPin size={16} className="mr-2" />
                 Spécialiste Taxis Parisiens
               </div>
@@ -101,7 +101,7 @@ const AssuranceTaxiParis: React.FC = () => {
 
               <a
                 href="#devis"
-                className="inline-block bg-yellow-400 hover:bg-yellow-500 text-blue-900 font-bold text-lg px-8 py-4 rounded-xl transition-all transform hover:scale-105 shadow-xl"
+                className="inline-block bg-yellow-400 hover:bg-yellow-500 text-orange-900 font-bold text-lg px-8 py-4 rounded-xl transition-all transform hover:scale-105 shadow-xl"
               >
                 Devis Gratuit Taxi Paris →
               </a>
@@ -147,7 +147,7 @@ const AssuranceTaxiParis: React.FC = () => {
               </div>
 
               <div className="bg-yellow-50 border-l-4 border-yellow-500 p-6 rounded-r-xl">
-                <p className="text-lg font-semibold text-blue-900 mb-2">
+                <p className="text-lg font-semibold text-orange-900 mb-2">
                   💡 Bonne nouvelle !
                 </p>
                 <p className="text-gray-700">
@@ -268,7 +268,7 @@ const AssuranceTaxiParis: React.FC = () => {
               </h2>
 
               <div className="grid md:grid-cols-3 gap-8 mb-12">
-                <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl shadow-lg p-8 border-2 border-blue-300">
+                <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-2xl shadow-lg p-8 border-2 border-orange-300">
                   <div className="text-center mb-4">
                     <div className="bg-yellow-500 text-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                       <Shield size={32} />
@@ -476,7 +476,7 @@ const AssuranceTaxiParis: React.FC = () => {
         </section>
 
         {/* CTA Section */}
-        <section id="devis" className="py-16 bg-gradient-to-br from-blue-900 via-blue-800 to-blue-900 text-white">
+        <section id="devis" className="py-16 bg-gradient-to-br from-orange-900 via-blue-800 to-orange-900 text-white">
           <div className="container mx-auto px-4">
             <div className="max-w-6xl mx-auto">
               <div className="text-center mb-12">
@@ -496,7 +496,7 @@ const AssuranceTaxiParis: React.FC = () => {
                 <div className="space-y-6">
                   <div className="flex items-start">
                     <div className="bg-yellow-400 rounded-full p-3 mr-4">
-                      <MapPin className="text-blue-900" size={24} />
+                      <MapPin className="text-orange-900" size={24} />
                     </div>
                     <div>
                       <h3 className="text-xl font-bold mb-2">Spécialiste Paris</h3>
@@ -506,7 +506,7 @@ const AssuranceTaxiParis: React.FC = () => {
 
                   <div className="flex items-start">
                     <div className="bg-yellow-400 rounded-full p-3 mr-4">
-                      <TrendingUp className="text-blue-900" size={24} />
+                      <TrendingUp className="text-orange-900" size={24} />
                     </div>
                     <div>
                       <h3 className="text-xl font-bold mb-2">-35% Garanti</h3>
@@ -516,7 +516,7 @@ const AssuranceTaxiParis: React.FC = () => {
 
                   <div className="flex items-start">
                     <div className="bg-yellow-400 rounded-full p-3 mr-4">
-                      <Shield className="text-blue-900" size={24} />
+                      <Shield className="text-orange-900" size={24} />
                     </div>
                     <div>
                       <h3 className="text-xl font-bold mb-2">Couverture Complète</h3>
@@ -526,7 +526,7 @@ const AssuranceTaxiParis: React.FC = () => {
 
                   <div className="flex items-start">
                     <div className="bg-yellow-400 rounded-full p-3 mr-4">
-                      <Phone className="text-blue-900" size={24} />
+                      <Phone className="text-orange-900" size={24} />
                     </div>
                     <div>
                       <h3 className="text-xl font-bold mb-2">Support Parisien</h3>

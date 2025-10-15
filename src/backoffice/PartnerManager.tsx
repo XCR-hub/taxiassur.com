@@ -77,9 +77,9 @@ const PartnerManager: React.FC = () => {
 
   const getCategoryColor = (category: string) => {
     const colors = {
-      directory: 'bg-blue-100 text-blue-800',
+      directory: 'bg-orange-100 text-orange-800',
       equipment: 'bg-green-100 text-green-800',
-      service: 'bg-purple-100 text-purple-800',
+      service: 'bg-orange-100 text-orange-800',
       association: 'bg-orange-100 text-orange-800',
       media: 'bg-pink-100 text-pink-800',
       other: 'bg-gray-100 text-gray-800'
@@ -139,7 +139,7 @@ const PartnerManager: React.FC = () => {
             
             <a
               href="/backoffice"
-              className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
+              className="bg-orange-600 hover:bg-orange-700 text-white font-medium px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
             >
               <Home size={16} />
               <span>Accueil Backoffice</span>
@@ -152,7 +152,7 @@ const PartnerManager: React.FC = () => {
         <div className="flex justify-between items-center mb-8">
           <button
             onClick={() => setShowAddForm(true)}
-            className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+            className="flex items-center space-x-2 bg-orange-600 hover:bg-orange-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
           >
             <Plus size={16} />
             <span>Ajouter Partenaire</span>
@@ -337,7 +337,7 @@ const PartnerManager: React.FC = () => {
                       type="checkbox"
                       checked={formData.featured}
                       onChange={(e) => setFormData(prev => ({ ...prev, featured: e.target.checked }))}
-                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      className="rounded border-gray-300 text-orange-600 focus:ring-blue-500"
                     />
                     <span className="ml-2 text-sm text-gray-700">Partenaire mis en avant</span>
                   </label>
@@ -353,7 +353,7 @@ const PartnerManager: React.FC = () => {
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                    className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition-colors"
                   >
                     Ajouter
                   </button>
@@ -442,7 +442,7 @@ const PartnerManager: React.FC = () => {
                   href={partner.website}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                  className="text-orange-600 hover:text-orange-800 text-sm font-medium"
                 >
                   Visiter le site →
                 </a>
@@ -462,7 +462,7 @@ const PartnerManager: React.FC = () => {
             </p>
             <button
               onClick={() => setShowAddForm(true)}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+              className="bg-orange-600 hover:bg-orange-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
             >
               Ajouter le premier partenaire
             </button>

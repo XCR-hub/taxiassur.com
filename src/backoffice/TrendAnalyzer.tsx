@@ -115,7 +115,7 @@ export default function TrendAnalyzer() {
   return (
     <div className="max-w-7xl mx-auto">
       {/* Header */}
-      <div className="bg-gradient-to-r from-slate-700 via-slate-600 to-blue-700 rounded-xl p-6 mb-6 text-white shadow-lg">
+      <div className="bg-gradient-to-r from-slate-700 via-slate-600 to-orange-700 rounded-xl p-6 mb-6 text-white shadow-lg">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center space-x-3">
             <Target size={32} className="animate-pulse" />
@@ -147,7 +147,7 @@ export default function TrendAnalyzer() {
           <button
             onClick={analyzeNow}
             disabled={isAnalyzing}
-            className="flex items-center space-x-2 bg-gradient-to-r from-slate-600 to-blue-600 hover:from-slate-700 hover:to-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors disabled:opacity-50 shadow-md"
+            className="flex items-center space-x-2 bg-gradient-to-r from-slate-600 to-orange-600 hover:from-slate-700 hover:to-orange-700 text-white px-6 py-3 rounded-lg font-medium transition-colors disabled:opacity-50 shadow-md"
           >
             {isAnalyzing ? (
               <>
@@ -174,7 +174,7 @@ export default function TrendAnalyzer() {
               onClick={() => setFilter(f)}
               className={`px-4 py-2 rounded-lg font-medium transition-colors ${
                 filter === f
-                  ? 'bg-gradient-to-r from-slate-600 to-blue-600 text-white'
+                  ? 'bg-gradient-to-r from-slate-600 to-orange-600 text-white'
                   : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
               }`}
             >
@@ -187,11 +187,11 @@ export default function TrendAnalyzer() {
       {/* Opportunities List */}
       {loading ? (
         <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600"></div>
         </div>
       ) : filteredOpportunities.length === 0 ? (
         <div className="bg-slate-50 rounded-xl p-8 text-center border border-slate-300">
-          <Lightbulb size={48} className="mx-auto text-blue-600 mb-4" />
+          <Lightbulb size={48} className="mx-auto text-orange-600 mb-4" />
           <h3 className="text-xl font-bold text-slate-800 mb-2">Aucune opportunité pour le moment</h3>
           <p className="text-slate-600 mb-4">
             Cliquez sur "Analyser Maintenant" pour découvrir les meilleures opportunités SEO
@@ -199,7 +199,7 @@ export default function TrendAnalyzer() {
           <button
             onClick={analyzeNow}
             disabled={isAnalyzing}
-            className="bg-gradient-to-r from-slate-600 to-blue-600 hover:from-slate-700 hover:to-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors shadow-md"
+            className="bg-gradient-to-r from-slate-600 to-orange-600 hover:from-slate-700 hover:to-orange-700 text-white px-6 py-3 rounded-lg font-medium transition-colors shadow-md"
           >
             Lancer l'Analyse
           </button>
@@ -209,7 +209,7 @@ export default function TrendAnalyzer() {
           {filteredOpportunities.map((opp, index) => (
             <div
               key={index}
-              className="bg-white rounded-xl shadow-lg p-6 border-2 border-slate-200 hover:border-blue-300 transition-colors"
+              className="bg-white rounded-xl shadow-lg p-6 border-2 border-slate-200 hover:border-orange-300 transition-colors"
             >
               <div className="flex items-start justify-between mb-4">
                 <div className="flex-1">
@@ -245,7 +245,7 @@ export default function TrendAnalyzer() {
 
                 <button
                   onClick={() => generateArticle(opp)}
-                  className="flex items-center space-x-2 bg-gradient-to-r from-slate-600 to-blue-600 hover:from-slate-700 hover:to-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors ml-4 shadow-md"
+                  className="flex items-center space-x-2 bg-gradient-to-r from-slate-600 to-orange-600 hover:from-slate-700 hover:to-orange-700 text-white px-4 py-2 rounded-lg font-medium transition-colors ml-4 shadow-md"
                 >
                   <Search size={18} />
                   <span>Générer Article</span>
@@ -272,7 +272,7 @@ export default function TrendAnalyzer() {
       {/* Info Box */}
       <div className="mt-6 bg-slate-50 rounded-xl p-6 border border-slate-300">
         <h3 className="text-lg font-bold text-slate-800 mb-3 flex items-center">
-          <Lightbulb size={20} className="mr-2 text-blue-600" />
+          <Lightbulb size={20} className="mr-2 text-orange-600" />
           Comment ça marche ?
         </h3>
         <ul className="space-y-2 text-sm text-slate-700">

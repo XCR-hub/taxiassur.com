@@ -113,7 +113,7 @@ const AssuranceTaxiUrgence: React.FC = () => {
                     <li>✓ Malus important</li>
                     <li>✓ Activité VTC mixte</li>
                   </ul>
-                  <div className="mt-4 font-bold text-blue-900">
+                  <div className="mt-4 font-bold text-orange-900">
                     → Solution : Acceptons tous profils
                   </div>
                 </div>
@@ -208,7 +208,7 @@ const AssuranceTaxiUrgence: React.FC = () => {
           </div>
         </section>
 
-        <section id="devis-urgent" className="py-16 bg-gradient-to-br from-blue-900 to-blue-800 text-white">
+        <section id="devis-urgent" className="py-16 bg-gradient-to-br from-orange-900 to-orange-800 text-white">
           <div className="container mx-auto px-4">
             <div className="max-w-6xl mx-auto">
               <div className="text-center mb-12">
@@ -240,7 +240,7 @@ const AssuranceTaxiUrgence: React.FC = () => {
                     <p>Résiliés, malussés, jeunes conducteurs acceptés</p>
                   </div>
 
-                  <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border-2 border-blue-400">
+                  <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border-2 border-orange-400">
                     <div className="flex items-center mb-3">
                       <Phone className="text-yellow-400 mr-3" size={32} />
                       <div className="text-2xl font-black">Support Direct</div>

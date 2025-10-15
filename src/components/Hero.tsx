@@ -137,9 +137,9 @@ const Hero: React.FC = () => {
               </p>
 
               <p className="text-sm text-gray-200 leading-relaxed">
-                <strong className="text-pink-400">Insurance for taxi drivers</strong>: TaxiAssur is the leading <strong className="text-indigo-400">insurance broker for taxi</strong> in France.
-                We offer <strong className="text-teal-400">cheap taxi insurance</strong> with comprehensive coverage including RC Pro, legal protection, and 24/7 roadside assistance.
-                Get your <strong className="text-rose-400">free taxi insurance quote</strong> in 2 minutes.
+                <strong className="text-orange-400">Insurance for taxi drivers</strong>: TaxiAssur is the leading <strong className="text-yellow-400">insurance broker for taxi</strong> in France.
+                We offer <strong className="text-amber-400">cheap taxi insurance</strong> with comprehensive coverage including RC Pro, legal protection, and 24/7 roadside assistance.
+                Get your <strong className="text-orange-400">free taxi insurance quote</strong> in 2 minutes.
               </p>
             </div>
 
@@ -157,7 +157,7 @@ const Hero: React.FC = () => {
                 <MapPin className="text-green-400" size={16} aria-hidden="true" />
                 <span>{totalCities > 0 ? `${totalCities} Villes` : 'Toutes les Villes'}</span>
               </Link>
-              <Link to="/blog" className="flex items-center space-x-2 text-xs text-gray-300 hover:text-yellow-400 transition-colors bg-gray-800/50 hover:bg-gray-700/50 px-3 py-2 rounded-lg border border-gray-600 hover:border-purple-500/50">
+              <Link to="/blog" className="flex items-center space-x-2 text-xs text-gray-300 hover:text-yellow-400 transition-colors bg-gray-800/50 hover:bg-gray-700/50 px-3 py-2 rounded-lg border border-gray-600 hover:border-orange-500/50">
                 <Users className="text-yellow-400" size={16} aria-hidden="true" />
                 <span>{totalArticles > 0 ? `${totalArticles} Articles` : 'Actualités & Conseils'}</span>
               </Link>

@@ -121,7 +121,7 @@ const GestionSinistres: React.FC = () => {
               </div>
 
               <div className="ai-card text-center p-6 hover:shadow-yellow-500/40 transition-all duration-300 group">
-                <div className="w-16 h-16 bg-gradient-to-br from-yellow-400 to-indigo-500 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform shadow-lg">
+                <div className="w-16 h-16 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform shadow-lg">
                   <Clock className="text-white" size={24} />
                 </div>
                 <h3 className="text-xl font-bold text-white mb-3 drop-shadow-lg">3. Traitement</h3>

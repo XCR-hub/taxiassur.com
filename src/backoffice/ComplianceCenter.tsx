@@ -136,7 +136,7 @@ const ComplianceCenter: React.FC = () => {
               
               <a
                 href="/backoffice"
-                className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
+                className="bg-orange-600 hover:bg-orange-700 text-white font-medium px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
               >
                 <Home size={16} />
                 <span>Accueil Backoffice</span>
@@ -151,7 +151,7 @@ const ComplianceCenter: React.FC = () => {
             <div className="flex items-center space-x-4">
               <button
                 onClick={() => setShowDSRModal(true)}
-                className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+                className="flex items-center space-x-2 bg-orange-600 hover:bg-orange-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
               >
                 <Mail size={16} />
                 <span>Traiter DSR</span>
@@ -170,8 +170,8 @@ const ComplianceCenter: React.FC = () => {
           {/* Compliance Overview */}
           {report && (
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-              <Card className="text-center bg-gradient-to-br from-blue-50 to-indigo-50">
-                <Shield className="mx-auto mb-2 text-blue-600" size={24} />
+              <Card className="text-center bg-gradient-to-br from-orange-50 to-yellow-50">
+                <Shield className="mx-auto mb-2 text-orange-600" size={24} />
                 <div className="text-2xl font-bold text-gray-900">{report.totalConsents}</div>
                 <div className="text-sm text-gray-600">Consentements</div>
               </Card>
@@ -226,7 +226,7 @@ const ComplianceCenter: React.FC = () => {
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                           consent.lawfulBasis === 'consent' 
                             ? 'bg-green-100 text-green-800' 
-                            : 'bg-blue-100 text-blue-800'
+                            : 'bg-orange-100 text-orange-800'
                         }`}>
                           {consent.lawfulBasis === 'consent' ? 'Consentement' : 'Intérêt légitime'}
                         </span>
@@ -249,7 +249,7 @@ const ComplianceCenter: React.FC = () => {
                         <div className="flex space-x-2">
                           <button
                             onClick={() => setSelectedConsent(consent)}
-                            className="text-blue-600 hover:text-blue-800"
+                            className="text-orange-600 hover:text-orange-800"
                           >
                             <Eye size={16} />
                           </button>
@@ -304,7 +304,7 @@ const ComplianceCenter: React.FC = () => {
                 <h4 className="font-medium text-gray-900 mb-3">Droits des Personnes</h4>
                 <ul className="space-y-2 text-sm text-gray-700">
                   <li className="flex items-center space-x-2">
-                    <Eye className="text-blue-600" size={16} />
+                    <Eye className="text-orange-600" size={16} />
                     <span><strong>Accès :</strong> Export des données personnelles</span>
                   </li>
                   <li className="flex items-center space-x-2">
@@ -394,7 +394,7 @@ const ComplianceCenter: React.FC = () => {
                     className={`px-4 py-2 text-white rounded-lg transition-colors ${
                       dsrType === 'erasure' 
                         ? 'bg-red-600 hover:bg-red-700' 
-                        : 'bg-blue-600 hover:bg-blue-700'
+                        : 'bg-orange-600 hover:bg-orange-700'
                     } disabled:bg-gray-400`}
                   >
                     {dsrType === 'erasure' ? 'Supprimer' : 'Exporter'}

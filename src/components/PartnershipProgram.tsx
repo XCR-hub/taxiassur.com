@@ -20,7 +20,7 @@ const PartnershipProgram: React.FC = () => {
       description: 'Intégrez TaxiAssur dans vos annuaires taxi avec commission sur chaque lead qualifié',
       commission: '50-120€',
       examples: ['Annuaires taxi locaux', 'Répertoires professionnels', 'Pages Jaunes'],
-      color: 'from-yellow-400 to-indigo-500'
+      color: 'from-yellow-400 to-yellow-500'
     },
     {
       icon: FileText,

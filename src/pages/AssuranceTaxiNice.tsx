@@ -14,7 +14,7 @@ const AssuranceTaxiNice: React.FC = () => {
       </Helmet>
       <Header />
       <main>
-        <section className="bg-gradient-to-r from-cyan-900 to-blue-900 text-white py-20 text-center">
+        <section className="bg-gradient-to-r from-cyan-900 to-orange-900 text-white py-20 text-center">
           <div className="container mx-auto px-4">
             <h1 className="text-5xl font-black mb-6">Assurance Taxi Nice<br/><span className="text-yellow-400">1,820€/an</span></h1>
             <a href="#devis" className="bg-yellow-400 text-cyan-900 font-bold px-8 py-4 rounded-xl inline-block">Devis →</a>

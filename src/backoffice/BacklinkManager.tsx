@@ -94,9 +94,9 @@ const BacklinkManager: React.FC = () => {
 
   const getTypeColor = (type: string) => {
     const colors = {
-      directory: 'bg-blue-100 text-blue-800',
+      directory: 'bg-orange-100 text-orange-800',
       partnership: 'bg-green-100 text-green-800',
-      'guest-post': 'bg-purple-100 text-purple-800',
+      'guest-post': 'bg-orange-100 text-orange-800',
       forum: 'bg-orange-100 text-orange-800',
       social: 'bg-pink-100 text-pink-800',
       other: 'bg-gray-100 text-gray-800'
@@ -129,7 +129,7 @@ const BacklinkManager: React.FC = () => {
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex justify-between items-center">
             <div className="flex items-center space-x-4">
-              <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-xl flex items-center justify-center shadow-lg">
+              <div className="w-10 h-10 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-xl flex items-center justify-center shadow-lg">
                 <Link className="text-white" size={20} />
               </div>
               <div>
@@ -144,7 +144,7 @@ const BacklinkManager: React.FC = () => {
             
             <a
               href="/backoffice"
-              className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
+              className="bg-orange-600 hover:bg-orange-700 text-white font-medium px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
             >
               <Home size={16} />
               <span>Accueil Backoffice</span>
@@ -157,7 +157,7 @@ const BacklinkManager: React.FC = () => {
         <div className="flex justify-between items-center mb-8">
           <button
             onClick={() => setShowAddForm(true)}
-            className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+            className="flex items-center space-x-2 bg-orange-600 hover:bg-orange-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
           >
             <Plus size={16} />
             <span>Ajouter Backlink</span>
@@ -297,7 +297,7 @@ const BacklinkManager: React.FC = () => {
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                    className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition-colors"
                   >
                     Ajouter
                   </button>
@@ -314,12 +314,12 @@ const BacklinkManager: React.FC = () => {
               <div className="flex items-center justify-between">
                 <div className="flex-1">
                   <div className="flex items-center space-x-3 mb-2">
-                    <Link className="text-blue-600" size={16} />
+                    <Link className="text-orange-600" size={16} />
                     <a
                       href={backlink.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-blue-600 hover:text-blue-800 font-medium"
+                      className="text-orange-600 hover:text-orange-800 font-medium"
                     >
                       {backlink.domain}
                     </a>
@@ -382,7 +382,7 @@ const BacklinkManager: React.FC = () => {
             </p>
             <button
               onClick={() => setShowAddForm(true)}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+              className="bg-orange-600 hover:bg-orange-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
             >
               Ajouter le premier backlink
             </button>

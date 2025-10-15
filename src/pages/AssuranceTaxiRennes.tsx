@@ -14,10 +14,10 @@ const AssuranceTaxiRennes: React.FC = () => {
       </Helmet>
       <Header />
       <main>
-        <section className="bg-gradient-to-r from-blue-900 to-blue-800 text-white py-20 text-center">
+        <section className="bg-gradient-to-r from-orange-900 to-orange-800 text-white py-20 text-center">
           <div className="container mx-auto px-4">
             <h1 className="text-5xl font-black mb-6">Assurance Taxi Rennes<br/><span className="text-yellow-400">1450€/an</span></h1>
-            <a href="#devis" className="bg-yellow-400 text-blue-900 font-bold px-8 py-4 rounded-xl inline-block">Devis Gratuit →</a>
+            <a href="#devis" className="bg-yellow-400 text-orange-900 font-bold px-8 py-4 rounded-xl inline-block">Devis Gratuit →</a>
           </div>
         </section>
         <section className="py-16 bg-white text-center">
@@ -27,7 +27,7 @@ const AssuranceTaxiRennes: React.FC = () => {
             <p className="text-xl text-gray-600">RC Pro + Tous risques + Assistance</p>
           </div>
         </section>
-        <section id="devis" className="py-16 bg-blue-900 text-white">
+        <section id="devis" className="py-16 bg-orange-900 text-white">
           <div className="container mx-auto px-4 max-w-4xl">
             <h2 className="text-3xl font-black text-center mb-8">Devis Rennes</h2>
             <EnhancedLeadForm />

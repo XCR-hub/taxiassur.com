@@ -173,7 +173,7 @@ const ConversionAnalytics: React.FC = () => {
           <div className="max-w-7xl mx-auto px-6 py-4">
             <div className="flex justify-between items-center">
               <div className="flex items-center space-x-4">
-                <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center shadow-lg">
+                <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-pink-500 rounded-xl flex items-center justify-center shadow-lg">
                   <BarChart3 className="text-white" size={20} />
                 </div>
                 <div>
@@ -188,7 +188,7 @@ const ConversionAnalytics: React.FC = () => {
               
               <a
                 href="/backoffice"
-                className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
+                className="bg-orange-600 hover:bg-orange-700 text-white font-medium px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
               >
                 <Home size={16} />
                 <span>Accueil Backoffice</span>
@@ -222,14 +222,14 @@ const ConversionAnalytics: React.FC = () => {
               <div className="text-sm text-gray-600">Taux de conversion</div>
             </Card>
 
-            <Card className="text-center bg-gradient-to-br from-blue-50 to-indigo-50">
-              <Users className="mx-auto mb-2 text-blue-600" size={24} />
+            <Card className="text-center bg-gradient-to-br from-orange-50 to-yellow-50">
+              <Users className="mx-auto mb-2 text-orange-600" size={24} />
               <div className="text-2xl font-bold text-gray-900">{totalConversions}</div>
               <div className="text-sm text-gray-600">Leads générés</div>
             </Card>
 
-            <Card className="text-center bg-gradient-to-br from-purple-50 to-pink-50">
-              <Clock className="mx-auto mb-2 text-purple-600" size={24} />
+            <Card className="text-center bg-gradient-to-br from-orange-50 to-pink-50">
+              <Clock className="mx-auto mb-2 text-orange-600" size={24} />
               <div className="text-2xl font-bold text-gray-900">{data.formAnalytics.averageTime}s</div>
               <div className="text-sm text-gray-600">Temps moyen formulaire</div>
             </Card>
@@ -245,7 +245,7 @@ const ConversionAnalytics: React.FC = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
             <Card>
               <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
-                <TrendingUp className="mr-2 text-blue-600" size={20} />
+                <TrendingUp className="mr-2 text-orange-600" size={20} />
                 Entonnoir de Conversion
               </h3>
               
@@ -262,7 +262,7 @@ const ConversionAnalytics: React.FC = () => {
                     
                     <div className="w-full bg-gray-200 rounded-full h-3">
                       <div 
-                        className="bg-gradient-to-r from-blue-500 to-indigo-500 h-3 rounded-full transition-all duration-500"
+                        className="bg-gradient-to-r from-orange-500 to-yellow-500 h-3 rounded-full transition-all duration-500"
                         style={{ width: `${(step.conversions / data.funnelSteps[0].visitors) * 100}%` }}
                       ></div>
                     </div>
@@ -291,8 +291,8 @@ const ConversionAnalytics: React.FC = () => {
                     <div className="flex items-center space-x-3">
                       <div className={`w-3 h-3 rounded-full ${
                         index === 0 ? 'bg-green-500' : 
-                        index === 1 ? 'bg-blue-500' : 
-                        index === 2 ? 'bg-purple-500' : 'bg-gray-400'
+                        index === 1 ? 'bg-orange-500' : 
+                        index === 2 ? 'bg-orange-500' : 'bg-gray-400'
                       }`}></div>
                       <span className="font-medium text-gray-900">{source.source}</span>
                     </div>
@@ -310,7 +310,7 @@ const ConversionAnalytics: React.FC = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
             <Card>
               <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
-                <Target className="mr-2 text-purple-600" size={20} />
+                <Target className="mr-2 text-orange-600" size={20} />
                 Performance par Ville
               </h3>
               
@@ -353,9 +353,9 @@ const ConversionAnalytics: React.FC = () => {
                   </div>
                 ))}
                 
-                <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-                  <h4 className="font-medium text-blue-900 mb-2">💡 Recommandations</h4>
-                  <ul className="text-sm text-blue-800 space-y-1">
+                <div className="mt-6 p-4 bg-orange-50 rounded-lg">
+                  <h4 className="font-medium text-orange-900 mb-2">💡 Recommandations</h4>
+                  <ul className="text-sm text-orange-800 space-y-1">
                     <li>• Simplifier le champ avec le plus d'abandon</li>
                     <li>• Ajouter des messages d'aide contextuels</li>
                     <li>• Tester un formulaire en plusieurs étapes</li>
@@ -405,7 +405,7 @@ const ConversionAnalytics: React.FC = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <Card>
               <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
-                <PieChart className="mr-2 text-indigo-600" size={20} />
+                <PieChart className="mr-2 text-yellow-600" size={20} />
                 Répartition par Appareil
               </h3>
               
@@ -415,7 +415,7 @@ const ConversionAnalytics: React.FC = () => {
                     <div className="flex items-center space-x-3">
                       <div className={`w-4 h-4 rounded-full ${
                         device.device === 'Mobile' ? 'bg-green-500' :
-                        device.device === 'Desktop' ? 'bg-blue-500' : 'bg-purple-500'
+                        device.device === 'Desktop' ? 'bg-orange-500' : 'bg-orange-500'
                       }`}></div>
                       <span className="font-medium text-gray-900">{device.device}</span>
                     </div>
@@ -443,19 +443,19 @@ const ConversionAnalytics: React.FC = () => {
               </h3>
               
               <div className="space-y-4">
-                <div className="p-4 bg-blue-50 rounded-lg">
+                <div className="p-4 bg-orange-50 rounded-lg">
                   <div className="flex justify-between items-center mb-2">
-                    <span className="font-medium text-blue-900">CTA Principal</span>
-                    <span className="text-sm text-blue-600">En cours</span>
+                    <span className="font-medium text-orange-900">CTA Principal</span>
+                    <span className="text-sm text-orange-600">En cours</span>
                   </div>
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
-                      <div className="text-blue-800">Variante A: "Devis Gratuit"</div>
-                      <div className="text-blue-600">Conv: 3.2% (50% trafic)</div>
+                      <div className="text-orange-800">Variante A: "Devis Gratuit"</div>
+                      <div className="text-orange-600">Conv: 3.2% (50% trafic)</div>
                     </div>
                     <div>
-                      <div className="text-blue-800">Variante B: "Économisez 35%"</div>
-                      <div className="text-blue-600">Conv: 4.1% (50% trafic)</div>
+                      <div className="text-orange-800">Variante B: "Économisez 35%"</div>
+                      <div className="text-orange-600">Conv: 4.1% (50% trafic)</div>
                     </div>
                   </div>
                   <div className="mt-2 text-xs text-green-600 font-medium">
@@ -463,12 +463,12 @@ const ConversionAnalytics: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="p-4 bg-purple-50 rounded-lg">
+                <div className="p-4 bg-orange-50 rounded-lg">
                   <div className="flex justify-between items-center mb-2">
-                    <span className="font-medium text-purple-900">Formulaire</span>
-                    <span className="text-sm text-purple-600">Planifié</span>
+                    <span className="font-medium text-orange-900">Formulaire</span>
+                    <span className="text-sm text-orange-600">Planifié</span>
                   </div>
-                  <div className="text-sm text-purple-800">
+                  <div className="text-sm text-orange-800">
                     Test formulaire 1 étape vs 3 étapes
                   </div>
                 </div>
@@ -503,18 +503,18 @@ const ConversionAnalytics: React.FC = () => {
                 </ul>
               </div>
               
-              <div className="p-4 bg-blue-50 rounded-lg">
-                <h4 className="font-medium text-blue-900 mb-2">📊 Priorité Moyenne</h4>
-                <ul className="text-sm text-blue-800 space-y-1">
+              <div className="p-4 bg-orange-50 rounded-lg">
+                <h4 className="font-medium text-orange-900 mb-2">📊 Priorité Moyenne</h4>
+                <ul className="text-sm text-orange-800 space-y-1">
                   <li>• Améliorer temps de chargement mobile</li>
                   <li>• Ajouter témoignages sur formulaire</li>
                   <li>• Optimiser pages villes top 5</li>
                 </ul>
               </div>
               
-              <div className="p-4 bg-purple-50 rounded-lg">
-                <h4 className="font-medium text-purple-900 mb-2">🔬 Tests Futurs</h4>
-                <ul className="text-sm text-purple-800 space-y-1">
+              <div className="p-4 bg-orange-50 rounded-lg">
+                <h4 className="font-medium text-orange-900 mb-2">🔬 Tests Futurs</h4>
+                <ul className="text-sm text-orange-800 space-y-1">
                   <li>• Formulaire progressif</li>
                   <li>• Chat bot intégré</li>
                   <li>• Calculateur de prix</li>

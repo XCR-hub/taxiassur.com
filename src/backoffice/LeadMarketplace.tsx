@@ -177,7 +177,7 @@ const LeadMarketplace: React.FC = () => {
               
               <a
                 href="/backoffice"
-                className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
+                className="bg-orange-600 hover:bg-orange-700 text-white font-medium px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
               >
                 <Home size={16} />
                 <span>Accueil Backoffice</span>
@@ -196,8 +196,8 @@ const LeadMarketplace: React.FC = () => {
 
           {/* Stats */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <Card className="text-center bg-gradient-to-br from-blue-50 to-indigo-50">
-              <Users className="mx-auto mb-2 text-blue-600" size={24} />
+            <Card className="text-center bg-gradient-to-br from-orange-50 to-yellow-50">
+              <Users className="mx-auto mb-2 text-orange-600" size={24} />
               <div className="text-2xl font-bold text-gray-900">{stats.totalLeads}</div>
               <div className="text-sm text-gray-600">Leads totaux</div>
             </Card>
@@ -208,8 +208,8 @@ const LeadMarketplace: React.FC = () => {
               <div className="text-sm text-gray-600">Vendus aujourd'hui</div>
             </Card>
 
-            <Card className="text-center bg-gradient-to-br from-purple-50 to-pink-50">
-              <Euro className="mx-auto mb-2 text-purple-600" size={24} />
+            <Card className="text-center bg-gradient-to-br from-orange-50 to-pink-50">
+              <Euro className="mx-auto mb-2 text-orange-600" size={24} />
               <div className="text-2xl font-bold text-gray-900">{stats.revenue}€</div>
               <div className="text-sm text-gray-600">CA total</div>
             </Card>
@@ -268,7 +268,7 @@ const LeadMarketplace: React.FC = () => {
               <div className="flex items-end">
                 <button
                   onClick={loadLeads}
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+                  className="w-full bg-orange-600 hover:bg-orange-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
                 >
                   Actualiser
                 </button>
@@ -288,8 +288,8 @@ const LeadMarketplace: React.FC = () => {
                       </h3>
                       <span className={`px-3 py-1 rounded-full text-xs font-medium ${
                         lead.type === 'exclusive' 
-                          ? 'bg-purple-100 text-purple-800' 
-                          : 'bg-blue-100 text-blue-800'
+                          ? 'bg-orange-100 text-orange-800' 
+                          : 'bg-orange-100 text-orange-800'
                       }`}>
                         {lead.type === 'exclusive' ? 'Exclusif' : 'Partagé'}
                       </span>
@@ -331,7 +331,7 @@ const LeadMarketplace: React.FC = () => {
                       <span className="text-red-600 font-medium">Vendu</span>
                     )}
                     
-                    <button className="text-blue-600 hover:text-blue-800">
+                    <button className="text-orange-600 hover:text-orange-800">
                       <Eye size={16} />
                     </button>
                   </div>

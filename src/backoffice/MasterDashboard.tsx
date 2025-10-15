@@ -256,7 +256,7 @@ const MasterDashboard: React.FC = () => {
 
             <button
               onClick={loadAllData}
-              className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-semibold transition-all"
+              className="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg font-semibold transition-all"
             >
               <RefreshCw className="w-5 h-5" />
             </button>
@@ -291,17 +291,17 @@ const MasterDashboard: React.FC = () => {
 
       {/* Stats Temps Réel */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <div className="bg-gradient-to-br from-blue-900/40 to-blue-800/40 border border-blue-500/30 rounded-lg p-6">
+        <div className="bg-gradient-to-br from-orange-900/40 to-orange-800/40 border border-orange-500/30 rounded-lg p-6">
           <div className="flex items-center justify-between mb-4">
-            <Activity className="w-8 h-8 text-blue-400" />
-            <span className="text-xs font-semibold text-blue-300 bg-blue-500/20 px-2 py-1 rounded">
+            <Activity className="w-8 h-8 text-orange-400" />
+            <span className="text-xs font-semibold text-orange-300 bg-orange-500/20 px-2 py-1 rounded">
               LIVE
             </span>
           </div>
           <p className="text-3xl font-bold text-white mb-1">
             {stats?.active_sessions || 0}
           </p>
-          <p className="text-blue-300 text-sm">Sessions actives (5 min)</p>
+          <p className="text-orange-300 text-sm">Sessions actives (5 min)</p>
         </div>
 
         <div className="bg-gradient-to-br from-green-900/40 to-green-800/40 border border-green-500/30 rounded-lg p-6">
@@ -326,17 +326,17 @@ const MasterDashboard: React.FC = () => {
           <p className="text-amber-300 text-sm">Conversions aujourd'hui</p>
         </div>
 
-        <div className="bg-gradient-to-br from-purple-900/40 to-purple-800/40 border border-purple-500/30 rounded-lg p-6">
+        <div className="bg-gradient-to-br from-orange-900/40 to-orange-800/40 border border-orange-500/30 rounded-lg p-6">
           <div className="flex items-center justify-between mb-4">
-            <FileText className="w-8 h-8 text-blue-400" />
-            <span className="text-xs font-semibold text-purple-300 bg-purple-500/20 px-2 py-1 rounded">
+            <FileText className="w-8 h-8 text-orange-400" />
+            <span className="text-xs font-semibold text-orange-300 bg-orange-500/20 px-2 py-1 rounded">
               PENDING
             </span>
           </div>
           <p className="text-3xl font-bold text-white mb-1">
             {stats?.pending_quotes || 0}
           </p>
-          <p className="text-purple-300 text-sm">Devis en attente</p>
+          <p className="text-orange-300 text-sm">Devis en attente</p>
         </div>
       </div>
 
@@ -455,7 +455,7 @@ const MasterDashboard: React.FC = () => {
       {/* Top Pages */}
       <div className="mb-8">
         <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-2">
-          <BarChart3 className="w-6 h-6 text-blue-400" />
+          <BarChart3 className="w-6 h-6 text-orange-400" />
           Top 10 Pages Aujourd'hui
         </h2>
 
@@ -496,7 +496,7 @@ const MasterDashboard: React.FC = () => {
       {/* Sessions Récentes */}
       <div>
         <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-2">
-          <Activity className="w-6 h-6 text-blue-400" />
+          <Activity className="w-6 h-6 text-orange-400" />
           Sessions Récentes (Live)
         </h2>
 

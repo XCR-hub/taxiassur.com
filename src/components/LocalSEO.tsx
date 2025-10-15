@@ -94,7 +94,7 @@ const LocalSEO: React.FC = () => {
                 <div className="text-sm text-gray-200 font-medium">Départements couverts</div>
               </div>
               <div className="text-center">
-                <div className="w-20 h-20 bg-gradient-to-br from-yellow-400 to-indigo-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-2xl">
+                <div className="w-20 h-20 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-2xl">
                   <Users className="text-white" size={24} />
                 </div>
                 <div className="text-4xl font-bold text-white">100+</div>

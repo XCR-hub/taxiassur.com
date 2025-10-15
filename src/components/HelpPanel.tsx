@@ -137,7 +137,7 @@ const HelpPanel: React.FC<HelpPanelProps> = ({
                   href={videoUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 px-3 py-2 bg-gray-900 hover:bg-purple-700 text-white rounded-lg text-sm transition"
+                  className="flex items-center gap-2 px-3 py-2 bg-gray-900 hover:bg-orange-700 text-white rounded-lg text-sm transition"
                 >
                   <ExternalLink className="w-4 h-4" />
                   Voir la vidéo
@@ -151,7 +151,7 @@ const HelpPanel: React.FC<HelpPanelProps> = ({
                 href="/docs/guides/INDEX.md"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 text-sm text-yellow-400 hover:text-blue-300 transition"
+                className="flex items-center justify-center gap-2 text-sm text-yellow-400 hover:text-orange-300 transition"
               >
                 <FileText className="w-4 h-4" />
                 Voir toute la documentation

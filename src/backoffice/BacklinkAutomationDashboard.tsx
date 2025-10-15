@@ -180,9 +180,9 @@ const BacklinkAutomationDashboard: React.FC = () => {
   const getActionIcon = (actionType: string) => {
     switch (actionType) {
       case 'email_sent':
-        return <Send size={16} className="text-blue-600" />;
+        return <Send size={16} className="text-orange-600" />;
       case 'email_opened':
-        return <Eye size={16} className="text-purple-600" />;
+        return <Eye size={16} className="text-orange-600" />;
       case 'email_replied':
         return <Mail size={16} className="text-green-600" />;
       case 'backlink_verified':
@@ -232,7 +232,7 @@ const BacklinkAutomationDashboard: React.FC = () => {
             </h1>
             <button
               onClick={() => navigate('/backoffice')}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+              className="flex items-center gap-2 px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition-colors"
             >
               <Home size={18} />
               Accueil Backoffice
@@ -245,17 +245,17 @@ const BacklinkAutomationDashboard: React.FC = () => {
 
         {/* Stats globales */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
-          <Card className="bg-gradient-to-br from-blue-50 to-indigo-50">
+          <Card className="bg-gradient-to-br from-orange-50 to-yellow-50">
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-sm text-gray-600 mb-1">Emails Envoyés</p>
                 <p className="text-3xl font-bold text-gray-900">{stats.totalSent}</p>
               </div>
-              <Send className="text-blue-600" size={24} />
+              <Send className="text-orange-600" size={24} />
             </div>
           </Card>
 
-          <Card className="bg-gradient-to-br from-purple-50 to-pink-50">
+          <Card className="bg-gradient-to-br from-orange-50 to-pink-50">
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-sm text-gray-600 mb-1">Emails Ouverts</p>
@@ -264,7 +264,7 @@ const BacklinkAutomationDashboard: React.FC = () => {
                   {stats.totalSent > 0 ? ((stats.totalOpened / stats.totalSent) * 100).toFixed(1) : 0}% taux ouverture
                 </p>
               </div>
-              <Eye className="text-purple-600" size={24} />
+              <Eye className="text-orange-600" size={24} />
             </div>
           </Card>
 
@@ -301,7 +301,7 @@ const BacklinkAutomationDashboard: React.FC = () => {
         <Card className="mb-8">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-bold text-gray-900 flex items-center">
-              <BarChart3 className="mr-2 text-indigo-600" size={24} />
+              <BarChart3 className="mr-2 text-yellow-600" size={24} />
               Campagnes d'Outreach
             </h2>
             <button
@@ -381,7 +381,7 @@ const BacklinkAutomationDashboard: React.FC = () => {
         {/* Journal d'activité */}
         <Card>
           <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
-            <Activity className="mr-2 text-purple-600" size={24} />
+            <Activity className="mr-2 text-orange-600" size={24} />
             Journal d'Activité (dernières actions)
           </h2>
 

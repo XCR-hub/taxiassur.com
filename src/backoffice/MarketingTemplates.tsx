@@ -126,7 +126,7 @@ const MarketingTemplates: React.FC = () => {
         {/* LinkedIn - Page Vitrine */}
         <Card className="bg-slate-800 border-slate-700">
           <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-            <ExternalLink className="w-6 h-6 text-blue-400" />
+            <ExternalLink className="w-6 h-6 text-orange-400" />
             LinkedIn - Configuration Page Vitrine
           </h2>
 
@@ -137,7 +137,7 @@ const MarketingTemplates: React.FC = () => {
                 <h3 className="text-lg font-semibold text-white">Description Courte</h3>
                 <button
                   onClick={() => handleCopy(marketingTemplates.linkedin.showcase_description_courte, 'linkedin-short')}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2"
+                  className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg flex items-center gap-2"
                 >
                   {copied === 'linkedin-short' ? (
                     <>
@@ -163,7 +163,7 @@ const MarketingTemplates: React.FC = () => {
                 <h3 className="text-lg font-semibold text-white">Description Longue (À propos)</h3>
                 <button
                   onClick={() => handleCopy(marketingTemplates.linkedin.showcase_description_longue, 'linkedin-long')}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2"
+                  className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg flex items-center gap-2"
                 >
                   {copied === 'linkedin-long' ? (
                     <>
@@ -201,7 +201,7 @@ const MarketingTemplates: React.FC = () => {
                 </div>
                 <div>
                   <label className="text-sm font-medium text-slate-400">URL Politique de Confidentialité</label>
-                  <p className="text-blue-400 mt-1">{marketingTemplates.linkedin.lead_gen_form.privacy_url}</p>
+                  <p className="text-orange-400 mt-1">{marketingTemplates.linkedin.lead_gen_form.privacy_url}</p>
                 </div>
               </div>
             </div>
@@ -211,7 +211,7 @@ const MarketingTemplates: React.FC = () => {
         {/* LinkedIn - Posts */}
         <Card className="bg-slate-800 border-slate-700">
           <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-            <ExternalLink className="w-6 h-6 text-blue-400" />
+            <ExternalLink className="w-6 h-6 text-orange-400" />
             LinkedIn - Posts Prêts à Publier
           </h2>
 
@@ -223,7 +223,7 @@ const MarketingTemplates: React.FC = () => {
                     <h3 className="text-lg font-semibold text-white">{post.titre}</h3>
                     <div className="flex flex-wrap gap-2 mt-2">
                       {post.hashtags.map((tag) => (
-                        <span key={tag} className="text-xs bg-blue-600 text-white px-2 py-1 rounded">
+                        <span key={tag} className="text-xs bg-orange-600 text-white px-2 py-1 rounded">
                           #{tag}
                         </span>
                       ))}
@@ -231,7 +231,7 @@ const MarketingTemplates: React.FC = () => {
                   </div>
                   <button
                     onClick={() => handleCopy(post.texte, `linkedin-post-${key}`)}
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2"
+                    className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg flex items-center gap-2"
                   >
                     {copied === `linkedin-post-${key}` ? (
                       <>
@@ -257,7 +257,7 @@ const MarketingTemplates: React.FC = () => {
         {/* Communiqué de Presse */}
         <Card className="bg-slate-800 border-slate-700">
           <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-            <FileText className="w-6 h-6 text-blue-400" />
+            <FileText className="w-6 h-6 text-orange-400" />
             Communiqué de Presse
           </h2>
 
@@ -271,7 +271,7 @@ const MarketingTemplates: React.FC = () => {
                       `${marketingTemplates.presse.communique_template.objet}\n\n${marketingTemplates.presse.communique_template.intro}\n\nPoints clés :\n${marketingTemplates.presse.communique_template.points_cles.join('\n')}\n\n${marketingTemplates.presse.communique_template.contact.label}\n${marketingTemplates.presse.communique_template.contact.fields.join('\n')}\n\n${marketingTemplates.presse.communique_template.contact.note}`,
                       'presse'
                     )}
-                    className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg flex items-center gap-2"
+                    className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg flex items-center gap-2"
                   >
                     {copied === 'presse' ? (
                       <>

@@ -18,7 +18,7 @@ const ComparateurAXA: React.FC = () => {
       <Header />
 
       <main className="min-h-screen bg-white">
-        <section className="bg-gradient-to-br from-blue-900 to-blue-800 text-white py-20">
+        <section className="bg-gradient-to-br from-orange-900 to-orange-800 text-white py-20">
           <div className="container mx-auto px-4">
             <div className="max-w-4xl mx-auto text-center">
               <h1 className="text-4xl md:text-5xl font-black mb-6">

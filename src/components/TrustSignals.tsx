@@ -18,7 +18,7 @@ const TrustSignals: React.FC = () => {
       subtitle: 'Spécialiste Taxi',
       description: 'Leader reconnu du courtage en assurance taxi en France',
       color: 'text-yellow-600',
-      bgColor: 'bg-purple-50'
+      bgColor: 'bg-orange-50'
     },
     {
       icon: Users,

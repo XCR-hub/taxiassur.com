@@ -121,8 +121,8 @@ const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
             </form>
 
             {/* Default Credentials Info */}
-            <div className="mt-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-yellow-200 rounded-xl">
-              <h3 className="text-lg font-bold text-blue-900 mb-3 flex items-center">
+            <div className="mt-8 p-6 bg-gradient-to-r from-orange-50 to-yellow-50 border-2 border-yellow-200 rounded-xl">
+              <h3 className="text-lg font-bold text-orange-900 mb-3 flex items-center">
                 <Lock className="mr-2" size={18} />
                 Informations de connexion
               </h3>

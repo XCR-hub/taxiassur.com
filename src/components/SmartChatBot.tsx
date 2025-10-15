@@ -278,7 +278,7 @@ const SmartChatBot: React.FC = () => {
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
-          className="fixed bottom-6 right-6 w-14 h-14 bg-gradient-to-r from-yellow-400 to-indigo-500 hover:from-yellow-500 hover:to-yellow-600 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center z-40 animate-pulse"
+          className="fixed bottom-6 right-6 w-14 h-14 bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center z-40 animate-pulse"
         >
           <MessageCircle size={24} />
         </button>
@@ -288,7 +288,7 @@ const SmartChatBot: React.FC = () => {
       {isOpen && (
         <div className="fixed bottom-6 right-6 w-80 h-96 bg-white rounded-2xl shadow-2xl border border-gray-200 flex flex-col z-50">
           {/* Header */}
-          <div className="bg-gradient-to-r from-yellow-400 to-indigo-500 text-white p-4 rounded-t-2xl flex items-center justify-between">
+          <div className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-white p-4 rounded-t-2xl flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <div className="w-8 h-8 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
                 <Bot size={16} />

@@ -18,15 +18,15 @@ export const backofficeTheme = {
   textDisabled: 'text-slate-500',
 
   // Button colors
-  buttonPrimary: 'bg-blue-600 hover:bg-blue-700 text-white',
+  buttonPrimary: 'bg-orange-600 hover:bg-orange-700 text-white',
   buttonSecondary: 'bg-slate-700 hover:bg-slate-600 text-white',
   buttonSuccess: 'bg-green-600 hover:bg-green-700 text-white',
   buttonDanger: 'bg-red-600 hover:bg-red-700 text-white',
   buttonWarning: 'bg-amber-600 hover:bg-amber-700 text-white',
 
   // Accent gradients
-  gradientBlue: 'bg-gradient-to-br from-blue-600 to-blue-700',
-  gradientPurple: 'bg-gradient-to-br from-purple-600 to-purple-700',
+  gradientBlue: 'bg-gradient-to-br from-orange-600 to-orange-700',
+  gradientPurple: 'bg-gradient-to-br from-orange-600 to-orange-700',
   gradientGreen: 'bg-gradient-to-br from-green-600 to-green-700',
   gradientAmber: 'bg-gradient-to-br from-amber-600 to-amber-700',
   gradientRed: 'bg-gradient-to-br from-red-600 to-red-700',
@@ -36,16 +36,16 @@ export const backofficeTheme = {
   statusSuccess: 'text-green-400 bg-green-900/20',
   statusWarning: 'text-amber-400 bg-amber-900/20',
   statusError: 'text-red-400 bg-red-900/20',
-  statusInfo: 'text-blue-400 bg-blue-900/20',
+  statusInfo: 'text-orange-400 bg-orange-900/20',
 
   // Border colors
   borderDefault: 'border-slate-700',
   borderHover: 'hover:border-slate-600',
-  borderFocus: 'focus:border-blue-500',
+  borderFocus: 'focus:border-orange-500',
 
   // Loading states
   skeleton: 'bg-slate-700 animate-pulse',
-  spinner: 'text-blue-500',
+  spinner: 'text-orange-500',
 };
 
 // Classes complètes pré-composées pour usage direct
@@ -54,17 +54,17 @@ export const themeClasses = {
   container: 'max-w-7xl mx-auto space-y-6',
   card: 'bg-slate-800 border border-slate-700 rounded-lg p-6',
   cardHover: 'bg-slate-800 border border-slate-700 rounded-lg p-6 hover:border-slate-600 transition',
-  input: 'w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500',
-  select: 'w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500',
+  input: 'w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:border-orange-500 focus:ring-1 focus:ring-blue-500',
+  select: 'w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:border-orange-500 focus:ring-1 focus:ring-blue-500',
   button: 'px-4 py-2 rounded-lg font-semibold transition flex items-center gap-2',
-  buttonPrimary: 'px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition flex items-center gap-2',
+  buttonPrimary: 'px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-semibold transition flex items-center gap-2',
   buttonSecondary: 'px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg font-semibold transition flex items-center gap-2',
   buttonSuccess: 'px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition flex items-center gap-2',
   badge: 'px-3 py-1 rounded-full text-sm font-semibold',
   badgeSuccess: 'px-3 py-1 rounded-full text-sm font-semibold bg-green-900/20 text-green-400 border border-green-500/30',
   badgeWarning: 'px-3 py-1 rounded-full text-sm font-semibold bg-amber-900/20 text-amber-400 border border-amber-500/30',
   badgeError: 'px-3 py-1 rounded-full text-sm font-semibold bg-red-900/20 text-red-400 border border-red-500/30',
-  badgeInfo: 'px-3 py-1 rounded-full text-sm font-semibold bg-blue-900/20 text-blue-400 border border-blue-500/30',
+  badgeInfo: 'px-3 py-1 rounded-full text-sm font-semibold bg-orange-900/20 text-orange-400 border border-orange-500/30',
   table: 'w-full border-collapse',
   tableRow: 'border-b border-slate-700 hover:bg-slate-700/30 transition',
   tableHeader: 'px-4 py-3 text-left text-slate-300 font-semibold text-sm',

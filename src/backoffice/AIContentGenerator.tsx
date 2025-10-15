@@ -320,7 +320,7 @@ ${generatedContent.faq?.map(f => `**${f.question}**\n${f.answer}`).join('\n\n')}
 
   return (
     <div className="max-w-6xl mx-auto">
-      <div className="bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl p-6 mb-6 text-white">
+      <div className="bg-gradient-to-r from-orange-600 to-orange-600 rounded-xl p-6 mb-6 text-white">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center space-x-3">
             <Sparkles size={32} className="animate-pulse" />
@@ -334,7 +334,7 @@ ${generatedContent.faq?.map(f => `**${f.question}**\n${f.answer}`).join('\n\n')}
             <span>Retour</span>
           </button>
         </div>
-        <p className="text-purple-100">
+        <p className="text-orange-100">
           Créez des articles optimisés pour Google en 30 secondes avec ChatGPT-4
         </p>
       </div>
@@ -357,11 +357,11 @@ ${generatedContent.faq?.map(f => `**${f.question}**\n${f.answer}`).join('\n\n')}
                       onClick={() => setContentType(option.value as any)}
                       className={`flex items-start space-x-3 p-4 rounded-lg border-2 transition-all ${
                         contentType === option.value
-                          ? 'border-purple-500 bg-purple-50'
-                          : 'border-gray-200 hover:border-purple-300'
+                          ? 'border-orange-500 bg-orange-50'
+                          : 'border-gray-200 hover:border-orange-300'
                       }`}
                     >
-                      <Icon className={contentType === option.value ? 'text-purple-600' : 'text-gray-600'} size={24} />
+                      <Icon className={contentType === option.value ? 'text-orange-600' : 'text-gray-600'} size={24} />
                       <div className="text-left">
                         <p className="font-medium text-gray-800">{option.label}</p>
                         <p className="text-sm text-gray-600">{option.description}</p>
@@ -423,10 +423,10 @@ ${generatedContent.faq?.map(f => `**${f.question}**\n${f.answer}`).join('\n\n')}
                   id="generateImage"
                   checked={generateImage}
                   onChange={(e) => setGenerateImage(e.target.checked)}
-                  className="w-5 h-5 text-purple-600 rounded focus:ring-2 focus:ring-purple-500"
+                  className="w-5 h-5 text-orange-600 rounded focus:ring-2 focus:ring-purple-500"
                 />
                 <label htmlFor="generateImage" className="text-sm font-medium text-gray-700 flex items-center space-x-2">
-                  <ImageIcon size={20} className="text-purple-600" />
+                  <ImageIcon size={20} className="text-orange-600" />
                   <span>Générer une image d'illustration</span>
                 </label>
               </div>
@@ -479,7 +479,7 @@ ${generatedContent.faq?.map(f => `**${f.question}**\n${f.answer}`).join('\n\n')}
             <button
               onClick={handleGenerate}
               disabled={isGenerating || !keyword.trim()}
-              className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-4 rounded-lg font-medium hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center space-x-2"
+              className="w-full bg-gradient-to-r from-orange-600 to-orange-600 text-white px-6 py-4 rounded-lg font-medium hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center space-x-2"
             >
               {isGenerating ? (
                 <>
@@ -495,8 +495,8 @@ ${generatedContent.faq?.map(f => `**${f.question}**\n${f.answer}`).join('\n\n')}
             </button>
 
             {usage && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                <p className="text-sm text-blue-800">
+              <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
+                <p className="text-sm text-orange-800">
                   <strong>Coût:</strong> {usage.cost.toFixed(4)}€ ({usage.tokens.toLocaleString()} tokens)
                 </p>
               </div>
@@ -534,7 +534,7 @@ ${generatedContent.faq?.map(f => `**${f.question}**\n${f.answer}`).join('\n\n')}
                 </button>
                 <button
                   onClick={downloadAsHTML}
-                  className="flex items-center space-x-1 px-3 py-2 bg-blue-100 hover:bg-blue-200 rounded-lg transition-colors text-sm"
+                  className="flex items-center space-x-1 px-3 py-2 bg-orange-100 hover:bg-orange-200 rounded-lg transition-colors text-sm"
                 >
                   <Download size={16} />
                   <span>HTML</span>
@@ -557,7 +557,7 @@ ${generatedContent.faq?.map(f => `**${f.question}**\n${f.answer}`).join('\n\n')}
           {isGenerating && (
             <div className="h-96 flex items-center justify-center">
               <div className="text-center">
-                <Loader2 className="animate-spin mx-auto text-purple-600 mb-3" size={48} />
+                <Loader2 className="animate-spin mx-auto text-orange-600 mb-3" size={48} />
                 <p className="text-gray-600 font-medium">Génération en cours...</p>
                 <p className="text-sm text-gray-600 mt-2">Cela peut prendre 20-30 secondes</p>
               </div>
@@ -566,7 +566,7 @@ ${generatedContent.faq?.map(f => `**${f.question}**\n${f.answer}`).join('\n\n')}
 
           {generatedContent && (
             <div className="space-y-4 max-h-[600px] overflow-y-auto">
-              <div className="bg-purple-50 rounded-lg p-4">
+              <div className="bg-orange-50 rounded-lg p-4">
                 <h4 className="font-bold text-lg text-gray-800 mb-2">{generatedContent.title}</h4>
                 <p className="text-sm text-gray-600 mb-2">
                   <strong>Slug:</strong> {generatedContent.slug}
@@ -577,15 +577,15 @@ ${generatedContent.faq?.map(f => `**${f.question}**\n${f.answer}`).join('\n\n')}
               </div>
 
               {generatedContent.featuredImage && (
-                <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-lg p-4">
+                <div className="bg-gradient-to-br from-orange-50 to-orange-50 rounded-lg p-4">
                   <h4 className="font-bold text-gray-800 mb-3 flex items-center space-x-2">
-                    <ImageIcon size={20} className="text-purple-600" />
+                    <ImageIcon size={20} className="text-orange-600" />
                     <span>Image générée</span>
                   </h4>
                   <img
                     src={generatedContent.featuredImage}
                     alt={generatedContent.imageAlt || generatedContent.title}
-                    className="w-full h-auto rounded-lg shadow-lg border-2 border-purple-200"
+                    className="w-full h-auto rounded-lg shadow-lg border-2 border-orange-200"
                   />
                   {generatedContent.imageAlt && (
                     <p className="text-xs text-gray-600 mt-2">
@@ -600,7 +600,7 @@ ${generatedContent.faq?.map(f => `**${f.question}**\n${f.answer}`).join('\n\n')}
               </div>
 
               {generatedContent.faq && generatedContent.faq.length > 0 && (
-                <div className="bg-blue-50 rounded-lg p-4">
+                <div className="bg-orange-50 rounded-lg p-4">
                   <h4 className="font-bold text-gray-800 mb-3">FAQ Générée</h4>
                   <div className="space-y-3">
                     {generatedContent.faq.map((faq, index) => (
@@ -616,7 +616,7 @@ ${generatedContent.faq?.map(f => `**${f.question}**\n${f.answer}`).join('\n\n')}
               {generatedContent.keywords && (
                 <div className="flex flex-wrap gap-2">
                   {generatedContent.keywords.map((kw, index) => (
-                    <span key={index} className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm">
+                    <span key={index} className="px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-sm">
                       {kw}
                     </span>
                   ))}
@@ -627,7 +627,7 @@ ${generatedContent.faq?.map(f => `**${f.question}**\n${f.answer}`).join('\n\n')}
         </div>
       </div>
 
-      <div className="mt-6 bg-gradient-to-r from-green-50 to-blue-50 rounded-xl p-6">
+      <div className="mt-6 bg-gradient-to-r from-green-50 to-orange-50 rounded-xl p-6">
         <h3 className="text-lg font-bold text-gray-800 mb-3">💡 Conseils d'Utilisation</h3>
         <ul className="space-y-2 text-sm text-gray-700">
           <li>✅ <strong>Mots-clés longue traîne</strong> : Plus spécifiques = meilleur positionnement</li>

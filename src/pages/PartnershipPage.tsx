@@ -43,7 +43,7 @@ const PartnershipPage: React.FC = () => {
       description: 'Intégrez TaxiAssur dans vos annuaires taxi avec commission sur chaque lead qualifié',
       commission: '50-80€',
       examples: ['Annuaires taxi locaux', 'Répertoires professionnels', 'Pages Jaunes'],
-      color: 'from-yellow-400 to-indigo-500'
+      color: 'from-yellow-400 to-yellow-500'
     },
     {
       icon: FileText,
@@ -114,7 +114,7 @@ const PartnershipPage: React.FC = () => {
       description: 'Développez votre portefeuille avec nos leads taxi exclusifs',
       benefits: ['Leads qualifiés 20-70€', 'Formation produits', 'Support commercial', 'Outils marketing'],
       commission: '20-70€ par lead',
-      color: 'from-yellow-400 to-indigo-500'
+      color: 'from-yellow-400 to-yellow-500'
     },
     {
       id: 'annuaire',
@@ -720,13 +720,13 @@ const PartnershipPage: React.FC = () => {
             <div className="container-max">
               <div className="text-center mb-12">
                 <div className="flex items-center justify-center space-x-3 mb-6">
-                  <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 to-indigo-500 rounded-xl flex items-center justify-center shadow-2xl">
+                  <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-xl flex items-center justify-center shadow-2xl">
                     <Users className="text-white drop-shadow-md" size={24} />
                   </div>
                   <h2 className="text-3xl font-bold text-white drop-shadow-lg">
                     Marketplace de Leads Taxi Exclusifs
                   </h2>
-                  <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-yellow-500 rounded-xl flex items-center justify-center shadow-2xl">
+                  <div className="w-12 h-12 bg-gradient-to-br from-yellow-500 to-yellow-500 rounded-xl flex items-center justify-center shadow-2xl">
                     <Euro className="text-white animate-pulse drop-shadow-md" size={24} />
                   </div>
                 </div>

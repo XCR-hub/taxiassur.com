@@ -224,7 +224,7 @@ const PopupManagerBackoffice: React.FC = () => {
               <div className="flex space-x-2">
                 <button
                   onClick={() => setShowPreview(!showPreview)}
-                  className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                  className="flex items-center space-x-2 px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition-colors"
                 >
                   <Eye size={16} />
                   <span>{showPreview ? 'Masquer' : 'Aperçu'}</span>
@@ -285,7 +285,7 @@ const PopupManagerBackoffice: React.FC = () => {
                     type="checkbox"
                     checked={editingPopup.enabled}
                     onChange={(e) => setEditingPopup(prev => prev ? { ...prev, enabled: e.target.checked } : null)}
-                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    className="rounded border-gray-300 text-orange-600 focus:ring-blue-500"
                   />
                   <span className="ml-2 text-sm text-gray-700">Popup activée</span>
                 </label>
@@ -499,7 +499,7 @@ const PopupManagerBackoffice: React.FC = () => {
                               targeting: { ...prev.targeting, devices: newDevices }
                             } : null);
                           }}
-                          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                          className="rounded border-gray-300 text-orange-600 focus:ring-blue-500"
                         />
                         <span className="ml-2 text-sm text-gray-700 capitalize flex items-center">
                           {device === 'mobile' && <Smartphone size={14} className="mr-1" />}
@@ -522,7 +522,7 @@ const PopupManagerBackoffice: React.FC = () => {
                           ...prev,
                           targeting: { ...prev.targeting, newVisitors: e.target.checked }
                         } : null)}
-                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        className="rounded border-gray-300 text-orange-600 focus:ring-blue-500"
                       />
                       <span className="ml-2 text-sm text-gray-700">Nouveaux visiteurs</span>
                     </label>
@@ -537,7 +537,7 @@ const PopupManagerBackoffice: React.FC = () => {
                           ...prev,
                           targeting: { ...prev.targeting, returningVisitors: e.target.checked }
                         } : null)}
-                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        className="rounded border-gray-300 text-orange-600 focus:ring-blue-500"
                       />
                       <span className="ml-2 text-sm text-gray-700">Visiteurs récurrents</span>
                     </label>
@@ -653,7 +653,7 @@ const PopupManagerBackoffice: React.FC = () => {
                   <div className={`p-6 rounded-t-2xl text-white ${
                     editingPopup.design.theme === 'urgent' ? 'bg-gradient-to-r from-red-500 to-pink-500' :
                     editingPopup.design.theme === 'premium' ? 'bg-gradient-to-r from-amber-500 to-yellow-500' :
-                    'bg-gradient-to-r from-blue-500 to-indigo-500'
+                    'bg-gradient-to-r from-orange-500 to-yellow-500'
                   }`}>
                     <h3 className="text-xl font-bold mb-2">{editingPopup.content.title}</h3>
                     <p className="text-sm opacity-90">{editingPopup.content.subtitle}</p>
@@ -671,7 +671,7 @@ const PopupManagerBackoffice: React.FC = () => {
                     <button className={`w-full py-3 px-6 rounded-lg font-bold transition-colors ${
                       editingPopup.design.theme === 'urgent' ? 'bg-red-500 hover:bg-red-600 text-white' :
                       editingPopup.design.theme === 'premium' ? 'bg-amber-500 hover:bg-amber-600 text-black' :
-                      'bg-blue-500 hover:bg-blue-600 text-white'
+                      'bg-orange-500 hover:bg-orange-600 text-white'
                     }`}>
                       {editingPopup.content.ctaText}
                     </button>
@@ -725,7 +725,7 @@ const PopupManagerBackoffice: React.FC = () => {
               
               <a
                 href="/backoffice"
-                className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
+                className="bg-orange-600 hover:bg-orange-700 text-white font-medium px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
               >
                 <Home size={16} />
                 <span>Accueil Backoffice</span>
@@ -739,7 +739,7 @@ const PopupManagerBackoffice: React.FC = () => {
             
             <button
               onClick={createNewPopup}
-              className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+              className="flex items-center space-x-2 bg-orange-600 hover:bg-orange-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
             >
               <Plus size={16} />
               <span>Nouvelle Popup</span>
@@ -748,8 +748,8 @@ const PopupManagerBackoffice: React.FC = () => {
 
           {/* Statistics */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <Card className="text-center bg-gradient-to-br from-blue-50 to-indigo-50">
-              <Eye className="mx-auto mb-2 text-blue-600" size={24} />
+            <Card className="text-center bg-gradient-to-br from-orange-50 to-yellow-50">
+              <Eye className="mx-auto mb-2 text-orange-600" size={24} />
               <div className="text-2xl font-bold text-gray-900">
                 {Object.values(analytics).reduce((sum, popup: any) => sum + (popup.view || 0), 0)}
               </div>
@@ -764,8 +764,8 @@ const PopupManagerBackoffice: React.FC = () => {
               <div className="text-sm text-gray-600">Clics totaux</div>
             </Card>
 
-            <Card className="text-center bg-gradient-to-br from-purple-50 to-pink-50">
-              <TrendingUp className="mx-auto mb-2 text-purple-600" size={24} />
+            <Card className="text-center bg-gradient-to-br from-orange-50 to-pink-50">
+              <TrendingUp className="mx-auto mb-2 text-orange-600" size={24} />
               <div className="text-2xl font-bold text-gray-900">
                 {Object.values(analytics).reduce((sum, popup: any) => sum + (popup.convert || 0), 0)}
               </div>
@@ -795,7 +795,7 @@ const PopupManagerBackoffice: React.FC = () => {
                   <div className="flex justify-between items-start mb-3">
                     <div className="flex items-center space-x-2">
                       <span className="text-lg">{getTypeIcon(popup.type)}</span>
-                      <h3 className="font-bold text-gray-900 group-hover:text-blue-600 transition-colors">
+                      <h3 className="font-bold text-gray-900 group-hover:text-orange-600 transition-colors">
                         {popup.name}
                       </h3>
                     </div>
@@ -819,7 +819,7 @@ const PopupManagerBackoffice: React.FC = () => {
                   {/* Analytics */}
                   <div className="grid grid-cols-3 gap-2 mb-4 text-center">
                     <div>
-                      <div className="text-lg font-bold text-blue-600">{views}</div>
+                      <div className="text-lg font-bold text-orange-600">{views}</div>
                       <div className="text-xs text-gray-600">Vues</div>
                     </div>
                     <div>
@@ -827,7 +827,7 @@ const PopupManagerBackoffice: React.FC = () => {
                       <div className="text-xs text-gray-600">Clics</div>
                     </div>
                     <div>
-                      <div className="text-lg font-bold text-purple-600">{conversionRate}%</div>
+                      <div className="text-lg font-bold text-orange-600">{conversionRate}%</div>
                       <div className="text-xs text-gray-600">Conv.</div>
                     </div>
                   </div>
@@ -835,7 +835,7 @@ const PopupManagerBackoffice: React.FC = () => {
                   <div className="flex space-x-2">
                     <button
                       onClick={() => setEditingPopup(popup)}
-                      className="flex items-center space-x-1 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg transition-colors flex-1"
+                      className="flex items-center space-x-1 px-3 py-2 bg-orange-600 hover:bg-orange-700 text-white text-sm rounded-lg transition-colors flex-1"
                     >
                       <Edit size={14} />
                       <span>Modifier</span>
@@ -872,7 +872,7 @@ const PopupManagerBackoffice: React.FC = () => {
               </p>
               <button
                 onClick={createNewPopup}
-                className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+                className="bg-orange-600 hover:bg-orange-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
               >
                 Créer ma première popup
               </button>

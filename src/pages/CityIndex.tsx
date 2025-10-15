@@ -162,7 +162,7 @@ const CityIndex: React.FC = () => {
                             className="block group"
                           >
                             <div className="ai-card p-6 text-center hover:shadow-amber-500/40 hover:border-amber-500/50 transition-all duration-300">
-                              <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 to-indigo-500 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform shadow-lg">
+                              <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform shadow-lg">
                                 <MapPin className="text-white drop-shadow-md" size={20} />
                               </div>
                               <h4 className="font-bold text-white group-hover:text-amber-300 transition-colors mb-2 drop-shadow-lg">
@@ -196,7 +196,7 @@ const CityIndex: React.FC = () => {
                 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
                   <div className="ai-card text-center p-8 hover:shadow-yellow-500/40 transition-all duration-300 group">
-                    <div className="w-20 h-20 bg-gradient-to-br from-yellow-400 to-indigo-500 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-2xl group-hover:scale-110 transition-transform">
+                    <div className="w-20 h-20 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-2xl group-hover:scale-110 transition-transform">
                       <MapPin className="text-white drop-shadow-md" size={32} />
                     </div>
                     <h3 className="text-xl font-bold text-white mb-3 drop-shadow-lg">

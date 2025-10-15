@@ -209,7 +209,7 @@ const Dashboard: React.FC = () => {
                 <a
                   href="/"
                   target="_blank"
-                  className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
+                  className="bg-orange-600 hover:bg-orange-700 text-white font-medium px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
                 >
                   <Globe size={16} />
                   <span>Voir le Site</span>
@@ -236,21 +236,21 @@ const Dashboard: React.FC = () => {
         <main className="p-8">
         <div className="max-w-7xl mx-auto">
           {/* Dashboard Header - Improved Readability */}
-          <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl shadow-lg border-2 border-blue-200 p-8 mb-8">
+          <div className="bg-gradient-to-br from-orange-50 to-yellow-50 rounded-2xl shadow-lg border-2 border-orange-200 p-8 mb-8">
             <div className="flex justify-between items-center">
               <div>
-                <h1 className="text-4xl font-bold text-blue-900 mb-3">
+                <h1 className="text-4xl font-bold text-orange-900 mb-3">
                   📊 Dashboard TaxiAssur
                 </h1>
-                <p className="text-xl text-blue-700">
+                <p className="text-xl text-orange-700">
                   Pilotage SEO, contenu et acquisition de leads
                 </p>
               </div>
               <div className="flex items-center space-x-6">
                 <AdminPing />
                 <div className="text-right">
-                  <p className="text-sm text-blue-600">Dernière MAJ</p>
-                  <p className="font-semibold text-blue-900">{new Date().toLocaleString('fr-FR')}</p>
+                  <p className="text-sm text-orange-600">Dernière MAJ</p>
+                  <p className="font-semibold text-orange-900">{new Date().toLocaleString('fr-FR')}</p>
                 </div>
               </div>
             </div>
@@ -261,11 +261,11 @@ const Dashboard: React.FC = () => {
             <a 
               href="/blog"
               target="_blank"
-              className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl shadow-lg border-2 border-blue-300 p-6 text-center hover:shadow-xl transition-all duration-300 hover:scale-105 block"
+              className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl shadow-lg border-2 border-orange-300 p-6 text-center hover:shadow-xl transition-all duration-300 hover:scale-105 block"
             >
-              <FileText className="mx-auto mb-2 text-blue-700" size={24} />
-              <div className="text-3xl font-bold text-blue-900 mb-1">{stats.posts}</div>
-              <div className="text-sm font-bold text-blue-700">Articles</div>
+              <FileText className="mx-auto mb-2 text-orange-700" size={24} />
+              <div className="text-3xl font-bold text-orange-900 mb-1">{stats.posts}</div>
+              <div className="text-sm font-bold text-orange-700">Articles</div>
             </a>
 
             <a 
@@ -281,11 +281,11 @@ const Dashboard: React.FC = () => {
             <a 
               href="/avis"
               target="_blank"
-              className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl shadow-lg border-2 border-purple-300 p-6 text-center hover:shadow-xl transition-all duration-300 hover:scale-105 block"
+              className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl shadow-lg border-2 border-orange-300 p-6 text-center hover:shadow-xl transition-all duration-300 hover:scale-105 block"
             >
-              <Users className="mx-auto mb-2 text-purple-700" size={24} />
-              <div className="text-3xl font-bold text-purple-900 mb-1">{stats.reviews}</div>
-              <div className="text-sm font-bold text-purple-700">Avis</div>
+              <Users className="mx-auto mb-2 text-orange-700" size={24} />
+              <div className="text-3xl font-bold text-orange-900 mb-1">{stats.reviews}</div>
+              <div className="text-sm font-bold text-orange-700">Avis</div>
             </a>
 
             <a 
@@ -300,11 +300,11 @@ const Dashboard: React.FC = () => {
 
             <a 
               href="/backoffice/backlinks"
-              className="bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-xl shadow-lg border-2 border-indigo-300 p-6 text-center hover:shadow-xl transition-all duration-300 hover:scale-105 block"
+              className="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-xl shadow-lg border-2 border-yellow-300 p-6 text-center hover:shadow-xl transition-all duration-300 hover:scale-105 block"
             >
-              <Link className="mx-auto mb-2 text-indigo-700" size={24} />
-              <div className="text-3xl font-bold text-indigo-900 mb-1">{stats.backlinks}</div>
-              <div className="text-sm font-bold text-indigo-700">Backlinks</div>
+              <Link className="mx-auto mb-2 text-yellow-700" size={24} />
+              <div className="text-3xl font-bold text-yellow-900 mb-1">{stats.backlinks}</div>
+              <div className="text-sm font-bold text-yellow-700">Backlinks</div>
             </a>
 
             <a 
@@ -330,20 +330,20 @@ const Dashboard: React.FC = () => {
             
             <a 
               href="/backoffice/lead-manager"
-              className="bg-gradient-to-br from-blue-50 to-indigo-100 rounded-xl shadow-lg border-2 border-blue-300 p-6 text-center hover:shadow-xl transition-all duration-300 hover:scale-105 block"
+              className="bg-gradient-to-br from-orange-50 to-yellow-100 rounded-xl shadow-lg border-2 border-orange-300 p-6 text-center hover:shadow-xl transition-all duration-300 hover:scale-105 block"
             >
-              <Activity className="mx-auto mb-2 text-blue-700" size={24} />
-              <div className="text-3xl font-bold text-blue-800 mb-1">{realLeadStats.week}</div>
-              <div className="text-sm font-bold text-blue-700">Cette semaine</div>
+              <Activity className="mx-auto mb-2 text-orange-700" size={24} />
+              <div className="text-3xl font-bold text-orange-800 mb-1">{realLeadStats.week}</div>
+              <div className="text-sm font-bold text-orange-700">Cette semaine</div>
             </a>
             
             <a 
               href="/backoffice/lead-manager"
-              className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl shadow-lg border-2 border-purple-300 p-6 text-center hover:shadow-xl transition-all duration-300 hover:scale-105 block"
+              className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl shadow-lg border-2 border-orange-300 p-6 text-center hover:shadow-xl transition-all duration-300 hover:scale-105 block"
             >
-              <TrendingUp className="mx-auto mb-2 text-purple-700" size={24} />
-              <div className="text-3xl font-bold text-purple-800 mb-1">{realLeadStats.month}</div>
-              <div className="text-sm font-bold text-purple-700">Ce mois</div>
+              <TrendingUp className="mx-auto mb-2 text-orange-700" size={24} />
+              <div className="text-3xl font-bold text-orange-800 mb-1">{realLeadStats.month}</div>
+              <div className="text-sm font-bold text-orange-700">Ce mois</div>
             </a>
             
             <a 
@@ -384,11 +384,11 @@ const Dashboard: React.FC = () => {
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="font-bold text-gray-800">Temps réponse</span>
-                      <span className="text-sm text-blue-800 font-bold">{systemHealth.responseTime}</span>
+                      <span className="text-sm text-orange-800 font-bold">{systemHealth.responseTime}</span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="font-bold text-gray-800">Score SEO</span>
-                      <span className="text-sm text-purple-800 font-bold">{systemHealth.seoScore}/100</span>
+                      <span className="text-sm text-orange-800 font-bold">{systemHealth.seoScore}/100</span>
                     </div>
                   </>
                 )}
@@ -404,15 +404,15 @@ const Dashboard: React.FC = () => {
               </div>
             </div>
 
-            <div className="bg-gradient-to-br from-blue-50 to-indigo-100 rounded-xl shadow-lg border-2 border-blue-300 p-6">
-              <h3 className="text-xl font-bold text-blue-900 mb-6 flex items-center">
-                <RefreshCw className="mr-2 text-blue-700" size={20} />
+            <div className="bg-gradient-to-br from-orange-50 to-yellow-100 rounded-xl shadow-lg border-2 border-orange-300 p-6">
+              <h3 className="text-xl font-bold text-orange-900 mb-6 flex items-center">
+                <RefreshCw className="mr-2 text-orange-700" size={20} />
                 Actions Rapides
               </h3>
               <div className="space-y-4">
                 <button
                   onClick={handleRegenerateFeeds}
-                  className="w-full flex items-center justify-center space-x-2 bg-blue-700 hover:bg-blue-800 text-white font-bold py-3 px-4 rounded-lg transition-colors shadow-lg hover:shadow-xl"
+                  className="w-full flex items-center justify-center space-x-2 bg-orange-700 hover:bg-orange-800 text-white font-bold py-3 px-4 rounded-lg transition-colors shadow-lg hover:shadow-xl"
                 >
                   <RefreshCw size={16} />
                   <span>Régénérer Feeds</span>
@@ -464,9 +464,9 @@ const Dashboard: React.FC = () => {
 
           {/* Quick Links */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-            <div className="bg-gradient-to-br from-blue-50 to-indigo-100 rounded-xl shadow-lg border-2 border-blue-300 p-6">
-              <h3 className="text-xl font-bold text-blue-900 mb-6 flex items-center">
-                <Users className="mr-2 text-blue-700" size={20} />
+            <div className="bg-gradient-to-br from-orange-50 to-yellow-100 rounded-xl shadow-lg border-2 border-orange-300 p-6">
+              <h3 className="text-xl font-bold text-orange-900 mb-6 flex items-center">
+                <Users className="mr-2 text-orange-700" size={20} />
                 Acquisition Partenaires
               </h3>
               <div className="grid grid-cols-4 gap-4">
@@ -488,10 +488,10 @@ const Dashboard: React.FC = () => {
 
                 <a
                   href="/backoffice/partner-finder"
-                  className="text-center p-4 bg-blue-100 border-2 border-blue-300 rounded-lg hover:bg-blue-200 transition-colors group shadow-lg hover:shadow-xl"
+                  className="text-center p-4 bg-orange-100 border-2 border-orange-300 rounded-lg hover:bg-orange-200 transition-colors group shadow-lg hover:shadow-xl"
                 >
-                  <Search className="mx-auto mb-2 text-blue-700 group-hover:scale-110 transition-transform" size={20} />
-                  <div className="text-sm font-bold text-blue-900">Partner Finder</div>
+                  <Search className="mx-auto mb-2 text-orange-700 group-hover:scale-110 transition-transform" size={20} />
+                  <div className="text-sm font-bold text-orange-900">Partner Finder</div>
                 </a>
 
                 <a
@@ -504,31 +504,31 @@ const Dashboard: React.FC = () => {
 
                 <a
                   href="/backoffice/outreach"
-                  className="text-center p-4 bg-purple-100 border-2 border-purple-300 rounded-lg hover:bg-purple-200 transition-colors group shadow-lg hover:shadow-xl"
+                  className="text-center p-4 bg-orange-100 border-2 border-orange-300 rounded-lg hover:bg-orange-200 transition-colors group shadow-lg hover:shadow-xl"
                 >
-                  <Mail className="mx-auto mb-2 text-purple-700 group-hover:scale-110 transition-transform" size={20} />
-                  <div className="text-sm font-bold text-purple-900">Outreach</div>
+                  <Mail className="mx-auto mb-2 text-orange-700 group-hover:scale-110 transition-transform" size={20} />
+                  <div className="text-sm font-bold text-orange-900">Outreach</div>
                 </a>
               </div>
 
               <div className="mt-4 space-y-3">
                 <a
                   href="/backoffice/ai-generator"
-                  className="w-full flex items-center justify-center space-x-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-bold py-4 px-6 rounded-lg transition-all shadow-lg hover:shadow-xl"
+                  className="w-full flex items-center justify-center space-x-3 bg-gradient-to-r from-orange-600 to-orange-600 hover:from-orange-700 hover:to-orange-700 text-white font-bold py-4 px-6 rounded-lg transition-all shadow-lg hover:shadow-xl"
                 >
                   <Plus size={20} />
                   <span>Générateur de Contenu IA</span>
                 </a>
                 <a
                   href="/backoffice/automation-scheduler"
-                  className="w-full flex items-center justify-center space-x-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-indigo-700 hover:to-purple-700 text-white font-bold py-4 px-6 rounded-lg transition-all shadow-lg hover:shadow-xl"
+                  className="w-full flex items-center justify-center space-x-3 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-yellow-700 hover:to-orange-700 text-white font-bold py-4 px-6 rounded-lg transition-all shadow-lg hover:shadow-xl"
                 >
                   <Clock size={20} />
                   <span>⚡ Planification Automatique</span>
                 </a>
                 <a
                   href="/backoffice/trend-analyzer"
-                  className="w-full flex items-center justify-center space-x-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold py-4 px-6 rounded-lg transition-all shadow-lg hover:shadow-xl"
+                  className="w-full flex items-center justify-center space-x-3 bg-gradient-to-r from-orange-600 to-pink-600 hover:from-orange-700 hover:to-pink-700 text-white font-bold py-4 px-6 rounded-lg transition-all shadow-lg hover:shadow-xl"
                 >
                   <TrendingUp size={20} />
                   <span>📊 Analyse des Tendances</span>
@@ -574,10 +574,10 @@ const Dashboard: React.FC = () => {
                 
                 <a
                   href="/backoffice/popups"
-                  className="text-center p-4 bg-purple-100 border-2 border-purple-300 rounded-lg hover:bg-purple-200 transition-colors group shadow-lg hover:shadow-xl"
+                  className="text-center p-4 bg-orange-100 border-2 border-orange-300 rounded-lg hover:bg-orange-200 transition-colors group shadow-lg hover:shadow-xl"
                 >
-                  <Eye className="mx-auto mb-2 text-purple-700 group-hover:scale-110 transition-transform" size={20} />
-                  <div className="text-sm font-bold text-purple-900">Popups</div>
+                  <Eye className="mx-auto mb-2 text-orange-700 group-hover:scale-110 transition-transform" size={20} />
+                  <div className="text-sm font-bold text-orange-900">Popups</div>
                 </a>
               </div>
             </div>
@@ -585,26 +585,26 @@ const Dashboard: React.FC = () => {
 
           {/* Liens externes utiles */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-            <div className="bg-gradient-to-br from-blue-50 to-indigo-100 rounded-xl shadow-lg border-2 border-blue-300 p-6">
-              <h3 className="text-xl font-bold text-blue-900 mb-6 flex items-center">
-                <Globe className="mr-2 text-blue-700" size={20} />
+            <div className="bg-gradient-to-br from-orange-50 to-yellow-100 rounded-xl shadow-lg border-2 border-orange-300 p-6">
+              <h3 className="text-xl font-bold text-orange-900 mb-6 flex items-center">
+                <Globe className="mr-2 text-orange-700" size={20} />
                 Gestion Contenu
               </h3>
               <div className="grid grid-cols-3 gap-6">
                 <a
                   href="/backoffice/content"
-                  className="text-center p-6 bg-purple-100 border-2 border-purple-300 rounded-lg hover:bg-purple-200 transition-colors group shadow-lg hover:shadow-xl"
+                  className="text-center p-6 bg-orange-100 border-2 border-orange-300 rounded-lg hover:bg-orange-200 transition-colors group shadow-lg hover:shadow-xl"
                 >
-                  <FileText className="mx-auto mb-2 text-purple-700 group-hover:scale-110 transition-transform" size={24} />
-                  <div className="text-sm font-bold text-purple-900">Publication Manuelle</div>
+                  <FileText className="mx-auto mb-2 text-orange-700 group-hover:scale-110 transition-transform" size={24} />
+                  <div className="text-sm font-bold text-orange-900">Publication Manuelle</div>
                 </a>
                 
                 <a
                   href="/backoffice/lead-manager"
-                  className="text-center p-6 bg-blue-100 border-2 border-blue-300 rounded-lg hover:bg-blue-200 transition-colors group shadow-lg hover:shadow-xl"
+                  className="text-center p-6 bg-orange-100 border-2 border-orange-300 rounded-lg hover:bg-orange-200 transition-colors group shadow-lg hover:shadow-xl"
                 >
-                  <Users className="mx-auto mb-2 text-blue-700 group-hover:scale-110 transition-transform" size={24} />
-                  <div className="text-sm font-bold text-blue-900">Gestion Leads</div>
+                  <Users className="mx-auto mb-2 text-orange-700 group-hover:scale-110 transition-transform" size={24} />
+                  <div className="text-sm font-bold text-orange-900">Gestion Leads</div>
                 </a>
                 
                 <a
@@ -617,9 +617,9 @@ const Dashboard: React.FC = () => {
               </div>
             </div>
 
-            <div className="bg-gradient-to-br from-purple-50 to-pink-100 rounded-xl shadow-lg border-2 border-purple-300 p-6">
-              <h3 className="text-xl font-bold text-purple-900 mb-6 flex items-center">
-                <Users className="mr-2 text-purple-700" size={20} />
+            <div className="bg-gradient-to-br from-orange-50 to-pink-100 rounded-xl shadow-lg border-2 border-orange-300 p-6">
+              <h3 className="text-xl font-bold text-orange-900 mb-6 flex items-center">
+                <Users className="mr-2 text-orange-700" size={20} />
                 Marketplace & Partenaires
               </h3>
               <div className="grid grid-cols-2 gap-6">
@@ -670,10 +670,10 @@ const Dashboard: React.FC = () => {
               <a
                 href="/deploy-guide.html"
                 target="_blank"
-                className="text-center p-6 bg-blue-100 border-2 border-blue-300 rounded-lg hover:bg-blue-200 transition-colors group shadow-lg hover:shadow-xl"
+                className="text-center p-6 bg-orange-100 border-2 border-orange-300 rounded-lg hover:bg-orange-200 transition-colors group shadow-lg hover:shadow-xl"
               >
-                <FileText className="mx-auto mb-2 text-blue-700 group-hover:scale-110 transition-transform" size={24} />
-                <div className="text-sm font-bold text-blue-900">Guide Deploy</div>
+                <FileText className="mx-auto mb-2 text-orange-700 group-hover:scale-110 transition-transform" size={24} />
+                <div className="text-sm font-bold text-orange-900">Guide Deploy</div>
               </a>
               
               <a
@@ -687,19 +687,19 @@ const Dashboard: React.FC = () => {
               
               <a
                 href="/backoffice/news"
-                className="text-center p-6 bg-purple-100 border-2 border-purple-300 rounded-lg hover:bg-purple-200 transition-colors group shadow-lg hover:shadow-xl"
+                className="text-center p-6 bg-orange-100 border-2 border-orange-300 rounded-lg hover:bg-orange-200 transition-colors group shadow-lg hover:shadow-xl"
               >
-                <TrendingUp className="mx-auto mb-2 text-purple-700 group-hover:scale-110 transition-transform" size={24} />
-                <div className="text-sm font-bold text-purple-900">Actualités IA</div>
+                <TrendingUp className="mx-auto mb-2 text-orange-700 group-hover:scale-110 transition-transform" size={24} />
+                <div className="text-sm font-bold text-orange-900">Actualités IA</div>
               </a>
               
               <a
                 href="/programme-partenaires"
                 target="_blank"
-                className="text-center p-6 bg-indigo-100 border-2 border-indigo-300 rounded-lg hover:bg-indigo-200 transition-colors group shadow-lg hover:shadow-xl"
+                className="text-center p-6 bg-yellow-100 border-2 border-yellow-300 rounded-lg hover:bg-yellow-200 transition-colors group shadow-lg hover:shadow-xl"
               >
-                <Handshake className="mx-auto mb-2 text-indigo-700 group-hover:scale-110 transition-transform" size={24} />
-                <div className="text-sm font-bold text-indigo-900">Programme Partenaires</div>
+                <Handshake className="mx-auto mb-2 text-yellow-700 group-hover:scale-110 transition-transform" size={24} />
+                <div className="text-sm font-bold text-yellow-900">Programme Partenaires</div>
               </a>
             </div>
           </div>

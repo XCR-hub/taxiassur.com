@@ -254,7 +254,7 @@ const LeadManager: React.FC = () => {
             <div className="px-6 py-4">
               <div className="flex justify-between items-center">
                 <div className="flex items-center space-x-4">
-                  <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
+                  <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center shadow-lg">
                     <Users className="text-white" size={20} />
                   </div>
                   <div>
@@ -269,7 +269,7 @@ const LeadManager: React.FC = () => {
 
               <a
                 href="/backoffice"
-                className="bg-blue-600 hover:bg-blue-500 text-white font-medium px-4 py-2 rounded-lg transition-colors flex items-center space-x-2 shadow-lg"
+                className="bg-orange-600 hover:bg-orange-500 text-white font-medium px-4 py-2 rounded-lg transition-colors flex items-center space-x-2 shadow-lg"
               >
                 <Home size={16} />
                 <span>Accueil Backoffice</span>
@@ -291,7 +291,7 @@ const LeadManager: React.FC = () => {
               </button>
               <button
                 onClick={loadLeads}
-                className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-500 text-white font-medium py-2 px-4 rounded-lg transition-colors shadow-lg"
+                className="flex items-center space-x-2 bg-orange-600 hover:bg-orange-500 text-white font-medium py-2 px-4 rounded-lg transition-colors shadow-lg"
               >
                 <Users size={16} />
                 <span>Actualiser</span>
@@ -302,7 +302,7 @@ const LeadManager: React.FC = () => {
           {/* Statistics */}
           <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mb-8">
             <Card className="text-center bg-slate-800 border border-slate-700">
-              <Users className="mx-auto mb-2 text-blue-400" size={20} />
+              <Users className="mx-auto mb-2 text-orange-400" size={20} />
               <div className="text-2xl font-bold text-white">{stats.total}</div>
               <div className="text-sm text-slate-300">Total</div>
             </Card>
@@ -320,7 +320,7 @@ const LeadManager: React.FC = () => {
             </Card>
 
             <Card className="text-center bg-slate-800 border border-slate-700">
-              <FileText className="mx-auto mb-2 text-purple-400" size={20} />
+              <FileText className="mx-auto mb-2 text-orange-400" size={20} />
               <div className="text-2xl font-bold text-white">{stats.devis_envoye}</div>
               <div className="text-sm text-slate-300">Devis Envoyés</div>
             </Card>
@@ -425,7 +425,7 @@ const LeadManager: React.FC = () => {
                         </span>
                       </td>
                       <td className="py-3 px-4">
-                        <span className="px-2 py-1 bg-blue-600 text-white rounded-full text-xs font-medium">
+                        <span className="px-2 py-1 bg-orange-600 text-white rounded-full text-xs font-medium">
                           {lead.status.toUpperCase()}
                         </span>
                       </td>
@@ -448,7 +448,7 @@ const LeadManager: React.FC = () => {
                               setSelectedLead(lead);
                               setShowDetailModal(true);
                             }}
-                            className="text-blue-600 hover:text-blue-800"
+                            className="text-orange-600 hover:text-orange-800"
                             title="Voir détails"
                           >
                             <Eye size={16} />
@@ -496,7 +496,7 @@ const LeadManager: React.FC = () => {
                           </a>
                           <a
                             href={`mailto:${lead.email}?subject=Votre devis assurance taxi TaxiAssur&body=Bonjour ${lead.name},%0A%0AJe reviens vers vous concernant votre demande de devis d'assurance taxi.%0A%0ACordialement,%0AL'équipe TaxiAssur`}
-                            className="text-purple-600 hover:text-purple-800"
+                            className="text-orange-600 hover:text-orange-800"
                             title="Envoyer email"
                           >
                             <Mail size={16} />
@@ -636,29 +636,29 @@ const LeadManager: React.FC = () => {
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Envoi de devis */}
-                    <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
-                      <h4 className="font-medium text-purple-900 mb-3 flex items-center">
+                    <div className="bg-orange-50 p-4 rounded-lg border border-orange-200">
+                      <h4 className="font-medium text-orange-900 mb-3 flex items-center">
                         <FileText className="mr-2" size={16} />
                         Envoyer un Devis
                       </h4>
 
-                      <p className="text-sm text-purple-800 mb-3">
+                      <p className="text-sm text-orange-800 mb-3">
                         Un email professionnel avec votre offre de devis sera envoyé automatiquement au client.
                       </p>
 
                       <div className="space-y-3">
-                        <div className="bg-white p-3 rounded-lg border border-purple-200">
-                          <label className="block text-xs font-medium text-purple-900 mb-2">
+                        <div className="bg-white p-3 rounded-lg border border-orange-200">
+                          <label className="block text-xs font-medium text-orange-900 mb-2">
                             📎 Pièce jointe (optionnel)
                           </label>
                           <input
                             type="file"
                             accept=".pdf"
                             onChange={(e) => setAttachments({ ...attachments, devis: e.target.files?.[0] || null })}
-                            className="w-full text-xs text-gray-600 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-purple-100 file:text-purple-700 hover:file:bg-purple-200"
+                            className="w-full text-xs text-gray-600 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-orange-100 file:text-orange-700 hover:file:bg-orange-200"
                           />
                           {attachments.devis && (
-                            <p className="text-xs text-purple-700 mt-1 flex items-center">
+                            <p className="text-xs text-orange-700 mt-1 flex items-center">
                               ✅ {attachments.devis.name}
                             </p>
                           )}
@@ -666,14 +666,14 @@ const LeadManager: React.FC = () => {
 
                         <button
                           onClick={() => handleSendEmail('devis')}
-                          className="w-full flex items-center justify-center space-x-2 bg-purple-600 hover:bg-purple-700 text-white font-medium py-3 px-4 rounded-lg transition-colors shadow-md hover:shadow-lg"
+                          className="w-full flex items-center justify-center space-x-2 bg-orange-600 hover:bg-orange-700 text-white font-medium py-3 px-4 rounded-lg transition-colors shadow-md hover:shadow-lg"
                         >
                           <Send size={18} />
                           <span>Envoyer le Devis</span>
                         </button>
                       </div>
 
-                      <p className="text-xs text-purple-700 mt-3 text-center">
+                      <p className="text-xs text-orange-700 mt-3 text-center">
                         ✅ Passera automatiquement en "Devis Envoyé"
                       </p>
                     </div>
@@ -767,7 +767,7 @@ const LeadManager: React.FC = () => {
                   <div className="grid grid-cols-2 gap-4">
                     <a
                       href={`tel:${selectedLead.phone}`}
-                      className="flex items-center justify-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+                      className="flex items-center justify-center space-x-2 bg-orange-600 hover:bg-orange-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
                       onClick={() => {
                         // Track call action
                         if (typeof gtag !== 'undefined') {
@@ -784,7 +784,7 @@ const LeadManager: React.FC = () => {
                     </a>
                     <a
                       href={`mailto:${selectedLead.email}?subject=Votre devis assurance taxi TaxiAssur&body=Bonjour ${selectedLead.name},%0A%0AJe reviens vers vous concernant votre demande de devis d'assurance taxi.%0A%0ACordialement,%0AL'équipe TaxiAssur`}
-                      className="flex items-center justify-center space-x-2 bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+                      className="flex items-center justify-center space-x-2 bg-orange-600 hover:bg-orange-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
                       onClick={() => {
                         // Track email action
                         if (typeof gtag !== 'undefined') {
@@ -848,9 +848,9 @@ const LeadManager: React.FC = () => {
               </div>
 
               <div className="space-y-4">
-                <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                  <h3 className="font-medium text-blue-900 mb-2">📧 Email Automatique</h3>
-                  <p className="text-sm text-blue-800">
+                <div className="bg-orange-50 p-4 rounded-lg border border-orange-200">
+                  <h3 className="font-medium text-orange-900 mb-2">📧 Email Automatique</h3>
+                  <p className="text-sm text-orange-800">
                     Un email sera envoyé à <strong>{reviewRequestLead.name}</strong> pour demander 
                     un avis Google sur nos services.
                   </p>
@@ -971,7 +971,7 @@ const LeadManager: React.FC = () => {
                   </button>
                   <button
                     onClick={handleStatusUpdate}
-                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                    className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition-colors"
                   >
                     Mettre à Jour
                   </button>

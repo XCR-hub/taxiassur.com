@@ -45,7 +45,7 @@ const PrixAssuranceTaxi: React.FC = () => {
 
       <main className="min-h-screen bg-gray-50">
         {/* Hero Section */}
-        <section className="bg-gradient-to-br from-blue-900 via-blue-800 to-blue-900 text-white py-16">
+        <section className="bg-gradient-to-br from-orange-900 via-blue-800 to-orange-900 text-white py-16">
           <div className="container mx-auto px-4">
             <div className="max-w-4xl mx-auto text-center">
               <div className="inline-flex items-center space-x-2 bg-yellow-600/50 px-4 py-2 rounded-full mb-6">
@@ -62,15 +62,15 @@ const PrixAssuranceTaxi: React.FC = () => {
               </p>
 
               <div className="flex flex-wrap justify-center gap-4 text-sm">
-                <div className="flex items-center space-x-2 bg-blue-800/50 px-4 py-2 rounded-lg">
+                <div className="flex items-center space-x-2 bg-orange-800/50 px-4 py-2 rounded-lg">
                   <Calculator className="text-green-400" size={16} />
                   <span>Calculateur de prix</span>
                 </div>
-                <div className="flex items-center space-x-2 bg-blue-800/50 px-4 py-2 rounded-lg">
+                <div className="flex items-center space-x-2 bg-orange-800/50 px-4 py-2 rounded-lg">
                   <TrendingDown className="text-red-400" size={16} />
                   <span>Économie 35%</span>
                 </div>
-                <div className="flex items-center space-x-2 bg-blue-800/50 px-4 py-2 rounded-lg">
+                <div className="flex items-center space-x-2 bg-orange-800/50 px-4 py-2 rounded-lg">
                   <Shield className="text-yellow-400" size={16} />
                   <span>Devis gratuit 2min</span>
                 </div>
@@ -98,7 +98,7 @@ const PrixAssuranceTaxi: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-xl border-2 border-blue-400 text-center transform scale-105 shadow-lg">
+                <div className="bg-gradient-to-br from-orange-50 to-orange-100 p-6 rounded-xl border-2 border-orange-400 text-center transform scale-105 shadow-lg">
                   <div className="text-sm text-yellow-700 font-semibold mb-2">PRIX MOYEN</div>
                   <div className="text-5xl font-bold text-yellow-600 mb-2">2 200€</div>
                   <div className="text-sm text-gray-600">par an</div>
@@ -267,7 +267,7 @@ const PrixAssuranceTaxi: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="bg-purple-50 p-6 rounded-xl border-2 border-purple-200">
+                <div className="bg-orange-50 p-6 rounded-xl border-2 border-orange-200">
                   <div className="flex items-start space-x-4">
                     <div className="bg-gray-900 text-white rounded-full p-3 flex-shrink-0">
                       <Car size={24} />
@@ -318,7 +318,7 @@ const PrixAssuranceTaxi: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="bg-indigo-50 p-6 rounded-xl border-2 border-indigo-200">
+                <div className="bg-yellow-50 p-6 rounded-xl border-2 border-yellow-200">
                   <div className="flex items-start space-x-4">
                     <div className="bg-yellow-500 text-white rounded-full p-3 flex-shrink-0">
                       <Shield size={24} />
@@ -398,7 +398,7 @@ const PrixAssuranceTaxi: React.FC = () => {
                     <CheckCircle size={16} />
                     <span>15 assureurs comparés</span>
                   </div>
-                  <div className="flex items-center justify-center space-x-2 text-purple-700">
+                  <div className="flex items-center justify-center space-x-2 text-orange-700">
                     <CheckCircle size={16} />
                     <span>Expert dédié</span>
                   </div>
@@ -456,7 +456,7 @@ const PrixAssuranceTaxi: React.FC = () => {
                 </p>
 
                 <div className="bg-yellow-50 border-l-4 border-yellow-500 p-6 mb-6">
-                  <p className="text-blue-900 font-semibold">
+                  <p className="text-orange-900 font-semibold">
                     Average savings with TaxiAssur: <span className="text-2xl">35%</span>
                   </p>
                   <p className="text-yellow-800 text-sm mt-2">

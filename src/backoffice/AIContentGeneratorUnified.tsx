@@ -290,7 +290,7 @@ Total: ${generatedContent.metadata?.totalWords ?? 0} mots générés`
   return (
     <div className="max-w-7xl mx-auto">
       {/* Header */}
-      <div className="bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-600 rounded-xl p-6 mb-6 text-white shadow-2xl">
+      <div className="bg-gradient-to-r from-orange-600 via-blue-600 to-yellow-600 rounded-xl p-6 mb-6 text-white shadow-2xl">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center space-x-3">
             <Sparkles size={32} className="animate-pulse" />
@@ -304,7 +304,7 @@ Total: ${generatedContent.metadata?.totalWords ?? 0} mots générés`
             <span>Retour</span>
           </button>
         </div>
-        <p className="text-purple-100 mb-3">
+        <p className="text-orange-100 mb-3">
           🚀 Génère automatiquement : Article Blog + Page Ville + FAQ + Actualité + Image SEO
         </p>
         <div className="flex items-center space-x-4 text-sm flex-wrap gap-2">
@@ -389,9 +389,9 @@ Total: ${generatedContent.metadata?.totalWords ?? 0} mots générés`
             </div>
 
             {/* Prompt image */}
-            <div className="border-2 border-indigo-200 rounded-lg p-4 bg-indigo-50">
+            <div className="border-2 border-yellow-200 rounded-lg p-4 bg-yellow-50">
               <div className="flex items-center space-x-2 mb-3">
-                <ImageIcon className="text-indigo-600" size={20} />
+                <ImageIcon className="text-yellow-600" size={20} />
                 <label className="text-sm font-semibold text-gray-700">
                   Prompt pour l'image SEO (optionnel)
                 </label>
@@ -401,9 +401,9 @@ Total: ${generatedContent.metadata?.totalWords ?? 0} mots générés`
                 onChange={(e) => setImagePrompt(e.target.value)}
                 placeholder="Ex: Photo professionnelle d'un taxi moderne à Paris, éclairage doré, haute qualité, style réaliste"
                 rows={3}
-                className="w-full px-4 py-3 border-2 border-indigo-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 placeholder-gray-400 resize-none"
+                className="w-full px-4 py-3 border-2 border-yellow-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 placeholder-gray-400 resize-none"
               />
-              <p className="text-xs text-indigo-700 mt-2">
+              <p className="text-xs text-yellow-700 mt-2">
                 💡 Si vide, un prompt SEO sera généré automatiquement avec : ville + mot-clé + style professionnel
               </p>
             </div>
@@ -426,7 +426,7 @@ Total: ${generatedContent.metadata?.totalWords ?? 0} mots générés`
             <button
               onClick={handleGenerate}
               disabled={isGenerating || !keyword.trim() || !city.trim()}
-              className="w-full bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-600 text-white px-6 py-4 rounded-lg font-bold hover:shadow-2xl disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center space-x-2 text-lg"
+              className="w-full bg-gradient-to-r from-orange-600 via-blue-600 to-yellow-600 text-white px-6 py-4 rounded-lg font-bold hover:shadow-2xl disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center space-x-2 text-lg"
             >
               {isGenerating ? (
                 <>
@@ -442,8 +442,8 @@ Total: ${generatedContent.metadata?.totalWords ?? 0} mots générés`
             </button>
 
             {isGenerating && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                <p className="text-sm text-blue-800">
+              <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
+                <p className="text-sm text-orange-800">
                   ⏳ <strong>Génération en cours...</strong> Cela peut prendre 30-60 secondes.
                   <br />
                   📝 Création article blog (1800-2200 mots)
@@ -499,7 +499,7 @@ Total: ${generatedContent.metadata?.totalWords ?? 0} mots générés`
           {isGenerating && (
             <div className="h-[600px] flex items-center justify-center">
               <div className="text-center">
-                <Loader2 className="animate-spin mx-auto text-purple-600 mb-3" size={48} />
+                <Loader2 className="animate-spin mx-auto text-orange-600 mb-3" size={48} />
                 <p className="text-gray-600 font-bold text-lg">Génération complète en cours...</p>
                 <p className="text-sm text-slate-500 mt-2">30-60 secondes estimées</p>
               </div>
@@ -509,10 +509,10 @@ Total: ${generatedContent.metadata?.totalWords ?? 0} mots générés`
           {generatedContent && (
             <div className="space-y-4 max-h-[600px] overflow-y-auto">
               {/* Métadonnées */}
-              <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg p-4 border-2 border-purple-200">
+              <div className="bg-gradient-to-r from-orange-50 to-orange-50 rounded-lg p-4 border-2 border-orange-200">
                 <div className="flex items-center justify-between mb-3">
                   <h4 className="font-bold text-gray-800 flex items-center space-x-2">
-                    <Sparkles className="text-purple-600" size={20} />
+                    <Sparkles className="text-orange-600" size={20} />
                     <span>Métadonnées Globales</span>
                   </h4>
                   <span className="px-3 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full">
@@ -521,13 +521,13 @@ Total: ${generatedContent.metadata?.totalWords ?? 0} mots générés`
                 </div>
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   <div className="flex items-center space-x-2">
-                    <Clock className="text-blue-600" size={16} />
+                    <Clock className="text-orange-600" size={16} />
                     <span className="text-gray-700">
                       <strong>{generatedContent.metadata?.totalWords ?? 0}</strong> mots totaux
                     </span>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <FileText className="text-purple-600" size={16} />
+                    <FileText className="text-orange-600" size={16} />
                     <span className="text-gray-700">
                       <strong>{generatedContent.blogPost?.readingTime ?? 5}</strong> min lecture
                     </span>
@@ -536,9 +536,9 @@ Total: ${generatedContent.metadata?.totalWords ?? 0} mots générés`
               </div>
 
               {/* Article de blog */}
-              <div className="bg-purple-50 rounded-lg p-4 border-2 border-purple-200">
+              <div className="bg-orange-50 rounded-lg p-4 border-2 border-orange-200">
                 <h4 className="font-bold text-lg text-gray-800 mb-2 flex items-center space-x-2">
-                  <FileText className="text-purple-600" size={20} />
+                  <FileText className="text-orange-600" size={20} />
                   <span>Article de Blog</span>
                 </h4>
                 <p className="text-sm text-gray-700 mb-2">
@@ -553,7 +553,7 @@ Total: ${generatedContent.metadata?.totalWords ?? 0} mots générés`
                 {generatedContent.blogPost?.keywords && (
                   <div className="flex flex-wrap gap-2 mt-3">
                     {(generatedContent.blogPost.keywords || []).map((kw, index) => (
-                      <span key={index} className="px-2 py-1 bg-purple-200 text-purple-800 rounded-full text-xs font-medium">
+                      <span key={index} className="px-2 py-1 bg-orange-200 text-orange-800 rounded-full text-xs font-medium">
                         #{kw}
                       </span>
                     ))}
@@ -563,15 +563,15 @@ Total: ${generatedContent.metadata?.totalWords ?? 0} mots générés`
 
               {/* Image générée */}
               {generatedContent.blogPost?.featuredImage && (
-                <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-4 border-2 border-blue-200">
+                <div className="bg-gradient-to-br from-orange-50 to-yellow-50 rounded-lg p-4 border-2 border-orange-200">
                   <h4 className="font-bold text-gray-800 mb-3 flex items-center space-x-2">
-                    <ImageIcon size={20} className="text-blue-600" />
+                    <ImageIcon size={20} className="text-orange-600" />
                     <span>Image SEO Générée</span>
                   </h4>
                   <img
                     src={generatedContent.blogPost.featuredImage}
                     alt={generatedContent.blogPost?.imageAlt || generatedContent.blogPost?.title || 'Image'}
-                    className="w-full h-auto rounded-lg shadow-lg border-2 border-blue-300"
+                    className="w-full h-auto rounded-lg shadow-lg border-2 border-orange-300"
                   />
                   {generatedContent.blogPost?.imageAlt && (
                     <p className="text-xs text-gray-700 mt-2 bg-white px-3 py-2 rounded">
@@ -621,9 +621,9 @@ Total: ${generatedContent.metadata?.totalWords ?? 0} mots générés`
 
               {/* Actualité */}
               {generatedContent.newsArticle && (
-                <div className="bg-blue-50 rounded-lg p-4 border-2 border-blue-200">
+                <div className="bg-orange-50 rounded-lg p-4 border-2 border-orange-200">
                   <h4 className="font-bold text-lg text-gray-800 mb-2 flex items-center space-x-2">
-                    <Tag className="text-blue-600" size={20} />
+                    <Tag className="text-orange-600" size={20} />
                     <span>Actualité</span>
                   </h4>
                   <p className="text-sm text-gray-700 mb-2">
@@ -640,7 +640,7 @@ Total: ${generatedContent.metadata?.totalWords ?? 0} mots générés`
 
               {/* Contenu complet (replié) */}
               <details className="bg-gray-50 rounded-lg p-4 border-2 border-gray-200">
-                <summary className="font-bold text-gray-800 cursor-pointer hover:text-purple-600">
+                <summary className="font-bold text-gray-800 cursor-pointer hover:text-orange-600">
                   📄 Voir le contenu complet (cliquer pour déplier)
                 </summary>
                 <div className="mt-4 prose prose-sm max-w-none">
@@ -653,7 +653,7 @@ Total: ${generatedContent.metadata?.totalWords ?? 0} mots générés`
       </div>
 
       {/* Conseils */}
-      <div className="mt-6 bg-gradient-to-r from-green-50 to-blue-50 rounded-xl p-6 border-2 border-green-200">
+      <div className="mt-6 bg-gradient-to-r from-green-50 to-orange-50 rounded-xl p-6 border-2 border-green-200">
         <h3 className="text-lg font-bold text-gray-800 mb-3 flex items-center space-x-2">
           <Sparkles className="text-green-600" size={20} />
           <span>💡 Mode Unifié - Génération Automatique Complète</span>

@@ -106,13 +106,13 @@ const ErrorBoundary: React.FC<{ children: React.ReactNode }> = ({ children }) =>
         <div className="space-x-4">
           <a 
             href="/" 
-            className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+            className="bg-orange-600 hover:bg-orange-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
           >
             Retour à l'accueil
           </a>
           <a 
             href="tel:0180855786" 
-            className="border border-blue-600 text-blue-600 hover:bg-blue-50 font-medium py-2 px-4 rounded-lg transition-colors"
+            className="border border-orange-600 text-orange-600 hover:bg-orange-50 font-medium py-2 px-4 rounded-lg transition-colors"
           >
             01 80 85 57 86
           </a>

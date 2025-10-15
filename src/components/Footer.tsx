@@ -61,19 +61,19 @@ const Footer: React.FC = () => {
             {/* Badges de confiance compacts */}
             <div className="mt-4 pt-4 border-t border-gray-800">
               <div className="flex flex-wrap gap-2">
-                <span className="px-2 py-1 bg-blue-900/30 text-blue-300 rounded text-xs font-medium border border-blue-800">
+                <span className="px-2 py-1 bg-yellow-900/30 text-yellow-300 rounded text-xs font-medium border border-yellow-800">
                   CSCA
                 </span>
-                <span className="px-2 py-1 bg-indigo-900/30 text-indigo-300 rounded text-xs font-medium border border-indigo-800">
+                <span className="px-2 py-1 bg-orange-900/30 text-orange-300 rounded text-xs font-medium border border-orange-800">
                   EDI Courtage
                 </span>
-                <span className="px-2 py-1 bg-purple-900/30 text-purple-300 rounded text-xs font-medium border border-purple-800">
+                <span className="px-2 py-1 bg-amber-900/30 text-amber-300 rounded text-xs font-medium border border-amber-800">
                   EDI Signature
                 </span>
                 <span className="px-2 py-1 bg-green-900/30 text-green-300 rounded text-xs font-medium border border-green-800">
                   RC Pro CGPA
                 </span>
-                <span className="px-2 py-1 bg-cyan-900/30 text-cyan-300 rounded text-xs font-medium border border-cyan-800">
+                <span className="px-2 py-1 bg-yellow-900/30 text-yellow-300 rounded text-xs font-medium border border-yellow-800">
                   EXCALIBUR
                 </span>
               </div>
@@ -221,7 +221,7 @@ const Footer: React.FC = () => {
                   href="https://facebook.com/taxiassur"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-gray-600 hover:text-yellow-500 transition-colors"
+                  className="text-gray-600 hover:text-orange-500 transition-colors"
                   aria-label="Suivez-nous sur Facebook"
                 >
                   <Facebook size={18} />
@@ -230,7 +230,7 @@ const Footer: React.FC = () => {
                   href="https://twitter.com/taxiassur"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-gray-600 hover:text-yellow-400 transition-colors"
+                  className="text-gray-600 hover:text-orange-400 transition-colors"
                   aria-label="Suivez-nous sur Twitter"
                 >
                   <Twitter size={18} />
@@ -239,7 +239,7 @@ const Footer: React.FC = () => {
                   href="https://linkedin.com/company/taxiassur"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-gray-600 hover:text-yellow-600 transition-colors"
+                  className="text-gray-600 hover:text-orange-600 transition-colors"
                   aria-label="Suivez-nous sur LinkedIn"
                 >
                   <Linkedin size={18} />

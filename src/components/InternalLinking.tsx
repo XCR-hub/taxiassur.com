@@ -36,7 +36,7 @@ export default function InternalLinking({
   if (relatedLinks.length === 0) return null;
 
   return (
-    <section className="bg-gradient-to-br from-blue-50 to-white py-12 sm:py-16 border-t border-b border-blue-100">
+    <section className="bg-gradient-to-br from-orange-50 to-white py-12 sm:py-16 border-t border-b border-orange-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center gap-3 mb-8">
           <TrendingUp className="w-6 h-6 text-yellow-600" />
@@ -76,7 +76,7 @@ function InternalLinkCard({ link }: { link: RelatedLink }) {
   return (
     <Link
       to={link.url}
-      className="group bg-white p-6 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-blue-300"
+      className="group bg-white p-6 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-orange-300"
     >
       <div className="flex items-start gap-4 mb-3">
         <div className={`bg-gradient-to-br ${colors[link.category]} text-white p-3 rounded-lg group-hover:scale-110 transition-transform`}>

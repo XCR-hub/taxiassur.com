@@ -141,7 +141,7 @@ const AssuranceMotoTaxi: React.FC = () => {
                   </div>
 
                   <div className="bg-yellow-50 border-l-4 border-yellow-500 p-6 rounded-r-xl">
-                    <p className="font-semibold text-blue-900 mb-2">🏙️ Zones autorisées</p>
+                    <p className="font-semibold text-orange-900 mb-2">🏙️ Zones autorisées</p>
                     <p className="text-sm text-gray-700">
                       Moto-taxi autorisé uniquement dans grandes villes :
                       <strong> Paris, Lyon, Marseille, Nice, Cannes, Bordeaux, Toulouse</strong>.

@@ -82,14 +82,14 @@ const Contact: React.FC = () => {
                 </div>
 
                 <div className="ai-card text-center p-6 hover:shadow-yellow-500/40 transition-all duration-300 group">
-                  <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-yellow-400 to-indigo-500 rounded-full mb-4 group-hover:scale-110 transition-transform shadow-lg">
+                  <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-full mb-4 group-hover:scale-110 transition-transform shadow-lg">
                     <Mail className="text-white" size={24} />
                   </div>
                   <h3 className="text-xl font-bold text-white mb-2 drop-shadow-lg">Email</h3>
                   <p className="text-gray-300 mb-3 drop-shadow-md">Écrivez-nous</p>
                   <a 
                     href="mailto:team@taxiassur.com" 
-                    className="text-yellow-400 hover:text-blue-300 font-semibold transition-colors"
+                    className="text-yellow-400 hover:text-orange-300 font-semibold transition-colors"
                   >
                     team@taxiassur.com
                   </a>

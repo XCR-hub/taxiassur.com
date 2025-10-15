@@ -79,7 +79,7 @@ const AssuranceTaxiTesla: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-8 border-2 border-blue-300">
+                <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-2xl p-8 border-2 border-orange-300">
                   <Shield className="text-yellow-600 mb-4" size={48} />
                   <h3 className="text-2xl font-bold mb-4">Économies Assurance</h3>
                   <div className="space-y-3 text-gray-700">
@@ -91,7 +91,7 @@ const AssuranceTaxiTesla: React.FC = () => {
                       <span>Réduction électrique -10%</span>
                       <span className="font-bold text-green-600">-154€</span>
                     </div>
-                    <div className="pt-3 border-t-2 border-blue-300">
+                    <div className="pt-3 border-t-2 border-orange-300">
                       <div className="flex justify-between items-center font-black text-lg">
                         <span>Tesla taxi/an</span>
                         <span className="text-yellow-600">1,386€</span>

@@ -33,7 +33,7 @@ export default function NavigationMenu() {
             <PieChart className="w-5 h-5" />
             <span>Analytics</span>
           </Link>
-          <Link to="/backoffice/old-dashboard" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm">
+          <Link to="/backoffice/old-dashboard" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm">
             <BarChart3 className="w-5 h-5" />
             <span>Dashboard Pro</span>
           </Link>
@@ -93,7 +93,7 @@ export default function NavigationMenu() {
             <Link2 className="w-5 h-5" />
             <span>Backlinks</span>
           </Link>
-          <Link to="/backoffice/backlink-prospector" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm">
+          <Link to="/backoffice/backlink-prospector" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm">
             <Search className="w-5 h-5" />
             <span>Prospecteur</span>
           </Link>
@@ -123,7 +123,7 @@ export default function NavigationMenu() {
             <Search className="w-5 h-5" />
             <span>Chercher</span>
           </Link>
-          <Link to="/backoffice/prospects" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm">
+          <Link to="/backoffice/prospects" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm">
             <Eye className="w-5 h-5" />
             <span>Prospects</span>
           </Link>
@@ -189,7 +189,7 @@ export default function NavigationMenu() {
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
           <Link
             to="/backoffice"
-            className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm"
+            className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm"
           >
             <BookOpen className="w-5 h-5" />
             <span>Toutes les pages</span>

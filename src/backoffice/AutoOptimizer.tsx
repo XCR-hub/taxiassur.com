@@ -254,7 +254,7 @@ export default function AutoOptimizer() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <RefreshCw className="w-8 h-8 text-blue-400 animate-spin" />
+        <RefreshCw className="w-8 h-8 text-orange-400 animate-spin" />
       </div>
     );
   }
@@ -262,19 +262,19 @@ export default function AutoOptimizer() {
   return (
     <div className="space-y-6">
       {/* Header avec statistiques */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-800 rounded-xl p-6 text-white shadow-xl">
+      <div className="bg-gradient-to-r from-orange-600 to-orange-800 rounded-xl p-6 text-white shadow-xl">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h1 className="text-3xl font-bold mb-2 flex items-center gap-3">
               <Zap className="w-8 h-8" />
               Centre d'Automatisation
             </h1>
-            <p className="text-blue-100">
+            <p className="text-orange-100">
               Contrôle et monitoring en temps réel de toutes les automatisations
             </p>
           </div>
           <div className="text-right">
-            <div className="text-sm text-blue-200">Dernière mise à jour</div>
+            <div className="text-sm text-orange-200">Dernière mise à jour</div>
             <div className="text-lg font-bold">
               {lastCheck ? lastCheck.toLocaleTimeString('fr-FR') : '--:--:--'}
             </div>
@@ -291,19 +291,19 @@ export default function AutoOptimizer() {
         <div className="grid grid-cols-3 gap-4">
           <div className="bg-white/10 rounded-lg p-4 backdrop-blur-sm">
             <div className="text-3xl font-bold">{activeCount}/{automations.length}</div>
-            <div className="text-sm text-blue-100">Automatisations actives</div>
+            <div className="text-sm text-orange-100">Automatisations actives</div>
           </div>
           <div className="bg-white/10 rounded-lg p-4 backdrop-blur-sm">
             <div className="text-3xl font-bold text-green-300">
               {automations.reduce((sum, a) => sum + a.successful_runs, 0)}
             </div>
-            <div className="text-sm text-blue-100">Exécutions réussies</div>
+            <div className="text-sm text-orange-100">Exécutions réussies</div>
           </div>
           <div className="bg-white/10 rounded-lg p-4 backdrop-blur-sm">
             <div className={`text-3xl font-bold ${recentErrors > 0 ? 'text-red-300' : 'text-green-300'}`}>
               {recentErrors}
             </div>
-            <div className="text-sm text-blue-100">Erreurs récentes</div>
+            <div className="text-sm text-orange-100">Erreurs récentes</div>
           </div>
         </div>
       </div>
@@ -370,7 +370,7 @@ export default function AutoOptimizer() {
             return (
               <div
                 key={auto.id}
-                className="bg-slate-700 rounded-lg p-4 border border-slate-600 hover:border-blue-500 transition-all"
+                className="bg-slate-700 rounded-lg p-4 border border-slate-600 hover:border-orange-500 transition-all"
               >
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex-1">
@@ -423,7 +423,7 @@ export default function AutoOptimizer() {
                   <button
                     onClick={() => testAutomation(auto)}
                     disabled={testing === auto.id}
-                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-gray-600 text-white rounded-lg font-medium transition-all"
+                    className="flex items-center gap-2 px-4 py-2 bg-orange-600 hover:bg-orange-500 disabled:bg-gray-600 text-white rounded-lg font-medium transition-all"
                   >
                     {testing === auto.id ? (
                       <>
@@ -487,7 +487,7 @@ export default function AutoOptimizer() {
                       ? 'bg-green-900/20 border-green-700'
                       : log.status === 'error'
                       ? 'bg-red-900/20 border-red-700'
-                      : 'bg-blue-900/20 border-blue-700'
+                      : 'bg-orange-900/20 border-orange-700'
                   }`}
                 >
                   <div className="flex items-start justify-between">
@@ -497,7 +497,7 @@ export default function AutoOptimizer() {
                       ) : log.status === 'error' ? (
                         <AlertTriangle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
                       ) : (
-                        <Clock className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5 animate-pulse" />
+                        <Clock className="w-5 h-5 text-orange-400 flex-shrink-0 mt-0.5 animate-pulse" />
                       )}
                       <div className="flex-1">
                         <div className="text-white font-medium">
@@ -518,12 +518,12 @@ export default function AutoOptimizer() {
       </div>
 
       {/* Info box */}
-      <div className="bg-blue-900/30 border border-blue-700 rounded-xl p-4">
+      <div className="bg-orange-900/30 border border-orange-700 rounded-xl p-4">
         <div className="flex items-start gap-3">
-          <AlertCircle className="w-6 h-6 text-blue-400 flex-shrink-0" />
+          <AlertCircle className="w-6 h-6 text-orange-400 flex-shrink-0" />
           <div>
             <div className="text-white font-medium mb-1">💡 Mode d'emploi</div>
-            <ul className="text-sm text-blue-200 space-y-1">
+            <ul className="text-sm text-orange-200 space-y-1">
               <li>• <strong>Tester</strong> : Lance un test de l'automatisation sans l'activer</li>
               <li>• <strong>Activer</strong> : Active l'automatisation selon sa fréquence configurée</li>
               <li>• <strong>Logs</strong> : Affiche l'historique complet des exécutions</li>
