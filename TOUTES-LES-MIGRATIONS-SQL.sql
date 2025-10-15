@@ -92,7 +92,10 @@ END $$;
 -- SECTION 3 : TABLE LEADS
 -- ============================================================================
 
-CREATE TABLE IF NOT EXISTS leads (
+-- Drop and recreate to ensure schema consistency
+DROP TABLE IF EXISTS leads CASCADE;
+
+CREATE TABLE leads (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   email text NOT NULL,
   phone text,
@@ -143,7 +146,10 @@ CREATE INDEX IF NOT EXISTS idx_leads_email ON leads(email);
 -- ============================================================================
 
 -- Table blog_posts
-CREATE TABLE IF NOT EXISTS blog_posts (
+-- Drop and recreate to ensure schema consistency
+DROP TABLE IF EXISTS blog_posts CASCADE;
+
+CREATE TABLE blog_posts (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   slug text UNIQUE NOT NULL,
   title text NOT NULL,
@@ -183,7 +189,10 @@ CREATE INDEX IF NOT EXISTS idx_blog_posts_published ON blog_posts(published) WHE
 CREATE INDEX IF NOT EXISTS idx_blog_posts_featured_image ON blog_posts(featured_image) WHERE featured_image IS NOT NULL;
 
 -- Table faq_entries
-CREATE TABLE IF NOT EXISTS faq_entries (
+-- Drop and recreate to ensure schema consistency
+DROP TABLE IF EXISTS faq_entries CASCADE;
+
+CREATE TABLE faq_entries (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   question text NOT NULL,
   answer text NOT NULL,
@@ -213,7 +222,10 @@ CREATE INDEX IF NOT EXISTS idx_faq_entries_order ON faq_entries(order_index);
 CREATE INDEX IF NOT EXISTS idx_faq_entries_category ON faq_entries(category);
 
 -- Table city_pages
-CREATE TABLE IF NOT EXISTS city_pages (
+-- Drop and recreate to ensure schema consistency
+DROP TABLE IF EXISTS city_pages CASCADE;
+
+CREATE TABLE city_pages (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   city text UNIQUE NOT NULL,
   title text NOT NULL,
@@ -242,7 +254,10 @@ CREATE POLICY "Allow authenticated all city_pages"
   USING (true);
 
 -- Table reviews
-CREATE TABLE IF NOT EXISTS reviews (
+-- Drop and recreate to ensure schema consistency
+DROP TABLE IF EXISTS reviews CASCADE;
+
+CREATE TABLE reviews (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   name text NOT NULL,
   rating integer NOT NULL CHECK (rating >= 1 AND rating <= 5),
@@ -265,7 +280,10 @@ CREATE POLICY "Allow anon read published reviews"
 -- ============================================================================
 
 -- Table automation_status
-CREATE TABLE IF NOT EXISTS automation_status (
+-- Drop and recreate to ensure schema consistency
+DROP TABLE IF EXISTS automation_status CASCADE;
+
+CREATE TABLE automation_status (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   name text UNIQUE NOT NULL,
   description text,

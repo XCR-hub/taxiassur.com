@@ -6,6 +6,7 @@
 1. `ERROR: column "automation_id" does not exist`
 2. `ERROR: column "automation_name" does not exist`
 3. `ERROR: column "url" does not exist`
+4. `ERROR: column bp.image_alt does not exist`
 
 ### Cause racine :
 Des versions antérieures des tables existent dans Supabase avec des structures différentes, créant des conflits lors de l'exécution des migrations avec `CREATE TABLE IF NOT EXISTS`.
@@ -18,12 +19,20 @@ Des versions antérieures des tables existent dans Supabase avec des structures 
 
 Toutes les tables suivantes ont été modifiées pour utiliser `DROP TABLE IF EXISTS [table] CASCADE;` avant leur création :
 
+**Tables Core :**
+- `leads`
+- `blog_posts`
+- `faq_entries`
+- `city_pages`
+- `reviews`
+
 **Tables SEO & Tracking :**
 - `seo_metrics`
 - `seo_tracking`
 - `google_search_console_data`
 
 **Tables Automatisation :**
+- `automation_status`
 - `automation_logs`
 
 **Tables Backlinks & Partenaires :**
