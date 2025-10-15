@@ -131,16 +131,73 @@ BEGIN
   END IF;
 END $$;
 
--- get_dashboard_stats (adaptatif)
+-- get_dashboard_stats (adaptatif avec détection de colonnes)
 CREATE FUNCTION public.get_dashboard_stats() RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER AS $$
-DECLARE stats jsonb := '{}'::jsonb; blog_exists boolean; faq_exists boolean; leads_exists boolean;
+DECLARE
+  stats jsonb := '{}'::jsonb;
+  blog_exists boolean;
+  faq_exists boolean;
+  leads_exists boolean;
+  has_lead_status boolean;
+  has_status boolean;
+  status_col text;
 BEGIN
   SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'blog_posts') INTO blog_exists;
   SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'faq') INTO faq_exists;
   SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'leads') INTO leads_exists;
-  IF blog_exists THEN stats := stats || jsonb_build_object('total_blog_posts', (SELECT COUNT(*) FROM blog_posts WHERE COALESCE(published, true) = true), 'recent_blog_posts', (SELECT COALESCE(jsonb_agg(jsonb_build_object('id', id, 'title', title, 'slug', slug)), '[]'::jsonb) FROM (SELECT id, title, slug FROM blog_posts WHERE COALESCE(published, true) = true ORDER BY created_at DESC LIMIT 5) recent)); END IF;
-  IF faq_exists THEN stats := stats || jsonb_build_object('total_faqs', (SELECT COUNT(*) FROM faq)); END IF;
-  IF leads_exists THEN stats := stats || jsonb_build_object('total_leads', (SELECT COUNT(*) FROM leads), 'new_leads_today', (SELECT COUNT(*) FROM leads WHERE created_at::date = CURRENT_DATE), 'new_leads_week', (SELECT COUNT(*) FROM leads WHERE created_at >= CURRENT_DATE - interval '7 days'), 'leads_by_status', (SELECT COALESCE(jsonb_object_agg(lead_status::text, count), '{}'::jsonb) FROM (SELECT COALESCE(lead_status::text, 'inconnu') as lead_status, COUNT(*) as count FROM leads GROUP BY lead_status) sub)); END IF;
+
+  IF blog_exists THEN
+    stats := stats || jsonb_build_object(
+      'total_blog_posts', (SELECT COUNT(*) FROM blog_posts WHERE COALESCE(published, true) = true),
+      'recent_blog_posts', (SELECT COALESCE(jsonb_agg(jsonb_build_object('id', id, 'title', title, 'slug', slug)), '[]'::jsonb)
+                            FROM (SELECT id, title, slug FROM blog_posts WHERE COALESCE(published, true) = true ORDER BY created_at DESC LIMIT 5) recent)
+    );
+  END IF;
+
+  IF faq_exists THEN
+    stats := stats || jsonb_build_object('total_faqs', (SELECT COUNT(*) FROM faq));
+  END IF;
+
+  IF leads_exists THEN
+    -- Détecter quelle colonne de statut existe
+    SELECT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'leads' AND column_name = 'lead_status') INTO has_lead_status;
+    SELECT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'leads' AND column_name = 'status') INTO has_status;
+
+    IF has_lead_status THEN
+      status_col := 'lead_status';
+    ELSIF has_status THEN
+      status_col := 'status';
+    ELSE
+      status_col := NULL;
+    END IF;
+
+    IF status_col IS NOT NULL THEN
+      -- Construire dynamiquement la requête avec la bonne colonne
+      EXECUTE format(
+        'SELECT jsonb_build_object(
+          ''total_leads'', (SELECT COUNT(*) FROM leads),
+          ''new_leads_today'', (SELECT COUNT(*) FROM leads WHERE created_at::date = CURRENT_DATE),
+          ''new_leads_week'', (SELECT COUNT(*) FROM leads WHERE created_at >= CURRENT_DATE - interval ''7 days''),
+          ''leads_by_status'', (SELECT COALESCE(jsonb_object_agg(status_val, count), ''{}''::jsonb)
+                                FROM (SELECT COALESCE(%I::text, ''inconnu'') as status_val, COUNT(*) as count
+                                      FROM leads GROUP BY %I) sub)
+        )', status_col, status_col
+      ) INTO stats;
+      stats := jsonb_build_object('total_leads', (stats->>'total_leads')::int,
+                                  'new_leads_today', (stats->>'new_leads_today')::int,
+                                  'new_leads_week', (stats->>'new_leads_week')::int,
+                                  'leads_by_status', stats->'leads_by_status');
+    ELSE
+      -- Pas de colonne status, juste les comptages
+      stats := stats || jsonb_build_object(
+        'total_leads', (SELECT COUNT(*) FROM leads),
+        'new_leads_today', (SELECT COUNT(*) FROM leads WHERE created_at::date = CURRENT_DATE),
+        'new_leads_week', (SELECT COUNT(*) FROM leads WHERE created_at >= CURRENT_DATE - interval '7 days'),
+        'leads_by_status', '{}'::jsonb
+      );
+    END IF;
+  END IF;
+
   RETURN stats;
 END; $$;
 
