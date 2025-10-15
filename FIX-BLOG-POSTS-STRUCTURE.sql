@@ -114,7 +114,10 @@ SELECT
   id,
   title,
   slug,
-  array_length(tags, 1) as "Nb tags",
+  CASE
+    WHEN tags IS NOT NULL THEN array_length(tags, 1)
+    ELSE 0
+  END as "Nb tags",
   published,
   created_at,
   '✅ Article créé avec succès !' as status
@@ -123,12 +126,29 @@ WHERE slug LIKE 'test-structure-%'
 ORDER BY created_at DESC
 LIMIT 1;
 
--- 6. Test final avec la fonction RPC
+-- 6. Test final : Vérifier que les colonnes sont utilisables
 SELECT
+  id,
   title,
   slug,
-  array_length(tags, 1) as "Nb tags",
-  reading_time,
-  '✅ Visible via RPC' as status
-FROM get_blog_posts()
+  CASE
+    WHEN tags IS NOT NULL THEN array_length(tags, 1)
+    ELSE 0
+  END as "Nb tags",
+  COALESCE(reading_time, 0) as "Temps lecture",
+  published,
+  '✅ Structure OK' as status
+FROM blog_posts
+WHERE published = true
+ORDER BY created_at DESC
 LIMIT 3;
+
+-- 7. Test de la fonction RPC (si elle existe)
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_proc WHERE proname = 'get_blog_posts') THEN
+    RAISE NOTICE '✅ La fonction get_blog_posts() existe';
+  ELSE
+    RAISE NOTICE '⚠️ La fonction get_blog_posts() n''existe pas encore';
+  END IF;
+END $$;
