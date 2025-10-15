@@ -133,9 +133,9 @@ export async function updateLeadStatus(
       dateFields.client_at = new Date().toISOString();
     }
 
-    // Mise à jour via Supabase avec la valeur DB
+    // Mise à jour via Supabase avec la valeur DB (français)
     const updateData: any = {
-      lead_status: dbStatus, // Utiliser la valeur DB (new, contacted, etc.)
+      lead_status: dbStatus, // Utiliser directement: nouveau, contacte, devis_envoye, client, perdu
       ...dateFields
     };
 
@@ -147,6 +147,8 @@ export async function updateLeadStatus(
       updateData.notes = additionalData.notes;
     }
 
+    console.log('📤 Sending to Supabase:', updateData);
+
     const { data, error } = await supabase
       .from('leads')
       .update(updateData)
@@ -156,10 +158,12 @@ export async function updateLeadStatus(
 
     if (error) {
       console.error('❌ Supabase update error:', error);
+      console.error('❌ Error details:', JSON.stringify(error, null, 2));
       throw error;
     }
 
     console.log('✅ Lead status updated successfully:', data);
+    console.log('✅ New lead_status in DB:', data?.lead_status);
     return true;
   } catch (error) {
     console.error('Failed to update lead status:', error);
