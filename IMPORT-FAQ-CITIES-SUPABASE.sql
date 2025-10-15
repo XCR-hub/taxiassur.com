@@ -74,6 +74,22 @@ BEGIN
   END IF;
 END $$;
 
+-- Ajouter contrainte unique sur question pour éviter doublons FAQ
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'faq_entries_question_key'
+  ) THEN
+    ALTER TABLE faq_entries ADD CONSTRAINT faq_entries_question_key UNIQUE (question);
+    RAISE NOTICE '✅ Contrainte unique sur question ajoutée';
+  ELSE
+    RAISE NOTICE '⚠️ Contrainte unique sur question existe déjà';
+  END IF;
+EXCEPTION
+  WHEN OTHERS THEN
+    RAISE NOTICE '⚠️ Erreur contrainte question (probablement existe déjà) : %', SQLERRM;
+END $$;
+
 -- ============================================================
 -- PARTIE 1 : IMPORT DES FAQ
 -- ============================================================
@@ -88,7 +104,12 @@ VALUES (
   'tarifs',
   1
 )
-ON CONFLICT DO NOTHING;
+ON CONFLICT (question) DO UPDATE SET
+  answer = EXCLUDED.answer,
+  tags = EXCLUDED.tags,
+  category = EXCLUDED.category,
+  display_order = EXCLUDED.display_order,
+  updated_at = now();
 
 -- FAQ 2: Couverture France
 INSERT INTO faq_entries (question, answer, tags, status, category, display_order)
@@ -100,7 +121,12 @@ VALUES (
   'couverture',
   2
 )
-ON CONFLICT DO NOTHING;
+ON CONFLICT (question) DO UPDATE SET
+  answer = EXCLUDED.answer,
+  tags = EXCLUDED.tags,
+  category = EXCLUDED.category,
+  display_order = EXCLUDED.display_order,
+  updated_at = now();
 
 -- FAQ 3: Délai attestation
 INSERT INTO faq_entries (question, answer, tags, status, category, display_order)
@@ -112,7 +138,12 @@ VALUES (
   'documents',
   3
 )
-ON CONFLICT DO NOTHING;
+ON CONFLICT (question) DO UPDATE SET
+  answer = EXCLUDED.answer,
+  tags = EXCLUDED.tags,
+  category = EXCLUDED.category,
+  display_order = EXCLUDED.display_order,
+  updated_at = now();
 
 -- FAQ 4: Garanties incluses
 INSERT INTO faq_entries (question, answer, tags, status, category, display_order)
@@ -124,7 +155,12 @@ VALUES (
   'garanties',
   4
 )
-ON CONFLICT DO NOTHING;
+ON CONFLICT (question) DO UPDATE SET
+  answer = EXCLUDED.answer,
+  tags = EXCLUDED.tags,
+  category = EXCLUDED.category,
+  display_order = EXCLUDED.display_order,
+  updated_at = now();
 
 -- FAQ 5: Pièces nécessaires
 INSERT INTO faq_entries (question, answer, tags, status, category, display_order)
@@ -136,7 +172,12 @@ VALUES (
   'documents',
   5
 )
-ON CONFLICT DO NOTHING;
+ON CONFLICT (question) DO UPDATE SET
+  answer = EXCLUDED.answer,
+  tags = EXCLUDED.tags,
+  category = EXCLUDED.category,
+  display_order = EXCLUDED.display_order,
+  updated_at = now();
 
 -- FAQ 6: Résiliation assurance
 INSERT INTO faq_entries (question, answer, tags, status, category, display_order)
@@ -148,7 +189,12 @@ VALUES (
   'résiliation',
   6
 )
-ON CONFLICT DO NOTHING;
+ON CONFLICT (question) DO UPDATE SET
+  answer = EXCLUDED.answer,
+  tags = EXCLUDED.tags,
+  category = EXCLUDED.category,
+  display_order = EXCLUDED.display_order,
+  updated_at = now();
 
 -- FAQ 7: Procédure sinistre
 INSERT INTO faq_entries (question, answer, tags, status, category, display_order)
@@ -160,7 +206,12 @@ VALUES (
   'sinistres',
   7
 )
-ON CONFLICT DO NOTHING;
+ON CONFLICT (question) DO UPDATE SET
+  answer = EXCLUDED.answer,
+  tags = EXCLUDED.tags,
+  category = EXCLUDED.category,
+  display_order = EXCLUDED.display_order,
+  updated_at = now();
 
 -- FAQ 8: Frais cachés
 INSERT INTO faq_entries (question, answer, tags, status, category, display_order)
@@ -172,7 +223,12 @@ VALUES (
   'tarifs',
   8
 )
-ON CONFLICT DO NOTHING;
+ON CONFLICT (question) DO UPDATE SET
+  answer = EXCLUDED.answer,
+  tags = EXCLUDED.tags,
+  category = EXCLUDED.category,
+  display_order = EXCLUDED.display_order,
+  updated_at = now();
 
 -- ============================================================
 -- PARTIE 2 : IMPORT DES CITY PAGES (Principales Villes)
@@ -204,8 +260,11 @@ VALUES (
   ARRAY['Paris', 'taxi', 'assurance', 'Île-de-France', 'CDG', 'Orly'],
   'published'
 )
-ON CONFLICT (slug) DO UPDATE SET
+ON CONFLICT (city) DO UPDATE SET
+  title = EXCLUDED.title,
   content = EXCLUDED.content,
+  meta_description = EXCLUDED.meta_description,
+  keywords = EXCLUDED.keywords,
   updated_at = now();
 
 -- Lyon
@@ -231,8 +290,11 @@ VALUES (
   ARRAY['Lyon', 'Rhône', 'taxi', 'Saint-Exupéry', 'Rhône-Alpes'],
   'published'
 )
-ON CONFLICT (slug) DO UPDATE SET
+ON CONFLICT (city) DO UPDATE SET
+  title = EXCLUDED.title,
   content = EXCLUDED.content,
+  meta_description = EXCLUDED.meta_description,
+  keywords = EXCLUDED.keywords,
   updated_at = now();
 
 -- Marseille
@@ -258,8 +320,11 @@ VALUES (
   ARRAY['Marseille', 'PACA', 'Bouches-du-Rhône', 'Marignane', 'taxi'],
   'published'
 )
-ON CONFLICT (slug) DO UPDATE SET
+ON CONFLICT (city) DO UPDATE SET
+  title = EXCLUDED.title,
   content = EXCLUDED.content,
+  meta_description = EXCLUDED.meta_description,
+  keywords = EXCLUDED.keywords,
   updated_at = now();
 
 -- Toulouse
@@ -285,8 +350,11 @@ VALUES (
   ARRAY['Toulouse', 'Occitanie', 'Haute-Garonne', 'Blagnac', 'taxi'],
   'published'
 )
-ON CONFLICT (slug) DO UPDATE SET
+ON CONFLICT (city) DO UPDATE SET
+  title = EXCLUDED.title,
   content = EXCLUDED.content,
+  meta_description = EXCLUDED.meta_description,
+  keywords = EXCLUDED.keywords,
   updated_at = now();
 
 -- Nice
@@ -312,8 +380,11 @@ VALUES (
   ARRAY['Nice', 'Côte d''Azur', 'Alpes-Maritimes', 'taxi', 'PACA'],
   'published'
 )
-ON CONFLICT (slug) DO UPDATE SET
+ON CONFLICT (city) DO UPDATE SET
+  title = EXCLUDED.title,
   content = EXCLUDED.content,
+  meta_description = EXCLUDED.meta_description,
+  keywords = EXCLUDED.keywords,
   updated_at = now();
 
 -- ============================================================
