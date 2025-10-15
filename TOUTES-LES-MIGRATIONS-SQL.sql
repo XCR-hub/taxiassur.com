@@ -335,7 +335,9 @@ CREATE INDEX IF NOT EXISTS idx_automation_logs_created_at ON automation_logs(cre
 -- SECTION 6 : BACKLINKS & PARTENARIATS
 -- ============================================================================
 
-CREATE TABLE IF NOT EXISTS backlink_opportunities (
+DROP TABLE IF EXISTS backlink_opportunities CASCADE;
+
+CREATE TABLE backlink_opportunities (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   domain text NOT NULL,
   url text NOT NULL,
@@ -357,7 +359,9 @@ CREATE POLICY "Allow authenticated all backlink_opportunities"
   TO authenticated
   USING (true);
 
-CREATE TABLE IF NOT EXISTS partner_prospects (
+DROP TABLE IF EXISTS partner_prospects CASCADE;
+
+CREATE TABLE partner_prospects (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   company_name text NOT NULL,
   website text,
@@ -385,7 +389,9 @@ CREATE POLICY "Allow authenticated all partner_prospects"
 -- SECTION 7 : RÉSEAUX SOCIAUX & CONTENU
 -- ============================================================================
 
-CREATE TABLE IF NOT EXISTS social_media_posts (
+DROP TABLE IF EXISTS social_media_posts CASCADE;
+
+CREATE TABLE social_media_posts (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   platform text NOT NULL CHECK (platform IN ('facebook', 'twitter', 'linkedin', 'instagram')),
   content text NOT NULL,
@@ -409,7 +415,9 @@ CREATE POLICY "Allow authenticated all social_media_posts"
 
 CREATE INDEX IF NOT EXISTS idx_social_media_posts_scheduled ON social_media_posts(scheduled_for) WHERE status = 'scheduled';
 
-CREATE TABLE IF NOT EXISTS content_schedule (
+DROP TABLE IF EXISTS content_schedule CASCADE;
+
+CREATE TABLE content_schedule (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   content_type text NOT NULL CHECK (content_type IN ('blog', 'social', 'email', 'video')),
   title text NOT NULL,
@@ -434,7 +442,10 @@ CREATE POLICY "Allow authenticated all content_schedule"
 -- SECTION 8 : SEO TRACKING
 -- ============================================================================
 
-CREATE TABLE IF NOT EXISTS seo_metrics (
+-- Drop and recreate to ensure schema consistency
+DROP TABLE IF EXISTS seo_metrics CASCADE;
+
+CREATE TABLE seo_metrics (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   url text NOT NULL,
   keyword text NOT NULL,
@@ -459,7 +470,10 @@ CREATE POLICY "Allow authenticated all seo_metrics"
 CREATE INDEX IF NOT EXISTS idx_seo_metrics_url_keyword ON seo_metrics(url, keyword);
 CREATE INDEX IF NOT EXISTS idx_seo_metrics_tracked_date ON seo_metrics(tracked_date DESC);
 
-CREATE TABLE IF NOT EXISTS seo_tracking (
+-- Drop and recreate to ensure schema consistency
+DROP TABLE IF EXISTS seo_tracking CASCADE;
+
+CREATE TABLE seo_tracking (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   page_url text NOT NULL,
   keyword text NOT NULL,
@@ -482,7 +496,10 @@ CREATE POLICY "Allow authenticated all seo_tracking"
   TO authenticated
   USING (true);
 
-CREATE TABLE IF NOT EXISTS google_search_console_data (
+-- Drop and recreate to ensure schema consistency
+DROP TABLE IF EXISTS google_search_console_data CASCADE;
+
+CREATE TABLE google_search_console_data (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   page text NOT NULL,
   query text NOT NULL,
@@ -510,7 +527,9 @@ CREATE INDEX IF NOT EXISTS idx_gsc_data_page ON google_search_console_data(page)
 -- SECTION 9 : IA AUTO-APPRENANTE
 -- ============================================================================
 
-CREATE TABLE IF NOT EXISTS ai_learning_data (
+DROP TABLE IF EXISTS ai_learning_data CASCADE;
+
+CREATE TABLE ai_learning_data (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   category text NOT NULL,
   prompt_used text NOT NULL,
@@ -532,7 +551,9 @@ CREATE POLICY "Allow authenticated all ai_learning"
 CREATE INDEX IF NOT EXISTS idx_ai_learning_category ON ai_learning_data(category);
 CREATE INDEX IF NOT EXISTS idx_ai_learning_success_score ON ai_learning_data(success_score DESC);
 
-CREATE TABLE IF NOT EXISTS ai_performance_metrics (
+DROP TABLE IF EXISTS ai_performance_metrics CASCADE;
+
+CREATE TABLE ai_performance_metrics (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   content_type text NOT NULL,
   metric_name text NOT NULL,
@@ -556,7 +577,9 @@ CREATE INDEX IF NOT EXISTS idx_ai_metrics_recorded_at ON ai_performance_metrics(
 -- SECTION 10 : SIGNATURE ÉLECTRONIQUE & EMAILS
 -- ============================================================================
 
-CREATE TABLE IF NOT EXISTS signature_requests (
+DROP TABLE IF EXISTS signature_requests CASCADE;
+
+CREATE TABLE signature_requests (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   lead_id uuid REFERENCES leads(id),
   document_url text NOT NULL,
@@ -579,7 +602,9 @@ CREATE POLICY "Allow authenticated all signatures"
   TO authenticated
   USING (true);
 
-CREATE TABLE IF NOT EXISTS email_logs (
+DROP TABLE IF EXISTS email_logs CASCADE;
+
+CREATE TABLE email_logs (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   recipient text NOT NULL,
   subject text NOT NULL,
@@ -611,7 +636,9 @@ CREATE INDEX IF NOT EXISTS idx_email_logs_created_at ON email_logs(created_at DE
 -- SECTION 11 : PROGRAMME DE PARRAINAGE
 -- ============================================================================
 
-CREATE TABLE IF NOT EXISTS ambassadors (
+DROP TABLE IF EXISTS ambassadors CASCADE;
+
+CREATE TABLE ambassadors (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   email text UNIQUE NOT NULL,
   first_name text NOT NULL,
@@ -642,7 +669,9 @@ CREATE POLICY "Allow authenticated all ambassadors"
   TO authenticated
   USING (true);
 
-CREATE TABLE IF NOT EXISTS referrals (
+DROP TABLE IF EXISTS referrals CASCADE;
+
+CREATE TABLE referrals (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   ambassador_id uuid REFERENCES ambassadors(id),
   lead_id uuid REFERENCES leads(id),
@@ -669,7 +698,9 @@ CREATE INDEX IF NOT EXISTS idx_referrals_status ON referrals(status);
 -- SECTION 12 : NEWS & ACTUALITÉS
 -- ============================================================================
 
-CREATE TABLE IF NOT EXISTS news_items (
+DROP TABLE IF EXISTS news_items CASCADE;
+
+CREATE TABLE news_items (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   title text NOT NULL,
   slug text UNIQUE NOT NULL,
