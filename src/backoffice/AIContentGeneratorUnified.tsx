@@ -110,6 +110,14 @@ export default function AIContentGeneratorUnified() {
         throw new Error(data.error || 'Erreur lors de la génération');
       }
 
+      // Debug image Pexels
+      console.log('🖼️ DEBUG IMAGE PEXELS:', {
+        hasImage: !!data.content?.blogPost?.featuredImage,
+        imageUrl: data.content?.blogPost?.featuredImage?.substring(0, 80) + '...',
+        imageAlt: data.content?.blogPost?.imageAlt,
+        fullContent: data.content?.blogPost
+      });
+
       setGeneratedContent(data.content);
     } catch (err) {
       console.error('Generation error:', err);
