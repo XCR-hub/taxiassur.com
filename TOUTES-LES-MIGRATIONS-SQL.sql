@@ -979,7 +979,7 @@ BEGIN
     PERFORM cron.schedule(
       'ai_content_generation_daily',
       '0 9 * * *',
-      $$
+      $CRON$
       SELECT net.http_post(
         url := current_setting('app.supabase_url') || '/functions/v1/generate-seo-content',
         headers := jsonb_build_object(
@@ -988,7 +988,7 @@ BEGIN
         ),
         body := jsonb_build_object('auto', true)
       );
-      $$
+      $CRON$
     );
   END IF;
 END $$;
@@ -1002,7 +1002,7 @@ BEGIN
     PERFORM cron.schedule(
       'social_media_publisher',
       '0 10,14,18 * * *',
-      $$
+      $CRON$
       SELECT net.http_post(
         url := current_setting('app.supabase_url') || '/functions/v1/social-media-auto-publisher',
         headers := jsonb_build_object(
@@ -1011,7 +1011,7 @@ BEGIN
         ),
         body := jsonb_build_object('scheduled', true)
       );
-      $$
+      $CRON$
     );
   END IF;
 END $$;
@@ -1025,7 +1025,7 @@ BEGIN
     PERFORM cron.schedule(
       'seo_daily_refresh',
       '0 8 * * *',
-      $$
+      $CRON$
       SELECT net.http_post(
         url := current_setting('app.supabase_url') || '/functions/v1/seo-daily-refresh',
         headers := jsonb_build_object(
@@ -1034,7 +1034,7 @@ BEGIN
         ),
         body := jsonb_build_object('auto', true)
       );
-      $$
+      $CRON$
     );
   END IF;
 END $$;
@@ -1048,7 +1048,7 @@ BEGIN
     PERFORM cron.schedule(
       'backlink_prospection_weekly',
       '0 9 * * 1',
-      $$
+      $CRON$
       SELECT net.http_post(
         url := current_setting('app.supabase_url') || '/functions/v1/backlink-auto-outreach',
         headers := jsonb_build_object(
@@ -1057,7 +1057,7 @@ BEGIN
         ),
         body := jsonb_build_object('weekly', true)
       );
-      $$
+      $CRON$
     );
   END IF;
 END $$;
@@ -1071,7 +1071,7 @@ BEGIN
     PERFORM cron.schedule(
       'email_auto_responder_hourly',
       '0 * * * *',
-      $$
+      $CRON$
       SELECT net.http_post(
         url := current_setting('app.supabase_url') || '/functions/v1/email-auto-responder',
         headers := jsonb_build_object(
@@ -1080,7 +1080,7 @@ BEGIN
         ),
         body := jsonb_build_object('auto', true)
       );
-      $$
+      $CRON$
     );
   END IF;
 END $$;
