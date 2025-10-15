@@ -96,9 +96,9 @@ export default function Actualites() {
 
       <Header />
 
-      <main className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
+      <main className="min-h-screen bg-gradient-to-br from-gray-50 to-yellow-50">
         {/* Hero Section */}
-        <section className="bg-gradient-to-r from-blue-600 to-purple-600 text-white py-16">
+        <section className="bg-gradient-to-r from-black via-gray-900 to-yellow-600 text-white py-16">
           <div className="container mx-auto px-4">
             <div className="max-w-4xl mx-auto text-center">
               <div className="inline-flex items-center space-x-2 bg-white/20 px-4 py-2 rounded-full mb-6">
@@ -108,7 +108,7 @@ export default function Actualites() {
               <h1 className="text-4xl md:text-5xl font-bold mb-4">
                 L'Actualité de l'Assurance Taxi
               </h1>
-              <p className="text-xl text-blue-100">
+              <p className="text-xl text-yellow-100">
                 Restez informé des dernières nouveautés, réglementations et conseils pour optimiser votre activité
               </p>
             </div>
@@ -125,7 +125,7 @@ export default function Actualites() {
                   onClick={() => setFilter(cat.id)}
                   className={`px-4 py-2 rounded-lg font-medium transition-all ${
                     filter === cat.id
-                      ? 'bg-blue-600 text-white shadow-md'
+                      ? 'bg-yellow-500 text-black shadow-md font-bold'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
                 >
@@ -141,7 +141,7 @@ export default function Actualites() {
           {loading ? (
             <div className="flex items-center justify-center py-20">
               <div className="text-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-500 mx-auto mb-4"></div>
                 <p className="text-gray-600">Chargement des actualités...</p>
               </div>
             </div>
@@ -158,7 +158,7 @@ export default function Actualites() {
                 >
                   {/* Image */}
                   {article.image_url && (
-                    <div className="relative h-48 bg-gradient-to-br from-blue-500 to-purple-500">
+                    <div className="relative h-48 bg-gradient-to-br from-yellow-400 to-yellow-600">
                       <img
                         src={article.image_url}
                         alt={article.title}
@@ -181,14 +181,14 @@ export default function Actualites() {
                       {article.score > 0 && (
                         <div className="flex items-center space-x-1">
                           <TrendingUp size={14} />
-                          <span className="font-semibold text-blue-600">{article.score}/100</span>
+                          <span className="font-semibold text-yellow-600">{article.score}/100</span>
                         </div>
                       )}
                     </div>
 
                     {/* Category */}
                     <div className="mb-3">
-                      <span className="inline-block px-3 py-1 bg-blue-100 text-blue-700 text-xs font-semibold rounded-full">
+                      <span className="inline-block px-3 py-1 bg-yellow-100 text-yellow-800 text-xs font-semibold rounded-full">
                         {article.category}
                       </span>
                     </div>
@@ -229,7 +229,7 @@ export default function Actualites() {
                     <div className="flex space-x-2 pt-4 border-t border-gray-100">
                       <a
                         href={`/actualites/${article.slug}`}
-                        className="flex-1 text-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors"
+                        className="flex-1 text-center px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-black font-bold rounded-lg transition-colors"
                       >
                         Lire l'article
                       </a>
@@ -253,17 +253,17 @@ export default function Actualites() {
         </section>
 
         {/* CTA Section */}
-        <section className="bg-gradient-to-r from-blue-600 to-purple-600 text-white py-16">
+        <section className="bg-gradient-to-r from-black via-gray-900 to-yellow-600 text-white py-16">
           <div className="container mx-auto px-4 text-center">
             <h2 className="text-3xl font-bold mb-4">
               Besoin d'un Devis Personnalisé ?
             </h2>
-            <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
+            <p className="text-xl text-yellow-100 mb-8 max-w-2xl mx-auto">
               Nos experts analysent votre situation et vous proposent les meilleures offres du marché
             </p>
             <a
               href="/"
-              className="inline-block px-8 py-4 bg-white text-blue-600 font-bold rounded-lg hover:bg-blue-50 transition-colors shadow-xl"
+              className="inline-block px-8 py-4 bg-yellow-500 text-black font-bold rounded-lg hover:bg-yellow-400 transition-colors shadow-xl"
             >
               Obtenir un Devis Gratuit
             </a>
