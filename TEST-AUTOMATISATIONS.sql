@@ -96,23 +96,30 @@ SELECT
   COUNT(*) FILTER (WHERE status = 'converted') as "Convertis"
 FROM leads;
 
--- News Articles
-SELECT
-  '📰 ACTUALITÉS' as type,
-  COUNT(*) as total,
-  COUNT(*) FILTER (WHERE status = 'published') as "Publiées",
-  COUNT(*) FILTER (WHERE status = 'draft') as "Brouillons"
-FROM news_articles
-WHERE EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'news_articles');
+-- News Articles (vérification conditionnelle)
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'news_articles' AND table_schema = 'public') THEN
+    RAISE NOTICE '📰 ACTUALITÉS: % total, % publiées',
+      (SELECT COUNT(*) FROM news_articles),
+      (SELECT COUNT(*) FROM news_articles WHERE status = 'published');
+  ELSE
+    RAISE NOTICE '📰 ACTUALITÉS: ⚠️ Table non créée (optionnelle)';
+  END IF;
+END $$;
 
--- Social Media Posts
-SELECT
-  '📱 RÉSEAUX SOCIAUX' as type,
-  COUNT(*) as total,
-  COUNT(*) FILTER (WHERE status = 'published') as "Publiés",
-  COUNT(*) FILTER (WHERE status = 'scheduled') as "Programmés"
-FROM social_media_posts
-WHERE EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'social_media_posts');
+-- Social Media Posts (vérification conditionnelle)
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'social_media_posts' AND table_schema = 'public') THEN
+    RAISE NOTICE '📱 RÉSEAUX SOCIAUX: % total, % publiés, % programmés',
+      (SELECT COUNT(*) FROM social_media_posts),
+      (SELECT COUNT(*) FROM social_media_posts WHERE status = 'published'),
+      (SELECT COUNT(*) FROM social_media_posts WHERE status = 'scheduled');
+  ELSE
+    RAISE NOTICE '📱 RÉSEAUX SOCIAUX: ⚠️ Table non créée (optionnelle)';
+  END IF;
+END $$;
 
 -- ============================================================
 -- PARTIE 4 : TEST DE CRÉATION D'UN LEAD
