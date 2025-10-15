@@ -355,29 +355,29 @@ Consultez le détail dans la console (F12)`);
                   <span>Notifier les Moteurs (Simulé)</span>
                 </button>
 
-                <div className="w-full bg-red-900/30 border-2 border-red-500 rounded-lg p-4">
-                  <div className="flex items-start gap-3 mb-3">
-                    <AlertCircle className="text-red-400 flex-shrink-0 mt-0.5" size={20} />
+                <div className="w-full bg-blue-900/30 border-2 border-blue-500 rounded-lg p-4">
+                  <div className="flex items-start gap-3">
+                    <Settings className="text-blue-400 flex-shrink-0 mt-0.5" size={20} />
                     <div>
-                      <p className="text-sm font-bold text-red-300 mb-2">
-                        ⚠️ Webhook Google Search Console non configuré
+                      <p className="text-sm font-bold text-blue-300 mb-2">
+                        🔧 Configuration API Google Search Console
                       </p>
-                      <p className="text-xs text-red-200 mb-2">
-                        Pour recevoir les notifications de Google automatiquement :
+                      <p className="text-xs text-blue-200 mb-3">
+                        Pour obtenir les vraies données Google (pages indexées, performances, etc.) :
                       </p>
-                      <div className="text-xs text-red-100 space-y-1 mb-3">
-                        <p><strong>1.</strong> Dans Google Search Console → <strong>Paramètres</strong></p>
-                        <p><strong>2.</strong> Onglet <strong>Autres paramètres</strong> → <strong>Notifications</strong></p>
-                        <p><strong>3.</strong> Ajouter l'URL webhook :</p>
+                      <div className="text-xs text-blue-100 space-y-1 mb-3">
+                        <p><strong>1.</strong> Active l'API dans <a href="https://console.cloud.google.com/apis/library" target="_blank" className="underline hover:text-blue-200">Google Cloud Console</a></p>
+                        <p><strong>2.</strong> Crée une clé API dans <a href="https://console.cloud.google.com/apis/credentials" target="_blank" className="underline hover:text-blue-200">Credentials</a></p>
+                        <p><strong>3.</strong> Ajoute la clé dans Supabase Secrets :</p>
                       </div>
-                      <div className="bg-slate-900 p-2 rounded border border-red-500 mb-2">
-                        <code className="text-xs text-amber-300 break-all">
-                          https://drohhxrkoequjphvabvq.supabase.co/functions/v1/seo-webhook-receiver
+                      <div className="bg-slate-900 p-2 rounded border border-blue-500 mb-3">
+                        <code className="text-xs text-amber-300">
+                          GOOGLE_SEARCH_CONSOLE_API_KEY = ta_clé_ici
                         </code>
                       </div>
-                      <p className="text-xs text-red-200">
-                        📚 <a href="/GUIDE-SOUMISSION-SITEMAPS-AUTO.md" className="underline hover:text-red-100" target="_blank">
-                          Voir le guide complet
+                      <p className="text-xs text-blue-200">
+                        📚 <a href="/SOLUTION-GOOGLE-CSE-SANS-WEBHOOK.md" className="underline hover:text-blue-100 font-semibold" target="_blank">
+                          → Voir le guide complet étape par étape
                         </a>
                       </p>
                     </div>
