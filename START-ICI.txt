@@ -1,0 +1,108 @@
+╔══════════════════════════════════════════════════════════════╗
+║                  🚀 DÉMARRAGE RAPIDE - 2 MIN                 ║
+╚══════════════════════════════════════════════════════════════╝
+
+📋 ÉTAPE 1 : EXÉCUTER LE SQL (1 minute)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Allez sur : https://supabase.com/dashboard/project/drohhxrkoequjphvabvq
+
+2. Cliquez sur "SQL Editor" (menu gauche)
+
+3. Cliquez sur "New query"
+
+4. Ouvrez le fichier : FIX-PERMISSION-ET-RECUPERATION-DONNEES-V2.sql
+
+5. Copiez TOUT le contenu et collez-le dans l'éditeur
+
+6. Cliquez sur "Run" (ou Ctrl+Enter)
+
+✅ RÉSULTAT ATTENDU :
+NOTICE: ✅ TOUTES LES FONCTIONS SONT OPÉRATIONNELLES
+
+
+📋 ÉTAPE 2 : TESTER L'APPLICATION (1 minute)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Dans votre terminal, lancez :
+   npm run dev
+
+2. Connectez-vous au backoffice
+
+3. Naviguez vers : /backoffice/data
+
+✅ VOUS VERREZ :
+- Dashboard avec statistiques
+- Liste des articles de blog
+- Liste des actualités
+- Liste des FAQs
+- Liste des leads
+- Recherche en temps réel
+
+
+╔══════════════════════════════════════════════════════════════╗
+║                    ✅ C'EST TOUT !                           ║
+║                                                              ║
+║  Vos données Supabase sont maintenant accessibles dans       ║
+║  l'application React avec des hooks prêts à l'emploi !       ║
+╚══════════════════════════════════════════════════════════════╝
+
+
+📚 DOCUMENTATION COMPLÈTE :
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+- EXECUTER-MAINTENANT.md         → Guide rapide
+- SOLUTION-FINALE-COMPLETE.md    → Documentation complète
+- GUIDE-COMPLET-RECUPERATION-DONNEES.md → Guide technique
+
+
+🔥 FONCTIONS CRÉÉES :
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. get_blog_posts()        → Récupère les articles
+2. get_news()              → Récupère les actualités
+3. get_faqs()              → Récupère les FAQs
+4. get_leads()             → Récupère les leads
+5. get_dashboard_stats()   → Récupère les statistiques
+6. search_content()        → Recherche full-text
+7. get_cron_config()       → Config pour automatisations
+
+
+🎨 HOOKS REACT CRÉÉS :
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+import {
+  useBlogPosts,
+  useNews,
+  useFAQs,
+  useLeads,
+  useDashboardStats,
+  useContentSearch
+} from '../hooks/useSupabaseData';
+
+
+🔒 SÉCURITÉ :
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ RLS activé sur toutes les tables
+✅ Politiques restrictives
+✅ Accès public uniquement pour contenu public
+✅ Leads accessibles uniquement aux utilisateurs authentifiés
+
+
+🆘 PROBLÈME ?
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Lisez : SOLUTION-FINALE-COMPLETE.md
+Section "DÉPANNAGE" avec toutes les solutions
+
+
+✅ BUILD TESTÉ ET VALIDÉ :
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✓ built in 18.90s
+✓ 1723 modules transformés
+✓ 0 erreur
+
+
+🎉 PRÊT À UTILISER !
