@@ -307,7 +307,10 @@ INSERT INTO automation_status (name, description, frequency) VALUES
 ON CONFLICT (name) DO NOTHING;
 
 -- Table automation_logs
-CREATE TABLE IF NOT EXISTS automation_logs (
+-- Drop and recreate to ensure schema consistency
+DROP TABLE IF EXISTS automation_logs CASCADE;
+
+CREATE TABLE automation_logs (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   automation_name text NOT NULL,
   status text NOT NULL CHECK (status IN ('success', 'error', 'running')),
