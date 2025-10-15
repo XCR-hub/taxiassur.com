@@ -1,45 +1,30 @@
 /*
   ═══════════════════════════════════════════════════════════════════════════
-  🔧 CORRECTIONS 3 PROBLÈMES - VERSION CORRIGÉE (Sans erreur permissions)
+  🔧 CORRECTION FAQ - VERSION ULTRA SIMPLE
   ═══════════════════════════════════════════════════════════════════════════
 
-  PROBLÈME 1 : Pas d'images dans articles générés IA
-  PROBLÈME 2 : Page FAQ vide (0 questions affichées)
-  PROBLÈME 3 : 5 CRON jobs en échec
+  Cette version ne fait QUE corriger la FAQ (pas de CRON job)
+  → Plus simple, 0 risque d'erreur
+  → Temps d'exécution : 5 secondes
 
   ═══════════════════════════════════════════════════════════════════════════
 */
 
--- ═══════════════════════════════════════════════════════════════════════════
--- PROBLÈME 1 : IMAGES PEXELS NON GÉNÉRÉES
--- ═══════════════════════════════════════════════════════════════════════════
-
 DO $$
 BEGIN
-  RAISE NOTICE '🖼️ PROBLÈME 1 : Configuration clé Pexels API';
-  RAISE NOTICE '';
-  RAISE NOTICE 'CAUSE : La clé PEXELS_API_KEY n''est pas configurée dans Supabase Vault';
-  RAISE NOTICE '';
-  RAISE NOTICE 'SOLUTION :';
-  RAISE NOTICE '1. Créer un compte gratuit Pexels API : https://www.pexels.com/api/';
-  RAISE NOTICE '2. Copier votre API Key';
-  RAISE NOTICE '3. Aller dans Supabase → Settings → Vault → Secrets';
-  RAISE NOTICE '4. Créer un nouveau secret :';
-  RAISE NOTICE '   - Name : PEXELS_API_KEY';
-  RAISE NOTICE '   - Secret : votre-clé-pexels';
-  RAISE NOTICE '';
-  RAISE NOTICE 'Une fois configuré, les prochains articles auront automatiquement des images.';
+  RAISE NOTICE '═══════════════════════════════════════════════════════════';
+  RAISE NOTICE '📋 CORRECTION PAGE FAQ - VERSION SIMPLE';
+  RAISE NOTICE '═══════════════════════════════════════════════════════════';
   RAISE NOTICE '';
 END $$;
 
 -- ═══════════════════════════════════════════════════════════════════════════
--- PROBLÈME 2 : PAGE FAQ VIDE (fonction RPC manquante)
+-- ÉTAPE 1 : Créer fonction RPC get_faq_entries()
 -- ═══════════════════════════════════════════════════════════════════════════
 
 DO $$
 BEGIN
-  RAISE NOTICE '';
-  RAISE NOTICE '📋 PROBLÈME 2 : Création fonction get_faq_entries()';
+  RAISE NOTICE '🔧 ÉTAPE 1/3 : Création fonction get_faq_entries()';
 END $$;
 
 -- Supprimer l'ancienne fonction si elle existe
@@ -74,25 +59,13 @@ $$;
 GRANT EXECUTE ON FUNCTION get_faq_entries() TO anon, authenticated;
 
 DO $$
-DECLARE
-  faq_count int;
 BEGIN
-  SELECT COUNT(*) INTO faq_count FROM faq;
-
-  RAISE NOTICE '✅ Fonction get_faq_entries() créée !';
-  RAISE NOTICE '   → % questions FAQ disponibles', faq_count;
-
-  IF faq_count = 0 THEN
-    RAISE NOTICE '';
-    RAISE NOTICE '⚠️  ATTENTION : Table FAQ vide !';
-    RAISE NOTICE '   → Insertion automatique de 8 FAQ de test...';
-  ELSE
-    RAISE NOTICE '   → Page FAQ devrait maintenant afficher les questions';
-  END IF;
+  RAISE NOTICE '   ✅ Fonction get_faq_entries() créée avec succès !';
+  RAISE NOTICE '';
 END $$;
 
 -- ═══════════════════════════════════════════════════════════════════════════
--- Insérer 8 FAQ de test (si table vide)
+-- ÉTAPE 2 : Insérer 8 FAQ de test (si table vide)
 -- ═══════════════════════════════════════════════════════════════════════════
 
 DO $$
@@ -101,9 +74,12 @@ DECLARE
 BEGIN
   SELECT COUNT(*) INTO faq_count FROM faq;
 
+  RAISE NOTICE '🔧 ÉTAPE 2/3 : Vérification FAQ existantes';
+  RAISE NOTICE '   → FAQ actuelles en base : %', faq_count;
+
   IF faq_count = 0 THEN
+    RAISE NOTICE '   → Insertion de 8 FAQ de test...';
     RAISE NOTICE '';
-    RAISE NOTICE '📝 Insertion de 8 FAQ de test...';
 
     -- FAQ 1 : Tarifs
     INSERT INTO faq (question, answer, category, priority)
@@ -177,140 +153,60 @@ BEGIN
       7
     );
 
-    RAISE NOTICE '✅ 8 FAQ de test insérées avec succès !';
-    RAISE NOTICE '   → Rafraîchissez la page /faq pour les voir';
+    RAISE NOTICE '   ✅ 8 FAQ de test insérées avec succès !';
+  ELSE
+    RAISE NOTICE '   ✅ FAQ déjà présentes en base (% questions)', faq_count;
   END IF;
-END $$;
-
--- ═══════════════════════════════════════════════════════════════════════════
--- PROBLÈME 3 : CRON JOBS EN ÉCHEC
--- ═══════════════════════════════════════════════════════════════════════════
-
-DO $$
-BEGIN
-  RAISE NOTICE '';
-  RAISE NOTICE '⏰ PROBLÈME 3 : Information sur les CRON jobs en échec';
-  RAISE NOTICE '';
-  RAISE NOTICE '⚠️  NOTE : Suppression des CRON jobs nécessite les permissions superuser';
-  RAISE NOTICE '   → Les jobs en échec n''impactent pas le fonctionnement du système';
-  RAISE NOTICE '   → Ils peuvent être ignorés ou supprimés manuellement via Dashboard';
-  RAISE NOTICE '';
-  RAISE NOTICE 'Pour supprimer manuellement :';
-  RAISE NOTICE '   1. Allez dans Supabase Dashboard';
-  RAISE NOTICE '   2. Database → Cron Jobs';
-  RAISE NOTICE '   3. Supprimez les jobs avec statut "Failed" :';
-  RAISE NOTICE '      - daily_competitor_monitoring';
-  RAISE NOTICE '      - seo-daily-refresh';
-  RAISE NOTICE '      - analyze-performance-metrics';
-  RAISE NOTICE '      - manage-ab-experiments';
-  RAISE NOTICE '      - detect-anomalies';
   RAISE NOTICE '';
 END $$;
 
 -- ═══════════════════════════════════════════════════════════════════════════
--- BONUS : Créer CRON job pour génération FAQ automatique
--- ═══════════════════════════════════════════════════════════════════════════
-
-DO $$
-BEGIN
-  RAISE NOTICE '';
-  RAISE NOTICE '🤖 BONUS : Tentative création CRON job génération FAQ automatique';
-END $$;
-
--- Supprimer l'ancien job s'il existe (peut échouer si pas de permissions)
-DO $$
-BEGIN
-  PERFORM cron.unschedule('ai-auto-generate-faq')
-  WHERE EXISTS (SELECT 1 FROM cron.job WHERE jobname = 'ai-auto-generate-faq');
-EXCEPTION WHEN OTHERS THEN
-  RAISE NOTICE '⚠️  Pas de permissions pour supprimer l''ancien CRON job';
-END $$;
-
--- Créer un job qui génère des FAQ tous les lundis à 9h
-DO $$
-BEGIN
-  PERFORM cron.schedule(
-    'ai-auto-generate-faq',
-    '0 9 * * 1',
-    $cron$
-    SELECT net.http_post(
-      url := 'https://drohhxrkoequjphvabvq.supabase.co/functions/v1/generate-seo-content',
-      headers := jsonb_build_object(
-        'Content-Type', 'application/json',
-        'Authorization', 'Bearer ' || current_setting('app.settings.service_role_key', true)
-      ),
-      body := jsonb_build_object(
-        'action', 'generate_faq',
-        'category', 'assurance taxi',
-        'count', 5
-      )
-    );
-    $cron$
-  );
-  RAISE NOTICE '✅ CRON job FAQ créé : Génération automatique tous les lundis à 9h';
-  RAISE NOTICE '   → 5 nouvelles FAQ par semaine';
-EXCEPTION WHEN OTHERS THEN
-  RAISE NOTICE '⚠️  Pas de permissions pour créer CRON job FAQ';
-  RAISE NOTICE '   → Peut être créé manuellement via Dashboard';
-END $$;
-
--- ═══════════════════════════════════════════════════════════════════════════
--- VÉRIFICATION FINALE
+-- ÉTAPE 3 : Vérification finale
 -- ═══════════════════════════════════════════════════════════════════════════
 
 DO $$
 DECLARE
   faq_count int;
-  cron_count int;
 BEGIN
-  -- Compter les FAQ
   SELECT COUNT(*) INTO faq_count FROM faq;
 
-  -- Compter les CRON jobs (peut échouer si pas de permissions)
-  BEGIN
-    SELECT COUNT(*) INTO cron_count FROM cron.job;
-  EXCEPTION WHEN OTHERS THEN
-    cron_count := -1;
-  END;
-
+  RAISE NOTICE '🔧 ÉTAPE 3/3 : Vérification finale';
   RAISE NOTICE '';
   RAISE NOTICE '═══════════════════════════════════════════════════════════';
-  RAISE NOTICE '✅ CORRECTIONS APPLIQUÉES AVEC SUCCÈS !';
+  RAISE NOTICE '✅ CORRECTION FAQ TERMINÉE AVEC SUCCÈS !';
   RAISE NOTICE '═══════════════════════════════════════════════════════════';
   RAISE NOTICE '';
   RAISE NOTICE '📊 RÉSUMÉ :';
-  RAISE NOTICE '   • FAQ en base : %', faq_count;
-  IF cron_count >= 0 THEN
-    RAISE NOTICE '   • CRON jobs visibles : %', cron_count;
-  ELSE
-    RAISE NOTICE '   • CRON jobs : Pas de permissions lecture';
-  END IF;
+  RAISE NOTICE '   • Fonction get_faq_entries() : ✅ Créée';
+  RAISE NOTICE '   • Permissions publiques : ✅ Accordées';
+  RAISE NOTICE '   • FAQ en base de données : % questions', faq_count;
   RAISE NOTICE '';
   RAISE NOTICE '🎯 PROCHAINES ÉTAPES :';
   RAISE NOTICE '';
-  RAISE NOTICE '1. VÉRIFIER PAGE FAQ';
+  RAISE NOTICE '1. TESTER LA FONCTION RPC';
+  RAISE NOTICE '   → Exécuter : SELECT * FROM get_faq_entries();';
+  RAISE NOTICE '   → Devrait retourner : % lignes', faq_count;
+  RAISE NOTICE '';
+  RAISE NOTICE '2. VÉRIFIER LA PAGE FAQ';
   RAISE NOTICE '   → Ouvrir : https://taxiassur.com/faq';
+  RAISE NOTICE '   → Appuyer : CTRL + SHIFT + R (vider cache)';
   RAISE NOTICE '   → Devrait afficher : % questions', faq_count;
-  RAISE NOTICE '   → Si toujours vide : Vider cache navigateur (Ctrl+Shift+R)';
   RAISE NOTICE '';
-  RAISE NOTICE '2. CONFIGURER IMAGES PEXELS';
-  RAISE NOTICE '   → Créer compte : https://www.pexels.com/api/';
-  RAISE NOTICE '   → Configurer PEXELS_API_KEY dans Supabase Vault';
-  RAISE NOTICE '   → Les prochains articles auront des images automatiquement';
+  RAISE NOTICE '3. SI LA PAGE EST TOUJOURS VIDE';
+  RAISE NOTICE '   → Vérifier console navigateur (F12)';
+  RAISE NOTICE '   → Chercher erreurs "get_faq_entries"';
   RAISE NOTICE '';
-  RAISE NOTICE '3. NETTOYER CRON JOBS (Optionnel)';
-  RAISE NOTICE '   → Dashboard → Database → Cron Jobs';
-  RAISE NOTICE '   → Supprimer les jobs "Failed" manuellement';
-  RAISE NOTICE '';
+  RAISE NOTICE '═══════════════════════════════════════════════════════════';
+  RAISE NOTICE '🎉 C''EST PRÊT ! Testez maintenant la page /faq';
   RAISE NOTICE '═══════════════════════════════════════════════════════════';
 END $$;
 
--- Afficher les FAQ actuelles
+-- Afficher un aperçu des FAQ
 SELECT
-  '📋 FAQ ACTUELLES' as info,
-  question,
+  '📋 APERÇU FAQ' as info,
+  LEFT(question, 60) as question,
   category,
   priority
 FROM faq
 ORDER BY priority DESC, created_at DESC
-LIMIT 10;
+LIMIT 8;
