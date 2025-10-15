@@ -4,7 +4,7 @@ import {
   Zap, FileEdit, Newspaper, Package, TrendingUp, FileText,
   Search, Link2, Mail, Eye, Plus, Send,
   UserCircle, Clock, Megaphone, Shield, Globe, Settings, BookOpen,
-  QrCode, MessageSquare
+  QrCode, MessageSquare, Brain
 } from 'lucide-react';
 
 export default function NavigationMenu() {
@@ -145,7 +145,11 @@ export default function NavigationMenu() {
           ⚙️ AUTOMATISATION & SÉCURITÉ
         </h3>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-          <Link to="/backoffice/auto-optimizer" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm animate-pulse">
+          <Link to="/backoffice/master-ai" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-purple-500 to-purple-700 hover:from-purple-600 hover:to-purple-800 text-white rounded-lg font-semibold transition-all shadow-2xl border-2 border-purple-300 text-sm animate-pulse">
+            <Brain className="w-5 h-5" />
+            <span>🤖 IA Maître</span>
+          </Link>
+          <Link to="/backoffice/auto-optimizer" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm">
             <Zap className="w-5 h-5" />
             <span>Auto-Optimisation</span>
           </Link>
