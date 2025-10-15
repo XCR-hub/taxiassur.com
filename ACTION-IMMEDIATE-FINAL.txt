@@ -1,103 +1,52 @@
-═══════════════════════════════════════════════════════════════════════
-                   🚀 ACTION IMMÉDIATE - UPLOAD MAINTENANT
-═══════════════════════════════════════════════════════════════════════
+🚨 RÉCUPÉRATION URGENTE - SUIVEZ CES 3 ÉTAPES
 
-✅ TOUT EST CORRIGÉ ET PRÊT !
-══════════════════════════════
+═══════════════════════════════════════════════════════════
+ÉTAPE 1 : DIAGNOSTIC (1 minute)
+═══════════════════════════════════════════════════════════
 
-Problème résolu :
-❌ Avant : 1 fichier API copié
-✅ Après : 17 fichiers API copiés
+1. Ouvrez : https://supabase.com/dashboard/project/drohhxrkoequjphvabvq/sql/new
 
-Build final :
-✅ 138 fichiers générés
-✅ Toutes les API PHP incluses
-✅ Mapping automatique des statuts
-✅ Confirmations d'envoi
-✅ Structure IONOS complète
+2. Copiez TOUT le fichier : RECUPERATION-URGENTE-DONNEES.sql
 
-═══════════════════════════════════════════════════════════════════════
+3. Collez dans l'éditeur SQL Supabase
 
-📁 UPLOAD MAINTENANT
-════════════════════
+4. Cliquez RUN (ou Ctrl+Enter)
 
-DOSSIER :
-C:\Users\TCERD\Desktop\a15\project\dist
+✅ RÉSULTAT ATTENDU :
+   - Diagnostic des tables
+   - Comptage des données
+   - 5 articles + 8 FAQ restaurés automatiquement
 
-CONTENU :
-138 fichiers complets incluant :
-- 17 fichiers API PHP ✅
-- 46 assets JS/CSS ✅
-- 24 articles blog ✅
-- Configuration complète ✅
 
-ACTION :
-1. Ouvre FileZilla (ou ton client FTP)
-2. Connecte-toi à IONOS
-3. Upload TOUT le contenu de /dist
-4. Teste : https://taxiassur.fr/backoffice/leads
+═══════════════════════════════════════════════════════════
+ÉTAPE 2 : RESTAURATION COMPLÈTE (2 minutes)
+═══════════════════════════════════════════════════════════
 
-═══════════════════════════════════════════════════════════════════════
+1. Dans Supabase SQL Editor → New query
 
-🎯 TEST APRÈS UPLOAD
-════════════════════
+2. Copiez TOUT le fichier : RESTAURER-24-ARTICLES-AVEC-IMAGES.sql
 
-1. Site : https://taxiassur.fr
-   → Doit s'afficher normalement
+3. Collez et cliquez RUN
 
-2. Backoffice : https://taxiassur.fr/backoffice/leads
-   → Colonnes "État Lead" et "Type Contrat" ✅
-   → Change un statut → Plus d'erreur 400 ! ✅
+✅ RÉSULTAT ATTENDU :
+   - 7 articles restaurés avec images Pexels
+   - Total : 12+ articles disponibles
 
-3. Envoie un devis
-   → Confirmation demandée ✅
-   → Statut passe à "Devis Envoyé" ✅
 
-═══════════════════════════════════════════════════════════════════════
+═══════════════════════════════════════════════════════════
+ÉTAPE 3 : VÉRIFICATION (1 minute)
+═══════════════════════════════════════════════════════════
 
-✅ RÉCAP SESSION COMPLÈTE
-═════════════════════════
+Exécutez cette requête SQL :
 
-5 PROBLÈMES RÉSOLUS :
-━━━━━━━━━━━━━━━━━━━
+SELECT 'Articles' as type, COUNT(*) as total FROM blog_posts WHERE published = true
+UNION ALL SELECT 'FAQs', COUNT(*) FROM faq
+UNION ALL SELECT 'Leads', COUNT(*) FROM leads;
 
-1. Webhook Google Search Console manquant
-   ✅ Solution : API directe (guide fourni)
 
-2. Page SEO pas aux bonnes couleurs
-   ✅ Solution : Couleurs cohérentes
+✅ ATTENDU : Articles: 12+, FAQs: 8+, Leads: vos données
 
-3. Colonne "État" vide dans leads
-   ✅ Solution : Colonnes inversées
 
-4. Erreur 400 changement statut
-   ✅ Solution : Mapping automatique
-
-5. Fichiers API manquants
-   ✅ Solution : Script deploy corrigé
-
-═══════════════════════════════════════════════════════════════════════
-
-📚 GUIDES DISPONIBLES
-═════════════════════
-
-- CORRECTION-DEPLOY-FICHIERS-MANQUANTS.txt (détails)
-- CORRECTION-ERREUR-400-STATUT.txt (mapping)
-- CORRECTION-STATUT-LEADS-FINAL.txt (colonnes)
-- GUIDE-API-GOOGLE-SEARCH-CONSOLE.txt (API Google)
-- RESUME-FINAL-SESSION.txt (résumé complet)
-
-═══════════════════════════════════════════════════════════════════════
-
-🚀 TOUT EST PRÊT !
-══════════════════
-
-✅ Build complet : 138 fichiers
-✅ Toutes les API : 17 fichiers PHP
-✅ Mapping statuts : Actif
-✅ Confirmations : Ajoutées
-✅ Colonnes : Corrigées
-
-UPLOAD ET TESTE ! 🎉
-
-═══════════════════════════════════════════════════════════════════════
+═══════════════════════════════════════════════════════════
+🎯 COMMENCEZ MAINTENANT !
+═══════════════════════════════════════════════════════════
