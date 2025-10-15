@@ -185,9 +185,9 @@ Consultez le détail dans la console (F12)`);
 
   return (
     
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100 p-8">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-8">
         {/* Header with Home Button */}
-        <header className="bg-gradient-to-r from-slate-700 via-slate-600 to-blue-700 border-b-2 border-slate-800 shadow-lg mb-8">
+        <header className="bg-gradient-to-r from-slate-800 via-blue-800 to-slate-800 border-b-2 border-amber-500 shadow-lg mb-8">
           <div className="max-w-7xl mx-auto px-6 py-4">
             <div className="flex justify-between items-center">
               <div className="flex items-center space-x-4">
@@ -254,33 +254,33 @@ Consultez le détail dans la console (F12)`);
 
           {/* SEO Overview */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <Card className="text-center bg-gradient-to-br from-slate-100 to-blue-100 border border-slate-300">
-              <Globe className="mx-auto mb-2 text-blue-600" size={24} />
-              <div className="text-2xl font-bold text-slate-900">{seoData.totalUrls}</div>
-              <div className="text-sm text-slate-600">URLs totales</div>
+            <Card className="text-center bg-slate-800 border border-blue-500">
+              <Globe className="mx-auto mb-2 text-blue-400" size={24} />
+              <div className="text-2xl font-bold text-white">{seoData.totalUrls}</div>
+              <div className="text-sm text-slate-400">URLs totales</div>
             </Card>
 
-            <Card className="text-center bg-gradient-to-br from-green-50 to-emerald-100 border border-green-300">
-              <CheckCircle className="mx-auto mb-2 text-green-600" size={24} />
-              <div className="text-2xl font-bold text-slate-900">{seoData.indexedPages}</div>
-              <div className="text-sm text-slate-600">Pages indexées</div>
+            <Card className="text-center bg-slate-800 border border-green-500">
+              <CheckCircle className="mx-auto mb-2 text-green-400" size={24} />
+              <div className="text-2xl font-bold text-white">{seoData.indexedPages}</div>
+              <div className="text-sm text-slate-400">Pages indexées</div>
               {seoData.isRealData && (
                 <div className="text-xs text-green-600 mt-1">✅ Données réelles</div>
               )}
             </Card>
 
-            <Card className="text-center bg-gradient-to-br from-yellow-50 to-amber-100 border border-yellow-300">
-              <AlertCircle className="mx-auto mb-2 text-yellow-600" size={24} />
-              <div className="text-2xl font-bold text-slate-900">{seoData.pendingPages}</div>
-              <div className="text-sm text-slate-600">En attente</div>
+            <Card className="text-center bg-slate-800 border border-amber-500">
+              <AlertCircle className="mx-auto mb-2 text-amber-400" size={24} />
+              <div className="text-2xl font-bold text-white">{seoData.pendingPages}</div>
+              <div className="text-sm text-slate-400">En attente</div>
             </Card>
 
-            <Card className="text-center bg-gradient-to-br from-slate-200 to-slate-100 border border-slate-400">
-              <TrendingUp className="mx-auto mb-2 text-slate-600" size={24} />
-              <div className="text-2xl font-bold text-slate-900">
+            <Card className="text-center bg-slate-800 border border-slate-500">
+              <TrendingUp className="mx-auto mb-2 text-slate-400" size={24} />
+              <div className="text-2xl font-bold text-white">
                 {seoData.averagePosition > 0 ? seoData.averagePosition.toFixed(1) : 'N/A'}
               </div>
-              <div className="text-sm text-slate-600">Position moyenne</div>
+              <div className="text-sm text-slate-400">Position moyenne</div>
             </Card>
           </div>
 
@@ -310,9 +310,9 @@ Consultez le détail dans la console (F12)`);
 
           {/* Actions & Tools */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-            <Card className="bg-white border border-slate-300">
-              <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center">
-                <RefreshCw className="mr-2 text-slate-600" size={20} />
+            <Card className="bg-slate-800 border border-slate-700">
+              <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
+                <RefreshCw className="mr-2 text-amber-400" size={20} />
                 Actions SEO
               </h3>
               <div className="space-y-3">
@@ -355,9 +355,33 @@ Consultez le détail dans la console (F12)`);
                   <span>Notifier les Moteurs (Simulé)</span>
                 </button>
 
-                <div className="w-full flex items-center justify-center space-x-2 bg-red-100 text-red-800 font-medium py-3 px-4 rounded-lg border-2 border-red-300">
-                  <AlertCircle size={16} />
-                  <span>⚠️ Webhook non configuré</span>
+                <div className="w-full bg-red-900/30 border-2 border-red-500 rounded-lg p-4">
+                  <div className="flex items-start gap-3 mb-3">
+                    <AlertCircle className="text-red-400 flex-shrink-0 mt-0.5" size={20} />
+                    <div>
+                      <p className="text-sm font-bold text-red-300 mb-2">
+                        ⚠️ Webhook Google Search Console non configuré
+                      </p>
+                      <p className="text-xs text-red-200 mb-2">
+                        Pour recevoir les notifications de Google automatiquement :
+                      </p>
+                      <div className="text-xs text-red-100 space-y-1 mb-3">
+                        <p><strong>1.</strong> Dans Google Search Console → <strong>Paramètres</strong></p>
+                        <p><strong>2.</strong> Onglet <strong>Autres paramètres</strong> → <strong>Notifications</strong></p>
+                        <p><strong>3.</strong> Ajouter l'URL webhook :</p>
+                      </div>
+                      <div className="bg-slate-900 p-2 rounded border border-red-500 mb-2">
+                        <code className="text-xs text-amber-300 break-all">
+                          https://drohhxrkoequjphvabvq.supabase.co/functions/v1/seo-webhook-receiver
+                        </code>
+                      </div>
+                      <p className="text-xs text-red-200">
+                        📚 <a href="/GUIDE-SOUMISSION-SITEMAPS-AUTO.md" className="underline hover:text-red-100" target="_blank">
+                          Voir le guide complet
+                        </a>
+                      </p>
+                    </div>
+                  </div>
                 </div>
 
                 <button
@@ -371,19 +395,19 @@ Consultez le détail dans la console (F12)`);
               </div>
             </Card>
 
-            <Card className="bg-white border border-slate-300">
-              <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center">
-                <CheckCircle className="mr-2 text-green-600" size={20} />
+            <Card className="bg-slate-800 border border-slate-700">
+              <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
+                <CheckCircle className="mr-2 text-green-400" size={20} />
                 Checklist SEO
               </h3>
               <div className="space-y-3">
                 {seoChecklist.map((item, index) => (
                   <div key={index} className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">
-                      <div className={`w-2 h-2 rounded-full ${item.status ? 'bg-green-500' : 'bg-red-500'}`}></div>
-                      <span className="text-slate-700">{item.name}</span>
+                      <div className={`w-2 h-2 rounded-full ${item.status ? 'bg-green-400' : 'bg-red-400'}`}></div>
+                      <span className="text-slate-300">{item.name}</span>
                       {item.count && (
-                        <span className="text-xs bg-slate-100 px-2 py-1 rounded-full text-slate-700">
+                        <span className="text-xs bg-slate-700 px-2 py-1 rounded-full text-slate-300">
                           {item.count}
                         </span>
                       )}
@@ -393,7 +417,7 @@ Consultez le détail dans la console (F12)`);
                         href={item.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-blue-600 hover:text-blue-800"
+                        className="text-blue-400 hover:text-blue-300"
                       >
                         <ExternalLink size={14} />
                       </a>
@@ -406,8 +430,8 @@ Consultez le détail dans la console (F12)`);
 
           {/* Ping Results */}
           {pingResults.length > 0 && (
-            <Card className="mb-8 bg-white border border-slate-300">
-              <h3 className="text-lg font-semibold text-slate-900 mb-4">
+            <Card className="mb-8 bg-slate-800 border border-slate-700">
+              <h3 className="text-lg font-semibold text-white mb-4">
                 Résultats Ping Moteurs (Simulé)
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -432,9 +456,9 @@ Consultez le détail dans la console (F12)`);
 
           {/* Statut des Automatisations */}
           {cronJobsStatus.length > 0 && (
-            <Card className="bg-white border border-slate-300 mb-8">
-              <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center">
-                <Clock className="mr-2 text-blue-600" size={20} />
+            <Card className="bg-slate-800 border border-slate-700 mb-8">
+              <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
+                <Clock className="mr-2 text-blue-400" size={20} />
                 Automatisations SEO (Cron Jobs)
               </h3>
               <div className="space-y-3">
