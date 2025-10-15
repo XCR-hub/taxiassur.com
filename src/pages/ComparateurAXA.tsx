@@ -128,7 +128,7 @@ const ComparateurAXA: React.FC = () => {
 
               <div className="overflow-x-auto">
                 <table className="w-full bg-white shadow-xl rounded-xl overflow-hidden">
-                  <thead className="bg-gradient-to-r from-blue-600 to-blue-700 text-white">
+                  <thead className="bg-gradient-to-r from-yellow-500 to-yellow-700 text-white">
                     <tr>
                       <th className="p-4 text-left">Critère</th>
                       <th className="p-4 text-center">AXA Pro</th>
@@ -244,10 +244,10 @@ const ComparateurAXA: React.FC = () => {
             <div className="max-w-5xl mx-auto text-center">
               <h3 className="text-xl font-bold mb-6">Comparer d'autres assureurs</h3>
               <div className="grid md:grid-cols-4 gap-4">
-                <Link to="/comparateur-macif-taxi" className="text-blue-600 hover:underline">Macif Taxi</Link>
-                <Link to="/comparateur-mfa-taxi" className="text-blue-600 hover:underline">MFA Taxi</Link>
-                <Link to="/comparateur-groupama-taxi" className="text-blue-600 hover:underline">Groupama Taxi</Link>
-                <Link to="/blog/comparatif-assurances-taxi-2024" className="text-blue-600 hover:underline">Tous Comparatifs</Link>
+                <Link to="/comparateur-macif-taxi" className="text-yellow-600 hover:underline">Macif Taxi</Link>
+                <Link to="/comparateur-mfa-taxi" className="text-yellow-600 hover:underline">MFA Taxi</Link>
+                <Link to="/comparateur-groupama-taxi" className="text-yellow-600 hover:underline">Groupama Taxi</Link>
+                <Link to="/blog/comparatif-assurances-taxi-2024" className="text-yellow-600 hover:underline">Tous Comparatifs</Link>
               </div>
             </div>
           </div>

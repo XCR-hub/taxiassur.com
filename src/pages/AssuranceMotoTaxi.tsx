@@ -117,7 +117,7 @@ const AssuranceMotoTaxi: React.FC = () => {
                       <span><strong>Rapidité :</strong> Évite embouteillages, trajets 2x plus rapides</span>
                     </li>
                     <li className="flex items-start">
-                      <Clock className="text-blue-600 mr-2 flex-shrink-0 mt-1" size={20} />
+                      <Clock className="text-yellow-600 mr-2 flex-shrink-0 mt-1" size={20} />
                       <span><strong>Flexibilité :</strong> Accès zones difficiles, circulation fluide</span>
                     </li>
                     <li className="flex items-start">
@@ -140,7 +140,7 @@ const AssuranceMotoTaxi: React.FC = () => {
                     </ul>
                   </div>
 
-                  <div className="bg-blue-50 border-l-4 border-blue-600 p-6 rounded-r-xl">
+                  <div className="bg-yellow-50 border-l-4 border-yellow-500 p-6 rounded-r-xl">
                     <p className="font-semibold text-blue-900 mb-2">🏙️ Zones autorisées</p>
                     <p className="text-sm text-gray-700">
                       Moto-taxi autorisé uniquement dans grandes villes :
@@ -200,21 +200,21 @@ const AssuranceMotoTaxi: React.FC = () => {
                   </div>
                   <ul className="space-y-3 text-sm">
                     <li className="flex items-start">
-                      <Check className="text-blue-600 mr-2 flex-shrink-0 mt-1" />
+                      <Check className="text-yellow-600 mr-2 flex-shrink-0 mt-1" />
                       <div>
                         <strong>Garantie conducteur</strong>
                         <p className="text-gray-600">Vos frais médicaux si accident</p>
                       </div>
                     </li>
                     <li className="flex items-start">
-                      <Check className="text-blue-600 mr-2 flex-shrink-0 mt-1" />
+                      <Check className="text-yellow-600 mr-2 flex-shrink-0 mt-1" />
                       <div>
                         <strong>Vol + Incendie</strong>
                         <p className="text-gray-600">Protection moto vol/dégâts</p>
                       </div>
                     </li>
                     <li className="flex items-start">
-                      <Check className="text-blue-600 mr-2 flex-shrink-0 mt-1" />
+                      <Check className="text-yellow-600 mr-2 flex-shrink-0 mt-1" />
                       <div>
                         <strong>Assistance 0 km</strong>
                         <p className="text-gray-600">Dépannage partout, 24/7</p>
@@ -230,21 +230,21 @@ const AssuranceMotoTaxi: React.FC = () => {
                   </div>
                   <ul className="space-y-3 text-sm">
                     <li className="flex items-start">
-                      <Check className="text-purple-600 mr-2 flex-shrink-0 mt-1" />
+                      <Check className="text-yellow-600 mr-2 flex-shrink-0 mt-1" />
                       <div>
                         <strong>Protection juridique</strong>
                         <p className="text-gray-600">Défense litiges clients</p>
                       </div>
                     </li>
                     <li className="flex items-start">
-                      <Check className="text-purple-600 mr-2 flex-shrink-0 mt-1" />
+                      <Check className="text-yellow-600 mr-2 flex-shrink-0 mt-1" />
                       <div>
                         <strong>Équipements pro</strong>
                         <p className="text-gray-600">Casques, gilets, accessoires</p>
                       </div>
                     </li>
                     <li className="flex items-start">
-                      <Check className="text-purple-600 mr-2 flex-shrink-0 mt-1" />
+                      <Check className="text-yellow-600 mr-2 flex-shrink-0 mt-1" />
                       <div>
                         <strong>Perte exploitation</strong>
                         <p className="text-gray-600">Indemnité si arrêt activité</p>
@@ -600,10 +600,10 @@ const AssuranceMotoTaxi: React.FC = () => {
             <div className="max-w-5xl mx-auto">
               <h3 className="text-xl font-bold mb-6 text-center">Autres assurances transport</h3>
               <div className="grid md:grid-cols-4 gap-4 text-center text-sm">
-                <Link to="/assurance-taxi" className="text-blue-600 hover:underline">Assurance Taxi</Link>
-                <Link to="/assurance-taxi-vtc" className="text-blue-600 hover:underline">Assurance VTC</Link>
-                <Link to="/rc-professionnelle" className="text-blue-600 hover:underline">RC Pro Transport</Link>
-                <Link to="/prix-assurance-taxi" className="text-blue-600 hover:underline">Tarifs Comparés</Link>
+                <Link to="/assurance-taxi" className="text-yellow-600 hover:underline">Assurance Taxi</Link>
+                <Link to="/assurance-taxi-vtc" className="text-yellow-600 hover:underline">Assurance VTC</Link>
+                <Link to="/rc-professionnelle" className="text-yellow-600 hover:underline">RC Pro Transport</Link>
+                <Link to="/prix-assurance-taxi" className="text-yellow-600 hover:underline">Tarifs Comparés</Link>
               </div>
             </div>
           </div>

@@ -95,7 +95,7 @@ const Hero: React.FC = () => {
             {/* Badge ORIAS */}
             <div className="mb-6 sm:mb-8">
               <div className="inline-flex items-center space-x-2 sm:space-x-3 bg-gradient-to-r from-amber-500/20 to-yellow-500/20 px-3 sm:px-6 py-2 sm:py-3 rounded-2xl border border-amber-500/40 backdrop-blur-sm">
-                <Shield className="text-amber-400 drop-shadow-lg" size={16} />
+                <Shield className="text-yellow-500 drop-shadow-lg" size={16} />
                 <span className="text-amber-300 font-bold text-xs sm:text-sm tracking-wide drop-shadow-md">COURTIER ORIAS</span>
                 <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
               </div>
@@ -105,7 +105,7 @@ const Hero: React.FC = () => {
             <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-4 sm:mb-6 drop-shadow-lg leading-tight">
               <span>Assurance Taxi</span> <span className="text-gradient">Pas Cher</span>
               <br />
-              <span className="text-amber-400">Devis Gratuit 2 min</span>
+              <span className="text-yellow-500">Devis Gratuit 2 min</span>
             </h1>
 
             {/* Subtitle with benefits */}
@@ -116,12 +116,12 @@ const Hero: React.FC = () => {
             {/* SEO Rich Content - 250+ words */}
             <div className="mb-6 sm:mb-8 space-y-2 sm:space-y-3 bg-gray-900/40 backdrop-blur-sm rounded-xl p-3 sm:p-5 border border-gray-700/50">
               <p className="text-xs sm:text-sm text-gray-200 leading-relaxed">
-                <strong className="text-amber-400">TaxiAssur</strong> est le <strong className="text-blue-400">courtier spécialisé en assurance taxi</strong> leader en France.
+                <strong className="text-yellow-500">TaxiAssur</strong> est le <strong className="text-yellow-400">courtier spécialisé en assurance taxi</strong> leader en France.
                 Notre expertise unique depuis septembre 2025 nous permet de négocier les <strong className="text-green-400">meilleurs tarifs d'assurance taxi</strong> du marché.
               </p>
 
               <p className="text-sm text-gray-200 leading-relaxed">
-                Obtenez votre <strong className="text-purple-400">devis assurance taxi gratuit</strong> en seulement 2 minutes.
+                Obtenez votre <strong className="text-yellow-400">devis assurance taxi gratuit</strong> en seulement 2 minutes.
                 Nous comparons instantanément les offres de nos 15 partenaires assureurs pour vous garantir une <strong className="text-red-400">assurance taxi pas cher</strong> sans compromis sur les garanties.
               </p>
 
@@ -145,20 +145,20 @@ const Hero: React.FC = () => {
 
             {/* Quick Links - Internal Links for SEO */}
             <div className="grid grid-cols-2 gap-3 mb-6">
-              <Link to="/assurance-taxi" className="flex items-center space-x-2 text-xs text-gray-300 hover:text-amber-400 transition-colors bg-gray-800/50 hover:bg-gray-700/50 px-3 py-2 rounded-lg border border-gray-600 hover:border-amber-500/50">
-                <FileText className="text-amber-400" size={16} aria-hidden="true" />
+              <Link to="/assurance-taxi" className="flex items-center space-x-2 text-xs text-gray-300 hover:text-yellow-500 transition-colors bg-gray-800/50 hover:bg-gray-700/50 px-3 py-2 rounded-lg border border-gray-600 hover:border-amber-500/50">
+                <FileText className="text-yellow-500" size={16} aria-hidden="true" />
                 <span>Guide Complet Assurance Taxi</span>
               </Link>
-              <Link to="/rc-professionnelle" className="flex items-center space-x-2 text-xs text-gray-300 hover:text-blue-400 transition-colors bg-gray-800/50 hover:bg-gray-700/50 px-3 py-2 rounded-lg border border-gray-600 hover:border-blue-500/50">
-                <Shield className="text-blue-400" size={16} aria-hidden="true" />
+              <Link to="/rc-professionnelle" className="flex items-center space-x-2 text-xs text-gray-300 hover:text-yellow-400 transition-colors bg-gray-800/50 hover:bg-gray-700/50 px-3 py-2 rounded-lg border border-gray-600 hover:border-yellow-500/50">
+                <Shield className="text-yellow-400" size={16} aria-hidden="true" />
                 <span>RC Professionnelle</span>
               </Link>
               <Link to="/villes" className="flex items-center space-x-2 text-xs text-gray-300 hover:text-green-400 transition-colors bg-gray-800/50 hover:bg-gray-700/50 px-3 py-2 rounded-lg border border-gray-600 hover:border-green-500/50">
                 <MapPin className="text-green-400" size={16} aria-hidden="true" />
                 <span>{totalCities > 0 ? `${totalCities} Villes` : 'Toutes les Villes'}</span>
               </Link>
-              <Link to="/blog" className="flex items-center space-x-2 text-xs text-gray-300 hover:text-purple-400 transition-colors bg-gray-800/50 hover:bg-gray-700/50 px-3 py-2 rounded-lg border border-gray-600 hover:border-purple-500/50">
-                <Users className="text-purple-400" size={16} aria-hidden="true" />
+              <Link to="/blog" className="flex items-center space-x-2 text-xs text-gray-300 hover:text-yellow-400 transition-colors bg-gray-800/50 hover:bg-gray-700/50 px-3 py-2 rounded-lg border border-gray-600 hover:border-purple-500/50">
+                <Users className="text-yellow-400" size={16} aria-hidden="true" />
                 <span>{totalArticles > 0 ? `${totalArticles} Articles` : 'Actualités & Conseils'}</span>
               </Link>
             </div>
@@ -172,12 +172,12 @@ const Hero: React.FC = () => {
               </div>
               <div className="text-center bg-amber-600 hover:bg-amber-700 rounded-lg sm:rounded-xl p-2 sm:p-4 border-2 border-amber-500 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer">
                 <Star className="mx-auto mb-1 sm:mb-2 text-white fill-current drop-shadow-lg" size={16} />
-                <div className="text-lg sm:text-2xl font-bold text-amber-400 drop-shadow-lg">100+</div>
+                <div className="text-lg sm:text-2xl font-bold text-yellow-500 drop-shadow-lg">100+</div>
                 <div className="text-xs text-white font-medium drop-shadow-md hidden sm:block">Clients</div>
               </div>
-              <div className="text-center bg-blue-600 hover:bg-blue-700 rounded-lg sm:rounded-xl p-2 sm:p-4 border-2 border-blue-500 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer">
+              <div className="text-center bg-yellow-500 hover:bg-yellow-600 rounded-lg sm:rounded-xl p-2 sm:p-4 border-2 border-yellow-500 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer">
                 <Zap className="mx-auto mb-1 sm:mb-2 text-white drop-shadow-lg" size={16} />
-                <div className="text-lg sm:text-2xl font-bold text-blue-400 drop-shadow-lg">15min</div>
+                <div className="text-lg sm:text-2xl font-bold text-yellow-400 drop-shadow-lg">15min</div>
                 <div className="text-xs text-white font-medium drop-shadow-md hidden sm:block">Réponse</div>
               </div>
             </div>
@@ -376,11 +376,11 @@ const Hero: React.FC = () => {
                       <span>100% Gratuit</span>
                     </div>
                     <div className="flex items-center space-x-1">
-                      <Clock className="text-amber-400" size={12} />
+                      <Clock className="text-yellow-500" size={12} />
                       <span>Réponse 15min</span>
                     </div>
                     <div className="flex items-center space-x-1">
-                      <Shield className="text-blue-400" size={12} />
+                      <Shield className="text-yellow-400" size={12} />
                       <span>Sécurisé</span>
                     </div>
                   </div>

@@ -53,16 +53,16 @@ export default function ConfianceEtCertifications() {
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               {/* CSCA */}
-              <div className="bg-white rounded-2xl p-8 shadow-xl border-2 border-blue-200">
+              <div className="bg-white rounded-2xl p-8 shadow-xl border-2 border-yellow-200">
                 <div className="flex items-center space-x-4 mb-6">
-                  <div className="w-16 h-16 bg-blue-100 rounded-xl flex items-center justify-center">
-                    <span className="text-2xl font-bold text-blue-600">CSCA</span>
+                  <div className="w-16 h-16 bg-yellow-100 rounded-xl flex items-center justify-center">
+                    <span className="text-2xl font-bold text-yellow-600">CSCA</span>
                   </div>
                   <div>
                     <h3 className="text-2xl font-bold text-gray-900">
                       Chambre Syndicale du Courtage d'Assurance
                     </h3>
-                    <p className="text-sm text-blue-600 font-medium">Adhérent Actif</p>
+                    <p className="text-sm text-yellow-600 font-medium">Adhérent Actif</p>
                   </div>
                 </div>
                 <p className="text-gray-700 leading-relaxed mb-4">
@@ -82,13 +82,13 @@ export default function ConfianceEtCertifications() {
               <div className="bg-white rounded-2xl p-8 shadow-xl border-2 border-indigo-200">
                 <div className="flex items-center space-x-4 mb-6">
                   <div className="w-16 h-16 bg-indigo-100 rounded-xl flex items-center justify-center">
-                    <span className="text-2xl font-bold text-indigo-600">EDI</span>
+                    <span className="text-2xl font-bold text-yellow-600">EDI</span>
                   </div>
                   <div>
                     <h3 className="text-2xl font-bold text-gray-900">
                       EDI Courtage + EDI Messages + EDI Signature
                     </h3>
-                    <p className="text-sm text-indigo-600 font-medium">Partenaire Intégré</p>
+                    <p className="text-sm text-yellow-600 font-medium">Partenaire Intégré</p>
                   </div>
                 </div>
                 <p className="text-gray-700 leading-relaxed mb-4">

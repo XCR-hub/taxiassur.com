@@ -308,7 +308,7 @@ const LeadManager: React.FC = () => {
             </Card>
 
             <Card className="text-center bg-slate-800 border border-slate-700">
-              <Eye className="mx-auto mb-2 text-amber-400" size={20} />
+              <Eye className="mx-auto mb-2 text-yellow-500" size={20} />
               <div className="text-2xl font-bold text-white">{stats.nouveau}</div>
               <div className="text-sm text-slate-300">Nouveaux</div>
             </Card>
@@ -332,7 +332,7 @@ const LeadManager: React.FC = () => {
             </Card>
 
             <Card className="text-center bg-slate-800 border border-slate-700">
-              <Euro className="mx-auto mb-2 text-amber-400" size={20} />
+              <Euro className="mx-auto mb-2 text-yellow-500" size={20} />
               <div className="text-2xl font-bold text-white">{stats.totalPrimes.toLocaleString()}€</div>
               <div className="text-sm text-slate-300">CA Réalisé</div>
             </Card>

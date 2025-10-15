@@ -97,7 +97,7 @@ const AssuranceTaxiVTCCombine: React.FC = () => {
                         <span className="font-bold">2,800€/mois</span>
                       </div>
                       <div className="w-full bg-gray-300 rounded-full h-3">
-                        <div className="bg-blue-600 h-3 rounded-full" style={{ width: '70%' }}></div>
+                        <div className="bg-yellow-500 h-3 rounded-full" style={{ width: '70%' }}></div>
                       </div>
                     </div>
 
@@ -117,7 +117,7 @@ const AssuranceTaxiVTCCombine: React.FC = () => {
                         <span className="font-bold text-purple-900">3,800€/mois</span>
                       </div>
                       <div className="w-full bg-gray-300 rounded-full h-3">
-                        <div className="bg-purple-600 h-3 rounded-full" style={{ width: '95%' }}></div>
+                        <div className="bg-gray-900 h-3 rounded-full" style={{ width: '95%' }}></div>
                       </div>
                     </div>
                   </div>
@@ -140,7 +140,7 @@ const AssuranceTaxiVTCCombine: React.FC = () => {
 
               <div className="overflow-x-auto">
                 <table className="w-full bg-white shadow-xl rounded-xl overflow-hidden">
-                  <thead className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white">
+                  <thead className="bg-gradient-to-r from-gray-900 to-yellow-600 text-white">
                     <tr>
                       <th className="p-4 text-left">Formule</th>
                       <th className="p-4 text-center">Prix/an</th>
@@ -192,7 +192,7 @@ const AssuranceTaxiVTCCombine: React.FC = () => {
               <div className="grid md:grid-cols-2 gap-8">
                 <div className="bg-white rounded-2xl p-8 shadow-lg">
                   <div className="flex items-center mb-6">
-                    <Shield className="text-purple-600 mr-3" size={48} />
+                    <Shield className="text-yellow-600 mr-3" size={48} />
                     <h3 className="text-2xl font-bold">Activité Taxi</h3>
                   </div>
                   <ul className="space-y-3">
@@ -217,7 +217,7 @@ const AssuranceTaxiVTCCombine: React.FC = () => {
 
                 <div className="bg-white rounded-2xl p-8 shadow-lg">
                   <div className="flex items-center mb-6">
-                    <Users className="text-indigo-600 mr-3" size={48} />
+                    <Users className="text-yellow-600 mr-3" size={48} />
                     <h3 className="text-2xl font-bold">Activité VTC</h3>
                   </div>
                   <ul className="space-y-3">
@@ -294,7 +294,7 @@ const AssuranceTaxiVTCCombine: React.FC = () => {
           </div>
         </section>
 
-        <section id="devis" className="py-16 bg-gradient-to-br from-purple-600 to-indigo-600 text-white">
+        <section id="devis" className="py-16 bg-gradient-to-br from-gray-900 to-yellow-600 text-white">
           <div className="container mx-auto px-4">
             <div className="max-w-6xl mx-auto">
               <div className="text-center mb-12">

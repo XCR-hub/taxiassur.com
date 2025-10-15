@@ -51,22 +51,22 @@ const FAQ: React.FC = () => {
                   Questions <span className="text-gradient">Fréquentes</span>
                 </h1>
                 <p className="text-2xl text-gray-200 mb-8 leading-relaxed drop-shadow-md">
-                  ❓ <strong className="text-blue-400">Trouvez rapidement les réponses</strong> à toutes vos questions sur 
-                  <strong className="text-amber-400">l'assurance taxi</strong> avec nos 
+                  ❓ <strong className="text-yellow-400">Trouvez rapidement les réponses</strong> à toutes vos questions sur 
+                  <strong className="text-yellow-500">l'assurance taxi</strong> avec nos 
                   <strong className="text-green-400">experts TaxiAssur</strong>. Guide complet et conseils pro.
                 </p>
                 
                 <div className="grid grid-cols-3 gap-6 max-w-md mx-auto mb-8">
-                  <div className="ai-card p-4 hover:shadow-blue-500/40 transition-all duration-300">
-                    <div className="text-2xl font-bold text-blue-400 drop-shadow-lg">{faqCount}+</div>
+                  <div className="ai-card p-4 hover:shadow-yellow-500/40 transition-all duration-300">
+                    <div className="text-2xl font-bold text-yellow-400 drop-shadow-lg">{faqCount}+</div>
                     <div className="text-xs text-gray-300 drop-shadow-md">Questions</div>
                   </div>
                   <div className="ai-card p-4 hover:shadow-green-500/40 transition-all duration-300">
                     <div className="text-2xl font-bold text-green-400 drop-shadow-lg">Expert</div>
                     <div className="text-xs text-gray-300 drop-shadow-md">Réponses</div>
                   </div>
-                  <div className="ai-card p-4 hover:shadow-purple-500/40 transition-all duration-300">
-                    <div className="text-2xl font-bold text-purple-400 drop-shadow-lg">24h/7</div>
+                  <div className="ai-card p-4 hover:shadow-yellow-500/40 transition-all duration-300">
+                    <div className="text-2xl font-bold text-yellow-400 drop-shadow-lg">24h/7</div>
                     <div className="text-xs text-gray-300 drop-shadow-md">Support</div>
                   </div>
                 </div>

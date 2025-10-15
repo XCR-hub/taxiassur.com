@@ -68,7 +68,7 @@ const AssuranceTaxiVTC: React.FC = () => {
                 Assurance Taxi VTC<br />
                 <span className="text-yellow-400">Complète & Pas Chère</span>
               </h1>
-              <p className="text-xl md:text-2xl mb-8 text-blue-100">
+              <p className="text-xl md:text-2xl mb-8 text-yellow-100">
                 Comparez Taxi vs VTC • RC Pro Incluse • Devis en 2 min
               </p>
 
@@ -110,7 +110,7 @@ const AssuranceTaxiVTC: React.FC = () => {
 
               <div className="overflow-x-auto">
                 <table className="w-full border-collapse bg-white shadow-lg rounded-xl overflow-hidden">
-                  <thead className="bg-gradient-to-r from-blue-600 to-blue-700 text-white">
+                  <thead className="bg-gradient-to-r from-yellow-500 to-yellow-700 text-white">
                     <tr>
                       <th className="p-4 text-left font-bold">Critère</th>
                       <th className="p-4 text-center font-bold">🚕 TAXI</th>
@@ -118,7 +118,7 @@ const AssuranceTaxiVTC: React.FC = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
-                    <tr className="hover:bg-blue-50 transition-colors">
+                    <tr className="hover:bg-yellow-50 transition-colors">
                       <td className="p-4 font-semibold">RC Professionnelle</td>
                       <td className="p-4 text-center">
                         <Check className="inline text-green-600" /> Obligatoire
@@ -127,32 +127,32 @@ const AssuranceTaxiVTC: React.FC = () => {
                         <Check className="inline text-green-600" /> Obligatoire
                       </td>
                     </tr>
-                    <tr className="hover:bg-blue-50 transition-colors">
+                    <tr className="hover:bg-yellow-50 transition-colors">
                       <td className="p-4 font-semibold">Statut juridique</td>
                       <td className="p-4 text-center">Artisan / SARL</td>
                       <td className="p-4 text-center">Auto-entrepreneur</td>
                     </tr>
-                    <tr className="hover:bg-blue-50 transition-colors">
+                    <tr className="hover:bg-yellow-50 transition-colors">
                       <td className="p-4 font-semibold">Prix moyen/an</td>
                       <td className="p-4 text-center font-bold text-red-600">2,200€</td>
                       <td className="p-4 text-center font-bold text-green-600">1,800€</td>
                     </tr>
-                    <tr className="hover:bg-blue-50 transition-colors">
+                    <tr className="hover:bg-yellow-50 transition-colors">
                       <td className="p-4 font-semibold">Prix TaxiAssur/an</td>
-                      <td className="p-4 text-center font-bold text-blue-600">1,430€ (-35%)</td>
-                      <td className="p-4 text-center font-bold text-blue-600">1,170€ (-35%)</td>
+                      <td className="p-4 text-center font-bold text-yellow-600">1,430€ (-35%)</td>
+                      <td className="p-4 text-center font-bold text-yellow-600">1,170€ (-35%)</td>
                     </tr>
-                    <tr className="hover:bg-blue-50 transition-colors">
+                    <tr className="hover:bg-yellow-50 transition-colors">
                       <td className="p-4 font-semibold">Carte professionnelle</td>
                       <td className="p-4 text-center">Carte T (Taxi)</td>
                       <td className="p-4 text-center">Carte VTC</td>
                     </tr>
-                    <tr className="hover:bg-blue-50 transition-colors">
+                    <tr className="hover:bg-yellow-50 transition-colors">
                       <td className="p-4 font-semibold">Zone d'activité</td>
                       <td className="p-4 text-center">Maraude autorisée</td>
                       <td className="p-4 text-center">Réservation préalable uniquement</td>
                     </tr>
-                    <tr className="hover:bg-blue-50 transition-colors">
+                    <tr className="hover:bg-yellow-50 transition-colors">
                       <td className="p-4 font-semibold">Équipement obligatoire</td>
                       <td className="p-4 text-center">Compteur horokilométrique</td>
                       <td className="p-4 text-center">Application réservation</td>
@@ -161,7 +161,7 @@ const AssuranceTaxiVTC: React.FC = () => {
                 </table>
               </div>
 
-              <div className="mt-8 bg-blue-50 border-l-4 border-blue-600 p-6 rounded-r-xl">
+              <div className="mt-8 bg-yellow-50 border-l-4 border-yellow-500 p-6 rounded-r-xl">
                 <p className="text-lg font-semibold text-blue-900 mb-2">
                   💡 Bon à savoir
                 </p>
@@ -183,9 +183,9 @@ const AssuranceTaxiVTC: React.FC = () => {
               </h2>
 
               <div className="grid md:grid-cols-2 gap-8 mb-12">
-                <div className="bg-white rounded-2xl shadow-lg p-8 border-t-4 border-blue-600">
+                <div className="bg-white rounded-2xl shadow-lg p-8 border-t-4 border-yellow-500">
                   <div className="flex items-center mb-4">
-                    <Shield className="text-blue-600 mr-3" size={32} />
+                    <Shield className="text-yellow-600 mr-3" size={32} />
                     <h3 className="text-2xl font-bold">Assurances OBLIGATOIRES</h3>
                   </div>
                   <ul className="space-y-4">
@@ -220,21 +220,21 @@ const AssuranceTaxiVTC: React.FC = () => {
                   </div>
                   <ul className="space-y-4">
                     <li className="flex items-start">
-                      <Check className="text-blue-600 mr-2 flex-shrink-0 mt-1" />
+                      <Check className="text-yellow-600 mr-2 flex-shrink-0 mt-1" />
                       <div>
                         <strong className="text-lg">Protection juridique</strong>
                         <p className="text-gray-600 text-sm">Assistance en cas de litige avec client ou administration</p>
                       </div>
                     </li>
                     <li className="flex items-start">
-                      <Check className="text-blue-600 mr-2 flex-shrink-0 mt-1" />
+                      <Check className="text-yellow-600 mr-2 flex-shrink-0 mt-1" />
                       <div>
                         <strong className="text-lg">Garantie conducteur</strong>
                         <p className="text-gray-600 text-sm">Protection en cas d'accident responsable (frais médicaux, ITT)</p>
                       </div>
                     </li>
                     <li className="flex items-start">
-                      <Check className="text-blue-600 mr-2 flex-shrink-0 mt-1" />
+                      <Check className="text-yellow-600 mr-2 flex-shrink-0 mt-1" />
                       <div>
                         <strong className="text-lg">Assistance 0 km</strong>
                         <p className="text-gray-600 text-sm">Dépannage même devant chez vous + véhicule de remplacement</p>
@@ -321,38 +321,38 @@ const AssuranceTaxiVTC: React.FC = () => {
                     <h3 className="text-2xl font-bold mb-2">Formule TAXI</h3>
                     <div className="flex items-baseline">
                       <span className="text-gray-600 line-through text-2xl mr-2">2,200€</span>
-                      <span className="text-4xl font-black text-blue-600">1,430€</span>
+                      <span className="text-4xl font-black text-yellow-600">1,430€</span>
                       <span className="text-gray-600 ml-2">/an</span>
                     </div>
-                    <p className="text-blue-700 font-bold text-lg mt-2">Économie : 770€/an (-35%)</p>
+                    <p className="text-yellow-700 font-bold text-lg mt-2">Économie : 770€/an (-35%)</p>
                   </div>
 
                   <ul className="space-y-3 mb-6">
                     <li className="flex items-start">
-                      <Check className="text-blue-600 mr-2 flex-shrink-0 mt-1" />
+                      <Check className="text-yellow-600 mr-2 flex-shrink-0 mt-1" />
                       <span>RC Pro illimitée incluse</span>
                     </li>
                     <li className="flex items-start">
-                      <Check className="text-blue-600 mr-2 flex-shrink-0 mt-1" />
+                      <Check className="text-yellow-600 mr-2 flex-shrink-0 mt-1" />
                       <span>Tous risques + maraude</span>
                     </li>
                     <li className="flex items-start">
-                      <Check className="text-blue-600 mr-2 flex-shrink-0 mt-1" />
+                      <Check className="text-yellow-600 mr-2 flex-shrink-0 mt-1" />
                       <span>Protection juridique offerte</span>
                     </li>
                     <li className="flex items-start">
-                      <Check className="text-blue-600 mr-2 flex-shrink-0 mt-1" />
+                      <Check className="text-yellow-600 mr-2 flex-shrink-0 mt-1" />
                       <span>Assistance 0 km</span>
                     </li>
                     <li className="flex items-start">
-                      <Check className="text-blue-600 mr-2 flex-shrink-0 mt-1" />
+                      <Check className="text-yellow-600 mr-2 flex-shrink-0 mt-1" />
                       <span>Véhicule de remplacement</span>
                     </li>
                   </ul>
 
                   <a
                     href="#devis"
-                    className="block w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-xl text-center transition-colors"
+                    className="block w-full bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-3 px-6 rounded-xl text-center transition-colors"
                   >
                     Devis Taxi Gratuit
                   </a>
@@ -462,7 +462,7 @@ const AssuranceTaxiVTC: React.FC = () => {
                 <h2 className="text-3xl md:text-4xl font-black mb-4">
                   Obtenez Votre Devis Gratuit en 2 Minutes
                 </h2>
-                <p className="text-xl text-blue-100">
+                <p className="text-xl text-yellow-100">
                   Taxi, VTC ou les deux ? Comparez et économisez jusqu'à -35%
                 </p>
               </div>
@@ -479,7 +479,7 @@ const AssuranceTaxiVTC: React.FC = () => {
                     </div>
                     <div>
                       <h3 className="text-xl font-bold mb-2">Courtier Agréé ORIAS</h3>
-                      <p className="text-blue-100">N° 11 061 425 • Garantie professionnelle</p>
+                      <p className="text-yellow-100">N° 11 061 425 • Garantie professionnelle</p>
                     </div>
                   </div>
 
@@ -489,7 +489,7 @@ const AssuranceTaxiVTC: React.FC = () => {
                     </div>
                     <div>
                       <h3 className="text-xl font-bold mb-2">Économies Garanties</h3>
-                      <p className="text-blue-100">Jusqu'à -35% vs assureurs classiques</p>
+                      <p className="text-yellow-100">Jusqu'à -35% vs assureurs classiques</p>
                     </div>
                   </div>
 
@@ -499,7 +499,7 @@ const AssuranceTaxiVTC: React.FC = () => {
                     </div>
                     <div>
                       <h3 className="text-xl font-bold mb-2">Attestation Immédiate</h3>
-                      <p className="text-blue-100">Documents envoyés par email en 10 minutes</p>
+                      <p className="text-yellow-100">Documents envoyés par email en 10 minutes</p>
                     </div>
                   </div>
 
@@ -509,7 +509,7 @@ const AssuranceTaxiVTC: React.FC = () => {
                     </div>
                     <div>
                       <h3 className="text-xl font-bold mb-2">Support 7j/7</h3>
-                      <p className="text-blue-100">Conseiller dédié • Assistance sinistre 24/7</p>
+                      <p className="text-yellow-100">Conseiller dédié • Assistance sinistre 24/7</p>
                     </div>
                   </div>
                 </div>
@@ -524,13 +524,13 @@ const AssuranceTaxiVTC: React.FC = () => {
             <div className="max-w-5xl mx-auto">
               <h3 className="text-xl font-bold mb-6 text-center">Pour aller plus loin</h3>
               <div className="grid md:grid-cols-3 gap-4">
-                <Link to="/assurance-taxi" className="text-blue-600 hover:text-blue-800 hover:underline text-center">
+                <Link to="/assurance-taxi" className="text-yellow-600 hover:text-yellow-800 hover:underline text-center">
                   → Assurance Taxi classique
                 </Link>
-                <Link to="/rc-professionnelle" className="text-blue-600 hover:text-blue-800 hover:underline text-center">
+                <Link to="/rc-professionnelle" className="text-yellow-600 hover:text-yellow-800 hover:underline text-center">
                   → RC Professionnelle expliquée
                 </Link>
-                <Link to="/prix-assurance-taxi" className="text-blue-600 hover:text-blue-800 hover:underline text-center">
+                <Link to="/prix-assurance-taxi" className="text-yellow-600 hover:text-yellow-800 hover:underline text-center">
                   → Tarifs détaillés par profil
                 </Link>
               </div>

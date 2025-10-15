@@ -18,20 +18,20 @@ export default function TaxisSinistres() {
 
       <main className="pt-24 pb-16">
         {/* Hero */}
-        <section className="bg-gradient-to-br from-blue-600 to-blue-800 text-white py-16">
+        <section className="bg-gradient-to-br from-yellow-500 to-blue-800 text-white py-16">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="max-w-3xl">
               <h1 className="text-4xl md:text-5xl font-bold mb-6">
                 Taxis Sinistrés : Procédure et Assistance Complète
               </h1>
-              <p className="text-xl text-blue-100 mb-8">
+              <p className="text-xl text-yellow-100 mb-8">
                 Votre taxi a subi un sinistre ? Nous vous accompagnons dans toutes les démarches pour une prise en charge rapide et efficace.
               </p>
               <div className="flex flex-wrap gap-4">
-                <a href="#procedure" className="bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-blue-50 transition">
+                <a href="#procedure" className="bg-white text-yellow-600 px-8 py-3 rounded-lg font-semibold hover:bg-yellow-50 transition">
                   Voir la procédure
                 </a>
-                <a href="tel:+33186653850" className="bg-blue-700 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-800 transition flex items-center gap-2">
+                <a href="tel:+33186653850" className="bg-yellow-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-800 transition flex items-center gap-2">
                   <Phone className="w-5 h-5" />
                   Assistance 24/7
                 </a>
@@ -61,8 +61,8 @@ export default function TaxisSinistres() {
 
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
               {/* Étape 1 */}
-              <div className="bg-blue-50 p-6 rounded-lg">
-                <div className="w-12 h-12 bg-blue-600 text-white rounded-full flex items-center justify-center text-xl font-bold mb-4">1</div>
+              <div className="bg-yellow-50 p-6 rounded-lg">
+                <div className="w-12 h-12 bg-yellow-500 text-white rounded-full flex items-center justify-center text-xl font-bold mb-4">1</div>
                 <h3 className="text-xl font-bold mb-3">Sécuriser les lieux</h3>
                 <ul className="space-y-2 text-gray-700">
                   <li className="flex items-start gap-2">
@@ -81,8 +81,8 @@ export default function TaxisSinistres() {
               </div>
 
               {/* Étape 2 */}
-              <div className="bg-blue-50 p-6 rounded-lg">
-                <div className="w-12 h-12 bg-blue-600 text-white rounded-full flex items-center justify-center text-xl font-bold mb-4">2</div>
+              <div className="bg-yellow-50 p-6 rounded-lg">
+                <div className="w-12 h-12 bg-yellow-500 text-white rounded-full flex items-center justify-center text-xl font-bold mb-4">2</div>
                 <h3 className="text-xl font-bold mb-3">Documenter le sinistre</h3>
                 <ul className="space-y-2 text-gray-700">
                   <li className="flex items-start gap-2">
@@ -101,8 +101,8 @@ export default function TaxisSinistres() {
               </div>
 
               {/* Étape 3 */}
-              <div className="bg-blue-50 p-6 rounded-lg">
-                <div className="w-12 h-12 bg-blue-600 text-white rounded-full flex items-center justify-center text-xl font-bold mb-4">3</div>
+              <div className="bg-yellow-50 p-6 rounded-lg">
+                <div className="w-12 h-12 bg-yellow-500 text-white rounded-full flex items-center justify-center text-xl font-bold mb-4">3</div>
                 <h3 className="text-xl font-bold mb-3">Constat amiable</h3>
                 <ul className="space-y-2 text-gray-700">
                   <li className="flex items-start gap-2">
@@ -121,8 +121,8 @@ export default function TaxisSinistres() {
               </div>
 
               {/* Étape 4 */}
-              <div className="bg-blue-50 p-6 rounded-lg">
-                <div className="w-12 h-12 bg-blue-600 text-white rounded-full flex items-center justify-center text-xl font-bold mb-4">4</div>
+              <div className="bg-yellow-50 p-6 rounded-lg">
+                <div className="w-12 h-12 bg-yellow-500 text-white rounded-full flex items-center justify-center text-xl font-bold mb-4">4</div>
                 <h3 className="text-xl font-bold mb-3">Déclarer à l'assurance</h3>
                 <ul className="space-y-2 text-gray-700">
                   <li className="flex items-start gap-2">
@@ -141,8 +141,8 @@ export default function TaxisSinistres() {
               </div>
 
               {/* Étape 5 */}
-              <div className="bg-blue-50 p-6 rounded-lg">
-                <div className="w-12 h-12 bg-blue-600 text-white rounded-full flex items-center justify-center text-xl font-bold mb-4">5</div>
+              <div className="bg-yellow-50 p-6 rounded-lg">
+                <div className="w-12 h-12 bg-yellow-500 text-white rounded-full flex items-center justify-center text-xl font-bold mb-4">5</div>
                 <h3 className="text-xl font-bold mb-3">Expertise</h3>
                 <ul className="space-y-2 text-gray-700">
                   <li className="flex items-start gap-2">
@@ -161,8 +161,8 @@ export default function TaxisSinistres() {
               </div>
 
               {/* Étape 6 */}
-              <div className="bg-blue-50 p-6 rounded-lg">
-                <div className="w-12 h-12 bg-blue-600 text-white rounded-full flex items-center justify-center text-xl font-bold mb-4">6</div>
+              <div className="bg-yellow-50 p-6 rounded-lg">
+                <div className="w-12 h-12 bg-yellow-500 text-white rounded-full flex items-center justify-center text-xl font-bold mb-4">6</div>
                 <h3 className="text-xl font-bold mb-3">Indemnisation</h3>
                 <ul className="space-y-2 text-gray-700">
                   <li className="flex items-start gap-2">
@@ -190,7 +190,7 @@ export default function TaxisSinistres() {
 
             <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
               <div className="bg-white p-6 rounded-lg shadow-md">
-                <FileText className="w-12 h-12 text-blue-600 mb-4" />
+                <FileText className="w-12 h-12 text-yellow-600 mb-4" />
                 <h3 className="text-xl font-bold mb-4">Documents obligatoires</h3>
                 <ul className="space-y-2 text-gray-700">
                   <li>✓ Constat amiable rempli et signé</li>
@@ -219,10 +219,10 @@ export default function TaxisSinistres() {
         {/* CTA Formulaire */}
         <section className="py-16 bg-white">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="bg-gradient-to-br from-blue-600 to-blue-800 text-white p-8 rounded-2xl text-center mb-12">
+            <div className="bg-gradient-to-br from-yellow-500 to-blue-800 text-white p-8 rounded-2xl text-center mb-12">
               <h2 className="text-3xl font-bold mb-4">Besoin d'aide pour votre sinistre ?</h2>
               <p className="text-xl mb-6">Nos experts vous accompagnent dans toutes vos démarches</p>
-              <p className="text-blue-100 mb-8">Assistance 24/7 • Réponse en 2 minutes • Gratuit et sans engagement</p>
+              <p className="text-yellow-100 mb-8">Assistance 24/7 • Réponse en 2 minutes • Gratuit et sans engagement</p>
             </div>
 
             <FormLead />

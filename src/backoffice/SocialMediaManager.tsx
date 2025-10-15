@@ -334,7 +334,7 @@ export default function SocialMediaManager() {
                   )}
 
                   {!dbNetwork && (
-                    <div className="pt-2 text-xs text-amber-400">
+                    <div className="pt-2 text-xs text-yellow-500">
                       ⚠️ Réseau non configuré - Cliquez pour voir le guide
                     </div>
                   )}
@@ -367,7 +367,7 @@ export default function SocialMediaManager() {
       {/* Guide de configuration */}
       <div className="bg-amber-900/30 border border-amber-700 rounded-xl p-6">
         <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-          <AlertCircle className="w-6 h-6 text-amber-400" />
+          <AlertCircle className="w-6 h-6 text-yellow-500" />
           APIs Manquantes - Configuration Requise
         </h3>
 
@@ -454,7 +454,7 @@ export default function SocialMediaManager() {
               })}
             </div>
             {selectedNetworks.size === 0 && (
-              <p className="text-sm text-amber-400 mt-2">
+              <p className="text-sm text-yellow-500 mt-2">
                 ⚠️ Sélectionnez au moins un réseau dans l'onglet "Réseaux Sociaux"
               </p>
             )}
@@ -710,7 +710,7 @@ export default function SocialMediaManager() {
               <div className="text-sm text-slate-400">Engagement total</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-amber-400">98%</div>
+              <div className="text-2xl font-bold text-yellow-500">98%</div>
               <div className="text-sm text-slate-400">Taux de succès</div>
             </div>
           </div>

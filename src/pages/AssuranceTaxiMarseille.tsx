@@ -29,8 +29,8 @@ const AssuranceTaxiMarseille: React.FC = () => {
           <div className="container mx-auto px-4 max-w-5xl">
             <h2 className="text-4xl font-black text-center mb-12">Tarifs Marseille par Zone</h2>
             <div className="grid md:grid-cols-4 gap-6">
-              <div className="bg-blue-50 rounded-xl p-6 text-center">
-                <div className="text-2xl font-black text-blue-600">1,890€</div>
+              <div className="bg-yellow-50 rounded-xl p-6 text-center">
+                <div className="text-2xl font-black text-yellow-600">1,890€</div>
                 <p>Vieux-Port</p>
               </div>
               <div className="bg-green-50 rounded-xl p-6 text-center">

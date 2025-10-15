@@ -114,7 +114,7 @@ const OfferPage: React.FC = () => {
                       {index === breadcrumbs.length - 1 ? (
                         <span className="text-white font-medium">{crumb.name}</span>
                       ) : (
-                        <Link to={crumb.url} className="hover:text-amber-400 transition-colors">
+                        <Link to={crumb.url} className="hover:text-yellow-500 transition-colors">
                           {crumb.name}
                         </Link>
                       )}

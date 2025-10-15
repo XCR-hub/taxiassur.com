@@ -95,7 +95,7 @@ export default function TrustBadges({ variant = 'full', showLogos = true }: Trus
         {badges.map((badge, index) => (
           <div
             key={index}
-            className="bg-white border-2 border-gray-200 rounded-lg p-3 hover:border-blue-500 transition-all duration-300 hover:shadow-lg"
+            className="bg-white border-2 border-gray-200 rounded-lg p-3 hover:border-yellow-500 transition-all duration-300 hover:shadow-lg"
           >
             <div className="flex items-center space-x-2">
               <div className={`p-2 rounded-lg bg-${badge.color}-100`}>
@@ -137,7 +137,7 @@ export default function TrustBadges({ variant = 'full', showLogos = true }: Trus
         {badges.map((badge, index) => (
           <div
             key={index}
-            className="bg-white border-2 border-gray-200 rounded-xl p-6 hover:border-blue-500 transition-all duration-300 hover:shadow-xl transform hover:-translate-y-1"
+            className="bg-white border-2 border-gray-200 rounded-xl p-6 hover:border-yellow-500 transition-all duration-300 hover:shadow-xl transform hover:-translate-y-1"
           >
             <div className="flex items-start space-x-4">
               <div className={`p-3 rounded-xl bg-gradient-to-br from-${badge.color}-100 to-${badge.color}-200 flex-shrink-0`}>
@@ -165,10 +165,10 @@ export default function TrustBadges({ variant = 'full', showLogos = true }: Trus
       </div>
 
       {/* Section conformité renforcée */}
-      <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-xl p-8">
+      <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-yellow-200 rounded-xl p-8">
         <div className="max-w-4xl mx-auto">
           <div className="flex items-start space-x-4 mb-6">
-            <div className="p-3 rounded-xl bg-blue-600 flex-shrink-0">
+            <div className="p-3 rounded-xl bg-yellow-500 flex-shrink-0">
               <Shield className="text-white" size={32} />
             </div>
             <div>
@@ -183,9 +183,9 @@ export default function TrustBadges({ variant = 'full', showLogos = true }: Trus
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-white rounded-lg p-4 border border-blue-200">
+            <div className="bg-white rounded-lg p-4 border border-yellow-200">
               <div className="flex items-center space-x-2 mb-2">
-                <Lock className="text-blue-600" size={20} />
+                <Lock className="text-yellow-600" size={20} />
                 <h4 className="font-semibold text-gray-900">Gel des Avoirs</h4>
               </div>
               <p className="text-sm text-gray-600">
@@ -193,9 +193,9 @@ export default function TrustBadges({ variant = 'full', showLogos = true }: Trus
               </p>
             </div>
 
-            <div className="bg-white rounded-lg p-4 border border-blue-200">
+            <div className="bg-white rounded-lg p-4 border border-yellow-200">
               <div className="flex items-center space-x-2 mb-2">
-                <Users className="text-blue-600" size={20} />
+                <Users className="text-yellow-600" size={20} />
                 <h4 className="font-semibold text-gray-900">Personnes Politiquement Exposées</h4>
               </div>
               <p className="text-sm text-gray-600">
@@ -203,9 +203,9 @@ export default function TrustBadges({ variant = 'full', showLogos = true }: Trus
               </p>
             </div>
 
-            <div className="bg-white rounded-lg p-4 border border-blue-200">
+            <div className="bg-white rounded-lg p-4 border border-yellow-200">
               <div className="flex items-center space-x-2 mb-2">
-                <FileCheck className="text-blue-600" size={20} />
+                <FileCheck className="text-yellow-600" size={20} />
                 <h4 className="font-semibold text-gray-900">Registre des Élus</h4>
               </div>
               <p className="text-sm text-gray-600">

@@ -96,7 +96,7 @@ const CompetitorComparison: React.FC = () => {
                       {item.feature}
                     </span>
                     {item.highlight && (
-                      <div className="text-xs text-amber-400 font-medium mt-1 drop-shadow-md">⭐ Avantage exclusif</div>
+                      <div className="text-xs text-yellow-500 font-medium mt-1 drop-shadow-md">⭐ Avantage exclusif</div>
                     )}
                   </div>
                   

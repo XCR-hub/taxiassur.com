@@ -41,23 +41,23 @@ const Blog: React.FC = () => {
                   Blog <span className="text-gradient">TaxiAssur</span>
                 </h1>
                 <p className="text-2xl text-gray-200 mb-8 leading-relaxed drop-shadow-md">
-                  📰 <strong className="text-blue-400">Actualités assurance taxi</strong>, 
-                  <strong className="text-amber-400">conseils d'experts</strong> et 
-                  <strong className="text-green-400">guides pratiques</strong> pour optimiser votre activité professionnelle. 
-                  <strong className="text-purple-400">Contenu exclusif</strong> par nos spécialistes.
+                  📰 <strong className="text-yellow-400">Actualités assurance taxi</strong>,
+                  <strong className="text-yellow-500">conseils d'experts</strong> et
+                  <strong className="text-green-400">guides pratiques</strong> pour optimiser votre activité professionnelle.
+                  <strong className="text-yellow-400">Contenu exclusif</strong> par nos spécialistes.
                 </p>
                 
                 <div className="grid grid-cols-3 gap-6 max-w-md mx-auto mb-8">
-                  <div className="ai-card p-4 hover:shadow-blue-500/40 transition-all duration-300">
-                    <div className="text-2xl font-bold text-blue-400 drop-shadow-lg">{totalArticles || 45}+</div>
+                  <div className="ai-card p-4 hover:shadow-yellow-500/40 transition-all duration-300">
+                    <div className="text-2xl font-bold text-yellow-400 drop-shadow-lg">{totalArticles || 45}+</div>
                     <div className="text-xs text-gray-300 drop-shadow-md">Articles</div>
                   </div>
                   <div className="ai-card p-4 hover:shadow-green-500/40 transition-all duration-300">
                     <div className="text-2xl font-bold text-green-400 drop-shadow-lg">2k+</div>
                     <div className="text-xs text-gray-300 drop-shadow-md">Mots/article</div>
                   </div>
-                  <div className="ai-card p-4 hover:shadow-purple-500/40 transition-all duration-300">
-                    <div className="text-2xl font-bold text-purple-400 drop-shadow-lg">Expert</div>
+                  <div className="ai-card p-4 hover:shadow-yellow-500/40 transition-all duration-300">
+                    <div className="text-2xl font-bold text-yellow-400 drop-shadow-lg">Expert</div>
                     <div className="text-xs text-gray-300 drop-shadow-md">Contenu</div>
                   </div>
                 </div>

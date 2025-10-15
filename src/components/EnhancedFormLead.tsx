@@ -390,11 +390,11 @@ const EnhancedFormLead: React.FC = () => {
             <span>Gratuit</span>
           </div>
           <div className="flex items-center space-x-1">
-            <Clock size={12} className="text-amber-400" />
+            <Clock size={12} className="text-yellow-500" />
             <span>2 min</span>
           </div>
           <div className="flex items-center space-x-1">
-            <Shield size={12} className="text-blue-400" />
+            <Shield size={12} className="text-yellow-400" />
             <span>Sécurisé</span>
           </div>
         </div>

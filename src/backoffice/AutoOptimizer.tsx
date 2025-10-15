@@ -244,7 +244,7 @@ export default function AutoOptimizer() {
 
   const getHealthColor = (rate: number) => {
     if (rate >= 90) return 'text-green-400';
-    if (rate >= 70) return 'text-amber-400';
+    if (rate >= 70) return 'text-yellow-500';
     return 'text-red-400';
   };
 

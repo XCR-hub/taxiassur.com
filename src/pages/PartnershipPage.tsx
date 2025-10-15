@@ -43,7 +43,7 @@ const PartnershipPage: React.FC = () => {
       description: 'Intégrez TaxiAssur dans vos annuaires taxi avec commission sur chaque lead qualifié',
       commission: '50-80€',
       examples: ['Annuaires taxi locaux', 'Répertoires professionnels', 'Pages Jaunes'],
-      color: 'from-blue-500 to-indigo-500'
+      color: 'from-yellow-400 to-indigo-500'
     },
     {
       icon: FileText,
@@ -51,7 +51,7 @@ const PartnershipPage: React.FC = () => {
       description: 'Monétisez votre audience avec nos articles sponsorisés et liens d\'affiliation',
       commission: '80-150€',
       examples: ['Blogs taxi', 'Magazines transport', 'Sites d\'actualités'],
-      color: 'from-purple-500 to-pink-500'
+      color: 'from-gray-800 to-pink-500'
     },
     {
       icon: Handshake,
@@ -114,7 +114,7 @@ const PartnershipPage: React.FC = () => {
       description: 'Développez votre portefeuille avec nos leads taxi exclusifs',
       benefits: ['Leads qualifiés 20-70€', 'Formation produits', 'Support commercial', 'Outils marketing'],
       commission: '20-70€ par lead',
-      color: 'from-blue-500 to-indigo-500'
+      color: 'from-yellow-400 to-indigo-500'
     },
     {
       id: 'annuaire',
@@ -130,7 +130,7 @@ const PartnershipPage: React.FC = () => {
       description: 'Articles sponsorisés et partenariats éditoriaux',
       benefits: ['Articles invités', 'Liens contextuels', 'Contenu expert', 'Audience qualifiée'],
       commission: '100-200€ par lead',
-      color: 'from-purple-500 to-pink-500'
+      color: 'from-gray-800 to-pink-500'
     },
     {
       id: 'service',
@@ -231,27 +231,27 @@ const PartnershipPage: React.FC = () => {
                 </div>
                 
                 <p className="text-2xl text-gray-200 mb-8 leading-relaxed drop-shadow-md">
-                  💰 <strong className="text-amber-400">Monétisez votre audience taxi</strong> avec des commissions jusqu'à 300€/lead ou 
+                  💰 <strong className="text-yellow-500">Monétisez votre audience taxi</strong> avec des commissions jusqu'à 300€/lead ou 
                   <strong className="text-green-400"> développez votre portefeuille</strong> avec nos leads taxi exclusifs. 
-                  <strong className="text-blue-400">+50 partenaires</strong> génèrent déjà des revenus avec TaxiAssur.
+                  <strong className="text-yellow-400">+50 partenaires</strong> génèrent déjà des revenus avec TaxiAssur.
                 </p>
                 
                 {/* Stats impressionnantes */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
                   <div className="ai-card p-4 hover:shadow-amber-500/40 transition-all duration-300">
-                    <div className="text-3xl font-bold text-amber-400 drop-shadow-lg">300€</div>
+                    <div className="text-3xl font-bold text-yellow-500 drop-shadow-lg">300€</div>
                     <div className="text-sm text-gray-300 drop-shadow-md">Commission max</div>
                   </div>
                   <div className="ai-card p-4 hover:shadow-green-500/40 transition-all duration-300">
                     <div className="text-3xl font-bold text-green-400 drop-shadow-lg">50+</div>
                     <div className="text-sm text-gray-300 drop-shadow-md">Partenaires actifs</div>
                   </div>
-                  <div className="ai-card p-4 hover:shadow-blue-500/40 transition-all duration-300">
-                    <div className="text-3xl font-bold text-blue-400 drop-shadow-lg">500%</div>
+                  <div className="ai-card p-4 hover:shadow-yellow-500/40 transition-all duration-300">
+                    <div className="text-3xl font-bold text-yellow-400 drop-shadow-lg">500%</div>
                     <div className="text-sm text-gray-300 drop-shadow-md">ROI moyen</div>
                   </div>
-                  <div className="ai-card p-4 hover:shadow-purple-500/40 transition-all duration-300">
-                    <div className="text-3xl font-bold text-purple-400 drop-shadow-lg">24h</div>
+                  <div className="ai-card p-4 hover:shadow-yellow-500/40 transition-all duration-300">
+                    <div className="text-3xl font-bold text-yellow-400 drop-shadow-lg">24h</div>
                     <div className="text-sm text-gray-300 drop-shadow-md">Activation</div>
                   </div>
                 </div>
@@ -288,9 +288,9 @@ const PartnershipPage: React.FC = () => {
                 
                 <div className="ai-card p-8 shadow-2xl border border-gray-700/60 taxi-glow">
                   <div className="flex items-center justify-center space-x-3 mb-8">
-                    <Calculator className="text-amber-400 drop-shadow-md" size={32} />
+                    <Calculator className="text-yellow-500 drop-shadow-md" size={32} />
                     <h3 className="text-2xl font-bold text-white drop-shadow-lg">Simulateur de Gains</h3>
-                    <BarChart3 className="text-amber-400 animate-pulse drop-shadow-md" size={32} />
+                    <BarChart3 className="text-yellow-500 animate-pulse drop-shadow-md" size={32} />
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
@@ -349,15 +349,15 @@ const PartnershipPage: React.FC = () => {
                     </p>
                     <div className="mt-4 grid grid-cols-3 gap-4 text-sm">
                       <div>
-                        <div className="text-xl font-bold text-amber-400">{Math.round(monthlyEarnings / 30)}</div>
+                        <div className="text-xl font-bold text-yellow-500">{Math.round(monthlyEarnings / 30)}</div>
                         <div className="text-gray-300">€/jour</div>
                       </div>
                       <div>
-                        <div className="text-xl font-bold text-blue-400">{Math.round(monthlyEarnings * 0.7)}</div>
+                        <div className="text-xl font-bold text-yellow-400">{Math.round(monthlyEarnings * 0.7)}</div>
                         <div className="text-gray-300">€ net estimé</div>
                       </div>
                       <div>
-                        <div className="text-xl font-bold text-purple-400">500%</div>
+                        <div className="text-xl font-bold text-yellow-400">500%</div>
                         <div className="text-gray-300">ROI moyen</div>
                       </div>
                     </div>
@@ -398,7 +398,7 @@ const PartnershipPage: React.FC = () => {
                     <div className="bg-gradient-to-r from-amber-500/20 to-yellow-500/20 p-4 rounded-lg border border-amber-500/40 mb-4 backdrop-blur-sm">
                       <div className="flex justify-between items-center">
                         <span className="text-sm font-medium text-amber-300 drop-shadow-md">Commission</span>
-                        <span className="text-lg font-bold text-amber-400 drop-shadow-lg">{type.commission}</span>
+                        <span className="text-lg font-bold text-yellow-500 drop-shadow-lg">{type.commission}</span>
                       </div>
                     </div>
                     
@@ -692,7 +692,7 @@ const PartnershipPage: React.FC = () => {
                       <div className="bg-gradient-to-r from-amber-500/20 to-yellow-500/20 p-4 rounded-lg border border-amber-500/40 mb-4 backdrop-blur-sm">
                         <div className="flex justify-between items-center">
                           <span className="text-sm font-medium text-amber-300 drop-shadow-md">Commission par lead</span>
-                          <span className="text-xl font-bold text-amber-400 drop-shadow-lg">{type.commission}</span>
+                          <span className="text-xl font-bold text-yellow-500 drop-shadow-lg">{type.commission}</span>
                         </div>
                       </div>
                       
@@ -720,13 +720,13 @@ const PartnershipPage: React.FC = () => {
             <div className="container-max">
               <div className="text-center mb-12">
                 <div className="flex items-center justify-center space-x-3 mb-6">
-                  <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-xl flex items-center justify-center shadow-2xl">
+                  <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 to-indigo-500 rounded-xl flex items-center justify-center shadow-2xl">
                     <Users className="text-white drop-shadow-md" size={24} />
                   </div>
                   <h2 className="text-3xl font-bold text-white drop-shadow-lg">
                     Marketplace de Leads Taxi Exclusifs
                   </h2>
-                  <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-blue-500 rounded-xl flex items-center justify-center shadow-2xl">
+                  <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-yellow-500 rounded-xl flex items-center justify-center shadow-2xl">
                     <Euro className="text-white animate-pulse drop-shadow-md" size={24} />
                   </div>
                 </div>
@@ -734,9 +734,9 @@ const PartnershipPage: React.FC = () => {
                   🏪 Marketplace de Leads Taxi
                 </h3>
                 <p className="text-xl text-gray-200 max-w-3xl mx-auto drop-shadow-md">
-                  🎯 <strong className="text-blue-400">Courtiers en assurance</strong> : développez votre portefeuille avec nos 
+                  🎯 <strong className="text-yellow-400">Courtiers en assurance</strong> : développez votre portefeuille avec nos 
                   <strong className="text-green-400">leads taxi qualifiés exclusifs</strong>. 
-                  <strong className="text-amber-400">Tarification transparente</strong>, accès immédiat, support inclus.
+                  <strong className="text-yellow-500">Tarification transparente</strong>, accès immédiat, support inclus.
                 </p>
               </div>
 
@@ -752,7 +752,7 @@ const PartnershipPage: React.FC = () => {
                     )}
                     
                     <h3 className="text-2xl font-bold text-white mb-2 drop-shadow-lg">{plan.type}</h3>
-                    <div className="text-5xl font-bold text-amber-400 mb-2 drop-shadow-lg">{plan.price}</div>
+                    <div className="text-5xl font-bold text-yellow-500 mb-2 drop-shadow-lg">{plan.price}</div>
                     <p className="text-gray-300 mb-6 drop-shadow-md">{plan.description}</p>
                     
                     <ul className="space-y-3 mb-8">
@@ -788,7 +788,7 @@ const PartnershipPage: React.FC = () => {
                   </p>
                   <div className="flex items-center justify-center space-x-4 text-sm">
                     <div className="flex items-center space-x-1">
-                      <Clock className="text-amber-400" size={14} />
+                      <Clock className="text-yellow-500" size={14} />
                       <span className="text-gray-300">Activation 24h</span>
                     </div>
                     <div className="flex items-center space-x-1">
@@ -796,7 +796,7 @@ const PartnershipPage: React.FC = () => {
                       <span className="text-gray-300">Leads garantis</span>
                     </div>
                     <div className="flex items-center space-x-1">
-                      <Target className="text-blue-400" size={14} />
+                      <Target className="text-yellow-400" size={14} />
                       <span className="text-gray-300">ROI 500%+</span>
                     </div>
                   </div>
@@ -829,24 +829,24 @@ const PartnershipPage: React.FC = () => {
             <div className="container-max">
               <div className="max-w-4xl mx-auto text-center relative z-20">
                 <div className="flex items-center justify-center space-x-3 mb-6">
-                  <Crown className="text-amber-400 animate-bounce drop-shadow-lg" size={40} />
+                  <Crown className="text-yellow-500 animate-bounce drop-shadow-lg" size={40} />
                   <h2 className="text-4xl font-bold drop-shadow-lg">
                     Rejoignez Notre Réseau de Partenaires
                   </h2>
-                  <Gift className="text-amber-400 animate-pulse drop-shadow-lg" size={40} />
+                  <Gift className="text-yellow-500 animate-pulse drop-shadow-lg" size={40} />
                 </div>
                 <h3 className="text-2xl font-bold mb-4 text-gradient">
                   Rejoignez Notre Réseau de Partenaires
                 </h3>
                 <p className="text-xl text-gray-200 mb-8 leading-relaxed drop-shadow-md">
-                  💰 <strong className="text-amber-400">Développez vos revenus</strong> en recommandant la meilleure assurance taxi du marché 
+                  💰 <strong className="text-yellow-500">Développez vos revenus</strong> en recommandant la meilleure assurance taxi du marché 
                   ou <strong className="text-green-400">achetez nos leads taxi qualifiés exclusifs</strong>. 
-                  <strong className="text-blue-400">ROI 500%+ garanti</strong> pour nos partenaires actifs.
+                  <strong className="text-yellow-400">ROI 500%+ garanti</strong> pour nos partenaires actifs.
                 </p>
                 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                   <div className="ai-card p-6 hover:shadow-amber-500/40 transition-all duration-300">
-                    <Euro className="mx-auto mb-3 text-amber-400 drop-shadow-md" size={32} />
+                    <Euro className="mx-auto mb-3 text-yellow-500 drop-shadow-md" size={32} />
                     <div className="text-2xl font-bold text-white drop-shadow-lg">50-300€</div>
                     <div className="text-sm text-gray-300 drop-shadow-md">Commission/lead</div>
                   </div>
@@ -855,8 +855,8 @@ const PartnershipPage: React.FC = () => {
                     <div className="text-2xl font-bold text-white drop-shadow-lg">500%</div>
                     <div className="text-sm text-gray-300 drop-shadow-md">ROI moyen</div>
                   </div>
-                  <div className="ai-card p-6 hover:shadow-blue-500/40 transition-all duration-300">
-                    <Clock className="mx-auto mb-3 text-blue-400 drop-shadow-md" size={32} />
+                  <div className="ai-card p-6 hover:shadow-yellow-500/40 transition-all duration-300">
+                    <Clock className="mx-auto mb-3 text-yellow-400 drop-shadow-md" size={32} />
                     <div className="text-2xl font-bold text-white drop-shadow-lg">24h</div>
                     <div className="text-sm text-gray-300 drop-shadow-md">Activation</div>
                   </div>
@@ -872,7 +872,7 @@ const PartnershipPage: React.FC = () => {
                   </a>
                   <a 
                     href="tel:0180855786" 
-                    className="border-2 border-amber-500 text-amber-400 hover:bg-amber-500 hover:text-black font-bold py-4 px-8 rounded-xl transition-all duration-300 flex items-center space-x-2"
+                    className="border-2 border-amber-500 text-yellow-500 hover:bg-amber-500 hover:text-black font-bold py-4 px-8 rounded-xl transition-all duration-300 flex items-center space-x-2"
                   >
                     <Phone size={20} />
                     <span>📞 EXPERT PARTENAIRES : 01 80 85 57 86</span>
@@ -889,11 +889,11 @@ const PartnershipPage: React.FC = () => {
                       <span className="text-gray-300">Formation gratuite</span>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <Target className="text-blue-400" size={16} />
+                      <Target className="text-yellow-400" size={16} />
                       <span className="text-gray-300">Outils marketing</span>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <Award className="text-purple-400" size={16} />
+                      <Award className="text-yellow-400" size={16} />
                       <span className="text-gray-300">Support prioritaire</span>
                     </div>
                   </div>

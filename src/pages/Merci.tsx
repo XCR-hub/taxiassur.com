@@ -47,7 +47,7 @@ const Merci: React.FC = () => {
               </p>
 
               <div className="card-premium inline-block">
-                <div className="flex items-center justify-center space-x-2 text-amber-400">
+                <div className="flex items-center justify-center space-x-2 text-yellow-500">
                   <Clock size={24} />
                   <span className="font-semibold text-lg">Réponse rapide garantie</span>
                 </div>
@@ -59,7 +59,7 @@ const Merci: React.FC = () => {
               {/* What happens next */}
               <div className="card-premium">
                 <h2 className="text-2xl font-bold text-white mb-6 flex items-center">
-                  <Phone className="text-amber-400 mr-3" size={28} />
+                  <Phone className="text-yellow-500 mr-3" size={28} />
                   Prochaines Étapes
                 </h2>
                 
@@ -99,7 +99,7 @@ const Merci: React.FC = () => {
               {/* Required documents */}
               <div className="card-premium">
                 <h2 className="text-2xl font-bold text-white mb-6 flex items-center">
-                  <FileText className="text-blue-400 mr-3" size={28} />
+                  <FileText className="text-yellow-400 mr-3" size={28} />
                   Documents à Préparer
                 </h2>
                 
@@ -117,7 +117,7 @@ const Merci: React.FC = () => {
                 </div>
                 
                 <div className="mt-6 p-4 bg-gradient-to-r from-amber-500/10 to-yellow-500/10 rounded-lg border border-amber-500/20">
-                  <p className="text-sm text-amber-400">
+                  <p className="text-sm text-yellow-500">
                     <strong>💡 Conseil :</strong> Envoyez ces pièces par email à 
                     <a href="mailto:team@taxiassur.com" className="font-semibold underline ml-1">
                       team@taxiassur.com
@@ -159,7 +159,7 @@ const Merci: React.FC = () => {
             <div className="text-center mt-12">
               <a 
                 href="/" 
-                className="text-amber-400 hover:text-amber-300 font-semibold transition-colors duration-200"
+                className="text-yellow-500 hover:text-amber-300 font-semibold transition-colors duration-200"
               >
                 ← Retourner à l'accueil
               </a>

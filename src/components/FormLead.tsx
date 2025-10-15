@@ -85,11 +85,11 @@ const FormLead: React.FC = () => {
                 <span className="text-sm text-gray-200 font-semibold drop-shadow-md">100% Gratuit</span>
               </div>
               <div className="flex items-center space-x-2">
-                <Phone className="text-blue-400 drop-shadow-lg" size={20} />
+                <Phone className="text-yellow-400 drop-shadow-lg" size={20} />
                 <span className="text-sm text-gray-200 font-semibold drop-shadow-md">Réponse Rapide</span>
               </div>
               <div className="flex items-center space-x-2">
-                <Clock className="text-amber-400 drop-shadow-lg" size={20} />
+                <Clock className="text-yellow-500 drop-shadow-lg" size={20} />
                 <span className="text-sm text-gray-200 font-semibold drop-shadow-md">Service Pro</span>
               </div>
             </div>

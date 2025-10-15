@@ -123,7 +123,7 @@ const UltraConversionCTA: React.FC<UltraConversionCTAProps> = ({
               <a
                 href="#devis"
                 onClick={handleClick}
-                className="btn-primary bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600"
+                className="btn-primary bg-gradient-to-r from-green-500 to-yellow-500 hover:from-green-600 hover:to-yellow-600"
               >
                 <TrendingUp className="w-5 h-5" />
                 Devis Gratuit en 2min

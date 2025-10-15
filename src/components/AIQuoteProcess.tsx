@@ -179,7 +179,7 @@ const AIQuoteProcess: React.FC = () => {
       <div className="space-y-6 max-w-md mx-auto">
         <div className="form-field-taxi">
           <label className="block text-sm font-medium text-white mb-2 flex items-center space-x-2">
-            <User size={16} className="text-amber-400" />
+            <User size={16} className="text-yellow-500" />
             <span>Nom et prénom</span>
           </label>
           <input
@@ -193,7 +193,7 @@ const AIQuoteProcess: React.FC = () => {
 
         <div className="form-field-taxi">
           <label className="block text-sm font-medium text-white mb-2 flex items-center space-x-2">
-            <Mail size={16} className="text-amber-400" />
+            <Mail size={16} className="text-yellow-500" />
             <span>Email</span>
           </label>
           <input
@@ -207,7 +207,7 @@ const AIQuoteProcess: React.FC = () => {
 
         <div className="form-field-taxi">
           <label className="block text-sm font-medium text-white mb-2 flex items-center space-x-2">
-            <Phone size={16} className="text-amber-400" />
+            <Phone size={16} className="text-yellow-500" />
             <span>Téléphone</span>
           </label>
           <input
@@ -250,7 +250,7 @@ const AIQuoteProcess: React.FC = () => {
       <div className="space-y-6 max-w-md mx-auto">
         <div className="form-field-taxi">
           <label className="block text-sm font-medium text-white mb-2 flex items-center space-x-2">
-            <MapPin size={16} className="text-amber-400" />
+            <MapPin size={16} className="text-yellow-500" />
             <span>Ville d'activité</span>
           </label>
           <input
@@ -264,7 +264,7 @@ const AIQuoteProcess: React.FC = () => {
 
         <div className="relative">
           <label className="block text-sm font-medium text-white mb-4 flex items-center space-x-2">
-            <Shield size={16} className="text-amber-400" />
+            <Shield size={16} className="text-yellow-500" />
             <span>Statut professionnel</span>
           </label>
           <div className="grid grid-cols-3 gap-3">
@@ -292,7 +292,7 @@ const AIQuoteProcess: React.FC = () => {
 
         <div className="form-field-taxi">
           <label className="block text-sm font-medium text-white mb-2 flex items-center space-x-2">
-            <Car size={16} className="text-amber-400" />
+            <Car size={16} className="text-yellow-500" />
             <span>Immatriculation (optionnel)</span>
           </label>
           <input
@@ -355,7 +355,7 @@ const AIQuoteProcess: React.FC = () => {
         </div>
 
         <div className="bg-gradient-to-r from-amber-900/50 to-yellow-900/50 rounded-2xl p-6 border border-amber-500/40 backdrop-blur-sm animate-taxi-pulse-glow">
-          <div className="flex items-center justify-center space-x-2 text-amber-400 mb-2">
+          <div className="flex items-center justify-center space-x-2 text-yellow-500 mb-2">
             <CheckCircle size={20} />
             <span className="font-semibold drop-shadow-md">Profil Analysé avec Succès</span>
           </div>

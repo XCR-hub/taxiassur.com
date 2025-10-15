@@ -520,7 +520,7 @@ const EnhancedLeadForm: React.FC<EnhancedLeadFormProps> = ({
                   <span className="text-sm text-gray-700 font-semibold">100% Gratuit</span>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <Phone className="text-blue-600" size={20} />
+                  <Phone className="text-yellow-600" size={20} />
                   <span className="text-sm text-gray-700 font-semibold">Réponse Rapide</span>
                 </div>
                 <div className="flex items-center space-x-2">

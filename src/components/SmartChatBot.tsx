@@ -278,7 +278,7 @@ const SmartChatBot: React.FC = () => {
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
-          className="fixed bottom-6 right-6 w-14 h-14 bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center z-40 animate-pulse"
+          className="fixed bottom-6 right-6 w-14 h-14 bg-gradient-to-r from-yellow-400 to-indigo-500 hover:from-yellow-500 hover:to-yellow-600 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center z-40 animate-pulse"
         >
           <MessageCircle size={24} />
         </button>
@@ -288,14 +288,14 @@ const SmartChatBot: React.FC = () => {
       {isOpen && (
         <div className="fixed bottom-6 right-6 w-80 h-96 bg-white rounded-2xl shadow-2xl border border-gray-200 flex flex-col z-50">
           {/* Header */}
-          <div className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white p-4 rounded-t-2xl flex items-center justify-between">
+          <div className="bg-gradient-to-r from-yellow-400 to-indigo-500 text-white p-4 rounded-t-2xl flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <div className="w-8 h-8 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
                 <Bot size={16} />
               </div>
               <div>
                 <h4 className="font-bold">Assistant TaxiAssur</h4>
-                <p className="text-xs text-blue-100">En ligne • Répond en 2min</p>
+                <p className="text-xs text-yellow-100">En ligne • Répond en 2min</p>
               </div>
             </div>
             <button
@@ -312,7 +312,7 @@ const SmartChatBot: React.FC = () => {
               <div key={message.id} className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}>
                 <div className={`max-w-xs p-3 rounded-lg ${
                   message.type === 'user' 
-                    ? 'bg-blue-500 text-white' 
+                    ? 'bg-yellow-500 text-white' 
                     : 'bg-gray-100 text-gray-900'
                 }`}>
                   <p className="text-sm">{message.message}</p>
@@ -360,12 +360,12 @@ const SmartChatBot: React.FC = () => {
                 onChange={(e) => setCurrentInput(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
                 placeholder="Tapez votre message..."
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm text-gray-900 bg-white placeholder-gray-500"
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent text-sm text-gray-900 bg-white placeholder-gray-500"
               />
               <button
                 onClick={handleSendMessage}
                 disabled={!currentInput.trim()}
-                className="bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white p-2 rounded-lg transition-colors"
+                className="bg-yellow-500 hover:bg-yellow-500 disabled:bg-gray-300 disabled:cursor-not-allowed text-white p-2 rounded-lg transition-colors"
               >
                 <Send size={16} />
               </button>

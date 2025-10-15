@@ -37,22 +37,22 @@ const Reviews: React.FC = () => {
                   Avis <span className="text-gradient">Clients</span>
                 </h1>
                 <p className="text-2xl text-gray-200 mb-8 leading-relaxed drop-shadow-md">
-                  ⭐ <strong className="text-amber-400">Découvrez pourquoi +100 professionnels du taxi</strong> 
+                  ⭐ <strong className="text-yellow-500">Découvrez pourquoi +100 professionnels du taxi</strong> 
                   nous font confiance pour leur assurance. <strong className="text-green-400">Clients satisfaits</strong>, 
-                  <strong className="text-blue-400">témoignages authentiques</strong> et économies réelles.
+                  <strong className="text-yellow-400">témoignages authentiques</strong> et économies réelles.
                 </p>
                 
                 <div className="grid grid-cols-3 gap-6 max-w-md mx-auto mb-8">
                   <div className="ai-card p-4 hover:shadow-amber-500/40 transition-all duration-300">
-                    <div className="text-2xl font-bold text-amber-400 drop-shadow-lg">100+</div>
+                    <div className="text-2xl font-bold text-yellow-500 drop-shadow-lg">100+</div>
                     <div className="text-xs text-gray-300 drop-shadow-md">Clients actifs</div>
                   </div>
                   <div className="ai-card p-4 hover:shadow-green-500/40 transition-all duration-300">
                     <div className="text-2xl font-bold text-green-400 drop-shadow-lg">50+</div>
                     <div className="text-xs text-gray-300 drop-shadow-md">Avis réels</div>
                   </div>
-                  <div className="ai-card p-4 hover:shadow-blue-500/40 transition-all duration-300">
-                    <div className="text-2xl font-bold text-blue-400 drop-shadow-lg">580€</div>
+                  <div className="ai-card p-4 hover:shadow-yellow-500/40 transition-all duration-300">
+                    <div className="text-2xl font-bold text-yellow-400 drop-shadow-lg">580€</div>
                     <div className="text-xs text-gray-300 drop-shadow-md">Économie moy.</div>
                   </div>
                 </div>

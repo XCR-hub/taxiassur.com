@@ -110,7 +110,7 @@ export default function NewsArticle() {
         <Header />
         <main className="min-h-screen bg-white flex items-center justify-center">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-500 mx-auto mb-4"></div>
             <p className="text-gray-600">Chargement de l'article...</p>
           </div>
         </main>
@@ -129,7 +129,7 @@ export default function NewsArticle() {
             <p className="text-gray-600 mb-6">Cet article n'existe pas ou a été supprimé.</p>
             <Link
               to="/actualites"
-              className="inline-flex items-center space-x-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors"
+              className="inline-flex items-center space-x-2 px-6 py-3 bg-yellow-500 hover:bg-yellow-600 text-white font-semibold rounded-lg transition-colors"
             >
               <ArrowLeft size={20} />
               <span>Retour aux actualités</span>
@@ -166,9 +166,9 @@ export default function NewsArticle() {
         <div className="bg-gray-50 border-b border-gray-200">
           <div className="container mx-auto px-4 py-4">
             <nav className="flex items-center space-x-2 text-sm">
-              <Link to="/" className="text-blue-600 hover:text-blue-700">Accueil</Link>
+              <Link to="/" className="text-yellow-600 hover:text-yellow-700">Accueil</Link>
               <span className="text-gray-400">/</span>
-              <Link to="/actualites" className="text-blue-600 hover:text-blue-700">Actualités</Link>
+              <Link to="/actualites" className="text-yellow-600 hover:text-yellow-700">Actualités</Link>
               <span className="text-gray-400">/</span>
               <span className="text-gray-600">{article.title}</span>
             </nav>
@@ -180,7 +180,7 @@ export default function NewsArticle() {
           {/* Back Button */}
           <Link
             to="/actualites"
-            className="inline-flex items-center space-x-2 text-blue-600 hover:text-blue-700 font-medium mb-6"
+            className="inline-flex items-center space-x-2 text-yellow-600 hover:text-yellow-700 font-medium mb-6"
           >
             <ArrowLeft size={20} />
             <span>Retour aux actualités</span>
@@ -188,7 +188,7 @@ export default function NewsArticle() {
 
           {/* Category & Meta */}
           <div className="mb-6">
-            <span className="inline-block px-4 py-2 bg-blue-100 text-blue-700 text-sm font-semibold rounded-full mb-4">
+            <span className="inline-block px-4 py-2 bg-yellow-100 text-yellow-700 text-sm font-semibold rounded-full mb-4">
               {article.category}
             </span>
             <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
@@ -202,8 +202,8 @@ export default function NewsArticle() {
               </div>
               {article.score > 0 && (
                 <div className="flex items-center space-x-2">
-                  <TrendingUp size={16} className="text-blue-600" />
-                  <span className="font-semibold text-blue-600">{article.score}/100</span>
+                  <TrendingUp size={16} className="text-yellow-600" />
+                  <span className="font-semibold text-yellow-600">{article.score}/100</span>
                 </div>
               )}
             </div>
@@ -256,9 +256,9 @@ export default function NewsArticle() {
 
           {/* Source */}
           {article.source && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8">
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 mb-8">
               <div className="flex items-start space-x-3">
-                <ExternalLink size={20} className="text-blue-600 mt-1" />
+                <ExternalLink size={20} className="text-yellow-600 mt-1" />
                 <div>
                   <p className="text-sm text-gray-700 mb-2">
                     <span className="font-semibold">Source:</span> {article.source}
@@ -268,7 +268,7 @@ export default function NewsArticle() {
                       href={article.source_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                      className="text-sm text-yellow-600 hover:text-yellow-700 font-medium"
                     >
                       Lire l'article original →
                     </a>
@@ -293,7 +293,7 @@ export default function NewsArticle() {
                     to={`/actualites/${related.slug}`}
                     className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow"
                   >
-                    <span className="inline-block px-3 py-1 bg-blue-100 text-blue-700 text-xs font-semibold rounded-full mb-3">
+                    <span className="inline-block px-3 py-1 bg-yellow-100 text-yellow-700 text-xs font-semibold rounded-full mb-3">
                       {related.category}
                     </span>
                     <h3 className="text-lg font-bold text-gray-900 mb-2 line-clamp-2">
@@ -305,7 +305,7 @@ export default function NewsArticle() {
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-gray-500">{timeAgo(related.published_at)}</span>
                       {related.score > 0 && (
-                        <span className="text-blue-600 font-semibold">{related.score}/100</span>
+                        <span className="text-yellow-600 font-semibold">{related.score}/100</span>
                       )}
                     </div>
                   </Link>
@@ -316,17 +316,17 @@ export default function NewsArticle() {
         )}
 
         {/* CTA */}
-        <section className="bg-gradient-to-r from-blue-600 to-purple-600 text-white py-16">
+        <section className="bg-gradient-to-r from-yellow-500 to-yellow-600 text-white py-16">
           <div className="container mx-auto px-4 text-center">
             <h2 className="text-3xl font-bold mb-4">
               Besoin d'une Assurance Taxi ?
             </h2>
-            <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
+            <p className="text-xl text-yellow-100 mb-8 max-w-2xl mx-auto">
               Obtenez un devis personnalisé en 2 minutes
             </p>
             <Link
               to="/#devis"
-              className="inline-block px-8 py-4 bg-white text-blue-600 font-bold rounded-lg hover:bg-blue-50 transition-colors shadow-xl"
+              className="inline-block px-8 py-4 bg-white text-yellow-600 font-bold rounded-lg hover:bg-yellow-50 transition-colors shadow-xl"
             >
               Devis Gratuit
             </Link>

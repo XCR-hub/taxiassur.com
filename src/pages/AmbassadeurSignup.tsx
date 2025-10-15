@@ -78,13 +78,13 @@ const AmbassadeurSignup: React.FC = () => {
       icon: Award,
       title: 'Badge Digital',
       description: 'Badge "Ambassadeur TaxiAssur" à afficher sur vos réseaux',
-      color: 'from-blue-500 to-cyan-500'
+      color: 'from-yellow-400 to-cyan-500'
     },
     {
       icon: Crown,
       title: 'Accès VIP',
       description: 'Support prioritaire et canal Telegram exclusif',
-      color: 'from-purple-500 to-pink-500'
+      color: 'from-gray-800 to-pink-500'
     },
     {
       icon: Trophy,
@@ -131,15 +131,15 @@ const AmbassadeurSignup: React.FC = () => {
                 </div>
 
                 <p className="text-base sm:text-lg md:text-xl text-gray-200 mb-6 sm:mb-8 leading-relaxed">
-                  🚀 <strong className="text-amber-400">Recommandez TaxiAssur</strong> et aidez d'autres chauffeurs à économiser.
-                  En échange : <strong className="text-blue-400">visibilité</strong>,
+                  🚀 <strong className="text-yellow-500">Recommandez TaxiAssur</strong> et aidez d'autres chauffeurs à économiser.
+                  En échange : <strong className="text-yellow-400">visibilité</strong>,
                   <strong className="text-green-400">badge digital</strong>, et
-                  <strong className="text-purple-400">accès VIP</strong>. <strong>Sans engagement</strong>.
+                  <strong className="text-yellow-400">accès VIP</strong>. <strong>Sans engagement</strong>.
                 </p>
 
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
                   <div className="ai-card p-3 sm:p-4">
-                    <div className="text-2xl sm:text-3xl font-bold text-amber-400 mb-1">100+</div>
+                    <div className="text-2xl sm:text-3xl font-bold text-yellow-500 mb-1">100+</div>
                     <div className="text-xs sm:text-sm text-gray-300">Ambassadeurs</div>
                   </div>
                   <div className="ai-card p-3 sm:p-4">
@@ -147,11 +147,11 @@ const AmbassadeurSignup: React.FC = () => {
                     <div className="text-xs sm:text-sm text-gray-300">Sans frais</div>
                   </div>
                   <div className="ai-card p-3 sm:p-4">
-                    <div className="text-2xl sm:text-3xl font-bold text-blue-400 mb-1">VIP</div>
+                    <div className="text-2xl sm:text-3xl font-bold text-yellow-400 mb-1">VIP</div>
                     <div className="text-xs sm:text-sm text-gray-300">Accès prioritaire</div>
                   </div>
                   <div className="ai-card p-3 sm:p-4">
-                    <div className="text-2xl sm:text-3xl font-bold text-purple-400 mb-1">Badge</div>
+                    <div className="text-2xl sm:text-3xl font-bold text-yellow-400 mb-1">Badge</div>
                     <div className="text-xs sm:text-sm text-gray-300">Digital inclus</div>
                   </div>
                 </div>
@@ -330,8 +330,8 @@ const AmbassadeurSignup: React.FC = () => {
                     </button>
 
                     <p className="text-xs text-gray-400 text-center">
-                      En vous inscrivant, vous acceptez nos <Link to="/mentions-legales" className="text-amber-400 hover:underline">conditions</Link> et
-                      notre <Link to="/politique-confidentialite" className="text-amber-400 hover:underline">politique de confidentialité</Link>.
+                      En vous inscrivant, vous acceptez nos <Link to="/mentions-legales" className="text-yellow-500 hover:underline">conditions</Link> et
+                      notre <Link to="/politique-confidentialite" className="text-yellow-500 hover:underline">politique de confidentialité</Link>.
                     </p>
                   </form>
                 </div>
@@ -355,10 +355,10 @@ const AmbassadeurSignup: React.FC = () => {
                       Votre inscription est confirmée. Voici vos outils pour commencer à partager.
                     </p>
                     <div className="inline-flex items-center space-x-3 bg-gray-800/50 px-4 sm:px-6 py-3 sm:py-4 rounded-xl border border-amber-500/50">
-                      <Star className="text-amber-400" size={24} />
+                      <Star className="text-yellow-500" size={24} />
                       <div className="text-left">
                         <div className="text-xs text-gray-400">Votre code parrain</div>
-                        <div className="text-lg sm:text-xl font-bold text-amber-400">{ambassadorData?.referral_code}</div>
+                        <div className="text-lg sm:text-xl font-bold text-yellow-500">{ambassadorData?.referral_code}</div>
                       </div>
                     </div>
                   </div>
@@ -415,7 +415,7 @@ const AmbassadeurSignup: React.FC = () => {
 
                       <div className="bg-gray-800/50 p-4 rounded-lg">
                         <div className="flex items-center space-x-3 mb-3">
-                          <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
+                          <div className="w-8 h-8 bg-yellow-500 rounded-lg flex items-center justify-center">
                             <span className="text-black font-bold">3</span>
                           </div>
                           <h4 className="text-base sm:text-lg font-bold text-white">Gagnez</h4>
@@ -427,7 +427,7 @@ const AmbassadeurSignup: React.FC = () => {
 
                       <div className="bg-gray-800/50 p-4 rounded-lg">
                         <div className="flex items-center space-x-3 mb-3">
-                          <div className="w-8 h-8 bg-purple-500 rounded-lg flex items-center justify-center">
+                          <div className="w-8 h-8 bg-gray-800 rounded-lg flex items-center justify-center">
                             <span className="text-black font-bold">4</span>
                           </div>
                           <h4 className="text-base sm:text-lg font-bold text-white">Brillez</h4>

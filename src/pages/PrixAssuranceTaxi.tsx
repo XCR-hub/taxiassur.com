@@ -48,7 +48,7 @@ const PrixAssuranceTaxi: React.FC = () => {
         <section className="bg-gradient-to-br from-blue-900 via-blue-800 to-blue-900 text-white py-16">
           <div className="container mx-auto px-4">
             <div className="max-w-4xl mx-auto text-center">
-              <div className="inline-flex items-center space-x-2 bg-blue-700/50 px-4 py-2 rounded-full mb-6">
+              <div className="inline-flex items-center space-x-2 bg-yellow-600/50 px-4 py-2 rounded-full mb-6">
                 <DollarSign size={20} className="text-yellow-400" />
                 <span className="text-sm font-semibold">Guide Tarifs 2024</span>
               </div>
@@ -57,7 +57,7 @@ const PrixAssuranceTaxi: React.FC = () => {
                 Prix Assurance Taxi : <span className="text-yellow-400">Coût Moyen & Tarifs 2024</span>
               </h1>
 
-              <p className="text-xl text-blue-100 mb-8">
+              <p className="text-xl text-yellow-100 mb-8">
                 Découvrez combien coûte réellement une assurance taxi en France et comment économiser jusqu'à 35% avec TaxiAssur
               </p>
 
@@ -71,7 +71,7 @@ const PrixAssuranceTaxi: React.FC = () => {
                   <span>Économie 35%</span>
                 </div>
                 <div className="flex items-center space-x-2 bg-blue-800/50 px-4 py-2 rounded-lg">
-                  <Shield className="text-purple-400" size={16} />
+                  <Shield className="text-yellow-400" size={16} />
                   <span>Devis gratuit 2min</span>
                 </div>
               </div>
@@ -99,8 +99,8 @@ const PrixAssuranceTaxi: React.FC = () => {
                 </div>
 
                 <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-xl border-2 border-blue-400 text-center transform scale-105 shadow-lg">
-                  <div className="text-sm text-blue-700 font-semibold mb-2">PRIX MOYEN</div>
-                  <div className="text-5xl font-bold text-blue-600 mb-2">2 200€</div>
+                  <div className="text-sm text-yellow-700 font-semibold mb-2">PRIX MOYEN</div>
+                  <div className="text-5xl font-bold text-yellow-600 mb-2">2 200€</div>
                   <div className="text-sm text-gray-600">par an</div>
                   <div className="mt-4 text-xs text-gray-700 font-medium">
                     Profil standard : 5 ans exp, grande ville, garanties complètes
@@ -140,14 +140,14 @@ const PrixAssuranceTaxi: React.FC = () => {
           <div className="container mx-auto px-4">
             <div className="max-w-6xl mx-auto">
               <h2 className="text-3xl font-bold text-center mb-4">
-                <MapPin className="inline text-blue-600 mb-1" size={32} />
+                <MapPin className="inline text-yellow-600 mb-1" size={32} />
                 {' '}Prix Assurance Taxi par Ville
               </h2>
               <p className="text-center text-gray-600 mb-12">Tarifs moyens constatés selon la localisation (2024)</p>
 
               <div className="overflow-x-auto bg-white rounded-xl shadow-lg">
                 <table className="w-full">
-                  <thead className="bg-blue-600 text-white">
+                  <thead className="bg-yellow-500 text-white">
                     <tr>
                       <th className="px-6 py-4 text-left">Ville</th>
                       <th className="px-6 py-4 text-center">Prix Moyen</th>
@@ -156,49 +156,49 @@ const PrixAssuranceTaxi: React.FC = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
-                    <tr className="hover:bg-blue-50">
+                    <tr className="hover:bg-yellow-50">
                       <td className="px-6 py-4 font-semibold">Paris (75)</td>
                       <td className="px-6 py-4 text-center text-red-600 font-bold">3 200€</td>
                       <td className="px-6 py-4 text-center text-red-600">+45%</td>
                       <td className="px-6 py-4 text-center text-green-600 font-bold">2 080€</td>
                     </tr>
-                    <tr className="hover:bg-blue-50">
+                    <tr className="hover:bg-yellow-50">
                       <td className="px-6 py-4 font-semibold">Lyon (69)</td>
                       <td className="px-6 py-4 text-center font-bold">2 500€</td>
                       <td className="px-6 py-4 text-center text-orange-600">+14%</td>
                       <td className="px-6 py-4 text-center text-green-600 font-bold">1 625€</td>
                     </tr>
-                    <tr className="hover:bg-blue-50">
+                    <tr className="hover:bg-yellow-50">
                       <td className="px-6 py-4 font-semibold">Marseille (13)</td>
                       <td className="px-6 py-4 text-center font-bold">2 400€</td>
                       <td className="px-6 py-4 text-center text-orange-600">+9%</td>
                       <td className="px-6 py-4 text-center text-green-600 font-bold">1 560€</td>
                     </tr>
-                    <tr className="hover:bg-blue-50">
+                    <tr className="hover:bg-yellow-50">
                       <td className="px-6 py-4 font-semibold">Toulouse (31)</td>
                       <td className="px-6 py-4 text-center font-bold">2 100€</td>
-                      <td className="px-6 py-4 text-center text-blue-600">-5%</td>
+                      <td className="px-6 py-4 text-center text-yellow-600">-5%</td>
                       <td className="px-6 py-4 text-center text-green-600 font-bold">1 365€</td>
                     </tr>
-                    <tr className="hover:bg-blue-50">
+                    <tr className="hover:bg-yellow-50">
                       <td className="px-6 py-4 font-semibold">Nice (06)</td>
                       <td className="px-6 py-4 text-center font-bold">2 300€</td>
                       <td className="px-6 py-4 text-center text-orange-600">+5%</td>
                       <td className="px-6 py-4 text-center text-green-600 font-bold">1 495€</td>
                     </tr>
-                    <tr className="hover:bg-blue-50">
+                    <tr className="hover:bg-yellow-50">
                       <td className="px-6 py-4 font-semibold">Bordeaux (33)</td>
                       <td className="px-6 py-4 text-center font-bold">2 000€</td>
                       <td className="px-6 py-4 text-center text-green-600">-9%</td>
                       <td className="px-6 py-4 text-center text-green-600 font-bold">1 300€</td>
                     </tr>
-                    <tr className="hover:bg-blue-50">
+                    <tr className="hover:bg-yellow-50">
                       <td className="px-6 py-4 font-semibold">Lille (59)</td>
                       <td className="px-6 py-4 text-center font-bold">2 150€</td>
-                      <td className="px-6 py-4 text-center text-blue-600">-2%</td>
+                      <td className="px-6 py-4 text-center text-yellow-600">-2%</td>
                       <td className="px-6 py-4 text-center text-green-600 font-bold">1 398€</td>
                     </tr>
-                    <tr className="hover:bg-blue-50 bg-green-50">
+                    <tr className="hover:bg-yellow-50 bg-green-50">
                       <td className="px-6 py-4 font-semibold">Province (autres villes)</td>
                       <td className="px-6 py-4 text-center font-bold">1 800€</td>
                       <td className="px-6 py-4 text-center text-green-600">-18%</td>
@@ -211,7 +211,7 @@ const PrixAssuranceTaxi: React.FC = () => {
               <div className="mt-6 text-center">
                 <Link
                   to="/villes"
-                  className="inline-flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition-all"
+                  className="inline-flex items-center space-x-2 bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-3 rounded-lg font-semibold transition-all"
                 >
                   <MapPin size={20} />
                   <span>Voir toutes les villes couvertes</span>
@@ -233,9 +233,9 @@ const PrixAssuranceTaxi: React.FC = () => {
               </p>
 
               <div className="grid md:grid-cols-2 gap-6">
-                <div className="bg-blue-50 p-6 rounded-xl border-2 border-blue-200">
+                <div className="bg-yellow-50 p-6 rounded-xl border-2 border-yellow-200">
                   <div className="flex items-start space-x-4">
-                    <div className="bg-blue-600 text-white rounded-full p-3 flex-shrink-0">
+                    <div className="bg-yellow-500 text-white rounded-full p-3 flex-shrink-0">
                       <MapPin size={24} />
                     </div>
                     <div>
@@ -269,7 +269,7 @@ const PrixAssuranceTaxi: React.FC = () => {
 
                 <div className="bg-purple-50 p-6 rounded-xl border-2 border-purple-200">
                   <div className="flex items-start space-x-4">
-                    <div className="bg-purple-600 text-white rounded-full p-3 flex-shrink-0">
+                    <div className="bg-gray-900 text-white rounded-full p-3 flex-shrink-0">
                       <Car size={24} />
                     </div>
                     <div>
@@ -320,7 +320,7 @@ const PrixAssuranceTaxi: React.FC = () => {
 
                 <div className="bg-indigo-50 p-6 rounded-xl border-2 border-indigo-200">
                   <div className="flex items-start space-x-4">
-                    <div className="bg-indigo-600 text-white rounded-full p-3 flex-shrink-0">
+                    <div className="bg-yellow-500 text-white rounded-full p-3 flex-shrink-0">
                       <Shield size={24} />
                     </div>
                     <div>
@@ -394,7 +394,7 @@ const PrixAssuranceTaxi: React.FC = () => {
                     <CheckCircle size={16} />
                     <span>Économie 35% garantie</span>
                   </div>
-                  <div className="flex items-center justify-center space-x-2 text-blue-700">
+                  <div className="flex items-center justify-center space-x-2 text-yellow-700">
                     <CheckCircle size={16} />
                     <span>15 assureurs comparés</span>
                   </div>
@@ -455,11 +455,11 @@ const PrixAssuranceTaxi: React.FC = () => {
                   to find you the best rates.
                 </p>
 
-                <div className="bg-blue-50 border-l-4 border-blue-500 p-6 mb-6">
+                <div className="bg-yellow-50 border-l-4 border-yellow-500 p-6 mb-6">
                   <p className="text-blue-900 font-semibold">
                     Average savings with TaxiAssur: <span className="text-2xl">35%</span>
                   </p>
-                  <p className="text-blue-800 text-sm mt-2">
+                  <p className="text-yellow-800 text-sm mt-2">
                     Our clients pay an average of €1,430/year instead of €2,200 — that's €770 saved annually!
                   </p>
                 </div>
@@ -473,7 +473,7 @@ const PrixAssuranceTaxi: React.FC = () => {
                 <div className="text-center mt-8">
                   <a
                     href="#devis"
-                    className="inline-block bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-lg font-bold text-lg transition-all"
+                    className="inline-block bg-yellow-500 hover:bg-yellow-600 text-white px-8 py-4 rounded-lg font-bold text-lg transition-all"
                   >
                     Get Free Quote →
                   </a>

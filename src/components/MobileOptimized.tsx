@@ -80,7 +80,7 @@ export function MobileSection({ children, className = '', bgColor = 'white' }: S
   const bgClasses = {
     white: 'bg-white',
     gray: 'bg-gray-50',
-    blue: 'bg-blue-50',
+    blue: 'bg-yellow-50',
     gradient: 'bg-gradient-to-br from-blue-50 to-white'
   };
 
@@ -178,9 +178,9 @@ export function MobileButton({
   className = ''
 }: ButtonProps) {
   const variantClasses = {
-    primary: 'bg-blue-600 text-white hover:bg-blue-700',
+    primary: 'bg-yellow-500 text-white hover:bg-yellow-600',
     secondary: 'bg-gray-600 text-white hover:bg-gray-700',
-    outline: 'border-2 border-blue-600 text-blue-600 hover:bg-blue-50'
+    outline: 'border-2 border-yellow-500 text-yellow-600 hover:bg-yellow-50'
   };
 
   const sizeClasses = {

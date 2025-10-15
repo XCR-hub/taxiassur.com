@@ -39,7 +39,7 @@ export default function InternalLinking({
     <section className="bg-gradient-to-br from-blue-50 to-white py-12 sm:py-16 border-t border-b border-blue-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center gap-3 mb-8">
-          <TrendingUp className="w-6 h-6 text-blue-600" />
+          <TrendingUp className="w-6 h-6 text-yellow-600" />
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">
             Découvrez aussi
           </h2>
@@ -67,9 +67,9 @@ function InternalLinkCard({ link }: { link: RelatedLink }) {
   };
 
   const colors = {
-    blog: 'from-blue-500 to-blue-600',
+    blog: 'from-yellow-400 to-yellow-600',
     city: 'from-green-500 to-green-600',
-    service: 'from-purple-500 to-purple-600',
+    service: 'from-gray-800 to-yellow-600',
     faq: 'from-orange-500 to-orange-600'
   };
 
@@ -83,7 +83,7 @@ function InternalLinkCard({ link }: { link: RelatedLink }) {
           {icons[link.category]}
         </div>
         <div className="flex-1">
-          <h3 className="text-lg font-bold text-gray-900 group-hover:text-blue-600 transition-colors mb-2 line-clamp-2">
+          <h3 className="text-lg font-bold text-gray-900 group-hover:text-yellow-600 transition-colors mb-2 line-clamp-2">
             {link.title}
           </h3>
           {link.description && (
@@ -93,7 +93,7 @@ function InternalLinkCard({ link }: { link: RelatedLink }) {
           )}
         </div>
       </div>
-      <div className="flex items-center text-blue-600 font-semibold text-sm group-hover:gap-3 gap-2 transition-all">
+      <div className="flex items-center text-yellow-600 font-semibold text-sm group-hover:gap-3 gap-2 transition-all">
         En savoir plus
         <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
       </div>
@@ -257,22 +257,22 @@ export function FooterInternalLinks() {
         <h3 className="font-bold text-lg mb-4 text-white">Assurance Taxi</h3>
         <ul className="space-y-2">
           <li>
-            <Link to="/assurance-taxi" className="text-gray-300 hover:text-blue-400 transition">
+            <Link to="/assurance-taxi" className="text-gray-300 hover:text-yellow-400 transition">
               Assurance Taxi Professionnel
             </Link>
           </li>
           <li>
-            <Link to="/rc-professionnelle" className="text-gray-300 hover:text-blue-400 transition">
+            <Link to="/rc-professionnelle" className="text-gray-300 hover:text-yellow-400 transition">
               RC Professionnelle
             </Link>
           </li>
           <li>
-            <Link to="/flotte-vehicules" className="text-gray-300 hover:text-blue-400 transition">
+            <Link to="/flotte-vehicules" className="text-gray-300 hover:text-yellow-400 transition">
               Assurance Flotte
             </Link>
           </li>
           <li>
-            <Link to="/assurance-taxi-vtc" className="text-gray-300 hover:text-blue-400 transition">
+            <Link to="/assurance-taxi-vtc" className="text-gray-300 hover:text-yellow-400 transition">
               Assurance VTC
             </Link>
           </li>
@@ -284,22 +284,22 @@ export function FooterInternalLinks() {
         <h3 className="font-bold text-lg mb-4 text-white">Grandes Villes</h3>
         <ul className="space-y-2">
           <li>
-            <Link to="/assurance-taxi-paris" className="text-gray-300 hover:text-blue-400 transition">
+            <Link to="/assurance-taxi-paris" className="text-gray-300 hover:text-yellow-400 transition">
               Paris
             </Link>
           </li>
           <li>
-            <Link to="/assurance-taxi-lyon" className="text-gray-300 hover:text-blue-400 transition">
+            <Link to="/assurance-taxi-lyon" className="text-gray-300 hover:text-yellow-400 transition">
               Lyon
             </Link>
           </li>
           <li>
-            <Link to="/assurance-taxi-marseille" className="text-gray-300 hover:text-blue-400 transition">
+            <Link to="/assurance-taxi-marseille" className="text-gray-300 hover:text-yellow-400 transition">
               Marseille
             </Link>
           </li>
           <li>
-            <Link to="/ville" className="text-gray-300 hover:text-blue-400 transition">
+            <Link to="/ville" className="text-gray-300 hover:text-yellow-400 transition">
               Toutes les villes
             </Link>
           </li>
@@ -311,22 +311,22 @@ export function FooterInternalLinks() {
         <h3 className="font-bold text-lg mb-4 text-white">Ressources</h3>
         <ul className="space-y-2">
           <li>
-            <Link to="/blog" className="text-gray-300 hover:text-blue-400 transition">
+            <Link to="/blog" className="text-gray-300 hover:text-yellow-400 transition">
               Blog
             </Link>
           </li>
           <li>
-            <Link to="/faq" className="text-gray-300 hover:text-blue-400 transition">
+            <Link to="/faq" className="text-gray-300 hover:text-yellow-400 transition">
               FAQ
             </Link>
           </li>
           <li>
-            <Link to="/taxis-sinistres" className="text-gray-300 hover:text-blue-400 transition">
+            <Link to="/taxis-sinistres" className="text-gray-300 hover:text-yellow-400 transition">
               Gestion Sinistres
             </Link>
           </li>
           <li>
-            <Link to="/prix-assurance-taxi" className="text-gray-300 hover:text-blue-400 transition">
+            <Link to="/prix-assurance-taxi" className="text-gray-300 hover:text-yellow-400 transition">
               Prix Assurance Taxi
             </Link>
           </li>
@@ -338,22 +338,22 @@ export function FooterInternalLinks() {
         <h3 className="font-bold text-lg mb-4 text-white">Contact</h3>
         <ul className="space-y-2">
           <li>
-            <Link to="/contact" className="text-gray-300 hover:text-blue-400 transition">
+            <Link to="/contact" className="text-gray-300 hover:text-yellow-400 transition">
               Devis Gratuit
             </Link>
           </li>
           <li>
-            <a href="tel:+33186653850" className="text-gray-300 hover:text-blue-400 transition">
+            <a href="tel:+33186653850" className="text-gray-300 hover:text-yellow-400 transition">
               01 86 65 38 50
             </a>
           </li>
           <li>
-            <Link to="/partenaires" className="text-gray-300 hover:text-blue-400 transition">
+            <Link to="/partenaires" className="text-gray-300 hover:text-yellow-400 transition">
               Devenir Partenaire
             </Link>
           </li>
           <li>
-            <Link to="/ambassadeur" className="text-gray-300 hover:text-blue-400 transition">
+            <Link to="/ambassadeur" className="text-gray-300 hover:text-yellow-400 transition">
               Programme Ambassadeur
             </Link>
           </li>
@@ -389,7 +389,7 @@ export function Breadcrumbs({ items }: BreadcrumbsProps) {
             ) : (
               <Link
                 to={item.url}
-                className="text-blue-600 hover:text-blue-800 hover:underline transition"
+                className="text-yellow-600 hover:text-yellow-800 hover:underline transition"
               >
                 {item.name}
               </Link>

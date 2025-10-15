@@ -175,7 +175,7 @@ const CityPage: React.FC = () => {
       icon: MapPin,
       title: `Expertise Locale ${cityData.city}`,
       description: `Connaissance approfondie du marché taxi de ${cityData.city} et de sa région. Tarifs adaptés aux spécificités locales.`,
-      color: 'from-blue-500 to-indigo-600'
+      color: 'from-yellow-400 to-yellow-600'
     },
     {
       icon: TrendingDown,
@@ -187,7 +187,7 @@ const CityPage: React.FC = () => {
       icon: Users,
       title: 'Réseau Partenaires Local',
       description: `Partenaires privilégiés dans la région de ${cityData.city} : garages, équipementiers, services.`,
-      color: 'from-purple-500 to-pink-600'
+      color: 'from-gray-800 to-pink-600'
     },
     {
       icon: Award,
@@ -231,13 +231,13 @@ const CityPage: React.FC = () => {
           <section className="section-padding">
             <div className="container-max">
               <div className="text-center mb-12">
-                <div className="inline-flex items-center space-x-2 bg-amber-500/20 text-amber-400 px-4 py-2 rounded-full text-sm font-medium mb-6 backdrop-blur-sm border border-amber-500/30">
+                <div className="inline-flex items-center space-x-2 bg-amber-500/20 text-yellow-500 px-4 py-2 rounded-full text-sm font-medium mb-6 backdrop-blur-sm border border-amber-500/30">
                   <MapPin size={16} />
                   <span>{cityData.city}</span>
                 </div>
 
                 <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 drop-shadow-2xl">
-                  Assurance Taxi à <span className="text-amber-400">{cityData.city}</span>
+                  Assurance Taxi à <span className="text-yellow-500">{cityData.city}</span>
                 </h1>
 
                 <p className="text-xl text-gray-300 max-w-3xl mx-auto mb-8">
@@ -247,19 +247,19 @@ const CityPage: React.FC = () => {
 
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto mb-8">
                   <div className="bg-white/10 backdrop-blur-md rounded-lg p-4 border border-white/20">
-                    <div className="text-3xl font-bold text-amber-400 mb-1">{cityStats.taxis}+</div>
+                    <div className="text-3xl font-bold text-yellow-500 mb-1">{cityStats.taxis}+</div>
                     <div className="text-sm text-gray-300">Taxis assurés</div>
                   </div>
                   <div className="bg-white/10 backdrop-blur-md rounded-lg p-4 border border-white/20">
-                    <div className="text-3xl font-bold text-amber-400 mb-1">{cityStats.savings}</div>
+                    <div className="text-3xl font-bold text-yellow-500 mb-1">{cityStats.savings}</div>
                     <div className="text-sm text-gray-300">Économies moy.</div>
                   </div>
                   <div className="bg-white/10 backdrop-blur-md rounded-lg p-4 border border-white/20">
-                    <div className="text-3xl font-bold text-amber-400 mb-1">{cityStats.clients}</div>
+                    <div className="text-3xl font-bold text-yellow-500 mb-1">{cityStats.clients}</div>
                     <div className="text-sm text-gray-300">Clients satisfaits</div>
                   </div>
                   <div className="bg-white/10 backdrop-blur-md rounded-lg p-4 border border-white/20">
-                    <div className="text-3xl font-bold text-amber-400 mb-1">{cityStats.satisfaction}</div>
+                    <div className="text-3xl font-bold text-yellow-500 mb-1">{cityStats.satisfaction}</div>
                     <div className="text-sm text-gray-300">Note moyenne</div>
                   </div>
                 </div>
@@ -297,7 +297,7 @@ const CityPage: React.FC = () => {
                     <ul className="space-y-3">
                       {localFeatures.map((feature, index) => (
                         <li key={index} className="flex items-start space-x-3">
-                          <CheckCircle size={20} className="text-amber-400 flex-shrink-0 mt-1" />
+                          <CheckCircle size={20} className="text-yellow-500 flex-shrink-0 mt-1" />
                           <span className="text-gray-200">{feature}</span>
                         </li>
                       ))}

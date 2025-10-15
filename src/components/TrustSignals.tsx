@@ -9,15 +9,15 @@ const TrustSignals: React.FC = () => {
       title: 'Courtier Agréé ORIAS',
       subtitle: 'N° 11 061 425',
       description: 'Certification officielle garantissant notre sérieux et notre expertise',
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-50'
+      color: 'text-yellow-600',
+      bgColor: 'bg-yellow-50'
     },
     {
       icon: Award,
       title: '15 Ans d\'Expertise',
       subtitle: 'Spécialiste Taxi',
       description: 'Leader reconnu du courtage en assurance taxi en France',
-      color: 'text-purple-600',
+      color: 'text-yellow-600',
       bgColor: 'bg-purple-50'
     },
     {
@@ -54,7 +54,7 @@ const TrustSignals: React.FC = () => {
                   <IconComponent className="text-black drop-shadow-md" size={24} />
                 </div>
                 <h4 className="font-bold text-white mb-2 group-hover:text-amber-300 transition-colors drop-shadow-lg text-lg">{element.title}</h4>
-                <p className="text-sm font-medium text-amber-400 mb-3 drop-shadow-md">{element.subtitle}</p>
+                <p className="text-sm font-medium text-yellow-500 mb-3 drop-shadow-md">{element.subtitle}</p>
                 <p className="text-sm text-gray-300 drop-shadow-md leading-relaxed">{element.description}</p>
               </div>
             );

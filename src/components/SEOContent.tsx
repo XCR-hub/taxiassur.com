@@ -22,8 +22,8 @@ const SEOContent: React.FC = () => {
               </div>
             </div>
             <p className="text-sm sm:text-base md:text-lg lg:text-xl text-gray-200 max-w-3xl mx-auto leading-relaxed drop-shadow-md">
-              🎯 <strong className="text-amber-400">Guide complet 2025</strong> pour choisir la meilleure 
-              <strong className="text-blue-400">assurance taxi professionnelle</strong>. 
+              🎯 <strong className="text-yellow-500">Guide complet 2025</strong> pour choisir la meilleure 
+              <strong className="text-yellow-400">assurance taxi professionnelle</strong>. 
               <strong className="text-green-400">Conseils d'experts</strong> et comparatifs détaillés.
             </p>
           </div>
@@ -37,8 +37,8 @@ const SEOContent: React.FC = () => {
                   Guide Complet 2025
                 </h3>
                 <p className="text-sm sm:text-base md:text-lg text-gray-300 leading-relaxed mb-4 sm:mb-6 drop-shadow-md">
-                  L'<strong className="text-amber-400">assurance taxi</strong> est obligatoire pour exercer votre activité de chauffeur de taxi en France. 
-                  En tant que <strong className="text-blue-400">courtier assurance taxi</strong> spécialisé depuis 15 ans, TaxiAssur vous accompagne 
+                  L'<strong className="text-yellow-500">assurance taxi</strong> est obligatoire pour exercer votre activité de chauffeur de taxi en France. 
+                  En tant que <strong className="text-yellow-400">courtier assurance taxi</strong> spécialisé depuis 15 ans, TaxiAssur vous accompagne 
                   pour trouver la meilleure <strong className="text-green-400">assurance taxi pas cher</strong> adaptée à vos besoins professionnels.
                 </p>
                 
@@ -46,7 +46,7 @@ const SEOContent: React.FC = () => {
                   Pourquoi un Courtier ?
                 </h4>
                 <p className="text-sm sm:text-base text-gray-300 leading-relaxed mb-4 sm:mb-6 drop-shadow-md">
-                  Un <strong className="text-amber-400">courtier assurance taxi</strong> comme TaxiAssur négocie pour vous les meilleures conditions 
+                  Un <strong className="text-yellow-500">courtier assurance taxi</strong> comme TaxiAssur négocie pour vous les meilleures conditions 
                   auprès de multiples assureurs. Notre expertise du secteur taxi nous permet d'obtenir des 
                   <strong className="text-green-400">tarifs assurance taxi</strong> jusqu'à 35% moins chers que les assureurs traditionnels.
                 </p>
@@ -66,7 +66,7 @@ const SEOContent: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                   <div className="bg-gray-800/50 p-6 rounded-xl border border-gray-700/50 backdrop-blur-sm">
                     <h5 className="font-bold text-white mb-3 flex items-center drop-shadow-lg">
-                      <Shield className="text-blue-400 mr-2" size={20} />
+                      <Shield className="text-yellow-400 mr-2" size={20} />
                       RC Professionnelle Taxi
                     </h5>
                     <ul className="text-sm text-gray-300 space-y-2 drop-shadow-md">
@@ -119,7 +119,7 @@ const SEOContent: React.FC = () => {
                   Tarifs Assurance Taxi : Économisez avec TaxiAssur
                 </h4>
                 <p className="text-gray-300 leading-relaxed mb-6 drop-shadow-md">
-                  Les <strong className="text-amber-400">tarifs assurance taxi</strong> varient selon votre zone d'activité, votre expérience 
+                  Les <strong className="text-yellow-500">tarifs assurance taxi</strong> varient selon votre zone d'activité, votre expérience 
                   et votre véhicule. Grâce à nos partenariats avec les meilleurs assureurs, TaxiAssur obtient 
                   des <strong className="text-green-400">prix assurance taxi</strong> préférentiels. Nos clients économisent en moyenne 580€ par an.
                 </p>
@@ -145,8 +145,8 @@ const SEOContent: React.FC = () => {
                   Devis Assurance Taxi Gratuit en 2 Minutes
                 </h4>
                 <p className="text-gray-300 leading-relaxed mb-6 drop-shadow-md">
-                  Obtenez votre <strong className="text-amber-400">devis assurance taxi</strong> gratuit personnalisé en moins de 2 minutes.
-                  Notre <strong className="text-blue-400">comparateur assurance taxi</strong> optimisé vous permet de comparer instantanément les meilleures offres
+                  Obtenez votre <strong className="text-yellow-500">devis assurance taxi</strong> gratuit personnalisé en moins de 2 minutes.
+                  Notre <strong className="text-yellow-400">comparateur assurance taxi</strong> optimisé vous permet de comparer instantanément les meilleures offres
                   du marché. Réponse garantie sous 15 minutes par nos experts en <strong className="text-green-400">assurance chauffeur</strong>.
                 </p>
 
@@ -154,23 +154,23 @@ const SEOContent: React.FC = () => {
                   Comparateur Assurance Taxi : Trouvez la Meilleure Offre
                 </h4>
                 <p className="text-gray-300 leading-relaxed mb-6 drop-shadow-md">
-                  Notre <strong className="text-amber-400">comparateur assurance taxi</strong> analyse en temps réel les offres de 15+ assureurs partenaires.
+                  Notre <strong className="text-yellow-500">comparateur assurance taxi</strong> analyse en temps réel les offres de 15+ assureurs partenaires.
                   Contrairement aux comparateurs généralistes, TaxiAssur est spécialisé exclusivement dans
-                  l'<strong className="text-blue-400">assurance VTC</strong> et l'<strong className="text-green-400">assurance chauffeur</strong>.
+                  l'<strong className="text-yellow-400">assurance VTC</strong> et l'<strong className="text-green-400">assurance chauffeur</strong>.
                   Cette expertise nous permet d'obtenir des tarifs jusqu\'à 40% moins chers pour une
-                  <strong className="text-amber-400">assurance flotte taxi</strong> ou un véhicule unique.
+                  <strong className="text-yellow-500">assurance flotte taxi</strong> ou un véhicule unique.
                 </p>
 
                 <h4 className="text-xl font-bold text-white mb-4 mt-8 drop-shadow-lg">
                   Assurance Taxi en Ligne : Rapide et Sécurisé
                 </h4>
                 <p className="text-gray-300 leading-relaxed mb-6 drop-shadow-md">
-                  Souscrire une <strong className="text-amber-400">assurance taxi en ligne</strong> avec TaxiAssur est simple et 100% sécurisé.
+                  Souscrire une <strong className="text-yellow-500">assurance taxi en ligne</strong> avec TaxiAssur est simple et 100% sécurisé.
                   Notre processus digital vous permet d'obtenir votre attestation d\'assurance en quelques clics, sans rendez-vous physique.
-                  Nos <strong className="text-blue-400">courtiers assurance taxi</strong> restent disponibles 7j/7 pour vous accompagner à chaque étape.
+                  Nos <strong className="text-yellow-400">courtiers assurance taxi</strong> restent disponibles 7j/7 pour vous accompagner à chaque étape.
                 </p>
 
-                <div className="bg-gradient-to-r from-purple-500/20 to-pink-500/20 p-6 rounded-xl border border-purple-500/40 mb-8 backdrop-blur-sm">
+                <div className="bg-gradient-to-r from-gray-800/20 to-pink-500/20 p-6 rounded-xl border border-purple-500/40 mb-8 backdrop-blur-sm">
                   <h5 className="font-bold text-purple-300 mb-3 drop-shadow-md">🌟 Assurance Flotte Taxi : Offre Spéciale</h5>
                   <p className="text-purple-200 text-sm leading-relaxed drop-shadow-md mb-3">
                     Vous gérez plusieurs véhicules ? Notre <strong>assurance flotte taxi</strong> vous fait économiser jusqu'à
@@ -200,10 +200,10 @@ const SEOContent: React.FC = () => {
                   Assurance VTC et Assurance Chauffeur : Notre Expertise
                 </h4>
                 <p className="text-gray-300 leading-relaxed mb-6 drop-shadow-md">
-                  Au-delà de l'<strong className="text-amber-400">assurance taxi</strong>, TaxiAssur est également spécialiste de
-                  l'<strong className="text-blue-400">assurance VTC</strong> et de toutes formes d'<strong className="text-green-400">assurance chauffeur</strong> professionnel.
+                  Au-delà de l'<strong className="text-yellow-500">assurance taxi</strong>, TaxiAssur est également spécialiste de
+                  l'<strong className="text-yellow-400">assurance VTC</strong> et de toutes formes d'<strong className="text-green-400">assurance chauffeur</strong> professionnel.
                   Que vous soyez chauffeur de taxi traditionnel, conducteur VTC, ou exploitant d'une flotte mixte,
-                  nos solutions s'adaptent parfaitement à votre activité. Notre statut de <strong className="text-amber-400">courtier assurance taxi</strong>
+                  nos solutions s'adaptent parfaitement à votre activité. Notre statut de <strong className="text-yellow-500">courtier assurance taxi</strong>
                   certifié ORIAS nous permet de négocier les meilleures conditions pour tous types de transport de personnes.
                 </p>
 
@@ -220,23 +220,23 @@ const SEOContent: React.FC = () => {
                   </p>
                 </div>
 
-                <div className="bg-gradient-to-r from-blue-500/20 to-indigo-500/20 p-6 rounded-xl border border-blue-500/40 backdrop-blur-sm">
+                <div className="bg-gradient-to-r from-yellow-400/20 to-indigo-500/20 p-6 rounded-xl border border-yellow-500/40 backdrop-blur-sm">
                   <h5 className="font-bold text-blue-300 mb-3 drop-shadow-md">🚀 Processus TaxiAssur</h5>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                     <div className="text-center">
-                      <div className="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center mx-auto mb-2 font-bold shadow-lg">1</div>
-                      <p className="text-blue-200 font-medium drop-shadow-md">Devis en ligne</p>
-                      <p className="text-blue-100">2 minutes</p>
+                      <div className="w-8 h-8 bg-yellow-500 text-white rounded-full flex items-center justify-center mx-auto mb-2 font-bold shadow-lg">1</div>
+                      <p className="text-yellow-200 font-medium drop-shadow-md">Devis en ligne</p>
+                      <p className="text-yellow-100">2 minutes</p>
                     </div>
                     <div className="text-center">
-                      <div className="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center mx-auto mb-2 font-bold shadow-lg">2</div>
-                      <p className="text-blue-200 font-medium drop-shadow-md">Analyse expert</p>
-                      <p className="text-blue-100">15 minutes</p>
+                      <div className="w-8 h-8 bg-yellow-500 text-white rounded-full flex items-center justify-center mx-auto mb-2 font-bold shadow-lg">2</div>
+                      <p className="text-yellow-200 font-medium drop-shadow-md">Analyse expert</p>
+                      <p className="text-yellow-100">15 minutes</p>
                     </div>
                     <div className="text-center">
-                      <div className="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center mx-auto mb-2 font-bold shadow-lg">3</div>
-                      <p className="text-blue-200 font-medium drop-shadow-md">Offre personnalisée</p>
-                      <p className="text-blue-100">Immédiat</p>
+                      <div className="w-8 h-8 bg-yellow-500 text-white rounded-full flex items-center justify-center mx-auto mb-2 font-bold shadow-lg">3</div>
+                      <p className="text-yellow-200 font-medium drop-shadow-md">Offre personnalisée</p>
+                      <p className="text-yellow-100">Immédiat</p>
                     </div>
                   </div>
                 </div>
@@ -250,11 +250,11 @@ const SEOContent: React.FC = () => {
                 <div className="space-y-3">
                   <div className="flex justify-between items-center">
                     <span className="text-gray-300">Clients satisfaits</span>
-                    <span className="font-bold text-amber-400">+1500</span>
+                    <span className="font-bold text-yellow-500">+1500</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-gray-300">Spécialiste taxi depuis</span>
-                    <span className="font-bold text-amber-400">septembre 2025</span>
+                    <span className="font-bold text-yellow-500">septembre 2025</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-gray-300">Économie moyenne</span>
@@ -262,11 +262,11 @@ const SEOContent: React.FC = () => {
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-gray-300">Objectif qualité</span>
-                    <span className="font-bold text-amber-400">Excellence</span>
+                    <span className="font-bold text-yellow-500">Excellence</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-gray-300">Délai de réponse</span>
-                    <span className="font-bold text-blue-400">15 min</span>
+                    <span className="font-bold text-yellow-400">15 min</span>
                   </div>
                 </div>
               </div>
@@ -293,10 +293,10 @@ const SEOContent: React.FC = () => {
                 </ul>
               </div>
 
-              <div className="ai-card p-6 bg-gradient-to-br from-blue-500/10 to-indigo-500/10 border-2 border-blue-500/40 hover:shadow-blue-500/40 transition-all duration-300">
+              <div className="ai-card p-6 bg-gradient-to-br from-yellow-400/10 to-indigo-500/10 border-2 border-yellow-500/40 hover:shadow-yellow-500/40 transition-all duration-300">
                 <div className="flex justify-between items-center mb-4">
                   <span className="text-gray-300">Clients taxi</span>
-                  <span className="font-bold text-amber-400">100+</span>
+                  <span className="font-bold text-yellow-500">100+</span>
                 </div>
                 <a 
                   href="#devis" 
@@ -338,8 +338,8 @@ const SEOContent: React.FC = () => {
                   className="ai-card text-center p-4 hover:shadow-amber-500/40 hover:border-amber-500/50 transition-all duration-300 group"
                 >
                   <div className="font-medium text-white group-hover:text-amber-300 transition-colors drop-shadow-lg">{city}</div>
-                  <div className="text-xs text-gray-600 group-hover:text-amber-400 transition-colors drop-shadow-md">Assurance taxi</div>
-                  <div className="text-xs text-gray-600 group-hover:text-amber-400 transition-colors drop-shadow-md">Devis gratuit</div>
+                  <div className="text-xs text-gray-600 group-hover:text-yellow-500 transition-colors drop-shadow-md">Assurance taxi</div>
+                  <div className="text-xs text-gray-600 group-hover:text-yellow-500 transition-colors drop-shadow-md">Devis gratuit</div>
                 </a>
               ))}
             </div>
@@ -352,12 +352,12 @@ const SEOContent: React.FC = () => {
             </h3>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="ai-card p-6 hover:shadow-blue-500/40 transition-all duration-300">
+              <div className="ai-card p-6 hover:shadow-yellow-500/40 transition-all duration-300">
                 <h4 className="font-bold text-white mb-3 drop-shadow-lg">
                   Quel est le prix d'une assurance taxi ?
                 </h4>
                 <p className="text-gray-300 text-sm leading-relaxed drop-shadow-md">
-                  Le <strong className="text-amber-400">prix assurance taxi</strong> varie de 1200€ à 2500€/an selon votre zone d'activité, 
+                  Le <strong className="text-yellow-500">prix assurance taxi</strong> varie de 1200€ à 2500€/an selon votre zone d'activité, 
                   votre expérience et votre véhicule. Avec TaxiAssur, nos clients économisent en moyenne 35% 
                   grâce à nos <strong className="text-green-400">tarifs assurance taxi</strong> négociés.
                 </p>
@@ -368,18 +368,18 @@ const SEOContent: React.FC = () => {
                   Comment obtenir un devis assurance taxi ?
                 </h4>
                 <p className="text-gray-300 text-sm leading-relaxed drop-shadow-md">
-                  Obtenez votre <strong className="text-amber-400">devis assurance taxi gratuit</strong> en 2 minutes avec TaxiAssur. 
+                  Obtenez votre <strong className="text-yellow-500">devis assurance taxi gratuit</strong> en 2 minutes avec TaxiAssur. 
                   Remplissez notre formulaire en ligne et recevez votre proposition personnalisée 
                   sous 15 minutes par nos experts.
                 </p>
               </div>
 
-              <div className="ai-card p-6 hover:shadow-purple-500/40 transition-all duration-300">
+              <div className="ai-card p-6 hover:shadow-yellow-500/40 transition-all duration-300">
                 <h4 className="font-bold text-white mb-3 drop-shadow-lg">
                   Qu'est-ce que la RC professionnelle taxi ?
                 </h4>
                 <p className="text-gray-300 text-sm leading-relaxed drop-shadow-md">
-                  La <strong className="text-amber-400">RC professionnelle taxi</strong> couvre votre responsabilité civile en tant que 
+                  La <strong className="text-yellow-500">RC professionnelle taxi</strong> couvre votre responsabilité civile en tant que 
                   professionnel du transport. Elle est obligatoire et distincte de l'assurance véhicule. 
                   TaxiAssur l'inclut systématiquement dans ses offres.
                 </p>
@@ -390,7 +390,7 @@ const SEOContent: React.FC = () => {
                   Peut-on avoir une assurance taxi pas cher ?
                 </h4>
                 <p className="text-gray-300 text-sm leading-relaxed drop-shadow-md">
-                  Oui ! Une <strong className="text-amber-400">assurance taxi pas cher</strong> est possible avec un courtier spécialisé. 
+                  Oui ! Une <strong className="text-yellow-500">assurance taxi pas cher</strong> est possible avec un courtier spécialisé. 
                   TaxiAssur négocie des tarifs préférentiels permettant jusqu'à 35% d\'économies 
                   sans compromis sur les garanties.
                 </p>

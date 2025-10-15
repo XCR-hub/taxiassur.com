@@ -131,8 +131,8 @@ const MirrorPage: React.FC = () => {
                           </p>
                         </div>
 
-                        <div className="bg-gray-800/50 rounded-lg p-6 border border-blue-500/30">
-                          <Clock className="w-8 h-8 text-blue-400 mb-3" />
+                        <div className="bg-gray-800/50 rounded-lg p-6 border border-yellow-500/30">
+                          <Clock className="w-8 h-8 text-yellow-400 mb-3" />
                           <h3 className="text-white font-bold mb-2">Réponse Rapide</h3>
                           <p className="text-gray-400 text-sm">
                             Devis personnalisé en 2 minutes maximum
@@ -140,7 +140,7 @@ const MirrorPage: React.FC = () => {
                         </div>
 
                         <div className="bg-gray-800/50 rounded-lg p-6 border border-amber-500/30">
-                          <Shield className="w-8 h-8 text-amber-400 mb-3" />
+                          <Shield className="w-8 h-8 text-yellow-500 mb-3" />
                           <h3 className="text-white font-bold mb-2">Couverture Complète</h3>
                           <p className="text-gray-400 text-sm">
                             RC Pro + Tous risques + Assistance 0km inclus
@@ -148,7 +148,7 @@ const MirrorPage: React.FC = () => {
                         </div>
 
                         <div className="bg-gray-800/50 rounded-lg p-6 border border-purple-500/30">
-                          <TrendingDown className="w-8 h-8 text-purple-400 mb-3" />
+                          <TrendingDown className="w-8 h-8 text-yellow-400 mb-3" />
                           <h3 className="text-white font-bold mb-2">Tarif Négocié</h3>
                           <p className="text-gray-400 text-sm">
                             Conditions préférentielles courtier spécialisé

@@ -20,7 +20,7 @@ const PartnershipProgram: React.FC = () => {
       description: 'Intégrez TaxiAssur dans vos annuaires taxi avec commission sur chaque lead qualifié',
       commission: '50-120€',
       examples: ['Annuaires taxi locaux', 'Répertoires professionnels', 'Pages Jaunes'],
-      color: 'from-blue-500 to-indigo-500'
+      color: 'from-yellow-400 to-indigo-500'
     },
     {
       icon: FileText,
@@ -28,7 +28,7 @@ const PartnershipProgram: React.FC = () => {
       description: 'Monétisez votre audience avec nos articles sponsorisés et liens d\'affiliation',
       commission: '100-200€',
       examples: ['Blogs taxi', 'Magazines transport', 'Sites d\'actualités'],
-      color: 'from-purple-500 to-pink-500'
+      color: 'from-gray-800 to-pink-500'
     },
     {
       icon: Handshake,
@@ -77,9 +77,9 @@ const PartnershipProgram: React.FC = () => {
           </div>
           
           <p className="text-xl text-gray-200 max-w-3xl mx-auto leading-relaxed drop-shadow-md">
-            💰 Rejoignez le <strong className="text-amber-400">programme partenaires TaxiAssur</strong> et monétisez votre audience taxi. 
+            💰 Rejoignez le <strong className="text-yellow-500">programme partenaires TaxiAssur</strong> et monétisez votre audience taxi. 
             <strong className="text-green-400">Commissions attractives</strong>, outils marketing gratuits, 
-            suivi temps réel. <strong className="text-blue-400">+50 partenaires</strong> génèrent déjà des revenus avec nous.
+            suivi temps réel. <strong className="text-yellow-400">+50 partenaires</strong> génèrent déjà des revenus avec nous.
           </p>
         </div>
 
@@ -87,9 +87,9 @@ const PartnershipProgram: React.FC = () => {
         <div className="max-w-4xl mx-auto mb-16">
           <div className="ai-card rounded-2xl p-8 shadow-2xl border border-gray-700/60 taxi-glow">
             <div className="flex items-center justify-center space-x-3 mb-8">
-              <Calculator className="text-amber-400 drop-shadow-md" size={24} />
+              <Calculator className="text-yellow-500 drop-shadow-md" size={24} />
               <h3 className="text-2xl font-bold text-white drop-shadow-lg">Calculateur de Revenus Partenaire</h3>
-              <Target className="text-amber-400 animate-pulse drop-shadow-md" size={24} />
+              <Target className="text-yellow-500 animate-pulse drop-shadow-md" size={24} />
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -148,15 +148,15 @@ const PartnershipProgram: React.FC = () => {
               </p>
               <div className="mt-6 grid grid-cols-3 gap-4 text-sm">
                 <div>
-                  <div className="text-2xl font-bold text-amber-400 drop-shadow-lg">{Math.round(monthlyEarnings / 30)}</div>
+                  <div className="text-2xl font-bold text-yellow-500 drop-shadow-lg">{Math.round(monthlyEarnings / 30)}</div>
                   <div className="text-gray-300 drop-shadow-md">€/jour</div>
                 </div>
                 <div>
-                  <div className="text-2xl font-bold text-blue-400 drop-shadow-lg">{Math.round(monthlyEarnings * 0.7)}</div>
+                  <div className="text-2xl font-bold text-yellow-400 drop-shadow-lg">{Math.round(monthlyEarnings * 0.7)}</div>
                   <div className="text-gray-300 drop-shadow-md">€ net estimé</div>
                 </div>
                 <div>
-                  <div className="text-2xl font-bold text-purple-400 drop-shadow-lg">500%</div>
+                  <div className="text-2xl font-bold text-yellow-400 drop-shadow-lg">500%</div>
                   <div className="text-gray-300 drop-shadow-md">ROI moyen</div>
                 </div>
               </div>
@@ -185,7 +185,7 @@ const PartnershipProgram: React.FC = () => {
                 <div className="bg-gradient-to-r from-amber-500/20 to-yellow-500/20 p-4 rounded-lg border border-amber-500/40 mb-4 backdrop-blur-sm">
                   <div className="flex justify-between items-center">
                     <span className="text-sm font-medium text-amber-300 drop-shadow-md">Commission par lead</span>
-                    <span className="text-xl font-bold text-amber-400 drop-shadow-lg">{type.commission}</span>
+                    <span className="text-xl font-bold text-yellow-500 drop-shadow-lg">{type.commission}</span>
                   </div>
                 </div>
                 

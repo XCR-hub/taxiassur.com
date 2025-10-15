@@ -43,8 +43,8 @@ const FlotteVehicules: React.FC = () => {
                 Assurance <span className="text-gradient">Flotte de Véhicules</span>
               </h1>
               <p className="text-2xl text-gray-200 mb-8 leading-relaxed drop-shadow-md">
-                🚐 <strong className="text-blue-400">Simplifiez la gestion de votre flotte taxi</strong> avec une 
-                <strong className="text-amber-400">assurance globale</strong>. 
+                🚐 <strong className="text-yellow-400">Simplifiez la gestion de votre flotte taxi</strong> avec une 
+                <strong className="text-yellow-500">assurance globale</strong>. 
                 <strong className="text-green-400">Tarifs préférentiels groupe</strong> et service dédié professionnel.
               </p>
               
@@ -84,7 +84,7 @@ const FlotteVehicules: React.FC = () => {
               </div>
 
               <div className="ai-card text-center p-6 hover:shadow-amber-500/40 transition-all duration-300 group">
-                <Clock className="text-amber-400 mx-auto mb-4 group-hover:scale-110 transition-transform drop-shadow-md" size={48} />
+                <Clock className="text-yellow-500 mx-auto mb-4 group-hover:scale-110 transition-transform drop-shadow-md" size={48} />
                 <h3 className="text-xl font-bold text-white mb-3 drop-shadow-lg">
                   Gestion Simplifiée
                 </h3>
@@ -93,8 +93,8 @@ const FlotteVehicules: React.FC = () => {
                 </p>
               </div>
 
-              <div className="ai-card text-center p-6 hover:shadow-blue-500/40 transition-all duration-300 group">
-                <Users className="text-blue-400 mx-auto mb-4 group-hover:scale-110 transition-transform drop-shadow-md" size={48} />
+              <div className="ai-card text-center p-6 hover:shadow-yellow-500/40 transition-all duration-300 group">
+                <Users className="text-yellow-400 mx-auto mb-4 group-hover:scale-110 transition-transform drop-shadow-md" size={48} />
                 <h3 className="text-xl font-bold text-white mb-3 drop-shadow-lg">
                   Conseiller Dédié
                 </h3>
@@ -103,8 +103,8 @@ const FlotteVehicules: React.FC = () => {
                 </p>
               </div>
 
-              <div className="ai-card text-center p-6 hover:shadow-purple-500/40 transition-all duration-300 group">
-                <Truck className="text-purple-400 mx-auto mb-4 group-hover:scale-110 transition-transform drop-shadow-md" size={48} />
+              <div className="ai-card text-center p-6 hover:shadow-yellow-500/40 transition-all duration-300 group">
+                <Truck className="text-yellow-400 mx-auto mb-4 group-hover:scale-110 transition-transform drop-shadow-md" size={48} />
                 <h3 className="text-xl font-bold text-white mb-3 drop-shadow-lg">
                   Flexibilité Totale
                 </h3>
@@ -125,7 +125,7 @@ const FlotteVehicules: React.FC = () => {
               </h2>
               
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div className="ai-card text-center p-6 hover:shadow-blue-500/40 transition-all duration-300">
+                <div className="ai-card text-center p-6 hover:shadow-yellow-500/40 transition-all duration-300">
                   <div className="text-4xl font-bold text-gradient mb-4 drop-shadow-lg">2-5</div>
                   <h3 className="text-xl font-bold text-white mb-3 drop-shadow-lg">Petite Flotte</h3>
                   <ul className="text-gray-300 space-y-2 text-sm drop-shadow-md">
@@ -150,7 +150,7 @@ const FlotteVehicules: React.FC = () => {
                   </ul>
                 </div>
 
-                <div className="ai-card text-center p-6 hover:shadow-purple-500/40 transition-all duration-300">
+                <div className="ai-card text-center p-6 hover:shadow-yellow-500/40 transition-all duration-300">
                   <div className="text-4xl font-bold text-gradient mb-4 drop-shadow-lg">20+</div>
                   <h3 className="text-xl font-bold text-white mb-3 drop-shadow-lg">Grande Flotte</h3>
                   <ul className="text-gray-300 space-y-2 text-sm drop-shadow-md">

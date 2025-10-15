@@ -45,7 +45,7 @@ const FormStepper: React.FC<FormStepperProps> = ({
               {/* Step Label */}
               <span className={`
                 text-xs mt-1 font-medium transition-colors duration-300
-                ${isCurrent ? 'text-amber-400' : isCompleted ? 'text-green-400' : 'text-gray-600'}
+                ${isCurrent ? 'text-yellow-500' : isCompleted ? 'text-green-400' : 'text-gray-600'}
               `}>
                 {stepLabels[index]}
               </span>

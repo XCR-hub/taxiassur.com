@@ -53,7 +53,7 @@ const Avis: React.FC = () => {
           {/* Trust indicators */}
           <div className="flex justify-center items-center space-x-8">
             <div className="bg-gray-900/90 border border-amber-500/50 rounded-xl p-4 text-center">
-              <div className="text-3xl font-bold text-amber-400">100+</div>
+              <div className="text-3xl font-bold text-yellow-500">100+</div>
               <div className="flex justify-center mb-1">
                 {[...Array(5)].map((_, i) => (
                   <Star key={i} size={16} className="text-yellow-400 fill-current" />
@@ -66,8 +66,8 @@ const Avis: React.FC = () => {
               <p className="text-sm text-gray-300">Taxis clients</p>
               <p className="text-xs text-gray-600">Depuis Sept 2025</p>
             </div>
-            <div className="bg-gray-900/90 border border-blue-500/50 rounded-xl p-4 text-center">
-              <div className="text-3xl font-bold text-blue-400">-35%</div>
+            <div className="bg-gray-900/90 border border-yellow-500/50 rounded-xl p-4 text-center">
+              <div className="text-3xl font-bold text-yellow-400">-35%</div>
               <p className="text-sm text-gray-300">Économie moyenne</p>
             </div>
           </div>

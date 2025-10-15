@@ -80,7 +80,7 @@ const AssuranceTaxiTesla: React.FC = () => {
                 </div>
 
                 <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-8 border-2 border-blue-300">
-                  <Shield className="text-blue-600 mb-4" size={48} />
+                  <Shield className="text-yellow-600 mb-4" size={48} />
                   <h3 className="text-2xl font-bold mb-4">Économies Assurance</h3>
                   <div className="space-y-3 text-gray-700">
                     <div className="flex justify-between items-center">
@@ -94,7 +94,7 @@ const AssuranceTaxiTesla: React.FC = () => {
                     <div className="pt-3 border-t-2 border-blue-300">
                       <div className="flex justify-between items-center font-black text-lg">
                         <span>Tesla taxi/an</span>
-                        <span className="text-blue-600">1,386€</span>
+                        <span className="text-yellow-600">1,386€</span>
                       </div>
                     </div>
                   </div>
@@ -166,7 +166,7 @@ const AssuranceTaxiTesla: React.FC = () => {
                 <div className="bg-white border-2 border-gray-300 rounded-2xl p-8">
                   <h3 className="text-2xl font-bold mb-6 text-center">Tesla Model 3</h3>
                   <div className="text-center mb-6">
-                    <div className="text-4xl font-black text-blue-600 mb-2">42,000€</div>
+                    <div className="text-4xl font-black text-yellow-600 mb-2">42,000€</div>
                     <div className="text-gray-600">Prix neuf</div>
                   </div>
                   <ul className="space-y-3 mb-6">
@@ -196,13 +196,13 @@ const AssuranceTaxiTesla: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="bg-white border-2 border-blue-600 rounded-2xl p-8">
-                  <div className="absolute top-4 right-4 bg-blue-600 text-white px-3 py-1 rounded-full text-sm font-bold">
+                <div className="bg-white border-2 border-yellow-500 rounded-2xl p-8">
+                  <div className="absolute top-4 right-4 bg-yellow-500 text-white px-3 py-1 rounded-full text-sm font-bold">
                     SUV
                   </div>
                   <h3 className="text-2xl font-bold mb-6 text-center">Tesla Model Y</h3>
                   <div className="text-center mb-6">
-                    <div className="text-4xl font-black text-blue-600 mb-2">49,000€</div>
+                    <div className="text-4xl font-black text-yellow-600 mb-2">49,000€</div>
                     <div className="text-gray-600">Prix neuf</div>
                   </div>
                   <ul className="space-y-3 mb-6">
@@ -224,10 +224,10 @@ const AssuranceTaxiTesla: React.FC = () => {
                     </li>
                     <li className="flex justify-between">
                       <span>Assurance :</span>
-                      <span className="font-bold text-blue-600">1,490€/an</span>
+                      <span className="font-bold text-yellow-600">1,490€/an</span>
                     </li>
                   </ul>
-                  <div className="bg-blue-50 border-l-4 border-blue-600 p-4 rounded-r-xl">
+                  <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded-r-xl">
                     <p className="text-sm"><strong>Idéal pour :</strong> Aéroports, familles, longs trajets, confort premium</p>
                   </div>
                 </div>

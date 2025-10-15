@@ -41,9 +41,9 @@ const SEOBooster: React.FC = () => {
           </div>
           
           <p className="text-xl text-gray-200 max-w-3xl mx-auto leading-relaxed drop-shadow-md">
-            🎯 <strong className="text-amber-400">Objectif : Position #1 Google</strong> pour "assurance taxi" 
+            🎯 <strong className="text-yellow-500">Objectif : Position #1 Google</strong> pour "assurance taxi" 
             et générer <strong className="text-green-400">1+ lead qualifié/jour</strong> en trafic organique. 
-            Stratégie complète : <strong className="text-blue-400">contenu expert + maillage + autorité</strong>.
+            Stratégie complète : <strong className="text-yellow-400">contenu expert + maillage + autorité</strong>.
           </p>
         </div>
 
@@ -70,7 +70,7 @@ const SEOBooster: React.FC = () => {
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span className="text-gray-600">Volume :</span>
-                    <span className="font-bold text-amber-400">{kw.volume}</span>
+                    <span className="font-bold text-yellow-500">{kw.volume}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Objectif :</span>
@@ -94,7 +94,7 @@ const SEOBooster: React.FC = () => {
                 <h4 className="text-lg font-bold text-gray-900 mb-4">Mots-Clés Locaux Prioritaires</h4>
                 <div className="grid grid-cols-2 gap-3">
                   {localKeywords.map((keyword, index) => (
-                    <div key={index} className="bg-blue-50 text-blue-800 px-3 py-2 rounded-lg text-sm font-medium text-center">
+                    <div key={index} className="bg-yellow-50 text-yellow-800 px-3 py-2 rounded-lg text-sm font-medium text-center">
                       {keyword}
                     </div>
                   ))}
@@ -157,18 +157,18 @@ const SEOBooster: React.FC = () => {
             </div>
             
             <div className="text-center">
-              <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+              <div className="w-16 h-16 bg-gradient-to-br from-yellow-400 to-indigo-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
                 <Users className="text-white" size={24} />
               </div>
-              <div className="text-2xl font-bold text-blue-600">5000+</div>
+              <div className="text-2xl font-bold text-yellow-600">5000+</div>
               <div className="text-sm text-gray-600">Visiteurs/mois organiques</div>
             </div>
             
             <div className="text-center">
-              <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+              <div className="w-16 h-16 bg-gradient-to-br from-gray-800 to-pink-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
                 <Zap className="text-white" size={24} />
               </div>
-              <div className="text-2xl font-bold text-purple-600">30+</div>
+              <div className="text-2xl font-bold text-yellow-600">30+</div>
               <div className="text-sm text-gray-600">Leads/mois SEO</div>
             </div>
             

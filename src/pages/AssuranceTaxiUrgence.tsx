@@ -104,8 +104,8 @@ const AssuranceTaxiUrgence: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="bg-blue-50 border-l-4 border-blue-600 p-6 rounded-r-xl">
-                  <Phone className="text-blue-600 mb-4" size={48} />
+                <div className="bg-yellow-50 border-l-4 border-yellow-500 p-6 rounded-r-xl">
+                  <Phone className="text-yellow-600 mb-4" size={48} />
                   <h3 className="text-xl font-bold mb-3">Profils Difficiles</h3>
                   <ul className="space-y-2 text-gray-700">
                     <li>✓ Jeune conducteur</li>
@@ -131,7 +131,7 @@ const AssuranceTaxiUrgence: React.FC = () => {
 
               <div className="space-y-6">
                 <div className="bg-white rounded-2xl shadow-xl p-8 flex items-start">
-                  <div className="bg-blue-600 text-white rounded-full w-12 h-12 flex items-center justify-center font-black text-xl mr-6 flex-shrink-0">
+                  <div className="bg-yellow-500 text-white rounded-full w-12 h-12 flex items-center justify-center font-black text-xl mr-6 flex-shrink-0">
                     1
                   </div>
                   <div>
@@ -242,7 +242,7 @@ const AssuranceTaxiUrgence: React.FC = () => {
 
                   <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border-2 border-blue-400">
                     <div className="flex items-center mb-3">
-                      <Phone className="text-blue-400 mr-3" size={32} />
+                      <Phone className="text-yellow-400 mr-3" size={32} />
                       <div className="text-2xl font-black">Support Direct</div>
                     </div>
                     <p>Conseiller disponible si besoin assistance</p>
@@ -261,7 +261,7 @@ const AssuranceTaxiUrgence: React.FC = () => {
               <div className="space-y-6">
                 <div className="bg-gray-50 rounded-xl p-6">
                   <div className="flex items-center mb-3">
-                    <div className="bg-blue-600 text-white w-12 h-12 rounded-full flex items-center justify-center font-bold mr-3">
+                    <div className="bg-yellow-500 text-white w-12 h-12 rounded-full flex items-center justify-center font-bold mr-3">
                       KM
                     </div>
                     <div>

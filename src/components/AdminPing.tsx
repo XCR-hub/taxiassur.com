@@ -27,7 +27,7 @@ const AdminPing: React.FC = () => {
   const getStatusIcon = () => {
     switch (status) {
       case 'loading':
-        return <Activity className="animate-spin text-blue-500" size={16} />;
+        return <Activity className="animate-spin text-yellow-500" size={16} />;
       case 'success':
         return <CheckCircle className="text-green-500" size={16} />;
       case 'error':

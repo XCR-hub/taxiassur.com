@@ -217,7 +217,7 @@ const MasterDashboard: React.FC = () => {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center">
         <div className="text-center">
-          <RefreshCw className="w-12 h-12 text-amber-400 animate-spin mx-auto mb-4" />
+          <RefreshCw className="w-12 h-12 text-yellow-500 animate-spin mx-auto mb-4" />
           <p className="text-white text-lg">Chargement du dashboard...</p>
         </div>
       </div>
@@ -317,7 +317,7 @@ const MasterDashboard: React.FC = () => {
 
         <div className="bg-gradient-to-br from-amber-900/40 to-amber-800/40 border border-amber-500/30 rounded-lg p-6">
           <div className="flex items-center justify-between mb-4">
-            <TrendingUp className="w-8 h-8 text-amber-400" />
+            <TrendingUp className="w-8 h-8 text-yellow-500" />
             <span className="text-lg font-bold text-amber-300">{conversionRate}%</span>
           </div>
           <p className="text-3xl font-bold text-white mb-1">
@@ -383,7 +383,7 @@ const MasterDashboard: React.FC = () => {
       <div className="mb-8">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-            <Zap className="w-6 h-6 text-amber-400" />
+            <Zap className="w-6 h-6 text-yellow-500" />
             Automatisations ({automations.filter(a => a.is_enabled).length}/{automations.length} actives)
           </h2>
 
@@ -480,7 +480,7 @@ const MasterDashboard: React.FC = () => {
                       parseFloat(page.conversion_rate) > 10
                         ? 'text-green-400'
                         : parseFloat(page.conversion_rate) > 5
-                        ? 'text-amber-400'
+                        ? 'text-yellow-500'
                         : 'text-slate-400'
                     }`}>
                       {page.conversion_rate}%

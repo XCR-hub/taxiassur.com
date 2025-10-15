@@ -221,7 +221,7 @@ const Footer: React.FC = () => {
                   href="https://facebook.com/taxiassur"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-gray-600 hover:text-blue-500 transition-colors"
+                  className="text-gray-600 hover:text-yellow-500 transition-colors"
                   aria-label="Suivez-nous sur Facebook"
                 >
                   <Facebook size={18} />
@@ -230,7 +230,7 @@ const Footer: React.FC = () => {
                   href="https://twitter.com/taxiassur"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-gray-600 hover:text-blue-400 transition-colors"
+                  className="text-gray-600 hover:text-yellow-400 transition-colors"
                   aria-label="Suivez-nous sur Twitter"
                 >
                   <Twitter size={18} />
@@ -239,7 +239,7 @@ const Footer: React.FC = () => {
                   href="https://linkedin.com/company/taxiassur"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-gray-600 hover:text-blue-600 transition-colors"
+                  className="text-gray-600 hover:text-yellow-600 transition-colors"
                   aria-label="Suivez-nous sur LinkedIn"
                 >
                   <Linkedin size={18} />

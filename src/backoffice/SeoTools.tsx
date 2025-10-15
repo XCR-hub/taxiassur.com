@@ -270,7 +270,7 @@ Consultez le détail dans la console (F12)`);
             </Card>
 
             <Card className="text-center bg-slate-800 border border-amber-500">
-              <AlertCircle className="mx-auto mb-2 text-amber-400" size={24} />
+              <AlertCircle className="mx-auto mb-2 text-yellow-500" size={24} />
               <div className="text-2xl font-bold text-white">{seoData.pendingPages}</div>
               <div className="text-sm text-slate-400">En attente</div>
             </Card>
@@ -312,7 +312,7 @@ Consultez le détail dans la console (F12)`);
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
             <Card className="bg-slate-800 border border-slate-700">
               <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
-                <RefreshCw className="mr-2 text-amber-400" size={20} />
+                <RefreshCw className="mr-2 text-yellow-500" size={20} />
                 Actions SEO
               </h3>
               <div className="space-y-3">

@@ -46,7 +46,7 @@ const UltimateConversion: React.FC = () => {
       title: 'Analyse IA Personnalisée',
       description: 'Notre IA analyse votre profil taxi en temps réel pour vous proposer la meilleure assurance du marché',
       benefit: 'Économies garanties jusqu\'à 35%',
-      color: 'from-blue-500 to-indigo-600'
+      color: 'from-yellow-400 to-yellow-600'
     },
     {
       icon: Zap,
@@ -65,9 +65,9 @@ const UltimateConversion: React.FC = () => {
   ];
 
   const socialProofElements = [
-    { label: 'Devis demandés aujourd\'hui', value: liveStats.devisToday, icon: '📊', color: 'text-blue-600' },
+    { label: 'Devis demandés aujourd\'hui', value: liveStats.devisToday, icon: '📊', color: 'text-yellow-600' },
     { label: 'Économies générées (total)', value: `${Math.round(liveStats.economiesTotal / 1000)}k€`, icon: '💰', color: 'text-green-600' },
-    { label: 'Prospects qualifiés', value: `${Math.floor(liveStats.clientsSatisfaits / 30)}+`, icon: '😊', color: 'text-purple-600' },
+    { label: 'Prospects qualifiés', value: `${Math.floor(liveStats.clientsSatisfaits / 30)}+`, icon: '😊', color: 'text-yellow-600' },
     { label: 'Taxis clients (Sept 2025)', value: `${liveStats.taxisActifs}+`, icon: '🚖', color: 'text-amber-600' }
   ];
 

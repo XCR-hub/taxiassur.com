@@ -33,7 +33,7 @@ const AssuranceTaxiLyon: React.FC = () => {
               <div className="bg-white shadow-xl rounded-xl p-8">
                 <div className="grid md:grid-cols-3 gap-6">
                   <div className="text-center">
-                    <div className="text-3xl font-black text-blue-600">1,690€</div>
+                    <div className="text-3xl font-black text-yellow-600">1,690€</div>
                     <p className="text-gray-600">Lyon Centre (1-2-3)</p>
                   </div>
                   <div className="text-center">

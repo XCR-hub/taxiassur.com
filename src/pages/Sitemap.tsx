@@ -94,8 +94,8 @@ const Sitemap: React.FC = () => {
                       className="card-premium hover:border-amber-500/50 transition-all duration-300 group"
                     >
                       <div className="flex items-center mb-3">
-                        <IconComponent className="text-amber-400 mr-3 group-hover:scale-110 transition-transform" size={24} />
-                        <h3 className="text-lg font-bold text-white group-hover:text-amber-400 transition-colors">
+                        <IconComponent className="text-yellow-500 mr-3 group-hover:scale-110 transition-transform" size={24} />
+                        <h3 className="text-lg font-bold text-white group-hover:text-yellow-500 transition-colors">
                           {page.title}
                         </h3>
                       </div>
@@ -118,7 +118,7 @@ const Sitemap: React.FC = () => {
                     to={page.path}
                     className="card-premium hover:border-amber-500/50 transition-all duration-300 group"
                   >
-                    <h3 className="text-lg font-bold text-white mb-3 group-hover:text-amber-400 transition-colors">
+                    <h3 className="text-lg font-bold text-white mb-3 group-hover:text-yellow-500 transition-colors">
                       {page.title}
                     </h3>
                     <p className="text-gray-600 text-sm">

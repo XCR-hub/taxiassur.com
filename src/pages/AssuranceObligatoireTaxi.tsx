@@ -169,7 +169,7 @@ const AssuranceObligatoireTaxi: React.FC = () => {
               <h2 className="text-3xl font-black text-center mb-12">Documents Obligatoires à Fournir</h2>
 
               <div className="grid md:grid-cols-2 gap-8">
-                <div className="bg-blue-50 rounded-xl p-6">
+                <div className="bg-yellow-50 rounded-xl p-6">
                   <h3 className="text-xl font-bold mb-4">Pour Souscrire Assurance</h3>
                   <ul className="space-y-2 text-gray-700">
                     <li>✓ Carte professionnelle taxi valide</li>
@@ -210,9 +210,9 @@ const AssuranceObligatoireTaxi: React.FC = () => {
           <div className="container mx-auto px-4">
             <div className="max-w-5xl mx-auto text-center">
               <div className="grid md:grid-cols-3 gap-4">
-                <Link to="/rc-professionnelle" className="text-blue-600 hover:underline">RC Professionnelle</Link>
-                <Link to="/assurance-taxi" className="text-blue-600 hover:underline">Assurance Taxi</Link>
-                <Link to="/prix-assurance-taxi" className="text-blue-600 hover:underline">Prix Assurance</Link>
+                <Link to="/rc-professionnelle" className="text-yellow-600 hover:underline">RC Professionnelle</Link>
+                <Link to="/assurance-taxi" className="text-yellow-600 hover:underline">Assurance Taxi</Link>
+                <Link to="/prix-assurance-taxi" className="text-yellow-600 hover:underline">Prix Assurance</Link>
               </div>
             </div>
           </div>

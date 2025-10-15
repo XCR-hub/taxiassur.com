@@ -108,7 +108,7 @@ export default function LeadCRM() {
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
           <div className="p-2 bg-amber-500/20 rounded-lg">
-            <Users className="w-6 h-6 text-amber-400" />
+            <Users className="w-6 h-6 text-yellow-500" />
           </div>
           <div>
             <h2 className="text-2xl font-bold text-white">CRM & Leads</h2>
@@ -201,18 +201,18 @@ export default function LeadCRM() {
           className="group bg-gradient-to-br from-amber-500/10 to-orange-500/10 border-2 border-amber-500/30 rounded-xl p-6 hover:border-amber-500/60 hover:shadow-xl hover:shadow-amber-500/20 transition-all duration-300 hover:scale-105"
         >
           <div className="flex items-center justify-between mb-4">
-            <Database className="w-8 h-8 text-amber-400" />
-            <span className="text-xs font-semibold text-amber-400 bg-amber-500/20 px-2 py-1 rounded">
+            <Database className="w-8 h-8 text-yellow-500" />
+            <span className="text-xs font-semibold text-yellow-500 bg-amber-500/20 px-2 py-1 rounded">
               TOTAL
             </span>
           </div>
-          <div className="text-4xl font-bold text-amber-400 mb-2">
+          <div className="text-4xl font-bold text-yellow-500 mb-2">
             {stats.total}
           </div>
           <div className="text-sm font-semibold text-amber-300">
             Tous les leads
           </div>
-          <div className="mt-3 flex items-center gap-2 text-xs text-amber-400 opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="mt-3 flex items-center gap-2 text-xs text-yellow-500 opacity-0 group-hover:opacity-100 transition-opacity">
             <span>Voir détails</span>
             <ArrowRight className="w-3 h-3" />
           </div>

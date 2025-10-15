@@ -87,8 +87,8 @@ const ExitIntentLeadCapture: React.FC<ExitIntentLeadCaptureProps> = ({ onClose }
                   <div className="text-2xl font-black text-green-600 mb-1">-35%</div>
                   <div className="text-xs text-gray-600">Économie</div>
                 </div>
-                <div className="text-center p-3 bg-blue-50 rounded-lg">
-                  <div className="text-2xl font-black text-blue-600 mb-1">2 min</div>
+                <div className="text-center p-3 bg-yellow-50 rounded-lg">
+                  <div className="text-2xl font-black text-yellow-600 mb-1">2 min</div>
                   <div className="text-xs text-gray-600">Devis gratuit</div>
                 </div>
                 <div className="text-center p-3 bg-orange-50 rounded-lg">
@@ -116,7 +116,7 @@ const ExitIntentLeadCapture: React.FC<ExitIntentLeadCaptureProps> = ({ onClose }
                     onChange={(e) => setEmail(e.target.value)}
                     required
                     placeholder="votre@email.com"
-                    className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:border-blue-600 focus:outline-none"
+                    className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:border-yellow-500 focus:outline-none"
                   />
                 </div>
 
@@ -128,7 +128,7 @@ const ExitIntentLeadCapture: React.FC<ExitIntentLeadCaptureProps> = ({ onClose }
                     onChange={(e) => setPhone(e.target.value)}
                     required
                     placeholder="06 12 34 56 78"
-                    className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:border-blue-600 focus:outline-none"
+                    className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:border-yellow-500 focus:outline-none"
                   />
                 </div>
 

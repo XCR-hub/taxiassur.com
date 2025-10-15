@@ -23,7 +23,7 @@ const AssuranceTaxiDijon: React.FC = () => {
         <section className="py-16 bg-white text-center">
           <div className="container mx-auto px-4">
             <h2 className="text-4xl font-black mb-8">Tarif Dijon</h2>
-            <div className="text-5xl font-black text-blue-600 mb-4">1430€/an</div>
+            <div className="text-5xl font-black text-yellow-600 mb-4">1430€/an</div>
             <p className="text-xl text-gray-600">RC Pro + Tous risques + Assistance</p>
           </div>
         </section>

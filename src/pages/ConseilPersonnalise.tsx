@@ -43,8 +43,8 @@ const ConseilPersonnalise: React.FC = () => {
                 Conseil <span className="text-gradient">Personnalisé</span>
               </h1>
               <p className="text-2xl text-gray-200 mb-8 leading-relaxed drop-shadow-md">
-                👨‍💼 <strong className="text-blue-400">Nos experts vous accompagnent</strong> pour trouver 
-                <strong className="text-amber-400">l'assurance taxi parfaitement adaptée</strong> à votre activité. 
+                👨‍💼 <strong className="text-yellow-400">Nos experts vous accompagnent</strong> pour trouver 
+                <strong className="text-yellow-500">l'assurance taxi parfaitement adaptée</strong> à votre activité. 
                 <strong className="text-green-400">Conseil gratuit et personnalisé</strong> par des spécialistes.
               </p>
               
@@ -74,7 +74,7 @@ const ConseilPersonnalise: React.FC = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
               <div className="ai-card text-center p-6 hover:shadow-amber-500/40 transition-all duration-300 group">
-                <Award className="text-amber-400 mx-auto mb-4 group-hover:scale-110 transition-transform drop-shadow-md" size={48} />
+                <Award className="text-yellow-500 mx-auto mb-4 group-hover:scale-110 transition-transform drop-shadow-md" size={48} />
                 <h3 className="text-xl font-bold text-white mb-3 drop-shadow-lg">
                   Expertise Reconnue
                 </h3>
@@ -93,8 +93,8 @@ const ConseilPersonnalise: React.FC = () => {
                 </p>
               </div>
 
-              <div className="ai-card text-center p-6 hover:shadow-blue-500/40 transition-all duration-300 group">
-                <MessageCircle className="text-blue-400 mx-auto mb-4 group-hover:scale-110 transition-transform drop-shadow-md" size={48} />
+              <div className="ai-card text-center p-6 hover:shadow-yellow-500/40 transition-all duration-300 group">
+                <MessageCircle className="text-yellow-400 mx-auto mb-4 group-hover:scale-110 transition-transform drop-shadow-md" size={48} />
                 <h3 className="text-xl font-bold text-white mb-3 drop-shadow-lg">
                   Écoute Attentive
                 </h3>
@@ -103,8 +103,8 @@ const ConseilPersonnalise: React.FC = () => {
                 </p>
               </div>
 
-              <div className="ai-card text-center p-6 hover:shadow-purple-500/40 transition-all duration-300 group">
-                <Users className="text-purple-400 mx-auto mb-4 group-hover:scale-110 transition-transform drop-shadow-md" size={48} />
+              <div className="ai-card text-center p-6 hover:shadow-yellow-500/40 transition-all duration-300 group">
+                <Users className="text-yellow-400 mx-auto mb-4 group-hover:scale-110 transition-transform drop-shadow-md" size={48} />
                 <h3 className="text-xl font-bold text-white mb-3 drop-shadow-lg">
                   Suivi Personnalisé
                 </h3>
@@ -129,7 +129,7 @@ const ConseilPersonnalise: React.FC = () => {
                   <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-yellow-500 rounded-full flex items-center justify-center flex-shrink-0 text-black font-bold shadow-lg">
                     1
                   </div>
-                  <div className="ai-card flex-1 p-6 hover:shadow-blue-500/40 transition-all duration-300">
+                  <div className="ai-card flex-1 p-6 hover:shadow-yellow-500/40 transition-all duration-300">
                     <h3 className="text-xl font-bold text-white mb-3 drop-shadow-lg">Analyse de Votre Situation</h3>
                     <p className="text-gray-300 drop-shadow-md">
                       Étude complète de votre activité : type de taxi, zone d'activité, 
@@ -155,7 +155,7 @@ const ConseilPersonnalise: React.FC = () => {
                   <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-yellow-500 rounded-full flex items-center justify-center flex-shrink-0 text-black font-bold shadow-lg">
                     3
                   </div>
-                  <div className="ai-card flex-1 p-6 hover:shadow-purple-500/40 transition-all duration-300">
+                  <div className="ai-card flex-1 p-6 hover:shadow-yellow-500/40 transition-all duration-300">
                     <h3 className="text-xl font-bold text-white mb-3 drop-shadow-lg">Recommandations Personnalisées</h3>
                     <p className="text-gray-300 drop-shadow-md">
                       Présentation des solutions les mieux adaptées avec explications détaillées 

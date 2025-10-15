@@ -12,7 +12,7 @@ export default function NavigationMenu() {
     <div className="mb-8 space-y-6">
       {/* Leads & Marketplace */}
       <div className="bg-slate-800/50 border border-amber-500/30 rounded-lg p-4">
-        <h3 className="text-amber-400 font-bold text-sm mb-3 flex items-center gap-2">
+        <h3 className="text-yellow-500 font-bold text-sm mb-3 flex items-center gap-2">
           <DollarSign className="w-4 h-4" />
           LEADS & MARKETPLACE
         </h3>

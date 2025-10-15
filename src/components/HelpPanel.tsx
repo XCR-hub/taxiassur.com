@@ -37,7 +37,7 @@ const HelpPanel: React.FC<HelpPanelProps> = ({
       case 'medium':
         return 'border-l-4 border-yellow-500 bg-yellow-50/10';
       case 'low':
-        return 'border-l-4 border-blue-500 bg-blue-50/10';
+        return 'border-l-4 border-yellow-500 bg-yellow-50/10';
       default:
         return 'border-l-4 border-gray-500 bg-gray-50/10';
     }
@@ -48,7 +48,7 @@ const HelpPanel: React.FC<HelpPanelProps> = ({
       {/* Bouton d'aide flottant */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-6 right-6 z-50 bg-blue-600 hover:bg-blue-700 text-white p-4 rounded-full shadow-lg transition-all hover:scale-110"
+        className="fixed bottom-6 right-6 z-50 bg-yellow-500 hover:bg-yellow-600 text-white p-4 rounded-full shadow-lg transition-all hover:scale-110"
         title="Aide et Documentation"
       >
         {isOpen ? (
@@ -65,7 +65,7 @@ const HelpPanel: React.FC<HelpPanelProps> = ({
             {/* Header */}
             <div className="border-b border-slate-700 pb-4 mb-4">
               <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                <FileText className="w-6 h-6 text-blue-400" />
+                <FileText className="w-6 h-6 text-yellow-400" />
                 {title}
               </h3>
               {description && (
@@ -84,7 +84,7 @@ const HelpPanel: React.FC<HelpPanelProps> = ({
                     <button
                       key={index}
                       onClick={action.action}
-                      className="w-full flex items-center gap-2 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm transition"
+                      className="w-full flex items-center gap-2 px-3 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg text-sm transition"
                     >
                       {action.icon}
                       {action.label}
@@ -137,7 +137,7 @@ const HelpPanel: React.FC<HelpPanelProps> = ({
                   href={videoUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm transition"
+                  className="flex items-center gap-2 px-3 py-2 bg-gray-900 hover:bg-purple-700 text-white rounded-lg text-sm transition"
                 >
                   <ExternalLink className="w-4 h-4" />
                   Voir la vidéo
@@ -151,7 +151,7 @@ const HelpPanel: React.FC<HelpPanelProps> = ({
                 href="/docs/guides/INDEX.md"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 text-sm text-blue-400 hover:text-blue-300 transition"
+                className="flex items-center justify-center gap-2 text-sm text-yellow-400 hover:text-blue-300 transition"
               >
                 <FileText className="w-4 h-4" />
                 Voir toute la documentation

@@ -95,7 +95,7 @@ const NewsletterPage: React.FC = () => {
                 <h1 className="text-4xl md:text-5xl font-bold mb-6">
                   Newsletter <span className="text-gradient">Assurance Taxi</span>
                 </h1>
-                <p className="text-xl text-blue-100 mb-8">
+                <p className="text-xl text-yellow-100 mb-8">
                   Restez informé des actualités assurance taxi, recevez nos conseils d'experts 
                   et bénéficiez d'offres exclusives. Gratuit et sans spam.
                 </p>
@@ -103,15 +103,15 @@ const NewsletterPage: React.FC = () => {
                 <div className="grid grid-cols-3 gap-6 max-w-md mx-auto">
                   <div className="text-center">
                     <div className="text-2xl font-bold text-blue-300">{stats.subscribers.toLocaleString()}</div>
-                    <div className="text-sm text-blue-200">Abonnés</div>
+                    <div className="text-sm text-yellow-200">Abonnés</div>
                   </div>
                   <div className="text-center">
                     <div className="text-2xl font-bold text-green-300">{stats.articlesPublished}</div>
-                    <div className="text-sm text-blue-200">Articles</div>
+                    <div className="text-sm text-yellow-200">Articles</div>
                   </div>
                   <div className="text-center">
                     <div className="text-2xl font-bold text-yellow-300">{stats.averageRating}/5</div>
-                    <div className="text-sm text-blue-200">Satisfaction</div>
+                    <div className="text-sm text-yellow-200">Satisfaction</div>
                   </div>
                 </div>
               </div>
@@ -134,7 +134,7 @@ const NewsletterPage: React.FC = () => {
                     const IconComponent = benefit.icon;
                     return (
                       <div key={index} className="text-center">
-                        <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-2xl mb-4 shadow-lg">
+                        <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-yellow-400 to-indigo-500 rounded-2xl mb-4 shadow-lg">
                           <IconComponent className="text-white" size={24} />
                         </div>
                         <h3 className="text-xl font-bold text-gray-900 mb-3">
@@ -178,7 +178,7 @@ const NewsletterPage: React.FC = () => {
                         <span className="text-sm text-gray-600">
                           {new Date(article.date).toLocaleDateString('fr-FR')}
                         </span>
-                        <span className="text-blue-600 hover:text-blue-700 font-medium text-sm">
+                        <span className="text-yellow-600 hover:text-yellow-700 font-medium text-sm">
                           Lire l'article →
                         </span>
                       </div>

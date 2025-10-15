@@ -79,7 +79,7 @@ const QuelleAssuranceTaxi: React.FC = () => {
 
               <div className="overflow-x-auto">
                 <table className="w-full bg-white shadow-xl rounded-xl overflow-hidden">
-                  <thead className="bg-gradient-to-r from-blue-600 to-blue-700 text-white">
+                  <thead className="bg-gradient-to-r from-yellow-500 to-yellow-700 text-white">
                     <tr>
                       <th className="p-4 text-left">Assureur</th>
                       <th className="p-4 text-center">Prix/an</th>
@@ -157,9 +157,9 @@ const QuelleAssuranceTaxi: React.FC = () => {
           <div className="container mx-auto px-4">
             <div className="max-w-5xl mx-auto text-center">
               <div className="grid md:grid-cols-3 gap-4">
-                <Link to="/assurance-taxi" className="text-blue-600 hover:underline">Assurance Taxi</Link>
-                <Link to="/rc-professionnelle" className="text-blue-600 hover:underline">RC Professionnelle</Link>
-                <Link to="/prix-assurance-taxi" className="text-blue-600 hover:underline">Prix Assurance</Link>
+                <Link to="/assurance-taxi" className="text-yellow-600 hover:underline">Assurance Taxi</Link>
+                <Link to="/rc-professionnelle" className="text-yellow-600 hover:underline">RC Professionnelle</Link>
+                <Link to="/prix-assurance-taxi" className="text-yellow-600 hover:underline">Prix Assurance</Link>
               </div>
             </div>
           </div>

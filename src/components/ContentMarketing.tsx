@@ -14,7 +14,7 @@ const ContentMarketing: React.FC = () => {
         'Optimiser son Assurance Taxi : 10 Conseils'
       ],
       seoValue: 'Longue traîne + Featured snippets',
-      color: 'from-blue-500 to-indigo-500'
+      color: 'from-yellow-400 to-indigo-500'
     },
     {
       icon: TrendingUp,
@@ -38,7 +38,7 @@ const ContentMarketing: React.FC = () => {
         'Success Stories Taxi Marseille'
       ],
       seoValue: 'Conversion + Local SEO',
-      color: 'from-purple-500 to-pink-500'
+      color: 'from-gray-800 to-pink-500'
     },
     {
       icon: Target,
@@ -86,10 +86,10 @@ const ContentMarketing: React.FC = () => {
           </div>
           
           <p className="text-xl text-gray-200 max-w-3xl mx-auto leading-relaxed drop-shadow-md">
-            📝 <strong className="text-amber-400">Stratégie de contenu experte</strong> pour dominer Google. 
-            <strong className="text-blue-400">8-12 articles/mois</strong> optimisés SEO, 
+            📝 <strong className="text-yellow-500">Stratégie de contenu experte</strong> pour dominer Google. 
+            <strong className="text-yellow-400">8-12 articles/mois</strong> optimisés SEO, 
             <strong className="text-green-400">2000+ mots/article</strong>, ciblage longue traîne. 
-            <strong className="text-purple-400">Autorité topique maximale</strong> sur l'assurance taxi.
+            <strong className="text-yellow-400">Autorité topique maximale</strong> sur l'assurance taxi.
           </p>
         </div>
 
@@ -148,7 +148,7 @@ const ContentMarketing: React.FC = () => {
                   <h4 className="font-bold text-gray-900 mb-2 text-sm">{item.week}</h4>
                   <p className="text-sm text-gray-700 mb-2">{item.topic}</p>
                   <div className="space-y-1">
-                    <span className="inline-block bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">
+                    <span className="inline-block bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs font-medium">
                       {item.type}
                     </span>
                     <div className="text-xs text-gray-600">{item.words} mots</div>

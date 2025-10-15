@@ -105,9 +105,9 @@ const DynamicPopup: React.FC<DynamicPopupProps> = ({
         };
       default:
         return {
-          header: 'bg-gradient-to-r from-blue-500 to-indigo-500',
-          button: 'bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600',
-          accent: 'text-blue-600'
+          header: 'bg-gradient-to-r from-yellow-400 to-indigo-500',
+          button: 'bg-gradient-to-r from-yellow-400 to-indigo-500 hover:from-yellow-500 hover:to-yellow-600',
+          accent: 'text-yellow-600'
         };
     }
   };

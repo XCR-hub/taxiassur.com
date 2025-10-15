@@ -87,11 +87,11 @@ const BlogList: React.FC<BlogListProps> = ({
       <div className="bg-gradient-to-r from-gray-800 to-gray-900 rounded-xl p-6 border border-gray-700 shadow-xl">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
           <div>
-            <div className="text-3xl font-bold text-amber-400">{posts.length}</div>
+            <div className="text-3xl font-bold text-yellow-500">{posts.length}</div>
             <div className="text-sm text-gray-300">Articles Publiés</div>
           </div>
           <div>
-            <div className="text-3xl font-bold text-blue-400">{allTags.length}</div>
+            <div className="text-3xl font-bold text-yellow-400">{allTags.length}</div>
             <div className="text-sm text-gray-300">Catégories</div>
           </div>
           <div>
@@ -99,7 +99,7 @@ const BlogList: React.FC<BlogListProps> = ({
             <div className="text-sm text-gray-300">Contenu Expert</div>
           </div>
           <div>
-            <div className="text-3xl font-bold text-purple-400">Gratuit</div>
+            <div className="text-3xl font-bold text-yellow-400">Gratuit</div>
             <div className="text-sm text-gray-300">Accès Illimité</div>
           </div>
         </div>
@@ -109,7 +109,7 @@ const BlogList: React.FC<BlogListProps> = ({
       {showFilters && allTags.length > 0 && (
         <div className="space-y-3">
           <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-            <Tag size={20} className="text-amber-400" />
+            <Tag size={20} className="text-yellow-500" />
             Filtrer par catégorie
           </h3>
           <div className="flex flex-wrap gap-3">
@@ -166,7 +166,7 @@ const BlogList: React.FC<BlogListProps> = ({
               {/* Meta */}
               <div className="flex items-center space-x-4 text-sm text-gray-400">
                 <div className="flex items-center space-x-2 bg-gray-900 px-3 py-1.5 rounded-lg border border-gray-700">
-                  <Calendar size={16} className="text-blue-400" />
+                  <Calendar size={16} className="text-yellow-400" />
                   <span className="font-medium">{formatDate(post.createdAt)}</span>
                 </div>
                 <div className="flex items-center space-x-2 bg-gray-900 px-3 py-1.5 rounded-lg border border-gray-700">
@@ -176,7 +176,7 @@ const BlogList: React.FC<BlogListProps> = ({
               </div>
 
               {/* Title */}
-              <h3 className="text-xl font-bold text-white group-hover:text-amber-400 transition-colors leading-tight min-h-[3.5rem]">
+              <h3 className="text-xl font-bold text-white group-hover:text-yellow-500 transition-colors leading-tight min-h-[3.5rem]">
                 <Link to={`/blog/${post.id}`}>
                   {post.title}
                 </Link>
@@ -193,7 +193,7 @@ const BlogList: React.FC<BlogListProps> = ({
                   {post.tags.slice(0, 3).map(tag => (
                     <span
                       key={tag}
-                      className="px-3 py-1.5 bg-amber-500/10 text-amber-400 text-xs font-semibold rounded-lg border border-amber-500/30 hover:bg-amber-500/20 transition-colors"
+                      className="px-3 py-1.5 bg-amber-500/10 text-yellow-500 text-xs font-semibold rounded-lg border border-amber-500/30 hover:bg-amber-500/20 transition-colors"
                     >
                       #{tag}
                     </span>

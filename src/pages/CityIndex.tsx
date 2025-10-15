@@ -61,16 +61,16 @@ const CityIndex: React.FC = () => {
                   </div>
                 </div>
                 <p className="text-2xl text-gray-200 mb-8 leading-relaxed drop-shadow-md">
-                  🗺️ <strong className="text-blue-400">Trouvez votre assurance taxi dans votre ville</strong>. 
-                  <strong className="text-amber-400">Couverture nationale complète</strong>, 
+                  🗺️ <strong className="text-yellow-400">Trouvez votre assurance taxi dans votre ville</strong>. 
+                  <strong className="text-yellow-500">Couverture nationale complète</strong>, 
                   <strong className="text-green-400">tarifs adaptés par région</strong> et 
-                  <strong className="text-purple-400">expertise locale garantie</strong>.
+                  <strong className="text-yellow-400">expertise locale garantie</strong>.
                 </p>
                 
                 <div className="grid grid-cols-3 gap-6 max-w-lg mx-auto mb-8">
                   <div className="text-center">
                     <div className="ai-card p-4 hover:shadow-amber-500/40 transition-all duration-300">
-                      <div className="text-3xl font-bold text-amber-400 drop-shadow-lg">{cities.length}</div>
+                      <div className="text-3xl font-bold text-yellow-500 drop-shadow-lg">{cities.length}</div>
                       <div className="text-sm text-gray-300 drop-shadow-md">Villes couvertes</div>
                     </div>
                   </div>
@@ -81,8 +81,8 @@ const CityIndex: React.FC = () => {
                     </div>
                   </div>
                   <div className="text-center">
-                    <div className="ai-card p-4 hover:shadow-blue-500/40 transition-all duration-300">
-                      <div className="text-3xl font-bold text-blue-400 drop-shadow-lg">-35%</div>
+                    <div className="ai-card p-4 hover:shadow-yellow-500/40 transition-all duration-300">
+                      <div className="text-3xl font-bold text-yellow-400 drop-shadow-lg">-35%</div>
                       <div className="text-sm text-gray-300 drop-shadow-md">Économie moyenne</div>
                     </div>
                   </div>
@@ -119,10 +119,10 @@ const CityIndex: React.FC = () => {
                       to={`/ville/${city.slug}`}
                       className="ai-card p-6 text-center hover:shadow-amber-500/40 hover:border-amber-500/50 transition-all duration-300 group"
                     >
-                      <MapPin className="mx-auto mb-3 text-amber-400 group-hover:scale-110 transition-transform drop-shadow-md" size={24} />
+                      <MapPin className="mx-auto mb-3 text-yellow-500 group-hover:scale-110 transition-transform drop-shadow-md" size={24} />
                       <div className="font-bold text-white text-lg group-hover:text-amber-300 transition-colors drop-shadow-lg">{city.city}</div>
                       <div className="text-sm text-gray-300 drop-shadow-md">Département {city.department}</div>
-                      <div className="text-xs text-amber-400 opacity-0 group-hover:opacity-100 transition-opacity mt-2 drop-shadow-md">
+                      <div className="text-xs text-yellow-500 opacity-0 group-hover:opacity-100 transition-opacity mt-2 drop-shadow-md">
                         Voir les tarifs →
                       </div>
                     </Link>
@@ -162,7 +162,7 @@ const CityIndex: React.FC = () => {
                             className="block group"
                           >
                             <div className="ai-card p-6 text-center hover:shadow-amber-500/40 hover:border-amber-500/50 transition-all duration-300">
-                              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform shadow-lg">
+                              <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 to-indigo-500 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform shadow-lg">
                                 <MapPin className="text-white drop-shadow-md" size={20} />
                               </div>
                               <h4 className="font-bold text-white group-hover:text-amber-300 transition-colors mb-2 drop-shadow-lg">
@@ -171,7 +171,7 @@ const CityIndex: React.FC = () => {
                               <p className="text-sm text-gray-300 mb-3 drop-shadow-md">
                                 Département {city.department}
                               </p>
-                              <div className="text-xs text-amber-400 opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-md">
+                              <div className="text-xs text-yellow-500 opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-md">
                                 Voir les tarifs →
                               </div>
                             </div>
@@ -195,8 +195,8 @@ const CityIndex: React.FC = () => {
                 </h2>
                 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
-                  <div className="ai-card text-center p-8 hover:shadow-blue-500/40 transition-all duration-300 group">
-                    <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-2xl group-hover:scale-110 transition-transform">
+                  <div className="ai-card text-center p-8 hover:shadow-yellow-500/40 transition-all duration-300 group">
+                    <div className="w-20 h-20 bg-gradient-to-br from-yellow-400 to-indigo-500 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-2xl group-hover:scale-110 transition-transform">
                       <MapPin className="text-white drop-shadow-md" size={32} />
                     </div>
                     <h3 className="text-xl font-bold text-white mb-3 drop-shadow-lg">
@@ -219,8 +219,8 @@ const CityIndex: React.FC = () => {
                     </p>
                   </div>
 
-                  <div className="ai-card text-center p-8 hover:shadow-purple-500/40 transition-all duration-300 group">
-                    <div className="w-20 h-20 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-2xl group-hover:scale-110 transition-transform">
+                  <div className="ai-card text-center p-8 hover:shadow-yellow-500/40 transition-all duration-300 group">
+                    <div className="w-20 h-20 bg-gradient-to-br from-gray-800 to-pink-500 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-2xl group-hover:scale-110 transition-transform">
                       <Users className="text-white drop-shadow-md" size={32} />
                     </div>
                     <h3 className="text-xl font-bold text-white mb-3 drop-shadow-lg">

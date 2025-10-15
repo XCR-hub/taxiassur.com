@@ -77,9 +77,9 @@ const AssuranceTaxi: React.FC = () => {
                 Assurance Taxi <span className="text-gradient">Professionnelle Pas Cher</span>
               </h1>
               <p className="text-2xl text-gray-200 mb-8 leading-relaxed drop-shadow-md">
-                🛡️ <strong className="text-blue-400">Comparateur assurance taxi</strong> et <strong className="text-green-400">assurance VTC</strong>.
-                <strong className="text-amber-400">Devis assurance taxi gratuit</strong> en 2min par nos
-                <strong className="text-green-400">courtiers assurance taxi</strong> experts. <strong className="text-blue-400">Assurance taxi en ligne</strong> • Économisez 35% !
+                🛡️ <strong className="text-yellow-400">Comparateur assurance taxi</strong> et <strong className="text-green-400">assurance VTC</strong>.
+                <strong className="text-yellow-500">Devis assurance taxi gratuit</strong> en 2min par nos
+                <strong className="text-green-400">courtiers assurance taxi</strong> experts. <strong className="text-yellow-400">Assurance taxi en ligne</strong> • Économisez 35% !
               </p>
               
               <div className="grid grid-cols-3 gap-6 max-w-md mx-auto mb-8">
@@ -88,11 +88,11 @@ const AssuranceTaxi: React.FC = () => {
                   <div className="text-xs text-gray-300 drop-shadow-md">Économies</div>
                 </div>
                 <div className="ai-card p-4 hover:shadow-amber-500/40 transition-all duration-300">
-                  <div className="text-2xl font-bold text-amber-400 drop-shadow-lg">2min</div>
+                  <div className="text-2xl font-bold text-yellow-500 drop-shadow-lg">2min</div>
                   <div className="text-xs text-gray-300 drop-shadow-md">Devis</div>
                 </div>
-                <div className="ai-card p-4 hover:shadow-blue-500/40 transition-all duration-300">
-                  <div className="text-2xl font-bold text-blue-400 drop-shadow-lg">15min</div>
+                <div className="ai-card p-4 hover:shadow-yellow-500/40 transition-all duration-300">
+                  <div className="text-2xl font-bold text-yellow-400 drop-shadow-lg">15min</div>
                   <div className="text-xs text-gray-300 drop-shadow-md">Rappel</div>
                 </div>
               </div>

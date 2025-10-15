@@ -154,7 +154,7 @@ export default function ElectronicSignature({
       {/* En-tête */}
       <div className="flex items-center justify-between">
         <h3 className="font-medium text-gray-900 flex items-center space-x-2">
-          <FileSignature className="text-indigo-600" size={20} />
+          <FileSignature className="text-yellow-600" size={20} />
           <span>Signature Électronique</span>
         </h3>
         <div className="text-xs text-gray-500">
@@ -210,7 +210,7 @@ export default function ElectronicSignature({
           <button
             onClick={handleSendForSignature}
             disabled={!contractFile || sending}
-            className="w-full flex items-center justify-center space-x-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-400 text-white font-medium py-3 px-4 rounded-lg transition-colors shadow-md hover:shadow-lg"
+            className="w-full flex items-center justify-center space-x-2 bg-yellow-500 hover:bg-indigo-700 disabled:bg-gray-400 text-white font-medium py-3 px-4 rounded-lg transition-colors shadow-md hover:shadow-lg"
           >
             {sending ? (
               <>
@@ -262,7 +262,7 @@ export default function ElectronicSignature({
                       statusInfo.color === 'green'
                         ? 'bg-green-100 text-green-800'
                         : statusInfo.color === 'blue'
-                        ? 'bg-blue-100 text-blue-800'
+                        ? 'bg-yellow-100 text-yellow-800'
                         : statusInfo.color === 'red'
                         ? 'bg-red-100 text-red-800'
                         : statusInfo.color === 'orange'
@@ -277,7 +277,7 @@ export default function ElectronicSignature({
                 {/* Informations détaillées */}
                 <div className="grid grid-cols-2 gap-3 text-xs mb-3">
                   {request.viewedAt && (
-                    <div className="flex items-center space-x-2 text-blue-700">
+                    <div className="flex items-center space-x-2 text-yellow-700">
                       <Eye size={14} />
                       <span>Consulté le {formatDate(request.viewedAt)}</span>
                     </div>

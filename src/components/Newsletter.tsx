@@ -115,9 +115,9 @@ const Newsletter: React.FC = () => {
             </div>
             
             <p className="text-xl text-gray-200 mb-8 leading-relaxed drop-shadow-md">
-              📧 Recevez <strong className="text-amber-400">gratuitement</strong> nos actualités assurance taxi, 
+              📧 Recevez <strong className="text-yellow-500">gratuitement</strong> nos actualités assurance taxi, 
               conseils d'experts, guides pratiques et offres exclusives. 
-              <strong className="text-blue-400">+2500 professionnels</strong> nous font déjà confiance.
+              <strong className="text-yellow-400">+2500 professionnels</strong> nous font déjà confiance.
             </p>
           </div>
 
@@ -130,7 +130,7 @@ const Newsletter: React.FC = () => {
               
               <div className="space-y-4">
                 <div className="flex items-start space-x-4 p-4 ai-card rounded-xl shadow-lg border border-gray-700/60 hover:border-amber-500/40 transition-all duration-300">
-                  <TrendingUp className="text-amber-400 flex-shrink-0 mt-1 drop-shadow-md" size={20} />
+                  <TrendingUp className="text-yellow-500 flex-shrink-0 mt-1 drop-shadow-md" size={20} />
                   <div>
                     <h4 className="font-bold text-white mb-1 drop-shadow-lg">Actualités Assurance Taxi</h4>
                     <p className="text-sm text-gray-300 drop-shadow-md">Nouvelles réglementations, évolutions tarifaires, conseils d'optimisation</p>
@@ -138,7 +138,7 @@ const Newsletter: React.FC = () => {
                 </div>
 
                 <div className="flex items-start space-x-4 p-4 bg-white rounded-xl shadow-lg border border-indigo-200">
-                  <FileText className="text-indigo-600 flex-shrink-0 mt-1" size={20} />
+                  <FileText className="text-yellow-600 flex-shrink-0 mt-1" size={20} />
                   <div>
                     <h4 className="font-bold text-gray-900 mb-1">Guides Pratiques Exclusifs</h4>
                     <p className="text-sm text-gray-600">Dossiers complets, checklists, comparatifs assureurs</p>
@@ -146,7 +146,7 @@ const Newsletter: React.FC = () => {
                 </div>
 
                 <div className="flex items-start space-x-4 p-4 bg-white rounded-xl shadow-lg border border-purple-200">
-                  <Gift className="text-purple-600 flex-shrink-0 mt-1" size={20} />
+                  <Gift className="text-yellow-600 flex-shrink-0 mt-1" size={20} />
                   <div>
                     <h4 className="font-bold text-gray-900 mb-1">Offres Spéciales Abonnés</h4>
                     <p className="text-sm text-gray-600">Réductions exclusives, tarifs négociés, avant-premières</p>
@@ -232,11 +232,11 @@ const Newsletter: React.FC = () => {
                     <span>2500+ abonnés</span>
                   </div>
                   <div className="flex items-center space-x-1">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                    <div className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></div>
                     <span>1 email/semaine</span>
                   </div>
                   <div className="flex items-center space-x-1">
-                    <div className="w-2 h-2 bg-purple-500 rounded-full animate-pulse"></div>
+                    <div className="w-2 h-2 bg-gray-800 rounded-full animate-pulse"></div>
                     <span>Contenu exclusif</span>
                   </div>
                 </div>

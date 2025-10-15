@@ -43,8 +43,8 @@ const RCProfessionnelle: React.FC = () => {
                 RC Professionnelle <span className="text-gradient">Taxi</span>
               </h1>
               <p className="text-2xl text-gray-200 mb-8 leading-relaxed drop-shadow-md">
-                🛡️ <strong className="text-blue-400">Protégez votre responsabilité civile professionnelle</strong> avec une 
-                <strong className="text-amber-400">couverture RC taxi adaptée</strong> aux spécificités de votre métier. 
+                🛡️ <strong className="text-yellow-400">Protégez votre responsabilité civile professionnelle</strong> avec une 
+                <strong className="text-yellow-500">couverture RC taxi adaptée</strong> aux spécificités de votre métier. 
                 <strong className="text-green-400">Devis RC Pro gratuit</strong> et expert dédié.
               </p>
               
@@ -109,7 +109,7 @@ const RCProfessionnelle: React.FC = () => {
               
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <div className="ai-card text-center p-6 hover:shadow-amber-500/40 transition-all duration-300 group">
-                  <Users className="text-amber-400 mx-auto mb-4 group-hover:scale-110 transition-transform drop-shadow-md" size={48} />
+                  <Users className="text-yellow-500 mx-auto mb-4 group-hover:scale-110 transition-transform drop-shadow-md" size={48} />
                   <h3 className="text-xl font-bold text-white mb-3 drop-shadow-lg">
                     Protection Clients
                   </h3>
@@ -118,8 +118,8 @@ const RCProfessionnelle: React.FC = () => {
                   </p>
                 </div>
 
-                <div className="ai-card text-center p-6 hover:shadow-blue-500/40 transition-all duration-300 group">
-                  <FileText className="text-blue-400 mx-auto mb-4 group-hover:scale-110 transition-transform drop-shadow-md" size={48} />
+                <div className="ai-card text-center p-6 hover:shadow-yellow-500/40 transition-all duration-300 group">
+                  <FileText className="text-yellow-400 mx-auto mb-4 group-hover:scale-110 transition-transform drop-shadow-md" size={48} />
                   <h3 className="text-xl font-bold text-white mb-3 drop-shadow-lg">
                     Assistance Juridique
                   </h3>

@@ -40,8 +40,8 @@ const Contact: React.FC = () => {
                   Contactez <span className="text-gradient">TaxiAssur</span>
                 </h1>
                 <p className="text-2xl text-gray-200 mb-8 leading-relaxed drop-shadow-md">
-                  📞 <strong className="text-blue-400">Nos experts sont à votre disposition</strong> pour répondre à toutes vos questions 
-                  et vous accompagner dans votre <strong className="text-amber-400">projet d'assurance taxi</strong>. 
+                  📞 <strong className="text-yellow-400">Nos experts sont à votre disposition</strong> pour répondre à toutes vos questions 
+                  et vous accompagner dans votre <strong className="text-yellow-500">projet d'assurance taxi</strong>. 
                   <strong className="text-green-400">Réponse garantie sous 15 minutes</strong>.
                 </p>
                 
@@ -50,12 +50,12 @@ const Contact: React.FC = () => {
                     <div className="text-2xl font-bold text-green-400 drop-shadow-lg">15min</div>
                     <div className="text-xs text-gray-300 drop-shadow-md">Réponse</div>
                   </div>
-                  <div className="ai-card p-4 hover:shadow-blue-500/40 transition-all duration-300">
-                    <div className="text-2xl font-bold text-blue-400 drop-shadow-lg">7j/7</div>
+                  <div className="ai-card p-4 hover:shadow-yellow-500/40 transition-all duration-300">
+                    <div className="text-2xl font-bold text-yellow-400 drop-shadow-lg">7j/7</div>
                     <div className="text-xs text-gray-300 drop-shadow-md">Service</div>
                   </div>
-                  <div className="ai-card p-4 hover:shadow-purple-500/40 transition-all duration-300">
-                    <div className="text-2xl font-bold text-purple-400 drop-shadow-lg">Expert</div>
+                  <div className="ai-card p-4 hover:shadow-yellow-500/40 transition-all duration-300">
+                    <div className="text-2xl font-bold text-yellow-400 drop-shadow-lg">Expert</div>
                     <div className="text-xs text-gray-300 drop-shadow-md">Dédié</div>
                   </div>
                 </div>
@@ -75,21 +75,21 @@ const Contact: React.FC = () => {
                   <p className="text-gray-300 mb-3 drop-shadow-md">Appelez-nous directement</p>
                   <a 
                     href="tel:0180855786" 
-                    className="text-amber-400 hover:text-amber-300 font-semibold transition-colors"
+                    className="text-yellow-500 hover:text-amber-300 font-semibold transition-colors"
                   >
                     01 80 85 57 86
                   </a>
                 </div>
 
-                <div className="ai-card text-center p-6 hover:shadow-blue-500/40 transition-all duration-300 group">
-                  <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-full mb-4 group-hover:scale-110 transition-transform shadow-lg">
+                <div className="ai-card text-center p-6 hover:shadow-yellow-500/40 transition-all duration-300 group">
+                  <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-yellow-400 to-indigo-500 rounded-full mb-4 group-hover:scale-110 transition-transform shadow-lg">
                     <Mail className="text-white" size={24} />
                   </div>
                   <h3 className="text-xl font-bold text-white mb-2 drop-shadow-lg">Email</h3>
                   <p className="text-gray-300 mb-3 drop-shadow-md">Écrivez-nous</p>
                   <a 
                     href="mailto:team@taxiassur.com" 
-                    className="text-blue-400 hover:text-blue-300 font-semibold transition-colors"
+                    className="text-yellow-400 hover:text-blue-300 font-semibold transition-colors"
                   >
                     team@taxiassur.com
                   </a>
@@ -106,8 +106,8 @@ const Contact: React.FC = () => {
                   </p>
                 </div>
 
-                <div className="ai-card text-center p-6 hover:shadow-purple-500/40 transition-all duration-300 group">
-                  <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full mb-4 group-hover:scale-110 transition-transform shadow-lg">
+                <div className="ai-card text-center p-6 hover:shadow-yellow-500/40 transition-all duration-300 group">
+                  <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-gray-800 to-pink-500 rounded-full mb-4 group-hover:scale-110 transition-transform shadow-lg">
                     <Clock className="text-white" size={24} />
                   </div>
                   <h3 className="text-xl font-bold text-white mb-2 drop-shadow-lg">Horaires</h3>
@@ -135,7 +135,7 @@ const Contact: React.FC = () => {
                     </ul>
                   </div>
 
-                  <div className="ai-card p-6 hover:shadow-blue-500/40 transition-all duration-300">
+                  <div className="ai-card p-6 hover:shadow-yellow-500/40 transition-all duration-300">
                     <h3 className="text-2xl font-bold text-white mb-4 drop-shadow-lg">
                       Expertise Reconnue
                     </h3>

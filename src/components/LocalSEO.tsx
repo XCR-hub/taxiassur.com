@@ -61,12 +61,12 @@ const LocalSEO: React.FC = () => {
                 <h3 className="text-xs sm:text-sm font-bold text-white group-hover:text-amber-300 transition-colors mb-1">
                   {city.name}
                 </h3>
-                <div className="text-xs text-amber-400 group-hover:text-amber-300 transition-colors font-medium mb-1 sm:mb-2">
+                <div className="text-xs text-yellow-500 group-hover:text-amber-300 transition-colors font-medium mb-1 sm:mb-2">
                   Devis →
                 </div>
                 <div className="grid grid-cols-2 gap-1 text-xs">
                   <div>
-                    <div className="text-blue-400 font-bold text-xs">{city.clients}</div>
+                    <div className="text-yellow-400 font-bold text-xs">{city.clients}</div>
                     <div className="text-gray-600 text-xs hidden sm:block">Clients</div>
                   </div>
                   <div>
@@ -94,14 +94,14 @@ const LocalSEO: React.FC = () => {
                 <div className="text-sm text-gray-200 font-medium">Départements couverts</div>
               </div>
               <div className="text-center">
-                <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-2xl">
+                <div className="w-20 h-20 bg-gradient-to-br from-yellow-400 to-indigo-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-2xl">
                   <Users className="text-white" size={24} />
                 </div>
                 <div className="text-4xl font-bold text-white">100+</div>
                 <div className="text-sm text-gray-200 font-medium">Clients nationaux</div>
               </div>
               <div className="text-center">
-                <div className="w-20 h-20 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-2xl">
+                <div className="w-20 h-20 bg-gradient-to-br from-gray-800 to-pink-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-2xl">
                   <Award className="text-white" size={24} />
                 </div>
                 <div className="text-4xl font-bold text-white">100+</div>

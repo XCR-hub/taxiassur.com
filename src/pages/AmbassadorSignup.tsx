@@ -83,7 +83,7 @@ const AmbassadorSignup: React.FC = () => {
             <label className="block text-sm font-semibold text-gray-400 mb-2">
               Votre code de parrainage
             </label>
-            <p className="text-3xl font-bold text-amber-400 font-mono">
+            <p className="text-3xl font-bold text-yellow-500 font-mono">
               {result.ambassador.referral_code}
             </p>
           </div>
@@ -91,13 +91,13 @@ const AmbassadorSignup: React.FC = () => {
           {/* Instructions */}
           <div className="space-y-4 mb-8">
             <h3 className="text-xl font-bold text-white flex items-center gap-2">
-              <Share2 className="w-6 h-6 text-blue-400" />
+              <Share2 className="w-6 h-6 text-yellow-400" />
               Comment partager votre lien ?
             </h3>
 
             <div className="space-y-3">
               <div className="flex items-start gap-3 text-gray-300">
-                <span className="flex-shrink-0 w-8 h-8 bg-blue-500/20 rounded-full flex items-center justify-center text-blue-400 font-bold">
+                <span className="flex-shrink-0 w-8 h-8 bg-yellow-500/20 rounded-full flex items-center justify-center text-yellow-400 font-bold">
                   1
                 </span>
                 <div>
@@ -109,7 +109,7 @@ const AmbassadorSignup: React.FC = () => {
               </div>
 
               <div className="flex items-start gap-3 text-gray-300">
-                <span className="flex-shrink-0 w-8 h-8 bg-blue-500/20 rounded-full flex items-center justify-center text-blue-400 font-bold">
+                <span className="flex-shrink-0 w-8 h-8 bg-yellow-500/20 rounded-full flex items-center justify-center text-yellow-400 font-bold">
                   2
                 </span>
                 <div>
@@ -121,7 +121,7 @@ const AmbassadorSignup: React.FC = () => {
               </div>
 
               <div className="flex items-start gap-3 text-gray-300">
-                <span className="flex-shrink-0 w-8 h-8 bg-blue-500/20 rounded-full flex items-center justify-center text-blue-400 font-bold">
+                <span className="flex-shrink-0 w-8 h-8 bg-yellow-500/20 rounded-full flex items-center justify-center text-yellow-400 font-bold">
                   3
                 </span>
                 <div>
@@ -137,7 +137,7 @@ const AmbassadorSignup: React.FC = () => {
           {/* Récompenses */}
           <div className="bg-gradient-to-r from-amber-900/30 to-orange-900/30 border border-amber-500/30 rounded-lg p-6">
             <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-              <DollarSign className="w-6 h-6 text-amber-400" />
+              <DollarSign className="w-6 h-6 text-yellow-500" />
               Vos récompenses
             </h3>
             <ul className="space-y-2 text-gray-300">
@@ -159,7 +159,7 @@ const AmbassadorSignup: React.FC = () => {
           <div className="mt-6 text-center">
             <a
               href="/backoffice"
-              className="text-blue-400 hover:text-blue-300 font-semibold"
+              className="text-yellow-400 hover:text-blue-300 font-semibold"
             >
               → Accéder à mon espace ambassadeur
             </a>
@@ -175,7 +175,7 @@ const AmbassadorSignup: React.FC = () => {
         {/* Hero */}
         <div className="text-center mb-12">
           <div className="inline-flex items-center justify-center w-20 h-20 bg-amber-500/20 rounded-full mb-6">
-            <Award className="w-10 h-10 text-amber-400" />
+            <Award className="w-10 h-10 text-yellow-500" />
           </div>
           <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
             Devenez Ambassadeur TaxiAssur
@@ -195,7 +195,7 @@ const AmbassadorSignup: React.FC = () => {
             </div>
 
             <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-6">
-              <Share2 className="w-8 h-8 text-blue-400 mb-3 mx-auto" />
+              <Share2 className="w-8 h-8 text-yellow-400 mb-3 mx-auto" />
               <h3 className="font-bold text-white mb-2">Partagez facilement</h3>
               <p className="text-sm text-gray-400">
                 Lien personnel à partager sur WhatsApp, Facebook
@@ -203,7 +203,7 @@ const AmbassadorSignup: React.FC = () => {
             </div>
 
             <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-6">
-              <TrendingUp className="w-8 h-8 text-purple-400 mb-3 mx-auto" />
+              <TrendingUp className="w-8 h-8 text-yellow-400 mb-3 mx-auto" />
               <h3 className="font-bold text-white mb-2">Progressez</h3>
               <p className="text-sm text-gray-400">
                 Débloquez des badges et augmentez vos gains

@@ -58,22 +58,22 @@ const Offers: React.FC = () => {
                   Nos <span className="text-gradient">Offres</span>
                 </h1>
                 <p className="text-2xl text-gray-200 mb-8 leading-relaxed drop-shadow-md">
-                  🎯 <strong className="text-blue-400">Solutions d'assurance sur-mesure</strong> pour tous les 
-                  <strong className="text-amber-400">professionnels du transport de personnes</strong>. 
+                  🎯 <strong className="text-yellow-400">Solutions d'assurance sur-mesure</strong> pour tous les 
+                  <strong className="text-yellow-500">professionnels du transport de personnes</strong>. 
                   <strong className="text-green-400">Tarifs négociés exclusifs</strong> et service expert.
                 </p>
                 
                 <div className="grid grid-cols-3 gap-6 max-w-md mx-auto mb-8">
-                  <div className="ai-card p-4 hover:shadow-blue-500/40 transition-all duration-300">
-                    <div className="text-2xl font-bold text-blue-400 drop-shadow-lg">4</div>
+                  <div className="ai-card p-4 hover:shadow-yellow-500/40 transition-all duration-300">
+                    <div className="text-2xl font-bold text-yellow-400 drop-shadow-lg">4</div>
                     <div className="text-xs text-gray-300 drop-shadow-md">Offres</div>
                   </div>
                   <div className="ai-card p-4 hover:shadow-green-500/40 transition-all duration-300">
                     <div className="text-2xl font-bold text-green-400 drop-shadow-lg">-35%</div>
                     <div className="text-xs text-gray-300 drop-shadow-md">Économies</div>
                   </div>
-                  <div className="ai-card p-4 hover:shadow-purple-500/40 transition-all duration-300">
-                    <div className="text-2xl font-bold text-purple-400 drop-shadow-lg">Expert</div>
+                  <div className="ai-card p-4 hover:shadow-yellow-500/40 transition-all duration-300">
+                    <div className="text-2xl font-bold text-yellow-400 drop-shadow-lg">Expert</div>
                     <div className="text-xs text-gray-300 drop-shadow-md">Service</div>
                   </div>
                 </div>

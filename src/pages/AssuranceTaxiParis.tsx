@@ -80,7 +80,7 @@ const AssuranceTaxiParis: React.FC = () => {
                 Assurance Taxi Paris<br />
                 <span className="text-yellow-400">Tarifs Négociés -35%</span>
               </h1>
-              <p className="text-xl md:text-2xl mb-8 text-blue-100">
+              <p className="text-xl md:text-2xl mb-8 text-yellow-100">
                 Tous arrondissements • G7, Alpha, indépendants • Devis 2 min
               </p>
 
@@ -146,7 +146,7 @@ const AssuranceTaxiParis: React.FC = () => {
                 </div>
               </div>
 
-              <div className="bg-blue-50 border-l-4 border-blue-600 p-6 rounded-r-xl">
+              <div className="bg-yellow-50 border-l-4 border-yellow-500 p-6 rounded-r-xl">
                 <p className="text-lg font-semibold text-blue-900 mb-2">
                   💡 Bonne nouvelle !
                 </p>
@@ -169,7 +169,7 @@ const AssuranceTaxiParis: React.FC = () => {
 
               <div className="overflow-x-auto">
                 <table className="w-full bg-white shadow-xl rounded-xl overflow-hidden">
-                  <thead className="bg-gradient-to-r from-blue-600 to-blue-700 text-white">
+                  <thead className="bg-gradient-to-r from-yellow-500 to-yellow-700 text-white">
                     <tr>
                       <th className="p-4 text-left font-bold">Zone Paris</th>
                       <th className="p-4 text-center font-bold">Arrondissements</th>
@@ -179,7 +179,7 @@ const AssuranceTaxiParis: React.FC = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
-                    <tr className="hover:bg-blue-50 transition-colors">
+                    <tr className="hover:bg-yellow-50 transition-colors">
                       <td className="p-4 font-semibold">Paris Centre</td>
                       <td className="p-4 text-center">1-4</td>
                       <td className="p-4 text-center text-red-600 font-bold">3,500€</td>
@@ -190,7 +190,7 @@ const AssuranceTaxiParis: React.FC = () => {
                         </span>
                       </td>
                     </tr>
-                    <tr className="hover:bg-blue-50 transition-colors">
+                    <tr className="hover:bg-yellow-50 transition-colors">
                       <td className="p-4 font-semibold">Paris Ouest</td>
                       <td className="p-4 text-center">8, 16, 17</td>
                       <td className="p-4 text-center text-red-600 font-bold">3,400€</td>
@@ -201,7 +201,7 @@ const AssuranceTaxiParis: React.FC = () => {
                         </span>
                       </td>
                     </tr>
-                    <tr className="hover:bg-blue-50 transition-colors">
+                    <tr className="hover:bg-yellow-50 transition-colors">
                       <td className="p-4 font-semibold">Paris Nord</td>
                       <td className="p-4 text-center">18, 19</td>
                       <td className="p-4 text-center text-red-600 font-bold">3,200€</td>
@@ -212,7 +212,7 @@ const AssuranceTaxiParis: React.FC = () => {
                         </span>
                       </td>
                     </tr>
-                    <tr className="hover:bg-blue-50 transition-colors">
+                    <tr className="hover:bg-yellow-50 transition-colors">
                       <td className="p-4 font-semibold">Paris Est</td>
                       <td className="p-4 text-center">11, 12, 20</td>
                       <td className="p-4 text-center text-red-600 font-bold">3,100€</td>
@@ -223,7 +223,7 @@ const AssuranceTaxiParis: React.FC = () => {
                         </span>
                       </td>
                     </tr>
-                    <tr className="hover:bg-blue-50 transition-colors">
+                    <tr className="hover:bg-yellow-50 transition-colors">
                       <td className="p-4 font-semibold">Paris Sud</td>
                       <td className="p-4 text-center">13, 14, 15</td>
                       <td className="p-4 text-center text-red-600 font-bold">3,000€</td>
@@ -234,7 +234,7 @@ const AssuranceTaxiParis: React.FC = () => {
                         </span>
                       </td>
                     </tr>
-                    <tr className="bg-blue-50 font-bold">
+                    <tr className="bg-yellow-50 font-bold">
                       <td className="p-4">MOYENNE PARIS</td>
                       <td className="p-4 text-center">Tous</td>
                       <td className="p-4 text-center text-red-700 text-lg">3,200€</td>
@@ -270,7 +270,7 @@ const AssuranceTaxiParis: React.FC = () => {
               <div className="grid md:grid-cols-3 gap-8 mb-12">
                 <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl shadow-lg p-8 border-2 border-blue-300">
                   <div className="text-center mb-4">
-                    <div className="bg-blue-600 text-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <div className="bg-yellow-500 text-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                       <Shield size={32} />
                     </div>
                     <h3 className="text-2xl font-bold">Taxis G7</h3>
@@ -282,7 +282,7 @@ const AssuranceTaxiParis: React.FC = () => {
                     <li>✓ Gestion sinistres dédiée</li>
                   </ul>
                   <div className="mt-6 text-center">
-                    <div className="text-2xl font-black text-blue-600">2,150€/an</div>
+                    <div className="text-2xl font-black text-yellow-600">2,150€/an</div>
                     <p className="text-sm text-gray-600">au lieu de 3,300€</p>
                   </div>
                 </div>
@@ -353,7 +353,7 @@ const AssuranceTaxiParis: React.FC = () => {
               <div className="grid md:grid-cols-3 gap-6">
                 <div className="bg-white rounded-xl shadow-lg p-6">
                   <div className="flex items-center mb-4">
-                    <div className="bg-blue-600 text-white w-12 h-12 rounded-full flex items-center justify-center font-bold mr-3">
+                    <div className="bg-yellow-500 text-white w-12 h-12 rounded-full flex items-center justify-center font-bold mr-3">
                       JM
                     </div>
                     <div>
@@ -483,7 +483,7 @@ const AssuranceTaxiParis: React.FC = () => {
                 <h2 className="text-3xl md:text-4xl font-black mb-4">
                   Obtenez Votre Devis Taxi Paris en 2 Minutes
                 </h2>
-                <p className="text-xl text-blue-100">
+                <p className="text-xl text-yellow-100">
                   Tous arrondissements • Économisez jusqu'à 1,225€/an
                 </p>
               </div>
@@ -500,7 +500,7 @@ const AssuranceTaxiParis: React.FC = () => {
                     </div>
                     <div>
                       <h3 className="text-xl font-bold mb-2">Spécialiste Paris</h3>
-                      <p className="text-blue-100">Tarifs négociés tous arrondissements</p>
+                      <p className="text-yellow-100">Tarifs négociés tous arrondissements</p>
                     </div>
                   </div>
 
@@ -510,7 +510,7 @@ const AssuranceTaxiParis: React.FC = () => {
                     </div>
                     <div>
                       <h3 className="text-xl font-bold mb-2">-35% Garanti</h3>
-                      <p className="text-blue-100">Économie moyenne 1,120€/an</p>
+                      <p className="text-yellow-100">Économie moyenne 1,120€/an</p>
                     </div>
                   </div>
 
@@ -520,7 +520,7 @@ const AssuranceTaxiParis: React.FC = () => {
                     </div>
                     <div>
                       <h3 className="text-xl font-bold mb-2">Couverture Complète</h3>
-                      <p className="text-blue-100">RC Pro + Maraude + Aéroports + Assistance 0km</p>
+                      <p className="text-yellow-100">RC Pro + Maraude + Aéroports + Assistance 0km</p>
                     </div>
                   </div>
 
@@ -530,7 +530,7 @@ const AssuranceTaxiParis: React.FC = () => {
                     </div>
                     <div>
                       <h3 className="text-xl font-bold mb-2">Support Parisien</h3>
-                      <p className="text-blue-100">Conseiller dédié qui connaît Paris</p>
+                      <p className="text-yellow-100">Conseiller dédié qui connaît Paris</p>
                     </div>
                   </div>
                 </div>
@@ -545,10 +545,10 @@ const AssuranceTaxiParis: React.FC = () => {
             <div className="max-w-5xl mx-auto">
               <h3 className="text-xl font-bold mb-6 text-center">Assurance Taxi autres villes</h3>
               <div className="grid md:grid-cols-4 gap-4 text-center text-sm">
-                <Link to="/assurance-taxi" className="text-blue-600 hover:underline">Assurance Taxi</Link>
-                <Link to="/assurance-taxi-vtc" className="text-blue-600 hover:underline">Assurance VTC</Link>
-                <Link to="/rc-professionnelle" className="text-blue-600 hover:underline">RC Pro Taxi</Link>
-                <Link to="/prix-assurance-taxi" className="text-blue-600 hover:underline">Tarifs Assurance</Link>
+                <Link to="/assurance-taxi" className="text-yellow-600 hover:underline">Assurance Taxi</Link>
+                <Link to="/assurance-taxi-vtc" className="text-yellow-600 hover:underline">Assurance VTC</Link>
+                <Link to="/rc-professionnelle" className="text-yellow-600 hover:underline">RC Pro Taxi</Link>
+                <Link to="/prix-assurance-taxi" className="text-yellow-600 hover:underline">Tarifs Assurance</Link>
               </div>
             </div>
           </div>

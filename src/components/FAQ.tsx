@@ -78,7 +78,7 @@ const FAQ: React.FC = () => {
                     {faq.question}
                   </h3>
                   {openIndex === index ? (
-                    <Minus className="text-amber-400 flex-shrink-0" size={20} />
+                    <Minus className="text-yellow-500 flex-shrink-0" size={20} />
                   ) : (
                     <Plus className="text-gray-600 flex-shrink-0" size={20} />
                   )}

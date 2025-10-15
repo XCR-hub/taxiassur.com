@@ -84,11 +84,11 @@ const FaqList: React.FC<FaqListProps> = ({
       <div className="bg-gradient-to-r from-gray-800 to-gray-900 rounded-xl p-6 border border-gray-700 shadow-xl">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
           <div>
-            <div className="text-3xl font-bold text-amber-400">{faqs.length}</div>
+            <div className="text-3xl font-bold text-yellow-500">{faqs.length}</div>
             <div className="text-sm text-gray-300">Questions Répondues</div>
           </div>
           <div>
-            <div className="text-3xl font-bold text-blue-400">{allTags.length}</div>
+            <div className="text-3xl font-bold text-yellow-400">{allTags.length}</div>
             <div className="text-sm text-gray-300">Thématiques</div>
           </div>
           <div>
@@ -96,7 +96,7 @@ const FaqList: React.FC<FaqListProps> = ({
             <div className="text-sm text-gray-300">Réponses Certifiées</div>
           </div>
           <div>
-            <div className="text-3xl font-bold text-purple-400">24h/7</div>
+            <div className="text-3xl font-bold text-yellow-400">24h/7</div>
             <div className="text-sm text-gray-300">Disponibilité</div>
           </div>
         </div>
@@ -123,7 +123,7 @@ const FaqList: React.FC<FaqListProps> = ({
           {showFilters && allTags.length > 0 && (
             <div className="space-y-3">
               <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-                <Tag size={20} className="text-amber-400" />
+                <Tag size={20} className="text-yellow-500" />
                 Filtrer par thématique
               </h3>
               <div className="flex flex-wrap gap-3">
@@ -174,7 +174,7 @@ const FaqList: React.FC<FaqListProps> = ({
               className="w-full text-left flex justify-between items-center hover:bg-gray-700/30 transition-colors duration-200 p-4 -m-4 rounded-lg group"
               onClick={() => setOpenIndex(openIndex === index ? null : index)}
             >
-              <h3 className="text-lg font-bold text-white pr-4 group-hover:text-amber-400 transition-colors">
+              <h3 className="text-lg font-bold text-white pr-4 group-hover:text-yellow-500 transition-colors">
                 {faq.question}
               </h3>
               <div className={`flex-shrink-0 rounded-full p-2 transition-all ${
@@ -198,12 +198,12 @@ const FaqList: React.FC<FaqListProps> = ({
 
                 {faq.tags.length > 0 && (
                   <div className="flex items-center space-x-2 pt-4 border-t border-gray-700">
-                    <Tag size={16} className="text-amber-400" />
+                    <Tag size={16} className="text-yellow-500" />
                     <div className="flex flex-wrap gap-2">
                       {faq.tags.map(tag => (
                         <span
                           key={tag}
-                          className="px-3 py-1.5 bg-gray-900 text-amber-400 text-xs font-semibold rounded-lg border border-amber-500/30"
+                          className="px-3 py-1.5 bg-gray-900 text-yellow-500 text-xs font-semibold rounded-lg border border-amber-500/30"
                         >
                           {tag}
                         </span>
