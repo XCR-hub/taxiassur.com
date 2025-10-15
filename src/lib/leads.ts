@@ -26,6 +26,24 @@ export const LeadSchema = z.object({
 export type Lead = z.infer<typeof LeadSchema>;
 export type LeadStatus = z.infer<typeof LeadStatusSchema>;
 
+// Mapping entre les valeurs TypeScript et les valeurs DB
+// TypeScript utilise des valeurs françaises, la DB utilise des valeurs anglaises
+const statusToDb: Record<LeadStatus, string> = {
+  nouveau: 'new',
+  contacte: 'contacted',
+  devis_envoye: 'interested',
+  client: 'converted',
+  perdu: 'lost'
+};
+
+const statusFromDb: Record<string, LeadStatus> = {
+  new: 'nouveau',
+  contacted: 'contacte',
+  interested: 'devis_envoye',
+  converted: 'client',
+  lost: 'perdu'
+};
+
 // Gestion des leads - Récupère depuis le système PHP actuel
 export async function getLeads(): Promise<Lead[]> {
   try {
@@ -48,25 +66,31 @@ export async function getLeads(): Promise<Lead[]> {
     const leads = result.leads || [];
     console.log(`✅ Found ${leads.length} leads from API`);
 
-    return leads.map((lead: any) => ({
-      id: lead.id || `lead-${Date.now()}`,
-      name: lead.name || 'Lead anonyme',
-      email: lead.email || '',
-      phone: lead.phone || '',
-      city: lead.city || '',
-      status: lead.status || 'taxi',
-      immatriculation: lead.immatriculation || lead.registration || 'Non renseignée',
-      leadStatus: (lead.leadStatus || lead.lead_status || 'nouveau') as LeadStatus,
-      createdAt: lead.createdAt || lead.timestamp || new Date().toISOString(),
-      updatedAt: lead.updatedAt || lead.updated_at,
-      contactedAt: lead.contactedAt || lead.contacted_at,
-      devisEnvoyeAt: lead.devisEnvoyeAt || lead.devis_envoye_at,
-      clientAt: lead.clientAt || lead.client_at,
-      primeRealisee: lead.primeRealisee || lead.prime_realisee,
-      notes: lead.notes,
-      source: lead.source || 'website',
-      assignedTo: lead.assignedTo || lead.assigned_to
-    }));
+    return leads.map((lead: any) => {
+      // Récupérer le statut depuis la DB et le convertir
+      const dbStatus = lead.leadStatus || lead.lead_status || 'new';
+      const mappedStatus = statusFromDb[dbStatus] || 'nouveau';
+
+      return {
+        id: lead.id || `lead-${Date.now()}`,
+        name: lead.name || 'Lead anonyme',
+        email: lead.email || '',
+        phone: lead.phone || '',
+        city: lead.city || '',
+        status: lead.status || 'taxi',
+        immatriculation: lead.immatriculation || lead.registration || 'Non renseignée',
+        leadStatus: mappedStatus as LeadStatus,
+        createdAt: lead.createdAt || lead.timestamp || new Date().toISOString(),
+        updatedAt: lead.updatedAt || lead.updated_at,
+        contactedAt: lead.contactedAt || lead.contacted_at,
+        devisEnvoyeAt: lead.devisEnvoyeAt || lead.devis_envoye_at,
+        clientAt: lead.clientAt || lead.client_at,
+        primeRealisee: lead.primeRealisee || lead.prime_realisee,
+        notes: lead.notes,
+        source: lead.source || 'website',
+        assignedTo: lead.assignedTo || lead.assigned_to
+      };
+    });
   } catch (error) {
     console.error('Failed to load leads:', error);
     return [];
@@ -85,6 +109,10 @@ export async function updateLeadStatus(
   try {
     console.log('🔄 Updating lead status:', { leadId, newStatus, additionalData });
 
+    // Convertir le statut TypeScript vers la valeur DB
+    const dbStatus = statusToDb[newStatus];
+    console.log('📝 Mapping status:', { from: newStatus, to: dbStatus });
+
     // Préparer les champs de date basés sur le statut
     const dateFields: Record<string, string> = {
       updated_at: new Date().toISOString()
@@ -98,9 +126,9 @@ export async function updateLeadStatus(
       dateFields.client_at = new Date().toISOString();
     }
 
-    // Mise à jour via Supabase
+    // Mise à jour via Supabase avec la valeur DB
     const updateData: any = {
-      lead_status: newStatus, // IMPORTANT: lead_status (l'état du lead), pas status (le type de contrat)
+      lead_status: dbStatus, // Utiliser la valeur DB (new, contacted, etc.)
       ...dateFields
     };
 
