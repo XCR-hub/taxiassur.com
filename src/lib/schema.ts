@@ -50,7 +50,7 @@ export const LeadSchema = z.object({
   name: z.string().min(2),
   email: z.string().email(),
   phone: z.string().min(10),
-  status: z.enum(["taxi", "vtc", "rc-pro", "autre"]),
+  status: z.enum(["taxi", "vtc", "autre"]),
   city: z.string().min(2),
   immatriculation: z.string().optional(),
   honeypot: z.string().optional(),

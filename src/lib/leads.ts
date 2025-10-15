@@ -9,7 +9,7 @@ export const LeadSchema = z.object({
   email: z.string().email(),
   phone: z.string(),
   city: z.string(),
-  status: z.enum(['taxi', 'vtc', 'rc-pro', 'autre']),
+  status: z.enum(['taxi', 'vtc', 'autre']),
   immatriculation: z.string().optional(),
   leadStatus: LeadStatusSchema.default('nouveau'),
   createdAt: z.string(),
