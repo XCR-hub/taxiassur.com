@@ -1,18 +1,78 @@
 /*
   # Import FAQ et City Pages dans Supabase
 
-  1. Import des FAQ
+  1. Vérification et correction structure tables
+    - Vérifie que les colonnes existent
+    - Ajoute les colonnes manquantes si nécessaire
+
+  2. Import des FAQ
     - Importe toutes les FAQ depuis les fichiers JSON
     - Status: published pour visibilité immédiate
 
-  2. Import des City Pages
+  3. Import des City Pages
     - Crée les pages villes principales
     - Status: published pour référencement
 
-  3. Vérification
+  4. Vérification
     - Compte le nombre d'entrées créées
     - Affiche les premières entrées
 */
+
+-- ============================================================
+-- PARTIE 0 : VÉRIFICATION ET CORRECTION STRUCTURE
+-- ============================================================
+
+-- Vérifier et corriger la structure de faq_entries
+DO $$
+BEGIN
+  -- Ajouter la colonne tags si elle n'existe pas
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'faq_entries' AND column_name = 'tags'
+  ) THEN
+    ALTER TABLE faq_entries ADD COLUMN tags text[] DEFAULT ARRAY[]::text[];
+    RAISE NOTICE '✅ Colonne tags ajoutée à faq_entries';
+  ELSE
+    RAISE NOTICE '⚠️ Colonne tags existe déjà dans faq_entries';
+  END IF;
+
+  -- Ajouter la colonne category si elle n'existe pas
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'faq_entries' AND column_name = 'category'
+  ) THEN
+    ALTER TABLE faq_entries ADD COLUMN category text;
+    RAISE NOTICE '✅ Colonne category ajoutée à faq_entries';
+  ELSE
+    RAISE NOTICE '⚠️ Colonne category existe déjà dans faq_entries';
+  END IF;
+
+  -- Ajouter la colonne display_order si elle n'existe pas
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'faq_entries' AND column_name = 'display_order'
+  ) THEN
+    ALTER TABLE faq_entries ADD COLUMN display_order integer DEFAULT 0;
+    RAISE NOTICE '✅ Colonne display_order ajoutée à faq_entries';
+  ELSE
+    RAISE NOTICE '⚠️ Colonne display_order existe déjà dans faq_entries';
+  END IF;
+END $$;
+
+-- Vérifier et corriger la structure de city_pages
+DO $$
+BEGIN
+  -- Ajouter la colonne keywords si elle n'existe pas
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'city_pages' AND column_name = 'keywords'
+  ) THEN
+    ALTER TABLE city_pages ADD COLUMN keywords text[] DEFAULT ARRAY[]::text[];
+    RAISE NOTICE '✅ Colonne keywords ajoutée à city_pages';
+  ELSE
+    RAISE NOTICE '⚠️ Colonne keywords existe déjà dans city_pages';
+  END IF;
+END $$;
 
 -- ============================================================
 -- PARTIE 1 : IMPORT DES FAQ
