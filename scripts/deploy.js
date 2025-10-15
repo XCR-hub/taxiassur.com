@@ -81,12 +81,19 @@ directories.forEach(dir => {
 // 4. Copie des fichiers PHP critiques
 console.log('🔗 Copie des fichiers PHP...');
 
-// Copier l'API lead
-if (fs.existsSync('public/api/lead.php')) {
-  fs.copyFileSync('public/api/lead.php', 'dist/api/lead.php');
-  console.log('✓ API lead copiée');
+// Copier TOUS les fichiers PHP de l'API
+if (fs.existsSync('public/api')) {
+  const apiFiles = fs.readdirSync('public/api');
+  let copiedCount = 0;
+  apiFiles.forEach(file => {
+    if (file.endsWith('.php')) {
+      fs.copyFileSync(`public/api/${file}`, `dist/api/${file}`);
+      copiedCount++;
+    }
+  });
+  console.log(`✓ ${copiedCount} fichiers API copiés`);
 } else {
-  console.log('⚠️  API lead manquante dans public/api/');
+  console.log('⚠️  Dossier public/api/ manquant');
 }
 
 // Copier les webhooks
