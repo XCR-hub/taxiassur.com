@@ -98,28 +98,28 @@ BEGIN
       name_col := '''inconnu''';
     END IF;
 
-    -- Construire la requête adaptative
+    -- Construire la requête adaptative avec cast vers TEXT dès le départ
     sql_query := format('CREATE FUNCTION public.get_leads(status_filter text DEFAULT NULL, limit_count int DEFAULT 100, offset_count int DEFAULT 0) '
       || 'RETURNS TABLE (id uuid, name text, email text, phone text, city text, status text, lead_status text, created_at timestamptz) '
       || 'LANGUAGE plpgsql SECURITY DEFINER AS $f$ BEGIN '
       || 'IF status_filter IS NULL THEN '
-      || 'RETURN QUERY SELECT l.id, COALESCE(%s, '''')::text as name, %s::text as email, %s::text as phone, %s::text as city, %s::text as status, %s::text as lead_status, l.created_at FROM leads l ORDER BY l.created_at DESC LIMIT limit_count OFFSET offset_count; '
+      || 'RETURN QUERY SELECT l.id, COALESCE(%s, '''')::text as name, %s as email, %s as phone, %s as city, %s as status, %s as lead_status, l.created_at FROM leads l ORDER BY l.created_at DESC LIMIT limit_count OFFSET offset_count; '
       || 'ELSE '
-      || 'RETURN QUERY SELECT l.id, COALESCE(%s, '''')::text as name, %s::text as email, %s::text as phone, %s::text as city, %s::text as status, %s::text as lead_status, l.created_at FROM leads l WHERE %s::text = status_filter ORDER BY l.created_at DESC LIMIT limit_count OFFSET offset_count; '
+      || 'RETURN QUERY SELECT l.id, COALESCE(%s, '''')::text as name, %s as email, %s as phone, %s as city, %s as status, %s as lead_status, l.created_at FROM leads l WHERE %s = status_filter ORDER BY l.created_at DESC LIMIT limit_count OFFSET offset_count; '
       || 'END IF; END; $f$;',
       name_col,
-      CASE WHEN has_email THEN 'l.email' ELSE '''''' END,
-      CASE WHEN has_phone THEN 'COALESCE(l.phone, '''')' ELSE '''''' END,
-      CASE WHEN has_city THEN 'COALESCE(l.city, '''')' ELSE '''''' END,
-      CASE WHEN has_status THEN 'COALESCE(l.status, ''taxi'')' ELSE '''taxi''' END,
-      CASE WHEN has_lead_status THEN 'COALESCE(l.lead_status, ''nouveau'')' ELSE '''nouveau''' END,
+      CASE WHEN has_email THEN 'l.email::text' ELSE '''''' END,
+      CASE WHEN has_phone THEN 'COALESCE(l.phone::text, '''')' ELSE '''''' END,
+      CASE WHEN has_city THEN 'COALESCE(l.city::text, '''')' ELSE '''''' END,
+      CASE WHEN has_status THEN 'COALESCE(l.status::text, ''taxi'')' ELSE '''taxi''' END,
+      CASE WHEN has_lead_status THEN 'COALESCE(l.lead_status::text, ''nouveau'')' ELSE '''nouveau''' END,
       name_col,
-      CASE WHEN has_email THEN 'l.email' ELSE '''''' END,
-      CASE WHEN has_phone THEN 'COALESCE(l.phone, '''')' ELSE '''''' END,
-      CASE WHEN has_city THEN 'COALESCE(l.city, '''')' ELSE '''''' END,
-      CASE WHEN has_status THEN 'COALESCE(l.status, ''taxi'')' ELSE '''taxi''' END,
-      CASE WHEN has_lead_status THEN 'COALESCE(l.lead_status, ''nouveau'')' ELSE '''nouveau''' END,
-      CASE WHEN has_lead_status THEN 'COALESCE(l.lead_status, ''nouveau'')' ELSE '''nouveau''' END
+      CASE WHEN has_email THEN 'l.email::text' ELSE '''''' END,
+      CASE WHEN has_phone THEN 'COALESCE(l.phone::text, '''')' ELSE '''''' END,
+      CASE WHEN has_city THEN 'COALESCE(l.city::text, '''')' ELSE '''''' END,
+      CASE WHEN has_status THEN 'COALESCE(l.status::text, ''taxi'')' ELSE '''taxi''' END,
+      CASE WHEN has_lead_status THEN 'COALESCE(l.lead_status::text, ''nouveau'')' ELSE '''nouveau''' END,
+      CASE WHEN has_lead_status THEN 'COALESCE(l.lead_status::text, ''nouveau'')' ELSE '''nouveau''' END
     );
 
     EXECUTE sql_query;
