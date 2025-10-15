@@ -27,16 +27,24 @@ export type Lead = z.infer<typeof LeadSchema>;
 export type LeadStatus = z.infer<typeof LeadStatusSchema>;
 
 // Mapping entre les valeurs TypeScript et les valeurs DB
-// TypeScript utilise des valeurs françaises, la DB utilise des valeurs anglaises
+// IMPORTANT: Depuis la migration 20251015000000, la DB utilise aussi les valeurs françaises
+// On garde le mapping pour rétro-compatibilité avec les anciennes données
 const statusToDb: Record<LeadStatus, string> = {
-  nouveau: 'new',
-  contacte: 'contacted',
-  devis_envoye: 'interested',
-  client: 'converted',
-  perdu: 'lost'
+  nouveau: 'nouveau',
+  contacte: 'contacte',
+  devis_envoye: 'devis_envoye',
+  client: 'client',
+  perdu: 'perdu'
 };
 
 const statusFromDb: Record<string, LeadStatus> = {
+  // Nouvelles valeurs françaises (depuis migration)
+  nouveau: 'nouveau',
+  contacte: 'contacte',
+  devis_envoye: 'devis_envoye',
+  client: 'client',
+  perdu: 'perdu',
+  // Anciennes valeurs anglaises (rétro-compatibilité)
   new: 'nouveau',
   contacted: 'contacte',
   interested: 'devis_envoye',
