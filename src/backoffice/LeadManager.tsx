@@ -895,36 +895,40 @@ const LeadManager: React.FC = () => {
         )}
         {/* Status Update Modal */}
         {showStatusModal && selectedLead && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <Card className="w-full max-w-md mx-4">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-bold text-gray-900">
-                  ✏️ Modifier le Statut
-                </h2>
-                <button
-                  onClick={() => setShowStatusModal(false)}
-                  className="text-gray-600 hover:text-gray-600"
-                >
-                  ✕
-                </button>
+          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg border border-gray-200 overflow-hidden">
+              {/* Header avec style Actualités */}
+              <div className="bg-gradient-to-r from-yellow-500 to-orange-500 px-6 py-4">
+                <div className="flex justify-between items-center">
+                  <h2 className="text-xl font-bold text-black flex items-center gap-2">
+                    <Edit size={20} />
+                    Modifier le Statut
+                  </h2>
+                  <button
+                    onClick={() => setShowStatusModal(false)}
+                    className="text-black hover:bg-black/10 rounded-full p-1 transition-colors"
+                  >
+                    <XCircle size={24} />
+                  </button>
+                </div>
               </div>
 
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Lead : {selectedLead.name}
-                  </label>
+              <div className="p-6 space-y-5">
+                {/* Info Lead */}
+                <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                  <h3 className="font-semibold text-gray-900 mb-1">Lead : {selectedLead.name}</h3>
                   <p className="text-sm text-gray-600">{selectedLead.email} • {selectedLead.city}</p>
                 </div>
 
+                {/* Sélection du statut */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-semibold text-gray-900 mb-2">
                     Nouveau statut
                   </label>
                   <select
                     value={statusUpdate.newStatus}
                     onChange={(e) => setStatusUpdate(prev => ({ ...prev, newStatus: e.target.value as LeadStatus }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
+                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 text-gray-900 bg-white font-medium transition-all"
                   >
                     <option value="nouveau">🆕 Nouveau</option>
                     <option value="contacte">📞 Contacté</option>
@@ -934,23 +938,26 @@ const LeadManager: React.FC = () => {
                   </select>
                 </div>
 
+                {/* Prime réalisée (si client) */}
                 {statusUpdate.newStatus === 'client' && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      💰 Prime réalisée (€)
+                  <div className="bg-green-50 rounded-lg p-4 border border-green-200">
+                    <label className="block text-sm font-semibold text-green-900 mb-2">
+                      💰 Chiffre d'affaires réalisé (€)
                     </label>
                     <input
                       type="number"
                       value={statusUpdate.primeRealisee}
                       onChange={(e) => setStatusUpdate(prev => ({ ...prev, primeRealisee: e.target.value }))}
                       placeholder="1500"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white placeholder-gray-400"
+                      className="w-full px-4 py-3 border-2 border-green-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-gray-900 bg-white placeholder-gray-400 font-medium"
                     />
+                    <p className="text-xs text-green-700 mt-2">Montant de la prime annuelle</p>
                   </div>
                 )}
 
+                {/* Notes */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-semibold text-gray-900 mb-2">
                     📝 Notes (optionnel)
                   </label>
                   <textarea
@@ -958,26 +965,27 @@ const LeadManager: React.FC = () => {
                     onChange={(e) => setStatusUpdate(prev => ({ ...prev, notes: e.target.value }))}
                     rows={3}
                     placeholder="Commentaires sur ce lead..."
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white placeholder-gray-400"
+                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 text-gray-900 bg-white placeholder-gray-400"
                   />
                 </div>
 
-                <div className="flex justify-end space-x-3 pt-4">
+                {/* Boutons d'action */}
+                <div className="flex gap-3 pt-2">
                   <button
                     onClick={() => setShowStatusModal(false)}
-                    className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                    className="flex-1 px-4 py-3 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors font-medium"
                   >
                     Annuler
                   </button>
                   <button
                     onClick={handleStatusUpdate}
-                    className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition-colors"
+                    className="flex-1 px-4 py-3 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-black font-bold rounded-lg transition-all shadow-md hover:shadow-lg"
                   >
                     Mettre à Jour
                   </button>
                 </div>
               </div>
-            </Card>
+            </div>
           </div>
         )}
         </div>
