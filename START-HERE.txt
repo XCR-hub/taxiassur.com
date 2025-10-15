@@ -1,93 +1,55 @@
+🚀 TESTER TES AUTOMATISATIONS EN 2 MINUTES
 
-╔══════════════════════════════════════════════════════════════════════╗
-║                                                                      ║
-║                  🎯 COMMENCE ICI - 10 MINUTES 🎯                    ║
-║                                                                      ║
-╚══════════════════════════════════════════════════════════════════════╝
+✅ TOUTES LES ERREURS CORRIGÉES !
 
-OBJECTIF:
-Afficher les 24 articles sur https://taxiassur.com/blog
+═══════════════════════════════════════════════════════════════
 
-ACTUELLEMENT:
-✅ Build production terminé (dist/)
-✅ 24 articles avec FAQ créés (fichiers JSON)
-✅ 2 fichiers SQL générés
-❌ Supabase vide (0 articles)
-❌ Site affiche "0 Articles Publiés"
+🎯 ACTION IMMÉDIATE (1 min)
 
-══════════════════════════════════════════════════════════════════════
+1. Supabase Dashboard → SQL Editor
+2. Copie TEST-AUTOMATISATIONS-SIMPLE.sql
+3. Run
+4. Lis ton Score système : X / 6
 
-ÉTAPE 1: REMPLIR SUPABASE (5 MIN)
+═══════════════════════════════════════════════════════════════
 
-1. Va sur: https://drohhxrkoequjphvabvq.supabase.co
+📊 TU VERRAS :
 
-2. Menu → SQL Editor → New query
+1️⃣ Cron jobs : actifs/inactifs
+2️⃣ Données : articles, FAQ, villes, leads
+3️⃣ Fonctionnalités avancées
+4️⃣ Test lead : créé/mis à jour
+5️⃣ Dernières activités
+6️⃣ Sécurité RLS
+7️⃣ Score final : X / 6 avec diagnostic
 
-3. Fichier 1: SUPABASE-REPAIR-FINAL.sql
-   - Ouvre-le, copie tout (Ctrl+A, Ctrl+C)
-   - Colle dans SQL Editor (Ctrl+V)
-   - Clique RUN
-   - ✅ Attends "Success"
+═══════════════════════════════════════════════════════════════
 
-4. New query
+🏆 INTERPRÉTATION DU SCORE
 
-5. Fichier 2: INSERT-24-ARTICLES-BLOG.sql
-   - Ouvre-le, copie tout (Ctrl+A, Ctrl+C)
-   - Colle dans SQL Editor (Ctrl+V)
-   - Clique RUN (attends 30 sec)
-   - ✅ Attends "Success. INSERT 0 24"
+6/6 → ✅✅✅ PARFAIT ! Système 100% opérationnel
+5/6 → ✅✅ EXCELLENT ! Prêt pour production
+4/6 → ✅ BON ! Quelques options manquantes (non bloquant)
+3/6 → ⚠️ À compléter avant production
+2/6 → ⚠️ Configuration requise
+0-1/6 → ❌ Exécute :
+         1. IMPORT-FAQ-CITIES-SUPABASE.sql
+         2. ACTIVATION-TOTALE-AUTOMATISATIONS.sql
+         3. Re-teste
 
-6. Vérifie:
-   SELECT COUNT(*) FROM blog_posts;
-   → Devrait retourner: 24
+═══════════════════════════════════════════════════════════════
 
-══════════════════════════════════════════════════════════════════════
+💡 RAPPEL VALEURS
 
-ÉTAPE 2: UPLOAD SUR IONOS (5 MIN)
+Table leads :
+- status → 'taxi' | 'vtc' | 'autre'
+- lead_status → 'nouveau' | 'contacte' | 'client' | 'perdu'
+                (valeurs en français depuis migration 15 oct)
 
-1. Connecte FTP IONOS
+═══════════════════════════════════════════════════════════════
 
-2. Va dans public_html (ou www)
+✅ LANCE LE TEST MAINTENANT !
 
-3. Upload TOUT le contenu de: dist/
+Supabase → SQL Editor → TEST-AUTOMATISATIONS-SIMPLE.sql → Run
 
-4. Écrase les fichiers existants
-
-══════════════════════════════════════════════════════════════════════
-
-TEST FINAL:
-
-1. https://taxiassur.com/blog
-   ✅ Devrait afficher: "24 Articles Publiés"
-
-2. https://taxiassur.com/blog/assurance-taxi-jeune-conducteur
-   ✅ Section FAQ visible
-
-══════════════════════════════════════════════════════════════════════
-
-📁 FICHIERS IMPORTANTS:
-
-✅ SUPABASE-REPAIR-FINAL.sql (14 KB)
-✅ INSERT-24-ARTICLES-BLOG.sql (81 KB)
-✅ dist/ (build production)
-
-📖 GUIDES DÉTAILLÉS:
-
-- ACTION-IMMEDIATE-FINAL.txt
-- GUIDE-FINAL-SUPABASE-ARTICLES.md
-- RECAP-FINAL-COMPLET.md
-
-══════════════════════════════════════════════════════════════════════
-
-🎉 AMÉLIORATIONS APPLIQUÉES:
-
-✅ Menu: "Villes" ajouté
-✅ Blog: Bannières + Filtres + Cartes redesignées
-✅ FAQ: Bannières + Recherche + Cartes redesignées
-✅ 21/24 articles avec FAQ complètes
-✅ Build: 17.64s
-
-══════════════════════════════════════════════════════════════════════
-
-⏱️ TEMPS TOTAL: 10 MINUTES
-
+═══════════════════════════════════════════════════════════════

@@ -186,7 +186,7 @@ BEGIN
       '0123456789',
       'Paris',
       'taxi',
-      'new',
+      'nouveau',
       'test_automatisation'
     )
     RETURNING id INTO lead_id;
