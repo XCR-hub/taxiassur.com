@@ -149,38 +149,56 @@ END $$;
 DO $$
 DECLARE
   lead_id UUID;
+  existing_lead UUID;
 BEGIN
-  -- Insérer ou mettre à jour un lead de test
-  INSERT INTO leads (
-    name,
-    email,
-    phone,
-    city,
-    status,
-    lead_status,
-    source
-  )
-  VALUES (
-    'Test Automatisation ' || NOW()::date,
-    'test-automation@taxiassur.fr',
-    '0123456789',
-    'Paris',
-    'taxi',
-    'new',
-    'test_automatisation'
-  )
-  ON CONFLICT (email) DO UPDATE SET
-    updated_at = NOW(),
-    name = 'Test Automatisation ' || NOW()::date
-  RETURNING id INTO lead_id;
+  -- Vérifier si le lead existe déjà
+  SELECT id INTO existing_lead FROM leads WHERE email = 'test-automation@taxiassur.fr';
 
-  RAISE NOTICE '════════════════════════════════════════════════';
-  RAISE NOTICE '🧪 TEST LEAD';
-  RAISE NOTICE '════════════════════════════════════════════════';
-  RAISE NOTICE '✅ Lead de test créé/mis à jour';
-  RAISE NOTICE '   ID : %', lead_id;
-  RAISE NOTICE '   Email : test-automation@taxiassur.fr';
-  RAISE NOTICE '';
+  IF existing_lead IS NOT NULL THEN
+    -- Mettre à jour le lead existant
+    UPDATE leads SET
+      updated_at = NOW(),
+      name = 'Test Automatisation ' || NOW()::date
+    WHERE id = existing_lead
+    RETURNING id INTO lead_id;
+
+    RAISE NOTICE '════════════════════════════════════════════════';
+    RAISE NOTICE '🧪 TEST LEAD';
+    RAISE NOTICE '════════════════════════════════════════════════';
+    RAISE NOTICE '✅ Lead de test mis à jour';
+    RAISE NOTICE '   ID : %', lead_id;
+    RAISE NOTICE '   Email : test-automation@taxiassur.fr';
+    RAISE NOTICE '';
+  ELSE
+    -- Insérer un nouveau lead de test
+    INSERT INTO leads (
+      name,
+      email,
+      phone,
+      city,
+      status,
+      lead_status,
+      source
+    )
+    VALUES (
+      'Test Automatisation ' || NOW()::date,
+      'test-automation@taxiassur.fr',
+      '0123456789',
+      'Paris',
+      'taxi',
+      'new',
+      'test_automatisation'
+    )
+    RETURNING id INTO lead_id;
+
+    RAISE NOTICE '════════════════════════════════════════════════';
+    RAISE NOTICE '🧪 TEST LEAD';
+    RAISE NOTICE '════════════════════════════════════════════════';
+    RAISE NOTICE '✅ Lead de test créé';
+    RAISE NOTICE '   ID : %', lead_id;
+    RAISE NOTICE '   Email : test-automation@taxiassur.fr';
+    RAISE NOTICE '';
+  END IF;
 END $$;
 
 -- ============================================================
