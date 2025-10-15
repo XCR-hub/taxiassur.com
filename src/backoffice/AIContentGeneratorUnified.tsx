@@ -239,13 +239,17 @@ ${(generatedContent.faq || []).map(f => `**${f?.question ?? 'Q'}**\n${f?.answer 
       // 4. PUBLIER L'ACTUALITÉ
       if (generatedContent.newsArticle) {
         const { data: newsData, error: newsError } = await adminClient
-          .from('news')
+          .from('news_articles')
           .insert({
             title: generatedContent.newsArticle.title,
+            slug: generatedContent.newsArticle.title.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
             content: generatedContent.newsArticle.content,
+            excerpt: generatedContent.newsArticle.content.replace(/<[^>]*>/g, '').substring(0, 150),
+            image_url: generatedContent.newsArticle.imageUrl || null,
             category: generatedContent.newsArticle.category || 'Réglementation',
-            featured: generatedContent.newsArticle.featured || false,
-            published_date: new Date().toISOString(),
+            tags: [keyword, city].filter(Boolean),
+            status: 'published',
+            published_at: new Date().toISOString(),
             created_at: new Date().toISOString()
           })
           .select()

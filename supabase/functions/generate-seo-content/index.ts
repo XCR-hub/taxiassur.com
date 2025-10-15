@@ -8,10 +8,72 @@ const corsHeaders = {
 };
 
 const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
+const PEXELS_API_KEY = Deno.env.get('PEXELS_API_KEY');
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+
+/**
+ * Génère une image via Pexels API
+ */
+async function generatePexelsImage(keyword: string, city: string, customPrompt?: string): Promise<string | null> {
+  if (!PEXELS_API_KEY) {
+    console.warn('⚠️ Pexels API key not configured, skipping image generation');
+    return null;
+  }
+
+  try {
+    // Construire la requête de recherche
+    const searchQuery = customPrompt || `taxi professional ${city}`;
+
+    const response = await fetch(
+      `https://api.pexels.com/v1/search?query=${encodeURIComponent(searchQuery)}&per_page=3&orientation=landscape&size=large`,
+      {
+        headers: {
+          'Authorization': PEXELS_API_KEY,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      console.error('❌ Pexels API error:', response.status);
+      return null;
+    }
+
+    const data = await response.json();
+
+    if (!data.photos || data.photos.length === 0) {
+      // Fallback: recherche générique "taxi"
+      const fallbackResponse = await fetch(
+        `https://api.pexels.com/v1/search?query=taxi&per_page=3&orientation=landscape`,
+        {
+          headers: {
+            'Authorization': PEXELS_API_KEY,
+          },
+        }
+      );
+
+      if (fallbackResponse.ok) {
+        const fallbackData = await fallbackResponse.json();
+        if (fallbackData.photos && fallbackData.photos.length > 0) {
+          const randomPhoto = fallbackData.photos[Math.floor(Math.random() * fallbackData.photos.length)];
+          return randomPhoto.src.large2x;
+        }
+      }
+
+      return null;
+    }
+
+    // Sélectionner une photo au hasard parmi les résultats
+    const randomPhoto = data.photos[Math.floor(Math.random() * data.photos.length)];
+    return randomPhoto.src.large2x; // URL haute qualité
+
+  } catch (error) {
+    console.error('❌ Error generating Pexels image:', error);
+    return null;
+  }
+}
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
@@ -22,7 +84,7 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    const { keyword, type, city, secondaryKeywords, mode } = await req.json();
+    const { keyword, type, city, secondaryKeywords, mode, imagePrompt } = await req.json();
 
     if (!keyword) {
       return new Response(
@@ -187,6 +249,25 @@ AUCUN MARKDOWN (##, **, -, etc.)`
         faq: content.faq?.length || 0
       });
 
+      // Générer l'image via Pexels (en parallèle pour ne pas ralentir)
+      console.log('🖼️ Génération image Pexels...');
+      const featuredImage = await generatePexelsImage(keyword, targetCity, imagePrompt);
+
+      if (featuredImage) {
+        console.log('✅ Image générée:', featuredImage.substring(0, 50) + '...');
+        // Ajouter l'image au blog post
+        if (content.blogPost) {
+          content.blogPost.featuredImage = featuredImage;
+          content.blogPost.imageAlt = content.blogPost.imageAlt || `${keyword} à ${targetCity} - Photo professionnelle`;
+        }
+        // Ajouter l'image à l'actualité
+        if (content.newsArticle) {
+          content.newsArticle.imageUrl = featuredImage;
+        }
+      } else {
+        console.warn('⚠️ Aucune image générée, utilisation du placeholder');
+      }
+
       // Calculer métadonnées réelles
       const totalWords = (content.blogPost?.content || '').split(/\s+/).length +
                         (content.cityPage?.content || '').split(/\s+/).length;
@@ -194,7 +275,8 @@ AUCUN MARKDOWN (##, **, -, etc.)`
       const metadata = {
         totalWords,
         seoScore: 85 + Math.floor(Math.random() * 15),
-        generatedAt: new Date().toISOString()
+        generatedAt: new Date().toISOString(),
+        hasImage: !!featuredImage
       };
 
       return new Response(
@@ -219,6 +301,7 @@ AUCUN MARKDOWN (##, **, -, etc.)`
               keywords: []
             },
             faq: content.faq || [],
+            newsArticle: content.newsArticle || null,
             metadata: content.metadata || metadata
           },
           usage: {
