@@ -381,10 +381,29 @@ const MasterDashboard: React.FC = () => {
 
       {/* Automatisations */}
       <div className="mb-8">
-        <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-2">
-          <Zap className="w-6 h-6 text-amber-400" />
-          Automatisations ({automations.filter(a => a.is_enabled).length}/{automations.length} actives)
-        </h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+            <Zap className="w-6 h-6 text-amber-400" />
+            Automatisations ({automations.filter(a => a.is_enabled).length}/{automations.length} actives)
+          </h2>
+
+          <div className="flex gap-3">
+            <button
+              onClick={startAllAutomations}
+              className="px-6 py-2 bg-gradient-to-r from-green-600 to-green-500 text-white font-bold rounded-lg hover:from-green-500 hover:to-green-400 transition-all shadow-lg hover:shadow-green-500/50 flex items-center gap-2"
+            >
+              <Play className="w-4 h-4" />
+              TOUT ACTIVER
+            </button>
+            <button
+              onClick={stopAllAutomations}
+              className="px-6 py-2 bg-gradient-to-r from-red-600 to-red-500 text-white font-bold rounded-lg hover:from-red-500 hover:to-red-400 transition-all shadow-lg hover:shadow-red-500/50 flex items-center gap-2"
+            >
+              <Square className="w-4 h-4" />
+              TOUT ARRÊTER
+            </button>
+          </div>
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {automations.map((auto) => (
