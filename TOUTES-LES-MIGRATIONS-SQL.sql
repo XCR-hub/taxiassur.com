@@ -309,7 +309,6 @@ ON CONFLICT (name) DO NOTHING;
 -- Table automation_logs
 CREATE TABLE IF NOT EXISTS automation_logs (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  automation_id uuid REFERENCES automation_status(id),
   automation_name text NOT NULL,
   status text NOT NULL CHECK (status IN ('success', 'error', 'running')),
   message text,
@@ -318,7 +317,15 @@ CREATE TABLE IF NOT EXISTS automation_logs (
   created_at timestamptz DEFAULT now()
 );
 
-CREATE INDEX IF NOT EXISTS idx_automation_logs_automation_id ON automation_logs(automation_id);
+ALTER TABLE automation_logs ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow authenticated all automation_logs" ON automation_logs;
+CREATE POLICY "Allow authenticated all automation_logs"
+  ON automation_logs FOR ALL
+  TO authenticated
+  USING (true);
+
+CREATE INDEX IF NOT EXISTS idx_automation_logs_automation_name ON automation_logs(automation_name);
 CREATE INDEX IF NOT EXISTS idx_automation_logs_created_at ON automation_logs(created_at DESC);
 
 -- ============================================================================
