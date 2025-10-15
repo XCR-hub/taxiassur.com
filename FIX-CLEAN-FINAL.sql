@@ -56,12 +56,58 @@ DO $$ BEGIN
   END IF;
 END $$;
 
--- get_leads (SI leads existe - structure simple réelle)
-DO $$ BEGIN
+-- get_leads (SI leads existe - détection dynamique des colonnes)
+DO $$
+DECLARE
+  has_name boolean;
+  has_first_name boolean;
+  has_email boolean;
+  has_phone boolean;
+  has_city boolean;
+  has_status boolean;
+  has_lead_status boolean;
+  name_col text;
+  sql_query text;
+BEGIN
   IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'leads') THEN
-    EXECUTE 'CREATE FUNCTION public.get_leads(status_filter text DEFAULT NULL, limit_count int DEFAULT 100, offset_count int DEFAULT 0) RETURNS TABLE (id uuid, name text, email text, phone text, city text, status text, lead_status text, created_at timestamptz) LANGUAGE plpgsql SECURITY DEFINER AS $f$ BEGIN IF status_filter IS NULL THEN RETURN QUERY SELECT l.id, COALESCE(l.name, '''') as name, l.email, COALESCE(l.phone, '''') as phone, COALESCE(l.city, '''') as city, COALESCE(l.status, ''taxi'') as status, COALESCE(l.lead_status, ''new'') as lead_status, l.created_at FROM leads l ORDER BY l.created_at DESC LIMIT limit_count OFFSET offset_count; ELSE RETURN QUERY SELECT l.id, COALESCE(l.name, '''') as name, l.email, COALESCE(l.phone, '''') as phone, COALESCE(l.city, '''') as city, COALESCE(l.status, ''taxi'') as status, COALESCE(l.lead_status, ''new'') as lead_status, l.created_at FROM leads l WHERE COALESCE(l.lead_status, ''new'') = status_filter ORDER BY l.created_at DESC LIMIT limit_count OFFSET offset_count; END IF; END; $f$;';
+    -- Détecter quelles colonnes existent
+    SELECT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'leads' AND column_name = 'name') INTO has_name;
+    SELECT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'leads' AND column_name = 'first_name') INTO has_first_name;
+    SELECT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'leads' AND column_name = 'email') INTO has_email;
+    SELECT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'leads' AND column_name = 'phone') INTO has_phone;
+    SELECT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'leads' AND column_name = 'city') INTO has_city;
+    SELECT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'leads' AND column_name = 'status') INTO has_status;
+    SELECT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'leads' AND column_name = 'lead_status') INTO has_lead_status;
+
+    -- Choisir la colonne nom
+    IF has_name THEN name_col := 'l.name'; ELSIF has_first_name THEN name_col := 'l.first_name'; ELSE name_col := '''inconnu'''; END IF;
+
+    -- Construire la requête adaptative
+    sql_query := format('CREATE FUNCTION public.get_leads(status_filter text DEFAULT NULL, limit_count int DEFAULT 100, offset_count int DEFAULT 0) '
+      || 'RETURNS TABLE (id uuid, name text, email text, phone text, city text, status text, lead_status text, created_at timestamptz) '
+      || 'LANGUAGE plpgsql SECURITY DEFINER AS $f$ BEGIN '
+      || 'IF status_filter IS NULL THEN RETURN QUERY SELECT l.id, COALESCE(%s, '''') as name, %s, %s, %s, %s, %s, l.created_at FROM leads l ORDER BY l.created_at DESC LIMIT limit_count OFFSET offset_count; '
+      || 'ELSE RETURN QUERY SELECT l.id, COALESCE(%s, '''') as name, %s, %s, %s, %s, %s, l.created_at FROM leads l WHERE %s = status_filter ORDER BY l.created_at DESC LIMIT limit_count OFFSET offset_count; '
+      || 'END IF; END; $f$;',
+      name_col,
+      CASE WHEN has_email THEN 'l.email' ELSE '''''' END,
+      CASE WHEN has_phone THEN 'COALESCE(l.phone, '''')' ELSE '''''' END,
+      CASE WHEN has_city THEN 'COALESCE(l.city, '''')' ELSE '''''' END,
+      CASE WHEN has_status THEN 'COALESCE(l.status, ''taxi'')' ELSE '''taxi''' END,
+      CASE WHEN has_lead_status THEN 'COALESCE(l.lead_status, ''nouveau'')' ELSE '''nouveau''' END,
+      name_col,
+      CASE WHEN has_email THEN 'l.email' ELSE '''''' END,
+      CASE WHEN has_phone THEN 'COALESCE(l.phone, '''')' ELSE '''''' END,
+      CASE WHEN has_city THEN 'COALESCE(l.city, '''')' ELSE '''''' END,
+      CASE WHEN has_status THEN 'COALESCE(l.status, ''taxi'')' ELSE '''taxi''' END,
+      CASE WHEN has_lead_status THEN 'COALESCE(l.lead_status, ''nouveau'')' ELSE '''nouveau''' END,
+      CASE WHEN has_lead_status THEN 'COALESCE(l.lead_status, ''nouveau'')' ELSE '''nouveau''' END
+    );
+
+    EXECUTE sql_query;
     GRANT EXECUTE ON FUNCTION public.get_leads(text, int, int) TO authenticated, service_role;
-    RAISE NOTICE '✓ get_leads créée (structure: name, email, phone, city, status, lead_status)';
+    RAISE NOTICE '✓ get_leads créée (colonnes: name=%, email=%, phone=%, city=%, status=%, lead_status=%)',
+      has_name OR has_first_name, has_email, has_phone, has_city, has_status, has_lead_status;
   END IF;
 END $$;
 
