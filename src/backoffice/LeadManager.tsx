@@ -111,6 +111,15 @@ const LeadManager: React.FC = () => {
       let success = false;
       const attachment = type === 'devis' ? attachments.devis : attachments.contract;
 
+      // Demander confirmation
+      const confirmMsg = type === 'devis'
+        ? `Confirmer l'envoi du devis à ${selectedLead.email} ?${attachment ? '\n\nPièce jointe : ' + attachment.name : ''}\n\n✅ Le statut passera automatiquement à "Devis Envoyé"`
+        : `Confirmer l'envoi du contrat à ${selectedLead.email} ?${attachment ? '\n\nPièce jointe : ' + attachment.name : ''}\n\n✅ Le statut passera automatiquement à "Client"`;
+
+      if (!confirm(confirmMsg)) {
+        return;
+      }
+
       if (type === 'devis') {
         success = await sendDevisEmail(selectedLead.id, attachment);
 
@@ -383,8 +392,8 @@ const LeadManager: React.FC = () => {
                     <th className="text-left py-3 px-4 font-medium text-white">Client</th>
                     <th className="text-left py-3 px-4 font-medium text-white">Contact</th>
                     <th className="text-left py-3 px-4 font-medium text-white">Ville</th>
-                    <th className="text-left py-3 px-4 font-medium text-white">Statut</th>
-                    <th className="text-left py-3 px-4 font-medium text-white">État</th>
+                    <th className="text-left py-3 px-4 font-medium text-white">État Lead</th>
+                    <th className="text-left py-3 px-4 font-medium text-white">Type Contrat</th>
                     <th className="text-left py-3 px-4 font-medium text-white">Prime</th>
                     <th className="text-left py-3 px-4 font-medium text-white">Date</th>
                     <th className="text-left py-3 px-4 font-medium text-white">Actions</th>
@@ -411,13 +420,13 @@ const LeadManager: React.FC = () => {
                         <span className="font-medium text-white">{lead.city}</span>
                       </td>
                       <td className="py-3 px-4">
-                        <span className="px-2 py-1 bg-blue-600 text-white rounded-full text-xs font-medium">
-                          {lead.status.toUpperCase()}
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getLeadStatusColor(lead.leadStatus)}`}>
+                          {getLeadStatusLabel(lead.leadStatus)}
                         </span>
                       </td>
                       <td className="py-3 px-4">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getLeadStatusColor(lead.leadStatus)}`}>
-                          {getLeadStatusLabel(lead.leadStatus)}
+                        <span className="px-2 py-1 bg-blue-600 text-white rounded-full text-xs font-medium">
+                          {lead.status.toUpperCase()}
                         </span>
                       </td>
                       <td className="py-3 px-4">

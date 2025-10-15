@@ -100,7 +100,7 @@ export async function updateLeadStatus(
 
     // Mise à jour via Supabase
     const updateData: any = {
-      status: newStatus,
+      lead_status: newStatus, // IMPORTANT: lead_status (l'état du lead), pas status (le type de contrat)
       ...dateFields
     };
 
