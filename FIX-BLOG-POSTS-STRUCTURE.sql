@@ -81,7 +81,6 @@ ORDER BY ordinal_position;
 
 -- 4. Test : Créer un article de test avec toutes les colonnes
 INSERT INTO blog_posts (
-  id,
   slug,
   title,
   excerpt,
@@ -94,7 +93,6 @@ INSERT INTO blog_posts (
   created_at,
   updated_at
 ) VALUES (
-  'test-structure-' || extract(epoch from now())::text,
   'test-structure-blog-posts-' || to_char(now(), 'YYYY-MM-DD-HH24-MI-SS'),
   'TEST STRUCTURE : Article créé le ' || to_char(now(), 'DD/MM/YYYY à HH24:MI'),
   'Article de test pour vérifier que toutes les colonnes existent.',
@@ -107,7 +105,7 @@ INSERT INTO blog_posts (
   now(),
   now()
 )
-ON CONFLICT (id) DO UPDATE SET
+ON CONFLICT (slug) DO UPDATE SET
   title = EXCLUDED.title,
   updated_at = now();
 
@@ -121,7 +119,7 @@ SELECT
   created_at,
   '✅ Article créé avec succès !' as status
 FROM blog_posts
-WHERE id LIKE 'test-structure-%'
+WHERE slug LIKE 'test-structure-%'
 ORDER BY created_at DESC
 LIMIT 1;
 
