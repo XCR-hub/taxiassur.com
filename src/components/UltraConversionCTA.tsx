@@ -71,7 +71,7 @@ const UltraConversionCTA: React.FC<UltraConversionCTAProps> = ({
               <a
                 href="#devis"
                 onClick={handleClick}
-                className="btn-primary bg-white text-red-600 hover:bg-gray-100 shadow-lg transform hover:scale-105 transition-all"
+                className="btn-primary bg-white text-red-600 hover:bg-yellow-50 shadow-lg transform hover:scale-105 transition-all"
               >
                 <Zap className="w-5 h-5" />
                 Je profite de l'offre maintenant
@@ -188,7 +188,7 @@ const UltraConversionCTA: React.FC<UltraConversionCTAProps> = ({
           <a
             href="#devis"
             onClick={handleClick}
-            className="btn-primary bg-white text-orange-600 hover:bg-gray-100 text-lg px-8 py-4 shadow-xl transform hover:scale-105 transition-all whitespace-nowrap"
+            className="btn-primary bg-white text-orange-600 hover:bg-yellow-50 text-lg px-8 py-4 shadow-xl transform hover:scale-105 transition-all whitespace-nowrap"
           >
             <ArrowRight className="w-6 h-6" />
             Je Compare Maintenant

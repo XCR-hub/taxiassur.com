@@ -116,7 +116,7 @@ export default function Actualites() {
         </section>
 
         {/* Filters */}
-        <section className="sticky top-0 z-10 bg-white border-b border-gray-200 shadow-sm">
+        <section className="sticky top-0 z-10 bg-white border-b border-yellow-200 shadow-sm">
           <div className="container mx-auto px-4 py-4">
             <div className="flex flex-wrap gap-2 justify-center">
               {categories.map(cat => (
@@ -126,7 +126,7 @@ export default function Actualites() {
                   className={`px-4 py-2 rounded-lg font-medium transition-all ${
                     filter === cat.id
                       ? 'bg-yellow-500 text-black shadow-md font-bold'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      : 'bg-gray-100 text-gray-700 hover:bg-yellow-100'
                   }`}
                 >
                   {cat.label}
@@ -194,7 +194,7 @@ export default function Actualites() {
                     </div>
 
                     {/* Title */}
-                    <h2 className="text-xl font-bold text-gray-900 mb-3 line-clamp-2">
+                    <h2 className="text-xl font-bold text-gray-900 font-semibold mb-3 line-clamp-2">
                       {article.title}
                     </h2>
 
@@ -209,7 +209,7 @@ export default function Actualites() {
                         {article.tags.slice(0, 3).map(tag => (
                           <span
                             key={tag}
-                            className="inline-flex items-center space-x-1 px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded"
+                            className="inline-flex items-center space-x-1 px-2 py-1 bg-gradient-to-br from-white to-gray-50 text-gray-600 text-xs rounded"
                           >
                             <Tag size={10} />
                             <span>{tag}</span>
@@ -238,7 +238,7 @@ export default function Actualites() {
                           href={article.source_url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="flex items-center justify-center px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors"
+                          className="flex items-center justify-center px-4 py-2 bg-gray-100 hover:bg-yellow-100 text-yellow-800 border border-yellow-200 rounded-lg transition-colors"
                           title="Voir la source"
                         >
                           <ExternalLink size={18} />

@@ -160,7 +160,7 @@ const AssuranceTaxiParis: React.FC = () => {
         </section>
 
         {/* Prix par arrondissement */}
-        <section className="py-16 bg-gray-50">
+        <section className="py-16 bg-white border border-yellow-100">
           <div className="container mx-auto px-4">
             <div className="max-w-6xl mx-auto">
               <h2 className="text-3xl md:text-4xl font-black text-center mb-12">
@@ -178,7 +178,7 @@ const AssuranceTaxiParis: React.FC = () => {
                       <th className="p-4 text-center font-bold">Économie</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-200">
+                  <tbody className="divide-y divide-yellow-100">
                     <tr className="hover:bg-yellow-50 transition-colors">
                       <td className="p-4 font-semibold">Paris Centre</td>
                       <td className="p-4 text-center">1-4</td>
@@ -343,7 +343,7 @@ const AssuranceTaxiParis: React.FC = () => {
         </section>
 
         {/* Témoignages Parisiens */}
-        <section className="py-16 bg-gray-50">
+        <section className="py-16 bg-white border border-yellow-100">
           <div className="container mx-auto px-4">
             <div className="max-w-5xl mx-auto">
               <h2 className="text-3xl md:text-4xl font-black text-center mb-12">
@@ -427,7 +427,7 @@ const AssuranceTaxiParis: React.FC = () => {
               </h2>
 
               <div className="space-y-6">
-                <div className="bg-gray-50 rounded-xl shadow-lg p-6">
+                <div className="bg-white border border-yellow-100 rounded-xl shadow-lg p-6">
                   <h3 className="text-xl font-bold mb-3">L'assurance change selon l'arrondissement ?</h3>
                   <p className="text-gray-700">
                     Oui, les tarifs varient selon la zone d'activité principale. Paris Centre (1-4) est plus cher
@@ -436,7 +436,7 @@ const AssuranceTaxiParis: React.FC = () => {
                   </p>
                 </div>
 
-                <div className="bg-gray-50 rounded-xl shadow-lg p-6">
+                <div className="bg-white border border-yellow-100 rounded-xl shadow-lg p-6">
                   <h3 className="text-xl font-bold mb-3">Taxis G7 : assurance spécifique ?</h3>
                   <p className="text-gray-700">
                     Les taxis G7 peuvent choisir l'assurance de leur choix. TaxiAssur a négocié des <strong>tarifs préférentiels
@@ -445,7 +445,7 @@ const AssuranceTaxiParis: React.FC = () => {
                   </p>
                 </div>
 
-                <div className="bg-gray-50 rounded-xl shadow-lg p-6">
+                <div className="bg-white border border-yellow-100 rounded-xl shadow-lg p-6">
                   <h3 className="text-xl font-bold mb-3">Assurance taxi électrique Paris (Tesla, etc.) ?</h3>
                   <p className="text-gray-700">
                     Paris encourage les taxis électriques (Tesla Model 3, Ioniq 5). TaxiAssur assure tous véhicules électriques
@@ -454,7 +454,7 @@ const AssuranceTaxiParis: React.FC = () => {
                   </p>
                 </div>
 
-                <div className="bg-gray-50 rounded-xl shadow-lg p-6">
+                <div className="bg-white border border-yellow-100 rounded-xl shadow-lg p-6">
                   <h3 className="text-xl font-bold mb-3">Couverture aéroports Paris (CDG, Orly) ?</h3>
                   <p className="text-gray-700">
                     Oui, toutes nos assurances couvrent les trajets aéroports (CDG, Orly, Le Bourget).
@@ -463,7 +463,7 @@ const AssuranceTaxiParis: React.FC = () => {
                   </p>
                 </div>
 
-                <div className="bg-gray-50 rounded-xl shadow-lg p-6">
+                <div className="bg-white border border-yellow-100 rounded-xl shadow-lg p-6">
                   <h3 className="text-xl font-bold mb-3">Délai obtention attestation Paris ?</h3>
                   <p className="text-gray-700">
                     Souscription 100% en ligne en 5 minutes. <strong>Attestation envoyée par email en 10 minutes</strong>.

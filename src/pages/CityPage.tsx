@@ -127,7 +127,7 @@ const CityPage: React.FC = () => {
                     <li key={crumb.url} className="flex items-center">
                       {index > 0 && <span className="mx-2">/</span>}
                       {index === breadcrumbs.length - 1 ? (
-                        <span className="text-gray-900 font-medium">{crumb.name}</span>
+                        <span className="text-gray-900 font-semibold font-medium">{crumb.name}</span>
                       ) : (
                         <a href={crumb.url} className="hover:text-amber-600 transition-colors">
                           {crumb.name}
@@ -144,7 +144,7 @@ const CityPage: React.FC = () => {
 
               <div className="mt-12">
                 <Card className="bg-gradient-to-br from-amber-50 to-yellow-50 border-2 border-amber-200">
-                  <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">
+                  <h2 className="text-2xl font-bold text-gray-900 font-semibold mb-6 text-center">
                     Obtenez votre devis gratuit
                   </h2>
                   <LeadForm />
@@ -305,7 +305,7 @@ const CityPage: React.FC = () => {
                   </div>
                   <div>
                     <Card className="bg-white border-none">
-                      <h3 className="text-2xl font-bold text-gray-900 mb-6 text-center">
+                      <h3 className="text-2xl font-bold text-gray-900 font-semibold mb-6 text-center">
                         Obtenez votre devis gratuit
                       </h3>
                       <LeadForm />

@@ -279,7 +279,7 @@ const EnhancedLeadForm: React.FC<EnhancedLeadFormProps> = ({
             value={formData.name}
             onChange={handleChange}
             className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200 ${
-              errors.name ? 'border-red-500' : validationState.name ? 'border-green-500' : 'border-gray-300'
+              errors.name ? 'border-red-500' : validationState.name ? 'border-green-500' : 'border-orange-200'
             }`}
             placeholder={FormOptimizer.generateDynamicPlaceholders('name')}
           />
@@ -301,7 +301,7 @@ const EnhancedLeadForm: React.FC<EnhancedLeadFormProps> = ({
             value={formData.phone}
             onChange={handleChange}
             className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200 ${
-              errors.phone ? 'border-red-500' : validationState.phone ? 'border-green-500' : 'border-gray-300'
+              errors.phone ? 'border-red-500' : validationState.phone ? 'border-green-500' : 'border-orange-200'
             }`}
             placeholder={FormOptimizer.generateDynamicPlaceholders('phone')}
           />
@@ -324,7 +324,7 @@ const EnhancedLeadForm: React.FC<EnhancedLeadFormProps> = ({
           value={formData.email}
           onChange={handleChange}
           className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200 ${
-            errors.email ? 'border-red-500' : validationState.email ? 'border-green-500' : 'border-gray-300'
+            errors.email ? 'border-red-500' : validationState.email ? 'border-green-500' : 'border-orange-200'
           }`}
           placeholder={FormOptimizer.generateDynamicPlaceholders('email')}
         />
@@ -356,7 +356,7 @@ const EnhancedLeadForm: React.FC<EnhancedLeadFormProps> = ({
             value={formData.city}
             onChange={handleChange}
             className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200 ${
-              errors.city ? 'border-red-500' : validationState.city ? 'border-green-500' : 'border-gray-300'
+              errors.city ? 'border-red-500' : validationState.city ? 'border-green-500' : 'border-orange-200'
             }`}
             placeholder={FormOptimizer.generateDynamicPlaceholders('city', city)}
           />
@@ -376,7 +376,7 @@ const EnhancedLeadForm: React.FC<EnhancedLeadFormProps> = ({
             value={formData.status}
             onChange={handleChange}
             className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200 ${
-              errors.status ? 'border-red-500' : 'border-gray-300'
+              errors.status ? 'border-red-500' : 'border-orange-200'
             }`}
           >
             <option value="taxi">Taxi (licence préfecture)</option>
@@ -397,7 +397,7 @@ const EnhancedLeadForm: React.FC<EnhancedLeadFormProps> = ({
           name="immatriculation"
           value={formData.immatriculation}
           onChange={handleChange}
-          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200"
+          className="w-full px-4 py-3 border border-orange-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200"
           placeholder={FormOptimizer.generateDynamicPlaceholders('immatriculation')}
         />
       </div>
@@ -411,7 +411,7 @@ const EnhancedLeadForm: React.FC<EnhancedLeadFormProps> = ({
         <p className="text-gray-600">Vérifiez vos informations avant envoi</p>
       </div>
 
-      <div className="bg-gray-50 p-6 rounded-lg space-y-4">
+      <div className="bg-white border border-yellow-100 p-6 rounded-lg space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <span className="text-sm text-gray-600">Nom :</span>
@@ -488,7 +488,7 @@ const EnhancedLeadForm: React.FC<EnhancedLeadFormProps> = ({
             </button>
             <button
               onClick={() => setShowExitIntent(false)}
-              className="text-gray-600 hover:text-gray-700 text-sm"
+              className="text-gray-600 hover:text-orange-600 text-sm"
             >
               Continuer sans devis
             </button>
@@ -556,7 +556,7 @@ const EnhancedLeadForm: React.FC<EnhancedLeadFormProps> = ({
                         <button
                           type="button"
                           onClick={prevStep}
-                          className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                          className="px-6 py-3 border border-orange-200 text-gray-700 rounded-lg hover:bg-white border border-yellow-100 transition-colors"
                         >
                           Précédent
                         </button>
@@ -619,7 +619,7 @@ const EnhancedLeadForm: React.FC<EnhancedLeadFormProps> = ({
                 )}
 
                 {/* Legal consent */}
-                <div className="mt-6 bg-gray-50 p-4 rounded-lg border border-gray-200">
+                <div className="mt-6 bg-white border border-yellow-100 p-4 rounded-lg border border-yellow-200">
                   <p className="text-xs text-gray-600">
                     En soumettant ce formulaire, j'accepte d'être recontacté par TaxiAssur.com 
                     pour recevoir mon devis personnalisé. Données sécurisées selon notre 

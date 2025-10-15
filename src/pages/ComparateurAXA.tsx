@@ -30,7 +30,7 @@ const ComparateurAXA: React.FC = () => {
           </div>
         </section>
 
-        <section className="py-16 bg-gray-50">
+        <section className="py-16 bg-white border border-yellow-100">
           <div className="container mx-auto px-4">
             <div className="max-w-6xl mx-auto">
               <h2 className="text-3xl font-black text-center mb-12">Comparatif Prix AXA vs TaxiAssur</h2>
@@ -166,7 +166,7 @@ const ComparateurAXA: React.FC = () => {
                       <td className="p-4 text-center">48-72h</td>
                       <td className="p-4 text-center text-green-600 font-bold">✓ 10 min</td>
                     </tr>
-                    <tr className="bg-gray-50 font-bold">
+                    <tr className="bg-white border border-yellow-100 font-bold">
                       <td className="p-4">TOTAL RÉEL/AN</td>
                       <td className="p-4 text-center text-red-600 text-xl">2,950€</td>
                       <td className="p-4 text-center text-green-600 text-xl">1,430€</td>
@@ -178,7 +178,7 @@ const ComparateurAXA: React.FC = () => {
           </div>
         </section>
 
-        <section className="py-16 bg-gray-50">
+        <section className="py-16 bg-white border border-yellow-100">
           <div className="container mx-auto px-4">
             <div className="max-w-5xl mx-auto">
               <h2 className="text-3xl font-black text-center mb-12">Avis Clients</h2>

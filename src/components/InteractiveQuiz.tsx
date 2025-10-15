@@ -188,7 +188,7 @@ const InteractiveQuiz: React.FC = () => {
         <div className="mt-8 text-left">
           <h3 className="text-xl font-bold mb-4">Récapitulatif :</h3>
           {questions.map((q, index) => (
-            <div key={q.id} className="mb-4 p-4 bg-gray-50 rounded-lg">
+            <div key={q.id} className="mb-4 p-4 bg-white border border-yellow-100 rounded-lg">
               <div className="flex items-start">
                 {answers[index] ? (
                   <CheckCircle className="text-green-600 mr-2 flex-shrink-0 mt-1" size={20} />
@@ -239,7 +239,7 @@ const InteractiveQuiz: React.FC = () => {
 
         <div className="space-y-3">
           {currentQ.options.map((option, index) => {
-            let bgColor = 'bg-gray-50 hover:bg-gray-100 border-gray-300';
+            let bgColor = 'bg-white border border-yellow-100 hover:bg-gradient-to-br from-white to-gray-50 border-orange-200';
             let cursor = 'cursor-pointer';
 
             if (showResult) {

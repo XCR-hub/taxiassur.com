@@ -116,7 +116,7 @@ const ExitIntentLeadCapture: React.FC<ExitIntentLeadCaptureProps> = ({ onClose }
                     onChange={(e) => setEmail(e.target.value)}
                     required
                     placeholder="votre@email.com"
-                    className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:border-yellow-500 focus:outline-none"
+                    className="w-full px-3 py-2 border-2 border-orange-200 rounded-lg focus:border-yellow-500 focus:outline-none"
                   />
                 </div>
 
@@ -128,7 +128,7 @@ const ExitIntentLeadCapture: React.FC<ExitIntentLeadCaptureProps> = ({ onClose }
                     onChange={(e) => setPhone(e.target.value)}
                     required
                     placeholder="06 12 34 56 78"
-                    className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:border-yellow-500 focus:outline-none"
+                    className="w-full px-3 py-2 border-2 border-orange-200 rounded-lg focus:border-yellow-500 focus:outline-none"
                   />
                 </div>
 
@@ -152,7 +152,7 @@ const ExitIntentLeadCapture: React.FC<ExitIntentLeadCaptureProps> = ({ onClose }
               <div className="mt-4 text-center">
                 <button
                   onClick={handleClose}
-                  className="text-sm text-gray-600 hover:text-gray-700 underline"
+                  className="text-sm text-gray-600 hover:text-orange-600 underline"
                 >
                   Non merci, retourner au site
                 </button>

@@ -286,7 +286,7 @@ const SmartChatBot: React.FC = () => {
 
       {/* Chat Window */}
       {isOpen && (
-        <div className="fixed bottom-6 right-6 w-80 h-96 bg-white rounded-2xl shadow-2xl border border-gray-200 flex flex-col z-50">
+        <div className="fixed bottom-6 right-6 w-80 h-96 bg-white rounded-2xl shadow-2xl border border-yellow-200 flex flex-col z-50">
           {/* Header */}
           <div className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-white p-4 rounded-t-2xl flex items-center justify-between">
             <div className="flex items-center space-x-3">
@@ -313,7 +313,7 @@ const SmartChatBot: React.FC = () => {
                 <div className={`max-w-xs p-3 rounded-lg ${
                   message.type === 'user' 
                     ? 'bg-yellow-500 text-white' 
-                    : 'bg-gray-100 text-gray-900'
+                    : 'bg-gradient-to-br from-white to-gray-50 text-gray-900'
                 }`}>
                   <p className="text-sm">{message.message}</p>
                   
@@ -340,7 +340,7 @@ const SmartChatBot: React.FC = () => {
             
             {isTyping && (
               <div className="flex justify-start">
-                <div className="bg-gray-100 p-3 rounded-lg">
+                <div className="bg-gradient-to-br from-white to-gray-50 p-3 rounded-lg">
                   <div className="flex space-x-1">
                     <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
                     <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
@@ -352,7 +352,7 @@ const SmartChatBot: React.FC = () => {
           </div>
 
           {/* Input */}
-          <div className="p-4 border-t border-gray-200 bg-white">
+          <div className="p-4 border-t border-yellow-200 bg-white">
             <div className="flex space-x-2">
               <input
                 type="text"
@@ -360,7 +360,7 @@ const SmartChatBot: React.FC = () => {
                 onChange={(e) => setCurrentInput(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
                 placeholder="Tapez votre message..."
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent text-sm text-gray-900 bg-white placeholder-gray-500"
+                className="flex-1 px-3 py-2 border border-orange-200 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent text-sm text-gray-900 bg-white placeholder-gray-500"
               />
               <button
                 onClick={handleSendMessage}

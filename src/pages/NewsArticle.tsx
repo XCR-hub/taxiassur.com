@@ -125,7 +125,7 @@ export default function NewsArticle() {
         <Header />
         <main className="min-h-screen bg-white flex items-center justify-center">
           <div className="text-center">
-            <h1 className="text-2xl font-bold text-gray-900 mb-4">Article non trouvé</h1>
+            <h1 className="text-2xl font-bold text-gray-900 font-semibold mb-4">Article non trouvé</h1>
             <p className="text-gray-600 mb-6">Cet article n'existe pas ou a été supprimé.</p>
             <Link
               to="/actualites"
@@ -163,7 +163,7 @@ export default function NewsArticle() {
 
       <main className="min-h-screen bg-white">
         {/* Breadcrumb */}
-        <div className="bg-gray-50 border-b border-gray-200">
+        <div className="bg-white border border-yellow-100 border-b border-yellow-200">
           <div className="container mx-auto px-4 py-4">
             <nav className="flex items-center space-x-2 text-sm">
               <Link to="/" className="text-yellow-600 hover:text-yellow-700">Accueil</Link>
@@ -210,7 +210,7 @@ export default function NewsArticle() {
           </div>
 
           {/* Title */}
-          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6 leading-tight">
+          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 font-semibold mb-6 leading-tight">
             {article.title}
           </h1>
 
@@ -241,11 +241,11 @@ export default function NewsArticle() {
 
           {/* Tags */}
           {article.tags && article.tags.length > 0 && (
-            <div className="flex flex-wrap gap-2 mb-8 pb-8 border-b border-gray-200">
+            <div className="flex flex-wrap gap-2 mb-8 pb-8 border-b border-yellow-200">
               {article.tags.map(tag => (
                 <span
                   key={tag}
-                  className="inline-flex items-center space-x-1 px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full"
+                  className="inline-flex items-center space-x-1 px-3 py-1 bg-gradient-to-br from-white to-gray-50 text-gray-700 text-sm rounded-full"
                 >
                   <Tag size={14} />
                   <span>{tag}</span>
@@ -281,9 +281,9 @@ export default function NewsArticle() {
 
         {/* Related Articles */}
         {relatedArticles.length > 0 && (
-          <section className="bg-gray-50 py-16">
+          <section className="bg-white border border-yellow-100 py-16">
             <div className="container mx-auto px-4">
-              <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">
+              <h2 className="text-3xl font-bold text-gray-900 font-semibold mb-8 text-center">
                 Articles similaires
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
@@ -296,7 +296,7 @@ export default function NewsArticle() {
                     <span className="inline-block px-3 py-1 bg-yellow-100 text-yellow-700 text-xs font-semibold rounded-full mb-3">
                       {related.category}
                     </span>
-                    <h3 className="text-lg font-bold text-gray-900 mb-2 line-clamp-2">
+                    <h3 className="text-lg font-bold text-gray-900 font-semibold mb-2 line-clamp-2">
                       {related.title}
                     </h3>
                     <p className="text-gray-600 text-sm line-clamp-3 mb-4">

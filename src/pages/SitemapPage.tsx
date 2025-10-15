@@ -95,7 +95,7 @@ const SitemapPage: React.FC = () => {
           <section className="section-padding">
             <div className="container-max">
               <div className="max-w-6xl mx-auto">
-                <h2 className="text-3xl font-bold text-gray-900 mb-8">Pages Principales</h2>
+                <h2 className="text-3xl font-bold text-gray-900 font-semibold mb-8">Pages Principales</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-16">
                   {pages.map((page, index) => {
                     const IconComponent = page.icon;
@@ -108,7 +108,7 @@ const SitemapPage: React.FC = () => {
                         <Card hover className="group h-full">
                           <div className="flex items-center mb-3">
                             <IconComponent className="text-amber-500 mr-3 group-hover:scale-110 transition-transform" size={24} />
-                            <h3 className="text-lg font-bold text-gray-900 group-hover:text-amber-600 transition-colors">
+                            <h3 className="text-lg font-bold text-gray-900 font-semibold group-hover:text-amber-600 transition-colors">
                               {page.title}
                             </h3>
                           </div>
@@ -122,7 +122,7 @@ const SitemapPage: React.FC = () => {
                 </div>
 
                 {/* Legal Pages */}
-                <h2 className="text-3xl font-bold text-gray-900 mb-8">Informations Légales</h2>
+                <h2 className="text-3xl font-bold text-gray-900 font-semibold mb-8">Informations Légales</h2>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
                   {legalPages.map((page, index) => (
                     <Link
@@ -131,7 +131,7 @@ const SitemapPage: React.FC = () => {
                       className="block"
                     >
                       <Card hover className="group h-full">
-                        <h3 className="text-lg font-bold text-gray-900 mb-3 group-hover:text-amber-600 transition-colors">
+                        <h3 className="text-lg font-bold text-gray-900 font-semibold mb-3 group-hover:text-amber-600 transition-colors">
                           {page.title}
                         </h3>
                         <p className="text-gray-600 text-sm">
@@ -143,11 +143,11 @@ const SitemapPage: React.FC = () => {
                 </div>
 
                 {/* Services Pages */}
-                <h2 className="text-3xl font-bold text-gray-900 mb-8">Nos Services</h2>
+                <h2 className="text-3xl font-bold text-gray-900 font-semibold mb-8">Nos Services</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-16">
                   <Link to="/assurance-taxi" className="block">
                     <Card hover className="group h-full">
-                      <h3 className="text-lg font-bold text-gray-900 mb-3 group-hover:text-amber-600 transition-colors">
+                      <h3 className="text-lg font-bold text-gray-900 font-semibold mb-3 group-hover:text-amber-600 transition-colors">
                         Assurance Taxi
                       </h3>
                       <p className="text-gray-600 text-sm">
@@ -157,7 +157,7 @@ const SitemapPage: React.FC = () => {
                   </Link>
                   <Link to="/rc-professionnelle" className="block">
                     <Card hover className="group h-full">
-                      <h3 className="text-lg font-bold text-gray-900 mb-3 group-hover:text-amber-600 transition-colors">
+                      <h3 className="text-lg font-bold text-gray-900 font-semibold mb-3 group-hover:text-amber-600 transition-colors">
                         RC Professionnelle
                       </h3>
                       <p className="text-gray-600 text-sm">
@@ -167,7 +167,7 @@ const SitemapPage: React.FC = () => {
                   </Link>
                   <Link to="/flotte-vehicules" className="block">
                     <Card hover className="group h-full">
-                      <h3 className="text-lg font-bold text-gray-900 mb-3 group-hover:text-amber-600 transition-colors">
+                      <h3 className="text-lg font-bold text-gray-900 font-semibold mb-3 group-hover:text-amber-600 transition-colors">
                         Assurance Flotte
                       </h3>
                       <p className="text-gray-600 text-sm">
@@ -177,7 +177,7 @@ const SitemapPage: React.FC = () => {
                   </Link>
                   <Link to="/gestion-sinistres" className="block">
                     <Card hover className="group h-full">
-                      <h3 className="text-lg font-bold text-gray-900 mb-3 group-hover:text-amber-600 transition-colors">
+                      <h3 className="text-lg font-bold text-gray-900 font-semibold mb-3 group-hover:text-amber-600 transition-colors">
                         Gestion Sinistres
                       </h3>
                       <p className="text-gray-600 text-sm">
@@ -188,10 +188,10 @@ const SitemapPage: React.FC = () => {
                 </div>
 
                 {/* External Resources - SEO Backlinks */}
-                <h2 className="text-3xl font-bold text-gray-900 mb-8">Ressources Externes</h2>
+                <h2 className="text-3xl font-bold text-gray-900 font-semibold mb-8">Ressources Externes</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-16">
                   <Card>
-                    <h3 className="text-lg font-bold text-gray-900 mb-3">ORIAS - Registre des Intermédiaires</h3>
+                    <h3 className="text-lg font-bold text-gray-900 font-semibold mb-3">ORIAS - Registre des Intermédiaires</h3>
                     <p className="text-gray-600 text-sm mb-3">
                       Vérifiez notre agrément courtier ORIAS 11 061 425
                     </p>
@@ -205,7 +205,7 @@ const SitemapPage: React.FC = () => {
                     </a>
                   </Card>
                   <Card>
-                    <h3 className="text-lg font-bold text-gray-900 mb-3">Service Public - Taxi</h3>
+                    <h3 className="text-lg font-bold text-gray-900 font-semibold mb-3">Service Public - Taxi</h3>
                     <p className="text-gray-600 text-sm mb-3">
                       Réglementation officielle des taxis en France
                     </p>
@@ -219,7 +219,7 @@ const SitemapPage: React.FC = () => {
                     </a>
                   </Card>
                   <Card>
-                    <h3 className="text-lg font-bold text-gray-900 mb-3">Légifrance - Code des Assurances</h3>
+                    <h3 className="text-lg font-bold text-gray-900 font-semibold mb-3">Légifrance - Code des Assurances</h3>
                     <p className="text-gray-600 text-sm mb-3">
                       Textes de loi régissant l'assurance en France
                     </p>
@@ -233,7 +233,7 @@ const SitemapPage: React.FC = () => {
                     </a>
                   </Card>
                   <Card>
-                    <h3 className="text-lg font-bold text-gray-900 mb-3">FFA - Fédération Française Assurance</h3>
+                    <h3 className="text-lg font-bold text-gray-900 font-semibold mb-3">FFA - Fédération Française Assurance</h3>
                     <p className="text-gray-600 text-sm mb-3">
                       Informations officielles sur l'assurance en France
                     </p>
@@ -249,10 +249,10 @@ const SitemapPage: React.FC = () => {
                 </div>
 
                 {/* Technical Links */}
-                <h2 className="text-3xl font-bold text-gray-900 mb-8">Liens Techniques</h2>
+                <h2 className="text-3xl font-bold text-gray-900 font-semibold mb-8">Liens Techniques</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <Card>
-                    <h3 className="text-lg font-bold text-gray-900 mb-3">Flux RSS</h3>
+                    <h3 className="text-lg font-bold text-gray-900 font-semibold mb-3">Flux RSS</h3>
                     <p className="text-gray-600 text-sm mb-3">
                       Suivez nos derniers articles de blog
                     </p>
@@ -267,7 +267,7 @@ const SitemapPage: React.FC = () => {
                   </Card>
 
                   <Card>
-                    <h3 className="text-lg font-bold text-gray-900 mb-3">Sitemap XML</h3>
+                    <h3 className="text-lg font-bold text-gray-900 font-semibold mb-3">Sitemap XML</h3>
                     <p className="text-gray-600 text-sm mb-3">
                       Plan du site pour les moteurs de recherche
                     </p>
@@ -289,7 +289,7 @@ const SitemapPage: React.FC = () => {
           <section className="section-padding bg-gradient-to-br from-amber-50 to-yellow-50">
             <div className="container-max">
               <div className="max-w-2xl mx-auto text-center">
-                <h2 className="text-3xl font-bold text-gray-900 mb-4">
+                <h2 className="text-3xl font-bold text-gray-900 font-semibold mb-4">
                   Besoin d'Aide ?
                 </h2>
                 <p className="text-gray-600 mb-8">

@@ -16,7 +16,7 @@ export default function ConfianceEtCertifications() {
 
       <div className="min-h-screen bg-gradient-to-b from-white via-gray-50 to-white">
         {/* Hero Section */}
-        <section className="bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500 text-gray-900 py-20">
+        <section className="bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500 text-gray-900 font-semibold py-20">
           <div className="container-max text-center">
             <h1 className="text-5xl font-bold mb-6">
               🏆 Votre Confiance, Notre Engagement
@@ -47,7 +47,7 @@ export default function ConfianceEtCertifications() {
         {/* Section détaillée - Adhésions professionnelles */}
         <section className="bg-gradient-to-br from-orange-50 to-yellow-50 py-16">
           <div className="container-max">
-            <h2 className="text-4xl font-bold text-center text-gray-900 mb-12">
+            <h2 className="text-4xl font-bold text-center text-gray-900 font-semibold mb-12">
               🤝 Nos Adhésions Professionnelles
             </h2>
 
@@ -59,7 +59,7 @@ export default function ConfianceEtCertifications() {
                     <span className="text-2xl font-bold text-yellow-600">CSCA</span>
                   </div>
                   <div>
-                    <h3 className="text-2xl font-bold text-gray-900">
+                    <h3 className="text-2xl font-bold text-gray-900 font-semibold">
                       Chambre Syndicale du Courtage d'Assurance
                     </h3>
                     <p className="text-sm text-yellow-600 font-medium">Adhérent Actif</p>
@@ -85,7 +85,7 @@ export default function ConfianceEtCertifications() {
                     <span className="text-2xl font-bold text-yellow-600">EDI</span>
                   </div>
                   <div>
-                    <h3 className="text-2xl font-bold text-gray-900">
+                    <h3 className="text-2xl font-bold text-gray-900 font-semibold">
                       EDI Courtage + EDI Messages + EDI Signature
                     </h3>
                     <p className="text-sm text-yellow-600 font-medium">Partenaire Intégré</p>
@@ -110,7 +110,7 @@ export default function ConfianceEtCertifications() {
                     <span className="text-xl font-bold text-cyan-600">EXCALIBUR</span>
                   </div>
                   <div>
-                    <h3 className="text-2xl font-bold text-gray-900">
+                    <h3 className="text-2xl font-bold text-gray-900 font-semibold">
                       CRM Spécialisé Assurances
                     </h3>
                     <p className="text-sm text-cyan-600 font-medium">Logiciel Professionnel</p>
@@ -135,7 +135,7 @@ export default function ConfianceEtCertifications() {
                     <span className="text-2xl font-bold text-green-600">CGPA</span>
                   </div>
                   <div>
-                    <h3 className="text-2xl font-bold text-gray-900">
+                    <h3 className="text-2xl font-bold text-gray-900 font-semibold">
                       RC Professionnelle + Caisse de Garantie
                     </h3>
                     <p className="text-sm text-green-600 font-medium">Protection Active</p>
@@ -161,7 +161,7 @@ export default function ConfianceEtCertifications() {
           <div className="bg-gradient-to-br from-red-50 via-orange-50 to-yellow-50 rounded-3xl p-12 border-2 border-orange-200">
             <div className="max-w-4xl mx-auto">
               <div className="text-center mb-12">
-                <h2 className="text-4xl font-bold text-gray-900 mb-4">
+                <h2 className="text-4xl font-bold text-gray-900 font-semibold mb-4">
                   🛡️ Conformité Totale LCB-FT
                 </h2>
                 <p className="text-xl text-gray-700">
@@ -170,13 +170,13 @@ export default function ConfianceEtCertifications() {
               </div>
 
               <div className="bg-white rounded-2xl p-8 mb-8 shadow-lg">
-                <h3 className="text-2xl font-bold text-gray-900 mb-6">
+                <h3 className="text-2xl font-bold text-gray-900 font-semibold mb-6">
                   Nos Obligations et Contrôles
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div className="text-center p-6 bg-red-50 rounded-xl border border-red-200">
                     <div className="text-4xl mb-3">🔒</div>
-                    <h4 className="font-bold text-gray-900 mb-2">Gel des Avoirs</h4>
+                    <h4 className="font-bold text-gray-900 font-semibold mb-2">Gel des Avoirs</h4>
                     <p className="text-sm text-gray-600">
                       Vérification automatique contre les listes de sanctions
                       internationales (ONU, UE, OFAC)
@@ -185,7 +185,7 @@ export default function ConfianceEtCertifications() {
 
                   <div className="text-center p-6 bg-orange-50 rounded-xl border border-orange-200">
                     <div className="text-4xl mb-3">👥</div>
-                    <h4 className="font-bold text-gray-900 mb-2">Personnes Politiquement Exposées</h4>
+                    <h4 className="font-bold text-gray-900 font-semibold mb-2">Personnes Politiquement Exposées</h4>
                     <p className="text-sm text-gray-600">
                       Contrôle PPE selon directives européennes.
                       Vigilance renforcée obligatoire
@@ -194,7 +194,7 @@ export default function ConfianceEtCertifications() {
 
                   <div className="text-center p-6 bg-yellow-50 rounded-xl border border-yellow-200">
                     <div className="text-4xl mb-3">📋</div>
-                    <h4 className="font-bold text-gray-900 mb-2">Registre des Élus</h4>
+                    <h4 className="font-bold text-gray-900 font-semibold mb-2">Registre des Élus</h4>
                     <p className="text-sm text-gray-600">
                       Surveillance des mandats électifs locaux et nationaux
                     </p>
@@ -203,7 +203,7 @@ export default function ConfianceEtCertifications() {
               </div>
 
               <div className="bg-white rounded-2xl p-8 shadow-lg">
-                <h3 className="text-xl font-bold text-gray-900 mb-4">
+                <h3 className="text-xl font-bold text-gray-900 font-semibold mb-4">
                   📝 Nos Engagements
                 </h3>
                 <ul className="space-y-3 text-gray-700">
@@ -243,7 +243,7 @@ export default function ConfianceEtCertifications() {
             <div className="max-w-4xl mx-auto text-center">
               <div className="bg-white rounded-3xl p-12 shadow-2xl border-2 border-orange-200">
                 <div className="text-6xl mb-6">🚀</div>
-                <h2 className="text-4xl font-bold text-gray-900 mb-6">
+                <h2 className="text-4xl font-bold text-gray-900 font-semibold mb-6">
                   Service de Résiliation Simplifié
                 </h2>
                 <div className="flex items-center justify-center space-x-3 mb-6">
@@ -257,21 +257,21 @@ export default function ConfianceEtCertifications() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
                   <div className="bg-orange-50 p-6 rounded-xl border border-orange-200">
                     <div className="text-2xl mb-3">📧</div>
-                    <h4 className="font-bold text-gray-900 mb-2">Résiliation Automatique</h4>
+                    <h4 className="font-bold text-gray-900 font-semibold mb-2">Résiliation Automatique</h4>
                     <p className="text-sm text-gray-600">
                       Nous envoyons votre lettre de résiliation à votre ancien assureur
                     </p>
                   </div>
                   <div className="bg-orange-50 p-6 rounded-xl border border-orange-200">
                     <div className="text-2xl mb-3">⏱️</div>
-                    <h4 className="font-bold text-gray-900 mb-2">Gain de Temps</h4>
+                    <h4 className="font-bold text-gray-900 font-semibold mb-2">Gain de Temps</h4>
                     <p className="text-sm text-gray-600">
                       Plus besoin d'envoyer votre recommandé vous-même
                     </p>
                   </div>
                   <div className="bg-orange-50 p-6 rounded-xl border border-orange-200">
                     <div className="text-2xl mb-3">✅</div>
-                    <h4 className="font-bold text-gray-900 mb-2">Suivi Complet</h4>
+                    <h4 className="font-bold text-gray-900 font-semibold mb-2">Suivi Complet</h4>
                     <p className="text-sm text-gray-600">
                       Confirmation de la résiliation et attestation
                     </p>
@@ -284,7 +284,7 @@ export default function ConfianceEtCertifications() {
 
         {/* CTA Final */}
         <section className="container-max py-16">
-          <div className="bg-gradient-to-r from-orange-500 to-amber-500 rounded-3xl p-12 text-center text-gray-900 shadow-2xl">
+          <div className="bg-gradient-to-r from-orange-500 to-amber-500 rounded-3xl p-12 text-center text-gray-900 font-semibold shadow-2xl">
             <h2 className="text-4xl font-bold mb-6">
               Prêt à Travailler avec un Courtier de Confiance ?
             </h2>
@@ -301,7 +301,7 @@ export default function ConfianceEtCertifications() {
               </a>
               <a
                 href="/contact"
-                className="bg-white text-gray-900 px-8 py-4 rounded-xl font-bold text-lg hover:bg-gray-100 transition-all border-2 border-gray-900"
+                className="bg-white text-gray-900 font-semibold px-8 py-4 rounded-xl font-bold text-lg hover:bg-gradient-to-br from-white to-gray-50 transition-all border-2 border-gray-900"
               >
                 Nous Contacter
               </a>

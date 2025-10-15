@@ -184,7 +184,7 @@ export default function TaxisSinistres() {
         </section>
 
         {/* Documents nécessaires */}
-        <section className="py-16 bg-gray-50">
+        <section className="py-16 bg-white border border-yellow-100">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <h2 className="text-3xl font-bold mb-12 text-center">Documents à Préparer</h2>
 
@@ -230,7 +230,7 @@ export default function TaxisSinistres() {
         </section>
 
         {/* FAQ Sinistres */}
-        <section className="py-16 bg-gray-50">
+        <section className="py-16 bg-white border border-yellow-100">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
             <h2 className="text-3xl font-bold mb-12 text-center">Questions Fréquentes sur les Sinistres</h2>
 

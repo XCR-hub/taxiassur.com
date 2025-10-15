@@ -231,7 +231,7 @@ const BlogList: React.FC<BlogListProps> = ({
               className={`px-4 py-2 rounded-lg font-medium transition-colors ${
                 currentPage === i + 1
                   ? 'bg-amber-500 text-black'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  : 'bg-gray-100 text-gray-700 hover:bg-yellow-100'
               }`}
             >
               {i + 1}

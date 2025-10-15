@@ -128,7 +128,7 @@ export default function AIChatBot() {
   }
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 w-[380px] h-[600px] bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-gray-200">
+    <div className="fixed bottom-6 right-6 z-50 w-[380px] h-[600px] bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-yellow-200">
       <div className="bg-gradient-to-r from-orange-500 to-amber-500 text-white p-4 flex items-center justify-between">
         <div className="flex items-center space-x-3">
           <div className="relative">
@@ -149,7 +149,7 @@ export default function AIChatBot() {
         </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-white border border-yellow-100">
         {messages.map((message, index) => (
           <div
             key={index}
@@ -159,7 +159,7 @@ export default function AIChatBot() {
               className={`max-w-[80%] rounded-2xl px-4 py-3 ${
                 message.role === 'user'
                   ? 'bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-br-none'
-                  : 'bg-white text-gray-800 rounded-bl-none shadow-md border border-gray-200'
+                  : 'bg-white text-gray-800 rounded-bl-none shadow-md border border-yellow-200'
               }`}
             >
               <p className="text-sm whitespace-pre-wrap">{message.content}</p>
@@ -174,7 +174,7 @@ export default function AIChatBot() {
 
         {isLoading && (
           <div className="flex justify-start">
-            <div className="bg-white rounded-2xl rounded-bl-none px-4 py-3 shadow-md border border-gray-200">
+            <div className="bg-white rounded-2xl rounded-bl-none px-4 py-3 shadow-md border border-yellow-200">
               <Loader2 className="animate-spin text-orange-500" size={20} />
             </div>
           </div>
@@ -184,7 +184,7 @@ export default function AIChatBot() {
       </div>
 
       {messages.length === 1 && (
-        <div className="px-4 py-2 bg-white border-t border-gray-200">
+        <div className="px-4 py-2 bg-white border-t border-yellow-200">
           <p className="text-xs text-gray-600 mb-2 font-medium">Questions rapides :</p>
           <div className="grid grid-cols-2 gap-2">
             {quickActions.map((action, index) => (
@@ -203,7 +203,7 @@ export default function AIChatBot() {
         </div>
       )}
 
-      <div className="p-4 bg-white border-t border-gray-200">
+      <div className="p-4 bg-white border-t border-yellow-200">
         <div className="flex items-center space-x-2">
           <input
             ref={inputRef}
@@ -212,7 +212,7 @@ export default function AIChatBot() {
             onChange={(e) => setInput(e.target.value)}
             onKeyPress={handleKeyPress}
             placeholder="Posez votre question..."
-            className="flex-1 px-4 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm"
+            className="flex-1 px-4 py-3 border border-orange-200 rounded-full focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm"
             disabled={isLoading}
           />
           <button

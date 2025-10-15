@@ -44,7 +44,7 @@ const Partners: React.FC = () => {
           <section className="section-padding bg-gradient-to-br from-amber-50 to-yellow-50">
             <div className="container-max">
               <div className="text-center mb-12">
-                <h2 className="text-3xl font-bold text-gray-900 mb-4">
+                <h2 className="text-3xl font-bold text-gray-900 font-semibold mb-4">
                   Partenaires Privilégiés
                 </h2>
                 <p className="text-gray-600 max-w-2xl mx-auto">
@@ -61,7 +61,7 @@ const Partners: React.FC = () => {
           <section className="section-padding">
             <div className="container-max">
               <div className="text-center mb-12">
-                <h2 className="text-3xl font-bold text-gray-900 mb-4">
+                <h2 className="text-3xl font-bold text-gray-900 font-semibold mb-4">
                   Répertoire Complet
                 </h2>
                 <p className="text-gray-600 max-w-2xl mx-auto">

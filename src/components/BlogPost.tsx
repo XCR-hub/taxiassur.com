@@ -188,7 +188,7 @@ const BlogPost: React.FC = () => {
                 </h2>
                 <div className="space-y-4">
                   {post.faq.map((item, index) => (
-                    <div key={index} className="bg-gray-50 rounded-lg p-6">
+                    <div key={index} className="bg-white border border-yellow-100 rounded-lg p-6">
                       <h3 className="font-semibold text-gray-900 mb-2">
                         {item.q}
                       </h3>
@@ -205,7 +205,7 @@ const BlogPost: React.FC = () => {
             <div className="text-center">
               <Link
                 to="/blog"
-                className="inline-flex items-center space-x-2 bg-gray-100 hover:bg-gray-200 text-gray-900 font-medium py-3 px-6 rounded-lg transition-colors"
+                className="inline-flex items-center space-x-2 bg-gray-100 hover:bg-yellow-100 text-gray-900 font-medium py-3 px-6 rounded-lg transition-colors"
               >
                 <ArrowLeft size={20} />
                 <span>Retour au blog</span>

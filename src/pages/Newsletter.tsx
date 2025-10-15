@@ -122,10 +122,10 @@ const NewsletterPage: React.FC = () => {
           <Newsletter />
 
           {/* Benefits */}
-          <section className="section-padding bg-gray-50">
+          <section className="section-padding bg-white border border-yellow-100">
             <div className="container-max">
               <div className="max-w-6xl mx-auto">
-                <h2 className="text-3xl font-bold text-gray-900 mb-12 text-center">
+                <h2 className="text-3xl font-bold text-gray-900 font-semibold mb-12 text-center">
                   Pourquoi S'Abonner à Notre Newsletter ?
                 </h2>
                 
@@ -137,7 +137,7 @@ const NewsletterPage: React.FC = () => {
                         <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-2xl mb-4 shadow-lg">
                           <IconComponent className="text-white" size={24} />
                         </div>
-                        <h3 className="text-xl font-bold text-gray-900 mb-3">
+                        <h3 className="text-xl font-bold text-gray-900 font-semibold mb-3">
                           {benefit.title}
                         </h3>
                         <p className="text-gray-600">
@@ -155,15 +155,15 @@ const NewsletterPage: React.FC = () => {
           <section className="section-padding">
             <div className="container-max">
               <div className="max-w-4xl mx-auto">
-                <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">
+                <h2 className="text-3xl font-bold text-gray-900 font-semibold mb-8 text-center">
                   Derniers Articles Newsletter
                 </h2>
                 
                 <div className="space-y-6">
                   {recentArticles.map((article, index) => (
-                    <div key={index} className="bg-white border border-gray-200 rounded-xl p-6 shadow-lg hover:shadow-xl transition-shadow">
+                    <div key={index} className="bg-white border border-yellow-200 rounded-xl p-6 shadow-lg hover:shadow-xl transition-shadow">
                       <div className="flex items-start justify-between mb-3">
-                        <h3 className="text-xl font-bold text-gray-900 flex-1">
+                        <h3 className="text-xl font-bold text-gray-900 font-semibold flex-1">
                           {article.title}
                         </h3>
                         <div className="flex items-center space-x-2 text-sm text-gray-600 ml-4">
@@ -193,7 +193,7 @@ const NewsletterPage: React.FC = () => {
           <section className="section-padding bg-gradient-to-br from-amber-50 to-yellow-50">
             <div className="container-max">
               <div className="max-w-4xl mx-auto text-center">
-                <h2 className="text-3xl font-bold text-gray-900 mb-8">
+                <h2 className="text-3xl font-bold text-gray-900 font-semibold mb-8">
                   Ce que Disent Nos Abonnés
                 </h2>
                 

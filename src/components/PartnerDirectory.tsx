@@ -98,7 +98,7 @@ const PartnerDirectory: React.FC<PartnerDirectoryProps> = ({
               className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
                 selectedCategory === '' 
                   ? 'bg-amber-500 text-black' 
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  : 'bg-gray-100 text-gray-700 hover:bg-yellow-100'
               }`}
             >
               Tous
@@ -110,7 +110,7 @@ const PartnerDirectory: React.FC<PartnerDirectoryProps> = ({
                 className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
                   selectedCategory === category 
                     ? 'bg-amber-500 text-black' 
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    : 'bg-gray-100 text-gray-700 hover:bg-yellow-100'
                 }`}
               >
                 {getCategoryLabel(category)}

@@ -138,7 +138,7 @@ const ContentMarketing: React.FC = () => {
             📅 Calendrier Editorial Optimisé
           </h3>
           
-          <div className="bg-white rounded-2xl p-8 shadow-xl border border-gray-200">
+          <div className="bg-white rounded-2xl p-8 shadow-xl border border-yellow-200">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {contentCalendar.map((item, index) => (
                 <div key={index} className="text-center p-6 bg-gradient-to-br from-slate-50 to-gray-50 rounded-xl border border-slate-200">

@@ -51,7 +51,7 @@ const AdminPing: React.FC = () => {
   };
 
   return (
-    <div className="flex items-center space-x-3 bg-white rounded-lg px-4 py-2 shadow-lg border border-gray-200">
+    <div className="flex items-center space-x-3 bg-white rounded-lg px-4 py-2 shadow-lg border border-yellow-200">
       {getStatusIcon()}
       <span className={`font-bold text-base ${
         status === 'success' ? 'text-green-600' : 

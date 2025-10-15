@@ -43,7 +43,7 @@ const PrixAssuranceTaxi: React.FC = () => {
 
       <Header />
 
-      <main className="min-h-screen bg-gray-50">
+      <main className="min-h-screen bg-white border border-yellow-100">
         {/* Hero Section */}
         <section className="bg-gradient-to-br from-orange-900 via-blue-800 to-orange-900 text-white py-16">
           <div className="container mx-auto px-4">
@@ -136,7 +136,7 @@ const PrixAssuranceTaxi: React.FC = () => {
         </section>
 
         {/* Tableau Prix par Ville */}
-        <section className="py-12 bg-gray-50">
+        <section className="py-12 bg-white border border-yellow-100">
           <div className="container mx-auto px-4">
             <div className="max-w-6xl mx-auto">
               <h2 className="text-3xl font-bold text-center mb-4">
@@ -155,7 +155,7 @@ const PrixAssuranceTaxi: React.FC = () => {
                       <th className="px-6 py-4 text-center">Tarif TaxiAssur</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-200">
+                  <tbody className="divide-y divide-yellow-100">
                     <tr className="hover:bg-yellow-50">
                       <td className="px-6 py-4 font-semibold">Paris (75)</td>
                       <td className="px-6 py-4 text-center text-red-600 font-bold">3 200€</td>

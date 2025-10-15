@@ -128,13 +128,13 @@ const Home: React.FC = () => {
             <TrustSignals />
 
             {/* 11.5. Badges de confiance professionnels */}
-            <section className="py-16 bg-gray-50">
+            <section className="py-16 bg-white border border-yellow-100">
               <div className="container-max">
                 <TrustBadges variant="compact" showLogos={false} />
                 <div className="text-center mt-8">
                   <a
                     href="/confiance-certifications"
-                    className="inline-block bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-gray-900 font-bold px-8 py-4 rounded-xl transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+                    className="inline-block bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-gray-900 font-semibold font-bold px-8 py-4 rounded-xl transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-1"
                   >
                     En savoir plus sur nos certifications
                   </a>

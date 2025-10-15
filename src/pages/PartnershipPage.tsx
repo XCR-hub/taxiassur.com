@@ -304,7 +304,7 @@ const PartnershipPage: React.FC = () => {
                         onChange={(e) => setCalculatorData(prev => ({ ...prev, leadsPerMonth: parseInt(e.target.value) || 0 }))}
                         min="1"
                         max="100"
-                        className="w-full px-4 py-3 bg-gray-800/70 border border-gray-600 rounded-lg focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-white placeholder-gray-400 transition-all duration-300"
+                        className="w-full px-4 py-3 bg-gray-800/70 border border-gray-600 rounded-lg focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-white placeholder-gray-500 transition-all duration-300"
                       />
                     </div>
                     
@@ -318,7 +318,7 @@ const PartnershipPage: React.FC = () => {
                         onChange={(e) => setCalculatorData(prev => ({ ...prev, conversionRate: parseInt(e.target.value) || 0 }))}
                         min="5"
                         max="50"
-                        className="w-full px-4 py-3 bg-gray-800/70 border border-gray-600 rounded-lg focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-white placeholder-gray-400 transition-all duration-300"
+                        className="w-full px-4 py-3 bg-gray-800/70 border border-gray-600 rounded-lg focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-white placeholder-gray-500 transition-all duration-300"
                       />
                     </div>
                     
@@ -332,7 +332,7 @@ const PartnershipPage: React.FC = () => {
                         onChange={(e) => setCalculatorData(prev => ({ ...prev, averageCommission: parseInt(e.target.value) || 0 }))}
                         min="50"
                         max="300"
-                        className="w-full px-4 py-3 bg-gray-800/70 border border-gray-600 rounded-lg focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-white placeholder-gray-400 transition-all duration-300"
+                        className="w-full px-4 py-3 bg-gray-800/70 border border-gray-600 rounded-lg focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-white placeholder-gray-500 transition-all duration-300"
                       />
                     </div>
                   </div>
@@ -467,7 +467,7 @@ const PartnershipPage: React.FC = () => {
                             value={partnerForm.company}
                             onChange={handleFormChange}
                             required
-                            className="w-full px-4 py-3 bg-gray-800/70 border border-gray-600 rounded-lg focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-white placeholder-gray-400 transition-all duration-300"
+                            className="w-full px-4 py-3 bg-gray-800/70 border border-gray-600 rounded-lg focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-white placeholder-gray-500 transition-all duration-300"
                             placeholder="Votre Société SARL"
                           />
                         </div>
@@ -484,7 +484,7 @@ const PartnershipPage: React.FC = () => {
                             value={partnerForm.name}
                             onChange={handleFormChange}
                             required
-                            className="w-full px-4 py-3 bg-gray-800/70 border border-gray-600 rounded-lg focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-white placeholder-gray-400 transition-all duration-300"
+                            className="w-full px-4 py-3 bg-gray-800/70 border border-gray-600 rounded-lg focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-white placeholder-gray-500 transition-all duration-300"
                             placeholder="Jean Dupont"
                           />
                         </div>
@@ -503,7 +503,7 @@ const PartnershipPage: React.FC = () => {
                             value={partnerForm.email}
                             onChange={handleFormChange}
                             required
-                            className="w-full px-4 py-3 bg-gray-800/70 border border-gray-600 rounded-lg focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-white placeholder-gray-400 transition-all duration-300"
+                            className="w-full px-4 py-3 bg-gray-800/70 border border-gray-600 rounded-lg focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-white placeholder-gray-500 transition-all duration-300"
                             placeholder="contact@votre-societe.com"
                           />
                         </div>
@@ -520,7 +520,7 @@ const PartnershipPage: React.FC = () => {
                             value={partnerForm.phone}
                             onChange={handleFormChange}
                             required
-                            className="w-full px-4 py-3 bg-gray-800/70 border border-gray-600 rounded-lg focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-white placeholder-gray-400 transition-all duration-300"
+                            className="w-full px-4 py-3 bg-gray-800/70 border border-gray-600 rounded-lg focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-white placeholder-gray-500 transition-all duration-300"
                             placeholder="01 23 45 67 89"
                           />
                         </div>
@@ -537,7 +537,7 @@ const PartnershipPage: React.FC = () => {
                           name="website"
                           value={partnerForm.website}
                           onChange={handleFormChange}
-                          className="w-full px-4 py-3 bg-gray-800/70 border border-gray-600 rounded-lg focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-white placeholder-gray-400 transition-all duration-300"
+                          className="w-full px-4 py-3 bg-gray-800/70 border border-gray-600 rounded-lg focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-white placeholder-gray-500 transition-all duration-300"
                           placeholder="https://votre-site.com"
                         />
                       </div>
@@ -554,7 +554,7 @@ const PartnershipPage: React.FC = () => {
                           onChange={handleFormChange}
                           required
                           rows={4}
-                          className="w-full px-4 py-3 bg-gray-800/70 border border-gray-600 rounded-lg focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-white placeholder-gray-400 transition-all duration-300"
+                          className="w-full px-4 py-3 bg-gray-800/70 border border-gray-600 rounded-lg focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-white placeholder-gray-500 transition-all duration-300"
                           placeholder="Décrivez votre entreprise, vos services, votre expertise..."
                         />
                       </div>
@@ -571,7 +571,7 @@ const PartnershipPage: React.FC = () => {
                             name="audience"
                             value={partnerForm.audience}
                             onChange={handleFormChange}
-                            className="w-full px-4 py-3 bg-gray-800/70 border border-gray-600 rounded-lg focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-white placeholder-gray-400 transition-all duration-300"
+                            className="w-full px-4 py-3 bg-gray-800/70 border border-gray-600 rounded-lg focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-white placeholder-gray-500 transition-all duration-300"
                             placeholder="Ex: 500 chauffeurs, 1200 abonnés..."
                           />
                         </div>
@@ -587,7 +587,7 @@ const PartnershipPage: React.FC = () => {
                             name="traffic"
                             value={partnerForm.traffic}
                             onChange={handleFormChange}
-                            className="w-full px-4 py-3 bg-gray-800/70 border border-gray-600 rounded-lg focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-white placeholder-gray-400 transition-all duration-300"
+                            className="w-full px-4 py-3 bg-gray-800/70 border border-gray-600 rounded-lg focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-white placeholder-gray-500 transition-all duration-300"
                             placeholder="Ex: 5000 visiteurs/mois"
                           />
                         </div>
@@ -605,7 +605,7 @@ const PartnershipPage: React.FC = () => {
                             name="experience"
                             value={partnerForm.experience}
                             onChange={handleFormChange}
-                            className="w-full px-4 py-3 bg-gray-800/70 border border-gray-600 rounded-lg focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-white placeholder-gray-400 transition-all duration-300"
+                            className="w-full px-4 py-3 bg-gray-800/70 border border-gray-600 rounded-lg focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-white placeholder-gray-500 transition-all duration-300"
                             placeholder="Ex: 5 ans courtage, 10 ans taxi..."
                           />
                         </div>
@@ -621,7 +621,7 @@ const PartnershipPage: React.FC = () => {
                             name="objectives"
                             value={partnerForm.objectives}
                             onChange={handleFormChange}
-                            className="w-full px-4 py-3 bg-gray-800/70 border border-gray-600 rounded-lg focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-white placeholder-gray-400 transition-all duration-300"
+                            className="w-full px-4 py-3 bg-gray-800/70 border border-gray-600 rounded-lg focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-white placeholder-gray-500 transition-all duration-300"
                             placeholder="Ex: 2000€/mois"
                           />
                         </div>
@@ -730,7 +730,7 @@ const PartnershipPage: React.FC = () => {
                     <Euro className="text-white animate-pulse drop-shadow-md" size={24} />
                   </div>
                 </div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-4">
+                <h3 className="text-2xl font-bold text-gray-900 font-semibold mb-4">
                   🏪 Marketplace de Leads Taxi
                 </h3>
                 <p className="text-xl text-gray-200 max-w-3xl mx-auto drop-shadow-md">

@@ -72,7 +72,7 @@ const QuelleAssuranceTaxi: React.FC = () => {
           </div>
         </section>
 
-        <section className="py-16 bg-gray-50">
+        <section className="py-16 bg-white border border-yellow-100">
           <div className="container mx-auto px-4">
             <div className="max-w-5xl mx-auto">
               <h2 className="text-3xl font-black text-center mb-12">Comparatif Assureurs Taxi 2024</h2>
@@ -125,17 +125,17 @@ const QuelleAssuranceTaxi: React.FC = () => {
               <h2 className="text-3xl font-black text-center mb-12">Questions Fréquentes</h2>
 
               <div className="space-y-6">
-                <div className="bg-gray-50 rounded-xl p-6">
+                <div className="bg-white border border-yellow-100 rounded-xl p-6">
                   <h3 className="text-xl font-bold mb-3">Quelle est la meilleure assurance taxi ?</h3>
                   <p className="text-gray-700">TaxiAssur offre le meilleur rapport qualité-prix avec RC Pro incluse à partir de 1,430€/an (-35% vs marché), assistance 24/7 et souscription 100% en ligne.</p>
                 </div>
 
-                <div className="bg-gray-50 rounded-xl p-6">
+                <div className="bg-white border border-yellow-100 rounded-xl p-6">
                   <h3 className="text-xl font-bold mb-3">RC Pro taxi : quel montant ?</h3>
                   <p className="text-gray-700">Le montant RC Pro doit être illimité car en cas d'accident grave, les dommages peuvent atteindre plusieurs millions d'euros. Toute limitation vous expose à payer le reste personnellement.</p>
                 </div>
 
-                <div className="bg-gray-50 rounded-xl p-6">
+                <div className="bg-white border border-yellow-100 rounded-xl p-6">
                   <h3 className="text-xl font-bold mb-3">Puis-je assurer mon taxi chez mon assureur auto classique ?</h3>
                   <p className="text-gray-700">Non, il faut obligatoirement un contrat spécifique transport de personnes incluant RC Pro. Une assurance auto classique ne couvre pas l'activité professionnelle taxi.</p>
                 </div>

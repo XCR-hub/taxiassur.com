@@ -79,7 +79,7 @@ interface SectionProps {
 export function MobileSection({ children, className = '', bgColor = 'white' }: SectionProps) {
   const bgClasses = {
     white: 'bg-white',
-    gray: 'bg-gray-50',
+    gray: 'bg-white border border-yellow-100',
     blue: 'bg-yellow-50',
     gradient: 'bg-gradient-to-br from-orange-50 to-white'
   };

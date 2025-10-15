@@ -88,7 +88,7 @@ const SEOBooster: React.FC = () => {
             🗺️ SEO Local : Domination Géographique
           </h3>
           
-          <div className="bg-white rounded-2xl p-8 shadow-xl border border-gray-200">
+          <div className="bg-white rounded-2xl p-8 shadow-xl border border-yellow-200">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               <div>
                 <h4 className="text-lg font-bold text-gray-900 mb-4">Mots-Clés Locaux Prioritaires</h4>
@@ -124,7 +124,7 @@ const SEOBooster: React.FC = () => {
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {competitorAnalysis.map((comp, index) => (
-              <div key={index} className="bg-white rounded-xl p-6 shadow-lg border border-gray-200">
+              <div key={index} className="bg-white rounded-xl p-6 shadow-lg border border-yellow-200">
                 <h4 className="font-bold text-gray-900 mb-3">{comp.competitor}</h4>
                 <div className="space-y-3">
                   <div>

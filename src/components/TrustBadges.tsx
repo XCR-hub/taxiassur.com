@@ -95,7 +95,7 @@ export default function TrustBadges({ variant = 'full', showLogos = true }: Trus
         {badges.map((badge, index) => (
           <div
             key={index}
-            className="bg-white border-2 border-gray-200 rounded-lg p-3 hover:border-yellow-500 transition-all duration-300 hover:shadow-lg"
+            className="bg-white border-2 border-yellow-200 rounded-lg p-3 hover:border-yellow-500 transition-all duration-300 hover:shadow-lg"
           >
             <div className="flex items-center space-x-2">
               <div className={`p-2 rounded-lg bg-${badge.color}-100`}>
@@ -137,7 +137,7 @@ export default function TrustBadges({ variant = 'full', showLogos = true }: Trus
         {badges.map((badge, index) => (
           <div
             key={index}
-            className="bg-white border-2 border-gray-200 rounded-xl p-6 hover:border-yellow-500 transition-all duration-300 hover:shadow-xl transform hover:-translate-y-1"
+            className="bg-white border-2 border-yellow-200 rounded-xl p-6 hover:border-yellow-500 transition-all duration-300 hover:shadow-xl transform hover:-translate-y-1"
           >
             <div className="flex items-start space-x-4">
               <div className={`p-3 rounded-xl bg-gradient-to-br from-${badge.color}-100 to-${badge.color}-200 flex-shrink-0`}>
@@ -218,7 +218,7 @@ export default function TrustBadges({ variant = 'full', showLogos = true }: Trus
 
       {/* Logos partenaires */}
       {showLogos && (
-        <div className="bg-gray-50 rounded-xl p-8">
+        <div className="bg-white border border-yellow-100 rounded-xl p-8">
           <h3 className="text-center text-lg font-semibold text-gray-700 mb-6">
             Nos Partenaires Professionnels
           </h3>

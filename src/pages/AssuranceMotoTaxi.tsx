@@ -155,7 +155,7 @@ const AssuranceMotoTaxi: React.FC = () => {
         </section>
 
         {/* Assurance spécifique */}
-        <section className="py-16 bg-gray-50">
+        <section className="py-16 bg-white border border-yellow-100">
           <div className="container mx-auto px-4">
             <div className="max-w-6xl mx-auto">
               <h2 className="text-3xl md:text-4xl font-black text-center mb-12">
@@ -286,7 +286,7 @@ const AssuranceMotoTaxi: React.FC = () => {
                       <th className="p-4 text-center font-bold">Économie</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-200">
+                  <tbody className="divide-y divide-yellow-100">
                     <tr className="hover:bg-orange-50 transition-colors">
                       <td className="p-4 font-semibold">Paris</td>
                       <td className="p-4 text-center text-red-600 font-bold">2,200€</td>
@@ -418,7 +418,7 @@ const AssuranceMotoTaxi: React.FC = () => {
         </section>
 
         {/* Comparatif Moto vs Auto */}
-        <section className="py-16 bg-gray-50">
+        <section className="py-16 bg-white border border-yellow-100">
           <div className="container mx-auto px-4">
             <div className="max-w-5xl mx-auto">
               <h2 className="text-3xl md:text-4xl font-black text-center mb-12">
@@ -434,33 +434,33 @@ const AssuranceMotoTaxi: React.FC = () => {
                       <th className="p-4 text-center font-bold">🚕 TAXI AUTO</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-200">
-                    <tr className="hover:bg-gray-50">
+                  <tbody className="divide-y divide-yellow-100">
+                    <tr className="hover:bg-white border border-yellow-100">
                       <td className="p-4 font-semibold">Prix moyen/an</td>
                       <td className="p-4 text-center text-green-600 font-bold">1,500-2,200€</td>
                       <td className="p-4 text-center text-red-600 font-bold">2,200-3,500€</td>
                     </tr>
-                    <tr className="hover:bg-gray-50">
+                    <tr className="hover:bg-white border border-yellow-100">
                       <td className="p-4 font-semibold">Risque accidents</td>
                       <td className="p-4 text-center">Plus élevé (2 roues)</td>
                       <td className="p-4 text-center">Moyen (4 roues)</td>
                     </tr>
-                    <tr className="hover:bg-gray-50">
+                    <tr className="hover:bg-white border border-yellow-100">
                       <td className="p-4 font-semibold">Rapidité trajets</td>
                       <td className="p-4 text-center text-green-600 font-bold">2x plus rapide</td>
                       <td className="p-4 text-center">Standard</td>
                     </tr>
-                    <tr className="hover:bg-gray-50">
+                    <tr className="hover:bg-white border border-yellow-100">
                       <td className="p-4 font-semibold">Zones autorisées</td>
                       <td className="p-4 text-center">Grandes villes uniquement</td>
                       <td className="p-4 text-center">Partout en France</td>
                     </tr>
-                    <tr className="hover:bg-gray-50">
+                    <tr className="hover:bg-white border border-yellow-100">
                       <td className="p-4 font-semibold">Investissement départ</td>
                       <td className="p-4 text-center text-green-600 font-bold">10,000-20,000€</td>
                       <td className="p-4 text-center">20,000-40,000€</td>
                     </tr>
-                    <tr className="hover:bg-gray-50">
+                    <tr className="hover:bg-white border border-yellow-100">
                       <td className="p-4 font-semibold">Garantie conducteur</td>
                       <td className="p-4 text-center">Fortement recommandée</td>
                       <td className="p-4 text-center">Recommandée</td>
@@ -481,7 +481,7 @@ const AssuranceMotoTaxi: React.FC = () => {
               </h2>
 
               <div className="space-y-6">
-                <div className="bg-gray-50 rounded-xl shadow-lg p-6">
+                <div className="bg-white border border-yellow-100 rounded-xl shadow-lg p-6">
                   <h3 className="text-xl font-bold mb-3">Comment devenir moto-taxi ?</h3>
                   <p className="text-gray-700">
                     Pour devenir moto-taxi : 1) Permis moto A ou A2 depuis +2 ans, 2) Examen capacité transport personnes (CCPCT),
@@ -490,7 +490,7 @@ const AssuranceMotoTaxi: React.FC = () => {
                   </p>
                 </div>
 
-                <div className="bg-gray-50 rounded-xl shadow-lg p-6">
+                <div className="bg-white border border-yellow-100 rounded-xl shadow-lg p-6">
                   <h3 className="text-xl font-bold mb-3">Quelle moto pour moto-taxi ?</h3>
                   <p className="text-gray-700">
                     Motos recommandées : BMW R1250 RT, Honda Gold Wing, Yamaha FJR 1300, scooters Yamaha T-Max, BMW C 650 GT.
@@ -499,7 +499,7 @@ const AssuranceMotoTaxi: React.FC = () => {
                   </p>
                 </div>
 
-                <div className="bg-gray-50 rounded-xl shadow-lg p-6">
+                <div className="bg-white border border-yellow-100 rounded-xl shadow-lg p-6">
                   <h3 className="text-xl font-bold mb-3">Assurance moto-taxi électrique ?</h3>
                   <p className="text-gray-700">
                     Oui, TaxiAssur assure les motos électriques moto-taxi (Zero SR, Energica Ego, BMW CE 04).
@@ -508,7 +508,7 @@ const AssuranceMotoTaxi: React.FC = () => {
                   </p>
                 </div>
 
-                <div className="bg-gray-50 rounded-xl shadow-lg p-6">
+                <div className="bg-white border border-yellow-100 rounded-xl shadow-lg p-6">
                   <h3 className="text-xl font-bold mb-3">Combien gagne un moto-taxi ?</h3>
                   <p className="text-gray-700">
                     Revenu moyen moto-taxi : <strong>2,500-4,000€/mois</strong> selon ville et activité. Paris : 3,500-5,000€/mois.
@@ -517,7 +517,7 @@ const AssuranceMotoTaxi: React.FC = () => {
                   </p>
                 </div>
 
-                <div className="bg-gray-50 rounded-xl shadow-lg p-6">
+                <div className="bg-white border border-yellow-100 rounded-xl shadow-lg p-6">
                   <h3 className="text-xl font-bold mb-3">Moto-taxi sans licence : possible ?</h3>
                   <p className="text-gray-700">
                     <strong>NON, absolument interdit !</strong> Exercer moto-taxi sans licence =

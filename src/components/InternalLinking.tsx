@@ -377,7 +377,7 @@ interface BreadcrumbsProps {
 
 export function Breadcrumbs({ items }: BreadcrumbsProps) {
   return (
-    <nav className="bg-gray-50 py-3 px-4 sm:px-6 lg:px-8 border-b border-gray-200">
+    <nav className="bg-white border border-yellow-100 py-3 px-4 sm:px-6 lg:px-8 border-b border-yellow-200">
       <ol className="max-w-7xl mx-auto flex items-center space-x-2 text-sm">
         {items.map((item, index) => (
           <li key={index} className="flex items-center">

@@ -359,7 +359,7 @@ const InstantQuoteCalculator: React.FC = () => {
                     }, 800);
                   }
                 }}
-                className="inline-flex items-center bg-white hover:bg-gray-100 text-gray-900 font-bold px-8 py-4 rounded-xl transition-all shadow-lg"
+                className="inline-flex items-center bg-white hover:bg-gradient-to-br from-white to-gray-50 text-gray-900 font-bold px-8 py-4 rounded-xl transition-all shadow-lg"
               >
                 Souscrire à {quote.finalPrice}€/an
                 <ArrowRight className="ml-2" size={20} />

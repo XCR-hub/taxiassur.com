@@ -52,7 +52,7 @@ const AssuranceTaxiVTCCombine: React.FC = () => {
           </div>
         </section>
 
-        <section className="py-16 bg-gray-50">
+        <section className="py-16 bg-white border border-yellow-100">
           <div className="container mx-auto px-4">
             <div className="max-w-5xl mx-auto">
               <h2 className="text-3xl font-black text-center mb-12">Pourquoi Cumul Taxi + VTC ?</h2>
@@ -184,7 +184,7 @@ const AssuranceTaxiVTCCombine: React.FC = () => {
           </div>
         </section>
 
-        <section className="py-16 bg-gray-50">
+        <section className="py-16 bg-white border border-yellow-100">
           <div className="container mx-auto px-4">
             <div className="max-w-5xl mx-auto">
               <h2 className="text-3xl font-black text-center mb-12">Garanties Assurance Combinée</h2>
@@ -262,28 +262,28 @@ const AssuranceTaxiVTCCombine: React.FC = () => {
               <h2 className="text-3xl font-black text-center mb-12">Questions Fréquentes</h2>
 
               <div className="space-y-6">
-                <div className="bg-gray-50 rounded-xl p-6">
+                <div className="bg-white border border-yellow-100 rounded-xl p-6">
                   <h3 className="text-xl font-bold mb-3">Puis-je vraiment cumuler taxi et VTC ?</h3>
                   <p className="text-gray-700">
                     Oui, c'est légal si vous avez carte professionnelle taxi + carte VTC. Vous pouvez exercer les 2 activités avec même véhicule. Notre assurance combinée couvre les 2 simultanément.
                   </p>
                 </div>
 
-                <div className="bg-gray-50 rounded-xl p-6">
+                <div className="bg-white border border-yellow-100 rounded-xl p-6">
                   <h3 className="text-xl font-bold mb-3">Faut-il choisir taxi OU VTC à chaque course ?</h3>
                   <p className="text-gray-700">
                     Non, vous êtes libre. Vous pouvez faire maraude taxi le matin, puis activer Uber l'après-midi. Assurance couvre automatiquement selon activité du moment. Flexibilité totale.
                   </p>
                 </div>
 
-                <div className="bg-gray-50 rounded-xl p-6">
+                <div className="bg-white border border-yellow-100 rounded-xl p-6">
                   <h3 className="text-xl font-bold mb-3">Prix 2,340€ inclut vraiment les 2 activités ?</h3>
                   <p className="text-gray-700">
                     Oui, 2,340€/an couvre taxi ET VTC sur même contrat. RC Pro double activité incluse. vs 1,430€ taxi seul + 2,470€ VTC seul = 3,900€ si séparé. Économie 1,560€/an.
                   </p>
                 </div>
 
-                <div className="bg-gray-50 rounded-xl p-6">
+                <div className="bg-white border border-yellow-100 rounded-xl p-6">
                   <h3 className="text-xl font-bold mb-3">Comment prouver quelle activité en cas de sinistre ?</h3>
                   <p className="text-gray-700">
                     Notre assurance couvre les 2 en permanence donc pas besoin de prouver. Que vous soyez en maraude taxi ou sur Uber au moment accident, vous êtes couvert. Simple et sans tracas.

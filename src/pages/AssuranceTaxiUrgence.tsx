@@ -122,7 +122,7 @@ const AssuranceTaxiUrgence: React.FC = () => {
           </div>
         </section>
 
-        <section className="py-16 bg-gray-50">
+        <section className="py-16 bg-white border border-yellow-100">
           <div className="container mx-auto px-4">
             <div className="max-w-4xl mx-auto">
               <h2 className="text-3xl font-black text-center mb-12">
@@ -259,7 +259,7 @@ const AssuranceTaxiUrgence: React.FC = () => {
               <h2 className="text-3xl font-black text-center mb-12">Témoignages Urgence</h2>
 
               <div className="space-y-6">
-                <div className="bg-gray-50 rounded-xl p-6">
+                <div className="bg-white border border-yellow-100 rounded-xl p-6">
                   <div className="flex items-center mb-3">
                     <div className="bg-yellow-500 text-white w-12 h-12 rounded-full flex items-center justify-center font-bold mr-3">
                       KM
@@ -276,7 +276,7 @@ const AssuranceTaxiUrgence: React.FC = () => {
                   </p>
                 </div>
 
-                <div className="bg-gray-50 rounded-xl p-6">
+                <div className="bg-white border border-yellow-100 rounded-xl p-6">
                   <div className="flex items-center mb-3">
                     <div className="bg-green-600 text-white w-12 h-12 rounded-full flex items-center justify-center font-bold mr-3">
                       ST

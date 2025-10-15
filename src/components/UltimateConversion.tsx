@@ -162,7 +162,7 @@ const UltimateConversion: React.FC = () => {
               <div className="flex flex-col sm:flex-row gap-6 justify-center mb-6">
                 <a 
                   href="#devis" 
-                  className="bg-white hover:bg-gray-100 text-red-600 font-bold py-4 px-8 rounded-xl transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:scale-105 flex items-center justify-center space-x-2"
+                  className="bg-white hover:bg-yellow-50 text-red-600 font-bold py-4 px-8 rounded-xl transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:scale-105 flex items-center justify-center space-x-2"
                 >
                   <Target size={24} />
                   <span>🎯 OBTENIR MON DEVIS ASSURANCE TAXI</span>

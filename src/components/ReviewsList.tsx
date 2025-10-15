@@ -127,7 +127,7 @@ const ReviewsList: React.FC<ReviewsListProps> = ({
             className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
               selectedRating === null 
                 ? 'bg-amber-500 text-black' 
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                : 'bg-gray-100 text-gray-700 hover:bg-yellow-100'
             }`}
           >
             Tous les avis
@@ -139,7 +139,7 @@ const ReviewsList: React.FC<ReviewsListProps> = ({
               className={`px-4 py-2 rounded-full text-sm font-medium transition-colors flex items-center space-x-1 ${
                 selectedRating === rating 
                   ? 'bg-amber-500 text-black' 
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  : 'bg-gray-100 text-gray-700 hover:bg-yellow-100'
               }`}
             >
               <span>{rating}</span>
@@ -211,7 +211,7 @@ const ReviewsList: React.FC<ReviewsListProps> = ({
                   {renderStars(review.rating)}
                 </div>
                 {review.source && (
-                  <span className="text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded-full">
+                  <span className="text-xs text-gray-600 bg-gradient-to-br from-white to-gray-50 px-2 py-1 rounded-full">
                     {review.source}
                   </span>
                 )}

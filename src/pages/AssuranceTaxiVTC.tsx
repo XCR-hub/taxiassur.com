@@ -117,7 +117,7 @@ const AssuranceTaxiVTC: React.FC = () => {
                       <th className="p-4 text-center font-bold">🚗 VTC</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-200">
+                  <tbody className="divide-y divide-yellow-100">
                     <tr className="hover:bg-yellow-50 transition-colors">
                       <td className="p-4 font-semibold">RC Professionnelle</td>
                       <td className="p-4 text-center">
@@ -175,7 +175,7 @@ const AssuranceTaxiVTC: React.FC = () => {
         </section>
 
         {/* Section Obligations légales */}
-        <section className="py-16 bg-gray-50">
+        <section className="py-16 bg-white border border-yellow-100">
           <div className="container mx-auto px-4">
             <div className="max-w-5xl mx-auto">
               <h2 className="text-3xl md:text-4xl font-black text-center mb-12">
@@ -379,7 +379,7 @@ const AssuranceTaxiVTC: React.FC = () => {
         </section>
 
         {/* FAQ Section */}
-        <section className="py-16 bg-gray-50">
+        <section className="py-16 bg-white border border-yellow-100">
           <div className="container mx-auto px-4">
             <div className="max-w-4xl mx-auto">
               <h2 className="text-3xl md:text-4xl font-black text-center mb-12">

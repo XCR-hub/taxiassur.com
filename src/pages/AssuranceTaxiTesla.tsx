@@ -20,7 +20,7 @@ const AssuranceTaxiTesla: React.FC = () => {
         <section className="bg-gradient-to-br from-gray-900 via-gray-800 to-black text-white py-20">
           <div className="container mx-auto px-4">
             <div className="max-w-4xl mx-auto text-center">
-              <div className="inline-flex items-center bg-green-400 text-gray-900 px-6 py-3 rounded-full mb-6">
+              <div className="inline-flex items-center bg-green-400 text-gray-900 font-semibold px-6 py-3 rounded-full mb-6">
                 <Zap size={24} className="mr-2" />
                 <span className="font-bold">Taxi Électrique</span>
               </div>
@@ -45,7 +45,7 @@ const AssuranceTaxiTesla: React.FC = () => {
                 </div>
               </div>
 
-              <a href="#devis" className="inline-block bg-green-400 hover:bg-green-500 text-gray-900 font-bold text-xl px-12 py-5 rounded-xl transition-all">
+              <a href="#devis" className="inline-block bg-green-400 hover:bg-green-500 text-gray-900 font-semibold font-bold text-xl px-12 py-5 rounded-xl transition-all">
                 Devis Tesla Taxi →
               </a>
             </div>
@@ -110,7 +110,7 @@ const AssuranceTaxiTesla: React.FC = () => {
           </div>
         </section>
 
-        <section className="py-16 bg-gray-50">
+        <section className="py-16 bg-white border border-yellow-100">
           <div className="container mx-auto px-4">
             <div className="max-w-6xl mx-auto">
               <h2 className="text-3xl font-black text-center mb-12">Prix Assurance Tesla Taxi par Ville</h2>
@@ -163,7 +163,7 @@ const AssuranceTaxiTesla: React.FC = () => {
               <h2 className="text-3xl font-black text-center mb-12">Model 3 vs Model Y pour Taxi</h2>
 
               <div className="grid md:grid-cols-2 gap-8">
-                <div className="bg-white border-2 border-gray-300 rounded-2xl p-8">
+                <div className="bg-white border-2 border-orange-200 rounded-2xl p-8">
                   <h3 className="text-2xl font-bold mb-6 text-center">Tesla Model 3</h3>
                   <div className="text-center mb-6">
                     <div className="text-4xl font-black text-yellow-600 mb-2">42,000€</div>
@@ -236,7 +236,7 @@ const AssuranceTaxiTesla: React.FC = () => {
           </div>
         </section>
 
-        <section className="py-16 bg-gray-50">
+        <section className="py-16 bg-white border border-yellow-100">
           <div className="container mx-auto px-4">
             <div className="max-w-4xl mx-auto">
               <h2 className="text-3xl font-black text-center mb-12">Questions Fréquentes Tesla Taxi</h2>
