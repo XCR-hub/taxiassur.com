@@ -971,84 +971,119 @@ GRANT EXECUTE ON FUNCTION track_seo_metrics TO authenticated;
 CREATE EXTENSION IF NOT EXISTS pg_cron;
 
 -- Job 1: Génération de contenu IA quotidien (9h00 tous les jours)
-SELECT cron.schedule(
-  'ai_content_generation_daily',
-  '0 9 * * *',
-  $$
-  SELECT net.http_post(
-    url := current_setting('app.supabase_url') || '/functions/v1/generate-seo-content',
-    headers := jsonb_build_object(
-      'Content-Type', 'application/json',
-      'Authorization', 'Bearer ' || current_setting('app.supabase_service_role_key')
-    ),
-    body := jsonb_build_object('auto', true)
-  );
-  $$
-) ON CONFLICT DO NOTHING;
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM cron.job WHERE jobname = 'ai_content_generation_daily'
+  ) THEN
+    PERFORM cron.schedule(
+      'ai_content_generation_daily',
+      '0 9 * * *',
+      $$
+      SELECT net.http_post(
+        url := current_setting('app.supabase_url') || '/functions/v1/generate-seo-content',
+        headers := jsonb_build_object(
+          'Content-Type', 'application/json',
+          'Authorization', 'Bearer ' || current_setting('app.supabase_service_role_key')
+        ),
+        body := jsonb_build_object('auto', true)
+      );
+      $$
+    );
+  END IF;
+END $$;
 
 -- Job 2: Publication réseaux sociaux (10h, 14h, 18h)
-SELECT cron.schedule(
-  'social_media_publisher',
-  '0 10,14,18 * * *',
-  $$
-  SELECT net.http_post(
-    url := current_setting('app.supabase_url') || '/functions/v1/social-media-auto-publisher',
-    headers := jsonb_build_object(
-      'Content-Type', 'application/json',
-      'Authorization', 'Bearer ' || current_setting('app.supabase_service_role_key')
-    ),
-    body := jsonb_build_object('scheduled', true)
-  );
-  $$
-) ON CONFLICT DO NOTHING;
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM cron.job WHERE jobname = 'social_media_publisher'
+  ) THEN
+    PERFORM cron.schedule(
+      'social_media_publisher',
+      '0 10,14,18 * * *',
+      $$
+      SELECT net.http_post(
+        url := current_setting('app.supabase_url') || '/functions/v1/social-media-auto-publisher',
+        headers := jsonb_build_object(
+          'Content-Type', 'application/json',
+          'Authorization', 'Bearer ' || current_setting('app.supabase_service_role_key')
+        ),
+        body := jsonb_build_object('scheduled', true)
+      );
+      $$
+    );
+  END IF;
+END $$;
 
 -- Job 3: Mise à jour SEO quotidienne (8h00)
-SELECT cron.schedule(
-  'seo_daily_refresh',
-  '0 8 * * *',
-  $$
-  SELECT net.http_post(
-    url := current_setting('app.supabase_url') || '/functions/v1/seo-daily-refresh',
-    headers := jsonb_build_object(
-      'Content-Type', 'application/json',
-      'Authorization', 'Bearer ' || current_setting('app.supabase_service_role_key')
-    ),
-    body := jsonb_build_object('auto', true)
-  );
-  $$
-) ON CONFLICT DO NOTHING;
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM cron.job WHERE jobname = 'seo_daily_refresh'
+  ) THEN
+    PERFORM cron.schedule(
+      'seo_daily_refresh',
+      '0 8 * * *',
+      $$
+      SELECT net.http_post(
+        url := current_setting('app.supabase_url') || '/functions/v1/seo-daily-refresh',
+        headers := jsonb_build_object(
+          'Content-Type', 'application/json',
+          'Authorization', 'Bearer ' || current_setting('app.supabase_service_role_key')
+        ),
+        body := jsonb_build_object('auto', true)
+      );
+      $$
+    );
+  END IF;
+END $$;
 
 -- Job 4: Prospection backlinks hebdomadaire (lundi 9h00)
-SELECT cron.schedule(
-  'backlink_prospection_weekly',
-  '0 9 * * 1',
-  $$
-  SELECT net.http_post(
-    url := current_setting('app.supabase_url') || '/functions/v1/backlink-auto-outreach',
-    headers := jsonb_build_object(
-      'Content-Type', 'application/json',
-      'Authorization', 'Bearer ' || current_setting('app.supabase_service_role_key')
-    ),
-    body := jsonb_build_object('weekly', true)
-  );
-  $$
-) ON CONFLICT DO NOTHING;
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM cron.job WHERE jobname = 'backlink_prospection_weekly'
+  ) THEN
+    PERFORM cron.schedule(
+      'backlink_prospection_weekly',
+      '0 9 * * 1',
+      $$
+      SELECT net.http_post(
+        url := current_setting('app.supabase_url') || '/functions/v1/backlink-auto-outreach',
+        headers := jsonb_build_object(
+          'Content-Type', 'application/json',
+          'Authorization', 'Bearer ' || current_setting('app.supabase_service_role_key')
+        ),
+        body := jsonb_build_object('weekly', true)
+      );
+      $$
+    );
+  END IF;
+END $$;
 
 -- Job 5: Auto-responder email (toutes les heures)
-SELECT cron.schedule(
-  'email_auto_responder_hourly',
-  '0 * * * *',
-  $$
-  SELECT net.http_post(
-    url := current_setting('app.supabase_url') || '/functions/v1/email-auto-responder',
-    headers := jsonb_build_object(
-      'Content-Type', 'application/json',
-      'Authorization', 'Bearer ' || current_setting('app.supabase_service_role_key')
-    ),
-    body := jsonb_build_object('auto', true)
-  );
-  $$
-) ON CONFLICT DO NOTHING;
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM cron.job WHERE jobname = 'email_auto_responder_hourly'
+  ) THEN
+    PERFORM cron.schedule(
+      'email_auto_responder_hourly',
+      '0 * * * *',
+      $$
+      SELECT net.http_post(
+        url := current_setting('app.supabase_url') || '/functions/v1/email-auto-responder',
+        headers := jsonb_build_object(
+          'Content-Type', 'application/json',
+          'Authorization', 'Bearer ' || current_setting('app.supabase_service_role_key')
+        ),
+        body := jsonb_build_object('auto', true)
+      );
+      $$
+    );
+  END IF;
+END $$;
 
 -- ============================================================================
 -- RÉACTIVER LES TRIGGERS
