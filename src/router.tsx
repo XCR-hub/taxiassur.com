@@ -76,6 +76,7 @@ const QRCodeGenerator = lazy(() => import('./backoffice/QRCodeGenerator'));
 const TaxisSinistres = lazy(() => import('./pages/TaxisSinistres'));
 const Actualites = lazy(() => import('./pages/Actualites'));
 const NewsArticle = lazy(() => import('./pages/NewsArticle'));
+const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
 
 const LoadingFallback = () => (
   <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-black flex items-center justify-center">
@@ -481,6 +482,10 @@ export const router = createBrowserRouter([
   {
     path: '/backoffice/qr-codes',
     element: <AuthGuard><SuspenseWrapper><QRCodeGenerator /></SuspenseWrapper></AuthGuard>
+  },
+  {
+    path: '/backoffice/data',
+    element: <AuthGuard><SuspenseWrapper><AdminDashboard /></SuspenseWrapper></AuthGuard>
   },
   // Pages miroirs longue traîne (17 routes)
   { path: '/assurance-taxi-pas-cher', element: <SuspenseWrapper><MirrorPage /></SuspenseWrapper> },
