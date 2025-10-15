@@ -11,10 +11,10 @@ export default function NavigationMenu() {
   return (
     <div className="mb-8 space-y-6">
       {/* Leads & Marketplace */}
-      <div className="bg-slate-800/50 border border-amber-500/30 rounded-lg p-4">
-        <h3 className="text-yellow-500 font-bold text-sm mb-3 flex items-center gap-2">
-          <DollarSign className="w-4 h-4" />
-          LEADS & MARKETPLACE
+      <div className="bg-gradient-to-r from-yellow-900/40 to-amber-900/40 border-2 border-yellow-500/60 rounded-xl p-6 shadow-2xl">
+        <h3 className="text-yellow-400 font-extrabold text-xl mb-4 flex items-center gap-3 uppercase tracking-wide">
+          <DollarSign className="w-7 h-7 animate-pulse" />
+          💰 LEADS & MARKETPLACE
         </h3>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
           <Link to="/backoffice/leads" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm">
@@ -41,10 +41,10 @@ export default function NavigationMenu() {
       </div>
 
       {/* Contenu & IA */}
-      <div className="bg-slate-800/50 border border-purple-500/30 rounded-lg p-4">
-        <h3 className="text-blue-400 font-bold text-sm mb-3 flex items-center gap-2">
-          <Zap className="w-4 h-4" />
-          CONTENU & GÉNÉRATION IA
+      <div className="bg-gradient-to-r from-purple-900/40 to-indigo-900/40 border-2 border-purple-500/60 rounded-xl p-6 shadow-2xl">
+        <h3 className="text-purple-400 font-extrabold text-xl mb-4 flex items-center gap-3 uppercase tracking-wide">
+          <Zap className="w-7 h-7 animate-pulse" />
+          ⚡ CONTENU & GÉNÉRATION IA
         </h3>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
           <Link to="/backoffice/ai-generator" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-violet-500 to-violet-600 hover:from-violet-600 hover:to-violet-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm">
@@ -75,10 +75,10 @@ export default function NavigationMenu() {
       </div>
 
       {/* SEO & Backlinks */}
-      <div className="bg-slate-800/50 border border-green-500/30 rounded-lg p-4">
-        <h3 className="text-green-400 font-bold text-sm mb-3 flex items-center gap-2">
-          <Search className="w-4 h-4" />
-          SEO & BACKLINKS
+      <div className="bg-gradient-to-r from-green-900/40 to-emerald-900/40 border-2 border-green-500/60 rounded-xl p-6 shadow-2xl">
+        <h3 className="text-green-400 font-extrabold text-xl mb-4 flex items-center gap-3 uppercase tracking-wide">
+          <Search className="w-7 h-7 animate-pulse" />
+          🔍 SEO & BACKLINKS
         </h3>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
           <Link to="/backoffice/seo" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm">
@@ -109,10 +109,10 @@ export default function NavigationMenu() {
       </div>
 
       {/* Partenaires & Prospects */}
-      <div className="bg-slate-800/50 border border-cyan-500/30 rounded-lg p-4">
-        <h3 className="text-cyan-400 font-bold text-sm mb-3 flex items-center gap-2">
-          <UserCircle className="w-4 h-4" />
-          PARTENAIRES & PROSPECTS
+      <div className="bg-gradient-to-r from-cyan-900/40 to-sky-900/40 border-2 border-cyan-500/60 rounded-xl p-6 shadow-2xl">
+        <h3 className="text-cyan-400 font-extrabold text-xl mb-4 flex items-center gap-3 uppercase tracking-wide">
+          <UserCircle className="w-7 h-7 animate-pulse" />
+          🤝 PARTENAIRES & PROSPECTS
         </h3>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
           <Link to="/backoffice/partners" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-cyan-500 to-cyan-600 hover:from-cyan-600 hover:to-cyan-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm">
@@ -139,10 +139,10 @@ export default function NavigationMenu() {
       </div>
 
       {/* Automatisation & Sécurité */}
-      <div className="bg-slate-800/50 border border-red-500/30 rounded-lg p-4">
-        <h3 className="text-red-400 font-bold text-sm mb-3 flex items-center gap-2">
-          <Settings className="w-4 h-4" />
-          AUTOMATISATION & SÉCURITÉ
+      <div className="bg-gradient-to-r from-red-900/40 to-orange-900/40 border-2 border-red-500/60 rounded-xl p-6 shadow-2xl">
+        <h3 className="text-red-400 font-extrabold text-xl mb-4 flex items-center gap-3 uppercase tracking-wide">
+          <Settings className="w-7 h-7 animate-pulse" />
+          ⚙️ AUTOMATISATION & SÉCURITÉ
         </h3>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
           <Link to="/backoffice/auto-optimizer" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm animate-pulse">

@@ -27,8 +27,7 @@ export type Lead = z.infer<typeof LeadSchema>;
 export type LeadStatus = z.infer<typeof LeadStatusSchema>;
 
 // Mapping entre les valeurs TypeScript et les valeurs DB
-// IMPORTANT: Depuis la migration 20251015000000, la DB utilise aussi les valeurs françaises
-// On garde le mapping pour rétro-compatibilité avec les anciennes données
+// IMPORTANT: Depuis la migration 20251015000000, la DB utilise les valeurs françaises
 const statusToDb: Record<LeadStatus, string> = {
   nouveau: 'nouveau',
   contacte: 'contacte',
@@ -117,9 +116,9 @@ export async function updateLeadStatus(
   try {
     console.log('🔄 Updating lead status:', { leadId, newStatus, additionalData });
 
-    // Convertir le statut TypeScript vers la valeur DB
-    const dbStatus = statusToDb[newStatus];
-    console.log('📝 Mapping status:', { from: newStatus, to: dbStatus });
+    // Utiliser directement le statut français (plus de conversion nécessaire)
+    const dbStatus = newStatus;
+    console.log('📝 Using status:', { status: dbStatus });
 
     // Préparer les champs de date basés sur le statut
     const dateFields: Record<string, string> = {
