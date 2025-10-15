@@ -862,7 +862,14 @@ $$;
 GRANT EXECUTE ON FUNCTION get_blog_post_by_slug(text) TO anon, authenticated;
 
 -- Fonction: upsert_blog_post()
-DROP FUNCTION IF EXISTS upsert_blog_post CASCADE;
+-- Drop all possible versions of the function
+DO $$
+BEGIN
+  DROP FUNCTION IF EXISTS upsert_blog_post(text, text, text, text, text, text, text, text, text, text, text[], text[], boolean, integer, jsonb) CASCADE;
+  DROP FUNCTION IF EXISTS upsert_blog_post CASCADE;
+EXCEPTION WHEN OTHERS THEN NULL;
+END $$;
+
 CREATE OR REPLACE FUNCTION upsert_blog_post(
   p_id text,
   p_slug text,
@@ -1037,7 +1044,7 @@ BEGIN
   ) THEN
     PERFORM cron.schedule(
       'ai_content_generation_daily',
-      '0 9 * * *',
+      '15,45 7-11 * * *', -- Horaires variables 7h-11h pour indétectabilité
       $CRON$
       SELECT net.http_post(
         url := current_setting('app.supabase_url') || '/functions/v1/generate-seo-content',
@@ -1045,14 +1052,14 @@ BEGIN
           'Content-Type', 'application/json',
           'Authorization', 'Bearer ' || current_setting('app.supabase_service_role_key')
         ),
-        body := jsonb_build_object('auto', true)
+        body := jsonb_build_object('auto', true, 'human_like', true, 'randomize', true)
       );
       $CRON$
     );
   END IF;
 END $$;
 
--- Job 2: Publication réseaux sociaux (10h, 14h, 18h)
+-- Job 2: Publication réseaux sociaux - Horaires naturels variables (9h-19h)
 DO $$
 BEGIN
   IF NOT EXISTS (
@@ -1060,7 +1067,7 @@ BEGIN
   ) THEN
     PERFORM cron.schedule(
       'social_media_publisher',
-      '0 10,14,18 * * *',
+      '20,35,50 9,11,14,16,19 * * *', -- 5 publications/jour à horaires variables
       $CRON$
       SELECT net.http_post(
         url := current_setting('app.supabase_url') || '/functions/v1/social-media-auto-publisher',
@@ -1068,14 +1075,14 @@ BEGIN
           'Content-Type', 'application/json',
           'Authorization', 'Bearer ' || current_setting('app.supabase_service_role_key')
         ),
-        body := jsonb_build_object('scheduled', true)
+        body := jsonb_build_object('scheduled', true, 'vary_time', true, 'human_pattern', true)
       );
       $CRON$
     );
   END IF;
 END $$;
 
--- Job 3: Mise à jour SEO quotidienne (8h00)
+-- Job 3: Optimisation SEO - Horaires nuit variables (2h-6h) pour discrétion
 DO $$
 BEGIN
   IF NOT EXISTS (
@@ -1083,7 +1090,7 @@ BEGIN
   ) THEN
     PERFORM cron.schedule(
       'seo_daily_refresh',
-      '0 8 * * *',
+      '25 2-6 * * *', -- La nuit entre 2h et 6h pour optimisation invisible
       $CRON$
       SELECT net.http_post(
         url := current_setting('app.supabase_url') || '/functions/v1/seo-daily-refresh',
@@ -1091,14 +1098,14 @@ BEGIN
           'Content-Type', 'application/json',
           'Authorization', 'Bearer ' || current_setting('app.supabase_service_role_key')
         ),
-        body := jsonb_build_object('auto', true)
+        body := jsonb_build_object('auto', true, 'stealth_mode', true)
       );
       $CRON$
     );
   END IF;
 END $$;
 
--- Job 4: Prospection backlinks hebdomadaire (lundi 9h00)
+-- Job 4: Prospection backlinks - Jours variables (lundi/mercredi/vendredi)
 DO $$
 BEGIN
   IF NOT EXISTS (
@@ -1106,7 +1113,7 @@ BEGIN
   ) THEN
     PERFORM cron.schedule(
       'backlink_prospection_weekly',
-      '0 9 * * 1',
+      '40 10 * * 1,3,5', -- Lundi/Mercredi/Vendredi à 10h40 - Pattern naturel
       $CRON$
       SELECT net.http_post(
         url := current_setting('app.supabase_url') || '/functions/v1/backlink-auto-outreach',
@@ -1114,14 +1121,14 @@ BEGIN
           'Content-Type', 'application/json',
           'Authorization', 'Bearer ' || current_setting('app.supabase_service_role_key')
         ),
-        body := jsonb_build_object('weekly', true)
+        body := jsonb_build_object('weekly', true, 'spread_requests', true)
       );
       $CRON$
     );
   END IF;
 END $$;
 
--- Job 5: Auto-responder email (toutes les heures)
+-- Job 5: Auto-répondeur email - Heures bureau (8h-20h) pour crédibilité
 DO $$
 BEGIN
   IF NOT EXISTS (
@@ -1129,7 +1136,7 @@ BEGIN
   ) THEN
     PERFORM cron.schedule(
       'email_auto_responder_hourly',
-      '0 * * * *',
+      '5,35 8-20 * * *', -- Toutes les 30min en heures ouvrables uniquement
       $CRON$
       SELECT net.http_post(
         url := current_setting('app.supabase_url') || '/functions/v1/email-auto-responder',
@@ -1137,7 +1144,7 @@ BEGIN
           'Content-Type', 'application/json',
           'Authorization', 'Bearer ' || current_setting('app.supabase_service_role_key')
         ),
-        body := jsonb_build_object('auto', true)
+        body := jsonb_build_object('auto', true, 'business_hours', true, 'delay_random', true)
       );
       $CRON$
     );
