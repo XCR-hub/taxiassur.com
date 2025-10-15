@@ -758,7 +758,14 @@ CREATE INDEX IF NOT EXISTS idx_news_published_at ON news_items(published_at DESC
 -- ============================================================================
 
 -- Fonction: get_blog_posts()
-DROP FUNCTION IF EXISTS get_blog_posts() CASCADE;
+DO $$
+DECLARE func_record RECORD;
+BEGIN
+  FOR func_record IN SELECT oid::regprocedure FROM pg_proc WHERE proname = 'get_blog_posts'
+  LOOP EXECUTE 'DROP FUNCTION IF EXISTS ' || func_record.oid::regprocedure || ' CASCADE'; END LOOP;
+EXCEPTION WHEN OTHERS THEN NULL;
+END $$;
+
 CREATE OR REPLACE FUNCTION get_blog_posts()
 RETURNS TABLE (
   id text,
@@ -809,7 +816,14 @@ $$;
 GRANT EXECUTE ON FUNCTION get_blog_posts() TO anon, authenticated;
 
 -- Fonction: get_blog_post_by_slug(slug)
-DROP FUNCTION IF EXISTS get_blog_post_by_slug(text) CASCADE;
+DO $$
+DECLARE func_record RECORD;
+BEGIN
+  FOR func_record IN SELECT oid::regprocedure FROM pg_proc WHERE proname = 'get_blog_post_by_slug'
+  LOOP EXECUTE 'DROP FUNCTION IF EXISTS ' || func_record.oid::regprocedure || ' CASCADE'; END LOOP;
+EXCEPTION WHEN OTHERS THEN NULL;
+END $$;
+
 CREATE OR REPLACE FUNCTION get_blog_post_by_slug(p_slug text)
 RETURNS TABLE (
   id text,
@@ -862,11 +876,18 @@ $$;
 GRANT EXECUTE ON FUNCTION get_blog_post_by_slug(text) TO anon, authenticated;
 
 -- Fonction: upsert_blog_post()
--- Drop all possible versions of the function
+-- Drop ALL versions of the function by querying pg_catalog
 DO $$
+DECLARE
+  func_record RECORD;
 BEGIN
-  DROP FUNCTION IF EXISTS upsert_blog_post(text, text, text, text, text, text, text, text, text, text, text[], text[], boolean, integer, jsonb) CASCADE;
-  DROP FUNCTION IF EXISTS upsert_blog_post CASCADE;
+  FOR func_record IN
+    SELECT oid::regprocedure
+    FROM pg_proc
+    WHERE proname = 'upsert_blog_post'
+  LOOP
+    EXECUTE 'DROP FUNCTION IF EXISTS ' || func_record.oid::regprocedure || ' CASCADE';
+  END LOOP;
 EXCEPTION WHEN OTHERS THEN NULL;
 END $$;
 
@@ -939,7 +960,14 @@ $$;
 GRANT EXECUTE ON FUNCTION upsert_blog_post TO authenticated;
 
 -- Fonction: get_faq_entries()
-DROP FUNCTION IF EXISTS get_faq_entries() CASCADE;
+DO $$
+DECLARE func_record RECORD;
+BEGIN
+  FOR func_record IN SELECT oid::regprocedure FROM pg_proc WHERE proname = 'get_faq_entries'
+  LOOP EXECUTE 'DROP FUNCTION IF EXISTS ' || func_record.oid::regprocedure || ' CASCADE'; END LOOP;
+EXCEPTION WHEN OTHERS THEN NULL;
+END $$;
+
 CREATE OR REPLACE FUNCTION get_faq_entries()
 RETURNS TABLE (
   id uuid,
@@ -972,7 +1000,14 @@ $$;
 GRANT EXECUTE ON FUNCTION get_faq_entries() TO anon, authenticated;
 
 -- Fonction: get_faq_by_category(category)
-DROP FUNCTION IF EXISTS get_faq_by_category(text) CASCADE;
+DO $$
+DECLARE func_record RECORD;
+BEGIN
+  FOR func_record IN SELECT oid::regprocedure FROM pg_proc WHERE proname = 'get_faq_by_category'
+  LOOP EXECUTE 'DROP FUNCTION IF EXISTS ' || func_record.oid::regprocedure || ' CASCADE'; END LOOP;
+EXCEPTION WHEN OTHERS THEN NULL;
+END $$;
+
 CREATE OR REPLACE FUNCTION get_faq_by_category(p_category text)
 RETURNS TABLE (
   id uuid,
@@ -1002,7 +1037,14 @@ $$;
 GRANT EXECUTE ON FUNCTION get_faq_by_category(text) TO anon, authenticated;
 
 -- Fonction: track_seo_metrics()
-DROP FUNCTION IF EXISTS track_seo_metrics CASCADE;
+DO $$
+DECLARE func_record RECORD;
+BEGIN
+  FOR func_record IN SELECT oid::regprocedure FROM pg_proc WHERE proname = 'track_seo_metrics'
+  LOOP EXECUTE 'DROP FUNCTION IF EXISTS ' || func_record.oid::regprocedure || ' CASCADE'; END LOOP;
+EXCEPTION WHEN OTHERS THEN NULL;
+END $$;
+
 CREATE OR REPLACE FUNCTION track_seo_metrics(
   p_url text,
   p_keyword text,
