@@ -56,12 +56,12 @@ DO $$ BEGIN
   END IF;
 END $$;
 
--- get_leads (SI leads existe)
+-- get_leads (SI leads existe - structure simple réelle)
 DO $$ BEGIN
   IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'leads') THEN
-    EXECUTE 'CREATE FUNCTION public.get_leads(status_filter text DEFAULT NULL, limit_count int DEFAULT 100, offset_count int DEFAULT 0) RETURNS TABLE (id uuid, first_name text, last_name text, email text, phone text, city text, vehicle_type text, contract_type text, status text, created_at timestamptz) LANGUAGE plpgsql SECURITY DEFINER AS $f$ BEGIN IF status_filter IS NULL THEN RETURN QUERY SELECT l.id, l.first_name, l.last_name, l.email, l.phone, l.city, l.vehicle_type, l.contract_type, l.status, l.created_at FROM leads l ORDER BY l.created_at DESC LIMIT limit_count OFFSET offset_count; ELSE RETURN QUERY SELECT l.id, l.first_name, l.last_name, l.email, l.phone, l.city, l.vehicle_type, l.contract_type, l.status, l.created_at FROM leads l WHERE l.status = status_filter ORDER BY l.created_at DESC LIMIT limit_count OFFSET offset_count; END IF; END; $f$;';
+    EXECUTE 'CREATE FUNCTION public.get_leads(status_filter text DEFAULT NULL, limit_count int DEFAULT 100, offset_count int DEFAULT 0) RETURNS TABLE (id uuid, name text, email text, phone text, city text, status text, lead_status text, created_at timestamptz) LANGUAGE plpgsql SECURITY DEFINER AS $f$ BEGIN IF status_filter IS NULL THEN RETURN QUERY SELECT l.id, COALESCE(l.name, '''') as name, l.email, COALESCE(l.phone, '''') as phone, COALESCE(l.city, '''') as city, COALESCE(l.status, ''taxi'') as status, COALESCE(l.lead_status, ''new'') as lead_status, l.created_at FROM leads l ORDER BY l.created_at DESC LIMIT limit_count OFFSET offset_count; ELSE RETURN QUERY SELECT l.id, COALESCE(l.name, '''') as name, l.email, COALESCE(l.phone, '''') as phone, COALESCE(l.city, '''') as city, COALESCE(l.status, ''taxi'') as status, COALESCE(l.lead_status, ''new'') as lead_status, l.created_at FROM leads l WHERE COALESCE(l.lead_status, ''new'') = status_filter ORDER BY l.created_at DESC LIMIT limit_count OFFSET offset_count; END IF; END; $f$;';
     GRANT EXECUTE ON FUNCTION public.get_leads(text, int, int) TO authenticated, service_role;
-    RAISE NOTICE '✓ get_leads créée';
+    RAISE NOTICE '✓ get_leads créée (structure: name, email, phone, city, status, lead_status)';
   END IF;
 END $$;
 
