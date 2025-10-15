@@ -152,20 +152,20 @@ DECLARE
 BEGIN
   -- Insérer ou mettre à jour un lead de test
   INSERT INTO leads (
+    name,
     email,
     phone,
-    name,
-    activity_type,
     city,
     status,
+    lead_status,
     source
   )
   VALUES (
+    'Test Automatisation ' || NOW()::date,
     'test-automation@taxiassur.fr',
     '0123456789',
-    'Test Automatisation ' || NOW()::date,
-    'taxi',
     'Paris',
+    'taxi',
     'new',
     'test_automatisation'
   )
@@ -193,7 +193,8 @@ SELECT
   name as "Nom",
   email as "Email",
   city as "Ville",
-  status as "Status",
+  status as "Type",
+  lead_status as "Statut",
   TO_CHAR(created_at, 'DD/MM/YYYY HH24:MI') as "Créé le"
 FROM leads
 ORDER BY created_at DESC

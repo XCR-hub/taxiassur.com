@@ -91,9 +91,9 @@ FROM city_pages;
 SELECT
   '👥 LEADS' as type,
   COUNT(*) as total,
-  COUNT(*) FILTER (WHERE status = 'new') as "Nouveaux",
-  COUNT(*) FILTER (WHERE status = 'contacted') as "Contactés",
-  COUNT(*) FILTER (WHERE status = 'converted') as "Convertis"
+  COUNT(*) FILTER (WHERE lead_status = 'new') as "Nouveaux",
+  COUNT(*) FILTER (WHERE lead_status = 'contacted') as "Contactés",
+  COUNT(*) FILTER (WHERE lead_status = 'converted') as "Convertis"
 FROM leads;
 
 -- News Articles (vérification conditionnelle)
@@ -127,20 +127,20 @@ END $$;
 
 -- Insérer un lead de test
 INSERT INTO leads (
+  name,
   email,
   phone,
-  name,
-  activity_type,
   city,
   status,
+  lead_status,
   source
 )
 VALUES (
+  'Test Automatisation',
   'test-automation@taxiassur.fr',
   '0123456789',
-  'Test Automatisation',
-  'taxi',
   'Paris',
+  'taxi',
   'new',
   'test_automatisation'
 )
@@ -218,7 +218,8 @@ SELECT
   name as "Nom",
   email as "Email",
   city as "Ville",
-  status as "Status",
+  status as "Type",
+  lead_status as "Statut",
   source as "Source",
   created_at as "Créé le"
 FROM leads
