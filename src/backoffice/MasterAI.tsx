@@ -43,6 +43,9 @@ interface Metrics {
   recent_leads?: number;
   total_faq?: number;
   conversion_rate?: number;
+  taxi_prospects?: number;
+  prospects_not_contacted?: number;
+  prospects_with_email?: number;
 }
 
 interface DashboardData {
@@ -392,7 +395,7 @@ export default function MasterAI() {
           </div>
         </div>
 
-        {/* Metrics */}
+        {/* Metrics Principaux */}
         <div className="grid grid-cols-4 gap-6">
           <div className="bg-gradient-to-br from-blue-500/20 to-blue-600/20 border border-blue-500/30 rounded-xl p-6">
             <div className="flex items-center justify-between mb-2">
@@ -427,6 +430,51 @@ export default function MasterAI() {
           </div>
         </div>
 
+        {/* Metrics Scraping Taxis */}
+        {(metrics.taxi_prospects !== undefined && metrics.taxi_prospects > 0) && (
+          <div className="bg-gradient-to-br from-cyan-500/10 to-blue-500/10 border border-cyan-500/30 rounded-xl p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center space-x-3">
+                <div className="p-3 bg-cyan-500/20 rounded-lg">
+                  <Users className="text-cyan-400" size={28} />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-white">Scraping Taxis Google Places</h3>
+                  <p className="text-sm text-slate-400">Prospection automatique 24/7</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-4">
+              <div className="bg-slate-800/50 rounded-lg p-4">
+                <div className="text-2xl font-bold text-cyan-400">{metrics.taxi_prospects}</div>
+                <div className="text-xs text-slate-400 mt-1">Total prospects</div>
+              </div>
+
+              <div className="bg-slate-800/50 rounded-lg p-4">
+                <div className="text-2xl font-bold text-yellow-400">{metrics.prospects_not_contacted || 0}</div>
+                <div className="text-xs text-slate-400 mt-1">À contacter</div>
+              </div>
+
+              <div className="bg-slate-800/50 rounded-lg p-4">
+                <div className="text-2xl font-bold text-green-400">{metrics.prospects_with_email || 0}</div>
+                <div className="text-xs text-slate-400 mt-1">Avec email</div>
+              </div>
+            </div>
+
+            <div className="mt-4 pt-4 border-t border-cyan-500/30">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-slate-400">Projection 6 mois</span>
+                <span className="text-white font-semibold">75 000 prospects</span>
+              </div>
+              <div className="flex items-center justify-between text-sm mt-2">
+                <span className="text-slate-400">ROI estimé</span>
+                <span className="text-green-400 font-semibold">50-75K€</span>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Info Panel */}
         <div className="bg-gradient-to-br from-purple-500/10 to-pink-500/10 border border-purple-500/30 rounded-xl p-6">
           <div className="flex items-start space-x-4">
@@ -460,11 +508,11 @@ export default function MasterAI() {
                 </div>
                 <div className="flex items-center space-x-2 text-green-400">
                   <CheckCircle size={16} />
-                  <span>Apprend de chaque action pour s'améliorer</span>
+                  <span>Scrape 400 prospects taxis/jour via Google Places</span>
                 </div>
                 <div className="flex items-center space-x-2 text-green-400">
                   <CheckCircle size={16} />
-                  <span>S'adapte aux tendances et comportements</span>
+                  <span>Apprend de chaque action pour s'améliorer</span>
                 </div>
               </div>
               <div className="mt-4 pt-4 border-t border-purple-500/30">
