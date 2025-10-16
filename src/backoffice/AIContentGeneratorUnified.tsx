@@ -176,6 +176,10 @@ ${(generatedContent.faq || []).map(f => `**${f?.question ?? 'Q'}**\n${f?.answer 
       // 1. PUBLIER L'ARTICLE DE BLOG
       const blogSlug = `${generatedContent.blogPost?.slug ?? 'article'}-${Date.now()}`;
 
+      // Vérifier et logger l'image
+      const featuredImage = generatedContent.blogPost?.featuredImage || null;
+      console.log('🖼️ Image à sauvegarder:', featuredImage ? featuredImage.substring(0, 80) : 'AUCUNE');
+
       const { data: blogData, error: blogError } = await adminClient
         .from('blog_posts')
         .insert({
@@ -189,12 +193,15 @@ ${(generatedContent.faq || []).map(f => `**${f?.question ?? 'Q'}**\n${f?.answer 
           published: true,
           read_time: generatedContent.blogPost?.readingTime ?? 5,
           author: 'TaxiAssur',
-          featured_image: generatedContent.blogPost?.featuredImage || null,
+          featured_image: featuredImage,
+          image_alt: generatedContent.blogPost?.imageAlt || null,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         })
         .select()
         .single();
+
+      console.log('✅ Article sauvegardé avec image:', blogData?.featured_image ? 'OUI' : 'NON');
 
       if (blogError) {
         console.error('Blog post error:', blogError);
@@ -225,27 +232,31 @@ ${(generatedContent.faq || []).map(f => `**${f?.question ?? 'Q'}**\n${f?.answer 
         }
       }
 
-      // 3. PUBLIER TOUTES LES FAQ
+      // 3. PUBLIER TOUTES LES FAQ (non-bloquant)
       let faqCount = 0;
       if (generatedContent.faq && generatedContent.faq.length > 0) {
-        const faqEntries = (generatedContent.faq || []).map((faq, index) => ({
-          question: faq?.question ?? 'Question',
-          answer: faq?.answer ?? 'Réponse',
-          category: faq?.category ?? 'Général',
-          order_index: index
-        }));
+        try {
+          const faqEntries = (generatedContent.faq || []).map((faq, index) => ({
+            question: faq?.question ?? 'Question',
+            answer: faq?.answer ?? 'Réponse',
+            category: faq?.category ?? 'Général',
+            order_index: index
+          }));
 
-        const { data: faqData, error: faqError } = await adminClient
-          .from('faq_entries')
-          .insert(faqEntries)
-          .select();
+          const { data: faqData, error: faqError } = await adminClient
+            .from('faq_entries')
+            .insert(faqEntries)
+            .select();
 
-        if (faqError) {
-          console.error('❌ FAQ insert error:', faqError);
-          throw new Error(`Erreur FAQ: ${faqError.message}`);
-        } else {
-          faqCount = faqData?.length || 0;
-          console.log(`✅ ${faqCount} FAQ publiées avec succès`);
+          if (faqError) {
+            console.error('❌ FAQ insert error:', faqError);
+            console.warn('⚠️ FAQ non publiées, mais article créé quand même');
+          } else {
+            faqCount = faqData?.length || 0;
+            console.log(`✅ ${faqCount} FAQ publiées avec succès`);
+          }
+        } catch (faqErr) {
+          console.error('❌ Erreur FAQ (non-bloquante):', faqErr);
         }
       }
 
@@ -276,12 +287,15 @@ ${(generatedContent.faq || []).map(f => `**${f?.question ?? 'Q'}**\n${f?.answer 
         }
       }
 
+      const imageStatus = generatedContent.blogPost?.featuredImage ? '✅ avec image' : '⚠️ sans image';
+      const faqStatus = faqCount > 0 ? `✅ ${faqCount} FAQ ajoutées` : '⚠️ FAQ non publiées';
+
       setSuccess(
         `✅ Publication réussie !
 
-📝 Article de blog publié
+📝 Article de blog publié ${imageStatus}
 🏙️ Page ville créée/mise à jour
-❓ ${faqCount} FAQ ajoutées
+❓ ${faqStatus}
 📰 Actualité publiée
 
 Total: ${generatedContent.metadata?.totalWords ?? 0} mots générés`
