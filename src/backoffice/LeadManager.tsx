@@ -213,8 +213,8 @@ const LeadManager: React.FC = () => {
     const stats = {
       total: leads.length,
       nouveau: leads.filter(l => l.leadStatus === 'nouveau').length,
-      contacte: leads.filter(l => l.leadStatus === 'contacte').length,
-      devis_envoye: leads.filter(l => l.leadStatus === 'devis_envoye').length,
+      contacte: leads.filter(l => l.leadStatus === 'contacté').length,
+      devis_envoye: leads.filter(l => l.leadStatus === 'devis envoyé').length,
       client: leads.filter(l => l.leadStatus === 'client').length,
       perdu: leads.filter(l => l.leadStatus === 'perdu').length,
       totalPrimes: leads.filter(l => l.primeRealisee).reduce((sum, l) => sum + (l.primeRealisee || 0), 0),
