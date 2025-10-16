@@ -55,51 +55,45 @@ const statusFromDb: Record<string, LeadStatus> = {
   lost: 'perdu'
 };
 
-// Gestion des leads - Récupère depuis le système PHP actuel
 export async function getLeads(): Promise<Lead[]> {
   try {
-    console.log('🔍 Fetching leads from API...');
+    console.log('🔍 Fetching leads from Supabase...');
 
-    const response = await fetch('/api/lead-manager.php?action=list');
+    const { data: leadsData, error } = await supabase
+      .from('leads')
+      .select('*')
+      .order('created_at', { ascending: false });
 
-    if (!response.ok) {
-      console.error('❌ API error:', response.status);
+    if (error) {
+      console.error('❌ Supabase error:', error);
       return [];
     }
 
-    const result = await response.json();
-
-    if (!result.success) {
-      console.error('❌ API returned error:', result.error);
-      return [];
-    }
-
-    const leads = result.leads || [];
-    console.log(`✅ Found ${leads.length} leads from API`);
+    const leads = leadsData || [];
+    console.log(`✅ Found ${leads.length} leads from Supabase`);
 
     return leads.map((lead: any) => {
-      // Récupérer le statut depuis la DB et le convertir
-      const dbStatus = lead.leadStatus || lead.lead_status || 'new';
+      const dbStatus = lead.lead_status || 'new';
       const mappedStatus = statusFromDb[dbStatus] || 'nouveau';
 
       return {
-        id: lead.id || `lead-${Date.now()}`,
+        id: lead.id,
         name: lead.name || 'Lead anonyme',
         email: lead.email || '',
         phone: lead.phone || '',
         city: lead.city || '',
         status: lead.status || 'taxi',
-        immatriculation: lead.immatriculation || lead.registration || 'Non renseignée',
+        immatriculation: lead.immatriculation || 'Non renseignée',
         leadStatus: mappedStatus as LeadStatus,
-        createdAt: lead.createdAt || lead.timestamp || new Date().toISOString(),
-        updatedAt: lead.updatedAt || lead.updated_at,
-        contactedAt: lead.contactedAt || lead.contacted_at,
-        devisEnvoyeAt: lead.devisEnvoyeAt || lead.devis_envoye_at,
-        clientAt: lead.clientAt || lead.client_at,
-        primeRealisee: lead.primeRealisee || lead.prime_realisee,
+        createdAt: lead.created_at || new Date().toISOString(),
+        updatedAt: lead.updated_at,
+        contactedAt: lead.contacted_at,
+        devisEnvoyeAt: lead.devis_envoye_at,
+        clientAt: lead.client_at,
+        primeRealisee: lead.prime_realisee,
         notes: lead.notes,
         source: lead.source || 'website',
-        assignedTo: lead.assignedTo || lead.assigned_to
+        assignedTo: lead.assigned_to
       };
     });
   } catch (error) {
