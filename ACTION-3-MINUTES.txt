@@ -1,0 +1,107 @@
+═══════════════════════════════════════════════════════════════════════════
+🖼️ SOLUTION IMAGES PEXELS - 3 MINUTES
+═══════════════════════════════════════════════════════════════════════════
+
+✅ DIAGNOSTIC CONFIRMÉ
+
+Vous avez dit : "il n'y a pas de photos générée par pexel"
+Vous avez dit : "il n'y a pas de preview"
+
+→ Pas de section "Image SEO Générée" dans l'aperçu
+→ Cause : Clé PEXELS_API_KEY non configurée
+
+═══════════════════════════════════════════════════════════════════════════
+🎯 SOLUTION : 3 ÉTAPES (3 MINUTES)
+═══════════════════════════════════════════════════════════════════════════
+
+ÉTAPE 1 : CRÉER COMPTE PEXELS (1 minute)
+────────────────────────────────────────────────────────────────────────
+1. https://www.pexels.com/api/
+2. Cliquer "Get Started" ou "Sign Up"
+3. Email + Password
+4. Confirmer email
+
+ÉTAPE 2 : OBTENIR API KEY (30 secondes)
+────────────────────────────────────────────────────────────────────────
+1. https://www.pexels.com/api/new/
+2. Project name : TaxiAssur
+3. Description : Images blog
+4. Cliquer "Generate API Key"
+5. 📋 COPIER LA CLÉ (elle n'apparaît qu'une fois !)
+
+ÉTAPE 3 : CONFIGURER SUPABASE (1 minute)
+────────────────────────────────────────────────────────────────────────
+1. https://supabase.com/dashboard/project/drohhxrkoequjphvabvq
+2. Settings (⚙️) → Vault
+3. "New secret"
+4. Name : PEXELS_API_KEY
+5. Secret : [coller votre clé]
+6. "Create secret"
+7. ✅ Devrait apparaître dans la liste
+
+═══════════════════════════════════════════════════════════════════════════
+✅ TESTER IMMÉDIATEMENT
+═══════════════════════════════════════════════════════════════════════════
+
+1. Retour sur : /backoffice/ai-generator
+
+2. CTRL + F5 (recharger avec cache vidé)
+
+3. Générer nouveau contenu :
+   Mot-clé : assurance taxi Lyon
+   Ville : Lyon
+
+4. Attendre 30-60 secondes
+
+5. RÉSULTAT ATTENDU :
+
+   ✅ Section "Image SEO Générée" apparaît
+   ✅ Photo haute qualité visible
+   ✅ URL https://images.pexels.com/...
+
+═══════════════════════════════════════════════════════════════════════════
+🎉 APRÈS CONFIGURATION
+═══════════════════════════════════════════════════════════════════════════
+
+GÉNÉRATIONS MANUELLES :
+   ✅ Aperçu affiche image
+   ✅ Articles publiés avec images
+   ✅ SEO optimisé (alt-text)
+
+AUTOMATISATIONS CRON :
+   ✅ Tous futurs articles auront image auto
+   ✅ 0 action manuelle
+   ✅ Haute qualité garantie
+   ✅ 100% libres de droits
+
+QUOTA :
+   ✅ 20 000 images/mois (gratuit)
+   ✅ Largement suffisant
+
+═══════════════════════════════════════════════════════════════════════════
+📁 GUIDE DÉTAILLÉ
+═══════════════════════════════════════════════════════════════════════════
+
+Si besoin plus de détails :
+→ CONFIGURER-PEXELS-MAINTENANT.md
+
+Contient :
+   • Captures d'écran étape par étape
+   • Résolution problèmes fréquents
+   • Exemples de résultats
+   • Vérifications SQL
+
+═══════════════════════════════════════════════════════════════════════════
+🚀 C'EST PARTI !
+═══════════════════════════════════════════════════════════════════════════
+
+1. https://www.pexels.com/api/ → Sign Up (1 min)
+2. Obtenir API Key (30 sec)
+3. Supabase Vault → PEXELS_API_KEY (1 min)
+4. Tester générateur IA (30 sec)
+
+TEMPS TOTAL : 3 MINUTES ⏱️
+
+Après ça, toutes vos images seront automatiques ! 🎉
+
+═══════════════════════════════════════════════════════════════════════════
