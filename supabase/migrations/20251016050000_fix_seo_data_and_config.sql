@@ -70,7 +70,58 @@ END;
 $$;
 
 -- ============================================================================
--- 2. POPULATE seo_metrics avec vraies données
+-- 2. FIX structure seo_metrics (ajouter colonnes manquantes)
+-- ============================================================================
+
+-- Ajouter colonne 'date' si elle n'existe pas
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'seo_metrics' AND column_name = 'date'
+  ) THEN
+    ALTER TABLE seo_metrics ADD COLUMN date date NOT NULL DEFAULT CURRENT_DATE;
+    CREATE UNIQUE INDEX IF NOT EXISTS seo_metrics_date_idx ON seo_metrics(date);
+  END IF;
+END $$;
+
+-- Ajouter colonne 'metadata' si elle n'existe pas
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'seo_metrics' AND column_name = 'metadata'
+  ) THEN
+    ALTER TABLE seo_metrics ADD COLUMN metadata jsonb DEFAULT '{}'::jsonb;
+  END IF;
+END $$;
+
+-- S'assurer que les colonnes nécessaires existent
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'seo_metrics' AND column_name = 'total_urls') THEN
+    ALTER TABLE seo_metrics ADD COLUMN total_urls int DEFAULT 0;
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'seo_metrics' AND column_name = 'indexed_pages') THEN
+    ALTER TABLE seo_metrics ADD COLUMN indexed_pages int DEFAULT 0;
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'seo_metrics' AND column_name = 'pending_pages') THEN
+    ALTER TABLE seo_metrics ADD COLUMN pending_pages int DEFAULT 0;
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'seo_metrics' AND column_name = 'source') THEN
+    ALTER TABLE seo_metrics ADD COLUMN source text DEFAULT 'manual';
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'seo_metrics' AND column_name = 'average_position') THEN
+    ALTER TABLE seo_metrics ADD COLUMN average_position decimal DEFAULT 0;
+  END IF;
+END $$;
+
+-- ============================================================================
+-- 3. POPULATE seo_metrics avec vraies données
 -- ============================================================================
 
 -- Fonction pour calculer et insérer les vraies métriques
