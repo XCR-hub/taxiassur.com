@@ -73,6 +73,17 @@ $$;
 -- 2. FIX structure seo_metrics (ajouter colonnes manquantes)
 -- ============================================================================
 
+-- Rendre colonnes 'url' et 'keyword' nullable si elles existent (héritage anciennes migrations)
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'seo_metrics' AND column_name = 'url') THEN
+    ALTER TABLE seo_metrics ALTER COLUMN url DROP NOT NULL;
+  END IF;
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'seo_metrics' AND column_name = 'keyword') THEN
+    ALTER TABLE seo_metrics ALTER COLUMN keyword DROP NOT NULL;
+  END IF;
+END $$;
+
 -- Ajouter colonne 'date' si elle n'existe pas
 DO $$
 BEGIN
