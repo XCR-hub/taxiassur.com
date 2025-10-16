@@ -395,6 +395,10 @@ $$ LANGUAGE plpgsql;
 -- 11. FIX FAQ PAGE (utiliser faq_entries)
 -- ============================================================================
 
+-- Supprimer anciennes fonctions pour éviter conflits de type
+DROP FUNCTION IF EXISTS get_faq_by_city(text);
+DROP FUNCTION IF EXISTS get_all_faq();
+
 -- Fonction pour récupérer FAQ par ville (corrigée)
 CREATE OR REPLACE FUNCTION get_faq_by_city(p_city text)
 RETURNS SETOF faq_entries AS $$
