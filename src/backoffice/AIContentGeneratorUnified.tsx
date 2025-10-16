@@ -226,6 +226,7 @@ ${(generatedContent.faq || []).map(f => `**${f?.question ?? 'Q'}**\n${f?.answer 
       }
 
       // 3. PUBLIER TOUTES LES FAQ
+      let faqCount = 0;
       if (generatedContent.faq && generatedContent.faq.length > 0) {
         const faqEntries = (generatedContent.faq || []).map((faq, index) => ({
           question: faq?.question ?? 'Question',
@@ -234,13 +235,17 @@ ${(generatedContent.faq || []).map(f => `**${f?.question ?? 'Q'}**\n${f?.answer 
           order_index: index
         }));
 
-        const { error: faqError } = await adminClient
+        const { data: faqData, error: faqError } = await adminClient
           .from('faq_entries')
-          .insert(faqEntries);
+          .insert(faqEntries)
+          .select();
 
         if (faqError) {
-          console.warn('FAQ insert warning:', faqError);
-          // Ne pas bloquer si les FAQ échouent
+          console.error('❌ FAQ insert error:', faqError);
+          throw new Error(`Erreur FAQ: ${faqError.message}`);
+        } else {
+          faqCount = faqData?.length || 0;
+          console.log(`✅ ${faqCount} FAQ publiées avec succès`);
         }
       }
 
@@ -276,7 +281,7 @@ ${(generatedContent.faq || []).map(f => `**${f?.question ?? 'Q'}**\n${f?.answer 
 
 📝 Article de blog publié
 🏙️ Page ville créée/mise à jour
-❓ ${generatedContent.faq.length} FAQ ajoutées
+❓ ${faqCount} FAQ ajoutées
 📰 Actualité publiée
 
 Total: ${generatedContent.metadata?.totalWords ?? 0} mots générés`
