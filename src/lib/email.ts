@@ -44,7 +44,7 @@ export async function submitSecureLead(leadData: SecureLead): Promise<{ success:
         behavior_score: leadData.behaviorScore,
         time_on_page: leadData.timeOnPage,
         source: 'website_form',
-        lead_status: 'new'
+        lead_status: 'nouveau'
       })
       .select()
       .single();

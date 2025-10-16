@@ -73,7 +73,7 @@ export async function getLeads(): Promise<Lead[]> {
     console.log(`✅ Found ${leads.length} leads from Supabase`);
 
     return leads.map((lead: any) => {
-      const dbStatus = lead.lead_status || 'new';
+      const dbStatus = lead.lead_status || 'nouveau';
       const mappedStatus = statusFromDb[dbStatus] || 'nouveau';
 
       return {
