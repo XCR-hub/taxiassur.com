@@ -1,0 +1,78 @@
+🔍 DIAGNOSTIC REQUIS - COMMENCE ICI
+
+ERROR: function populate_real_seo_metrics() does not exist
+
+Cela signifie que les migrations SQL n'ont PAS été appliquées.
+
+═══════════════════════════════════════════════════════════
+            PROCÉDURE COMPLÈTE (3-13 MIN)
+═══════════════════════════════════════════════════════════
+
+ÉTAPE 1: DIAGNOSTIC (30 sec)
+----------------------------
+1. Ouvrir Supabase SQL Editor
+   https://supabase.com/dashboard/project/drohhxrkoequjphvabvq
+
+2. Copier fichier: DIAGNOSTIC-ETAT-BASE.sql
+
+3. Coller dans SQL Editor → RUN
+
+4. Lire résultats (10 lignes)
+
+
+ÉTAPE 2: APPLIQUER MIGRATIONS (2-12 min)
+-----------------------------------------
+SELON LE DIAGNOSTIC:
+
+A) Si FONCTIONS RPC vide:
+   → Appliquer migration 1 (7 min)
+   → Puis migration 2 (3 min)
+   → Puis migration 4 (2 min)
+   Total: 12 min
+
+B) Si fonction populate existe mais pas average_position:
+   → Appliquer migration 4 (2 min)
+   Total: 2 min
+
+C) Si tout existe:
+   → Rien à faire
+   → Tester directement
+
+
+ÉTAPE 3: TESTER (1 min)
+------------------------
+SELECT populate_real_seo_metrics();
+SELECT * FROM get_current_seo_metrics();
+SELECT * FROM seo_metrics LIMIT 1;
+
+
+═══════════════════════════════════════════════════════════
+                FICHIERS MIGRATIONS
+═══════════════════════════════════════════════════════════
+
+Migration 1 (7 min):
+  supabase/migrations/20251016060000_fix_all_errors_complete.sql
+
+Migration 2 (3 min):
+  supabase/migrations/20251016080000_force_drop_get_current_seo_metrics.sql
+
+Migration 4 (2 min):
+  supabase/migrations/20251016095000_fix_seo_metrics_columns_simple.sql
+
+
+═══════════════════════════════════════════════════════════
+                   GUIDES DÉTAILLÉS
+═══════════════════════════════════════════════════════════
+
+📖 COMMENCE-PAR-DIAGNOSTIC.md - Guide complet étape par étape
+📖 FIX-TOUTES-ERREURS-SQL.md - Détails migration 1
+📖 SOLUTION-FINALE-DROP-FUNCTION.md - Détails migration 2
+📖 FIX-URGENT-AVERAGE-POSITION.md - Détails migration 4
+
+
+═══════════════════════════════════════════════════════════
+
+✅ COMMENCE PAR LE DIAGNOSTIC !
+   Fichier: DIAGNOSTIC-ETAT-BASE.sql
+
+🚀 Durée totale: 3-13 min selon ce qui manque
