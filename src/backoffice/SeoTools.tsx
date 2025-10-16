@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Globe, RefreshCw, TrendingUp, ExternalLink, CheckCircle, AlertCircle, Home } from 'lucide-react';
+import { Search, Globe, RefreshCw, TrendingUp, ExternalLink, CheckCircle, AlertCircle, Home, Settings, Clock } from 'lucide-react';
 import { pingSearchEngines } from '../lib/ping';
 import { regenerateFeeds } from '../lib/feeds';
 import { generateCityPages } from '../lib/ping';
