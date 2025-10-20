@@ -329,12 +329,11 @@ Consultez le détail dans la console (F12)`);
                   onClick={async () => {
                     setIsWorking(true);
                     try {
-                      // Appeler directement l'Edge Function
                       const { data: { session } } = await supabase.auth.getSession();
                       const token = session?.access_token || import.meta.env.VITE_SUPABASE_ANON_KEY;
 
                       const response = await fetch(
-                        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/seo-daily-refresh`,
+                        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/sync-google-search-console`,
                         {
                           method: 'POST',
                           headers: {
@@ -347,16 +346,16 @@ Consultez le détail dans la console (F12)`);
 
                       if (!response.ok) {
                         const error = await response.json();
-                        throw new Error(error.error || 'Failed to refresh SEO data');
+                        throw new Error(error.error || 'Failed to sync GSC data');
                       }
 
                       const result = await response.json();
-                      console.log('SEO refresh result:', result);
+                      console.log('GSC sync result:', result);
 
-                      alert('✅ Rafraîchissement SEO lancé ! Les données seront mises à jour dans quelques instants.');
-                      setTimeout(loadSeoData, 3000); // Recharger après 3s
+                      alert('✅ Synchronisation Google Search Console réussie ! Les vraies données sont maintenant affichées.');
+                      setTimeout(loadSeoData, 2000);
                     } catch (error: any) {
-                      console.error('SEO refresh error:', error);
+                      console.error('GSC sync error:', error);
                       alert(`❌ Erreur: ${error.message}`);
                     } finally {
                       setIsWorking(false);
@@ -366,7 +365,7 @@ Consultez le détail dans la console (F12)`);
                   className="w-full flex items-center justify-center space-x-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 disabled:bg-gray-400 text-white font-medium py-3 px-4 rounded-lg transition-colors shadow-md"
                 >
                   <TrendingUp size={16} />
-                  <span>🔄 Rafraîchir Données SEO</span>
+                  <span>📊 Sync Google Search Console</span>
                 </button>
 
                 <button
