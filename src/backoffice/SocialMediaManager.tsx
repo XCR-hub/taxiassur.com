@@ -172,6 +172,13 @@ export default function SocialMediaManager() {
   const [selectedNetworks, setSelectedNetworks] = useState<Set<string>>(new Set());
   const [activeTab, setActiveTab] = useState<'networks' | 'publications' | 'whatsapp' | 'automation'>('networks');
   const [loading, setLoading] = useState(true);
+  const [generatingAI, setGeneratingAI] = useState(false);
+  const [aiResult, setAiResult] = useState<string | null>(null);
+  const [realStats, setRealStats] = useState({
+    totalPosts: 0,
+    totalEngagement: 0,
+    successRate: 0
+  });
   const [newPost, setNewPost] = useState({
     platforms: [] as string[],
     content: '',
@@ -181,6 +188,7 @@ export default function SocialMediaManager() {
 
   useEffect(() => {
     loadNetworks();
+    loadRealStats();
   }, []);
 
   const loadNetworks = async () => {
@@ -195,6 +203,70 @@ export default function SocialMediaManager() {
       console.error('Error loading networks:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadRealStats = async () => {
+    try {
+      const { data: posts } = await supabase
+        .from('social_media_posts')
+        .select('*');
+
+      if (posts) {
+        const totalPosts = posts.length;
+        const published = posts.filter(p => p.status === 'published').length;
+        const totalEngagement = posts.reduce((sum, p) => sum + (p.engagement || 0), 0);
+        const successRate = totalPosts > 0 ? Math.round((published / totalPosts) * 100) : 0;
+
+        setRealStats({
+          totalPosts,
+          totalEngagement,
+          successRate
+        });
+      }
+    } catch (error) {
+      console.error('Error loading stats:', error);
+    }
+  };
+
+  const handleGenerateAI = async () => {
+    setGeneratingAI(true);
+    setAiResult(null);
+
+    try {
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const response = await fetch(
+        `${supabaseUrl}/functions/v1/ai-viral-content-generator`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          },
+          body: JSON.stringify({
+            topic: 'assurance taxi',
+            platform: 'multi',
+            tone: 'professional',
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (response.ok && data.content) {
+        setNewPost({
+          ...newPost,
+          content: data.content,
+          hashtags: data.hashtags || ''
+        });
+        setAiResult('✅ Contenu généré avec succès !');
+      } else {
+        setAiResult('❌ Erreur: ' + (data.error || 'Service indisponible'));
+      }
+    } catch (error) {
+      setAiResult('❌ Erreur réseau ou clé API manquante');
+    } finally {
+      setGeneratingAI(false);
     }
   };
 
@@ -405,9 +477,22 @@ export default function SocialMediaManager() {
               Utilise l'intelligence artificielle pour générer du contenu viral optimisé, non détectable comme IA
             </p>
           </div>
-          <button className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-black font-bold py-3 px-6 rounded-lg shadow-lg flex items-center gap-2">
-            <Zap size={20} />
-            Générer avec IA
+          <button
+            onClick={handleGenerateAI}
+            disabled={generatingAI}
+            className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-black font-bold py-3 px-6 rounded-lg shadow-lg flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {generatingAI ? (
+              <>
+                <div className="animate-spin rounded-full h-5 w-5 border-2 border-black border-t-transparent" />
+                Génération...
+              </>
+            ) : (
+              <>
+                <Zap size={20} />
+                Générer avec IA
+              </>
+            )}
           </button>
         </div>
 
@@ -425,6 +510,16 @@ export default function SocialMediaManager() {
             <div className="text-green-100 text-xs mt-1">7M+ vues moyennes</div>
           </div>
         </div>
+
+        {aiResult && (
+          <div className={`mt-4 p-3 rounded-lg ${
+            aiResult.startsWith('✅')
+              ? 'bg-green-900/50 border border-green-700 text-green-200'
+              : 'bg-red-900/50 border border-red-700 text-red-200'
+          }`}>
+            {aiResult}
+          </div>
+        )}
       </div>
 
       {/* Publication Manuelle */}
@@ -699,18 +794,18 @@ export default function SocialMediaManager() {
         </div>
 
         <div className="bg-slate-700 rounded-lg p-4">
-          <h3 className="font-bold text-white mb-3">📊 Statistiques Automatisation</h3>
+          <h3 className="font-bold text-white mb-3">📊 Statistiques Automatisation (Données Réelles)</h3>
           <div className="grid grid-cols-3 gap-4">
             <div className="text-center">
-              <div className="text-2xl font-bold text-green-400">247</div>
+              <div className="text-2xl font-bold text-green-400">{realStats.totalPosts}</div>
               <div className="text-sm text-slate-400">Publications auto</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-orange-400">12.5K</div>
+              <div className="text-2xl font-bold text-orange-400">{realStats.totalEngagement.toLocaleString()}</div>
               <div className="text-sm text-slate-400">Engagement total</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-yellow-500">98%</div>
+              <div className="text-2xl font-bold text-yellow-500">{realStats.successRate}%</div>
               <div className="text-sm text-slate-400">Taux de succès</div>
             </div>
           </div>
