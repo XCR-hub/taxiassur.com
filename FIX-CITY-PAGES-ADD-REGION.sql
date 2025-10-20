@@ -1,48 +1,78 @@
 /*
-  # Fix City Pages - Ajouter la colonne region
+  # Fix City Pages - Ajouter colonnes manquantes
 
-  Problème: ERROR 42703: column "region" does not exist
-  Solution: Ajouter la colonne region à la table city_pages existante
+  Structure actuelle : id, city, title, slug, content, meta_description, keywords, status
+  À ajouter : dept, region, population, taxi_count
 */
 
--- Vérifier si la colonne existe déjà
+-- ============================================
+-- ÉTAPE 1 : Ajouter les colonnes manquantes
+-- ============================================
+
+-- Ajouter dept
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'city_pages' AND column_name = 'dept'
+  ) THEN
+    ALTER TABLE city_pages ADD COLUMN dept text;
+    RAISE NOTICE '✅ Colonne dept ajoutée';
+  END IF;
+END $$;
+
+-- Ajouter region
 DO $$
 BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM information_schema.columns
     WHERE table_name = 'city_pages' AND column_name = 'region'
   ) THEN
-    -- Ajouter la colonne region
     ALTER TABLE city_pages ADD COLUMN region text;
-    RAISE NOTICE 'Colonne region ajoutée avec succès';
-  ELSE
-    RAISE NOTICE 'Colonne region existe déjà';
+    RAISE NOTICE '✅ Colonne region ajoutée';
   END IF;
 END $$;
 
--- Mettre à jour les villes existantes avec leurs régions
-UPDATE city_pages SET region = 'Île-de-France' WHERE department IN ('75', '92', '93', '94', '95', '77', '78', '91');
-UPDATE city_pages SET region = 'Auvergne-Rhône-Alpes' WHERE department IN ('69', '42', '38', '74', '63');
-UPDATE city_pages SET region = 'Provence-Alpes-Côte d''Azur' WHERE department IN ('13', '06', '83');
-UPDATE city_pages SET region = 'Occitanie' WHERE department IN ('31', '34', '30', '66');
-UPDATE city_pages SET region = 'Pays de la Loire' WHERE department IN ('44', '49', '72');
-UPDATE city_pages SET region = 'Grand Est' WHERE department IN ('67', '51', '57', '68');
-UPDATE city_pages SET region = 'Nouvelle-Aquitaine' WHERE department IN ('33', '87');
-UPDATE city_pages SET region = 'Hauts-de-France' WHERE department IN ('59', '80');
-UPDATE city_pages SET region = 'Bretagne' WHERE department IN ('35', '29');
-UPDATE city_pages SET region = 'Bourgogne-Franche-Comté' WHERE department IN ('21', '25');
-UPDATE city_pages SET region = 'Centre-Val de Loire' WHERE department IN ('37', '45');
-UPDATE city_pages SET region = 'Normandie' WHERE department = '76';
+-- Ajouter population
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'city_pages' AND column_name = 'population'
+  ) THEN
+    ALTER TABLE city_pages ADD COLUMN population integer;
+    RAISE NOTICE '✅ Colonne population ajoutée';
+  END IF;
+END $$;
 
--- Vérifier le résultat
-SELECT name, department, region FROM city_pages ORDER BY name LIMIT 10;
+-- Ajouter taxi_count
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'city_pages' AND column_name = 'taxi_count'
+  ) THEN
+    ALTER TABLE city_pages ADD COLUMN taxi_count integer;
+    RAISE NOTICE '✅ Colonne taxi_count ajoutée';
+  END IF;
+END $$;
 
--- Créer un index sur region pour performance
+-- ============================================
+-- ÉTAPE 2 : Créer les index
+-- ============================================
+
+CREATE INDEX IF NOT EXISTS idx_city_pages_dept ON city_pages(dept);
 CREATE INDEX IF NOT EXISTS idx_city_pages_region ON city_pages(region);
 
--- ✅ Résultat attendu : Toutes les villes ont maintenant une région
-SELECT COUNT(*) as total, region
-FROM city_pages
-WHERE status = 'published'
-GROUP BY region
-ORDER BY total DESC;
+-- ============================================
+-- ÉTAPE 3 : Vérification
+-- ============================================
+
+-- Voir les colonnes ajoutées
+SELECT column_name, data_type
+FROM information_schema.columns
+WHERE table_name = 'city_pages'
+  AND column_name IN ('city', 'dept', 'region', 'population', 'taxi_count')
+ORDER BY column_name;
+
+-- ✅ RÉSULTAT ATTENDU : dept, region, population, taxi_count disponibles
