@@ -2,6 +2,7 @@ import { createBrowserRouter } from 'react-router-dom';
 import { Navigate } from 'react-router-dom';
 import { lazy, Suspense } from 'react';
 import ScrollToTop from './components/ScrollToTop';
+import AuthGuard from './components/AuthGuard';
 
 const Home = lazy(() => import('./pages/Home'));
 const Blog = lazy(() => import('./pages/Blog'));
@@ -64,7 +65,6 @@ const MasterAI = lazy(() => import('./backoffice/MasterAI'));
 const TrendAnalyzer = lazy(() => import('./backoffice/TrendAnalyzer'));
 const ProspectSeeder = lazy(() => import('./backoffice/ProspectSeeder'));
 const CampaignLauncher = lazy(() => import('./backoffice/CampaignLauncher'));
-const AuthGuard = lazy(() => import('./components/AuthGuard'));
 const NewsletterPage = lazy(() => import('./pages/Newsletter'));
 const MirrorPage = lazy(() => import('./pages/MirrorPage'));
 const MasterDashboard = lazy(() => import('./backoffice/MasterDashboard'));
