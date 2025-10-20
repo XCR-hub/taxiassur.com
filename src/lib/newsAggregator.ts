@@ -337,10 +337,14 @@ export function useNewsSystem() {
     try {
       setIsRunning(true);
       setError(null);
-      
+
+      // Persister l'état actif dans localStorage
+      localStorage.setItem('news_system_active', 'true');
+      localStorage.removeItem('news_system_disabled');
+
       await aggregator.initialize();
       const news = await aggregator.aggregateNews();
-      
+
       if (news.length > 0) {
         await aggregator.saveRawNews(news);
         setNewsCount(news.length);
@@ -348,13 +352,16 @@ export function useNewsSystem() {
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur inconnue');
-    } finally {
       setIsRunning(false);
     }
   }, [aggregator]);
 
   const stopNewsSystem = useCallback(() => {
     setIsRunning(false);
+
+    // Persister l'état arrêté dans localStorage
+    localStorage.setItem('news_system_active', 'false');
+    localStorage.setItem('news_system_disabled', 'true');
   }, []);
 
   useEffect(() => {

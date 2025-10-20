@@ -23,6 +23,37 @@ const NewsManager: React.FC = () => {
   const loadProcessedNews = async () => {
     setLoading(true);
     try {
+      // Charger depuis Supabase d'abord
+      const { supabase } = await import('../lib/supabase');
+
+      const { data: supabaseNews, error: supabaseError } = await supabase
+        .from('news_articles')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(20);
+
+      if (!supabaseError && supabaseNews && supabaseNews.length > 0) {
+        // Convertir les données Supabase au format attendu
+        const formattedNews = supabaseNews.map((article: any) => ({
+          id: article.id,
+          originalTitle: article.title,
+          synthesizedTitle: article.title,
+          originalContent: article.content,
+          synthesizedContent: article.summary || article.content.substring(0, 300),
+          taxiAngle: article.category || 'actualité taxi',
+          seoKeywords: article.tags || [],
+          publishedAt: article.published_at || article.created_at,
+          sources: [article.author || 'TaxiAssur'],
+          relevanceScore: 85,
+          status: article.status || 'draft',
+          createdAt: article.created_at,
+          updatedAt: article.updated_at
+        }));
+        setProcessedNews(formattedNews);
+        return;
+      }
+
+      // Fallback sur fichier JSON statique
       const response = await fetch('/content/processed-news.json');
       if (response.ok) {
         const data = await response.json();
@@ -36,15 +67,58 @@ const NewsManager: React.FC = () => {
   };
 
   const manualRefresh = async () => {
-    // Webhook make.php désactivé (fichier non disponible sur serveur)
-    // Utiliser les Edge Functions Supabase à la place
-    alert('⚠️ Fonctionnalité désactivée temporairement.\nUtilisez les Edge Functions Supabase pour l\'agrégation d\'actualités.');
+    try {
+      setLoading(true);
+
+      // Appeler l'Edge Function Supabase pour agréger les actualités
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-social-scraper`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
+          },
+          body: JSON.stringify({
+            keywords: ['assurance taxi', 'taxi professionnel', 'réglementation taxi'],
+            max_results: settings.maxNewsPerDay
+          })
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Échec de l\'agrégation des actualités');
+      }
+
+      const result = await response.json();
+      alert(`✅ ${result.articles?.length || 0} actualités récupérées et traitées !`);
+      await loadProcessedNews();
+    } catch (error: any) {
+      console.error('Error refreshing news:', error);
+      alert(`❌ Erreur : ${error.message}`);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const publishNews = async (newsId: string) => {
-    // Webhook make.php désactivé (fichier non disponible sur serveur)
-    // Utiliser les Edge Functions Supabase à la place
-    alert('⚠️ Fonctionnalité désactivée temporairement.\nUtilisez les Edge Functions Supabase pour la publication d\'actualités.');
+    try {
+      // Publier l'actualité dans Supabase
+      const { supabase } = await import('../lib/supabase');
+
+      const { error } = await supabase
+        .from('news_articles')
+        .update({ status: 'published', published_at: new Date().toISOString() })
+        .eq('id', newsId);
+
+      if (error) throw error;
+
+      alert('✅ Actualité publiée avec succès !');
+      await loadProcessedNews();
+    } catch (error: any) {
+      console.error('Error publishing news:', error);
+      alert(`❌ Erreur : ${error.message}`);
+    }
   };
 
   const getAngleColor = (angle: string): string => {
@@ -191,7 +265,7 @@ const NewsManager: React.FC = () => {
                   onChange={(e) => setSettings(prev => ({ ...prev, checkInterval: parseInt(e.target.value) }))}
                   min="1"
                   max="24"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 bg-white text-gray-900"
                 />
               </div>
               
@@ -205,7 +279,7 @@ const NewsManager: React.FC = () => {
                   onChange={(e) => setSettings(prev => ({ ...prev, maxNewsPerDay: parseInt(e.target.value) }))}
                   min="1"
                   max="10"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 bg-white text-gray-900"
                 />
               </div>
               
@@ -219,7 +293,7 @@ const NewsManager: React.FC = () => {
                   onChange={(e) => setSettings(prev => ({ ...prev, qualityThreshold: parseInt(e.target.value) }))}
                   min="50"
                   max="100"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 bg-white text-gray-900"
                 />
               </div>
               
@@ -229,9 +303,9 @@ const NewsManager: React.FC = () => {
                     type="checkbox"
                     checked={settings.autoPublish}
                     onChange={(e) => setSettings(prev => ({ ...prev, autoPublish: e.target.checked }))}
-                    className="rounded border-gray-300 text-orange-600 focus:ring-blue-500"
+                    className="rounded border-gray-300 text-orange-600 focus:ring-orange-500 h-4 w-4"
                   />
-                  <span className="ml-2 text-sm text-gray-700">Publication auto</span>
+                  <span className="ml-2 text-sm font-medium text-gray-900">Publication auto</span>
                 </label>
               </div>
             </div>
