@@ -138,8 +138,140 @@ const CityPage: React.FC = () => {
                 </ol>
               </nav>
 
-              <article className="prose prose-lg max-w-none prose-headings:text-gray-900 prose-h2:text-3xl prose-h2:font-bold prose-h2:mb-6 prose-h2:mt-8 prose-h3:text-2xl prose-h3:font-bold prose-h3:mb-4 prose-h3:mt-6 prose-p:text-gray-700 prose-p:text-lg prose-p:leading-relaxed prose-p:mb-4 prose-ul:text-gray-700 prose-li:mb-2 prose-strong:text-gray-900 prose-strong:font-semibold">
-                <div dangerouslySetInnerHTML={{ __html: cityPageData.content }} />
+              {/* En-tête avec H1 */}
+              <div className="mb-12">
+                <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+                  {cityPageData.h1_title || cityPageData.title}
+                </h1>
+                {cityPageData.meta_description && (
+                  <p className="text-xl text-gray-600 leading-relaxed">
+                    {cityPageData.meta_description}
+                  </p>
+                )}
+              </div>
+
+              {/* Statistiques ville */}
+              {cityPageData.population && (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
+                  <Card className="bg-gradient-to-br from-yellow-50 to-amber-100 border-2 border-yellow-200">
+                    <div className="text-center">
+                      <div className="text-3xl font-bold text-gray-900">
+                        {cityPageData.population >= 1000000
+                          ? `${(cityPageData.population / 1000000).toFixed(1)}M`
+                          : `${Math.floor(cityPageData.population / 1000)}k`}
+                      </div>
+                      <div className="text-sm text-gray-600 mt-1">Habitants</div>
+                    </div>
+                  </Card>
+                  <Card className="bg-gradient-to-br from-green-50 to-emerald-100 border-2 border-green-200">
+                    <div className="text-center">
+                      <div className="text-3xl font-bold text-gray-900">
+                        {Math.floor(cityPageData.population / 2000)}
+                      </div>
+                      <div className="text-sm text-gray-600 mt-1">Taxis actifs</div>
+                    </div>
+                  </Card>
+                  <Card className="bg-gradient-to-br from-blue-50 to-sky-100 border-2 border-blue-200">
+                    <div className="text-center">
+                      <div className="text-3xl font-bold text-gray-900">24/7</div>
+                      <div className="text-sm text-gray-600 mt-1">Assistance</div>
+                    </div>
+                  </Card>
+                  <Card className="bg-gradient-to-br from-pink-50 to-rose-100 border-2 border-pink-200">
+                    <div className="text-center">
+                      <div className="text-3xl font-bold text-gray-900">-35%</div>
+                      <div className="text-sm text-gray-600 mt-1">Économies</div>
+                    </div>
+                  </Card>
+                </div>
+              )}
+
+              {/* Contenu structuré */}
+              <article className="prose prose-lg max-w-none">
+                {(() => {
+                  try {
+                    const content = typeof cityPageData.content === 'string'
+                      ? JSON.parse(cityPageData.content)
+                      : cityPageData.content;
+
+                    return (
+                      <div className="space-y-8">
+                        {/* Introduction */}
+                        {content.intro && (
+                          <Card className="bg-white border-2 border-gray-200 p-6">
+                            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+                              Pourquoi choisir TaxiAssur à {cityPageData.city_name || cityPageData.city} ?
+                            </h2>
+                            <p className="text-lg text-gray-700 leading-relaxed">
+                              {content.intro}
+                            </p>
+                          </Card>
+                        )}
+
+                        {/* Spécificités locales */}
+                        {content.specificites && content.specificites.length > 0 && (
+                          <Card className="bg-gradient-to-br from-amber-50 to-yellow-50 border-2 border-amber-200 p-6">
+                            <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
+                              <MapPin className="mr-2 text-yellow-600" size={24} />
+                              Spécificités locales
+                            </h3>
+                            <ul className="space-y-3">
+                              {content.specificites.map((spec: string, idx: number) => (
+                                <li key={idx} className="flex items-start text-gray-700">
+                                  <CheckCircle className="mr-3 mt-1 text-green-600 flex-shrink-0" size={20} />
+                                  <span className="text-lg">{spec}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </Card>
+                        )}
+
+                        {/* Tarif moyen */}
+                        {content.tarif_moyen && (
+                          <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-200 p-6">
+                            <h3 className="text-xl font-bold text-gray-900 mb-3 flex items-center">
+                              <TrendingDown className="mr-2 text-green-600" size={24} />
+                              Tarifs compétitifs
+                            </h3>
+                            <div className="flex items-baseline space-x-2">
+                              <span className="text-3xl font-bold text-gray-900">{content.tarif_moyen}</span>
+                              <span className="text-gray-600">par an</span>
+                            </div>
+                            <p className="text-sm text-gray-600 mt-2">
+                              Tarif moyen constaté pour un taxi professionnel
+                            </p>
+                          </Card>
+                        )}
+
+                        {/* Garanties incluses */}
+                        <Card className="bg-white border-2 border-gray-200 p-6">
+                          <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
+                            <Shield className="mr-2 text-yellow-600" size={24} />
+                            Garanties incluses
+                          </h3>
+                          <ul className="grid md:grid-cols-2 gap-3">
+                            {[
+                              'RC Professionnelle complète',
+                              'Protection juridique',
+                              'Assistance 24/7',
+                              'Véhicule de remplacement',
+                              'Protection du matériel',
+                              'Couverture tous accidents'
+                            ].map((garantie, idx) => (
+                              <li key={idx} className="flex items-center text-gray-700">
+                                <CheckCircle className="mr-2 text-green-600" size={18} />
+                                <span>{garantie}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </Card>
+                      </div>
+                    );
+                  } catch (e) {
+                    // Fallback si JSON parse échoue
+                    return <div dangerouslySetInnerHTML={{ __html: cityPageData.content }} />;
+                  }
+                })()}
               </article>
 
               <div className="mt-12">
