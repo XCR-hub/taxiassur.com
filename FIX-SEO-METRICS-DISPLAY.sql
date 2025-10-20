@@ -44,13 +44,13 @@ BEGIN
   IF v_has_data THEN
     -- Calculer les sommes des 30 derniers jours
     SELECT
-      COALESCE(SUM(impressions), 0),
-      COALESCE(SUM(clicks), 0),
-      COALESCE(AVG(average_position), 0)
+      COALESCE(SUM(sm.impressions), 0),
+      COALESCE(SUM(sm.clicks), 0),
+      COALESCE(AVG(sm.average_position), 0)
     INTO v_impressions_sum, v_clicks_sum, v_avg_position
-    FROM seo_metrics
-    WHERE date >= CURRENT_DATE - INTERVAL '30 days'
-      AND source IN ('google', 'automated'); -- Seulement sources fiables
+    FROM seo_metrics sm
+    WHERE sm.date >= CURRENT_DATE - INTERVAL '30 days'
+      AND sm.source IN ('google', 'automated'); -- Seulement sources fiables
 
     -- Retourner les données les plus récentes avec sommes calculées
     RETURN QUERY
