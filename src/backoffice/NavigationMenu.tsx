@@ -4,7 +4,7 @@ import {
   Zap, FileEdit, Newspaper, Package, TrendingUp, FileText,
   Search, Link2, Mail, Eye, Plus, Send,
   UserCircle, Clock, Megaphone, Shield, Globe, Settings, BookOpen,
-  QrCode, MessageSquare, Brain
+  QrCode, MessageSquare, Brain, MapPin
 } from 'lucide-react';
 
 export default function NavigationMenu() {
@@ -70,6 +70,10 @@ export default function NavigationMenu() {
           <Link to="/backoffice/directory" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-rose-500 to-rose-600 hover:from-rose-600 hover:to-rose-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm">
             <FileText className="w-5 h-5" />
             <span>Annuaires</span>
+          </Link>
+          <Link to="/backoffice/generate-cities" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm">
+            <MapPin className="w-5 h-5" />
+            <span>Pages Ville IA</span>
           </Link>
         </div>
       </div>
