@@ -77,7 +77,7 @@ Deno.serve(async (req: Request) => {
     // 4. Enregistrer les métriques quotidiennes
     const { error: metricsError } = await supabase
       .from("seo_metrics")
-      .insert({
+      .upsert({
         date: new Date().toISOString().split('T')[0],
         total_urls: totalUrls,
         indexed_pages: googleMetrics.indexedPages,
@@ -89,9 +89,9 @@ Deno.serve(async (req: Request) => {
         sitemap_submitted: true,
         last_crawl_date: new Date().toISOString(),
         source: gscConfig?.value?.enabled ? 'google' : 'automated'
-      })
-      .onConflict('date')
-      .merge();
+      }, {
+        onConflict: 'date'
+      });
 
     if (metricsError) {
       console.error("Error saving metrics:", metricsError);
