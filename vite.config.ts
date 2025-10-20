@@ -33,7 +33,24 @@ export default defineConfig({
             return 'vendor';
           }
           if (id.includes('/backoffice/')) {
-            return 'backoffice';
+            // Séparer les composants backoffice pour éviter dépendances circulaires
+            if (id.includes('MasterDashboard') || id.includes('MasterAI')) {
+              return 'backoffice-master';
+            }
+            if (id.includes('NewsManager') || id.includes('SocialMediaManager')) {
+              return 'backoffice-content';
+            }
+            if (id.includes('LeadManager') || id.includes('LeadCRM') || id.includes('LeadMarketplace')) {
+              return 'backoffice-leads';
+            }
+            if (id.includes('AIContentGenerator') || id.includes('AutoOptimizer')) {
+              return 'backoffice-ai';
+            }
+            if (id.includes('BacklinkManager') || id.includes('BacklinkProspector')) {
+              return 'backoffice-seo';
+            }
+            // Autres composants backoffice
+            return 'backoffice-tools';
           }
           if (id.includes('/pages/')) {
             const match = id.match(/pages\/([^/]+)/);
