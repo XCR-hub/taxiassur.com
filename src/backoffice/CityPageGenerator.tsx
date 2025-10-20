@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { MapPin, Plus, Loader, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { MapPin, Plus, Loader, CheckCircle, XCircle, AlertCircle, Image, FileText, Newspaper, HelpCircle } from 'lucide-react';
 import Card from '../components/Card';
 import { supabase } from '../lib/supabase';
 
@@ -10,6 +10,17 @@ interface GenerationResult {
   slug?: string;
   url?: string;
   error?: string;
+  article_id?: string;
+  faq_ids?: string[];
+  news_id?: string;
+  image_url?: string;
+  generated?: {
+    city_page: boolean;
+    article: boolean;
+    faqs: number;
+    news: boolean;
+    image: boolean;
+  };
 }
 
 const CityPageGenerator: React.FC = () => {
@@ -19,6 +30,11 @@ const CityPageGenerator: React.FC = () => {
   const [taxiCount, setTaxiCount] = useState('');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<GenerationResult | null>(null);
+
+  const [generateArticle, setGenerateArticle] = useState(true);
+  const [generateFaq, setGenerateFaq] = useState(true);
+  const [generateNews, setGenerateNews] = useState(false);
+  const [generateImage, setGenerateImage] = useState(true);
 
   const regions = [
     'Auvergne-Rhône-Alpes',
@@ -45,7 +61,7 @@ const CityPageGenerator: React.FC = () => {
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 
       const response = await fetch(
-        `${supabaseUrl}/functions/v1/generate-city-pages-ai`,
+        `${supabaseUrl}/functions/v1/generate-city-complete`,
         {
           method: 'POST',
           headers: {
@@ -57,6 +73,10 @@ const CityPageGenerator: React.FC = () => {
             dept,
             region,
             taxi_count: taxiCount ? parseInt(taxiCount) : 500,
+            generate_article: generateArticle,
+            generate_faq: generateFaq,
+            generate_news: generateNews,
+            generate_image: generateImage,
           }),
         }
       );
@@ -76,6 +96,10 @@ const CityPageGenerator: React.FC = () => {
         setDept('');
         setRegion('');
         setTaxiCount('');
+        setGenerateArticle(true);
+        setGenerateFaq(true);
+        setGenerateNews(false);
+        setGenerateImage(true);
       } else {
         setResult({
           success: false,
@@ -134,9 +158,9 @@ const CityPageGenerator: React.FC = () => {
                 {result.message}
               </h3>
               {result.success && result.url && (
-                <div className="space-y-2">
+                <div className="space-y-3">
                   <p className="text-sm text-green-800">
-                    <strong>ID:</strong> {result.city_id}
+                    <strong>ID Page:</strong> {result.city_id}
                   </p>
                   <p className="text-sm text-green-800">
                     <strong>Slug:</strong> {result.slug}
@@ -145,10 +169,37 @@ const CityPageGenerator: React.FC = () => {
                     href={result.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center text-sm text-blue-600 hover:text-blue-800 underline"
+                    className="inline-flex items-center text-sm text-blue-600 hover:text-blue-800 underline font-semibold"
                   >
-                    Voir la page →
+                    Voir la page ville →
                   </a>
+                  {result.generated && (
+                    <div className="mt-4 p-3 bg-white rounded-lg border border-green-200">
+                      <p className="font-semibold text-green-900 mb-2">Contenu généré :</p>
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        <div className="flex items-center space-x-2">
+                          <MapPin size={14} className={result.generated.city_page ? 'text-green-600' : 'text-gray-400'} />
+                          <span>Page ville</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <FileText size={14} className={result.generated.article ? 'text-green-600' : 'text-gray-400'} />
+                          <span>Article blog</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <HelpCircle size={14} className={result.generated.faqs > 0 ? 'text-green-600' : 'text-gray-400'} />
+                          <span>{result.generated.faqs} FAQ</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Newspaper size={14} className={result.generated.news ? 'text-green-600' : 'text-gray-400'} />
+                          <span>Actualité</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Image size={14} className={result.generated.image ? 'text-green-600' : 'text-gray-400'} />
+                          <span>Image Pexels</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
               {!result.success && result.error && (
@@ -225,16 +276,76 @@ const CityPageGenerator: React.FC = () => {
             </select>
           </div>
 
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-3">
+              Options de génération
+            </label>
+            <div className="space-y-3">
+              <label className="flex items-center space-x-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={generateArticle}
+                  onChange={(e) => setGenerateArticle(e.target.checked)}
+                  className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                />
+                <div className="flex items-center space-x-2">
+                  <FileText size={18} className="text-blue-600" />
+                  <span className="text-sm font-medium text-gray-700">Générer article de blog (800 mots)</span>
+                </div>
+              </label>
+
+              <label className="flex items-center space-x-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={generateFaq}
+                  onChange={(e) => setGenerateFaq(e.target.checked)}
+                  className="w-5 h-5 text-green-600 border-gray-300 rounded focus:ring-green-500"
+                />
+                <div className="flex items-center space-x-2">
+                  <HelpCircle size={18} className="text-green-600" />
+                  <span className="text-sm font-medium text-gray-700">Générer 3 FAQ localisées</span>
+                </div>
+              </label>
+
+              <label className="flex items-center space-x-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={generateNews}
+                  onChange={(e) => setGenerateNews(e.target.checked)}
+                  className="w-5 h-5 text-orange-600 border-gray-300 rounded focus:ring-orange-500"
+                />
+                <div className="flex items-center space-x-2">
+                  <Newspaper size={18} className="text-orange-600" />
+                  <span className="text-sm font-medium text-gray-700">Générer actualité (400 mots)</span>
+                </div>
+              </label>
+
+              <label className="flex items-center space-x-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={generateImage}
+                  onChange={(e) => setGenerateImage(e.target.checked)}
+                  className="w-5 h-5 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                />
+                <div className="flex items-center space-x-2">
+                  <Image size={18} className="text-purple-600" />
+                  <span className="text-sm font-medium text-gray-700">Chercher image Pexels</span>
+                </div>
+              </label>
+            </div>
+          </div>
+
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <div className="flex items-start space-x-3">
               <AlertCircle size={20} className="text-blue-600 flex-shrink-0 mt-0.5" />
               <div className="text-sm text-blue-800">
-                <p className="font-medium mb-1">Comment ça marche ?</p>
+                <p className="font-medium mb-1">Génération automatique complète</p>
                 <ul className="list-disc list-inside space-y-1 text-blue-700">
-                  <li>L'IA génère un contenu SEO optimisé et unique</li>
-                  <li>La page est automatiquement publiée sur le site</li>
-                  <li>Accessible immédiatement via /ville/[slug]</li>
-                  <li>Si OpenAI est indisponible, un template est utilisé</li>
+                  <li>Page ville + Article blog + 3 FAQ + Image en 1 clic</li>
+                  <li>Contenu unique généré par IA (GPT-4)</li>
+                  <li>Publication automatique et instantanée</li>
+                  <li>Fallback template si OpenAI indisponible</li>
+                  <li>Temps estimé : 10-15 secondes</li>
                 </ul>
               </div>
             </div>
