@@ -198,9 +198,9 @@ try {
                 'updated_at' => date('c')
             ];
 
-            if ($newStatus === 'contacte') {
+            if ($newStatus === 'contacté') {
                 $updateData['contacted_at'] = date('c');
-            } elseif ($newStatus === 'devis_envoye') {
+            } elseif ($newStatus === 'devis envoyé') {
                 $updateData['devis_envoye_at'] = date('c');
             } elseif ($newStatus === 'client') {
                 $updateData['client_at'] = date('c');
@@ -299,7 +299,7 @@ try {
 
             // Mettre à jour le statut du lead
             $updateData = [
-                'lead_status' => 'devis_envoye',
+                'lead_status' => 'devis envoyé',
                 'devis_envoye_at' => date('c'),
                 'updated_at' => date('c')
             ];
