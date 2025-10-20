@@ -166,13 +166,13 @@ INSERT INTO news_articles (
   );
 
 -- 5. Insérer des avis clients
-INSERT INTO reviews (name, rating, comment, verified, status, created_at) VALUES
-  ('Jean-Pierre M.', 5, 'Service impeccable ! J''ai économisé 600€ sur mon assurance taxi. L''équipe TaxiAssur a géré toutes les démarches.', true, 'published', NOW() - INTERVAL '10 days'),
-  ('Marie L.', 5, 'Excellente prise en charge après mon sinistre. Remboursement rapide et conseils professionnels.', true, 'published', NOW() - INTERVAL '8 days'),
-  ('Ahmed K.', 5, 'Comparaison rapide et efficace. J''ai trouvé la meilleure assurance pour ma flotte de taxis.', true, 'published', NOW() - INTERVAL '6 days'),
-  ('David R.', 4, 'Bon rapport qualité-prix. Les garanties sont adaptées aux taxis parisiens.', true, 'published', NOW() - INTERVAL '4 days'),
-  ('Fatima R.', 5, 'Service client réactif et à l''écoute. Je recommande vivement TaxiAssur !', true, 'published', NOW() - INTERVAL '2 days'),
-  ('Mohammed B.', 5, 'Meilleur tarif du marché trouvé en 5 minutes. Attestation reçue immédiatement.', true, 'published', NOW() - INTERVAL '1 day');
+INSERT INTO reviews (name, rating, comment, status, created_at) VALUES
+  ('Jean-Pierre M.', 5, 'Service impeccable ! J''ai économisé 600€ sur mon assurance taxi. L''équipe TaxiAssur a géré toutes les démarches.', 'published', NOW() - INTERVAL '10 days'),
+  ('Marie L.', 5, 'Excellente prise en charge après mon sinistre. Remboursement rapide et conseils professionnels.', 'published', NOW() - INTERVAL '8 days'),
+  ('Ahmed K.', 5, 'Comparaison rapide et efficace. J''ai trouvé la meilleure assurance pour ma flotte de taxis.', 'published', NOW() - INTERVAL '6 days'),
+  ('David R.', 4, 'Bon rapport qualité-prix. Les garanties sont adaptées aux taxis parisiens.', 'published', NOW() - INTERVAL '4 days'),
+  ('Fatima R.', 5, 'Service client réactif et à l''écoute. Je recommande vivement TaxiAssur !', 'published', NOW() - INTERVAL '2 days'),
+  ('Mohammed B.', 5, 'Meilleur tarif du marché trouvé en 5 minutes. Attestation reçue immédiatement.', 'published', NOW() - INTERVAL '1 day');
 
 -- 6. Initialiser métriques SEO réelles
 DELETE FROM seo_metrics WHERE date = CURRENT_DATE;
