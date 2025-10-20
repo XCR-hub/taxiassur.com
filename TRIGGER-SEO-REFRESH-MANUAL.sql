@@ -25,8 +25,6 @@ INSERT INTO seo_metrics (
   clicks,
   ctr,
   average_position,
-  sitemap_submitted,
-  last_crawl_date,
   source,
   created_at,
   updated_at
@@ -39,8 +37,6 @@ INSERT INTO seo_metrics (
   1,                                -- 1 clic (VRAI depuis Google)
   1.96,                             -- CTR = 1/51 * 100
   13.5,                             -- Position moyenne (VRAI depuis Google)
-  true,
-  NOW(),
   'google',                         -- SOURCE = google (données réelles)
   NOW(),
   NOW()

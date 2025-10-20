@@ -77,8 +77,6 @@ Deno.serve(async (req: Request) => {
         clicks: googleMetrics.clicks,
         ctr: googleMetrics.ctr,
         average_position: googleMetrics.averagePosition,
-        sitemap_submitted: true,
-        last_crawl_date: new Date().toISOString(),
         source: gscConfig?.value?.enabled ? 'google' : 'automated'
       });
 
