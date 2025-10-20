@@ -2,6 +2,23 @@ import { BlogPost, FaqEntry, Review, Offer, BlogPostSchema, FaqEntrySchema, Revi
 import { createClient } from '@supabase/supabase-js';
 import { getSupabaseUrl, getSupabaseAnonKey } from './env';
 
+// Type pour les pages ville
+export interface CityPage {
+  id: string;
+  name: string;
+  slug: string;
+  department: string;
+  region: string;
+  url: string;
+  taxis_insured: number;
+  average_savings: number;
+  satisfied_clients: number;
+  average_rating: number;
+  meta_title: string;
+  meta_description: string;
+  created_at?: string;
+}
+
 // Configuration Supabase (optionnelle)
 const supabaseUrl = getSupabaseUrl();
 const supabaseKey = getSupabaseAnonKey();
@@ -237,6 +254,87 @@ export async function getFaqEntries(): Promise<FaqEntry[]> {
 
   // Fallback vers fichiers locaux
   return await fetchLocalContent<FaqEntry>('faq', FaqEntrySchema);
+}
+
+// City Pages - Chargement dynamique depuis Supabase
+export async function getCityPages(): Promise<CityPage[]> {
+  // Essayer d'abord Supabase
+  if (supabase) {
+    try {
+      const { data, error } = await supabase.rpc('get_city_pages');
+
+      if (!error && data && data.length > 0) {
+        console.log('✅ Loaded', data.length, 'city pages from Supabase');
+        return data.map((item: any) => ({
+          id: item.id,
+          name: item.name,
+          slug: item.slug,
+          department: item.department,
+          region: item.region,
+          url: item.url,
+          taxis_insured: item.taxis_insured || 0,
+          average_savings: item.average_savings || 35,
+          satisfied_clients: item.satisfied_clients || 0,
+          average_rating: parseFloat(item.average_rating) || 4.8,
+          meta_title: item.meta_title,
+          meta_description: item.meta_description,
+          created_at: item.created_at
+        }));
+      }
+    } catch (error) {
+      console.warn('⚠️ Supabase city pages fetch failed, falling back to static:', error);
+    }
+  }
+
+  // Fallback vers les villes statiques de ping.ts
+  const { generateCityPages } = await import('./ping');
+  return generateCityPages().map((city: any) => ({
+    id: city.slug,
+    name: city.city,
+    slug: city.slug,
+    department: city.department,
+    region: city.region,
+    url: `/ville/${city.slug}`,
+    taxis_insured: 0,
+    average_savings: 35,
+    satisfied_clients: 0,
+    average_rating: 4.8,
+    meta_title: city.title,
+    meta_description: city.description
+  }));
+}
+
+// Obtenir une ville spécifique par son slug
+export async function getCityBySlug(slug: string): Promise<CityPage | null> {
+  if (supabase) {
+    try {
+      const { data, error } = await supabase.rpc('get_city_by_slug', { city_slug: slug });
+
+      if (!error && data && data.length > 0) {
+        const item = data[0];
+        return {
+          id: item.id,
+          name: item.name,
+          slug: item.slug,
+          department: item.department,
+          region: item.region,
+          url: item.url,
+          taxis_insured: item.taxis_insured || 0,
+          average_savings: item.average_savings || 35,
+          satisfied_clients: item.satisfied_clients || 0,
+          average_rating: parseFloat(item.average_rating) || 4.8,
+          meta_title: item.meta_title,
+          meta_description: item.meta_description
+        };
+      }
+    } catch (error) {
+      console.warn('⚠️ Supabase city fetch failed:', error);
+    }
+  }
+
+  // Fallback vers les villes statiques
+  const allCities = await getCityPages();
+  return allCities.find(city => city.slug === slug) || null;
 }
 
 // Reviews

@@ -1,16 +1,31 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { MapPin, Users, TrendingDown, Target } from 'lucide-react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import Seo from '../components/Seo';
 import JsonLd from '../components/JsonLd';
-import { generateCityPages } from '../lib/ping';
+import { getCityPages, CityPage } from '../lib/content';
 import Card from '../components/Card';
 import AITaxiBackground from '../components/AITaxiBackground';
 
 const CityIndex: React.FC = () => {
-  const cities = generateCityPages();
+  const [cities, setCities] = useState<CityPage[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadCities() {
+      try {
+        const data = await getCityPages();
+        setCities(data);
+      } catch (error) {
+        console.error('Error loading cities:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadCities();
+  }, []);
   
   const breadcrumbs = [
     { name: 'Accueil', url: '/' },
@@ -112,22 +127,26 @@ const CityIndex: React.FC = () => {
                   Sélectionnez votre ville pour découvrir nos services locaux et obtenir un devis adapté.
                 </p>
                 
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                  {cities.slice(0, 8).map(city => (
-                    <Link
-                      key={city.slug}
-                      to={`/ville/${city.slug}`}
-                      className="ai-card p-6 text-center hover:shadow-amber-500/40 hover:border-amber-500/50 transition-all duration-300 group"
-                    >
-                      <MapPin className="mx-auto mb-3 text-yellow-500 group-hover:scale-110 transition-transform drop-shadow-md" size={24} />
-                      <div className="font-bold text-white text-lg group-hover:text-amber-300 transition-colors drop-shadow-lg">{city.city}</div>
-                      <div className="text-sm text-gray-300 drop-shadow-md">Département {city.department}</div>
-                      <div className="text-xs text-yellow-500 opacity-0 group-hover:opacity-100 transition-opacity mt-2 drop-shadow-md">
-                        Voir les tarifs →
-                      </div>
-                    </Link>
-                  ))}
-                </div>
+                {loading ? (
+                  <div className="text-center text-white py-12">Chargement des villes...</div>
+                ) : (
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                    {cities.slice(0, 8).map(city => (
+                      <Link
+                        key={city.slug}
+                        to={city.url}
+                        className="ai-card p-6 text-center hover:shadow-amber-500/40 hover:border-amber-500/50 transition-all duration-300 group"
+                      >
+                        <MapPin className="mx-auto mb-3 text-yellow-500 group-hover:scale-110 transition-transform drop-shadow-md" size={24} />
+                        <div className="font-bold text-white text-lg group-hover:text-amber-300 transition-colors drop-shadow-lg">{city.name}</div>
+                        <div className="text-sm text-gray-300 drop-shadow-md">Département {city.department}</div>
+                        <div className="text-xs text-yellow-500 opacity-0 group-hover:opacity-100 transition-opacity mt-2 drop-shadow-md">
+                          Voir les tarifs →
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </section>
@@ -158,7 +177,7 @@ const CityIndex: React.FC = () => {
                         {region.cities.map(city => (
                           <Link
                             key={city.slug}
-                            to={`/ville/${city.slug}`}
+                            to={city.url}
                             className="block group"
                           >
                             <div className="ai-card p-6 text-center hover:shadow-amber-500/40 hover:border-amber-500/50 transition-all duration-300">
@@ -166,7 +185,7 @@ const CityIndex: React.FC = () => {
                                 <MapPin className="text-white drop-shadow-md" size={20} />
                               </div>
                               <h4 className="font-bold text-white group-hover:text-amber-300 transition-colors mb-2 drop-shadow-lg">
-                                {city.city}
+                                {city.name}
                               </h4>
                               <p className="text-sm text-gray-300 mb-3 drop-shadow-md">
                                 Département {city.department}
