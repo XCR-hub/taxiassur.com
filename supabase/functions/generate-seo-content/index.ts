@@ -130,6 +130,12 @@ ANTI-DÉTECTION IA OBLIGATOIRE :
 - Utilise : "franchement", "du coup", "bon", "concrètement"
 - ÉVITE : "il est important", "en conclusion", "il convient de"
 
+DONNÉES VILLE OBLIGATOIRES :
+- dept : Code département (ex: "75" pour Paris, "69" pour Lyon)
+- region : Région française (ex: "Île-de-France", "Auvergne-Rhône-Alpes")
+- population : Population réelle de la ville
+- taxi_count : Estimation nombre de taxis (Paris: 958, Lyon: 624, Marseille: 534, grandes villes: 200-500, moyennes: 100-200, petites: 50-100)
+
 FORMAT JSON STRICT (TOUS LES CHAMPS OBLIGATOIRES) :
 
 {
@@ -150,7 +156,11 @@ FORMAT JSON STRICT (TOUS LES CHAMPS OBLIGATOIRES) :
     "slug": "${keyword.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${targetCity.toLowerCase()}",
     "content": "<h2>Section 1</h2><p>Contenu spécifique ville...</p>",
     "metaDescription": "Tout sur ${keyword} à ${targetCity}. Tarifs, conseils et devis instantané.",
-    "keywords": ["${keyword}", "${targetCity}", "assurance taxi"]
+    "keywords": ["${keyword}", "${targetCity}", "assurance taxi"],
+    "dept": "75",
+    "region": "Île-de-France",
+    "population": 2102650,
+    "taxi_count": 958
   },
   "faq": [
     {

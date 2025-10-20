@@ -25,6 +25,10 @@ interface UnifiedContent {
     content: string;
     metaDescription: string;
     keywords: string[];
+    dept?: string;
+    region?: string;
+    population?: number;
+    taxi_count?: number;
   };
 
   // FAQ (5-10 questions)
@@ -218,6 +222,10 @@ ${(generatedContent.faq || []).map(f => `**${f?.question ?? 'Q'}**\n${f?.answer 
           content: generatedContent.cityPage?.content ?? '',
           meta_description: generatedContent.cityPage?.metaDescription ?? '',
           keywords: generatedContent.cityPage?.keywords ?? [],
+          dept: generatedContent.cityPage?.dept ?? null,
+          region: generatedContent.cityPage?.region ?? null,
+          population: generatedContent.cityPage?.population ?? null,
+          taxi_count: generatedContent.cityPage?.taxi_count ?? null,
           status: 'published',
           published_at: new Date().toISOString(),
         })
@@ -621,9 +629,23 @@ Total: ${generatedContent.metadata?.totalWords ?? 0} mots générés`
                 <p className="text-sm text-gray-700 mb-2">
                   <strong>Titre:</strong> {generatedContent.cityPage?.title ?? 'Non généré'}
                 </p>
-                <p className="text-sm text-gray-700">
+                <p className="text-sm text-gray-700 mb-2">
                   <strong>Slug:</strong> {generatedContent.cityPage?.slug ?? 'non-genere'}
                 </p>
+                <div className="grid grid-cols-2 gap-2 mt-3 text-sm">
+                  <div className="bg-white px-3 py-2 rounded border border-green-300">
+                    <strong>Département:</strong> {generatedContent.cityPage?.dept ?? 'N/A'}
+                  </div>
+                  <div className="bg-white px-3 py-2 rounded border border-green-300">
+                    <strong>Région:</strong> {generatedContent.cityPage?.region ?? 'N/A'}
+                  </div>
+                  <div className="bg-white px-3 py-2 rounded border border-green-300">
+                    <strong>Population:</strong> {generatedContent.cityPage?.population?.toLocaleString() ?? 'N/A'}
+                  </div>
+                  <div className="bg-white px-3 py-2 rounded border border-green-300">
+                    <strong>Taxis:</strong> {generatedContent.cityPage?.taxi_count ?? 'N/A'}
+                  </div>
+                </div>
               </div>
 
               {/* FAQ */}
