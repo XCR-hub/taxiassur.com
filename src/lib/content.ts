@@ -259,9 +259,8 @@ export async function getFaqEntries(): Promise<FaqEntry[]> {
 
 // City Pages - Chargement dynamique depuis Supabase
 export async function getCityPages(): Promise<CityPage[]> {
-  // MODE SÉCURISÉ : Désactiver temporairement Supabase pour les villes
-  // Utiliser uniquement les villes statiques pour éviter l'écran noir
-  const USE_STATIC_CITIES = true;  // ⚠️ TEMPORAIRE - Activer Supabase après upload
+  // Mode hybride : Essayer Supabase, sinon fallback vers villes statiques
+  const USE_STATIC_CITIES = false;  // ✅ Supabase activé
 
   // Essayer d'abord Supabase directement (pas de RPC)
   if (supabase && !USE_STATIC_CITIES) {
@@ -316,8 +315,8 @@ export async function getCityPages(): Promise<CityPage[]> {
 
 // Obtenir une ville spécifique par son slug
 export async function getCityBySlug(slug: string): Promise<CityPage | null> {
-  // MODE SÉCURISÉ : Utiliser uniquement villes statiques
-  const USE_STATIC_CITIES = true;  // ⚠️ TEMPORAIRE
+  // Mode hybride : Essayer Supabase, sinon fallback vers villes statiques
+  const USE_STATIC_CITIES = false;  // ✅ Supabase activé
 
   if (supabase && !USE_STATIC_CITIES) {
     try {
