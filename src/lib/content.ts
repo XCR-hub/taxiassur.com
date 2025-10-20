@@ -258,8 +258,12 @@ export async function getFaqEntries(): Promise<FaqEntry[]> {
 
 // City Pages - Chargement dynamique depuis Supabase
 export async function getCityPages(): Promise<CityPage[]> {
+  // MODE SÉCURISÉ : Désactiver temporairement Supabase pour les villes
+  // Utiliser uniquement les villes statiques pour éviter l'écran noir
+  const USE_STATIC_CITIES = true;  // ⚠️ TEMPORAIRE - Activer Supabase après upload
+
   // Essayer d'abord Supabase directement (pas de RPC)
-  if (supabase) {
+  if (supabase && !USE_STATIC_CITIES) {
     try {
       const { data, error } = await supabase
         .from('city_pages')
@@ -291,6 +295,7 @@ export async function getCityPages(): Promise<CityPage[]> {
   }
 
   // Fallback vers les villes statiques de ping.ts
+  console.log('📍 Using static city pages (safe mode)');
   const { generateCityPages } = await import('./ping');
   return generateCityPages().map((city: any) => ({
     id: city.slug,
@@ -310,7 +315,10 @@ export async function getCityPages(): Promise<CityPage[]> {
 
 // Obtenir une ville spécifique par son slug
 export async function getCityBySlug(slug: string): Promise<CityPage | null> {
-  if (supabase) {
+  // MODE SÉCURISÉ : Utiliser uniquement villes statiques
+  const USE_STATIC_CITIES = true;  // ⚠️ TEMPORAIRE
+
+  if (supabase && !USE_STATIC_CITIES) {
     try {
       const { data, error } = await supabase
         .from('city_pages')
@@ -341,6 +349,7 @@ export async function getCityBySlug(slug: string): Promise<CityPage | null> {
   }
 
   // Fallback vers les villes statiques
+  console.log('📍 Using static city page for:', slug);
   const allCities = await getCityPages();
   return allCities.find(city => city.slug === slug) || null;
 }
