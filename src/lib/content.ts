@@ -258,26 +258,30 @@ export async function getFaqEntries(): Promise<FaqEntry[]> {
 
 // City Pages - Chargement dynamique depuis Supabase
 export async function getCityPages(): Promise<CityPage[]> {
-  // Essayer d'abord Supabase
+  // Essayer d'abord Supabase directement (pas de RPC)
   if (supabase) {
     try {
-      const { data, error } = await supabase.rpc('get_city_pages');
+      const { data, error } = await supabase
+        .from('city_pages')
+        .select('*')
+        .eq('status', 'published')
+        .order('taxi_count', { ascending: false });
 
       if (!error && data && data.length > 0) {
         console.log('✅ Loaded', data.length, 'city pages from Supabase');
         return data.map((item: any) => ({
           id: item.id,
-          name: item.name,
+          name: item.city,              // ✅ CORRECTION: city → name
           slug: item.slug,
-          department: item.department,
-          region: item.region,
-          url: item.url,
-          taxis_insured: item.taxis_insured || 0,
-          average_savings: item.average_savings || 35,
-          satisfied_clients: item.satisfied_clients || 0,
-          average_rating: parseFloat(item.average_rating) || 4.8,
-          meta_title: item.meta_title,
-          meta_description: item.meta_description,
+          department: item.dept || '',  // ✅ CORRECTION: dept → department
+          region: item.region || '',
+          url: `/ville/${item.slug}`,
+          taxis_insured: item.taxi_count || 0,  // ✅ CORRECTION: taxi_count → taxis_insured
+          average_savings: 35,
+          satisfied_clients: Math.floor((item.taxi_count || 0) * 0.8),
+          average_rating: 4.8,
+          meta_title: item.title || item.city,
+          meta_description: item.meta_description || '',
           created_at: item.created_at
         }));
       }
@@ -308,23 +312,27 @@ export async function getCityPages(): Promise<CityPage[]> {
 export async function getCityBySlug(slug: string): Promise<CityPage | null> {
   if (supabase) {
     try {
-      const { data, error } = await supabase.rpc('get_city_by_slug', { city_slug: slug });
+      const { data, error } = await supabase
+        .from('city_pages')
+        .select('*')
+        .eq('slug', slug)
+        .eq('status', 'published')
+        .single();
 
-      if (!error && data && data.length > 0) {
-        const item = data[0];
+      if (!error && data) {
         return {
-          id: item.id,
-          name: item.name,
-          slug: item.slug,
-          department: item.department,
-          region: item.region,
-          url: item.url,
-          taxis_insured: item.taxis_insured || 0,
-          average_savings: item.average_savings || 35,
-          satisfied_clients: item.satisfied_clients || 0,
-          average_rating: parseFloat(item.average_rating) || 4.8,
-          meta_title: item.meta_title,
-          meta_description: item.meta_description
+          id: data.id,
+          name: data.city,              // ✅ CORRECTION: city → name
+          slug: data.slug,
+          department: data.dept || '',  // ✅ CORRECTION: dept → department
+          region: data.region || '',
+          url: `/ville/${data.slug}`,
+          taxis_insured: data.taxi_count || 0,  // ✅ CORRECTION: taxi_count → taxis_insured
+          average_savings: 35,
+          satisfied_clients: Math.floor((data.taxi_count || 0) * 0.8),
+          average_rating: 4.8,
+          meta_title: data.title || data.city,
+          meta_description: data.meta_description || ''
         };
       }
     } catch (error) {
