@@ -78,6 +78,9 @@ CREATE POLICY "Allow anon insert logs"
   TO anon, authenticated
   WITH CHECK (true);
 
+-- Drop existing function if exists (to avoid return type conflict)
+DROP FUNCTION IF EXISTS get_viral_template(text);
+
 -- Fonction RPC pour récupérer un template viral
 CREATE OR REPLACE FUNCTION get_viral_template(p_category text DEFAULT NULL)
 RETURNS TABLE (
