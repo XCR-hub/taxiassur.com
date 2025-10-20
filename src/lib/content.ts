@@ -24,8 +24,9 @@ const supabaseUrl = getSupabaseUrl();
 const supabaseKey = getSupabaseAnonKey();
 
 console.log('🔧 Supabase Config:', {
-  url: supabaseUrl,
-  keyPrefix: supabaseKey?.substring(0, 20) + '...'
+  url: supabaseUrl || 'NOT_CONFIGURED',
+  keyPrefix: supabaseKey ? supabaseKey.substring(0, 20) + '...' : 'NOT_CONFIGURED',
+  enabled: !!(supabaseUrl && supabaseKey)
 });
 
 const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null;

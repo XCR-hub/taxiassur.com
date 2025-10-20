@@ -15,7 +15,8 @@ export function getEnv(key: string): string | undefined {
 export function getSupabaseUrl(): string {
   const url = getEnv('VITE_SUPABASE_URL');
   if (!url) {
-    throw new Error('VITE_SUPABASE_URL is not configured. Please check your environment variables.');
+    console.warn('⚠️ VITE_SUPABASE_URL is not configured. Supabase features will be disabled.');
+    return ''; // ✅ SAFE: Return empty string instead of throwing
   }
   return url;
 }
@@ -23,7 +24,8 @@ export function getSupabaseUrl(): string {
 export function getSupabaseAnonKey(): string {
   const key = getEnv('VITE_SUPABASE_ANON_KEY');
   if (!key) {
-    throw new Error('VITE_SUPABASE_ANON_KEY is not configured. Please check your environment variables.');
+    console.warn('⚠️ VITE_SUPABASE_ANON_KEY is not configured. Supabase features will be disabled.');
+    return ''; // ✅ SAFE: Return empty string instead of throwing
   }
   return key;
 }
