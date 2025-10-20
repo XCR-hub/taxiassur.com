@@ -21,7 +21,7 @@ export default defineConfig({
       output: {
         manualChunks(id) {
           if (id.includes('node_modules')) {
-            if (id.includes('react')) {
+            if (id.includes('react') || id.includes('scheduler')) {
               return 'vendor-react';
             }
             if (id.includes('router')) {
@@ -30,26 +30,14 @@ export default defineConfig({
             if (id.includes('lucide')) {
               return 'vendor-icons';
             }
+            if (id.includes('supabase')) {
+              return 'vendor-supabase';
+            }
             return 'vendor';
           }
+          // NE PAS séparer le backoffice - tout dans un chunk pour éviter dépendances circulaires
           if (id.includes('/backoffice/')) {
-            // Séparer TOUS les composants backoffice individuellement pour éviter les dépendances circulaires
-            if (id.includes('MasterDashboard')) return 'backoffice-masterdashboard';
-            if (id.includes('MasterAI')) return 'backoffice-masterai';
-            if (id.includes('NewsManager')) return 'backoffice-newsmanager';
-            if (id.includes('SocialMediaManager')) return 'backoffice-socialmedia';
-            if (id.includes('LeadManager')) return 'backoffice-leadmanager';
-            if (id.includes('LeadCRM')) return 'backoffice-leadcrm';
-            if (id.includes('LeadMarketplace')) return 'backoffice-leadmarketplace';
-            if (id.includes('AIContentGenerator')) return 'backoffice-aicontentgen';
-            if (id.includes('AutoOptimizer')) return 'backoffice-autooptimizer';
-            if (id.includes('BacklinkManager')) return 'backoffice-backlinkmanager';
-            if (id.includes('BacklinkProspector')) return 'backoffice-backlinkprospector';
-            if (id.includes('Dashboard')) return 'backoffice-dashboard';
-            if (id.includes('CityPageGenerator')) return 'backoffice-citypagegen';
-            if (id.includes('TrendAnalyzer')) return 'backoffice-trendanalyzer';
-            // Autres composants backoffice dans un chunk séparé
-            return 'backoffice-other';
+            return 'backoffice-all';
           }
           if (id.includes('/pages/')) {
             const match = id.match(/pages\/([^/]+)/);
