@@ -125,18 +125,26 @@ const LeadManager: React.FC = () => {
 
         // Auto-changement statut vers "Devis Envoyé"
         if (success) {
-          await updateLeadStatus(selectedLead.id, 'devis_envoye', {
+          const statusUpdateSuccess = await updateLeadStatus(selectedLead.id, 'devis envoyé', {
             notes: `Devis envoyé le ${new Date().toLocaleDateString('fr-FR')}${attachment ? ' avec pièce jointe: ' + attachment.name : ''}`
           });
+
+          if (!statusUpdateSuccess) {
+            console.error('⚠️ Email envoyé mais erreur lors de la mise à jour du statut');
+          }
         }
       } else if (type === 'contract') {
         success = await sendContractEmail(selectedLead.id, attachment);
 
         // Auto-changement statut vers "Client"
         if (success) {
-          await updateLeadStatus(selectedLead.id, 'client', {
+          const statusUpdateSuccess = await updateLeadStatus(selectedLead.id, 'client', {
             notes: `Contrat envoyé le ${new Date().toLocaleDateString('fr-FR')}${attachment ? ' avec pièce jointe: ' + attachment.name : ''}`
           });
+
+          if (!statusUpdateSuccess) {
+            console.error('⚠️ Email envoyé mais erreur lors de la mise à jour du statut');
+          }
         }
       }
 
@@ -147,10 +155,12 @@ const LeadManager: React.FC = () => {
         const attachmentMsg = attachment ? '\n\nPièce jointe incluse : ' + attachment.name : '';
         const statusMsg = type === 'devis' ? '\n\n✅ Statut automatiquement changé en "Devis Envoyé"' : '\n\n✅ Statut automatiquement changé en "Client"';
         alert(`✅ ${type === 'devis' ? 'Devis' : 'Contrat'} envoyé avec succès !\n\nL'email a été envoyé à ${selectedLead.email}${attachmentMsg}${statusMsg}`);
+      } else {
+        alert('❌ Erreur lors de l\'envoi de l\'email. Vérifiez la console pour plus de détails.');
       }
     } catch (error) {
       console.error('Email sending error:', error);
-      alert('❌ Erreur de connexion au serveur');
+      alert(`❌ Erreur de connexion au serveur\n\nDétails: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
     }
   };
 

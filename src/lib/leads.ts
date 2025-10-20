@@ -123,9 +123,9 @@ export async function updateLeadStatus(
       updated_at: new Date().toISOString()
     };
 
-    if (newStatus === 'contacte' && additionalData) {
+    if (newStatus === 'contacté') {
       dateFields.contacted_at = new Date().toISOString();
-    } else if (newStatus === 'devis_envoye') {
+    } else if (newStatus === 'devis envoyé') {
       dateFields.devis_envoye_at = new Date().toISOString();
     } else if (newStatus === 'client') {
       dateFields.client_at = new Date().toISOString();
