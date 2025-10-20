@@ -59,10 +59,10 @@ Deno.serve(async (req: Request) => {
       averagePosition: 0
     };
 
-    if (gscConfig?.value?.enabled && gscConfig?.value?.api_key) {
+    if (gscConfig?.value?.enabled && gscConfig?.value?.credentials) {
       console.log("🔍 Fetching Google Search Console data...");
       googleMetrics = await fetchGoogleSearchConsoleData(
-        gscConfig.value.api_key,
+        gscConfig.value.credentials,
         gscConfig.value.site_url
       );
     } else {
@@ -172,19 +172,31 @@ Deno.serve(async (req: Request) => {
 });
 
 // Fonction pour récupérer les données Google Search Console
-async function fetchGoogleSearchConsoleData(apiKey: string, siteUrl: string) {
+async function fetchGoogleSearchConsoleData(credentialsJson: string, siteUrl: string) {
   try {
+    // Parser les credentials du compte de service
+    const credentials = JSON.parse(credentialsJson);
+
+    // Générer un JWT token pour l'authentification OAuth 2.0
+    const accessToken = await getAccessToken(credentials);
+
+    if (!accessToken) {
+      console.error("Failed to get access token");
+      return getEstimatedMetrics();
+    }
+
     const endDate = new Date();
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - 7); // 7 derniers jours
 
-    // API Google Search Console
+    // API Google Search Console avec OAuth 2.0
     const response = await fetch(
-      `https://www.googleapis.com/webmasters/v3/sites/${encodeURIComponent(siteUrl)}/searchAnalytics/query?key=${apiKey}`,
+      `https://www.googleapis.com/webmasters/v3/sites/${encodeURIComponent(siteUrl)}/searchAnalytics/query`,
       {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Authorization": `Bearer ${accessToken}`
         },
         body: JSON.stringify({
           startDate: startDate.toISOString().split('T')[0],
@@ -196,7 +208,8 @@ async function fetchGoogleSearchConsoleData(apiKey: string, siteUrl: string) {
     );
 
     if (!response.ok) {
-      console.error("Google Search Console API error:", response.status);
+      const errorText = await response.text();
+      console.error("Google Search Console API error:", response.status, errorText);
       return getEstimatedMetrics();
     }
 
@@ -221,6 +234,83 @@ async function fetchGoogleSearchConsoleData(apiKey: string, siteUrl: string) {
     console.error("Error fetching GSC data:", error);
     return getEstimatedMetrics();
   }
+}
+
+// Générer un access token OAuth 2.0 depuis le compte de service
+async function getAccessToken(credentials: any): Promise<string | null> {
+  try {
+    // Créer le JWT
+    const header = btoa(JSON.stringify({ alg: "RS256", typ: "JWT" }));
+
+    const now = Math.floor(Date.now() / 1000);
+    const claim = {
+      iss: credentials.client_email,
+      scope: "https://www.googleapis.com/auth/webmasters.readonly",
+      aud: "https://oauth2.googleapis.com/token",
+      exp: now + 3600,
+      iat: now
+    };
+
+    const claimString = btoa(JSON.stringify(claim));
+    const signatureInput = `${header}.${claimString}`;
+
+    // Importer la clé privée
+    const privateKey = await crypto.subtle.importKey(
+      "pkcs8",
+      pemToArrayBuffer(credentials.private_key),
+      {
+        name: "RSASSA-PKCS1-v1_5",
+        hash: "SHA-256"
+      },
+      false,
+      ["sign"]
+    );
+
+    // Signer le JWT
+    const signature = await crypto.subtle.sign(
+      "RSASSA-PKCS1-v1_5",
+      privateKey,
+      new TextEncoder().encode(signatureInput)
+    );
+
+    const jwt = `${signatureInput}.${btoa(String.fromCharCode(...new Uint8Array(signature)))}`;
+
+    // Échanger le JWT contre un access token
+    const tokenResponse = await fetch("https://oauth2.googleapis.com/token", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer",
+        assertion: jwt
+      })
+    });
+
+    if (!tokenResponse.ok) {
+      console.error("Token exchange failed:", await tokenResponse.text());
+      return null;
+    }
+
+    const tokenData = await tokenResponse.json();
+    return tokenData.access_token;
+
+  } catch (error) {
+    console.error("Error generating access token:", error);
+    return null;
+  }
+}
+
+// Convertir PEM en ArrayBuffer
+function pemToArrayBuffer(pem: string): ArrayBuffer {
+  const b64 = pem
+    .replace(/-----BEGIN PRIVATE KEY-----/, "")
+    .replace(/-----END PRIVATE KEY-----/, "")
+    .replace(/\s/g, "");
+  const binary = atob(b64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return bytes.buffer;
 }
 
 // Métriques estimées si API non disponible
