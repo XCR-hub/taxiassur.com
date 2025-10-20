@@ -10,7 +10,7 @@ DROP FUNCTION IF EXISTS trigger_seo_refresh();
 
 ### 2️⃣ Initialiser le contenu
 
-Copiez/collez tout le contenu de : **`INITIALISER-CONTENU-DEMO-CORRIGE.sql`**
+Copiez/collez tout le contenu de : **`INITIALISER-CONTENU-SIMPLE-FINAL.sql`**
 
 ### 3️⃣ Ajouter les insights IA
 
