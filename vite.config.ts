@@ -33,24 +33,23 @@ export default defineConfig({
             return 'vendor';
           }
           if (id.includes('/backoffice/')) {
-            // Séparer les composants backoffice pour éviter dépendances circulaires
-            if (id.includes('MasterDashboard') || id.includes('MasterAI')) {
-              return 'backoffice-master';
-            }
-            if (id.includes('NewsManager') || id.includes('SocialMediaManager')) {
-              return 'backoffice-content';
-            }
-            if (id.includes('LeadManager') || id.includes('LeadCRM') || id.includes('LeadMarketplace')) {
-              return 'backoffice-leads';
-            }
-            if (id.includes('AIContentGenerator') || id.includes('AutoOptimizer')) {
-              return 'backoffice-ai';
-            }
-            if (id.includes('BacklinkManager') || id.includes('BacklinkProspector')) {
-              return 'backoffice-seo';
-            }
-            // Autres composants backoffice
-            return 'backoffice-tools';
+            // Séparer TOUS les composants backoffice individuellement pour éviter les dépendances circulaires
+            if (id.includes('MasterDashboard')) return 'backoffice-masterdashboard';
+            if (id.includes('MasterAI')) return 'backoffice-masterai';
+            if (id.includes('NewsManager')) return 'backoffice-newsmanager';
+            if (id.includes('SocialMediaManager')) return 'backoffice-socialmedia';
+            if (id.includes('LeadManager')) return 'backoffice-leadmanager';
+            if (id.includes('LeadCRM')) return 'backoffice-leadcrm';
+            if (id.includes('LeadMarketplace')) return 'backoffice-leadmarketplace';
+            if (id.includes('AIContentGenerator')) return 'backoffice-aicontentgen';
+            if (id.includes('AutoOptimizer')) return 'backoffice-autooptimizer';
+            if (id.includes('BacklinkManager')) return 'backoffice-backlinkmanager';
+            if (id.includes('BacklinkProspector')) return 'backoffice-backlinkprospector';
+            if (id.includes('Dashboard')) return 'backoffice-dashboard';
+            if (id.includes('CityPageGenerator')) return 'backoffice-citypagegen';
+            if (id.includes('TrendAnalyzer')) return 'backoffice-trendanalyzer';
+            // Autres composants backoffice dans un chunk séparé
+            return 'backoffice-other';
           }
           if (id.includes('/pages/')) {
             const match = id.match(/pages\/([^/]+)/);
