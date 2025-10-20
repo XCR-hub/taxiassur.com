@@ -39,7 +39,7 @@
 **Dans Supabase SQL Editor, exécutez :**
 
 ```sql
--- Copiez/collez tout le fichier AJOUTER-INSIGHTS-IA-TEMPS-REEL.sql
+-- Copiez/collez tout le fichier AJOUTER-INSIGHTS-IA-TEMPS-REEL-CORRIGE.sql
 ```
 
 **Ce que ce script fait :**
@@ -195,7 +195,7 @@ SELECT net.http_post(
 ## ✨ Récapitulatif des Fichiers
 
 1. **`INITIALISER-CONTENU-DEMO-CORRIGE.sql`** - Contenu initial (OBLIGATOIRE)
-2. **`AJOUTER-INSIGHTS-IA-TEMPS-REEL.sql`** - Insights IA (RECOMMANDÉ)
+2. **`AJOUTER-INSIGHTS-IA-TEMPS-REEL-CORRIGE.sql`** - Insights IA (RECOMMANDÉ)
 3. **`DIAGNOSTIC-COMPLET-BASE.sql`** - Diagnostic de la base (OPTIONNEL)
 
 ---
