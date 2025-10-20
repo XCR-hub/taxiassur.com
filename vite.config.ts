@@ -67,14 +67,11 @@ export default defineConfig({
     cssCodeSplit: true,
     terserOptions: {
       compress: {
-        drop_console: true,
+        drop_console: false,
         drop_debugger: true,
-        pure_funcs: ['console.log', 'console.info'],
         passes: 1
       },
-      mangle: {
-        safari10: true
-      },
+      mangle: false,
       format: {
         comments: false
       }
