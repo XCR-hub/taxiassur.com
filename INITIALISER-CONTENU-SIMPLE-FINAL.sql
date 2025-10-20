@@ -139,15 +139,14 @@ INSERT INTO faq_entries (question, answer, category, status, created_at) VALUES
 
 -- 4. Insérer des actualités
 INSERT INTO news_articles (
-  title, slug, excerpt, content, author, status,
-  category, featured_image, created_at, updated_at
+  title, slug, excerpt, content, status,
+  category, image_url, created_at, updated_at
 ) VALUES
   (
     'Nouvelles réglementations taxi 2025',
     'nouvelles-reglementations-taxi-2025',
     'Découvrez les changements réglementaires qui impactent les taxis en 2025.',
     '<p>Le gouvernement a annoncé de nouvelles mesures pour moderniser le secteur du taxi en 2025.</p>',
-    'Rédaction TaxiAssur',
     'published',
     'reglementation',
     'https://images.pexels.com/photos/6589052/pexels-photo-6589052.jpeg',
@@ -159,7 +158,6 @@ INSERT INTO news_articles (
     'transition-vehicules-electriques-taxi',
     'Les aides à la conversion pour les taxis qui passent à l''électrique.',
     '<p>De nouvelles aides financières sont disponibles pour les taxis souhaitant acquérir un véhicule électrique.</p>',
-    'Rédaction TaxiAssur',
     'published',
     'environnement',
     'https://images.pexels.com/photos/110844/pexels-photo-110844.jpeg',
