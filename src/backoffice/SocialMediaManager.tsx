@@ -235,6 +235,12 @@ export default function SocialMediaManager() {
 
     try {
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      // Récupérer les plateformes sélectionnées
+      const selectedPlatforms = Array.from(selectedNetworks);
+      const platforms = selectedPlatforms.length > 0
+        ? selectedPlatforms
+        : ['facebook', 'linkedin', 'instagram']; // Par défaut
+
       const response = await fetch(
         `${supabaseUrl}/functions/v1/ai-viral-content-generator`,
         {
@@ -244,27 +250,35 @@ export default function SocialMediaManager() {
             'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
           },
           body: JSON.stringify({
-            topic: 'assurance taxi',
-            platform: 'multi',
-            tone: 'professional',
+            category: 'assurance',
+            topic: 'assurance taxi - conseils et actualités',
+            target_audience: 'chauffeurs de taxi et VTC',
+            platforms: platforms,
+            auto_publish: false, // Génère en brouillon
           }),
         }
       );
 
       const data = await response.json();
 
-      if (response.ok && data.content) {
+      if (response.ok && data.success && data.posts && data.posts.length > 0) {
+        // Utiliser le premier post généré
+        const firstPost = data.posts[0];
         setNewPost({
           ...newPost,
-          content: data.content,
-          hashtags: data.hashtags || ''
+          content: firstPost.content,
+          hashtags: data.hashtags?.join(' ') || firstPost.hashtags?.join(' ') || ''
         });
-        setAiResult('✅ Contenu généré avec succès !');
+        setAiResult(`✅ ${data.message} | Template: ${data.template_used} | Potentiel: ${data.viral_potential} | Score humanisation: ${data.humanization_score}%`);
+
+        // Rafraîchir la liste des posts après génération
+        await loadPosts();
       } else {
-        setAiResult('❌ Erreur: ' + (data.error || 'Service indisponible'));
+        setAiResult('❌ Erreur: ' + (data.error || 'Aucun contenu généré'));
       }
-    } catch (error) {
-      setAiResult('❌ Erreur réseau ou clé API manquante');
+    } catch (error: any) {
+      console.error('Error generating AI content:', error);
+      setAiResult(`❌ Erreur: ${error.message || 'Clé API OPENAI_API_KEY manquante ou service indisponible'}`);
     } finally {
       setGeneratingAI(false);
     }
