@@ -329,11 +329,34 @@ Consultez le détail dans la console (F12)`);
                   onClick={async () => {
                     setIsWorking(true);
                     try {
-                      const { data, error } = await supabase.rpc('trigger_seo_refresh');
-                      if (error) throw error;
+                      // Appeler directement l'Edge Function
+                      const { data: { session } } = await supabase.auth.getSession();
+                      const token = session?.access_token || import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+                      const response = await fetch(
+                        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/seo-daily-refresh`,
+                        {
+                          method: 'POST',
+                          headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                          },
+                          body: JSON.stringify({})
+                        }
+                      );
+
+                      if (!response.ok) {
+                        const error = await response.json();
+                        throw new Error(error.error || 'Failed to refresh SEO data');
+                      }
+
+                      const result = await response.json();
+                      console.log('SEO refresh result:', result);
+
                       alert('✅ Rafraîchissement SEO lancé ! Les données seront mises à jour dans quelques instants.');
                       setTimeout(loadSeoData, 3000); // Recharger après 3s
                     } catch (error: any) {
+                      console.error('SEO refresh error:', error);
                       alert(`❌ Erreur: ${error.message}`);
                     } finally {
                       setIsWorking(false);
