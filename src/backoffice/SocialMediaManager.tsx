@@ -272,7 +272,7 @@ export default function SocialMediaManager() {
         setAiResult(`✅ ${data.message} | Template: ${data.template_used} | Potentiel: ${data.viral_potential} | Score humanisation: ${data.humanization_score}%`);
 
         // Rafraîchir la liste des posts après génération
-        await loadPosts();
+        await loadRealStats();
       } else {
         setAiResult('❌ Erreur: ' + (data.error || 'Aucun contenu généré'));
       }
