@@ -179,6 +179,7 @@ export default function SocialMediaManager() {
     totalEngagement: 0,
     successRate: 0
   });
+  const [posts, setPosts] = useState<any[]>([]);
   const [newPost, setNewPost] = useState({
     platforms: [] as string[],
     content: '',
@@ -208,14 +209,17 @@ export default function SocialMediaManager() {
 
   const loadRealStats = async () => {
     try {
-      const { data: posts } = await supabase
-        .from('social_media_posts')
-        .select('*');
+      const { data: postsData } = await supabase
+        .from('social_posts')
+        .select('*, social_networks(platform)')
+        .order('created_at', { ascending: false })
+        .limit(20);
 
-      if (posts) {
-        const totalPosts = posts.length;
-        const published = posts.filter(p => p.status === 'published').length;
-        const totalEngagement = posts.reduce((sum, p) => sum + (p.engagement || 0), 0);
+      if (postsData) {
+        setPosts(postsData);
+        const totalPosts = postsData.length;
+        const published = postsData.filter(p => p.status === 'published').length;
+        const totalEngagement = postsData.reduce((sum, p) => sum + (p.engagement || 0), 0);
         const successRate = totalPosts > 0 ? Math.round((published / totalPosts) * 100) : 0;
 
         setRealStats({
@@ -292,6 +296,34 @@ export default function SocialMediaManager() {
       newSelection.add(networkId);
     }
     setSelectedNetworks(newSelection);
+  };
+
+  const handlePublishNow = async () => {
+    if (selectedNetworks.size === 0 || !newPost.content) return;
+
+    try {
+      const platformsArray = Array.from(selectedNetworks);
+
+      for (const platform of platformsArray) {
+        const network = networks.find(n => n.platform === platform);
+        if (!network) continue;
+
+        await supabase.from('social_posts').insert({
+          network_id: network.id,
+          content: newPost.content,
+          hashtags: newPost.hashtags.split(/[,\s]+/).filter(Boolean),
+          status: newPost.scheduled_at ? 'scheduled' : 'draft',
+          scheduled_at: newPost.scheduled_at || null,
+        });
+      }
+
+      setNewPost({ platforms: [], content: '', hashtags: '', scheduled_at: '' });
+      await loadRealStats();
+      alert('✅ Publication créée avec succès !');
+    } catch (error) {
+      console.error('Error publishing:', error);
+      alert('❌ Erreur lors de la publication');
+    }
   };
 
   const toggleNetworkActive = async (networkId: string, currentStatus: boolean) => {
@@ -609,6 +641,7 @@ export default function SocialMediaManager() {
 
           <div className="flex gap-3">
             <button
+              onClick={handlePublishNow}
               disabled={selectedNetworks.size === 0 || !newPost.content}
               className="flex-1 bg-gradient-to-r from-slate-600 to-orange-600 hover:from-slate-700 hover:to-orange-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-bold py-3 px-6 rounded-lg transition-all shadow-md"
             >
@@ -620,6 +653,70 @@ export default function SocialMediaManager() {
             </button>
           </div>
         </div>
+      </div>
+
+      {/* Liste des Publications Générées */}
+      <div className="bg-slate-800 rounded-xl p-6 border border-slate-700">
+        <h2 className="text-xl font-bold text-white mb-4">📋 Publications Générées ({posts.length})</h2>
+
+        {posts.length === 0 ? (
+          <div className="text-center py-8 text-slate-400">
+            Aucune publication générée
+            <p className="text-sm mt-2">Utilisez le générateur IA ci-dessus pour créer du contenu</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {posts.map((post) => (
+              <div key={post.id} className="bg-slate-700 rounded-lg p-4 border border-slate-600">
+                {/* Image si disponible */}
+                {post.media_urls && post.media_urls.length > 0 && (
+                  <img
+                    src={post.media_urls[0]}
+                    alt="Post image"
+                    className="w-full h-48 object-cover rounded-lg mb-3"
+                  />
+                )}
+
+                {/* Plateforme */}
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="px-2 py-1 bg-orange-600 text-white text-xs rounded-full">
+                    {post.social_networks?.platform || 'Unknown'}
+                  </span>
+                  <span className={`px-2 py-1 text-xs rounded-full ${
+                    post.status === 'published' ? 'bg-green-600 text-white' :
+                    post.status === 'scheduled' ? 'bg-blue-600 text-white' :
+                    'bg-gray-600 text-white'
+                  }`}>
+                    {post.status}
+                  </span>
+                </div>
+
+                {/* Contenu */}
+                <p className="text-white text-sm mb-2 line-clamp-3">{post.content}</p>
+
+                {/* Hashtags */}
+                {post.hashtags && post.hashtags.length > 0 && (
+                  <div className="text-xs text-orange-400 mb-2">
+                    {post.hashtags.slice(0, 3).join(' ')}
+                  </div>
+                )}
+
+                {/* Stats */}
+                <div className="flex gap-4 text-xs text-slate-400 border-t border-slate-600 pt-2 mt-2">
+                  <span>👁️ {post.views || 0}</span>
+                  <span>❤️ {post.likes || 0}</span>
+                  <span>💬 {post.comments || 0}</span>
+                  <span>🔄 {post.shares || 0}</span>
+                </div>
+
+                {/* Date */}
+                <div className="text-xs text-slate-500 mt-2">
+                  {new Date(post.created_at).toLocaleDateString('fr-FR')}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
