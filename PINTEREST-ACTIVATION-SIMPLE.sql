@@ -136,6 +136,7 @@ BEGIN
     INSERT INTO social_networks (
       platform,
       name,
+      category,
       is_active,
       is_connected,
       auto_publish,
@@ -145,6 +146,7 @@ BEGIN
     ) VALUES (
       'pinterest',
       'Pinterest',
+      'social',
       true,
       true,
       true,
@@ -159,6 +161,7 @@ BEGIN
   ELSE
     INSERT INTO social_networks (
       platform,
+      category,
       is_active,
       is_connected,
       auto_publish,
@@ -167,6 +170,7 @@ BEGIN
       updated_at
     ) VALUES (
       'pinterest',
+      'social',
       true,
       true,
       true,
