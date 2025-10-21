@@ -62,7 +62,7 @@ $$;
 GRANT EXECUTE ON FUNCTION get_viral_template(TEXT) TO anon, authenticated, service_role;
 
 -- ═════════════════════════════════════════════════════════════
--- FIX 2: Corriger fonction get_blog_posts (published_at → published)
+-- FIX 2: Corriger fonction get_blog_posts (colonnes réelles uniquement)
 -- ═════════════════════════════════════════════════════════════
 
 DROP FUNCTION IF EXISTS get_blog_posts();
@@ -74,18 +74,16 @@ CREATE OR REPLACE FUNCTION get_blog_posts(
   p_offset INTEGER DEFAULT 0
 )
 RETURNS TABLE (
-  id UUID,
-  title TEXT,
+  id TEXT,
   slug TEXT,
+  title TEXT,
   excerpt TEXT,
   content TEXT,
-  author TEXT,
-  published BOOLEAN,
-  image_url TEXT,
-  category TEXT,
+  meta_description TEXT,
   tags TEXT[],
-  seo_title TEXT,
-  seo_description TEXT,
+  published BOOLEAN,
+  reading_time INTEGER,
+  faq JSONB,
   created_at TIMESTAMPTZ,
   updated_at TIMESTAMPTZ
 )
@@ -96,17 +94,15 @@ BEGIN
   RETURN QUERY
   SELECT
     bp.id,
-    bp.title,
     bp.slug,
+    bp.title,
     bp.excerpt,
     bp.content,
-    bp.author,
-    bp.published,
-    bp.image_url,
-    bp.category,
+    bp.meta_description,
     bp.tags,
-    bp.seo_title,
-    bp.seo_description,
+    bp.published,
+    bp.reading_time,
+    bp.faq,
     bp.created_at,
     bp.updated_at
   FROM blog_posts bp
