@@ -1,8 +1,109 @@
-🚨 RÉCUPÉRATION URGENTE - SUIVEZ CES 3 ÉTAPES
+═══════════════════════════════════════════════════════════════════
+⚡ ACTION IMMÉDIATE - 30 SECONDES
+═══════════════════════════════════════════════════════════════════
 
-═══════════════════════════════════════════════════════════
-ÉTAPE 1 : DIAGNOSTIC (1 minute)
-═══════════════════════════════════════════════════════════
+PROBLÈME: Erreur 500 sur génération IA posts
+
+CAUSE: Fonction RPC "get_viral_template" manquante
+
+SOLUTION: Exécuter ce SQL dans Supabase Dashboard
+
+═══════════════════════════════════════════════════════════════════
+📋 COPIER/COLLER CE SQL
+═══════════════════════════════════════════════════════════════════
+
+-- Supprimer si existe
+DROP FUNCTION IF EXISTS get_viral_template(text);
+
+-- Créer fonction
+CREATE OR REPLACE FUNCTION get_viral_template(p_category TEXT DEFAULT NULL)
+RETURNS TABLE (
+  id UUID,
+  name TEXT,
+  category TEXT,
+  template_text TEXT,
+  hashtags TEXT[],
+  emoji_pattern TEXT,
+  engagement_tactics JSONB,
+  avg_views BIGINT,
+  performance_score INTEGER,
+  platforms TEXT[]
+)
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+  IF p_category IS NOT NULL THEN
+    RETURN QUERY
+    SELECT
+      vt.id, vt.name, vt.category, vt.template_text,
+      vt.hashtags, vt.emoji_pattern, vt.engagement_tactics,
+      vt.avg_views, vt.performance_score, vt.platforms
+    FROM viral_templates vt
+    WHERE vt.category = p_category
+    ORDER BY vt.performance_score DESC, vt.avg_views DESC
+    LIMIT 1;
+  ELSE
+    RETURN QUERY
+    SELECT
+      vt.id, vt.name, vt.category, vt.template_text,
+      vt.hashtags, vt.emoji_pattern, vt.engagement_tactics,
+      vt.avg_views, vt.performance_score, vt.platforms
+    FROM viral_templates vt
+    ORDER BY vt.performance_score DESC, vt.avg_views DESC
+    LIMIT 1;
+  END IF;
+END;
+$$;
+
+-- Donner accès
+GRANT EXECUTE ON FUNCTION get_viral_template(TEXT) TO anon, authenticated, service_role;
+
+-- Test
+SELECT name, category, performance_score FROM get_viral_template(NULL);
+
+═══════════════════════════════════════════════════════════════════
+🎯 ÉTAPES
+═══════════════════════════════════════════════════════════════════
+
+1. Supabase Dashboard → SQL Editor
+2. Copier le SQL ci-dessus
+3. Coller dans l'éditeur
+4. Cliquer RUN
+5. Voir résultat test: 1 ligne avec nom template
+
+═══════════════════════════════════════════════════════════════════
+✅ RÉSULTAT ATTENDU
+═══════════════════════════════════════════════════════════════════
+
+Query executé avec succès
+
+Résultat test:
+name                           | category    | performance_score
+Secret Révélé : Économies Taxi | conseil     | 98
+
+═══════════════════════════════════════════════════════════════════
+🔄 PUIS RETESTER
+═══════════════════════════════════════════════════════════════════
+
+https://taxiassur.com/backoffice/social-media
+
+→ Génération IA
+→ Sujet: "Test économies"
+→ Plateformes: Facebook
+→ Générer
+
+✅ Voir: "1 publication(s) générée(s) avec succès"
+❌ Plus d'erreur 500 !
+
+═══════════════════════════════════════════════════════════════════
+
+Date: 21 octobre 2025 - 00h00
+viral_templates: ✅ OK (10 templates)
+Fonction RPC: ⏳ À créer (30 secondes)
+Edge function: ✅ OK (attend juste la fonction)
+
+C'EST LA SEULE ACTION MANQUANTE ! ⚡
 
 1. Ouvrez : https://supabase.com/dashboard/project/drohhxrkoequjphvabvq/sql/new
 
