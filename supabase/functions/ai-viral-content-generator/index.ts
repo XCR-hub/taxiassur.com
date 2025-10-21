@@ -109,6 +109,34 @@ Utilise des transitions naturelles, des expressions humaines, des émojis strat�
     // 7. Déterminer le meilleur moment de publication
     const bestTime = calculateBestPostingTime();
 
+    // 7.5 Générer une image Pexels pertinente
+    const pexelsKey = Deno.env.get("PEXELS_API_KEY");
+    let imageUrl: string | null = null;
+
+    if (pexelsKey) {
+      try {
+        const searchQuery = topic.includes('taxi') ? 'taxi driver city' : 'insurance professional';
+        const pexelsResponse = await fetch(
+          `https://api.pexels.com/v1/search?query=${encodeURIComponent(searchQuery)}&per_page=15&orientation=landscape`,
+          {
+            headers: {
+              'Authorization': pexelsKey
+            }
+          }
+        );
+
+        if (pexelsResponse.ok) {
+          const pexelsData = await pexelsResponse.json();
+          if (pexelsData.photos && pexelsData.photos.length > 0) {
+            const randomIndex = Math.floor(Math.random() * Math.min(5, pexelsData.photos.length));
+            imageUrl = pexelsData.photos[randomIndex].src.large;
+          }
+        }
+      } catch (error) {
+        console.error('Pexels error:', error);
+      }
+    }
+
     // 8. Créer les posts pour chaque plateforme
     const posts = [];
     for (const platform of platforms) {
@@ -132,6 +160,7 @@ Utilise des transitions naturelles, des expressions humaines, des émojis strat�
         .insert({
           network_id: network.id,
           content: platformContent,
+          media_urls: imageUrl ? [imageUrl] : [],
           hashtags: hashtags,
           mentions: mentions,
           ai_generated: true,
