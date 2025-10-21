@@ -62,7 +62,7 @@ $$;
 GRANT EXECUTE ON FUNCTION get_viral_template(TEXT) TO anon, authenticated, service_role;
 
 -- ═════════════════════════════════════════════════════════════
--- FIX 2: Corriger fonction get_blog_posts (colonnes réelles uniquement)
+-- FIX 2: Corriger fonction get_blog_posts (colonnes réelles + cast UUID)
 -- ═════════════════════════════════════════════════════════════
 
 DROP FUNCTION IF EXISTS get_blog_posts();
@@ -93,7 +93,7 @@ AS $$
 BEGIN
   RETURN QUERY
   SELECT
-    bp.id,
+    bp.id::TEXT,
     bp.slug,
     bp.title,
     bp.excerpt,
