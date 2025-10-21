@@ -5,12 +5,16 @@
   Cette migration ajoute les réseaux sociaux principaux.
 */
 
--- Supprimer les doublons éventuels
+-- Supprimer tous les doublons si la table a des données
 DELETE FROM social_networks
-WHERE id NOT IN (
-  SELECT MIN(id)
-  FROM social_networks
-  GROUP BY platform
+WHERE id IN (
+  SELECT id
+  FROM (
+    SELECT id, platform,
+           ROW_NUMBER() OVER (PARTITION BY platform ORDER BY created_at) as rn
+    FROM social_networks
+  ) t
+  WHERE rn > 1
 );
 
 -- Insérer les réseaux sociaux par défaut (sans ON CONFLICT)
