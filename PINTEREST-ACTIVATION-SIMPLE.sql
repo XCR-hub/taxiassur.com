@@ -93,10 +93,11 @@ END $$;
 -- 2️⃣ Supprimer les doublons Pinterest (si existent)
 DELETE FROM social_networks
 WHERE platform = 'pinterest'
-AND id NOT IN (
-  SELECT MIN(id)
+AND ctid NOT IN (
+  SELECT MIN(ctid)
   FROM social_networks
   WHERE platform = 'pinterest'
+  GROUP BY platform
 );
 
 -- 3️⃣ Ajouter contrainte unique sur platform (sans gestion d'exception)
