@@ -512,3 +512,140 @@
     font-size: 0.875rem;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   STYLES POUR LE CONTENU DES PAGES VILLES
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Forcer le texte en couleur sombre sur les pages villes */
+.city-page-content,
+.city-page-raw-content {
+  color: #111827 !important;
+}
+
+.city-page-content *,
+.city-page-raw-content * {
+  color: #374151 !important;
+}
+
+/* Titres dans les pages villes */
+.city-page-content h1,
+.city-page-raw-content h1 {
+  color: #111827 !important;
+  font-size: 2.25rem;
+  font-weight: 800;
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+}
+
+.city-page-content h2,
+.city-page-raw-content h2 {
+  color: #1f2937 !important;
+  font-size: 1.875rem;
+  font-weight: 700;
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 3px solid #f59e0b;
+}
+
+.city-page-content h3,
+.city-page-raw-content h3 {
+  color: #374151 !important;
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.city-page-content h4,
+.city-page-raw-content h4 {
+  color: #4b5563 !important;
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+}
+
+/* Paragraphes */
+.city-page-content p,
+.city-page-raw-content p {
+  color: #374151 !important;
+  margin-bottom: 1rem;
+  line-height: 1.75;
+}
+
+/* Listes */
+.city-page-content ul,
+.city-page-content ol,
+.city-page-raw-content ul,
+.city-page-raw-content ol {
+  color: #374151 !important;
+  margin: 1rem 0;
+  padding-left: 1.5rem;
+}
+
+.city-page-content li,
+.city-page-raw-content li {
+  color: #374151 !important;
+  margin-bottom: 0.5rem;
+}
+
+/* Strong et emphasis */
+.city-page-content strong,
+.city-page-raw-content strong {
+  color: #111827 !important;
+  font-weight: 700;
+}
+
+.city-page-content em,
+.city-page-raw-content em {
+  color: #4b5563 !important;
+}
+
+/* Liens */
+.city-page-content a,
+.city-page-raw-content a {
+  color: #2563eb !important;
+  text-decoration: underline;
+}
+
+.city-page-content a:hover,
+.city-page-raw-content a:hover {
+  color: #1d4ed8 !important;
+}
+
+/* Tableaux */
+.city-page-content table,
+.city-page-raw-content table {
+  width: 100%;
+  margin: 1.5rem 0;
+  border-collapse: collapse;
+}
+
+.city-page-content th,
+.city-page-raw-content th {
+  background: #f59e0b;
+  color: white !important;
+  padding: 0.75rem;
+  text-align: left;
+  font-weight: 600;
+}
+
+.city-page-content td,
+.city-page-raw-content td {
+  color: #374151 !important;
+  padding: 0.75rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+/* Divs et autres éléments */
+.city-page-content div,
+.city-page-raw-content div {
+  color: #374151 !important;
+}
+
+.city-page-content span,
+.city-page-raw-content span {
+  color: inherit !important;
+}

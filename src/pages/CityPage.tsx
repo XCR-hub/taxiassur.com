@@ -187,7 +187,7 @@ const CityPage: React.FC = () => {
               )}
 
               {/* Contenu structuré */}
-              <article className="prose prose-lg max-w-none">
+              <article className="prose prose-lg max-w-none city-page-content">
                 {(() => {
                   try {
                     const content = typeof cityPageData.content === 'string'
@@ -377,7 +377,12 @@ const CityPage: React.FC = () => {
                     );
                   } catch (e) {
                     // Fallback si JSON parse échoue
-                    return <div dangerouslySetInnerHTML={{ __html: cityPageData.content }} />;
+                    return (
+                      <div
+                        className="city-page-raw-content"
+                        dangerouslySetInnerHTML={{ __html: cityPageData.content }}
+                      />
+                    );
                   }
                 })()}
               </article>
