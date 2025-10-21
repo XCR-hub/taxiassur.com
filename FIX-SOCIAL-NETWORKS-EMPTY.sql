@@ -5,18 +5,33 @@
   Cette migration ajoute les réseaux sociaux principaux.
 */
 
--- Insérer les réseaux sociaux par défaut
+-- Supprimer les doublons éventuels
+DELETE FROM social_networks
+WHERE id NOT IN (
+  SELECT MIN(id)
+  FROM social_networks
+  GROUP BY platform
+);
+
+-- Insérer les réseaux sociaux par défaut (sans ON CONFLICT)
 INSERT INTO social_networks (platform, account_name, is_active, is_connected, auto_publish, total_posts, total_engagement)
-VALUES
-  ('facebook', 'TaxiAssur', true, false, false, 0, 0),
-  ('linkedin', 'TaxiAssur', true, false, false, 0, 0),
-  ('instagram', '@taxiassur', true, false, false, 0, 0),
-  ('twitter', '@taxiassur', true, false, false, 0, 0),
-  ('youtube', 'TaxiAssur', false, false, false, 0, 0),
-  ('tiktok', '@taxiassur', false, false, false, 0, 0)
-ON CONFLICT (platform) DO UPDATE SET
-  is_active = EXCLUDED.is_active,
-  account_name = EXCLUDED.account_name;
+SELECT 'facebook', 'TaxiAssur', true, false, false, 0, 0
+WHERE NOT EXISTS (SELECT 1 FROM social_networks WHERE platform = 'facebook')
+UNION ALL
+SELECT 'linkedin', 'TaxiAssur', true, false, false, 0, 0
+WHERE NOT EXISTS (SELECT 1 FROM social_networks WHERE platform = 'linkedin')
+UNION ALL
+SELECT 'instagram', '@taxiassur', true, false, false, 0, 0
+WHERE NOT EXISTS (SELECT 1 FROM social_networks WHERE platform = 'instagram')
+UNION ALL
+SELECT 'twitter', '@taxiassur', true, false, false, 0, 0
+WHERE NOT EXISTS (SELECT 1 FROM social_networks WHERE platform = 'twitter')
+UNION ALL
+SELECT 'youtube', 'TaxiAssur', false, false, false, 0, 0
+WHERE NOT EXISTS (SELECT 1 FROM social_networks WHERE platform = 'youtube')
+UNION ALL
+SELECT 'tiktok', '@taxiassur', false, false, false, 0, 0
+WHERE NOT EXISTS (SELECT 1 FROM social_networks WHERE platform = 'tiktok');
 
 -- Vérifier l'insertion
 SELECT
