@@ -8,9 +8,11 @@ Erreur 500 lors du clic sur **"Générer avec IA"** dans `/backoffice/social-med
 ### ÉTAPE 1 : Insérer les Templates Viraux (2 min)
 
 1. **Ouvrir** : Supabase Dashboard → SQL Editor
-2. **Copier/Coller** le contenu de : `FIX-GENERATEUR-IA-SOCIAL-MEDIA.sql`
+2. **Copier/Coller** le contenu de : `FIX-GENERATEUR-IA-SOCIAL-MEDIA-V2.sql`
 3. **Cliquer** : RUN
 4. **Vérifier** : Doit afficher "5 templates actifs"
+
+⚠️ **Important** : Utilisez la **V2** qui évite les erreurs de doublon (`ON CONFLICT`)
 
 ### ÉTAPE 2 : Configurer la Clé OpenAI (5 min)
 
@@ -98,7 +100,7 @@ SELECT name, avg_views FROM get_viral_template('assurance');
 
 ### Erreur : "No viral template found"
 **Cause :** Étape 1 pas faite
-**Solution :** Exécuter `FIX-GENERATEUR-IA-SOCIAL-MEDIA.sql`
+**Solution :** Exécuter `FIX-GENERATEUR-IA-SOCIAL-MEDIA-V2.sql`
 
 ### Erreur : "OPENAI_API_KEY not configured"
 **Cause :** Étape 2 pas faite ou mal faite
@@ -134,7 +136,8 @@ Modifier pour utiliser GPT-3.5-Turbo (10x moins cher) :
 
 Pour plus de détails, voir :
 - `CONFIGURATION-OPENAI-SUPABASE.md` - Guide complet configuration
-- `FIX-GENERATEUR-IA-SOCIAL-MEDIA.sql` - Script d'installation
+- `FIX-GENERATEUR-IA-SOCIAL-MEDIA-V2.sql` - Script d'installation (sans erreur)
+- `FIX-GENERATEUR-IA-SOCIAL-MEDIA.sql` - Version originale (peut avoir erreur ON CONFLICT)
 - Edge Function : `supabase/functions/ai-viral-content-generator/index.ts`
 
 ## ✅ Checklist Finale

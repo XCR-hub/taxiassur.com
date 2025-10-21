@@ -1,14 +1,11 @@
 /*
 ═══════════════════════════════════════════════════════════════════
-🔧 FIX: Générateur IA Réseaux Sociaux (Erreur 500)
+🔧 FIX: Générateur IA Réseaux Sociaux - VERSION SANS ERREUR
 ═══════════════════════════════════════════════════════════════════
 
 PROBLÈME: Erreur 500 lors de "Générer avec IA" dans /backoffice/social-media
 
-CAUSES POSSIBLES:
-1. ❌ Aucun template viral dans la table viral_templates
-2. ❌ Clé OPENAI_API_KEY non configurée dans Supabase
-3. ❌ Fonction RPC get_viral_template retourne vide
+CETTE VERSION: Évite l'erreur ON CONFLICT et vérifie les doublons
 
 COPIER/COLLER DANS: Supabase Dashboard → SQL Editor → RUN
 ═══════════════════════════════════════════════════════════════════
@@ -18,48 +15,46 @@ COPIER/COLLER DANS: Supabase Dashboard → SQL Editor → RUN
 -- ÉTAPE 1: DIAGNOSTIC - Vérifier l'existence des templates
 -- ═════════════════════════════════════════════════════════════
 
+DO $$
+BEGIN
+  RAISE NOTICE '═══════════════════════════════════════════════════════';
+  RAISE NOTICE '📊 DIAGNOSTIC TEMPLATES VIRAUX';
+  RAISE NOTICE '═══════════════════════════════════════════════════════';
+END $$;
+
 SELECT
-  COUNT(*) as total_templates,
-  COUNT(CASE WHEN is_active = true THEN 1 END) as actifs,
-  string_agg(DISTINCT category, ', ') as categories
+  'Total templates' as metric,
+  COUNT(*)::text as valeur
+FROM viral_templates
+UNION ALL
+SELECT
+  'Templates actifs' as metric,
+  COUNT(*)::text as valeur
+FROM viral_templates
+WHERE is_active = true
+UNION ALL
+SELECT
+  'Catégories' as metric,
+  string_agg(DISTINCT category, ', ') as valeur
 FROM viral_templates;
 
--- Si résultat = 0, aucun template n'existe
--- Si actifs = 0, tous les templates sont désactivés
-
 -- ═════════════════════════════════════════════════════════════
--- ÉTAPE 2: TESTER LA FONCTION RPC get_viral_template
+-- ÉTAPE 2: SUPPRIMER LES ANCIENS TEMPLATES (OPTIONNEL)
 -- ═════════════════════════════════════════════════════════════
 
-SELECT * FROM get_viral_template('assurance');
-
--- Si résultat vide, la fonction ne retourne rien
--- L'Edge Function échouera avec "No viral template found"
+-- ⚠️ DÉCOMMENTER LA LIGNE CI-DESSOUS POUR RÉINITIALISER
+-- DELETE FROM viral_templates WHERE category = 'assurance';
 
 -- ═════════════════════════════════════════════════════════════
--- ÉTAPE 3: INSÉRER DES TEMPLATES VIRAUX SI MANQUANTS
+-- ÉTAPE 3: INSÉRER LES TEMPLATES (SI ILS N'EXISTENT PAS)
 -- ═════════════════════════════════════════════════════════════
 
--- Supprimer uniquement les templates de démonstration si nécessaire
--- TRUNCATE TABLE viral_templates CASCADE;
-
--- Note: Si les templates existent déjà, cette insertion échouera silencieusement
--- Pour réinsérer, décommentez TRUNCATE ci-dessus ou supprimez manuellement les templates
-
--- Insérer 5 templates viraux haute performance
+-- Template 1: Question Choc
 INSERT INTO viral_templates (
-  name,
-  category,
-  template_text,
-  hashtags,
-  emoji_pattern,
-  engagement_tactics,
-  avg_views,
-  performance_score,
-  is_active
-) VALUES
--- Template 1: Question choc
-(
+  name, category, template_text, hashtags, emoji_pattern,
+  engagement_tactics, avg_views, performance_score, is_active
+)
+SELECT
   'Question Choc - Assurance',
   'assurance',
   'Saviez-vous que [CHIFFRE PRÉCIS] % des [PUBLIC CIBLE] paient TROP CHER leur assurance ? 😱
@@ -79,10 +74,16 @@ Voici LA méthode que personne ne vous dit pour économiser jusqu''à [MONTANT] 
   7200000,
   95,
   true
-),
+WHERE NOT EXISTS (
+  SELECT 1 FROM viral_templates WHERE name = 'Question Choc - Assurance'
+);
 
 -- Template 2: Histoire personnelle
-(
+INSERT INTO viral_templates (
+  name, category, template_text, hashtags, emoji_pattern,
+  engagement_tactics, avg_views, performance_score, is_active
+)
+SELECT
   'Histoire Personnelle - Témoignage',
   'assurance',
   'Il y a [DURÉE], j''ai failli perdre [CONSÉQUENCE DRAMATIQUE] 😰
@@ -105,10 +106,16 @@ Mon conseil : [ACTION CONCRÈTE]
   5800000,
   92,
   true
-),
+WHERE NOT EXISTS (
+  SELECT 1 FROM viral_templates WHERE name = 'Histoire Personnelle - Témoignage'
+);
 
 -- Template 3: Liste numérotée
-(
+INSERT INTO viral_templates (
+  name, category, template_text, hashtags, emoji_pattern,
+  engagement_tactics, avg_views, performance_score, is_active
+)
+SELECT
   'Top 5 Erreurs - Liste Virale',
   'assurance',
   'TOP 5 des ERREURS qui vous coûtent des milliers d''euros en assurance taxi 💸
@@ -130,10 +137,16 @@ Mon conseil : [ACTION CONCRÈTE]
   8500000,
   98,
   true
-),
+WHERE NOT EXISTS (
+  SELECT 1 FROM viral_templates WHERE name = 'Top 5 Erreurs - Liste Virale'
+);
 
 -- Template 4: Avant/Après
-(
+INSERT INTO viral_templates (
+  name, category, template_text, hashtags, emoji_pattern,
+  engagement_tactics, avg_views, performance_score, is_active
+)
+SELECT
   'Transformation Avant/Après',
   'assurance',
   'AVANT ❌ vs APRÈS ✅
@@ -163,10 +176,16 @@ En fait, la clé c''était [INSIGHT CLÉ].
   6400000,
   94,
   true
-),
+WHERE NOT EXISTS (
+  SELECT 1 FROM viral_templates WHERE name = 'Transformation Avant/Après'
+);
 
 -- Template 5: Mythe vs Réalité
-(
+INSERT INTO viral_templates (
+  name, category, template_text, hashtags, emoji_pattern,
+  engagement_tactics, avg_views, performance_score, is_active
+)
+SELECT
   'Mythe VS Réalité - Éducation',
   'assurance',
   '🚨 MYTHE vs RÉALITÉ sur l''assurance taxi 🚨
@@ -194,73 +213,87 @@ Ce que ça change pour vous :
   7800000,
   96,
   true
+WHERE NOT EXISTS (
+  SELECT 1 FROM viral_templates WHERE name = 'Mythe VS Réalité - Éducation'
 );
-
--- Note: Si vous obtenez une erreur de doublon, les templates existent déjà.
--- C'est normal et le système fonctionnera quand même.
 
 -- ═════════════════════════════════════════════════════════════
 -- ÉTAPE 4: VÉRIFICATION FINALE
 -- ═════════════════════════════════════════════════════════════
 
+DO $$
+BEGIN
+  RAISE NOTICE '═══════════════════════════════════════════════════════';
+  RAISE NOTICE '✅ RÉSULTAT FINAL';
+  RAISE NOTICE '═══════════════════════════════════════════════════════';
+END $$;
+
 -- Compter les templates actifs
 SELECT
-  COUNT(*) as total_actifs,
-  AVG(avg_views) as vues_moyennes,
-  AVG(performance_score) as score_moyen
+  '📊 Total templates actifs' as info,
+  COUNT(*)::text as valeur
+FROM viral_templates
+WHERE is_active = true
+UNION ALL
+SELECT
+  '📈 Vues moyennes' as info,
+  ROUND(AVG(avg_views)/1000000, 1)::text || 'M' as valeur
+FROM viral_templates
+WHERE is_active = true
+UNION ALL
+SELECT
+  '⭐ Score moyen' as info,
+  ROUND(AVG(performance_score))::text || '/100' as valeur
 FROM viral_templates
 WHERE is_active = true;
 
--- Tester la fonction RPC avec catégorie
+-- Lister les templates disponibles
 SELECT
-  name,
-  category,
-  avg_views,
-  performance_score
-FROM get_viral_template('assurance')
-LIMIT 3;
+  '📝 ' || name as "Template",
+  (avg_views / 1000000)::numeric(10,1) || 'M vues' as "Performance",
+  performance_score || '/100' as "Score"
+FROM viral_templates
+WHERE is_active = true
+ORDER BY avg_views DESC;
 
--- Tester la fonction RPC sans catégorie (retourne le meilleur template)
-SELECT
-  name,
-  category,
-  avg_views,
-  performance_score
-FROM get_viral_template(NULL)
-LIMIT 1;
+-- Tester la fonction RPC
+DO $$
+DECLARE
+  template_count integer;
+BEGIN
+  SELECT COUNT(*) INTO template_count
+  FROM get_viral_template('assurance');
+
+  IF template_count > 0 THEN
+    RAISE NOTICE '✅ Fonction get_viral_template() fonctionne: % templates trouvés', template_count;
+  ELSE
+    RAISE WARNING '⚠️ Fonction get_viral_template() ne retourne aucun template!';
+  END IF;
+END $$;
 
 /*
 ═══════════════════════════════════════════════════════════════════
-✅ RÉSULTAT ATTENDU
+✅ SUCCÈS !
 ═══════════════════════════════════════════════════════════════════
 
-Après exécution, vous devriez avoir :
-- 5 templates viraux actifs
-- Score moyen : 95/100
-- Vues moyennes : 7.1M+
+Si vous voyez les résultats ci-dessus, les templates sont installés.
 
-La fonction get_viral_template devrait retourner au moins 1 template.
+PROCHAINES ÉTAPES:
 
-IMPORTANT: Configuration de OPENAI_API_KEY
-═══════════════════════════════════════════════════════════════════
+1. Configurer la clé OpenAI
+   → Supabase Dashboard → Settings → Edge Functions → Secrets
+   → Ajouter: OPENAI_API_KEY = sk-proj-...
 
-Si l'erreur persiste après avoir des templates, c'est la clé OpenAI :
+2. Tester le générateur
+   → Aller sur /backoffice/social-media
+   → Cliquer "Générer avec IA"
+   → Attendre 5-10 secondes
+   → ✅ Contenu généré !
 
-1. Aller dans Supabase Dashboard
-2. Settings → Edge Functions → Manage secrets
-3. Ajouter : OPENAI_API_KEY = sk-proj-...votre-clé...
-
-SANS cette clé, l'Edge Function retournera toujours erreur 500.
-
-TEST FINAL
-═══════════════════════════════════════════════════════════════════
-
-1. Exécuter ce SQL
-2. Vérifier que les templates existent
-3. Configurer OPENAI_API_KEY dans Supabase
-4. Retourner sur /backoffice/social-media
-5. Cliquer "Générer avec IA"
-6. ✅ Ça devrait fonctionner !
+AIDE:
+- Si erreur 500 persiste: vérifier OPENAI_API_KEY
+- Si "No viral template found": réexécuter ce script
+- Documentation: CONFIGURATION-OPENAI-SUPABASE.md
 
 ═══════════════════════════════════════════════════════════════════
 */
