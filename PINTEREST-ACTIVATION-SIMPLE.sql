@@ -137,6 +137,7 @@ BEGIN
       platform,
       name,
       category,
+      url,
       is_active,
       is_connected,
       auto_publish,
@@ -147,6 +148,7 @@ BEGIN
       'pinterest',
       'Pinterest',
       'social',
+      'https://www.pinterest.fr/taxiassur/',
       true,
       true,
       true,
@@ -162,6 +164,7 @@ BEGIN
     INSERT INTO social_networks (
       platform,
       category,
+      url,
       is_active,
       is_connected,
       auto_publish,
@@ -171,6 +174,7 @@ BEGIN
     ) VALUES (
       'pinterest',
       'social',
+      'https://www.pinterest.fr/taxiassur/',
       true,
       true,
       true,
