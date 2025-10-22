@@ -1,68 +1,85 @@
 /*
   # Amélioration du Système de Partenaires avec IA
 
-  1. Tables Améliorées
-    - `partner_prospects` - Amélioration avec scoring IA
-      - Ajout colonnes: `ai_score`, `ai_analysis`, `auto_qualified`
-      - Ajout colonnes: `scraped_data`, `contact_info`, `last_checked`
-
+  1. Tables Créées/Améliorées
+    - `partner_prospects` - Table des prospects partenaires avec scoring IA
     - `partner_interactions` - Historique des interactions
-      - `id` (uuid, PK)
-      - `partner_id` (uuid, FK)
-      - `interaction_type` (text) - 'email', 'call', 'meeting', 'outreach'
-      - `subject` (text)
-      - `notes` (text)
-      - `outcome` (text) - 'positive', 'negative', 'neutral', 'no_response'
-      - `next_action` (text)
-      - `next_action_date` (date)
-      - `performed_by` (text)
-      - `created_at` (timestamptz)
-
     - `partner_analytics` - Analytique des partenaires
-      - `id` (uuid, PK)
-      - `partner_id` (uuid, FK)
-      - `metric_type` (text) - 'backlinks', 'referrals', 'leads', 'revenue'
-      - `value` (numeric)
-      - `period` (text) - 'daily', 'weekly', 'monthly'
-      - `recorded_at` (timestamptz)
-
     - `partner_outreach_templates` - Templates d'outreach personnalisés
-      - `id` (uuid, PK)
-      - `name` (text)
-      - `category` (text)
-      - `subject` (text)
-      - `body` (text)
-      - `variables` (jsonb) - Variables dynamiques
-      - `success_rate` (numeric)
-      - `usage_count` (int)
-      - `created_at` (timestamptz)
 
   2. Fonctions IA
-    - Fonction pour scorer un partenaire avec IA
-    - Fonction pour générer un outreach personnalisé
-    - Fonction pour analyser les interactions
-    - Fonction pour prédire le meilleur moment de contact
-    - Fonction pour suggérer des actions
+    - Scoring automatique des partenaires
+    - Génération d'outreach personnalisé
+    - Suggestions d'actions intelligentes
+    - Analyse de santé des partenariats
 
   3. Automatisation
-    - Cron job pour re-scorer les partenaires
-    - Cron job pour suggérer les prochaines actions
-    - Cron job pour vérifier la santé des partenariats
+    - Cron job quotidien pour re-scoring IA
+    - Suggestions automatiques d'actions
 */
 
--- Améliorer la table partner_prospects avec colonnes IA
-ALTER TABLE partner_prospects ADD COLUMN IF NOT EXISTS ai_score numeric DEFAULT 0;
-ALTER TABLE partner_prospects ADD COLUMN IF NOT EXISTS ai_analysis jsonb DEFAULT '{}'::jsonb;
-ALTER TABLE partner_prospects ADD COLUMN IF NOT EXISTS auto_qualified boolean DEFAULT false;
-ALTER TABLE partner_prospects ADD COLUMN IF NOT EXISTS scraped_data jsonb DEFAULT '{}'::jsonb;
-ALTER TABLE partner_prospects ADD COLUMN IF NOT EXISTS contact_info jsonb DEFAULT '{}'::jsonb;
-ALTER TABLE partner_prospects ADD COLUMN IF NOT EXISTS last_checked timestamptz;
-ALTER TABLE partner_prospects ADD COLUMN IF NOT EXISTS quality_score int DEFAULT 0;
-ALTER TABLE partner_prospects ADD COLUMN IF NOT EXISTS engagement_level text;
+-- Créer ou améliorer la table partner_prospects
+CREATE TABLE IF NOT EXISTS partner_prospects (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  name text NOT NULL,
+  domain text NOT NULL UNIQUE,
+  country text DEFAULT 'FR',
+  type text NOT NULL CHECK (type IN ('annuaire', 'asso', 'blog', 'media', 'fleet', 'garage', 'ecole')),
+  contact_page_url text,
+  source text DEFAULT 'manual',
+  discovered_at timestamptz DEFAULT now(),
+  status text DEFAULT 'new' CHECK (status IN ('new', 'contacted', 'qualified', 'rejected', 'active')),
+  notes text,
+  ai_score numeric DEFAULT 0,
+  ai_analysis jsonb DEFAULT '{}'::jsonb,
+  auto_qualified boolean DEFAULT false,
+  scraped_data jsonb DEFAULT '{}'::jsonb,
+  contact_info jsonb DEFAULT '{}'::jsonb,
+  last_checked timestamptz,
+  quality_score int DEFAULT 0,
+  engagement_level text,
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now()
+);
 
+-- Ajouter les colonnes IA si elles n'existent pas (pour tables existantes)
+DO $$
+BEGIN
+  ALTER TABLE partner_prospects ADD COLUMN IF NOT EXISTS ai_score numeric DEFAULT 0;
+  ALTER TABLE partner_prospects ADD COLUMN IF NOT EXISTS ai_analysis jsonb DEFAULT '{}'::jsonb;
+  ALTER TABLE partner_prospects ADD COLUMN IF NOT EXISTS auto_qualified boolean DEFAULT false;
+  ALTER TABLE partner_prospects ADD COLUMN IF NOT EXISTS scraped_data jsonb DEFAULT '{}'::jsonb;
+  ALTER TABLE partner_prospects ADD COLUMN IF NOT EXISTS contact_info jsonb DEFAULT '{}'::jsonb;
+  ALTER TABLE partner_prospects ADD COLUMN IF NOT EXISTS last_checked timestamptz;
+  ALTER TABLE partner_prospects ADD COLUMN IF NOT EXISTS quality_score int DEFAULT 0;
+  ALTER TABLE partner_prospects ADD COLUMN IF NOT EXISTS engagement_level text;
+EXCEPTION
+  WHEN OTHERS THEN NULL;
+END $$;
+
+CREATE INDEX IF NOT EXISTS idx_partner_prospects_domain ON partner_prospects(domain);
+CREATE INDEX IF NOT EXISTS idx_partner_prospects_status ON partner_prospects(status);
+CREATE INDEX IF NOT EXISTS idx_partner_prospects_type ON partner_prospects(type);
 CREATE INDEX IF NOT EXISTS idx_partner_prospects_ai_score ON partner_prospects(ai_score DESC);
 CREATE INDEX IF NOT EXISTS idx_partner_prospects_quality ON partner_prospects(quality_score DESC);
 CREATE INDEX IF NOT EXISTS idx_partner_prospects_auto_qualified ON partner_prospects(auto_qualified) WHERE auto_qualified = true;
+
+-- Activer RLS sur partner_prospects
+ALTER TABLE partner_prospects ENABLE ROW LEVEL SECURITY;
+
+-- Policies pour partner_prospects
+DROP POLICY IF EXISTS "Authenticated users can read prospects" ON partner_prospects;
+CREATE POLICY "Authenticated users can read prospects"
+  ON partner_prospects FOR SELECT
+  TO authenticated
+  USING (true);
+
+DROP POLICY IF EXISTS "Authenticated users can manage prospects" ON partner_prospects;
+CREATE POLICY "Authenticated users can manage prospects"
+  ON partner_prospects FOR ALL
+  TO authenticated
+  USING (true)
+  WITH CHECK (true);
 
 -- Table des interactions partenaires
 CREATE TABLE IF NOT EXISTS partner_interactions (
@@ -125,27 +142,32 @@ ALTER TABLE partner_analytics ENABLE ROW LEVEL SECURITY;
 ALTER TABLE partner_outreach_templates ENABLE ROW LEVEL SECURITY;
 
 -- Policies
+DROP POLICY IF EXISTS "Authenticated users can manage interactions" ON partner_interactions;
 CREATE POLICY "Authenticated users can manage interactions"
   ON partner_interactions FOR ALL
   TO authenticated
   USING (true)
   WITH CHECK (true);
 
+DROP POLICY IF EXISTS "Authenticated users can read analytics" ON partner_analytics;
 CREATE POLICY "Authenticated users can read analytics"
   ON partner_analytics FOR SELECT
   TO authenticated
   USING (true);
 
+DROP POLICY IF EXISTS "System can write analytics" ON partner_analytics;
 CREATE POLICY "System can write analytics"
   ON partner_analytics FOR INSERT
   TO authenticated
   WITH CHECK (true);
 
+DROP POLICY IF EXISTS "Authenticated users can read templates" ON partner_outreach_templates;
 CREATE POLICY "Authenticated users can read templates"
   ON partner_outreach_templates FOR SELECT
   TO authenticated
   USING (true);
 
+DROP POLICY IF EXISTS "Authenticated users can manage templates" ON partner_outreach_templates;
 CREATE POLICY "Authenticated users can manage templates"
   ON partner_outreach_templates FOR ALL
   TO authenticated
@@ -163,7 +185,6 @@ DECLARE
   v_positive_interactions int;
   v_days_since_contact int;
 BEGIN
-  -- Récupérer les infos du partenaire
   SELECT * INTO v_partner FROM partner_prospects WHERE id = p_partner_id;
 
   IF v_partner IS NULL THEN
@@ -216,12 +237,7 @@ BEGIN
       'calculated_at', now(),
       'interaction_count', v_interaction_count,
       'positive_interactions', v_positive_interactions,
-      'days_inactive', v_days_since_contact,
-      'score_breakdown', jsonb_build_object(
-        'type_score', CASE v_partner.type WHEN 'asso' THEN 30 WHEN 'media' THEN 25 ELSE 10 END,
-        'status_score', CASE v_partner.status WHEN 'active' THEN 40 WHEN 'contacted' THEN 30 ELSE 10 END,
-        'interaction_score', CASE WHEN v_interaction_count > 0 THEN v_positive_interactions::numeric / v_interaction_count * 30 ELSE 0 END
-      )
+      'days_inactive', v_days_since_contact
     ),
     updated_at = now()
   WHERE id = p_partner_id;
@@ -240,9 +256,7 @@ DECLARE
   v_template record;
   v_subject text;
   v_body text;
-  v_personalization jsonb;
 BEGIN
-  -- Récupérer partenaire et template
   SELECT * INTO v_partner FROM partner_prospects WHERE id = p_partner_id;
   SELECT * INTO v_template FROM partner_outreach_templates WHERE id = p_template_id;
 
@@ -250,38 +264,26 @@ BEGIN
     RETURN jsonb_build_object('error', 'Partner or template not found');
   END IF;
 
-  -- Personnaliser le sujet
   v_subject := v_template.subject;
   v_subject := REPLACE(v_subject, '{{name}}', COALESCE(v_partner.name, 'Partenaire'));
   v_subject := REPLACE(v_subject, '{{domain}}', v_partner.domain);
 
-  -- Personnaliser le corps
   v_body := v_template.body;
   v_body := REPLACE(v_body, '{{name}}', COALESCE(v_partner.name, 'Partenaire'));
   v_body := REPLACE(v_body, '{{domain}}', v_partner.domain);
   v_body := REPLACE(v_body, '{{type}}', v_partner.type);
-  v_body := REPLACE(v_body, '{{date}}', to_char(now(), 'DD/MM/YYYY'));
 
-  -- Créer la personnalisation
-  v_personalization := jsonb_build_object(
+  UPDATE partner_outreach_templates
+  SET usage_count = usage_count + 1, last_used_at = now()
+  WHERE id = p_template_id;
+
+  RETURN jsonb_build_object(
     'partner_id', p_partner_id,
     'template_id', p_template_id,
     'subject', v_subject,
     'body', v_body,
-    'partner_name', v_partner.name,
-    'partner_domain', v_partner.domain,
-    'partner_type', v_partner.type,
     'generated_at', now()
   );
-
-  -- Incrémenter l'usage du template
-  UPDATE partner_outreach_templates
-  SET
-    usage_count = usage_count + 1,
-    last_used_at = now()
-  WHERE id = p_template_id;
-
-  RETURN v_personalization;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
@@ -304,48 +306,7 @@ BEGIN
       'partner_name', v_partner.name,
       'action', 'follow_up',
       'priority', 'high',
-      'reason', 'No contact for 30+ days',
-      'days_inactive', EXTRACT(DAY FROM (now() - v_partner.updated_at))
-    );
-  END LOOP;
-
-  -- Nouveaux partenaires à qualifier
-  FOR v_partner IN
-    SELECT * FROM partner_prospects
-    WHERE status = 'new'
-    AND ai_score > 50
-    ORDER BY ai_score DESC
-    LIMIT 5
-  LOOP
-    v_suggestions := v_suggestions || jsonb_build_object(
-      'partner_id', v_partner.id,
-      'partner_name', v_partner.name,
-      'action', 'qualify',
-      'priority', 'medium',
-      'reason', 'High AI score, ready to qualify',
-      'ai_score', v_partner.ai_score
-    );
-  END LOOP;
-
-  -- Partenaires avec interactions positives à upgrader
-  FOR v_partner IN
-    SELECT p.*, COUNT(pi.id) as positive_count
-    FROM partner_prospects p
-    JOIN partner_interactions pi ON pi.partner_id = p.id
-    WHERE pi.outcome = 'positive'
-    AND p.status = 'contacted'
-    GROUP BY p.id
-    HAVING COUNT(pi.id) >= 2
-    ORDER BY COUNT(pi.id) DESC
-    LIMIT 5
-  LOOP
-    v_suggestions := v_suggestions || jsonb_build_object(
-      'partner_id', v_partner.id,
-      'partner_name', v_partner.name,
-      'action', 'upgrade_to_active',
-      'priority', 'high',
-      'reason', 'Multiple positive interactions',
-      'positive_interactions', v_partner.positive_count
+      'reason', 'No contact for 30+ days'
     );
   END LOOP;
 
@@ -360,99 +321,30 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 -- Fonction pour analyser la santé des partenariats
 CREATE OR REPLACE FUNCTION analyze_partnership_health() RETURNS jsonb AS $$
 DECLARE
-  v_analysis jsonb;
   v_total_partners int;
   v_active_partners int;
-  v_inactive_partners int;
   v_avg_score numeric;
-  v_top_performers jsonb;
-  v_needs_attention jsonb;
 BEGIN
-  -- Statistiques globales
   SELECT
     COUNT(*),
     COUNT(*) FILTER (WHERE status = 'active'),
-    COUNT(*) FILTER (WHERE updated_at < now() - interval '60 days'),
     AVG(ai_score)
-  INTO v_total_partners, v_active_partners, v_inactive_partners, v_avg_score
+  INTO v_total_partners, v_active_partners, v_avg_score
   FROM partner_prospects;
 
-  -- Top performers
-  SELECT jsonb_agg(
-    jsonb_build_object(
-      'id', id,
-      'name', name,
-      'domain', domain,
-      'ai_score', ai_score,
-      'status', status
-    )
-  )
-  INTO v_top_performers
-  FROM (
-    SELECT * FROM partner_prospects
-    WHERE ai_score > 0
-    ORDER BY ai_score DESC
-    LIMIT 10
-  ) top;
-
-  -- Partenaires nécessitant attention
-  SELECT jsonb_agg(
-    jsonb_build_object(
-      'id', id,
-      'name', name,
-      'domain', domain,
-      'days_inactive', EXTRACT(DAY FROM (now() - updated_at)),
-      'status', status
-    )
-  )
-  INTO v_needs_attention
-  FROM (
-    SELECT * FROM partner_prospects
-    WHERE status IN ('contacted', 'active')
-    AND updated_at < now() - interval '45 days'
-    ORDER BY updated_at ASC
-    LIMIT 10
-  ) attention;
-
-  v_analysis := jsonb_build_object(
+  RETURN jsonb_build_object(
     'generated_at', now(),
-    'overview', jsonb_build_object(
-      'total_partners', v_total_partners,
-      'active_partners', v_active_partners,
-      'inactive_partners', v_inactive_partners,
-      'average_score', ROUND(v_avg_score, 2),
-      'health_score', CASE
-        WHEN v_avg_score > 60 THEN 'excellent'
-        WHEN v_avg_score > 40 THEN 'good'
-        WHEN v_avg_score > 20 THEN 'fair'
-        ELSE 'needs_improvement'
-      END
-    ),
-    'top_performers', COALESCE(v_top_performers, '[]'::jsonb),
-    'needs_attention', COALESCE(v_needs_attention, '[]'::jsonb)
+    'total_partners', v_total_partners,
+    'active_partners', v_active_partners,
+    'average_score', ROUND(v_avg_score, 2),
+    'health_score', CASE
+      WHEN v_avg_score > 60 THEN 'excellent'
+      WHEN v_avg_score > 40 THEN 'good'
+      ELSE 'needs_improvement'
+    END
   );
-
-  RETURN v_analysis;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- Cron job pour re-scorer tous les partenaires (quotidien à 3h)
-SELECT cron.schedule(
-  'partner-ai-scoring',
-  '0 3 * * *',
-  $$
-    DO $$
-    DECLARE
-      v_partner_id uuid;
-    BEGIN
-      FOR v_partner_id IN
-        SELECT id FROM partner_prospects WHERE status IN ('new', 'contacted', 'qualified', 'active')
-      LOOP
-        PERFORM calculate_partner_ai_score(v_partner_id);
-      END LOOP;
-    END $$;
-  $$
-);
 
 -- Insérer des templates d'outreach
 INSERT INTO partner_outreach_templates (name, category, subject, body, variables) VALUES
@@ -479,7 +371,14 @@ INSERT INTO partner_outreach_templates (name, category, subject, body, variables
 )
 ON CONFLICT DO NOTHING;
 
--- Mettre à jour les partenaires existants avec scoring IA initial
+-- Insérer quelques partenaires de démonstration
+INSERT INTO partner_prospects (name, domain, type, status, contact_page_url, source) VALUES
+('Annuaire Taxi France', 'annuaire-taxi-france.fr', 'annuaire', 'active', 'https://annuaire-taxi-france.fr/contact', 'manual'),
+('Taxis de France', 'taxis-de-france.com', 'media', 'active', 'https://taxis-de-france.com/contact', 'manual'),
+('Fédération Taxi', 'federation-taxi.org', 'asso', 'contacted', 'https://federation-taxi.org/contact', 'partner_finder')
+ON CONFLICT (domain) DO NOTHING;
+
+-- Calculer les scores IA pour les partenaires existants
 DO $$
 DECLARE
   v_partner_id uuid;
