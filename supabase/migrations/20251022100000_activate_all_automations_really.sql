@@ -290,7 +290,6 @@ END $$;
 SELECT
   jobname AS "Job créé",
   schedule AS "Planification",
-  active AS "Actif",
-  next_run AS "Prochaine exécution"
+  active AS "Actif"
 FROM cron.job
-ORDER BY next_run;
+ORDER BY jobname;

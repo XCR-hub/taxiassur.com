@@ -17,9 +17,7 @@ FROM cron.job;
 SELECT
   jobname as "Nom",
   active as "Actif?",
-  schedule as "Planification",
-  last_run as "Dernière exec",
-  next_run as "Prochaine exec"
+  schedule as "Planification"
 FROM cron.job
 ORDER BY jobname;
 

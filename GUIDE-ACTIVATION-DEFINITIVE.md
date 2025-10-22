@@ -109,11 +109,10 @@ Une fois les secrets ajoutés, vérifiez que tout est actif :
 SELECT
   jobname AS "Job",
   active AS "Actif?",
-  schedule AS "Quand?",
-  next_run AS "Prochaine exécution"
+  schedule AS "Quand?"
 FROM cron.job
 WHERE active = true
-ORDER BY next_run;
+ORDER BY jobname;
 ```
 
 **Vous devriez voir 9 jobs:**

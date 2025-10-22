@@ -96,10 +96,9 @@ Vous l'avez déjà (celui utilisé pour les tests)
 SELECT
   jobname,
   active,
-  schedule,
-  next_run
+  schedule
 FROM cron.job
-ORDER BY next_run;
+ORDER BY jobname;
 ```
 
 Vous devriez voir ~10 cron jobs avec `active = true`

@@ -73,9 +73,9 @@ Rien ne fonctionne automatiquement :
 SELECT
   jobname,
   active,
-  next_run
+  schedule
 FROM cron.job
-ORDER BY next_run;
+ORDER BY jobname;
 ```
 
 **Vous devez voir 9 jobs avec `active = true`**
