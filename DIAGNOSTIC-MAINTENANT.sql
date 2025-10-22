@@ -78,27 +78,25 @@ FROM seo_metrics;
 -- 4. IA AUTO-APPRENANTE - Fonctionne-t-elle ?
 -- ============================================
 
--- Tâches d'apprentissage
+-- Données d'apprentissage IA
 SELECT
-  '🤖 TÂCHES IA' as section,
-  task_type as type,
-  status,
+  '🤖 DONNÉES IA' as section,
+  data_type as type,
   COUNT(*) as nombre,
-  MAX(created_at) as derniere_tache
-FROM ai_learning_tasks
-GROUP BY task_type, status
+  MAX(created_at) as derniere_donnee
+FROM ai_learning_data
+GROUP BY data_type
 ORDER BY MAX(created_at) DESC;
 
--- Logs d'erreurs récents
+-- Logs d'automatisation récents
 SELECT
-  '⚠️ ERREURS RÉCENTES' as section,
+  '📋 LOGS RÉCENTS' as section,
   created_at as quand,
-  level as niveau,
-  message,
-  details
-FROM ai_learning_logs
+  action_type as type,
+  status,
+  error_message
+FROM automation_logs
 WHERE created_at > NOW() - INTERVAL '24 hours'
-  AND level IN ('error', 'warning')
 ORDER BY created_at DESC
 LIMIT 10;
 
@@ -145,8 +143,8 @@ SELECT
   '❌ PROBLÈME',
   'IA auto-apprenante inactive',
   'HAUTE',
-  'Aucune tâche IA exécutée récemment'
-WHERE (SELECT COUNT(*) FROM ai_learning_tasks WHERE created_at > NOW() - INTERVAL '24 hours') = 0
+  'Aucune donnée IA récente'
+WHERE (SELECT COUNT(*) FROM ai_learning_data WHERE created_at > NOW() - INTERVAL '24 hours') = 0
 
 UNION ALL
 
