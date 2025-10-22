@@ -46,7 +46,7 @@ BEGIN
   UPDATE social_networks
   SET
     config = config || jsonb_build_object(
-      'board_id', 'YOUR_BOARD_ID_HERE',
+      'board_id', '945333846723355976',
       'api_version', 'v5',
       'base_url', 'https://api.pinterest.com/v5'
     ),
