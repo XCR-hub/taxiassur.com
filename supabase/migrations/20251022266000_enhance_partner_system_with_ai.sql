@@ -17,6 +17,60 @@
     - Calcul automatique des scores IA
 */
 
+-- Vérifier et ajouter les colonnes essentielles si elles n'existent pas
+DO $$
+BEGIN
+  -- Ajouter outreach_status si manquante
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'partner_prospects' AND column_name = 'outreach_status'
+  ) THEN
+    ALTER TABLE partner_prospects ADD COLUMN outreach_status text DEFAULT 'not_contacted';
+    ALTER TABLE partner_prospects ADD CONSTRAINT check_outreach_status
+      CHECK (outreach_status IN ('not_contacted', 'contacted', 'responded', 'interested', 'partnership_active', 'rejected'));
+  END IF;
+
+  -- Ajouter relevance_score si manquante
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'partner_prospects' AND column_name = 'relevance_score'
+  ) THEN
+    ALTER TABLE partner_prospects ADD COLUMN relevance_score numeric(3,2);
+  END IF;
+
+  -- Ajouter last_contact_date si manquante
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'partner_prospects' AND column_name = 'last_contact_date'
+  ) THEN
+    ALTER TABLE partner_prospects ADD COLUMN last_contact_date timestamptz;
+  END IF;
+
+  -- Ajouter contact_email si manquante
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'partner_prospects' AND column_name = 'contact_email'
+  ) THEN
+    ALTER TABLE partner_prospects ADD COLUMN contact_email text;
+  END IF;
+
+  -- Ajouter contact_name si manquante
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'partner_prospects' AND column_name = 'contact_name'
+  ) THEN
+    ALTER TABLE partner_prospects ADD COLUMN contact_name text;
+  END IF;
+
+  -- Ajouter industry si manquante
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'partner_prospects' AND column_name = 'industry'
+  ) THEN
+    ALTER TABLE partner_prospects ADD COLUMN industry text;
+  END IF;
+END $$;
+
 -- Ajouter les colonnes IA à la table partner_prospects existante
 ALTER TABLE partner_prospects ADD COLUMN IF NOT EXISTS ai_score numeric DEFAULT 0;
 ALTER TABLE partner_prospects ADD COLUMN IF NOT EXISTS ai_analysis jsonb DEFAULT '{}'::jsonb;
