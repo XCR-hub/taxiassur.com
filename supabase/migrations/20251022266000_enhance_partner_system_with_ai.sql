@@ -137,20 +137,35 @@ DECLARE
   v_interaction_count int;
   v_positive_interactions int;
   v_days_since_contact int;
+  v_outreach_status text;
 BEGIN
-  SELECT * INTO v_partner FROM partner_prospects WHERE id = p_partner_id;
+  -- Récupérer le partenaire avec gestion d'erreur
+  SELECT
+    id,
+    company_name,
+    website,
+    relevance_score,
+    last_contact_date,
+    COALESCE(outreach_status, 'not_contacted') as outreach_status
+  INTO v_partner
+  FROM partner_prospects
+  WHERE id = p_partner_id;
 
-  IF v_partner IS NULL THEN
+  IF v_partner IS NULL OR v_partner.id IS NULL THEN
     RETURN 0;
   END IF;
 
+  -- Extraire le statut dans une variable séparée
+  v_outreach_status := v_partner.outreach_status;
+
   -- Score de base selon le statut
-  CASE v_partner.outreach_status
+  CASE v_outreach_status
     WHEN 'partnership_active' THEN v_score := v_score + 50;
     WHEN 'interested' THEN v_score := v_score + 40;
     WHEN 'responded' THEN v_score := v_score + 30;
     WHEN 'contacted' THEN v_score := v_score + 20;
     WHEN 'not_contacted' THEN v_score := v_score + 10;
+    ELSE v_score := v_score + 10;
   END CASE;
 
   -- Bonus pour relevance_score existant
@@ -249,7 +264,7 @@ BEGIN
   -- Partenaires sans contact depuis 30+ jours
   FOR v_partner IN
     SELECT * FROM partner_prospects
-    WHERE outreach_status IN ('contacted', 'responded')
+    WHERE COALESCE(outreach_status, 'not_contacted') IN ('contacted', 'responded')
     AND last_contact_date < now() - interval '30 days'
     ORDER BY ai_score DESC NULLS LAST
     LIMIT 10
@@ -267,7 +282,7 @@ BEGIN
   -- Partenaires intéressés sans suite
   FOR v_partner IN
     SELECT * FROM partner_prospects
-    WHERE outreach_status = 'interested'
+    WHERE COALESCE(outreach_status, 'not_contacted') = 'interested'
     ORDER BY ai_score DESC NULLS LAST
     LIMIT 5
   LOOP
@@ -298,8 +313,8 @@ DECLARE
 BEGIN
   SELECT
     COUNT(*),
-    COUNT(*) FILTER (WHERE outreach_status = 'partnership_active'),
-    AVG(ai_score)
+    COUNT(*) FILTER (WHERE COALESCE(outreach_status, 'not_contacted') = 'partnership_active'),
+    AVG(COALESCE(ai_score, 0))
   INTO v_total_partners, v_active_partners, v_avg_score
   FROM partner_prospects;
 
