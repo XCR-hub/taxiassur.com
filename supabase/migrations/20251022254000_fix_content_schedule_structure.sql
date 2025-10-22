@@ -11,6 +11,7 @@
   - last_generated_at
   - is_active
   - metadata
+  - UNIQUE constraint sur content_type
 */
 
 -- Fonction helper pour ajouter une colonne si elle n'existe pas
@@ -62,6 +63,22 @@ BEGIN
     -- Convertir en text si c'est un enum
     ALTER TABLE content_schedule ALTER COLUMN content_type TYPE text;
     RAISE NOTICE 'Colonne content_type convertie en text';
+  END IF;
+END $$;
+
+-- Ajouter contrainte UNIQUE sur content_type si elle n'existe pas
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_constraint
+    WHERE conname = 'content_schedule_content_type_key'
+    AND conrelid = 'content_schedule'::regclass
+  ) THEN
+    ALTER TABLE content_schedule ADD CONSTRAINT content_schedule_content_type_key UNIQUE (content_type);
+    RAISE NOTICE 'Contrainte UNIQUE ajoutée sur content_type';
+  ELSE
+    RAISE NOTICE 'Contrainte UNIQUE existe déjà sur content_type';
   END IF;
 END $$;
 
