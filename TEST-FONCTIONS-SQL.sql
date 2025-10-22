@@ -97,7 +97,7 @@ SELECT
   title,
   slug,
   excerpt,
-  status,
+  category,
   published,
   created_at
 FROM blog_posts
@@ -149,7 +149,7 @@ UNION ALL
 SELECT
   'blog_posts' AS table_name,
   COUNT(*) AS total_lignes,
-  COUNT(DISTINCT status) AS statuts_uniques,
+  COUNT(DISTINCT category) AS categories_uniques,
   NULL AS compagnies_uniques
 FROM blog_posts;
 
