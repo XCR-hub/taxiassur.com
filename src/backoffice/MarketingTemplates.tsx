@@ -1,17 +1,115 @@
-import React, { useState } from 'react';
-import { MessageSquare, Mail, FileText, Copy, CheckCircle, Download, ExternalLink, QrCode } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { MessageSquare, Mail, FileText, Copy, CheckCircle, Download, ExternalLink, QrCode, Eye, Sparkles, TrendingUp, Link2, BarChart3, History, RefreshCw } from 'lucide-react';
 import Card from '../components/Card';
 import marketingTemplates from '../data/marketing-templates.json';
 import HelpPanel from '../components/HelpPanel';
 import { getHelpConfig } from '../lib/help-configs';
+import { supabase } from '../lib/supabase';
+
+interface CopyHistory {
+  id: string;
+  template_type: string;
+  template_id: string;
+  copied_at: string;
+}
+
+interface TemplateStats {
+  total_copies: number;
+  total_downloads: number;
+  most_used: string;
+  last_copy: string | null;
+}
 
 const MarketingTemplates: React.FC = () => {
   const [copied, setCopied] = useState<string>('');
   const [ambassadorCode, setAmbassadorCode] = useState<string>('AMB123');
   const [ambassadorName, setAmbassadorName] = useState<string>('Jean');
+  const [showPreview, setShowPreview] = useState<string | null>(null);
+  const [previewType, setPreviewType] = useState<'whatsapp' | 'email' | 'linkedin'>('whatsapp');
+  const [copyHistory, setCopyHistory] = useState<CopyHistory[]>([]);
+  const [stats, setStats] = useState<TemplateStats>({
+    total_copies: 0,
+    total_downloads: 0,
+    most_used: '-',
+    last_copy: null
+  });
+  const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
+  const [generatingQR, setGeneratingQR] = useState(false);
+  const [shortUrl, setShortUrl] = useState<string>('');
+  const [generatingVariant, setGeneratingVariant] = useState(false);
+  const [aiVariant, setAiVariant] = useState<string>('');
 
-  const handleCopy = (text: string, id: string) => {
-    // Remplacer les placeholders
+  useEffect(() => {
+    loadStats();
+    loadCopyHistory();
+  }, []);
+
+  const loadStats = async () => {
+    try {
+      const { data } = await supabase
+        .from('marketing_template_usage')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(100);
+
+      if (data) {
+        const totalCopies = data.filter(d => d.action === 'copy').length;
+        const totalDownloads = data.filter(d => d.action === 'download').length;
+
+        const templateCounts: Record<string, number> = {};
+        data.forEach(d => {
+          templateCounts[d.template_id] = (templateCounts[d.template_id] || 0) + 1;
+        });
+
+        const mostUsed = Object.entries(templateCounts)
+          .sort((a, b) => b[1] - a[1])[0]?.[0] || '-';
+
+        const lastCopy = data[0]?.created_at || null;
+
+        setStats({ total_copies: totalCopies, total_downloads: totalDownloads, most_used: mostUsed, last_copy: lastCopy });
+      }
+    } catch (error) {
+      console.error('Error loading stats:', error);
+    }
+  };
+
+  const loadCopyHistory = async () => {
+    try {
+      const { data } = await supabase
+        .from('marketing_template_usage')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      if (data) {
+        setCopyHistory(data.map(d => ({
+          id: d.id,
+          template_type: d.template_type,
+          template_id: d.template_id,
+          copied_at: d.created_at
+        })));
+      }
+    } catch (error) {
+      console.error('Error loading history:', error);
+    }
+  };
+
+  const trackUsage = async (templateType: string, templateId: string, action: 'copy' | 'download') => {
+    try {
+      await supabase.from('marketing_template_usage').insert({
+        template_type: templateType,
+        template_id: templateId,
+        action: action,
+        ambassador_code: ambassadorCode
+      });
+      await loadStats();
+      await loadCopyHistory();
+    } catch (error) {
+      console.error('Error tracking usage:', error);
+    }
+  };
+
+  const handleCopy = async (text: string, id: string, type: string = 'whatsapp') => {
     const personalizedText = text
       .replace(/{CODE}/g, ambassadorCode)
       .replace(/{Prénom}/g, ambassadorName)
@@ -19,10 +117,11 @@ const MarketingTemplates: React.FC = () => {
 
     navigator.clipboard.writeText(personalizedText);
     setCopied(id);
+    await trackUsage(type, id, 'copy');
     setTimeout(() => setCopied(''), 2000);
   };
 
-  const downloadTemplate = (content: string, filename: string) => {
+  const downloadTemplate = async (content: string, filename: string, type: string = 'presse', id: string = 'download') => {
     const blob = new Blob([content], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -32,20 +131,120 @@ const MarketingTemplates: React.FC = () => {
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
+    await trackUsage(type, id, 'download');
+  };
+
+  const generateQRCode = async () => {
+    setGeneratingQR(true);
+    try {
+      const url = `https://taxiassur.com/devis?ref=${ambassadorCode}`;
+      const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(url)}`;
+      setQrCodeUrl(qrUrl);
+    } catch (error) {
+      console.error('Error generating QR code:', error);
+    } finally {
+      setGeneratingQR(false);
+    }
+  };
+
+  const shortenUrl = async () => {
+    const longUrl = `https://taxiassur.com/devis?ref=${ambassadorCode}`;
+    setShortUrl(longUrl);
+  };
+
+  const generateAIVariant = async (originalText: string) => {
+    setGeneratingVariant(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-seo-content', {
+        body: {
+          prompt: `Réécris ce message marketing de manière plus engageante et persuasive, en gardant le même sens : "${originalText}"`,
+          max_length: 500
+        }
+      });
+
+      if (error) throw error;
+      setAiVariant(data?.content || 'Erreur de génération');
+    } catch (error) {
+      console.error('Error generating variant:', error);
+      setAiVariant('Erreur lors de la génération de variante');
+    } finally {
+      setGeneratingVariant(false);
+    }
+  };
+
+  const openPreview = (text: string, type: 'whatsapp' | 'email' | 'linkedin') => {
+    setShowPreview(text);
+    setPreviewType(type);
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-yellow-50 to-orange-50 p-6">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
-        <div>
-          <h1 className="text-3xl font-bold text-white flex items-center gap-3">
-            <FileText className="w-8 h-8" />
-            Templates Marketing
-          </h1>
-          <p className="text-slate-300 mt-2">
-            Messages prêts à l'emploi pour WhatsApp, LinkedIn, Email et Presse
-          </p>
+        <div className="bg-gradient-to-r from-orange-600 to-orange-700 rounded-xl p-6 text-white shadow-xl">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold flex items-center gap-3">
+                <FileText className="w-8 h-8" />
+                Templates Marketing
+              </h1>
+              <p className="text-orange-100 mt-2">
+                Messages prêts à l'emploi pour WhatsApp, LinkedIn, Email et Presse
+              </p>
+            </div>
+            <button
+              onClick={() => { loadStats(); loadCopyHistory(); }}
+              className="px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors flex items-center space-x-2"
+            >
+              <RefreshCw size={18} />
+              <span>Actualiser</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Statistiques */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-blue-500">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600 mb-1">Total Copies</p>
+                <p className="text-3xl font-bold text-gray-800">{stats.total_copies}</p>
+              </div>
+              <Copy size={32} className="text-blue-500" />
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-green-500">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600 mb-1">Téléchargements</p>
+                <p className="text-3xl font-bold text-gray-800">{stats.total_downloads}</p>
+              </div>
+              <Download size={32} className="text-green-500" />
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-orange-500">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600 mb-1">Plus Utilisé</p>
+                <p className="text-lg font-bold text-gray-800 truncate">{stats.most_used}</p>
+              </div>
+              <TrendingUp size={32} className="text-orange-500" />
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-purple-500">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600 mb-1">Dernier Usage</p>
+                <p className="text-sm font-medium text-gray-800">
+                  {stats.last_copy ? new Date(stats.last_copy).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '-'}
+                </p>
+              </div>
+              <BarChart3 size={32} className="text-purple-500" />
+            </div>
+          </div>
         </div>
 
         {/* Personnalisation */}
