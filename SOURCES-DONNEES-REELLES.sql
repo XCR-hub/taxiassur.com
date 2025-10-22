@@ -30,16 +30,15 @@ BEGIN
   IF published_blog > 0 THEN
     RAISE NOTICE 'Exemples articles publiés:';
     FOR sample_blog IN
-      SELECT title, slug, views, created_at
+      SELECT title, slug, created_at
       FROM blog_posts
       WHERE published = true
       ORDER BY created_at DESC
       LIMIT 5
     LOOP
-      RAISE NOTICE '  - % (slug: %, vues: %)',
+      RAISE NOTICE '  - % (slug: %)',
         sample_blog.title,
-        sample_blog.slug,
-        COALESCE(sample_blog.views, 0);
+        sample_blog.slug;
     END LOOP;
   END IF;
 
