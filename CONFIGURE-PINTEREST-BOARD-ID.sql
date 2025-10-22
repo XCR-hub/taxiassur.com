@@ -20,6 +20,8 @@
 INSERT INTO social_networks (
   platform,
   name,
+  category,
+  url,
   access_token,
   refresh_token,
   token_expires_at,
@@ -29,6 +31,8 @@ INSERT INTO social_networks (
 VALUES (
   'pinterest',
   'Pinterest - Réseaux',
+  'social-media',
+  'https://www.pinterest.fr/',
   'pina_AMATW2QXAABNSBAAGCAB4DLXSH5QRGQBQBIQDZDPWGOIQCVDF7UFOLF2NLTMGHYITC2ZKTYUPPFKBHXNR7P7H2OTAGWCTHYA',
   NULL,
   NOW() + INTERVAL '365 days',
@@ -43,6 +47,8 @@ VALUES (
 ON CONFLICT (platform)
 DO UPDATE SET
   name = EXCLUDED.name,
+  category = EXCLUDED.category,
+  url = EXCLUDED.url,
   access_token = EXCLUDED.access_token,
   config = social_networks.config || jsonb_build_object(
     'board_id', '945333846723355976',
@@ -59,6 +65,8 @@ SELECT
   '✅ PINTEREST CONFIGURÉ !' as status,
   platform,
   name,
+  category,
+  url,
   is_active,
   config->>'board_id' as board_id,
   config->>'board_name' as board_name,
