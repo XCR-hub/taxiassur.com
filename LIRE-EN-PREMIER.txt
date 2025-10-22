@@ -1,10 +1,11 @@
 ========================================
-⚡ EXÉCUTER MAINTENANT - VERSION CORRIGÉE
+⚡ EXÉCUTER MAINTENANT - VERSION FINALE
 ========================================
 
 PROBLÈMES RÉSOLUS:
 ✅ "cannot change return type" - DROP avant CREATE
 ✅ "column reference ambiguous" - Colonnes renommées
+✅ "no unique constraint matching" - Contrainte UNIQUE ajoutée
 
 ========================================
 ✅ SOLUTION FINALE (30 SECONDES)
@@ -58,9 +59,10 @@ RETURNS TABLE (result_company_name text, ...)
 
 1. DROP 3 anciennes fonctions (évite conflits)
 2. Ajoute 12 colonnes manquantes
-3. Crée 3 nouvelles fonctions (noms corrects)
-4. Configure 4 index de performance
-5. Définit permissions (authenticated, anon, service_role)
+3. Crée contrainte UNIQUE (company_name, city)
+4. Crée 3 nouvelles fonctions (noms corrects)
+5. Configure 4 index de performance
+6. Définit permissions (authenticated, anon, service_role)
 
 Durée : 30 secondes
 Fichier : 1 seul (FIX-FINAL-DROP-ALL-FUNCTIONS.sql)

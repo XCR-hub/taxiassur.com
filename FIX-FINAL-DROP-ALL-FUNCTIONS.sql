@@ -29,6 +29,19 @@ ALTER TABLE taxi_prospects ADD COLUMN IF NOT EXISTS website text;
 ALTER TABLE taxi_prospects ADD COLUMN IF NOT EXISTS google_place_id text;
 ALTER TABLE taxi_prospects ADD COLUMN IF NOT EXISTS rating numeric(2,1);
 
+-- Créer contrainte UNIQUE pour éviter les doublons
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conname = 'taxi_prospects_company_city_unique'
+  ) THEN
+    ALTER TABLE taxi_prospects
+    ADD CONSTRAINT taxi_prospects_company_city_unique
+    UNIQUE (company_name, city);
+  END IF;
+END $$;
+
 CREATE INDEX IF NOT EXISTS idx_taxi_prospects_city ON taxi_prospects(city);
 CREATE INDEX IF NOT EXISTS idx_taxi_prospects_status ON taxi_prospects(status);
 CREATE INDEX IF NOT EXISTS idx_social_posts_platform ON social_posts(platform);
