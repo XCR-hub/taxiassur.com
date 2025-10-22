@@ -203,7 +203,10 @@ BEGIN
 END;
 $$;
 
-RAISE NOTICE '✅ Fonction get_blog_post_by_id créée';
+DO $$
+BEGIN
+  RAISE NOTICE '✅ Fonction get_blog_post_by_id créée';
+END $$;
 
 -- ============================================
 -- RÉSUMÉ FINAL
