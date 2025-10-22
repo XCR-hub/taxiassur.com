@@ -221,15 +221,21 @@ SELECT cron.schedule(
   'ai-learning-daily',
   '0 5 * * *', -- 5h00 chaque jour
   $$
-  INSERT INTO ai_learning_tasks (task_type, status, priority, data)
+  INSERT INTO ai_learning_data (data_type, input_data, ai_output, metadata)
   VALUES (
-    'analyze_seo_performance',
-    'pending',
-    8,
+    'content_generation',
     jsonb_build_object(
       'date', NOW()::date,
-      'auto_generated', true,
-      'scope', 'full_analysis'
+      'scope', 'full_analysis',
+      'trigger', 'cron'
+    ),
+    jsonb_build_object(
+      'status', 'pending',
+      'analysis_type', 'seo_performance'
+    ),
+    jsonb_build_object(
+      'source', 'cron_job',
+      'auto_generated', true
     )
   );
   $$

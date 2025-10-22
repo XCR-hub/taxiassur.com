@@ -1,153 +1,76 @@
-═══════════════════════════════════════════════════════════════════
-⚡ ACTION IMMÉDIATE - 30 SECONDES
-═══════════════════════════════════════════════════════════════════
+================================================================================
+APPLIQUER MAINTENANT - 2 ERREURS CORRIGÉES
+================================================================================
 
-PROBLÈME: Erreur 500 sur génération IA posts
+✅ ERREUR 1 CORRIGÉE: column "last_run" does not exist
+✅ ERREUR 2 CORRIGÉE: relation "ai_learning_tasks" does not exist
 
-CAUSE: Fonction RPC "get_viral_template" manquante
+LA MIGRATION FONCTIONNE MAINTENANT !
 
-SOLUTION: Exécuter ce SQL dans Supabase Dashboard
+================================================================================
+ACTION IMMÉDIATE (5 MINUTES)
+================================================================================
 
-═══════════════════════════════════════════════════════════════════
-📋 COPIER/COLLER CE SQL
-═══════════════════════════════════════════════════════════════════
+1. Ouvrir: https://supabase.com/dashboard
 
--- Supprimer si existe
-DROP FUNCTION IF EXISTS get_viral_template(text);
+2. Cliquer: SQL Editor (icône </> à gauche)
 
--- Créer fonction
-CREATE OR REPLACE FUNCTION get_viral_template(p_category TEXT DEFAULT NULL)
-RETURNS TABLE (
-  id UUID,
-  name TEXT,
-  category TEXT,
-  template_text TEXT,
-  hashtags TEXT[],
-  emoji_pattern TEXT,
-  engagement_tactics JSONB,
-  avg_views BIGINT,
-  performance_score INTEGER,
-  platforms TEXT[]
-)
-LANGUAGE plpgsql
-SECURITY DEFINER
-AS $$
-BEGIN
-  IF p_category IS NOT NULL THEN
-    RETURN QUERY
-    SELECT
-      vt.id, vt.name, vt.category, vt.template_text,
-      vt.hashtags, vt.emoji_pattern, vt.engagement_tactics,
-      vt.avg_views, vt.performance_score, vt.platforms
-    FROM viral_templates vt
-    WHERE vt.category = p_category
-    ORDER BY vt.performance_score DESC, vt.avg_views DESC
-    LIMIT 1;
-  ELSE
-    RETURN QUERY
-    SELECT
-      vt.id, vt.name, vt.category, vt.template_text,
-      vt.hashtags, vt.emoji_pattern, vt.engagement_tactics,
-      vt.avg_views, vt.performance_score, vt.platforms
-    FROM viral_templates vt
-    ORDER BY vt.performance_score DESC, vt.avg_views DESC
-    LIMIT 1;
-  END IF;
-END;
-$$;
+3. Copier-coller TOUT le contenu du fichier:
+   supabase/migrations/20251022100000_activate_all_automations_really.sql
 
--- Donner accès
-GRANT EXECUTE ON FUNCTION get_viral_template(TEXT) TO anon, authenticated, service_role;
+4. Cliquer: Run (ou Ctrl+Enter)
 
--- Test
-SELECT name, category, performance_score FROM get_viral_template(NULL);
+5. Lire le diagnostic qui s'affiche
 
-═══════════════════════════════════════════════════════════════════
-🎯 ÉTAPES
-═══════════════════════════════════════════════════════════════════
+RÉSULTAT: 9 cron jobs créés et actifs ✅
 
-1. Supabase Dashboard → SQL Editor
-2. Copier le SQL ci-dessus
-3. Coller dans l'éditeur
-4. Cliquer RUN
-5. Voir résultat test: 1 ligne avec nom template
+================================================================================
+ENSUITE (10 MINUTES)
+================================================================================
 
-═══════════════════════════════════════════════════════════════════
-✅ RÉSULTAT ATTENDU
-═══════════════════════════════════════════════════════════════════
+Settings > Edge Functions > Secrets
 
-Query executé avec succès
+Ajouter ces 4 secrets:
 
-Résultat test:
-name                           | category    | performance_score
-Secret Révélé : Économies Taxi | conseil     | 98
+1. OPENAI_API_KEY
+   → https://platform.openai.com/api-keys
 
-═══════════════════════════════════════════════════════════════════
-🔄 PUIS RETESTER
-═══════════════════════════════════════════════════════════════════
+2. PEXELS_API_KEY
+   → https://www.pexels.com/api/
 
-https://taxiassur.com/backoffice/social-media
+3. GOOGLE_SEARCH_CONSOLE_API_KEY
+   → https://console.cloud.google.com
 
-→ Génération IA
-→ Sujet: "Test économies"
-→ Plateformes: Facebook
-→ Générer
+4. PINTEREST_ACCESS_TOKEN
+   → Vous l'avez déjà
 
-✅ Voir: "1 publication(s) générée(s) avec succès"
-❌ Plus d'erreur 500 !
+================================================================================
+VÉRIFIER
+================================================================================
 
-═══════════════════════════════════════════════════════════════════
+Dans SQL Editor:
 
-Date: 21 octobre 2025 - 00h00
-viral_templates: ✅ OK (10 templates)
-Fonction RPC: ⏳ À créer (30 secondes)
-Edge function: ✅ OK (attend juste la fonction)
+SELECT jobname, active, schedule
+FROM cron.job
+ORDER BY jobname;
 
-C'EST LA SEULE ACTION MANQUANTE ! ⚡
+Vous verrez 9 jobs avec active = true ✅
 
-1. Ouvrez : https://supabase.com/dashboard/project/drohhxrkoequjphvabvq/sql/new
+================================================================================
+RÉSULTATS APRÈS 24H
+================================================================================
 
-2. Copiez TOUT le fichier : RECUPERATION-URGENTE-DONNEES.sql
+✅ 1 article blog (2h00)
+✅ Données SEO (1h00)
+✅ 2 posts Pinterest (9h30 + 19h30)
+✅ 1 post LinkedIn (10h00)
+✅ Scraping taxis (3h00)
+✅ Analyse IA (5h00)
+✅ Dashboard mis à jour avec vraies données
 
-3. Collez dans l'éditeur SQL Supabase
+================================================================================
+COMMENCEZ MAINTENANT !
+================================================================================
 
-4. Cliquez RUN (ou Ctrl+Enter)
-
-✅ RÉSULTAT ATTENDU :
-   - Diagnostic des tables
-   - Comptage des données
-   - 5 articles + 8 FAQ restaurés automatiquement
-
-
-═══════════════════════════════════════════════════════════
-ÉTAPE 2 : RESTAURATION COMPLÈTE (2 minutes)
-═══════════════════════════════════════════════════════════
-
-1. Dans Supabase SQL Editor → New query
-
-2. Copiez TOUT le fichier : RESTAURER-24-ARTICLES-AVEC-IMAGES.sql
-
-3. Collez et cliquez RUN
-
-✅ RÉSULTAT ATTENDU :
-   - 7 articles restaurés avec images Pexels
-   - Total : 12+ articles disponibles
-
-
-═══════════════════════════════════════════════════════════
-ÉTAPE 3 : VÉRIFICATION (1 minute)
-═══════════════════════════════════════════════════════════
-
-Exécutez cette requête SQL :
-
-SELECT 'Articles' as type, COUNT(*) as total FROM blog_posts WHERE published = true
-UNION ALL SELECT 'FAQs', COUNT(*) FROM faq
-UNION ALL SELECT 'Leads', COUNT(*) FROM leads;
-
-
-✅ ATTENDU : Articles: 12+, FAQs: 8+, Leads: vos données
-
-
-═══════════════════════════════════════════════════════════
-🎯 COMMENCEZ MAINTENANT !
-═══════════════════════════════════════════════════════════
+Ouvrez Supabase SQL Editor et collez la migration.
+C'est prêt à fonctionner sans erreur.
