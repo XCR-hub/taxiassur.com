@@ -33,7 +33,11 @@ BEGIN
   END IF;
 END $$;
 
--- Mettre à jour la fonction get_blog_posts pour inclure featured_image
+-- Supprimer anciennes versions des fonctions
+DROP FUNCTION IF EXISTS get_blog_posts();
+DROP FUNCTION IF EXISTS get_blog_post_by_slug(text);
+
+-- Créer la fonction get_blog_posts pour inclure featured_image
 CREATE OR REPLACE FUNCTION get_blog_posts()
 RETURNS TABLE (
   id text,
@@ -78,7 +82,7 @@ BEGIN
 END;
 $$;
 
--- Mettre à jour la fonction get_blog_post_by_slug
+-- Créer la fonction get_blog_post_by_slug
 CREATE OR REPLACE FUNCTION get_blog_post_by_slug(p_slug text)
 RETURNS TABLE (
   id text,

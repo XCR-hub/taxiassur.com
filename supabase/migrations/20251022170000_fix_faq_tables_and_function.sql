@@ -52,26 +52,75 @@ CREATE POLICY "Authenticated can update FAQ"
 -- ============================================
 
 DO $$
+DECLARE
+  has_status_column BOOLEAN;
+  has_published_column BOOLEAN;
 BEGIN
-  -- Si faq_entries existe, migrer les données
+  -- Vérifier si faq_entries existe
   IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'faq_entries') THEN
-    INSERT INTO faq (id, question, answer, category, tags, display_order, published, created_at, updated_at)
-    SELECT
-      fe.id,
-      fe.question,
-      fe.answer,
-      COALESCE(fe.category, 'assurance-taxi') as category,
-      COALESCE(fe.tags, ARRAY[]::text[]) as tags,
-      COALESCE(fe.display_order, 0) as display_order,
-      CASE
-        WHEN fe.status = 'published' THEN true
-        ELSE false
-      END as published,
-      fe.created_at,
-      COALESCE(fe.updated_at, fe.created_at) as updated_at
-    FROM faq_entries fe
-    WHERE NOT EXISTS (SELECT 1 FROM faq WHERE faq.id = fe.id)
-    ON CONFLICT (id) DO NOTHING;
+
+    -- Vérifier les colonnes disponibles
+    SELECT EXISTS (
+      SELECT 1 FROM information_schema.columns
+      WHERE table_name = 'faq_entries' AND column_name = 'status'
+    ) INTO has_status_column;
+
+    SELECT EXISTS (
+      SELECT 1 FROM information_schema.columns
+      WHERE table_name = 'faq_entries' AND column_name = 'published'
+    ) INTO has_published_column;
+
+    -- Migration selon les colonnes disponibles
+    IF has_status_column THEN
+      INSERT INTO faq (id, question, answer, category, tags, display_order, published, created_at, updated_at)
+      SELECT
+        fe.id,
+        fe.question,
+        fe.answer,
+        COALESCE(fe.category, 'assurance-taxi') as category,
+        COALESCE(fe.tags, ARRAY[]::text[]) as tags,
+        COALESCE(fe.display_order, 0) as display_order,
+        CASE
+          WHEN fe.status = 'published' THEN true
+          ELSE false
+        END as published,
+        fe.created_at,
+        COALESCE(fe.updated_at, fe.created_at) as updated_at
+      FROM faq_entries fe
+      WHERE NOT EXISTS (SELECT 1 FROM faq WHERE faq.id = fe.id)
+      ON CONFLICT (id) DO NOTHING;
+    ELSIF has_published_column THEN
+      INSERT INTO faq (id, question, answer, category, tags, display_order, published, created_at, updated_at)
+      SELECT
+        fe.id,
+        fe.question,
+        fe.answer,
+        COALESCE(fe.category, 'assurance-taxi') as category,
+        COALESCE(fe.tags, ARRAY[]::text[]) as tags,
+        COALESCE(fe.display_order, 0) as display_order,
+        COALESCE(fe.published, true) as published,
+        fe.created_at,
+        COALESCE(fe.updated_at, fe.created_at) as updated_at
+      FROM faq_entries fe
+      WHERE NOT EXISTS (SELECT 1 FROM faq WHERE faq.id = fe.id)
+      ON CONFLICT (id) DO NOTHING;
+    ELSE
+      -- Aucune colonne status ou published, considérer tout publié
+      INSERT INTO faq (id, question, answer, category, tags, display_order, published, created_at, updated_at)
+      SELECT
+        fe.id,
+        fe.question,
+        fe.answer,
+        COALESCE(fe.category, 'assurance-taxi') as category,
+        COALESCE(fe.tags, ARRAY[]::text[]) as tags,
+        COALESCE(fe.display_order, 0) as display_order,
+        true as published,
+        fe.created_at,
+        COALESCE(fe.updated_at, fe.created_at) as updated_at
+      FROM faq_entries fe
+      WHERE NOT EXISTS (SELECT 1 FROM faq WHERE faq.id = fe.id)
+      ON CONFLICT (id) DO NOTHING;
+    END IF;
 
     RAISE NOTICE '✅ Données migrées de faq_entries vers faq';
   ELSE
