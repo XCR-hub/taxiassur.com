@@ -326,6 +326,49 @@ export default function SocialMediaManager() {
     }
   };
 
+  const handlePublishToPinterest = async (post: any) => {
+    try {
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+      const response = await fetch(`${supabaseUrl}/functions/v1/pinterest-publisher`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabaseKey}`,
+        },
+        body: JSON.stringify({
+          board_id: '945333846723355976',
+          title: post.content.substring(0, 100),
+          description: post.content,
+          link: 'https://taxiassur.com',
+          image_url: post.media_urls?.[0] || 'https://images.pexels.com/photos/887846/pexels-photo-887846.jpeg',
+          alt_text: 'Assurance Taxi Professionnelle'
+        })
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        await supabase.from('social_posts')
+          .update({
+            status: 'published',
+            published_at: new Date().toISOString(),
+            post_url: result.pin_url
+          })
+          .eq('id', post.id);
+
+        await loadRealStats();
+        alert('✅ Publié sur Pinterest avec succès !');
+      } else {
+        throw new Error(result.error || 'Erreur de publication');
+      }
+    } catch (error) {
+      console.error('Error publishing to Pinterest:', error);
+      alert('❌ Erreur lors de la publication sur Pinterest');
+    }
+  };
+
   const toggleNetworkActive = async (networkId: string, currentStatus: boolean) => {
     try {
       const { error } = await supabase
@@ -713,6 +756,28 @@ export default function SocialMediaManager() {
                 <div className="text-xs text-slate-500 mt-2">
                   {new Date(post.created_at).toLocaleDateString('fr-FR')}
                 </div>
+
+                {/* Bouton Publier sur Pinterest */}
+                {post.status === 'draft' && (
+                  <button
+                    onClick={() => handlePublishToPinterest(post)}
+                    className="w-full mt-3 bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-700 hover:to-pink-700 text-white font-bold py-2 px-4 rounded-lg flex items-center justify-center gap-2"
+                  >
+                    <Send size={16} />
+                    📌 Publier sur Pinterest
+                  </button>
+                )}
+
+                {post.status === 'published' && post.post_url && (
+                  <a
+                    href={post.post_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full mt-3 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg flex items-center justify-center gap-2"
+                  >
+                    ✅ Voir sur Pinterest
+                  </a>
+                )}
               </div>
             ))}
           </div>
