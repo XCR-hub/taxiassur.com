@@ -1,4 +1,4 @@
-import { Prospect, Consent, Outreach, Directory, Backlink, Campaign } from './schema';
+import { Prospect, Consent, Outreach, Directory, Backlink, Campaign, ProspectSchema, ConsentSchema, OutreachSchema, DirectorySchema, BacklinkSchema, CampaignSchema } from './schema';
 import { supabase } from './supabase';
 
 // Generic CRUD operations for partnership data
@@ -81,34 +81,73 @@ export async function getProspects(): Promise<Prospect[]> {
   if (supabase) {
     try {
       const { data, error } = await supabase
-        .from('prospects')
+        .from('partner_prospects')
         .select('*')
-        .order('discoveredAt', { ascending: false });
-      
+        .order('last_scraped_at', { ascending: false });
+
       if (!error && data) {
-        return data.map(item => ProspectSchema.parse(item));
+        // Map Supabase fields to Prospect schema
+        return data.map(item => ({
+          id: item.id?.toString() || crypto.randomUUID(),
+          name: item.company_name,
+          domain: item.website?.replace(/^https?:\/\//, '').replace(/\/.*$/, '') || '',
+          type: (item.industry?.toLowerCase().includes('blog') ? 'blog' :
+                 item.industry?.toLowerCase().includes('asso') ? 'asso' :
+                 item.industry?.toLowerCase().includes('média') ? 'media' :
+                 item.industry?.toLowerCase().includes('garage') ? 'garage' :
+                 item.industry?.toLowerCase().includes('école') || item.industry?.toLowerCase().includes('formation') ? 'ecole' :
+                 item.industry?.toLowerCase().includes('flotte') ? 'fleet' : 'annuaire') as Prospect['type'],
+          status: (item.outreach_status === 'not_contacted' ? 'new' :
+                  item.outreach_status === 'contacted' ? 'contacted' :
+                  item.outreach_status === 'qualified' ? 'qualified' :
+                  item.outreach_status === 'partner' ? 'partner' : 'new') as Prospect['status'],
+          discoveredAt: item.last_scraped_at || new Date().toISOString(),
+          source: item.source || 'Manual',
+          publicEmail: item.contact_email,
+          contactPageUrl: item.website,
+          notes: item.notes,
+          relevanceScore: item.relevance_score,
+          reviewedAt: item.last_outreach_at,
+          reviewedBy: 'System'
+        }));
       }
     } catch (error) {
       console.warn('Supabase prospects fetch failed, falling back to local:', error);
     }
   }
-  
+
   return await fetchLocalContent<Prospect>('prospects', ProspectSchema);
 }
 
 export async function saveProspect(prospect: Prospect): Promise<boolean> {
   if (supabase) {
     try {
+      // Map Prospect to partner_prospects schema
+      const supabaseData = {
+        company_name: prospect.name,
+        website: `https://${prospect.domain}`,
+        contact_email: prospect.publicEmail,
+        industry: prospect.type,
+        relevance_score: prospect.relevanceScore || 0.8,
+        notes: prospect.notes,
+        source: prospect.source || 'Manual',
+        outreach_status: (prospect.status === 'new' ? 'not_contacted' :
+                         prospect.status === 'contacted' ? 'contacted' :
+                         prospect.status === 'qualified' ? 'qualified' :
+                         prospect.status === 'partner' ? 'partner' : 'not_contacted'),
+        last_scraped_at: prospect.discoveredAt || new Date().toISOString()
+      };
+
       const { error } = await supabase
-        .from('prospects')
-        .upsert(prospect);
-      
+        .from('partner_prospects')
+        .upsert(supabaseData, { onConflict: 'website' });
+
       if (!error) return true;
     } catch (error) {
       console.warn('Supabase prospect save failed, falling back to local:', error);
     }
   }
-  
+
   return await saveContent('prospects', prospect.id, prospect);
 }
 
