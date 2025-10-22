@@ -14,20 +14,54 @@ import { supabase } from '../lib/supabase';
 
 interface CityPageData {
   id: string;
-  city: string;
+  city_name: string;
   title: string;
   slug: string;
   content: string;
+  dept?: string;
+  region?: string;
+  population?: number;
+  taxi_count?: number;
   meta_description?: string;
   keywords?: string[];
   status: string;
+  published?: boolean;
+  image_url?: string;
   created_at: string;
   updated_at: string;
+}
+
+interface FAQ {
+  id: string;
+  question: string;
+  answer: string;
+  city?: string;
+}
+
+interface BlogPost {
+  id: string;
+  title: string;
+  slug: string;
+  excerpt?: string;
+  published: boolean;
+  created_at: string;
+}
+
+interface NewsArticle {
+  id: string;
+  title: string;
+  slug: string;
+  excerpt?: string;
+  published: boolean;
+  created_at: string;
 }
 
 const CityPage: React.FC = () => {
   const { city } = useParams<{ city: string }>();
   const [cityPageData, setCityPageData] = useState<CityPageData | null>(null);
+  const [faqs, setFaqs] = useState<FAQ[]>([]);
+  const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
+  const [newsArticles, setNewsArticles] = useState<NewsArticle[]>([]);
   const [loading, setLoading] = useState(true);
   const [useTemplate, setUseTemplate] = useState(false);
 
@@ -39,11 +73,12 @@ const CityPage: React.FC = () => {
       }
 
       try {
+        // Charger la page ville
         const { data, error } = await supabase
           .from('city_pages')
           .select('*')
           .eq('slug', city)
-          .eq('status', 'published')
+          .or('status.eq.published,published.eq.true')
           .maybeSingle();
 
         if (error) {
@@ -51,6 +86,32 @@ const CityPage: React.FC = () => {
           setUseTemplate(true);
         } else if (data) {
           setCityPageData(data);
+
+          // Charger les FAQ (de la ville ou générales)
+          const { data: faqData } = await supabase
+            .from('faq')
+            .select('*')
+            .or(`city.eq.${data.city_name},city.is.null`)
+            .limit(5);
+          if (faqData) setFaqs(faqData);
+
+          // Charger les articles de blog récents
+          const { data: blogData } = await supabase
+            .from('blog_posts')
+            .select('id, title, slug, excerpt, published, created_at')
+            .eq('published', true)
+            .order('created_at', { ascending: false })
+            .limit(3);
+          if (blogData) setBlogPosts(blogData);
+
+          // Charger les actualités récentes
+          const { data: newsData } = await supabase
+            .from('news_articles')
+            .select('id, title, slug, excerpt, published, created_at')
+            .eq('published', true)
+            .order('created_at', { ascending: false })
+            .limit(3);
+          if (newsData) setNewsArticles(newsData);
         } else {
           setUseTemplate(true);
         }
