@@ -1,8 +1,8 @@
 /*
   # Amélioration du Système de Partenaires avec IA
 
-  1. Tables Créées/Améliorées
-    - `partner_prospects` - Table des prospects partenaires avec scoring IA
+  1. Tables Améliorées
+    - `partner_prospects` - Amélioration de la table existante avec colonnes IA
     - `partner_interactions` - Historique des interactions
     - `partner_analytics` - Analytique des partenaires
     - `partner_outreach_templates` - Templates d'outreach personnalisés
@@ -14,72 +14,25 @@
     - Analyse de santé des partenariats
 
   3. Automatisation
-    - Cron job quotidien pour re-scoring IA
-    - Suggestions automatiques d'actions
+    - Calcul automatique des scores IA
 */
 
--- Créer ou améliorer la table partner_prospects
-CREATE TABLE IF NOT EXISTS partner_prospects (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  name text NOT NULL,
-  domain text NOT NULL UNIQUE,
-  country text DEFAULT 'FR',
-  type text NOT NULL CHECK (type IN ('annuaire', 'asso', 'blog', 'media', 'fleet', 'garage', 'ecole')),
-  contact_page_url text,
-  source text DEFAULT 'manual',
-  discovered_at timestamptz DEFAULT now(),
-  status text DEFAULT 'new' CHECK (status IN ('new', 'contacted', 'qualified', 'rejected', 'active')),
-  notes text,
-  ai_score numeric DEFAULT 0,
-  ai_analysis jsonb DEFAULT '{}'::jsonb,
-  auto_qualified boolean DEFAULT false,
-  scraped_data jsonb DEFAULT '{}'::jsonb,
-  contact_info jsonb DEFAULT '{}'::jsonb,
-  last_checked timestamptz,
-  quality_score int DEFAULT 0,
-  engagement_level text,
-  created_at timestamptz DEFAULT now(),
-  updated_at timestamptz DEFAULT now()
-);
+-- Ajouter les colonnes IA à la table partner_prospects existante
+ALTER TABLE partner_prospects ADD COLUMN IF NOT EXISTS ai_score numeric DEFAULT 0;
+ALTER TABLE partner_prospects ADD COLUMN IF NOT EXISTS ai_analysis jsonb DEFAULT '{}'::jsonb;
+ALTER TABLE partner_prospects ADD COLUMN IF NOT EXISTS auto_qualified boolean DEFAULT false;
+ALTER TABLE partner_prospects ADD COLUMN IF NOT EXISTS scraped_data jsonb DEFAULT '{}'::jsonb;
+ALTER TABLE partner_prospects ADD COLUMN IF NOT EXISTS contact_info jsonb DEFAULT '{}'::jsonb;
+ALTER TABLE partner_prospects ADD COLUMN IF NOT EXISTS last_checked timestamptz;
+ALTER TABLE partner_prospects ADD COLUMN IF NOT EXISTS quality_score int DEFAULT 0;
+ALTER TABLE partner_prospects ADD COLUMN IF NOT EXISTS engagement_level text;
 
--- Ajouter les colonnes IA si elles n'existent pas (pour tables existantes)
-DO $$
-BEGIN
-  ALTER TABLE partner_prospects ADD COLUMN IF NOT EXISTS ai_score numeric DEFAULT 0;
-  ALTER TABLE partner_prospects ADD COLUMN IF NOT EXISTS ai_analysis jsonb DEFAULT '{}'::jsonb;
-  ALTER TABLE partner_prospects ADD COLUMN IF NOT EXISTS auto_qualified boolean DEFAULT false;
-  ALTER TABLE partner_prospects ADD COLUMN IF NOT EXISTS scraped_data jsonb DEFAULT '{}'::jsonb;
-  ALTER TABLE partner_prospects ADD COLUMN IF NOT EXISTS contact_info jsonb DEFAULT '{}'::jsonb;
-  ALTER TABLE partner_prospects ADD COLUMN IF NOT EXISTS last_checked timestamptz;
-  ALTER TABLE partner_prospects ADD COLUMN IF NOT EXISTS quality_score int DEFAULT 0;
-  ALTER TABLE partner_prospects ADD COLUMN IF NOT EXISTS engagement_level text;
-EXCEPTION
-  WHEN OTHERS THEN NULL;
-END $$;
-
-CREATE INDEX IF NOT EXISTS idx_partner_prospects_domain ON partner_prospects(domain);
-CREATE INDEX IF NOT EXISTS idx_partner_prospects_status ON partner_prospects(status);
-CREATE INDEX IF NOT EXISTS idx_partner_prospects_type ON partner_prospects(type);
+-- Créer les index pour les colonnes IA
 CREATE INDEX IF NOT EXISTS idx_partner_prospects_ai_score ON partner_prospects(ai_score DESC);
 CREATE INDEX IF NOT EXISTS idx_partner_prospects_quality ON partner_prospects(quality_score DESC);
 CREATE INDEX IF NOT EXISTS idx_partner_prospects_auto_qualified ON partner_prospects(auto_qualified) WHERE auto_qualified = true;
-
--- Activer RLS sur partner_prospects
-ALTER TABLE partner_prospects ENABLE ROW LEVEL SECURITY;
-
--- Policies pour partner_prospects
-DROP POLICY IF EXISTS "Authenticated users can read prospects" ON partner_prospects;
-CREATE POLICY "Authenticated users can read prospects"
-  ON partner_prospects FOR SELECT
-  TO authenticated
-  USING (true);
-
-DROP POLICY IF EXISTS "Authenticated users can manage prospects" ON partner_prospects;
-CREATE POLICY "Authenticated users can manage prospects"
-  ON partner_prospects FOR ALL
-  TO authenticated
-  USING (true)
-  WITH CHECK (true);
+CREATE INDEX IF NOT EXISTS idx_partner_prospects_website ON partner_prospects(website);
+CREATE INDEX IF NOT EXISTS idx_partner_prospects_outreach ON partner_prospects(outreach_status);
 
 -- Table des interactions partenaires
 CREATE TABLE IF NOT EXISTS partner_interactions (
@@ -174,7 +127,7 @@ CREATE POLICY "Authenticated users can manage templates"
   USING (true)
   WITH CHECK (true);
 
--- Fonction pour scorer un partenaire avec IA
+-- Fonction pour scorer un partenaire avec IA (adaptée à la structure existante)
 CREATE OR REPLACE FUNCTION calculate_partner_ai_score(
   p_partner_id uuid
 ) RETURNS numeric AS $$
@@ -191,22 +144,19 @@ BEGIN
     RETURN 0;
   END IF;
 
-  -- Score de base selon le type
-  CASE v_partner.type
-    WHEN 'asso' THEN v_score := v_score + 30;
-    WHEN 'media' THEN v_score := v_score + 25;
-    WHEN 'annuaire' THEN v_score := v_score + 20;
-    WHEN 'fleet' THEN v_score := v_score + 15;
-    ELSE v_score := v_score + 10;
+  -- Score de base selon le statut
+  CASE v_partner.outreach_status
+    WHEN 'partnership_active' THEN v_score := v_score + 50;
+    WHEN 'interested' THEN v_score := v_score + 40;
+    WHEN 'responded' THEN v_score := v_score + 30;
+    WHEN 'contacted' THEN v_score := v_score + 20;
+    WHEN 'not_contacted' THEN v_score := v_score + 10;
   END CASE;
 
-  -- Score selon le statut
-  CASE v_partner.status
-    WHEN 'active' THEN v_score := v_score + 40;
-    WHEN 'contacted' THEN v_score := v_score + 30;
-    WHEN 'qualified' THEN v_score := v_score + 20;
-    WHEN 'new' THEN v_score := v_score + 10;
-  END CASE;
+  -- Bonus pour relevance_score existant
+  IF v_partner.relevance_score IS NOT NULL THEN
+    v_score := v_score + (v_partner.relevance_score * 20);
+  END IF;
 
   -- Analyser les interactions
   SELECT COUNT(*), COUNT(*) FILTER (WHERE outcome = 'positive')
@@ -220,8 +170,8 @@ BEGIN
   END IF;
 
   -- Pénalité pour inactivité
-  IF v_partner.updated_at IS NOT NULL THEN
-    v_days_since_contact := EXTRACT(DAY FROM (now() - v_partner.updated_at));
+  IF v_partner.last_contact_date IS NOT NULL THEN
+    v_days_since_contact := EXTRACT(DAY FROM (now() - v_partner.last_contact_date));
     IF v_days_since_contact > 90 THEN
       v_score := v_score * 0.7;
     ELSIF v_days_since_contact > 30 THEN
@@ -237,16 +187,16 @@ BEGIN
       'calculated_at', now(),
       'interaction_count', v_interaction_count,
       'positive_interactions', v_positive_interactions,
-      'days_inactive', v_days_since_contact
-    ),
-    updated_at = now()
+      'days_inactive', v_days_since_contact,
+      'relevance_score', v_partner.relevance_score
+    )
   WHERE id = p_partner_id;
 
   RETURN v_score;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- Fonction pour générer un outreach personnalisé
+-- Fonction pour générer un outreach personnalisé (adaptée)
 CREATE OR REPLACE FUNCTION generate_personalized_outreach(
   p_partner_id uuid,
   p_template_id uuid
@@ -265,13 +215,15 @@ BEGIN
   END IF;
 
   v_subject := v_template.subject;
-  v_subject := REPLACE(v_subject, '{{name}}', COALESCE(v_partner.name, 'Partenaire'));
-  v_subject := REPLACE(v_subject, '{{domain}}', v_partner.domain);
+  v_subject := REPLACE(v_subject, '{{name}}', COALESCE(v_partner.company_name, 'Partenaire'));
+  v_subject := REPLACE(v_subject, '{{company}}', COALESCE(v_partner.company_name, 'Partenaire'));
+  v_subject := REPLACE(v_subject, '{{website}}', COALESCE(v_partner.website, ''));
 
   v_body := v_template.body;
-  v_body := REPLACE(v_body, '{{name}}', COALESCE(v_partner.name, 'Partenaire'));
-  v_body := REPLACE(v_body, '{{domain}}', v_partner.domain);
-  v_body := REPLACE(v_body, '{{type}}', v_partner.type);
+  v_body := REPLACE(v_body, '{{name}}', COALESCE(v_partner.contact_name, 'Partenaire'));
+  v_body := REPLACE(v_body, '{{company}}', COALESCE(v_partner.company_name, 'Partenaire'));
+  v_body := REPLACE(v_body, '{{website}}', COALESCE(v_partner.website, ''));
+  v_body := REPLACE(v_body, '{{industry}}', COALESCE(v_partner.industry, ''));
 
   UPDATE partner_outreach_templates
   SET usage_count = usage_count + 1, last_used_at = now()
@@ -282,6 +234,7 @@ BEGIN
     'template_id', p_template_id,
     'subject', v_subject,
     'body', v_body,
+    'to_email', v_partner.contact_email,
     'generated_at', now()
   );
 END;
@@ -296,17 +249,35 @@ BEGIN
   -- Partenaires sans contact depuis 30+ jours
   FOR v_partner IN
     SELECT * FROM partner_prospects
-    WHERE status IN ('contacted', 'qualified')
-    AND updated_at < now() - interval '30 days'
-    ORDER BY ai_score DESC
+    WHERE outreach_status IN ('contacted', 'responded')
+    AND last_contact_date < now() - interval '30 days'
+    ORDER BY ai_score DESC NULLS LAST
     LIMIT 10
   LOOP
     v_suggestions := v_suggestions || jsonb_build_object(
       'partner_id', v_partner.id,
-      'partner_name', v_partner.name,
+      'partner_name', v_partner.company_name,
       'action', 'follow_up',
       'priority', 'high',
-      'reason', 'No contact for 30+ days'
+      'reason', 'No contact for 30+ days',
+      'ai_score', v_partner.ai_score
+    );
+  END LOOP;
+
+  -- Partenaires intéressés sans suite
+  FOR v_partner IN
+    SELECT * FROM partner_prospects
+    WHERE outreach_status = 'interested'
+    ORDER BY ai_score DESC NULLS LAST
+    LIMIT 5
+  LOOP
+    v_suggestions := v_suggestions || jsonb_build_object(
+      'partner_id', v_partner.id,
+      'partner_name', v_partner.company_name,
+      'action', 'close_deal',
+      'priority', 'critical',
+      'reason', 'Interested partner waiting for follow-up',
+      'ai_score', v_partner.ai_score
     );
   END LOOP;
 
@@ -327,7 +298,7 @@ DECLARE
 BEGIN
   SELECT
     COUNT(*),
-    COUNT(*) FILTER (WHERE status = 'active'),
+    COUNT(*) FILTER (WHERE outreach_status = 'partnership_active'),
     AVG(ai_score)
   INTO v_total_partners, v_active_partners, v_avg_score
   FROM partner_prospects;
@@ -335,11 +306,12 @@ BEGIN
   RETURN jsonb_build_object(
     'generated_at', now(),
     'total_partners', v_total_partners,
-    'active_partners', v_active_partners,
-    'average_score', ROUND(v_avg_score, 2),
+    'active_partnerships', v_active_partners,
+    'average_ai_score', ROUND(COALESCE(v_avg_score, 0), 2),
     'health_score', CASE
       WHEN v_avg_score > 60 THEN 'excellent'
       WHEN v_avg_score > 40 THEN 'good'
+      WHEN v_avg_score > 20 THEN 'fair'
       ELSE 'needs_improvement'
     END
   );
@@ -351,41 +323,38 @@ INSERT INTO partner_outreach_templates (name, category, subject, body, variables
 (
   'Premier Contact B2B',
   'initial_outreach',
-  'Partenariat TaxiAssur x {{name}}',
-  E'Bonjour,\n\nJe me permets de vous contacter car {{domain}} fait partie des acteurs clés du secteur taxi en France.\n\nTaxiAssur est le leader de l''assurance taxi en ligne. Nous proposons un partenariat gagnant-gagnant qui pourrait intéresser votre audience.\n\nSeriez-vous disponible pour un échange de 15 minutes cette semaine ?\n\nCordialement',
-  '["name", "domain"]'::jsonb
+  'Partenariat TaxiAssur x {{company}}',
+  E'Bonjour {{name}},\n\nJe me permets de vous contacter car {{company}} fait partie des acteurs clés du secteur taxi en France.\n\nTaxiAssur est le leader de l''assurance taxi en ligne. Nous proposons un partenariat gagnant-gagnant qui pourrait intéresser votre audience.\n\nSeriez-vous disponible pour un échange de 15 minutes cette semaine ?\n\nCordialement',
+  '["name", "company", "website"]'::jsonb
 ),
 (
   'Relance Partenaire',
   'follow_up',
   'Re: Partenariat TaxiAssur',
-  E'Bonjour {{name}},\n\nJe reviens vers vous concernant ma proposition de partenariat.\n\nNous avons récemment lancé de nouvelles offres spécifiques pour les {{type}} qui pourraient particulièrement vous intéresser.\n\nÊtes-vous disponible pour en discuter ?\n\nBien cordialement',
-  '["name", "type"]'::jsonb
+  E'Bonjour {{name}},\n\nJe reviens vers vous concernant ma proposition de partenariat.\n\nNous avons récemment lancé de nouvelles offres spécifiques pour le secteur {{industry}} qui pourraient particulièrement vous intéresser.\n\nÊtes-vous disponible pour en discuter ?\n\nBien cordialement',
+  '["name", "company", "industry"]'::jsonb
 ),
 (
   'Proposition Backlink',
   'backlink',
-  'Opportunité de contenu de qualité pour {{domain}}',
-  E'Bonjour,\n\nNous avons remarqué votre excellent contenu sur {{domain}}.\n\nNous proposons de créer un article invité de haute qualité sur l''assurance taxi, avec backlink naturel vers votre site.\n\nIntéressé par cette collaboration ?\n\nCordialement',
-  '["domain"]'::jsonb
+  'Opportunité de contenu de qualité pour {{company}}',
+  E'Bonjour {{name}},\n\nNous avons remarqué votre excellent contenu sur {{website}}.\n\nNous proposons de créer un article invité de haute qualité sur l''assurance taxi, avec backlink naturel vers votre site.\n\nIntéressé par cette collaboration ?\n\nCordialement',
+  '["name", "company", "website"]'::jsonb
 )
 ON CONFLICT DO NOTHING;
-
--- Insérer quelques partenaires de démonstration
-INSERT INTO partner_prospects (name, domain, type, status, contact_page_url, source) VALUES
-('Annuaire Taxi France', 'annuaire-taxi-france.fr', 'annuaire', 'active', 'https://annuaire-taxi-france.fr/contact', 'manual'),
-('Taxis de France', 'taxis-de-france.com', 'media', 'active', 'https://taxis-de-france.com/contact', 'manual'),
-('Fédération Taxi', 'federation-taxi.org', 'asso', 'contacted', 'https://federation-taxi.org/contact', 'partner_finder')
-ON CONFLICT (domain) DO NOTHING;
 
 -- Calculer les scores IA pour les partenaires existants
 DO $$
 DECLARE
   v_partner_id uuid;
+  v_count int := 0;
 BEGIN
   FOR v_partner_id IN
-    SELECT id FROM partner_prospects LIMIT 50
+    SELECT id FROM partner_prospects LIMIT 100
   LOOP
     PERFORM calculate_partner_ai_score(v_partner_id);
+    v_count := v_count + 1;
   END LOOP;
+
+  RAISE NOTICE 'Calculated AI scores for % partners', v_count;
 END $$;
