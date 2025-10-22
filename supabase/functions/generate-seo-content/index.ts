@@ -111,6 +111,31 @@ Deno.serve(async (req: Request) => {
 
     console.log(`🎯 Génération ${isUnified ? 'UNIFIÉE' : 'SIMPLE'}: ${keyword} | ${targetCity}`);
 
+    // 🔒 ACQUÉRIR VERROU AVANT GÉNÉRATION (évite doublons)
+    const { data: lockAcquired, error: lockError } = await supabase
+      .rpc('acquire_generation_lock', {
+        p_lock_type: 'blog',
+        p_locked_by: `generate-seo-content-${keyword}`,
+        p_duration_minutes: 5
+      });
+
+    if (lockError || !lockAcquired) {
+      console.warn('⚠️ Verrou déjà actif, génération ignorée');
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'Une génération est déjà en cours. Réessayez dans 2 minutes.',
+          locked: true
+        }),
+        {
+          status: 429,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
+    }
+
+    console.log('🔒 Verrou acquis, génération en cours...');
+
     // MODE UNIFIÉ : Génère TOUT en une fois
     if (isUnified) {
       const unifiedPrompt = `Tu dois générer un pack SEO COMPLET pour "${keyword}" à ${targetCity}.
@@ -141,7 +166,7 @@ FORMAT JSON STRICT (TOUS LES CHAMPS OBLIGATOIRES) :
 {
   "blogPost": {
     "title": "Titre accrocheur 55-65 caractères avec ${keyword}",
-    "slug": "${keyword.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${targetCity.toLowerCase()}-${Date.now()}",
+    "slug": "${keyword.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${targetCity.toLowerCase()}",
     "content": "<h2>Titre section 1</h2><p>Contenu HTML...</p><h2>Titre section 2</h2>...",
     "excerpt": "Résumé engageant 100-150 caractères",
     "metaDescription": "Description 150-160 caractères optimisée SEO",
@@ -391,6 +416,10 @@ HTML uniquement (pas de markdown). Ton naturel et conversationnel.`;
     );
   } catch (error) {
     console.error('❌ Error:', error);
+
+    // 🔓 LIBÉRER VERROU en cas d'erreur
+    await supabase.rpc('release_generation_lock', { p_lock_type: 'blog' }).catch(console.error);
+
     return new Response(
       JSON.stringify({
         success: false,
@@ -402,5 +431,8 @@ HTML uniquement (pas de markdown). Ton naturel et conversationnel.`;
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       }
     );
+  } finally {
+    // 🔓 TOUJOURS LIBÉRER VERROU à la fin
+    await supabase.rpc('release_generation_lock', { p_lock_type: 'blog' }).catch(console.error);
   }
 });
