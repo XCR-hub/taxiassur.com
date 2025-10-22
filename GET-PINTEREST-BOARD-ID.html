@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Récupérer Pinterest Board ID - TaxiAssur</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #E60023 0%, #BD081C 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .container {
+      background: white;
+      border-radius: 16px;
+      padding: 40px;
+      max-width: 700px;
+      width: 100%;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    h1 {
+      color: #E60023;
+      font-size: 28px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .subtitle {
+      color: #666;
+      margin-bottom: 30px;
+      font-size: 14px;
+    }
+    .step {
+      background: #f8f9fa;
+      border-left: 4px solid #E60023;
+      padding: 20px;
+      margin-bottom: 20px;
+      border-radius: 8px;
+    }
+    .step-number {
+      background: #E60023;
+      color: white;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      margin-right: 10px;
+      font-size: 14px;
+    }
+    .step-title {
+      font-weight: 600;
+      margin-bottom: 10px;
+      font-size: 16px;
+      color: #333;
+    }
+    .btn {
+      background: #E60023;
+      color: white;
+      border: none;
+      padding: 16px 32px;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      width: 100%;
+      margin-top: 20px;
+      transition: all 0.3s;
+      text-decoration: none;
+      display: inline-block;
+      text-align: center;
+    }
+    .btn:hover {
+      background: #AD081B;
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(230,0,35,0.2);
+    }
+    .code-block {
+      background: #2d2d2d;
+      color: #f8f8f2;
+      padding: 16px;
+      border-radius: 8px;
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      overflow-x: auto;
+      margin: 10px 0;
+      position: relative;
+    }
+    .info-box {
+      background: #e3f2fd;
+      border-left: 4px solid #2196F3;
+      padding: 16px;
+      margin: 20px 0;
+      border-radius: 8px;
+      font-size: 14px;
+      color: #1976d2;
+    }
+    .success-box {
+      background: #d4edda;
+      border-left: 4px solid #28a745;
+      padding: 16px;
+      margin: 20px 0;
+      border-radius: 8px;
+      font-size: 14px;
+      color: #155724;
+      display: none;
+    }
+    input {
+      background: white;
+      border: 2px solid #dee2e6;
+      padding: 12px;
+      border-radius: 8px;
+      width: 100%;
+      font-size: 14px;
+      margin-top: 10px;
+    }
+    input[readonly] {
+      background: #f8f9fa;
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+    }
+    .emoji {
+      font-size: 24px;
+    }
+    #boardsList {
+      margin-top: 15px;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    .board-item {
+      background: white;
+      border: 2px solid #dee2e6;
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 10px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .board-item:hover {
+      border-color: #E60023;
+      background: #fff5f6;
+    }
+    .board-item.selected {
+      border-color: #E60023;
+      background: #fff5f6;
+    }
+    .board-name {
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 5px;
+    }
+    .board-id {
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      color: #666;
+    }
+    .loading {
+      text-align: center;
+      padding: 20px;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>
+      <span class="emoji">📌</span>
+      Récupérer Pinterest Board ID
+    </h1>
+    <p class="subtitle">Configuration Pinterest pour TaxiAssur</p>
+
+    <div class="step">
+      <div class="step-title">
+        <span class="step-number">1</span>
+        Vérifier votre API Key
+      </div>
+      <div class="code-block">
+API Key: pina_AMATW2QXAABNSBAAGCAB4DLXSH5QRGQBQBIQDZDPWGOIQCVDF7UFOLF2NLTMGHYITC2ZKTYUPPFKBHXNR7P7H2OTAGWCTHYA
+Status: ✅ Configurée dans Supabase
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-title">
+        <span class="step-number">2</span>
+        Récupérer vos Boards Pinterest
+      </div>
+      <p style="margin-bottom: 10px; color: #666;">
+        Cliquez pour récupérer automatiquement tous vos boards Pinterest.
+      </p>
+      <button class="btn" onclick="fetchBoards()">
+        📋 Récupérer Mes Boards
+      </button>
+      <div id="boardsList"></div>
+    </div>
+
+    <div class="success-box" id="successBox">
+      <div style="font-weight: 600; margin-bottom: 10px;">✅ Board Sélectionné !</div>
+      <div style="margin-bottom: 10px;">
+        <strong>Nom du board :</strong> <span id="selectedBoardName"></span>
+      </div>
+      <input type="text" id="selectedBoardId" readonly>
+      <button class="btn" onclick="copyBoardId()" style="margin-top: 10px; background: #28a745;">
+        📋 Copier le Board ID
+      </button>
+    </div>
+
+    <div class="info-box">
+      <strong>📝 Prochaine étape :</strong><br>
+      1. Copiez le Board ID sélectionné<br>
+      2. Allez dans Supabase → SQL Editor<br>
+      3. Exécutez le fichier : <code>PINTEREST-ACTIVATION.sql</code><br>
+      4. Le Board ID sera automatiquement sauvegardé
+    </div>
+  </div>
+
+  <script>
+    const API_KEY = 'pina_AMATW2QXAABNSBAAGCAB4DLXSH5QRGQBQBIQDZDPWGOIQCVDF7UFOLF2NLTMGHYITC2ZKTYUPPFKBHXNR7P7H2OTAGWCTHYA';
+
+    async function fetchBoards() {
+      const boardsList = document.getElementById('boardsList');
+      boardsList.innerHTML = '<div class="loading">🔄 Récupération des boards...</div>';
+
+      try {
+        const response = await fetch('https://api.pinterest.com/v5/boards', {
+          headers: {
+            'Authorization': `Bearer ${API_KEY}`,
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(`Erreur Pinterest API: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        const boards = data.items || [];
+
+        if (boards.length === 0) {
+          boardsList.innerHTML = '<div class="loading">❌ Aucun board trouvé</div>';
+          return;
+        }
+
+        boardsList.innerHTML = '';
+
+        boards.forEach(board => {
+          const boardItem = document.createElement('div');
+          boardItem.className = 'board-item';
+          boardItem.innerHTML = `
+            <div class="board-name">${board.name}</div>
+            <div class="board-id">ID: ${board.id}</div>
+          `;
+          boardItem.onclick = () => selectBoard(board.id, board.name);
+          boardsList.appendChild(boardItem);
+        });
+
+        console.log('✅ Boards récupérés:', boards);
+      } catch (error) {
+        console.error('❌ Erreur:', error);
+        boardsList.innerHTML = `<div class="loading">❌ Erreur: ${error.message}</div>`;
+      }
+    }
+
+    function selectBoard(boardId, boardName) {
+      document.querySelectorAll('.board-item').forEach(item => {
+        item.classList.remove('selected');
+      });
+
+      event.currentTarget.classList.add('selected');
+
+      document.getElementById('selectedBoardName').textContent = boardName;
+      document.getElementById('selectedBoardId').value = boardId;
+      document.getElementById('successBox').style.display = 'block';
+      document.getElementById('successBox').scrollIntoView({ behavior: 'smooth' });
+
+      console.log('Board sélectionné:', { boardId, boardName });
+    }
+
+    function copyBoardId() {
+      const boardIdInput = document.getElementById('selectedBoardId');
+      boardIdInput.select();
+      document.execCommand('copy');
+
+      const btn = event.target;
+      const originalText = btn.textContent;
+      btn.textContent = '✅ Copié !';
+      btn.style.background = '#218838';
+
+      setTimeout(() => {
+        btn.textContent = originalText;
+        btn.style.background = '#28a745';
+      }, 2000);
+    }
+  </script>
+</body>
+</html>
