@@ -78,15 +78,12 @@ FROM seo_metrics;
 -- 4. IA AUTO-APPRENANTE - Fonctionne-t-elle ?
 -- ============================================
 
--- Données d'apprentissage IA
+-- Données d'apprentissage IA (si table existe)
 SELECT
   '🤖 DONNÉES IA' as section,
-  data_type as type,
-  COUNT(*) as nombre,
+  COALESCE(COUNT(*), 0) as nombre_total,
   MAX(created_at) as derniere_donnee
-FROM ai_learning_data
-GROUP BY data_type
-ORDER BY MAX(created_at) DESC;
+FROM ai_learning_data;
 
 -- Logs d'automatisation récents
 SELECT
