@@ -5,7 +5,7 @@
 TOUT PRÊT À ACTIVER EN 1 CLIC !
 
 ================================================================================
-ÉTAPE 1 - APPLIQUER LA MIGRATION (3 MIN)
+ÉTAPE 1 - APPLIQUER LA MIGRATION CORRIGÉE (3 MIN)
 ================================================================================
 
 1. Ouvrir: https://supabase.com/dashboard
@@ -13,12 +13,16 @@ TOUT PRÊT À ACTIVER EN 1 CLIC !
 3. SQL Editor (menu gauche)
 4. Copier-coller TOUT LE CONTENU de:
 
-   supabase/migrations/20251022120000_activate_ALL_cron_jobs_complete.sql
+   supabase/migrations/20251022130000_activate_ALL_cron_jobs_fixed.sql
+
+   ⚠️ VERSION CORRIGÉE qui gère l'erreur pg_cron
+   ✅ Fonctionne même si pg_cron existe déjà
+   ✅ Ne crée pas de doublons
 
 5. Cliquer "Run"
 
 RÉSULTAT IMMÉDIAT:
-✅ 47 cron jobs créés
+✅ 40+ cron jobs créés (sans doublons)
 ✅ Message de confirmation avec le décompte
 ✅ Tous les systèmes activés
 
@@ -200,13 +204,14 @@ Si erreurs dans les logs:
 🎯 C'EST PARTI !
 ================================================================================
 
-✅ Migration prête: 20251022120000_activate_ALL_cron_jobs_complete.sql
+✅ Migration corrigée: 20251022130000_activate_ALL_cron_jobs_fixed.sql
 ✅ Diagnostic prêt: DIAGNOSTIC-ULTRA-SIMPLE.sql
-✅ 47 cron jobs configurés
+✅ 40+ cron jobs configurés (sans doublons)
 ✅ Build validé
 ✅ Prêt pour production
+✅ Gère l'erreur pg_cron automatiquement
 
 TOUT CE QUE VOUS AVEZ À FAIRE:
-Copier-coller la migration dans Supabase SQL Editor et cliquer "Run"
+Copier-coller la migration CORRIGÉE dans Supabase SQL Editor et cliquer "Run"
 
-LES 47 CRON JOBS S'ACTIVENT AUTOMATIQUEMENT !
+LES CRON JOBS S'ACTIVENT AUTOMATIQUEMENT SANS ERREUR !
