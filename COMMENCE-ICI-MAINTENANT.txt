@@ -2,21 +2,22 @@
 TOUT EST CORRIGÉ - APPLIQUEZ MAINTENANT
 ================================================================================
 
-✅ 4 ERREURS SQL CORRIGÉES
-✅ 2 FICHIERS DE DIAGNOSTIC CRÉÉS
+✅ 5 ERREURS SQL CORRIGÉES
+✅ 3 FICHIERS DE DIAGNOSTIC CRÉÉS
 ✅ BUILD VALIDÉ
 
 ================================================================================
-VOUS AVEZ 2 OPTIONS DE DIAGNOSTIC
+VOUS AVEZ 3 OPTIONS DE DIAGNOSTIC
 ================================================================================
 
-OPTION 1 - DIAGNOSTIC COMPLET (recommandé)
--------------------------------------------
-Fichier: DIAGNOSTIC-MAINTENANT.sql
+OPTION 1 - DIAGNOSTIC FINAL (RECOMMANDÉ)
+-----------------------------------------
+Fichier: DIAGNOSTIC-FINAL-CORRIGE.sql
 
+✅ Version corrigée avec automation_type
 ✅ Affiche tous les détails
-✅ Vérifie 5 sections (cron, contenu, SEO, IA, logs)
-⚠️ Peut planter si tables manquantes
+✅ Vérifie 6 sections complètes
+✅ NE PLANTE PAS
 
 OPTION 2 - DIAGNOSTIC SIMPLE (sans risque)
 -------------------------------------------
@@ -25,6 +26,13 @@ Fichier: DIAGNOSTIC-SIMPLE.sql
 ✅ Ne plante jamais
 ✅ Fonctionne même si tables manquantes
 ✅ Affiche l'essentiel + prochaines étapes
+
+OPTION 3 - DIAGNOSTIC MAINTENANT (ancien)
+------------------------------------------
+Fichier: DIAGNOSTIC-MAINTENANT.sql
+
+⚠️ Peut avoir des erreurs de colonnes
+⚠️ Utiliser DIAGNOSTIC-FINAL-CORRIGE.sql à la place
 
 ================================================================================
 APPLIQUER LA MIGRATION (5 MIN)
@@ -47,14 +55,15 @@ VÉRIFIER (2 MIN)
 
 Dans SQL Editor:
 
-ESSAYEZ D'ABORD: DIAGNOSTIC-SIMPLE.sql
-- Ne plante jamais
-- Affiche l'état du système
-- Indique quoi faire ensuite
+UTILISEZ: DIAGNOSTIC-FINAL-CORRIGE.sql
+- Version corrigée qui fonctionne à 100%
+- Affiche l'état complet du système
+- 6 sections complètes
+- Indique exactement quoi faire
 
-SI TOUT VA BIEN: DIAGNOSTIC-MAINTENANT.sql
-- Plus détaillé
-- Montre tous les détails
+OU BIEN: DIAGNOSTIC-SIMPLE.sql
+- Version ultra-simple
+- Ne plante jamais
 
 ================================================================================
 CONFIGURER LES SECRETS (10 MIN)
@@ -91,9 +100,9 @@ ORDRE D'EXÉCUTION RECOMMANDÉ
 ================================================================================
 
 1. Appliquer migration (3 min)
-2. Exécuter DIAGNOSTIC-SIMPLE.sql (1 min)
+2. Exécuter DIAGNOSTIC-FINAL-CORRIGE.sql (1 min)
 3. Configurer les 4 secrets (10 min)
-4. Exécuter DIAGNOSTIC-SIMPLE.sql à nouveau (1 min)
+4. Exécuter DIAGNOSTIC-FINAL-CORRIGE.sql à nouveau (1 min)
 5. Attendre 24h
 6. Voir le contenu généré !
 
