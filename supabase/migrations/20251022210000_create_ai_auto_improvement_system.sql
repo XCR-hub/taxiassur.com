@@ -24,6 +24,16 @@
 */
 
 -- ============================================================================
+-- 0. NETTOYAGE: Supprimer tables existantes si présentes
+-- ============================================================================
+
+DROP TABLE IF EXISTS ai_performance_metrics CASCADE;
+DROP TABLE IF EXISTS ai_deployments CASCADE;
+DROP TABLE IF EXISTS ai_ab_tests CASCADE;
+DROP TABLE IF EXISTS ai_code_generations CASCADE;
+DROP TABLE IF EXISTS ai_page_improvements CASCADE;
+
+-- ============================================================================
 -- 1. TABLE: Améliorations de Pages
 -- ============================================================================
 
