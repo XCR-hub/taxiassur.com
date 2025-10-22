@@ -26,12 +26,13 @@ Deno.serve(async (req: Request) => {
     const FTP_HOST = Deno.env.get("FTP_HOST");
     const FTP_USER = Deno.env.get("FTP_USER");
     const FTP_PASSWORD = Deno.env.get("FTP_PASSWORD");
-    const FTP_PORT = Deno.env.get("FTP_PORT") || "21";
+    const FTP_PORT = Deno.env.get("FTP_PORT") || "22";
+    const FTP_PROTOCOL = Deno.env.get("FTP_PROTOCOL") || "sftp";
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
     const SUPABASE_SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
     if (!FTP_HOST || !FTP_USER || !FTP_PASSWORD) {
-      throw new Error("Credentials FTP manquants dans les secrets Supabase");
+      throw new Error("Credentials FTP/SFTP manquants dans les secrets Supabase");
     }
 
     const { createClient } = await import("npm:@supabase/supabase-js@2");
@@ -43,24 +44,36 @@ Deno.serve(async (req: Request) => {
       try {
         const remotePath = file.path.startsWith("/") ? file.path : `/${file.path}`;
 
-        const ftpUrl = `ftp://${FTP_USER}:${FTP_PASSWORD}@${FTP_HOST}:${FTP_PORT}${remotePath}`;
+        let response;
 
-        const response = await fetch(ftpUrl, {
-          method: "PUT",
-          body: file.content,
-          headers: {
-            "Content-Type": "text/plain",
-          },
-        });
+        if (FTP_PROTOCOL === "sftp" || FTP_PORT === "22") {
+          response = await fetch(`sftp://${FTP_HOST}:${FTP_PORT}${remotePath}`, {
+            method: "PUT",
+            body: file.content,
+            headers: {
+              "Authorization": `Basic ${btoa(`${FTP_USER}:${FTP_PASSWORD}`)}`,
+              "Content-Type": "text/plain",
+            },
+          });
+        } else {
+          response = await fetch(`ftp://${FTP_USER}:${FTP_PASSWORD}@${FTP_HOST}:${FTP_PORT}${remotePath}`, {
+            method: "PUT",
+            body: file.content,
+            headers: {
+              "Content-Type": "text/plain",
+            },
+          });
+        }
 
         if (!response.ok) {
-          throw new Error(`FTP upload failed: ${response.statusText}`);
+          throw new Error(`${FTP_PROTOCOL.toUpperCase()} upload failed: ${response.statusText}`);
         }
 
         uploadResults.push({
           path: file.path,
           status: "success",
           size_bytes: file.content.length,
+          protocol: FTP_PROTOCOL,
         });
       } catch (error) {
         uploadResults.push({

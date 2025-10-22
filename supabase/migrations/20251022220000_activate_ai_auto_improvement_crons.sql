@@ -41,10 +41,19 @@ BEGIN
   FOR page_record IN
     SELECT DISTINCT page_url, type
     FROM (
-      SELECT DISTINCT page_url, 'city_page' as type FROM city_pages WHERE status = 'published' LIMIT 5
-      UNION ALL
-      SELECT DISTINCT '/blog/' || slug, 'blog' FROM blog_posts WHERE published = true LIMIT 5
-    ) pages
+      SELECT DISTINCT '/assurance-taxi-' || LOWER(city_name) as page_url, 'city_page' as type
+      FROM city_pages
+      WHERE status = 'published'
+      LIMIT 5
+    ) AS subquery_city
+    UNION ALL
+    SELECT DISTINCT page_url, type
+    FROM (
+      SELECT DISTINCT '/blog/' || slug as page_url, 'blog' as type
+      FROM blog_posts
+      WHERE published = true
+      LIMIT 5
+    ) AS subquery_blog
   LOOP
     pages_analyzed := pages_analyzed + 1;
 
