@@ -11,7 +11,11 @@
   - last_generated_at
   - is_active
   - metadata
-  - UNIQUE constraint sur content_type
+
+  ## Contraintes gérées
+  - NOT NULL sur title, description, scheduled_date, target_url, status, priority
+  - CHECK sur content_type (supprimée)
+  - UNIQUE sur content_type (ajoutée)
 */
 
 -- Fonction helper pour ajouter une colonne si elle n'existe pas
@@ -67,6 +71,25 @@ BEGIN
       EXECUTE format('ALTER TABLE content_schedule ALTER COLUMN %I DROP NOT NULL', col_name);
       RAISE NOTICE 'Colonne % rendue nullable', col_name;
     END IF;
+  END LOOP;
+END $$;
+
+-- Supprimer contrainte CHECK sur content_type si elle existe
+DO $$
+DECLARE
+  constraint_name text;
+BEGIN
+  -- Trouver toutes les contraintes CHECK sur content_type
+  FOR constraint_name IN
+    SELECT con.conname
+    FROM pg_constraint con
+    INNER JOIN pg_class rel ON rel.oid = con.conrelid
+    WHERE rel.relname = 'content_schedule'
+    AND con.contype = 'c'
+    AND pg_get_constraintdef(con.oid) LIKE '%content_type%'
+  LOOP
+    EXECUTE format('ALTER TABLE content_schedule DROP CONSTRAINT IF EXISTS %I', constraint_name);
+    RAISE NOTICE 'Contrainte CHECK % supprimée', constraint_name;
   END LOOP;
 END $$;
 

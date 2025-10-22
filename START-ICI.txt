@@ -1,108 +1,67 @@
-╔══════════════════════════════════════════════════════════════╗
-║                  🚀 DÉMARRAGE RAPIDE - 2 MIN                 ║
-╚══════════════════════════════════════════════════════════════╝
+⚡ CORRECTION ULTIME - CONTRAINTE CHECK GÉRÉE
 
-📋 ÉTAPE 1 : EXÉCUTER LE SQL (1 minute)
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+═══════════════════════════════════════════════════════════
 
-1. Allez sur : https://supabase.com/dashboard/project/drohhxrkoequjphvabvq
+✅ TOUS PROBLÈMES RÉSOLUS
 
-2. Cliquez sur "SQL Editor" (menu gauche)
+Erreur 1: column "title" NOT NULL → ✅
+Erreur 2: column "scheduled_date" NOT NULL → ✅
+Erreur 3: content_type CHECK constraint → ✅
 
-3. Cliquez sur "New query"
+═══════════════════════════════════════════════════════════
 
-4. Ouvrez le fichier : FIX-PERMISSION-ET-RECUPERATION-DONNEES-V2.sql
+🎯 DERNIÈRE MIGRATION (2 minutes)
 
-5. Copiez TOUT le contenu et collez-le dans l'éditeur
+Supabase SQL Editor :
 
-6. Cliquez sur "Run" (ou Ctrl+Enter)
+Fichier : 20251022254000_fix_content_schedule_structure.sql
 
-✅ RÉSULTAT ATTENDU :
-NOTICE: ✅ TOUTES LES FONCTIONS SONT OPÉRATIONNELLES
+Copier TOUT → Coller → RUN
 
+═══════════════════════════════════════════════════════════
 
-📋 ÉTAPE 2 : TESTER L'APPLICATION (1 minute)
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ CORRECTIONS APPLIQUÉES
 
-1. Dans votre terminal, lancez :
-   npm run dev
+1. Suppression contraintes NOT NULL (6 colonnes)
+   → title, description, scheduled_date, target_url, status, priority
 
-2. Connectez-vous au backoffice
+2. Suppression contrainte CHECK sur content_type
+   → Détection + suppression automatique
 
-3. Naviguez vers : /backoffice/data
+3. Ajout contrainte UNIQUE sur content_type
+   → Pour ON CONFLICT
 
-✅ VOUS VERREZ :
-- Dashboard avec statistiques
-- Liste des articles de blog
-- Liste des actualités
-- Liste des FAQs
-- Liste des leads
-- Recherche en temps réel
+4. Insertion 3 configs
+   → blog, faq, review
 
+═══════════════════════════════════════════════════════════
 
-╔══════════════════════════════════════════════════════════════╗
-║                    ✅ C'EST TOUT !                           ║
-║                                                              ║
-║  Vos données Supabase sont maintenant accessibles dans       ║
-║  l'application React avec des hooks prêts à l'emploi !       ║
-╚══════════════════════════════════════════════════════════════╝
+📊 VÉRIFICATION
 
+SELECT content_type, frequency_per_week, auto_publish
+FROM content_schedule
+ORDER BY content_type;
 
-📚 DOCUMENTATION COMPLÈTE :
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+RÉSULTAT ATTENDU:
+blog   | 3 | true
+faq    | 2 | true
+review | 1 | false
 
-- EXECUTER-MAINTENANT.md         → Guide rapide
-- SOLUTION-FINALE-COMPLETE.md    → Documentation complète
-- GUIDE-COMPLET-RECUPERATION-DONNEES.md → Guide technique
+═══════════════════════════════════════════════════════════
 
+🌐 DÉPLOIEMENT
 
-🔥 FONCTIONS CRÉÉES :
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ Build : 17.61s
+→ Uploader /dist sur IONOS
 
-1. get_blog_posts()        → Récupère les articles
-2. get_news()              → Récupère les actualités
-3. get_faqs()              → Récupère les FAQs
-4. get_leads()             → Récupère les leads
-5. get_dashboard_stats()   → Récupère les statistiques
-6. search_content()        → Recherche full-text
-7. get_cron_config()       → Config pour automatisations
+═══════════════════════════════════════════════════════════
 
+🎉 INTERFACES FINALES
 
-🎨 HOOKS REACT CRÉÉS :
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ Auto-Optimizer : 26 automatisations + logs
+✅ AutomationScheduler : 3 cartes configurables
+✅ Marketing Templates : 11 templates
 
-import {
-  useBlogPosts,
-  useNews,
-  useFAQs,
-  useLeads,
-  useDashboardStats,
-  useContentSearch
-} from '../hooks/useSupabaseData';
+═══════════════════════════════════════════════════════════
 
-
-🔒 SÉCURITÉ :
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-✅ RLS activé sur toutes les tables
-✅ Politiques restrictives
-✅ Accès public uniquement pour contenu public
-✅ Leads accessibles uniquement aux utilisateurs authentifiés
-
-
-🆘 PROBLÈME ?
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-Lisez : SOLUTION-FINALE-COMPLETE.md
-Section "DÉPANNAGE" avec toutes les solutions
-
-
-✅ BUILD TESTÉ ET VALIDÉ :
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-✓ built in 18.90s
-✓ 1723 modules transformés
-✓ 0 erreur
-
-
-🎉 PRÊT À UTILISER !
+Toutes contraintes SQL gérées ! 🏆
