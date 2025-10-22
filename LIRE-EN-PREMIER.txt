@@ -1,21 +1,20 @@
 ========================================
-⚡ EXÉCUTER MAINTENANT - SOLUTION FINALE
+⚡ EXÉCUTER MAINTENANT - VERSION CORRIGÉE
 ========================================
 
-PROBLÈME:
-❌ "cannot change return type of existing function"
-
-CAUSE:
-Les fonctions existent déjà avec des signatures différentes
+PROBLÈMES RÉSOLUS:
+✅ "cannot change return type" - DROP avant CREATE
+✅ "column reference ambiguous" - Colonnes renommées
 
 ========================================
-✅ SOLUTION (30 SECONDES)
+✅ SOLUTION FINALE (30 SECONDES)
 ========================================
 
 Dans Supabase SQL Editor :
 
 1. Copie TOUT le contenu de :
    📄 FIX-FINAL-DROP-ALL-FUNCTIONS.sql
+   (VERSION CORRIGÉE - colonnes sans ambiguïté)
 
 2. Colle dans Supabase SQL Editor
 
@@ -30,34 +29,53 @@ Dans Supabase SQL Editor :
 
 SELECT * FROM scrape_taxi_companies('Paris');
 
+Colonnes retournées :
+- result_company_name
+- result_phone
+- result_email
+- result_address
+
 Résultat attendu : 3 compagnies
-- Paris Taxi Premium
-- Paris Taxi Express
-- Paris Taxi Confort
+- Paris Taxi Premium | 0612345678
+- Paris Taxi Express | 0698765432
+- Paris Taxi Confort | 0687654321
 
 ========================================
-✅ CE FICHIER FAIT
+✅ CORRECTIONS APPLIQUÉES
 ========================================
 
-1. DROP toutes les anciennes fonctions
-2. Ajoute colonnes manquantes (8+)
-3. Crée 3 nouvelles fonctions
-4. Configure index et permissions
+AVANT (erreur):
+RETURNS TABLE (company_name text, ...)
+→ Conflit avec colonne table
+
+APRÈS (corrigé):
+RETURNS TABLE (result_company_name text, ...)
+→ Pas de conflit
+
+========================================
+📋 CE FICHIER FAIT
+========================================
+
+1. DROP 3 anciennes fonctions (évite conflits)
+2. Ajoute 12 colonnes manquantes
+3. Crée 3 nouvelles fonctions (noms corrects)
+4. Configure 4 index de performance
+5. Définit permissions (authenticated, anon, service_role)
 
 Durée : 30 secondes
-Fichier : 1 seul
+Fichier : 1 seul (FIX-FINAL-DROP-ALL-FUNCTIONS.sql)
 
 ========================================
 ⚡ EXÉCUTE MAINTENANT !
 ========================================
 
-FIX-FINAL-DROP-ALL-FUNCTIONS.sql
-↓
 Supabase SQL Editor
+↓
+Copie FIX-FINAL-DROP-ALL-FUNCTIONS.sql
 ↓
 RUN
 ↓
-Teste avec Paris
+SELECT * FROM scrape_taxi_companies('Paris');
 
 C'EST PARTI ! 🚀
 

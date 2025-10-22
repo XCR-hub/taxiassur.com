@@ -122,10 +122,10 @@ GRANT EXECUTE ON FUNCTION generate_blog_post_ai(text, text, text[]) TO authentic
 
 CREATE FUNCTION scrape_taxi_companies(p_city_name text)
 RETURNS TABLE (
-  company_name text,
-  phone text,
-  email text,
-  address text
+  result_company_name text,
+  result_phone text,
+  result_email text,
+  result_address text
 )
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -149,7 +149,11 @@ BEGIN
   ON CONFLICT (company_name, city) DO NOTHING;
 
   RETURN QUERY
-  SELECT tp.company_name::text, tp.phone::text, tp.email::text, tp.address::text
+  SELECT
+    tp.company_name::text,
+    tp.phone::text,
+    tp.email::text,
+    tp.address::text
   FROM taxi_prospects tp
   WHERE tp.city = p_city_name
   ORDER BY tp.created_at DESC
