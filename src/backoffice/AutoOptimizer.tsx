@@ -125,31 +125,21 @@ export default function AutoOptimizer() {
 
   const loadLogs = async () => {
     try {
-      // Simuler des logs (à remplacer par vraie table automation_logs)
-      const mockLogs: AutomationLog[] = [
-        {
-          id: '1',
-          automation_name: 'sitemap_regeneration',
-          status: 'success',
-          message: 'Sitemap régénéré avec succès - 247 URLs',
-          created_at: new Date(Date.now() - 120000).toISOString()
-        },
-        {
-          id: '2',
-          automation_name: 'google_bing_ping',
-          status: 'success',
-          message: 'Ping envoyé à Google et Bing',
-          created_at: new Date(Date.now() - 300000).toISOString()
-        },
-        {
-          id: '3',
-          automation_name: 'seo_metrics_update',
-          status: 'error',
-          message: 'Erreur: API key manquante',
-          created_at: new Date(Date.now() - 600000).toISOString()
-        }
-      ];
-      setLogs(mockLogs);
+      const { data, error } = await supabase
+        .from('automation_logs')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(20);
+
+      if (!error && data) {
+        setLogs(data.map(log => ({
+          id: log.id,
+          automation_name: log.job_name,
+          status: log.status,
+          message: log.message || 'Exécution terminée',
+          created_at: log.created_at
+        })));
+      }
     } catch (error) {
       console.error('Error loading logs:', error);
     }
@@ -159,10 +149,10 @@ export default function AutoOptimizer() {
     try {
       const newStatus = !automation.is_enabled;
 
-      const { error } = await supabase
-        .from('automation_status')
-        .update({ is_enabled: newStatus })
-        .eq('id', automation.id);
+      const { error } = await supabase.rpc('toggle_automation', {
+        p_job_id: parseInt(automation.id),
+        p_enabled: newStatus
+      });
 
       if (error) throw error;
 
@@ -201,10 +191,10 @@ export default function AutoOptimizer() {
     }
 
     try {
-      const { error } = await supabase
-        .from('automation_status')
-        .update({ is_enabled: true })
-        .neq('name', '___NEVER_MATCH___');
+      // Activer tous les cron jobs via une requête SQL
+      const { error } = await supabase.rpc('execute_sql', {
+        query: 'UPDATE cron.job SET active = true'
+      });
 
       if (error) throw error;
 
@@ -222,10 +212,10 @@ export default function AutoOptimizer() {
     }
 
     try {
-      const { error } = await supabase
-        .from('automation_status')
-        .update({ is_enabled: false })
-        .neq('name', '___NEVER_MATCH___');
+      // Désactiver tous les cron jobs via une requête SQL
+      const { error } = await supabase.rpc('execute_sql', {
+        query: 'UPDATE cron.job SET active = false'
+      });
 
       if (error) throw error;
 
