@@ -183,12 +183,17 @@ BEGIN
   RAISE NOTICE '============================================';
 
   -- LinkedIn
-  SELECT EXISTS (
-    SELECT 1 FROM social_networks
-    WHERE platform = 'linkedin'
-    AND access_token IS NOT NULL
-    AND enabled = true
-  ) INTO linkedin_configured;
+  BEGIN
+    SELECT EXISTS (
+      SELECT 1 FROM social_networks
+      WHERE platform = 'linkedin'
+      AND access_token IS NOT NULL
+    ) INTO linkedin_configured;
+  EXCEPTION WHEN undefined_column THEN
+    linkedin_configured := false;
+  WHEN undefined_table THEN
+    linkedin_configured := false;
+  END;
 
   IF linkedin_configured THEN
     total_social := total_social + 1;
@@ -198,12 +203,17 @@ BEGIN
   END IF;
 
   -- Pinterest
-  SELECT EXISTS (
-    SELECT 1 FROM social_networks
-    WHERE platform = 'pinterest'
-    AND access_token IS NOT NULL
-    AND enabled = true
-  ) INTO pinterest_configured;
+  BEGIN
+    SELECT EXISTS (
+      SELECT 1 FROM social_networks
+      WHERE platform = 'pinterest'
+      AND access_token IS NOT NULL
+    ) INTO pinterest_configured;
+  EXCEPTION WHEN undefined_column THEN
+    pinterest_configured := false;
+  WHEN undefined_table THEN
+    pinterest_configured := false;
+  END;
 
   IF pinterest_configured THEN
     total_social := total_social + 1;
@@ -213,12 +223,17 @@ BEGIN
   END IF;
 
   -- YouTube
-  SELECT EXISTS (
-    SELECT 1 FROM social_networks
-    WHERE platform = 'youtube'
-    AND access_token IS NOT NULL
-    AND enabled = true
-  ) INTO youtube_configured;
+  BEGIN
+    SELECT EXISTS (
+      SELECT 1 FROM social_networks
+      WHERE platform = 'youtube'
+      AND access_token IS NOT NULL
+    ) INTO youtube_configured;
+  EXCEPTION WHEN undefined_column THEN
+    youtube_configured := false;
+  WHEN undefined_table THEN
+    youtube_configured := false;
+  END;
 
   IF youtube_configured THEN
     total_social := total_social + 1;
@@ -374,7 +389,15 @@ DECLARE
   blog_count INTEGER;
 BEGIN
   SELECT COUNT(*) INTO total_crons FROM cron.job WHERE active = true;
-  SELECT COUNT(*) INTO social_count FROM social_networks WHERE enabled = true AND access_token IS NOT NULL;
+
+  BEGIN
+    SELECT COUNT(*) INTO social_count FROM social_networks WHERE access_token IS NOT NULL;
+  EXCEPTION WHEN undefined_column THEN
+    social_count := 0;
+  WHEN undefined_table THEN
+    social_count := 0;
+  END;
+
   SELECT COUNT(*) INTO blog_count FROM blog_posts WHERE published = true;
 
   RAISE NOTICE '';
