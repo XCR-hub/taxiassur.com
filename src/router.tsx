@@ -48,6 +48,8 @@ const PartnerFinder = lazy(() => import('./backoffice/PartnerFinder'));
 const ProspectReview = lazy(() => import('./backoffice/ProspectReview'));
 const OutreachComposer = lazy(() => import('./backoffice/OutreachComposer'));
 const ComplianceCenter = lazy(() => import('./backoffice/ComplianceCenter'));
+const AuthCallbackYoutube = lazy(() => import('./pages/AuthCallbackYoutube'));
+const AuthCallbackLinkedin = lazy(() => import('./pages/AuthCallbackLinkedin'));
 const DirectoryAssistant = lazy(() => import('./backoffice/DirectoryAssistant'));
 const PopupManager = lazy(() => import('./backoffice/PopupManager'));
 const NewsManager = lazy(() => import('./backoffice/NewsManager'));
@@ -423,6 +425,14 @@ export const router = createBrowserRouter([
   {
     path: '/backoffice/leads',
     element: <AuthGuard><SuspenseWrapper><LeadManager /></SuspenseWrapper></AuthGuard>
+  },
+  {
+    path: '/auth/youtube/callback',
+    element: <SuspenseWrapper><AuthCallbackYoutube /></SuspenseWrapper>
+  },
+  {
+    path: '/auth/linkedin/callback',
+    element: <SuspenseWrapper><AuthCallbackLinkedin /></SuspenseWrapper>
   },
   {
     path: '/backoffice/lead-manager',
