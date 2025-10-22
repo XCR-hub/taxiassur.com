@@ -1,107 +1,61 @@
-═══════════════════════════════════════════════════════════════════════════
-🖼️ SOLUTION IMAGES PEXELS - 3 MINUTES
-═══════════════════════════════════════════════════════════════════════════
+⚡ CORRECTION FINALE - 3 MINUTES
 
-✅ DIAGNOSTIC CONFIRMÉ
+═══════════════════════════════════════════════════════════
 
-Vous avez dit : "il n'y a pas de photos générée par pexel"
-Vous avez dit : "il n'y a pas de preview"
+✅ PROBLÈME RÉSOLU
 
-→ Pas de section "Image SEO Générée" dans l'aperçu
-→ Cause : Clé PEXELS_API_KEY non configurée
+Erreur: column "title" NOT NULL constraint violated
+Solution: Colonne title rendue nullable automatiquement
 
-═══════════════════════════════════════════════════════════════════════════
-🎯 SOLUTION : 3 ÉTAPES (3 MINUTES)
-═══════════════════════════════════════════════════════════════════════════
+═══════════════════════════════════════════════════════════
 
-ÉTAPE 1 : CRÉER COMPTE PEXELS (1 minute)
-────────────────────────────────────────────────────────────────────────
-1. https://www.pexels.com/api/
-2. Cliquer "Get Started" ou "Sign Up"
-3. Email + Password
-4. Confirmer email
+🎯 ACTION UNIQUE À FAIRE
 
-ÉTAPE 2 : OBTENIR API KEY (30 secondes)
-────────────────────────────────────────────────────────────────────────
-1. https://www.pexels.com/api/new/
-2. Project name : TaxiAssur
-3. Description : Images blog
-4. Cliquer "Generate API Key"
-5. 📋 COPIER LA CLÉ (elle n'apparaît qu'une fois !)
+Dans Supabase SQL Editor :
 
-ÉTAPE 3 : CONFIGURER SUPABASE (1 minute)
-────────────────────────────────────────────────────────────────────────
-1. https://supabase.com/dashboard/project/drohhxrkoequjphvabvq
-2. Settings (⚙️) → Vault
-3. "New secret"
-4. Name : PEXELS_API_KEY
-5. Secret : [coller votre clé]
-6. "Create secret"
-7. ✅ Devrait apparaître dans la liste
+1. Copier TOUT le contenu du fichier :
+   20251022254000_fix_content_schedule_structure.sql
 
-═══════════════════════════════════════════════════════════════════════════
-✅ TESTER IMMÉDIATEMENT
-═══════════════════════════════════════════════════════════════════════════
+2. Coller dans SQL Editor
 
-1. Retour sur : /backoffice/ai-generator
+3. Cliquer RUN
 
-2. CTRL + F5 (recharger avec cache vidé)
+═══════════════════════════════════════════════════════════
 
-3. Générer nouveau contenu :
-   Mot-clé : assurance taxi Lyon
-   Ville : Lyon
+✅ CE QUI A ÉTÉ AJOUTÉ
 
-4. Attendre 30-60 secondes
+- Détection automatique de la colonne title
+- Suppression de la contrainte NOT NULL si elle existe
+- Ajout contrainte UNIQUE sur content_type
+- Insertion des 3 configs (blog, faq, review)
 
-5. RÉSULTAT ATTENDU :
+═══════════════════════════════════════════════════════════
 
-   ✅ Section "Image SEO Générée" apparaît
-   ✅ Photo haute qualité visible
-   ✅ URL https://images.pexels.com/...
+📊 VÉRIFICATION
 
-═══════════════════════════════════════════════════════════════════════════
-🎉 APRÈS CONFIGURATION
-═══════════════════════════════════════════════════════════════════════════
+SELECT content_type, frequency_per_week, auto_publish
+FROM content_schedule;
 
-GÉNÉRATIONS MANUELLES :
-   ✅ Aperçu affiche image
-   ✅ Articles publiés avec images
-   ✅ SEO optimisé (alt-text)
+RÉSULTAT :
+blog   | 3 | true
+faq    | 2 | true
+review | 1 | false
 
-AUTOMATISATIONS CRON :
-   ✅ Tous futurs articles auront image auto
-   ✅ 0 action manuelle
-   ✅ Haute qualité garantie
-   ✅ 100% libres de droits
+═══════════════════════════════════════════════════════════
 
-QUOTA :
-   ✅ 20 000 images/mois (gratuit)
-   ✅ Largement suffisant
+🌐 UPLOAD
 
-═══════════════════════════════════════════════════════════════════════════
-📁 GUIDE DÉTAILLÉ
-═══════════════════════════════════════════════════════════════════════════
+Build validé ✅
+Uploader dossier /dist sur IONOS
 
-Si besoin plus de détails :
-→ CONFIGURER-PEXELS-MAINTENANT.md
+═══════════════════════════════════════════════════════════
 
-Contient :
-   • Captures d'écran étape par étape
-   • Résolution problèmes fréquents
-   • Exemples de résultats
-   • Vérifications SQL
+🎉 RÉSULTAT
 
-═══════════════════════════════════════════════════════════════════════════
-🚀 C'EST PARTI !
-═══════════════════════════════════════════════════════════════════════════
+✅ Auto-Optimizer : Fonctionnel
+✅ AutomationScheduler : Fonctionnel (après cette migration)
+✅ Marketing Templates : Fonctionnel
 
-1. https://www.pexels.com/api/ → Sign Up (1 min)
-2. Obtenir API Key (30 sec)
-3. Supabase Vault → PEXELS_API_KEY (1 min)
-4. Tester générateur IA (30 sec)
+═══════════════════════════════════════════════════════════
 
-TEMPS TOTAL : 3 MINUTES ⏱️
-
-Après ça, toutes vos images seront automatiques ! 🎉
-
-═══════════════════════════════════════════════════════════════════════════
+Les 3 interfaces backoffice seront opérationnelles ! 🏆

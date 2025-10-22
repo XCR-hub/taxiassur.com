@@ -49,6 +49,21 @@ BEGIN
   PERFORM add_column_if_not_exists('content_schedule', 'metadata', 'jsonb DEFAULT ''{}''');
 END $$;
 
+-- Rendre la colonne title NULL si elle existe (au cas où)
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_name = 'content_schedule'
+    AND column_name = 'title'
+    AND is_nullable = 'NO'
+  ) THEN
+    ALTER TABLE content_schedule ALTER COLUMN title DROP NOT NULL;
+    RAISE NOTICE 'Colonne title rendue nullable';
+  END IF;
+END $$;
+
 -- S'assurer que content_type est bien text (pas enum)
 DO $$
 BEGIN
