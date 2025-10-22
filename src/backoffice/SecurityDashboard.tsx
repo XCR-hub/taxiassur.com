@@ -1,13 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { Shield, AlertTriangle, Activity, Lock, Eye, TrendingUp, Users, Globe, Home } from 'lucide-react';
+import { Shield, AlertTriangle, Activity, Lock, Eye, TrendingUp, Users, Globe, Home, RefreshCw, Download, BarChart3, Clock, CheckCircle, XCircle } from 'lucide-react';
 import Card from '../components/Card';
+import { supabase } from '../lib/supabase';
 
 interface SecurityLog {
+  id: string;
   timestamp: string;
   level: string;
   message: string;
   ip: string;
+  user_agent: string;
+  path: string;
+  method: string;
+  status_code: number;
+  blocked: boolean;
+  threat_type: string | null;
   context: any;
+  created_at: string;
 }
 
 interface SecurityStats {
@@ -15,8 +24,11 @@ interface SecurityStats {
   blockedRequests: number;
   spamAttempts: number;
   validLeads: number;
+  uniqueIPs: number;
+  avgResponseTime: number;
   topThreats: Array<{ type: string; count: number }>;
-  ipAnalysis: Array<{ ip: string; requests: number; blocked: boolean }>;
+  ipAnalysis: Array<{ ip: string; requests: number; blocked: boolean; country?: string }>;
+  hourlyActivity: Array<{ hour: number; requests: number }>;
 }
 
 const SecurityDashboard: React.FC = () => {
@@ -26,66 +38,135 @@ const SecurityDashboard: React.FC = () => {
     blockedRequests: 0,
     spamAttempts: 0,
     validLeads: 0,
+    uniqueIPs: 0,
+    avgResponseTime: 0,
     topThreats: [],
-    ipAnalysis: []
+    ipAnalysis: [],
+    hourlyActivity: []
   });
   const [loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState('24h');
+  const [liveMode, setLiveMode] = useState(true);
+  const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
 
   useEffect(() => {
     loadSecurityData();
-    const interval = setInterval(loadSecurityData, 30000); // Refresh every 30s
+    const interval = setInterval(() => {
+      if (liveMode) {
+        loadSecurityData();
+      }
+    }, 30000); // Refresh every 30s
     return () => clearInterval(interval);
-  }, [timeRange]);
+  }, [timeRange, liveMode]);
+
+  const getTimeRangeQuery = () => {
+    const now = new Date();
+    let timeAgo = new Date();
+
+    switch (timeRange) {
+      case '1h':
+        timeAgo.setHours(now.getHours() - 1);
+        break;
+      case '24h':
+        timeAgo.setHours(now.getHours() - 24);
+        break;
+      case '7d':
+        timeAgo.setDate(now.getDate() - 7);
+        break;
+      case '30d':
+        timeAgo.setDate(now.getDate() - 30);
+        break;
+      default:
+        timeAgo.setHours(now.getHours() - 24);
+    }
+
+    return timeAgo.toISOString();
+  };
 
   const loadSecurityData = async () => {
-    setLoading(true);
     try {
-      // Simulate security data (in real implementation, this would fetch from logs)
-      const mockLogs: SecurityLog[] = [
-        {
-          timestamp: new Date().toISOString(),
-          level: 'WARNING',
-          message: 'Honeypot triggered',
-          ip: '192.168.1.100',
-          context: { user_agent: 'Bot/1.0' }
-        },
-        {
-          timestamp: new Date(Date.now() - 300000).toISOString(),
-          level: 'INFO',
-          message: 'Valid lead processed',
-          ip: '85.123.45.67',
-          context: { behavior_score: 85 }
-        },
-        {
-          timestamp: new Date(Date.now() - 600000).toISOString(),
-          level: 'WARNING',
-          message: 'Rate limit exceeded',
-          ip: '192.168.1.101',
-          context: { requests_count: 10 }
+      const timeAgo = getTimeRangeQuery();
+
+      // Charger les logs de sécurité
+      const { data: logs, error: logsError } = await supabase
+        .from('security_logs')
+        .select('*')
+        .gte('created_at', timeAgo)
+        .order('created_at', { ascending: false })
+        .limit(50);
+
+      if (logsError) {
+        console.error('Error loading security logs:', logsError);
+      } else {
+        setSecurityLogs(logs || []);
+      }
+
+      // Charger les leads pour valider
+      const { data: leads } = await supabase
+        .from('leads')
+        .select('id, created_at, status')
+        .gte('created_at', timeAgo);
+
+      // Calculer les statistiques
+      const totalRequests = logs?.length || 0;
+      const blockedRequests = logs?.filter(l => l.blocked).length || 0;
+      const uniqueIPs = new Set(logs?.map(l => l.ip) || []).size;
+
+      // Analyser les menaces
+      const threatCounts: Record<string, number> = {};
+      logs?.forEach(log => {
+        if (log.threat_type) {
+          threatCounts[log.threat_type] = (threatCounts[log.threat_type] || 0) + 1;
         }
-      ];
+      });
 
-      const mockStats: SecurityStats = {
-        totalRequests: 1247,
-        blockedRequests: 89,
-        spamAttempts: 34,
-        validLeads: 156,
-        topThreats: [
-          { type: 'Bot Traffic', count: 45 },
-          { type: 'Rate Limiting', count: 23 },
-          { type: 'Honeypot', count: 12 },
-          { type: 'Invalid Referer', count: 9 }
-        ],
-        ipAnalysis: [
-          { ip: '192.168.1.100', requests: 25, blocked: true },
-          { ip: '85.123.45.67', requests: 3, blocked: false },
-          { ip: '192.168.1.101', requests: 15, blocked: true }
-        ]
-      };
+      const topThreats = Object.entries(threatCounts)
+        .map(([type, count]) => ({ type, count }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 5);
 
-      setSecurityLogs(mockLogs);
-      setStats(mockStats);
+      // Analyser les IPs
+      const ipCounts: Record<string, { requests: number; blocked: boolean }> = {};
+      logs?.forEach(log => {
+        if (!ipCounts[log.ip]) {
+          ipCounts[log.ip] = { requests: 0, blocked: false };
+        }
+        ipCounts[log.ip].requests += 1;
+        if (log.blocked) {
+          ipCounts[log.ip].blocked = true;
+        }
+      });
+
+      const ipAnalysis = Object.entries(ipCounts)
+        .map(([ip, data]) => ({ ip, ...data }))
+        .sort((a, b) => b.requests - a.requests)
+        .slice(0, 10);
+
+      // Activité horaire
+      const hourlyActivity: Record<number, number> = {};
+      logs?.forEach(log => {
+        const hour = new Date(log.created_at).getHours();
+        hourlyActivity[hour] = (hourlyActivity[hour] || 0) + 1;
+      });
+
+      const hourlyData = Array.from({ length: 24 }, (_, i) => ({
+        hour: i,
+        requests: hourlyActivity[i] || 0
+      }));
+
+      setStats({
+        totalRequests,
+        blockedRequests,
+        spamAttempts: logs?.filter(l => l.threat_type?.includes('spam')).length || 0,
+        validLeads: leads?.length || 0,
+        uniqueIPs,
+        avgResponseTime: 0, // À calculer si disponible
+        topThreats,
+        ipAnalysis,
+        hourlyActivity: hourlyData
+      });
+
+      setLastRefresh(new Date());
     } catch (error) {
       console.error('Failed to load security data:', error);
     } finally {
@@ -94,32 +175,71 @@ const SecurityDashboard: React.FC = () => {
   };
 
   const getSecurityScore = (): number => {
-    const { totalRequests, blockedRequests } = stats;
+    const { totalRequests, blockedRequests, validLeads } = stats;
     if (totalRequests === 0) return 100;
 
     const blockRate = (blockedRequests / totalRequests) * 100;
-    const score = Math.max(0, 100 - blockRate * 2); // Lower score if too many blocks
-    return Math.round(score * 10) / 10; // Arrondir à 1 décimale
+    const validRate = validLeads > 0 ? (validLeads / totalRequests) * 100 : 0;
+
+    // Score basé sur taux de blocage et taux de conversion
+    const score = Math.max(0, 100 - blockRate + validRate * 0.5);
+    return Math.min(100, Math.round(score * 10) / 10);
+  };
+
+  const getScoreLabel = (score: number): string => {
+    if (score >= 90) return 'Excellent';
+    if (score >= 75) return 'Très Bon';
+    if (score >= 60) return 'Bon';
+    if (score >= 40) return 'Moyen';
+    return 'À améliorer';
+  };
+
+  const getScoreColor = (score: number): string => {
+    if (score >= 90) return 'from-green-500 to-emerald-500';
+    if (score >= 75) return 'from-blue-500 to-cyan-500';
+    if (score >= 60) return 'from-yellow-500 to-orange-500';
+    return 'from-orange-500 to-red-500';
   };
 
   const getLevelColor = (level: string): string => {
     switch (level.toLowerCase()) {
-      case 'error': return 'text-red-600 bg-red-50';
-      case 'warning': return 'text-yellow-600 bg-yellow-50';
-      case 'info': return 'text-orange-600 bg-orange-50';
-      default: return 'text-gray-600 bg-gray-50';
+      case 'error': return 'text-red-600 bg-red-50 border-red-200';
+      case 'warning': return 'text-yellow-600 bg-yellow-50 border-yellow-200';
+      case 'info': return 'text-blue-600 bg-blue-50 border-blue-200';
+      case 'success': return 'text-green-600 bg-green-50 border-green-200';
+      default: return 'text-gray-600 bg-gray-50 border-gray-200';
     }
+  };
+
+  const exportSecurityReport = () => {
+    const report = {
+      generated_at: new Date().toISOString(),
+      time_range: timeRange,
+      stats,
+      logs: securityLogs,
+      score: getSecurityScore()
+    };
+
+    const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `security-report-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 p-8">
+      <div className="min-h-screen bg-gradient-to-br from-orange-50 via-yellow-50 to-orange-50 p-6">
         <div className="max-w-7xl mx-auto">
-          <div className="animate-pulse">
-            <div className="h-8 bg-gray-200 rounded mb-8"></div>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <div className="animate-pulse space-y-6">
+            <div className="h-12 bg-gray-300 rounded-xl w-1/3"></div>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               {[...Array(4)].map((_, i) => (
-                <div key={i} className="h-32 bg-gray-200 rounded"></div>
+                <div key={i} className="h-32 bg-gray-300 rounded-xl"></div>
               ))}
             </div>
           </div>
@@ -128,265 +248,351 @@ const SecurityDashboard: React.FC = () => {
     );
   }
 
+  const securityScore = getSecurityScore();
+
   return (
-    
-      <div className="min-h-screen bg-gray-50 p-8">
-        {/* Header with Home Button */}
-        <header className="bg-white border-b-2 border-gray-200 shadow-sm mb-8">
-          <div className="max-w-7xl mx-auto px-6 py-4">
-            <div className="flex justify-between items-center">
-              <div className="flex items-center space-x-4">
-                <div className="w-10 h-10 bg-gradient-to-br from-red-500 to-pink-500 rounded-xl flex items-center justify-center shadow-lg">
-                  <Shield className="text-white" size={20} />
-                </div>
-                <div>
-                  <h1 className="text-2xl font-bold text-gray-900">
-                    Tableau de Bord Sécurité
-                  </h1>
-                  <p className="text-sm text-gray-600">
-                    Monitoring et protection en temps réel
-                  </p>
-                </div>
-              </div>
-              
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-yellow-50 to-orange-50 p-6">
+      <div className="max-w-7xl mx-auto space-y-6">
+        {/* Header */}
+        <div className="bg-gradient-to-r from-red-600 to-pink-600 rounded-xl p-6 text-white shadow-xl">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold flex items-center gap-3">
+                <Shield className="w-8 h-8" />
+                Tableau de Bord Sécurité
+              </h1>
+              <p className="text-red-100 mt-2">
+                Monitoring et protection en temps réel
+              </p>
+            </div>
+            <div className="flex items-center space-x-3">
               <a
                 href="/backoffice"
-                className="bg-orange-600 hover:bg-orange-700 text-white font-medium px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
+                className="px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors flex items-center space-x-2"
               >
-                <Home size={16} />
-                <span>Accueil Backoffice</span>
+                <Home size={18} />
+                <span>Accueil</span>
               </a>
-            </div>
-          </div>
-        </header>
-
-        <div className="max-w-7xl mx-auto">
-          <div className="flex justify-between items-center mb-8">
-            
-            <div className="flex items-center space-x-4">
-              <select
-                value={timeRange}
-                onChange={(e) => setTimeRange(e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="1h">Dernière heure</option>
-                <option value="24h">Dernières 24h</option>
-                <option value="7d">7 derniers jours</option>
-                <option value="30d">30 derniers jours</option>
-              </select>
-              
               <button
-                onClick={loadSecurityData}
-                className="flex items-center space-x-2 bg-orange-600 hover:bg-orange-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+                onClick={exportSecurityReport}
+                className="px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors flex items-center space-x-2"
               >
-                <Activity size={16} />
-                <span>Actualiser</span>
+                <Download size={18} />
+                <span>Exporter</span>
               </button>
             </div>
           </div>
+        </div>
 
-          {/* Security Score */}
-          <div className="mb-8">
-            <Card className="bg-gradient-to-r from-green-50 to-emerald-50 border-green-200">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-500 rounded-full flex items-center justify-center">
-                    <Shield className="text-white" size={24} />
-                  </div>
-                  <div>
-                    <h3 className="text-2xl font-bold text-gray-900">
-                      Score Sécurité : {getSecurityScore()}/100
-                    </h3>
-                    <p className="text-gray-600">
-                      {getSecurityScore() > 90 ? 'Excellent' : getSecurityScore() > 70 ? 'Bon' : 'À améliorer'}
-                    </p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <div className="text-sm text-gray-600">Dernière analyse</div>
-                  <div className="font-medium">{new Date().toLocaleTimeString('fr-FR')}</div>
-                </div>
+        {/* Controls */}
+        <div className="flex items-center justify-between bg-white rounded-xl p-4 shadow-md">
+          <div className="flex items-center space-x-4">
+            <select
+              value={timeRange}
+              onChange={(e) => setTimeRange(e.target.value)}
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+            >
+              <option value="1h">Dernière heure</option>
+              <option value="24h">Dernières 24h</option>
+              <option value="7d">7 derniers jours</option>
+              <option value="30d">30 derniers jours</option>
+            </select>
+
+            <button
+              onClick={() => setLiveMode(!liveMode)}
+              className={`px-4 py-2 rounded-lg transition-colors flex items-center space-x-2 ${
+                liveMode
+                  ? 'bg-green-100 text-green-700 border-2 border-green-500'
+                  : 'bg-gray-100 text-gray-700 border-2 border-gray-300'
+              }`}
+            >
+              <div className={`w-2 h-2 rounded-full ${liveMode ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`}></div>
+              <span>{liveMode ? 'Live' : 'Pause'}</span>
+            </button>
+          </div>
+
+          <div className="flex items-center space-x-4">
+            <div className="text-sm text-gray-600 flex items-center space-x-2">
+              <Clock size={16} />
+              <span>Actualisé: {lastRefresh.toLocaleTimeString('fr-FR')}</span>
+            </div>
+            <button
+              onClick={loadSecurityData}
+              disabled={loading}
+              className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition-colors flex items-center space-x-2 disabled:opacity-50 font-medium"
+            >
+              <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
+              <span>Actualiser</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Security Score */}
+        <div className="bg-white rounded-xl p-6 shadow-lg">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <div className={`w-20 h-20 bg-gradient-to-br ${getScoreColor(securityScore)} rounded-full flex items-center justify-center shadow-lg`}>
+                <Shield className="text-white" size={32} />
               </div>
-            </Card>
+              <div>
+                <h3 className="text-3xl font-bold text-gray-900">
+                  {securityScore}/100
+                </h3>
+                <p className="text-lg text-gray-600">
+                  {getScoreLabel(securityScore)}
+                </p>
+              </div>
+            </div>
+            <div className="text-right space-y-2">
+              <div className="flex items-center space-x-2 text-sm text-gray-600">
+                <CheckCircle size={16} className="text-green-600" />
+                <span>{stats.validLeads} leads valides</span>
+              </div>
+              <div className="flex items-center space-x-2 text-sm text-gray-600">
+                <XCircle size={16} className="text-red-600" />
+                <span>{stats.blockedRequests} menaces bloquées</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-blue-500">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600 mb-1">Requêtes Totales</p>
+                <p className="text-3xl font-bold text-gray-800">{stats.totalRequests}</p>
+              </div>
+              <Globe size={32} className="text-blue-500" />
+            </div>
           </div>
 
-          {/* Security Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <Card className="text-center bg-gradient-to-br from-orange-50 to-yellow-50">
-              <Globe className="mx-auto mb-2 text-orange-600" size={24} />
-              <div className="text-2xl font-bold text-gray-900">{stats.totalRequests}</div>
-              <div className="text-sm text-gray-600">Requêtes totales</div>
-            </Card>
-
-            <Card className="text-center bg-gradient-to-br from-red-50 to-pink-50">
-              <AlertTriangle className="mx-auto mb-2 text-red-600" size={24} />
-              <div className="text-2xl font-bold text-gray-900">{stats.blockedRequests}</div>
-              <div className="text-sm text-gray-600">Requêtes bloquées</div>
-            </Card>
-
-            <Card className="text-center bg-gradient-to-br from-yellow-50 to-amber-50">
-              <Eye className="mx-auto mb-2 text-yellow-600" size={24} />
-              <div className="text-2xl font-bold text-gray-900">{stats.spamAttempts}</div>
-              <div className="text-sm text-gray-600">Tentatives spam</div>
-            </Card>
-
-            <Card className="text-center bg-gradient-to-br from-green-50 to-emerald-50">
-              <Users className="mx-auto mb-2 text-green-600" size={24} />
-              <div className="text-2xl font-bold text-gray-900">{stats.validLeads}</div>
-              <div className="text-sm text-gray-600">Leads valides</div>
-            </Card>
+          <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-red-500">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600 mb-1">Menaces Bloquées</p>
+                <p className="text-3xl font-bold text-gray-800">{stats.blockedRequests}</p>
+              </div>
+              <AlertTriangle size={32} className="text-red-500" />
+            </div>
           </div>
 
-          {/* Threat Analysis */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-            <Card>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                <AlertTriangle className="mr-2 text-red-600" size={20} />
-                Top Menaces Détectées
-              </h3>
+          <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-yellow-500">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600 mb-1">IPs Uniques</p>
+                <p className="text-3xl font-bold text-gray-800">{stats.uniqueIPs}</p>
+              </div>
+              <Users size={32} className="text-yellow-500" />
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-green-500">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600 mb-1">Leads Valides</p>
+                <p className="text-3xl font-bold text-gray-800">{stats.validLeads}</p>
+              </div>
+              <CheckCircle size={32} className="text-green-500" />
+            </div>
+          </div>
+        </div>
+
+        {/* Threat Analysis */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Card className="bg-white shadow-lg">
+            <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
+              <AlertTriangle className="mr-2 text-red-600" size={20} />
+              Top Menaces Détectées
+            </h3>
+            {stats.topThreats.length > 0 ? (
               <div className="space-y-3">
                 {stats.topThreats.map((threat, index) => (
-                  <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200 hover:border-orange-300 transition-colors">
                     <span className="font-medium text-gray-900">{threat.type}</span>
                     <div className="flex items-center space-x-2">
                       <span className="text-sm text-gray-600">{threat.count} tentatives</span>
-                      <div className={`w-2 h-2 rounded-full ${
+                      <div className={`w-3 h-3 rounded-full ${
                         threat.count > 20 ? 'bg-red-500' : threat.count > 10 ? 'bg-yellow-500' : 'bg-green-500'
                       }`}></div>
                     </div>
                   </div>
                 ))}
               </div>
-            </Card>
+            ) : (
+              <p className="text-center py-8 text-gray-500">Aucune menace détectée</p>
+            )}
+          </Card>
 
-            <Card>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                <Globe className="mr-2 text-orange-600" size={20} />
-                Analyse IP Suspectes
-              </h3>
-              <div className="space-y-3">
+          <Card className="bg-white shadow-lg">
+            <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
+              <Globe className="mr-2 text-orange-600" size={20} />
+              IPs Suspectes
+            </h3>
+            {stats.ipAnalysis.length > 0 ? (
+              <div className="space-y-3 max-h-80 overflow-y-auto">
                 {stats.ipAnalysis.map((ip, index) => (
-                  <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
                     <div className="flex items-center space-x-3">
                       <code className="text-sm font-mono bg-gray-200 px-2 py-1 rounded">
                         {ip.ip}
                       </code>
                       {ip.blocked && (
-                        <span className="px-2 py-1 bg-red-100 text-red-800 text-xs rounded-full">
+                        <span className="px-2 py-1 bg-red-100 text-red-800 text-xs rounded-full font-medium">
                           Bloquée
                         </span>
                       )}
                     </div>
-                    <span className="text-sm text-gray-600">{ip.requests} requêtes</span>
+                    <span className="text-sm text-gray-600 font-medium">{ip.requests} req</span>
                   </div>
                 ))}
               </div>
-            </Card>
+            ) : (
+              <p className="text-center py-8 text-gray-500">Aucune IP suspecte</p>
+            )}
+          </Card>
+        </div>
+
+        {/* Activity Graph */}
+        <Card className="bg-white shadow-lg">
+          <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
+            <BarChart3 className="mr-2 text-orange-600" size={20} />
+            Activité par Heure
+          </h3>
+          <div className="flex items-end justify-between h-40 space-x-1">
+            {stats.hourlyActivity.map((hour) => {
+              const maxRequests = Math.max(...stats.hourlyActivity.map(h => h.requests), 1);
+              const height = (hour.requests / maxRequests) * 100;
+              return (
+                <div key={hour.hour} className="flex-1 flex flex-col items-center space-y-1">
+                  <div
+                    className="w-full bg-gradient-to-t from-orange-600 to-orange-400 rounded-t-lg hover:from-orange-700 hover:to-orange-500 transition-all cursor-pointer"
+                    style={{ height: `${height}%` }}
+                    title={`${hour.hour}h: ${hour.requests} requêtes`}
+                  ></div>
+                  <span className="text-xs text-gray-600">{hour.hour}h</span>
+                </div>
+              );
+            })}
+          </div>
+        </Card>
+
+        {/* Security Logs */}
+        <Card className="bg-white shadow-lg">
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="text-lg font-bold text-gray-800 flex items-center">
+              <Activity className="mr-2 text-green-600" size={20} />
+              Logs Sécurité en Temps Réel
+            </h3>
+            <div className="flex items-center space-x-2">
+              {liveMode && <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>}
+              <span className="text-sm text-gray-600">{securityLogs.length} événements</span>
+            </div>
           </div>
 
-          {/* Security Logs */}
-          <Card>
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-lg font-semibold text-gray-900 flex items-center">
-                <Activity className="mr-2 text-green-600" size={20} />
-                Logs Sécurité en Temps Réel
-              </h3>
-              <div className="flex items-center space-x-2">
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                <span className="text-sm text-gray-600">Live</span>
-              </div>
-            </div>
-            
-            <div className="space-y-2 max-h-96 overflow-y-auto">
-              {securityLogs.map((log, index) => (
-                <div key={index} className={`p-3 rounded-lg border ${
-                  log.level === 'ERROR' ? 'border-red-200 bg-red-50' :
-                  log.level === 'WARNING' ? 'border-yellow-200 bg-yellow-50' :
-                  'border-orange-200 bg-orange-50'
-                }`}>
-                  <div className="flex items-center justify-between mb-1">
+          {securityLogs.length > 0 ? (
+            <div className="space-y-2 max-h-96 overflow-y-auto pr-2">
+              {securityLogs.map((log) => (
+                <div
+                  key={log.id}
+                  className={`p-4 rounded-lg border ${getLevelColor(log.level)}`}
+                >
+                  <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center space-x-2">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${getLevelColor(log.level)}`}>
+                      <span className={`px-2 py-1 rounded-full text-xs font-bold uppercase`}>
                         {log.level}
                       </span>
-                      <span className="text-sm font-medium text-gray-900">{log.message}</span>
+                      <span className="text-sm font-semibold text-gray-900">{log.message}</span>
+                      {log.blocked && (
+                        <span className="px-2 py-1 bg-red-600 text-white text-xs rounded-full font-medium">
+                          BLOQUÉ
+                        </span>
+                      )}
                     </div>
                     <span className="text-xs text-gray-600">
-                      {new Date(log.timestamp).toLocaleTimeString('fr-FR')}
+                      {new Date(log.created_at).toLocaleTimeString('fr-FR')}
                     </span>
                   </div>
-                  
+
                   <div className="flex items-center space-x-4 text-xs text-gray-600">
-                    <span>IP: <code className="bg-gray-200 px-1 rounded">{log.ip}</code></span>
-                    {log.context && Object.keys(log.context).length > 0 && (
-                      <span>Contexte: {JSON.stringify(log.context)}</span>
+                    <span className="flex items-center space-x-1">
+                      <Globe size={12} />
+                      <code className="bg-gray-200 px-2 py-0.5 rounded">{log.ip}</code>
+                    </span>
+                    {log.path && (
+                      <span className="flex items-center space-x-1">
+                        <Activity size={12} />
+                        <code className="bg-gray-200 px-2 py-0.5 rounded">{log.method} {log.path}</code>
+                      </span>
+                    )}
+                    {log.threat_type && (
+                      <span className="flex items-center space-x-1">
+                        <AlertTriangle size={12} className="text-red-600" />
+                        <span className="font-medium text-red-600">{log.threat_type}</span>
+                      </span>
                     )}
                   </div>
                 </div>
               ))}
             </div>
-          </Card>
+          ) : (
+            <div className="text-center py-12 text-gray-500">
+              <Activity className="w-12 h-12 mx-auto mb-3 opacity-50" />
+              <p>Aucun événement de sécurité</p>
+              <p className="text-sm mt-2">Les logs apparaîtront ici en temps réel</p>
+            </div>
+          )}
+        </Card>
 
-          {/* Security Recommendations */}
-          <div className="mt-8">
-            <Card>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                <Lock className="mr-2 text-orange-600" size={20} />
-                Recommandations Sécurité
-              </h3>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-3">
-                  <h4 className="font-medium text-gray-900">Actions Immédiates</h4>
-                  <ul className="space-y-2 text-sm text-gray-700">
-                    <li className="flex items-center space-x-2">
-                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                      <span>Changer le MAKE_SECRET par défaut</span>
-                    </li>
-                    <li className="flex items-center space-x-2">
-                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                      <span>Activer la surveillance IP</span>
-                    </li>
-                    <li className="flex items-center space-x-2">
-                      <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-                      <span>Configurer les alertes email</span>
-                    </li>
-                  </ul>
-                </div>
-                
-                <div className="space-y-3">
-                  <h4 className="font-medium text-gray-900">Optimisations</h4>
-                  <ul className="space-y-2 text-sm text-gray-700">
-                    <li className="flex items-center space-x-2">
-                      <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                      <span>Implémenter WAF (Web Application Firewall)</span>
-                    </li>
-                    <li className="flex items-center space-x-2">
-                      <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                      <span>Ajouter authentification 2FA</span>
-                    </li>
-                    <li className="flex items-center space-x-2">
-                      <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                      <span>Backup automatique quotidien</span>
-                    </li>
-                  </ul>
-                </div>
-              </div>
-            </Card>
+        {/* Recommendations */}
+        <Card className="bg-white shadow-lg">
+          <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
+            <Lock className="mr-2 text-orange-600" size={20} />
+            Recommandations Sécurité
+          </h3>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-3">
+              <h4 className="font-semibold text-gray-900">Actions Immédiates</h4>
+              <ul className="space-y-2 text-sm text-gray-700">
+                <li className="flex items-center space-x-2">
+                  <CheckCircle size={16} className="text-green-600" />
+                  <span>Surveillance IP activée</span>
+                </li>
+                <li className="flex items-center space-x-2">
+                  <CheckCircle size={16} className="text-green-600" />
+                  <span>Rate limiting configuré</span>
+                </li>
+                <li className="flex items-center space-x-2">
+                  <AlertTriangle size={16} className="text-yellow-600" />
+                  <span>Configurer les alertes email</span>
+                </li>
+              </ul>
+            </div>
+
+            <div className="space-y-3">
+              <h4 className="font-semibold text-gray-900">Optimisations</h4>
+              <ul className="space-y-2 text-sm text-gray-700">
+                <li className="flex items-center space-x-2">
+                  <TrendingUp size={16} className="text-orange-600" />
+                  <span>Implémenter WAF (Web Application Firewall)</span>
+                </li>
+                <li className="flex items-center space-x-2">
+                  <TrendingUp size={16} className="text-orange-600" />
+                  <span>Ajouter authentification 2FA</span>
+                </li>
+                <li className="flex items-center space-x-2">
+                  <TrendingUp size={16} className="text-orange-600" />
+                  <span>Backup automatique quotidien</span>
+                </li>
+              </ul>
+            </div>
           </div>
-        </div>
+        </Card>
       </div>
-    
+    </div>
   );
-};
-
-const getLevelColor = (level: string): string => {
-  switch (level.toLowerCase()) {
-    case 'error': return 'text-red-600 bg-red-100';
-    case 'warning': return 'text-yellow-600 bg-yellow-100';
-    case 'info': return 'text-orange-600 bg-orange-100';
-    default: return 'text-gray-600 bg-gray-100';
-  }
 };
 
 export default SecurityDashboard;
