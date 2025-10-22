@@ -1,0 +1,168 @@
+┌─────────────────────────────────────────────────────────────────────────┐
+│                                                                         │
+│  🔧 2 PROBLÈMES À CORRIGER MAINTENANT                                   │
+│                                                                         │
+└─────────────────────────────────────────────────────────────────────────┘
+
+PROBLÈME 1: Erreur SQL "column source does not exist"
+PROBLÈME 2: Articles blog affichent "Article non trouvé"
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│  SOLUTION 1: Exécuter Migration SQL pour Ajouter Colonne Source        │
+└─────────────────────────────────────────────────────────────────────────┘
+
+📁 Fichier à exécuter:
+   supabase/migrations/20251022269000_fix_partner_prospects_add_source.sql
+
+🎯 Ce que fait cette migration:
+   ✅ Vérifie si colonne "source" existe
+   ✅ L'ajoute si elle manque
+   ✅ Insère 20 prospects partenaires
+   ✅ Affiche le nombre total de prospects
+
+📍 Où l'exécuter:
+   1. Ouvre: https://supabase.com/dashboard
+   2. SQL Editor (menu gauche)
+   3. Copie TOUT le contenu du fichier ci-dessus
+   4. Colle et clique "Run"
+   5. Attends 3-5 secondes
+
+✅ Résultat attendu:
+   ✅ Migration terminée !
+   📊 Total prospects: 20
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│  SOLUTION 2: Problème URLs Blog - Diagnostic                           │
+└─────────────────────────────────────────────────────────────────────────┘
+
+❌ URL ACTUELLE (ne fonctionne pas):
+   https://taxiassur.com/blog/assurance-taxi-melun-1761106394869-1761132334521
+                                                   ^^^^^^^^^^^^^^^^^^^^^^^^
+                                                   Timestamps incorrects
+
+✅ URL CORRECTE (devrait être):
+   https://taxiassur.com/blog/assurance-taxi-2024
+   https://taxiassur.com/blog/comparatif-assurances-taxi-2024
+
+🔍 DIAGNOSTIC:
+
+Le problème vient des données dans Supabase:
+- Les articles ont des slugs avec timestamps
+- Au lieu d'utiliser les slugs propres des fichiers JSON locaux
+
+VÉRIFICATION DANS SUPABASE:
+
+Exécute cette requête dans SQL Editor pour vérifier:
+
+SELECT id, slug, title, created_at
+FROM blog_posts
+ORDER BY created_at DESC
+LIMIT 10;
+
+Tu vas probablement voir:
+  slug = "assurance-taxi-melun-1761106394869-1761132334521" ❌
+
+Au lieu de:
+  slug = "assurance-taxi-2024" ✅
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│  SOLUTION 2: Corriger les Slugs des Articles                           │
+└─────────────────────────────────────────────────────────────────────────┘
+
+Option A: Nettoyer les slugs automatiquement (RECOMMANDÉ)
+
+Exécute cette requête dans SQL Editor:
+
+```sql
+-- Nettoyer les slugs en enlevant les timestamps
+UPDATE blog_posts
+SET slug = REGEXP_REPLACE(slug, '-[0-9]{13,}-[0-9]{13,}$', '')
+WHERE slug ~ '-[0-9]{13,}-[0-9]{13,}$';
+
+-- Vérifier le résultat
+SELECT slug, title FROM blog_posts ORDER BY created_at DESC LIMIT 10;
+```
+
+Cela va transformer:
+  "assurance-taxi-melun-1761106394869-1761132334521"
+    ↓
+  "assurance-taxi-melun"
+
+Option B: Supprimer et réinsérer les articles
+
+Si Option A ne fonctionne pas, exécute:
+
+```sql
+-- Supprimer tous les articles avec slugs incorrects
+DELETE FROM blog_posts WHERE slug ~ '-[0-9]{13,}';
+
+-- Les articles seront rechargés depuis les fichiers JSON locaux
+-- lors de la prochaine visite de la page /blog
+```
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│  VÉRIFICATION APRÈS CORRECTION                                          │
+└─────────────────────────────────────────────────────────────────────────┘
+
+Après avoir exécuté les 2 solutions:
+
+1️⃣ Vérifie les prospects:
+   → https://taxiassur.com/backoffice/prospects
+   → Tu devrais voir 20 prospects
+
+2️⃣ Vérifie le blog:
+   → https://taxiassur.com/blog
+   → Clique sur n'importe quel article
+   → L'article devrait s'afficher correctement
+
+3️⃣ Si un article ne fonctionne toujours pas:
+   → Note le slug exact de l'URL
+   → Vérifie que le fichier JSON correspondant existe:
+     /public/content/blog/[slug].json
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│  SI ÇA NE FONCTIONNE TOUJOURS PAS                                       │
+└─────────────────────────────────────────────────────────────────────────┘
+
+Envoie-moi:
+
+1. Le résultat de cette requête SQL:
+   SELECT slug, title FROM blog_posts LIMIT 5;
+
+2. L'URL exacte d'un article qui ne fonctionne pas
+
+3. La liste des fichiers dans /public/content/blog/
+   (ou juste confirme que les fichiers .json existent)
+
+Je pourrai alors créer une migration SQL spécifique pour corriger.
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│  ORDRE D'EXÉCUTION                                                      │
+└─────────────────────────────────────────────────────────────────────────┘
+
+1️⃣ MAINTENANT: Exécute la migration pour ajouter colonne "source"
+   📁 20251022269000_fix_partner_prospects_add_source.sql
+
+2️⃣ ENSUITE: Nettoie les slugs des articles
+   📝 UPDATE blog_posts SET slug = REGEXP_REPLACE(...)
+
+3️⃣ ENFIN: Teste les 2 pages:
+   - /backoffice/prospects (devrait montrer 20 prospects)
+   - /blog (tous les articles devraient s'ouvrir)
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│  RÉSUMÉ RAPIDE                                                          │
+└─────────────────────────────────────────────────────────────────────────┘
+
+PROBLÈME 1 ✅ RÉSOLU:
+- Migration SQL prête
+- Ajoute colonne "source" manquante
+- Insère 20 prospects
+
+PROBLÈME 2 🔧 À VÉRIFIER:
+- Slugs d'articles contiennent des timestamps
+- Besoin de les nettoyer avec UPDATE SQL
+- Ou supprimer et recharger depuis JSON locaux
+
+👉 COMMENCE PAR EXÉCUTER:
+   20251022269000_fix_partner_prospects_add_source.sql
