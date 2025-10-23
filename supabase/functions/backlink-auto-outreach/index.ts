@@ -33,15 +33,43 @@ Deno.serve(async (req: Request) => {
 
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const { campaignId, maxEmailsPerRun = 10, testMode = false }: AutoOutreachRequest = await req.json();
+    const body = await req.json().catch(() => ({}));
+    const { campaignId, maxEmailsPerRun = 5, testMode = false } = body;
 
-    // 1. Récupérer les opportunités en attente
+    // Si pas de campaignId, chercher ou créer une campagne par défaut
+    let activeCampaignId = campaignId;
+    if (!activeCampaignId) {
+      const { data: campaigns } = await supabase
+        .from("backlink_campaigns")
+        .select("id")
+        .eq("status", "active")
+        .limit(1);
+
+      if (campaigns && campaigns.length > 0) {
+        activeCampaignId = campaigns[0].id;
+      } else {
+        // Créer une campagne par défaut
+        const { data: newCampaign } = await supabase
+          .from("backlink_campaigns")
+          .insert({
+            name: "Campagne Auto " + new Date().toLocaleDateString(),
+            status: "active",
+            target_min_da: 20
+          })
+          .select("id")
+          .single();
+
+        activeCampaignId = newCampaign?.id;
+      }
+    }
+
+    // 1. Récupérer les opportunités en attente (status = 'pending' OU 'new' avec email)
     const { data: opportunities, error: oppError } = await supabase
       .from("backlink_opportunities")
       .select("*")
-      .eq("status", "pending")
-      .eq("outreach_sent", false)
-      .order("domain_authority", { ascending: false })
+      .in("status", ["pending", "new"])
+      .not("contact_email", "is", null)
+      .order("quality_score", { ascending: false })
       .limit(maxEmailsPerRun);
 
     if (oppError) throw oppError;
@@ -80,9 +108,8 @@ Deno.serve(async (req: Request) => {
             await supabase
               .from("backlink_opportunities")
               .update({
-                outreach_sent: true,
-                outreach_date: new Date().toISOString(),
-                last_contacted: new Date().toISOString()
+                status: "contacted",
+                contacted_at: new Date().toISOString()
               })
               .eq("id", opp.id);
 
@@ -90,7 +117,7 @@ Deno.serve(async (req: Request) => {
             await supabase
               .from("backlink_outreach_log")
               .insert({
-                campaign_id: campaignId,
+                campaign_id: activeCampaignId,
                 opportunity_id: opp.id,
                 action_type: "email_sent",
                 recipient_email: opp.contact_email,
@@ -120,16 +147,22 @@ Deno.serve(async (req: Request) => {
     }
 
     // 3. Mettre à jour la campagne
-    if (!testMode && sentCount > 0) {
-      const { error: updateError } = await supabase
+    if (!testMode && sentCount > 0 && activeCampaignId) {
+      const { data: campaign } = await supabase
         .from("backlink_campaigns")
-        .update({
-          sent_count: supabase.raw(`sent_count + ${sentCount}`),
-          updated_at: new Date().toISOString()
-        })
-        .eq("id", campaignId);
+        .select("sent_count")
+        .eq("id", activeCampaignId)
+        .single();
 
-      if (updateError) console.error("Campaign update error:", updateError);
+      if (campaign) {
+        await supabase
+          .from("backlink_campaigns")
+          .update({
+            sent_count: (campaign.sent_count || 0) + sentCount,
+            updated_at: new Date().toISOString()
+          })
+          .eq("id", activeCampaignId);
+      }
     }
 
     return new Response(
