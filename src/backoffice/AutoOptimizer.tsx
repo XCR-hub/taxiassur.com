@@ -193,7 +193,7 @@ export default function AutoOptimizer() {
     try {
       // Activer tous les cron jobs via une requête SQL
       const { error } = await supabase.rpc('execute_sql', {
-        query: 'UPDATE cron.job SET active = true'
+        sql_query: 'UPDATE cron.job SET active = true'
       });
 
       if (error) throw error;
@@ -214,7 +214,7 @@ export default function AutoOptimizer() {
     try {
       // Désactiver tous les cron jobs via une requête SQL
       const { error } = await supabase.rpc('execute_sql', {
-        query: 'UPDATE cron.job SET active = false'
+        sql_query: 'UPDATE cron.job SET active = false'
       });
 
       if (error) throw error;
