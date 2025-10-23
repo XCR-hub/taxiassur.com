@@ -232,13 +232,22 @@ const BacklinkAutomationDashboard: React.FC = () => {
               <Zap className="mr-3 text-orange-500" size={32} />
               Dashboard Automation Backlinks
             </h1>
-            <button
-              onClick={() => navigate('/backoffice')}
-              className="flex items-center gap-2 px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition-colors"
-            >
-              <Home size={18} />
-              Accueil Backoffice
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => navigate('/backoffice/backlink-reports')}
+                className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
+              >
+                <BarChart3 size={18} />
+                Rapports Détaillés
+              </button>
+              <button
+                onClick={() => navigate('/backoffice')}
+                className="flex items-center gap-2 px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition-colors"
+              >
+                <Home size={18} />
+                Accueil Backoffice
+              </button>
+            </div>
           </div>
           <p className="text-gray-600">
             Suivi en temps réel de vos campagnes d'acquisition de backlinks automatisées
