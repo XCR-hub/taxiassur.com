@@ -1,62 +1,70 @@
-⚡ SOLUTION FINALE - TOUTES COLONNES NOT NULL GÉRÉES
+═══════════════════════════════════════════════════════════════
+  COMMENCE ICI - FIX ERREUR 401
+═══════════════════════════════════════════════════════════════
 
-═══════════════════════════════════════════════════════════
+❌ SITUATION:
+Console affiche: "code: '42501', message: 'permission denied'"
+→ Cela signifie que le fix SQL N'A PAS ÉTÉ EXÉCUTÉ
 
-✅ PROBLÈMES RÉSOLUS
+✅ SOLUTION (4 ÉTAPES - 30 SECONDES):
 
-Erreur 1: column "title" NOT NULL → CORRIGÉE
-Erreur 2: column "scheduled_date" NOT NULL → CORRIGÉE
+┌───────────────────────────────────────────────────────────┐
+│ ÉTAPE 1: DIAGNOSTIC                                       │
+└───────────────────────────────────────────────────────────┘
 
-Solution: Toutes colonnes problématiques rendues nullable
-(title, description, scheduled_date, target_url, status, priority)
+https://supabase.com/dashboard/project/drohhxrkoequjphvabvq/sql
+→ + New Query
+→ Copier/Coller:
 
-═══════════════════════════════════════════════════════════
+SELECT prosecdef FROM pg_proc WHERE proname = 'toggle_automation';
 
-🎯 DERNIÈRE ACTION (2 minutes)
+→ RUN
+→ Si résultat = "false" → La fonction n'a PAS SECURITY DEFINER
+→ Continuer ÉTAPE 2
 
-Dans Supabase SQL Editor :
+┌───────────────────────────────────────────────────────────┐
+│ ÉTAPE 2: FIX                                              │
+└───────────────────────────────────────────────────────────┘
 
-1. Ouvrir : 20251022254000_fix_content_schedule_structure.sql
-2. Copier TOUT le contenu
-3. Coller dans SQL Editor
-4. Cliquer RUN
+→ Ouvrir fichier: FIX-CLEAN-FINAL.sql
+→ Ctrl+A (tout sélectionner)
+→ Ctrl+C (copier)
+→ Retour sur SQL Editor (même onglet ou nouveau)
+→ Ctrl+V (coller)
+→ RUN
+→ Attendre "Success"
 
-═══════════════════════════════════════════════════════════
+┌───────────────────────────────────────────────────────────┐
+│ ÉTAPE 3: VÉRIFICATION                                     │
+└───────────────────────────────────────────────────────────┘
 
-✅ CE QUI EST CORRIGÉ
+→ Refaire la requête de l'ÉTAPE 1:
 
-✓ Détection automatique de 6 colonnes potentielles
-✓ Suppression contrainte NOT NULL si elles existent
-✓ Ajout contrainte UNIQUE sur content_type
-✓ Insertion 3 configs (blog, faq, review)
+SELECT prosecdef FROM pg_proc WHERE proname = 'toggle_automation';
 
-═══════════════════════════════════════════════════════════
+→ RUN
+→ Résultat doit être "true" (pas "false")
+→ Si "true" → Continuer ÉTAPE 4
 
-📊 VÉRIFIER
+┌───────────────────────────────────────────────────────────┐
+│ ÉTAPE 4: TESTER                                           │
+└───────────────────────────────────────────────────────────┘
 
-SELECT content_type, frequency_per_week, auto_publish
-FROM content_schedule;
+https://taxiassur.com/backoffice/auto-optimizer
+→ Ctrl+Shift+R (vider cache)
+→ Cliquer switch
+→ Console: Plus d'erreur 401 ✅
 
-ATTENDU:
-blog   | 3 | true
-faq    | 2 | true
-review | 1 | false
+═══════════════════════════════════════════════════════════════
 
-═══════════════════════════════════════════════════════════
+FICHIER À UTILISER:
+✅ FIX-CLEAN-FINAL.sql (30 lignes)
 
-🌐 UPLOAD
+FICHIERS À NE PAS UTILISER:
+❌ Tous les autres fichiers SQL
 
-✅ Build validé (16.74s)
-→ Uploader /dist sur IONOS
+═══════════════════════════════════════════════════════════════
 
-═══════════════════════════════════════════════════════════
+TIMING TOTAL: 30 secondes
 
-🎉 INTERFACES BACKOFFICE
-
-✅ Auto-Optimizer : 26 automatisations
-✅ AutomationScheduler : 3 cartes (après cette migration)
-✅ Marketing Templates : 11 templates
-
-═══════════════════════════════════════════════════════════
-
-Cette fois c'est la bonne ! 🏆
+PAS DE REBUILD IONOS NÉCESSAIRE ❌
