@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Test Hunter.io Scan</title>
+  <style>
+    body {
+      font-family: system-ui;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+    }
+    button {
+      background: #3b82f6;
+      color: white;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    button:hover { background: #2563eb; }
+    button:disabled { background: #9ca3af; cursor: wait; }
+    #result {
+      margin-top: 20px;
+      padding: 15px;
+      background: #f3f4f6;
+      border-radius: 6px;
+      white-space: pre-wrap;
+      font-family: monospace;
+      font-size: 12px;
+    }
+    .success { background: #d1fae5; color: #065f46; }
+    .error { background: #fee2e2; color: #991b1b; }
+  </style>
+</head>
+<body>
+  <h1>🔍 Test Scan Backlinks + Hunter.io</h1>
+  <p>Ce test va scanner les backlinks et récupérer les emails via Hunter.io</p>
+
+  <button id="scanBtn" onclick="testScan()">🚀 Lancer le Scan</button>
+
+  <div id="result"></div>
+
+  <script>
+    const SUPABASE_URL = 'https://drohhxrkoequjphvabvq.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRyb2hoeHJrb2VxdWpwaHZhYnZxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk3ODM3NjAsImV4cCI6MjA3NTM1OTc2MH0.LP9fh10fY0nRDjpG4VW2yGZ5sT4BkiDalox8ToMbMlg';
+
+    async function testScan() {
+      const btn = document.getElementById('scanBtn');
+      const result = document.getElementById('result');
+
+      btn.disabled = true;
+      btn.textContent = '⏳ Scan en cours (30-60s)...';
+      result.textContent = 'Démarrage du scan...\n';
+
+      try {
+        const response = await fetch(`${SUPABASE_URL}/functions/v1/scan-backlinks`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          result.className = 'success';
+          result.textContent = `✅ SCAN RÉUSSI !\n\n${JSON.stringify(data, null, 2)}`;
+
+          // Afficher les nouveaux sites avec emails
+          setTimeout(async () => {
+            const checkResponse = await fetch(`${SUPABASE_URL}/rest/v1/backlink_opportunities?select=domain,contact_email,status&order=created_at.desc&limit=10`, {
+              headers: {
+                'apikey': SUPABASE_ANON_KEY,
+                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+              }
+            });
+            const sites = await checkResponse.json();
+
+            result.textContent += '\n\n📧 DERNIERS SITES AVEC EMAILS:\n';
+            sites.forEach(site => {
+              result.textContent += `\n${site.domain}`;
+              if (site.contact_email) {
+                result.textContent += ` ✅ ${site.contact_email}`;
+              } else {
+                result.textContent += ` ⚠️ Pas d'email trouvé`;
+              }
+            });
+          }, 2000);
+        } else {
+          result.className = 'error';
+          result.textContent = `❌ ERREUR:\n\n${JSON.stringify(data, null, 2)}`;
+        }
+      } catch (error) {
+        result.className = 'error';
+        result.textContent = `❌ ERREUR RÉSEAU:\n\n${error.message}`;
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '🚀 Lancer le Scan';
+      }
+    }
+  </script>
+</body>
+</html>
