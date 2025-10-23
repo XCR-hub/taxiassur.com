@@ -1,0 +1,27 @@
+╔═══════════════════════════════════════════════════════════════╗
+║  FIX BACKLINK - 1 LIGNE SQL (CORRIGÉ)                        ║
+╚═══════════════════════════════════════════════════════════════╝
+
+🎯 COPIER-COLLER CETTE LIGNE DANS SUPABASE SQL EDITOR:
+
+DELETE FROM backlink_campaigns WHERE ctid NOT IN (SELECT MIN(ctid) FROM backlink_campaigns GROUP BY name); INSERT INTO backlink_opportunities (domain, url, title, description, domain_authority, relevance_score, estimated_traffic, spam_score, status, contact_email, quality_score) VALUES ('assurpro-taxis.com', 'https://assurpro-taxis.com/partenaires', 'Assurances Pro Taxis', 'Comparateur assurances taxis', 55, 94, 4200, 1, 'new', 'partenariats@assurpro-taxis.com', 82), ('transport-magazine.fr', 'https://transport-magazine.fr/annuaire', 'Annuaire Transport', 'Magazine transport', 62, 85, 4000, 1, 'new', 'contact@transport-magazine.fr', 79), ('assurance-pro-france.fr', 'https://assurance-pro-france.fr/partenaires', 'Annuaire Assurances Pro', 'Annuaire assurances', 58, 92, 3500, 2, 'new', 'partenariats@assurance-pro-france.fr', 75), ('flotte-taxi-france.fr', 'https://flotte-taxi-france.fr/annuaire', 'Annuaire Flottes', 'Annuaire flottes taxis', 48, 90, 2800, 2, 'new', 'contact@flotte-taxi-france.fr', 72), ('taxiinfos-pro.com', 'https://taxiinfos-pro.com/ressources', 'Ressources Taxis', 'Info ressources taxis', 45, 88, 2200, 3, 'new', 'redaction@taxiinfos-pro.com', 68) ON CONFLICT (url) DO UPDATE SET quality_score = EXCLUDED.quality_score, status = 'new'; UPDATE backlink_campaigns SET target_count = (SELECT COUNT(*) FROM backlink_opportunities WHERE status = 'new'), sent_count = 0, opened_count = 0; SELECT '✅ RÉPARÉ!' as msg, (SELECT COUNT(*) FROM backlink_campaigns) as camps, (SELECT COUNT(*) FROM backlink_opportunities WHERE status = 'new') as opps;
+
+───────────────────────────────────────────────────────────────
+
+✅ RÉSULTAT ATTENDU:
+
+msg        | camps | opps
+✅ RÉPARÉ! |   1   |  5
+
+───────────────────────────────────────────────────────────────
+
+📍 APRÈS LE SQL:
+
+1. Attendre 10 secondes
+2. Aller sur: https://taxiassur.com/backoffice/backlink-automation
+3. Ctrl+Shift+R (hard refresh)
+4. ✅ 1 campagne + 5 opportunités
+5. Sélectionner la campagne
+6. Cliquer "Lancer Automation"
+
+╚═══════════════════════════════════════════════════════════════╝
