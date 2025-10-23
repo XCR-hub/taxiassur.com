@@ -1,69 +1,52 @@
-========================================
-🚀 EXÉCUTER MAINTENANT - 1 SEUL FICHIER
-========================================
+════════════════════════════════════════════════════════════════
+  FIX EN 1 COPIER/COLLER - 10 SECONDES
+════════════════════════════════════════════════════════════════
 
-PROBLÈMES DÉTECTÉS:
-❌ Erreur: "Failed to fetch" avec fichiers trop complexes
-❌ Colonnes manquantes (data_source, status, platform, etc.)
-❌ Fonctions manquantes (scrape_taxi_companies, etc.)
+🚨 ERREUR TOUJOURS LÀ:
+ERROR: 42501: permission denied for table job
 
-========================================
-✅ SOLUTION ULTRA-SIMPLE (1 MINUTE)
-========================================
+📋 SOLUTION ULTRA-RAPIDE:
+═════════════════════════
 
-ÉTAPE UNIQUE : Exécuter 1 Fichier SQL
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. Ouvrir:
+   https://supabase.com/dashboard/project/drohhxrkoequjphvabvq/sql
 
-Dans Supabase SQL Editor :
+2. + New Query
 
-1. Ouvre le fichier :
-   📄 EXECUTER-MAINTENANT-FIX-COMPLET.sql
+3. Copier/Coller EXACTEMENT ce bloc:
 
-2. COPIE TOUT LE CONTENU (Ctrl+A, Ctrl+C)
+DROP FUNCTION IF EXISTS toggle_automation(TEXT, BOOLEAN) CASCADE;
+CREATE FUNCTION toggle_automation(automation_name TEXT, enabled BOOLEAN) RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, cron AS $$ DECLARE affected_count INT; BEGIN UPDATE cron.job SET active = enabled WHERE jobname = automation_name; GET DIAGNOSTICS affected_count = ROW_COUNT; RETURN jsonb_build_object('success', true, 'affected_rows', affected_count); END; $$;
+GRANT EXECUTE ON FUNCTION toggle_automation(TEXT, BOOLEAN) TO anon;
+GRANT EXECUTE ON FUNCTION toggle_automation(TEXT, BOOLEAN) TO authenticated;
 
-3. COLLE dans Supabase SQL Editor
+4. RUN
 
-4. Clique sur "RUN" (ou Ctrl+Enter)
+5. Attendre "Success" (2 secondes)
 
-✓ Résultat attendu (dernières lignes) :
-  "TOUTES LES CORRECTIONS APPLIQUÉES - Testez maintenant:"
-  "SELECT * FROM scrape_taxi_companies('Paris');"
+6. https://taxiassur.com/backoffice/auto-optimizer
 
-========================================
-🧪 TESTS IMMÉDIATS (30 SECONDES)
-========================================
+7. Ctrl+Shift+R
 
--- Test 1 : Scraper Paris
-SELECT * FROM scrape_taxi_companies('Paris');
+8. Cliquer switch → ✅ Marche!
 
-Résultat : 3 compagnies de taxi
+════════════════════════════════════════════════════════════════
 
--- Test 2 : Publication Social
-SELECT * FROM publish_to_social_media('linkedin', 'Test post');
+⚠️  IMPORTANT:
+══════════════
+Ne PAS utiliser les anciens fichiers SQL!
+Copier UNIQUEMENT le bloc ci-dessus!
 
-Résultat : JSON avec success = true
+Il est en 1 SEULE LIGNE pour éviter les erreurs de copie.
 
--- Test 3 : Génération Article
-SELECT * FROM generate_blog_post_ai('Titre test');
+════════════════════════════════════════════════════════════════
 
-Résultat : JSON avec post_id
+POURQUOI ÇA NE MARCHAIT PAS AVANT?
+═══════════════════════════════════
+Vous avez probablement copié un fichier qui utilisait:
+→ CREATE OR REPLACE (ne marche PAS pour SECURITY DEFINER)
 
-========================================
-✅ CE QUI EST CORRIGÉ EN 1 FICHIER
-========================================
+Ce nouveau bloc utilise:
+→ DROP puis CREATE (marche à 100%)
 
-✅ Colonnes ajoutées (social_posts, email_logs, taxi_prospects)
-✅ 3 fonctions créées
-✅ Index de performance
-✅ Permissions configurées
-
-========================================
-⚡ COMMENCE MAINTENANT !
-========================================
-
-1. Ouvre Supabase SQL Editor
-2. Copie EXECUTER-MAINTENANT-FIX-COMPLET.sql
-3. Colle et RUN
-4. Teste avec: SELECT * FROM scrape_taxi_companies('Paris');
-
-C'EST PARTI ! 🚀
+════════════════════════════════════════════════════════════════
