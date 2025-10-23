@@ -32,17 +32,17 @@ const SeoTools: React.FC = () => {
 
   const loadSeoData = async () => {
     try {
-      // Récupérer les vraies métriques depuis Supabase
+      // Récupérer les vraies métriques depuis Supabase (UNIQUEMENT données réelles)
       const { data, error } = await supabase.rpc('get_current_seo_metrics');
 
       if (error) {
         console.error('Error loading SEO metrics:', error);
-        // Fallback sur données estimées
+        // PAS de fallback - afficher qu'il n'y a pas de données
         setSeoData({
-          lastSitemapUpdate: new Date().toISOString(),
-          totalUrls: 45 + cities.length,
-          indexedPages: Math.floor((45 + cities.length) * 0.85),
-          pendingPages: Math.floor((45 + cities.length) * 0.15),
+          lastSitemapUpdate: '',
+          totalUrls: 0,
+          indexedPages: 0,
+          pendingPages: 0,
           impressions30d: 0,
           clicks30d: 0,
           averagePosition: 0,
@@ -54,24 +54,28 @@ const SeoTools: React.FC = () => {
 
       if (data && data.length > 0) {
         const metrics = data[0];
+        // Vérifier si c'est vraiment des données réelles (pas juste des 0)
+        const hasRealData = metrics.last_update !== null &&
+                           (metrics.impressions_30d > 0 || metrics.total_urls > 0);
+
         setSeoData({
-          lastSitemapUpdate: metrics.last_update || new Date().toISOString(),
-          totalUrls: metrics.total_urls || (45 + cities.length),
-          indexedPages: metrics.indexed_pages || 0,
-          pendingPages: metrics.pending_pages || 0,
+          lastSitemapUpdate: metrics.last_update || '',
+          totalUrls: hasRealData ? metrics.total_urls : 0,
+          indexedPages: hasRealData ? metrics.indexed_pages : 0,
+          pendingPages: hasRealData ? metrics.pending_pages : 0,
           impressions30d: metrics.impressions_30d || 0,
           clicks30d: metrics.clicks_30d || 0,
-          averagePosition: metrics.average_position || 0,
+          averagePosition: metrics.average_position ? Number(metrics.average_position).toFixed(1) : 0,
           lastUpdate: metrics.last_update,
-          isRealData: metrics.last_update !== null
+          isRealData: hasRealData
         });
       } else {
-        // Aucune métrique, utiliser estimations
+        // Aucune donnée réelle - afficher 0 partout
         setSeoData({
-          lastSitemapUpdate: new Date().toISOString(),
-          totalUrls: 45 + cities.length,
-          indexedPages: Math.floor((45 + cities.length) * 0.85),
-          pendingPages: Math.floor((45 + cities.length) * 0.15),
+          lastSitemapUpdate: '',
+          totalUrls: 0,
+          indexedPages: 0,
+          pendingPages: 0,
           impressions30d: 0,
           clicks30d: 0,
           averagePosition: 0,
@@ -81,6 +85,18 @@ const SeoTools: React.FC = () => {
       }
     } catch (error) {
       console.error('Error in loadSeoData:', error);
+      // En cas d'erreur, tout à 0
+      setSeoData({
+        lastSitemapUpdate: '',
+        totalUrls: 0,
+        indexedPages: 0,
+        pendingPages: 0,
+        impressions30d: 0,
+        clicks30d: 0,
+        averagePosition: 0,
+        lastUpdate: null,
+        isRealData: false
+      });
     }
   };
 
@@ -115,24 +131,78 @@ const SeoTools: React.FC = () => {
   const handlePingEngines = async () => {
     setIsWorking(true);
     try {
-      const sitemapUrl = `${import.meta.env.VITE_SITE_URL || 'https://taxiassur.com'}/feeds/sitemap.xml`;
-      const result = await pingSearchEngines(sitemapUrl);
-      setPingResults(result.results);
+      const siteUrl = import.meta.env.VITE_SITE_URL || 'https://taxiassur.com';
 
-      if (result.success) {
-        alert(`✅ Sitemap disponible : ${sitemapUrl}
+      // Appel à l'edge function IndexNow RÉELLE
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/indexnow-ping`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
+          },
+          body: JSON.stringify({
+            siteUrl: siteUrl,
+            urls: [
+              siteUrl,
+              `${siteUrl}/feeds/sitemap.xml`,
+              `${siteUrl}/feeds/rss.xml`
+            ]
+          })
+        }
+      );
 
-📝 Pour soumettre manuellement votre sitemap :
+      const result = await response.json();
 
-1. Google Search Console : https://search.google.com/search-console
-2. Bing Webmaster Tools : https://www.bing.com/webmasters
+      if (response.ok && result.success) {
+        setPingResults(result.results || [{
+          engine: 'IndexNow',
+          success: true,
+          status: response.status
+        }]);
 
-Les moteurs de recherche crawlent automatiquement les sitemaps XML dans robots.txt.`);
+        alert(`✅ IndexNow Ping Envoyé !
+
+${result.successful || 0}/${result.engines_pinged || 0} moteurs notifiés avec succès :
+${result.message || ''}
+• Bing
+• Yandex
+• Seznam
+
+Votre sitemap sera crawlé dans les prochaines heures.
+
+💡 Astuce : Soumettez aussi manuellement via :
+• Google Search Console : https://search.google.com/search-console
+• Bing Webmaster Tools : https://www.bing.com/webmasters`);
       } else {
-        alert('⚠️ Certains moteurs n\'ont pas pu être notifiés');
+        setPingResults([{
+          engine: 'IndexNow',
+          success: false,
+          status: response.status,
+          error: result.error || 'Erreur inconnue'
+        }]);
+
+        alert(`⚠️ Erreur IndexNow : ${result.error || 'Service temporairement indisponible'}
+
+Vous pouvez soumettre manuellement via :
+• Google Search Console : https://search.google.com/search-console
+• Bing Webmaster Tools : https://www.bing.com/webmasters`);
       }
     } catch (error) {
-      alert('❌ Erreur lors du ping');
+      console.error('IndexNow ping error:', error);
+      setPingResults([{
+        engine: 'IndexNow',
+        success: false,
+        error: error instanceof Error ? error.message : 'Network error'
+      }]);
+
+      alert(`❌ Erreur réseau lors du ping IndexNow
+
+Vérifiez :
+1. Votre connexion internet
+2. Les paramètres Supabase (URL, Key)
+3. Ou soumettez manuellement via Google/Bing`);
     } finally {
       setIsWorking(false);
     }
@@ -227,16 +297,18 @@ Consultez le détail dans la console (F12)`);
 
           {/* Info sur les données */}
           {!seoData.isRealData && (
-            <div className="mb-6 p-4 bg-amber-50 border-2 border-amber-300 rounded-lg">
+            <div className="mb-6 p-4 bg-red-50 border-2 border-red-400 rounded-lg">
               <div className="flex items-start gap-3">
-                <AlertCircle className="text-amber-600 flex-shrink-0 mt-0.5" size={20} />
+                <AlertCircle className="text-red-600 flex-shrink-0 mt-0.5" size={24} />
                 <div>
-                  <p className="text-sm font-medium text-amber-900">
-                    <strong>Données estimées</strong> - Configuration Google Search Console API requise
+                  <p className="text-base font-bold text-red-900 mb-2">
+                    ⚠️ AUCUNE DONNÉE RÉELLE DISPONIBLE
                   </p>
-                  <p className="text-xs text-amber-700 mt-1">
-                    Pour obtenir les vraies données d'indexation, configurez votre clé API Google Search Console dans les paramètres.
-                    Le système effectue un rafraîchissement quotidien automatique à 2h du matin.
+                  <p className="text-sm text-red-800 mb-2">
+                    Les métriques affichées sont à <strong>zéro</strong> car Google Search Console n'a pas encore été synchronisé.
+                  </p>
+                  <p className="text-sm text-red-700 font-medium">
+                    🔧 Action requise : Cliquez sur le bouton <strong>"Sync Google Search Console"</strong> ci-dessous pour récupérer vos vraies données d'indexation.
                   </p>
                 </div>
               </div>
