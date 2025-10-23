@@ -105,7 +105,7 @@ Deno.serve(async (req: Request) => {
 
           if (emailSent) {
             // Mettre à jour l'opportunité
-            await supabase
+            const { error: updateError } = await supabase
               .from("backlink_opportunities")
               .update({
                 status: "contacted",
@@ -113,18 +113,27 @@ Deno.serve(async (req: Request) => {
               })
               .eq("id", opp.id);
 
-            // Logger l'action
-            await supabase
-              .from("backlink_outreach_log")
-              .insert({
-                campaign_id: activeCampaignId,
-                opportunity_id: opp.id,
-                action_type: "email_sent",
-                recipient_email: opp.contact_email,
-                subject: emailTemplate.subject,
-                message_sent: emailTemplate.html,
-                status: "success"
-              });
+            if (updateError) {
+              console.error(`Update opportunity error for ${opp.domain}:`, updateError);
+            }
+
+            // Logger l'action (optionnel, ne pas bloquer si table n'existe pas)
+            try {
+              await supabase
+                .from("backlink_outreach_log")
+                .insert({
+                  campaign_id: activeCampaignId,
+                  opportunity_id: opp.id,
+                  action_type: "email_sent",
+                  recipient_email: opp.contact_email,
+                  subject: emailTemplate.subject,
+                  message_sent: emailTemplate.html,
+                  status: "success"
+                });
+            } catch (logError) {
+              console.error("Log insert error (non-blocking):", logError);
+              // Ne pas bloquer, logging est optionnel
+            }
 
             sentCount++;
           }
@@ -148,20 +157,33 @@ Deno.serve(async (req: Request) => {
 
     // 3. Mettre à jour la campagne
     if (!testMode && sentCount > 0 && activeCampaignId) {
-      const { data: campaign } = await supabase
-        .from("backlink_campaigns")
-        .select("sent_count")
-        .eq("id", activeCampaignId)
-        .single();
-
-      if (campaign) {
-        await supabase
+      try {
+        const { data: campaign, error: campaignError } = await supabase
           .from("backlink_campaigns")
-          .update({
-            sent_count: (campaign.sent_count || 0) + sentCount,
-            updated_at: new Date().toISOString()
-          })
-          .eq("id", activeCampaignId);
+          .select("sent_count")
+          .eq("id", activeCampaignId)
+          .single();
+
+        if (campaignError) {
+          console.error("Campaign fetch error:", campaignError);
+          // Ne pas bloquer si erreur campagne, emails déjà envoyés
+        } else if (campaign) {
+          const { error: updateError } = await supabase
+            .from("backlink_campaigns")
+            .update({
+              sent_count: (campaign.sent_count || 0) + sentCount,
+              updated_at: new Date().toISOString()
+            })
+            .eq("id", activeCampaignId);
+
+          if (updateError) {
+            console.error("Campaign update error:", updateError);
+            // Ne pas bloquer, emails déjà envoyés
+          }
+        }
+      } catch (error) {
+        console.error("Campaign update exception:", error);
+        // Ne pas bloquer, continuer avec la réponse
       }
     }
 
