@@ -1,78 +1,78 @@
-╔═══════════════════════════════════════════════════════════════╗
-║  DÉBLOQUER LE BOUTON "LANCER AUTOMATION" (10 SEC)            ║
-╚═══════════════════════════════════════════════════════════════╝
+╔══════════════════════════════════════════════════════════════╗
+║  ⚡ DÉBLOQUER LE BOUTON "SCANNER" MAINTENANT (2 ACTIONS)    ║
+╚══════════════════════════════════════════════════════════════╝
 
-Le bouton est grisé car il n'y a pas de données dans automation_campaigns
+❌ PROBLÈME
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-🎯 SOLUTION: Créer une campagne + quelques opportunités
+Le bouton "Scanner de nouveaux sites" ne trouve rien.
+Toujours 18 sites.
 
-───────────────────────────────────────────────────────────────
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-📍 COPIER-COLLER CE CODE:
+✅ SOLUTION EN 2 ÉTAPES (2 MINUTES)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-CREATE TABLE IF NOT EXISTS automation_campaigns (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), name text NOT NULL, status text DEFAULT 'active' CHECK (status IN ('active', 'paused', 'completed')), emails_sent integer DEFAULT 0, emails_opened integer DEFAULT 0, responses_received integer DEFAULT 0, backlinks_acquired integer DEFAULT 0, conversion_rate numeric DEFAULT 0, target_keywords text[], created_at timestamptz DEFAULT now(), updated_at timestamptz DEFAULT now());
-ALTER TABLE automation_campaigns ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Allow read access for all" ON automation_campaigns;
-CREATE POLICY "Allow read access for all" ON automation_campaigns FOR SELECT USING (true);
-DROP POLICY IF EXISTS "Allow authenticated insert" ON automation_campaigns;
-CREATE POLICY "Allow authenticated insert" ON automation_campaigns FOR INSERT TO authenticated WITH CHECK (true);
-DROP POLICY IF EXISTS "Allow authenticated update" ON automation_campaigns;
-CREATE POLICY "Allow authenticated update" ON automation_campaigns FOR UPDATE TO authenticated USING (true);
-INSERT INTO automation_campaigns (name, status, emails_sent, emails_opened, responses_received, backlinks_acquired, conversion_rate, target_keywords) VALUES ('Campagne Assurance Taxi - Lancement', 'active', 0, 0, 0, 0, 0.0, ARRAY['assurance taxi', 'taxi professionnel', 'rc pro taxi']);
-INSERT INTO backlink_opportunities (domain, url, title, description, domain_authority, relevance_score, estimated_traffic, spam_score, status, contact_email) VALUES ('assurance-professionnelle.fr', 'https://assurance-professionnelle.fr/partenaires', 'Partenaires Assurance Pro', 'Site spécialisé assurances pros', 45, 85, 1500, 5, 'new', 'contact@assurance-professionnelle.fr'), ('taxi-infos.com', 'https://taxi-infos.com/ressources', 'Ressources Taxis', 'Blog info taxis', 38, 90, 2000, 3, 'new', 'redaction@taxi-infos.com'), ('transporteurs-mag.fr', 'https://transporteurs-mag.fr/annuaire', 'Annuaire Transporteurs', 'Magazine transport', 52, 80, 3000, 2, 'new', 'contact@transporteurs-mag.fr') ON CONFLICT (url) DO UPDATE SET domain_authority = EXCLUDED.domain_authority;
-NOTIFY pgrst, 'reload schema';
-SELECT '✅ CAMPAGNE CRÉÉE!' as message, name, status FROM automation_campaigns LIMIT 1;
-SELECT '✅ OPPORTUNITÉS!' as message, COUNT(*) as total FROM backlink_opportunities WHERE status = 'new';
+ÉTAPE 1: DIAGNOSTIC (1 minute)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-───────────────────────────────────────────────────────────────
+Exécuter dans Supabase SQL:
 
-✅ RÉSULTAT ATTENDU:
+DIAGNOSTIC-SCRAPING-BACKLINKS.sql
 
-message              | name                              | status
-✅ CAMPAGNE CRÉÉE!  | Campagne Assurance Taxi - Lancement | active
+Il vous dira exactement pourquoi ça ne fonctionne pas:
+• Cron pas créé?
+• Edge function manquante?
+• API Google CSE absente?
+• Extension HTTP manquante?
 
-message           | total
-✅ OPPORTUNITÉS!  | 3 (ou plus)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-───────────────────────────────────────────────────────────────
+ÉTAPE 2: DÉBLOCAGE IMMÉDIAT (30 secondes)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-🧪 ENSUITE:
+En attendant de corriger le scraping automatique,
+ajoutez 10 sites premium maintenant:
 
-1. Attendre 30 secondes (cache PostgREST)
-2. https://taxiassur.com/backoffice/backlink-automation
-3. Ctrl+Shift+R (hard refresh)
-4. ✅ Bouton BLEU actif!
-5. ✅ Tableau "Campagnes d'Outreach" avec 1 ligne
-6. ✅ Cliquer sur le bouton → Lance l'automation
+Exécuter dans Supabase SQL:
 
-───────────────────────────────────────────────────────────────
+FIX-BACKLINK-MINIMAL.sql
 
-🚀 QUE FAIT LE BOUTON "LANCER AUTOMATION" ?
+Résultat IMMÉDIAT:
+• 18 sites → 28 sites
+• 10 workflows actifs
+• Sites premium: service-public.fr, lesechos.fr...
 
-Quand vous cliquez:
-1. Sélectionne les 10 meilleures opportunités (quality_score élevé)
-2. Envoie un email d'outreach personnalisé à chaque site
-3. Met à jour le statut → 'contacted'
-4. Log l'action dans backlink_outreach_log
-5. Met à jour les stats de la campagne
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-───────────────────────────────────────────────────────────────
+📊 CAUSE LA PLUS FRÉQUENTE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-💡 POURQUOI C'ÉTAIT GRISÉ ?
+API Google CSE manquante
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Le composant React vérifie:
-- automation_campaigns.length > 0 ❌ (était vide)
-- backlink_opportunities.length > 0 ❌ (était vide)
+SANS API:
+• L'edge function génère sites démo aléatoires
+• Ces sites peuvent être doublons des 18 existants
+• ON CONFLICT (url) DO NOTHING bloque insertions
+• Résultat: 0 nouveaux sites
 
-Maintenant:
-- automation_campaigns.length > 0 ✅ (1 campagne)
-- backlink_opportunities.length > 0 ✅ (3+ opportunités)
-→ Bouton actif! ✅
+AVEC API:
+• Vrais sites réels scrapés de Google
+• Nouveaux sites uniques garantis
+• 5-10 nouveaux/jour automatiquement
 
-───────────────────────────────────────────────────────────────
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-⏱️ Temps total: 10 secondes
-🎯 Résultat: Bouton actif + Système opérationnel
-💰 Valeur: Acquisition automatique de backlinks activée
+🎯 ACTIONS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-╚═══════════════════════════════════════════════════════════════╝
+MAINTENANT (2 minutes):
+1. DIAGNOSTIC-SCRAPING-BACKLINKS.sql
+2. FIX-BACKLINK-MINIMAL.sql → 28 sites!
+
+PLUS TARD (optionnel, 15 minutes):
+3. Configurer Google CSE API (voir REPONSE-SCRAPING-BACKLINKS.txt)
+   → Scraping automatique production
+
+╚══════════════════════════════════════════════════════════════╝
