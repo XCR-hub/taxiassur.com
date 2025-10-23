@@ -225,6 +225,45 @@ const BacklinkReports: React.FC = () => {
             </h1>
             <div className="flex items-center gap-4">
               <button
+                onClick={async () => {
+                  if (!confirm('Envoyer 5 emails maintenant ?')) return;
+                  setLoading(true);
+                  try {
+                    const { data: { session } } = await supabase.auth.getSession();
+                    const token = session?.access_token || import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+                    const response = await fetch(
+                      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/backlink-auto-outreach`,
+                      {
+                        method: 'POST',
+                        headers: {
+                          'Authorization': `Bearer ${token}`,
+                          'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ maxEmailsPerRun: 5 })
+                      }
+                    );
+
+                    if (!response.ok) {
+                      throw new Error('Erreur envoi emails');
+                    }
+
+                    const result = await response.json();
+                    alert(`✅ ${result.emailsSent || 0} emails envoyés !`);
+                    setTimeout(loadDetailedStats, 2000);
+                  } catch (error: any) {
+                    alert(`❌ Erreur: ${error.message}`);
+                  } finally {
+                    setLoading(false);
+                  }
+                }}
+                disabled={loading}
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white rounded-lg transition-colors"
+              >
+                <Send size={18} />
+                Envoyer Emails
+              </button>
+              <button
                 onClick={exportToCSV}
                 className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
               >
@@ -247,6 +286,24 @@ const BacklinkReports: React.FC = () => {
               </button>
             </div>
           </div>
+
+          {/* Alerte emails en attente */}
+          {opportunities.filter(o => o.status === 'pending' && o.contact_email).length > 0 && stats.emails_sent === 0 && (
+            <div className="bg-blue-50 border-2 border-blue-300 rounded-lg p-4 mb-4">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="text-blue-600 flex-shrink-0" size={24} />
+                <div>
+                  <h3 className="font-bold text-blue-900 mb-1">
+                    {opportunities.filter(o => o.status === 'pending' && o.contact_email).length} emails prêts à envoyer
+                  </h3>
+                  <p className="text-sm text-blue-700">
+                    Cliquez sur le bouton "Envoyer Emails" ci-dessus pour lancer la campagne d'outreach.
+                    Les emails seront envoyés aux sites scrapés avec un message personnalisé.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Filtres période */}
           <div className="flex items-center gap-2">
