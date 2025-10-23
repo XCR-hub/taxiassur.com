@@ -1,45 +1,45 @@
 import { createClient } from '@supabase/supabase-js';
 import { getSupabaseUrl, getSupabaseAnonKey, getSupabaseServiceRoleKey } from './env';
 
-// Lazy initialization to avoid circular dependencies
+// Singleton instance - created once and reused
 let supabaseInstance: ReturnType<typeof createClient> | null = null;
 
-const getSupabaseInstance = () => {
-  if (!supabaseInstance) {
-    let supabaseUrl: string;
-    let supabaseAnonKey: string;
-
-    try {
-      supabaseUrl = getSupabaseUrl();
-      supabaseAnonKey = getSupabaseAnonKey();
-      console.log('🔧 Supabase Config:', {
-        url: supabaseUrl,
-        keyPrefix: supabaseAnonKey.substring(0, 20) + '...'
-      });
-    } catch (error) {
-      console.error('Supabase configuration error:', error);
-      // Fallback to avoid app crash
-      supabaseUrl = 'https://drohhxrkoequjphvabvq.supabase.co';
-      supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRyb2hoeHJrb2VxdWpwaHZhYnZxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk3ODM3NjAsImV4cCI6MjA3NTM1OTc2MH0.LP9fh10fY0nRDjpG4VW2yGZ5sT4BkiDalox8ToMbMlg';
-    }
-
-    supabaseInstance = createClient(supabaseUrl, supabaseAnonKey, {
-      auth: {
-        persistSession: false,
-        autoRefreshToken: false
-      }
-    });
+const initSupabase = () => {
+  if (supabaseInstance) {
+    return supabaseInstance;
   }
+
+  let supabaseUrl: string;
+  let supabaseAnonKey: string;
+
+  try {
+    supabaseUrl = getSupabaseUrl();
+    supabaseAnonKey = getSupabaseAnonKey();
+    console.log('🔧 Supabase Config:', {
+      url: supabaseUrl,
+      keyPrefix: supabaseAnonKey.substring(0, 20) + '...',
+      enabled: true
+    });
+  } catch (error) {
+    console.error('Supabase configuration error:', error);
+    // Fallback to avoid app crash
+    supabaseUrl = 'https://drohhxrkoequjphvabvq.supabase.co';
+    supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRyb2hoeHJrb2VxdWpwaHZhYnZxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk3ODM3NjAsImV4cCI6MjA3NTM1OTc2MH0.LP9fh10fY0nRDjpG4VW2yGZ5sT4BkiDalox8ToMbMlg';
+  }
+
+  supabaseInstance = createClient(supabaseUrl, supabaseAnonKey, {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      storageKey: 'taxiassur-auth'
+    }
+  });
+
   return supabaseInstance;
 };
 
-// Supabase client with fallback for development (READ operations)
-export const supabase = new Proxy({} as ReturnType<typeof createClient>, {
-  get(target, prop) {
-    const instance = getSupabaseInstance();
-    return instance[prop as keyof typeof instance];
-  }
-});
+// Export singleton instance directly
+export const supabase = initSupabase();
 
 // Supabase ADMIN client with Service Role Key (WRITE operations from backoffice)
 // Bypasses RLS - Use only for authenticated admin operations

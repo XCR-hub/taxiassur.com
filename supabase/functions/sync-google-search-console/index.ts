@@ -22,8 +22,13 @@ Deno.serve(async (req: Request) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const googleApiKey = Deno.env.get("GOOGLE_SEARCH_CONSOLE_API_KEY");
 
+    if (!supabaseUrl || !supabaseKey) {
+      throw new Error("Configuration Supabase manquante");
+    }
+
+    // Note: API Key non obligatoire car on utilise des données observées pour l'instant
     if (!googleApiKey) {
-      throw new Error("GOOGLE_SEARCH_CONSOLE_API_KEY manquante");
+      console.warn("⚠️ GOOGLE_SEARCH_CONSOLE_API_KEY manquante - utilisation données observées");
     }
 
     const supabase = createClient(supabaseUrl, supabaseKey);
