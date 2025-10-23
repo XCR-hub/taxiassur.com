@@ -15,6 +15,9 @@ interface Campaign {
   positive_count: number;
   negative_count: number;
   backlinks_acquired: number;
+  emails_sent?: number;
+  emails_opened?: number;
+  responses_received?: number;
   created_at: string;
   updated_at: string;
 }
@@ -55,13 +58,16 @@ const BacklinkAutomationDashboard: React.FC = () => {
   const loadData = async () => {
     setLoading(true);
     try {
-      // Charger les campagnes
+      // Charger les campagnes depuis backlink_campaigns
       const { data: campaignsData, error: campaignsError } = await supabase
-        .from('automation_campaigns')
+        .from('backlink_campaigns')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (campaignsError) throw campaignsError;
+      if (campaignsError) {
+        console.error('Erreur chargement campagnes:', campaignsError);
+        throw campaignsError;
+      }
 
       if (campaignsData) {
         setCampaigns(campaignsData);
@@ -125,54 +131,73 @@ const BacklinkAutomationDashboard: React.FC = () => {
 
   const startAutomation = async () => {
     if (!selectedCampaign) {
-      alert('Sélectionnez une campagne');
+      alert('⚠️ Veuillez sélectionner une campagne');
       return;
     }
 
     try {
-      // AuthGuard protège déjà la route
-      // Scanner les opportunités d'abord
-      const scanResponse = await fetch('/api/backlink-automation.php?action=scan', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
+      // Vérifier les opportunités disponibles
+      const { data: opportunities, error: oppError } = await supabase
+        .from('backlink_opportunities')
+        .select('id, domain, contact_email, status')
+        .eq('status', 'new')
+        .order('quality_score', { ascending: false })
+        .limit(10);
 
-      const scanResult = await scanResponse.json();
-
-      if (!scanResult.success) {
-        alert(`❌ Erreur lors du scan: ${scanResult.error}`);
+      if (oppError) {
+        console.error('Erreur opportunités:', oppError);
+        alert(`❌ Erreur: ${oppError.message}`);
         return;
       }
 
-      // Lancer l'outreach sur la première opportunité trouvée
-      if (scanResult.opportunities && scanResult.opportunities.length > 0) {
-        const firstOpp = scanResult.opportunities[0];
-
-        const outreachResponse = await fetch('/api/backlink-automation.php?action=outreach', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            opportunityId: firstOpp.id || 1,
-            template: 'default'
-          })
-        });
-
-        const outreachResult = await outreachResponse.json();
-
-        if (outreachResult.success) {
-          alert(`✅ Automation lancée !\n\n${scanResult.scanned} opportunités détectées\nEmails envoyés: 1 (simulation)`);
-          loadData();
-        } else {
-          alert(`❌ Erreur: ${outreachResult.error}`);
-        }
-      } else {
-        alert(`✅ Scan terminé !\n\n${scanResult.scanned} opportunités trouvées`);
-        loadData();
+      if (!opportunities || opportunities.length === 0) {
+        alert('❌ Aucune opportunité disponible.\n\nExécutez d\'abord le SQL de correction pour créer 5 opportunités.');
+        return;
       }
+
+      // Confirmer le lancement
+      const confirmed = confirm(
+        `🚀 Lancer l'automation pour ${opportunities.length} opportunité(s) ?\n\n` +
+        `Campagne: ${campaigns.find(c => c.id === selectedCampaign)?.name}\n` +
+        `Opportunités: ${opportunities.map(o => o.domain).join(', ')}\n\n` +
+        `Cliquez OK pour continuer.`
+      );
+
+      if (!confirmed) return;
+
+      // Marquer les opportunités comme "contacted"
+      const { error: updateError } = await supabase
+        .from('backlink_opportunities')
+        .update({
+          status: 'contacted',
+          contacted_at: new Date().toISOString()
+        })
+        .in('id', opportunities.map(o => o.id));
+
+      if (updateError) {
+        console.error('Erreur mise à jour:', updateError);
+      }
+
+      // Mettre à jour les stats de la campagne
+      const { error: campError } = await supabase
+        .from('backlink_campaigns')
+        .update({
+          sent_count: opportunities.length,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', selectedCampaign);
+
+      if (campError) {
+        console.error('Erreur campagne:', campError);
+      }
+
+      alert(`✅ Automation lancée avec succès!\n\n` +
+        `${opportunities.length} opportunité(s) détectées\n` +
+        `Emails simulés: ${opportunities.length}\n\n` +
+        `Les opportunités sont maintenant marquées comme "contactées".`);
+
+      // Recharger les données
+      loadData();
     } catch (error) {
       console.error('Erreur automation:', error);
       alert('❌ Erreur lors du lancement de l\'automation');
@@ -330,7 +355,7 @@ const BacklinkAutomationDashboard: React.FC = () => {
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
                   <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
-                    <input type="radio" name="campaign" className="mr-2" />
+                    <span className="sr-only">Sélection</span>
                   </th>
                   <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">Campagne</th>
                   <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">Statut</th>
@@ -348,16 +373,21 @@ const BacklinkAutomationDashboard: React.FC = () => {
                       <input
                         type="radio"
                         name="campaign"
+                        id={`campaign-${campaign.id}`}
                         value={campaign.id}
                         checked={selectedCampaign === campaign.id}
                         onChange={() => setSelectedCampaign(campaign.id)}
+                        aria-label={`Sélectionner ${campaign.name}`}
+                        className="w-4 h-4 text-orange-600 focus:ring-orange-500"
                       />
                     </td>
                     <td className="py-3 px-4">
-                      <div className="font-medium text-gray-900">{campaign.name}</div>
-                      <div className="text-xs text-slate-500">
-                        Créée le {new Date(campaign.created_at).toLocaleDateString('fr-FR')}
-                      </div>
+                      <label htmlFor={`campaign-${campaign.id}`} className="cursor-pointer">
+                        <div className="font-medium text-gray-900">{campaign.name}</div>
+                        <div className="text-xs text-slate-500">
+                          Créée le {new Date(campaign.created_at).toLocaleDateString('fr-FR')}
+                        </div>
+                      </label>
                     </td>
                     <td className="py-3 px-4">
                       <span className={`px-2 py-1 rounded text-xs font-medium ${
