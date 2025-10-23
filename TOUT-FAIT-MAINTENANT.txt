@@ -1,90 +1,65 @@
-✅ CORRECTION TERMINÉE - ACTIONS IMMÉDIATES
+═══════════════════════════════════════════════════════════════
+  ERREUR TROUVÉE: "function name not unique"
+═══════════════════════════════════════════════════════════════
 
-═══════════════════════════════════════════════════════
-1️⃣ RECHARGER LA PAGE (5 secondes)
-═══════════════════════════════════════════════════════
+❌ CAUSE:
+Il y a PLUSIEURS versions de toggle_automation dans la base.
+Le diagnostic a montré "2 rows" au lieu de "1 row".
 
-Sur la page /backoffice/master:
+✅ FIX EN 3 ÉTAPES (10 SECONDES):
+═══════════════════════════════════════════════════════════════
 
-👉 Ctrl + Shift + R (Windows/Linux)
-👉 Cmd + Shift + R (Mac)
+1️⃣ OUVRIR:
+   FIX-FINAL-DROP-ALL-FUNCTIONS.sql
 
-Cela recharge le nouveau code corrigé.
+2️⃣ COPIER/COLLER:
+   → Ctrl+A (sélectionner)
+   → Ctrl+C (copier)
+   → https://supabase.com/dashboard/project/drohhxrkoequjphvabvq/sql
+   → + New Query
+   → Ctrl+V (coller)
+   → RUN
 
-═══════════════════════════════════════════════════════
-2️⃣ TESTER (10 secondes)
-═══════════════════════════════════════════════════════
+3️⃣ VÉRIFIER:
+   En bas de la page, vous DEVEZ voir:
+   "1 row" (pas "2 rows")
+   
+   Si vous voyez "1 row" avec prosecdef=true → ✅ OK!
 
-Cliquer sur: "TOUT ACTIVER"
+4️⃣ TESTER:
+   → https://taxiassur.com/backoffice/auto-optimizer
+   → Ctrl+Shift+R (vider cache)
+   → Cliquer switch
+   → Console: Plus d'erreur 401 ✅
 
-AVANT (erreur):
-❌ PATCH ...automation_status?name=neq. 400 (Bad Request)
+═══════════════════════════════════════════════════════════════
 
-APRÈS (corrigé):
-✅ Popup: "Toutes les automatisations sont activées !"
-✅ Cartes en VERT
-✅ Compteur mis à jour
+CE QUI VA SE PASSER:
+═══════════════════════════════════════════════════════════════
 
-═══════════════════════════════════════════════════════
-3️⃣ ACTIVER 50 CRON JOBS (2 minutes)
-═══════════════════════════════════════════════════════
+Le script SQL va:
+1. Trouver TOUTES les versions de toggle_automation
+2. Les supprimer UNE PAR UNE
+3. Créer UNE SEULE nouvelle version avec SECURITY DEFINER
+4. Vérifier qu'il n'y en a plus qu'une
 
-1. Ouvrir Supabase SQL Editor
-2. Copier: ACTIVER-50-CRON-JOBS-COMPLET.sql
-3. Coller et Run
-4. Attendre 60 secondes
+═══════════════════════════════════════════════════════════════
 
-═══════════════════════════════════════════════════════
-FICHIERS CRÉÉS
-═══════════════════════════════════════════════════════
+FICHIER:
+✅ FIX-FINAL-DROP-ALL-FUNCTIONS.sql (70 lignes)
 
-📄 ACTIVER-50-CRON-JOBS-COMPLET.sql
-   → Fichier principal à exécuter dans Supabase
+NE PAS UTILISER:
+❌ FIX-CLEAN-FINAL.sql (ne supprimait qu'une version)
+❌ Tous les autres fichiers
 
-📖 LISTE-COMPLETE-50-CRON-JOBS.md
-   → Documentation détaillée des 50 cron jobs
+═══════════════════════════════════════════════════════════════
 
-📋 CORRECTION-ERREUR-400-ACTIVATION.md
-   → Détails techniques des corrections
+APRÈS AVOIR EXÉCUTÉ:
+═══════════════════════════════════════════════════════════════
 
-📝 ACTION-APRES-BUILD.txt
-   → Instructions complètes
+Si vous voyez:
+→ "1 row" ✅ C'est bon, tester le backoffice
+→ "2 rows" ❌ Me dire, il y a encore un problème
+→ Erreur SQL ❌ Copier/coller l'erreur complète
 
-📌 TOUT-FAIT-MAINTENANT.txt
-   → Ce fichier (résumé ultra-court)
-
-═══════════════════════════════════════════════════════
-CE QUI A ÉTÉ CORRIGÉ
-═══════════════════════════════════════════════════════
-
-Problème: Code utilisait is_enabled (n'existe pas)
-Solution: Changé en enabled (colonne réelle)
-
-✅ 6 corrections dans MasterDashboard.tsx
-✅ Build validé: 17.37s
-✅ Gestion d'erreur ajoutée
-✅ Messages explicites
-
-═══════════════════════════════════════════════════════
-RÉSULTAT FINAL
-═══════════════════════════════════════════════════════
-
-Après exécution du SQL:
-
-🚀 50+ cron jobs actifs
-🚀 80+ actions automatiques par jour
-🚀 Système 100% autonome
-
-Production quotidienne:
-- 2 articles blog
-- 11 posts réseaux sociaux  
-- 40 emails prospects
-- 6 SMS
-- 4 refresh SEO
-- 24 réponses emails auto
-
-═══════════════════════════════════════════════════════
-
-👉 COMMENCER PAR: Ctrl+Shift+R sur /backoffice/master
-
-Date: 23 octobre 2025
+═══════════════════════════════════════════════════════════════
