@@ -259,7 +259,7 @@ const PopupManagerBackoffice: React.FC = () => {
                     type="text"
                     value={editingPopup.name}
                     onChange={(e) => setEditingPopup(prev => prev ? { ...prev, name: e.target.value } : null)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
                   />
                 </div>
 
@@ -270,7 +270,7 @@ const PopupManagerBackoffice: React.FC = () => {
                   <select
                     value={editingPopup.type}
                     onChange={(e) => setEditingPopup(prev => prev ? { ...prev, type: e.target.value as any } : null)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
                   >
                     <option value="exit-intent">Exit Intent (sortie de souris)</option>
                     <option value="time-based">Temporisé (après X secondes)</option>
@@ -307,7 +307,7 @@ const PopupManagerBackoffice: React.FC = () => {
                       ...prev,
                       content: { ...prev.content, title: e.target.value }
                     } : null)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
                   />
                 </div>
 
@@ -322,7 +322,7 @@ const PopupManagerBackoffice: React.FC = () => {
                       ...prev,
                       content: { ...prev.content, subtitle: e.target.value }
                     } : null)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
                   />
                 </div>
 
@@ -337,7 +337,7 @@ const PopupManagerBackoffice: React.FC = () => {
                       content: { ...prev.content, description: e.target.value }
                     } : null)}
                     rows={3}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
                   />
                 </div>
 
@@ -353,7 +353,7 @@ const PopupManagerBackoffice: React.FC = () => {
                         ...prev,
                         content: { ...prev.content, ctaText: e.target.value }
                       } : null)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
                     />
                   </div>
 
@@ -367,7 +367,7 @@ const PopupManagerBackoffice: React.FC = () => {
                         ...prev,
                         content: { ...prev.content, ctaAction: e.target.value as any }
                       } : null)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
                     >
                       <option value="form">Aller au formulaire</option>
                       <option value="phone">Appeler</option>
@@ -389,7 +389,7 @@ const PopupManagerBackoffice: React.FC = () => {
                       content: { ...prev.content, urgencyText: e.target.value }
                     } : null)}
                     placeholder="Ex: Plus que 5 minutes !"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
                   />
                 </div>
               </div>
@@ -409,7 +409,7 @@ const PopupManagerBackoffice: React.FC = () => {
                       ...prev,
                       design: { ...prev.design, theme: e.target.value as any }
                     } : null)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
                   >
                     <option value="default">Par défaut</option>
                     <option value="urgent">Urgent (rouge)</option>
@@ -428,7 +428,7 @@ const PopupManagerBackoffice: React.FC = () => {
                       ...prev,
                       design: { ...prev.design, animation: e.target.value as any }
                     } : null)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
                   >
                     <option value="bounce">Rebond</option>
                     <option value="fade">Fondu</option>
@@ -447,7 +447,7 @@ const PopupManagerBackoffice: React.FC = () => {
                       ...prev,
                       design: { ...prev.design, size: e.target.value as any }
                     } : null)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
                   >
                     <option value="sm">Petite</option>
                     <option value="md">Moyenne</option>
@@ -474,7 +474,7 @@ const PopupManagerBackoffice: React.FC = () => {
                     } : null)}
                     rows={3}
                     placeholder="/"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
                   />
                 </div>
 
@@ -558,7 +558,7 @@ const PopupManagerBackoffice: React.FC = () => {
                       } : null)}
                       min="1"
                       max="300"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
                     />
                   </div>
                 )}
@@ -577,7 +577,7 @@ const PopupManagerBackoffice: React.FC = () => {
                       } : null)}
                       min="10"
                       max="100"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
                     />
                   </div>
                 )}
@@ -601,7 +601,7 @@ const PopupManagerBackoffice: React.FC = () => {
                     } : null)}
                     min="1"
                     max="5"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
                   />
                 </div>
 
@@ -618,7 +618,7 @@ const PopupManagerBackoffice: React.FC = () => {
                     } : null)}
                     min="1"
                     max="10"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
                   />
                 </div>
 
@@ -635,7 +635,7 @@ const PopupManagerBackoffice: React.FC = () => {
                     } : null)}
                     min="1"
                     max="168"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
                   />
                 </div>
               </div>

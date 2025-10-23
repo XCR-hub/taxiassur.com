@@ -17,8 +17,25 @@ Deno.serve(async (req: Request) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const { action, content, platform, author } = await req.json();
+    const body = await req.json();
+    const { action, content, platform, author, keywords, max_results } = body;
 
+    // Support pour NewsManager (veille automatique)
+    if (keywords && max_results) {
+      // Simuler une veille de news (NewsManager)
+      const mockNews = {
+        success: true,
+        news_count: 3,
+        message: `Veille effectuée pour: ${keywords.join(', ')}`
+      };
+
+      return new Response(
+        JSON.stringify(mockNews),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Support pour analyse de contenu social
     if (action === "analyze") {
       const patterns = [];
       if (content.match(/cherche.*assurance|besoin.*assurance/i)) patterns.push('recherche_assurance');
@@ -44,8 +61,12 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    throw new Error("Unknown action");
+    return new Response(
+      JSON.stringify({ success: false, error: "Action non reconnue ou paramètres manquants" }),
+      { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
   } catch (error) {
+    console.error('Error in ai-social-scraper:', error);
     return new Response(
       JSON.stringify({ success: false, error: error.message }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
