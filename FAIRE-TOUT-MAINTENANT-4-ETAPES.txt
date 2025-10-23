@@ -1,0 +1,201 @@
+╔══════════════════════════════════════════════════════════════════════╗
+║  🚀 FIX COMPLET BACKLINK AUTOMATION (4 MINUTES)                     ║
+╚══════════════════════════════════════════════════════════════════════╝
+
+🎯 OBJECTIF: Réparer système backlink ET retirer concurrents
+
+══════════════════════════════════════════════════════════════════════
+
+📍 ÉTAPE 1: NETTOYER CONCURRENTS (1 MIN) ⭐ PRIORITÉ
+
+1. Ouvrir: https://supabase.com/dashboard/project/drohhxrkoequjphvabvq/sql
+
+2. Copier fichier: NETTOYER-OPPORTUNITES-CONCURRENTES.sql
+
+3. Coller → Run ▶
+
+4. Vérifier:
+   ✅ 4 concurrents supprimés
+   ✅ 10 nouvelles opportunités ajoutées
+   ✅ Score moyen: ~79
+
+══════════════════════════════════════════════════════════════════════
+
+📍 ÉTAPE 2: FIX DOUBLON CAMPAGNE (30 SEC)
+
+1. Dans Supabase SQL (même onglet)
+
+2. Copier:
+
+DELETE FROM backlink_campaigns 
+WHERE id NOT IN (
+  SELECT DISTINCT ON (name) id
+  FROM backlink_campaigns
+  ORDER BY name, created_at ASC
+);
+
+SELECT 'OK: ' || COUNT(*) || ' campagne' FROM backlink_campaigns;
+
+3. Run ▶
+
+4. Vérifier: "OK: 1 campagne"
+
+══════════════════════════════════════════════════════════════════════
+
+📍 ÉTAPE 3: UPLOAD SUR IONOS (2 MIN)
+
+1. Ouvrir FileZilla
+
+2. Connecter: ftp.taxiassur.com
+
+3. Naviguer: /httpdocs
+
+4. Uploader: Tout le contenu de /dist
+
+5. Attendre fin upload
+
+══════════════════════════════════════════════════════════════════════
+
+📍 ÉTAPE 4: TESTER (30 SEC)
+
+1. Ouvrir: taxiassur.com/backoffice/backlink-automation
+
+2. Ctrl+Shift+R (vider cache)
+
+3. Vérifier:
+   ✅ 1 seule campagne
+   ✅ Radio cliquable
+   ✅ Bouton actif
+
+4. Tester:
+   • Sélectionner campagne
+   • Cliquer "Lancer Automation"
+   • Confirmer
+   ✅ Message succès
+
+5. Vérifier page rapports:
+   • Ouvrir: taxiassur.com/backoffice/backlink-reports
+   • Ctrl+Shift+R
+   ✅ 14+ opportunités
+   ✅ Plus de concurrents (assurpro, assurtaxi)
+   ✅ Nouvelles opportunités (actu-transport, etc.)
+
+══════════════════════════════════════════════════════════════════════
+
+✅ CHECKLIST FINALE:
+
+□ SQL nettoyage concurrents exécuté
+□ 4 concurrents supprimés
+□ 10 nouveaux sites ajoutés
+□ SQL fix doublon exécuté  
+□ 1 seule campagne reste
+□ Fichiers uploadés IONOS
+□ Cache navigateur vidé
+□ Dashboard fonctionne (1 campagne)
+□ Automation lance correctement
+□ Page rapports OK (14+ opportunités)
+□ Plus de concurrents visibles
+□ Nouveaux sites visibles
+□ Scores 72-86
+□ 0 erreur console
+
+══════════════════════════════════════════════════════════════════════
+
+📊 RÉSULTAT ATTENDU:
+
+Dashboard Automation:
+✅ 1 campagne "Campagne Assurance Taxi - Lancement"
+✅ Bouton "Lancer Automation" fonctionnel
+✅ Popup confirmation OK
+✅ Message succès affiché
+✅ Stats se mettent à jour
+
+Page Rapports:
+✅ 14+ opportunités totales
+✅ 10 nouvelles (status "new")
+✅ Sites NON-concurrents:
+   • annuaire-taxis-france.fr (86)
+   • actu-transport.fr (84)
+   • vtc-mag.com (82)
+   • mobilite-pro.fr (81)
+   • flotte-auto.fr (80)
+   • taxis-info.fr (79)
+   • entrepreneur-france.fr (77)
+   • vehicules-pro.com (76)
+   • pme-magazine.fr (74)
+   • gestion-entreprise.fr (72)
+
+✅ Plus de concurrents:
+   ❌ assurpro-taxis.com (supprimé)
+   ❌ assurtaxi.net (supprimé)
+   ❌ assurance-pro-france.fr (supprimé)
+   ❌ assurance-professionnelle.fr (supprimé)
+
+══════════════════════════════════════════════════════════════════════
+
+📁 FICHIERS À UTILISER (ORDRE):
+
+1️⃣ NETTOYER-OPPORTUNITES-CONCURRENTES.sql
+   → Supprime concurrents + ajoute bons sites
+
+2️⃣ EXECUTE-MAINTENANT.sql (ou copier le DELETE ci-dessus)
+   → Supprime doublon campagne
+
+3️⃣ /dist (dossier)
+   → À uploader sur IONOS
+
+4️⃣ CORRIGER-OPPORTUNITES-MAINTENANT.txt
+   → Guide détaillé étape 1
+
+5️⃣ DEPLOYER-MAINTENANT-3-ETAPES.txt
+   → Guide détaillé upload
+
+══════════════════════════════════════════════════════════════════════
+
+⏱️ TEMPS TOTAL: 4 MINUTES
+
+• Nettoyage concurrents: 1 min
+• Fix doublon: 30 sec
+• Upload FTP: 2 min
+• Test: 30 sec
+
+══════════════════════════════════════════════════════════════════════
+
+💡 CATÉGORIES OPPORTUNITÉS (NON-CONCURRENTES):
+
+✅ À CHERCHER:
+• 🚛 Transport & Mobilité → Magazines, blogs
+• 🚖 Annuaires Taxis/VTC → Sans assurance
+• 🏢 Entrepreneurs & PME → Sites indépendants
+• 🔧 Auto & Flottes → Gestion véhicules pro
+• 💼 Gestion & Finance → Conseils TPE
+
+❌ À ÉVITER:
+• Assurance (tout type)
+• Courtiers
+• Comparateurs assurance
+• Mutuelles
+• Tout site avec "assur*" dans le nom
+
+══════════════════════════════════════════════════════════════════════
+
+🎯 APRÈS TOUT ÇA:
+
+Le système sera 100% fonctionnel:
+
+✅ Automation backlinks opérationnelle
+✅ 1 seule campagne (plus de doublon)
+✅ 10 opportunités de qualité (non-concurrentes)
+✅ Scores moyens: 79/100
+✅ Dashboard complet
+✅ Rapports détaillés
+✅ Export CSV
+✅ 0 erreur
+
+Vous pourrez:
+• Lancer des campagnes d'outreach
+• Acquérir des backlinks de qualité
+• Améliorer votre SEO
+• SANS aider vos concurrents
+
+╚══════════════════════════════════════════════════════════════════════╝
