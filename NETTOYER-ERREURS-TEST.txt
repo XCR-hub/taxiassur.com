@@ -1,48 +1,64 @@
-⚡ NETTOYAGE ERREURS TEST - SIMPLE ET PROPRE
+═══════════════════════════════════════════════════════════════
+  FIX IMMEDIAT: Supprimer la mauvaise version de toggle_automation
+═══════════════════════════════════════════════════════════════
 
-═══════════════════════════════════════════════════════════
+SITUATION:
+Il y a 2 versions de toggle_automation qui coexistent:
 
-🎯 CE QUI EST NETTOYÉ
+1. toggle_automation(p_job_id bigint, p_enabled boolean)
+   ↳ Créée dans: 20251022250000_create_automation_monitoring_system.sql
+   ↳ SECURIT Y DEFINER: ✅ OUI
+   ↳ Permissions: authenticated, service_role (PAS anon)
 
-❌ "Erreur test: Timeout" → ✅ Supprimé
+2. toggle_automation(automation_name text, enabled boolean)
+   ↳ Créée dans: FIX-CLEAN-FINAL.sql (votre dernier fix)
+   ↳ SECURITY DEFINER: ✅ OUI  
+   ↳ Permissions: anon, authenticated
 
-═══════════════════════════════════════════════════════════
+PROBLÈME:
+Le frontend Auto-Optimizer utilise la version avec "automation_name"
+mais PostgreSQL est confus car il y a 2 fonctions.
 
-✅ CE QUI RESTE INTACT (DONNÉES RÉELLES)
+═══════════════════════════════════════════════════════════════
 
-✓ Dates futures = dates de déclenchement prévues
-✓ 0 exécutions = normal (pas encore lancé)
-✓ Toutes les statistiques réelles
-✓ Configuration des cron jobs
+✅ SOLUTION SIMPLE (5 SECONDES):
+═══════════════════════════════════════════════════════════════
 
-═══════════════════════════════════════════════════════════
+EXÉCUTER dans Supabase SQL Editor:
 
-🚀 MIGRATION À EXÉCUTER
+```sql
+-- Supprimer la version avec p_job_id (pas utilisée par le frontend)
+DROP FUNCTION IF EXISTS toggle_automation(bigint, boolean) CASCADE;
 
-Supabase SQL Editor :
+-- Vérifier qu'il ne reste qu'une seule version
+SELECT 
+  proname as nom,
+  prosecdef as security_definer,
+  pg_get_function_arguments(oid) as parametres
+FROM pg_proc 
+WHERE proname = 'toggle_automation';
 
-Fichier: 20251022261000_clean_test_errors_only.sql
+-- Doit afficher 1 seule ligne:
+-- toggle_automation | true | automation_name text, enabled boolean
+```
 
-Copier → Coller → RUN (30 secondes)
+Puis:
+1. https://taxiassur.com/backoffice/auto-optimizer
+2. Ctrl+Shift+R (vider cache)
+3. Cliquer switch
+4. ✅ Ça marche!
 
-═══════════════════════════════════════════════════════════
+═══════════════════════════════════════════════════════════════
 
-📊 RÉSULTAT
+🎯 POURQUOI PAS FIX-FINAL-DROP-ALL-FUNCTIONS.sql?
 
-Interface Auto-Optimizer :
+Parce que vous avez BESOIN de la version avec "automation_name text"!
+Le backoffice utilise:
+  supabase.rpc('toggle_automation', { 
+    automation_name: 'nom-du-job', 
+    enabled: true 
+  })
 
-✅ 57/57 Automatisations actives
-✅ 0 Exécutions (normal - pas encore lancées)
-✅ 0 Erreurs (erreurs test supprimées)
-✅ Dates futures (= prochains déclenchements)
+On supprime juste l'autre version qui n'est pas utilisée.
 
-═══════════════════════════════════════════════════════════
-
-🌐 DÉPLOIEMENT
-
-✅ Build : 17.05s
-→ Uploader /dist sur IONOS
-
-═══════════════════════════════════════════════════════════
-
-Données réelles conservées ! 🎯
+═══════════════════════════════════════════════════════════════
