@@ -159,7 +159,9 @@ export default function AutoOptimizer() {
 
       if (error) throw error;
 
+      // Forcer le rafraîchissement
       await loadAutomations();
+      setLastCheck(new Date());
 
       const status = newStatus ? '✅ activée' : '⏸️ désactivée';
       alert(`L'automatisation "${AUTOMATION_DESCRIPTIONS[automation.name]?.title || automation.name}" est maintenant ${status}`);
