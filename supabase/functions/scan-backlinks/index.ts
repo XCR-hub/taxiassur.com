@@ -125,74 +125,133 @@ serve(async (req: Request) => {
                 }
 
                 let contactEmail = null;
+                let companyInfo: any = null;
 
-                // MÉTHODE 1 : Scraper la page /contact du site
-                try {
-                  const contactUrl = `https://${domain}/contact`;
-                  const contactResponse = await fetch(contactUrl, {
-                    headers: { 'User-Agent': 'Mozilla/5.0 (compatible; TaxiAssurBot/1.0)' }
-                  });
-
-                  if (contactResponse.ok) {
-                    const html = await contactResponse.text();
-                    const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
-                    const emails = html.match(emailRegex);
-
-                    if (emails && emails.length > 0) {
-                      const validEmail = emails.find(e =>
-                        !e.includes('example.com') &&
-                        !e.includes('yourdomain') &&
-                        (e.includes('contact') || e.includes('info') || e.includes('redac'))
-                      );
-                      if (validEmail) contactEmail = validEmail;
+                // ============================================
+                // MÉTHODE 1 : Company Enrichment (données entreprise)
+                // ============================================
+                if (hunterApiKey) {
+                  try {
+                    const companyUrl = `https://api.hunter.io/v2/companies/find?domain=${domain}&api_key=${hunterApiKey}`;
+                    const companyResponse = await fetch(companyUrl);
+                    if (companyResponse.ok) {
+                      const companyData = await companyResponse.json();
+                      companyInfo = companyData.data;
+                      console.log(`Company info for ${domain}:`, companyInfo?.name);
                     }
+                    await new Promise(resolve => setTimeout(resolve, 300));
+                  } catch (error) {
+                    console.log(`Company enrichment failed for ${domain}`);
                   }
-                } catch (scrapeError) {
-                  console.log(`Could not scrape contact page for ${domain}`);
                 }
 
-                // MÉTHODE 2 : Hunter.io Email Finder (si pas trouvé par scraping)
+                // ============================================
+                // MÉTHODE 2 : Domain Search (tous les emails du domaine)
+                // ============================================
                 if (!contactEmail && hunterApiKey) {
                   try {
-                    // Chercher les noms communs pour les contacts
-                    const commonNames = [
-                      { first: 'contact', last: 'redaction' },
-                      { first: 'redaction', last: 'web' },
-                      { first: 'webmaster', last: 'site' }
+                    const domainUrl = `https://api.hunter.io/v2/domain-search?domain=${domain}&api_key=${hunterApiKey}&limit=10`;
+                    const domainResponse = await fetch(domainUrl);
+                    if (domainResponse.ok) {
+                      const domainData = await domainResponse.json();
+                      if (domainData.data?.emails?.length > 0) {
+                        // Priorité : contact@, info@, redac@, webmaster@
+                        const priorityEmail = domainData.data.emails.find((e: any) =>
+                          e.type === 'generic' &&
+                          (e.value.includes('contact') || e.value.includes('info') ||
+                           e.value.includes('redac') || e.value.includes('webmaster'))
+                        );
+                        contactEmail = priorityEmail?.value || domainData.data.emails[0]?.value;
+                      }
+                    }
+                    await new Promise(resolve => setTimeout(resolve, 300));
+                  } catch (error) {
+                    console.log(`Domain search failed for ${domain}`);
+                  }
+                }
+
+                // ============================================
+                // MÉTHODE 3 : Discover API (cherche sur le web)
+                // ============================================
+                if (!contactEmail && hunterApiKey) {
+                  try {
+                    const discoverUrl = `https://api.hunter.io/v2/discover?api_key=${hunterApiKey}&domain=${domain}`;
+                    const discoverResponse = await fetch(discoverUrl);
+                    if (discoverResponse.ok) {
+                      const discoverData = await discoverResponse.json();
+                      if (discoverData.data?.emails?.length > 0) {
+                        contactEmail = discoverData.data.emails[0].value;
+                      }
+                    }
+                    await new Promise(resolve => setTimeout(resolve, 300));
+                  } catch (error) {
+                    console.log(`Discover failed for ${domain}`);
+                  }
+                }
+
+                // ============================================
+                // MÉTHODE 4 : Scraper la page /contact
+                // ============================================
+                if (!contactEmail) {
+                  try {
+                    const contactUrls = [
+                      `https://${domain}/contact`,
+                      `https://${domain}/nous-contacter`,
+                      `https://${domain}/about`,
+                      `https://${domain}/a-propos`
                     ];
 
-                    for (const name of commonNames) {
-                      const finderUrl = `https://api.hunter.io/v2/email-finder?domain=${domain}&first_name=${name.first}&last_name=${name.last}&api_key=${hunterApiKey}`;
-                      const finderResponse = await fetch(finderUrl);
+                    for (const contactUrl of contactUrls) {
+                      const contactResponse = await fetch(contactUrl, {
+                        headers: { 'User-Agent': 'Mozilla/5.0 (compatible; TaxiAssurBot/1.0)' }
+                      });
 
-                      if (finderResponse.ok) {
-                        const finderData = await finderResponse.json();
-                        if (finderData.data?.email && finderData.data?.score > 50) {
-                          contactEmail = finderData.data.email;
-                          break;
-                        }
-                      }
-                      await new Promise(resolve => setTimeout(resolve, 300));
-                    }
+                      if (contactResponse.ok) {
+                        const html = await contactResponse.text();
+                        const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
+                        const emails = html.match(emailRegex);
 
-                    // Si toujours rien, fallback sur Domain Search
-                    if (!contactEmail) {
-                      const domainUrl = `https://api.hunter.io/v2/domain-search?domain=${domain}&api_key=${hunterApiKey}&limit=5`;
-                      const domainResponse = await fetch(domainUrl);
-                      if (domainResponse.ok) {
-                        const domainData = await domainResponse.json();
-                        if (domainData.data?.emails?.length > 0) {
-                          const genericEmail = domainData.data.emails.find((e: any) =>
-                            e.type === 'generic' && (e.value.includes('contact') || e.value.includes('info') || e.value.includes('redac'))
+                        if (emails && emails.length > 0) {
+                          const validEmail = emails.find(e =>
+                            !e.includes('example.com') &&
+                            !e.includes('yourdomain') &&
+                            !e.includes('sentry') &&
+                            !e.includes('wixpress') &&
+                            e.includes(domain.split('.')[0])
                           );
-                          contactEmail = genericEmail?.value || domainData.data.emails[0]?.value;
+                          if (validEmail) {
+                            contactEmail = validEmail;
+                            break;
+                          }
                         }
                       }
                     }
+                  } catch (scrapeError) {
+                    console.log(`Contact page scraping failed for ${domain}`);
+                  }
+                }
 
-                    await new Promise(resolve => setTimeout(resolve, 500));
-                  } catch (hunterError) {
-                    console.error(`Hunter.io error for ${domain}:`, hunterError);
+                // ============================================
+                // MÉTHODE 5 : Email Verification (valider l'email trouvé)
+                // ============================================
+                if (contactEmail && hunterApiKey) {
+                  try {
+                    const verifyUrl = `https://api.hunter.io/v2/email-verifier?email=${contactEmail}&api_key=${hunterApiKey}`;
+                    const verifyResponse = await fetch(verifyUrl);
+                    if (verifyResponse.ok) {
+                      const verifyData = await verifyResponse.json();
+                      // Score minimum 50/100 et status deliverable
+                      if (verifyData.data?.score < 50 || verifyData.data?.status !== 'valid') {
+                        console.log(`Email ${contactEmail} rejected - score: ${verifyData.data?.score}`);
+                        contactEmail = null; // Email invalide
+                      } else {
+                        console.log(`✓ Email ${contactEmail} verified - score: ${verifyData.data?.score}`);
+                      }
+                    }
+                    await new Promise(resolve => setTimeout(resolve, 300));
+                  } catch (error) {
+                    console.log(`Email verification failed for ${contactEmail}`);
+                    // On garde l'email même si vérification échoue
                   }
                 }
 
