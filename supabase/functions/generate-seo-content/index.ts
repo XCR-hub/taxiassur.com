@@ -51,11 +51,53 @@ const FRENCH_CITIES: Record<string, { dept: string; region: string; population: 
   'nimes': { dept: '30', region: 'Occitanie', population: 150610, taxi_count: 102 },
   'le havre': { dept: '76', region: 'Normandie', population: 170352, taxi_count: 118 },
 
-  // Petites villes Seine-et-Marne
+  // Île-de-France (autres villes)
+  'argenteuil': { dept: '95', region: 'Île-de-France', population: 110488, taxi_count: 135 },
+  'montreuil': { dept: '93', region: 'Île-de-France', population: 108434, taxi_count: 132 },
+  'saint-denis': { dept: '93', region: 'Île-de-France', population: 111103, taxi_count: 136 },
+  'nanterre': { dept: '92', region: 'Île-de-France', population: 93509, taxi_count: 114 },
+  'vitry-sur-seine': { dept: '94', region: 'Île-de-France', population: 92772, taxi_count: 113 },
+  'creteil': { dept: '94', region: 'Île-de-France', population: 91042, taxi_count: 111 },
+  'aulnay-sous-bois': { dept: '93', region: 'Île-de-France', population: 85740, taxi_count: 105 },
+  'asnieres-sur-seine': { dept: '92', region: 'Île-de-France', population: 86512, taxi_count: 106 },
+  'colombes': { dept: '92', region: 'Île-de-France', population: 85199, taxi_count: 104 },
+
+  // Seine-et-Marne (77)
   'chailly-en-biere': { dept: '77', region: 'Île-de-France', population: 2180, taxi_count: 3 },
   'fontainebleau': { dept: '77', region: 'Île-de-France', population: 14720, taxi_count: 18 },
   'melun': { dept: '77', region: 'Île-de-France', population: 40032, taxi_count: 48 },
   'meaux': { dept: '77', region: 'Île-de-France', population: 53526, taxi_count: 65 },
+  'vaux-le-penil': { dept: '77', region: 'Île-de-France', population: 11200, taxi_count: 14 },
+  'milly-la-foret': { dept: '77', region: 'Île-de-France', population: 4850, taxi_count: 6 },
+  'cesson': { dept: '77', region: 'Île-de-France', population: 8642, taxi_count: 11 },
+  'sens': { dept: '89', region: 'Bourgogne-Franche-Comté', population: 25355, taxi_count: 31 },
+  'le-mee-sur-seine': { dept: '77', region: 'Île-de-France', population: 20583, taxi_count: 25 },
+  'veneux-les-sablons': { dept: '77', region: 'Île-de-France', population: 5012, taxi_count: 6 },
+  'champeaux': { dept: '77', region: 'Île-de-France', population: 1630, taxi_count: 2 },
+  'ponthierry': { dept: '77', region: 'Île-de-France', population: 5892, taxi_count: 7 },
+  'saint-fargeau': { dept: '77', region: 'Île-de-France', population: 1820, taxi_count: 2 },
+  'bois-le-roi': { dept: '77', region: 'Île-de-France', population: 5726, taxi_count: 7 },
+  'montauban': { dept: '82', region: 'Occitanie', population: 60952, taxi_count: 74 },
+
+  // Provence-Alpes-Côte d'Azur (autres)
+  'avignon': { dept: '84', region: 'Provence-Alpes-Côte d\'Azur', population: 91143, taxi_count: 111 },
+
+  // Grand Est (autres)
+  'mulhouse': { dept: '68', region: 'Grand Est', population: 108942, taxi_count: 133 },
+  'nancy': { dept: '54', region: 'Grand Est', population: 104885, taxi_count: 128 },
+
+  // Nouvelle-Aquitaine (autres)
+  'poitiers': { dept: '86', region: 'Nouvelle-Aquitaine', population: 88665, taxi_count: 108 },
+  'la-rochelle': { dept: '17', region: 'Nouvelle-Aquitaine', population: 77196, taxi_count: 94 },
+
+  // Hauts-de-France (autres)
+  'roubaix': { dept: '59', region: 'Hauts-de-France', population: 96990, taxi_count: 118 },
+  'tourcoing': { dept: '59', region: 'Hauts-de-France', population: 97476, taxi_count: 119 },
+  'dunkerque': { dept: '59', region: 'Hauts-de-France', population: 87353, taxi_count: 107 },
+
+  // Normandie (autres)
+  'rouen': { dept: '76', region: 'Normandie', population: 110145, taxi_count: 134 },
+  'caen': { dept: '14', region: 'Normandie', population: 105403, taxi_count: 129 },
 };
 
 /**
