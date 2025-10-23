@@ -1,67 +1,90 @@
-═══════════════════════════════════════════════════════════════
-  🔧 FIX: Page Backlink Automation (Upload Requis)
-═══════════════════════════════════════════════════════════════
+╔══════════════════════════════════════════════════════════════╗
+║  🔧 FIX: "Opportunity not found" - BACKLINK DASHBOARD       ║
+╚══════════════════════════════════════════════════════════════╝
 
-PROBLÈME:
-❌ Bouton "Lancer Automatisation" grisé
-❌ Erreur 400: "Could not find relationship backlink_opportunities"
-❌ Ancien build en ligne (pas le nouveau)
+❌ ERREUR AFFICHÉE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-CAUSE:
-Le fichier corrigé existe en LOCAL mais pas sur le serveur IONOS.
-Vous devez uploader le NOUVEAU build.
+Popup rouge: "Erreur: Opportunity not found"
 
-═══════════════════════════════════════════════════════════════
-  ✅ SOLUTION: UPLOAD FICHIER (2 MIN)
-═══════════════════════════════════════════════════════════════
+Dans /backoffice/backlink-automation
 
-FICHIER À UPLOADER:
-📦 dist/assets/backoffice-all-BTck8klu.js
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-DESTINATION IONOS:
-📁 /dist/assets/backoffice-all-BTck8klu.js
+🔍 CAUSE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-ÉTAPES:
-1. Connectez-vous FTP IONOS
-2. Allez dans: /dist/assets/
-3. Uploadez: backoffice-all-BTck8klu.js
-4. Remplacez l'ancien
-5. Allez sur: https://taxiassur.com/backoffice/backlink-automation
-6. Ctrl+Shift+R (hard refresh)
+Le dashboard essaie de charger une opportunité backlink
+qui n'existe PAS dans backlink_opportunities.
 
-═══════════════════════════════════════════════════════════════
+Possibilités:
+1. URL contient un ID invalide (?id=xxx)
+2. Opportunité supprimée mais lien reste
+3. Table backlink_opportunities vide ou incomplète
 
-RÉSULTAT ATTENDU:
-✅ Page charge sans erreur 400
-✅ Tableau "Campagnes d'Outreach" affiche données
-✅ Tableau "Journal d'Activité" affiche logs
-✅ Bouton "Lancer Automatisation" actif (bleu)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-═══════════════════════════════════════════════════════════════
+✅ SOLUTION IMMÉDIATE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-ALTERNATIVE: UPLOAD COMPLET /dist
-Si vous préférez tout uploader d'un coup:
-1. Supprimez le dossier /dist sur IONOS
-2. Uploadez tout le nouveau dossier /dist (local)
-3. Attendez fin upload (~2-3 min)
-4. Ctrl+Shift+R sur la page
+ÉTAPE 1: Ajouter 10 sites (30 secondes)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-═══════════════════════════════════════════════════════════════
+Exécuter dans Supabase SQL:
 
-⚠️ NOTE IMPORTANTE:
-Le fichier backoffice-all-BTck8klu.js contient TOUTES les pages
-backoffice. Donc cet upload corrige:
-  ✅ /backoffice/backlink-automation (notre page)
-  ✅ Toutes les autres pages backoffice
+FIX-BACKLINK-MINIMAL.sql
 
-═══════════════════════════════════════════════════════════════
+Résultat:
+• 18 sites → 28 sites
+• Tous avec IDs valides
+• Erreur "not found" disparaîtra
 
-📝 RAPPEL:
-La correction a déjà été faite dans le code source:
-  ✅ src/backoffice/BacklinkAutomationDashboard.tsx (ligne 97)
-  ✅ npm run build exécuté avec succès
-  ✅ Fichier généré: dist/assets/backoffice-all-BTck8klu.js
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Il ne reste plus qu'à l'uploader sur IONOS!
+ÉTAPE 2: Recharger la page (5 secondes)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-═══════════════════════════════════════════════════════════════
+1. Fermer popup "OK"
+2. F5 ou Ctrl+R
+3. La page devrait charger correctement
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📊 SI L'ERREUR PERSISTE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Vérifier l'URL:
+
+Mauvais:
+https://taxiassur.com/backoffice/backlink-automation?id=12345
+
+Bon:
+https://taxiassur.com/backoffice/backlink-automation
+
+Si URL contient "?id=", supprimer cette partie.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔧 SI BESOIN: VÉRIFIER DONNÉES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Exécuter dans Supabase SQL pour voir les opportunités:
+
+SELECT id, domain, url, status, created_at
+FROM backlink_opportunities
+ORDER BY created_at DESC
+LIMIT 10;
+
+Si résultat vide ou < 10 lignes:
+→ Exécuter FIX-BACKLINK-MINIMAL.sql
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚡ RÉSUMÉ
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Exécuter FIX-BACKLINK-MINIMAL.sql (30s)
+2. Recharger page F5 (5s)
+3. Erreur "Opportunity not found" disparue ✅
+
+╚══════════════════════════════════════════════════════════════╝
