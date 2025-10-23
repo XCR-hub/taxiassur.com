@@ -125,19 +125,71 @@ serve(async (req: Request) => {
                 }
 
                 let contactEmail = null;
-                if (hunterApiKey) {
+
+                // MÉTHODE 1 : Scraper la page /contact du site
+                try {
+                  const contactUrl = `https://${domain}/contact`;
+                  const contactResponse = await fetch(contactUrl, {
+                    headers: { 'User-Agent': 'Mozilla/5.0 (compatible; TaxiAssurBot/1.0)' }
+                  });
+
+                  if (contactResponse.ok) {
+                    const html = await contactResponse.text();
+                    const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
+                    const emails = html.match(emailRegex);
+
+                    if (emails && emails.length > 0) {
+                      const validEmail = emails.find(e =>
+                        !e.includes('example.com') &&
+                        !e.includes('yourdomain') &&
+                        (e.includes('contact') || e.includes('info') || e.includes('redac'))
+                      );
+                      if (validEmail) contactEmail = validEmail;
+                    }
+                  }
+                } catch (scrapeError) {
+                  console.log(`Could not scrape contact page for ${domain}`);
+                }
+
+                // MÉTHODE 2 : Hunter.io Email Finder (si pas trouvé par scraping)
+                if (!contactEmail && hunterApiKey) {
                   try {
-                    const hunterUrl = `https://api.hunter.io/v2/domain-search?domain=${domain}&api_key=${hunterApiKey}&limit=1`;
-                    const hunterResponse = await fetch(hunterUrl);
-                    if (hunterResponse.ok) {
-                      const hunterData = await hunterResponse.json();
-                      if (hunterData.data?.emails?.length > 0) {
-                        const genericEmail = hunterData.data.emails.find((e: any) =>
-                          e.type === 'generic' && (e.value.includes('contact') || e.value.includes('info'))
-                        );
-                        contactEmail = genericEmail?.value || hunterData.data.emails[0]?.value;
+                    // Chercher les noms communs pour les contacts
+                    const commonNames = [
+                      { first: 'contact', last: 'redaction' },
+                      { first: 'redaction', last: 'web' },
+                      { first: 'webmaster', last: 'site' }
+                    ];
+
+                    for (const name of commonNames) {
+                      const finderUrl = `https://api.hunter.io/v2/email-finder?domain=${domain}&first_name=${name.first}&last_name=${name.last}&api_key=${hunterApiKey}`;
+                      const finderResponse = await fetch(finderUrl);
+
+                      if (finderResponse.ok) {
+                        const finderData = await finderResponse.json();
+                        if (finderData.data?.email && finderData.data?.score > 50) {
+                          contactEmail = finderData.data.email;
+                          break;
+                        }
+                      }
+                      await new Promise(resolve => setTimeout(resolve, 300));
+                    }
+
+                    // Si toujours rien, fallback sur Domain Search
+                    if (!contactEmail) {
+                      const domainUrl = `https://api.hunter.io/v2/domain-search?domain=${domain}&api_key=${hunterApiKey}&limit=5`;
+                      const domainResponse = await fetch(domainUrl);
+                      if (domainResponse.ok) {
+                        const domainData = await domainResponse.json();
+                        if (domainData.data?.emails?.length > 0) {
+                          const genericEmail = domainData.data.emails.find((e: any) =>
+                            e.type === 'generic' && (e.value.includes('contact') || e.value.includes('info') || e.value.includes('redac'))
+                          );
+                          contactEmail = genericEmail?.value || domainData.data.emails[0]?.value;
+                        }
                       }
                     }
+
                     await new Promise(resolve => setTimeout(resolve, 500));
                   } catch (hunterError) {
                     console.error(`Hunter.io error for ${domain}:`, hunterError);
