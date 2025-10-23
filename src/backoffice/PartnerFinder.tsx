@@ -47,10 +47,24 @@ const PartnerFinder: React.FC = () => {
     setLoading(true);
     try {
       const query = customQuery || selectedQuery;
+
+      // Vérifier si Google CSE est disponible
+      const cseKey = import.meta.env.VITE_GOOGLE_CSE_API_KEY;
+      const cseCx = import.meta.env.VITE_GOOGLE_CSE_CX;
+
+      if (!cseKey || !cseCx) {
+        alert('⚠️ Google CSE non configuré. Les données de démonstration seront utilisées.');
+        // Données de démo si API non configurée
+        const demoResults = generateDemoResults(query);
+        setCandidates(prev => [...prev, ...demoResults]);
+        setLoading(false);
+        return;
+      }
+
       const result = await cseSearch(query, 1);
-      
+
       setRemainingQuota(result.remainingQuota);
-      
+
       const newCandidates: Candidate[] = result.items.map(item => ({
         id: generateProspectId(extractDomain(item.link)),
         title: item.title,
@@ -61,23 +75,32 @@ const PartnerFinder: React.FC = () => {
         contactUrls: extractContactUrl(item.link),
         type: inferProspectType(item.title, item.snippet || '')
       }));
-      
+
       setCandidates(prev => {
         const merged = [...prev, ...newCandidates];
         const domainMap = new Map<string, Candidate>();
-        
+
         merged.forEach(candidate => {
           if (!domainMap.has(candidate.domain)) {
             domainMap.set(candidate.domain, candidate);
           }
         });
-        
+
         return Array.from(domainMap.values());
       });
-      
+
       console.log(`✅ Partner Finder: ${result.items.length} nouveaux prospects trouvés`);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Search error:', error);
+
+      // Si erreur API (quota dépassé), utiliser données de démo
+      if (error?.message?.includes('quota') || error?.message?.includes('403')) {
+        alert('⚠️ Quota Google CSE dépassé (100/jour). Utilisation des données de démonstration.');
+        const demoResults = generateDemoResults(customQuery || selectedQuery);
+        setCandidates(prev => [...prev, ...demoResults]);
+      } else {
+        alert(`❌ Erreur de recherche : ${error?.message || 'Erreur inconnue'}`);
+      }
       const errorMessage = error instanceof Error ? error.message : 'Erreur de recherche';
       console.error('❌ Partner Finder Error:', errorMessage);
       alert(`❌ ${errorMessage}`);
@@ -148,6 +171,27 @@ const PartnerFinder: React.FC = () => {
     if (confirm('Effacer tous les candidats ?')) {
       setCandidates([]);
     }
+  };
+
+  const generateDemoResults = (query: string): Candidate[] => {
+    const demoSites = [
+      { domain: 'auto-moto.com', title: 'Guide assurance taxi professionnelle', type: 'media' as const },
+      { domain: 'caradisiac.com', title: 'Assurance véhicule professionnel taxi', type: 'media' as const },
+      { domain: 'largus.fr', title: 'Comparatif assurances taxis VTC', type: 'media' as const },
+      { domain: 'taxi-france.com', title: 'Annuaire national des taxis', type: 'annuaire' as const },
+      { domain: 'federation-taxi.fr', title: 'Fédération française du taxi', type: 'asso' as const }
+    ];
+
+    return demoSites.map(site => ({
+      id: generateProspectId(site.domain),
+      title: site.title,
+      url: `https://${site.domain}/`,
+      domain: site.domain,
+      snippet: `Résultat de démonstration pour la recherche "${query}"`,
+      status: 'new' as const,
+      contactUrls: [`https://${site.domain}/contact`],
+      type: site.type
+    }));
   };
 
   const getTypeColor = (type: Prospect['type']) => {
