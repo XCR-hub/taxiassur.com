@@ -448,6 +448,7 @@ CREATE OR REPLACE FUNCTION calculate_taxi_lead_score(
 DECLARE
   v_score int := 0;
   v_grade text;
+  v_temperature text;
 BEGIN
   -- Note Google (20 points max)
   IF p_google_rating >= 4.5 THEN v_score := v_score + 20;
@@ -486,9 +487,13 @@ BEGIN
   ELSE v_grade := 'D';
   END IF;
 
+  -- Déterminer température (cold par défaut, sera mis à jour par IA selon engagement)
+  v_temperature := 'cold';
+
   RETURN jsonb_build_object(
     'score', LEAST(v_score, 100),
-    'grade', v_grade
+    'grade', v_grade,
+    'temperature', v_temperature
   );
 END;
 $$ LANGUAGE plpgsql;
