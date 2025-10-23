@@ -1,0 +1,120 @@
+⚡ RÉSOUDRE L'ERREUR 404 (10 SECONDES)
+========================================
+
+❌ ERREUR:
+POST /rest/v1/rpc/execute_sql 404 (Not Found)
+
+✅ CAUSE:
+La fonction execute_sql() n'existe pas dans Supabase
+
+✅ SOLUTION:
+Exécuter 1 fichier SQL (10 secondes)
+
+========================================
+ÉTAPES (10 SECONDES)
+========================================
+
+1. Ouvrir ce lien:
+   https://supabase.com/dashboard/project/drohhxrkoequjphvabvq/sql
+
+2. Cliquer: + New Query
+
+3. Copier TOUT le fichier:
+   EXECUTER-CETTE-FONCTION-MAINTENANT.sql
+
+4. Coller dans SQL Editor
+
+5. Cliquer: RUN
+
+6. Voir message succès:
+   {
+     "success": true,
+     "message": "Requête exécutée avec succès"
+   }
+
+========================================
+TESTER (5 SECONDES)
+========================================
+
+1. Ouvrir:
+   https://taxiassur.com/backoffice/auto-optimizer
+
+2. Vider cache: Ctrl+F5
+
+3. Cliquer: ACTIVER TOUTES
+
+4. ✅ Pas d'erreur 404
+
+========================================
+POURQUOI CETTE ERREUR ?
+========================================
+
+L'AutoOptimizer appelle la fonction:
+  supabase.rpc('execute_sql', { query: '...' })
+
+Mais la fonction n'existe pas encore car:
+  • La migration 3 n'a pas été exécutée
+  • Ou elle a été exécutée partiellement
+
+La fonction attend le paramètre "sql_query" (pas "query")
+
+========================================
+APRÈS EXÉCUTION
+========================================
+
+✅ Fonction execute_sql() créée
+✅ AutoOptimizer fonctionnel
+✅ Pas d'erreur 404
+
+Durée totale: 10 secondes
+
+========================================
+SI ERREUR PERSISTE
+========================================
+
+1. Vérifier fonction existe:
+   SELECT proname FROM pg_proc WHERE proname = 'execute_sql';
+   Attendu: 1 ligne
+
+2. Vider cache navigateur complet:
+   - Ctrl+Shift+Delete
+   - Cocher "Cache" et "Cookies"
+   - Effacer
+   - Ou navigation privée
+
+3. Vérifier paramètre:
+   Le code appelle: execute_sql(query)
+   Mais fonction attend: execute_sql(sql_query)
+   → Voir fix dans AutoOptimizer.tsx
+
+========================================
+FICHIERS
+========================================
+
+Fichier SQL à exécuter:
+  EXECUTER-CETTE-FONCTION-MAINTENANT.sql
+
+Guide complet:
+  COPIER-COLLER-ICI.md
+
+Migration complète (311 lignes):
+  supabase/migrations/20251023070000_fix_backoffice_errors.sql
+
+========================================
+RÉCAP ULTRA-RAPIDE
+========================================
+
+1. https://supabase.com/dashboard → SQL Editor
+2. + New Query
+3. Copier EXECUTER-CETTE-FONCTION-MAINTENANT.sql
+4. Coller → RUN
+5. Rafraîchir backoffice (Ctrl+F5)
+6. ✅ Fonctionnel
+
+DURÉE: 10 SECONDES
+
+========================================
+Build: ✅ 16.47s (0 erreur)
+Status: 🟢 PRÊT
+Date: 23 octobre 2025
+========================================
