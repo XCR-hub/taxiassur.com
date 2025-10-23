@@ -16,8 +16,9 @@
 -- 1. SUPPRIMER TOUTES LES ANCIENNES VERSIONS
 -- ============================================
 
-DROP FUNCTION IF EXISTS toggle_automation(bigint, boolean) CASCADE;
-DROP FUNCTION IF EXISTS toggle_automation(p_job_id bigint, p_enabled boolean) CASCADE;
+-- CRITICAL: Supprimer TOUTES les versions avec CASCADE
+-- Cela évite l'erreur "cannot change return type of existing function"
+DROP FUNCTION IF EXISTS toggle_automation CASCADE;
 
 -- ============================================
 -- 2. CRÉER LA BONNE VERSION
@@ -43,22 +44,28 @@ BEGIN
   GET DIAGNOSTICS v_rows_affected = ROW_COUNT;
   
   IF v_rows_affected > 0 THEN
-    -- Logger l'action
-    PERFORM log_automation_run(
-      automation_name,
-      'success',
-      CASE 
-        WHEN enabled THEN 'Automatisation activée via dashboard'
-        ELSE 'Automatisation désactivée via dashboard'
-      END,
-      jsonb_build_object(
-        'action', 'toggle',
-        'enabled', enabled,
-        'source', 'backoffice'
-      ),
-      0
-    );
-    
+    -- Logger l'action (avec gestion d'erreur si fonction n'existe pas)
+    BEGIN
+      PERFORM log_automation_run(
+        automation_name,
+        'success',
+        CASE
+          WHEN enabled THEN 'Automatisation activée via dashboard'
+          ELSE 'Automatisation désactivée via dashboard'
+        END,
+        jsonb_build_object(
+          'action', 'toggle',
+          'enabled', enabled,
+          'source', 'backoffice'
+        ),
+        0
+      );
+    EXCEPTION
+      WHEN OTHERS THEN
+        -- Si log_automation_run n'existe pas, ignorer silencieusement
+        NULL;
+    END;
+
     RETURN true;
   ELSE
     -- Job non trouvé
@@ -68,18 +75,23 @@ BEGIN
   
 EXCEPTION
   WHEN OTHERS THEN
-    -- Logger l'erreur
-    PERFORM log_automation_run(
-      automation_name,
-      'error',
-      'Erreur lors du toggle: ' || SQLERRM,
-      jsonb_build_object(
-        'action', 'toggle',
-        'enabled', enabled,
-        'error', SQLERRM
-      ),
-      0
-    );
+    -- Logger l'erreur (avec gestion si fonction n'existe pas)
+    BEGIN
+      PERFORM log_automation_run(
+        automation_name,
+        'error',
+        'Erreur lors du toggle: ' || SQLERRM,
+        jsonb_build_object(
+          'action', 'toggle',
+          'enabled', enabled,
+          'error', SQLERRM
+        ),
+        0
+      );
+    EXCEPTION
+      WHEN OTHERS THEN
+        RAISE WARNING 'Erreur toggle_automation: %', SQLERRM;
+    END;
     RETURN false;
 END;
 $$;
