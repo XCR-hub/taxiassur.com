@@ -57,7 +57,7 @@ const BacklinkAutomationDashboard: React.FC = () => {
     try {
       // Charger les campagnes
       const { data: campaignsData, error: campaignsError } = await supabase
-        .from('backlink_campaigns')
+        .from('automation_campaigns')
         .select('*')
         .order('created_at', { ascending: false });
 
@@ -67,11 +67,11 @@ const BacklinkAutomationDashboard: React.FC = () => {
         setCampaigns(campaignsData);
 
         // Calculer les stats globales
-        const totalSent = campaignsData.reduce((sum, c) => sum + c.sent_count, 0);
-        const totalOpened = campaignsData.reduce((sum, c) => sum + c.opened_count, 0);
-        const totalReplied = campaignsData.reduce((sum, c) => sum + c.replied_count, 0);
-        const totalPositive = campaignsData.reduce((sum, c) => sum + c.positive_count, 0);
-        const totalBacklinks = campaignsData.reduce((sum, c) => sum + c.backlinks_acquired, 0);
+        const totalSent = campaignsData.reduce((sum, c) => sum + (c.emails_sent || 0), 0);
+        const totalOpened = campaignsData.reduce((sum, c) => sum + (c.emails_opened || 0), 0);
+        const totalReplied = campaignsData.reduce((sum, c) => sum + (c.responses_received || 0), 0);
+        const totalPositive = campaignsData.reduce((sum, c) => sum + (c.responses_received || 0), 0);
+        const totalBacklinks = campaignsData.reduce((sum, c) => sum + (c.backlinks_acquired || 0), 0);
 
         setStats({
           totalSent,
@@ -359,18 +359,18 @@ const BacklinkAutomationDashboard: React.FC = () => {
                         {campaign.status}
                       </span>
                     </td>
-                    <td className="py-3 px-4 text-right font-medium text-gray-900">{campaign.sent_count}</td>
-                    <td className="py-3 px-4 text-right text-gray-600">{campaign.opened_count}</td>
+                    <td className="py-3 px-4 text-right font-medium text-gray-900">{campaign.emails_sent || 0}</td>
+                    <td className="py-3 px-4 text-right text-gray-600">{campaign.emails_opened || 0}</td>
                     <td className="py-3 px-4 text-right text-gray-600">
-                      {campaign.replied_count}
+                      {campaign.responses_received || 0}
                       <span className="text-xs text-green-600 ml-1">
-                        (+{campaign.positive_count})
+                        (+{campaign.responses_received || 0})
                       </span>
                     </td>
-                    <td className="py-3 px-4 text-right font-bold text-orange-600">{campaign.backlinks_acquired}</td>
+                    <td className="py-3 px-4 text-right font-bold text-orange-600">{campaign.backlinks_acquired || 0}</td>
                     <td className="py-3 px-4 text-right text-gray-600">
-                      {campaign.sent_count > 0
-                        ? ((campaign.backlinks_acquired / campaign.sent_count) * 100).toFixed(1)
+                      {(campaign.emails_sent || 0) > 0
+                        ? (((campaign.backlinks_acquired || 0) / (campaign.emails_sent || 1)) * 100).toFixed(1)
                         : 0}%
                     </td>
                   </tr>
