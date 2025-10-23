@@ -94,7 +94,7 @@ const BacklinkAutomationDashboard: React.FC = () => {
           sentiment,
           status,
           created_at,
-          backlink_opportunities!inner (
+          backlink_opportunities (
             domain,
             url
           )
@@ -102,7 +102,9 @@ const BacklinkAutomationDashboard: React.FC = () => {
         .order('created_at', { ascending: false })
         .limit(50);
 
-      if (logsError) throw logsError;
+      if (logsError) {
+        console.error('Erreur chargement logs:', logsError);
+      }
 
       if (logsData) {
         setLogs(logsData.map((log: any) => ({
