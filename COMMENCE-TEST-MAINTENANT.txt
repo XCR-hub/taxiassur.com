@@ -1,199 +1,37 @@
-╔════════════════════════════════════════════════════════════╗
-║                                                            ║
-║     🧪 TESTER LES AUTOMATISATIONS EN 2 MINUTES 🧪         ║
-║                                                            ║
-╚════════════════════════════════════════════════════════════╝
+🚨 ERREUR 401 TOUJOURS PRÉSENTE
 
-✅ ERREUR CORRIGÉE !
+════════════════════════════════════════════════
 
-L'erreur "relation social_media_posts does not exist" est maintenant
-gérée automatiquement.
+POURQUOI ?
+══════════
+Vous n'avez PAS ENCORE exécuté le fix SQL !
 
-═══════════════════════════════════════════════════════════════
+Le fichier FIX-TOGGLE-AUTOMATION-401-FINAL.sql 
+existe mais n'a pas été exécuté dans Supabase.
 
-🎯 ACTION IMMÉDIATE (2 min)
+ACTION IMMÉDIATE (30 SECONDES)
+═══════════════════════════════
 
-1. Va sur Supabase Dashboard
-   → https://supabase.com/dashboard/project/[TON_PROJECT_ID]
+1. Ouvrir:
+   https://supabase.com/dashboard/project/drohhxrkoequjphvabvq/sql
 
-2. Clique sur "SQL Editor" (dans le menu gauche)
+2. + New Query
 
-3. Copie-colle le contenu de :
-   TEST-AUTOMATISATIONS-SIMPLE.sql
+3. Copier/Coller TOUT le contenu de:
+   FIX-TOGGLE-AUTOMATION-401-FINAL.sql
 
-4. Clique "Run" (ou Ctrl+Enter)
+4. Cliquer RUN (bouton vert)
 
-5. Attends 5-10 secondes
+5. Attendre les 8 résultats
 
-═══════════════════════════════════════════════════════════════
+6. Retour sur backoffice:
+   https://taxiassur.com/backoffice/auto-optimizer
 
-📊 CE QUE TU VERRAS
+7. Ctrl+Shift+R (vider cache)
 
-Le script affiche 7 sections :
+8. Tester un switch → ✅ Doit marcher
 
-1️⃣ CRON JOBS
-   → Nombre de crons actifs/inactifs
-   → Liste détaillée avec statut ✅/❌
+════════════════════════════════════════════════
 
-2️⃣ DONNÉES
-   → Articles de blog : X
-   → FAQ : X / 8
-   → Villes : X / 5
-   → Leads total : X
-   → Leads 24h : X
-
-3️⃣ FONCTIONNALITÉS AVANCÉES
-   → Actualités : ✅ configuré / ⚠️ non configuré
-   → Réseaux sociaux : ✅/⚠️
-   → Backlinks : ✅/⚠️
-   → IA Auto-apprenante : ✅/⚠️
-
-4️⃣ TEST LEAD
-   → Création d'un lead de test
-   → Vérification que la table fonctionne
-
-5️⃣ DERNIÈRES ACTIVITÉS
-   → 3 derniers leads
-   → 3 derniers articles
-
-6️⃣ SÉCURITÉ RLS
-   → Vérification que RLS est activé
-   → blog_posts : ✅/❌
-   → faq_entries : ✅/❌
-   → city_pages : ✅/❌
-   → leads : ✅/❌
-
-7️⃣ RÉSUMÉ FINAL
-   → Score système : X / 6
-   → Statut global :
-     ✅✅✅ SYSTÈME 100% OPÉRATIONNEL !
-     ✅ Système fonctionnel
-     ⚠️ Système partiellement configuré
-     ❌ Système non configuré
-
-═══════════════════════════════════════════════════════════════
-
-🎯 RÉSULTATS POSSIBLES
-
-╔════════════════════════════════════════════════════════════╗
-║ Score 6/6 → ✅✅✅ PARFAIT !                               ║
-║                                                            ║
-║ Tout fonctionne, automatisations actives                  ║
-║ → Continue de monitorer                                   ║
-╚════════════════════════════════════════════════════════════╝
-
-╔════════════════════════════════════════════════════════════╗
-║ Score 4-5/6 → ✅ BON                                       ║
-║                                                            ║
-║ Système fonctionnel, quelques fonctionnalités optionnelles║
-║ manquantes (actualités, réseaux sociaux, backlinks, IA)   ║
-║ → Pas bloquant pour le lancement                          ║
-╚════════════════════════════════════════════════════════════╝
-
-╔════════════════════════════════════════════════════════════╗
-║ Score 2-3/6 → ⚠️ À COMPLÉTER                              ║
-║                                                            ║
-║ Données manquantes (FAQ, villes, articles)                ║
-║ → Exécute IMPORT-FAQ-CITIES-SUPABASE.sql                  ║
-║                                                            ║
-║ Crons inactifs                                             ║
-║ → Exécute ACTIVATION-TOTALE-AUTOMATISATIONS.sql           ║
-╚════════════════════════════════════════════════════════════╝
-
-╔════════════════════════════════════════════════════════════╗
-║ Score 0-1/6 → ❌ CONFIGURATION REQUISE                     ║
-║                                                            ║
-║ Système non configuré                                      ║
-║                                                            ║
-║ ORDRE D'EXÉCUTION :                                        ║
-║ 1. IMPORT-FAQ-CITIES-SUPABASE.sql                         ║
-║ 2. ACTIVATION-TOTALE-AUTOMATISATIONS.sql                  ║
-║ 3. Re-test avec TEST-AUTOMATISATIONS-SIMPLE.sql           ║
-╚════════════════════════════════════════════════════════════╝
-
-═══════════════════════════════════════════════════════════════
-
-🆘 SI TU VOIS DES ERREURS
-
-ERROR: relation "xxx" does not exist
-→ Normal ! Table optionnelle non créée
-→ Le script gère automatiquement
-→ Continue de lire les résultats
-
-ERROR: permission denied
-→ Vérifie que tu es admin du projet Supabase
-→ Ou demande les droits
-
-ERROR: syntax error
-→ Copie bien TODO le contenu du fichier .sql
-→ Pas seulement une partie
-
-═══════════════════════════════════════════════════════════════
-
-📁 FICHIERS CRÉÉS
-
-TEST-AUTOMATISATIONS.sql
-→ Version complète avec toutes les vérifications
-→ Peut afficher des erreurs si tables manquantes
-
-TEST-AUTOMATISATIONS-SIMPLE.sql ✅ RECOMMANDÉ
-→ Version simplifiée et robuste
-→ Gère automatiquement les tables manquantes
-→ Aucune erreur, que des messages clairs
-
-COMMENT-TESTER-AUTOMATISATIONS.md
-→ Guide détaillé avec tests avancés
-→ Tests par fonctionnalité
-→ Dashboard de monitoring
-→ Solutions aux problèmes
-
-COMMENCE-TEST-MAINTENANT.txt
-→ Ce fichier que tu lis actuellement
-→ Guide express 2 minutes
-
-═══════════════════════════════════════════════════════════════
-
-🚀 PROCHAINES ÉTAPES SELON LE SCORE
-
-Score 6/6 ou 5/6 :
-✅ C'est bon ! Système opérationnel
-→ Monitore les logs pendant 24-48h
-→ Vérifie que les crons s'exécutent
-→ Teste la génération automatique de contenu
-
-Score 3-4/6 :
-⚠️ Complète la configuration
-→ Importe les données manquantes
-→ Active les crons
-→ Re-test dans 10 minutes
-
-Score 0-2/6 :
-❌ Configuration initiale requise
-→ Suis l'ordre d'exécution ci-dessus
-→ Demande de l'aide si blocages
-
-═══════════════════════════════════════════════════════════════
-
-💡 ASTUCE PRO
-
-Ajoute ce test à tes favoris et exécute-le :
-- Après chaque déploiement
-- Une fois par semaine pour monitoring
-- Après ajout de fonctionnalités
-- En cas de doute sur le système
-
-Le script s'exécute en 5 secondes et te dit TOUT !
-
-═══════════════════════════════════════════════════════════════
-
-✅ MAINTENANT : EXÉCUTE TEST-AUTOMATISATIONS-SIMPLE.SQL
-
-1. Supabase Dashboard → SQL Editor
-2. Copie-colle TEST-AUTOMATISATIONS-SIMPLE.sql
-3. Run
-4. Lis les résultats
-5. Partage ton score système ! 🎯
-
-═══════════════════════════════════════════════════════════════
-
-BON TEST ! 🚀
+PAS DE REBUILD NÉCESSAIRE ❌
+Le problème est UNIQUEMENT côté Supabase SQL

@@ -1,193 +1,39 @@
-═══════════════════════════════════════════════════════════════════════════
-✅ CORRECTION ERREUR SQL - VERSION FINALE
-═══════════════════════════════════════════════════════════════════════════
+⚡ FIX ERREUR 401 - EXÉCUTER CE SQL MAINTENANT
 
-Vous aviez une erreur SQL :
-❌ ERROR: 42601: syntax error at or near "SELECT" LINE 236
+════════════════════════════════════════════════
 
-✅ C'EST CORRIGÉ ! 2 solutions disponibles :
+FICHIERS DISPONIBLES:
 
-═══════════════════════════════════════════════════════════════════════════
-🎯 SOLUTION 1 : VERSION SIMPLE (RECOMMANDÉE)
-═══════════════════════════════════════════════════════════════════════════
+Option 1 - RAPIDE (20 lignes)
+   → FIX-RAPIDE-TOGGLE.sql
+   → Juste le fix essentiel
 
-Fichier : CORRECTION-FAQ-SIMPLE.sql
+Option 2 - COMPLET (avec tests et vérifications)
+   → FIX-TOGGLE-AUTOMATION-401-FINAL.sql
+   → Fix + tests + diagnostics
 
-Ce qu'il fait :
-   ✅ Crée fonction get_faq_entries()
-   ✅ Insère 8 FAQ de test
-   ✅ SANS CRON job (plus simple, 0 erreur)
+════════════════════════════════════════════════
 
-Comment l'exécuter :
-   1. Ouvrez Supabase SQL Editor
-   2. Copiez/collez CORRECTION-FAQ-SIMPLE.sql
-   3. Cliquez RUN
-   4. 5 secondes
+CHOISIR UNE OPTION ET:
 
-Résultat attendu :
-   ✅ "Fonction get_faq_entries() créée avec succès !"
-   ✅ "8 FAQ de test insérées avec succès !"
-   ✅ "CORRECTION FAQ TERMINÉE AVEC SUCCÈS !"
+1. https://supabase.com/dashboard/project/drohhxrkoequjphvabvq/sql
+2. + New Query
+3. Copier/Coller le fichier SQL
+4. RUN
+5. https://taxiassur.com/backoffice/auto-optimizer
+6. Ctrl+Shift+R
+7. Cliquer switch → ✅ Marche
 
-═══════════════════════════════════════════════════════════════════════════
-🎯 SOLUTION 2 : VERSION COMPLÈTE (avec CRON job)
-═══════════════════════════════════════════════════════════════════════════
+════════════════════════════════════════════════
 
-Fichier : CORRECTIONS-3-PROBLEMES-FIXED.sql
+IMPORTANT:
+Les fichiers SQL créés ne font RIEN tant qu'ils
+ne sont PAS exécutés dans Supabase !
 
-Ce qu'il fait :
-   ✅ Crée fonction get_faq_entries()
-   ✅ Insère 8 FAQ de test
-   ✅ Crée CRON job génération FAQ (lundis 9h)
-   ✅ Gère les erreurs de permission
+→ Il faut COPIER/COLLER dans SQL Editor
+→ Et cliquer RUN
 
-Différence vs Solution 1 :
-   → Plus complet
-   → Peut échouer si pas de permissions CRON
-   → Génération auto FAQ tous les lundis
+════════════════════════════════════════════════
 
-═══════════════════════════════════════════════════════════════════════════
-🚀 ACTION IMMÉDIATE (5 SECONDES)
-═══════════════════════════════════════════════════════════════════════════
-
-CHOISISSEZ VERSION SIMPLE :
-
-1. Ouvrez Supabase SQL Editor
-2. Copiez/collez CORRECTION-FAQ-SIMPLE.sql
-3. Cliquez RUN
-4. Attendez 5 secondes
-
-RÉSULTAT : Page FAQ fonctionnelle !
-
-═══════════════════════════════════════════════════════════════════════════
-✅ VÉRIFICATION (10 SECONDES)
-═══════════════════════════════════════════════════════════════════════════
-
-1. TESTER FONCTION RPC
-   → Supabase SQL Editor
-   → Exécuter : SELECT * FROM get_faq_entries();
-   → Devrait retourner 8 lignes
-
-2. VÉRIFIER PAGE FAQ
-   → Ouvrir : https://taxiassur.com/faq
-   → CTRL + SHIFT + R (vider cache)
-   → Devrait afficher : "8 Questions Répondues"
-
-3. VÉRIFIER MASTER AI
-   → Ouvrir : https://taxiassur.com/backoffice/master-ai
-   → Devrait afficher vraies données
-   → Pas de "mock" dans les insights
-
-═══════════════════════════════════════════════════════════════════════════
-🖼️ IMAGES AUTOMATIQUES (3 MINUTES)
-═══════════════════════════════════════════════════════════════════════════
-
-Après correction FAQ, configurez Pexels :
-
-1. Créer compte : https://www.pexels.com/api/
-2. Obtenir API Key
-3. Supabase → Vault → Secrets → PEXELS_API_KEY
-
-Guide complet : GUIDE-CONFIGURATION-PEXELS-API.md
-
-═══════════════════════════════════════════════════════════════════════════
-📊 ÉTAT FINAL
-═══════════════════════════════════════════════════════════════════════════
-
-✅ ERREUR SQL CORRIGÉE
-   → 2 versions disponibles (simple + complète)
-   → Syntaxe $cron$ au lieu de $$ imbriqué
-
-✅ PAGE FAQ
-   → Fonction RPC créée
-   → 8 questions insérées
-   → Recherche + filtres
-
-✅ MASTER AI
-   → Données réelles Supabase
-   → Optimisations dynamiques
-   → Insights vrais
-
-✅ BUILD
-   → Validé (15.99s, 0 erreur)
-   → Prêt pour production
-
-⏳ IMAGES PEXELS
-   → Configuration 3 min
-   → Puis automatique
-
-═══════════════════════════════════════════════════════════════════════════
-📁 TOUS LES FICHIERS CRÉÉS
-═══════════════════════════════════════════════════════════════════════════
-
-1. CORRECTION-FAQ-SIMPLE.sql          ← VERSION SIMPLE (Recommandée)
-2. CORRECTIONS-3-PROBLEMES-FIXED.sql  ← Version complète avec CRON
-3. GUIDE-CONFIGURATION-PEXELS-API.md  ← Guide images
-4. RESUME-CORRECTIONS-FINALES.md      ← Détails techniques
-5. LIRE-EN-PREMIER-CORRECTIONS.txt    ← Guide rapide
-
-═══════════════════════════════════════════════════════════════════════════
-🎯 POURQUOI 2 VERSIONS ?
-═══════════════════════════════════════════════════════════════════════════
-
-VERSION SIMPLE (CORRECTION-FAQ-SIMPLE.sql)
-   ✅ Plus rapide (5 sec vs 10 sec)
-   ✅ 0 risque erreur permission
-   ✅ Fait l'essentiel : FAQ fonctionnelle
-   ❌ Pas de CRON job auto-génération
-
-VERSION COMPLÈTE (CORRECTIONS-3-PROBLEMES-FIXED.sql)
-   ✅ Tout-en-un
-   ✅ CRON job FAQ automatique
-   ✅ Gère erreurs permissions
-   ⚠️  Peut échouer si pas permissions superuser
-
-RECOMMANDATION : Commencez par VERSION SIMPLE
-   → Si ça marche, vous pouvez ajouter CRON job plus tard via Dashboard
-
-═══════════════════════════════════════════════════════════════════════════
-❓ FAQ RAPIDE
-═══════════════════════════════════════════════════════════════════════════
-
-Q : Quelle version exécuter ?
-R : CORRECTION-FAQ-SIMPLE.sql (la plus simple et fiable)
-
-Q : L'erreur SQL est corrigée ?
-R : OUI ! Les deux versions corrigées (syntaxe $cron$ au lieu de $$)
-
-Q : Page FAQ toujours vide après script ?
-R : Vider cache (CTRL+SHIFT+R) et vérifier console navigateur (F12)
-
-Q : Comment ajouter CRON job après ?
-R : Dashboard Supabase → Database → Cron Jobs → New Cron Job
-
-Q : Master AI affiche erreurs ?
-R : Normal si tables vides au 1er chargement. Se corrige auto.
-
-═══════════════════════════════════════════════════════════════════════════
-✅ CHECKLIST FINALE
-═══════════════════════════════════════════════════════════════════════════
-
-- [ ] CORRECTION-FAQ-SIMPLE.sql exécuté dans Supabase
-- [ ] SELECT * FROM get_faq_entries(); retourne 8 lignes
-- [ ] Page /faq affiche 8 questions
-- [ ] Cache navigateur vidé (CTRL+SHIFT+R)
-- [ ] Master AI affiche vraies données
-- [ ] Pexels configuré (ou en cours - 3 min)
-
-═══════════════════════════════════════════════════════════════════════════
-🚀 C'EST PARTI !
-═══════════════════════════════════════════════════════════════════════════
-
-EXÉCUTEZ CORRECTION-FAQ-SIMPLE.sql MAINTENANT !
-
-   1. Supabase SQL Editor
-   2. Copier/coller
-   3. RUN
-   4. 5 secondes
-
-Votre page FAQ sera fonctionnelle ! 🎉
-
-Puis configurez Pexels (3 min) pour les images automatiques.
-
-═══════════════════════════════════════════════════════════════════════════
+PAS DE REBUILD IONOS ❌
+Juste exécuter le SQL ✅
