@@ -199,11 +199,20 @@ GRANT EXECUTE ON FUNCTION get_seo_cron_stats() TO anon, authenticated;
 -- 6. DONNÉES TEST (pour backlink automation)
 -- ============================================
 
-INSERT INTO backlink_opportunities (domain, url, domain_authority, page_authority, spam_score, status, contact_email)
+-- Utiliser structure existante de la table (avec page_title)
+INSERT INTO backlink_opportunities (
+  domain,
+  url,
+  page_title,
+  domain_authority,
+  page_authority,
+  status,
+  contact_email
+)
 VALUES
-  ('assurance-pro.fr', 'https://assurance-pro.fr/partenaires', 65, 58, 2, 'pending', 'contact@assurance-pro.fr'),
-  ('taxi-mag.com', 'https://taxi-mag.com/liens-utiles', 52, 48, 1, 'pending', 'redaction@taxi-mag.com'),
-  ('assurtaxi.net', 'https://assurtaxi.net/ressources', 45, 42, 3, 'contacted', 'info@assurtaxi.net')
+  ('assurance-pro.fr', 'https://assurance-pro.fr/partenaires', 'Nos Partenaires Assurance', 65, 58, 'pending', 'contact@assurance-pro.fr'),
+  ('taxi-mag.com', 'https://taxi-mag.com/liens-utiles', 'Liens Utiles Taxi', 52, 48, 'pending', 'redaction@taxi-mag.com'),
+  ('assurtaxi.net', 'https://assurtaxi.net/ressources', 'Ressources Professionnelles', 45, 42, 'contacted', 'info@assurtaxi.net')
 ON CONFLICT (url) DO NOTHING;
 
 -- Message succès
