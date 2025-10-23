@@ -199,10 +199,10 @@ GRANT EXECUTE ON FUNCTION get_seo_cron_stats() TO anon, authenticated;
 -- 6. DONNÉES TEST (pour backlink automation)
 -- ============================================
 
--- Ajouter colonnes manquantes si nécessaire
+-- Ajouter TOUTES les colonnes manquantes
 DO $$
 BEGIN
-  -- Ajouter page_title si pas existe
+  -- Ajouter page_title
   IF NOT EXISTS (
     SELECT 1 FROM information_schema.columns
     WHERE table_name = 'backlink_opportunities' AND column_name = 'page_title'
@@ -210,7 +210,23 @@ BEGIN
     ALTER TABLE backlink_opportunities ADD COLUMN page_title text;
   END IF;
 
-  -- Ajouter spam_score si pas existe
+  -- Ajouter domain_authority
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'backlink_opportunities' AND column_name = 'domain_authority'
+  ) THEN
+    ALTER TABLE backlink_opportunities ADD COLUMN domain_authority integer;
+  END IF;
+
+  -- Ajouter page_authority
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'backlink_opportunities' AND column_name = 'page_authority'
+  ) THEN
+    ALTER TABLE backlink_opportunities ADD COLUMN page_authority integer;
+  END IF;
+
+  -- Ajouter spam_score
   IF NOT EXISTS (
     SELECT 1 FROM information_schema.columns
     WHERE table_name = 'backlink_opportunities' AND column_name = 'spam_score'
@@ -218,12 +234,20 @@ BEGIN
     ALTER TABLE backlink_opportunities ADD COLUMN spam_score integer;
   END IF;
 
-  -- Ajouter contact_name si pas existe
+  -- Ajouter contact_name
   IF NOT EXISTS (
     SELECT 1 FROM information_schema.columns
     WHERE table_name = 'backlink_opportunities' AND column_name = 'contact_name'
   ) THEN
     ALTER TABLE backlink_opportunities ADD COLUMN contact_name text;
+  END IF;
+
+  -- Ajouter contact_email
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'backlink_opportunities' AND column_name = 'contact_email'
+  ) THEN
+    ALTER TABLE backlink_opportunities ADD COLUMN contact_email text;
   END IF;
 END $$;
 
