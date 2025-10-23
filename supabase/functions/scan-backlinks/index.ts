@@ -109,7 +109,18 @@ serve(async (req: Request) => {
                 const url = new URL(item.link);
                 const domain = url.hostname.replace('www.', '');
 
-                if (domain === 'taxiassur.com' || domain === competitor.domain) {
+                // FILTRE ANTI-CONCURRENTS
+                const blockedKeywords = [
+                  'assurance', 'insurance', 'assureur', 'mutuelle',
+                  'axa', 'generali', 'allianz', 'maif', 'macif', 'matmut',
+                  'april', 'mfa', 'courtier', 'broker', 'groupama', 'maaf'
+                ];
+
+                const isCompetitor = blockedKeywords.some(keyword =>
+                  domain.toLowerCase().includes(keyword)
+                );
+
+                if (domain === 'taxiassur.com' || domain === competitor.domain || isCompetitor) {
                   continue;
                 }
 
