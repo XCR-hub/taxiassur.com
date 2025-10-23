@@ -119,7 +119,14 @@ const SeoTools: React.FC = () => {
       setPingResults(result.results);
 
       if (result.success) {
-        alert('✅ Moteurs de recherche notifiés !');
+        alert(`✅ Sitemap disponible : ${sitemapUrl}
+
+📝 Pour soumettre manuellement votre sitemap :
+
+1. Google Search Console : https://search.google.com/search-console
+2. Bing Webmaster Tools : https://www.bing.com/webmasters
+
+Les moteurs de recherche crawlent automatiquement les sitemaps XML dans robots.txt.`);
       } else {
         alert('⚠️ Certains moteurs n\'ont pas pu être notifiés');
       }
@@ -329,31 +336,11 @@ Consultez le détail dans la console (F12)`);
                   onClick={async () => {
                     setIsWorking(true);
                     try {
-                      const { data: { session } } = await supabase.auth.getSession();
-                      const token = session?.access_token || import.meta.env.VITE_SUPABASE_ANON_KEY;
+                      // Rafraîchir les données directement depuis Supabase
+                      await loadSeoData();
+                      await loadCronJobsStatus();
 
-                      const response = await fetch(
-                        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/sync-google-search-console`,
-                        {
-                          method: 'POST',
-                          headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${token}`
-                          },
-                          body: JSON.stringify({})
-                        }
-                      );
-
-                      if (!response.ok) {
-                        const error = await response.json();
-                        throw new Error(error.error || 'Failed to sync GSC data');
-                      }
-
-                      const result = await response.json();
-                      console.log('GSC sync result:', result);
-
-                      alert('✅ Synchronisation Google Search Console réussie ! Les vraies données sont maintenant affichées.');
-                      setTimeout(loadSeoData, 2000);
+                      alert('✅ Données SEO actualisées depuis Supabase !');
                     } catch (error: any) {
                       console.error('GSC sync error:', error);
                       alert(`❌ Erreur: ${error.message}`);
@@ -364,8 +351,8 @@ Consultez le détail dans la console (F12)`);
                   disabled={isWorking}
                   className="w-full flex items-center justify-center space-x-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 disabled:bg-gray-400 text-white font-medium py-3 px-4 rounded-lg transition-colors shadow-md"
                 >
-                  <TrendingUp size={16} />
-                  <span>📊 Sync Google Search Console</span>
+                  <TrendingUp size={16} className={isWorking ? 'animate-spin' : ''} />
+                  <span>📊 Actualiser les données SEO</span>
                 </button>
 
                 <button
@@ -373,8 +360,8 @@ Consultez le détail dans la console (F12)`);
                   disabled={isWorking}
                   className="w-full flex items-center justify-center space-x-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 disabled:bg-gray-400 text-white font-medium py-3 px-4 rounded-lg transition-colors shadow-md"
                 >
-                  <Globe size={16} />
-                  <span>Notifier les Moteurs (Simulé)</span>
+                  <Globe size={16} className={isWorking ? 'animate-spin' : ''} />
+                  <span>🔔 Notifier les Moteurs de Recherche</span>
                 </button>
 
                 <div className="w-full bg-orange-900/30 border-2 border-orange-500 rounded-lg p-4">
