@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Send, Loader2, CheckCircle, AlertCircle, Mail, TrendingUp, Rocket, Home } from 'lucide-react';
 import { getSupabaseUrl } from '../lib/env';
-import { supabase } from '../lib/supabase';
 
 export default function CampaignLauncher() {
   const [isGenerating, setIsGenerating] = useState(false);
@@ -15,19 +14,19 @@ export default function CampaignLauncher() {
     setResults(null);
 
     try {
-      // Récupérer le token de session
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        throw new Error('Session expirée, reconnectez-vous');
-      }
-
       const supabaseUrl = getSupabaseUrl();
+      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+      if (!supabaseAnonKey) {
+        throw new Error('Configuration Supabase manquante');
+      }
 
       const response = await fetch(`${supabaseUrl}/functions/v1/partner-scraper-outreach`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${session.access_token}`,
+          'Authorization': `Bearer ${supabaseAnonKey}`,
           'Content-Type': 'application/json',
+          'apikey': supabaseAnonKey,
         },
         body: JSON.stringify({
           action: 'batch_outreach'
