@@ -23,14 +23,14 @@ interface RealtimeStats {
 interface AutomationStatus {
   name: string;
   description: string;
-  is_enabled: boolean;
-  is_running: boolean;
-  frequency: string;
-  total_runs: number;
-  successful_runs: number;
-  failed_runs: number;
-  last_run_at: string;
-  last_run_status: string;
+  enabled: boolean;
+  last_run?: string | null;
+  run_count?: number;
+  success_count?: number;
+  error_count?: number;
+  last_error?: string | null;
+  created_at?: string;
+  updated_at?: string;
 }
 
 const MasterDashboard: React.FC = () => {
@@ -154,10 +154,16 @@ const MasterDashboard: React.FC = () => {
   // Toggle automation
   const toggleAutomation = async (name: string, currentState: boolean) => {
     try {
-      await supabase
+      const { error } = await supabase
         .from('automation_status')
-        .update({ is_enabled: !currentState })
+        .update({ enabled: !currentState })
         .eq('name', name);
+
+      if (error) {
+        console.error('Error toggling automation:', error);
+        alert(`❌ Erreur: ${error.message}`);
+        return;
+      }
 
       await loadAutomations();
     } catch (error) {
@@ -168,10 +174,16 @@ const MasterDashboard: React.FC = () => {
   // Start ALL automations
   const startAllAutomations = async () => {
     try {
-      await supabase
+      const { error } = await supabase
         .from('automation_status')
-        .update({ is_enabled: true })
-        .neq('name', ''); // Update all
+        .update({ enabled: true })
+        .gt('name', ''); // Update all rows where name is not empty
+
+      if (error) {
+        console.error('Error updating automations:', error);
+        alert(`❌ Erreur: ${error.message}`);
+        return;
+      }
 
       await loadAutomations();
       alert('✅ Toutes les automatisations sont activées !');
@@ -187,10 +199,16 @@ const MasterDashboard: React.FC = () => {
     if (!confirmed) return;
 
     try {
-      await supabase
+      const { error } = await supabase
         .from('automation_status')
-        .update({ is_enabled: false })
-        .neq('name', ''); // Update all
+        .update({ enabled: false })
+        .gt('name', ''); // Update all rows where name is not empty
+
+      if (error) {
+        console.error('Error updating automations:', error);
+        alert(`❌ Erreur: ${error.message}`);
+        return;
+      }
 
       await loadAutomations();
       alert('🛑 Toutes les automatisations sont arrêtées');
@@ -384,7 +402,7 @@ const MasterDashboard: React.FC = () => {
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-2xl font-bold text-white flex items-center gap-2">
             <Zap className="w-6 h-6 text-yellow-500" />
-            Automatisations ({automations.filter(a => a.is_enabled).length}/{automations.length} actives)
+            Automatisations ({automations.filter(a => a.enabled).length}/{automations.length} actives)
           </h2>
 
           <div className="flex gap-3">
@@ -410,7 +428,7 @@ const MasterDashboard: React.FC = () => {
             <div
               key={auto.name}
               className={`border rounded-lg p-4 transition-all ${
-                auto.is_enabled
+                auto.enabled
                   ? 'bg-green-900/20 border-green-500/30'
                   : 'bg-slate-800/50 border-slate-700'
               }`}
@@ -418,7 +436,7 @@ const MasterDashboard: React.FC = () => {
               <div className="flex items-start justify-between mb-3">
                 <div className="flex-1">
                   <h3 className="font-bold text-white mb-1 flex items-center gap-2">
-                    {auto.is_enabled ? (
+                    {auto.enabled ? (
                       <CheckCircle className="w-4 h-4 text-green-400" />
                     ) : (
                       <AlertCircle className="w-4 h-4 text-slate-500" />
@@ -426,25 +444,26 @@ const MasterDashboard: React.FC = () => {
                     {auto.description}
                   </h3>
                   <p className="text-xs text-slate-400">
-                    Fréquence : {auto.frequency} • Runs : {auto.successful_runs}/{auto.total_runs}
+                    Runs : {auto.success_count || 0}/{auto.run_count || 0}
+                    {auto.error_count ? ` • Erreurs : ${auto.error_count}` : ''}
                   </p>
                 </div>
 
                 <button
-                  onClick={() => toggleAutomation(auto.name, auto.is_enabled)}
+                  onClick={() => toggleAutomation(auto.name, auto.enabled)}
                   className={`px-3 py-1 rounded text-xs font-semibold transition-all ${
-                    auto.is_enabled
+                    auto.enabled
                       ? 'bg-green-500 text-white hover:bg-green-600'
                       : 'bg-gray-700 text-slate-300 hover:bg-gray-600'
                   }`}
                 >
-                  {auto.is_enabled ? 'ON' : 'OFF'}
+                  {auto.enabled ? 'ON' : 'OFF'}
                 </button>
               </div>
 
-              {auto.last_run_at && (
+              {auto.last_run && (
                 <p className="text-xs text-slate-500">
-                  Dernier run : {new Date(auto.last_run_at).toLocaleString('fr-FR')}
+                  Dernier run : {new Date(auto.last_run).toLocaleString('fr-FR')}
                 </p>
               )}
             </div>
