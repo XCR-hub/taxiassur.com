@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FileText, Mail, HelpCircle, Plus, CreditCard as Edit, Trash2, Send, Users, Calendar, Save, Eye, EyeOff, Home } from 'lucide-react';
+import TestAutomationButton from './TestAutomationButton';
 
 interface Article {
   id: string;
@@ -886,8 +887,35 @@ const ContentManager: React.FC = () => {
           </div>
         </div>
       </div>
+
+      <TestAutomationButton
+        title="Tester Automatisations Contenu"
+        tests={[
+          {
+            name: "Générer Article Blog",
+            functionName: "blog-articles",
+            method: "POST",
+            body: { topic: "assurance taxi électrique" },
+            description: "Génère article blog optimisé SEO"
+          },
+          {
+            name: "Générer SEO Content",
+            functionName: "generate-seo-content",
+            method: "POST",
+            body: { type: "blog", keyword: "assurance taxi" },
+            description: "Génère contenu SEO avec IA"
+          },
+          {
+            name: "Générer Page Ville",
+            functionName: "generate-city-page",
+            method: "POST",
+            body: { city: "Paris" },
+            description: "Génère page ville complète"
+          }
+        ]}
+      />
     </div>
-    
+
   );
 };
 

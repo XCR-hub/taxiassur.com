@@ -6,6 +6,7 @@ import {
   Plus, Settings, BarChart3, Globe, Smartphone, Mail, Video,
   Users, TrendingUp, Calendar, Award, Zap, Check, X
 } from 'lucide-react';
+import TestAutomationButton from './TestAutomationButton';
 
 interface SocialNetwork {
   id: string;
@@ -1090,6 +1091,39 @@ export default function SocialMediaManager() {
           {activeTab === 'automation' && renderAutomationTab()}
         </div>
       </div>
+
+      <TestAutomationButton
+        title="Tester Automatisations Social Media"
+        tests={[
+          {
+            name: "Publier LinkedIn",
+            functionName: "linkedin-publisher",
+            method: "POST",
+            body: { content: "Test post", scheduledFor: new Date().toISOString() },
+            description: "Teste publication LinkedIn"
+          },
+          {
+            name: "Publier Pinterest",
+            functionName: "pinterest-publisher",
+            method: "POST",
+            body: { title: "Test", imageUrl: "https://placehold.co/600x400" },
+            description: "Teste publication Pinterest"
+          },
+          {
+            name: "Publier YouTube",
+            functionName: "youtube-publisher",
+            method: "POST",
+            body: { title: "Test", description: "Test video" },
+            description: "Teste publication YouTube"
+          },
+          {
+            name: "Auto Publisher",
+            functionName: "social-media-auto-publisher",
+            method: "POST",
+            description: "Publication auto multi-plateformes"
+          }
+        ]}
+      />
     </div>
   );
 }

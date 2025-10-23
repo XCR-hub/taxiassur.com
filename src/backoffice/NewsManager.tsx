@@ -3,6 +3,7 @@ import { Play, Pause, RefreshCw, Eye, Settings, TrendingUp, Clock, Zap, Globe, H
 import { useNewsSystem } from '../lib/newsAggregator';
 import { ProcessedNews } from '../lib/newsAggregator';
 import Card from '../components/Card';
+import TestAutomationButton from './TestAutomationButton';
 
 const NewsManager: React.FC = () => {
   const { isRunning: isActive, lastUpdate, newsCount, error, startNewsSystem: startSystem, stopNewsSystem: stopSystem } = useNewsSystem();
@@ -152,8 +153,7 @@ const NewsManager: React.FC = () => {
   }
 
   return (
-    
-      <div className="min-h-screen bg-gray-50 p-8">
+    <div className="min-h-screen bg-gray-50 p-8">
         {/* Header with Home Button */}
         <header className="bg-white border-b-2 border-gray-200 shadow-sm mb-8">
           <div className="max-w-7xl mx-auto px-6 py-4">
@@ -404,8 +404,31 @@ const NewsManager: React.FC = () => {
             </Card>
           )}
         </div>
-      </div>
-    
+
+      <TestAutomationButton
+        title="Tester Automatisations Actualités"
+        tests={[
+          {
+            name: "AI Social Scraper",
+            functionName: "ai-social-scraper",
+            method: "POST",
+            description: "Scrappe actualités assurance taxi"
+          },
+          {
+            name: "Trend Analyzer",
+            functionName: "trend-analyzer-proxy",
+            method: "POST",
+            description: "Analyse tendances secteur"
+          },
+          {
+            name: "Auto Content Scheduler",
+            functionName: "auto-content-scheduler",
+            method: "POST",
+            description: "Planifie publications automatiques"
+          }
+        ]}
+      />
+    </div>
   );
 };
 

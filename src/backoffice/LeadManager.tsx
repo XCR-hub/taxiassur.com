@@ -5,6 +5,7 @@ import { formatDate } from '../lib/utils';
 import Card from '../components/Card';
 import ElectronicSignature from '../components/ElectronicSignature';
 import BackButton from './BackButton';
+import TestAutomationButton from './TestAutomationButton';
 
 const LeadManager: React.FC = () => {
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -999,6 +1000,31 @@ const LeadManager: React.FC = () => {
           </div>
         )}
         </div>
+
+      <TestAutomationButton
+        title="Tester Automatisations Leads"
+        tests={[
+          {
+            name: "Auto Email Responder",
+            functionName: "email-auto-responder",
+            method: "POST",
+            description: "Test envoi auto-réponse aux nouveaux leads"
+          },
+          {
+            name: "Lead Email Sender",
+            functionName: "send-lead-email",
+            method: "POST",
+            body: { leadId: "test", type: "devis" },
+            description: "Test envoi email devis"
+          },
+          {
+            name: "SERP Lead Optimizer",
+            functionName: "serp-lead-optimizer",
+            method: "POST",
+            description: "Optimise pages pour conversion leads"
+          }
+        ]}
+      />
       </div>
   );
 };

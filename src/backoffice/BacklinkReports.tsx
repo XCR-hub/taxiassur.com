@@ -7,6 +7,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import Card from '../components/Card';
+import TestAutomationButton from './TestAutomationButton';
 
 interface OpportunityDetail {
   id: string;
@@ -533,6 +534,31 @@ const BacklinkReports: React.FC = () => {
           </div>
         </Card>
       </div>
+
+      <TestAutomationButton
+        title="Tester Automatisations Backlinks"
+        tests={[
+          {
+            name: "Scanner Backlinks",
+            functionName: "scan-backlinks",
+            method: "POST",
+            description: "Scan 10 nouveaux sites concurrents"
+          },
+          {
+            name: "Envoyer Outreach Emails",
+            functionName: "backlink-auto-outreach",
+            method: "POST",
+            body: { maxEmailsPerRun: 5 },
+            description: "Envoie 5 emails aux opportunités pending"
+          },
+          {
+            name: "Auto Followup",
+            functionName: "auto-followup",
+            method: "POST",
+            description: "Envoie relances automatiques J+7/14/21"
+          }
+        ]}
+      />
     </div>
   );
 };
