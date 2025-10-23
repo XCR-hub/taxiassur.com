@@ -14,8 +14,11 @@ interface Automation {
   frequency: string;
   total_runs: number;
   successful_runs: number;
+  failed_runs: number;
+  success_rate: number;
   last_run_at: string | null;
   last_error: string | null;
+  next_run_at: string | null;
 }
 
 interface AutomationLog {
@@ -111,12 +114,12 @@ export default function AutoOptimizer() {
   const loadAutomations = async () => {
     try {
       const { data, error } = await supabase
-        .from('automation_status')
-        .select('*')
-        .order('name');
+        .rpc('get_automations_with_stats');
 
       if (!error && data) {
         setAutomations(data);
+      } else if (error) {
+        console.error('Error loading automations:', error);
       }
     } catch (error) {
       console.error('Error loading automations:', error);
@@ -228,8 +231,7 @@ export default function AutoOptimizer() {
   };
 
   const getSuccessRate = (auto: Automation) => {
-    if (auto.total_runs === 0) return 0;
-    return Math.round((auto.successful_runs / auto.total_runs) * 100);
+    return auto.success_rate || 0;
   };
 
   const getHealthColor = (rate: number) => {
