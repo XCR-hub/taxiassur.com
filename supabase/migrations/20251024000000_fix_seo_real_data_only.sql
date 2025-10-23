@@ -16,6 +16,9 @@
     - Accessible par authenticated et anon
 */
 
+-- Drop fonction existante (signature différente)
+DROP FUNCTION IF EXISTS get_current_seo_metrics();
+
 -- Fonction pour obtenir métriques SEO (VRAIES DONNÉES UNIQUEMENT)
 CREATE OR REPLACE FUNCTION get_current_seo_metrics()
 RETURNS TABLE (
