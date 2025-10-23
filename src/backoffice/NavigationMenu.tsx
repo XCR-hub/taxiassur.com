@@ -123,10 +123,6 @@ export default function NavigationMenu() {
             <UserCircle className="w-5 h-5" />
             <span>Partenaires</span>
           </Link>
-          <Link to="/backoffice/partner-finder" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-sky-500 to-sky-600 hover:from-sky-600 hover:to-sky-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm">
-            <Search className="w-5 h-5" />
-            <span>Chercher</span>
-          </Link>
           <Link to="/backoffice/prospects" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm">
             <Eye className="w-5 h-5" />
             <span>Prospects</span>

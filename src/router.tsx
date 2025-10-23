@@ -44,7 +44,7 @@ const ContentManager = lazy(() => import('./backoffice/ContentManager'));
 const SeoTools = lazy(() => import('./backoffice/SeoTools'));
 const SecurityDashboard = lazy(() => import('./backoffice/SecurityDashboard'));
 const ConversionAnalytics = lazy(() => import('./backoffice/ConversionAnalytics'));
-const PartnerFinder = lazy(() => import('./backoffice/PartnerFinder'));
+// PartnerFinder supprimé - redirige vers BacklinkReports
 const ProspectReview = lazy(() => import('./backoffice/ProspectReview'));
 const OutreachComposer = lazy(() => import('./backoffice/OutreachComposer'));
 const ComplianceCenter = lazy(() => import('./backoffice/ComplianceCenter'));
@@ -60,7 +60,7 @@ const BacklinkProspector = lazy(() => import('./backoffice/BacklinkProspector'))
 const BacklinkAutomationDashboard = lazy(() => import('./backoffice/BacklinkAutomationDashboard'));
 const BacklinkReports = lazy(() => import('./backoffice/BacklinkReports'));
 const SEOStrategyDashboard = lazy(() => import('./backoffice/SEOStrategyDashboard'));
-const AIContentGenerator = lazy(() => import('./backoffice/AIContentGenerator'));
+// AIContentGenerator legacy supprimé - utiliser AIContentGeneratorUnified
 const AIContentGeneratorUnified = lazy(() => import('./backoffice/AIContentGeneratorUnified'));
 const AutomationScheduler = lazy(() => import('./backoffice/AutomationScheduler'));
 const AutoOptimizer = lazy(() => import('./backoffice/AutoOptimizer'));
@@ -389,7 +389,7 @@ export const router = createBrowserRouter([
   },
   {
     path: '/backoffice/partner-finder',
-    element: <AuthGuard><SuspenseWrapper><PartnerFinder /></SuspenseWrapper></AuthGuard>
+    element: <Navigate to="/backoffice/backlink-reports" replace />
   },
   {
     path: '/backoffice/prospects',
@@ -461,7 +461,7 @@ export const router = createBrowserRouter([
   },
   {
     path: '/backoffice/ai-generator-legacy',
-    element: <AuthGuard><SuspenseWrapper><AIContentGenerator /></SuspenseWrapper></AuthGuard>
+    element: <Navigate to="/backoffice/ai-generator" replace />
   },
   {
     path: '/backoffice/automation-scheduler',
