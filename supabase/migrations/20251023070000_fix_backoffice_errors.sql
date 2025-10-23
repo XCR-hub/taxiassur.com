@@ -199,20 +199,49 @@ GRANT EXECUTE ON FUNCTION get_seo_cron_stats() TO anon, authenticated;
 -- 6. DONNÉES TEST (pour backlink automation)
 -- ============================================
 
--- Utiliser structure existante de la table (avec page_title)
+-- Ajouter colonnes manquantes si nécessaire
+DO $$
+BEGIN
+  -- Ajouter page_title si pas existe
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'backlink_opportunities' AND column_name = 'page_title'
+  ) THEN
+    ALTER TABLE backlink_opportunities ADD COLUMN page_title text;
+  END IF;
+
+  -- Ajouter spam_score si pas existe
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'backlink_opportunities' AND column_name = 'spam_score'
+  ) THEN
+    ALTER TABLE backlink_opportunities ADD COLUMN spam_score integer;
+  END IF;
+
+  -- Ajouter contact_name si pas existe
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'backlink_opportunities' AND column_name = 'contact_name'
+  ) THEN
+    ALTER TABLE backlink_opportunities ADD COLUMN contact_name text;
+  END IF;
+END $$;
+
+-- Insérer données test
 INSERT INTO backlink_opportunities (
   domain,
   url,
   page_title,
   domain_authority,
   page_authority,
+  spam_score,
   status,
   contact_email
 )
 VALUES
-  ('assurance-pro.fr', 'https://assurance-pro.fr/partenaires', 'Nos Partenaires Assurance', 65, 58, 'pending', 'contact@assurance-pro.fr'),
-  ('taxi-mag.com', 'https://taxi-mag.com/liens-utiles', 'Liens Utiles Taxi', 52, 48, 'pending', 'redaction@taxi-mag.com'),
-  ('assurtaxi.net', 'https://assurtaxi.net/ressources', 'Ressources Professionnelles', 45, 42, 'contacted', 'info@assurtaxi.net')
+  ('assurance-pro.fr', 'https://assurance-pro.fr/partenaires', 'Nos Partenaires Assurance', 65, 58, 2, 'pending', 'contact@assurance-pro.fr'),
+  ('taxi-mag.com', 'https://taxi-mag.com/liens-utiles', 'Liens Utiles Taxi', 52, 48, 1, 'pending', 'redaction@taxi-mag.com'),
+  ('assurtaxi.net', 'https://assurtaxi.net/ressources', 'Ressources Professionnelles', 45, 42, 3, 'contacted', 'info@assurtaxi.net')
 ON CONFLICT (url) DO NOTHING;
 
 -- Message succès
