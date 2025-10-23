@@ -1,128 +1,77 @@
-═══════════════════════════════════════════════════════════════
-  🚨 2 PROBLÈMES À CORRIGER - 1 SEULE MIGRATION SQL
-═══════════════════════════════════════════════════════════════
+========================================
+DÉBLOCAGE EMAILS BACKLINKS - 2 PROBLÈMES
+========================================
 
-ERREUR CONSOLE:
-❌ column "job_name" does not exist
-❌ Error loading automations
-❌ 0/0 Automatisations actives
+PROBLÈME 1 : Opportunités scrapées = concurrents (résolu ✅)
+PROBLÈME 2 : Emails ne partent pas
 
-CAUSE:
-La fonction cherche "job_name" mais la colonne s'appelle peut-être
-"automation_name" ou "automation_type" (3 versions différentes)
+DIAGNOSTIC À FAIRE SUR SUPABASE SQL EDITOR :
+============================================
 
-═══════════════════════════════════════════════════════════════
+-- 1. Vérifier qu'on a des opportunités avec email NON concurrentes
+SELECT
+  domain,
+  contact_email,
+  status,
+  outreach_sent
+FROM backlink_opportunities
+WHERE contact_email IS NOT NULL
+  AND status = 'pending'
+  AND domain NOT ILIKE '%assurance%'
+ORDER BY domain_authority DESC NULLS LAST
+LIMIT 5;
 
-✅ SOLUTION: 1 MIGRATION SQL INTELLIGENTE (30 SEC)
-═══════════════════════════════════════════════════════════════
+-- 2. Si résultat vide = AUCUNE opportunité valide disponible
+-- Solution : Scanner de nouveaux sites (pas concurrents)
 
-Cette migration:
-1. Détecte automatiquement la bonne colonne
-2. Adapte la requête en conséquence
-3. Fonctionne quelle que soit la structure
+-- 3. Si opportunités présentes, vérifier la campagne
+SELECT
+  id,
+  name,
+  status,
+  sent_count
+FROM backlink_campaigns
+WHERE status = 'active'
+LIMIT 1;
 
-═══════════════════════════════════════════════════════════════
+-- 4. Tester l'envoi manuellement
+WITH campaign AS (
+  SELECT id FROM backlink_campaigns WHERE status = 'active' LIMIT 1
+)
+SELECT net.http_post(
+  url := 'https://drohhxrkoequjphvabvq.supabase.co/functions/v1/backlink-auto-outreach',
+  headers := jsonb_build_object(
+    'Authorization', 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRyb2hoeHJrb2VxdWpwaHZhYnZxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mjc5NzQ0NzUsImV4cCI6MjA0MzU1MDQ3NX0.t9TxdKBP__CU_lc6BVW5e1ELlT-_bEE7g0aHDYCRlCY',
+    'Content-Type', 'application/json'
+  ),
+  body := jsonb_build_object(
+    'campaignId', (SELECT id FROM campaign),
+    'maxEmailsPerRun', 3,
+    'testMode', false
+  )
+);
 
-🎯 EXÉCUTER MAINTENANT:
-═══════════════════════════════════════════════════════════════
+========================================
+CAUSES PROBABLES SI ÇA NE MARCHE PAS :
+========================================
 
-1. https://supabase.com/dashboard/project/drohhxrkoequjphvabvq
-2. SQL Editor → + New query
-3. Copier TOUT le fichier:
-   supabase/migrations/20251023100000_fix_get_automations_column_name.sql
-4. RUN
-5. Voir message:
-   ✅ Fonction get_automations_with_stats() corrigée
-   Colonne détectée: automation_name (ou job_name, ou automation_type)
-   Automatisations trouvées: 53
+1. ❌ Aucune opportunité valide (toutes étaient des concurrents)
+   → Solution : Scanner des sites légitimes (médias, blogs auto)
 
-═══════════════════════════════════════════════════════════════
+2. ❌ SendGrid API Key manquante ou invalide
+   → Vérifier dans Supabase → Project Settings → Edge Functions Secrets
+   → Doit avoir : SENDGRID_API_KEY
 
-✅ RÉSULTAT ATTENDU:
-═══════════════════════════════════════════════════════════════
+3. ❌ Edge Function pas déployée
+   → Redéployer backlink-auto-outreach
 
-Sur https://taxiassur.com/backoffice/auto-optimizer
-(après Ctrl+Shift+R):
+4. ❌ Cron job désactivé
+   → Vérifier pg_cron.job
 
-AVANT:
-  0/0 Automatisations actives
-  Liste vide
-  Erreur 400 dans console
+========================================
+CE QU'IL FAUT FAIRE MAINTENANT :
+========================================
 
-APRÈS:
-  0/53 Automatisations actives (ou 12/53 si certaines actives)
-  Liste complète de 53 automatisations
-  Fréquences: "0 9 * * *", "*/4 * * *", etc.
-  Stats: Exécutions, taux de réussite
-  Plus d'erreur ✅
-
-═══════════════════════════════════════════════════════════════
-
-📊 CE QUE FAIT LA MIGRATION:
-═══════════════════════════════════════════════════════════════
-
-1. Détecte automatiquement si la colonne s'appelle:
-   - job_name
-   - automation_name
-   - automation_type
-
-2. Adapte dynamiquement la requête SQL avec format()
-
-3. Récupère les vraies stats depuis cron.job:
-   - ID, nom, description
-   - Active/inactive
-   - Fréquence CRON
-   - Total exécutions
-   - Réussites/échecs
-   - Taux de réussite %
-   - Dernière exécution
-   - Dernière erreur
-
-═══════════════════════════════════════════════════════════════
-
-🔍 TEST RAPIDE (OPTIONNEL):
-═══════════════════════════════════════════════════════════════
-
-Après avoir exécuté la migration, dans SQL Editor:
-
--- Voir colonne détectée
-SELECT column_name 
-FROM information_schema.columns
-WHERE table_name = 'automation_logs'
-AND column_name IN ('job_name', 'automation_name', 'automation_type');
-
--- Tester la fonction
-SELECT * FROM get_automations_with_stats() LIMIT 5;
-
--- Doit afficher 5 automatisations avec leurs stats
-
-═══════════════════════════════════════════════════════════════
-
-📁 FICHIERS:
-═══════════════════════════════════════════════════════════════
-
-MIGRATION SQL:
-  supabase/migrations/20251023100000_fix_get_automations_column_name.sql
-
-BUILD (déjà uploadé):
-  dist/assets/backoffice-all-CHK_Qh2X.js
-
-═══════════════════════════════════════════════════════════════
-
-✅ APRÈS CETTE MIGRATION:
-═══════════════════════════════════════════════════════════════
-
-Dashboard 100% opérationnel:
-✅ Toggle activer/désactiver fonctionne
-✅ Liste complète de 53 automatisations affichée
-✅ Stats réelles (fréquence, exécutions, taux réussite)
-✅ Rafraîchissement auto 10s
-✅ Logs récents visibles
-✅ Actions groupées disponibles
-✅ Système prêt pour production
-
-═══════════════════════════════════════════════════════════════
-
-C'EST LA VRAIE DERNIÈRE ÉTAPE! Cette migration résout TOUT! ✅
-
-═══════════════════════════════════════════════════════════════
+1. Exécuter le diagnostic SQL ci-dessus
+2. Me donner les résultats (combien d'opportunités ?)
+3. Je vous dirai la solution exacte selon les résultats
