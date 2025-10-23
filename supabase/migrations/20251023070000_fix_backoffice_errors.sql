@@ -251,22 +251,28 @@ BEGIN
   END IF;
 END $$;
 
--- Insérer données test
-INSERT INTO backlink_opportunities (
-  domain,
-  url,
-  page_title,
-  domain_authority,
-  page_authority,
-  spam_score,
-  status,
-  contact_email
-)
-VALUES
-  ('assurance-pro.fr', 'https://assurance-pro.fr/partenaires', 'Nos Partenaires Assurance', 65, 58, 2, 'pending', 'contact@assurance-pro.fr'),
-  ('taxi-mag.com', 'https://taxi-mag.com/liens-utiles', 'Liens Utiles Taxi', 52, 48, 1, 'pending', 'redaction@taxi-mag.com'),
-  ('assurtaxi.net', 'https://assurtaxi.net/ressources', 'Ressources Professionnelles', 45, 42, 3, 'contacted', 'info@assurtaxi.net')
-ON CONFLICT (url) DO NOTHING;
+-- Insérer données test (si pas déjà présentes)
+DO $$
+BEGIN
+  -- Supprimer anciennes données test si existent
+  DELETE FROM backlink_opportunities WHERE domain IN ('assurance-pro.fr', 'taxi-mag.com', 'assurtaxi.net');
+
+  -- Insérer nouvelles données
+  INSERT INTO backlink_opportunities (
+    domain,
+    url,
+    page_title,
+    domain_authority,
+    page_authority,
+    spam_score,
+    status,
+    contact_email
+  )
+  VALUES
+    ('assurance-pro.fr', 'https://assurance-pro.fr/partenaires', 'Nos Partenaires Assurance', 65, 58, 2, 'pending', 'contact@assurance-pro.fr'),
+    ('taxi-mag.com', 'https://taxi-mag.com/liens-utiles', 'Liens Utiles Taxi', 52, 48, 1, 'pending', 'redaction@taxi-mag.com'),
+    ('assurtaxi.net', 'https://assurtaxi.net/ressources', 'Ressources Professionnelles', 45, 42, 3, 'contacted', 'info@assurtaxi.net');
+END $$;
 
 -- Message succès
 DO $$
