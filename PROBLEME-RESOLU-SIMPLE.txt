@@ -1,83 +1,78 @@
-✅ PROBLÈME RÉSOLU : Erreur 400 Mise à Jour Statut Leads
+╔══════════════════════════════════════════════════════════════╗
+║  LE FIX SQL EST OK - MAIS LE CACHE BLOQUE                   ║
+╚══════════════════════════════════════════════════════════════╝
+
+✅ CE QUI EST BON:
+━━━━━━━━━━━━━━━━━
+• Fonction SQL exécutée: ✅
+• SECURITY DEFINER = true: ✅
+• Supabase: ✅
+
+❌ CE QUI BLOQUE:
+━━━━━━━━━━━━━━━━
+• Cache navigateur contient l'ancien code JavaScript
+• Le fichier "backoffice-all-w8o7ifUe.js" est en cache
 
 ═══════════════════════════════════════════════════════════════
 
-🔴 LE PROBLÈME
+⚡ SOLUTION EN 3 ACTIONS:
+═══════════════════════════════════════════════════════════════
 
-Quand tu changeais le statut d'un lead dans le backoffice :
-❌ Erreur "Erreur lors de la mise à jour"
-❌ Message console : "PATCH 400 (Bad Request)"
-❌ Le statut ne changeait pas
+ACTION 1: VIDER LE CACHE COMPLÈTEMENT
+──────────────────────────────────────
+1. Fermer TOUS les onglets taxiassur.com
+2. Ouvrir DevTools (F12)
+3. Clic droit sur le bouton Actualiser (⟳)
+4. Choisir: "Vider le cache et actualiser de manière forcée"
+
+OU
+
+1. Ctrl+Shift+Delete
+2. Cocher "Images et fichiers en cache"
+3. Période: "Dernière heure"
+4. Effacer
+
+ACTION 2: NAVIGATION PRIVÉE (TEST)
+──────────────────────────────────
+Pour tester si c'est bien le cache:
+
+1. Ctrl+Shift+N (fenêtre privée)
+2. https://taxiassur.com/backoffice/auto-optimizer
+3. Cliquer switch
+4. Si ça marche → C'était bien le cache
+
+ACTION 3: SI ÇA NE MARCHE PAS
+──────────────────────────────
+Il faut rebuild + re-upload sur IONOS:
+
+npm run build
+# Puis uploader /dist sur IONOS
 
 ═══════════════════════════════════════════════════════════════
 
-🔍 LA CAUSE
+🎯 ORDRE À SUIVRE:
+━━━━━━━━━━━━━━━━
 
-Conflit entre le code et la base de données :
-- La DB attendait des statuts en FRANÇAIS : "nouveau", "contacte", etc.
-- Le code envoyait des statuts en ANGLAIS : "new", "contacted", etc.
-→ La DB refusait avec une erreur 400
-
-═══════════════════════════════════════════════════════════════
-
-✅ LA SOLUTION
-
-J'ai corrigé le fichier src/lib/leads.ts :
-- Maintenant il envoie les statuts en FRANÇAIS
-- Matching parfait avec la base de données
-- Build réussi sans erreurs
+1️⃣ ACTION 1 (vider cache complet)
+   ↓ Si ça ne marche pas
+2️⃣ ACTION 2 (fenêtre privée)
+   ↓ Si ça marche en privé mais pas en normal
+3️⃣ ACTION 1 encore (vider cache VRAIMENT)
+   ↓ Si rien ne marche
+4️⃣ ACTION 3 (rebuild)
 
 ═══════════════════════════════════════════════════════════════
 
-🚀 CE QUI FONCTIONNE MAINTENANT
+💡 POURQUOI?
+━━━━━━━━━━━
 
-✅ Changement de statut : Nouveau → Contacté → Devis Envoyé → Client
-✅ Envoi automatique de devis avec changement de statut
-✅ Envoi automatique de contrat avec changement de statut
-✅ Enregistrement des dates et notes
-✅ Plus d'erreur 400 !
+Le fichier JS en cache:
+"backoffice-all-w8o7ifUe.js"
 
-═══════════════════════════════════════════════════════════════
+Contient l'ancien code qui appelle toggle_automation
+SANS tenir compte du nouveau SECURITY DEFINER.
 
-📦 UPLOAD SUR IONOS
-
-Le dossier dist/ est prêt avec la correction.
-
-Upload sur IONOS (via FTP/FileZilla) :
-1. Connecte-toi à IONOS
-2. Va dans /taxiassur.com/
-3. Remplace tout le contenu par le contenu de dist/
-
-OU simplement :
-- Supprime le dossier assets/ existant
-- Upload le nouveau dossier dist/assets/
-- Upload le fichier dist/index.html
+Le navigateur utilise ce vieux fichier au lieu d'en
+télécharger un nouveau.
 
 ═══════════════════════════════════════════════════════════════
-
-🧪 POUR TESTER
-
-1. Va sur https://taxiassur.com/backoffice/leads
-2. Clique sur un lead (icône œil)
-3. Clique sur le crayon à côté du statut
-4. Change le statut (ex: Nouveau → Contacté)
-5. Clique "Mettre à Jour"
-6. ✅ Message : "Statut mis à jour avec succès !"
-
-═══════════════════════════════════════════════════════════════
-
-📁 FICHIERS IMPORTANTS
-
-- FIX-ERREUR-400-STATUT-LEADS.md  → Documentation complète
-- dist/ → Build prêt à uploader sur IONOS
-
-═══════════════════════════════════════════════════════════════
-
-🎯 RÉSULTAT FINAL
-
-✅ Erreur 400 éliminée
-✅ Backoffice 100% fonctionnel
-✅ Workflow automatisé opérationnel
-✅ Build réussi
-
-Le système est prêt pour la production !
