@@ -48,4 +48,8 @@ $$;
 -- Permissions
 GRANT EXECUTE ON FUNCTION get_current_seo_metrics() TO anon, authenticated;
 
-RAISE NOTICE '✅ Fonction RPC corrigée - position → avg_position';
+-- Message succès
+DO $$
+BEGIN
+  RAISE NOTICE '✅ Fonction RPC corrigée - position → avg_position';
+END $$;

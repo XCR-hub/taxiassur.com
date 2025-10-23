@@ -28,13 +28,20 @@ BEGIN
 END;
 $$;
 
+-- Activer extension unaccent si pas déjà fait
+CREATE EXTENSION IF NOT EXISTS unaccent;
+
 -- Insérer 300 villes avec contenu généré
 INSERT INTO city_pages (city, title, slug, content, meta_description, dept, region, population, taxi_count, status, published)
 SELECT
   city_name,
   'Assurance Taxi à ' || city_name || ' (' || dept || ') - Devis Gratuit',
   'assurance-taxi-' || lower(regexp_replace(
-    unaccent(city_name),
+    translate(
+      lower(city_name),
+      'àâäéèêëïîôöùûüÿçñ ''',
+      'aaaeeeeiioouuuycn--'
+    ),
     '[^a-z0-9]+', '-', 'g'
   )),
   generate_city_content(city_name, dept, region_name),
