@@ -150,8 +150,8 @@ export default function AutoOptimizer() {
       const newStatus = !automation.is_enabled;
 
       const { error } = await supabase.rpc('toggle_automation', {
-        p_job_id: parseInt(automation.id),
-        p_enabled: newStatus
+        automation_name: automation.name,
+        enabled: newStatus
       });
 
       if (error) throw error;
