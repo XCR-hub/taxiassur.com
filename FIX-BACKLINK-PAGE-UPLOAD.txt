@@ -1,0 +1,67 @@
+═══════════════════════════════════════════════════════════════
+  🔧 FIX: Page Backlink Automation (Upload Requis)
+═══════════════════════════════════════════════════════════════
+
+PROBLÈME:
+❌ Bouton "Lancer Automatisation" grisé
+❌ Erreur 400: "Could not find relationship backlink_opportunities"
+❌ Ancien build en ligne (pas le nouveau)
+
+CAUSE:
+Le fichier corrigé existe en LOCAL mais pas sur le serveur IONOS.
+Vous devez uploader le NOUVEAU build.
+
+═══════════════════════════════════════════════════════════════
+  ✅ SOLUTION: UPLOAD FICHIER (2 MIN)
+═══════════════════════════════════════════════════════════════
+
+FICHIER À UPLOADER:
+📦 dist/assets/backoffice-all-BTck8klu.js
+
+DESTINATION IONOS:
+📁 /dist/assets/backoffice-all-BTck8klu.js
+
+ÉTAPES:
+1. Connectez-vous FTP IONOS
+2. Allez dans: /dist/assets/
+3. Uploadez: backoffice-all-BTck8klu.js
+4. Remplacez l'ancien
+5. Allez sur: https://taxiassur.com/backoffice/backlink-automation
+6. Ctrl+Shift+R (hard refresh)
+
+═══════════════════════════════════════════════════════════════
+
+RÉSULTAT ATTENDU:
+✅ Page charge sans erreur 400
+✅ Tableau "Campagnes d'Outreach" affiche données
+✅ Tableau "Journal d'Activité" affiche logs
+✅ Bouton "Lancer Automatisation" actif (bleu)
+
+═══════════════════════════════════════════════════════════════
+
+ALTERNATIVE: UPLOAD COMPLET /dist
+Si vous préférez tout uploader d'un coup:
+1. Supprimez le dossier /dist sur IONOS
+2. Uploadez tout le nouveau dossier /dist (local)
+3. Attendez fin upload (~2-3 min)
+4. Ctrl+Shift+R sur la page
+
+═══════════════════════════════════════════════════════════════
+
+⚠️ NOTE IMPORTANTE:
+Le fichier backoffice-all-BTck8klu.js contient TOUTES les pages
+backoffice. Donc cet upload corrige:
+  ✅ /backoffice/backlink-automation (notre page)
+  ✅ Toutes les autres pages backoffice
+
+═══════════════════════════════════════════════════════════════
+
+📝 RAPPEL:
+La correction a déjà été faite dans le code source:
+  ✅ src/backoffice/BacklinkAutomationDashboard.tsx (ligne 97)
+  ✅ npm run build exécuté avec succès
+  ✅ Fichier généré: dist/assets/backoffice-all-BTck8klu.js
+
+Il ne reste plus qu'à l'uploader sur IONOS!
+
+═══════════════════════════════════════════════════════════════
