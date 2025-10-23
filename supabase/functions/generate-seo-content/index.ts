@@ -191,31 +191,6 @@ Deno.serve(async (req: Request) => {
 
     console.log(`🎯 Génération ${isUnified ? 'UNIFIÉE' : 'SIMPLE'}: ${keyword} | ${targetCity}`);
 
-    // 🔒 ACQUÉRIR VERROU AVANT GÉNÉRATION (évite doublons)
-    const { data: lockAcquired, error: lockError } = await supabase
-      .rpc('acquire_generation_lock', {
-        p_lock_type: 'blog',
-        p_locked_by: `generate-seo-content-${keyword}`,
-        p_duration_minutes: 5
-      });
-
-    if (lockError || !lockAcquired) {
-      console.warn('⚠️ Verrou déjà actif, génération ignorée');
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: 'Une génération est déjà en cours. Réessayez dans 2 minutes.',
-          locked: true
-        }),
-        {
-          status: 429,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      );
-    }
-
-    console.log('🔒 Verrou acquis, génération en cours...');
-
     // 📍 RÉCUPÉRER LES INFOS GÉOGRAPHIQUES RÉELLES
     const cityInfo = getCityInfo(targetCity);
     console.log('📍 Infos ville:', cityInfo);
@@ -503,9 +478,6 @@ HTML uniquement (pas de markdown). Ton naturel et conversationnel.`;
   } catch (error) {
     console.error('❌ Error:', error);
 
-    // 🔓 LIBÉRER VERROU en cas d'erreur
-    await supabase.rpc('release_generation_lock', { p_lock_type: 'blog' }).catch(console.error);
-
     return new Response(
       JSON.stringify({
         success: false,
@@ -517,8 +489,5 @@ HTML uniquement (pas de markdown). Ton naturel et conversationnel.`;
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       }
     );
-  } finally {
-    // 🔓 TOUJOURS LIBÉRER VERROU à la fin
-    await supabase.rpc('release_generation_lock', { p_lock_type: 'blog' }).catch(console.error);
   }
 });
