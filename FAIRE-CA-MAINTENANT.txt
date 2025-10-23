@@ -1,0 +1,35 @@
+╔═══════════════════════════════════════════════════════════╗
+║  🎯 FAIRE ÇA MAINTENANT (30 SECONDES)                    ║
+╚═══════════════════════════════════════════════════════════╝
+
+1. Ouvrir Supabase SQL:
+   https://supabase.com/dashboard/project/drohhxrkoequjphvabvq/sql
+
+2. Copier le fichier:
+   FIX-FINAL-DOUBLON-CAMPAGNE.sql
+
+3. Coller → Run ▶
+
+4. Vérifier dernière ligne:
+   "🎯 SYSTÈME PRÊT! | 1 | 9 | 12"
+
+5. Ouvrir:
+   https://taxiassur.com/backoffice/backlink-automation
+
+6. Ctrl+Shift+R (vider cache)
+
+7. Sélectionner campagne (radio)
+
+8. Cliquer "Lancer Automation"
+
+9. Confirmer OK
+
+10. ✅ "Automation lancée avec succès!"
+
+═══════════════════════════════════════════════════════════
+
+✅ SI ÇA MARCHE: C'est bon!
+
+❌ SI ERREUR: Lire ACTION-IMMEDIATE-BACKLINK-FINAL.txt
+
+╚═══════════════════════════════════════════════════════════╝
