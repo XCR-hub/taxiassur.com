@@ -253,7 +253,25 @@ END $$;
 
 -- Insérer données test (si pas déjà présentes)
 DO $$
+DECLARE
+  constraint_exists boolean;
 BEGIN
+  -- Vérifier si contrainte CHECK existe
+  SELECT EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conname = 'backlink_opportunities_status_check'
+  ) INTO constraint_exists;
+
+  -- Supprimer et recréer contrainte si elle existe avec mauvaises valeurs
+  IF constraint_exists THEN
+    ALTER TABLE backlink_opportunities DROP CONSTRAINT IF EXISTS backlink_opportunities_status_check;
+  END IF;
+
+  -- Ajouter contrainte correcte
+  ALTER TABLE backlink_opportunities
+    ADD CONSTRAINT backlink_opportunities_status_check
+    CHECK (status IN ('pending', 'contacted', 'accepted', 'rejected', 'live'));
+
   -- Supprimer anciennes données test si existent
   DELETE FROM backlink_opportunities WHERE domain IN ('assurance-pro.fr', 'taxi-mag.com', 'assurtaxi.net');
 
