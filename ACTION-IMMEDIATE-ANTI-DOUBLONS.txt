@@ -1,0 +1,136 @@
+╔════════════════════════════════════════════════════════════╗
+║  🚨 FIX IMMÉDIAT ANTI-DOUBLONS (2 MINUTES)                ║
+╚════════════════════════════════════════════════════════════╝
+
+PROBLÈMES DÉTECTÉS :
+❌ 3 crons blog actifs (dont 1 qui publie toutes les minutes!)
+❌ Doublons de contenu blog/ville
+❌ Images Pexels réutilisées
+
+
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃  📋 ÉTAPE 1 : APPLIQUER LA MIGRATION (1 minute)           ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+Dans Supabase SQL Editor :
+
+1️⃣ Copie/colle le contenu de :
+   supabase/migrations/20251024018000_fix_all_duplicates_and_crons.sql
+
+2️⃣ Clique "Run"
+
+
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃  ✅ CE QUE CETTE MIGRATION FAIT                           ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+1. 🗑️  Supprime les 3 crons blog
+2. ✅ Crée UN SEUL cron : 1x/jour à 10h
+3. 🧹 Nettoie les doublons existants (blog + villes)
+4. 🔒 Ajoute contraintes UNIQUE sur slugs
+5. 🎨 Crée système de tracking images Pexels
+6. 🛡️  Ajoute triggers pour bloquer futurs doublons
+
+
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃  📊 VÉRIFICATION APRÈS MIGRATION                          ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+-- 1. Vérifier les crons
+SELECT jobname, schedule, active
+FROM cron.job
+WHERE jobname LIKE '%blog%';
+
+✅ Tu devrais voir :
+   generate_daily_blog_post | 0 10 * * * | true
+
+-- 2. Vérifier doublons blog
+SELECT slug, COUNT(*) as nb
+FROM blog_posts
+GROUP BY slug
+HAVING COUNT(*) > 1;
+
+✅ Résultat vide = plus de doublons !
+
+-- 3. Vérifier doublons villes
+SELECT slug, COUNT(*) as nb
+FROM city_pages
+GROUP BY slug
+HAVING COUNT(*) > 1;
+
+✅ Résultat vide = plus de doublons !
+
+
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃  🎨 NOUVEAU : SYSTÈME ANTI-DOUBLON IMAGES                 ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+Table créée : pexels_images_used
+
+Fonctions disponibles :
+- check_pexels_image_not_used(pexels_id, query)
+  → Retourne true si image jamais utilisée
+
+- register_pexels_image_used(...)
+  → Enregistre une image comme utilisée
+
+Usage dans tes Edge Functions :
+```typescript
+// Vérifier avant utilisation
+const { data } = await supabase
+  .rpc('check_pexels_image_not_used', {
+    p_pexels_id: '1234567',
+    p_search_query: 'taxi'
+  });
+
+if (data) {
+  // Image OK, l'utiliser
+  // Puis l'enregistrer
+  await supabase.rpc('register_pexels_image_used', {
+    p_pexels_id: '1234567',
+    p_pexels_url: 'https://...',
+    p_search_query: 'taxi',
+    p_used_in_type: 'blog',
+    p_used_in_id: 42
+  });
+}
+```
+
+
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃  🔒 PROTECTIONS AUTOMATIQUES ACTIVÉES                     ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+1. Contrainte UNIQUE sur blog_posts.slug
+   → Impossible d'insérer un slug en double
+
+2. Contrainte UNIQUE sur city_pages.slug
+   → Impossible d'insérer un slug en double
+
+3. Trigger auto sur blog_posts
+   → Si doublon détecté, ajoute timestamp au slug
+
+4. Trigger auto sur city_pages
+   → Si doublon détecté, ajoute timestamp au slug
+
+5. Table pexels_images_used
+   → Track toutes les images utilisées
+
+
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃  🎯 RÉSULTAT FINAL                                        ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+✅ 1 seul cron blog : 1x/jour à 10h
+✅ Plus de doublons d'articles
+✅ Plus de doublons de pages villes
+✅ Images Pexels jamais réutilisées
+✅ Système bulletproof avec contraintes + triggers
+
+
+╔════════════════════════════════════════════════════════════╗
+║  ⚡ LANCE LA MIGRATION MAINTENANT !                       ║
+╚════════════════════════════════════════════════════════════╝
+
+Fichier : supabase/migrations/20251024018000_fix_all_duplicates_and_crons.sql
+
