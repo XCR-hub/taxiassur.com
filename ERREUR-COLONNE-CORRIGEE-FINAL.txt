@@ -1,0 +1,20 @@
+✅ ERREUR SQL CORRIGÉE
+
+Problème : 
+❌ column "author_id" does not exist
+   → La colonne s'appelle "author" et pas "author_id"
+
+Solution :
+✅ Migration corrigée avec détection automatique :
+   - Vérifie si "author_id" existe → convertit si oui
+   - Vérifie si "author" existe → convertit si oui
+   - Fonctionne dans tous les cas
+
+Action maintenant :
+1. Copie supabase/migrations/20251024021000_fix_content_opportunities_rls.sql
+2. Exécute dans Supabase SQL Editor
+3. Peu importe le nom de la colonne, ça fonctionnera
+
+Résultat attendu :
+✅ Colonne author convertie en TEXT
+✅ RLS content_opportunities corrigé
