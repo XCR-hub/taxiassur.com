@@ -1,0 +1,29 @@
+{
+  "id": "sinistre-taxi-que-faire",
+  "title": "Sinistre Taxi : Procédure Complète et Erreurs à Éviter",
+  "excerpt": "Guide pratique pour gérer un sinistre taxi efficacement. Démarches, documents requis, délais et pièges à éviter pour un remboursement optimal.",
+  "content": "<h2>Les Premières Actions Cruciales</h2><p>Un sinistre bien géré dès les premiers instants peut faire la différence sur l'indemnisation finale.</p><h3>Sur les Lieux de l'Accident</h3><ul><li>Sécuriser la zone et porter secours si nécessaire</li><li>Appeler les forces de l'ordre si blessés ou désaccord</li><li>Prendre des photos sous tous les angles</li><li>Remplir le constat amiable avec précision</li><li>Relever les témoignages</li></ul><h3>Dans les 5 Jours Ouvrés</h3><p>Déclaration obligatoire à votre assureur avec tous les documents : constat, photos, témoignages, factures.</p><h3>Erreurs Fréquentes à Éviter</h3><ul><li>Reconnaître sa responsabilité sur place</li><li>Oublier de déclarer des dommages mineurs</li><li>Ne pas photographier l'intérieur du véhicule</li><li>Accepter un règlement trop rapide</li></ul><h3>Spécificités Taxi</h3><p>N'oubliez pas de déclarer la perte d'exploitation : chaque jour d'immobilisation représente un manque à gagner.</p><h3>Véhicule de Remplacement</h3><p>Exigez un véhicule adapté à votre activité professionnelle, pas un véhicule de tourisme standard.</p>",
+  "tags": ["sinistre", "procédure", "constat", "indemnisation", "conseils"],
+  "coverImage": "https://images.pexels.com/photos/1545743/pexels-photo-1545743.jpeg?auto=compress&cs=tinysrgb&w=800",
+  "author": "TaxiAssur",
+  "createdAt": "2024-01-16T10:15:00Z",
+  "status": "published",
+  "faq": [
+    {
+      "q": "Quelles sont les premières actions après un sinistre taxi ?",
+      "a": "Sécurisez la zone, portez secours si nécessaire, appelez les forces de l'ordre en cas de blessés, prenez des photos sous tous les angles, remplissez le constat amiable avec précision et relevez les témoignages."
+    },
+    {
+      "q": "Dans quel délai dois-je déclarer un sinistre à mon assureur ?",
+      "a": "Vous devez déclarer le sinistre dans les 5 jours ouvrés suivant l'accident. Passé ce délai, votre assureur peut refuser la prise en charge."
+    },
+    {
+      "q": "Puis-je obtenir un véhicule de remplacement pendant la réparation ?",
+      "a": "Oui, si vous avez souscrit cette garantie. Exigez un véhicule adapté à votre activité professionnelle de taxi, pas un véhicule de tourisme standard."
+    },
+    {
+      "q": "Comment éviter les erreurs courantes lors d'un sinistre ?",
+      "a": "Ne reconnaissez jamais votre responsabilité sur place, déclarez tous les dommages même mineurs, photographiez l'intérieur du véhicule, et n'acceptez pas un règlement trop rapide sans vérifier tous les préjudices y compris la perte d'exploitation."
+    }
+  ]
+}

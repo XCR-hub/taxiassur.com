@@ -1,0 +1,36 @@
+[
+  {
+    "id": "annuaire-taxi-france",
+    "url": "https://annuaire-taxi-france.fr/assurance-taxi",
+    "domain": "annuaire-taxi-france.fr",
+    "anchorText": "assurance taxi professionnelle",
+    "type": "directory",
+    "status": "active",
+    "dateAdded": "2024-01-15T10:00:00Z",
+    "lastChecked": "2024-01-20T14:30:00Z",
+    "notes": "Annuaire principal taxi France - lien contextuel dans section assurance",
+    "tags": ["annuaire", "taxi", "france"]
+  },
+  {
+    "id": "taxis-de-france",
+    "url": "https://www.taxis-de-france.com/services/assurance",
+    "domain": "taxis-de-france.com",
+    "anchorText": "TaxiAssur - spécialiste assurance",
+    "type": "directory",
+    "status": "active",
+    "dateAdded": "2024-01-16T09:15:00Z",
+    "notes": "Portail très visité - partenariat établi",
+    "tags": ["annuaire", "partenariat", "visibilité"]
+  },
+  {
+    "id": "forum-taxi-pro",
+    "url": "https://forum-taxi-pro.fr/topic/assurance-recommandations",
+    "domain": "forum-taxi-pro.fr",
+    "anchorText": "TaxiAssur recommandé",
+    "type": "forum",
+    "status": "active",
+    "dateAdded": "2024-01-18T16:45:00Z",
+    "notes": "Recommandation organique dans discussion",
+    "tags": ["forum", "recommandation", "communauté"]
+  }
+]

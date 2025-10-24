@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Edge Functions - TaxiAssur</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 20px;
+            background: #0f172a;
+            color: #fff;
+        }
+        .test-card {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .test-card h3 {
+            margin-top: 0;
+            color: #f97316;
+        }
+        button {
+            background: linear-gradient(to right, #f97316, #ea580c);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        button:hover {
+            opacity: 0.9;
+        }
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 13px;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        .success {
+            background: #064e3b;
+            border: 1px solid #059669;
+            color: #10b981;
+        }
+        .error {
+            background: #7f1d1d;
+            border: 1px solid #dc2626;
+            color: #f87171;
+        }
+        .info {
+            background: #1e3a8a;
+            border: 1px solid #3b82f6;
+            color: #93c5fd;
+        }
+        .config {
+            background: #422006;
+            border: 1px solid #d97706;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+        input {
+            width: 100%;
+            padding: 8px;
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 4px;
+            color: #fff;
+            margin-top: 5px;
+        }
+        label {
+            display: block;
+            margin-top: 10px;
+            color: #d97706;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 Test Edge Functions TaxiAssur</h1>
+    <p>Testez chaque edge function manuellement pour vérifier si les clés API sont configurées.</p>
+
+    <div class="config">
+        <h3>⚙️ Configuration</h3>
+        <label>SUPABASE_URL:</label>
+        <input type="text" id="supabaseUrl" placeholder="https://votre-projet.supabase.co">
+
+        <label>SUPABASE_ANON_KEY:</label>
+        <input type="text" id="supabaseKey" placeholder="votre-clé-anon">
+
+        <p style="margin-top: 15px; color: #94a3b8; font-size: 14px;">
+            ℹ️ Trouvez ces valeurs dans: Supabase Dashboard > Project Settings > API
+        </p>
+    </div>
+
+    <!-- Test 1: Génération Article IA -->
+    <div class="test-card">
+        <h3>📝 Test 1: Génération Article IA (OpenAI)</h3>
+        <p>Teste si la clé OPENAI_API_KEY est configurée</p>
+        <button onclick="testGenerateSEOContent()">🚀 Tester Génération Article</button>
+        <div id="result-article"></div>
+    </div>
+
+    <!-- Test 2: Image Pexels -->
+    <div class="test-card">
+        <h3>🖼️ Test 2: Génération Image (Pexels)</h3>
+        <p>Teste si la clé PEXELS_API_KEY est configurée</p>
+        <button onclick="testPexelsImage()">🚀 Tester Image Pexels</button>
+        <div id="result-pexels"></div>
+    </div>
+
+    <!-- Test 3: Google Search Console -->
+    <div class="test-card">
+        <h3>📊 Test 3: Sync Google Search Console</h3>
+        <p>Teste si la clé GOOGLE_SEARCH_CONSOLE_API_KEY est configurée</p>
+        <button onclick="testGoogleSearchConsole()">🚀 Tester GSC Sync</button>
+        <div id="result-gsc"></div>
+    </div>
+
+    <!-- Test 4: Pinterest -->
+    <div class="test-card">
+        <h3>📌 Test 4: Publication Pinterest</h3>
+        <p>Teste si PINTEREST_ACCESS_TOKEN est configuré</p>
+        <button onclick="testPinterest()">🚀 Tester Pinterest</button>
+        <div id="result-pinterest"></div>
+    </div>
+
+    <!-- Test 5: Scraping Taxis -->
+    <div class="test-card">
+        <h3>🚕 Test 5: Scraping Taxis (Google Places)</h3>
+        <p>Teste le scraping automatique de compagnies de taxis</p>
+        <button onclick="testScrapeTaxis()">🚀 Tester Scraping</button>
+        <div id="result-scraping"></div>
+    </div>
+
+    <script>
+        function getConfig() {
+            const url = document.getElementById('supabaseUrl').value;
+            const key = document.getElementById('supabaseKey').value;
+
+            if (!url || !key) {
+                alert('⚠️ Veuillez configurer SUPABASE_URL et SUPABASE_ANON_KEY');
+                return null;
+            }
+
+            return { url, key };
+        }
+
+        async function callEdgeFunction(functionName, body = {}) {
+            const config = getConfig();
+            if (!config) return null;
+
+            try {
+                const response = await fetch(`${config.url}/functions/v1/${functionName}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${config.key}`
+                    },
+                    body: JSON.stringify(body)
+                });
+
+                const data = await response.json();
+                return { success: response.ok, data, status: response.status };
+            } catch (error) {
+                return { success: false, error: error.message };
+            }
+        }
+
+        async function testGenerateSEOContent() {
+            const resultDiv = document.getElementById('result-article');
+            resultDiv.innerHTML = '<div class="result info">⏳ Test en cours...</div>';
+
+            const result = await callEdgeFunction('generate-seo-content', {
+                type: 'article',
+                keyword: 'assurance taxi test',
+                count: 1
+            });
+
+            if (result.success) {
+                resultDiv.innerHTML = `
+                    <div class="result success">
+                        ✅ OpenAI API KEY configurée !
+                        ${JSON.stringify(result.data, null, 2)}
+                    </div>
+                `;
+            } else {
+                resultDiv.innerHTML = `
+                    <div class="result error">
+                        ❌ Erreur - Clé OpenAI probablement manquante
+                        Statut: ${result.status}
+                        ${JSON.stringify(result.data || result.error, null, 2)}
+                    </div>
+                `;
+            }
+        }
+
+        async function testPexelsImage() {
+            const resultDiv = document.getElementById('result-pexels');
+            resultDiv.innerHTML = '<div class="result info">⏳ Test en cours...</div>';
+
+            const result = await callEdgeFunction('generate-seo-content', {
+                type: 'image',
+                query: 'taxi professionnel'
+            });
+
+            if (result.success && result.data.image_url) {
+                resultDiv.innerHTML = `
+                    <div class="result success">
+                        ✅ Pexels API KEY configurée !
+                        Image: <img src="${result.data.image_url}" style="max-width: 300px; margin-top: 10px;">
+                    </div>
+                `;
+            } else {
+                resultDiv.innerHTML = `
+                    <div class="result error">
+                        ❌ Erreur - Clé Pexels probablement manquante
+                        ${JSON.stringify(result.data || result.error, null, 2)}
+                    </div>
+                `;
+            }
+        }
+
+        async function testGoogleSearchConsole() {
+            const resultDiv = document.getElementById('result-gsc');
+            resultDiv.innerHTML = '<div class="result info">⏳ Test en cours...</div>';
+
+            const result = await callEdgeFunction('sync-google-search-console', {});
+
+            if (result.success) {
+                resultDiv.innerHTML = `
+                    <div class="result success">
+                        ✅ Google Search Console API configurée !
+                        ${JSON.stringify(result.data, null, 2)}
+                    </div>
+                `;
+            } else {
+                resultDiv.innerHTML = `
+                    <div class="result error">
+                        ❌ Erreur - Clé Google Search Console probablement manquante
+                        ${JSON.stringify(result.data || result.error, null, 2)}
+                    </div>
+                `;
+            }
+        }
+
+        async function testPinterest() {
+            const resultDiv = document.getElementById('result-pinterest');
+            resultDiv.innerHTML = '<div class="result info">⏳ Test en cours...</div>';
+
+            const result = await callEdgeFunction('pinterest-publisher', {
+                board_id: '945333846723355976',
+                title: 'Test automatique',
+                description: 'Ceci est un test de publication Pinterest',
+                link: 'https://taxiassur.com',
+                image_url: 'https://images.pexels.com/photos/887846/pexels-photo-887846.jpeg'
+            });
+
+            if (result.success) {
+                resultDiv.innerHTML = `
+                    <div class="result success">
+                        ✅ Pinterest Access Token configuré !
+                        Pin publié: ${result.data.pin_url}
+                        <a href="${result.data.pin_url}" target="_blank" style="color: #10b981;">Voir sur Pinterest</a>
+                    </div>
+                `;
+            } else {
+                resultDiv.innerHTML = `
+                    <div class="result error">
+                        ❌ Erreur - Pinterest Access Token probablement manquant
+                        ${JSON.stringify(result.data || result.error, null, 2)}
+                    </div>
+                `;
+            }
+        }
+
+        async function testScrapeTaxis() {
+            const resultDiv = document.getElementById('result-scraping');
+            resultDiv.innerHTML = '<div class="result info">⏳ Test en cours (peut prendre 10-30s)...</div>';
+
+            const result = await callEdgeFunction('scrape-taxi-companies', {
+                city: 'Paris',
+                limit: 5
+            });
+
+            if (result.success) {
+                resultDiv.innerHTML = `
+                    <div class="result success">
+                        ✅ Scraping fonctionne !
+                        ${result.data.count} compagnies trouvées
+                        ${JSON.stringify(result.data, null, 2)}
+                    </div>
+                `;
+            } else {
+                resultDiv.innerHTML = `
+                    <div class="result error">
+                        ❌ Erreur de scraping
+                        ${JSON.stringify(result.data || result.error, null, 2)}
+                    </div>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>

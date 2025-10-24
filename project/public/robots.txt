@@ -1,0 +1,23 @@
+User-agent: *
+Allow: /
+Allow: /blog/
+Allow: /ville/
+Allow: /assurance-taxi*
+Allow: /faq
+Allow: /contact
+
+# Interdictions
+Disallow: /admin/
+Disallow: /api/
+Disallow: /backoffice/
+Disallow: /webhooks/
+Disallow: /*?*utm_
+Disallow: /*?*session
+Disallow: /*?*ref=
+
+# Sitemaps (MULTIPLE pour meilleure indexation)
+Sitemap: https://taxiassur.com/sitemap.xml
+Sitemap: https://taxiassur.com/feeds/sitemap.xml
+
+# Crawl delay naturel (pas trop rapide = humain)
+Crawl-delay: 1

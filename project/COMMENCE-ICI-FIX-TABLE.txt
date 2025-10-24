@@ -1,0 +1,249 @@
+╔══════════════════════════════════════════════════════════════╗
+║  🔧 FIX + ACTIVATION MODE PRODUCTION (1 MINUTE)            ║
+╚══════════════════════════════════════════════════════════════╝
+
+⚠️ ERREUR DÉTECTÉE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+ERROR: relation "automation_config" does not exist
+
+→ La table automation_config n'existe pas dans votre base
+→ Elle a probablement été supprimée ou jamais créée
+→ ON VA LA RECRÉER MAINTENANT!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ SOLUTION COMPLÈTE (1 MINUTE)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+ACTION IMMÉDIATE:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Ouvrir Supabase SQL Editor:
+   https://supabase.com/dashboard/project/drohhxrkoequjphvabvq/sql/new
+
+2. Copier TOUT le SQL ci-dessous
+
+3. Coller dans l'éditeur
+
+4. Cliquer "Run"
+
+5. Attendre résultat (5-10 secondes)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📋 SQL À COPIER-COLLER (TOUT!)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+-- Créer table automation_config
+CREATE TABLE IF NOT EXISTS automation_config (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  name text UNIQUE NOT NULL,
+  description text,
+  enabled boolean DEFAULT true,
+  schedule text,
+  config jsonb DEFAULT '{}'::jsonb,
+  last_run timestamptz,
+  next_run timestamptz,
+  run_count integer DEFAULT 0,
+  success_count integer DEFAULT 0,
+  error_count integer DEFAULT 0,
+  last_error text,
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now()
+);
+
+-- Index
+CREATE INDEX IF NOT EXISTS idx_automation_config_name ON automation_config(name);
+CREATE INDEX IF NOT EXISTS idx_automation_config_enabled ON automation_config(enabled);
+CREATE INDEX IF NOT EXISTS idx_automation_config_next_run ON automation_config(next_run);
+
+-- RLS
+ALTER TABLE automation_config ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Public read automation config" ON automation_config;
+CREATE POLICY "Public read automation config" 
+  ON automation_config FOR SELECT 
+  TO public 
+  USING (true);
+
+DROP POLICY IF EXISTS "Authenticated manage automation config" ON automation_config;
+CREATE POLICY "Authenticated manage automation config" 
+  ON automation_config FOR ALL 
+  TO authenticated 
+  USING (true) 
+  WITH CHECK (true);
+
+-- Ajouter automations backlinks EN MODE PRODUCTION
+INSERT INTO automation_config (name, description, enabled, schedule, config)
+VALUES 
+  (
+    'backlink-auto-outreach',
+    'Envoi automatique emails prospection backlinks',
+    true,
+    '0 9 * * 1,3,5',
+    jsonb_build_object(
+      'test_mode', false,
+      'production', true,
+      'max_emails_per_day', 50,
+      'delay_between_emails', 300
+    )
+  ),
+  (
+    'backlink-followup',
+    'Relances automatiques opportunités backlinks',
+    true,
+    '0 10 * * 2,4',
+    jsonb_build_object(
+      'test_mode', false,
+      'production', true,
+      'followup_delay_days', 7,
+      'max_followups', 3
+    )
+  ),
+  (
+    'backlink-scan-weekly',
+    'Scan hebdomadaire nouvelles opportunités',
+    true,
+    '0 8 * * 1',
+    jsonb_build_object(
+      'test_mode', false,
+      'production', true,
+      'max_sites_per_scan', 50
+    )
+  )
+ON CONFLICT (name) 
+DO UPDATE SET
+  enabled = true,
+  config = jsonb_set(
+    jsonb_set(
+      EXCLUDED.config,
+      '{test_mode}',
+      'false'::jsonb
+    ),
+    '{production}',
+    'true'::jsonb
+  ),
+  updated_at = now();
+
+-- Réinitialiser opportunités
+UPDATE backlink_opportunities 
+SET 
+  status = 'new',
+  contacted_at = NULL,
+  last_contact_date = NULL
+WHERE status = 'contacted' 
+  AND created_at >= CURRENT_DATE - INTERVAL '7 days'
+  AND email IS NOT NULL;
+
+-- VÉRIFICATION
+SELECT 
+  name,
+  enabled,
+  config->>'test_mode' as mode_test,
+  config->>'production' as production,
+  config->>'max_emails_per_day' as max_emails
+FROM automation_config
+WHERE name LIKE '%backlink%'
+ORDER BY name;
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ RÉSULTAT ATTENDU
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Vous devriez voir:
+
+name                        enabled  mode_test  production  max_emails
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+backlink-auto-outreach      true     false      true        50
+backlink-followup           true     false      true        null
+backlink-scan-weekly        true     false      true        null
+
+✅ mode_test = false → Mode simulation DÉSACTIVÉ
+✅ production = true → Mode production ACTIVÉ
+✅ enabled = true → Automations ACTIVES
+
+Si vous voyez ça: MODE PRODUCTION ACTIVÉ! 🎉
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎯 TEST IMMÉDIAT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Retourner sur:
+   https://taxiassur.com/backoffice/backlink-automation
+
+2. F5 pour recharger
+
+3. Cliquer "Lancer Automation"
+
+4. Observer le message:
+
+AVANT (simulation):
+"Emails simulés: 10"
+
+APRÈS (production):
+"Emails envoyés: 10"
+"Campagne lancée avec succès!"
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚠️ VÉRIFICATION SENDGRID
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Pour que les emails soient VRAIMENT envoyés, vérifier SendGrid:
+
+1. Aller sur:
+   https://supabase.com/dashboard/project/drohhxrkoequjphvabvq/settings/vault
+
+2. Chercher "SENDGRID_API_KEY" dans la liste
+
+3. Si présent:
+   ✅ Emails seront vraiment envoyés
+   ✅ Mode production OK
+   
+4. Si absent:
+   ❌ Emails simulés quand même
+   ❌ Configurer SendGrid d'abord
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📌 CONFIGURER SENDGRID (SI MANQUANT)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Créer compte gratuit:
+   https://signup.sendgrid.com/
+
+2. Obtenir clé API:
+   Settings > API Keys > Create API Key
+   Nom: TaxiAssur Production
+   Type: Full Access
+   Copier clé (commence par SG.)
+
+3. Ajouter dans Supabase Vault:
+   https://supabase.com/dashboard/project/drohhxrkoequjphvabvq/settings/vault
+   
+   New Secret:
+   - Name: SENDGRID_API_KEY
+   - Secret: SG.xxxxxxxxxxxxx (votre clé)
+   - Save
+
+4. Une fois fait:
+   ✅ Relancer automation
+   ✅ Emails vraiment envoyés!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎉 RÉSUMÉ
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Copier SQL ci-dessus
+2. Coller dans Supabase SQL Editor
+3. Cliquer Run
+4. Vérifier résultat (mode_test = false)
+5. Tester sur /backlink-automation
+6. Vérifier SendGrid configuré
+7. Lancer campagne réelle!
+
+╚══════════════════════════════════════════════════════════════╝

@@ -1,0 +1,31 @@
+{
+  "id": "vehicules-electriques-taxi",
+  "title": "Véhicules Électriques pour Taxis : Guide Complet de l'Assurance",
+  "excerpt": "Tout savoir sur l'assurance des taxis électriques : spécificités, avantages, tarifs préférentiels et démarches simplifiées avec TaxiAssur.",
+  "content": "<h2>L'Essor du Taxi Électrique</h2><p>La transition vers l'électrique transforme le secteur du taxi. Découvrez comment adapter votre assurance à cette révolution.</p><h3>Spécificités de l'Assurance Électrique</h3><ul><li>Couverture batterie et composants électroniques</li><li>Assistance spécialisée véhicules électriques</li><li>Tarifs préférentiels écologiques</li></ul><h2>Avantages Financiers</h2><p>Les véhicules électriques bénéficient de réductions tarifaires importantes grâce à leur profil de risque favorable.</p>",
+  "tags": [
+    "électrique",
+    "écologie",
+    "innovation",
+    "économies"
+  ],
+  "coverImage": "https://images.pexels.com/photos/110844/pexels-photo-110844.jpeg?auto=compress&cs=tinysrgb&w=800",
+  "author": "TaxiAssur",
+  "createdAt": "2024-01-10T09:30:00Z",
+  "updatedAt": "2024-01-10T09:30:00Z",
+  "status": "published",
+  "faq": [
+    {
+      "q": "L'assurance taxi électrique est-elle plus chère ?",
+      "a": "Non, au contraire ! Les véhicules électriques bénéficient de réductions tarifaires importantes (15-25%) grâce à leur profil de risque favorable et aux bonus écologiques proposés par les assureurs."
+    },
+    {
+      "q": "Quelles garanties spécifiques pour un taxi électrique ?",
+      "a": "L'assurance doit couvrir la batterie et les composants électroniques, proposer une assistance spécialisée véhicules électriques (dépannage, recharge), et idéalement inclure une garantie perte d'autonomie."
+    },
+    {
+      "q": "Puis-je assurer un taxi hybride comme un électrique ?",
+      "a": "Les véhicules hybrides rechargeables bénéficient aussi de réductions (10-15%), mais moindres que les 100% électriques. Les hybrides simples sont assurés comme des véhicules thermiques."
+    }
+  ]
+}

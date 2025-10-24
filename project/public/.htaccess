@@ -1,0 +1,72 @@
+# Configuration Apache MINIMALE pour IONOS - TaxiAssur.com
+# Version ultra-simplifiée qui fonctionne à 100%
+
+# Types MIME essentiels
+<IfModule mod_mime.c>
+    AddType text/css .css
+    AddType text/javascript .js
+    AddType application/json .json
+    AddType image/x-icon .ico
+    AddType image/png .png
+    AddType image/jpeg .jpg .jpeg
+</IfModule>
+
+# Activation du module de réécriture
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
+
+    # FORCER HTTPS - CRITIQUE POUR SEO
+    RewriteCond %{HTTPS} off
+    RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+    # Forcer www ou non-www (choisir une version canonique)
+    # Option 1: Sans www (RECOMMANDÉ pour taxiassur.com)
+    RewriteCond %{HTTP_HOST} ^www\.taxiassur\.com [NC]
+    RewriteRule ^(.*)$ https://taxiassur.com/$1 [L,R=301]
+
+    # Exclure les fichiers assets (CSS, JS, images, fonts)
+    RewriteCond %{REQUEST_URI} !^/assets/
+    RewriteCond %{REQUEST_URI} !^/content/
+    RewriteCond %{REQUEST_URI} !^/feeds/
+    RewriteCond %{REQUEST_URI} !\.css$
+    RewriteCond %{REQUEST_URI} !\.js$
+    RewriteCond %{REQUEST_URI} !\.json$
+    RewriteCond %{REQUEST_URI} !\.xml$
+    RewriteCond %{REQUEST_URI} !\.txt$
+    RewriteCond %{REQUEST_URI} !\.ico$
+    RewriteCond %{REQUEST_URI} !\.png$
+    RewriteCond %{REQUEST_URI} !\.jpg$
+    RewriteCond %{REQUEST_URI} !\.jpeg$
+    RewriteCond %{REQUEST_URI} !\.svg$
+    RewriteCond %{REQUEST_URI} !\.woff$
+    RewriteCond %{REQUEST_URI} !\.woff2$
+
+    # Redirection pour React Router (SPA) seulement si pas un fichier
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^(.*)$ /index.html [L,QSA]
+</IfModule>
+
+# Cache basique
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType text/css "access plus 1 week"
+    ExpiresByType application/javascript "access plus 1 week"
+    ExpiresByType image/png "access plus 1 week"
+    ExpiresByType image/jpeg "access plus 1 week"
+</IfModule>
+
+# Compression GZIP
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/css application/javascript application/json
+</IfModule>
+
+# Protection des fichiers sensibles
+<Files ".env*">
+    Require all denied
+</Files>
+
+<Files "*.log">
+    Require all denied
+</Files>

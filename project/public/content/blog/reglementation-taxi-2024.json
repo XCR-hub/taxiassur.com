@@ -1,0 +1,35 @@
+{
+  "id": "reglementation-taxi-2024",
+  "title": "Réglementation Taxi 2024 : Nouvelles Obligations d'Assurance",
+  "excerpt": "Mise à jour complète des obligations d'assurance pour les taxis en 2024. Nouvelles garanties, montants minimums et sanctions en cas de non-conformité.",
+  "content": "<h2>Les Nouvelles Obligations 2024</h2><p>La réglementation évolue pour mieux protéger les professionnels et leurs clients. Voici ce qui change cette année.</p><h3>Garanties Obligatoires Renforcées</h3><p>Le montant minimum de la RC professionnelle passe à 1,5M€ par sinistre, contre 1M€ précédemment.</p><h3>Protection Juridique Obligatoire</h3><p>Nouvelle obligation : une garantie protection juridique minimale de 15 000€ pour tous les taxis.</p><h3>Véhicules de Remplacement</h3><p>En cas de sinistre, l'assureur doit proposer un véhicule de remplacement sous 48h maximum.</p><h3>Sanctions Renforcées</h3><p>Les contrôles sont plus fréquents et les amendes peuvent atteindre 3 750€ en cas de défaut d'assurance.</p><h3>Certificats Numériques</h3><p>Les attestations dématérialisées sont désormais acceptées lors des contrôles.</p><h3>Formation Continue</h3><p>Les chauffeurs suivant une formation continue bénéficient de réductions tarifaires.</p>",
+  "tags": [
+    "réglementation",
+    "obligations",
+    "2024",
+    "conformité",
+    "sanctions"
+  ],
+  "coverImage": "https://images.pexels.com/photos/5668473/pexels-photo-5668473.jpeg?auto=compress&cs=tinysrgb&w=800",
+  "author": "TaxiAssur",
+  "createdAt": "2024-01-18T08:30:00Z",
+  "status": "published",
+  "faq": [
+    {
+      "q": "Quel est le montant minimum de RC professionnelle obligatoire en 2024 ?",
+      "a": "Le montant minimum de la RC professionnelle est passé à 1,5 million d'euros par sinistre en 2024, contre 1 million d'euros précédemment."
+    },
+    {
+      "q": "La protection juridique est-elle obligatoire pour les taxis ?",
+      "a": "Oui, depuis 2024, une garantie protection juridique minimale de 15 000€ est obligatoire pour tous les chauffeurs de taxi."
+    },
+    {
+      "q": "Quel délai pour obtenir un véhicule de remplacement après sinistre ?",
+      "a": "Depuis 2024, l'assureur doit proposer un véhicule de remplacement sous 48h maximum en cas de sinistre."
+    },
+    {
+      "q": "Quelles sont les sanctions en cas de défaut d'assurance taxi ?",
+      "a": "Les contrôles sont renforcés en 2024 et les amendes peuvent atteindre 3 750€ en cas de défaut d'assurance, plus une immobilisation du véhicule et suspension de la licence."
+    }
+  ]
+}
