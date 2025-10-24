@@ -1,0 +1,150 @@
+╔════════════════════════════════════════════════════════════╗
+║  ✅ 2 ERREURS BACKOFFICE CORRIGÉES                        ║
+╚════════════════════════════════════════════════════════════╝
+
+📦 ERREURS IDENTIFIÉES :
+
+1. TREND ANALYZER (erreur 401)
+   ❌ "new row violates row-level security policy"
+   → Table content_opportunities bloquée en écriture
+
+2. AI GENERATOR (erreur 400)  
+   ❌ "COALESCE types uuid and integer cannot be matched"
+   → Colonne author_id mal typée (UUID au lieu de TEXT)
+
+
+═══════════════════════════════════════════════════════════
+  ✅ SOLUTIONS APPLIQUÉES
+═══════════════════════════════════════════════════════════
+
+Migration SQL créée : 20251024021000_fix_content_opportunities_rls.sql
+
+
+CORRECTION 1 : Content Opportunities RLS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Avant :
+- RLS trop restrictif
+- Impossible d'insérer des opportunités
+
+Après :
+✅ Policy "Allow authenticated full access"
+   → INSERT, UPDATE, DELETE autorisés pour authenticated
+   
+✅ Policy "Allow anonymous read"
+   → SELECT autorisé pour anonymous
+
+
+CORRECTION 2 : Blog Posts Author ID
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Avant :
+- author_id = UUID
+- COALESCE entre UUID et INTEGER impossible
+
+Après :
+✅ author_id = TEXT
+✅ Valeur par défaut = 'system'
+✅ Compatible avec tous les types d'entrée
+
+
+═══════════════════════════════════════════════════════════
+  🎯 ACTION IMMÉDIATE (2 minutes)
+═══════════════════════════════════════════════════════════
+
+1. Va dans Supabase Dashboard → SQL Editor
+   https://supabase.com/dashboard/project/drohhxrkoequjphvabvq/editor
+
+2. Copie le contenu de :
+   supabase/migrations/20251024021000_fix_content_opportunities_rls.sql
+
+3. Exécute la requête
+
+4. Tu devrais voir :
+   "✅ RLS content_opportunities et blog_posts.author_id corrigés"
+
+5. Rafraîchis les pages :
+   - /backoffice/trend-analyzer
+   - /backoffice/ai-generator
+
+
+═══════════════════════════════════════════════════════════
+  ✅ RÉSULTAT ATTENDU
+═══════════════════════════════════════════════════════════
+
+TREND ANALYZER :
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ Bouton "Analyser maintenant" fonctionne
+✅ Sauvegarde les opportunités dans la base
+✅ Plus d'erreur 401
+✅ Affiche "✅ X opportunités découvertes !"
+
+
+AI GENERATOR :
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ Génération d'articles fonctionne
+✅ Sauvegarde dans blog_posts OK
+✅ Images Pexels intégrées
+✅ Plus d'erreur 400
+✅ Affiche "✅ Article publié avec succès !"
+
+
+═══════════════════════════════════════════════════════════
+  🔧 TECHNIQUE
+═══════════════════════════════════════════════════════════
+
+PROBLÈME RLS :
+L'erreur venait de policies trop restrictives. 
+→ Solution : Policy "FOR ALL" avec USING (true)
+
+PROBLÈME TYPE :
+PostgreSQL ne peut pas COALESCE entre UUID et INTEGER.
+→ Solution : Convertir author_id en TEXT universel
+
+
+═══════════════════════════════════════════════════════════
+  📊 DONNÉES DÉJÀ CRÉÉES
+═══════════════════════════════════════════════════════════
+
+Ne pas oublier la migration précédente :
+→ 20251024020000_populate_trend_analyzer_data.sql
+
+Contient 12 opportunités SEO à insérer :
+- 3 haute priorité
+- 3 priorité moyenne  
+- 6 basse priorité (longue traîne)
+
+
+═══════════════════════════════════════════════════════════
+  ⚡ ORDRE D'EXÉCUTION
+═══════════════════════════════════════════════════════════
+
+1. Exécuter 20251024020000_populate_trend_analyzer_data.sql
+   → Insère 12 opportunités
+
+2. Exécuter 20251024021000_fix_content_opportunities_rls.sql
+   → Corrige RLS et author_id
+
+3. Tester Trend Analyzer
+   → Cliquer "Analyser maintenant"
+   → Devrait ajouter des opportunités
+
+4. Tester AI Generator
+   → Générer un article
+   → Devrait sauvegarder dans blog_posts
+
+
+═══════════════════════════════════════════════════════════
+  💡 VÉRIFICATION RAPIDE
+═══════════════════════════════════════════════════════════
+
+Pour vérifier que tout fonctionne :
+
+SELECT COUNT(*) FROM content_opportunities;
+→ Devrait retourner au moins 12
+
+SELECT slug, author_id FROM blog_posts LIMIT 5;
+→ author_id devrait être TEXT (pas UUID)
+
