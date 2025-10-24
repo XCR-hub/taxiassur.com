@@ -1,0 +1,69 @@
+╔════════════════════════════════════════════════════════════╗
+║  🚀 ACTIVER L'IA COMPLÈTE (4000 MOTS) - 3 ÉTAPES         ║
+╚════════════════════════════════════════════════════════════╝
+
+┌────────────────────────────────────────────────────────────┐
+│ ÉTAPE 1 : Appliquer les migrations                        │
+└────────────────────────────────────────────────────────────┘
+
+Dans Supabase SQL Editor, exécute DANS L'ORDRE :
+
+1️⃣ supabase/migrations/20251024013000_connect_blog_cron_to_ai_generator.sql
+   ↪ Crée table queue + fonction de base
+
+2️⃣ supabase/migrations/20251024016000_fix_queue_processor_errors.sql
+   ↪ Fix les erreurs de policies
+
+
+┌────────────────────────────────────────────────────────────┐
+│ ÉTAPE 2 : Déployer l'Edge Function                        │
+└────────────────────────────────────────────────────────────┘
+
+Terminal local :
+$ cd /tmp/cc-agent/58094969/project
+$ supabase functions deploy process-content-queue
+
+
+┌────────────────────────────────────────────────────────────┐
+│ ÉTAPE 3 : Automatiser avec Make.com (5 minutes)           │
+└────────────────────────────────────────────────────────────┘
+
+1. Va sur make.com (gratuit)
+2. Nouveau scénario
+3. Module Schedule → Toutes les 5 minutes
+4. Module HTTP Request:
+   - URL: https://TON_PROJET.supabase.co/functions/v1/process-content-queue
+   - Method: POST
+   - Header: Authorization: Bearer TON_SERVICE_KEY
+5. Active !
+
+
+┌────────────────────────────────────────────────────────────┐
+│ 🧪 TESTER MAINTENANT                                       │
+└────────────────────────────────────────────────────────────┘
+
+-- 1. Générer un article
+SELECT generate_daily_blog_post();
+
+-- 2. Voir la queue
+SELECT * FROM content_generation_queue ORDER BY created_at DESC;
+
+-- 3. Traiter manuellement (ou attends 5 min Make.com)
+curl -X POST https://TON_PROJET.supabase.co/functions/v1/process-content-queue \
+  -H "Authorization: Bearer TON_SERVICE_KEY"
+
+-- 4. Vérifier le résultat
+SELECT title, LENGTH(content) as mots, featured_image 
+FROM blog_posts 
+ORDER BY created_at DESC 
+LIMIT 1;
+
+
+╔════════════════════════════════════════════════════════════╗
+║  ✅ RÉSULTAT : Articles de 4000+ mots automatiques !      ║
+╚════════════════════════════════════════════════════════════╝
+
+AVANT : "Contenu généré automatiquement..."
+APRÈS : Article complet avec intro, 5 sections H2, FAQ, images
+
+📄 Guide complet : SOLUTION-SIMPLE-SANS-PGNET.md
