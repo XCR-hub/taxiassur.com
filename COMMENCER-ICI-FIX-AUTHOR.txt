@@ -1,0 +1,121 @@
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃                                                               ┃
+┃        🚨 ERREUR 400 - CORRECTION EN 4 CLICS (30s)           ┃
+┃                                                               ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+
+📍 ÉTAPE 1 - OUVRIR SUPABASE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Cliquer sur ce lien :
+👉 https://supabase.com/dashboard/project/drohhxrkoequjphvabvq/sql/new
+
+
+📍 ÉTAPE 2 - COPIER CE CODE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Sélectionner et copier TOUT le texte entre les lignes ═══ :
+
+╔══════════════════════════════════════════════════════════════╗
+
+ALTER TABLE blog_posts
+ALTER COLUMN author TYPE TEXT USING COALESCE(author::TEXT, 'TaxiAssur');
+
+ALTER TABLE blog_posts
+ALTER COLUMN author SET DEFAULT 'TaxiAssur';
+
+ALTER TABLE blog_posts
+ALTER COLUMN author DROP NOT NULL;
+
+SELECT '✅ CORRECTION APPLIQUÉE' AS status;
+
+╚══════════════════════════════════════════════════════════════╝
+
+
+📍 ÉTAPE 3 - COLLER ET EXÉCUTER
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Coller le code dans l'éditeur SQL de Supabase
+2. Cliquer sur le bouton "RUN" (en haut à droite)
+3. Attendre 2 secondes
+
+
+📍 ÉTAPE 4 - VÉRIFIER LE RÉSULTAT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Vous devez voir en bas de l'écran :
+
+  ┌────────────────────────────┐
+  │ status                     │
+  ├────────────────────────────┤
+  │ ✅ CORRECTION APPLIQUÉE    │
+  └────────────────────────────┘
+
+Si vous voyez ce message → ✅ C'EST BON !
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+MAINTENANT TESTER L'APPLICATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1️⃣ Aller sur :
+   https://taxiassur.com/backoffice/ai-generator
+
+2️⃣ Recharger la page avec :
+   • Windows/Linux : Ctrl + Shift + R
+   • Mac : Cmd + Shift + R
+
+3️⃣ Remplir le formulaire :
+   • Mot-clé : assurance taxi pas cher
+   • Ville : Paris
+
+4️⃣ Cliquer sur :
+   "Générer TOUT le Contenu"
+
+5️⃣ Attendre 30-60 secondes
+
+6️⃣ Cliquer sur :
+   "Publier TOUT"
+
+
+✅ RÉSULTAT ATTENDU
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Vous devez voir :
+
+  ✅ Publication réussie !
+
+  📝 Article de blog publié ✅ avec image
+  🏙️ Page ville créée/mise à jour
+  ❓ ✅ 5-10 FAQ ajoutées
+  📰 Actualité publiée
+
+  Total: 4000+ mots générés
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+POURQUOI CETTE ERREUR ?
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+La colonne "author" était en UUID (identifiant unique)
+L'application envoie du TEXT ('TaxiAssur')
+→ Conflit de type → Erreur 400
+
+La correction convertit UUID → TEXT
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TEMPS TOTAL : 30 secondes de correction + 2 minutes de test
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+📞 BESOIN D'AIDE ?
+
+Si ça ne fonctionne pas après ces étapes :
+1. Vérifier que vous avez bien copié TOUT le code SQL
+2. Vérifier que le message "✅ CORRECTION APPLIQUÉE" s'affiche
+3. Vérifier que vous avez bien rechargé la page avec Ctrl+Shift+R
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
