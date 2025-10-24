@@ -1,124 +1,50 @@
-═══════════════════════════════════════════════════════════════
-  🚨 URGENT - EXÉCUTER CETTE MIGRATION SQL SUR SUPABASE
-═══════════════════════════════════════════════════════════════
+═══════════════════════════════════════════════════════════════════
+🚨 CORRECTION URGENTE - ERREUR 400 BLOG_POSTS
+═══════════════════════════════════════════════════════════════════
 
-ERREUR ACTUELLE:
-❌ POST toggle_automation 401 (Unauthorized)
-❌ permission denied for table job
-❌ Code: 42501
+ÉTAPE 1 : OUVRIR SUPABASE SQL EDITOR
+─────────────────────────────────────
+URL : https://supabase.com/dashboard/project/drohhxrkoequjphvabvq/sql/new
 
-CAUSE:
-Les anciennes versions de toggle_automation utilisent p_job_id (bigint)
-mais le frontend envoie automation_name (text).
 
-═══════════════════════════════════════════════════════════════
+ÉTAPE 2 : COPIER/COLLER CE CODE SQL
+─────────────────────────────────────
 
-📋 ÉTAPES (2 MINUTES):
-═══════════════════════════════════════════════════════════════
+-- Fix colonne author (UUID → TEXT)
+ALTER TABLE blog_posts
+ALTER COLUMN author TYPE TEXT USING COALESCE(author::TEXT, 'TaxiAssur');
 
-ÉTAPE 1: Aller sur Supabase Dashboard
-──────────────────────────────────────
-1. https://supabase.com/dashboard/project/drohhxrkoequjphvabvq
-2. Cliquer "SQL Editor" (menu gauche)
-3. Cliquer "+ New query"
+ALTER TABLE blog_posts
+ALTER COLUMN author SET DEFAULT 'TaxiAssur';
 
-ÉTAPE 2: Copier-Coller Cette Migration
-───────────────────────────────────────
-Copier TOUT le contenu du fichier:
-  supabase/migrations/20251023080000_fix_toggle_automation_final.sql
+ALTER TABLE blog_posts
+ALTER COLUMN author DROP NOT NULL;
 
-Ou copier directement le SQL ci-dessous:
+-- Vérification
+SELECT 'OK - Colonne author est maintenant TEXT' AS status;
 
-ÉTAPE 3: Exécuter (RUN)
-────────────────────────
-1. Cliquer "Run" (ou Ctrl+Enter)
-2. Attendre 2-3 secondes
-3. Vérifier les messages:
-   ✅ Une seule version de toggle_automation existe
-   ✅ Fonction toggle_automation(text, boolean) créée avec succès
-   ✅ FIX TOGGLE_AUTOMATION APPLIQUÉ
 
-ÉTAPE 4: Tester Dashboard
-──────────────────────────
-1. https://taxiassur.com/backoffice/auto-optimizer
-2. Ctrl+Shift+R (vider cache)
-3. Cliquer sur un switch
-4. Plus d'erreur 401 ✅
+ÉTAPE 3 : CLIQUER SUR "RUN"
+─────────────────────────────
+Vous devez voir : "OK - Colonne author est maintenant TEXT"
 
-═══════════════════════════════════════════════════════════════
 
-📄 FICHIER À EXÉCUTER:
-═══════════════════════════════════════════════════════════════
+ÉTAPE 4 : RECHARGER LA PAGE
+─────────────────────────────
+1. Retourner sur : https://taxiassur.com/backoffice/ai-generator
+2. Vider le cache : Ctrl+Shift+R (ou Cmd+Shift+R)
+3. Re-tester : Générer + Publier
 
-Fichier: supabase/migrations/20251023080000_fix_toggle_automation_final.sql
 
-Contenu: (Voir fichier ci-dessus)
+═══════════════════════════════════════════════════════════════════
+✅ APRÈS CETTE CORRECTION, L'ERREUR 400 SERA RÉSOLUE
+═══════════════════════════════════════════════════════════════════
 
-Ce fichier:
-1. ✅ Supprime les 4 anciennes versions (p_job_id)
-2. ✅ Crée la bonne version (automation_name)
-3. ✅ Ajoute SECURITY DEFINER (accès cron.job)
-4. ✅ GRANT à anon + authenticated + service_role
-5. ✅ SET search_path pour accès cron schema
-6. ✅ Gestion d'erreurs complète
+CAUSE DE L'ERREUR :
+La colonne "author" est en UUID mais l'application envoie du TEXT.
 
-═══════════════════════════════════════════════════════════════
+SOLUTION :
+Convertir la colonne en TEXT pour accepter 'TaxiAssur'.
 
-⚠️ POURQUOI LA MIGRATION SQL?
-═══════════════════════════════════════════════════════════════
-
-Le problème n'est PAS dans le code frontend (déjà corrigé ✅)
-Le problème est dans la BASE DE DONNÉES:
-
-1. Frontend envoie: toggle_automation('job-name', true)
-2. Base cherche: toggle_automation(text, boolean)
-3. Base trouve: toggle_automation(bigint, boolean) ❌ 4 versions!
-4. Erreur: "permission denied for table job"
-
-Solution: Créer toggle_automation(text, boolean) avec permissions.
-
-═══════════════════════════════════════════════════════════════
-
-🎯 APRÈS LA MIGRATION:
-═══════════════════════════════════════════════════════════════
-
-✅ 1 seule fonction toggle_automation(text, boolean)
-✅ Permissions correctes (anon peut exécuter)
-✅ SECURITY DEFINER (fonction peut accéder cron.job)
-✅ Dashboard opérationnel
-✅ Système d'automatisations activable
-
-═══════════════════════════════════════════════════════════════
-
-💬 TEST RAPIDE DANS SQL EDITOR (OPTIONNEL):
-═══════════════════════════════════════════════════════════════
-
-Après avoir exécuté la migration, tester:
-
--- Vérifier qu'une seule version existe
-SELECT 
-  proname,
-  pg_get_function_arguments(oid) as arguments
-FROM pg_proc 
-WHERE proname = 'toggle_automation';
-
--- Devrait afficher:
--- toggle_automation | automation_name text, enabled boolean
-
--- Tester la fonction (NE PAS faire si vous avez pas de job nommé 'test')
--- SELECT toggle_automation('generate-blog-articles-daily', true);
-
-═══════════════════════════════════════════════════════════════
-
-🚀 C'EST LA DERNIÈRE ÉTAPE!
-═══════════════════════════════════════════════════════════════
-
-Après cette migration:
-1. ✅ Frontend corrigé (déjà fait)
-2. ✅ Build uploadé sur IONOS (déjà fait)
-3. ✅ Base de données corrigée (cette migration)
-4. ✅ Dashboard fonctionnel
-
-→ Le système d'automatisations sera COMPLÈTEMENT opérationnel ✅
-
-═══════════════════════════════════════════════════════════════
+TEMPS : 30 secondes
+═══════════════════════════════════════════════════════════════════
