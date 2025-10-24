@@ -1,0 +1,103 @@
+╔════════════════════════════════════════════════════════════════╗
+║                                                                ║
+║   ✅ SQL EXÉCUTÉ ! MAINTENANT VIDER LE CACHE DU NAVIGATEUR    ║
+║                                                                ║
+╚════════════════════════════════════════════════════════════════╝
+
+
+Le SQL a bien été appliqué dans Supabase ✅
+Mais votre navigateur utilise encore l'ANCIEN code en cache.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ÉTAPE 1 - VIDER LE CACHE (MÉTHODE FORTE)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Ouvrir les DevTools :
+   • Windows/Linux : F12 ou Ctrl+Shift+I
+   • Mac : Cmd+Option+I
+
+2. Rester sur l'onglet Console (où vous voyez les erreurs)
+
+3. Faire un clic droit sur le bouton ⟳ (recharger) 
+   dans la barre d'adresse du navigateur
+
+4. Sélectionner : "Vider le cache et effectuer une actualisation forcée"
+   (ou "Empty Cache and Hard Reload")
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+MÉTHODE ALTERNATIVE (SI LA MÉTHODE 1 NE FONCTIONNE PAS)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Fermer COMPLÈTEMENT le navigateur
+2. Rouvrir le navigateur
+3. Aller directement sur : https://taxiassur.com/backoffice/ai-generator
+4. Appuyer sur : Ctrl+Shift+R (Windows) ou Cmd+Shift+R (Mac)
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ÉTAPE 2 - TESTER LA PUBLICATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Après avoir vidé le cache :
+
+1. Remplir le formulaire :
+   Mot-clé : assurance taxi pas cher
+   Ville : Paris
+
+2. Cliquer : "Générer TOUT le Contenu"
+   (attendre 30-60 secondes)
+
+3. Cliquer : "Publier TOUT"
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+RÉSULTAT ATTENDU (sans erreur 400)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Vous devez voir dans la console :
+
+  ✅ Article sauvegardé avec image: OUI
+  ✅ Publication réussie !
+  
+  📝 Article de blog publié ✅
+  🏙️ Page ville créée/mise à jour
+  ❓ ✅ 5-10 FAQ ajoutées
+
+
+PAS d'erreur 400 !
+PAS de "COALESCE types uuid and integer cannot be matched" !
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+POURQUOI VIDER LE CACHE ?
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Le navigateur garde en mémoire :
+- Les fichiers JavaScript compilés (.js)
+- La structure de la base de données
+- Les appels API
+
+Même si vous avez modifié la base, le navigateur utilise
+encore l'ancien code qui pense que "author" est UUID.
+
+Vider le cache = forcer le navigateur à recharger TOUT.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SI ÇA NE FONCTIONNE TOUJOURS PAS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Vérifier que le SQL a bien été exécuté dans Supabase
+   → Retour sur l'image que vous avez envoyée : ✅ "Success"
+
+2. Essayer avec un autre navigateur (Chrome, Firefox, Edge)
+   → Pour confirmer que c'est bien un problème de cache
+
+3. Vérifier dans Supabase Table Editor :
+   → Table "blog_posts" → Colonne "author" 
+   → Type doit être "text" (pas "uuid")
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
