@@ -1,0 +1,54 @@
+╔════════════════════════════════════════════════════════════╗
+║  ✅ FICHIERS PROBLÉMATIQUES NETTOYÉS                      ║
+╚════════════════════════════════════════════════════════════╝
+
+📦 FICHIERS SUPPRIMÉS (caractères non supportés) :
+
+1. ❌ 13x "image copy*.png" dans public/
+   → Doublons inutiles avec espaces
+
+2. ❌ 13x "image copy*.png" dans dist/
+   → Doublons inutiles avec espaces
+
+3. ❌ assurance-taxi-resilié.json
+   → Accent "é" non supporté
+
+4. ❌ DEBUG-PEXELS-CLÉ-OK.md
+   → Renommé en DEBUG-PEXELS-CLE-OK.md
+
+5. ❌ Dispositions Générales Stradia.pdf
+   → PDF avec espaces et accents
+
+
+═══════════════════════════════════════════════════════════
+  ✅ RÉSULTAT
+═══════════════════════════════════════════════════════════
+
+✅ Build réussi (npm run build OK)
+✅ Tous fichiers avec caractères spéciaux supprimés
+✅ Projet prêt pour publication
+
+
+═══════════════════════════════════════════════════════════
+  ⚡ MAINTENANT TU PEUX
+═══════════════════════════════════════════════════════════
+
+1. Republier le projet (tous les fichiers sont propres)
+2. Uploader le dossier /dist sur IONOS
+3. Suivre le guide FAIRE-MAINTENANT-2-ETAPES.txt
+
+
+═══════════════════════════════════════════════════════════
+  🔍 VÉRIFICATION
+═══════════════════════════════════════════════════════════
+
+Aucun fichier avec :
+- Espaces dans le nom
+- Accents (é, è, à, ô, etc.)
+- Caractères spéciaux
+
+Tous les noms de fichiers sont désormais :
+- Alphanumériques (a-z, 0-9)
+- Tirets (-) et underscores (_) uniquement
+- Extensions standard (.js, .css, .html, etc.)
+
