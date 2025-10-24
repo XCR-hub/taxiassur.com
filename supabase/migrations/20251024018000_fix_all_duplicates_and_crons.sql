@@ -8,26 +8,33 @@
 */
 
 -- =====================================================
--- PARTIE 1 : FIX CRONS BLOG
+-- PARTIE 1 : FIX CRONS BLOG (via fonctions cron)
 -- =====================================================
 
--- Désactiver tous les crons blog existants
-UPDATE cron.job
-SET active = false
-WHERE jobname IN ('generate_daily_blog_post', 'generate_blog_daily', 'test_blog_now');
+-- Supprimer tous les crons blog existants (safe)
+DO $$
+BEGIN
+  -- Supprimer generate_daily_blog_post
+  BEGIN
+    PERFORM cron.unschedule('generate_daily_blog_post');
+  EXCEPTION WHEN OTHERS THEN
+    RAISE NOTICE 'generate_daily_blog_post n''existe pas ou déjà supprimé';
+  END;
 
--- Supprimer tous les crons blog
-SELECT cron.unschedule('generate_daily_blog_post') WHERE EXISTS (
-  SELECT 1 FROM cron.job WHERE jobname = 'generate_daily_blog_post'
-);
+  -- Supprimer generate_blog_daily
+  BEGIN
+    PERFORM cron.unschedule('generate_blog_daily');
+  EXCEPTION WHEN OTHERS THEN
+    RAISE NOTICE 'generate_blog_daily n''existe pas ou déjà supprimé';
+  END;
 
-SELECT cron.unschedule('generate_blog_daily') WHERE EXISTS (
-  SELECT 1 FROM cron.job WHERE jobname = 'generate_blog_daily'
-);
-
-SELECT cron.unschedule('test_blog_now') WHERE EXISTS (
-  SELECT 1 FROM cron.job WHERE jobname = 'test_blog_now'
-);
+  -- Supprimer test_blog_now
+  BEGIN
+    PERFORM cron.unschedule('test_blog_now');
+  EXCEPTION WHEN OTHERS THEN
+    RAISE NOTICE 'test_blog_now n''existe pas ou déjà supprimé';
+  END;
+END $$;
 
 -- Recréer UN SEUL cron blog (1x/jour à 10h)
 SELECT cron.schedule(
@@ -40,6 +47,17 @@ SELECT cron.schedule(
 -- PARTIE 2 : CONTRAINTES ANTI-DOUBLONS BLOG
 -- =====================================================
 
+-- Supprimer les doublons AVANT d'ajouter la contrainte
+DELETE FROM blog_posts
+WHERE id IN (
+  SELECT id FROM (
+    SELECT
+      id,
+      ROW_NUMBER() OVER (PARTITION BY slug ORDER BY created_at DESC) as rn
+    FROM blog_posts
+  ) t WHERE rn > 1
+);
+
 -- Ajouter contrainte unique sur slug (si pas déjà existante)
 DO $$
 BEGIN
@@ -49,12 +67,26 @@ BEGIN
   ) THEN
     ALTER TABLE blog_posts
     ADD CONSTRAINT blog_posts_slug_unique UNIQUE (slug);
+    RAISE NOTICE '✅ Contrainte UNIQUE ajoutée sur blog_posts.slug';
+  ELSE
+    RAISE NOTICE '✅ Contrainte UNIQUE déjà existante sur blog_posts.slug';
   END IF;
 END $$;
 
 -- =====================================================
 -- PARTIE 3 : CONTRAINTES ANTI-DOUBLONS CITY PAGES
 -- =====================================================
+
+-- Supprimer les doublons AVANT d'ajouter la contrainte
+DELETE FROM city_pages
+WHERE id IN (
+  SELECT id FROM (
+    SELECT
+      id,
+      ROW_NUMBER() OVER (PARTITION BY slug ORDER BY created_at DESC) as rn
+    FROM city_pages
+  ) t WHERE rn > 1
+);
 
 -- Ajouter contrainte unique sur slug city_pages
 DO $$
@@ -65,6 +97,9 @@ BEGIN
   ) THEN
     ALTER TABLE city_pages
     ADD CONSTRAINT city_pages_slug_unique UNIQUE (slug);
+    RAISE NOTICE '✅ Contrainte UNIQUE ajoutée sur city_pages.slug';
+  ELSE
+    RAISE NOTICE '✅ Contrainte UNIQUE déjà existante sur city_pages.slug';
   END IF;
 END $$;
 
@@ -92,10 +127,12 @@ CREATE INDEX IF NOT EXISTS idx_pexels_used_query ON pexels_images_used(search_qu
 -- RLS
 ALTER TABLE pexels_images_used ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Allow service role full access on pexels" ON pexels_images_used
+DROP POLICY IF EXISTS "service_role_full_access_pexels" ON pexels_images_used;
+CREATE POLICY "service_role_full_access_pexels" ON pexels_images_used
   FOR ALL TO service_role USING (true) WITH CHECK (true);
 
-CREATE POLICY "Allow anon read pexels" ON pexels_images_used
+DROP POLICY IF EXISTS "anon_read_pexels" ON pexels_images_used;
+CREATE POLICY "anon_read_pexels" ON pexels_images_used
   FOR SELECT TO anon USING (true);
 
 -- =====================================================
@@ -104,7 +141,7 @@ CREATE POLICY "Allow anon read pexels" ON pexels_images_used
 
 CREATE OR REPLACE FUNCTION check_pexels_image_not_used(
   p_pexels_id TEXT,
-  p_search_query TEXT
+  p_search_query TEXT DEFAULT NULL
 ) RETURNS BOOLEAN AS $$
 DECLARE
   v_count INTEGER;
@@ -153,33 +190,7 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- =====================================================
--- PARTIE 7 : NETTOYER LES DOUBLONS EXISTANTS
--- =====================================================
-
--- Supprimer doublons blog_posts (garde le plus récent)
-DELETE FROM blog_posts
-WHERE id IN (
-  SELECT id FROM (
-    SELECT
-      id,
-      ROW_NUMBER() OVER (PARTITION BY slug ORDER BY created_at DESC) as rn
-    FROM blog_posts
-  ) t WHERE rn > 1
-);
-
--- Supprimer doublons city_pages (garde le plus récent)
-DELETE FROM city_pages
-WHERE id IN (
-  SELECT id FROM (
-    SELECT
-      id,
-      ROW_NUMBER() OVER (PARTITION BY slug ORDER BY created_at DESC) as rn
-    FROM city_pages
-  ) t WHERE rn > 1
-);
-
--- =====================================================
--- PARTIE 8 : TRIGGER POUR BLOQUER DOUBLONS
+-- PARTIE 7 : TRIGGER POUR BLOQUER DOUBLONS
 -- =====================================================
 
 -- Trigger pour blog_posts
@@ -191,7 +202,8 @@ BEGIN
     WHERE slug = NEW.slug AND id != COALESCE(NEW.id, 0)
   ) THEN
     -- Ajouter timestamp au slug pour le rendre unique
-    NEW.slug := NEW.slug || '-' || EXTRACT(EPOCH FROM NOW())::TEXT;
+    NEW.slug := NEW.slug || '-' || EXTRACT(EPOCH FROM NOW())::BIGINT::TEXT;
+    RAISE NOTICE 'Slug modifié pour éviter doublon: %', NEW.slug;
   END IF;
   RETURN NEW;
 END;
@@ -212,7 +224,8 @@ BEGIN
     WHERE slug = NEW.slug AND id != COALESCE(NEW.id, 0)
   ) THEN
     -- Ajouter timestamp au slug pour le rendre unique
-    NEW.slug := NEW.slug || '-' || EXTRACT(EPOCH FROM NOW())::TEXT;
+    NEW.slug := NEW.slug || '-' || EXTRACT(EPOCH FROM NOW())::BIGINT::TEXT;
+    RAISE NOTICE 'Slug modifié pour éviter doublon: %', NEW.slug;
   END IF;
   RETURN NEW;
 END;
@@ -225,16 +238,16 @@ CREATE TRIGGER trigger_prevent_duplicate_city_slug
   EXECUTE FUNCTION prevent_duplicate_city_slug();
 
 -- =====================================================
--- PARTIE 9 : GRANT PERMISSIONS
+-- PARTIE 8 : GRANT PERMISSIONS
 -- =====================================================
 
-GRANT EXECUTE ON FUNCTION check_pexels_image_not_used TO service_role;
+GRANT EXECUTE ON FUNCTION check_pexels_image_not_used TO service_role, anon;
 GRANT EXECUTE ON FUNCTION register_pexels_image_used TO service_role;
 GRANT EXECUTE ON FUNCTION prevent_duplicate_blog_slug TO service_role;
 GRANT EXECUTE ON FUNCTION prevent_duplicate_city_slug TO service_role;
 
 -- =====================================================
--- PARTIE 10 : VÉRIFICATION FINALE
+-- PARTIE 9 : VÉRIFICATION FINALE
 -- =====================================================
 
 DO $$
@@ -242,9 +255,11 @@ DECLARE
   v_blog_crons INTEGER;
   v_blog_duplicates INTEGER;
   v_city_duplicates INTEGER;
+  v_cron_names TEXT;
 BEGIN
   -- Compter les crons blog actifs
-  SELECT COUNT(*) INTO v_blog_crons
+  SELECT COUNT(*), string_agg(jobname, ', ')
+  INTO v_blog_crons, v_cron_names
   FROM cron.job
   WHERE jobname LIKE '%blog%' AND active = true;
 
@@ -267,9 +282,13 @@ BEGIN
   ) t;
 
   -- Log résultat
-  RAISE NOTICE '✅ Crons blog actifs: % (devrait être 1)', v_blog_crons;
+  RAISE NOTICE '════════════════════════════════════════';
+  RAISE NOTICE '✅ Crons blog actifs: % → %', v_blog_crons, COALESCE(v_cron_names, 'aucun');
   RAISE NOTICE '✅ Doublons blog: % (devrait être 0)', v_blog_duplicates;
   RAISE NOTICE '✅ Doublons city_pages: % (devrait être 0)', v_city_duplicates;
+  RAISE NOTICE '✅ Table pexels_images_used créée';
+  RAISE NOTICE '✅ Triggers anti-doublons activés';
+  RAISE NOTICE '════════════════════════════════════════';
 
   -- Insérer dans le log
   INSERT INTO cron_execution_log (job_name, status, details)
@@ -278,9 +297,10 @@ BEGIN
     'success',
     jsonb_build_object(
       'blog_crons', v_blog_crons,
+      'cron_names', v_cron_names,
       'blog_duplicates', v_blog_duplicates,
       'city_duplicates', v_city_duplicates,
-      'message', 'Système anti-doublons activé'
+      'message', 'Système anti-doublons activé avec succès'
     )
   );
 END $$;
