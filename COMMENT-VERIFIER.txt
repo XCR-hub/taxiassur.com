@@ -1,0 +1,107 @@
+
+╔══════════════════════════════════════════════════════════════════════╗
+║                                                                      ║
+║               🔧 ERREURS 401 - CORRECTION IMMÉDIATE                 ║
+║                                                                      ║
+╚══════════════════════════════════════════════════════════════════════╝
+
+DIAGNOSTIC:
+Les erreurs 401 indiquent que les politiques RLS (Row Level Security)
+de Supabase bloquent l'accès public aux données.
+
+ERREURS DÉTECTÉES:
+❌ automation_status → 401
+❌ analytics_sessions → 401
+❌ page_views → 401
+❌ blog-articles (edge function) → 401
+
+══════════════════════════════════════════════════════════════════════
+
+SOLUTION: Exécuter 3 fichiers SQL dans Supabase
+
+══════════════════════════════════════════════════════════════════════
+
+ÉTAPE 1: CRÉER LES TABLES (si pas déjà fait)
+─────────────────────────────────────────────
+
+Fichier: SUPABASE-REPAIR-FINAL.sql
+
+1. Va sur: https://drohhxrkoequjphvabvq.supabase.co
+2. SQL Editor → New query
+3. Copie-colle tout le fichier
+4. RUN
+
+✅ Résultat: "Success"
+
+══════════════════════════════════════════════════════════════════════
+
+ÉTAPE 2: FIXER LES POLITIQUES RLS (NOUVEAU)
+────────────────────────────────────────────
+
+Fichier: FIX-RLS-PUBLIC-ACCESS.sql
+
+1. SQL Editor → New query
+2. Copie-colle tout le fichier
+3. RUN
+
+✅ Résultat: "Success"
+
+Ce que ça fait:
+- ✅ Autorise la lecture publique des articles publiés
+- ✅ Autorise la lecture publique des FAQ
+- ✅ Autorise la lecture des stats pour le dashboard
+- ✅ Crée les fonctions RPC pour les statistiques
+- ⚠️  Garde les écritures réservées aux utilisateurs authentifiés
+
+══════════════════════════════════════════════════════════════════════
+
+ÉTAPE 3: INSÉRER LES 24 ARTICLES
+─────────────────────────────────
+
+Fichier: INSERT-24-ARTICLES-BLOG.sql
+
+1. SQL Editor → New query
+2. Copie-colle tout le fichier (1256 lignes)
+3. RUN (attends 20-30 secondes)
+
+✅ Résultat: "Success. INSERT 0 24"
+
+══════════════════════════════════════════════════════════════════════
+
+VÉRIFICATION:
+─────────────
+
+Dans SQL Editor, teste:
+
+1. SELECT COUNT(*) FROM blog_posts;
+   → Devrait retourner: 24
+
+2. SELECT COUNT(*) FROM faq_entries;
+   → Devrait retourner: 8+ (FAQ générales)
+
+3. SELECT * FROM blog_posts LIMIT 1;
+   → Devrait afficher un article complet
+
+══════════════════════════════════════════════════════════════════════
+
+ENSUITE: REBUILD ET UPLOAD
+───────────────────────────
+
+Le code React est déjà bon, il suffit de:
+
+1. Upload dist/ sur IONOS via FTP
+2. Teste https://taxiassur.com/blog
+3. Teste https://taxiassur.com/backoffice (les erreurs 401 disparaissent)
+
+══════════════════════════════════════════════════════════════════════
+
+📋 ORDRE D'EXÉCUTION DES 3 FICHIERS:
+
+1️⃣  SUPABASE-REPAIR-FINAL.sql       (crée les tables)
+2️⃣  FIX-RLS-PUBLIC-ACCESS.sql       (fixe les permissions)
+3️⃣  INSERT-24-ARTICLES-BLOG.sql     (insère les données)
+
+══════════════════════════════════════════════════════════════════════
+
+⏱️ TEMPS TOTAL: 8 MINUTES
+

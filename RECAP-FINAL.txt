@@ -1,0 +1,114 @@
+╔═══════════════════════════════════════════════════════════════════════════╗
+║                    🚨 3 ERREURS À CORRIGER - 20 MIN                       ║
+╚═══════════════════════════════════════════════════════════════════════════╝
+
+## ❌ Erreurs Visibles dans la Console
+
+1. SyntaxError: VITE_INDEXNOW_KEY
+2. ReferenceError: Cannot access 'Yn'
+3. POST /api/generate-content.php 500 (OpenAI invalide)
+
+═══════════════════════════════════════════════════════════════════════════
+
+## ✅ SOLUTION EN 4 ÉTAPES (DANS L'ORDRE)
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│ ÉTAPE 1 : Créer Nouvelle Clé OpenAI (5 min)                            │
+├─────────────────────────────────────────────────────────────────────────┤
+│ 1. https://platform.openai.com/api-keys                                │
+│ 2. "Create new secret key"                                              │
+│ 3. Nom : TaxiAssur Production                                           │
+│ 4. COPIEZ la clé : sk-proj-XXXX...                                     │
+│                                                                          │
+│ 5. Ouvrez /public/api/config.php                                       │
+│ 6. Lignes 33-34 : remplacez par votre nouvelle clé                     │
+└─────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│ ÉTAPE 2 : Nettoyer le Serveur IONOS (2 min)                            │
+├─────────────────────────────────────────────────────────────────────────┤
+│ Via FTP, SUPPRIMEZ à la racine :                                        │
+│   • /index.html (ancien)                                                │
+│   • /assets/ (ancien dossier)                                           │
+│   • /env-config.js (ancien fichier)                                     │
+└─────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│ ÉTAPE 3 : Upload Complet (10 min)                                      │
+├─────────────────────────────────────────────────────────────────────────┤
+│ Uploadez TOUT depuis /dist/ vers la racine IONOS :                     │
+│                                                                          │
+│   /dist/index.html        →  /index.html                               │
+│   /dist/assets/           →  /assets/                                  │
+│   /dist/favicon.ico       →  /favicon.ico                              │
+│   /dist/robots.txt        →  /robots.txt                               │
+│   /dist/manifest.json     →  /manifest.json                            │
+│                                                                          │
+│ ET :                                                                     │
+│   /public/api/config.php  →  /api/config.php (avec nouvelle clé)      │
+└─────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│ ÉTAPE 4 : Tests (3 min)                                                │
+├─────────────────────────────────────────────────────────────────────────┤
+│ 1. Videz cache : Ctrl+Shift+R (ou Cmd+Shift+R)                        │
+│ 2. Test config : https://taxiassur.com/api/test-debug-complet.php     │
+│    → Doit afficher "✅ ALL OK"                                         │
+│                                                                          │
+│ 3. Test console : F12 sur https://taxiassur.com                       │
+│    → ✅ "Configuration chargée"                                        │
+│    → ❌ Pas d'erreur SyntaxError                                       │
+│    → ❌ Pas d'erreur ReferenceError                                    │
+│                                                                          │
+│ 4. Test génération : /backoffice/ai-generator                         │
+│    → Mot-clé : "assurance taxi"                                        │
+│    → ✅ Génère SANS erreur 500                                         │
+└─────────────────────────────────────────────────────────────────────────┘
+
+═══════════════════════════════════════════════════════════════════════════
+
+## 🔍 POURQUOI CES ERREURS ?
+
+Erreur 1 : SyntaxError VITE_INDEXNOW_KEY
+  → Ancien env-config.js avec ligne mal formatée
+  → Fix : Supprimer le fichier
+
+Erreur 2 : Cannot access 'Yn'
+  → Build incomplet/corrompu uploadé
+  → Fix : Upload complet du nouveau build
+
+Erreur 3 : OpenAI 500
+  → Clé invalide (testée avec curl)
+  → Fix : Nouvelle clé OpenAI
+
+═══════════════════════════════════════════════════════════════════════════
+
+## 📊 ÉTAT ACTUEL
+
+Backend PHP      : ✅ Fonctionne
+Supabase         : ✅ URL corrigée
+Frontend Build   : ✅ Prêt (18.25s)
+Clé OpenAI       : ❌ Invalide (à remplacer)
+Upload           : ❌ À faire
+
+═══════════════════════════════════════════════════════════════════════════
+
+## ✅ CHECKLIST RAPIDE
+
+- [ ] 1. Clé OpenAI créée
+- [ ] 2. config.php modifié (lignes 33-34)
+- [ ] 3. Ancien /assets/ supprimé sur IONOS
+- [ ] 4. Ancien /index.html supprimé sur IONOS
+- [ ] 5. Ancien /env-config.js supprimé sur IONOS
+- [ ] 6. Nouveau /dist/* uploadé
+- [ ] 7. config.php uploadé
+- [ ] 8. Cache vidé (Ctrl+Shift+R)
+- [ ] 9. Test console → Pas d'erreur
+- [ ] 10. Test génération → Fonctionne
+
+═══════════════════════════════════════════════════════════════════════════
+
+📖 GUIDE DÉTAILLÉ : CORRECTION-ERREUR-500-API.md
+
+Temps total estimé : 20 minutes
+Build : 18.25s | 0 erreur ✅

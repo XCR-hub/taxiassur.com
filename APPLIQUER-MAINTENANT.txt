@@ -1,0 +1,27 @@
+🚨 ERREUR PERSISTANTE - ACTION IMMÉDIATE REQUISE
+
+ERROR: column "average_position" does not exist
+
+✅ SOLUTION: Appliquer migration 20251016095000
+
+📋 PROCÉDURE (2 MIN):
+
+1. Ouvrir Supabase SQL Editor
+   https://supabase.com/dashboard/project/drohhxrkoequjphvabvq
+
+2. Copier fichier:
+   supabase/migrations/20251016095000_fix_seo_metrics_columns_simple.sql
+
+3. Coller dans SQL Editor
+
+4. Cliquer RUN
+
+5. Vérifier NOTICE messages
+
+6. Tester: SELECT populate_real_seo_metrics();
+
+✅ RÉSULTAT ATTENDU: Aucune erreur
+
+📖 GUIDE DÉTAILLÉ: FIX-URGENT-AVERAGE-POSITION.md
+
+🚀 C'EST LA DERNIÈRE MIGRATION !

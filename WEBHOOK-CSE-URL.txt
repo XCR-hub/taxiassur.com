@@ -1,0 +1,85 @@
+═══════════════════════════════════════════════════════════════════════
+          📍 URL WEBHOOK GOOGLE SEARCH CONSOLE - CONFIGURATION
+═══════════════════════════════════════════════════════════════════════
+
+🔗 TON URL WEBHOOK (À COPIER)
+══════════════════════════════
+
+https://drohhxrkoequjphvabvq.supabase.co/functions/v1/seo-webhook-receiver
+
+⚠️ Copie cette URL EXACTEMENT (avec le https://)
+
+═══════════════════════════════════════════════════════════════════════
+
+📋 OÙ LA CONFIGURER ? (3 ÉTAPES)
+═════════════════════════════════
+
+ÉTAPE 1 : Google Search Console
+→ https://search.google.com/search-console
+→ Sélectionne ta propriété : taxiassur.fr
+
+ÉTAPE 2 : Paramètres → Notifications
+→ Menu gauche : Clique "Paramètres" (⚙️)
+→ Onglet "Autres paramètres"
+→ Section "Notifications"
+→ Clique "Ajouter un webhook"
+
+ÉTAPE 3 : Colle l'URL et Active
+→ Champ URL : Colle l'URL ci-dessus
+→ Sélectionne les événements :
+  ✅ Erreurs d'indexation
+  ✅ Changements de statut
+  ✅ Problèmes de sécurité
+→ Clique "Envoyer un test"
+→ Si test réussi ✅ → Clique "Enregistrer"
+
+═══════════════════════════════════════════════════════════════════════
+
+🔍 VÉRIFICATION IMMÉDIATE
+═════════════════════════
+
+Après configuration, vérifie dans Supabase :
+→ https://drohhxrkoequjphvabvq.supabase.co
+→ Table Editor → Table "seo_webhook_logs"
+→ Tu dois voir les notifications reçues ✅
+
+Ou dans ton Backoffice :
+→ https://taxiassur.fr/backoffice/seo
+→ Le message "Webhook non configuré" disparaît
+
+═══════════════════════════════════════════════════════════════════════
+
+📊 CE QUE LE WEBHOOK REÇOIT
+════════════════════════════
+
+Le webhook reçoit automatiquement :
+✅ Erreurs d'indexation (404, 500, etc.)
+✅ Pages nouvellement indexées
+✅ Problèmes de sécurité détectés
+✅ Changements de statut
+✅ Performances (si activé)
+
+Toutes les notifications sont enregistrées et traitées automatiquement !
+
+═══════════════════════════════════════════════════════════════════════
+
+📚 GUIDE COMPLET
+════════════════
+
+Pour plus de détails, voir :
+→ GUIDE-CONFIGURATION-WEBHOOK-GOOGLE-SEARCH-CONSOLE.md
+
+═══════════════════════════════════════════════════════════════════════
+
+🎯 RÉSUMÉ ULTRA-RAPIDE
+══════════════════════
+
+1. Copie l'URL webhook (ci-dessus)
+2. Google Search Console → Paramètres → Notifications → Ajouter webhook
+3. Colle l'URL + Sélectionne événements + Test + Enregistrer
+
+C'EST TOUT ! 🎉
+
+Ton système reçoit maintenant les notifications de Google automatiquement.
+
+═══════════════════════════════════════════════════════════════════════

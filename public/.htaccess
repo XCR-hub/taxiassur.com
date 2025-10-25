@@ -25,15 +25,6 @@
     RewriteCond %{HTTP_HOST} ^www\.taxiassur\.com [NC]
     RewriteRule ^(.*)$ https://taxiassur.com/$1 [L,R=301]
 
-    # REDIRECTIONS 301 - Anciennes URLs vers nouvelles
-    # Fix pour Google Search Console : "Page avec redirection"
-
-    # Rediriger /taxi-* vers /assurance-taxi-*
-    RewriteRule ^taxi-(.*)$ /assurance-taxi-$1 [L,R=301]
-
-    # Rediriger /ville/* vers /assurance-taxi-*
-    RewriteRule ^ville/(.*)$ /assurance-taxi-$1 [L,R=301]
-
     # Exclure les fichiers assets (CSS, JS, images, fonts)
     RewriteCond %{REQUEST_URI} !^/assets/
     RewriteCond %{REQUEST_URI} !^/content/
