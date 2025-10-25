@@ -1,0 +1,49 @@
+🔧 FIX ERREUR 401 - toggle_automation
+
+════════════════════════════════════════════════
+
+PROBLÈME
+════════
+❌ Page backoffice en erreur 401
+❌ Console: "permission denied for table job"
+❌ Erreur sur: POST .../rpc/toggle_automation
+
+CAUSE
+═════
+La fonction toggle_automation n'a PAS "SECURITY DEFINER"
+→ Elle ne peut pas accéder à cron.job
+
+SOLUTION (30 SECONDES)
+══════════════════════
+
+1. Ouvrir Supabase SQL Editor
+   https://supabase.com/dashboard/project/drohhxrkoequjphvabvq/sql
+
+2. + New Query
+
+3. Copier/Coller TOUT le fichier:
+   FIX-TOGGLE-AUTOMATION-401-FINAL.sql
+
+4. RUN
+
+5. Vérifier 8 résultats:
+   - Résultat 1: État actuel (❌ NON pour toggle_automation)
+   - Résultat 4: Nouvelle fonction (✅ OUI)
+   - Résultats 5-7: Tests OK
+   - Résultat 8: 53/53 actifs
+
+6. Tester backoffice:
+   https://taxiassur.com/backoffice/auto-optimizer
+   
+   - Ctrl+Shift+R (vider cache)
+   - Cliquer sur un switch ✅
+   - Plus d'erreur 401 ✅
+
+════════════════════════════════════════════════
+
+PAS BESOIN DE REBUILD ! ✅
+
+Le problème est uniquement côté Supabase.
+Le fix SQL suffit.
+
+Durée: 30 secondes

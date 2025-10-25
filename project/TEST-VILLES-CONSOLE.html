@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Test Villes Supabase</title>
+</head>
+<body>
+  <h1>Test Chargement Villes depuis Supabase</h1>
+  <div id="results"></div>
+
+  <script type="module">
+    // Configuration Supabase
+    const SUPABASE_URL = 'https://drohhxrkoequjphvabvq.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRyb2hoeHJrb2VxdWpwaHZhYnZxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk3ODM3NjAsImV4cCI6MjA3NTM1OTc2MH0.LP9fh10fY0nRDjpG4VW2yGZ5sT4BkiDalox8ToMbMlg';
+
+    const resultsDiv = document.getElementById('results');
+
+    // Test 1: Charger avec fetch direct
+    resultsDiv.innerHTML += '<h2>Test 1: Fetch Direct</h2>';
+
+    try {
+      const response = await fetch(`${SUPABASE_URL}/rest/v1/city_pages?status=eq.published&select=*&order=taxi_count.desc`, {
+        headers: {
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+        }
+      });
+
+      const data = await response.json();
+
+      resultsDiv.innerHTML += `<p><strong>Status:</strong> ${response.status}</p>`;
+      resultsDiv.innerHTML += `<p><strong>Nombre de villes:</strong> ${data.length || 0}</p>`;
+
+      if (data.length > 0) {
+        resultsDiv.innerHTML += '<h3>Premières villes:</h3><ul>';
+        data.slice(0, 5).forEach(ville => {
+          resultsDiv.innerHTML += `<li>${ville.city || ville.city_name || 'Sans nom'} - ${ville.region || 'Sans région'} - Status: ${ville.status}</li>`;
+        });
+        resultsDiv.innerHTML += '</ul>';
+      } else {
+        resultsDiv.innerHTML += '<p style="color: red;">❌ Aucune ville trouvée</p>';
+        resultsDiv.innerHTML += '<p>Réponse complète: ' + JSON.stringify(data, null, 2) + '</p>';
+      }
+    } catch (error) {
+      resultsDiv.innerHTML += `<p style="color: red;">❌ Erreur: ${error.message}</p>`;
+    }
+
+    // Test 2: Vérifier structure table
+    resultsDiv.innerHTML += '<h2>Test 2: Structure Table</h2>';
+
+    try {
+      const response = await fetch(`${SUPABASE_URL}/rest/v1/city_pages?limit=1&select=*`, {
+        headers: {
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+        }
+      });
+
+      const data = await response.json();
+
+      if (data.length > 0) {
+        resultsDiv.innerHTML += '<p><strong>Colonnes disponibles:</strong></p><ul>';
+        Object.keys(data[0]).forEach(col => {
+          resultsDiv.innerHTML += `<li>${col}: ${typeof data[0][col]}</li>`;
+        });
+        resultsDiv.innerHTML += '</ul>';
+      }
+    } catch (error) {
+      resultsDiv.innerHTML += `<p style="color: red;">❌ Erreur: ${error.message}</p>`;
+    }
+
+    // Test 3: Toutes les villes (sans filtre status)
+    resultsDiv.innerHTML += '<h2>Test 3: Toutes les Villes (sans filtre)</h2>';
+
+    try {
+      const response = await fetch(`${SUPABASE_URL}/rest/v1/city_pages?select=*&order=created_at.desc`, {
+        headers: {
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+        }
+      });
+
+      const data = await response.json();
+      resultsDiv.innerHTML += `<p><strong>Total villes (tous statuts):</strong> ${data.length || 0}</p>`;
+
+      if (data.length > 0) {
+        // Grouper par statut
+        const parStatut = {};
+        data.forEach(v => {
+          const statut = v.status || 'null';
+          parStatut[statut] = (parStatut[statut] || 0) + 1;
+        });
+
+        resultsDiv.innerHTML += '<p><strong>Par statut:</strong></p><ul>';
+        Object.entries(parStatut).forEach(([statut, count]) => {
+          resultsDiv.innerHTML += `<li>${statut}: ${count}</li>`;
+        });
+        resultsDiv.innerHTML += '</ul>';
+      }
+    } catch (error) {
+      resultsDiv.innerHTML += `<p style="color: red;">❌ Erreur: ${error.message}</p>`;
+    }
+  </script>
+</body>
+</html>

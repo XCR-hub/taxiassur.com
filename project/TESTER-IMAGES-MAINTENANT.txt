@@ -1,0 +1,200 @@
+═══════════════════════════════════════════════════════════════════════════
+🖼️ TESTER IMAGES PEXELS - GUIDE IMMÉDIAT
+═══════════════════════════════════════════════════════════════════════════
+
+✅ LE CODE EST PARFAIT !
+
+J'ai analysé TOUT le code :
+   ✅ Edge Function génère l'image Pexels
+   ✅ Frontend affiche l'image dans aperçu
+   ✅ Database sauve l'image (featured_image)
+   ✅ Blog post affiche l'image (coverImage)
+   ✅ Mapping complet featuredImage → featured_image → coverImage
+
+Le problème est : IMAGE GÉNÉRÉE MAIS PAS VISIBLE
+
+═══════════════════════════════════════════════════════════════════════════
+🎯 TEST IMMÉDIAT (2 MINUTES)
+═══════════════════════════════════════════════════════════════════════════
+
+1. OUVRIR : https://taxiassur.com/backoffice/ai-generator
+
+2. OUVRIR CONSOLE NAVIGATEUR : F12 (Onglet "Console")
+
+3. REMPLIR FORMULAIRE :
+   Mot-clé : assurance taxi
+   Ville : Lyon
+   Prompt image : (laisser vide = auto)
+
+4. CLIQUER : "Générer TOUT le Contenu"
+
+5. ATTENDRE : 30-60 secondes
+
+6. REGARDER CONSOLE :
+   Chercher : "🖼️ DEBUG IMAGE PEXELS"
+
+═══════════════════════════════════════════════════════════════════════════
+📊 RÉSULTATS POSSIBLES
+═══════════════════════════════════════════════════════════════════════════
+
+CAS A : hasImage: true + imageUrl: "https://images.pexels.com/..."
+   ✅ Image générée avec succès !
+   ✅ Devrait être visible dans aperçu
+
+   SI PAS VISIBLE DANS APERÇU :
+   → Scroll down dans la page
+   → Chercher section "Image SEO Générée"
+   → Si toujours pas visible : problème CSS ou CSP
+
+CAS B : hasImage: false + imageUrl: "undefined..."
+   ❌ Image NON générée
+
+   CAUSES POSSIBLES :
+   1. Clé PEXELS_API_KEY non configurée
+   2. Clé invalide
+   3. Erreur API Pexels
+
+   SOLUTION :
+   → Voir guide : DIAGNOSTIC-IMAGES-PEXELS.md
+
+═══════════════════════════════════════════════════════════════════════════
+🔍 DIAGNOSTIC APPROFONDI
+═══════════════════════════════════════════════════════════════════════════
+
+Si hasImage: false, vérifier Edge Function logs :
+
+1. Supabase Dashboard
+
+2. Edge Functions → generate-seo-content
+
+3. Logs (dernières 24h)
+
+4. Chercher :
+   ✅ "🖼️ Génération image Pexels..."
+   ✅ "✅ Image générée: https://..."
+
+   OU
+
+   ⚠️ "⚠️ Pexels API key not configured"
+   ❌ "❌ Pexels API error: 401"
+
+═══════════════════════════════════════════════════════════════════════════
+🛠️ SI CLÉS PEXELS MANQUANTE
+═══════════════════════════════════════════════════════════════════════════
+
+1. CRÉER COMPTE
+   → https://www.pexels.com/api/
+   → Sign Up (gratuit)
+   → Confirmer email
+
+2. OBTENIR API KEY
+   → https://www.pexels.com/api/new/
+   → Project Name : TaxiAssur
+   → Description : "Images pour blog"
+   → Copier la clé
+
+3. CONFIGURER SUPABASE
+   → Settings → Vault → Secrets
+   → New secret
+   → Name : PEXELS_API_KEY
+   → Secret : [coller votre clé]
+   → Save
+
+4. TESTER IMMÉDIATEMENT
+   → Retour sur /backoffice/ai-generator
+   → Générer nouveau contenu
+   → Vérifier console : hasImage devrait être true
+
+═══════════════════════════════════════════════════════════════════════════
+✅ CE QUI VA SE PASSER APRÈS CONFIG
+═══════════════════════════════════════════════════════════════════════════
+
+APERÇU GÉNÉRATEUR :
+   ✅ Section "Image SEO Générée" apparaît
+   ✅ Photo haute qualité 1920x1080
+   ✅ Alt SEO descriptif
+   ✅ URL https://images.pexels.com/...
+
+APRÈS PUBLICATION :
+   ✅ Page blog (/blog) : carte avec image
+   ✅ Article complet : image en tête
+   ✅ Responsive mobile
+   ✅ SEO optimisé
+
+AUTOMATISATIONS :
+   ✅ Tous futurs articles auront image auto
+   ✅ 0 action manuelle
+   ✅ Haute qualité garantie
+   ✅ 100% libres de droits
+
+═══════════════════════════════════════════════════════════════════════════
+📸 EXEMPLES D'IMAGES PEXELS
+═══════════════════════════════════════════════════════════════════════════
+
+Pour "assurance taxi Paris" :
+   → Photos taxis parisiens professionnels
+   → Voitures noires premium (Mercedes, Tesla)
+   → Éclairage urbain, qualité cinématique
+   → Résolution 1920x1080 minimum
+
+Pour "assurance taxi Lyon" :
+   → Taxis villes françaises
+   → Ambiance locale
+   → Style moderne et professionnel
+
+═══════════════════════════════════════════════════════════════════════════
+🎯 CHECKLIST RAPIDE
+═══════════════════════════════════════════════════════════════════════════
+
+- [ ] Console ouverte (F12)
+- [ ] Générateur IA ouvert (/backoffice/ai-generator)
+- [ ] Contenu généré (attendre 30-60 sec)
+- [ ] Cherché "DEBUG IMAGE PEXELS" dans console
+- [ ] Noté résultat : hasImage true ou false
+
+SI hasImage: true
+   - [ ] Scroll down dans aperçu
+   - [ ] Section "Image SEO Générée" visible
+   - [ ] Image affichée haute qualité
+
+SI hasImage: false
+   - [ ] Ouvert Supabase Edge Functions logs
+   - [ ] Cherché message erreur Pexels
+   - [ ] Vérifié PEXELS_API_KEY dans Vault
+
+═══════════════════════════════════════════════════════════════════════════
+📞 RÉSULTAT DU TEST
+═══════════════════════════════════════════════════════════════════════════
+
+Après le test, vous aurez la réponse :
+
+✅ CAS 1 : hasImage: true
+   → Images fonctionnent !
+   → Si pas visible dans UI : problème affichage
+   → Guide : DIAGNOSTIC-IMAGES-PEXELS.md section "CAS 3"
+
+❌ CAS 2 : hasImage: false
+   → Clé Pexels manquante/invalide
+   → Configurer selon guide ci-dessus
+   → Retester immédiatement
+
+═══════════════════════════════════════════════════════════════════════════
+🚀 PROCHAINE ÉTAPE
+═══════════════════════════════════════════════════════════════════════════
+
+FAITES LE TEST MAINTENANT (2 minutes) :
+
+1. F12 (console)
+2. /backoffice/ai-generator
+3. Générer contenu
+4. Regarder console
+5. Note résultat ici : _________________
+
+Puis contactez-moi avec :
+   • Screenshot console (DEBUG IMAGE PEXELS)
+   • Screenshot aperçu générateur
+   • Logs Edge Function (si hasImage: false)
+
+Je vous donnerai la solution exacte ! 🎯
+
+═══════════════════════════════════════════════════════════════════════════

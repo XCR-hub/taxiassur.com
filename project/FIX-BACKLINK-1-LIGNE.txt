@@ -1,0 +1,17 @@
+╔══════════════════════════════════════════════════════════════╗
+║  🔧 FIX EN 1 LIGNE: VOIR STRUCTURE TABLE                    ║
+╚══════════════════════════════════════════════════════════════╝
+
+⚡ EXÉCUTER DANS SUPABASE SQL:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+SELECT column_name, data_type 
+FROM information_schema.columns
+WHERE table_name = 'backlink_opportunities'
+ORDER BY ordinal_position;
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Copiez le résultat ici pour que je crée l'INSERT correct!
+
+╚══════════════════════════════════════════════════════════════╝

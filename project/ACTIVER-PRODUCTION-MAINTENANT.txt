@@ -1,0 +1,230 @@
+╔══════════════════════════════════════════════════════════════╗
+║  ⚡ ACTIVATION MODE PRODUCTION - 3 ÉTAPES (30 SECONDES)    ║
+╚══════════════════════════════════════════════════════════════╝
+
+📋 ACTION IMMÉDIATE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+ÉTAPE 1: Ouvrir Supabase SQL Editor
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Aller sur:
+   https://supabase.com/dashboard/project/drohhxrkoequjphvabvq/sql/new
+
+2. Vous devez être connecté à votre compte Supabase
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+ÉTAPE 2: Copier-Coller ce SQL (10 secondes)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+-- ACTIVATION MODE PRODUCTION
+UPDATE automation_config 
+SET 
+  config = jsonb_set(
+    jsonb_set(
+      COALESCE(config, '{}'::jsonb),
+      '{test_mode}',
+      'false'::jsonb
+    ),
+    '{production}',
+    'true'::jsonb
+  ),
+  enabled = true,
+  updated_at = now()
+WHERE name LIKE '%backlink%';
+
+-- Réinitialiser opportunités pour nouveau départ
+UPDATE backlink_opportunities 
+SET 
+  status = 'new',
+  contacted_at = NULL,
+  last_contact_date = NULL
+WHERE status = 'contacted' 
+  AND created_at >= CURRENT_DATE - INTERVAL '7 days'
+  AND email IS NOT NULL;
+
+-- VÉRIFICATION
+SELECT 
+  name,
+  enabled,
+  config->>'test_mode' as mode_test,
+  config->>'production' as production
+FROM automation_config
+WHERE name LIKE '%backlink%'
+ORDER BY name;
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+ÉTAPE 3: Cliquer "Run" (10 secondes)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Cliquer le bouton "Run" (ou Ctrl+Enter)
+
+2. Attendre résultat (2-3 secondes)
+
+3. Vérifier résultat attendu:
+
+name                        enabled    mode_test    production
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+backlink-auto-outreach      true       false        true
+backlink-followup           true       false        true
+backlink-scan-weekly        true       false        true
+
+✅ Si mode_test = false ET production = true:
+   → MODE PRODUCTION ACTIVÉ!
+
+❌ Si mode_test = true OU production = null:
+   → Réexécuter le SQL ci-dessus
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎯 TEST IMMÉDIAT (10 secondes)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Retourner sur:
+   https://taxiassur.com/backoffice/backlink-automation
+
+2. F5 pour recharger la page
+
+3. Cliquer "Lancer Automation"
+
+4. Observer le message:
+
+AVANT (simulation):
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+"Emails simulés: 10"
+
+APRÈS (production):
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+"Emails envoyés: 10"
+"Campagne lancée avec succès!"
+
+Stats:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+• Emails Envoyés: 0 → 10
+• Taux d'ouverture: Mis à jour en temps réel
+• Réponses: Trackées automatiquement
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚠️ IMPORTANT: VÉRIFIER SENDGRID
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Pour que les emails soient VRAIMENT envoyés, il faut:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Clé SendGrid configurée dans Supabase Vault
+2. Domaine vérifié dans SendGrid
+3. Email expéditeur validé
+
+Vérifier si SendGrid configuré:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Exécuter dans Supabase SQL:
+
+SELECT 
+  CASE 
+    WHEN EXISTS (
+      SELECT 1 FROM vault.decrypted_secrets 
+      WHERE name = 'SENDGRID_API_KEY'
+    )
+    THEN '✅ SendGrid configuré - Emails seront vraiment envoyés'
+    ELSE '❌ SendGrid MANQUANT - Rester en mode simulation'
+  END as statut_sendgrid;
+
+Résultat:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ "SendGrid configuré":
+   → Mode production OK
+   → Emails vraiment envoyés
+   → Continuer!
+
+❌ "SendGrid MANQUANT":
+   → Configurer SendGrid d'abord
+   → Voir guide CONFIGURATION-SENDGRID.md
+   → OU rester en simulation
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📊 SI SENDGRID MANQUANT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+2 OPTIONS:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+OPTION A: Configurer SendGrid (5 minutes)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Créer compte SendGrid gratuit:
+   https://signup.sendgrid.com/
+
+2. Obtenir clé API:
+   Settings > API Keys > Create API Key
+   Nom: TaxiAssur Production
+   Type: Full Access
+   Copier la clé (SG.xxxxx)
+
+3. Ajouter dans Supabase:
+   https://supabase.com/dashboard/project/drohhxrkoequjphvabvq/settings/vault
+   New Secret
+   Name: SENDGRID_API_KEY
+   Secret: SG.xxxxx
+   Save
+
+4. Vérifier domaine:
+   SendGrid > Settings > Sender Authentication
+   Authenticate Your Domain
+   Suivre instructions DNS
+
+5. Valider email expéditeur:
+   Settings > Sender Authentication
+   Single Sender Verification
+   Email: contact@taxiassur.com
+
+✅ Une fois fait → Emails vraiment envoyés!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+OPTION B: Rester en simulation
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Réexécuter dans Supabase SQL:
+
+UPDATE automation_config 
+SET 
+  config = jsonb_set(
+    COALESCE(config, '{}'::jsonb),
+    '{test_mode}',
+    'true'::jsonb
+  )
+WHERE name LIKE '%backlink%';
+
+→ Retour en mode simulation
+→ Pas d'emails réels envoyés
+→ Tests sans risque
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎯 RÉSUMÉ ULTRA-COURT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Copier SQL ci-dessus
+2. Coller dans Supabase SQL Editor
+3. Cliquer Run
+4. Vérifier résultat (mode_test = false)
+5. Tester sur /backlink-automation
+6. Observer "Emails envoyés" au lieu de "simulés"
+
+⚠️ Si SendGrid pas configuré:
+→ Emails simulés quand même
+→ Configurer SendGrid d'abord
+→ OU rester en simulation
+
+✅ Si SendGrid configuré:
+→ Emails VRAIMENT envoyés
+→ Mode production actif
+→ Stats réelles trackées!
+
+╚══════════════════════════════════════════════════════════════╝

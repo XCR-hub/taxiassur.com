@@ -1,0 +1,39 @@
+⚡ FIX ERREUR 401 - EXÉCUTER CE SQL MAINTENANT
+
+════════════════════════════════════════════════
+
+FICHIERS DISPONIBLES:
+
+Option 1 - RAPIDE (20 lignes)
+   → FIX-RAPIDE-TOGGLE.sql
+   → Juste le fix essentiel
+
+Option 2 - COMPLET (avec tests et vérifications)
+   → FIX-TOGGLE-AUTOMATION-401-FINAL.sql
+   → Fix + tests + diagnostics
+
+════════════════════════════════════════════════
+
+CHOISIR UNE OPTION ET:
+
+1. https://supabase.com/dashboard/project/drohhxrkoequjphvabvq/sql
+2. + New Query
+3. Copier/Coller le fichier SQL
+4. RUN
+5. https://taxiassur.com/backoffice/auto-optimizer
+6. Ctrl+Shift+R
+7. Cliquer switch → ✅ Marche
+
+════════════════════════════════════════════════
+
+IMPORTANT:
+Les fichiers SQL créés ne font RIEN tant qu'ils
+ne sont PAS exécutés dans Supabase !
+
+→ Il faut COPIER/COLLER dans SQL Editor
+→ Et cliquer RUN
+
+════════════════════════════════════════════════
+
+PAS DE REBUILD IONOS ❌
+Juste exécuter le SQL ✅

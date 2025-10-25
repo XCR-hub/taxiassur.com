@@ -1,0 +1,42 @@
+🚨 AUTOMATISATIONS DÉSACTIVÉES - SOLUTION IMMÉDIATE
+
+📋 ÉTAPES À SUIVRE:
+
+1. OUVRIR SUPABASE
+   → https://supabase.com/dashboard/project/enwraesoedauooxmptpw
+   → Menu: SQL Editor
+   → New Query
+
+2. COPIER-COLLER CONTENU DU FICHIER:
+   → ACTIVER-TOUTES-AUTOMATISATIONS-MAINTENANT.sql
+
+3. EXÉCUTER
+   → Cliquer "Run" (ou Ctrl+Enter)
+   → Attendre 30 secondes
+
+4. VÉRIFIER
+   → Ouvrir: /backoffice/master
+   → Section "Automatisations"
+   → Tout doit être VERT ✅
+
+📊 RÉSULTAT ATTENDU:
+- 25 cron jobs actifs
+- 20 automatisations actives
+- Affichage complet dans backoffice
+
+⚡ APRÈS ACTIVATION:
+1. Configurer clés API dans Supabase Vault:
+   - OPENAI_API_KEY (OBLIGATOIRE)
+   - PEXELS_API_KEY (recommandé)
+   - SENDGRID_API_KEY (emails)
+
+2. Les automatisations démarreront automatiquement:
+   - Génération blog: tous les jours 3h
+   - Publication LinkedIn: 8h, 14h, 18h
+   - Publication Pinterest: 9h, 12h, 15h, 18h, 21h
+   - Scraping taxis: tous les lundis 2h
+   - Et 15+ autres automatisations...
+
+✅ LE SYSTÈME REDEVIENDRA 100% AUTONOME !
+
+📖 Guide complet: GUIDE-ACTIVATION-AUTOMATISATIONS-3-ETAPES.md
