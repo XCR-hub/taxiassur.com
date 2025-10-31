@@ -218,9 +218,7 @@ ${(generatedContent.faq || []).map(f => `**${f?.question ?? 'Q'}**\n${f?.answer 
           read_time: generatedContent.blogPost?.readingTime ?? 5,
           author: 'TaxiAssur',
           featured_image: featuredImage,
-          image_alt: generatedContent.blogPost?.imageAlt || null,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
+          image_alt: generatedContent.blogPost?.imageAlt || null
         })
         .select()
         .single();
@@ -246,8 +244,7 @@ ${(generatedContent.faq || []).map(f => `**${f?.question ?? 'Q'}**\n${f?.answer 
           region: generatedContent.cityPage?.region ?? null,
           population: generatedContent.cityPage?.population ?? null,
           taxi_count: generatedContent.cityPage?.taxi_count ?? null,
-          status: 'published',
-          published_at: new Date().toISOString(),
+          status: 'published'
         })
         .select()
         .single();
