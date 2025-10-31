@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Sparkles, Loader2, Copy, Check, Download, Home, Save, FileText, MapPin, HelpCircle, Image as ImageIcon, Tag, Clock } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { getSupabaseAdmin } from '../lib/supabase';
 
 interface UnifiedContent {
@@ -56,6 +56,7 @@ interface UnifiedContent {
 
 export default function AIContentGeneratorUnified() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [keyword, setKeyword] = useState('');
   const [city, setCity] = useState('');
   const [secondaryKeywords, setSecondaryKeywords] = useState('');
@@ -66,6 +67,25 @@ export default function AIContentGeneratorUnified() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    const urlKeyword = searchParams.get('keyword');
+    const urlTitle = searchParams.get('title');
+    const urlQuestions = searchParams.get('questions');
+
+    if (urlKeyword) {
+      setKeyword(urlKeyword);
+    }
+
+    if (urlQuestions) {
+      const questions = urlQuestions.split('|||').filter(Boolean);
+      setSecondaryKeywords(questions.slice(0, 3).join(', '));
+    }
+
+    if (urlTitle) {
+      setImagePrompt(`Photo professionnelle illustrant: ${urlTitle}`);
+    }
+  }, [searchParams]);
 
   const handleGenerate = async () => {
     if (!keyword.trim()) {

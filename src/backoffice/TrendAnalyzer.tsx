@@ -79,8 +79,16 @@ export default function TrendAnalyzer() {
   };
 
   const generateArticle = (opp: ContentOpportunity) => {
-    // Rediriger vers le générateur IA avec les données pré-remplies
-    navigate(`/backoffice/ai-generator?keyword=${encodeURIComponent(opp.keyword)}&questions=${encodeURIComponent(opp.suggestedQuestions.join(','))}`);
+    const params = new URLSearchParams({
+      keyword: opp.keyword,
+      title: opp.suggestedTitle || '',
+      questions: opp.suggestedQuestions.join('|||'),
+      searchVolume: opp.searchVolume.toString(),
+      competition: opp.competition,
+      difficulty: opp.difficulty.toString(),
+      estimatedTraffic: opp.estimatedTraffic.toString()
+    });
+    navigate(`/backoffice/ai-generator?${params.toString()}`);
   };
 
   const filteredOpportunities = opportunities.filter(opp => {
