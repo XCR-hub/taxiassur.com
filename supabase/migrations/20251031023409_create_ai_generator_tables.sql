@@ -1,0 +1,1 @@
+ERROR:  42710: policy "Allow public read access to published blog posts" for table "blog_posts" already exists
