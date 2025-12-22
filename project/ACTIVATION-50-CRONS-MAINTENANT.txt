@@ -1,0 +1,49 @@
+⚡ ACTIVER LES 50 CRON JOBS - GUIDE EXPRESS
+
+📋 FICHIER À EXÉCUTER
+ACTIVER-50-CRON-JOBS-COMPLET.sql
+
+🎯 ACTION (30 SECONDES)
+
+1. Ouvrir Supabase SQL Editor
+   https://supabase.com/dashboard/project/drohhxrkoequjphvabvq/sql
+
+2. + New Query
+
+3. Copier TOUT le fichier: ACTIVER-50-CRON-JOBS-COMPLET.sql
+
+4. Coller dans l'éditeur
+
+5. Cliquer RUN
+
+6. Vérifier 4 résultats:
+
+   Résultat 1 - AVANT:
+   etape: AVANT
+   total: 53
+   actifs: 5
+   inactifs: 48
+
+   Résultat 2 - (pas affiché, c'est normal)
+
+   Résultat 3 - APRÈS:
+   etape: APRÈS
+   total: 53
+   actifs: 53  ← ✅ TOUS ACTIFS
+   inactifs: 0
+
+   Résultat 4 - LISTE:
+   50+ lignes avec tous les cron jobs
+
+7. Tester Backoffice
+   - https://taxiassur.com/backoffice/auto-optimizer
+   - Ctrl+Shift+R (vider cache)
+   - Compteur: 53/53 ✅
+   - Tous switches ON ✅
+
+✅ C'EST FAIT !
+
+La requête principale est simplement:
+UPDATE cron.job SET active = true;
+
+Durée: 30 secondes

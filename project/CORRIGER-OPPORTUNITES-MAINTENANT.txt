@@ -1,0 +1,212 @@
+╔══════════════════════════════════════════════════════════════╗
+║  ⚡ CORRIGER "OPPORTUNITY NOT FOUND" - 2 ACTIONS (1 MIN)   ║
+╚══════════════════════════════════════════════════════════════╝
+
+📸 SCREENSHOT MONTRE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ Dashboard charge: 314 city pages, 23 blog posts
+❌ Popup erreur: "Opportunity not found"
+📊 Stats: 0 emails, 0 backlinks obtenus
+📋 Campagne: "Backlinks Assurance Taxi - Automatisée" (active)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔍 DIAGNOSTIC
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Campagne existe: ✅
+Opportunités backlinks: ❌ (erreur "not found")
+
+→ La table backlink_opportunities est VIDE ou manque données
+→ La campagne cherche des opportunités qui n'existent pas
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ FIX EN 2 ACTIONS (1 MINUTE)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+ACTION 1: Ajouter 10 Opportunités (30 secondes)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Ouvrir Supabase SQL Editor:
+   https://supabase.com/dashboard/project/drohhxrkoequjphvabvq/sql
+
+2. Copier-coller le contenu de:
+   FIX-BACKLINK-MINIMAL.sql
+
+3. Cliquer "Run" ▶
+
+Résultat attendu:
+✅ 10 nouveaux sites insérés
+✅ Total: 28 opportunités (18 + 10)
+✅ Tous avec IDs valides
+
+Sites ajoutés:
+• service-public.fr (DA 85, trafic 50K/mois)
+• lesechos-entrepreneurs.fr (DA 72, 25K/mois)
+• bpifrance-creation.fr (DA 68, 18K/mois)
+• uncp-taxi.org (DA 45, syndicat taxis)
+• fnaim.fr (DA 52, fédération immobilier)
+• captaincontrat.com (DA 55, 5.5K/mois)
+• lentreprise.com (DA 65, L'Express 15K)
+• federation-auto-entrepreneur.fr (DA 48, 3.2K)
+• artisans-mag.com (DA 42, 1.2K)
+• pole-autoentrepreneur.com (DA 38, 2.1K)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+ACTION 2: Recharger Dashboard (10 secondes)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Fermer popup "OK"
+2. Appuyer F5 ou Ctrl+R
+3. Attendre chargement
+
+Résultat attendu:
+✅ "Opportunity not found" disparue
+✅ Dashboard affiche les 28 sites
+✅ Statistiques remplies
+✅ Bouton "Lancer Automation" actif
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📊 APRÈS LE FIX
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Dashboard devrait afficher:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📊 Métriques:
+• Emails Envoyés: 0
+• Emails Ouverts: 0 (0% taux ouverture)
+• Réponses Reçues: 0 (0.0% positives)
+• Backlinks Obtenus: 0 (0.0% taux conversion)
+
+📋 Campagnes:
+• Campagne Backlinks Assurance Taxi - Automatisée
+  Status: active
+  Envoyés: 0
+  Ouverts: 0
+  Réponses: 0 (+0)
+  Backlinks: 0
+  Taux Conv.: 0%
+
+🎯 Actions:
+• Bouton "Lancer Automation" (orange) cliquable
+• Aucune erreur
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🚀 ACTIVER L'AUTOMATION (APRÈS FIX)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Une fois l'erreur corrigée:
+
+1. Cliquer "Lancer Automation" (bouton orange)
+
+2. Confirmer dans popup
+
+3. Résultat attendu:
+   • Emails envoyés aux 28 sites
+   • Workflows outreach actifs
+   • Stats commencent à monter
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔧 SI L'ERREUR PERSISTE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Option A: Vérifier URL
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Si URL contient "?id=12345":
+
+Mauvais:
+https://taxiassur.com/backoffice/backlink-automation?id=12345
+
+Bon:
+https://taxiassur.com/backoffice/backlink-automation
+
+→ Supprimer "?id=..." de l'URL
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Option B: Vérifier Données Supabase
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Exécuter dans Supabase SQL:
+
+SELECT 
+  COUNT(*) as total,
+  COUNT(DISTINCT domain) as domaines_uniques,
+  MAX(created_at) as derniere_opportunite
+FROM backlink_opportunities;
+
+Résultat attendu:
+• total: 28 (ou plus)
+• domaines_uniques: 28
+• derniere_opportunite: aujourd'hui
+
+Si total = 0 ou < 10:
+→ Réexécuter FIX-BACKLINK-MINIMAL.sql
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Option C: Vérifier Relation Campagne
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Exécuter dans Supabase SQL:
+
+SELECT 
+  id,
+  name,
+  status,
+  (SELECT COUNT(*) FROM backlink_outreach 
+   WHERE campaign_id = outreach_campaigns.id) as total_outreach
+FROM outreach_campaigns
+WHERE name LIKE '%Backlinks%';
+
+Résultat attendu:
+• 1 campagne "Backlinks Assurance Taxi - Automatisée"
+• status: active
+• total_outreach: 0 (au début)
+
+Si total_outreach > 0 mais erreur persiste:
+→ Problème dans table backlink_outreach
+→ Contacter support ou voir logs
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚡ RÉSUMÉ ACTIONS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+MAINTENANT (1 minute):
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Exécuter FIX-BACKLINK-MINIMAL.sql (30s)
+   → 28 opportunités ajoutées
+
+2. F5 recharger page (10s)
+   → Erreur disparue
+
+3. Cliquer "Lancer Automation" (10s)
+   → Workflows actifs!
+
+TOTAL: 1 minute pour tout débloquer!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📂 FICHIERS À EXÉCUTER
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. FIX-BACKLINK-MINIMAL.sql
+   → Ajoute 10 sites premium
+
+2. DIAGNOSTIC-SCRAPING-BACKLINKS.sql (optionnel)
+   → Comprendre pourquoi scraping ne marche pas
+
+3. REPONSE-SCRAPING-BACKLINKS.txt (lecture)
+   → Guide complet scraping automatique
+
+╚══════════════════════════════════════════════════════════════╝

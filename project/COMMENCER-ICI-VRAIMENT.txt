@@ -1,0 +1,140 @@
+╔══════════════════════════════════════════════════════════════╗
+║  L'ERREUR 401 EST TOUJOURS LÀ                               ║
+║  Vous N'AVEZ PAS exécuté le fix SQL                         ║
+╚══════════════════════════════════════════════════════════════╝
+
+❌ PREUVE:
+Console montre: code: '42501', message: 'permission denied'
+→ La fonction SQL n'a TOUJOURS PAS "SECURITY DEFINER"
+
+═══════════════════════════════════════════════════════════════
+
+ÉTAPE 1 - DIAGNOSTIC (10 secondes)
+═══════════════════════════════════════════════════════════════
+
+Vérifier l'état actuel:
+
+1. https://supabase.com/dashboard/project/drohhxrkoequjphvabvq/sql
+2. + New Query
+3. Copier/Coller:
+
+   SELECT 
+     proname as "Nom fonction",
+     prosecdef as "SECURITY DEFINER?",
+     CASE 
+       WHEN prosecdef THEN '✅ OUI' 
+       ELSE '❌ NON - ERREUR 401 normale'
+     END as "Status"
+   FROM pg_proc 
+   WHERE proname = 'toggle_automation';
+
+4. RUN
+5. Regarder colonne "SECURITY DEFINER?"
+
+RÉSULTAT ATTENDU:
+┌─────────────────┬──────────────────┬───────────────────────┐
+│ Nom fonction    │ SECURITY DEFINER?│ Status                │
+├─────────────────┼──────────────────┼───────────────────────┤
+│toggle_automation│ false            │ ❌ NON - ERREUR 401...│
+└─────────────────┴──────────────────┴───────────────────────┘
+
+Si vous voyez "false" ou "❌ NON" → Continuer ÉTAPE 2
+
+═══════════════════════════════════════════════════════════════
+
+ÉTAPE 2 - FIX (10 secondes)
+═══════════════════════════════════════════════════════════════
+
+1. Rester sur: SQL Editor (même page)
+
+2. + New Query (nouvel onglet)
+
+3. Ouvrir fichier: FIX-CLEAN-FINAL.sql
+
+4. TOUT SÉLECTIONNER (Ctrl+A)
+
+5. COPIER (Ctrl+C)
+
+6. COLLER dans SQL Editor (Ctrl+V)
+
+7. RUN
+
+8. Attendre message "Success"
+
+IMPORTANT:
+──────────
+Vous DEVEZ voir "Success" SANS aucune erreur.
+Si vous voyez une erreur, copier/coller ICI.
+
+═══════════════════════════════════════════════════════════════
+
+ÉTAPE 3 - VÉRIFICATION (5 secondes)
+═══════════════════════════════════════════════════════════════
+
+Refaire le diagnostic (ÉTAPE 1):
+
+1. + New Query
+2. Copier/Coller la requête SELECT (voir ÉTAPE 1)
+3. RUN
+
+RÉSULTAT ATTENDU APRÈS FIX:
+┌─────────────────┬──────────────────┬──────────┐
+│ Nom fonction    │ SECURITY DEFINER?│ Status   │
+├─────────────────┼──────────────────┼──────────┤
+│toggle_automation│ true             │ ✅ OUI   │
+└─────────────────┴──────────────────┴──────────┘
+
+Si vous voyez "true" ou "✅ OUI" → Continuer ÉTAPE 4
+
+═══════════════════════════════════════════════════════════════
+
+ÉTAPE 4 - TESTER (5 secondes)
+═══════════════════════════════════════════════════════════════
+
+1. https://taxiassur.com/backoffice/auto-optimizer
+
+2. Ctrl+Shift+R (VIDER CACHE - OBLIGATOIRE!)
+
+3. Cliquer sur un switch
+
+4. Console (F12):
+   → ✅ Plus de "code: '42501'"
+   → ✅ Plus de "permission denied"
+   → ✅ Switch change d'état
+
+═══════════════════════════════════════════════════════════════
+
+RÉSUMÉ:
+═══════
+
+┌────────┬─────────────────────────────────────────┬─────────┐
+│ Étape  │ Action                                  │ Durée   │
+├────────┼─────────────────────────────────────────┼─────────┤
+│ 1      │ Diagnostic (voir si SECURITY DEFINER=❌)│ 10s     │
+│ 2      │ Exécuter FIX-CLEAN-FINAL.sql            │ 10s     │
+│ 3      │ Vérifier (voir si SECURITY DEFINER=✅)  │ 5s      │
+│ 4      │ Tester backoffice                       │ 5s      │
+├────────┼─────────────────────────────────────────┼─────────┤
+│ TOTAL  │                                         │ 30s     │
+└────────┴─────────────────────────────────────────┴─────────┘
+
+═══════════════════════════════════════════════════════════════
+
+⚠️  ATTENTION:
+══════════════
+
+Vous DEVEZ exécuter FIX-CLEAN-FINAL.sql dans Supabase.
+RIEN d'autre ne marchera.
+
+Le code frontend est OK.
+Le build IONOS est OK.
+SEUL le SQL manque.
+
+═══════════════════════════════════════════════════════════════
+
+FICHIERS:
+═════════
+
+✅ FIX-CLEAN-FINAL.sql (le fix SQL)
+✅ DIAGNOSTIC-ULTRA-SIMPLE.sql (vérifier l'état)
+✅ Ce guide (instructions complètes)

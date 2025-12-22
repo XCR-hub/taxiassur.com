@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Déclencher mise à jour SEO</title>
+  <style>
+    body { font-family: system-ui; max-width: 800px; margin: 50px auto; padding: 20px; }
+    button { background: #10b981; color: white; border: none; padding: 15px 30px; font-size: 16px; cursor: pointer; border-radius: 8px; }
+    button:hover { background: #059669; }
+    #result { margin-top: 20px; padding: 15px; border-radius: 8px; }
+    .success { background: #d1fae5; color: #065f46; }
+    .error { background: #fee2e2; color: #991b1b; }
+    pre { background: #f3f4f6; padding: 10px; border-radius: 4px; overflow-x: auto; }
+  </style>
+</head>
+<body>
+  <h1>🔄 Déclencher la mise à jour des données SEO</h1>
+  <p>Cliquez sur le bouton ci-dessous pour appeler l'edge function <code>seo-daily-refresh</code> qui va :</p>
+  <ul>
+    <li>✅ Récupérer les vraies données depuis Google Search Console</li>
+    <li>✅ Les enregistrer dans la table <code>seo_metrics</code></li>
+    <li>✅ Mettre à jour le backoffice avec les vraies données</li>
+  </ul>
+
+  <button onclick="refreshSEO()">🚀 Rafraîchir les données SEO maintenant</button>
+
+  <div id="result"></div>
+
+  <script>
+    async function refreshSEO() {
+      const resultDiv = document.getElementById('result');
+      resultDiv.innerHTML = '<p>⏳ Appel de l\'edge function en cours...</p>';
+
+      try {
+        const response = await fetch('https://gspaxuotsquzatewpgfd.supabase.co/functions/v1/seo-daily-refresh', {
+          method: 'POST',
+          headers: {
+            'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdzZGF4dW90c3F1emF0ZXdwZ2ZkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mjc5ODA0MzQsImV4cCI6MjA0MzU1NjQzNH0.2fXOwI8OYOEgQmm9o2PrUXOK7uc7L-48gq6WaDd-R-o',
+            'Content-Type': 'application/json'
+          }
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          resultDiv.className = 'success';
+          resultDiv.innerHTML = `
+            <h3>✅ Succès !</h3>
+            <p>Les données SEO ont été mises à jour avec succès :</p>
+            <pre>${JSON.stringify(data.metrics, null, 2)}</pre>
+            <p><strong>➡️ Prochaine étape :</strong> Rafraîchissez votre page <code>/backoffice/seo</code> pour voir les vraies données s'afficher.</p>
+          `;
+        } else {
+          throw new Error(data.error || 'Erreur inconnue');
+        }
+      } catch (error) {
+        resultDiv.className = 'error';
+        resultDiv.innerHTML = `
+          <h3>❌ Erreur</h3>
+          <p>${error.message}</p>
+          <p>Vérifiez que l'edge function est bien déployée et que la configuration Google Search Console est correcte.</p>
+        `;
+      }
+    }
+  </script>
+</body>
+</html>

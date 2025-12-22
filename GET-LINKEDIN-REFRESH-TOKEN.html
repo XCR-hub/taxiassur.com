@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Obtenir LinkedIn Access Token - TaxiAssur</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #0077B5 0%, #00A0DC 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .container {
+      background: white;
+      border-radius: 16px;
+      padding: 40px;
+      max-width: 700px;
+      width: 100%;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    h1 {
+      color: #0077B5;
+      font-size: 28px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .subtitle {
+      color: #666;
+      margin-bottom: 30px;
+      font-size: 14px;
+    }
+    .step {
+      background: #f8f9fa;
+      border-left: 4px solid #0077B5;
+      padding: 20px;
+      margin-bottom: 20px;
+      border-radius: 8px;
+    }
+    .step-number {
+      background: #0077B5;
+      color: white;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      margin-right: 10px;
+      font-size: 14px;
+    }
+    .step-title {
+      font-weight: 600;
+      margin-bottom: 10px;
+      font-size: 16px;
+      color: #333;
+    }
+    .btn {
+      background: #0077B5;
+      color: white;
+      border: none;
+      padding: 16px 32px;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      width: 100%;
+      margin-top: 20px;
+      transition: all 0.3s;
+      text-decoration: none;
+      display: inline-block;
+      text-align: center;
+    }
+    .btn:hover {
+      background: #005582;
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(0,119,181,0.2);
+    }
+    .code-block {
+      background: #2d2d2d;
+      color: #f8f8f2;
+      padding: 16px;
+      border-radius: 8px;
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      overflow-x: auto;
+      margin: 10px 0;
+      position: relative;
+    }
+    .info-box {
+      background: #e3f2fd;
+      border-left: 4px solid #2196F3;
+      padding: 16px;
+      margin: 20px 0;
+      border-radius: 8px;
+      font-size: 14px;
+      color: #1976d2;
+    }
+    .warning-box {
+      background: #fff3cd;
+      border-left: 4px solid #ffc107;
+      padding: 16px;
+      margin: 20px 0;
+      border-radius: 8px;
+      font-size: 14px;
+      color: #856404;
+    }
+    .success-box {
+      background: #d4edda;
+      border-left: 4px solid #28a745;
+      padding: 16px;
+      margin: 20px 0;
+      border-radius: 8px;
+      font-size: 14px;
+      color: #155724;
+      display: none;
+    }
+    textarea {
+      background: #f8f9fa;
+      border: 2px solid #dee2e6;
+      padding: 12px;
+      border-radius: 8px;
+      width: 100%;
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      margin-top: 10px;
+      resize: vertical;
+      min-height: 100px;
+    }
+    input[readonly] {
+      background: #f8f9fa;
+      border: 2px solid #dee2e6;
+      padding: 12px;
+      border-radius: 8px;
+      width: 100%;
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      margin-top: 10px;
+    }
+    .emoji {
+      font-size: 24px;
+    }
+    a {
+      color: #0077B5;
+      text-decoration: none;
+      font-weight: 600;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>
+      <span class="emoji">💼</span>
+      Obtenir LinkedIn Access Token
+    </h1>
+    <p class="subtitle">Configuration OAuth 2.0 pour TaxiAssur Social Media Manager</p>
+
+    <div class="warning-box">
+      <strong>⚠️ CONFIGURATION REQUISE - LinkedIn Developer</strong><br><br>
+      <strong>1. Ajouter la Redirect URI :</strong><br>
+      Dans votre app LinkedIn (<a href="https://www.linkedin.com/developers/apps/225548586/auth" target="_blank">https://www.linkedin.com/developers/apps/225548586/auth</a>)<br>
+      Authorized redirect URLs : <div class="code-block" style="margin-top: 5px;">https://taxiassur.com/auth/linkedin/callback</div>
+      <br>
+      <strong>2. Activer le scope w_organization_social :</strong><br>
+      - Onglet "Products"<br>
+      - Demander accès à : <strong>Share on LinkedIn</strong> et <strong>Marketing Developer Platform</strong><br>
+      - Cela débloquera automatiquement : <code>w_organization_social</code>
+    </div>
+
+    <div class="step">
+      <div class="step-title">
+        <span class="step-number">1</span>
+        Vérifier votre configuration
+      </div>
+      <div class="code-block">
+Client ID: 78jlte9c2mbjw5
+Client Secret: WPL_AP1.VD7oEnM5HAU5TuxG.1QnDMw==
+Redirect URI: https://taxiassur.com/auth/linkedin/callback
+
+Scopes demandés:
+✅ openid (profil de base)
+✅ profile (nom, photo)
+✅ email (adresse email)
+✅ w_member_social (poster sur profil personnel)
+⏳ w_organization_social (poster sur page entreprise - à activer)
+      </div>
+      <div class="info-box" style="margin-top: 10px;">
+        <strong>Comment activer w_organization_social :</strong><br>
+        1. Allez dans l'onglet <strong>Products</strong> de votre app<br>
+        2. Cliquez sur "Request access" pour :<br>
+        &nbsp;&nbsp;&nbsp;- Share on LinkedIn<br>
+        &nbsp;&nbsp;&nbsp;- Marketing Developer Platform<br>
+        3. Une fois approuvé, le scope sera automatiquement disponible
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-title">
+        <span class="step-number">2</span>
+        Autoriser l'application LinkedIn
+      </div>
+      <p style="margin-bottom: 10px; color: #666;">
+        Cliquez pour autoriser TaxiAssur à publier sur votre profil et vos pages LinkedIn.
+      </p>
+      <button class="btn" onclick="authorizeLinkedIn()">
+        🔐 Autoriser LinkedIn API
+      </button>
+    </div>
+
+    <div class="step">
+      <div class="step-title">
+        <span class="step-number">3</span>
+        Récupérer le code depuis l'URL
+      </div>
+      <p style="margin-bottom: 10px; color: #666;">
+        Après autorisation, vous serez redirigé. Copiez l'URL complète et collez-la ci-dessous :
+      </p>
+      <textarea id="callbackUrl" placeholder="https://taxiassur.com/auth/linkedin/callback?code=AQT..."></textarea>
+      <button class="btn" onclick="extractAndExchangeCode()" style="margin-top: 10px;">
+        🔄 Extraire et Échanger le Code
+      </button>
+    </div>
+
+    <div class="success-box" id="successBox">
+      <div style="font-weight: 600; margin-bottom: 10px;">✅ Access Token Obtenu !</div>
+      <input type="text" id="accessToken" readonly>
+      <button class="btn" onclick="copyToken()" style="margin-top: 10px; background: #28a745;">
+        📋 Copier l'Access Token
+      </button>
+      <div class="info-box" style="margin-top: 15px;">
+        <strong>⏱️ Durée de validité :</strong> 60 jours<br>
+        <strong>Expires in:</strong> <span id="expiresIn">-</span> secondes<br>
+        <strong>Expire le:</strong> <span id="expiresAt">-</span>
+      </div>
+    </div>
+
+    <div class="info-box">
+      <strong>📝 Prochaine étape :</strong><br>
+      1. Copiez l'Access Token obtenu<br>
+      2. Allez dans Supabase → SQL Editor<br>
+      3. Exécutez le fichier : <code>LINKEDIN-ACTIVATION.sql</code><br>
+      4. L'Access Token sera automatiquement sauvegardé
+    </div>
+  </div>
+
+  <script>
+    const CLIENT_ID = '78jlte9c2mbjw5';
+    const CLIENT_SECRET = 'WPL_AP1.VD7oEnM5HAU5TuxG.1QnDMw==';
+    const REDIRECT_URI = 'https://taxiassur.com/auth/linkedin/callback';
+    const SCOPES = [
+      'openid',
+      'profile',
+      'email',
+      'w_member_social',
+      'w_organization_social'
+    ];
+
+    function authorizeLinkedIn() {
+      const state = Math.random().toString(36).substring(7);
+      localStorage.setItem('linkedin_oauth_state', state);
+
+      const authUrl = `https://www.linkedin.com/oauth/v2/authorization?` +
+        `response_type=code&` +
+        `client_id=${CLIENT_ID}&` +
+        `redirect_uri=${encodeURIComponent(REDIRECT_URI)}&` +
+        `state=${state}&` +
+        `scope=${encodeURIComponent(SCOPES.join(' '))}`;
+
+      window.open(authUrl, '_blank', 'width=600,height=700');
+    }
+
+    async function extractAndExchangeCode() {
+      const callbackUrl = document.getElementById('callbackUrl').value.trim();
+
+      if (!callbackUrl) {
+        alert('❌ Veuillez coller l\'URL complète de redirection');
+        return;
+      }
+
+      try {
+        const url = new URL(callbackUrl);
+        const authCode = url.searchParams.get('code');
+        const state = url.searchParams.get('state');
+
+        if (!authCode) {
+          alert('❌ Aucun code trouvé dans l\'URL. Vérifiez l\'URL complète.');
+          return;
+        }
+
+        console.log('Code extrait:', authCode);
+
+        const response = await fetch('https://www.linkedin.com/oauth/v2/accessToken', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: new URLSearchParams({
+            grant_type: 'authorization_code',
+            code: authCode,
+            client_id: CLIENT_ID,
+            client_secret: CLIENT_SECRET,
+            redirect_uri: REDIRECT_URI
+          })
+        });
+
+        const data = await response.json();
+
+        if (data.error) {
+          alert('❌ Erreur: ' + data.error_description);
+          return;
+        }
+
+        if (data.access_token) {
+          document.getElementById('accessToken').value = data.access_token;
+          document.getElementById('expiresIn').textContent = data.expires_in;
+
+          const expiresAt = new Date(Date.now() + data.expires_in * 1000);
+          document.getElementById('expiresAt').textContent = expiresAt.toLocaleString('fr-FR');
+
+          document.getElementById('successBox').style.display = 'block';
+          document.getElementById('successBox').scrollIntoView({ behavior: 'smooth' });
+
+          console.log('Access Token obtenu:', data.access_token);
+          console.log('Expire dans:', data.expires_in, 'secondes');
+        }
+      } catch (error) {
+        alert('❌ Erreur: ' + error.message);
+      }
+    }
+
+    function copyToken() {
+      const tokenInput = document.getElementById('accessToken');
+      tokenInput.select();
+      document.execCommand('copy');
+
+      const btn = event.target;
+      const originalText = btn.textContent;
+      btn.textContent = '✅ Copié !';
+      btn.style.background = '#218838';
+
+      setTimeout(() => {
+        btn.textContent = originalText;
+        btn.style.background = '#28a745';
+      }, 2000);
+    }
+  </script>
+</body>
+</html>

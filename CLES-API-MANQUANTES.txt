@@ -1,0 +1,96 @@
+
+╔══════════════════════════════════════════════════════════════════════╗
+║                                                                      ║
+║          ✅ FICHIER SQL CORRIGÉ - ERREUR FONCTION RÉSOLUE          ║
+║                                                                      ║
+╚══════════════════════════════════════════════════════════════════════╝
+
+ERREUR QUE TU AS VUE:
+─────────────────────
+
+"ERROR: 42P13: cannot change return type of existing function
+HINT: Use DROP FUNCTION get_top_pages_today() first."
+
+EXPLICATION:
+────────────
+
+La fonction get_top_pages_today() existait déjà avec une signature
+différente. Supabase ne peut pas la remplacer automatiquement.
+
+SOLUTION APPLIQUÉE:
+──────────────────
+
+✅ J'ai corrigé le fichier FIX-RLS-PUBLIC-ACCESS.sql
+✅ Ajout de DROP FUNCTION avant CREATE FUNCTION
+✅ Ajout de vérifications si les tables existent
+
+MAINTENANT:
+──────────
+
+Le fichier FIX-RLS-PUBLIC-ACCESS.sql est PRÊT et devrait fonctionner
+sans erreur !
+
+══════════════════════════════════════════════════════════════════════
+
+📋 PROCÉDURE COMPLÈTE (8 MINUTES):
+
+1️⃣  SUPABASE-REPAIR-FINAL.sql
+    → Va sur: https://drohhxrkoequjphvabvq.supabase.co
+    → SQL Editor → New query
+    → Copie-colle tout
+    → RUN
+    ✅ Crée les tables
+
+2️⃣  FIX-RLS-PUBLIC-ACCESS.sql ⭐ CORRIGÉ
+    → SQL Editor → New query
+    → Copie-colle tout
+    → RUN
+    ✅ Configure les permissions RLS
+    ✅ Supprime et recrée les fonctions correctement
+
+3️⃣  INSERT-24-ARTICLES-BLOG.sql
+    → SQL Editor → New query
+    → Copie-colle tout (1256 lignes)
+    → RUN (attends 30 sec)
+    ✅ Insère 24 articles
+
+══════════════════════════════════════════════════════════════════════
+
+VÉRIFICATION:
+─────────────
+
+Dans SQL Editor, exécute:
+
+SELECT COUNT(*) FROM blog_posts;
+→ Devrait retourner: 24
+
+SELECT get_realtime_stats();
+→ Devrait retourner un JSON avec les stats
+
+SELECT * FROM get_top_pages_today();
+→ Devrait retourner les pages les plus visitées
+
+══════════════════════════════════════════════════════════════════════
+
+RÉSULTAT ATTENDU:
+─────────────────
+
+✅ Plus d'erreurs 401 dans la console
+✅ Blog affiche 24 articles sur /blog
+✅ Dashboard /backoffice fonctionne
+✅ FAQ accessibles
+✅ Fonctions RPC opérationnelles
+
+══════════════════════════════════════════════════════════════════════
+
+ENSUITE:
+────────
+
+Upload dist/ sur IONOS via FTP et teste le site !
+
+══════════════════════════════════════════════════════════════════════
+
+⏱️ TEMPS TOTAL: 8 MINUTES
+
+══════════════════════════════════════════════════════════════════════
+

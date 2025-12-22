@@ -1,0 +1,52 @@
+╔═══════════════════════════════════════════════════════════════╗
+║  🔴 ERREUR UUID - FIX CORRIGÉ (15 SECONDES)                  ║
+╚═══════════════════════════════════════════════════════════════╝
+
+❌ ERREUR PRÉCÉDENTE: "function min(uuid) does not exist"
+✅ CORRIGÉ: Utilisation de ctid au lieu de MIN(id)
+
+───────────────────────────────────────────────────────────────
+
+📁 FICHIERS À UTILISER:
+
+1. ✅ FIX-BACKLINK-1-LIGNE.txt (LE PLUS SIMPLE)
+   → 1 seule ligne SQL à copier-coller
+   → 15 secondes chrono
+
+2. FIX-BACKLINK-DOUBLON-CORRECT.sql (DÉTAILLÉ)
+   → Version complète avec commentaires
+   → Même résultat
+
+───────────────────────────────────────────────────────────────
+
+🎯 ACTION:
+
+Étape 1: Ouvrir FIX-BACKLINK-1-LIGNE.txt
+Étape 2: Copier la ligne SQL
+Étape 3: Coller dans Supabase SQL Editor
+Étape 4: Run
+Étape 5: Voir "✅ RÉPARÉ! | 1 | 5"
+Étape 6: Recharger la page backoffice
+
+───────────────────────────────────────────────────────────────
+
+✅ RÉSULTAT:
+
+• 1 campagne (doublon supprimé)
+• 5 opportunités disponibles
+• Bouton actif
+• Prêt à lancer automation
+
+───────────────────────────────────────────────────────────────
+
+📋 LES 5 OPPORTUNITÉS:
+
+1. assurpro-taxis.com (Score: 82) ⭐⭐⭐⭐⭐
+2. transport-magazine.fr (Score: 79) ⭐⭐⭐⭐
+3. assurance-pro-france.fr (Score: 75) ⭐⭐⭐⭐
+4. flotte-taxi-france.fr (Score: 72) ⭐⭐⭐⭐
+5. taxiinfos-pro.com (Score: 68) ⭐⭐⭐
+
+Tous avec emails valides!
+
+╚═══════════════════════════════════════════════════════════════╝

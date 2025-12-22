@@ -1,0 +1,22 @@
+⚡ COMMANDE ULTRA-RAPIDE - ACTIVER 50 CRONS
+
+═══════════════════════════════════════════════
+COPIER/COLLER CETTE LIGNE DANS SUPABASE SQL:
+═══════════════════════════════════════════════
+
+UPDATE cron.job SET active = true;
+
+═══════════════════════════════════════════════
+
+C'EST TOUT ! 🎉
+
+Résultat attendu: UPDATE 53 (ou le nombre de crons)
+
+Vérifier:
+SELECT COUNT(*) FROM cron.job WHERE active = true;
+→ Doit retourner: 53 (ou plus)
+
+Puis:
+1. https://taxiassur.com/backoffice/auto-optimizer
+2. Ctrl+Shift+R
+3. Compteur: 53/53 ✅

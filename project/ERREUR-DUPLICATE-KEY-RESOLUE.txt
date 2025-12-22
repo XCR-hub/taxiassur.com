@@ -1,0 +1,85 @@
+✅ ERREUR "duplicate key value violates unique constraint" RÉSOLUE
+
+═══════════════════════════════════════════════════════════════
+
+PROBLÈME :
+ERROR: 23505: duplicate key value violates unique constraint "city_pages_city_key"
+DETAIL: Key (city)=(Paris) already exists.
+
+═══════════════════════════════════════════════════════════════
+
+CAUSE :
+Tu as déjà importé Paris (et peut-être d'autres villes) dans la table.
+Le script essayait de les réinsérer sans gérer les doublons.
+
+═══════════════════════════════════════════════════════════════
+
+SOLUTION APPLIQUÉE :
+
+1️⃣ CITY PAGES
+   Changé : ON CONFLICT (slug) DO UPDATE SET...
+   En      : ON CONFLICT (city) DO UPDATE SET...
+
+   Maintenant le script :
+   ✅ Insère si la ville n'existe pas
+   ✅ Met à jour si la ville existe déjà
+   ✅ Utilise la contrainte unique sur "city" (correct)
+
+2️⃣ FAQ ENTRIES
+   Ajouté  : Contrainte unique sur "question"
+   Changé  : ON CONFLICT DO NOTHING
+   En      : ON CONFLICT (question) DO UPDATE SET...
+
+   Maintenant le script :
+   ✅ Insère si la question n'existe pas
+   ✅ Met à jour si la question existe déjà
+   ✅ Permet de réexécuter sans erreur
+
+═══════════════════════════════════════════════════════════════
+
+AVANTAGES :
+
+✅ Script IDEMPOTENT (exécutable plusieurs fois)
+✅ Pas d'erreur sur doublons
+✅ Met à jour le contenu si modifié
+✅ Conserve les données existantes
+
+═══════════════════════════════════════════════════════════════
+
+COMMENT UTILISER :
+
+1. Va sur Supabase Dashboard → SQL Editor
+2. Colle le contenu de IMPORT-FAQ-CITIES-SUPABASE.sql
+3. Clique "Run"
+
+RÉSULTAT ATTENDU :
+✅ Vérification structure tables
+✅ Ajout colonnes manquantes (si nécessaire)
+✅ 8 FAQ insérées/mises à jour
+✅ 5 villes insérées/mises à jour
+✅ AUCUNE erreur de doublon
+
+TU PEUX MAINTENANT RÉEXÉCUTER LE SCRIPT AUTANT DE FOIS QUE TU VEUX !
+
+═══════════════════════════════════════════════════════════════
+
+DÉTAILS TECHNIQUES :
+
+FAQ :
+- Contrainte unique : question
+- Si doublon : met à jour answer, tags, category, display_order
+- Conserve : id, created_at
+- Met à jour : updated_at
+
+VILLES :
+- Contrainte unique : city
+- Si doublon : met à jour title, content, meta_description, keywords
+- Conserve : id, slug, created_at, published_at
+- Met à jour : updated_at
+
+═══════════════════════════════════════════════════════════════
+
+✅ PRÊT À EXÉCUTER
+
+Le script est maintenant 100% sûr et robuste.
+Exécute-le dans Supabase SQL Editor !

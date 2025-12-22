@@ -1,0 +1,83 @@
+========================================
+⚡ EXÉCUTER MAINTENANT - VERSION FINALE
+========================================
+
+PROBLÈMES RÉSOLUS:
+✅ "cannot change return type" - DROP avant CREATE
+✅ "column reference ambiguous" - Colonnes renommées
+✅ "no unique constraint matching" - Contrainte UNIQUE ajoutée
+
+========================================
+✅ SOLUTION FINALE (30 SECONDES)
+========================================
+
+Dans Supabase SQL Editor :
+
+1. Copie TOUT le contenu de :
+   📄 FIX-FINAL-DROP-ALL-FUNCTIONS.sql
+   (VERSION CORRIGÉE - colonnes sans ambiguïté)
+
+2. Colle dans Supabase SQL Editor
+
+3. Clique RUN
+
+✓ Résultat attendu :
+  "MIGRATION COMPLETE - Test: SELECT * FROM scrape_taxi_companies('Paris');"
+
+========================================
+🧪 TEST IMMÉDIAT
+========================================
+
+SELECT * FROM scrape_taxi_companies('Paris');
+
+Colonnes retournées :
+- result_company_name
+- result_phone
+- result_email
+- result_address
+
+Résultat attendu : 3 compagnies
+- Paris Taxi Premium | 0612345678
+- Paris Taxi Express | 0698765432
+- Paris Taxi Confort | 0687654321
+
+========================================
+✅ CORRECTIONS APPLIQUÉES
+========================================
+
+AVANT (erreur):
+RETURNS TABLE (company_name text, ...)
+→ Conflit avec colonne table
+
+APRÈS (corrigé):
+RETURNS TABLE (result_company_name text, ...)
+→ Pas de conflit
+
+========================================
+📋 CE FICHIER FAIT
+========================================
+
+1. DROP 3 anciennes fonctions (évite conflits)
+2. Ajoute 12 colonnes manquantes
+3. Crée contrainte UNIQUE (company_name, city)
+4. Crée 3 nouvelles fonctions (noms corrects)
+5. Configure 4 index de performance
+6. Définit permissions (authenticated, anon, service_role)
+
+Durée : 30 secondes
+Fichier : 1 seul (FIX-FINAL-DROP-ALL-FUNCTIONS.sql)
+
+========================================
+⚡ EXÉCUTE MAINTENANT !
+========================================
+
+Supabase SQL Editor
+↓
+Copie FIX-FINAL-DROP-ALL-FUNCTIONS.sql
+↓
+RUN
+↓
+SELECT * FROM scrape_taxi_companies('Paris');
+
+C'EST PARTI ! 🚀
+

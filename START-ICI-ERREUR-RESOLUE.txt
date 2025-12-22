@@ -1,0 +1,102 @@
+═══════════════════════════════════════════════════════════
+  RÉSOUDRE L'ERREUR 401 - GUIDE COMPLET
+═══════════════════════════════════════════════════════════
+
+🚨 PROBLÈME ACTUEL:
+═══════════════════
+❌ Erreur console: "permission denied for table job" (401)
+❌ Erreur Supabase: "Failed to fetch (api.supabase.com)"
+
+📊 DIAGNOSTIC:
+══════════════
+✅ Code frontend: OK
+✅ Fichier SQL fix: Prêt
+❌ Fonction SQL: Manque SECURITY DEFINER
+❌ Connexion Supabase: Temporaire
+
+⚡ SOLUTION EN 3 ÉTAPES:
+════════════════════════
+
+ÉTAPE 1 - Attendre connexion Supabase (5-10 min)
+─────────────────────────────────────────────────
+L'erreur "Failed to fetch" indique:
+→ Supabase temporairement indisponible
+→ Ou problème réseau local
+
+Action: Attendre 5-10 minutes puis tester:
+https://supabase.com/dashboard/project/drohhxrkoequjphvabvq
+
+
+ÉTAPE 2 - Exécuter le fix SQL
+──────────────────────────────
+Dès que Supabase Dashboard fonctionne:
+
+1. Aller sur: SQL Editor
+   https://supabase.com/dashboard/project/drohhxrkoequjphvabvq/sql
+
+2. + New Query
+
+3. Copier/Coller LE FICHIER AU COMPLET:
+   
+   CHOISIR UN DE CES FICHIERS:
+   
+   Option A - SIMPLE (30 lignes):
+   → MIGRATION-SIMPLE-TOGGLE.sql
+   
+   Option B - COMPLET (avec tests):
+   → FIX-FINAL-FORCE-DROP.sql
+
+4. RUN (bouton vert)
+
+5. Attendre résultat:
+   → Si success → ✅ Bon!
+   → Si erreur → Copier/coller l'erreur
+
+
+ÉTAPE 3 - Tester le backoffice
+───────────────────────────────
+1. https://taxiassur.com/backoffice/auto-optimizer
+
+2. Ctrl+Shift+R (VIDER CACHE - OBLIGATOIRE!)
+
+3. Cliquer sur un switch
+
+4. Console (F12):
+   → ✅ Plus d'erreur 401
+   → ✅ Switch change d'état
+
+═══════════════════════════════════════════════════════════
+
+📁 FICHIERS DISPONIBLES:
+════════════════════════
+
+✅ MIGRATION-SIMPLE-TOGGLE.sql (30 lignes)
+   → Fix rapide, juste l'essentiel
+   → Recommandé si vous voulez faire vite
+
+✅ FIX-FINAL-FORCE-DROP.sql (160 lignes)
+   → Fix complet avec tests et vérifications
+   → Recommandé si vous voulez tout vérifier
+
+✅ SOLUTION-ERREUR-API-SUPABASE.txt
+   → Troubleshooting si Supabase ne marche pas
+
+═══════════════════════════════════════════════════════════
+
+⏰ TIMING:
+══════════
+Si connexion Supabase OK: 30 secondes
+Si connexion Supabase KO: Attendre 5-10 minutes
+
+❌ PAS DE REBUILD IONOS NÉCESSAIRE
+Le problème est uniquement côté Supabase SQL
+
+═══════════════════════════════════════════════════════════
+
+💡 ASTUCE:
+══════════
+Pour vérifier si Supabase fonctionne:
+→ Ouvrir https://status.supabase.com
+→ Voir s'il y a des incidents en cours
+
+═══════════════════════════════════════════════════════════

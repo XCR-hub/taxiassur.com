@@ -1,0 +1,25 @@
+<svg width="200" height="60" viewBox="0 0 200 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Shield background -->
+  <path d="M20 8C20 8 25 6 30 6C35 6 40 8 40 8V20C40 30 35 38 30 42C25 38 20 30 20 20V8Z" fill="#FFB800" stroke="#FF8C00" stroke-width="2"/>
+
+  <!-- Checkmark -->
+  <path d="M25 22L28 25L35 18" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Taxi icon -->
+  <rect x="22" y="14" width="16" height="8" rx="1" fill="white" opacity="0.3"/>
+  <circle cx="25" cy="26" r="1.5" fill="white"/>
+  <circle cx="35" cy="26" r="1.5" fill="white"/>
+
+  <!-- Text TAXIASSUR -->
+  <text x="48" y="26" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="#1E293B">
+    TAXI
+  </text>
+  <text x="48" y="42" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="#FFB800">
+    ASSUR
+  </text>
+
+  <!-- Tagline -->
+  <text x="130" y="35" font-family="Arial, sans-serif" font-size="9" fill="#64748B">
+    Assurance Taxi Pro
+  </text>
+</svg>

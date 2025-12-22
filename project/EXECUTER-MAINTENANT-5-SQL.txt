@@ -1,0 +1,118 @@
+╔══════════════════════════════════════════════════════════════╗
+║  ⚡ EXÉCUTER 5 SQL DANS SUPABASE (5 MINUTES)                ║
+╚══════════════════════════════════════════════════════════════╝
+
+🎯 Ouvrir: https://supabase.com/dashboard/project/drohhxrkoequjphvabvq/sql
+
+══════════════════════════════════════════════════════════════
+
+1️⃣ FIX COLONNE CONTACTED_AT (30 sec)
+
+Fichier: FIX-COLONNE-CONTACTED-AT.sql
+Copier → Coller → Run ▶
+Résultat: "COLONNES AJOUTÉES ✅"
+
+══════════════════════════════════════════════════════════════
+
+2️⃣ CRÉER TABLE + TEMPLATES EMAILS (1 min)
+
+Fichier: CREATE-EMAIL-TEMPLATES-TABLE.sql
+Copier → Coller → Run ▶
+Résultat: "✅ TABLE + 4 TEMPLATES CRÉÉS"
+
+Contenu:
+✅ Table email_templates créée
+✅ 4 templates HTML professionnels:
+   • backlink_premier_contact
+   • backlink_relance_1
+   • backlink_relance_finale
+   • backlink_confirmation
+
+══════════════════════════════════════════════════════════════
+
+3️⃣ WORKFLOW AUTOMATIQUE (1 min)
+
+Fichier: WORKFLOW-AUTOMATION-PRODUCTION.sql
+Copier → Coller → Run ▶
+Résultat: "✅ WORKFLOW CRÉÉ"
+
+Cron jobs créés:
+✅ backlink-workflow-automation (6h)
+✅ send-backlink-outreach-emails (1h)
+
+══════════════════════════════════════════════════════════════
+
+4️⃣ NETTOYER CONCURRENTS (1 min)
+
+Fichier: NETTOYER-OPPORTUNITES-CONCURRENTES.sql
+Copier → Coller → Run ▶
+Résultats:
+✅ 4 concurrents supprimés
+✅ 10 nouveaux sites ajoutés (scores 72-86)
+
+══════════════════════════════════════════════════════════════
+
+5️⃣ FIX DOUBLON CAMPAGNE (30 sec)
+
+Copier-coller ce code directement:
+
+DELETE FROM backlink_campaigns 
+WHERE id NOT IN (
+  SELECT DISTINCT ON (name) id
+  FROM backlink_campaigns
+  ORDER BY name, created_at ASC
+);
+
+SELECT 'OK: ' || COUNT(*) || ' campagne' FROM backlink_campaigns;
+
+Run ▶
+Résultat: "OK: 1 campagne"
+
+══════════════════════════════════════════════════════════════
+
+✅ APRÈS LES 5 SQL:
+
+Système 100% configuré:
+✅ Colonne contacted_at ajoutée
+✅ 4 templates emails HTML prêts
+✅ Workflow automatique actif (crons 6h + 1h)
+✅ 10 opportunités non-concurrentes
+✅ 1 seule campagne (doublon supprimé)
+
+══════════════════════════════════════════════════════════════
+
+🚀 ENSUITE:
+
+1. Upload /dist sur IONOS (FileZilla, 2 min)
+2. Ouvrir dashboard backlink-automation
+3. Ctrl+Shift+R (vider cache)
+4. Cliquer "Lancer Automation"
+5. Vérifier: Plus d'erreur "contacted_at"
+6. ✅ SYSTÈME EN PRODUCTION!
+
+══════════════════════════════════════════════════════════════
+
+⏱️ TEMPS TOTAL: 5 MINUTES
+
+30 sec + 1 min + 1 min + 1 min + 30 sec + 2 min upload = 6 min
+
+══════════════════════════════════════════════════════════════
+
+📁 FICHIERS:
+
+1. FIX-COLONNE-CONTACTED-AT.sql
+2. CREATE-EMAIL-TEMPLATES-TABLE.sql ⭐ NOUVEAU
+3. WORKFLOW-AUTOMATION-PRODUCTION.sql
+4. NETTOYER-OPPORTUNITES-CONCURRENTES.sql
+5. (Code DELETE direct pour doublon)
+
+══════════════════════════════════════════════════════════════
+
+📧 EMAILS QUI SERONT ENVOYÉS:
+
+De: Thomas Moreau <partenariats@taxiassur.com>
+Format: HTML professionnel orange TaxiAssur
+Timeline: J0 → J7 → J21 → J30
+Sites: 10 non-concurrents (Transport, VTC, PME)
+
+╚══════════════════════════════════════════════════════════════╝

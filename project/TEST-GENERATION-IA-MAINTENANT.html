@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Générateur IA - TaxiAssur</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 30px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    h1 {
+      margin: 0 0 10px 0;
+      color: #1a1a1a;
+    }
+    .subtitle {
+      color: #666;
+      margin-bottom: 30px;
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+      color: #333;
+    }
+    input, select {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 16px;
+      box-sizing: border-box;
+    }
+    button {
+      width: 100%;
+      padding: 14px;
+      background: #2563eb;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    button:hover {
+      background: #1d4ed8;
+      transform: translateY(-1px);
+    }
+    button:disabled {
+      background: #94a3b8;
+      cursor: not-allowed;
+      transform: none;
+    }
+    #result {
+      margin-top: 30px;
+      padding: 20px;
+      border-radius: 8px;
+      display: none;
+    }
+    #result.success {
+      background: #d1fae5;
+      border: 1px solid #10b981;
+      color: #065f46;
+      display: block;
+    }
+    #result.error {
+      background: #fee2e2;
+      border: 1px solid #ef4444;
+      color: #991b1b;
+      display: block;
+    }
+    .loading {
+      text-align: center;
+      padding: 20px;
+      color: #666;
+    }
+    .spinner {
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #2563eb;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 20px auto;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    pre {
+      background: #1e293b;
+      color: #e2e8f0;
+      padding: 15px;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-size: 13px;
+      max-height: 400px;
+    }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 15px;
+      margin-top: 20px;
+    }
+    .stat {
+      background: #f8fafc;
+      padding: 15px;
+      border-radius: 8px;
+      text-align: center;
+    }
+    .stat-value {
+      font-size: 24px;
+      font-weight: 700;
+      color: #2563eb;
+    }
+    .stat-label {
+      font-size: 12px;
+      color: #64748b;
+      margin-top: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>🤖 Test Générateur IA</h1>
+    <p class="subtitle">Testez la génération de contenu SEO automatique</p>
+
+    <form id="testForm">
+      <div class="form-group">
+        <label for="keyword">Mot-clé principal:</label>
+        <input type="text" id="keyword" value="assurance taxi" required>
+      </div>
+
+      <div class="form-group">
+        <label for="city">Ville:</label>
+        <input type="text" id="city" value="Paris" required>
+      </div>
+
+      <div class="form-group">
+        <label for="mode">Mode:</label>
+        <select id="mode" required>
+          <option value="unified">Unifié (Article + Ville + FAQ + Actualité)</option>
+          <option value="simple">Simple (Article uniquement)</option>
+        </select>
+      </div>
+
+      <button type="submit" id="submitBtn">
+        🚀 Générer Contenu
+      </button>
+    </form>
+
+    <div id="loading" class="loading" style="display: none;">
+      <div class="spinner"></div>
+      <p>Génération en cours... (10-20 secondes)</p>
+    </div>
+
+    <div id="result"></div>
+  </div>
+
+  <script>
+    const SUPABASE_URL = 'https://drohhxrkoequjphvabvq.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRyb2hoeHJrb2VxdWpwaHZhYnZxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mjg0MjAxNDQsImV4cCI6MjA0Mzk5NjE0NH0.pQLNJRv8r70s8DEuAyMBLmUg4Gvvs9uTJlMNAzV0f14';
+
+    document.getElementById('testForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const keyword = document.getElementById('keyword').value;
+      const city = document.getElementById('city').value;
+      const mode = document.getElementById('mode').value;
+
+      const submitBtn = document.getElementById('submitBtn');
+      const loading = document.getElementById('loading');
+      const result = document.getElementById('result');
+
+      submitBtn.disabled = true;
+      loading.style.display = 'block';
+      result.style.display = 'none';
+
+      try {
+        const response = await fetch(`${SUPABASE_URL}/functions/v1/generate-seo-content`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            keyword,
+            city,
+            mode
+          })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          result.className = 'success';
+          result.innerHTML = `
+            <h3>✅ Génération Réussie!</h3>
+            ${data.content.metadata ? `
+              <div class="stats">
+                <div class="stat">
+                  <div class="stat-value">${data.content.metadata.totalWords || 0}</div>
+                  <div class="stat-label">Mots</div>
+                </div>
+                <div class="stat">
+                  <div class="stat-value">${data.content.metadata.seoScore || 0}</div>
+                  <div class="stat-label">Score SEO</div>
+                </div>
+                <div class="stat">
+                  <div class="stat-value">${data.usage?.tokens || 0}</div>
+                  <div class="stat-label">Tokens</div>
+                </div>
+              </div>
+            ` : ''}
+            <p><strong>Contenu généré:</strong></p>
+            <ul>
+              ${data.content.blogPost ? `<li>✅ Article blog: ${data.content.blogPost.title}</li>` : ''}
+              ${data.content.cityPage ? `<li>✅ Page ville: ${data.content.cityPage.title}</li>` : ''}
+              ${data.content.faq ? `<li>✅ FAQ: ${data.content.faq.length} questions</li>` : ''}
+              ${data.content.newsArticle ? `<li>✅ Actualité: ${data.content.newsArticle.title}</li>` : ''}
+            </ul>
+            <p><strong>Réponse complète:</strong></p>
+            <pre>${JSON.stringify(data, null, 2)}</pre>
+          `;
+        } else {
+          result.className = 'error';
+          result.innerHTML = `
+            <h3>❌ Erreur</h3>
+            <p>${data.error || 'Erreur inconnue'}</p>
+            ${data.details ? `<p><strong>Détails:</strong> ${data.details}</p>` : ''}
+            <pre>${JSON.stringify(data, null, 2)}</pre>
+          `;
+        }
+      } catch (error) {
+        result.className = 'error';
+        result.innerHTML = `
+          <h3>❌ Erreur Réseau</h3>
+          <p>${error.message}</p>
+          <p><strong>Vérifications:</strong></p>
+          <ul>
+            <li>Edge function déployée?</li>
+            <li>OPENAI_API_KEY configurée?</li>
+            <li>CORS activé?</li>
+          </ul>
+        `;
+      } finally {
+        submitBtn.disabled = false;
+        loading.style.display = 'none';
+        result.style.display = 'block';
+      }
+    });
+  </script>
+</body>
+</html>

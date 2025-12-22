@@ -1,0 +1,92 @@
+🔧 FIX RAPIDE - Retirer Verrou Génération
+
+═══════════════════════════════════════════════════════
+PROBLÈME
+═══════════════════════════════════════════════════════
+
+Edge function crash car fonctions RPC manquantes:
+- acquire_generation_lock
+- release_generation_lock
+
+Erreur 500 + CORS bloqué
+
+═══════════════════════════════════════════════════════
+SOLUTION RAPIDE (2 min)
+═══════════════════════════════════════════════════════
+
+Retirer temporairement le système de verrou
+
+Dans: supabase/functions/generate-seo-content/index.ts
+
+SUPPRIMER CE BLOC (lignes 194-215):
+```typescript
+    // 🔒 ACQUÉRIR VERROU AVANT GÉNÉRATION (évite doublons)
+    const { data: lockAcquired, error: lockError } = await supabase
+      .rpc('acquire_generation_lock', {
+        p_lock_type: 'blog',
+        p_locked_by: `generate-seo-content-${keyword}`,
+        p_duration_minutes: 5
+      });
+
+    if (lockError || !lockAcquired) {
+      console.warn('⚠️ Verrou déjà actif, génération ignorée');
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'Une génération est déjà en cours. Réessayez dans 2 minutes.',
+          locked: true
+        }),
+        {
+          status: 429,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
+    }
+
+    console.log('🔒 Verrou acquis, génération en cours...');
+```
+
+SUPPRIMER dans catch (ligne 507):
+```typescript
+    // 🔓 LIBÉRER VERROU en cas d'erreur
+    await supabase.rpc('release_generation_lock', { p_lock_type: 'blog' }).catch(console.error);
+```
+
+SUPPRIMER dans finally (lignes 521-522):
+```typescript
+  } finally {
+    // 🔓 TOUJOURS LIBÉRER VERROU à la fin
+    await supabase.rpc('release_generation_lock', { p_lock_type: 'blog' }).catch(console.error);
+  }
+```
+
+RÉSULTAT:
+Le code passe directement à la génération sans verrou
+
+═══════════════════════════════════════════════════════
+REDÉPLOIEMENT (3 min)
+═══════════════════════════════════════════════════════
+
+1. Dashboard Supabase
+2. Edge Functions > generate-seo-content
+3. Modifier le code (retirer les 3 blocs ci-dessus)
+4. Deploy
+5. Attendre 30 secondes
+6. Tester sur /backoffice/ai-generator
+
+═══════════════════════════════════════════════════════
+TEST
+═══════════════════════════════════════════════════════
+
+URL: /backoffice/ai-generator
+Formulaire:
+- Mot-clé: test
+- Ville: Paris
+- Générer
+
+Attendu: Génération OK (pas d'erreur 500)
+
+═══════════════════════════════════════════════════════
+
+Note: Le verrou sera réactivé plus tard quand les fonctions RPC seront créées.
+Pour l'instant, on privilégie le fonctionnement basique.

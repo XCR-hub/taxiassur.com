@@ -1,0 +1,72 @@
+🚨 ERREUR: Failed to fetch (api.supabase.com)
+
+════════════════════════════════════════════════
+
+DIAGNOSTIC:
+═══════════
+❌ Erreur réseau ou Supabase temporairement indisponible
+❌ Impossible d'exécuter SQL via SQL Editor
+
+SOLUTIONS ALTERNATIVES:
+═══════════════════════
+
+OPTION 1 - Attendre et réessayer (5 min)
+═════════════════════════════════════════
+Parfois Supabase a des interruptions temporaires.
+→ Attendre 5 minutes
+→ Réessayer d'ouvrir:
+  https://supabase.com/dashboard/project/drohhxrkoequjphvabvq/sql
+→ Exécuter FIX-FINAL-FORCE-DROP.sql
+
+OPTION 2 - Utiliser l'API REST directement
+═══════════════════════════════════════════════
+Via curl ou Postman:
+
+POST https://drohhxrkoequjphvabvq.supabase.co/rest/v1/rpc/execute_sql
+Headers:
+  apikey: [VOTRE_SUPABASE_ANON_KEY]
+  Authorization: Bearer [VOTRE_SUPABASE_ANON_KEY]
+  Content-Type: application/json
+Body:
+{
+  "query": "DROP FUNCTION IF EXISTS toggle_automation(TEXT, BOOLEAN) CASCADE; CREATE FUNCTION toggle_automation(automation_name TEXT, enabled BOOLEAN) RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, cron AS $$ DECLARE affected_count INT; BEGIN UPDATE cron.job SET active = enabled WHERE jobname = automation_name; GET DIAGNOSTICS affected_count = ROW_COUNT; RETURN jsonb_build_object('success', true, 'affected_rows', affected_count); END; $$; GRANT EXECUTE ON FUNCTION toggle_automation(TEXT, BOOLEAN) TO anon;"
+}
+
+OPTION 3 - Vérifier votre connexion
+════════════════════════════════════
+1. Tester: https://api.supabase.com
+2. Vérifier firewall/VPN
+3. Tester avec autre navigateur
+4. Vider cache navigateur (Ctrl+Shift+Delete)
+
+OPTION 4 - Utiliser Supabase CLI (si installé)
+═══════════════════════════════════════════════
+supabase db reset
+supabase migration new fix_toggle_automation
+# Copier contenu de FIX-FINAL-FORCE-DROP.sql
+supabase db push
+
+OPTION 5 - Contacter support Supabase
+══════════════════════════════════════
+Si le problème persiste > 1 heure:
+→ https://supabase.com/dashboard/support
+
+════════════════════════════════════════════════
+
+STATUT ACTUEL:
+══════════════
+✅ Code frontend: OK (build 18.11s)
+✅ Fichier SQL: Prêt (FIX-FINAL-FORCE-DROP.sql)
+❌ Connexion Supabase: Temporairement indisponible
+
+ACTION RECOMMANDÉE:
+═══════════════════
+1. Attendre 5-10 minutes
+2. Réessayer https://supabase.com/dashboard
+3. Si ça marche → Exécuter FIX-FINAL-FORCE-DROP.sql
+4. Si ça ne marche pas → Option 2 (API REST)
+
+════════════════════════════════════════════════
+
+PAS DE REBUILD IONOS NÉCESSAIRE ❌
+Le problème est juste la connexion à Supabase

@@ -1,0 +1,260 @@
+╔═══════════════════════════════════════════════════════════════╗
+║  RAPPORTS BACKLINKS ULTRA-DÉTAILLÉS - GUIDE COMPLET          ║
+╚═══════════════════════════════════════════════════════════════╝
+
+✅ SYSTÈME CRÉÉ AVEC SUCCÈS!
+
+Vous avez maintenant 2 pages de reporting:
+
+1. 📊 DASHBOARD AUTOMATION (Vue Globale)
+   → https://taxiassur.com/backoffice/backlink-automation
+   → Stats en temps réel
+   → Lancer automation
+   → Journal d'activité
+
+2. 📈 RAPPORTS DÉTAILLÉS (Vue Analytique)
+   → https://taxiassur.com/backoffice/backlink-reports
+   → Stats ultra-détaillées
+   → Drill-down sur chaque opportunité
+   → Export CSV
+
+───────────────────────────────────────────────────────────────
+
+📊 RAPPORTS DISPONIBLES:
+
+┌─────────────────────────────────────────────────────────────┐
+│ GÉNÉRAL (Vue d'Ensemble)                                    │
+└─────────────────────────────────────────────────────────────┘
+
+✓ Sites Scrapés
+  → Nombre total de sites détectés automatiquement
+  → Nouvelles opportunités trouvées
+  → Score qualité moyen
+
+✓ Emails - Première Mise en Relation
+  → Nombre d'emails initiaux envoyés
+  → Taux d'ouverture (%)
+  → Taux de bounce (%)
+
+✓ Emails Ouverts
+  → Nombre d'emails ouverts
+  → % par rapport aux envoyés
+  → Temps moyen d'ouverture
+
+✓ Relances
+  → 1ère relance (après 7 jours sans réponse)
+  → 2ème relance (après 14 jours)
+  → 3ème relance (après 21 jours)
+  → Nombre de "no response" définitifs
+
+✓ Sites Acceptés
+  → Nombre de réponses positives
+  → Nombre de réponses négatives
+  → Taux d'acceptation (%)
+
+✓ Backlinks Acquis
+  → Nombre de backlinks actifs
+  → Nombre de backlinks vérifiés
+  → Nombre de backlinks cassés/supprimés
+
+┌─────────────────────────────────────────────────────────────┐
+│ DÉTAILS (Drill-Down sur Chaque Opportunité)                 │
+└─────────────────────────────────────────────────────────────┘
+
+Pour CHAQUE opportunité, vous voyez:
+
+📋 INFORMATIONS GÉNÉRALES:
+   • Domaine
+   • URL complète
+   • Statut actuel (new/contacted/responded/acquired)
+   • Score qualité (0-100)
+   • Email de contact
+   • Date de création
+   • Date de premier contact
+   • Date de réponse
+
+📧 HISTORIQUE EMAILS:
+   • Email initial envoyé le...
+   • Ouvert le... (ou pas ouvert)
+   • 1ère relance envoyée le...
+   • 2ème relance envoyée le...
+   • 3ème relance envoyée le...
+   • Réponse reçue le...
+   • Sentiment de la réponse (positif/négatif/neutre)
+
+🔗 BACKLINKS:
+   • Notre backlink envoyé: URL
+   • Leur backlink reçu: URL
+   • Date de vérification
+   • Statut vérification (pending/verified/broken)
+   • Dernière vérification le...
+
+📊 MÉTRIQUES AVANCÉES:
+   • Domain Authority (DA)
+   • Relevance Score
+   • Estimated Traffic
+   • Spam Score
+   • Quality Score (calculé automatiquement)
+
+───────────────────────────────────────────────────────────────
+
+🎯 FONCTIONNALITÉS DISPONIBLES:
+
+┌─────────────────────────────────────────────────────────────┐
+│ 1. FILTRES                                                   │
+└─────────────────────────────────────────────────────────────┘
+
+• Par Période:
+  - 7 derniers jours
+  - 30 derniers jours
+  - 90 derniers jours
+  - Tout l'historique
+
+• Par Statut:
+  - Tous
+  - Nouveaux (new)
+  - Contactés (contacted)
+  - Réponses reçues (responded)
+  - Backlinks acquis (acquired)
+  - Rejetés (rejected)
+
+┌─────────────────────────────────────────────────────────────┐
+│ 2. ACTIONS                                                   │
+└─────────────────────────────────────────────────────────────┘
+
+• Actualiser: Recharger les données en temps réel
+• Exporter CSV: Télécharger rapport complet
+• Drill-Down: Cliquer sur ⌄ pour voir détails complets
+
+┌─────────────────────────────────────────────────────────────┐
+│ 3. STATISTIQUES VISUELLES                                   │
+└─────────────────────────────────────────────────────────────┘
+
+• Cards colorées avec icônes
+• Graphiques de progression
+• Taux de conversion
+• Temps de réponse moyen
+• Score qualité moyen
+
+───────────────────────────────────────────────────────────────
+
+📥 EXPORT CSV:
+
+Le CSV contient TOUTES les colonnes:
+• Domaine
+• URL complète
+• Statut
+• Score Qualité
+• Email Contact
+• Date Création
+• Date Contact
+• Date Réponse
+• Notre Backlink
+• Leur Backlink
+• Statut Vérification
+• DA, Relevance, Traffic, Spam Score
+
+→ Compatible Excel, Google Sheets, etc.
+
+───────────────────────────────────────────────────────────────
+
+🔄 ACTUALISATION:
+
+Les données sont:
+• Mises à jour en temps réel via Supabase
+• Actualisées automatiquement toutes les 30 secondes
+• Rechargées manuellement avec bouton "Actualiser"
+• Synchronisées avec les Edge Functions
+
+───────────────────────────────────────────────────────────────
+
+📊 EXEMPLE DE VUE:
+
+┌──────────────────────────────────────────────────────────┐
+│ 📊 STATS GÉNÉRALES                                        │
+├──────────────────────────────────────────────────────────┤
+│ Sites Scrapés        150    (+12 nouvelles opportunités) │
+│ Emails Envoyés        85    (72 ouverts / 84.7%)        │
+│ Réponses              23    (18 positives / 78.3%)      │
+│ Backlinks Acquis      12    (12 vérifiés)               │
+└──────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────┐
+│ 🔄 DÉTAIL RELANCES                                        │
+├──────────────────────────────────────────────────────────┤
+│ Sites Contactés       85                                 │
+│ 1ère Relance         32                                 │
+│ 2ème Relance         15                                 │
+│ 3ème Relance          8                                 │
+└──────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────┐
+│ 📋 LISTE DÉTAILLÉE                                        │
+├──────────────────────────────────────────────────────────┤
+│ ⌄ assurance-pro-france.fr      [acquis]  Score: 92     │
+│   → Email envoyé: 15/10/2025                            │
+│   → Réponse reçue: 18/10/2025 (positif)                │
+│   → Notre backlink: https://taxiassur.com              │
+│   → Leur backlink: https://assurance-pro-france.fr...  │
+│   → Vérifié: ✅ 23/10/2025                              │
+│                                                         │
+│ ⌄ taxi-infos.com               [contacted] Score: 85   │
+│   → Email envoyé: 20/10/2025                            │
+│   → Ouvert: 21/10/2025                                  │
+│   → En attente de réponse...                            │
+└──────────────────────────────────────────────────────────┘
+
+───────────────────────────────────────────────────────────────
+
+🎯 UTILISATION:
+
+1. Ouvrir: https://taxiassur.com/backoffice/backlink-reports
+
+2. Choisir période: 7j / 30j / 90j / Tout
+
+3. Voir stats globales en haut
+
+4. Filtrer par statut si besoin
+
+5. Cliquer sur ⌄ pour drill-down
+
+6. Exporter CSV si besoin d'analyse externe
+
+───────────────────────────────────────────────────────────────
+
+✅ AVANTAGES:
+
+• Vision complète 360° de votre stratégie backlinks
+• Transparence totale sur chaque étape
+• Données en temps réel
+• Export pour analyses externes
+• Drill-down pour investigations
+• Suivi des relances automatiques
+• Vérification des backlinks cassés
+
+───────────────────────────────────────────────────────────────
+
+📁 FICHIERS:
+
+1. src/backoffice/BacklinkReports.tsx
+   → Nouveau composant de rapports détaillés
+
+2. src/backoffice/BacklinkAutomationDashboard.tsx
+   → Modifié avec bouton "Rapports Détaillés"
+
+3. src/router.tsx
+   → Route /backoffice/backlink-reports ajoutée
+
+4. Build ✅ Compilé avec succès
+
+───────────────────────────────────────────────────────────────
+
+🚀 PROCHAINES ÉTAPES:
+
+1. Exécuter le SQL (SYSTEME-BACKLINK-COMPLET-AUTOMATISE.sql)
+2. Attendre 30 secondes
+3. Recharger: /backoffice/backlink-automation
+4. Cliquer "Rapports Détaillés"
+5. Explorer toutes les données!
+
+╚═══════════════════════════════════════════════════════════════╝
