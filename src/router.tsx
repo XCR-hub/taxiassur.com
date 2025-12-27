@@ -78,6 +78,7 @@ const MarketingTemplates = lazy(() => import('./backoffice/MarketingTemplates'))
 const QRCodeGenerator = lazy(() => import('./backoffice/QRCodeGenerator'));
 const TaxisSinistres = lazy(() => import('./pages/TaxisSinistres'));
 const Actualites = lazy(() => import('./pages/Actualites'));
+const UserManagement = lazy(() => import('./backoffice/UserManagement'));
 const NewsArticle = lazy(() => import('./pages/NewsArticle'));
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
 const CityPageGenerator = lazy(() => import('./backoffice/CityPageGenerator'));
@@ -382,6 +383,10 @@ export const router = createBrowserRouter([
   {
     path: '/backoffice/security',
     element: <AuthGuard><SuspenseWrapper><SecurityDashboard /></SuspenseWrapper></AuthGuard>
+  },
+  {
+    path: '/backoffice/users',
+    element: <AuthGuard><SuspenseWrapper><UserManagement /></SuspenseWrapper></AuthGuard>
   },
   {
     path: '/backoffice/analytics',
