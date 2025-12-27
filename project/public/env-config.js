@@ -23,7 +23,7 @@ window.ENV_CONFIG = {
   VITE_SITE_URL: 'https://taxiassur.com',
   VITE_BRAND_NAME: 'TaxiAssur',
   VITE_META_PIXEL_ID: 'VOTRE_META_PIXEL_ID_ICI',
-  VITE_ADMIN_PASSWORD: 'taxiassur2024',
+  VITE_ADMIN_PASSWORD: 'taxiassur2026',
   VITE_NOINDEX: 'false'
 };
 
