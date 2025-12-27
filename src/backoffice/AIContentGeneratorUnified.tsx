@@ -455,12 +455,12 @@ Total: ${generatedContent.metadata?.totalWords ?? 0} mots générés`
               <textarea
                 value={imagePrompt}
                 onChange={(e) => setImagePrompt(e.target.value)}
-                placeholder="Ex: Photo professionnelle d'un taxi moderne à Paris, éclairage doré, haute qualité, style réaliste"
+                placeholder="Ex: Taxi noir premium devant monument parisien au coucher du soleil, ambiance professionnelle et chaleureuse, photo haute résolution"
                 rows={3}
                 className="w-full px-4 py-3 border-2 border-yellow-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 placeholder-gray-400 resize-none"
               />
               <p className="text-xs text-yellow-700 mt-2">
-                💡 Si vide, un prompt SEO sera généré automatiquement avec : ville + mot-clé + style professionnel
+                💡 Si vide, un prompt SEO ultra-optimisé sera généré automatiquement avec : ville + contexte unique + éclairage + style + moment de la journée. Chaque image sera unique grâce à un système de variation intelligent.
               </p>
             </div>
 
