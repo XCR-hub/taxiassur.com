@@ -650,17 +650,17 @@ Total: ${generatedContent.metadata?.totalWords ?? 0} mots générés`
                   <strong>Slug:</strong> {generatedContent.cityPage?.slug ?? 'non-genere'}
                 </p>
                 <div className="grid grid-cols-2 gap-2 mt-3 text-sm">
-                  <div className="bg-white px-3 py-2 rounded border border-green-300">
-                    <strong>Département:</strong> {generatedContent.cityPage?.dept ?? 'N/A'}
+                  <div className="bg-white px-3 py-2 rounded border border-green-300 text-gray-900">
+                    <strong className="text-gray-900">Département:</strong> {generatedContent.cityPage?.dept ?? 'N/A'}
                   </div>
-                  <div className="bg-white px-3 py-2 rounded border border-green-300">
-                    <strong>Région:</strong> {generatedContent.cityPage?.region ?? 'N/A'}
+                  <div className="bg-white px-3 py-2 rounded border border-green-300 text-gray-900">
+                    <strong className="text-gray-900">Région:</strong> {generatedContent.cityPage?.region ?? 'N/A'}
                   </div>
-                  <div className="bg-white px-3 py-2 rounded border border-green-300">
-                    <strong>Population:</strong> {generatedContent.cityPage?.population?.toLocaleString() ?? 'N/A'}
+                  <div className="bg-white px-3 py-2 rounded border border-green-300 text-gray-900">
+                    <strong className="text-gray-900">Population:</strong> {generatedContent.cityPage?.population?.toLocaleString() ?? 'N/A'}
                   </div>
-                  <div className="bg-white px-3 py-2 rounded border border-green-300">
-                    <strong>Taxis:</strong> {generatedContent.cityPage?.taxi_count ?? 'N/A'}
+                  <div className="bg-white px-3 py-2 rounded border border-green-300 text-gray-900">
+                    <strong className="text-gray-900">Taxis:</strong> {generatedContent.cityPage?.taxi_count ?? 'N/A'}
                   </div>
                 </div>
               </div>
@@ -709,12 +709,15 @@ Total: ${generatedContent.metadata?.totalWords ?? 0} mots générés`
               )}
 
               {/* Contenu complet (replié) */}
-              <details className="bg-gray-50 rounded-lg p-4 border-2 border-gray-200">
-                <summary className="font-bold text-gray-800 cursor-pointer hover:text-orange-600">
+              <details className="bg-white rounded-lg p-4 border-2 border-gray-400 shadow-sm">
+                <summary className="font-bold text-gray-900 cursor-pointer hover:text-orange-600 select-none">
                   📄 Voir le contenu complet (cliquer pour déplier)
                 </summary>
-                <div className="mt-4 prose prose-sm max-w-none">
-                  <div dangerouslySetInnerHTML={{ __html: generatedContent.blogPost?.content ?? '<p>Contenu non disponible</p>' }} />
+                <div className="mt-4 prose prose-sm max-w-none text-gray-900 bg-white p-4 rounded border border-gray-200">
+                  <div
+                    className="text-gray-900"
+                    dangerouslySetInnerHTML={{ __html: generatedContent.blogPost?.content ?? '<p class="text-gray-900">Contenu non disponible</p>' }}
+                  />
                 </div>
               </details>
             </div>

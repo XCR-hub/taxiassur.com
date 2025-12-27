@@ -1,10 +1,23 @@
 import { createClient } from '@supabase/supabase-js';
 import { getSupabaseUrl, getSupabaseAnonKey, getSupabaseServiceRoleKey } from './env';
 
+// Global singleton instances - prevents HMR duplicates
+declare global {
+  interface Window {
+    __TAXIASSUR_SUPABASE__?: ReturnType<typeof createClient>;
+    __TAXIASSUR_SUPABASE_ADMIN__?: ReturnType<typeof createClient>;
+  }
+}
+
 // Singleton instance - created once and reused
 let supabaseInstance: ReturnType<typeof createClient> | null = null;
 
 const initSupabase = () => {
+  // Check global instance first to prevent HMR duplicates
+  if (typeof window !== 'undefined' && window.__TAXIASSUR_SUPABASE__) {
+    return window.__TAXIASSUR_SUPABASE__;
+  }
+
   if (supabaseInstance) {
     return supabaseInstance;
   }
@@ -15,11 +28,6 @@ const initSupabase = () => {
   try {
     supabaseUrl = getSupabaseUrl();
     supabaseAnonKey = getSupabaseAnonKey();
-    console.log('🔧 Supabase Config:', {
-      url: supabaseUrl,
-      keyPrefix: supabaseAnonKey.substring(0, 20) + '...',
-      enabled: true
-    });
   } catch (error) {
     console.error('Supabase configuration error:', error);
     // Fallback to avoid app crash
@@ -35,6 +43,11 @@ const initSupabase = () => {
     }
   });
 
+  // Store in window to prevent HMR duplicates
+  if (typeof window !== 'undefined') {
+    window.__TAXIASSUR_SUPABASE__ = supabaseInstance;
+  }
+
   return supabaseInstance;
 };
 
@@ -46,6 +59,11 @@ export const supabase = initSupabase();
 let supabaseAdmin: ReturnType<typeof createClient> | null = null;
 
 export const getSupabaseAdmin = () => {
+  // Check global instance first to prevent HMR duplicates
+  if (typeof window !== 'undefined' && window.__TAXIASSUR_SUPABASE_ADMIN__) {
+    return window.__TAXIASSUR_SUPABASE_ADMIN__;
+  }
+
   if (!supabaseAdmin) {
     const supabaseUrl = getSupabaseUrl();
     const serviceRoleKey = getSupabaseServiceRoleKey();
@@ -55,10 +73,15 @@ export const getSupabaseAdmin = () => {
     supabaseAdmin = createClient(supabaseUrl, serviceRoleKey, {
       auth: {
         persistSession: false,
-        autoRefreshToken: false
+        autoRefreshToken: false,
+        storageKey: 'taxiassur-admin-auth'
       }
     });
-    console.log('🔐 Supabase Admin client initialized with Service Role Key');
+
+    // Store in window to prevent HMR duplicates
+    if (typeof window !== 'undefined') {
+      window.__TAXIASSUR_SUPABASE_ADMIN__ = supabaseAdmin;
+    }
   }
   return supabaseAdmin;
 };
