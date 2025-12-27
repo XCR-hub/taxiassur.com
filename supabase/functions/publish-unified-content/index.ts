@@ -103,6 +103,8 @@ serve(async (req: Request) => {
           console.error('City page error:', cityError);
           if (!cityError.message.includes('duplicate key')) {
             results.errors.push(`Page ville: ${cityError.message}`);
+          } else {
+            console.log('⚠️ Page ville existe déjà, ignorée');
           }
         } else {
           results.cityPage = cityData;
@@ -162,7 +164,7 @@ serve(async (req: Request) => {
             category: content.newsArticle.category || 'Réglementation',
             tags: content.newsArticle.tags || [],
             featured: content.newsArticle.featured || false,
-            published: true
+            status: 'published'
           })
           .select()
           .single();
