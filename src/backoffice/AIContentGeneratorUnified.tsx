@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Sparkles, Loader2, Copy, Check, Download, Home, Save, FileText, MapPin, HelpCircle, Image as ImageIcon, Tag, Clock } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { getSupabaseAdmin } from '../lib/supabase';
+import { supabase } from '../lib/supabase';
 
 interface UnifiedContent {
   // Article de blog
@@ -195,125 +195,27 @@ ${(generatedContent.faq || []).map(f => `**${f?.question ?? 'Q'}**\n${f?.answer 
     setSuccess('');
 
     try {
-      const adminClient = getSupabaseAdmin();
+      console.log('📤 Envoi du contenu vers Edge Function...');
 
-      // 1. PUBLIER L'ARTICLE DE BLOG
-      const blogSlug = `${generatedContent.blogPost?.slug ?? 'article'}-${Date.now()}`;
+      const { data, error } = await supabase.functions.invoke('publish-unified-content', {
+        body: { content: generatedContent }
+      });
 
-      // Vérifier et logger l'image
-      const featuredImage = generatedContent.blogPost?.featuredImage || null;
-      console.log('🖼️ Image à sauvegarder:', featuredImage ? featuredImage.substring(0, 80) : 'AUCUNE');
-
-      const { data: blogData, error: blogError } = await adminClient
-        .from('blog_posts')
-        .insert({
-          slug: blogSlug,
-          title: generatedContent.blogPost?.title ?? 'Titre',
-          excerpt: generatedContent.blogPost?.excerpt ?? '',
-          content: generatedContent.blogPost?.content ?? '',
-          meta_title: generatedContent.blogPost?.title ?? 'Titre',
-          meta_description: generatedContent.blogPost?.metaDescription ?? '',
-          keywords: generatedContent.blogPost?.keywords ?? [],
-          published: true,
-          read_time: generatedContent.blogPost?.readingTime ?? 5,
-          author: 'TaxiAssur',
-          featured_image: featuredImage,
-          image_alt: generatedContent.blogPost?.imageAlt || null
-        })
-        .select()
-        .single();
-
-      console.log('✅ Article sauvegardé avec image:', blogData?.featured_image ? 'OUI' : 'NON');
-
-      if (blogError) {
-        console.error('Blog post error:', blogError);
-        throw new Error(`Erreur article: ${blogError.message}`);
+      if (error) {
+        console.error('❌ Erreur Edge Function:', error);
+        throw new Error(`Erreur lors de la publication: ${error.message}`);
       }
 
-      // 2. PUBLIER LA PAGE VILLE
-      const { data: cityData, error: cityError } = await adminClient
-        .from('city_pages')
-        .insert({
-          city: generatedContent.cityPage?.city ?? 'Paris',
-          title: generatedContent.cityPage?.title ?? 'Titre',
-          slug: generatedContent.cityPage?.slug ?? 'slug',
-          content: generatedContent.cityPage?.content ?? '',
-          meta_description: generatedContent.cityPage?.metaDescription ?? '',
-          keywords: generatedContent.cityPage?.keywords ?? [],
-          dept: generatedContent.cityPage?.dept ?? null,
-          region: generatedContent.cityPage?.region ?? null,
-          population: generatedContent.cityPage?.population ?? null,
-          taxi_count: generatedContent.cityPage?.taxi_count ?? null,
-          status: 'published'
-        })
-        .select()
-        .single();
+      console.log('✅ Réponse Edge Function:', data);
 
-      if (cityError) {
-        console.error('City page error:', cityError);
-        // Ne pas bloquer si la ville existe déjà
-        if (!cityError.message.includes('duplicate key')) {
-          throw new Error(`Erreur page ville: ${cityError.message}`);
-        }
+      if (!data.success) {
+        throw new Error(data.error || 'Erreur lors de la publication');
       }
 
-      // 3. PUBLIER TOUTES LES FAQ (non-bloquant)
-      let faqCount = 0;
-      if (generatedContent.faq && generatedContent.faq.length > 0) {
-        try {
-          const faqEntries = (generatedContent.faq || []).map((faq, index) => ({
-            question: faq?.question ?? 'Question',
-            answer: faq?.answer ?? 'Réponse',
-            category: faq?.category ?? 'Général',
-            order_index: index
-          }));
-
-          const { data: faqData, error: faqError } = await adminClient
-            .from('faq_entries')
-            .insert(faqEntries)
-            .select();
-
-          if (faqError) {
-            console.error('❌ FAQ insert error:', faqError);
-            console.warn('⚠️ FAQ non publiées, mais article créé quand même');
-          } else {
-            faqCount = faqData?.length || 0;
-            console.log(`✅ ${faqCount} FAQ publiées avec succès`);
-          }
-        } catch (faqErr) {
-          console.error('❌ Erreur FAQ (non-bloquante):', faqErr);
-        }
-      }
-
-      // 4. PUBLIER L'ACTUALITÉ
-      if (generatedContent.newsArticle) {
-        const { data: newsData, error: newsError } = await adminClient
-          .from('news_articles')
-          .insert({
-            title: generatedContent.newsArticle.title,
-            slug: generatedContent.newsArticle.title.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
-            content: generatedContent.newsArticle.content,
-            excerpt: generatedContent.newsArticle.content.replace(/<[^>]*>/g, '').substring(0, 150),
-            image_url: generatedContent.newsArticle.imageUrl || null,
-            category: generatedContent.newsArticle.category || 'Réglementation',
-            tags: [keyword, city].filter(Boolean),
-            status: 'published',
-            published_at: new Date().toISOString(),
-            created_at: new Date().toISOString()
-          })
-          .select()
-          .single();
-
-        if (newsError) {
-          console.warn('News insert warning:', newsError);
-          // Ne pas bloquer si l'actualité échoue
-        } else {
-          console.log('✅ Actualité publiée:', newsData);
-        }
-      }
-
+      const { results } = data;
       const imageStatus = generatedContent.blogPost?.featuredImage ? '✅ avec image' : '⚠️ sans image';
-      const faqStatus = faqCount > 0 ? `✅ ${faqCount} FAQ ajoutées` : '⚠️ FAQ non publiées';
+      const faqStatus = results.faq?.length > 0 ? `✅ ${results.faq.length} FAQ ajoutées` : '⚠️ FAQ non publiées';
+      const errorsList = results.errors?.length > 0 ? `\n⚠️ ${results.errors.join(', ')}` : '';
 
       setSuccess(
         `✅ Publication réussie !
@@ -321,12 +223,11 @@ ${(generatedContent.faq || []).map(f => `**${f?.question ?? 'Q'}**\n${f?.answer 
 📝 Article de blog publié ${imageStatus}
 🏙️ Page ville créée/mise à jour
 ❓ ${faqStatus}
-📰 Actualité publiée
+📰 Actualité publiée${errorsList}
 
 Total: ${generatedContent.metadata?.totalWords ?? 0} mots générés`
       );
 
-      // Reset après 3 secondes
       setTimeout(() => {
         setGeneratedContent(null);
         setKeyword('');

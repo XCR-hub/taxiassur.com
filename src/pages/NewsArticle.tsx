@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { Calendar, Clock, Tag, ArrowLeft, TrendingUp, ExternalLink } from 'lucide-react';
-import { getSupabaseAdmin } from '../lib/supabase';
+import { supabase } from '../lib/supabase';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 
@@ -36,8 +36,6 @@ export default function NewsArticle() {
 
   const loadArticle = async (articleSlug: string) => {
     try {
-      const supabase = getSupabaseAdmin();
-
       const { data, error } = await supabase
         .from('news_articles')
         .select('*')
@@ -63,8 +61,6 @@ export default function NewsArticle() {
 
   const loadRelatedArticles = async (category: string, currentId: string) => {
     try {
-      const supabase = getSupabaseAdmin();
-
       const { data, error } = await supabase
         .from('news_articles')
         .select('id, title, slug, excerpt, category, published_at, score')

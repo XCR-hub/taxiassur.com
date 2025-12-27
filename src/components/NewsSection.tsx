@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Calendar, TrendingUp, Newspaper, ArrowRight } from 'lucide-react';
-import { getSupabaseAdmin } from '../lib/supabase';
+import { supabase } from '../lib/supabase';
 
 interface NewsArticle {
   id: string;
@@ -28,8 +28,6 @@ export default function NewsSection({ limit = 3, showTitle = true }: NewsSection
 
   const loadNews = async () => {
     try {
-      const supabase = getSupabaseAdmin();
-
       const { data, error } = await supabase
         .from('news_articles')
         .select('id, title, slug, excerpt, category, score, published_at, source')

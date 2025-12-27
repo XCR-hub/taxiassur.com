@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Calendar, Clock, Tag, ExternalLink, TrendingUp } from 'lucide-react';
-import { getSupabaseAdmin } from '../lib/supabase';
+import { supabase } from '../lib/supabase';
 import Footer from '../components/Footer';
 import Header from '../components/Header';
 
@@ -31,8 +31,6 @@ export default function Actualites() {
 
   const loadNews = async () => {
     try {
-      const supabase = getSupabaseAdmin();
-
       const { data, error } = await supabase
         .from('news_articles')
         .select('*')
