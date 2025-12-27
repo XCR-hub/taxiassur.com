@@ -156,28 +156,11 @@ const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
               </button>
             </form>
 
-            <div className="mt-8 p-6 bg-gradient-to-r from-orange-50 to-yellow-50 border-2 border-yellow-200 rounded-xl">
-              <h3 className="text-lg font-bold text-orange-900 mb-3 flex items-center">
-                <Lock className="mr-2" size={18} />
-                Accès Master (mode de secours)
-              </h3>
-              <div className="space-y-2 text-yellow-800">
-                <p className="text-sm">
-                  Email: <code className="bg-yellow-100 px-2 py-1 rounded font-mono text-xs">master@taxiassur.com</code>
-                </p>
-                <p className="flex items-center justify-between">
-                  <span className="font-medium text-sm">Mot de passe :</span>
-                  <code className="bg-yellow-100 px-3 py-1 rounded-lg font-mono text-sm font-bold">
-                    TaxiAssur2025!,&
-                  </code>
-                </p>
-              </div>
-              <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                <p className="text-sm text-amber-800">
-                  <strong>Production :</strong> Changez ce mot de passe via la variable d'environnement
-                  <code className="bg-amber-100 px-1 rounded mx-1">VITE_ADMIN_PASSWORD</code>
-                </p>
-              </div>
+            <div className="mt-8 p-4 bg-gray-100 border border-gray-300 rounded-xl">
+              <p className="text-sm text-gray-600 text-center">
+                <Shield className="inline mr-2" size={16} />
+                Accès réservé au personnel autorisé
+              </p>
             </div>
           </div>
         </div>
