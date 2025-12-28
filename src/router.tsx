@@ -82,6 +82,7 @@ const UserManagement = lazy(() => import('./backoffice/UserManagement'));
 const NewsArticle = lazy(() => import('./pages/NewsArticle'));
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
 const CityPageGenerator = lazy(() => import('./backoffice/CityPageGenerator'));
+const TestAutomations = lazy(() => import('./backoffice/TestAutomations'));
 
 const LoadingFallback = () => (
   <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-black flex items-center justify-center">
@@ -511,6 +512,10 @@ export const router = createBrowserRouter([
   {
     path: '/backoffice/generate-cities',
     element: <AuthGuard><SuspenseWrapper><CityPageGenerator /></SuspenseWrapper></AuthGuard>
+  },
+  {
+    path: '/backoffice/test-automations',
+    element: <AuthGuard><SuspenseWrapper><TestAutomations /></SuspenseWrapper></AuthGuard>
   },
   // Pages miroirs longue traîne (17 routes)
   { path: '/assurance-taxi-pas-cher', element: <SuspenseWrapper><MirrorPage /></SuspenseWrapper> },

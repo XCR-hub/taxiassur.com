@@ -43,6 +43,10 @@ export default function NavigationMenu() {
               <Shield className="w-5 h-5" />
               <span>Conformité</span>
             </Link>
+            <Link to="/backoffice/test-automations" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-600 hover:to-amber-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm">
+              <Zap className="w-5 h-5" />
+              <span>Test Automatisations</span>
+            </Link>
             <Link to="/" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white rounded-lg font-semibold transition-all shadow-md text-sm">
               <Globe className="w-5 h-5" />
               <span>Voir le site</span>
