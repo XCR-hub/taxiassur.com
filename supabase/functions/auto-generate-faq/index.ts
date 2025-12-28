@@ -89,17 +89,12 @@ Réponds UNIQUEMENT en JSON valide :
     const naturalityScore = 70 + Math.floor(Math.random() * 20);
 
     const { data: insertedFaq, error: insertError } = await supabase
-      .from('faq_items')
+      .from('faq_entries')
       .insert({
         question: faqData.question,
         answer: faqData.answer,
         category: faqData.category,
-        slug,
-        keywords: ['assurance taxi', randomTheme, faqData.category.toLowerCase()],
-        naturalness_score: naturalityScore,
-        writing_style: 'professionnel',
-        featured: Math.random() > 0.7,
-        published_at: new Date().toISOString(),
+        order_index: Math.floor(Math.random() * 1000),
       })
       .select()
       .single();
@@ -115,8 +110,7 @@ Réponds UNIQUEMENT en JSON valide :
           id: insertedFaq.id,
           question: insertedFaq.question,
           category: insertedFaq.category,
-          slug: insertedFaq.slug,
-          naturalness_score: insertedFaq.naturalness_score,
+          naturalness_score: naturalityScore,
         },
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
