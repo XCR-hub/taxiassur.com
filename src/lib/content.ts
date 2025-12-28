@@ -161,13 +161,15 @@ async function fetchLocalItem<T>(type: string, id: string, schema: any): Promise
 export async function getBlogPosts(): Promise<BlogPost[]> {
   if (supabase) {
     try {
-      // Utiliser la fonction SQL pour contourner le cache PostgREST
-      console.log('🔍 Fetching blog posts via SQL function...');
-      const { data, error } = await supabase.rpc('get_blog_posts');
+      console.log('🔍 Fetching blog posts from Supabase...');
+      const { data, error } = await supabase
+        .from('blog_posts')
+        .select('*')
+        .eq('published', true)
+        .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('❌ Supabase RPC error:', error.message, error.code, error.details);
-        console.log('Falling back to local content...');
+        console.error('❌ Supabase error:', error.message);
       } else if (data && data.length > 0) {
         console.log(`✅ Loaded ${data.length} blog posts from Supabase`);
         return data.map(item => ({
@@ -177,10 +179,10 @@ export async function getBlogPosts(): Promise<BlogPost[]> {
           content: item.content,
           author: item.author || 'TaxiAssur',
           coverImage: item.featured_image || null,
-          tags: item.tags || [],
+          tags: item.keywords || [],
           createdAt: item.created_at,
           updatedAt: item.updated_at || item.created_at,
-          faq: item.faq || [],
+          faq: [],
           status: 'published'
         }));
       } else {
@@ -202,23 +204,26 @@ export async function getBlogPosts(): Promise<BlogPost[]> {
 export async function getBlogPost(id: string): Promise<BlogPost | null> {
   if (supabase) {
     try {
-      // Utiliser la fonction SQL pour contourner le cache PostgREST
-      console.log(`🔍 Fetching blog post "${id}" via SQL function...`);
-      const { data, error } = await supabase.rpc('get_blog_post_by_slug', { p_slug: id });
+      console.log(`🔍 Fetching blog post "${id}" from Supabase...`);
+      const { data, error } = await supabase
+        .from('blog_posts')
+        .select('*')
+        .eq('slug', id)
+        .eq('published', true)
+        .maybeSingle();
 
-      if (!error && data && data.length > 0) {
-        const item = data[0];
+      if (!error && data) {
         return {
-          id: item.slug,
-          title: item.title,
-          excerpt: item.excerpt,
-          content: item.content,
-          author: item.author || 'TaxiAssur',
-          coverImage: item.featured_image || null,
-          tags: item.tags || [],
-          createdAt: item.created_at,
-          updatedAt: item.updated_at || item.created_at,
-          faq: item.faq || [],
+          id: data.slug,
+          title: data.title,
+          excerpt: data.excerpt,
+          content: data.content,
+          author: data.author || 'TaxiAssur',
+          coverImage: data.featured_image || null,
+          tags: data.keywords || [],
+          createdAt: data.created_at,
+          updatedAt: data.updated_at || data.created_at,
+          faq: [],
           status: 'published'
         };
       }
@@ -232,15 +237,18 @@ export async function getBlogPost(id: string): Promise<BlogPost | null> {
 
 // FAQ Entries
 export async function getFaqEntries(): Promise<FaqEntry[]> {
-  // Essayer d'abord Supabase
   if (supabase) {
     try {
-      const { data, error } = await supabase.rpc('get_faq_entries');
+      console.log('🔍 Fetching FAQ entries from Supabase...');
+      const { data, error } = await supabase
+        .from('faq_entries')
+        .select('*')
+        .order('order_index', { ascending: true });
 
       if (!error && data && data.length > 0) {
         console.log('✅ Loaded', data.length, 'FAQ from Supabase');
         return data.map((item: any) => ({
-          id: item.id,
+          id: item.id?.toString() || Math.random().toString(),
           question: item.question,
           answer: item.answer,
           updatedAt: item.created_at,
@@ -253,7 +261,7 @@ export async function getFaqEntries(): Promise<FaqEntry[]> {
     }
   }
 
-  // Fallback vers fichiers locaux
+  console.log('📂 Loading FAQ from local files...');
   return await fetchLocalContent<FaqEntry>('faq', FaqEntrySchema);
 }
 
