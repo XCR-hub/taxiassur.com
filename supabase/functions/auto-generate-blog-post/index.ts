@@ -23,6 +23,16 @@ const KEYWORDS = [
   'devis assurance taxi',
   'assurance taxi en ligne',
   'résiliation assurance taxi',
+  'assurance tous risques taxi',
+  'assurance taxi professionnel',
+  'malus assurance taxi',
+  'assurance taxi pas cher',
+  'meilleure assurance taxi',
+  'assurance taxi urgence',
+  'franchise assurance taxi',
+  'attestation assurance taxi',
+  'contrat assurance taxi',
+  'tarif assurance taxi',
 ];
 
 const AUTHORS = [
@@ -31,14 +41,49 @@ const AUTHORS = [
   { name: 'Sophie Bernard', bio: 'Spécialiste flotte de véhicules' },
   { name: 'Luc Rousseau', bio: 'Expert en gestion de sinistres' },
   { name: 'Émilie Petit', bio: 'Conseillère assurance VTC et taxi' },
+  { name: 'Pierre Moreau', bio: 'Spécialiste tarification et devis' },
+  { name: 'Claire Dubois', bio: 'Experte réglementation taxi' },
+  { name: 'Thomas Leroy', bio: 'Conseiller assurance professionnelle' },
+  { name: 'Isabelle Blanc', bio: 'Spécialiste véhicules électriques' },
+  { name: 'Michel Laurent', bio: 'Expert conformité et certifications' },
 ];
 
 function generateNaturalPublishTime(): Date {
   const now = new Date();
-  const hour = 6 + Math.floor(Math.random() * 17);
+  const currentHour = now.getHours();
+  let targetHour = currentHour;
+  if (currentHour < 6) {
+    targetHour = 6 + Math.floor(Math.random() * 3);
+  } else if (currentHour > 22) {
+    targetHour = 22 + Math.floor(Math.random() * 2);
+  } else {
+    const delay = Math.floor(Math.random() * 4);
+    targetHour = currentHour + delay;
+    if (targetHour > 23) targetHour = 23;
+  }
   const minute = Math.floor(Math.random() * 60);
-  now.setHours(hour, minute, 0, 0);
+  const second = Math.floor(Math.random() * 60);
+  now.setHours(targetHour, minute, second, 0);
   return now;
+}
+
+function selectSmartCity(cities: any[]): any {
+  const weights: number[] = [];
+  let totalWeight = 0;
+  for (let i = 0; i < cities.length; i++) {
+    const weight = Math.pow(cities.length - i, 1.5);
+    weights.push(weight);
+    totalWeight += weight;
+  }
+  const random = Math.random() * totalWeight;
+  let cumulative = 0;
+  for (let i = 0; i < weights.length; i++) {
+    cumulative += weights[i];
+    if (random <= cumulative) {
+      return cities[i];
+    }
+  }
+  return cities[0];
 }
 
 Deno.serve(async (req: Request) => {
@@ -56,13 +101,13 @@ Deno.serve(async (req: Request) => {
       .select('*')
       .gt('population', 50000)
       .order('population', { ascending: false })
-      .limit(100);
+      .limit(150);
 
     if (!cities || cities.length === 0) {
       throw new Error('Aucune ville trouvée');
     }
 
-    const randomCity = cities[Math.floor(Math.random() * cities.length)];
+    const randomCity = selectSmartCity(cities);
     const randomKeyword = KEYWORDS[Math.floor(Math.random() * KEYWORDS.length)];
     const randomAuthor = AUTHORS[Math.floor(Math.random() * AUTHORS.length)];
 
