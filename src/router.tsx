@@ -83,6 +83,7 @@ const NewsArticle = lazy(() => import('./pages/NewsArticle'));
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
 const CityPageGenerator = lazy(() => import('./backoffice/CityPageGenerator'));
 const TestAutomations = lazy(() => import('./backoffice/TestAutomations'));
+const AIMasterDashboard = lazy(() => import('./backoffice/AIMasterDashboard'));
 
 const LoadingFallback = () => (
   <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-black flex items-center justify-center">
@@ -480,6 +481,10 @@ export const router = createBrowserRouter([
   {
     path: '/backoffice/master-ai',
     element: <AuthGuard><SuspenseWrapper><MasterAI /></SuspenseWrapper></AuthGuard>
+  },
+  {
+    path: '/backoffice/ai-master-dashboard',
+    element: <AuthGuard><SuspenseWrapper><AIMasterDashboard /></SuspenseWrapper></AuthGuard>
   },
   {
     path: '/backoffice/trend-analyzer',
