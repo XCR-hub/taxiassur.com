@@ -19,18 +19,21 @@ import TrustBadges from '../components/TrustBadges';
 import InstantQuoteCalculator from '../components/InstantQuoteCalculator';
 import DynamicReviews from '../components/DynamicReviews';
 import ExitIntentLeadCapture from '../components/ExitIntentLeadCapture';
+import AggressiveConversionPopups from '../components/AggressiveConversionPopups';
 import InteractiveQuiz from '../components/InteractiveQuiz';
 import NewsSection from '../components/NewsSection';
+import { usePageTracking } from '../hooks/usePageTracking';
 
 const Home: React.FC = () => {
+  usePageTracking();
+
   useEffect(() => {
     localStorage.setItem('taxiassur_visited', 'true');
-    
-    // Preload critical resources for performance
+
     const preloadLinks = [
       'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap'
     ];
-    
+
     preloadLinks.forEach(href => {
       const link = document.createElement('link');
       link.rel = 'preload';
@@ -145,7 +148,10 @@ const Home: React.FC = () => {
             {/* 12. Newsletter - Engagement */}
             <Newsletter />
 
-            {/* 13. Exit intent popup - Last chance lead capture */}
+            {/* 13. Pop-ups conversion agressifs - Multi-niveaux */}
+            <AggressiveConversionPopups />
+
+            {/* 14. Exit intent popup - Last chance lead capture */}
             <ExitIntentLeadCapture />
             
             {/* 10. Conversion ultime - CTA final */}

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, AlertCircle, TrendingDown, Clock } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 
 interface ExitIntentLeadCaptureProps {
   onClose?: () => void;
@@ -10,25 +11,42 @@ const ExitIntentLeadCapture: React.FC<ExitIntentLeadCaptureProps> = ({ onClose }
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     let hasShown = sessionStorage.getItem('exitIntentShown');
     if (hasShown) return;
 
+    const sessionId = sessionStorage.getItem('session_id') || `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    sessionStorage.setItem('session_id', sessionId);
+
     const handleMouseLeave = (e: MouseEvent) => {
       if (e.clientY <= 0 && !hasShown) {
         setIsVisible(true);
         sessionStorage.setItem('exitIntentShown', 'true');
+
+        supabase.from('conversion_popups_tracking').insert({
+          popup_type: 'exit_intent',
+          action: 'shown',
+          session_id: sessionId,
+          page_url: window.location.href
+        }).then();
       }
     };
 
     document.addEventListener('mouseleave', handleMouseLeave);
 
-    // Alternative: show after 30 seconds if not interacted
     const timer = setTimeout(() => {
       if (!hasShown && !isVisible) {
         setIsVisible(true);
         sessionStorage.setItem('exitIntentShown', 'true');
+
+        supabase.from('conversion_popups_tracking').insert({
+          popup_type: 'timer_30s',
+          action: 'shown',
+          session_id: sessionId,
+          page_url: window.location.href
+        }).then();
       }
     }, 30000);
 
@@ -39,21 +57,65 @@ const ExitIntentLeadCapture: React.FC<ExitIntentLeadCaptureProps> = ({ onClose }
   }, [isVisible]);
 
   const handleClose = () => {
+    const sessionId = sessionStorage.getItem('session_id') || '';
+
+    supabase.from('conversion_popups_tracking').insert({
+      popup_type: 'exit_intent',
+      action: 'closed',
+      session_id: sessionId,
+      page_url: window.location.href
+    }).then();
+
     setIsVisible(false);
     onClose?.();
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmitting(true);
 
-    // TODO: Envoyer à Supabase
-    console.log('Exit intent lead:', { email, phone });
+    try {
+      const sessionId = sessionStorage.getItem('session_id') || '';
 
-    setIsSubmitted(true);
+      const { error } = await supabase.from('exit_intent_leads').insert({
+        email,
+        phone,
+        session_id: sessionId,
+        source_page: window.location.href,
+        user_agent: navigator.userAgent
+      });
 
-    setTimeout(() => {
-      handleClose();
-    }, 3000);
+      if (error) {
+        console.error('Error saving exit intent lead:', error);
+      } else {
+        await supabase.from('conversion_popups_tracking').insert({
+          popup_type: 'exit_intent',
+          action: 'converted',
+          session_id: sessionId,
+          page_url: window.location.href,
+          converted_email: email
+        });
+
+        await supabase.from('leads').insert({
+          email,
+          phone,
+          name: 'Exit Intent Lead',
+          city: 'Non renseignée',
+          status: 'prospect',
+          source: 'exit_intent'
+        });
+      }
+
+      setIsSubmitted(true);
+
+      setTimeout(() => {
+        handleClose();
+      }, 3000);
+    } catch (error) {
+      console.error('Error:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (!isVisible) return null;
@@ -134,9 +196,10 @@ const ExitIntentLeadCapture: React.FC<ExitIntentLeadCaptureProps> = ({ onClose }
 
                 <button
                   type="submit"
-                  className="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-bold py-3 px-6 rounded-lg transition-all"
+                  disabled={isSubmitting}
+                  className="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-bold py-3 px-6 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Recevoir Mon Tarif Préférentiel →
+                  {isSubmitting ? 'Envoi en cours...' : 'Recevoir Mon Tarif Préférentiel →'}
                 </button>
 
                 <p className="text-xs text-center text-gray-600">
