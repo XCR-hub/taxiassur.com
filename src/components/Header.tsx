@@ -67,21 +67,22 @@ const Header: React.FC = () => {
       {/* Top bar */}
       <div className="bg-gradient-to-r from-yellow-600 to-yellow-500 text-black py-2">
         <div className="container-max">
-          <div className="flex flex-col sm:flex-row justify-between items-center text-sm font-bold">
-            <div className="flex items-center space-x-6 mb-2 sm:mb-0">
-              <div className="flex items-center space-x-2">
-                <Phone size={14} aria-hidden="true" />
+          <div className="flex flex-col sm:flex-row justify-between items-center text-xs sm:text-sm font-bold">
+            <div className="flex items-center space-x-3 sm:space-x-6 mb-2 sm:mb-0">
+              <div className="flex items-center space-x-1 sm:space-x-2">
+                <Phone size={12} className="sm:w-3.5 sm:h-3.5" aria-hidden="true" />
                 <a href="tel:0180855786" className="hover:text-gray-900 transition-colors" aria-label="Téléphone 01 80 85 57 86">
                   01 80 85 57 86
                 </a>
               </div>
-              <div className="flex items-center space-x-2">
+              <div className="hidden md:flex items-center space-x-2">
                 <span>team@taxiassur.com</span>
               </div>
             </div>
-            <div className="flex items-center space-x-2">
-              <Shield size={14} aria-hidden="true" />
-              <span>ORIAS 11 061 425 • Courtier Agréé</span>
+            <div className="flex items-center space-x-1 sm:space-x-2 text-xs">
+              <Shield size={12} className="sm:w-3.5 sm:h-3.5" aria-hidden="true" />
+              <span className="hidden sm:inline">ORIAS 11 061 425 • Courtier Agréé</span>
+              <span className="sm:hidden">ORIAS Agréé</span>
             </div>
           </div>
         </div>
@@ -90,13 +91,13 @@ const Header: React.FC = () => {
       {/* Main header */}
       <div className="container-max py-4">
         <div className="flex justify-between items-center">
-          <Link to="/" className="flex items-center space-x-3">
-            <div className="w-12 h-12 bg-gradient-to-br from-yellow-600 to-yellow-500 rounded-xl flex items-center justify-center shadow-2xl">
-              <span className="text-black font-black text-lg">🚖</span>
+          <Link to="/" className="flex items-center space-x-2 sm:space-x-3">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-yellow-600 to-yellow-500 rounded-xl flex items-center justify-center shadow-2xl">
+              <span className="text-black font-black text-base sm:text-lg">🚖</span>
             </div>
             <div>
-              <span className="text-3xl font-black text-white tracking-tight">TaxiAssur</span>
-              <span className="block text-xs text-yellow-400 tracking-widest font-bold">EXCELLENCE COVERAGE RISKS</span>
+              <span className="text-xl sm:text-2xl lg:text-3xl font-black text-white tracking-tight">TaxiAssur</span>
+              <span className="hidden sm:block text-xs text-yellow-400 tracking-widest font-bold">EXCELLENCE COVERAGE RISKS</span>
             </div>
           </Link>
           

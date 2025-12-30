@@ -26,32 +26,32 @@ const Avantages: React.FC = () => {
   ];
 
   return (
-    <section className="section-padding bg-gray-950">
+    <section className="py-12 sm:py-16 md:py-20 bg-gray-950">
       <div className="container-max">
-        <div className="text-center mb-16">
-          <h2 className="text-4xl font-bold text-white mb-4">
+        <div className="text-center mb-8 sm:mb-12 lg:mb-16">
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-3 sm:mb-4 px-4">
             Pourquoi Choisir TaxiAssur ?
           </h2>
-          <p className="text-xl text-gray-300 max-w-2xl mx-auto">
+          <p className="text-base sm:text-lg lg:text-xl text-gray-300 max-w-2xl mx-auto px-4">
             Courtier spécialisé assurance taxi avec expertise reconnue et tarifs négociés exclusifs.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8 px-4">
           {advantages.map((advantage, index) => {
             const IconComponent = advantage.icon;
             return (
-              <div 
+              <div
                 key={index}
-                className="bg-gray-900/95 backdrop-blur-lg border border-gray-700/70 rounded-xl shadow-xl p-8 text-center fade-in-up hover:border-yellow-500/50 transition-colors duration-300"
+                className="bg-gray-900/95 backdrop-blur-lg border border-gray-700/70 rounded-xl shadow-xl p-6 sm:p-8 text-center fade-in-up hover:border-yellow-500/50 transition-colors duration-300"
               >
-                <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-yellow-600 to-yellow-500 mb-6 shadow-2xl subtle-pulse">
-                  <IconComponent className="text-black" size={28} />
+                <div className="inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-br from-yellow-600 to-yellow-500 mb-4 sm:mb-6 shadow-2xl subtle-pulse">
+                  <IconComponent className="text-black" size={24} />
                 </div>
-                <h3 className="text-xl font-bold text-white mb-4">
+                <h3 className="text-lg sm:text-xl font-bold text-white mb-3 sm:mb-4">
                   {advantage.title}
                 </h3>
-                <p className="text-gray-300 leading-relaxed">
+                <p className="text-sm sm:text-base text-gray-300 leading-relaxed">
                   {advantage.description}
                 </p>
               </div>
@@ -59,7 +59,7 @@ const Avantages: React.FC = () => {
           })}
         </div>
 
-        <div className="text-center mt-12">
+        <div className="text-center mt-8 sm:mt-12 px-4">
           <a href="#devis" className="btn-primary inline-block cta-urgent">
             Obtenir Mon Devis Gratuit
           </a>

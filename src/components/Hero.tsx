@@ -91,52 +91,52 @@ const Hero: React.FC = () => {
       <div className="container-max relative z-20">
         <div className="lg:flex lg:items-center lg:space-x-12">
           {/* Left Column: Content */}
-          <div className="lg:w-1/2 mb-8 lg:mb-0 px-4">
+          <div className="lg:w-1/2 mb-8 lg:mb-0 px-3 sm:px-4">
             {/* Badge ORIAS */}
-            <div className="mb-6 sm:mb-8">
-              <div className="inline-flex items-center space-x-2 sm:space-x-3 bg-gradient-to-r from-amber-500/20 to-yellow-500/20 px-3 sm:px-6 py-2 sm:py-3 rounded-2xl border border-amber-500/40 backdrop-blur-sm">
-                <Shield className="text-yellow-500 drop-shadow-lg" size={16} />
-                <span className="text-amber-300 font-bold text-xs sm:text-sm tracking-wide drop-shadow-md">COURTIER ORIAS</span>
-                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+            <div className="mb-4 sm:mb-6 lg:mb-8">
+              <div className="inline-flex items-center space-x-2 bg-gradient-to-r from-amber-500/20 to-yellow-500/20 px-3 sm:px-4 lg:px-6 py-2 sm:py-2.5 lg:py-3 rounded-xl sm:rounded-2xl border border-amber-500/40 backdrop-blur-sm">
+                <Shield className="text-yellow-500 drop-shadow-lg" size={14} />
+                <span className="text-amber-300 font-bold text-xs tracking-wide drop-shadow-md">COURTIER ORIAS</span>
+                <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-green-400 rounded-full animate-pulse"></div>
               </div>
             </div>
 
             {/* Main Title */}
-            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-4 sm:mb-6 drop-shadow-lg leading-tight">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-3 sm:mb-4 lg:mb-6 drop-shadow-lg leading-tight">
               <span>Assurance Taxi</span> <span className="text-gradient">Pas Cher</span>
               <br />
               <span className="text-yellow-500">Devis Gratuit 2 min</span>
             </h1>
 
             {/* Subtitle with benefits */}
-            <p className="text-xs sm:text-sm md:text-base text-amber-300 font-bold mb-4 sm:mb-6 drop-shadow-md">
+            <p className="text-xs sm:text-sm md:text-base text-amber-300 font-bold mb-3 sm:mb-4 lg:mb-6 drop-shadow-md">
               ORIAS • -35% • RC Pro • 15min
             </p>
 
             {/* SEO Rich Content - 250+ words */}
-            <div className="mb-6 sm:mb-8 space-y-2 sm:space-y-3 bg-gray-900/40 backdrop-blur-sm rounded-xl p-3 sm:p-5 border border-gray-700/50">
-              <p className="text-xs sm:text-sm text-gray-200 leading-relaxed">
+            <div className="mb-4 sm:mb-6 lg:mb-8 space-y-2 bg-gray-900/40 backdrop-blur-sm rounded-lg sm:rounded-xl p-3 sm:p-4 lg:p-5 border border-gray-700/50">
+              <p className="text-xs sm:text-sm text-gray-200 leading-relaxed hidden sm:block">
                 <strong className="text-yellow-500">TaxiAssur</strong> est le <strong className="text-yellow-400">courtier spécialisé en assurance taxi</strong> leader en France.
                 Notre expertise unique depuis septembre 2025 nous permet de négocier les <strong className="text-green-400">meilleurs tarifs d'assurance taxi</strong> du marché.
               </p>
 
-              <p className="text-sm text-gray-200 leading-relaxed">
+              <p className="text-xs sm:text-sm text-gray-200 leading-relaxed">
                 Obtenez votre <strong className="text-yellow-400">devis assurance taxi gratuit</strong> en seulement 2 minutes.
-                Nous comparons instantanément les offres de nos 15 partenaires assureurs pour vous garantir une <strong className="text-red-400">assurance taxi pas cher</strong> sans compromis sur les garanties.
+                <span className="hidden md:inline"> Nous comparons instantanément les offres de nos 15 partenaires assureurs pour vous garantir une <strong className="text-red-400">assurance taxi pas cher</strong> sans compromis sur les garanties.</span>
               </p>
 
-              <p className="text-sm text-gray-200 leading-relaxed">
+              <p className="text-xs sm:text-sm text-gray-200 leading-relaxed hidden md:block">
                 Notre <strong className="text-cyan-400">assurance professionnelle taxi</strong> inclut systématiquement la RC Pro,
                 la protection juridique, l'assistance 0 km et la garantie du conducteur. En tant que <strong className="text-orange-400">courtier ORIAS agréé</strong> (numéro 11 061 425),
                 nous vous accompagnons dans toutes vos démarches : souscription, gestion des sinistres, résiliation de votre ancien contrat.
               </p>
 
-              <p className="text-sm text-gray-200 leading-relaxed">
+              <p className="text-xs sm:text-sm text-gray-200 leading-relaxed hidden lg:block">
                 <strong className="text-yellow-400">Prix assurance taxi</strong> transparents : économisez en moyenne 35% par rapport aux tarifs directs assureurs.
                 Réponse personnalisée sous 15 minutes par nos experts taxi. Service gratuit, sans engagement.
               </p>
 
-              <p className="text-sm text-gray-200 leading-relaxed">
+              <p className="text-xs sm:text-sm text-gray-200 leading-relaxed hidden lg:block">
                 <strong className="text-orange-400">Insurance for taxi drivers</strong>: TaxiAssur is the leading <strong className="text-yellow-400">insurance broker for taxi</strong> in France.
                 We offer <strong className="text-amber-400">cheap taxi insurance</strong> with comprehensive coverage including RC Pro, legal protection, and 24/7 roadside assistance.
                 Get your <strong className="text-orange-400">free taxi insurance quote</strong> in 2 minutes.
@@ -144,22 +144,22 @@ const Hero: React.FC = () => {
             </div>
 
             {/* Quick Links - Internal Links for SEO */}
-            <div className="grid grid-cols-2 gap-3 mb-6">
-              <Link to="/assurance-taxi" className="flex items-center space-x-2 text-xs text-gray-300 hover:text-yellow-500 transition-colors bg-gray-800/50 hover:bg-gray-700/50 px-3 py-2 rounded-lg border border-gray-600 hover:border-amber-500/50">
-                <FileText className="text-yellow-500" size={16} aria-hidden="true" />
-                <span>Guide Complet Assurance Taxi</span>
+            <div className="grid grid-cols-2 gap-2 sm:gap-3 mb-4 sm:mb-6">
+              <Link to="/assurance-taxi" className="flex items-center space-x-1 sm:space-x-2 text-xs text-gray-300 hover:text-yellow-500 transition-colors bg-gray-800/50 hover:bg-gray-700/50 px-2 sm:px-3 py-2 rounded-lg border border-gray-600 hover:border-amber-500/50">
+                <FileText className="text-yellow-500 flex-shrink-0" size={14} aria-hidden="true" />
+                <span className="text-[10px] sm:text-xs">Guide Complet</span>
               </Link>
-              <Link to="/rc-professionnelle" className="flex items-center space-x-2 text-xs text-gray-300 hover:text-yellow-400 transition-colors bg-gray-800/50 hover:bg-gray-700/50 px-3 py-2 rounded-lg border border-gray-600 hover:border-yellow-500/50">
-                <Shield className="text-yellow-400" size={16} aria-hidden="true" />
-                <span>RC Professionnelle</span>
+              <Link to="/rc-professionnelle" className="flex items-center space-x-1 sm:space-x-2 text-xs text-gray-300 hover:text-yellow-400 transition-colors bg-gray-800/50 hover:bg-gray-700/50 px-2 sm:px-3 py-2 rounded-lg border border-gray-600 hover:border-yellow-500/50">
+                <Shield className="text-yellow-400 flex-shrink-0" size={14} aria-hidden="true" />
+                <span className="text-[10px] sm:text-xs">RC Pro</span>
               </Link>
-              <Link to="/villes" className="flex items-center space-x-2 text-xs text-gray-300 hover:text-green-400 transition-colors bg-gray-800/50 hover:bg-gray-700/50 px-3 py-2 rounded-lg border border-gray-600 hover:border-green-500/50">
-                <MapPin className="text-green-400" size={16} aria-hidden="true" />
-                <span>{totalCities > 0 ? `${totalCities} Villes` : 'Toutes les Villes'}</span>
+              <Link to="/villes" className="flex items-center space-x-1 sm:space-x-2 text-xs text-gray-300 hover:text-green-400 transition-colors bg-gray-800/50 hover:bg-gray-700/50 px-2 sm:px-3 py-2 rounded-lg border border-gray-600 hover:border-green-500/50">
+                <MapPin className="text-green-400 flex-shrink-0" size={14} aria-hidden="true" />
+                <span className="text-[10px] sm:text-xs">{totalCities > 0 ? `${totalCities} Villes` : 'Villes'}</span>
               </Link>
-              <Link to="/blog" className="flex items-center space-x-2 text-xs text-gray-300 hover:text-yellow-400 transition-colors bg-gray-800/50 hover:bg-gray-700/50 px-3 py-2 rounded-lg border border-gray-600 hover:border-orange-500/50">
-                <Users className="text-yellow-400" size={16} aria-hidden="true" />
-                <span>{totalArticles > 0 ? `${totalArticles} Articles` : 'Actualités & Conseils'}</span>
+              <Link to="/blog" className="flex items-center space-x-1 sm:space-x-2 text-xs text-gray-300 hover:text-yellow-400 transition-colors bg-gray-800/50 hover:bg-gray-700/50 px-2 sm:px-3 py-2 rounded-lg border border-gray-600 hover:border-orange-500/50">
+                <Users className="text-yellow-400 flex-shrink-0" size={14} aria-hidden="true" />
+                <span className="text-[10px] sm:text-xs">{totalArticles > 0 ? `${totalArticles} Articles` : 'Blog'}</span>
               </Link>
             </div>
 
@@ -200,13 +200,13 @@ const Hero: React.FC = () => {
 
           {/* Right Column: Form */}
           <div className="lg:w-1/2">
-            <div className="bg-gray-900/95 backdrop-blur-lg rounded-2xl p-8 shadow-2xl border border-amber-500/60" data-form="devis">
+            <div className="bg-gray-900/95 backdrop-blur-lg rounded-2xl p-4 sm:p-6 lg:p-8 shadow-2xl border border-amber-500/60" data-form="devis">
                 {/* Form Header */}
-                <div className="text-center mb-6">
-                  <h2 className="text-2xl font-bold text-gradient mb-4">
+                <div className="text-center mb-4 sm:mb-6">
+                  <h2 className="text-xl sm:text-2xl font-bold text-gradient mb-2 sm:mb-4">
                       Devis Assurance Taxi Gratuit
                     </h2>
-                  <p className="text-sm text-gray-300 drop-shadow-md">
+                  <p className="text-xs sm:text-sm text-gray-300 drop-shadow-md">
                     Courtier spécialisé • Tarifs négociés • Réponse 15min
                   </p>
                 </div>
@@ -232,9 +232,9 @@ const Hero: React.FC = () => {
                     </div>
                   )}
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                     <div>
-                      <label htmlFor="name" className="block text-sm font-semibold text-white mb-2">
+                      <label htmlFor="name" className="block text-xs sm:text-sm font-semibold text-white mb-1 sm:mb-2">
                         Nom et prénom *
                       </label>
                       <input
@@ -244,13 +244,13 @@ const Hero: React.FC = () => {
                         value={formData.name}
                         onChange={handleChange}
                         required
-                        className="w-full px-4 py-3 bg-gray-800/70 border border-gray-600 rounded-lg focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-white placeholder-gray-400 transition-all duration-300"
+                        className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base bg-gray-800/70 border border-gray-600 rounded-lg focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-white placeholder-gray-400 transition-all duration-300"
                         placeholder="Jean Dupont"
                       />
                     </div>
 
                     <div>
-                      <label htmlFor="phone" className="block text-sm font-semibold text-white mb-2">
+                      <label htmlFor="phone" className="block text-xs sm:text-sm font-semibold text-white mb-1 sm:mb-2">
                         Téléphone *
                       </label>
                       <input
@@ -260,15 +260,15 @@ const Hero: React.FC = () => {
                         value={formData.phone}
                         onChange={handleChange}
                         required
-                        className="w-full px-4 py-3 bg-gray-800/70 border border-gray-600 rounded-lg focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-white placeholder-gray-400 transition-all duration-300"
+                        className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base bg-gray-800/70 border border-gray-600 rounded-lg focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-white placeholder-gray-400 transition-all duration-300"
                         placeholder="06 12 34 56 78"
                       />
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                     <div>
-                      <label htmlFor="email" className="block text-sm font-semibold text-white mb-2">
+                      <label htmlFor="email" className="block text-xs sm:text-sm font-semibold text-white mb-1 sm:mb-2">
                         Email *
                       </label>
                       <input
@@ -278,13 +278,13 @@ const Hero: React.FC = () => {
                         value={formData.email}
                         onChange={handleChange}
                         required
-                        className="w-full px-4 py-3 bg-gray-800/70 border border-gray-600 rounded-lg focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-white placeholder-gray-400 transition-all duration-300"
+                        className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base bg-gray-800/70 border border-gray-600 rounded-lg focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-white placeholder-gray-400 transition-all duration-300"
                         placeholder="jean@email.com"
                       />
                     </div>
 
                     <div>
-                      <label htmlFor="city" className="block text-sm font-semibold text-white mb-2">
+                      <label htmlFor="city" className="block text-xs sm:text-sm font-semibold text-white mb-1 sm:mb-2">
                         Ville *
                       </label>
                       <input
@@ -294,15 +294,15 @@ const Hero: React.FC = () => {
                         value={formData.city}
                         onChange={handleChange}
                         required
-                        className="w-full px-4 py-3 bg-gray-800/70 border border-gray-600 rounded-lg focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-white placeholder-gray-400 transition-all duration-300"
+                        className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base bg-gray-800/70 border border-gray-600 rounded-lg focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-white placeholder-gray-400 transition-all duration-300"
                         placeholder="Paris"
                       />
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                     <div>
-                      <label htmlFor="status" className="block text-sm font-semibold text-white mb-2">
+                      <label htmlFor="status" className="block text-xs sm:text-sm font-semibold text-white mb-1 sm:mb-2">
                         Statut *
                       </label>
                       <select
@@ -311,7 +311,7 @@ const Hero: React.FC = () => {
                         value={formData.status}
                         onChange={handleChange}
                         required
-                        className="w-full px-4 py-3 bg-gray-800/70 border border-gray-600 rounded-lg focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-white transition-all duration-300"
+                        className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base bg-gray-800/70 border border-gray-600 rounded-lg focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-white transition-all duration-300"
                       >
                         <option value="taxi">Taxi</option>
                         <option value="vtc">VTC</option>
@@ -320,7 +320,7 @@ const Hero: React.FC = () => {
                     </div>
 
                     <div>
-                      <label htmlFor="immatriculation" className="block text-sm font-semibold text-white mb-2">
+                      <label htmlFor="immatriculation" className="block text-xs sm:text-sm font-semibold text-white mb-1 sm:mb-2">
                         Immatriculation (optionnel)
                       </label>
                       <input
@@ -329,15 +329,15 @@ const Hero: React.FC = () => {
                         name="immatriculation"
                         value={formData.immatriculation}
                         onChange={handleChange}
-                        className="w-full px-4 py-3 bg-gray-800/70 border border-gray-600 rounded-lg focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-white placeholder-gray-400 transition-all duration-300"
+                        className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base bg-gray-800/70 border border-gray-600 rounded-lg focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-white placeholder-gray-400 transition-all duration-300"
                         placeholder="AB-123-CD"
                       />
                     </div>
                   </div>
 
                   {/* Legal consent */}
-                  <div className="bg-gray-800/50 p-4 rounded-lg border border-gray-700">
-                    <p className="text-xs text-gray-600">
+                  <div className="bg-gray-800/50 p-3 sm:p-4 rounded-lg border border-gray-700">
+                    <p className="text-xs text-gray-400">
                       En soumettant ce formulaire, j'accepte d'être recontacté par TaxiAssur.com 
                       pour recevoir mon devis personnalisé. Données sécurisées selon notre 
                       <a href="/politique-confidentialite" className="text-amber-600 hover:underline"> politique de confidentialité</a>.
@@ -348,22 +348,22 @@ const Hero: React.FC = () => {
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="w-full py-4 px-6 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-black font-bold text-lg rounded-xl transition-all duration-200 shadow-xl hover:shadow-2xl flex items-center justify-center space-x-2"
+                    className="w-full py-3 sm:py-4 px-4 sm:px-6 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-black font-bold text-base sm:text-lg rounded-xl transition-all duration-200 shadow-xl hover:shadow-2xl flex items-center justify-center space-x-2"
                   >
                     {isSubmitting ? (
                       <>
-                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-black"></div>
-                        <span>ENVOI EN COURS...</span>
+                        <div className="animate-spin rounded-full h-4 w-4 sm:h-5 sm:w-5 border-b-2 border-black"></div>
+                        <span className="text-sm sm:text-base">ENVOI EN COURS...</span>
                       </>
                     ) : (
                       <>
-                        <Send size={20} />
-                        <span>🎯 OBTENIR MON DEVIS TAXI GRATUIT</span>
+                        <Send size={18} className="sm:w-5 sm:h-5" />
+                        <span className="text-sm sm:text-base">🎯 OBTENIR MON DEVIS GRATUIT</span>
                       </>
                     )}
                   </button>
 
-                  <p className="text-center text-sm text-gray-600 drop-shadow-md">
+                  <p className="text-center text-xs sm:text-sm text-gray-400 drop-shadow-md">
                     Réponse rapide de votre conseiller dédié
                   </p>
                 </form>
