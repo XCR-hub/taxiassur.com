@@ -86,6 +86,12 @@ const TestAutomations = lazy(() => import('./backoffice/TestAutomations'));
 const AIMasterDashboard = lazy(() => import('./backoffice/AIMasterDashboard'));
 const CRMCommercial = lazy(() => import('./backoffice/CRMCommercial'));
 const EspaceClient = lazy(() => import('./pages/EspaceClient'));
+const ClientDashboard = lazy(() => import('./pages/client/ClientDashboard'));
+const ClientDocuments = lazy(() => import('./pages/client/ClientDocuments'));
+const ClientSinistres = lazy(() => import('./pages/client/ClientSinistres'));
+const ClientPaiements = lazy(() => import('./pages/client/ClientPaiements'));
+const ClientNotifications = lazy(() => import('./pages/client/ClientNotifications'));
+const ClientProfil = lazy(() => import('./pages/client/ClientProfil'));
 
 const LoadingFallback = () => (
   <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-black flex items-center justify-center">
@@ -323,6 +329,36 @@ export const router = createBrowserRouter([
     path: '/espace-client',
     element: <SuspenseWrapper><EspaceClient /></SuspenseWrapper>,
     errorElement: <ErrorBoundary><Navigate to="/" replace /></ErrorBoundary>
+  },
+  {
+    path: '/client/dashboard',
+    element: <SuspenseWrapper><ClientDashboard /></SuspenseWrapper>,
+    errorElement: <ErrorBoundary><Navigate to="/espace-client" replace /></ErrorBoundary>
+  },
+  {
+    path: '/client/documents',
+    element: <SuspenseWrapper><ClientDocuments /></SuspenseWrapper>,
+    errorElement: <ErrorBoundary><Navigate to="/espace-client" replace /></ErrorBoundary>
+  },
+  {
+    path: '/client/sinistres',
+    element: <SuspenseWrapper><ClientSinistres /></SuspenseWrapper>,
+    errorElement: <ErrorBoundary><Navigate to="/espace-client" replace /></ErrorBoundary>
+  },
+  {
+    path: '/client/paiements',
+    element: <SuspenseWrapper><ClientPaiements /></SuspenseWrapper>,
+    errorElement: <ErrorBoundary><Navigate to="/espace-client" replace /></ErrorBoundary>
+  },
+  {
+    path: '/client/notifications',
+    element: <SuspenseWrapper><ClientNotifications /></SuspenseWrapper>,
+    errorElement: <ErrorBoundary><Navigate to="/espace-client" replace /></ErrorBoundary>
+  },
+  {
+    path: '/client/profil',
+    element: <SuspenseWrapper><ClientProfil /></SuspenseWrapper>,
+    errorElement: <ErrorBoundary><Navigate to="/espace-client" replace /></ErrorBoundary>
   },
   {
     path: '/partenaires',

@@ -58,25 +58,25 @@ export default function EspaceClient() {
         canonical="https://taxiassur.com/espace-client"
       />
 
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
 
         {/* Hero Section */}
         <section className="relative py-20 px-4 overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-blue-800 opacity-95"></div>
+          <div className="absolute inset-0 bg-gradient-to-r from-black to-gray-900 opacity-95"></div>
           <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAxMCAwIEwgMCAwIDAgMTAiIGZpbGw9Im5vbmUiIHN0cm9rZT0icmdiYSgyNTUsMjU1LDI1NSwwLjEpIiBzdHJva2Utd2lkdGg9IjEiLz48L3BhdHRlcm4+PC9kZWZzPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjZ3JpZCkiLz48L3N2Zz4=')] opacity-20"></div>
 
           <div className="relative max-w-7xl mx-auto text-center">
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-500/20 backdrop-blur-sm rounded-full text-white mb-6 border border-white/20">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-yellow-500/20 backdrop-blur-sm rounded-full text-white mb-6 border border-yellow-400/30">
               <Award className="w-4 h-4" />
               <span className="text-sm font-medium">Élu Meilleur Espace Client 2025</span>
             </div>
 
             <h1 className="text-5xl md:text-6xl font-bold text-white mb-6">
               Votre Assurance<br/>
-              <span className="text-blue-200">100% Digitale</span>
+              <span className="bg-gradient-to-r from-yellow-400 to-yellow-500 bg-clip-text text-transparent">100% Digitale</span>
             </h1>
 
-            <p className="text-xl text-blue-100 mb-8 max-w-3xl mx-auto">
+            <p className="text-xl text-gray-200 mb-8 max-w-3xl mx-auto">
               Gérez votre contrat d'assurance taxi en quelques clics. Disponible 24/7,
               sur ordinateur, tablette et mobile. Simple. Rapide. Sécurisé.
             </p>
@@ -84,13 +84,13 @@ export default function EspaceClient() {
             <div className="flex flex-wrap justify-center gap-4 mb-12">
               <a
                 href="#connexion"
-                className="px-8 py-4 bg-white text-blue-600 rounded-lg font-bold hover:bg-blue-50 transition-all shadow-xl hover:shadow-2xl hover:scale-105"
+                className="px-8 py-4 bg-gradient-to-r from-yellow-500 to-yellow-600 text-black rounded-lg font-bold hover:from-yellow-600 hover:to-yellow-700 transition-all shadow-xl hover:shadow-2xl hover:scale-105"
               >
                 Se Connecter
               </a>
               <a
                 href="#fonctionnalites"
-                className="px-8 py-4 bg-blue-500/20 backdrop-blur-sm text-white rounded-lg font-bold hover:bg-blue-500/30 transition-all border border-white/30"
+                className="px-8 py-4 bg-white/10 backdrop-blur-sm text-white rounded-lg font-bold hover:bg-white/20 transition-all border border-white/30"
               >
                 Découvrir
               </a>
@@ -118,8 +118,8 @@ export default function EspaceClient() {
           <div className="max-w-md mx-auto">
             <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 p-8">
               <div className="text-center mb-8">
-                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Lock className="w-8 h-8 text-blue-600" />
+                <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Lock className="w-8 h-8 text-yellow-600" />
                 </div>
                 <h2 className="text-2xl font-bold text-gray-900 mb-2">
                   Connexion Espace Client
@@ -143,7 +143,7 @@ export default function EspaceClient() {
                       onChange={(e) => setEmail(e.target.value)}
                       required
                       placeholder="votre@email.com"
-                      className="w-full pl-11 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                      className="w-full pl-11 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all"
                     />
                   </div>
                 </div>
@@ -161,7 +161,7 @@ export default function EspaceClient() {
                       onChange={(e) => setPassword(e.target.value)}
                       required
                       placeholder="••••••••"
-                      className="w-full pl-11 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                      className="w-full pl-11 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all"
                     />
                     <button
                       type="button"
@@ -188,7 +188,7 @@ export default function EspaceClient() {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold py-3 px-6 rounded-lg transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-700 hover:to-yellow-600 text-black font-bold py-3 px-6 rounded-lg transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isLoading ? 'Connexion...' : 'Se Connecter'}
                 </button>
@@ -196,13 +196,13 @@ export default function EspaceClient() {
                 <div className="text-center space-y-3 pt-4 border-t">
                   <a
                     href="/contact"
-                    className="block text-sm text-blue-600 hover:text-blue-700 font-medium"
+                    className="block text-sm text-gray-700 hover:text-yellow-600 font-medium"
                   >
                     Mot de passe oublié ?
                   </a>
                   <p className="text-xs text-gray-500">
                     Pas encore client ?{' '}
-                    <a href="/#devis" className="text-blue-600 hover:text-blue-700 font-medium">
+                    <a href="/#devis" className="text-yellow-600 hover:text-yellow-700 font-medium">
                       Obtenir un devis gratuit
                     </a>
                   </p>
@@ -220,7 +220,7 @@ export default function EspaceClient() {
             <div className="mt-6 text-center">
               <p className="text-sm text-gray-600">
                 Besoin d'aide ?{' '}
-                <a href="tel:0180855786" className="text-blue-600 hover:text-blue-700 font-medium">
+                <a href="tel:0180855786" className="text-yellow-600 hover:text-blue-700 font-medium">
                   01 80 85 57 86
                 </a>
               </p>
@@ -233,7 +233,7 @@ export default function EspaceClient() {
           <div className="max-w-7xl mx-auto">
             <div className="grid md:grid-cols-4 gap-8">
               <div className="text-center">
-                <div className="text-4xl font-bold text-blue-600 mb-2">98%</div>
+                <div className="text-4xl font-bold text-yellow-600 mb-2">98%</div>
                 <div className="text-gray-600">Satisfaction Client</div>
                 <div className="flex justify-center mt-2">
                   {[...Array(5)].map((_, i) => (
@@ -242,15 +242,15 @@ export default function EspaceClient() {
                 </div>
               </div>
               <div className="text-center">
-                <div className="text-4xl font-bold text-blue-600 mb-2">&lt;2min</div>
+                <div className="text-4xl font-bold text-yellow-600 mb-2">&lt;2min</div>
                 <div className="text-gray-600">Temps Réponse Moyen</div>
               </div>
               <div className="text-center">
-                <div className="text-4xl font-bold text-blue-600 mb-2">15 000+</div>
+                <div className="text-4xl font-bold text-yellow-600 mb-2">15 000+</div>
                 <div className="text-gray-600">Clients Connectés</div>
               </div>
               <div className="text-center">
-                <div className="text-4xl font-bold text-blue-600 mb-2">24/7</div>
+                <div className="text-4xl font-bold text-yellow-600 mb-2">24/7</div>
                 <div className="text-gray-600">Disponibilité</div>
               </div>
             </div>
@@ -274,7 +274,7 @@ export default function EspaceClient() {
               {/* Gestion Documents */}
               <div className="bg-white rounded-xl p-8 shadow-lg hover:shadow-2xl transition-all border border-gray-100 hover:border-blue-200">
                 <div className="w-14 h-14 bg-blue-100 rounded-xl flex items-center justify-center mb-6">
-                  <FileCheck className="w-7 h-7 text-blue-600" />
+                  <FileCheck className="w-7 h-7 text-yellow-600" />
                 </div>
                 <h3 className="text-xl font-bold text-gray-900 mb-3">
                   Gestion Documents
@@ -414,7 +414,7 @@ export default function EspaceClient() {
               {/* Support */}
               <div className="bg-white rounded-xl p-8 shadow-lg hover:shadow-2xl transition-all border border-gray-100 hover:border-blue-200">
                 <div className="w-14 h-14 bg-blue-100 rounded-xl flex items-center justify-center mb-6">
-                  <Zap className="w-7 h-7 text-blue-600" />
+                  <Zap className="w-7 h-7 text-yellow-600" />
                 </div>
                 <h3 className="text-xl font-bold text-gray-900 mb-3">
                   Support Instantané
@@ -493,7 +493,7 @@ export default function EspaceClient() {
         </section>
 
         {/* CTA Final */}
-        <section className="py-20 px-4 bg-gradient-to-r from-blue-600 to-blue-700">
+        <section className="py-20 px-4 bg-gradient-to-r from-black to-gray-900">
           <div className="max-w-4xl mx-auto text-center text-white">
             <h2 className="text-4xl font-bold mb-6">
               Prêt à Simplifier Votre Gestion ?
@@ -504,7 +504,7 @@ export default function EspaceClient() {
             <div className="flex flex-wrap justify-center gap-4">
               <a
                 href="/devis"
-                className="px-8 py-4 bg-white text-blue-600 rounded-lg font-bold hover:bg-blue-50 transition-all shadow-xl hover:shadow-2xl hover:scale-105"
+                className="px-8 py-4 bg-white text-yellow-600 rounded-lg font-bold hover:bg-blue-50 transition-all shadow-xl hover:shadow-2xl hover:scale-105"
               >
                 Obtenir Mon Devis Gratuit
               </a>
