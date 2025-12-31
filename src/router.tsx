@@ -475,7 +475,7 @@ export const router = createBrowserRouter([
   },
   {
     path: '/backoffice/leads',
-    element: <AuthGuard><SuspenseWrapper><LeadManager /></SuspenseWrapper></AuthGuard>
+    element: <AuthGuard><SuspenseWrapper><CRMCommercial /></SuspenseWrapper></AuthGuard>
   },
   {
     path: '/auth/youtube/callback',

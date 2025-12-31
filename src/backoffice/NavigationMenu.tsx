@@ -64,10 +64,16 @@ export default function NavigationMenu() {
           </h3>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
             {canViewCRM && (
-              <Link to="/backoffice/leads" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm">
-                <Users className="w-5 h-5" />
-                <span>Gestion Leads</span>
-              </Link>
+              <>
+                <Link to="/backoffice/leads" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-lg font-semibold transition-all shadow-lg border-2 border-green-300 text-sm animate-pulse">
+                  <Users className="w-5 h-5" />
+                  <span>💼 CRM Commercial</span>
+                </Link>
+                <Link to="/backoffice/lead-manager" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm">
+                  <Users className="w-5 h-5" />
+                  <span>Vue Simple Leads</span>
+                </Link>
+              </>
             )}
             {canViewMarketplace && (
               <>

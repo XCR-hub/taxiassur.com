@@ -98,11 +98,15 @@ const CRMCommercial: React.FC = () => {
     const { data, error } = await supabase
       .from('crm_leads_enhanced')
       .select('*')
-      .eq('status', 'active')
       .order('lead_score', { ascending: false })
-      .limit(50);
+      .limit(100);
 
-    if (data) setLeads(data);
+    if (data) {
+      setLeads(data);
+    }
+    if (error) {
+      console.error('Error loading leads:', error);
+    }
   };
 
   const loadLeadDetails = async (leadId: string) => {
