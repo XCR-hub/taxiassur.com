@@ -85,6 +85,7 @@ const CityPageGenerator = lazy(() => import('./backoffice/CityPageGenerator'));
 const TestAutomations = lazy(() => import('./backoffice/TestAutomations'));
 const AIMasterDashboard = lazy(() => import('./backoffice/AIMasterDashboard'));
 const CRMCommercial = lazy(() => import('./backoffice/CRMCommercial'));
+const WhatsAppManager = lazy(() => import('./backoffice/WhatsAppManager'));
 const EspaceClient = lazy(() => import('./pages/EspaceClient'));
 const ClientDashboard = lazy(() => import('./pages/client/ClientDashboard'));
 const ClientDocuments = lazy(() => import('./pages/client/ClientDocuments'));
@@ -476,6 +477,10 @@ export const router = createBrowserRouter([
   {
     path: '/backoffice/leads',
     element: <AuthGuard><SuspenseWrapper><CRMCommercial /></SuspenseWrapper></AuthGuard>
+  },
+  {
+    path: '/backoffice/whatsapp',
+    element: <AuthGuard><SuspenseWrapper><WhatsAppManager /></SuspenseWrapper></AuthGuard>
   },
   {
     path: '/auth/youtube/callback',
