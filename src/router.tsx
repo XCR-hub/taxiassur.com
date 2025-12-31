@@ -85,6 +85,7 @@ const CityPageGenerator = lazy(() => import('./backoffice/CityPageGenerator'));
 const TestAutomations = lazy(() => import('./backoffice/TestAutomations'));
 const AIMasterDashboard = lazy(() => import('./backoffice/AIMasterDashboard'));
 const CRMCommercial = lazy(() => import('./backoffice/CRMCommercial'));
+const EspaceClient = lazy(() => import('./pages/EspaceClient'));
 
 const LoadingFallback = () => (
   <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-black flex items-center justify-center">
@@ -316,6 +317,11 @@ export const router = createBrowserRouter([
   {
     path: '/confiance-certifications',
     element: <SuspenseWrapper><ConfianceEtCertifications /></SuspenseWrapper>,
+    errorElement: <ErrorBoundary><Navigate to="/" replace /></ErrorBoundary>
+  },
+  {
+    path: '/espace-client',
+    element: <SuspenseWrapper><EspaceClient /></SuspenseWrapper>,
     errorElement: <ErrorBoundary><Navigate to="/" replace /></ErrorBoundary>
   },
   {
