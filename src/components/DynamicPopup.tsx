@@ -47,24 +47,28 @@ const DynamicPopup: React.FC<DynamicPopupProps> = ({
 
   const handleConvert = () => {
     PopupManager.trackEvent(config.id, 'convert');
-    
+
     switch (config.content.ctaAction) {
       case 'form':
         const formElement = document.getElementById('devis');
         if (formElement) {
           formElement.scrollIntoView({ behavior: 'smooth' });
         }
+        onClose();
         break;
       case 'phone':
         window.open(`tel:${config.content.ctaValue || '0180855786'}`);
+        onClose();
         break;
       case 'email':
         window.open(`mailto:${config.content.ctaValue || 'team@taxiassur.com'}`);
+        onClose();
         break;
       case 'url':
         if (config.content.ctaValue) {
           window.open(config.content.ctaValue, '_blank');
         }
+        onClose();
         break;
     }
     

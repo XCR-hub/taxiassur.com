@@ -8,6 +8,8 @@ interface Message {
   timestamp: Date;
 }
 
+const MAX_MESSAGES = 50;
+
 export default function AIChatBot() {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
@@ -45,7 +47,10 @@ export default function AIChatBot() {
       timestamp: new Date()
     };
 
-    setMessages(prev => [...prev, userMessage]);
+    setMessages(prev => {
+      const updated = [...prev, userMessage];
+      return updated.length > MAX_MESSAGES ? updated.slice(-MAX_MESSAGES) : updated;
+    });
     setInput('');
     setIsLoading(true);
 
@@ -84,7 +89,10 @@ export default function AIChatBot() {
         timestamp: new Date()
       };
 
-      setMessages(prev => [...prev, assistantMessage]);
+      setMessages(prev => {
+        const updated = [...prev, assistantMessage];
+        return updated.length > MAX_MESSAGES ? updated.slice(-MAX_MESSAGES) : updated;
+      });
     } catch (error) {
       console.error('Error:', error);
       const errorMessage: Message = {
@@ -92,7 +100,10 @@ export default function AIChatBot() {
         content: "Le chatbot AI nécessite une configuration Supabase. Pour l'instant, contactez-nous au 01 80 85 57 86 ou via notre formulaire de contact.",
         timestamp: new Date()
       };
-      setMessages(prev => [...prev, errorMessage]);
+      setMessages(prev => {
+        const updated = [...prev, errorMessage];
+        return updated.length > MAX_MESSAGES ? updated.slice(-MAX_MESSAGES) : updated;
+      });
     } finally {
       setIsLoading(false);
     }
@@ -128,7 +139,7 @@ export default function AIChatBot() {
   }
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 w-[380px] h-[600px] bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-yellow-200">
+    <div className="fixed bottom-4 right-4 left-4 sm:left-auto sm:bottom-6 sm:right-6 z-50 w-auto sm:w-[380px] h-[calc(100vh-2rem)] sm:h-[600px] max-h-[calc(100vh-2rem)] sm:max-h-[90vh] bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-yellow-200">
       <div className="bg-gradient-to-r from-orange-500 to-amber-500 text-white p-4 flex items-center justify-between">
         <div className="flex items-center space-x-3">
           <div className="relative">
@@ -156,7 +167,7 @@ export default function AIChatBot() {
             className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
           >
             <div
-              className={`max-w-[80%] rounded-2xl px-4 py-3 ${
+              className={`max-w-[85%] sm:max-w-[75%] rounded-2xl px-4 py-3 ${
                 message.role === 'user'
                   ? 'bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-br-none'
                   : 'bg-white text-gray-800 rounded-bl-none shadow-md border border-yellow-200'
@@ -212,7 +223,7 @@ export default function AIChatBot() {
             onChange={(e) => setInput(e.target.value)}
             onKeyPress={handleKeyPress}
             placeholder="Posez votre question..."
-            className="flex-1 px-4 py-3 border border-orange-200 rounded-full focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm"
+            className="flex-1 px-4 py-3 border border-orange-200 rounded-full focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent text-base sm:text-sm"
             disabled={isLoading}
           />
           <button

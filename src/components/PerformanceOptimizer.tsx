@@ -6,13 +6,9 @@ interface PerformanceOptimizerProps {
 
 const PerformanceOptimizer: React.FC<PerformanceOptimizerProps> = ({ children }) => {
   useEffect(() => {
-    // Preload critical resources
+    // Preload critical resources (removed heavy image preload for mobile performance)
     const preloadCriticalResources = () => {
-      // Preload hero image
-      const heroImage = new Image();
-      heroImage.src = 'https://images.pexels.com/photos/1545743/pexels-photo-1545743.jpeg?auto=compress&cs=tinysrgb&w=1920&h=1080&fit=crop';
-
-      // Preload fonts
+      // Preload fonts only
       const fontLink = document.createElement('link');
       fontLink.rel = 'preload';
       fontLink.href = 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap';
@@ -65,37 +61,40 @@ const PerformanceOptimizer: React.FC<PerformanceOptimizerProps> = ({ children })
     optimizeImagesOnScroll();
     preventLayoutShifts();
 
-    // Performance monitoring
-    const measurePerformance = () => {
-      if ('performance' in window) {
-        window.addEventListener('load', () => {
-          setTimeout(() => {
-            const navigation = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming;
-            const paint = performance.getEntriesByType('paint');
-            
-            const metrics = {
-              loadTime: navigation.loadEventEnd - navigation.loadEventStart,
-              domContentLoaded: navigation.domContentLoadedEventEnd - navigation.domContentLoadedEventStart,
-              firstPaint: paint.find(p => p.name === 'first-paint')?.startTime || 0,
-              firstContentfulPaint: paint.find(p => p.name === 'first-contentful-paint')?.startTime || 0
-            };
+    // Performance monitoring with cleanup
+    const performanceHandler = () => {
+      setTimeout(() => {
+        const navigation = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming;
+        const paint = performance.getEntriesByType('paint');
 
-            // Send to analytics if configured
-            if (typeof gtag !== 'undefined') {
-              gtag('event', 'page_performance', {
-                event_category: 'performance',
-                load_time: Math.round(metrics.loadTime),
-                fcp: Math.round(metrics.firstContentfulPaint)
-              });
-            }
+        const metrics = {
+          loadTime: navigation.loadEventEnd - navigation.loadEventStart,
+          domContentLoaded: navigation.domContentLoadedEventEnd - navigation.domContentLoadedEventStart,
+          firstPaint: paint.find(p => p.name === 'first-paint')?.startTime || 0,
+          firstContentfulPaint: paint.find(p => p.name === 'first-contentful-paint')?.startTime || 0
+        };
 
-            console.log('Performance metrics:', metrics);
-          }, 1000);
-        });
-      }
+        if (typeof gtag === 'function') {
+          gtag('event', 'page_performance', {
+            event_category: 'performance',
+            load_time: Math.round(metrics.loadTime),
+            fcp: Math.round(metrics.firstContentfulPaint)
+          });
+        }
+
+        console.log('Performance metrics:', metrics);
+      }, 1000);
     };
 
-    measurePerformance();
+    if ('performance' in window) {
+      window.addEventListener('load', performanceHandler);
+    }
+
+    return () => {
+      if ('performance' in window) {
+        window.removeEventListener('load', performanceHandler);
+      }
+    };
 
   }, []);
 
