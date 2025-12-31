@@ -18,8 +18,7 @@ import UltimateConversion from '../components/UltimateConversion';
 import TrustBadges from '../components/TrustBadges';
 import InstantQuoteCalculator from '../components/InstantQuoteCalculator';
 import DynamicReviews from '../components/DynamicReviews';
-import ExitIntentLeadCapture from '../components/ExitIntentLeadCapture';
-import AggressiveConversionPopups from '../components/AggressiveConversionPopups';
+import SubtleConversionHelper from '../components/SubtleConversionHelper';
 import InteractiveQuiz from '../components/InteractiveQuiz';
 import NewsSection from '../components/NewsSection';
 import { usePageTracking } from '../hooks/usePageTracking';
@@ -148,11 +147,8 @@ const Home: React.FC = () => {
             {/* 12. Newsletter - Engagement */}
             <Newsletter />
 
-            {/* 13. Pop-ups conversion agressifs - Multi-niveaux */}
-            <AggressiveConversionPopups />
-
-            {/* 14. Exit intent popup - Last chance lead capture */}
-            <ExitIntentLeadCapture />
+            {/* 13. Aide conversion subtile et intelligente */}
+            <SubtleConversionHelper />
             
             {/* 10. Conversion ultime - CTA final */}
             <UltimateConversion />
