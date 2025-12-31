@@ -1,7 +1,55 @@
-import { Shield, FileCheck, Bell, Clock, CreditCard, Download, Upload, CheckCircle, Star, Zap, Lock, Smartphone, Calendar, Award } from 'lucide-react';
+import { useState } from 'react';
+import { Shield, FileCheck, Bell, Clock, CreditCard, Download, Upload, CheckCircle, Star, Zap, Lock, Smartphone, Calendar, Award, Mail, Eye, EyeOff } from 'lucide-react';
 import SEOHead from '../components/SEOHead';
+import { supabase } from '../lib/supabase';
 
 export default function EspaceClient() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      const { data: portalUser, error: portalError } = await supabase
+        .from('client_portal_users')
+        .select('*')
+        .eq('email', email.toLowerCase().trim())
+        .maybeSingle();
+
+      if (portalError) throw portalError;
+
+      if (!portalUser) {
+        setError('Email non reconnu. Veuillez vérifier votre adresse email.');
+        return;
+      }
+
+      if (!portalUser.is_active) {
+        setError('Votre compte est désactivé. Contactez-nous au 01 80 85 57 86.');
+        return;
+      }
+
+      setSuccess('Connexion réussie ! Redirection...');
+
+      setTimeout(() => {
+        window.location.href = `/client/dashboard?email=${encodeURIComponent(email)}`;
+      }, 1500);
+
+    } catch (err: unknown) {
+      console.error('Login error:', err);
+      setError('Une erreur est survenue. Réessayez dans quelques instants.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <>
       <SEOHead
@@ -65,8 +113,123 @@ export default function EspaceClient() {
           </div>
         </section>
 
+        {/* Formulaire de Connexion */}
+        <section id="connexion" className="py-16 px-4 bg-white">
+          <div className="max-w-md mx-auto">
+            <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 p-8">
+              <div className="text-center mb-8">
+                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Lock className="w-8 h-8 text-blue-600" />
+                </div>
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                  Connexion Espace Client
+                </h2>
+                <p className="text-gray-600">
+                  Accédez à votre contrat en toute sécurité
+                </p>
+              </div>
+
+              <form onSubmit={handleLogin} className="space-y-6">
+                <div>
+                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                    Adresse Email
+                  </label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <input
+                      id="email"
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                      placeholder="votre@email.com"
+                      className="w-full pl-11 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+                    Mot de Passe
+                  </label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <input
+                      id="password"
+                      type={showPassword ? 'text' : 'password'}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      placeholder="••••••••"
+                      className="w-full pl-11 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    >
+                      {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    </button>
+                  </div>
+                </div>
+
+                {error && (
+                  <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+                    {error}
+                  </div>
+                )}
+
+                {success && (
+                  <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm">
+                    {success}
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold py-3 px-6 rounded-lg transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isLoading ? 'Connexion...' : 'Se Connecter'}
+                </button>
+
+                <div className="text-center space-y-3 pt-4 border-t">
+                  <a
+                    href="/contact"
+                    className="block text-sm text-blue-600 hover:text-blue-700 font-medium"
+                  >
+                    Mot de passe oublié ?
+                  </a>
+                  <p className="text-xs text-gray-500">
+                    Pas encore client ?{' '}
+                    <a href="/#devis" className="text-blue-600 hover:text-blue-700 font-medium">
+                      Obtenir un devis gratuit
+                    </a>
+                  </p>
+                </div>
+              </form>
+
+              <div className="mt-6 pt-6 border-t text-center">
+                <p className="text-xs text-gray-500 flex items-center justify-center gap-2">
+                  <Lock className="w-3 h-3" />
+                  Connexion sécurisée SSL 256-bit
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-6 text-center">
+              <p className="text-sm text-gray-600">
+                Besoin d'aide ?{' '}
+                <a href="tel:0180855786" className="text-blue-600 hover:text-blue-700 font-medium">
+                  01 80 85 57 86
+                </a>
+              </p>
+            </div>
+          </div>
+        </section>
+
         {/* Statistiques */}
-        <section className="py-12 px-4 bg-white border-b">
+        <section className="py-12 px-4 bg-gray-50 border-b">
           <div className="max-w-7xl mx-auto">
             <div className="grid md:grid-cols-4 gap-8">
               <div className="text-center">

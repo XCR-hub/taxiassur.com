@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Phone, Menu, X, Shield, ChevronDown } from 'lucide-react';
+import { Phone, Menu, X, Shield, ChevronDown, User } from 'lucide-react';
 
 interface NavItem {
   name: string;
@@ -153,6 +153,13 @@ const Header: React.FC = () => {
           </nav>
 
           <div className="hidden lg:flex items-center space-x-3">
+            <Link
+              to="/espace-client"
+              className="flex items-center space-x-2 bg-gray-800 hover:bg-gray-700 text-white font-semibold py-2 px-5 rounded-lg transition-all duration-300 text-sm whitespace-nowrap border border-gray-600 hover:border-yellow-400"
+            >
+              <User size={16} />
+              <span>Espace Client</span>
+            </Link>
             <button
               onClick={() => {
                 const devisSection = document.getElementById('devis');
@@ -203,8 +210,16 @@ const Header: React.FC = () => {
                   {item.name}
                 </Link>
               ))}
+              <Link
+                to="/espace-client"
+                className="flex items-center justify-center space-x-2 bg-gray-800 hover:bg-gray-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-300 text-center mx-4 mt-4 w-[calc(100%-2rem)] border border-gray-600"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                <User size={18} />
+                <span>Espace Client</span>
+              </Link>
               <button
-                className="bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-500 hover:to-yellow-400 text-black font-bold py-3 px-6 rounded-lg transition-all duration-300 text-center mx-4 mt-4 w-[calc(100%-2rem)]"
+                className="bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-500 hover:to-yellow-400 text-black font-bold py-3 px-6 rounded-lg transition-all duration-300 text-center mx-4 mt-2 w-[calc(100%-2rem)]"
                 onClick={() => {
                   setIsMenuOpen(false);
                   setTimeout(() => {
