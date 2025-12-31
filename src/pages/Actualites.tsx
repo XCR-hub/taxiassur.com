@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Calendar, Clock, Tag, ExternalLink, TrendingUp } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { stripHtml, createSmartExcerpt } from '../lib/text-utils';
 import Footer from '../components/Footer';
 import Header from '../components/Header';
 
@@ -43,12 +44,33 @@ export default function Actualites() {
         return;
       }
 
-      setNews(data || []);
+      const cleanedData = (data || []).map(article => ({
+        ...article,
+        excerpt: getCleanExcerpt(article)
+      }));
+
+      setNews(cleanedData);
     } catch (err) {
       console.error('Failed to load news:', err);
     } finally {
       setLoading(false);
     }
+  };
+
+  const getCleanExcerpt = (article: any): string => {
+    if (!article.excerpt) {
+      return createSmartExcerpt(article.title, article.content || '');
+    }
+
+    const cleanedExcerpt = stripHtml(article.excerpt);
+
+    if (cleanedExcerpt.length < 20 || cleanedExcerpt.includes('href=') || cleanedExcerpt.includes('<a ')) {
+      return createSmartExcerpt(article.title, article.content || '');
+    }
+
+    return cleanedExcerpt.length > 160
+      ? cleanedExcerpt.substring(0, 160) + '...'
+      : cleanedExcerpt;
   };
 
   const filteredNews = filter === 'all'

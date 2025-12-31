@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Play, Pause, RefreshCw, Eye, Settings, TrendingUp, Clock, Zap, Globe, Home } from 'lucide-react';
+import { Play, Pause, RefreshCw, Eye, Settings, TrendingUp, Clock, Zap, Globe, Home, Sparkles } from 'lucide-react';
 import { useNewsSystem } from '../lib/newsAggregator';
 import { ProcessedNews } from '../lib/newsAggregator';
 import Card from '../components/Card';
@@ -122,6 +122,40 @@ const NewsManager: React.FC = () => {
     }
   };
 
+  const cleanExcerpts = async () => {
+    if (!confirm('Voulez-vous nettoyer tous les excerpts des actualités (suppression du code HTML brut) ?')) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/clean-news-excerpts`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
+          }
+        }
+      );
+
+      const result = await response.json();
+
+      if (result.success) {
+        alert(`✅ ${result.message}\n\nTotal: ${result.totalArticles} articles\nNettoyés: ${result.cleanedCount} articles`);
+        await loadProcessedNews();
+      } else {
+        throw new Error(result.error || 'Erreur inconnue');
+      }
+    } catch (error: any) {
+      console.error('Error cleaning excerpts:', error);
+      alert(`❌ Erreur lors du nettoyage : ${error.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const getAngleColor = (angle: string): string => {
     const colors: Record<string, string> = {
       'impact sur les assurances taxi': 'bg-orange-100 text-orange-800',
@@ -214,6 +248,15 @@ const NewsManager: React.FC = () => {
               >
                 <RefreshCw size={16} />
                 <span>Lancer Maintenant</span>
+              </button>
+
+              <button
+                onClick={cleanExcerpts}
+                className="flex items-center space-x-2 bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-black font-medium py-2 px-4 rounded-lg transition-colors shadow-md hover:shadow-lg"
+                title="Nettoyer les résumés (supprimer le code HTML brut)"
+              >
+                <Sparkles size={16} />
+                <span>Nettoyer Résumés</span>
               </button>
             </div>
           </div>

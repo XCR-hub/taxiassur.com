@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
 import { Calendar, TrendingUp, Newspaper, ArrowRight } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { stripHtml, createSmartExcerpt } from '../lib/text-utils';
 
 interface NewsArticle {
   id: string;
   title: string;
   slug: string;
   excerpt: string;
+  content?: string;
   category: string;
   score: number;
   published_at: string;
@@ -30,7 +32,7 @@ export default function NewsSection({ limit = 3, showTitle = true }: NewsSection
     try {
       const { data, error } = await supabase
         .from('news_articles')
-        .select('id, title, slug, excerpt, category, score, published_at, source')
+        .select('id, title, slug, excerpt, content, category, score, published_at, source')
         .eq('status', 'published')
         .order('published_at', { ascending: false })
         .limit(limit);
@@ -40,12 +42,33 @@ export default function NewsSection({ limit = 3, showTitle = true }: NewsSection
         return;
       }
 
-      setNews(data || []);
+      const cleanedData = (data || []).map(article => ({
+        ...article,
+        excerpt: getCleanExcerpt(article)
+      }));
+
+      setNews(cleanedData);
     } catch (err) {
       console.error('Failed to load news:', err);
     } finally {
       setLoading(false);
     }
+  };
+
+  const getCleanExcerpt = (article: any): string => {
+    if (!article.excerpt) {
+      return createSmartExcerpt(article.title, article.content || '');
+    }
+
+    const cleanedExcerpt = stripHtml(article.excerpt);
+
+    if (cleanedExcerpt.length < 20 || cleanedExcerpt.includes('href=') || cleanedExcerpt.includes('<a ')) {
+      return createSmartExcerpt(article.title, article.content || '');
+    }
+
+    return cleanedExcerpt.length > 160
+      ? cleanedExcerpt.substring(0, 160) + '...'
+      : cleanedExcerpt;
   };
 
   const timeAgo = (dateString: string) => {
