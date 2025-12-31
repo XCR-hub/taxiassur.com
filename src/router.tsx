@@ -84,6 +84,7 @@ const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
 const CityPageGenerator = lazy(() => import('./backoffice/CityPageGenerator'));
 const TestAutomations = lazy(() => import('./backoffice/TestAutomations'));
 const AIMasterDashboard = lazy(() => import('./backoffice/AIMasterDashboard'));
+const CRMCommercial = lazy(() => import('./backoffice/CRMCommercial'));
 
 const LoadingFallback = () => (
   <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-black flex items-center justify-center">
