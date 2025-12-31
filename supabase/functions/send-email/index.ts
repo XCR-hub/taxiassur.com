@@ -39,6 +39,7 @@ Deno.serve(async (req: Request) => {
 
     const BREVO_API_KEY = Deno.env.get("BREVO_API_KEY");
     const BREVO_SENDER_EMAIL = Deno.env.get("BREVO_SENDER_EMAIL") || "team@taxiassur.com";
+    const BREVO_SENDER_NAME = Deno.env.get("BREVO_SENDER_NAME") || "TaxiAssur";
 
     if (!BREVO_API_KEY) {
       console.error("BREVO_API_KEY not configured");
@@ -56,13 +57,12 @@ Deno.serve(async (req: Request) => {
 
     const brevoPayload = {
       sender: {
-        email: BREVO_SENDER_EMAIL,
-        name: "TaxiAssur"
+        name: BREVO_SENDER_NAME,
+        email: BREVO_SENDER_EMAIL
       },
       to: [{ email: to }],
       subject: subject,
-      textContent: text,
-      ...(html && { htmlContent: html })
+      ...(html ? { htmlContent: html } : { textContent: text })
     };
 
     const brevoResponse = await fetch("https://api.brevo.com/v3/smtp/email", {
