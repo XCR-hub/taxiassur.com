@@ -521,49 +521,49 @@ export default function EspaceClient() {
         {/* FAQ */}
         <section className="py-20 px-4 bg-gray-50">
           <div className="max-w-4xl mx-auto">
-            <h2 className="text-3xl font-bold text-center mb-12">
+            <h2 className="text-3xl font-bold text-gray-900 text-center mb-12">
               Questions Fréquentes
             </h2>
 
             <div className="space-y-6">
-              <details className="bg-white rounded-lg p-6 shadow-md">
-                <summary className="font-bold text-lg cursor-pointer">
+              <details className="bg-white rounded-lg p-6 shadow-md hover:shadow-lg transition-shadow">
+                <summary className="font-bold text-lg text-gray-900 cursor-pointer hover:text-yellow-600 transition-colors">
                   Comment accéder à mon espace client ?
                 </summary>
-                <p className="mt-4 text-gray-600">
+                <p className="mt-4 text-gray-700 leading-relaxed">
                   Dès la signature de votre contrat, vous recevez par email vos identifiants
                   de connexion. Connectez-vous sur taxiassur.com/espace-client avec votre
                   email et le mot de passe temporaire, puis changez-le lors de votre première visite.
                 </p>
               </details>
 
-              <details className="bg-white rounded-lg p-6 shadow-md">
-                <summary className="font-bold text-lg cursor-pointer">
+              <details className="bg-white rounded-lg p-6 shadow-md hover:shadow-lg transition-shadow">
+                <summary className="font-bold text-lg text-gray-900 cursor-pointer hover:text-yellow-600 transition-colors">
                   Quels documents puis-je télécharger ?
                 </summary>
-                <p className="mt-4 text-gray-600">
+                <p className="mt-4 text-gray-700 leading-relaxed">
                   Vous pouvez télécharger toutes vos attestations d'assurance, factures,
                   conditions générales, avenants, et tout document lié à votre contrat.
                   Les attestations sont disponibles instantanément.
                 </p>
               </details>
 
-              <details className="bg-white rounded-lg p-6 shadow-md">
-                <summary className="font-bold text-lg cursor-pointer">
+              <details className="bg-white rounded-lg p-6 shadow-md hover:shadow-lg transition-shadow">
+                <summary className="font-bold text-lg text-gray-900 cursor-pointer hover:text-yellow-600 transition-colors">
                   Comment déclarer un sinistre ?
                 </summary>
-                <p className="mt-4 text-gray-600">
+                <p className="mt-4 text-gray-700 leading-relaxed">
                   Dans votre espace client, section "Sinistres", cliquez sur "Déclarer un sinistre".
                   Remplissez le formulaire guidé (3min), ajoutez des photos depuis votre mobile,
                   et validez. Vous recevez immédiatement un numéro de sinistre et les coordonnées d'assistance.
                 </p>
               </details>
 
-              <details className="bg-white rounded-lg p-6 shadow-md">
-                <summary className="font-bold text-lg cursor-pointer">
+              <details className="bg-white rounded-lg p-6 shadow-md hover:shadow-lg transition-shadow">
+                <summary className="font-bold text-lg text-gray-900 cursor-pointer hover:text-yellow-600 transition-colors">
                   L'espace client est-il disponible sur mobile ?
                 </summary>
-                <p className="mt-4 text-gray-600">
+                <p className="mt-4 text-gray-700 leading-relaxed">
                   Oui, 100% ! L'espace client est optimisé pour mobile, tablette et ordinateur.
                   Vous pouvez même uploader des documents en scannant avec votre smartphone.
                 </p>
