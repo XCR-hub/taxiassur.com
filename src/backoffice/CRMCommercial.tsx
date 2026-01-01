@@ -500,6 +500,14 @@ const CRMCommercial: React.FC = () => {
               </button>
 
               <a
+                href="/backoffice/automations"
+                className="flex items-center gap-2 bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded-lg transition-colors"
+              >
+                <Zap size={18} />
+                Automatisations
+              </a>
+
+              <a
                 href="/backoffice"
                 className="flex items-center gap-2 bg-gray-900 hover:bg-gray-800 text-white font-bold py-2 px-4 rounded-lg transition-colors"
               >

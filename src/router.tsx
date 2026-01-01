@@ -88,6 +88,7 @@ const AIMasterDashboard = lazy(() => import('./backoffice/AIMasterDashboard'));
 const CRMCommercial = lazy(() => import('./backoffice/CRMCommercial'));
 const WhatsAppManager = lazy(() => import('./backoffice/WhatsAppManager'));
 const WhatsAppSettings = lazy(() => import('./backoffice/WhatsAppSettings'));
+const AutomationDashboard = lazy(() => import('./backoffice/AutomationDashboard'));
 const EspaceClient = lazy(() => import('./pages/EspaceClient'));
 const ClientDashboard = lazy(() => import('./pages/client/ClientDashboard'));
 const ClientDocuments = lazy(() => import('./pages/client/ClientDocuments'));
@@ -479,6 +480,10 @@ export const router = createBrowserRouter([
   {
     path: '/backoffice/leads',
     element: <AuthGuard><SuspenseWrapper><CRMCommercial /></SuspenseWrapper></AuthGuard>
+  },
+  {
+    path: '/backoffice/automations',
+    element: <AuthGuard><SuspenseWrapper><AutomationDashboard /></SuspenseWrapper></AuthGuard>
   },
   {
     path: '/backoffice/whatsapp',
