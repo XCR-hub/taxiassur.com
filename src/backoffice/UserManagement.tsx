@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Users, UserPlus, Shield, Lock, Mail, Eye, EyeOff, Edit2, Trash2, CheckCircle, XCircle, Search, Filter } from 'lucide-react';
+import { Users, UserPlus, Shield, Lock, Mail, Eye, EyeOff, Edit2, Trash2, CheckCircle, XCircle, Search, Filter, RefreshCw, Key, Send } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 interface AdminUser {
@@ -10,6 +10,7 @@ interface AdminUser {
   is_active: boolean;
   created_at: string;
   last_login?: string;
+  mfa_enabled?: boolean;
 }
 
 interface UserPermission {
@@ -48,11 +49,11 @@ const UserManagement: React.FC = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showPermissionsModal, setShowPermissionsModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
+  const [sending, setSending] = useState(false);
 
   const [newUser, setNewUser] = useState({
     email: '',
     full_name: '',
-    password: '',
     role: 'collaborator' as 'master' | 'collaborator'
   });
 
@@ -93,59 +94,125 @@ const UserManagement: React.FC = () => {
     }
   };
 
-  const hashPassword = async (password: string): Promise<string> => {
-    const encoder = new TextEncoder();
-    const data = encoder.encode(password);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-  };
-
-  const handleCreateUser = async () => {
+  const handleInviteUser = async () => {
     try {
-      if (!newUser.email || !newUser.full_name || !newUser.password) {
-        alert('Tous les champs sont requis');
+      if (!newUser.email || !newUser.full_name) {
+        alert('L\'email et le nom complet sont requis');
         return;
       }
 
-      const passwordHash = await hashPassword(newUser.password);
+      setSending(true);
 
-      const { data, error } = await supabase
-        .from('admin_users')
-        .insert([{
-          email: newUser.email,
-          full_name: newUser.full_name,
-          password_hash: passwordHash,
-          role: newUser.role,
-          is_active: true
-        }])
-        .select()
-        .single();
+      const { data: authData, error: authError } = await supabase.auth.admin.inviteUserByEmail(
+        newUser.email,
+        {
+          data: {
+            full_name: newUser.full_name,
+            role: newUser.role
+          },
+          redirectTo: `${window.location.origin}/auth/set-password`
+        }
+      );
 
-      if (error) throw error;
+      if (authError) {
+        console.error('Auth error:', authError);
+        alert(`Erreur lors de l'invitation: ${authError.message}`);
+        return;
+      }
 
-      for (const [permType, perms] of Object.entries(userPermissions)) {
-        if (perms.view || perms.edit || perms.delete) {
-          await supabase
-            .from('user_permissions')
-            .insert([{
-              user_id: data.id,
-              permission_type: permType,
-              can_view: perms.view,
-              can_edit: perms.edit,
-              can_delete: perms.delete
-            }]);
+      if (authData.user) {
+        const { error: dbError } = await supabase
+          .from('admin_users')
+          .insert([{
+            id: authData.user.id,
+            email: newUser.email,
+            full_name: newUser.full_name,
+            role: newUser.role,
+            is_active: true,
+            mfa_enabled: false
+          }]);
+
+        if (dbError) {
+          console.error('Database error:', dbError);
+          alert('Erreur lors de la sauvegarde des données utilisateur');
+          return;
+        }
+
+        for (const [permType, perms] of Object.entries(userPermissions)) {
+          if (perms.view || perms.edit || perms.delete) {
+            await supabase
+              .from('user_permissions')
+              .insert([{
+                user_id: authData.user.id,
+                permission_type: permType,
+                can_view: perms.view,
+                can_edit: perms.edit,
+                can_delete: perms.delete
+              }]);
+          }
         }
       }
 
-      alert('Utilisateur créé avec succès !');
+      alert(`Invitation envoyée avec succès à ${newUser.email} ! L'utilisateur va recevoir un email pour créer son mot de passe.`);
       setShowAddModal(false);
-      setNewUser({ email: '', full_name: '', password: '', role: 'collaborator' });
+      setNewUser({ email: '', full_name: '', role: 'collaborator' });
       setUserPermissions({});
       loadUsers();
     } catch (error) {
-      console.error('Error creating user:', error);
-      alert('Erreur lors de la création de l\'utilisateur');
+      console.error('Error inviting user:', error);
+      alert('Erreur lors de l\'invitation de l\'utilisateur');
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const handleResendInvite = async (email: string) => {
+    try {
+      setSending(true);
+
+      const { error } = await supabase.auth.admin.inviteUserByEmail(
+        email,
+        {
+          redirectTo: `${window.location.origin}/auth/set-password`
+        }
+      );
+
+      if (error) {
+        alert(`Erreur: ${error.message}`);
+        return;
+      }
+
+      alert(`Email d'invitation renvoyé à ${email} avec succès !`);
+    } catch (error) {
+      console.error('Error resending invite:', error);
+      alert('Erreur lors du renvoi de l\'invitation');
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const handleResetPassword = async (email: string) => {
+    try {
+      setSending(true);
+
+      const { error } = await supabase.auth.resetPasswordForEmail(
+        email,
+        {
+          redirectTo: `${window.location.origin}/auth/reset-password`
+        }
+      );
+
+      if (error) {
+        alert(`Erreur: ${error.message}`);
+        return;
+      }
+
+      alert(`Email de réinitialisation envoyé à ${email} avec succès !`);
+    } catch (error) {
+      console.error('Error sending password reset:', error);
+      alert('Erreur lors de l\'envoi de la réinitialisation');
+    } finally {
+      setSending(false);
     }
   };
 
@@ -164,16 +231,22 @@ const UserManagement: React.FC = () => {
     }
   };
 
-  const handleDeleteUser = async (userId: string) => {
-    if (!confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ?')) return;
+  const handleDeleteUser = async (userId: string, email: string) => {
+    if (!confirm(`Êtes-vous sûr de vouloir supprimer cet utilisateur ?\n\nCela supprimera:\n- Le compte Supabase Auth\n- Les données admin_users\n- Toutes les permissions`)) return;
 
     try {
-      const { error } = await supabase
+      const { error: authError } = await supabase.auth.admin.deleteUser(userId);
+
+      if (authError) {
+        console.error('Auth delete error:', authError);
+      }
+
+      const { error: dbError } = await supabase
         .from('admin_users')
         .delete()
         .eq('id', userId);
 
-      if (error) throw error;
+      if (dbError) throw dbError;
 
       alert('Utilisateur supprimé avec succès');
       loadUsers();
@@ -259,6 +332,13 @@ const UserManagement: React.FC = () => {
           <p className="text-gray-400 mt-2">Gérez les accès et permissions de vos collaborateurs</p>
         </div>
         <div className="flex items-center gap-3">
+          <button
+            onClick={loadUsers}
+            className="flex items-center gap-2 bg-gray-800 hover:bg-gray-700 text-white px-4 py-3 rounded-xl font-bold transition-all border border-gray-700"
+          >
+            <RefreshCw size={18} />
+            Actualiser
+          </button>
           <a
             href="/backoffice"
             className="flex items-center gap-2 bg-gray-800 hover:bg-gray-700 text-white px-4 py-3 rounded-xl font-bold transition-all border border-gray-700"
@@ -321,6 +401,11 @@ const UserManagement: React.FC = () => {
                     ) : (
                       <XCircle className="text-red-400" size={20} />
                     )}
+                    {user.mfa_enabled && (
+                      <span className="px-2 py-1 bg-green-500/20 text-green-400 rounded-full text-xs font-bold border border-green-500/50">
+                        🔒 2FA
+                      </span>
+                    )}
                   </div>
                   <p className="text-gray-400 flex items-center gap-2">
                     <Mail size={16} />
@@ -343,13 +428,29 @@ const UserManagement: React.FC = () => {
                     })}
                   </div>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-col gap-2">
                   <button
                     onClick={() => openPermissionsModal(user)}
                     className="p-2 bg-blue-500/20 text-blue-400 rounded-lg hover:bg-blue-500/30 transition-all"
                     title="Gérer les permissions"
                   >
                     <Shield size={20} />
+                  </button>
+                  <button
+                    onClick={() => handleResendInvite(user.email)}
+                    disabled={sending}
+                    className="p-2 bg-purple-500/20 text-purple-400 rounded-lg hover:bg-purple-500/30 transition-all disabled:opacity-50"
+                    title="Renvoyer l'invitation"
+                  >
+                    <Send size={20} />
+                  </button>
+                  <button
+                    onClick={() => handleResetPassword(user.email)}
+                    disabled={sending}
+                    className="p-2 bg-yellow-500/20 text-yellow-400 rounded-lg hover:bg-yellow-500/30 transition-all disabled:opacity-50"
+                    title="Réinitialiser le mot de passe"
+                  >
+                    <Key size={20} />
                   </button>
                   <button
                     onClick={() => handleToggleActive(user.id, user.is_active)}
@@ -364,7 +465,7 @@ const UserManagement: React.FC = () => {
                   </button>
                   {user.role !== 'master' && (
                     <button
-                      onClick={() => handleDeleteUser(user.id)}
+                      onClick={() => handleDeleteUser(user.id, user.email)}
                       className="p-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30 transition-all"
                       title="Supprimer"
                     >
@@ -393,6 +494,13 @@ const UserManagement: React.FC = () => {
               Inviter un Nouveau Collaborateur
             </h2>
 
+            <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4 mb-6">
+              <p className="text-blue-300 text-sm">
+                L'utilisateur recevra un email d'invitation pour créer son propre mot de passe.
+                Aucun mot de passe ne sera généré automatiquement.
+              </p>
+            </div>
+
             <div className="space-y-6">
               <div className="grid grid-cols-2 gap-6">
                 <div>
@@ -417,28 +525,16 @@ const UserManagement: React.FC = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-gray-300 mb-2 font-semibold">Mot de passe *</label>
-                  <input
-                    type="password"
-                    value={newUser.password}
-                    onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
-                    className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-                    placeholder="Mot de passe sécurisé"
-                  />
-                </div>
-                <div>
-                  <label className="block text-gray-300 mb-2 font-semibold">Rôle *</label>
-                  <select
-                    value={newUser.role}
-                    onChange={(e) => setNewUser({ ...newUser, role: e.target.value as any })}
-                    className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-                  >
-                    <option value="collaborator">👤 Collaborateur</option>
-                    <option value="master">👑 Master</option>
-                  </select>
-                </div>
+              <div>
+                <label className="block text-gray-300 mb-2 font-semibold">Rôle *</label>
+                <select
+                  value={newUser.role}
+                  onChange={(e) => setNewUser({ ...newUser, role: e.target.value as any })}
+                  className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                >
+                  <option value="collaborator">👤 Collaborateur</option>
+                  <option value="master">👑 Master</option>
+                </select>
               </div>
 
               <div>
@@ -505,15 +601,16 @@ const UserManagement: React.FC = () => {
 
             <div className="flex gap-4 mt-8">
               <button
-                onClick={handleCreateUser}
-                className="flex-1 bg-gradient-to-r from-amber-500 to-yellow-500 text-black px-6 py-3 rounded-xl font-bold hover:shadow-lg transition-all"
+                onClick={handleInviteUser}
+                disabled={sending}
+                className="flex-1 bg-gradient-to-r from-amber-500 to-yellow-500 text-black px-6 py-3 rounded-xl font-bold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Créer le Collaborateur
+                {sending ? 'Envoi en cours...' : 'Envoyer l\'Invitation'}
               </button>
               <button
                 onClick={() => {
                   setShowAddModal(false);
-                  setNewUser({ email: '', full_name: '', password: '', role: 'collaborator' });
+                  setNewUser({ email: '', full_name: '', role: 'collaborator' });
                   setUserPermissions({});
                 }}
                 className="px-6 py-3 bg-gray-800 text-white rounded-xl font-bold hover:bg-gray-700 transition-all"
