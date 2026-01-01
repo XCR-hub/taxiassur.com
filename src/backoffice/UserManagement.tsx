@@ -258,13 +258,22 @@ const UserManagement: React.FC = () => {
           </h1>
           <p className="text-gray-400 mt-2">Gérez les accès et permissions de vos collaborateurs</p>
         </div>
-        <button
-          onClick={() => setShowAddModal(true)}
-          className="flex items-center gap-2 bg-gradient-to-r from-amber-500 to-yellow-500 text-black px-6 py-3 rounded-xl font-bold hover:shadow-lg transition-all"
-        >
-          <UserPlus size={20} />
-          Inviter un Collaborateur
-        </button>
+        <div className="flex items-center gap-3">
+          <a
+            href="/backoffice"
+            className="flex items-center gap-2 bg-gray-800 hover:bg-gray-700 text-white px-4 py-3 rounded-xl font-bold transition-all border border-gray-700"
+          >
+            <Shield size={18} />
+            Accueil Admin
+          </a>
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="flex items-center gap-2 bg-gradient-to-r from-amber-500 to-yellow-500 text-black px-6 py-3 rounded-xl font-bold hover:shadow-lg transition-all"
+          >
+            <UserPlus size={20} />
+            Inviter un Collaborateur
+          </button>
+        </div>
       </div>
 
       <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-6">

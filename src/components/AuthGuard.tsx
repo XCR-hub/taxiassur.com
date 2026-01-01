@@ -171,7 +171,7 @@ const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
   return (
     <div>
       {currentUser && (
-        <div className="fixed top-4 right-4 z-50 bg-gray-900 border border-gray-700 rounded-xl px-4 py-2 shadow-lg">
+        <div className="fixed bottom-4 right-4 z-30 bg-gray-900 border border-gray-700 rounded-xl px-4 py-2 shadow-lg pointer-events-auto">
           <div className="flex items-center gap-3">
             <div className="text-right">
               <p className="text-white font-bold text-sm">{currentUser.full_name}</p>

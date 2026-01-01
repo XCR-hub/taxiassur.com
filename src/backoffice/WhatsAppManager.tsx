@@ -204,14 +204,37 @@ export default function WhatsAppManager() {
   };
 
   return (
-    <div className="flex h-[calc(100vh-200px)] bg-white rounded-lg shadow-lg overflow-hidden">
-      <div className="w-1/3 border-r flex flex-col">
-        <div className="p-4 border-b bg-gradient-to-r from-green-500 to-green-600">
-          <h2 className="text-xl font-bold text-white flex items-center gap-2">
-            <MessageSquare className="w-6 h-6" />
-            WhatsApp Business
-          </h2>
-          <div className="flex gap-2 mt-3">
+    <div className="min-h-screen bg-gray-50">
+      <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
+        <div className="container-max py-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-black text-gray-900 flex items-center gap-3">
+                <MessageSquare className="text-green-600" />
+                WhatsApp Manager
+              </h1>
+              <p className="text-gray-600">Gérez vos conversations WhatsApp Business</p>
+            </div>
+            <a
+              href="/backoffice"
+              className="flex items-center space-x-2 bg-gray-100 hover:bg-gray-200 text-gray-900 font-bold py-2 px-4 rounded-lg transition-colors"
+            >
+              <User size={18} />
+              <span>Accueil Admin</span>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <div className="container-max py-6">
+        <div className="flex h-[calc(100vh-200px)] bg-white rounded-lg shadow-lg overflow-hidden">
+          <div className="w-1/3 border-r flex flex-col">
+            <div className="p-4 border-b bg-gradient-to-r from-green-500 to-green-600">
+              <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                <MessageSquare className="w-6 h-6" />
+                Conversations
+              </h2>
+              <div className="flex gap-2 mt-3">
             <button
               onClick={() => setFilter('all')}
               className={`px-3 py-1 rounded text-sm ${
@@ -415,6 +438,8 @@ export default function WhatsAppManager() {
             </div>
           </div>
         )}
+      </div>
+        </div>
       </div>
     </div>
   );

@@ -364,6 +364,13 @@ const CRMCommercial: React.FC = () => {
             </div>
 
             <div className="flex items-center space-x-4">
+              <a
+                href="/backoffice"
+                className="flex items-center space-x-2 bg-gray-100 hover:bg-gray-200 text-gray-900 font-bold py-2 px-4 rounded-lg transition-colors"
+              >
+                <Users size={18} />
+                <span>Accueil Admin</span>
+              </a>
               <div className="relative">
                 <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
                   {notifications.length}
