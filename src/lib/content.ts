@@ -1,6 +1,7 @@
 import { BlogPost, FaqEntry, Review, Offer, BlogPostSchema, FaqEntrySchema, ReviewSchema, OfferSchema } from './schema';
 import { createClient } from '@supabase/supabase-js';
 import { getSupabaseUrl, getSupabaseAnonKey } from './env';
+import { generateCityPages } from './ping';
 
 // Type pour les pages ville
 export interface CityPage {
@@ -304,7 +305,6 @@ export async function getCityPages(): Promise<CityPage[]> {
 
   // Fallback vers les villes statiques de ping.ts
   console.log('📍 Using static city pages (safe mode)');
-  const { generateCityPages } = await import('./ping');
   return generateCityPages().map((city: any) => ({
     id: city.slug,
     name: city.city,

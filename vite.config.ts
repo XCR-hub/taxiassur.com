@@ -16,7 +16,7 @@ export default defineConfig({
     sourcemap: false,
     minify: 'terser',
     target: 'es2015',
-    chunkSizeWarningLimit: 500,
+    chunkSizeWarningLimit: 1000,
     rollupOptions: {
       output: {
         manualChunks(id) {
@@ -35,10 +35,27 @@ export default defineConfig({
             }
             return 'vendor';
           }
-          // NE PAS séparer le backoffice - tout dans un chunk pour éviter dépendances circulaires
+
           if (id.includes('/backoffice/')) {
-            return 'backoffice-all';
+            if (id.includes('CRM') || id.includes('Lead') || id.includes('Pipeline')) {
+              return 'backoffice-crm';
+            }
+            if (id.includes('AI') || id.includes('Master') || id.includes('Autonomous')) {
+              return 'backoffice-ai';
+            }
+            if (id.includes('Backlink') || id.includes('SEO') || id.includes('Content')) {
+              return 'backoffice-seo';
+            }
+            if (id.includes('Social') || id.includes('WhatsApp') || id.includes('Campaign')) {
+              return 'backoffice-marketing';
+            }
+            return 'backoffice-core';
           }
+
+          if (id.includes('/lib/supabase') || id.includes('/lib/auth')) {
+            return 'lib-core';
+          }
+
           if (id.includes('/pages/')) {
             const match = id.match(/pages\/([^/]+)/);
             if (match) return `page-${match[1].toLowerCase().replace('.tsx', '')}`;
@@ -57,9 +74,12 @@ export default defineConfig({
       compress: {
         drop_console: false,
         drop_debugger: true,
-        passes: 1
+        passes: 2,
+        pure_funcs: ['console.log']
       },
-      mangle: false,
+      mangle: {
+        safari10: true
+      },
       format: {
         comments: false
       }
