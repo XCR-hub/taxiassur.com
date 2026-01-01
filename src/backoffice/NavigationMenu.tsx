@@ -73,6 +73,10 @@ export default function NavigationMenu() {
                   <MessageSquare className="w-5 h-5" />
                   <span>💬 WhatsApp</span>
                 </Link>
+                <Link to="/backoffice/whatsapp-settings" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm">
+                  <Settings className="w-5 h-5" />
+                  <span>⚙️ Config WhatsApp</span>
+                </Link>
                 <Link to="/backoffice/lead-manager" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm">
                   <Users className="w-5 h-5" />
                   <span>Vue Simple Leads</span>
