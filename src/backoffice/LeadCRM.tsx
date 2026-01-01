@@ -29,21 +29,15 @@ export default function LeadCRM() {
 
   const loadLeadStats = async () => {
     try {
-      // Essayer d'abord l'API PHP
-      const response = await fetch('/api/lead-manager.php?action=list');
-      if (response.ok) {
-        const result = await response.json();
-        if (result.success && result.leads) {
-          calculateStats(result.leads);
-          return;
-        }
-      }
-
-      // Sinon charger depuis Supabase
-      const { data: leads } = await supabase
+      const { data: leads, error } = await supabase
         .from('leads')
         .select('created_at')
         .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error loading leads:', error);
+        return;
+      }
 
       if (leads) {
         calculateStats(leads);
