@@ -24,7 +24,17 @@ window.ENV_CONFIG = {
   VITE_BRAND_NAME: 'TaxiAssur',
   VITE_META_PIXEL_ID: 'VOTRE_META_PIXEL_ID_ICI',
   VITE_ADMIN_PASSWORD: 'taxiassur2024',
-  VITE_NOINDEX: 'false'
+  VITE_NOINDEX: 'false',
+
+  // Monitoring & Error Tracking
+  VITE_SENTRY_DSN: '',
+
+  // Email Service (Resend - meilleure délivrabilité)
+  VITE_RESEND_API_KEY: '',
+
+  // CAPTCHA (hCaptcha recommandé, ou reCAPTCHA v3)
+  VITE_HCAPTCHA_SITE_KEY: '',
+  VITE_HCAPTCHA_SECRET_KEY: ''
 };
 
 console.log('✅ Configuration chargée depuis env-config.js');
