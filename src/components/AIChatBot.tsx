@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { MessageCircle, X, Send, Loader2, Sparkles } from 'lucide-react';
 import { getSupabaseUrl, getSupabaseAnonKey } from '../lib/env';
+import { logger } from '@/lib/logger';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -94,7 +95,7 @@ export default function AIChatBot() {
         return updated.length > MAX_MESSAGES ? updated.slice(-MAX_MESSAGES) : updated;
       });
     } catch (error) {
-      console.error('Error:', error);
+      logger.error('Error:', error);
       const errorMessage: Message = {
         role: 'assistant',
         content: "Le chatbot AI nécessite une configuration Supabase. Pour l'instant, contactez-nous au 01 80 85 57 86 ou via notre formulaire de contact.",

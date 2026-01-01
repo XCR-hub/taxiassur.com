@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { logger } from '@/lib/logger';
 
 interface AnalyticsEvent {
   action: string;
@@ -16,7 +17,7 @@ export const useAnalytics = () => {
     // Initialize analytics if configured
     if (provider === 'ga4' && gtagId) {
       // GA4 is already loaded via script tag in index.html
-      console.log('GA4 Analytics initialized');
+      logger.log('GA4 Analytics initialized');
     }
   }, [provider, gtagId]);
 
@@ -64,7 +65,7 @@ export const useAnalytics = () => {
       localStorage.setItem('taxiassur_events', JSON.stringify(localEvents));
 
     } catch (error) {
-      console.warn('Analytics tracking error:', error);
+      logger.warn('Analytics tracking error:', error);
     }
   };
 
@@ -153,7 +154,7 @@ export const trackEvent = (event: string, parameters?: Record<string, any>) => {
       gtag('event', event, parameters);
     }
   } catch (error) {
-    console.warn('Global tracking error:', error);
+    logger.warn('Global tracking error:', error);
   }
 };
 

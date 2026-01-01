@@ -7,6 +7,7 @@ import { formatDate, calculateReadingTime } from '../lib/utils';
 import Seo from './Seo';
 import JsonLd from './JsonLd';
 import FaqList from './FaqList';
+import { logger } from '@/lib/logger';
 
 const BlogPost: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -30,7 +31,7 @@ const BlogPost: React.FC = () => {
           setError('Article non trouvé');
         }
       } catch (err) {
-        console.error('Failed to load blog post:', err);
+        logger.error('Failed to load blog post:', err);
         setError('Erreur lors du chargement de l\'article');
       } finally {
         setLoading(false);

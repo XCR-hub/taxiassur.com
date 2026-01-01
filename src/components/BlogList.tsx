@@ -5,6 +5,7 @@ import { BlogPost } from '../lib/schema';
 import { getBlogPosts } from '../lib/content';
 import { formatDate, calculateReadingTime, truncateText } from '../lib/utils';
 import Card from './Card';
+import { logger } from '@/lib/logger';
 
 interface BlogListProps {
   limit?: number;
@@ -37,7 +38,7 @@ const BlogList: React.FC<BlogListProps> = ({
         const tags = Array.from(new Set(blogPosts.flatMap(post => post.tags)));
         setAllTags(tags);
       } catch (error) {
-        console.error('Failed to load blog posts:', error);
+        logger.error('Failed to load blog posts:', error);
       } finally {
         setLoading(false);
       }

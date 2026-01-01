@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAnalytics } from './useAnalytics';
+import { logger } from '@/lib/logger';
 
 interface SecurityState {
   honeypot: string;
@@ -107,7 +108,7 @@ export const useFormSecurity = () => {
       const hashArray = Array.from(new Uint8Array(hashBuffer));
       return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
     } catch (error) {
-      console.warn('Checksum generation failed:', error);
+      logger.warn('Checksum generation failed:', error);
       return 'fallback_checksum';
     }
   };

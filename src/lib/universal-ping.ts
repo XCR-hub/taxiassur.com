@@ -1,3 +1,5 @@
+import { logger } from '@/lib/logger';
+
 /**
  * Système de ping universel pour tous les moteurs de recherche
  * Objectif : Maximiser la visibilité et devenir n°1 en leads assurance taxi
@@ -55,7 +57,7 @@ export async function pingAllSearchEngines(urls: string[]): Promise<{
     const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
     if (!supabaseUrl || !supabaseKey) {
-      console.error('Supabase credentials missing');
+      logger.error('Supabase credentials missing');
       return { success: false, results: [] };
     }
 
@@ -79,7 +81,7 @@ export async function pingAllSearchEngines(urls: string[]): Promise<{
     };
 
   } catch (error) {
-    console.error('Ping error:', error);
+    logger.error('Ping error:', error);
 
     // Fallback results if edge function fails
     return {

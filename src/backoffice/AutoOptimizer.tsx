@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { logger } from '@/lib/logger';
 import {
   Zap, Play, Pause, RefreshCw, Settings, CheckCircle,
   AlertTriangle, TrendingUp, BarChart3, Target, Sparkles,
@@ -119,10 +120,10 @@ export default function AutoOptimizer() {
       if (!error && data) {
         setAutomations(data);
       } else if (error) {
-        console.error('Error loading automations:', error);
+        logger.error('Error loading automations:', error);
       }
     } catch (error) {
-      console.error('Error loading automations:', error);
+      logger.error('Error loading automations:', error);
     }
   };
 
@@ -144,7 +145,7 @@ export default function AutoOptimizer() {
         })));
       }
     } catch (error) {
-      console.error('Error loading logs:', error);
+      logger.error('Error loading logs:', error);
     }
   };
 
@@ -166,7 +167,7 @@ export default function AutoOptimizer() {
       const status = newStatus ? '✅ activée' : '⏸️ désactivée';
       alert(`L'automatisation "${AUTOMATION_DESCRIPTIONS[automation.name]?.title || automation.name}" est maintenant ${status}`);
     } catch (error) {
-      console.error('Error toggling automation:', error);
+      logger.error('Error toggling automation:', error);
       alert('❌ Erreur lors du changement de statut');
     }
   };
@@ -183,7 +184,7 @@ export default function AutoOptimizer() {
 
       await loadData();
     } catch (error) {
-      console.error('Error testing automation:', error);
+      logger.error('Error testing automation:', error);
       alert('❌ Erreur lors du test');
     } finally {
       setTesting(null);
@@ -206,7 +207,7 @@ export default function AutoOptimizer() {
       await loadAutomations();
       alert('✅ Toutes les automatisations sont maintenant actives !\n\nLes processus vont démarrer selon leur fréquence configurée.');
     } catch (error) {
-      console.error('Error enabling automations:', error);
+      logger.error('Error enabling automations:', error);
       alert('❌ Erreur lors de l\'activation des automatisations');
     }
   };
@@ -227,7 +228,7 @@ export default function AutoOptimizer() {
       await loadAutomations();
       alert('⏸️ Toutes les automatisations ont été désactivées');
     } catch (error) {
-      console.error('Error disabling automations:', error);
+      logger.error('Error disabling automations:', error);
       alert('❌ Erreur lors de la désactivation');
     }
   };

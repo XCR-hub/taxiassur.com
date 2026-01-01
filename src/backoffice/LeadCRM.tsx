@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Users, Calendar, Activity, TrendingUp, Database, ArrowRight } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { logger } from '@/lib/logger';
 
 interface LeadStats {
   today: number;
@@ -35,7 +36,7 @@ export default function LeadCRM() {
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Error loading leads:', error);
+        logger.error('Error loading leads:', error);
         return;
       }
 
@@ -43,7 +44,7 @@ export default function LeadCRM() {
         calculateStats(leads);
       }
     } catch (error) {
-      console.error('Error loading lead stats:', error);
+      logger.error('Error loading lead stats:', error);
     } finally {
       setLoading(false);
     }

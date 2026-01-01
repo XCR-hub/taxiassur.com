@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { logger } from '@/lib/logger';
 import {
   Phone, Mail, MessageSquare, Calendar, FileText, CheckCircle,
   XCircle, Clock, TrendingUp, Users, Send, Sparkles, Upload,
@@ -183,7 +184,7 @@ const CRMCommercial: React.FC = () => {
       setLeads(data);
     }
     if (error) {
-      console.error('Error loading leads:', error);
+      logger.error('Error loading leads:', error);
     }
   };
 
@@ -295,7 +296,7 @@ const CRMCommercial: React.FC = () => {
         }));
       }
     } catch (error) {
-      console.error('Error improving email:', error);
+      logger.error('Error improving email:', error);
     } finally {
       setIsImproving(false);
     }

@@ -4,6 +4,7 @@ import { FileText, Shield, CreditCard, Bell, TrendingUp, Calendar, CheckCircle, 
 import ClientLayout from '../../components/client/ClientLayout';
 import SEOHead from '../../components/SEOHead';
 import { supabase } from '../../lib/supabase';
+import { logger } from '@/lib/logger';
 
 export default function ClientDashboard() {
   const [searchParams] = useSearchParams();
@@ -37,7 +38,7 @@ export default function ClientDashboard() {
         setUserData(data);
       }
     } catch (error) {
-      console.error('Error loading user data:', error);
+      logger.error('Error loading user data:', error);
     } finally {
       setLoading(false);
     }

@@ -1,4 +1,5 @@
 import React from 'react';
+import { logger } from '@/lib/logger';
 
 // Gestion des popups et modales
 import { z } from 'zod';
@@ -83,7 +84,7 @@ export class PopupManager {
       this.configs = Array.isArray(data) ? data.map(item => PopupConfigSchema.parse(item)) : [];
       return this.configs;
     } catch (error) {
-      console.warn('Failed to load popup configs:', error);
+      logger.warn('Failed to load popup configs:', error);
       return [];
     }
   }
@@ -105,7 +106,7 @@ export class PopupManager {
 
       return response.ok;
     } catch (error) {
-      console.error('Failed to save popup config:', error);
+      logger.error('Failed to save popup config:', error);
       return false;
     }
   }

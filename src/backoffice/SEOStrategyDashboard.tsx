@@ -3,6 +3,7 @@ import { TrendingUp, Target, Link2, FileText, MapPin, Zap, Award, CheckCircle, E
 import { useNavigate } from 'react-router-dom';
 import Card from '../components/Card';
 import { SEARCH_ENGINES, pingAllSearchEngines, getPriorityUrls, SEO_STRATEGY } from '../lib/universal-ping';
+import { logger } from '@/lib/logger';
 
 const SEOStrategyDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -18,7 +19,7 @@ const SEOStrategyDashboard: React.FC = () => {
       setPingResults(result.results);
       alert(`✅ ${result.results.length} moteurs notifiés !`);
     } catch (error) {
-      console.error('Ping error:', error);
+      logger.error('Ping error:', error);
       alert('❌ Erreur lors du ping');
     } finally {
       setIsPinging(false);

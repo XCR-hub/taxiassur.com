@@ -4,6 +4,7 @@ import { Shield, Phone, Clock, Send } from 'lucide-react';
 import { LeadSchema, Lead } from '../lib/schema';
 import { submitLead, trackLeadSubmission } from '../lib/email';
 import Card from './Card';
+import { logger } from '@/lib/logger';
 
 const LeadForm: React.FC = () => {
   const navigate = useNavigate();
@@ -79,7 +80,7 @@ const LeadForm: React.FC = () => {
         alert(result.error || 'Erreur lors de l\'envoi. Veuillez réessayer.');
       }
     } catch (error) {
-      console.error('Form submission error:', error);
+      logger.error('Form submission error:', error);
       alert('Erreur de connexion. Veuillez réessayer.');
     } finally {
       setIsSubmitting(false);

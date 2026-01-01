@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { logger } from '@/lib/logger';
 
 interface LazyImageProps {
   src: string;
@@ -46,7 +47,7 @@ const LazyImage: React.FC<LazyImageProps> = ({
   };
 
   const handleError = () => {
-    console.warn(`Failed to load image: ${src}`);
+    logger.warn(`Failed to load image: ${src}`);
   };
 
   // Generate WebP source if not provided

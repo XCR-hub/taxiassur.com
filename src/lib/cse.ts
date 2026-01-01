@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { logger } from '@/lib/logger';
 
 export const CseItemSchema = z.object({
   title: z.string(),
@@ -70,7 +71,7 @@ export async function cseSearch(query: string, start = 1): Promise<{
   remainingQuota: number;
 }> {
   if (!API_KEY || !CX) {
-    console.log("🔍 Partner Finder: Mode simulation (clés API Google non configurées)");
+    logger.log("🔍 Partner Finder: Mode simulation (clés API Google non configurées)");
     return {
       items: [
         {
@@ -150,7 +151,7 @@ export async function cseSearch(query: string, start = 1): Promise<{
       remainingQuota: CSERateLimiter.getRemainingQuota()
     };
   } catch (error) {
-    console.error('CSE Search Error:', error);
+    logger.error('CSE Search Error:', error);
     throw error;
   }
 }

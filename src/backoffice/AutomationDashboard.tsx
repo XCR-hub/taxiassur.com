@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { logger } from '@/lib/logger';
 import {
   Zap, Activity, CheckCircle, XCircle, Clock, TrendingUp,
   Play, Pause, Settings, BarChart3, Target, Sparkles,
@@ -171,7 +172,7 @@ const AutomationDashboard: React.FC = () => {
         loadData();
       }
     } catch (error) {
-      console.error('Error executing automations:', error);
+      logger.error('Error executing automations:', error);
       alert('❌ Erreur lors de l\'exécution');
     } finally {
       setIsExecuting(false);
@@ -203,7 +204,7 @@ const AutomationDashboard: React.FC = () => {
         loadData();
       }
     } catch (error) {
-      console.error('Error detecting opportunities:', error);
+      logger.error('Error detecting opportunities:', error);
       alert('❌ Erreur lors de la détection');
     } finally {
       setIsExecuting(false);
@@ -235,7 +236,7 @@ const AutomationDashboard: React.FC = () => {
         loadData();
       }
     } catch (error) {
-      console.error('Error generating suggestions:', error);
+      logger.error('Error generating suggestions:', error);
       alert('❌ Erreur lors de la génération');
     } finally {
       setIsExecuting(false);

@@ -3,6 +3,7 @@ import { Plus, Minus, Search, Tag } from 'lucide-react';
 import { FaqEntry } from '../lib/schema';
 import { getFaqEntries } from '../lib/content';
 import Card from './Card';
+import { logger } from '@/lib/logger';
 
 interface FaqListProps {
   limit?: number;
@@ -34,7 +35,7 @@ const FaqList: React.FC<FaqListProps> = ({
         const tags = Array.from(new Set(faqEntries.flatMap(faq => faq.tags)));
         setAllTags(tags);
       } catch (error) {
-        console.error('Failed to load FAQ entries:', error);
+        logger.error('Failed to load FAQ entries:', error);
       } finally {
         setLoading(false);
       }

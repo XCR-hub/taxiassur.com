@@ -1,3 +1,5 @@
+import { logger } from '@/lib/logger';
+
 /**
  * Behavioral Tracking System
  * Track user engagement signals pour améliorer SEO
@@ -159,10 +161,10 @@ class BehavioralTracker {
       });
 
       if (!response.ok) {
-        console.warn('[Behavioral Tracking] Failed to send to Supabase');
+        logger.warn('[Behavioral Tracking] Failed to send to Supabase');
       }
     } catch (error) {
-      console.error('[Behavioral Tracking] Error:', error);
+      logger.error('[Behavioral Tracking] Error:', error);
     }
   }
 
@@ -176,7 +178,7 @@ class BehavioralTracker {
 
       localStorage.setItem(key, JSON.stringify(existing));
     } catch (error) {
-      console.error('[Behavioral Tracking] LocalStorage error:', error);
+      logger.error('[Behavioral Tracking] LocalStorage error:', error);
     }
   }
 

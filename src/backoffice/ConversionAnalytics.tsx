@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { TrendingUp, Users, Target, MousePointer, Clock, BarChart3, PieChart, Activity, Home } from 'lucide-react';
 import Card from '../components/Card';
 import { supabase } from '../lib/supabase';
+import { logger } from '@/lib/logger';
 
 interface ConversionData {
   funnelSteps: Array<{ step: string; visitors: number; conversions: number; rate: number }>;
@@ -46,7 +47,7 @@ const ConversionAnalytics: React.FC = () => {
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Supabase error:', error);
+        logger.error('Supabase error:', error);
         setData({
           funnelSteps: [],
           topSources: [],
@@ -151,7 +152,7 @@ const ConversionAnalytics: React.FC = () => {
 
       setData(realData);
     } catch (error) {
-      console.error('Failed to load conversion data:', error);
+      logger.error('Failed to load conversion data:', error);
     } finally {
       setLoading(false);
     }

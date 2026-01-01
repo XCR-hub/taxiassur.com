@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { CheckCircle, Phone, Send, Shield, Clock, Award, TrendingDown, Zap, Target, Star, FileText, MapPin, Users, User, Mail } from 'lucide-react';
 import AITaxiBackground from './AITaxiBackground';
 import { useRealStats } from '../hooks/useRealStats';
+import { logger } from '@/lib/logger';
 
 const Hero: React.FC = () => {
   const navigate = useNavigate();
@@ -77,7 +78,7 @@ const Hero: React.FC = () => {
         setErrors([result.error || 'Erreur lors de l\'envoi. Veuillez réessayer.']);
       }
     } catch (error) {
-      console.error('Erreur:', error);
+      logger.error('Erreur:', error);
       setErrors(['Erreur de connexion. Veuillez réessayer.']);
     } finally {
       setIsSubmitting(false);

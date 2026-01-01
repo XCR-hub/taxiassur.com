@@ -6,6 +6,7 @@ import { generateCityPages } from '../lib/ping';
 import Card from '../components/Card';
 import { supabase } from '../lib/supabase';
 import TestAutomationButton from './TestAutomationButton';
+import { logger } from '@/lib/logger';
 
 const SeoTools: React.FC = () => {
   const [seoData, setSeoData] = useState({
@@ -36,7 +37,7 @@ const SeoTools: React.FC = () => {
       const { data, error } = await supabase.rpc('get_current_seo_metrics');
 
       if (error) {
-        console.error('Error loading SEO metrics:', error);
+        logger.error('Error loading SEO metrics:', error);
         // PAS de fallback - afficher qu'il n'y a pas de données
         setSeoData({
           lastSitemapUpdate: '',
@@ -84,7 +85,7 @@ const SeoTools: React.FC = () => {
         });
       }
     } catch (error) {
-      console.error('Error in loadSeoData:', error);
+      logger.error('Error in loadSeoData:', error);
       // En cas d'erreur, tout à 0
       setSeoData({
         lastSitemapUpdate: '',
@@ -107,7 +108,7 @@ const SeoTools: React.FC = () => {
         setCronJobsStatus(data);
       }
     } catch (error) {
-      console.error('Error loading cron jobs:', error);
+      logger.error('Error loading cron jobs:', error);
     }
   };
 
@@ -190,7 +191,7 @@ Vous pouvez soumettre manuellement via :
 • Bing Webmaster Tools : https://www.bing.com/webmasters`);
       }
     } catch (error) {
-      console.error('IndexNow ping error:', error);
+      logger.error('IndexNow ping error:', error);
       setPingResults([{
         engine: 'IndexNow',
         success: false,
@@ -240,12 +241,12 @@ Concurrence moyenne: ${result.avg_competition}
 Stratégie recommandée: ${result.strategy.focus}
 
 Consultez le détail dans la console (F12)`);
-        console.log('SERP Optimization Results:', result);
+        logger.log('SERP Optimization Results:', result);
       } else {
         alert(`❌ Erreur: ${result.error}`);
       }
     } catch (error) {
-      console.error('SERP optimization error:', error);
+      logger.error('SERP optimization error:', error);
       alert('❌ Erreur lors de l\'optimisation SERP');
     } finally {
       setIsWorking(false);
@@ -414,7 +415,7 @@ Consultez le détail dans la console (F12)`);
 
                       alert('✅ Données SEO actualisées depuis Supabase !');
                     } catch (error: any) {
-                      console.error('GSC sync error:', error);
+                      logger.error('GSC sync error:', error);
                       alert(`❌ Erreur: ${error.message}`);
                     } finally {
                       setIsWorking(false);

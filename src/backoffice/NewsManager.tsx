@@ -4,6 +4,7 @@ import { useNewsSystem } from '../lib/newsAggregator';
 import { ProcessedNews } from '../lib/newsAggregator';
 import Card from '../components/Card';
 import TestAutomationButton from './TestAutomationButton';
+import { logger } from '@/lib/logger';
 
 const NewsManager: React.FC = () => {
   const { isRunning: isActive, lastUpdate, newsCount, error, startNewsSystem: startSystem, stopNewsSystem: stopSystem } = useNewsSystem();
@@ -61,7 +62,7 @@ const NewsManager: React.FC = () => {
         setProcessedNews(Array.isArray(data) ? data : []);
       }
     } catch (error) {
-      console.error('Failed to load processed news:', error);
+      logger.error('Failed to load processed news:', error);
     } finally {
       setLoading(false);
     }
@@ -95,7 +96,7 @@ const NewsManager: React.FC = () => {
       alert(`✅ ${result.articles?.length || 0} actualités récupérées et traitées !`);
       await loadProcessedNews();
     } catch (error: any) {
-      console.error('Error refreshing news:', error);
+      logger.error('Error refreshing news:', error);
       alert(`❌ Erreur : ${error.message}`);
     } finally {
       setLoading(false);
@@ -117,7 +118,7 @@ const NewsManager: React.FC = () => {
       alert('✅ Actualité publiée avec succès !');
       await loadProcessedNews();
     } catch (error: any) {
-      console.error('Error publishing news:', error);
+      logger.error('Error publishing news:', error);
       alert(`❌ Erreur : ${error.message}`);
     }
   };
@@ -149,7 +150,7 @@ const NewsManager: React.FC = () => {
         throw new Error(result.error || 'Erreur inconnue');
       }
     } catch (error: any) {
-      console.error('Error cleaning excerpts:', error);
+      logger.error('Error cleaning excerpts:', error);
       alert(`❌ Erreur lors du nettoyage : ${error.message}`);
     } finally {
       setLoading(false);

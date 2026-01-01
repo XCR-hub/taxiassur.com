@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { logger } from '@/lib/logger';
 
 export interface AdminUser {
   id: string;
@@ -62,7 +63,7 @@ export const authenticateUser = async (
       .maybeSingle();
 
     if (userError) {
-      console.error('Database error:', userError);
+      logger.error('Database error:', userError);
       return { success: false, error: 'Erreur de base de données' };
     }
 
@@ -86,7 +87,7 @@ export const authenticateUser = async (
       permissions: permissions || []
     };
   } catch (error) {
-    console.error('Authentication error:', error);
+    logger.error('Authentication error:', error);
     return { success: false, error: 'Erreur lors de l\'authentification' };
   }
 };

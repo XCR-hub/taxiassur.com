@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { MessageSquare, Send, User, Check, CheckCheck, Clock, AlertCircle, Tag, UserPlus } from 'lucide-react';
+import { logger } from '@/lib/logger';
 
 interface Contact {
   id: string;
@@ -129,7 +130,7 @@ export default function WhatsAppManager() {
       await loadMessages(selectedConversation.id);
       await loadConversations();
     } catch (error) {
-      console.error('Error sending WhatsApp:', error);
+      logger.error('Error sending WhatsApp:', error);
       alert('Erreur lors de l\'envoi du message');
     } finally {
       setLoading(false);
@@ -153,7 +154,7 @@ export default function WhatsAppManager() {
       await loadMessages(selectedConversation.id);
       await loadConversations();
     } catch (error) {
-      console.error('Error sending template:', error);
+      logger.error('Error sending template:', error);
       alert('Erreur lors de l\'envoi du template');
     } finally {
       setLoading(false);

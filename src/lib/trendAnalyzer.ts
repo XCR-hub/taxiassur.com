@@ -4,6 +4,7 @@
  */
 
 import { supabase } from './supabase';
+import { logger } from '@/lib/logger';
 
 // =====================================================
 // 1. GOOGLE TRENDS API (Via Serper.dev ou SerpAPI)
@@ -33,13 +34,13 @@ export async function analyzeGoogleTrends(keyword: string): Promise<TrendData | 
     });
 
     if (error) {
-      console.error('Edge Function error:', error);
+      logger.error('Edge Function error:', error);
       return getMockTrendData(keyword);
     }
 
     // Si aucune donnée ou erreur API
     if (!data || data.error) {
-      console.warn('No trend data available, using mock data');
+      logger.warn('No trend data available, using mock data');
       return getMockTrendData(keyword);
     }
 
@@ -52,7 +53,7 @@ export async function analyzeGoogleTrends(keyword: string): Promise<TrendData | 
       timestamp: new Date().toISOString()
     };
   } catch (error) {
-    console.error('Google Trends error:', error);
+    logger.error('Google Trends error:', error);
     return getMockTrendData(keyword);
   }
 }
@@ -151,7 +152,7 @@ export async function getSearchConsoleData(): Promise<SearchConsoleData | null> 
 
     return data.metrics as SearchConsoleData;
   } catch (error) {
-    console.error('Search Console data error:', error);
+    logger.error('Search Console data error:', error);
     return null;
   }
 }
@@ -175,7 +176,7 @@ export async function getGoogleSuggestions(keyword: string): Promise<string[]> {
     });
 
     if (error) {
-      console.error('Edge Function error:', error);
+      logger.error('Edge Function error:', error);
       return generateFallbackSuggestions(keyword);
     }
 
@@ -186,7 +187,7 @@ export async function getGoogleSuggestions(keyword: string): Promise<string[]> {
 
     return data.suggestions;
   } catch (error) {
-    console.error('Google Suggest error:', error);
+    logger.error('Google Suggest error:', error);
     return generateFallbackSuggestions(keyword);
   }
 }
@@ -306,7 +307,7 @@ export async function saveContentOpportunities(opportunities: ContentOpportunity
     );
 
   if (error) {
-    console.error('Error saving opportunities:', error);
+    logger.error('Error saving opportunities:', error);
   }
 }
 

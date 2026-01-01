@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Globe, Star, MapPin, Filter } from 'lucide-react';
 import { getPartners, type Partner } from '../lib/backlinks';
 import Card from './Card';
+import { logger } from '@/lib/logger';
 
 interface PartnerDirectoryProps {
   featured?: boolean;
@@ -53,7 +54,7 @@ const PartnerDirectory: React.FC<PartnerDirectoryProps> = ({
       const categories = Array.from(new Set(activePartners.map(partner => partner.category)));
       setAllCategories(categories);
     } catch (error) {
-      console.error('Failed to load partners:', error);
+      logger.error('Failed to load partners:', error);
     } finally {
       setLoading(false);
     }

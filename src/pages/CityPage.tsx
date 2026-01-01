@@ -11,6 +11,7 @@ import { MapPin, Phone, CheckCircle, Users, Award, TrendingDown, Shield, Clock, 
 import Card from '../components/Card';
 import StickyCTA from '../components/StickyCTA';
 import { supabase } from '../lib/supabase';
+import { logger } from '@/lib/logger';
 
 interface CityPageData {
   id: string;
@@ -82,7 +83,7 @@ const CityPage: React.FC = () => {
           .maybeSingle();
 
         if (error) {
-          console.warn('Supabase city page fetch failed:', error);
+          logger.warn('Supabase city page fetch failed:', error);
           setUseTemplate(true);
         } else if (data) {
           setCityPageData(data);
@@ -116,7 +117,7 @@ const CityPage: React.FC = () => {
           setUseTemplate(true);
         }
       } catch (err) {
-        console.warn('Error loading city page:', err);
+        logger.warn('Error loading city page:', err);
         setUseTemplate(true);
       } finally {
         setLoading(false);

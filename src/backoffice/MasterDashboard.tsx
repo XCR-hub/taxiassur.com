@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { logger } from '@/lib/logger';
 import {
   Activity, Users, TrendingUp, DollarSign, MapPin, Clock,
   CheckCircle, AlertCircle, Play, Square, RefreshCw, Settings,
@@ -85,7 +86,7 @@ const MasterDashboard: React.FC = () => {
         });
       }
     } catch (error) {
-      console.error('Erreur chargement stats:', error);
+      logger.error('Erreur chargement stats:', error);
     }
   };
 
@@ -101,7 +102,7 @@ const MasterDashboard: React.FC = () => {
         setAutomations(data);
       }
     } catch (error) {
-      console.error('Error loading automations:', error);
+      logger.error('Error loading automations:', error);
     }
   };
 
@@ -117,7 +118,7 @@ const MasterDashboard: React.FC = () => {
         setTopPages([]);
       }
     } catch (error) {
-      console.error('Error loading top pages:', error);
+      logger.error('Error loading top pages:', error);
       setTopPages([]);
     }
   };
@@ -135,7 +136,7 @@ const MasterDashboard: React.FC = () => {
         setRecentSessions(data);
       }
     } catch (error) {
-      console.error('Error loading sessions:', error);
+      logger.error('Error loading sessions:', error);
     }
   };
 
@@ -160,14 +161,14 @@ const MasterDashboard: React.FC = () => {
         .eq('name', name);
 
       if (error) {
-        console.error('Error toggling automation:', error);
+        logger.error('Error toggling automation:', error);
         alert(`❌ Erreur: ${error.message}`);
         return;
       }
 
       await loadAutomations();
     } catch (error) {
-      console.error('Error toggling automation:', error);
+      logger.error('Error toggling automation:', error);
     }
   };
 
@@ -180,7 +181,7 @@ const MasterDashboard: React.FC = () => {
         .gt('name', ''); // Update all rows where name is not empty
 
       if (error) {
-        console.error('Error updating automations:', error);
+        logger.error('Error updating automations:', error);
         alert(`❌ Erreur: ${error.message}`);
         return;
       }
@@ -188,7 +189,7 @@ const MasterDashboard: React.FC = () => {
       await loadAutomations();
       alert('✅ Toutes les automatisations sont activées !');
     } catch (error) {
-      console.error('Error starting all automations:', error);
+      logger.error('Error starting all automations:', error);
       alert('❌ Erreur lors de l\'activation');
     }
   };
@@ -205,7 +206,7 @@ const MasterDashboard: React.FC = () => {
         .gt('name', ''); // Update all rows where name is not empty
 
       if (error) {
-        console.error('Error updating automations:', error);
+        logger.error('Error updating automations:', error);
         alert(`❌ Erreur: ${error.message}`);
         return;
       }
@@ -213,7 +214,7 @@ const MasterDashboard: React.FC = () => {
       await loadAutomations();
       alert('🛑 Toutes les automatisations sont arrêtées');
     } catch (error) {
-      console.error('Error stopping all automations:', error);
+      logger.error('Error stopping all automations:', error);
       alert('❌ Erreur lors de l\'arrêt');
     }
   };

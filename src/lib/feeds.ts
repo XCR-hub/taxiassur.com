@@ -1,4 +1,5 @@
 import { getEnv, getSupabaseUrl, getSupabaseAnonKey } from './env';
+import { logger } from '@/lib/logger';
 
 // Fonction pour déclencher la régénération des feeds via edge function
 export async function regenerateFeeds(): Promise<boolean> {
@@ -7,7 +8,7 @@ export async function regenerateFeeds(): Promise<boolean> {
     const supabaseKey = getSupabaseAnonKey();
 
     if (!supabaseUrl || !supabaseKey) {
-      console.error('Supabase configuration missing');
+      logger.error('Supabase configuration missing');
       return false;
     }
 
@@ -24,13 +25,13 @@ export async function regenerateFeeds(): Promise<boolean> {
 
     if (response.ok) {
       const result = await response.json();
-      console.log('✅ SEO automatisé:', result);
+      logger.log('✅ SEO automatisé:', result);
       return result.ok === true;
     }
 
     return false;
   } catch (error) {
-    console.error('Failed to regenerate feeds:', error);
+    logger.error('Failed to regenerate feeds:', error);
     return false;
   }
 }

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Calendar, TrendingUp, Newspaper, ArrowRight } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { stripHtml, createSmartExcerpt } from '../lib/text-utils';
+import { logger } from '@/lib/logger';
 
 interface NewsArticle {
   id: string;
@@ -38,7 +39,7 @@ export default function NewsSection({ limit = 3, showTitle = true }: NewsSection
         .limit(limit);
 
       if (error) {
-        console.error('Error loading news:', error);
+        logger.error('Error loading news:', error);
         return;
       }
 
@@ -49,7 +50,7 @@ export default function NewsSection({ limit = 3, showTitle = true }: NewsSection
 
       setNews(cleanedData);
     } catch (err) {
-      console.error('Failed to load news:', err);
+      logger.error('Failed to load news:', err);
     } finally {
       setLoading(false);
     }

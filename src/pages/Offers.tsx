@@ -9,6 +9,7 @@ import { truncateText } from '../lib/utils';
 import Seo from '../components/Seo';
 import JsonLd from '../components/JsonLd';
 import Card from '../components/Card';
+import { logger } from '@/lib/logger';
 
 const Offers: React.FC = () => {
   const [offers, setOffers] = useState<Offer[]>([]);
@@ -20,7 +21,7 @@ const Offers: React.FC = () => {
         const offersData = await getOffers();
         setOffers(offersData);
       } catch (error) {
-        console.error('Failed to load offers:', error);
+        logger.error('Failed to load offers:', error);
       } finally {
         setLoading(false);
       }

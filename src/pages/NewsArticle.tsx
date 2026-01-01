@@ -5,6 +5,7 @@ import { Calendar, Clock, Tag, ArrowLeft, TrendingUp, ExternalLink } from 'lucid
 import { supabase } from '../lib/supabase';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import { logger } from '@/lib/logger';
 
 interface NewsArticle {
   id: string;
@@ -44,7 +45,7 @@ export default function NewsArticle() {
         .maybeSingle();
 
       if (error) {
-        console.error('Error loading article:', error);
+        logger.error('Error loading article:', error);
         return;
       }
 
@@ -53,7 +54,7 @@ export default function NewsArticle() {
         loadRelatedArticles(data.category, data.id);
       }
     } catch (err) {
-      console.error('Failed to load article:', err);
+      logger.error('Failed to load article:', err);
     } finally {
       setLoading(false);
     }
@@ -74,7 +75,7 @@ export default function NewsArticle() {
         setRelatedArticles(data);
       }
     } catch (err) {
-      console.error('Failed to load related articles:', err);
+      logger.error('Failed to load related articles:', err);
     }
   };
 

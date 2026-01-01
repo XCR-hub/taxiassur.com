@@ -4,6 +4,7 @@ import ClientLayout from '../../components/client/ClientLayout';
 import SEOHead from '../../components/SEOHead';
 import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
+import { logger } from '@/lib/logger';
 
 export default function ClientProfil() {
   const [searchParams] = useSearchParams();
@@ -31,7 +32,7 @@ export default function ClientProfil() {
       if (error) throw error;
       if (data) setUserData(data);
     } catch (error) {
-      console.error('Error:', error);
+      logger.error('Error:', error);
     }
   };
 

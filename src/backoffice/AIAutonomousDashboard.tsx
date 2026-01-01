@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Brain, Zap, TrendingUp, Users, Target, Activity, RefreshCw, CheckCircle, AlertTriangle, Code, Rocket, Database, BarChart3, Home } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import Card from '../components/Card';
+import { logger } from '@/lib/logger';
 
 interface AIMetrics {
   total_leads: number;
@@ -71,7 +72,7 @@ export default function AIAutonomousDashboard() {
       if (suggestionsRes.data) setSuggestions(suggestionsRes.data);
       if (deploymentsRes.data) setDeployments(deploymentsRes.data);
     } catch (error) {
-      console.error('Error loading AI data:', error);
+      logger.error('Error loading AI data:', error);
     } finally {
       setLoading(false);
     }
@@ -107,7 +108,7 @@ export default function AIAutonomousDashboard() {
         loadAIData();
       }
     } catch (error) {
-      console.error('AI Analysis Error:', error);
+      logger.error('AI Analysis Error:', error);
       alert('Erreur lors de l\'analyse IA');
     } finally {
       setAiRunning(false);
@@ -144,7 +145,7 @@ export default function AIAutonomousDashboard() {
         loadAIData();
       }
     } catch (error) {
-      console.error('Deployment Error:', error);
+      logger.error('Deployment Error:', error);
       alert('Erreur lors du déploiement');
     }
   };

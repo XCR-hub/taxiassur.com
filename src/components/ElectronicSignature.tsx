@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FileSignature, Clock, CheckCircle, XCircle, Eye, Download, AlertCircle, Loader2 } from 'lucide-react';
+import { logger } from '@/lib/logger';
 import {
   createSignatureRequest,
   getSignatureRequestsForLead,
@@ -39,7 +40,7 @@ export default function ElectronicSignature({
       const data = await getSignatureRequestsForLead(leadId);
       setRequests(data);
     } catch (err) {
-      console.error('Failed to load signature requests:', err);
+      logger.error('Failed to load signature requests:', err);
     } finally {
       setLoading(false);
     }

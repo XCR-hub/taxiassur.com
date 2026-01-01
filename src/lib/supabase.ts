@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { getSupabaseUrl, getSupabaseAnonKey, getSupabaseServiceRoleKey } from './env';
+import { logger } from '@/lib/logger';
 
 // Global singleton instances - prevents HMR duplicates
 declare global {
@@ -29,7 +30,7 @@ const initSupabase = () => {
     supabaseUrl = getSupabaseUrl();
     supabaseAnonKey = getSupabaseAnonKey();
   } catch (error) {
-    console.error('Supabase configuration error:', error);
+    logger.error('Supabase configuration error:', error);
     // Fallback to avoid app crash
     supabaseUrl = 'https://drohhxrkoequjphvabvq.supabase.co';
     supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRyb2hoeHJrb2VxdWpwaHZhYnZxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk3ODM3NjAsImV4cCI6MjA3NTM1OTc2MH0.LP9fh10fY0nRDjpG4VW2yGZ5sT4BkiDalox8ToMbMlg';

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
+import { logger } from '@/lib/logger';
 
 interface RealStats {
   totalArticles: number;
@@ -28,7 +29,7 @@ export function useRealStats(): RealStats {
           .eq('published', true);
 
         if (articlesError) {
-          console.warn('Error fetching articles count:', articlesError);
+          logger.warn('Error fetching articles count:', articlesError);
         }
 
         // Récupérer le nombre total de FAQs
@@ -37,7 +38,7 @@ export function useRealStats(): RealStats {
           .select('*', { count: 'exact', head: true });
 
         if (faqsError) {
-          console.warn('Error fetching FAQs count:', faqsError);
+          logger.warn('Error fetching FAQs count:', faqsError);
         }
 
         // Récupérer le nombre total de pages ville
@@ -47,7 +48,7 @@ export function useRealStats(): RealStats {
           .eq('status', 'published');
 
         if (citiesError) {
-          console.warn('Error fetching cities count:', citiesError);
+          logger.warn('Error fetching cities count:', citiesError);
         }
 
         setStats({
@@ -58,7 +59,7 @@ export function useRealStats(): RealStats {
           error: null,
         });
       } catch (err) {
-        console.error('Error fetching stats:', err);
+        logger.error('Error fetching stats:', err);
         setStats(prev => ({
           ...prev,
           loading: false,

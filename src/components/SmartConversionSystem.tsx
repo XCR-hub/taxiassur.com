@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Shield, Award, TrendingUp, Users, Clock, Phone } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { logger } from '@/lib/logger';
 
 interface SmartConversionSystemProps {
   onClose?: () => void;
@@ -155,7 +156,7 @@ const SmartConversionSystem: React.FC<SmartConversionSystemProps> = ({ onClose }
         handleClose();
       }, 3000);
     } catch (error) {
-      console.error('Error saving lead:', error);
+      logger.error('Error saving lead:', error);
       alert('Une erreur est survenue. Veuillez réessayer.');
     }
   };

@@ -8,6 +8,7 @@ import JsonLd from '../components/JsonLd';
 import { getCityPages, CityPage } from '../lib/content';
 import Card from '../components/Card';
 import AITaxiBackground from '../components/AITaxiBackground';
+import { logger } from '@/lib/logger';
 
 const CityIndex: React.FC = () => {
   const [cities, setCities] = useState<CityPage[]>([]);
@@ -19,7 +20,7 @@ const CityIndex: React.FC = () => {
         const data = await getCityPages();
         setCities(data);
       } catch (error) {
-        console.error('Error loading cities:', error);
+        logger.error('Error loading cities:', error);
       } finally {
         setLoading(false);
       }

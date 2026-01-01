@@ -5,6 +5,7 @@ import marketingTemplates from '../data/marketing-templates.json';
 import HelpPanel from '../components/HelpPanel';
 import { getHelpConfig } from '../lib/help-configs';
 import { supabase } from '../lib/supabase';
+import { logger } from '@/lib/logger';
 
 interface CopyHistory {
   id: string;
@@ -69,7 +70,7 @@ const MarketingTemplates: React.FC = () => {
         setStats({ total_copies: totalCopies, total_downloads: totalDownloads, most_used: mostUsed, last_copy: lastCopy });
       }
     } catch (error) {
-      console.error('Error loading stats:', error);
+      logger.error('Error loading stats:', error);
     }
   };
 
@@ -90,7 +91,7 @@ const MarketingTemplates: React.FC = () => {
         })));
       }
     } catch (error) {
-      console.error('Error loading history:', error);
+      logger.error('Error loading history:', error);
     }
   };
 
@@ -105,7 +106,7 @@ const MarketingTemplates: React.FC = () => {
       await loadStats();
       await loadCopyHistory();
     } catch (error) {
-      console.error('Error tracking usage:', error);
+      logger.error('Error tracking usage:', error);
     }
   };
 
@@ -141,7 +142,7 @@ const MarketingTemplates: React.FC = () => {
       const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(url)}`;
       setQrCodeUrl(qrUrl);
     } catch (error) {
-      console.error('Error generating QR code:', error);
+      logger.error('Error generating QR code:', error);
     } finally {
       setGeneratingQR(false);
     }
@@ -165,7 +166,7 @@ const MarketingTemplates: React.FC = () => {
       if (error) throw error;
       setAiVariant(data?.content || 'Erreur de génération');
     } catch (error) {
-      console.error('Error generating variant:', error);
+      logger.error('Error generating variant:', error);
       setAiVariant('Erreur lors de la génération de variante');
     } finally {
       setGeneratingVariant(false);

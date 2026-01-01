@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
+import { logger } from '@/lib/logger';
 import {
   Facebook, Instagram, Twitter, Youtube, Linkedin, MessageSquare,
   Send, Hash, CheckCircle, Clock, AlertCircle, XCircle,
@@ -202,7 +203,7 @@ export default function SocialMediaManager() {
 
       if (data) setNetworks(data);
     } catch (error) {
-      console.error('Error loading networks:', error);
+      logger.error('Error loading networks:', error);
     } finally {
       setLoading(false);
     }
@@ -230,7 +231,7 @@ export default function SocialMediaManager() {
         });
       }
     } catch (error) {
-      console.error('Error loading stats:', error);
+      logger.error('Error loading stats:', error);
     }
   };
 
@@ -282,7 +283,7 @@ export default function SocialMediaManager() {
         setAiResult('❌ Erreur: ' + (data.error || 'Aucun contenu généré'));
       }
     } catch (error: any) {
-      console.error('Error generating AI content:', error);
+      logger.error('Error generating AI content:', error);
       setAiResult(`❌ Erreur: ${error.message || 'Clé API OPENAI_API_KEY manquante ou service indisponible'}`);
     } finally {
       setGeneratingAI(false);
@@ -322,7 +323,7 @@ export default function SocialMediaManager() {
       await loadRealStats();
       alert('✅ Publication créée avec succès !');
     } catch (error) {
-      console.error('Error publishing:', error);
+      logger.error('Error publishing:', error);
       alert('❌ Erreur lors de la publication');
     }
   };
@@ -365,7 +366,7 @@ export default function SocialMediaManager() {
         throw new Error(result.error || 'Erreur de publication');
       }
     } catch (error) {
-      console.error('Error publishing to Pinterest:', error);
+      logger.error('Error publishing to Pinterest:', error);
       alert('❌ Erreur lors de la publication sur Pinterest');
     }
   };
@@ -381,7 +382,7 @@ export default function SocialMediaManager() {
         await loadNetworks();
       }
     } catch (error) {
-      console.error('Error toggling network:', error);
+      logger.error('Error toggling network:', error);
     }
   };
 

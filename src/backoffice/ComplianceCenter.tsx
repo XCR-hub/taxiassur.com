@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Shield, Download, Trash2, Eye, Calendar, Mail, AlertTriangle, CheckCircle, Home, FileText, Activity, TrendingUp, RefreshCw, Users, Clock } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import Card from '../components/Card';
+import { logger } from '@/lib/logger';
 
 interface GDPRConsent {
   id: string;
@@ -106,7 +107,7 @@ const ComplianceCenter: React.FC = () => {
       if (auditRes.data) setAuditLogs(auditRes.data);
       if (reportRes.data) setReport(reportRes.data);
     } catch (error) {
-      console.error('Failed to load compliance data:', error);
+      logger.error('Failed to load compliance data:', error);
     } finally {
       setLoading(false);
     }
@@ -172,7 +173,7 @@ const ComplianceCenter: React.FC = () => {
       setDsrEmail('');
       setDsrNotes('');
     } catch (error) {
-      console.error('DSR error:', error);
+      logger.error('DSR error:', error);
       alert('❌ Erreur lors du traitement de la demande');
     }
   };

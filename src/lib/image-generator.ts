@@ -1,3 +1,5 @@
+import { logger } from '@/lib/logger';
+
 /**
  * Générateur d'images AI optimisées SEO pour articles
  * Utilise Unsplash API (gratuit) pour des images de qualité
@@ -42,7 +44,7 @@ export async function generateImageForArticle(
     return generateUnsplashSourceURL(searchQuery);
 
   } catch (error) {
-    console.error('Erreur génération image:', error);
+    logger.error('Erreur génération image:', error);
     return generateFallbackImage(searchQuery);
   }
 }

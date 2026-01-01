@@ -3,6 +3,7 @@ import { Mail, Send, Eye, CheckCircle, XCircle, TrendingUp, Activity, BarChart3,
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import Card from '../components/Card';
+import { logger } from '@/lib/logger';
 
 interface Campaign {
   id: string;
@@ -65,7 +66,7 @@ const BacklinkAutomationDashboard: React.FC = () => {
         .order('created_at', { ascending: false });
 
       if (campaignsError) {
-        console.error('Erreur chargement campagnes:', campaignsError);
+        logger.error('Erreur chargement campagnes:', campaignsError);
         throw campaignsError;
       }
 
@@ -109,7 +110,7 @@ const BacklinkAutomationDashboard: React.FC = () => {
         .limit(50);
 
       if (logsError) {
-        console.error('Erreur chargement logs:', logsError);
+        logger.error('Erreur chargement logs:', logsError);
       }
 
       if (logsData) {
@@ -123,7 +124,7 @@ const BacklinkAutomationDashboard: React.FC = () => {
       }
 
     } catch (error) {
-      console.error('Erreur chargement données:', error);
+      logger.error('Erreur chargement données:', error);
     } finally {
       setLoading(false);
     }
@@ -145,7 +146,7 @@ const BacklinkAutomationDashboard: React.FC = () => {
         .limit(10);
 
       if (oppError) {
-        console.error('Erreur opportunités:', oppError);
+        logger.error('Erreur opportunités:', oppError);
         alert(`❌ Erreur: ${oppError.message}`);
         return;
       }
@@ -175,7 +176,7 @@ const BacklinkAutomationDashboard: React.FC = () => {
         .in('id', opportunities.map(o => o.id));
 
       if (updateError) {
-        console.error('Erreur mise à jour:', updateError);
+        logger.error('Erreur mise à jour:', updateError);
       }
 
       // Mettre à jour les stats de la campagne
@@ -188,7 +189,7 @@ const BacklinkAutomationDashboard: React.FC = () => {
         .eq('id', selectedCampaign);
 
       if (campError) {
-        console.error('Erreur campagne:', campError);
+        logger.error('Erreur campagne:', campError);
       }
 
       alert(`✅ Automation lancée avec succès!\n\n` +
@@ -199,7 +200,7 @@ const BacklinkAutomationDashboard: React.FC = () => {
       // Recharger les données
       loadData();
     } catch (error) {
-      console.error('Erreur automation:', error);
+      logger.error('Erreur automation:', error);
       alert('❌ Erreur lors du lancement de l\'automation');
     }
   };

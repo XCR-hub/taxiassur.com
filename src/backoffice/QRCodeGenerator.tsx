@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { QrCode, Download, Copy, CheckCircle, Users, Link as LinkIcon, RefreshCw, Eye, Printer, FileImage, Sparkles, BarChart3, TrendingUp } from 'lucide-react';
 import Card from '../components/Card';
 import { supabase } from '../lib/supabase';
+import { logger } from '@/lib/logger';
 
 interface Ambassador {
   id: string;
@@ -56,7 +57,7 @@ const QRCodeGenerator: React.FC = () => {
       if (error) throw error;
       setAmbassadors(data || []);
     } catch (error) {
-      console.error('Failed to load ambassadors:', error);
+      logger.error('Failed to load ambassadors:', error);
     } finally {
       setLoading(false);
     }
@@ -87,7 +88,7 @@ const QRCodeGenerator: React.FC = () => {
         });
       }
     } catch (error) {
-      console.error('Error loading stats:', error);
+      logger.error('Error loading stats:', error);
     }
   };
 
@@ -113,7 +114,7 @@ const QRCodeGenerator: React.FC = () => {
       });
       await loadStats();
     } catch (error) {
-      console.error('Error tracking generation:', error);
+      logger.error('Error tracking generation:', error);
     }
   };
 

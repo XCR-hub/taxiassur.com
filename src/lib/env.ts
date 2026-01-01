@@ -1,3 +1,5 @@
+import { logger } from '@/lib/logger';
+
 // Helper to get environment variables with fallback for production
 // In production, variables are loaded from window.ENV (via env-config.js)
 // In development, variables are loaded from import.meta.env (via Vite)
@@ -15,7 +17,7 @@ export function getEnv(key: string): string | undefined {
 export function getSupabaseUrl(): string {
   const url = getEnv('VITE_SUPABASE_URL');
   if (!url) {
-    console.warn('⚠️ VITE_SUPABASE_URL is not configured. Supabase features will be disabled.');
+    logger.warn('⚠️ VITE_SUPABASE_URL is not configured. Supabase features will be disabled.');
     return ''; // ✅ SAFE: Return empty string instead of throwing
   }
   return url;
@@ -24,7 +26,7 @@ export function getSupabaseUrl(): string {
 export function getSupabaseAnonKey(): string {
   const key = getEnv('VITE_SUPABASE_ANON_KEY');
   if (!key) {
-    console.warn('⚠️ VITE_SUPABASE_ANON_KEY is not configured. Supabase features will be disabled.');
+    logger.warn('⚠️ VITE_SUPABASE_ANON_KEY is not configured. Supabase features will be disabled.');
     return ''; // ✅ SAFE: Return empty string instead of throwing
   }
   return key;
@@ -33,7 +35,7 @@ export function getSupabaseAnonKey(): string {
 export function getGoogleCseApiKey(): string {
   const key = getEnv('VITE_GOOGLE_CSE_API_KEY');
   if (!key) {
-    console.warn('WARNING: VITE_GOOGLE_CSE_API_KEY is not configured. Search features will not work.');
+    logger.warn('WARNING: VITE_GOOGLE_CSE_API_KEY is not configured. Search features will not work.');
     return '';
   }
   return key;
@@ -42,7 +44,7 @@ export function getGoogleCseApiKey(): string {
 export function getGoogleCseCx(): string {
   const cx = getEnv('VITE_GOOGLE_CSE_CX');
   if (!cx) {
-    console.warn('WARNING: VITE_GOOGLE_CSE_CX is not configured. Search features will not work.');
+    logger.warn('WARNING: VITE_GOOGLE_CSE_CX is not configured. Search features will not work.');
     return '';
   }
   return cx;
@@ -64,7 +66,7 @@ export function getNoIndex(): boolean {
 export function getSupabaseServiceRoleKey(): string {
   const key = getEnv('VITE_SUPABASE_SERVICE_ROLE_KEY');
   if (!key) {
-    console.warn('WARNING: VITE_SUPABASE_SERVICE_ROLE_KEY is not configured. Admin operations will fail.');
+    logger.warn('WARNING: VITE_SUPABASE_SERVICE_ROLE_KEY is not configured. Admin operations will fail.');
     return '';
   }
   return key;

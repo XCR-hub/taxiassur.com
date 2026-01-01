@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Shield, FileCheck, Bell, Clock, CreditCard, Download, Upload, CheckCircle, Star, Zap, Lock, Smartphone, Calendar, Award, Mail, Eye, EyeOff } from 'lucide-react';
 import SEOHead from '../components/SEOHead';
 import { supabase } from '../lib/supabase';
+import { logger } from '@/lib/logger';
 
 export default function EspaceClient() {
   const [email, setEmail] = useState('');
@@ -43,7 +44,7 @@ export default function EspaceClient() {
       }, 1500);
 
     } catch (err: unknown) {
-      console.error('Login error:', err);
+      logger.error('Login error:', err);
       setError('Une erreur est survenue. Réessayez dans quelques instants.');
     } finally {
       setIsLoading(false);

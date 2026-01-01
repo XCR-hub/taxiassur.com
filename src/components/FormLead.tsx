@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Shield, Phone, Clock, Send } from 'lucide-react';
+import { logger } from '@/lib/logger';
 
 const FormLead: React.FC = () => {
   const navigate = useNavigate();
@@ -54,11 +55,11 @@ const FormLead: React.FC = () => {
         // Redirection vers page de remerciement
         window.location.href = '/merci';
       } else {
-        console.error('Form error:', result);
+        logger.error('Form error:', result);
         alert(result.error || 'Erreur lors de l\'envoi. Veuillez réessayer.');
       }
     } catch (error) {
-      console.error('Form submission error:', error);
+      logger.error('Form submission error:', error);
       alert('Erreur de connexion. Veuillez vérifier votre connexion internet.');
     } finally {
       setIsSubmitting(false);

@@ -3,6 +3,7 @@ import { TrendingUp, Search, Zap, Target, BarChart3, Lightbulb, RefreshCw, Home 
 import { useNavigate } from 'react-router-dom';
 import { analyzeContentOpportunities, saveContentOpportunities, ContentOpportunity } from '../lib/trendAnalyzer';
 import { supabase } from '../lib/supabase';
+import { logger } from '@/lib/logger';
 
 export default function TrendAnalyzer() {
   const navigate = useNavigate();
@@ -23,11 +24,11 @@ export default function TrendAnalyzer() {
         .order('estimated_traffic', { ascending: false });
 
       if (error) {
-        console.error('Supabase error:', error);
+        logger.error('Supabase error:', error);
         throw error;
       }
 
-      console.log('Opportunités chargées depuis Supabase:', data?.length || 0);
+      logger.log('Opportunités chargées depuis Supabase:', data?.length || 0);
 
       setOpportunities(
         (data || []).map(d => ({
@@ -43,7 +44,7 @@ export default function TrendAnalyzer() {
         }))
       );
     } catch (err) {
-      console.error('Error loading opportunities:', err);
+      logger.error('Error loading opportunities:', err);
     } finally {
       setLoading(false);
     }
@@ -71,7 +72,7 @@ export default function TrendAnalyzer() {
 
       alert(`✅ ${newOpportunities.length} opportunités découvertes !`);
     } catch (err) {
-      console.error('Analysis error:', err);
+      logger.error('Analysis error:', err);
       alert('Erreur lors de l\'analyse. Vérifiez les clés API.');
     } finally {
       setIsAnalyzing(false);

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Shield, Phone, Clock, Send, CheckCircle, User, Mail, MapPin, Car } from 'lucide-react';
 import { useFormSecurity } from '../hooks/useFormSecurity';
 import { useAnalytics } from '../hooks/useAnalytics';
+import { logger } from '@/lib/logger';
 
 const EnhancedFormLead: React.FC = () => {
   const navigate = useNavigate();
@@ -88,7 +89,7 @@ const EnhancedFormLead: React.FC = () => {
     // Security validation
     const securityCheck = await validateSecurity(formData);
     if (!securityCheck.valid) {
-      console.warn('Security validation failed:', securityCheck.errors);
+      logger.warn('Security validation failed:', securityCheck.errors);
       return; // Silent fail for bots
     }
     
@@ -121,7 +122,7 @@ const EnhancedFormLead: React.FC = () => {
         alert(result.error || 'Erreur lors de l\'envoi. Veuillez réessayer.');
       }
     } catch (error) {
-      console.error('Form submission error:', error);
+      logger.error('Form submission error:', error);
       alert('Erreur de connexion. Veuillez réessayer.');
     } finally {
       setIsSubmitting(false);

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Send, Loader2, CheckCircle, AlertCircle, Mail, TrendingUp, Rocket, Home } from 'lucide-react';
 import { getSupabaseUrl } from '../lib/env';
+import { logger } from '@/lib/logger';
 
 export default function CampaignLauncher() {
   const [isGenerating, setIsGenerating] = useState(false);
@@ -45,7 +46,7 @@ export default function CampaignLauncher() {
       });
 
     } catch (err: any) {
-      console.error('Error:', err);
+      logger.error('Error:', err);
       setError(err.message);
     } finally {
       setIsGenerating(false);
@@ -84,7 +85,7 @@ export default function CampaignLauncher() {
       });
 
     } catch (err: any) {
-      console.error('Error:', err);
+      logger.error('Error:', err);
       setError(err.message);
     } finally {
       setIsSending(false);

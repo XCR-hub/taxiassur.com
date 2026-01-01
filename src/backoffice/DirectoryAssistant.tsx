@@ -3,6 +3,7 @@ import { Globe, ExternalLink, Copy, CheckCircle, Clock, AlertTriangle, Plus, Hom
 import { getDirectories, submitToDirectory } from '../lib/partners';
 import { Directory } from '../lib/schema';
 import Card from '../components/Card';
+import { logger } from '@/lib/logger';
 
 const DirectoryAssistant: React.FC = () => {
   const [directories, setDirectories] = useState<Directory[]>([]);
@@ -23,7 +24,7 @@ const DirectoryAssistant: React.FC = () => {
       const data = await getDirectories();
       setDirectories(data.filter(d => d.allowed));
     } catch (error) {
-      console.error('Failed to load directories:', error);
+      logger.error('Failed to load directories:', error);
     } finally {
       setLoading(false);
     }
@@ -92,7 +93,7 @@ Que vous soyez taxi indépendant, compagnie de taxi ou gestionnaire de flotte, n
         alert('❌ Erreur lors de la soumission API');
       }
     } catch (error) {
-      console.error('API submission error:', error);
+      logger.error('API submission error:', error);
       alert('❌ Erreur de connexion API');
     }
   };
@@ -152,16 +153,16 @@ UTM Link: ${content.url}
         // Ne copier que pour le premier (pour éviter de spam le clipboard)
         if (i === 0) {
           await navigator.clipboard.writeText(clipboardData);
-          console.log('📋 Données copiées dans le presse-papiers');
+          logger.log('📋 Données copiées dans le presse-papiers');
         }
 
         // Marquer comme en cours (pas encore soumis)
         setSubmissionStatus(prev => ({ ...prev, [directory.id]: 'pending' }));
         successCount++;
 
-        console.log(`✅ Ouvert : ${directory.name}`);
+        logger.log(`✅ Ouvert : ${directory.name}`);
       } catch (error) {
-        console.error(`❌ Échec : ${directory.name}`, error);
+        logger.error(`❌ Échec : ${directory.name}`, error);
       }
 
       // Délai entre chaque ouverture pour éviter le blocage popup

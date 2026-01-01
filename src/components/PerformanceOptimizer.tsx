@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { logger } from '@/lib/logger';
 
 interface PerformanceOptimizerProps {
   children: React.ReactNode;
@@ -82,7 +83,7 @@ const PerformanceOptimizer: React.FC<PerformanceOptimizerProps> = ({ children })
           });
         }
 
-        console.log('Performance metrics:', metrics);
+        logger.log('Performance metrics:', metrics);
       }, 1000);
     };
 

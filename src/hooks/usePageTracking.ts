@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
+import { logger } from '@/lib/logger';
 
 export const usePageTracking = () => {
   const startTimeRef = useRef<number>(Date.now());
@@ -27,7 +28,7 @@ export const usePageTracking = () => {
           viewport_height: window.innerHeight
         });
       } catch (error) {
-        console.error('Error tracking page view:', error);
+        logger.error('Error tracking page view:', error);
       }
     };
 
@@ -46,7 +47,7 @@ export const usePageTracking = () => {
             .order('created_at', { ascending: false })
             .limit(1);
         } catch (error) {
-          console.error('Error updating duration:', error);
+          logger.error('Error updating duration:', error);
         }
       }
     };

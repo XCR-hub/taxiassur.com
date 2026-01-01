@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { logger } from '@/lib/logger';
 import {
   Users, Eye, Phone, Mail, FileText, CheckCircle, XCircle, Euro,
   Search, Filter, Download, Send, Edit as EditIcon, Star,
@@ -44,7 +45,7 @@ const LeadManager: React.FC = () => {
       const data = await getLeads();
       setLeads(data);
     } catch (error) {
-      console.error('Failed to load leads:', error);
+      logger.error('Failed to load leads:', error);
     } finally {
       setLoading(false);
     }
@@ -97,7 +98,7 @@ const LeadManager: React.FC = () => {
         alert('❌ Erreur lors de la mise à jour');
       }
     } catch (error) {
-      console.error('Status update error:', error);
+      logger.error('Status update error:', error);
       alert('❌ Erreur de connexion');
     }
   };
@@ -140,7 +141,7 @@ const LeadManager: React.FC = () => {
         alert(`✅ ${type === 'devis' ? 'Devis' : 'Contrat'} envoyé avec succès !`);
       }
     } catch (error) {
-      console.error('Email sending error:', error);
+      logger.error('Email sending error:', error);
       alert('❌ Erreur lors de l\'envoi');
     }
   };

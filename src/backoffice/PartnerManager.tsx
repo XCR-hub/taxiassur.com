@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Globe, Plus, Star, MapPin, Mail, Phone, Home } from 'lucide-react';
 import { getPartners, addPartner, type Partner } from '../lib/backlinks';
 import Card from '../components/Card';
+import { logger } from '@/lib/logger';
 
 const PartnerManager: React.FC = () => {
   const [partners, setPartners] = useState<Partner[]>([]);
@@ -35,7 +36,7 @@ const PartnerManager: React.FC = () => {
       const data = await getPartners();
       setPartners(data);
     } catch (error) {
-      console.error('Failed to load partners:', error);
+      logger.error('Failed to load partners:', error);
     } finally {
       setLoading(false);
     }

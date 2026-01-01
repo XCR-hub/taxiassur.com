@@ -4,6 +4,7 @@ import { Review } from '../lib/schema';
 import { getReviews } from '../lib/content';
 import { formatDate, getAverageRating } from '../lib/utils';
 import Card from './Card';
+import { logger } from '@/lib/logger';
 
 interface ReviewsListProps {
   limit?: number;
@@ -29,7 +30,7 @@ const ReviewsList: React.FC<ReviewsListProps> = ({
         setReviews(reviewsData);
         setFilteredReviews(limit ? reviewsData.slice(0, limit) : reviewsData);
       } catch (error) {
-        console.error('Failed to load reviews:', error);
+        logger.error('Failed to load reviews:', error);
       } finally {
         setLoading(false);
       }

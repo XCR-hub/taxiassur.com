@@ -6,6 +6,7 @@ import { Handshake, TrendingUp, Euro, Users, Award, CheckCircle, Phone, Mail, Ca
 import Card from '../components/Card';
 import AITaxiBackground from '../components/AITaxiBackground';
 import StickyCTA from '../components/StickyCTA';
+import { logger } from '@/lib/logger';
 
 const PartnershipPage: React.FC = () => {
   const [partnerForm, setPartnerForm] = useState({
@@ -187,7 +188,7 @@ const PartnershipPage: React.FC = () => {
         alert(result.error || 'Erreur lors de l\'envoi. Veuillez réessayer.');
       }
     } catch (error) {
-      console.error('Partnership form error:', error);
+      logger.error('Partnership form error:', error);
       alert('Erreur de connexion. Veuillez réessayer.');
     } finally {
       setIsSubmitting(false);

@@ -5,6 +5,7 @@ import { SecureLeadSchema, SecureLead, BrowserFingerprint, BehaviorAnalyzer, Rat
 import { ConversionTracker, FormOptimizer, SmartPrefill, ExitIntentDetector } from '../lib/conversion';
 import { submitSecureLead } from '../lib/email';
 import Card from './Card';
+import { logger } from '@/lib/logger';
 
 interface EnhancedLeadFormProps {
   variant?: 'default' | 'minimal' | 'detailed';
@@ -205,7 +206,7 @@ const EnhancedLeadForm: React.FC<EnhancedLeadFormProps> = ({
         alert(result.error || 'Erreur lors de l\'envoi. Veuillez réessayer.');
       }
     } catch (error) {
-      console.error('Form submission error:', error);
+      logger.error('Form submission error:', error);
       ConversionTracker.track('form_network_error');
       alert('Erreur de connexion. Veuillez réessayer.');
     } finally {

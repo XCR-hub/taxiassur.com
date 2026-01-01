@@ -1,4 +1,5 @@
 import { Consent, ConsentSchema } from './schema';
+import { logger } from '@/lib/logger';
 
 export interface DSRRequest {
   id: string;
@@ -45,14 +46,14 @@ export class GDPRCompliance {
               consents.push(validated);
             }
           } catch (error) {
-            console.warn(`Failed to load consent ${filename}:`, error);
+            logger.warn(`Failed to load consent ${filename}:`, error);
           }
         }
       }
       
       return consents;
     } catch (error) {
-      console.warn('Failed to load consent ledger:', error);
+      logger.warn('Failed to load consent ledger:', error);
       return [];
     }
   }
@@ -88,7 +89,7 @@ export class GDPRCompliance {
       
       return response.ok;
     } catch (error) {
-      console.error('Failed to delete personal data:', error);
+      logger.error('Failed to delete personal data:', error);
       return false;
     }
   }
@@ -260,7 +261,7 @@ export class CampaignManager {
       
       return response.ok;
     } catch (error) {
-      console.error('Failed to schedule campaign:', error);
+      logger.error('Failed to schedule campaign:', error);
       return false;
     }
   }

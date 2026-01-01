@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowRight, CheckCircle, Sparkles, Zap, Shield, Clock, User, Mail, Phone, MapPin, Car, Send } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { logger } from '@/lib/logger';
 
 interface FormData {
   name: string;
@@ -89,7 +90,7 @@ const AIQuoteProcess: React.FC = () => {
         setCurrentStep(2);
       }
     } catch (error) {
-      console.error('Submission error:', error);
+      logger.error('Submission error:', error);
       alert('Erreur de connexion. Veuillez réessayer.');
       setCurrentStep(2);
     } finally {

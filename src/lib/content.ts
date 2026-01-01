@@ -2,6 +2,7 @@ import { BlogPost, FaqEntry, Review, Offer, BlogPostSchema, FaqEntrySchema, Revi
 import { createClient } from '@supabase/supabase-js';
 import { getSupabaseUrl, getSupabaseAnonKey } from './env';
 import { generateCityPages } from './ping';
+import { logger } from '@/lib/logger';
 
 // Type pour les pages ville
 export interface CityPage {
@@ -24,7 +25,7 @@ export interface CityPage {
 const supabaseUrl = getSupabaseUrl();
 const supabaseKey = getSupabaseAnonKey();
 
-console.log('🔧 Supabase Config:', {
+logger.log('🔧 Supabase Config:', {
   url: supabaseUrl || 'NOT_CONFIGURED',
   keyPrefix: supabaseKey ? supabaseKey.substring(0, 20) + '...' : 'NOT_CONFIGURED',
   enabled: !!(supabaseUrl && supabaseKey)
@@ -60,14 +61,14 @@ async function fetchLocalContent<T>(type: string, schema: any): Promise<T[]> {
         }
         index++;
       } catch (err) {
-        console.warn(`Error loading ${type}/index-${index}.json:`, err);
+        logger.warn(`Error loading ${type}/index-${index}.json:`, err);
         break;
       }
     }
 
     return items;
   } catch (error) {
-    console.warn(`Failed to load ${type} content:`, error);
+    logger.warn(`Failed to load ${type} content:`, error);
     return [];
   }
 }
@@ -136,7 +137,7 @@ async function loadKnownFiles(type: string): Promise<any[]> {
         items.push(data);
       }
     } catch (err) {
-      console.warn(`Failed to load ${type}/${file}.json:`, err);
+      logger.warn(`Failed to load ${type}/${file}.json:`, err);
     }
   }
 
@@ -153,7 +154,7 @@ async function fetchLocalItem<T>(type: string, id: string, schema: any): Promise
     const validated = schema.parse(data);
     return validated.status === 'published' ? validated : null;
   } catch (error) {
-    console.warn(`Failed to load ${type}/${id}:`, error);
+    logger.warn(`Failed to load ${type}/${id}:`, error);
     return null;
   }
 }
@@ -162,7 +163,7 @@ async function fetchLocalItem<T>(type: string, id: string, schema: any): Promise
 export async function getBlogPosts(): Promise<BlogPost[]> {
   if (supabase) {
     try {
-      console.log('🔍 Fetching blog posts from Supabase...');
+      logger.log('🔍 Fetching blog posts from Supabase...');
       const { data, error } = await supabase
         .from('blog_posts')
         .select('*')
@@ -170,9 +171,9 @@ export async function getBlogPosts(): Promise<BlogPost[]> {
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('❌ Supabase error:', error.message);
+        logger.error('❌ Supabase error:', error.message);
       } else if (data && data.length > 0) {
-        console.log(`✅ Loaded ${data.length} blog posts from Supabase`);
+        logger.log(`✅ Loaded ${data.length} blog posts from Supabase`);
         return data.map(item => ({
           id: item.slug,
           title: item.title,
@@ -187,25 +188,25 @@ export async function getBlogPosts(): Promise<BlogPost[]> {
           status: 'published'
         }));
       } else {
-        console.log('⚠️ No blog posts found in Supabase, trying local...');
+        logger.log('⚠️ No blog posts found in Supabase, trying local...');
       }
     } catch (error) {
-      console.error('❌ Supabase blog fetch exception:', error);
+      logger.error('❌ Supabase blog fetch exception:', error);
     }
   } else {
-    console.log('⚠️ Supabase not configured, using local content');
+    logger.log('⚠️ Supabase not configured, using local content');
   }
 
-  console.log('📂 Loading blog posts from local files...');
+  logger.log('📂 Loading blog posts from local files...');
   const posts = await fetchLocalContent<BlogPost>('blog', BlogPostSchema);
-  console.log(`✅ Loaded ${posts.length} blog posts from local files`);
+  logger.log(`✅ Loaded ${posts.length} blog posts from local files`);
   return posts.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 }
 
 export async function getBlogPost(id: string): Promise<BlogPost | null> {
   if (supabase) {
     try {
-      console.log(`🔍 Fetching blog post "${id}" from Supabase...`);
+      logger.log(`🔍 Fetching blog post "${id}" from Supabase...`);
       const { data, error } = await supabase
         .from('blog_posts')
         .select('*')
@@ -229,7 +230,7 @@ export async function getBlogPost(id: string): Promise<BlogPost | null> {
         };
       }
     } catch (error) {
-      console.warn('Supabase blog post fetch failed, falling back to local:', error);
+      logger.warn('Supabase blog post fetch failed, falling back to local:', error);
     }
   }
 
@@ -240,14 +241,14 @@ export async function getBlogPost(id: string): Promise<BlogPost | null> {
 export async function getFaqEntries(): Promise<FaqEntry[]> {
   if (supabase) {
     try {
-      console.log('🔍 Fetching FAQ entries from Supabase...');
+      logger.log('🔍 Fetching FAQ entries from Supabase...');
       const { data, error } = await supabase
         .from('faq_entries')
         .select('*')
         .order('order_index', { ascending: true });
 
       if (!error && data && data.length > 0) {
-        console.log('✅ Loaded', data.length, 'FAQ from Supabase');
+        logger.log('✅ Loaded', data.length, 'FAQ from Supabase');
         return data.map((item: any) => ({
           id: item.id?.toString() || Math.random().toString(),
           question: item.question,
@@ -258,11 +259,11 @@ export async function getFaqEntries(): Promise<FaqEntry[]> {
         }));
       }
     } catch (error) {
-      console.warn('⚠️ Supabase FAQ fetch failed, falling back to local:', error);
+      logger.warn('⚠️ Supabase FAQ fetch failed, falling back to local:', error);
     }
   }
 
-  console.log('📂 Loading FAQ from local files...');
+  logger.log('📂 Loading FAQ from local files...');
   return await fetchLocalContent<FaqEntry>('faq', FaqEntrySchema);
 }
 
@@ -281,7 +282,7 @@ export async function getCityPages(): Promise<CityPage[]> {
         .order('taxi_count', { ascending: false });
 
       if (!error && data && data.length > 0) {
-        console.log('✅ Loaded', data.length, 'city pages from Supabase');
+        logger.log('✅ Loaded', data.length, 'city pages from Supabase');
         return data.map((item: any) => ({
           id: item.id,
           name: item.city,              // ✅ CORRECTION: city → name
@@ -299,12 +300,12 @@ export async function getCityPages(): Promise<CityPage[]> {
         }));
       }
     } catch (error) {
-      console.warn('⚠️ Supabase city pages fetch failed, falling back to static:', error);
+      logger.warn('⚠️ Supabase city pages fetch failed, falling back to static:', error);
     }
   }
 
   // Fallback vers les villes statiques de ping.ts
-  console.log('📍 Using static city pages (safe mode)');
+  logger.log('📍 Using static city pages (safe mode)');
   return generateCityPages().map((city: any) => ({
     id: city.slug,
     name: city.city,
@@ -352,12 +353,12 @@ export async function getCityBySlug(slug: string): Promise<CityPage | null> {
         };
       }
     } catch (error) {
-      console.warn('⚠️ Supabase city fetch failed:', error);
+      logger.warn('⚠️ Supabase city fetch failed:', error);
     }
   }
 
   // Fallback vers les villes statiques
-  console.log('📍 Using static city page for:', slug);
+  logger.log('📍 Using static city page for:', slug);
   const allCities = await getCityPages();
   return allCities.find(city => city.slug === slug) || null;
 }
@@ -376,7 +377,7 @@ export async function getReviews(): Promise<Review[]> {
         return data.map(item => ReviewSchema.parse(item));
       }
     } catch (error) {
-      console.warn('Supabase reviews fetch failed, falling back to local:', error);
+      logger.warn('Supabase reviews fetch failed, falling back to local:', error);
     }
   }
   
@@ -398,7 +399,7 @@ export async function getOffers(): Promise<Offer[]> {
         return data.map(item => OfferSchema.parse(item));
       }
     } catch (error) {
-      console.warn('Supabase offers fetch failed, falling back to local:', error);
+      logger.warn('Supabase offers fetch failed, falling back to local:', error);
     }
   }
   
@@ -419,7 +420,7 @@ export async function getOffer(id: string): Promise<Offer | null> {
         return OfferSchema.parse(data);
       }
     } catch (error) {
-      console.warn('Supabase offer fetch failed, falling back to local:', error);
+      logger.warn('Supabase offer fetch failed, falling back to local:', error);
     }
   }
   
@@ -451,7 +452,7 @@ export async function getLastUpdateDate(): Promise<string> {
     
     return latestDate;
   } catch (error) {
-    console.warn('Failed to get last update date:', error);
+    logger.warn('Failed to get last update date:', error);
     return new Date().toISOString();
   }
 }

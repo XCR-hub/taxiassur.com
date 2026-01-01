@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Activity, TrendingUp, Zap, Target, Brain, AlertTriangle, CheckCircle, Clock } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import BackButton from './BackButton';
+import { logger } from '@/lib/logger';
 
 interface AIDecision {
   id: string;
@@ -67,7 +68,7 @@ const AIMasterDashboard: React.FC = () => {
       if (metricsRes.data) setMetrics(metricsRes.data);
       if (keywordsRes.data) setKeywords(keywordsRes.data);
     } catch (error) {
-      console.error('Error loading AI data:', error);
+      logger.error('Error loading AI data:', error);
     } finally {
       setLoading(false);
     }
@@ -86,13 +87,13 @@ const AIMasterDashboard: React.FC = () => {
       });
 
       const result = await response.json();
-      console.log('IA Master exécutée:', result);
+      logger.log('IA Master exécutée:', result);
 
       alert(`✅ IA Master exécutée avec succès!\n\n${result.decisions_count} décisions prises\nTendance: ${result.performance_trend}\nLeads 24h: ${result.leads_24h}`);
 
       await loadData();
     } catch (error) {
-      console.error('Error executing AI Master:', error);
+      logger.error('Error executing AI Master:', error);
       alert('❌ Erreur lors de l\'exécution de l\'IA Master');
     } finally {
       setExecuting(false);

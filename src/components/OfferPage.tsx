@@ -6,6 +6,7 @@ import { getOffer } from '../lib/content';
 import Seo from './Seo';
 import JsonLd from './JsonLd';
 import LeadForm from './LeadForm';
+import { logger } from '@/lib/logger';
 
 const OfferPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -29,7 +30,7 @@ const OfferPage: React.FC = () => {
           setError('Offre non trouvée');
         }
       } catch (err) {
-        console.error('Failed to load offer:', err);
+        logger.error('Failed to load offer:', err);
         setError('Erreur lors du chargement de l\'offre');
       } finally {
         setLoading(false);

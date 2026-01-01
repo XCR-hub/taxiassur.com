@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FileText, Mail, HelpCircle, Plus, CreditCard as Edit, Trash2, Send, Users, Calendar, Save, Eye, EyeOff, Home } from 'lucide-react';
 import TestAutomationButton from './TestAutomationButton';
+import { logger } from '@/lib/logger';
 
 interface Article {
   id: string;
@@ -104,7 +105,7 @@ const ContentManager: React.FC = () => {
         }
       ]);
     } catch (error) {
-      console.error('Erreur lors du chargement:', error);
+      logger.error('Erreur lors du chargement:', error);
     } finally {
       setLoading(false);
     }
@@ -168,7 +169,7 @@ const ContentManager: React.FC = () => {
 
       alert('Article publié avec succès !');
     } catch (error) {
-      console.error('Erreur:', error);
+      logger.error('Erreur:', error);
       alert('Erreur lors de la publication');
     } finally {
       setLoading(false);
@@ -228,7 +229,7 @@ const ContentManager: React.FC = () => {
 
       alert('FAQ ajoutée avec succès !');
     } catch (error) {
-      console.error('Erreur:', error);
+      logger.error('Erreur:', error);
       alert('Erreur lors de l\'ajout');
     } finally {
       setLoading(false);
@@ -274,7 +275,7 @@ const ContentManager: React.FC = () => {
         scheduledDate: ''
       });
     } catch (error) {
-      console.error('Erreur:', error);
+      logger.error('Erreur:', error);
       alert('Erreur lors de l\'envoi');
     } finally {
       setLoading(false);
@@ -322,7 +323,7 @@ const ContentManager: React.FC = () => {
       setArticles(prev => prev.filter(a => a.id !== id));
       alert('Article supprimé');
     } catch (error) {
-      console.error('Erreur:', error);
+      logger.error('Erreur:', error);
       alert('Erreur lors de la suppression');
     }
   };
@@ -343,7 +344,7 @@ const ContentManager: React.FC = () => {
       setFaqs(prev => prev.filter(f => f.id !== id));
       alert('FAQ supprimée');
     } catch (error) {
-      console.error('Erreur:', error);
+      logger.error('Erreur:', error);
       alert('Erreur lors de la suppression');
     }
   };

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { MessageCircle, X, Send, Bot, User, Phone, Mail } from 'lucide-react';
 import { ConversionTracker } from '../lib/conversion';
+import { logger } from '@/lib/logger';
 
 interface ChatMessage {
   id: string;
@@ -260,7 +261,7 @@ const SmartChatBot: React.FC = () => {
         ]
       });
     } catch (error) {
-      console.error('ChatGPT error:', error);
+      logger.error('ChatGPT error:', error);
       addMessage({
         type: 'bot',
         message: "Merci pour votre message ! Pour une réponse personnalisée, je vous recommande de parler directement avec un de nos experts.",

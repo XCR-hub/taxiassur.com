@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Users, Euro, TrendingUp, Download, Calendar, Eye, CheckCircle, Clock, Home } from 'lucide-react';
 import Card from '../components/Card';
+import { logger } from '@/lib/logger';
 
 interface PartnerStats {
   totalLeadsBought: number;
@@ -95,7 +96,7 @@ const PartnerPortal: React.FC = () => {
       setStats(mockStats);
       setPurchasedLeads(mockLeads);
     } catch (error) {
-      console.error('Failed to load partner data:', error);
+      logger.error('Failed to load partner data:', error);
     } finally {
       setLoading(false);
     }

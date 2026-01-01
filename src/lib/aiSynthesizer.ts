@@ -1,5 +1,6 @@
 import { RawNewsItem, ProcessedNews } from './newsAggregator';
 import { BlogPostSchema } from './schema';
+import { logger } from '@/lib/logger';
 
 // Système de synthèse IA pour transformer les actualités en contenu TaxiAssur
 export class AISynthesizer {
@@ -23,7 +24,7 @@ export class AISynthesizer {
           processed.push(synthesis);
         }
       } catch (error) {
-        console.error('Failed to synthesize news:', error);
+        logger.error('Failed to synthesize news:', error);
       }
     }
     
@@ -54,7 +55,7 @@ export class AISynthesizer {
         updatedAt: new Date().toISOString()
       };
     } catch (error) {
-      console.error('Synthesis error:', error);
+      logger.error('Synthesis error:', error);
       return null;
     }
   }
@@ -240,7 +241,7 @@ export class NewsScheduler {
     if (this.isRunning) return;
     
     this.isRunning = true;
-    console.log('🤖 Démarrage du système de veille actualités taxi');
+    logger.log('🤖 Démarrage du système de veille actualités taxi');
     
     // Exécution immédiate
     this.runNewsAggregation();
@@ -257,36 +258,36 @@ export class NewsScheduler {
       this.interval = null;
     }
     this.isRunning = false;
-    console.log('⏹️ Arrêt du système de veille actualités');
+    logger.log('⏹️ Arrêt du système de veille actualités');
   }
 
   private static async runNewsAggregation(): Promise<void> {
     try {
-      console.log('🔍 Recherche de nouvelles actualités taxi...');
+      logger.log('🔍 Recherche de nouvelles actualités taxi...');
       
       const aggregator = new NewsAggregator();
       await aggregator.initialize();
       
       const rawNews = await aggregator.aggregateNews();
-      console.log(`📰 ${rawNews.length} actualités trouvées`);
+      logger.log(`📰 ${rawNews.length} actualités trouvées`);
       
       if (rawNews.length > 0) {
         const processedNews = await AISynthesizer.synthesizeNews(rawNews);
-        console.log(`🤖 ${processedNews.length} actualités synthétisées`);
+        logger.log(`🤖 ${processedNews.length} actualités synthétisées`);
         
         // Convert to blog posts and publish
         for (const news of processedNews) {
           try {
             const blogPost = await AISynthesizer.convertToBlogPost(news);
             await this.publishBlogPost(blogPost);
-            console.log(`✅ Article publié : ${blogPost.title}`);
+            logger.log(`✅ Article publié : ${blogPost.title}`);
           } catch (error) {
-            console.error('Failed to publish blog post:', error);
+            logger.error('Failed to publish blog post:', error);
           }
         }
       }
     } catch (error) {
-      console.error('News aggregation error:', error);
+      logger.error('News aggregation error:', error);
     }
   }
 
@@ -306,7 +307,7 @@ export class NewsScheduler {
       
       return response.ok;
     } catch (error) {
-      console.error('Failed to publish blog post:', error);
+      logger.error('Failed to publish blog post:', error);
       return false;
     }
   }

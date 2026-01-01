@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { z } from 'zod';
+import { logger } from '@/lib/logger';
 
 export const NewsSourceSchema = z.object({
   id: z.string(),
@@ -119,7 +120,7 @@ export class NewsAggregator {
         this.sources = Array.isArray(data) ? data.map(item => NewsSourceSchema.parse(item)) : DEFAULT_NEWS_SOURCES;
       }
     } catch (error) {
-      console.warn('Failed to load news sources, using defaults:', error);
+      logger.warn('Failed to load news sources, using defaults:', error);
       this.sources = DEFAULT_NEWS_SOURCES;
     }
   }
@@ -132,7 +133,7 @@ export class NewsAggregator {
         this.processedNews = Array.isArray(data) ? data.map(item => ProcessedNewsSchema.parse(item)) : [];
       }
     } catch (error) {
-      console.warn('Failed to load processed news:', error);
+      logger.warn('Failed to load processed news:', error);
       this.processedNews = [];
     }
   }
@@ -141,7 +142,7 @@ export class NewsAggregator {
     try {
       // CORS proxy désactivé temporairement car allorigins.win retourne des erreurs
       // TODO: Utiliser une Edge Function Supabase pour récupérer les flux RSS
-      console.warn(`RSS fetch désactivé temporairement pour ${source.name} (problème CORS)`);
+      logger.warn(`RSS fetch désactivé temporairement pour ${source.name} (problème CORS)`);
       return [];
 
       /* Ancienne implémentation avec allorigins.win
@@ -183,7 +184,7 @@ export class NewsAggregator {
       return newsItems;
       */
     } catch (error) {
-      console.error(`Failed to fetch RSS from ${source.name}:`, error);
+      logger.error(`Failed to fetch RSS from ${source.name}:`, error);
       return [];
     }
   }
@@ -263,7 +264,7 @@ export class NewsAggregator {
         // Update last check time
         source.lastCheck = new Date().toISOString();
       } catch (error) {
-        console.error(`Error fetching from ${source.name}:`, error);
+        logger.error(`Error fetching from ${source.name}:`, error);
       }
     }
     
@@ -304,7 +305,7 @@ export class NewsAggregator {
       
       return response.ok;
     } catch (error) {
-      console.error('Failed to save raw news:', error);
+      logger.error('Failed to save raw news:', error);
       return false;
     }
   }

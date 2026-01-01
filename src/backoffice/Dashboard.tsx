@@ -8,6 +8,7 @@ import { checkUptime, getSEOScore } from '../lib/analytics';
 import { getLeads } from '../lib/leads';
 import AdminPing from '../components/AdminPing';
 import Card from '../components/Card';
+import { logger } from '@/lib/logger';
 
 const Dashboard: React.FC = () => {
   const [stats, setStats] = useState({
@@ -133,7 +134,7 @@ const Dashboard: React.FC = () => {
         seoScore
       });
     } catch (error) {
-      console.error('Failed to load dashboard data:', error);
+      logger.error('Failed to load dashboard data:', error);
     } finally {
       setIsLoading(false);
     }

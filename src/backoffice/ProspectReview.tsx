@@ -4,6 +4,7 @@ import { getProspects, saveProspect, saveConsent } from '../lib/partners';
 import { generateUnsubscribeToken, generateUnsubscribeUrl } from '../lib/outreach';
 import { Prospect, Consent } from '../lib/schema';
 import Card from '../components/Card';
+import { logger } from '@/lib/logger';
 
 const ProspectReview: React.FC = () => {
   const [prospects, setProspects] = useState<Prospect[]>([]);
@@ -29,7 +30,7 @@ const ProspectReview: React.FC = () => {
       const data = await getProspects();
       setProspects(data);
     } catch (error) {
-      console.error('Failed to load prospects:', error);
+      logger.error('Failed to load prospects:', error);
     } finally {
       setLoading(false);
     }
@@ -68,7 +69,7 @@ const ProspectReview: React.FC = () => {
         alert('Erreur lors de la mise à jour');
       }
     } catch (error) {
-      console.error('Update error:', error);
+      logger.error('Update error:', error);
       alert('Erreur de connexion');
     }
   };
@@ -102,7 +103,7 @@ const ProspectReview: React.FC = () => {
         alert('❌ Erreur lors de l\'enregistrement');
       }
     } catch (error) {
-      console.error('Consent save error:', error);
+      logger.error('Consent save error:', error);
       alert('❌ Erreur de connexion');
     }
   };

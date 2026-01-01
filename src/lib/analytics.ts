@@ -1,3 +1,5 @@
+import { logger } from '@/lib/logger';
+
 /**
  * Google Analytics Integration
  * Récupère les métriques réelles du site
@@ -23,7 +25,7 @@ export async function getRealAnalytics(): Promise<AnalyticsMetrics | null> {
   const GA_ID = import.meta.env.VITE_GA_MEASUREMENT_ID;
 
   if (!GA_ID) {
-    console.log('⚠️ Google Analytics non configuré - utilisation données de simulation');
+    logger.log('⚠️ Google Analytics non configuré - utilisation données de simulation');
     return getSimulatedMetrics();
   }
 
@@ -32,7 +34,7 @@ export async function getRealAnalytics(): Promise<AnalyticsMetrics | null> {
     // Pour l'instant, on utilise les données simulées basées sur le trafic réel
     return getSimulatedMetrics();
   } catch (error) {
-    console.error('Erreur récupération Analytics:', error);
+    logger.error('Erreur récupération Analytics:', error);
     return getSimulatedMetrics();
   }
 }
@@ -105,7 +107,7 @@ export async function getSEOScore(): Promise<number> {
 
     return Math.round(seoScore * 100);
   } catch (error) {
-    console.error('Erreur PageSpeed:', error);
+    logger.error('Erreur PageSpeed:', error);
     return 95; // Score simulé
   }
 }
@@ -131,7 +133,7 @@ export function initializeAnalytics() {
   const GA_ID = import.meta.env.VITE_GA_MEASUREMENT_ID;
 
   if (!GA_ID) {
-    console.log('⚠️ Google Analytics non configuré');
+    logger.log('⚠️ Google Analytics non configuré');
     return;
   }
 
@@ -149,7 +151,7 @@ export function initializeAnalytics() {
   gtag('js', new Date());
   gtag('config', GA_ID);
 
-  console.log('✅ Google Analytics initialisé');
+  logger.log('✅ Google Analytics initialisé');
 }
 
 /**

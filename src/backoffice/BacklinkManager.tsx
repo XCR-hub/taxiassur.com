@@ -3,6 +3,7 @@ import { Link, Plus, ExternalLink, CheckCircle, XCircle, Clock, Home } from 'luc
 import { getBacklinks, addBacklink, type Backlink } from '../lib/backlinks';
 import { verifyBacklink } from '../lib/ping';
 import Card from '../components/Card';
+import { logger } from '@/lib/logger';
 
 const BacklinkManager: React.FC = () => {
   const [backlinks, setBacklinks] = useState<Backlink[]>([]);
@@ -30,7 +31,7 @@ const BacklinkManager: React.FC = () => {
       const data = await getBacklinks();
       setBacklinks(data);
     } catch (error) {
-      console.error('Failed to load backlinks:', error);
+      logger.error('Failed to load backlinks:', error);
     } finally {
       setLoading(false);
     }

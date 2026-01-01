@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Sparkles, Loader2, Copy, Check, Download, Home, Save, FileText, MapPin, HelpCircle, Image as ImageIcon, Tag, Clock } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
+import { logger } from '@/lib/logger';
 
 interface UnifiedContent {
   // Article de blog
@@ -135,7 +136,7 @@ export default function AIContentGeneratorUnified() {
       }
 
       // Debug image Pexels
-      console.log('🖼️ DEBUG IMAGE PEXELS:', {
+      logger.log('🖼️ DEBUG IMAGE PEXELS:', {
         hasImage: !!data.content?.blogPost?.featuredImage,
         imageUrl: data.content?.blogPost?.featuredImage?.substring(0, 80) + '...',
         imageAlt: data.content?.blogPost?.imageAlt,
@@ -144,7 +145,7 @@ export default function AIContentGeneratorUnified() {
 
       setGeneratedContent(data.content);
     } catch (err) {
-      console.error('Generation error:', err);
+      logger.error('Generation error:', err);
       setError(err instanceof Error ? err.message : 'Erreur lors de la génération du contenu');
     } finally {
       setIsGenerating(false);
@@ -183,7 +184,7 @@ ${(generatedContent.faq || []).map(f => `**${f?.question ?? 'Q'}**\n${f?.answer 
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      console.error('Copy failed:', err);
+      logger.error('Copy failed:', err);
     }
   };
 
@@ -195,18 +196,18 @@ ${(generatedContent.faq || []).map(f => `**${f?.question ?? 'Q'}**\n${f?.answer 
     setSuccess('');
 
     try {
-      console.log('📤 Envoi du contenu vers Edge Function...');
+      logger.log('📤 Envoi du contenu vers Edge Function...');
 
       const { data, error } = await supabase.functions.invoke('publish-unified-content', {
         body: { content: generatedContent }
       });
 
       if (error) {
-        console.error('❌ Erreur Edge Function:', error);
+        logger.error('❌ Erreur Edge Function:', error);
         throw new Error(`Erreur lors de la publication: ${error.message}`);
       }
 
-      console.log('✅ Réponse Edge Function:', data);
+      logger.log('✅ Réponse Edge Function:', data);
 
       if (!data.success) {
         throw new Error(data.error || 'Erreur lors de la publication');
@@ -237,7 +238,7 @@ Total: ${generatedContent.metadata?.totalWords ?? 0} mots générés`
         setSuccess('');
       }, 3000);
     } catch (err) {
-      console.error('Publication error:', err);
+      logger.error('Publication error:', err);
       setError(err instanceof Error ? err.message : 'Erreur lors de la publication');
     } finally {
       setIsSaving(false);

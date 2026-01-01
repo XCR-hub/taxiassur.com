@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { logger } from '@/lib/logger';
 import {
   Activity,
   Brain,
@@ -76,7 +77,7 @@ export default function AutonomousSystemDashboard() {
 
       setLoading(false);
     } catch (error) {
-      console.error('Error loading dashboard:', error);
+      logger.error('Error loading dashboard:', error);
       setLoading(false);
     }
   };
@@ -95,7 +96,7 @@ export default function AutonomousSystemDashboard() {
       alert(`Self-Healing exécuté: ${result.checks_performed} vérifications, ${result.auto_fixes_applied} corrections auto`);
       loadDashboardData();
     } catch (error) {
-      console.error('Error triggering self-healing:', error);
+      logger.error('Error triggering self-healing:', error);
     }
   };
 
@@ -113,7 +114,7 @@ export default function AutonomousSystemDashboard() {
       alert(`Monitoring exécuté: ${result.anomalies?.length || 0} anomalies détectées`);
       loadDashboardData();
     } catch (error) {
-      console.error('Error triggering monitoring:', error);
+      logger.error('Error triggering monitoring:', error);
     }
   };
 

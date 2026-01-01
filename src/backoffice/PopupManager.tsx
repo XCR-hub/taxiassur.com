@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Plus, CreditCard as Edit, Trash2, Eye, EyeOff, Copy, Save, X, Monitor, Smartphone, Tablet, Home, TrendingUp, BarChart3 } from 'lucide-react';
 import { PopupConfig, PopupConfigSchema, PopupManager } from '../lib/popup';
 import Card from '../components/Card';
+import { logger } from '@/lib/logger';
 
 const PopupManagerBackoffice: React.FC = () => {
   const [popups, setPopups] = useState<PopupConfig[]>([]);
@@ -21,7 +22,7 @@ const PopupManagerBackoffice: React.FC = () => {
       const configs = await PopupManager.loadConfigs();
       setPopups(configs);
     } catch (error) {
-      console.error('Failed to load popups:', error);
+      logger.error('Failed to load popups:', error);
     } finally {
       setLoading(false);
     }
@@ -126,7 +127,7 @@ const PopupManagerBackoffice: React.FC = () => {
         alert('❌ Erreur lors de la sauvegarde');
       }
     } catch (error) {
-      console.error('Save error:', error);
+      logger.error('Save error:', error);
       alert('❌ Erreur de connexion');
     }
   };

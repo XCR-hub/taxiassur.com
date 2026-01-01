@@ -1,9 +1,11 @@
+import { logger } from '@/lib/logger';
+
 // Fonctions pour ping des moteurs de recherche et gestion des backlinks
 export async function pingSearchEngines(sitemapUrl: string): Promise<{ success: boolean; results: any[] }> {
   // Les appels directs aux APIs Google/Bing sont bloqués par CORS
   // En production, cela devrait passer par un backend ou être fait côté serveur
 
-  console.log('📡 Ping moteurs de recherche pour:', sitemapUrl);
+  logger.log('📡 Ping moteurs de recherche pour:', sitemapUrl);
 
   // Simulation du succès (les moteurs crawlent automatiquement)
   const results = [
@@ -21,7 +23,7 @@ export async function pingSearchEngines(sitemapUrl: string): Promise<{ success: 
     }
   ];
 
-  console.log('✅ Simulation ping réussie - Soumettez manuellement via Search Console pour meilleurs résultats');
+  logger.log('✅ Simulation ping réussie - Soumettez manuellement via Search Console pour meilleurs résultats');
 
   return { success: true, results };
 }

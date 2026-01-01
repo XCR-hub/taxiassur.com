@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { logger } from '@/lib/logger';
 import {
   Brain, Zap, TrendingUp, AlertTriangle, CheckCircle, Activity,
   Eye, RefreshCw, Settings, BarChart3, Target, Sparkles, Clock,
@@ -85,7 +86,7 @@ export default function MasterAI() {
       const { data, error } = await supabase.rpc('get_ai_master_dashboard');
 
       if (error) {
-        console.error('Error loading AI Master dashboard:', error);
+        logger.error('Error loading AI Master dashboard:', error);
         return;
       }
 
@@ -97,7 +98,7 @@ export default function MasterAI() {
 
       setLoading(false);
     } catch (error) {
-      console.error('Failed to load dashboard:', error);
+      logger.error('Failed to load dashboard:', error);
       setLoading(false);
     }
   };
@@ -110,7 +111,7 @@ export default function MasterAI() {
       });
 
       if (error) {
-        console.error('Error toggling automation:', error);
+        logger.error('Error toggling automation:', error);
         alert('❌ Erreur lors du changement de mode');
         return;
       }
@@ -121,7 +122,7 @@ export default function MasterAI() {
         await loadDashboardData();
       }
     } catch (error) {
-      console.error('Failed to toggle:', error);
+      logger.error('Failed to toggle:', error);
       alert('❌ Erreur de connexion');
     } finally {
       setToggling(false);

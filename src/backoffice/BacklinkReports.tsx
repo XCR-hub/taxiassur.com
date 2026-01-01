@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { logger } from '@/lib/logger';
 import {
   BarChart3, TrendingUp, Globe, Mail, Clock, CheckCircle,
   XCircle, AlertCircle, ChevronDown, ChevronUp, Eye, Send,
@@ -98,7 +99,7 @@ const BacklinkReports: React.FC = () => {
         .select('*')
         .gte('created_at', dateFrom);
 
-      if (logsError) console.error('Erreur logs:', logsError);
+      if (logsError) logger.error('Erreur logs:', logsError);
 
       if (oppsData) {
         setOpportunities(oppsData);
@@ -153,7 +154,7 @@ const BacklinkReports: React.FC = () => {
         });
       }
     } catch (error) {
-      console.error('Erreur chargement stats:', error);
+      logger.error('Erreur chargement stats:', error);
     } finally {
       setLoading(false);
     }

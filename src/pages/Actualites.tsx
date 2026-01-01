@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase';
 import { stripHtml, createSmartExcerpt } from '../lib/text-utils';
 import Footer from '../components/Footer';
 import Header from '../components/Header';
+import { logger } from '@/lib/logger';
 
 interface NewsArticle {
   id: string;
@@ -40,7 +41,7 @@ export default function Actualites() {
         .limit(20);
 
       if (error) {
-        console.error('Error loading news:', error);
+        logger.error('Error loading news:', error);
         return;
       }
 
@@ -51,7 +52,7 @@ export default function Actualites() {
 
       setNews(cleanedData);
     } catch (err) {
-      console.error('Failed to load news:', err);
+      logger.error('Failed to load news:', err);
     } finally {
       setLoading(false);
     }

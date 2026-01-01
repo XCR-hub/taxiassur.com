@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { logger } from '@/lib/logger';
 
 export const BacklinkSchema = z.object({
   id: z.string(),
@@ -44,7 +45,7 @@ export async function getBacklinks(): Promise<Backlink[]> {
     const data = await response.json();
     return Array.isArray(data) ? data.map(item => BacklinkSchema.parse(item)) : [];
   } catch (error) {
-    console.warn('Failed to load backlinks:', error);
+    logger.warn('Failed to load backlinks:', error);
     return [];
   }
 }
@@ -57,7 +58,7 @@ export async function getPartners(): Promise<Partner[]> {
     const data = await response.json();
     return Array.isArray(data) ? data.map(item => PartnerSchema.parse(item)) : [];
   } catch (error) {
-    console.warn('Failed to load partners:', error);
+    logger.warn('Failed to load partners:', error);
     return [];
   }
 }
@@ -85,7 +86,7 @@ export async function addBacklink(backlink: Omit<Backlink, 'id' | 'dateAdded'>):
 
     return response.ok;
   } catch (error) {
-    console.error('Failed to add backlink:', error);
+    logger.error('Failed to add backlink:', error);
     return false;
   }
 }
@@ -113,7 +114,7 @@ export async function addPartner(partner: Omit<Partner, 'id' | 'dateAdded'>): Pr
 
     return response.ok;
   } catch (error) {
-    console.error('Failed to add partner:', error);
+    logger.error('Failed to add partner:', error);
     return false;
   }
 }

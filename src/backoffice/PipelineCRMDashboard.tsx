@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { logger } from '@/lib/logger';
 import {
   Users,
   FileText,
@@ -67,7 +68,7 @@ export default function PipelineCRMDashboard() {
 
       setLoading(false);
     } catch (error) {
-      console.error('Error loading dashboard:', error);
+      logger.error('Error loading dashboard:', error);
       setLoading(false);
     }
   };

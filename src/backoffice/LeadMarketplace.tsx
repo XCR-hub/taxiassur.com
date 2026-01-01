@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Users, Euro, Clock, Target, TrendingUp, Eye, Download, Filter, Calendar, Home } from 'lucide-react';
 import Card from '../components/Card';
 import { supabase } from '../lib/supabase';
+import { logger } from '@/lib/logger';
 
 interface Lead {
   id: string;
@@ -49,14 +50,14 @@ const LeadMarketplace: React.FC = () => {
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Supabase error loading leads:', error);
+        logger.error('Supabase error loading leads:', error);
         setLeads([]);
         setStats({ totalLeads: 0, soldToday: 0, revenue: 0, avgPrice: 0 });
         return;
       }
 
       if (!data || data.length === 0) {
-        console.log('No leads found in database');
+        logger.log('No leads found in database');
         setLeads([]);
         setStats({ totalLeads: 0, soldToday: 0, revenue: 0, avgPrice: 0 });
         return;
@@ -98,7 +99,7 @@ const LeadMarketplace: React.FC = () => {
         avgPrice: Math.round(avgPrice)
       });
     } catch (error) {
-      console.error('Failed to load leads:', error);
+      logger.error('Failed to load leads:', error);
     } finally {
       setLoading(false);
     }

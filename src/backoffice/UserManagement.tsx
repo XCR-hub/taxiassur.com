@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Users, UserPlus, Shield, Lock, Mail, Eye, EyeOff, Edit2, Trash2, CheckCircle, XCircle, Search, Filter, RefreshCw, Key, Send } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { logger } from '@/lib/logger';
 
 interface AdminUser {
   id: string;
@@ -88,7 +89,7 @@ const UserManagement: React.FC = () => {
 
       setPermissions(permissionsMap);
     } catch (error) {
-      console.error('Error loading users:', error);
+      logger.error('Error loading users:', error);
     } finally {
       setLoading(false);
     }
@@ -115,7 +116,7 @@ const UserManagement: React.FC = () => {
       );
 
       if (authError) {
-        console.error('Auth error:', authError);
+        logger.error('Auth error:', authError);
         alert(`Erreur lors de l'invitation: ${authError.message}`);
         return;
       }
@@ -133,7 +134,7 @@ const UserManagement: React.FC = () => {
           }]);
 
         if (dbError) {
-          console.error('Database error:', dbError);
+          logger.error('Database error:', dbError);
           alert('Erreur lors de la sauvegarde des données utilisateur');
           return;
         }
@@ -159,7 +160,7 @@ const UserManagement: React.FC = () => {
       setUserPermissions({});
       loadUsers();
     } catch (error) {
-      console.error('Error inviting user:', error);
+      logger.error('Error inviting user:', error);
       alert('Erreur lors de l\'invitation de l\'utilisateur');
     } finally {
       setSending(false);
@@ -184,7 +185,7 @@ const UserManagement: React.FC = () => {
 
       alert(`Email d'invitation renvoyé à ${email} avec succès !`);
     } catch (error) {
-      console.error('Error resending invite:', error);
+      logger.error('Error resending invite:', error);
       alert('Erreur lors du renvoi de l\'invitation');
     } finally {
       setSending(false);
@@ -209,7 +210,7 @@ const UserManagement: React.FC = () => {
 
       alert(`Email de réinitialisation envoyé à ${email} avec succès !`);
     } catch (error) {
-      console.error('Error sending password reset:', error);
+      logger.error('Error sending password reset:', error);
       alert('Erreur lors de l\'envoi de la réinitialisation');
     } finally {
       setSending(false);
@@ -227,7 +228,7 @@ const UserManagement: React.FC = () => {
 
       loadUsers();
     } catch (error) {
-      console.error('Error toggling user status:', error);
+      logger.error('Error toggling user status:', error);
     }
   };
 
@@ -238,7 +239,7 @@ const UserManagement: React.FC = () => {
       const { error: authError } = await supabase.auth.admin.deleteUser(userId);
 
       if (authError) {
-        console.error('Auth delete error:', authError);
+        logger.error('Auth delete error:', authError);
       }
 
       const { error: dbError } = await supabase
@@ -251,7 +252,7 @@ const UserManagement: React.FC = () => {
       alert('Utilisateur supprimé avec succès');
       loadUsers();
     } catch (error) {
-      console.error('Error deleting user:', error);
+      logger.error('Error deleting user:', error);
       alert('Erreur lors de la suppression');
     }
   };
@@ -301,7 +302,7 @@ const UserManagement: React.FC = () => {
       setShowPermissionsModal(false);
       loadUsers();
     } catch (error) {
-      console.error('Error saving permissions:', error);
+      logger.error('Error saving permissions:', error);
       alert('Erreur lors de la sauvegarde des permissions');
     }
   };

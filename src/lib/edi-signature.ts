@@ -5,6 +5,7 @@
  */
 
 import { supabase } from './supabase';
+import { logger } from '@/lib/logger';
 
 // Configuration API EDI Signature
 const EDI_API_KEY = import.meta.env.VITE_EDI_SIGNATURE_API_KEY || '';
@@ -90,7 +91,7 @@ export async function createSignatureRequest(
     formData.append('auto_send', 'true'); // Envoyer automatiquement
     formData.append('expiration_days', '30'); // Expire après 30 jours
 
-    console.log('🔐 Envoi de la demande de signature à EDI Signature...');
+    logger.log('🔐 Envoi de la demande de signature à EDI Signature...');
 
     // Envoi à l'API EDI Signature
     const response = await fetch(`${getBaseURL()}/signature-requests`, {
@@ -109,7 +110,7 @@ export async function createSignatureRequest(
 
     const result = await response.json();
 
-    console.log('✅ Demande de signature créée:', result.id);
+    logger.log('✅ Demande de signature créée:', result.id);
 
     // Enregistrer dans Supabase
     const { data: savedRequest, error: dbError } = await supabase
@@ -127,7 +128,7 @@ export async function createSignatureRequest(
       .single();
 
     if (dbError) {
-      console.error('❌ Erreur lors de l\'enregistrement dans Supabase:', dbError);
+      logger.error('❌ Erreur lors de l\'enregistrement dans Supabase:', dbError);
       // Ne pas bloquer même si la DB échoue
     }
 
@@ -141,7 +142,7 @@ export async function createSignatureRequest(
       },
     };
   } catch (error) {
-    console.error('❌ Erreur lors de la création de la demande de signature:', error);
+    logger.error('❌ Erreur lors de la création de la demande de signature:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Erreur inconnue',
@@ -179,7 +180,7 @@ export async function getSignatureRequestStatus(
       data: result,
     };
   } catch (error) {
-    console.error('❌ Erreur lors de la récupération du statut:', error);
+    logger.error('❌ Erreur lors de la récupération du statut:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Erreur inconnue',
@@ -222,7 +223,7 @@ export async function downloadSignedDocument(
       filename,
     };
   } catch (error) {
-    console.error('❌ Erreur lors du téléchargement:', error);
+    logger.error('❌ Erreur lors du téléchargement:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Erreur inconnue',
@@ -261,7 +262,7 @@ export async function cancelSignatureRequest(
 
     return { success: true };
   } catch (error) {
-    console.error('❌ Erreur lors de l\'annulation:', error);
+    logger.error('❌ Erreur lors de l\'annulation:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Erreur inconnue',
@@ -283,7 +284,7 @@ export async function getSignatureRequestsForLead(
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('❌ Erreur Supabase:', error);
+      logger.error('❌ Erreur Supabase:', error);
       return [];
     }
 
@@ -306,7 +307,7 @@ export async function getSignatureRequestsForLead(
       updatedAt: row.updated_at,
     }));
   } catch (error) {
-    console.error('❌ Erreur lors de la récupération des demandes:', error);
+    logger.error('❌ Erreur lors de la récupération des demandes:', error);
     return [];
   }
 }
@@ -320,7 +321,7 @@ export function verifyWebhookSignature(
 ): boolean {
   // Note: Cette fonction nécessite une implémentation côté serveur
   // pour des raisons de sécurité (secret ne doit pas être exposé côté client)
-  console.warn('⚠️ Vérification webhook doit être faite côté serveur');
+  logger.warn('⚠️ Vérification webhook doit être faite côté serveur');
   return true;
 }
 

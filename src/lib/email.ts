@@ -1,6 +1,7 @@
 import { Lead } from './schema';
 import { SecureLead } from './security';
 import { supabase } from './supabase';
+import { logger } from '@/lib/logger';
 
 export async function submitLead(leadData: Lead): Promise<{ success: boolean; error?: string }> {
   try {
@@ -20,7 +21,7 @@ export async function submitLead(leadData: Lead): Promise<{ success: boolean; er
       return { success: false, error: result.error || 'Erreur lors de l\'envoi' };
     }
   } catch (error) {
-    console.error('Lead submission error:', error);
+    logger.error('Lead submission error:', error);
     return { 
       success: false, 
       error: error instanceof Error ? error.message : 'Erreur de connexion' 
@@ -50,7 +51,7 @@ export async function submitSecureLead(leadData: SecureLead): Promise<{ success:
       .single();
 
     if (dbError) {
-      console.error('Database error:', dbError);
+      logger.error('Database error:', dbError);
       return { success: false, error: 'Erreur lors de l\'enregistrement' };
     }
 
@@ -90,7 +91,7 @@ export async function submitSecureLead(leadData: SecureLead): Promise<{ success:
 
     return { success: true };
   } catch (error) {
-    console.error('Secure lead submission error:', error);
+    logger.error('Secure lead submission error:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Erreur de connexion'
@@ -109,7 +110,7 @@ async function sendEmail(params: {
   });
 
   if (error) {
-    console.error('Email error:', error);
+    logger.error('Email error:', error);
     throw error;
   }
 

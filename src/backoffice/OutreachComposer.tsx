@@ -4,6 +4,7 @@ import { getProspects, getOutreaches, saveOutreach, sendOutreach } from '../lib/
 import { getTemplates, renderTemplate, generateUnsubscribeToken, validateEmailContent } from '../lib/outreach';
 import { Prospect, Outreach } from '../lib/schema';
 import Card from '../components/Card';
+import { logger } from '@/lib/logger';
 
 const OutreachComposer: React.FC = () => {
   const [prospects, setProspects] = useState<Prospect[]>([]);
@@ -38,7 +39,7 @@ const OutreachComposer: React.FC = () => {
       setProspects(prospectsData.filter(p => p.status === 'qualified' && p.publicEmail));
       setOutreaches(outreachData);
     } catch (error) {
-      console.error('Failed to load data:', error);
+      logger.error('Failed to load data:', error);
     } finally {
       setLoading(false);
     }
@@ -135,7 +136,7 @@ const OutreachComposer: React.FC = () => {
           // Wait between sends (rate limiting)
           await new Promise(resolve => setTimeout(resolve, 2000));
         } catch (error) {
-          console.error(`Failed to send to ${prospect.publicEmail}:`, error);
+          logger.error(`Failed to send to ${prospect.publicEmail}:`, error);
           errorCount++;
         }
       }
@@ -144,7 +145,7 @@ const OutreachComposer: React.FC = () => {
       setSelectedProspects([]);
       loadData(); // Refresh data
     } catch (error) {
-      console.error('Campaign error:', error);
+      logger.error('Campaign error:', error);
       alert('❌ Erreur lors de la campagne');
     } finally {
       setSending(false);

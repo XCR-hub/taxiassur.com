@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Shield, AlertTriangle, Activity, Lock, Eye, TrendingUp, Users, Globe, Home, RefreshCw, Download, BarChart3, Clock, CheckCircle, XCircle } from 'lucide-react';
 import Card from '../components/Card';
 import { supabase } from '../lib/supabase';
+import { logger } from '@/lib/logger';
 
 interface SecurityLog {
   id: string;
@@ -96,7 +97,7 @@ const SecurityDashboard: React.FC = () => {
         .limit(50);
 
       if (logsError) {
-        console.error('Error loading security logs:', logsError);
+        logger.error('Error loading security logs:', logsError);
       } else {
         setSecurityLogs(logs || []);
       }
@@ -168,7 +169,7 @@ const SecurityDashboard: React.FC = () => {
 
       setLastRefresh(new Date());
     } catch (error) {
-      console.error('Failed to load security data:', error);
+      logger.error('Failed to load security data:', error);
     } finally {
       setLoading(false);
     }

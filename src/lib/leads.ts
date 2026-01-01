@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { supabase } from './supabase';
+import { logger } from '@/lib/logger';
 
 export const LeadStatusSchema = z.enum(['nouveau', 'contacté', 'devis envoyé', 'client', 'perdu']);
 
@@ -57,7 +58,7 @@ const statusFromDb: Record<string, LeadStatus> = {
 
 export async function getLeads(): Promise<Lead[]> {
   try {
-    console.log('🔍 Fetching leads from Supabase...');
+    logger.log('🔍 Fetching leads from Supabase...');
 
     const { data: leadsData, error } = await supabase
       .from('leads')
@@ -65,12 +66,12 @@ export async function getLeads(): Promise<Lead[]> {
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('❌ Supabase error:', error);
+      logger.error('❌ Supabase error:', error);
       return [];
     }
 
     const leads = leadsData || [];
-    console.log(`✅ Found ${leads.length} leads from Supabase`);
+    logger.log(`✅ Found ${leads.length} leads from Supabase`);
 
     return leads.map((lead: any) => {
       const dbStatus = lead.lead_status || 'nouveau';
@@ -97,7 +98,7 @@ export async function getLeads(): Promise<Lead[]> {
       };
     });
   } catch (error) {
-    console.error('Failed to load leads:', error);
+    logger.error('Failed to load leads:', error);
     return [];
   }
 }
@@ -112,11 +113,11 @@ export async function updateLeadStatus(
   }
 ): Promise<boolean> {
   try {
-    console.log('🔄 Updating lead status:', { leadId, newStatus, additionalData });
+    logger.log('🔄 Updating lead status:', { leadId, newStatus, additionalData });
 
     // Utiliser directement le statut français (plus de conversion nécessaire)
     const dbStatus = newStatus;
-    console.log('📝 Using status:', { status: dbStatus });
+    logger.log('📝 Using status:', { status: dbStatus });
 
     // Préparer les champs de date basés sur le statut
     const dateFields: Record<string, string> = {
@@ -145,7 +146,7 @@ export async function updateLeadStatus(
       updateData.notes = additionalData.notes;
     }
 
-    console.log('📤 Sending to Supabase:', updateData);
+    logger.log('📤 Sending to Supabase:', updateData);
 
     const { data, error } = await supabase
       .from('leads')
@@ -155,16 +156,16 @@ export async function updateLeadStatus(
       .single();
 
     if (error) {
-      console.error('❌ Supabase update error:', error);
-      console.error('❌ Error details:', JSON.stringify(error, null, 2));
+      logger.error('❌ Supabase update error:', error);
+      logger.error('❌ Error details:', JSON.stringify(error, null, 2));
       throw error;
     }
 
-    console.log('✅ Lead status updated successfully:', data);
-    console.log('✅ New lead_status in DB:', data?.lead_status);
+    logger.log('✅ Lead status updated successfully:', data);
+    logger.log('✅ New lead_status in DB:', data?.lead_status);
     return true;
   } catch (error) {
-    console.error('Failed to update lead status:', error);
+    logger.error('Failed to update lead status:', error);
     return false;
   }
 }
@@ -184,18 +185,18 @@ export async function sendDevisEmail(leadId: string, attachment?: File | null): 
       });
 
       if (!response.ok) {
-        console.error('HTTP error:', response.status);
+        logger.error('HTTP error:', response.status);
         throw new Error('Email sending failed');
       }
 
       const result = await response.json();
 
       if (!result.success) {
-        console.error('API error:', result.error);
+        logger.error('API error:', result.error);
         throw new Error(result.error || 'Failed to send devis');
       }
 
-      console.log('✅ Devis email sent successfully with attachment');
+      logger.log('✅ Devis email sent successfully with attachment');
       return true;
     } else {
       // Sans pièce jointe : utiliser JSON
@@ -211,22 +212,22 @@ export async function sendDevisEmail(leadId: string, attachment?: File | null): 
       });
 
       if (!response.ok) {
-        console.error('HTTP error:', response.status);
+        logger.error('HTTP error:', response.status);
         throw new Error('Email sending failed');
       }
 
       const result = await response.json();
 
       if (!result.success) {
-        console.error('API error:', result.error);
+        logger.error('API error:', result.error);
         throw new Error(result.error || 'Failed to send devis');
       }
 
-      console.log('✅ Devis email sent successfully');
+      logger.log('✅ Devis email sent successfully');
       return true;
     }
   } catch (error) {
-    console.error('❌ Failed to send devis:', error);
+    logger.error('❌ Failed to send devis:', error);
     return false;
   }
 }
@@ -258,18 +259,18 @@ export async function sendContractEmail(leadId: string, attachment?: File | null
       });
 
       if (!response.ok) {
-        console.error('HTTP error:', response.status);
+        logger.error('HTTP error:', response.status);
         throw new Error('Email sending failed');
       }
 
       const result = await response.json();
 
       if (!result.success) {
-        console.error('API error:', result.error);
+        logger.error('API error:', result.error);
         throw new Error(result.error || 'Failed to send contract');
       }
 
-      console.log('✅ Contract email sent successfully with attachment');
+      logger.log('✅ Contract email sent successfully with attachment');
       return true;
     } else {
       // Sans pièce jointe : utiliser JSON
@@ -285,22 +286,22 @@ export async function sendContractEmail(leadId: string, attachment?: File | null
       });
 
       if (!response.ok) {
-        console.error('HTTP error:', response.status);
+        logger.error('HTTP error:', response.status);
         throw new Error('Email sending failed');
       }
 
       const result = await response.json();
 
       if (!result.success) {
-        console.error('API error:', result.error);
+        logger.error('API error:', result.error);
         throw new Error(result.error || 'Failed to send contract');
       }
 
-      console.log('✅ Contract email sent successfully');
+      logger.log('✅ Contract email sent successfully');
       return true;
     }
   } catch (error) {
-    console.error('❌ Failed to send contract:', error);
+    logger.error('❌ Failed to send contract:', error);
     return false;
   }
 }

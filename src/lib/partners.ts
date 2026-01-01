@@ -1,5 +1,6 @@
 import { Prospect, Consent, Outreach, Directory, Backlink, Campaign, ProspectSchema, ConsentSchema, OutreachSchema, DirectorySchema, BacklinkSchema, CampaignSchema } from './schema';
 import { supabase } from './supabase';
+import { logger } from '@/lib/logger';
 
 // Generic CRUD operations for partnership data
 async function fetchLocalContent<T>(type: string, schema: any): Promise<T[]> {
@@ -42,14 +43,14 @@ async function fetchLocalContent<T>(type: string, schema: any): Promise<T[]> {
             items.push(validated);
           }
         } catch (error) {
-          console.warn(`Failed to load ${filename}:`, error);
+          logger.warn(`Failed to load ${filename}:`, error);
         }
       }
     }
     
     return items;
   } catch (error) {
-    console.warn(`Failed to load ${type} content:`, error);
+    logger.warn(`Failed to load ${type} content:`, error);
     return [];
   }
 }
@@ -71,7 +72,7 @@ async function saveContent<T>(type: string, id: string, data: T): Promise<boolea
     
     return response.ok;
   } catch (error) {
-    console.error(`Failed to save ${type}:`, error);
+    logger.error(`Failed to save ${type}:`, error);
     return false;
   }
 }
@@ -112,7 +113,7 @@ export async function getProspects(): Promise<Prospect[]> {
         }));
       }
     } catch (error) {
-      console.warn('Supabase prospects fetch failed, falling back to local:', error);
+      logger.warn('Supabase prospects fetch failed, falling back to local:', error);
     }
   }
 
@@ -144,7 +145,7 @@ export async function saveProspect(prospect: Prospect): Promise<boolean> {
 
       if (!error) return true;
     } catch (error) {
-      console.warn('Supabase prospect save failed, falling back to local:', error);
+      logger.warn('Supabase prospect save failed, falling back to local:', error);
     }
   }
 
@@ -168,7 +169,7 @@ export async function batchSaveProspects(prospects: Prospect[]): Promise<boolean
     
     return response.ok;
   } catch (error) {
-    console.error('Failed to batch save prospects:', error);
+    logger.error('Failed to batch save prospects:', error);
     return false;
   }
 }
@@ -190,7 +191,7 @@ export async function recordOptOut(email: string, token: string): Promise<boolea
     
     return response.ok;
   } catch (error) {
-    console.error('Failed to record opt-out:', error);
+    logger.error('Failed to record opt-out:', error);
     return false;
   }
 }
@@ -234,7 +235,7 @@ export async function sendOutreach(outreach: Outreach): Promise<boolean> {
     
     return false;
   } catch (error) {
-    console.error('Failed to send outreach:', error);
+    logger.error('Failed to send outreach:', error);
     return false;
   }
 }
@@ -248,7 +249,7 @@ export async function getDirectories(): Promise<Directory[]> {
     const data = await response.json();
     return Array.isArray(data) ? data.map(item => DirectorySchema.parse(item)) : [];
   } catch (error) {
-    console.warn('Failed to load directories:', error);
+    logger.warn('Failed to load directories:', error);
     return [];
   }
 }
@@ -269,7 +270,7 @@ export async function submitToDirectory(directoryId: string, submissionData: Rec
     
     return response.ok;
   } catch (error) {
-    console.error('Failed to submit to directory:', error);
+    logger.error('Failed to submit to directory:', error);
     return false;
   }
 }

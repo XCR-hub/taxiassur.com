@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { MapPin, Plus, Loader, CheckCircle, XCircle, AlertCircle, Image, FileText, Newspaper, HelpCircle } from 'lucide-react';
 import Card from '../components/Card';
 import { supabase } from '../lib/supabase';
+import { logger } from '@/lib/logger';
 
 interface GenerationResult {
   success: boolean;
@@ -108,7 +109,7 @@ const CityPageGenerator: React.FC = () => {
         });
       }
     } catch (error) {
-      console.error('Generation error:', error);
+      logger.error('Generation error:', error);
       setResult({
         success: false,
         message: 'Erreur réseau',

@@ -4,6 +4,7 @@
  */
 
 import { MIRROR_PAGES } from './mirror-pages';
+import { logger } from '@/lib/logger';
 
 export interface SEOAutomationConfig {
   enabled: boolean;
@@ -124,7 +125,7 @@ export async function pingSearchEngines(): Promise<{
  */
 export async function notifyPageUpdate(pageUrl: string): Promise<boolean> {
   // IndexNow removed - now handled by search engines crawling
-  console.log('[SEO] Page update:', pageUrl);
+  logger.log('[SEO] Page update:', pageUrl);
   return true;
 }
 
@@ -137,7 +138,7 @@ export async function notifyBulkPageUpdates(pageUrls: string[]): Promise<{
   failCount: number;
 }> {
   // IndexNow removed - now handled by search engines crawling
-  console.log('[SEO] Bulk page updates:', pageUrls.length, 'pages');
+  logger.log('[SEO] Bulk page updates:', pageUrls.length, 'pages');
   return {
     success: true,
     successCount: pageUrls.length,
@@ -174,7 +175,7 @@ export async function runDailyAutomation(): Promise<{
     const pingResult = await pingSearchEngines();
     results.ping = pingResult.success;
   } catch (error) {
-    console.error('[SEO Automation] Daily task failed:', error);
+    logger.error('[SEO Automation] Daily task failed:', error);
   }
 
   return results;

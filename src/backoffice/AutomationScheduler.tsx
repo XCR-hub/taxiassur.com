@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Calendar, Clock, Zap, Play, Pause, Settings, TrendingUp, FileText, HelpCircle, BarChart3, RefreshCw, Eye, Hash, CheckCircle, AlertCircle, Sparkles } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { logger } from '@/lib/logger';
 
 interface ScheduleConfig {
   id: string;
@@ -63,7 +64,7 @@ export default function AutomationScheduler() {
       if (error) throw error;
       setSchedules(data || []);
     } catch (err) {
-      console.error('Error loading schedules:', err);
+      logger.error('Error loading schedules:', err);
       setError('Erreur de chargement des planifications');
     }
   };
@@ -92,7 +93,7 @@ export default function AutomationScheduler() {
 
       setStats(stats);
     } catch (err) {
-      console.error('Error loading stats:', err);
+      logger.error('Error loading stats:', err);
     }
   };
 
@@ -118,7 +119,7 @@ export default function AutomationScheduler() {
 
       setRecentContent(recent);
     } catch (err) {
-      console.error('Error loading recent content:', err);
+      logger.error('Error loading recent content:', err);
     }
   };
 
@@ -140,7 +141,7 @@ export default function AutomationScheduler() {
 
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
-      console.error('Error updating schedule:', err);
+      logger.error('Error updating schedule:', err);
       setError('Erreur de mise à jour');
     } finally {
       setSaving(false);
@@ -180,7 +181,7 @@ export default function AutomationScheduler() {
 
       setTimeout(() => setSuccess(''), 5000);
     } catch (err) {
-      console.error('Error generating content:', err);
+      logger.error('Error generating content:', err);
       setError('Erreur lors de la génération');
     } finally {
       setGenerating(null);
