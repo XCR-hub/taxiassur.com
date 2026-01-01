@@ -89,6 +89,7 @@ const CRMCommercial = lazy(() => import('./backoffice/CRMCommercial'));
 const WhatsAppManager = lazy(() => import('./backoffice/WhatsAppManager'));
 const WhatsAppSettings = lazy(() => import('./backoffice/WhatsAppSettings'));
 const AutomationDashboard = lazy(() => import('./backoffice/AutomationDashboard'));
+const AutonomousSystemDashboard = lazy(() => import('./backoffice/AutonomousSystemDashboard'));
 const EspaceClient = lazy(() => import('./pages/EspaceClient'));
 const ClientDashboard = lazy(() => import('./pages/client/ClientDashboard'));
 const ClientDocuments = lazy(() => import('./pages/client/ClientDocuments'));
@@ -548,6 +549,10 @@ export const router = createBrowserRouter([
   {
     path: '/backoffice/ai-autonomous',
     element: <AuthGuard><SuspenseWrapper><AIAutonomousDashboard /></SuspenseWrapper></AuthGuard>
+  },
+  {
+    path: '/backoffice/autonomous-system',
+    element: <AuthGuard><SuspenseWrapper><AutonomousSystemDashboard /></SuspenseWrapper></AuthGuard>
   },
   {
     path: '/backoffice/trend-analyzer',
