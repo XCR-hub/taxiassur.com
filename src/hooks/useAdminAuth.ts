@@ -26,6 +26,7 @@ export function useAdminAuth() {
   useEffect(() => {
     let mounted = true;
     let authInitialized = false;
+    let isLoadingUser = false;
 
     const initAuth = async () => {
       if (!mounted) return;
@@ -66,7 +67,7 @@ export function useAdminAuth() {
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('🔐 Auth state changed:', event, 'Session:', !!session);
 
-      if (!mounted) return;
+      if (!mounted || isLoadingUser) return;
 
       if (event === 'SIGNED_IN' && session?.user) {
         await loadAdminUser(session.user.email!);
@@ -102,7 +103,8 @@ export function useAdminAuth() {
 
       if (error) {
         console.error('❌ Error loading admin user:', error);
-        throw error;
+        setState({ user: null, loading: false, isAuthenticated: false });
+        return;
       }
 
       console.log('👤 Admin user data:', adminUser ? 'Found' : 'Not found');
@@ -123,8 +125,7 @@ export function useAdminAuth() {
           isAuthenticated: true,
         });
       } else {
-        console.warn('⚠️ Admin user not found or inactive, signing out');
-        await supabase.auth.signOut();
+        console.warn('⚠️ Admin user not found or inactive');
         setState({ user: null, loading: false, isAuthenticated: false });
       }
     } catch (error) {

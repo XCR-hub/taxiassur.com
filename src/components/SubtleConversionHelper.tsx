@@ -19,24 +19,11 @@ export default function SubtleConversionHelper() {
       const timer = setTimeout(() => {
         setShowHelper(true);
         sessionStorage.setItem('helper_shown', 'true');
-      }, 30000);
+      }, 120000);
 
       return () => clearTimeout(timer);
     }
   }, []);
-
-  useEffect(() => {
-    if (hasInteracted) return;
-
-    const handleMouseLeave = (e: MouseEvent) => {
-      if (e.clientY <= 0 && !showExitIntent) {
-        setShowExitIntent(true);
-      }
-    };
-
-    document.addEventListener('mouseleave', handleMouseLeave);
-    return () => document.removeEventListener('mouseleave', handleMouseLeave);
-  }, [showExitIntent, hasInteracted]);
 
   const handleAction = (action: string) => {
     setHasInteracted(true);
@@ -70,49 +57,49 @@ export default function SubtleConversionHelper() {
     <>
       {showHelper && (
         <div className="fixed bottom-6 right-6 z-40 animate-slide-in-right">
-          <div className="bg-white rounded-xl shadow-2xl border border-gray-200 max-w-sm p-5">
+          <div className="bg-white rounded-xl shadow-2xl border border-orange-200 max-w-sm p-4">
             <div className="flex items-start justify-between mb-3">
               <div className="flex items-center gap-2">
                 <div className="w-10 h-10 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-full flex items-center justify-center">
                   <MessageCircle className="w-5 h-5 text-black" />
                 </div>
                 <div>
-                  <div className="font-semibold text-gray-900">Besoin d'aide ?</div>
-                  <div className="text-xs text-gray-500">Nous sommes là pour vous</div>
+                  <div className="text-sm font-semibold text-gray-900">Besoin d'aide ?</div>
+                  <div className="text-xs text-gray-500">Discutez avec un expert</div>
                 </div>
               </div>
               <button
                 onClick={handleDismiss}
                 className="text-gray-400 hover:text-gray-600 transition-colors"
               >
-                <X size={18} />
+                <X size={16} />
               </button>
             </div>
 
-            <p className="text-sm text-gray-600 mb-4">
-              Obtenez votre devis personnalisé ou discutez avec un expert.
+            <p className="text-xs text-gray-600 mb-3">
+              Devis gratuit en 2 minutes
             </p>
 
             <div className="flex gap-2">
               <button
                 onClick={() => handleAction('form')}
-                className="flex-1 bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-black font-semibold py-2.5 px-4 rounded-lg transition-all text-sm flex items-center justify-center gap-2"
+                className="flex-1 bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-black font-semibold py-2 px-3 rounded-lg transition-all text-xs flex items-center justify-center gap-1"
               >
                 Devis gratuit
-                <ChevronRight size={16} />
+                <ChevronRight size={14} />
               </button>
               <button
                 onClick={() => handleAction('phone')}
-                className="bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2.5 px-4 rounded-lg transition-all"
+                className="bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2 px-3 rounded-lg transition-all"
               >
-                <Phone size={18} />
+                <Phone size={16} />
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {showExitIntent && !showHelper && (
+      {false && showExitIntent && !showHelper && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
           <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full animate-scale-in">
             <div className="p-6">

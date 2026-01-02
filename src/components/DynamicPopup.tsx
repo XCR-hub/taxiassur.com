@@ -139,80 +139,47 @@ const DynamicPopup: React.FC<DynamicPopupProps> = ({
                       config.content.ctaAction === 'email' ? Mail : Gift;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
-      <div className={`bg-white rounded-2xl ${getSizeClass()} w-full shadow-2xl transform ${getAnimationClass()}`}>
-        {/* Header */}
-        <div className={`relative ${themeColors.header} text-white p-6 rounded-t-2xl`}>
+    <div className="fixed bottom-6 right-6 z-40 max-w-sm animate-slide-in-right">
+      <div className="bg-white rounded-xl shadow-2xl border-2 border-orange-200 overflow-hidden">
+        {/* Header compact */}
+        <div className={`relative ${themeColors.header} text-white px-4 py-3`}>
           <button
             onClick={handleClose}
-            className="absolute top-4 right-4 text-white hover:text-gray-200 transition-colors"
+            className="absolute top-2 right-2 text-white hover:text-gray-200 transition-colors"
           >
-            <X size={20} />
+            <X size={16} />
           </button>
-          
-          <div className="text-center">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-white bg-opacity-20 rounded-full mb-4">
-              <IconComponent size={32} />
+
+          <div className="flex items-center space-x-3">
+            <div className="flex items-center justify-center w-10 h-10 bg-white bg-opacity-20 rounded-lg">
+              <IconComponent size={20} />
             </div>
-            <h3 className="text-xl font-bold mb-2">{config.content.title}</h3>
-            <p className="text-white text-opacity-90">{config.content.subtitle}</p>
+            <div className="flex-1">
+              <h3 className="text-sm font-bold">{config.content.title}</h3>
+              <p className="text-xs text-white text-opacity-90">{config.content.subtitle}</p>
+            </div>
           </div>
         </div>
 
-        {/* Content */}
-        <div className="p-6">
-          <div className="text-center mb-6">
-            <p className="text-gray-700 mb-4">{config.content.description}</p>
-            
-            {/* Countdown si urgence */}
-            {config.content.urgencyText && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
-                <div className="flex items-center justify-center space-x-2 text-red-600">
-                  <Clock size={20} />
-                  {config.content.urgencyText.includes('minute') ? (
-                    <span className="font-bold text-lg">{formatTime(timeLeft)}</span>
-                  ) : (
-                    <span className="font-bold">{config.content.urgencyText}</span>
-                  )}
-                </div>
-              </div>
-            )}
+        {/* Content compact */}
+        <div className="p-4">
+          <p className="text-sm text-gray-700 mb-3">{config.content.description}</p>
 
-            {/* Benefits */}
-            {config.content.benefits.length > 0 && (
-              <div className="space-y-2 mb-6">
-                {config.content.benefits.map((benefit, index) => (
-                  <div key={index} className="flex items-center space-x-2 text-sm text-gray-700">
-                    <CheckCircle className="text-green-500" size={16} />
-                    <span>{benefit}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Actions */}
-          <div className="space-y-3">
+          {/* Actions compactes */}
+          <div className="space-y-2">
             <button
               onClick={handleClick}
-              className={`w-full ${themeColors.button} text-white font-bold py-4 px-6 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg`}
+              className={`w-full ${themeColors.button} text-white text-sm font-bold py-2.5 px-4 rounded-lg transition-all duration-300 hover:scale-105 shadow-lg`}
             >
               {config.content.ctaText}
             </button>
-            
+
             <button
               onClick={handleClose}
-              className="w-full text-gray-600 hover:text-orange-600 text-sm transition-colors"
+              className="w-full text-gray-500 hover:text-gray-700 text-xs transition-colors"
             >
-              Non merci, je préfère payer plus cher
+              Fermer
             </button>
-          </div>
-
-          {/* Social proof */}
-          <div className="mt-4 text-center">
-            <p className="text-xs text-gray-600">
-              Rejoint par 100+ chauffeurs satisfaits • Objectif excellence
-            </p>
           </div>
         </div>
       </div>
