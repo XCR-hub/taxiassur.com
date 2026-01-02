@@ -344,7 +344,7 @@ export async function createLead(input: CreateLeadInput): Promise<{ success: boo
     logger.log('Creating lead in Supabase:', { name: input.name, email: input.email });
 
     const { data, error } = await supabase
-      .from('crm_leads')
+      .from('leads')
       .insert({
         name: input.name,
         email: input.email,
