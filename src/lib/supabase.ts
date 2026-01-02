@@ -52,13 +52,8 @@ const getSupabaseInstance = () => {
   return supabaseInstance;
 };
 
-// Export lazy-initialized instance to prevent circular dependency
-export const supabase = new Proxy({} as ReturnType<typeof createClient>, {
-  get(target, prop) {
-    const instance = getSupabaseInstance();
-    return instance[prop as keyof typeof instance];
-  }
-});
+// Export singleton instance directly - initialized on first import
+export const supabase = getSupabaseInstance();
 
 // Supabase ADMIN client with Service Role Key (WRITE operations from backoffice)
 // Bypasses RLS - Use only for authenticated admin operations
