@@ -13,7 +13,7 @@ declare global {
 // Singleton instance - created once and reused
 let supabaseInstance: ReturnType<typeof createClient> | null = null;
 
-const initSupabase = () => {
+const getSupabaseInstance = () => {
   // Check global instance first to prevent HMR duplicates
   if (typeof window !== 'undefined' && window.__TAXIASSUR_SUPABASE__) {
     return window.__TAXIASSUR_SUPABASE__;
@@ -30,7 +30,7 @@ const initSupabase = () => {
     supabaseUrl = getSupabaseUrl();
     supabaseAnonKey = getSupabaseAnonKey();
   } catch (error) {
-    logger.error('Supabase configuration error:', error);
+    console.error('Supabase configuration error:', error);
     // Fallback to avoid app crash
     supabaseUrl = 'https://drohhxrkoequjphvabvq.supabase.co';
     supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRyb2hoeHJrb2VxdWpwaHZhYnZxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk3ODM3NjAsImV4cCI6MjA3NTM1OTc2MH0.LP9fh10fY0nRDjpG4VW2yGZ5sT4BkiDalox8ToMbMlg';
@@ -52,8 +52,13 @@ const initSupabase = () => {
   return supabaseInstance;
 };
 
-// Export singleton instance directly
-export const supabase = initSupabase();
+// Export lazy-initialized instance to prevent circular dependency
+export const supabase = new Proxy({} as ReturnType<typeof createClient>, {
+  get(target, prop) {
+    const instance = getSupabaseInstance();
+    return instance[prop as keyof typeof instance];
+  }
+});
 
 // Supabase ADMIN client with Service Role Key (WRITE operations from backoffice)
 // Bypasses RLS - Use only for authenticated admin operations
