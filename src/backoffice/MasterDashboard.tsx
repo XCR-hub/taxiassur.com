@@ -45,44 +45,56 @@ const MasterDashboard: React.FC = () => {
   // Charger les stats temps réel
   const loadRealtimeStats = async () => {
     try {
-      // Essayer d'abord la fonction RPC
-      const { data: rpcData, error: rpcError } = await supabase
-        .rpc('get_realtime_stats');
+      // Récupérer TOUS les leads depuis la base
+      const { data: allLeads, error: leadsError } = await supabase
+        .from('leads')
+        .select('status, created_at, lead_status, city')
+        .order('created_at', { ascending: false });
 
-      if (!rpcError && rpcData && rpcData.length > 0) {
-        const stats = rpcData[0];
-        setStats({
-          active_sessions: parseInt(stats.active_sessions) || 0,
-          today_sessions: parseInt(stats.today_sessions) || 0,
-          today_conversions: parseInt(stats.today_conversions) || 0,
-          today_quote_requests: parseInt(stats.today_quote_requests) || 0,
-          pending_quotes: parseInt(stats.pending_quotes) || 0,
-          avg_session_duration: parseFloat(stats.avg_session_duration) || 0,
-          top_traffic_source: stats.top_traffic_source || 'Direct',
-          top_city: stats.top_city || 'Paris'
-        });
+      if (leadsError) {
+        logger.error('Erreur récupération leads:', leadsError);
         return;
       }
 
-      // Fallback: utiliser les leads directement
-      const { data: leadsData } = await supabase
-        .from('leads')
-        .select('status, created_at')
-        .gte('created_at', new Date(new Date().setHours(0, 0, 0, 0)).toISOString());
+      if (allLeads) {
+        const now = new Date();
+        const todayStart = new Date(now.setHours(0, 0, 0, 0));
 
-      if (leadsData) {
-        const today_conversions = leadsData.filter(l => l.status === 'client').length;
-        const pending_quotes = leadsData.filter(l => l.status === 'nouveau' || l.status === 'contacte').length;
+        // Filtrer les leads d'aujourd'hui
+        const todayLeads = allLeads.filter(l =>
+          new Date(l.created_at) >= todayStart
+        );
+
+        // Calculer les conversions (statut client)
+        const today_conversions = todayLeads.filter(l =>
+          l.lead_status === 'client' || l.status === 'client'
+        ).length;
+
+        // Calculer les devis en attente
+        const pending_quotes = allLeads.filter(l =>
+          l.lead_status === 'nouveau' ||
+          l.lead_status === 'contacte' ||
+          l.status === 'nouveau' ||
+          l.status === 'contacte'
+        ).length;
+
+        // Trouver la ville la plus fréquente aujourd'hui
+        const cityCount: Record<string, number> = {};
+        todayLeads.forEach(lead => {
+          const city = lead.city || 'N/A';
+          cityCount[city] = (cityCount[city] || 0) + 1;
+        });
+        const topCity = Object.entries(cityCount).sort((a, b) => b[1] - a[1])[0]?.[0] || 'N/A';
 
         setStats({
           active_sessions: 0,
-          today_sessions: leadsData.length,
+          today_sessions: todayLeads.length,
           today_conversions,
-          today_quote_requests: leadsData.length,
+          today_quote_requests: todayLeads.length,
           pending_quotes,
           avg_session_duration: 0,
           top_traffic_source: 'Direct',
-          top_city: 'N/A'
+          top_city: topCity
         });
       }
     } catch (error) {
