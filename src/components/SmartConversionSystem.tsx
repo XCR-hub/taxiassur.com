@@ -137,10 +137,12 @@ const SmartConversionSystem: React.FC<SmartConversionSystemProps> = ({ onClose }
           session_id: sessionId
         }),
         supabase.from('leads').insert({
+          name: email.split('@')[0] || 'Prospect',
           email,
           phone,
+          city: 'Non spécifié',
           source: `notification_${activeNotification}`,
-          message: 'Lead capturé via notification intelligente'
+          notes: 'Lead capturé via notification intelligente'
         }),
         supabase.from('conversion_popups_tracking').insert({
           popup_type: activeNotification || 'unknown',
