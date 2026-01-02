@@ -12,7 +12,11 @@
     Header always set Access-Control-Allow-Origin "*"
     Header always set Access-Control-Allow-Methods "GET, POST, OPTIONS"
     Header always set Access-Control-Allow-Headers "Content-Type, X-Requested-With, Authorization"
-    Header always set Content-Type "application/json; charset=UTF-8"
+
+    # Content-Type JSON uniquement si le fichier existe et pas d'erreur
+    <FilesMatch "\.php$">
+        Header set Content-Type "application/json; charset=UTF-8" env=!REDIRECT_STATUS
+    </FilesMatch>
 </IfModule>
 
 # Traiter les requêtes OPTIONS (CORS preflight)

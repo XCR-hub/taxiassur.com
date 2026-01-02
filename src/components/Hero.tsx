@@ -4,6 +4,7 @@ import { CheckCircle, Phone, Send, Shield, Clock, Award, TrendingDown, Zap, Targ
 import AITaxiBackground from './AITaxiBackground';
 import { useRealStats } from '../hooks/useRealStats';
 import { logger } from '@/lib/logger';
+import { submitLead, getErrorMessage } from '@/lib/api-client';
 
 const Hero: React.FC = () => {
   const navigate = useNavigate();
@@ -54,37 +55,23 @@ const Hero: React.FC = () => {
     }
 
     try {
-      const response = await fetch('/api/lead.php', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Requested-With': 'XMLHttpRequest'
-        },
-        body: JSON.stringify({
-          name: formData.name,
-          email: formData.email,
-          phone: formData.phone,
-          city: formData.city,
-          status: formData.status,
-          immatriculation: formData.immatriculation
-        })
+      const response = await submitLead({
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        city: formData.city,
+        status: formData.status,
+        immatriculation: formData.immatriculation
       });
 
-      const contentType = response.headers.get('content-type');
-      if (!contentType || !contentType.includes('application/json')) {
-        throw new Error('Le serveur a retourné une réponse non-JSON');
-      }
-
-      const result = await response.json();
-
-      if (result.success || result.ok) {
+      if (response.success) {
         window.location.href = '/merci';
       } else {
-        setErrors([result.error || 'Erreur lors de l\'envoi. Veuillez réessayer.']);
+        setErrors([response.error || 'Erreur lors de l\'envoi. Veuillez réessayer.']);
       }
     } catch (error) {
-      logger.error('Erreur:', error);
-      setErrors(['Erreur de connexion. Veuillez réessayer.']);
+      logger.error('Erreur soumission formulaire:', error);
+      setErrors([getErrorMessage(error)]);
     } finally {
       setIsSubmitting(false);
     }
