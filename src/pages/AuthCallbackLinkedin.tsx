@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { supabase } from '../lib/supabase';
 
 export default function AuthCallbackLinkedin() {
   const [searchParams] = useSearchParams();
@@ -31,9 +32,9 @@ export default function AuthCallbackLinkedin() {
 
   async function exchangeCodeForToken(code: string) {
     try {
-      const CLIENT_ID = '78jlte9c2mbjw5';
-      const CLIENT_SECRET = 'WPL_AP1.VD7oEnM5HAU5TuxG.1QnDMw==';
-      const REDIRECT_URI = 'https://taxiassur.com/auth/linkedin/callback';
+      const CLIENT_ID = import.meta.env.VITE_LINKEDIN_CLIENT_ID;
+      const CLIENT_SECRET = import.meta.env.VITE_LINKEDIN_CLIENT_SECRET;
+      const REDIRECT_URI = import.meta.env.VITE_LINKEDIN_REDIRECT_URI;
 
       const response = await fetch('https://www.linkedin.com/oauth/v2/accessToken', {
         method: 'POST',
@@ -58,6 +59,9 @@ export default function AuthCallbackLinkedin() {
       if (data.access_token) {
         setToken(data.access_token);
         setExpiresIn(data.expires_in);
+
+        await saveTokenToDatabase(data.access_token, data.expires_in);
+
         setStatus('success');
       } else {
         throw new Error('Aucun access_token reçu');
@@ -65,6 +69,33 @@ export default function AuthCallbackLinkedin() {
     } catch (err: any) {
       setError(err.message);
       setStatus('error');
+    }
+  }
+
+  async function saveTokenToDatabase(accessToken: string, expiresIn: number) {
+    try {
+      const expiresAt = new Date(Date.now() + expiresIn * 1000);
+
+      const { error } = await supabase
+        .from('social_networks')
+        .upsert({
+          platform: 'linkedin',
+          name: 'LinkedIn',
+          is_connected: true,
+          is_active: true,
+          access_token: accessToken,
+          token_expires_at: expiresAt.toISOString(),
+          updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'platform'
+        });
+
+      if (error) {
+        console.error('Erreur sauvegarde token:', error);
+        throw error;
+      }
+    } catch (err) {
+      console.error('Erreur lors de la sauvegarde:', err);
     }
   }
 
@@ -135,19 +166,11 @@ export default function AuthCallbackLinkedin() {
             </div>
 
             <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
-              <h4 className="font-semibold text-blue-900 mb-2">📝 Prochaines étapes :</h4>
-              <ol className="list-decimal list-inside space-y-2 text-sm text-blue-800">
-                <li>Copiez le token ci-dessus</li>
-                <li>Allez dans Supabase → SQL Editor</li>
-                <li>Exécutez : <code className="bg-blue-100 px-2 py-1 rounded">LINKEDIN-ACTIVATION-MEMBER-ONLY.sql</code></li>
-                <li>Puis exécutez :
-                  <pre className="bg-blue-100 p-2 rounded mt-2 text-xs overflow-x-auto">
-{`UPDATE social_networks
-SET access_token = 'votre_token'
-WHERE platform = 'linkedin';`}
-                  </pre>
-                </li>
-              </ol>
+              <h4 className="font-semibold text-blue-900 mb-2">✅ Token Sauvegardé !</h4>
+              <p className="text-sm text-blue-800">
+                Le token a été automatiquement sauvegardé dans Supabase.
+                Vous pouvez maintenant utiliser LinkedIn depuis le backoffice.
+              </p>
             </div>
 
             <button
