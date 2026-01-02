@@ -221,7 +221,7 @@ const ProspectDocuments: React.FC = () => {
               Espace Documents
             </h1>
             <p className="text-xl text-amber-400 font-bold mb-4">
-              Bonjour {leadInfo.nom_prenom}
+              Bonjour {leadInfo.name}
             </p>
             <p className="text-gray-300">
               Uploadez vos documents pour accélérer le traitement de votre dossier
