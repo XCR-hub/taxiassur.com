@@ -328,3 +328,48 @@ export function getLeadStatusLabel(status: LeadStatus): string {
   return labels[status] || status;
 }
 
+export interface CreateLeadInput {
+  name: string;
+  email: string;
+  phone: string;
+  city: string;
+  status: 'taxi' | 'vtc' | 'autre';
+  immatriculation?: string;
+  source?: string;
+  notes?: string;
+}
+
+export async function createLead(input: CreateLeadInput): Promise<{ success: boolean; error?: string; leadId?: string }> {
+  try {
+    logger.log('Creating lead in Supabase:', { name: input.name, email: input.email });
+
+    const { data, error } = await supabase
+      .from('crm_leads')
+      .insert({
+        name: input.name,
+        email: input.email,
+        phone: input.phone,
+        city: input.city,
+        status: input.status,
+        immatriculation: input.immatriculation || '',
+        lead_status: 'nouveau',
+        source: input.source || 'website',
+        notes: input.notes || '',
+        created_at: new Date().toISOString()
+      })
+      .select()
+      .single();
+
+    if (error) {
+      logger.error('Supabase error creating lead:', error);
+      return { success: false, error: error.message };
+    }
+
+    logger.log('Lead created successfully:', data?.id);
+    return { success: true, leadId: data?.id };
+  } catch (error: any) {
+    logger.error('Failed to create lead:', error);
+    return { success: false, error: error.message || 'Une erreur est survenue' };
+  }
+}
+

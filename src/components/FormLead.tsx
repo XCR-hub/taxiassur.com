@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Shield, Phone, Clock, Send } from 'lucide-react';
 import { logger } from '@/lib/logger';
+import { createLead } from '@/lib/leads';
 
 const FormLead: React.FC = () => {
   const navigate = useNavigate();
@@ -25,26 +26,25 @@ const FormLead: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Anti-spam checks
     if (formData.company) return; // Honeypot check
     if (Date.now() - startTime < 1000) return; // Minimum 1 second delay
-    
+
     setIsSubmitting(true);
 
     try {
-      const response = await fetch('/api/lead.php', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Requested-With': 'XMLHttpRequest'
-        },
-        body: JSON.stringify(formData)
+      const result = await createLead({
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        city: formData.city,
+        status: formData.status as 'taxi' | 'vtc' | 'autre',
+        immatriculation: formData.immatriculation,
+        source: 'website'
       });
 
-      const result = await response.json();
-      
-      if (response.ok && (result.success || result.ok)) {
+      if (result.success) {
         // Track conversion
         if (typeof gtag !== 'undefined') {
           gtag('event', 'conversion', {
@@ -55,7 +55,7 @@ const FormLead: React.FC = () => {
         // Redirection vers page de remerciement
         window.location.href = '/merci';
       } else {
-        logger.error('Form error:', result);
+        logger.error('Form error:', result.error);
         alert(result.error || 'Erreur lors de l\'envoi. Veuillez réessayer.');
       }
     } catch (error) {

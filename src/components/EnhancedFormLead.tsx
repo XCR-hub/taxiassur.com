@@ -4,6 +4,7 @@ import { Shield, Phone, Clock, Send, CheckCircle, User, Mail, MapPin, Car } from
 import { useFormSecurity } from '../hooks/useFormSecurity';
 import { useAnalytics } from '../hooks/useAnalytics';
 import { logger } from '@/lib/logger';
+import { createLead } from '@/lib/leads';
 
 const EnhancedFormLead: React.FC = () => {
   const navigate = useNavigate();
@@ -99,23 +100,17 @@ const EnhancedFormLead: React.FC = () => {
     try {
       trackFormSubmit(formData);
 
-      const payload = {
-        ...formData,
-        ...getSecurityPayload()
-      };
-
-      const response = await fetch('/api/lead.php', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Requested-With': 'XMLHttpRequest'
-        },
-        body: JSON.stringify(payload)
+      const result = await createLead({
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        city: formData.city,
+        status: formData.status as 'taxi' | 'vtc' | 'autre',
+        immatriculation: formData.immatriculation,
+        source: 'website'
       });
-      
-      const result = await response.json();
-      
-      if (response.ok && (result.success || result.ok)) {
+
+      if (result.success) {
         trackFormComplete();
         navigate('/merci');
       } else {

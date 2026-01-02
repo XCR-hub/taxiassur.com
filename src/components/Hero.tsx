@@ -4,7 +4,7 @@ import { CheckCircle, Phone, Send, Shield, Clock, Award, TrendingDown, Zap, Targ
 import AITaxiBackground from './AITaxiBackground';
 import { useRealStats } from '../hooks/useRealStats';
 import { logger } from '@/lib/logger';
-import { submitLead, getErrorMessage } from '@/lib/api-client';
+import { createLead } from '@/lib/leads';
 
 const Hero: React.FC = () => {
   const navigate = useNavigate();
@@ -55,13 +55,14 @@ const Hero: React.FC = () => {
     }
 
     try {
-      const response = await submitLead({
+      const response = await createLead({
         name: formData.name,
         email: formData.email,
         phone: formData.phone,
         city: formData.city,
-        status: formData.status,
-        immatriculation: formData.immatriculation
+        status: formData.status as 'taxi' | 'vtc' | 'autre',
+        immatriculation: formData.immatriculation,
+        source: 'website'
       });
 
       if (response.success) {
@@ -69,9 +70,9 @@ const Hero: React.FC = () => {
       } else {
         setErrors([response.error || 'Erreur lors de l\'envoi. Veuillez réessayer.']);
       }
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Erreur soumission formulaire:', error);
-      setErrors([getErrorMessage(error)]);
+      setErrors([error.message || 'Une erreur est survenue']);
     } finally {
       setIsSubmitting(false);
     }

@@ -148,7 +148,8 @@ export async function apiCall<T = any>(
 }
 
 /**
- * POST vers l'API lead.php
+ * POST vers l'API lead.php (Legacy - utiliser createLead de lib/leads.ts)
+ * @deprecated Utiliser createLead() depuis lib/leads.ts à la place
  */
 export async function submitLead(data: {
   name: string;

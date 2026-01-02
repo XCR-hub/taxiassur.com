@@ -2,9 +2,10 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Shield, Phone, Clock, Send } from 'lucide-react';
 import { LeadSchema, Lead } from '../lib/schema';
-import { submitLead, trackLeadSubmission } from '../lib/email';
+import { trackLeadSubmission } from '../lib/email';
 import Card from './Card';
 import { logger } from '@/lib/logger';
+import { createLead } from '@/lib/leads';
 
 const LeadForm: React.FC = () => {
   const navigate = useNavigate();
@@ -61,20 +62,18 @@ const LeadForm: React.FC = () => {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch('/api/lead.php', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Requested-With': 'XMLHttpRequest'
-        },
-        body: JSON.stringify(formData)
+      const result = await createLead({
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        city: formData.city,
+        status: formData.status as 'taxi' | 'vtc' | 'autre',
+        immatriculation: formData.immatriculation || '',
+        source: 'website'
       });
-      
-      const result = await response.json();
-      
-      if (response.ok && (result.success || result.ok)) {
+
+      if (result.success) {
         trackLeadSubmission(formData);
-        // Redirection vers page de remerciement
         window.location.href = '/merci';
       } else {
         alert(result.error || 'Erreur lors de l\'envoi. Veuillez réessayer.');
