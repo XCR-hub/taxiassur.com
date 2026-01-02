@@ -202,7 +202,7 @@ export default function ProspectSeeder() {
     for (const prospect of PROSPECTS) {
       try {
         const { data, error } = await supabase
-          .from('partner_prospects')
+          .from('leads')
           .insert({
             ...prospect,
             outreach_status: 'not_contacted',

@@ -49,7 +49,7 @@ async function discoverPatterns(supabase: any) {
   const patterns = [];
 
   const { data: recentLeads } = await supabase
-    .from('crm_leads_enhanced')
+    .from('leads')
     .select('*')
     .gte('created_at', new Date(Date.now() - 30 * 86400000).toISOString())
     .order('created_at', { ascending: false })

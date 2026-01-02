@@ -271,7 +271,7 @@ const CRMCommercial: React.FC = () => {
 
   const updateLeadStage = async (leadId: string, newStage: string) => {
     const { error } = await supabase
-      .from('crm_leads_enhanced')
+      .from('leads')
       .update({
         stage: newStage,
         last_contact_at: new Date().toISOString()

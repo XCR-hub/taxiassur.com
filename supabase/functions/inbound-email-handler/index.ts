@@ -23,7 +23,7 @@ Deno.serve(async (req: Request) => {
     console.log('[Email Handler] Received email from:', emailData.from);
 
     const { data: lead } = await supabase
-      .from('crm_leads_enhanced')
+      .from('leads')
       .select('*')
       .eq('email', emailData.from)
       .maybeSingle();
@@ -32,7 +32,7 @@ Deno.serve(async (req: Request) => {
       console.log('[Email Handler] Creating new lead from email');
       
       const { data: newLead } = await supabase
-        .from('crm_leads_enhanced')
+        .from('leads')
         .insert({
           email: emailData.from,
           name: emailData.fromName || emailData.from.split('@')[0],
@@ -66,7 +66,7 @@ Deno.serve(async (req: Request) => {
         });
 
       await supabase
-        .from('crm_leads_enhanced')
+        .from('leads')
         .update({ 
           score: (lead.score || 0) + 10,
           last_contact_at: new Date().toISOString()
@@ -133,7 +133,7 @@ async function detectIntent(text: string, openaiKey?: string) {
 
 async function handleQuoteRequest(supabase: any, lead: any, emailData: any) {
   await supabase
-    .from('crm_leads_enhanced')
+    .from('leads')
     .update({ 
       status: 'quote_requested',
       score: (lead.score || 0) + 30
@@ -158,7 +158,7 @@ async function handleQuoteRequest(supabase: any, lead: any, emailData: any) {
 
 async function handleQuestion(supabase: any, lead: any, emailData: any, openaiKey?: string) {
   await supabase
-    .from('crm_leads_enhanced')
+    .from('leads')
     .update({ 
       status: 'engaged',
       score: (lead.score || 0) + 15
@@ -172,7 +172,7 @@ async function handleQuestion(supabase: any, lead: any, emailData: any, openaiKe
 
 async function handleComplaint(supabase: any, lead: any, emailData: any) {
   await supabase
-    .from('crm_leads_enhanced')
+    .from('leads')
     .update({ 
       status: 'requires_attention',
       score: Math.max((lead.score || 0) - 20, 0)
@@ -197,7 +197,7 @@ async function handleComplaint(supabase: any, lead: any, emailData: any) {
 
 async function handleInterest(supabase: any, lead: any, emailData: any) {
   await supabase
-    .from('crm_leads_enhanced')
+    .from('leads')
     .update({ 
       status: 'interested',
       score: (lead.score || 0) + 25
@@ -211,7 +211,7 @@ async function handleInterest(supabase: any, lead: any, emailData: any) {
 
 async function handleGeneral(supabase: any, lead: any, emailData: any) {
   await supabase
-    .from('crm_leads_enhanced')
+    .from('leads')
     .update({ 
       score: (lead.score || 0) + 5,
       last_contact_at: new Date().toISOString()

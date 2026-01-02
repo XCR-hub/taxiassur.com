@@ -181,7 +181,7 @@ async function checkCrons(supabase: any) {
 async function checkDatabase(supabase: any) {
   try {
     const { data: leads, error } = await supabase
-      .from('crm_leads_enhanced')
+      .from('leads')
       .select('id', { count: 'exact', head: true });
 
     if (error) throw error;

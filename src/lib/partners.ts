@@ -87,7 +87,7 @@ export async function getProspects(): Promise<Prospect[]> {
   if (supabase) {
     try {
       const { data, error } = await supabase
-        .from('partner_prospects')
+        .from('leads')
         .select('*')
         .order('last_scraped_at', { ascending: false });
 
@@ -145,7 +145,7 @@ export async function saveProspect(prospect: Prospect): Promise<boolean> {
       };
 
       const { error } = await supabase
-        .from('partner_prospects')
+        .from('leads')
         .upsert(supabaseData, { onConflict: 'website' });
 
       if (!error) return true;

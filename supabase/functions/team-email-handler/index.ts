@@ -45,7 +45,7 @@ Deno.serve(async (req: Request) => {
 
     // 1. VÉRIFIER SI LE LEAD EXISTE
     let { data: lead } = await supabase
-      .from('crm_leads_enhanced')
+      .from('leads')
       .select('*')
       .eq('email', emailData.from)
       .maybeSingle();
@@ -61,7 +61,7 @@ Deno.serve(async (req: Request) => {
       const namePart = emailParts[0].replace(/[._]/g, ' ');
       
       const { data: newLead, error: createError } = await supabase
-        .from('crm_leads_enhanced')
+        .from('leads')
         .insert({
           email: emailData.from,
           name: emailData.fromName || namePart,
@@ -462,7 +462,7 @@ async function progressToStage(supabase: any, leadId: string, stageName: string)
 
   const newStatus = statusMap[stageName] || 'new';
   await supabase
-    .from('crm_leads_enhanced')
+    .from('leads')
     .update({ status: newStatus })
     .eq('id', leadId);
 }

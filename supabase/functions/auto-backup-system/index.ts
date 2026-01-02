@@ -25,7 +25,7 @@ Deno.serve(async (req: Request) => {
     };
 
     const criticalTables = [
-      'crm_leads_enhanced',
+      'leads',
       'crm_automation_rules',
       'ai_decisions',
       'automation_roi_tracking',

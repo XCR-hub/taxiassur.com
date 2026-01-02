@@ -129,7 +129,7 @@ const SmartConversionSystem: React.FC<SmartConversionSystemProps> = ({ onClose }
 
     try {
       await Promise.all([
-        supabase.from('exit_intent_leads').insert({
+        supabase.from('leads').insert({
           email,
           phone,
           source_page: window.location.href,

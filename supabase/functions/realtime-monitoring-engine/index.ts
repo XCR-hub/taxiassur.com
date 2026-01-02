@@ -56,16 +56,16 @@ async function collectAllMetrics(supabase: any) {
   const metrics: any = {};
 
   const { count: totalLeads } = await supabase
-    .from('crm_leads_enhanced')
+    .from('leads')
     .select('*', { count: 'exact', head: true });
 
   const { count: newLeadsToday } = await supabase
-    .from('crm_leads_enhanced')
+    .from('leads')
     .select('*', { count: 'exact', head: true })
     .gte('created_at', new Date(Date.now() - 86400000).toISOString());
 
   const { count: convertedLeads } = await supabase
-    .from('crm_leads_enhanced')
+    .from('leads')
     .select('*', { count: 'exact', head: true })
     .eq('status', 'converted');
 

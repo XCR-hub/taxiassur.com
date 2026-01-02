@@ -113,7 +113,7 @@ async function autoScoreAllLeads(supabase: any): Promise<number> {
   console.log("📊 Auto-scoring all leads...");
 
   const { data: leads } = await supabase
-    .from('crm_leads_enhanced')
+    .from('leads')
     .select('id')
     .eq('status', 'active');
 
@@ -141,7 +141,7 @@ async function processActivities(supabase: any): Promise<number> {
 
   const { data: activities } = await supabase
     .from('crm_lead_activities')
-    .select('*, crm_leads_enhanced(id, lead_score, stage)')
+    .select('*, leads(id, lead_score, stage)')
     .gte('created_at', new Date(Date.now() - 3600000).toISOString())
     .order('created_at', { ascending: false });
 
@@ -203,7 +203,7 @@ async function generateAISuggestions(
   console.log("🧠 Generating AI suggestions...");
 
   const query = supabase
-    .from('crm_leads_enhanced')
+    .from('leads')
     .select(`
       *,
       crm_interactions(count),
@@ -305,7 +305,7 @@ async function executeWorkflows(supabase: any, openaiKey?: string): Promise<numb
     try {
       if (rule.trigger_type === 'time_based') {
         const { data: leads } = await supabase
-          .from('crm_leads_enhanced')
+          .from('leads')
           .select('*')
           .eq('status', 'active');
 
@@ -370,7 +370,7 @@ async function executeAction(supabase: any, lead: any, action: any, ruleId: stri
 
       case 'change_stage':
         await supabase
-          .from('crm_leads_enhanced')
+          .from('leads')
           .update({ stage: action.new_stage })
           .eq('id', lead.id);
         break;

@@ -64,7 +64,7 @@ Deno.serve(async (req: Request) => {
 async function processReminders(supabase: any, results: any) {
   const { data: pendingReminders } = await supabase
     .from('lead_reminders')
-    .select('*, crm_leads_enhanced(*)')
+    .select('*, leads(*)')
     .eq('status', 'pending')
     .lte('scheduled_for', new Date().toISOString())
     .lt('current_attempt', supabase.raw('max_attempts'));
@@ -146,7 +146,7 @@ async function sendSignatureReminder(supabase: any, lead: any) {
 
 async function processQuotes(supabase: any, results: any) {
   const { data: readyLeads } = await supabase
-    .from('crm_leads_enhanced')
+    .from('leads')
     .select('*, lead_pipeline_history!inner(stage_name)')
     .eq('lead_pipeline_history.stage_name', 'documents_complets')
     .is('lead_pipeline_history.exited_at', null);
@@ -171,7 +171,7 @@ async function processQuotes(supabase: any, results: any) {
 
   const { data: sentQuotes } = await supabase
     .from('lead_quotes')
-    .select('*, crm_leads_enhanced(*)')
+    .select('*, leads(*)')
     .eq('status', 'sent')
     .is('viewed_at', null)
     .lt('sent_at', new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString());
@@ -204,7 +204,7 @@ async function processQuotes(supabase: any, results: any) {
 async function processPayments(supabase: any, results: any) {
   const { data: acceptedQuotes } = await supabase
     .from('lead_quotes')
-    .select('*, crm_leads_enhanced(*)')
+    .select('*, leads(*)')
     .eq('status', 'accepted')
     .is('signed_at', null);
 
@@ -249,7 +249,7 @@ async function processPayments(supabase: any, results: any) {
 
   const { data: paidPayments } = await supabase
     .from('lead_payments')
-    .select('*, crm_leads_enhanced(*)')
+    .select('*, leads(*)')
     .eq('status', 'paid')
     .is('paid_at', null);
 
@@ -276,7 +276,7 @@ async function processPayments(supabase: any, results: any) {
 
 async function processContracts(supabase: any, results: any) {
   const { data: readyForContract } = await supabase
-    .from('crm_leads_enhanced')
+    .from('leads')
     .select('*, lead_pipeline_history!inner(stage_name)')
     .eq('lead_pipeline_history.stage_name', 'paiement_recu')
     .is('lead_pipeline_history.exited_at', null);
@@ -288,7 +288,7 @@ async function processContracts(supabase: any, results: any) {
 
   const { data: contractsReady } = await supabase
     .from('lead_contracts')
-    .select('*, crm_leads_enhanced(*)')
+    .select('*, leads(*)')
     .eq('status', 'ready_for_signature')
     .is('signature_url', null);
 
@@ -314,7 +314,7 @@ async function processContracts(supabase: any, results: any) {
 
   const { data: signedContracts } = await supabase
     .from('lead_contracts')
-    .select('*, crm_leads_enhanced(*)')
+    .select('*, leads(*)')
     .eq('status', 'signed')
     .is('activated_at', null);
 
@@ -349,7 +349,7 @@ async function processCrossSell(supabase: any, results: any) {
   fifteenDaysAgo.setDate(fifteenDaysAgo.getDate() - 15);
 
   const { data: activeClients } = await supabase
-    .from('crm_leads_enhanced')
+    .from('leads')
     .select('*')
     .eq('status', 'converted')
     .or(`created_at.lt.${fifteenDaysAgo.toISOString()}`);
