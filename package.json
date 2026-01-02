@@ -24,6 +24,7 @@
     "auto-deploy": "node scripts/auto-deploy.js",
     "setup": "node scripts/setup.js",
     "verify": "node scripts/verify-automations.js",
+    "verify:deployment": "node scripts/verify-deployment.js",
     "populate-cities": "node scripts/populate-city-pages.js",
     "backup:full": "node scripts/backup-system.js full",
     "backup:critical": "node scripts/backup-system.js critical",
