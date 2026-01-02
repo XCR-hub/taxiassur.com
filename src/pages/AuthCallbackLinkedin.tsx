@@ -35,20 +35,27 @@ export default function AuthCallbackLinkedin() {
       const CLIENT_ID = import.meta.env.VITE_LINKEDIN_CLIENT_ID;
       const CLIENT_SECRET = import.meta.env.VITE_LINKEDIN_CLIENT_SECRET;
       const REDIRECT_URI = import.meta.env.VITE_LINKEDIN_REDIRECT_URI;
+      const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+      const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-      const response = await fetch('https://www.linkedin.com/oauth/v2/accessToken', {
+      const response = await fetch(`${SUPABASE_URL}/functions/v1/linkedin-oauth-exchange`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
         },
-        body: new URLSearchParams({
-          grant_type: 'authorization_code',
+        body: JSON.stringify({
           code: code,
-          client_id: CLIENT_ID,
-          client_secret: CLIENT_SECRET,
-          redirect_uri: REDIRECT_URI
+          clientId: CLIENT_ID,
+          clientSecret: CLIENT_SECRET,
+          redirectUri: REDIRECT_URI
         })
       });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Erreur lors de l\'échange du code');
+      }
 
       const data = await response.json();
 
