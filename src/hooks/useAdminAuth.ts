@@ -80,7 +80,7 @@ export function useAdminAuth() {
         console.warn('⚠️ Auth initialization timeout');
         setState(prev => ({ ...prev, loading: false }));
       }
-    }, 8000);
+    }, 15000);
 
     return () => {
       mounted = false;

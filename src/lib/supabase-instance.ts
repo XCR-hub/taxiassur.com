@@ -56,7 +56,7 @@ function getSupabaseInstance() {
         persistSession: true,
         autoRefreshToken: true,
         storageKey: 'taxiassur-auth',
-        detectSessionInUrl: true
+        detectSessionInUrl: false
       }
     });
 
