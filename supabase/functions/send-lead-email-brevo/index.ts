@@ -122,7 +122,7 @@ Deno.serve(async (req: Request) => {
             <ol style="color: #4b5563; line-height: 1.8;">
               <li>☎️ Appeler le prospect au <strong>${lead.telephone}</strong></li>
               <li>✅ Qualifier le besoin et confirmer les informations</li>
-              <li>📄 Demander l'envoi des 5 documents requis</li>
+              <li>📄 Vérifier l'envoi des 7 documents requis (incluant autorisation stationnement + RIB)</li>
               <li>💰 Préparer et envoyer le devis sous 24h</li>
             </ol>
 
@@ -189,7 +189,7 @@ Deno.serve(async (req: Request) => {
             </div>
 
             <h3 style="color: #1f2937;">📋 Documents requis pour votre devis</h3>
-            <p>Pour accélérer le traitement de votre dossier et obtenir votre devis <strong>sous 24h</strong>, merci de nous transmettre ces 5 pièces :</p>
+            <p>Pour accélérer le traitement de votre dossier et obtenir votre devis <strong>sous 24h</strong>, merci de nous transmettre ces <strong>7 pièces</strong> :</p>
 
             <div class="documents">
               <div class="document-item">
@@ -211,6 +211,14 @@ Deno.serve(async (req: Request) => {
               <div class="document-item">
                 <strong>5. Relevé d'information</strong><br>
                 <span style="color: #6b7280; font-size: 14px;">De votre assureur précédent (si vous en avez un)</span>
+              </div>
+              <div class="document-item">
+                <strong>6. Autorisation de stationnement</strong><br>
+                <span style="color: #6b7280; font-size: 14px;">Autorisation préfectorale de stationnement taxi</span>
+              </div>
+              <div class="document-item">
+                <strong>7. RIB - Relevé d'Identité Bancaire</strong><br>
+                <span style="color: #6b7280; font-size: 14px;">Coordonnées bancaires complètes</span>
               </div>
             </div>
 

@@ -49,6 +49,18 @@ const DOCUMENT_TYPES: DocumentType[] = [
     label: 'Relevé d\'information',
     description: 'De votre assureur précédent (si applicable)',
     required: false
+  },
+  {
+    id: 'autorisation_stationnement',
+    label: 'Autorisation de stationnement',
+    description: 'Autorisation préfectorale de stationnement taxi',
+    required: true
+  },
+  {
+    id: 'rib',
+    label: 'RIB - Relevé d\'Identité Bancaire',
+    description: 'Coordonnées bancaires complètes',
+    required: true
   }
 ];
 
