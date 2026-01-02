@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Supabase Singleton</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #fff;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 30px;
+            text-align: center;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+        .status-card {
+            background: rgba(255,255,255,0.95);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            color: #333;
+        }
+        .status-card h2 {
+            margin-bottom: 16px;
+            color: #667eea;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .test-result {
+            padding: 12px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+        .success {
+            background: #d4edda;
+            border-left: 4px solid #28a745;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            border-left: 4px solid #dc3545;
+            color: #721c24;
+        }
+        .warning {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            color: #856404;
+        }
+        .info {
+            background: #d1ecf1;
+            border-left: 4px solid #17a2b8;
+            color: #0c5460;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            margin: 5px;
+        }
+        button:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        .console-output {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 16px;
+            border-radius: 8px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        .log { color: #d4d4d4; }
+        .warn { color: #ffd700; }
+        .error { color: #ff6b6b; }
+        .success { color: #51cf66; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Test Supabase Singleton</h1>
+
+        <div class="status-card">
+            <h2>📊 Tests Automatiques</h2>
+            <div id="autoTests"></div>
+        </div>
+
+        <div class="status-card">
+            <h2>🎮 Tests Manuels</h2>
+            <button onclick="testMultipleImports()">Test: Multiple Imports</button>
+            <button onclick="testWindowInstance()">Test: Window Instance</button>
+            <button onclick="testAuthMethods()">Test: Auth Methods</button>
+            <button onclick="clearCache()">Clear Cache</button>
+            <div id="manualTests"></div>
+        </div>
+
+        <div class="status-card">
+            <h2>📝 Console Output</h2>
+            <div class="console-output" id="consoleOutput"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        const outputDiv = document.getElementById('autoTests');
+        const consoleDiv = document.getElementById('consoleOutput');
+        const manualDiv = document.getElementById('manualTests');
+
+        // Intercept console logs
+        const originalLog = console.log;
+        const originalWarn = console.warn;
+        const originalError = console.error;
+
+        function addToConsole(msg, type = 'log') {
+            const time = new Date().toLocaleTimeString();
+            consoleDiv.innerHTML += `<div class="${type}">[${time}] ${msg}</div>`;
+            consoleDiv.scrollTop = consoleDiv.scrollHeight;
+        }
+
+        console.log = (...args) => {
+            originalLog(...args);
+            addToConsole(args.join(' '), 'log');
+        };
+
+        console.warn = (...args) => {
+            originalWarn(...args);
+            addToConsole(args.join(' '), 'warn');
+        };
+
+        console.error = (...args) => {
+            originalError(...args);
+            addToConsole(args.join(' '), 'error');
+        };
+
+        function addTest(name, passed, message) {
+            const className = passed ? 'success' : 'error';
+            const icon = passed ? '✅' : '❌';
+            outputDiv.innerHTML += `
+                <div class="test-result ${className}">
+                    ${icon} <strong>${name}</strong><br>${message}
+                </div>
+            `;
+        }
+
+        function addManualResult(message, type = 'info') {
+            manualDiv.innerHTML += `<div class="test-result ${type}">${message}</div>`;
+        }
+
+        // Tests automatiques au chargement
+        async function runAutoTests() {
+            console.log('🚀 Starting automatic tests...');
+
+            // Test 1: Import Supabase
+            try {
+                const { supabase } = await import('./assets/lib-core-DMEhhPpP.js');
+                addTest('Import Supabase', true, 'Successfully imported supabase from lib-core');
+                console.log('✅ Supabase imported');
+
+                // Test 2: Check Supabase instance
+                if (supabase && typeof supabase === 'object') {
+                    addTest('Supabase Instance', true, 'Supabase is a valid object');
+                } else {
+                    addTest('Supabase Instance', false, 'Supabase is not a valid object');
+                }
+
+                // Test 3: Check window instance
+                if (window.__TAXIASSUR_SUPABASE__) {
+                    addTest('Window Instance', true, 'Supabase instance found in window');
+                } else {
+                    addTest('Window Instance', false, 'No instance in window (will be created on first access)');
+                }
+
+                // Test 4: Check auth property
+                setTimeout(() => {
+                    if (supabase.auth) {
+                        addTest('Auth Property', true, 'supabase.auth is accessible');
+                        console.log('✅ Auth property accessible');
+                    } else {
+                        addTest('Auth Property', false, 'supabase.auth is not accessible');
+                    }
+
+                    // Test 5: Check from method
+                    if (typeof supabase.from === 'function') {
+                        addTest('From Method', true, 'supabase.from is a function');
+                        console.log('✅ from() method exists');
+                    } else {
+                        addTest('From Method', false, 'supabase.from is not a function');
+                    }
+
+                    // Test 6: Multiple access test
+                    const auth1 = supabase.auth;
+                    const auth2 = supabase.auth;
+                    if (auth1 === auth2) {
+                        addTest('Singleton Pattern', true, 'Multiple accesses return same instance');
+                        console.log('✅ Singleton pattern working');
+                    } else {
+                        addTest('Singleton Pattern', false, 'Multiple accesses return different instances');
+                    }
+                }, 1000);
+
+            } catch (error) {
+                addTest('Import Error', false, error.message);
+                console.error('❌ Import error:', error);
+            }
+        }
+
+        // Tests manuels
+        window.testMultipleImports = async () => {
+            try {
+                const imports = await Promise.all([
+                    import('./assets/lib-core-DMEhhPpP.js'),
+                    import('./assets/lib-core-DMEhhPpP.js'),
+                    import('./assets/lib-core-DMEhhPpP.js')
+                ]);
+
+                const instances = imports.map(m => m.supabase);
+                const allSame = instances.every(i => i === instances[0]);
+
+                addManualResult(
+                    allSame
+                        ? '✅ All imports return the same instance'
+                        : '❌ Different instances detected',
+                    allSame ? 'success' : 'error'
+                );
+            } catch (error) {
+                addManualResult('❌ Error: ' + error.message, 'error');
+            }
+        };
+
+        window.testWindowInstance = () => {
+            if (window.__TAXIASSUR_SUPABASE__) {
+                addManualResult('✅ Window instance exists: ' + typeof window.__TAXIASSUR_SUPABASE__, 'success');
+            } else {
+                addManualResult('⚠️ No window instance yet (created on first property access)', 'warning');
+            }
+        };
+
+        window.testAuthMethods = async () => {
+            try {
+                const { supabase } = await import('./assets/lib-core-DMEhhPpP.js');
+                const session = await supabase.auth.getSession();
+                addManualResult('✅ Auth methods work. Session: ' + (session.data.session ? 'Active' : 'None'), 'success');
+            } catch (error) {
+                addManualResult('❌ Auth error: ' + error.message, 'error');
+            }
+        };
+
+        window.clearCache = () => {
+            localStorage.clear();
+            sessionStorage.clear();
+            addManualResult('🗑️ Cache cleared. Refresh page to test fresh load.', 'info');
+        };
+
+        // Run tests on page load
+        runAutoTests();
+    </script>
+</body>
+</html>

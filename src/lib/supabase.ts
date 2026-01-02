@@ -10,49 +10,75 @@ declare global {
   }
 }
 
-// Create singleton instance immediately
-const createSupabaseInstance = () => {
-  // Check global instance first to prevent HMR duplicates
+// True lazy singleton - instance created ONLY on first property access
+let supabaseInstance: ReturnType<typeof createClient> | null = null;
+let isInitializing = false;
+
+const getOrCreateInstance = () => {
+  // Prevent multiple initializations during circular imports
+  if (isInitializing) {
+    throw new Error('Supabase is being initialized. Avoid circular dependencies.');
+  }
+
+  // Check window global first (survives HMR)
   if (typeof window !== 'undefined' && window.__TAXIASSUR_SUPABASE__) {
-    console.log('♻️ Using existing Supabase instance from window');
     return window.__TAXIASSUR_SUPABASE__;
   }
 
-  console.log('🆕 Creating new Supabase instance');
+  // Return cached instance
+  if (supabaseInstance) {
+    return supabaseInstance;
+  }
 
-  let supabaseUrl: string;
-  let supabaseAnonKey: string;
-
+  // Create new instance
+  isInitializing = true;
   try {
-    supabaseUrl = getSupabaseUrl();
-    supabaseAnonKey = getSupabaseAnonKey();
-  } catch (error) {
-    console.error('Supabase configuration error:', error);
-    // Fallback to avoid app crash
-    supabaseUrl = 'https://drohhxrkoequjphvabvq.supabase.co';
-    supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRyb2hoeHJrb2VxdWpwaHZhYnZxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk3ODM3NjAsImV4cCI6MjA3NTM1OTc2MH0.LP9fh10fY0nRDjpG4VW2yGZ5sT4BkiDalox8ToMbMlg';
-  }
+    console.log('🆕 Creating Supabase instance');
 
-  const instance = createClient(supabaseUrl, supabaseAnonKey, {
-    auth: {
-      persistSession: true,
-      autoRefreshToken: true,
-      storageKey: 'taxiassur-auth',
-      detectSessionInUrl: true
+    const supabaseUrl = getSupabaseUrl() || 'https://drohhxrkoequjphvabvq.supabase.co';
+    const supabaseAnonKey = getSupabaseAnonKey() || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRyb2hoeHJrb2VxdWpwaHZhYnZxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk3ODM3NjAsImV4cCI6MjA3NTM1OTc2MH0.LP9fh10fY0nRDjpG4VW2yGZ5sT4BkiDalox8ToMbMlg';
+
+    const instance = createClient(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        storageKey: 'taxiassur-auth',
+        detectSessionInUrl: true
+      }
+    });
+
+    // Cache globally
+    supabaseInstance = instance;
+    if (typeof window !== 'undefined') {
+      window.__TAXIASSUR_SUPABASE__ = instance;
     }
-  });
 
-  // Store in window to prevent HMR duplicates
-  if (typeof window !== 'undefined') {
-    window.__TAXIASSUR_SUPABASE__ = instance;
-    console.log('✅ Supabase instance stored in window');
+    return instance;
+  } finally {
+    isInitializing = false;
   }
-
-  return instance;
 };
 
-// Export singleton directly - NO PROXY
-export const supabase = createSupabaseInstance();
+// Lazy Proxy - creates instance on first property access
+const lazySupabaseProxy = new Proxy({} as ReturnType<typeof createClient>, {
+  get(_, prop) {
+    const instance = getOrCreateInstance();
+    const value = instance[prop as keyof typeof instance];
+
+    // Bind methods to preserve context
+    if (typeof value === 'function') {
+      return value.bind(instance);
+    }
+
+    return value;
+  }
+});
+
+// Export for direct use
+export const supabase = lazySupabaseProxy;
+
+// Export getter for explicit lazy loading
+export const getSupabase = () => getOrCreateInstance();
 
 // Supabase ADMIN client with Service Role Key (WRITE operations from backoffice)
 // Bypasses RLS - Use only for authenticated admin operations
