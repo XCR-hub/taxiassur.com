@@ -131,31 +131,33 @@ const CRMCommercial: React.FC = () => {
 
   const loadStats = async () => {
     const { data: leadsData } = await supabase
-      .from('crm_leads_enhanced')
-      .select('lead_score, conversion_probability, estimated_value, stage, created_at');
+      .from('leads')
+      .select('behavior_score, lead_status, prime_realisee, created_at, client_at');
 
     if (leadsData) {
       const thisMonth = new Date();
       thisMonth.setDate(1);
 
-      const hotLeads = leadsData.filter(l => l.lead_score >= 70).length;
+      const hotLeads = leadsData.filter(l => (l.behavior_score || 0) >= 70).length;
       const signedThisMonth = leadsData.filter(
-        l => l.stage === 'Contrat Signé' && new Date(l.created_at) >= thisMonth
+        l => l.lead_status === 'client' && l.client_at && new Date(l.client_at) >= thisMonth
       ).length;
 
       const totalValue = leadsData
-        .filter(l => l.stage !== 'Perdu' && l.stage !== 'Contrat Signé')
-        .reduce((sum, l) => sum + (l.estimated_value || 0), 0);
+        .filter(l => l.lead_status !== 'perdu' && l.lead_status !== 'client')
+        .reduce((sum, l) => sum + (Number(l.prime_realisee) || 0), 0);
 
       const avgValue = leadsData.length > 0
-        ? leadsData.reduce((sum, l) => sum + (l.estimated_value || 0), 0) / leadsData.length
+        ? leadsData.reduce((sum, l) => sum + (Number(l.prime_realisee) || 0), 0) / leadsData.length
         : 0;
+
+      const clientCount = leadsData.filter(l => l.lead_status === 'client').length;
 
       setStats({
         total_leads: leadsData.length,
         hot_leads: hotLeads,
         conversion_rate: leadsData.length > 0
-          ? (leadsData.filter(l => l.stage === 'Contrat Signé').length / leadsData.length) * 100
+          ? (clientCount / leadsData.length) * 100
           : 0,
         avg_deal_value: avgValue,
         pipeline_value: totalValue,
@@ -166,26 +168,59 @@ const CRMCommercial: React.FC = () => {
 
   const loadMyLeads = async () => {
     let query = supabase
-      .from('crm_leads_enhanced')
-      .select('*')
+      .from('leads')
+      .select('id, name, email, phone, city, status, lead_status, behavior_score, prime_realisee, created_at, contacted_at, devis_envoye_at, client_at, assigned_to, notes')
       .limit(200);
 
     if (sortBy === 'score') {
-      query = query.order('lead_score', { ascending: false });
+      query = query.order('behavior_score', { ascending: false, nullsLast: true });
     } else if (sortBy === 'date') {
       query = query.order('created_at', { ascending: false });
     } else {
-      query = query.order('estimated_value', { ascending: false });
+      query = query.order('prime_realisee', { ascending: false, nullsLast: true });
     }
 
     const { data, error } = await query;
 
     if (data) {
-      setLeads(data);
+      // Transform data to match expected interface
+      const transformedLeads = data.map(lead => ({
+        id: lead.id,
+        email: lead.email,
+        phone: lead.phone,
+        first_name: lead.name?.split(' ')[0] || '',
+        last_name: lead.name?.split(' ').slice(1).join(' ') || '',
+        company_name: '',
+        activity_type: lead.status || 'taxi',
+        vehicle_count: 1,
+        lead_score: lead.behavior_score || 0,
+        conversion_probability: lead.behavior_score || 0,
+        stage: mapLeadStatusToStage(lead.lead_status),
+        status: lead.lead_status || 'nouveau',
+        created_at: lead.created_at,
+        last_contact_at: lead.contacted_at || null,
+        next_followup_at: null,
+        estimated_value: Number(lead.prime_realisee) || 0,
+      }));
+      setLeads(transformedLeads);
     }
     if (error) {
       logger.error('Error loading leads:', error);
     }
+  };
+
+  const mapLeadStatusToStage = (status?: string): string => {
+    const statusMap: Record<string, string> = {
+      'nouveau': 'Nouveau Lead',
+      'contacte': 'Premier Contact',
+      'qualifie': 'Qualifié',
+      'devis_envoye': 'Devis Envoyé',
+      'negociation': 'Négociation',
+      'accord_verbal': 'Accord Verbal',
+      'client': 'Contrat Signé',
+      'perdu': 'Perdu'
+    };
+    return statusMap[status || 'nouveau'] || 'Nouveau Lead';
   };
 
   const loadLeadDetails = async (leadId: string) => {

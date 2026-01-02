@@ -47,10 +47,10 @@ export default function NavigationMenu() {
               <Zap className="w-5 h-5" />
               <span>Test Automatisations</span>
             </Link>
-            <Link to="/" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white rounded-lg font-semibold transition-all shadow-md text-sm">
+            <a href="/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white rounded-lg font-semibold transition-all shadow-md text-sm">
               <Globe className="w-5 h-5" />
               <span>Voir le site</span>
-            </Link>
+            </a>
           </div>
         </div>
       )}
@@ -285,38 +285,34 @@ export default function NavigationMenu() {
             <BookOpen className="w-5 h-5" />
             <span>Toutes les pages</span>
           </Link>
-          <a
-            href="https://github.com/yourusername/taxiassur"
-            target="_blank"
-            rel="noopener noreferrer"
+          <Link
+            to="/backoffice/security"
             className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-slate-600 to-slate-700 hover:from-slate-700 hover:to-slate-800 text-white rounded-lg font-semibold transition-all shadow-md text-sm"
           >
-            <BookOpen className="w-5 h-5" />
-            <span>Guide Backoffice</span>
-          </a>
+            <Shield className="w-5 h-5" />
+            <span>Config Sécurité</span>
+          </Link>
           <Link
-            to="/backoffice"
+            to="/backoffice/compliance"
             className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white rounded-lg font-semibold transition-all shadow-md text-sm"
           >
-            <BookOpen className="w-5 h-5" />
+            <Shield className="w-5 h-5" />
             <span>Config API</span>
           </Link>
           <Link
-            to="/backoffice"
+            to="/backoffice/master-ai"
             className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm"
           >
-            <BookOpen className="w-5 h-5" />
-            <span>Clé OpenAI</span>
+            <Brain className="w-5 h-5" />
+            <span>Config IA</span>
           </Link>
-          <a
-            href="https://docs.taxiassur.com"
-            target="_blank"
-            rel="noopener noreferrer"
+          <Link
+            to="/backoffice/seo-strategy"
             className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-cyan-500 to-cyan-600 hover:from-cyan-600 hover:to-cyan-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm"
           >
-            <BookOpen className="w-5 h-5" />
-            <span>Guide Déploiement</span>
-          </a>
+            <TrendingUp className="w-5 h-5" />
+            <span>Stratégie SEO</span>
+          </Link>
         </div>
       </div>
     </div>

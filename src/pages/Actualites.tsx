@@ -177,19 +177,42 @@ export default function Actualites() {
                   key={article.id}
                   className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300 flex flex-col"
                 >
-                  {/* Image */}
-                  {article.image_url && (
-                    <div className="relative h-48 bg-gradient-to-br from-yellow-400 to-yellow-600">
+                  {/* Image avec fallback */}
+                  <div className="relative h-48 bg-gradient-to-br from-yellow-400 to-yellow-600 overflow-hidden">
+                    {article.image_url ? (
                       <img
                         src={article.image_url}
                         alt={article.title}
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-cover transition-opacity duration-300"
+                        loading="lazy"
                         onError={(e) => {
                           e.currentTarget.style.display = 'none';
+                          const parent = e.currentTarget.parentElement;
+                          if (parent) {
+                            parent.innerHTML = `
+                              <div class="w-full h-full flex items-center justify-center text-white">
+                                <div class="text-center p-4">
+                                  <svg class="w-16 h-16 mx-auto mb-2 opacity-70" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z" />
+                                  </svg>
+                                  <p class="text-sm font-semibold opacity-80">Actualité Assurance Taxi</p>
+                                </div>
+                              </div>
+                            `;
+                          }
                         }}
                       />
-                    </div>
-                  )}
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-white">
+                        <div className="text-center p-4">
+                          <svg className="w-16 h-16 mx-auto mb-2 opacity-70" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z" />
+                          </svg>
+                          <p className="text-sm font-semibold opacity-80">Actualité Assurance Taxi</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
 
                   {/* Content */}
                   <div className="p-6 flex-1 flex flex-col">
