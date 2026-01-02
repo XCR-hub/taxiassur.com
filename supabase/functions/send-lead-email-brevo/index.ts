@@ -36,7 +36,6 @@ Deno.serve(async (req: Request) => {
       throw new Error("BREVO_API_KEY not configured");
     }
 
-    // Email à l'équipe TaxiAssur
     const teamEmailBody = `
       <!DOCTYPE html>
       <html>
@@ -150,7 +149,6 @@ Deno.serve(async (req: Request) => {
       </html>
     `;
 
-    // Email de confirmation au client avec demande de documents
     const clientEmailBody = `
       <!DOCTYPE html>
       <html>
@@ -261,7 +259,6 @@ Deno.serve(async (req: Request) => {
       </html>
     `;
 
-    // Envoi email à l'équipe
     const teamResponse = await fetch("https://api.brevo.com/v3/smtp/email", {
       method: "POST",
       headers: {
@@ -288,7 +285,6 @@ Deno.serve(async (req: Request) => {
       throw new Error(`Failed to send team email: ${error}`);
     }
 
-    // Envoi email de confirmation au client
     const clientResponse = await fetch("https://api.brevo.com/v3/smtp/email", {
       method: "POST",
       headers: {
