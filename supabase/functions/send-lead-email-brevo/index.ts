@@ -17,6 +17,7 @@ interface LeadPayload {
     ville: string;
     statut: string;
     immatriculation?: string;
+    access_token?: string;
     created_at: string;
   };
 }
@@ -214,10 +215,13 @@ Deno.serve(async (req: Request) => {
             </div>
 
             <div style="text-align: center;">
-              <a href="mailto:team@taxiassur.com?subject=Documents%20pour%20mon%20devis%20-%20${encodeURIComponent(lead.nom_prenom)}" class="cta-button">
-                📧 ENVOYER MES DOCUMENTS
+              <a href="https://taxiassur.com/espace-documents?token=${lead.access_token}" class="cta-button" style="text-decoration: none;">
+                📤 UPLOADER MES DOCUMENTS
               </a>
-              <p style="color: #6b7280; font-size: 14px;">Cliquez pour nous envoyer vos documents par email</p>
+              <p style="color: #6b7280; font-size: 14px;">Accédez à votre espace sécurisé pour uploader vos documents</p>
+              <p style="color: #9ca3af; font-size: 12px; margin-top: 10px;">
+                Vous pouvez aussi les envoyer par email à <a href="mailto:team@taxiassur.com" style="color: #3b82f6;">team@taxiassur.com</a>
+              </p>
             </div>
 
             <div class="info-box">

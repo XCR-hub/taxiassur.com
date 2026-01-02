@@ -12,6 +12,7 @@ const Reviews = lazy(() => import('./pages/Reviews'));
 const Offers = lazy(() => import('./pages/Offers'));
 const Contact = lazy(() => import('./pages/Contact'));
 const Merci = lazy(() => import('./pages/Merci'));
+const ProspectDocuments = lazy(() => import('./pages/ProspectDocuments'));
 const Legal = lazy(() => import('./pages/Legal'));
 const Policy = lazy(() => import('./pages/Policy'));
 const Conditions = lazy(() => import('./pages/Conditions'));
@@ -284,6 +285,11 @@ export const router = createBrowserRouter([
   {
     path: '/merci',
     element: <SuspenseWrapper><Merci /></SuspenseWrapper>,
+    errorElement: <ErrorBoundary><Navigate to="/" replace /></ErrorBoundary>
+  },
+  {
+    path: '/espace-documents',
+    element: <SuspenseWrapper><ProspectDocuments /></SuspenseWrapper>,
     errorElement: <ErrorBoundary><Navigate to="/" replace /></ErrorBoundary>
   },
   {

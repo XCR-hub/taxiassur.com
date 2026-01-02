@@ -175,28 +175,39 @@ const Merci: React.FC = () => {
                       ))}
                     </div>
 
-                    {/* Email documents CTA */}
+                    {/* Upload documents CTA */}
                     <div className="bg-gradient-to-r from-amber-500 via-yellow-500 to-amber-500 rounded-xl p-1 mb-4">
                       <div className="bg-gray-900 rounded-lg p-6">
                         <div className="text-center">
                           <Upload className="text-amber-400 mx-auto mb-3" size={32} />
                           <h3 className="text-xl font-bold text-white mb-2">
-                            📧 ENVOYEZ VOS DOCUMENTS
+                            📤 UPLOADEZ VOS DOCUMENTS
                           </h3>
                           <p className="text-gray-300 mb-4">
                             Pour un traitement <span className="text-amber-400 font-bold">PRIORITAIRE</span>
                           </p>
-                          <a
-                            href="mailto:team@taxiassur.com?subject=Documents%20pour%20mon%20devis%20assurance%20taxi"
-                            className="inline-flex items-center gap-2 bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 text-black font-bold py-4 px-8 rounded-xl transition-all duration-300 shadow-lg hover:shadow-amber-500/50"
-                          >
-                            <Mail size={20} />
-                            team@taxiassur.com
-                            <ArrowRight size={20} />
-                          </a>
-                          <p className="text-xs text-gray-500 mt-3">
-                            Joignez vos documents en pièces jointes
-                          </p>
+                          <div className="space-y-3">
+                            <a
+                              href="/espace-documents?from=merci"
+                              className="inline-flex items-center gap-2 bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 text-black font-bold py-4 px-8 rounded-xl transition-all duration-300 shadow-lg hover:shadow-amber-500/50"
+                            >
+                              <Upload size={20} />
+                              ACCÉDER À MON ESPACE
+                              <ArrowRight size={20} />
+                            </a>
+                            <p className="text-xs text-gray-500">
+                              Un lien d'accès unique vous a été envoyé par email
+                            </p>
+                            <p className="text-xs text-gray-400 mt-2">
+                              Vous pouvez aussi envoyer vos documents par email à{' '}
+                              <a
+                                href="mailto:team@taxiassur.com"
+                                className="text-blue-400 hover:text-blue-300 underline"
+                              >
+                                team@taxiassur.com
+                              </a>
+                            </p>
+                          </div>
                         </div>
                       </div>
                     </div>
