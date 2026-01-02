@@ -38,23 +38,34 @@ export default function AuthCallbackLinkedin() {
       const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
       const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-      const response = await fetch(`${SUPABASE_URL}/functions/v1/linkedin-oauth-exchange`, {
+      const functionUrl = `${SUPABASE_URL}/functions/v1/linkedin-oauth-exchange`;
+
+      const requestBody = {
+        code: code,
+        clientId: CLIENT_ID,
+        clientSecret: CLIENT_SECRET,
+        redirectUri: REDIRECT_URI
+      };
+
+      const response = await fetch(functionUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
         },
-        body: JSON.stringify({
-          code: code,
-          clientId: CLIENT_ID,
-          clientSecret: CLIENT_SECRET,
-          redirectUri: REDIRECT_URI
-        })
+        body: JSON.stringify(requestBody)
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Erreur lors de l\'échange du code');
+        let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorData.message || errorMessage;
+        } catch (e) {
+          const errorText = await response.text();
+          errorMessage = errorText || errorMessage;
+        }
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();
@@ -71,10 +82,11 @@ export default function AuthCallbackLinkedin() {
 
         setStatus('success');
       } else {
-        throw new Error('Aucun access_token reçu');
+        throw new Error('Aucun access_token reçu dans la réponse');
       }
     } catch (err: any) {
-      setError(err.message);
+      const errorMsg = err.message || 'Erreur inconnue lors de l\'échange du code OAuth';
+      setError(errorMsg);
       setStatus('error');
     }
   }
