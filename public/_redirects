@@ -1,0 +1,20 @@
+# Netlify/Cloudflare Redirects pour TaxiAssur.com
+# Force HTTPS et version canonique sans www
+
+# Force HTTPS
+http://taxiassur.com/* https://taxiassur.com/:splat 301!
+http://www.taxiassur.com/* https://taxiassur.com/:splat 301!
+
+# Force non-www
+https://www.taxiassur.com/* https://taxiassur.com/:splat 301!
+
+# Anciennes URLs avec redirections
+/offres https://taxiassur.com/assurance-taxi 301
+/comparateur-axa-taxi https://taxiassur.com/assurance-taxi 301
+/devis-instantane https://taxiassur.com/contact 301
+
+# Ville Amiens fix (éviter 5xx)
+/ville/amiens https://taxiassur.com/ville/amiens 200
+
+# SPA Routing - doit être en dernier
+/*    /index.html   200

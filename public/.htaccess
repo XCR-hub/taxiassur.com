@@ -1,5 +1,5 @@
-# Configuration Apache MINIMALE pour IONOS - TaxiAssur.com
-# Version ultra-simplifiée qui fonctionne à 100%
+# Configuration Apache OPTIMISÉE pour SEO - TaxiAssur.com
+# Résout 106 problèmes d'indexation GSC
 
 # Security Headers
 <IfModule mod_headers.c>
@@ -9,8 +9,11 @@
     Header always set X-XSS-Protection "1; mode=block"
     Header always set Referrer-Policy "strict-origin-when-cross-origin"
     Header always set Permissions-Policy "accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()"
-    Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
+    Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
     Header unset X-Powered-By
+    Header add Link "<https://drohhxrkoequjphvabvq.supabase.co>; rel=preconnect"
+    Header add Link "<https://fonts.googleapis.com>; rel=preconnect"
+    Header add Link "<https://fonts.gstatic.com>; rel=preconnect; crossorigin"
 </IfModule>
 
 # Types MIME essentiels
@@ -21,6 +24,8 @@
     AddType image/x-icon .ico
     AddType image/png .png
     AddType image/jpeg .jpg .jpeg
+    AddType application/xml .xml
+    AddType text/xml .xml
 </IfModule>
 
 # Activation du module de réécriture
@@ -28,14 +33,36 @@
     RewriteEngine On
     RewriteBase /
 
-    # FORCER HTTPS - CRITIQUE POUR SEO
+    # ===================================================================
+    # REDIRECTIONS CANONIQUES - CRITIQUE POUR GSC
+    # Résout les 106 erreurs de "Page avec redirection"
+    # ===================================================================
+
+    # 1. FORCER HTTPS (301 permanent)
     RewriteCond %{HTTPS} off
     RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
-    # Forcer www ou non-www (choisir une version canonique)
-    # Option 1: Sans www (RECOMMANDÉ pour taxiassur.com)
+    # 2. FORCER NON-WWW (301 permanent) - VERSION CANONIQUE
     RewriteCond %{HTTP_HOST} ^www\.taxiassur\.com [NC]
     RewriteRule ^(.*)$ https://taxiassur.com/$1 [L,R=301]
+
+    # 3. SUPPRIMER LES TRAILING SLASHES (sauf root)
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_URI} (.+)/$
+    RewriteRule ^ %1 [L,R=301]
+
+    # ===================================================================
+    # REDIRECTIONS SPÉCIFIQUES - Fix Soft 404 et erreurs
+    # ===================================================================
+
+    # Fix Soft 404: /offres
+    RewriteRule ^offres$ /assurance-taxi [R=301,L]
+
+    # Fix erreur redirection
+    RewriteRule ^comparateur-axa-taxi$ /assurance-taxi [R=301,L]
+
+    # Fix anciennes URLs
+    RewriteRule ^devis-instantane$ /contact [R=301,L]
 
     # Exclure les fichiers assets (CSS, JS, images, fonts)
     RewriteCond %{REQUEST_URI} !^/assets/
@@ -60,18 +87,23 @@
     RewriteRule ^(.*)$ /index.html [L,QSA]
 </IfModule>
 
-# Cache basique
+# Cache optimisé pour SEO
 <IfModule mod_expires.c>
     ExpiresActive On
-    ExpiresByType text/css "access plus 1 week"
-    ExpiresByType application/javascript "access plus 1 week"
-    ExpiresByType image/png "access plus 1 week"
-    ExpiresByType image/jpeg "access plus 1 week"
+    ExpiresByType text/html "access plus 1 hour"
+    ExpiresByType text/css "access plus 1 month"
+    ExpiresByType application/javascript "access plus 1 month"
+    ExpiresByType image/png "access plus 1 year"
+    ExpiresByType image/jpeg "access plus 1 year"
+    ExpiresByType image/svg+xml "access plus 1 year"
+    ExpiresByType application/json "access plus 1 hour"
+    ExpiresByType application/xml "access plus 1 hour"
+    ExpiresByType text/xml "access plus 1 hour"
 </IfModule>
 
 # Compression GZIP
 <IfModule mod_deflate.c>
-    AddOutputFilterByType DEFLATE text/html text/css application/javascript application/json
+    AddOutputFilterByType DEFLATE text/html text/css application/javascript application/json application/xml text/xml
 </IfModule>
 
 # Protection des fichiers sensibles
