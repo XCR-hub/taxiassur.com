@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
 
@@ -23,74 +23,16 @@ export function useAdminAuth() {
     isAuthenticated: false,
   });
 
-  useEffect(() => {
-    let mounted = true;
-    let authInitialized = false;
-    let isLoadingUser = false;
+  const isLoadingUserRef = React.useRef(false);
 
-    const initAuth = async () => {
-      if (!mounted) return;
+  const loadAdminUser = React.useCallback(async (email: string) => {
+    if (isLoadingUserRef.current) {
+      console.log('⏳ Already loading user, skipping...');
+      return;
+    }
 
-      try {
-        console.log('🔍 Checking auth session...');
+    isLoadingUserRef.current = true;
 
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-
-        if (!mounted) return;
-
-        if (sessionError) {
-          console.error('❌ Session error:', sessionError);
-          setState({ user: null, loading: false, isAuthenticated: false });
-          return;
-        }
-
-        console.log('✅ Session retrieved:', !!session);
-        authInitialized = true;
-
-        if (session?.user) {
-          console.log('👤 User found, loading admin data...');
-          await loadAdminUser(session.user.email!);
-        } else {
-          console.log('🚫 No session found');
-          setState({ user: null, loading: false, isAuthenticated: false });
-        }
-      } catch (error) {
-        console.error('❌ Error in initAuth:', error);
-        if (mounted) {
-          setState({ user: null, loading: false, isAuthenticated: false });
-        }
-      }
-    };
-
-    initAuth();
-
-    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('🔐 Auth state changed:', event, 'Session:', !!session);
-
-      if (!mounted || isLoadingUser) return;
-
-      if (event === 'SIGNED_IN' && session?.user) {
-        await loadAdminUser(session.user.email!);
-      } else if (event === 'SIGNED_OUT') {
-        setState({ user: null, loading: false, isAuthenticated: false });
-      }
-    });
-
-    const timeout = setTimeout(() => {
-      if (mounted && !authInitialized) {
-        console.warn('⚠️ Auth initialization timeout');
-        setState(prev => ({ ...prev, loading: false }));
-      }
-    }, 15000);
-
-    return () => {
-      mounted = false;
-      clearTimeout(timeout);
-      authListener.subscription.unsubscribe();
-    };
-  }, []);
-
-  const loadAdminUser = async (email: string) => {
     try {
       console.log('📧 Loading admin user for email:', email);
 
@@ -132,8 +74,76 @@ export function useAdminAuth() {
       console.error('❌ Error in loadAdminUser:', error);
       logger.error('Erreur lors du chargement admin:', error);
       setState({ user: null, loading: false, isAuthenticated: false });
+    } finally {
+      isLoadingUserRef.current = false;
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    let mounted = true;
+    let authInitialized = false;
+
+    const initAuth = async () => {
+      if (!mounted) return;
+
+      try {
+        console.log('🔍 Checking auth session...');
+
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+
+        if (!mounted) return;
+
+        if (sessionError) {
+          console.error('❌ Session error:', sessionError);
+          setState({ user: null, loading: false, isAuthenticated: false });
+          return;
+        }
+
+        console.log('✅ Session retrieved:', !!session);
+        authInitialized = true;
+
+        if (session?.user) {
+          console.log('👤 User found, loading admin data...');
+          await loadAdminUser(session.user.email!);
+        } else {
+          console.log('🚫 No session found');
+          setState({ user: null, loading: false, isAuthenticated: false });
+        }
+      } catch (error) {
+        console.error('❌ Error in initAuth:', error);
+        if (mounted) {
+          setState({ user: null, loading: false, isAuthenticated: false });
+        }
+      }
+    };
+
+    initAuth();
+
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('🔐 Auth state changed:', event, 'Session:', !!session);
+
+      if (!mounted || isLoadingUserRef.current) return;
+
+      if (event === 'SIGNED_IN' && session?.user) {
+        await loadAdminUser(session.user.email!);
+      } else if (event === 'SIGNED_OUT') {
+        setState({ user: null, loading: false, isAuthenticated: false });
+      }
+    });
+
+    const timeout = setTimeout(() => {
+      if (mounted && !authInitialized) {
+        console.warn('⚠️ Auth initialization timeout');
+        setState(prev => ({ ...prev, loading: false }));
+      }
+    }, 15000);
+
+    return () => {
+      mounted = false;
+      clearTimeout(timeout);
+      authListener.subscription.unsubscribe();
+    };
+  }, [loadAdminUser]);
 
   const signOut = async () => {
     try {
