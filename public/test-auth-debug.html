@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Auth Debug - TaxiAssur</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 { color: #333; margin-bottom: 20px; }
+        .status {
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border-left: 4px solid;
+        }
+        .status.success { background: #d4edda; border-color: #28a745; }
+        .status.error { background: #f8d7da; border-color: #dc3545; }
+        .status.warning { background: #fff3cd; border-color: #ffc107; }
+        .status.info { background: #d1ecf1; border-color: #17a2b8; }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 5px;
+            background: #007bff;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        button:hover { background: #0056b3; }
+        button.danger { background: #dc3545; }
+        button.danger:hover { background: #c82333; }
+        pre {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+        }
+        .test-section h2 {
+            color: #495057;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Diagnostic d'Authentification TaxiAssur</h1>
+
+        <div class="test-section">
+            <h2>1. Configuration Supabase</h2>
+            <div id="config-status"></div>
+            <button onclick="testConfig()">Tester la config</button>
+        </div>
+
+        <div class="test-section">
+            <h2>2. Connexion à Supabase</h2>
+            <div id="connection-status"></div>
+            <button onclick="testConnection()">Tester la connexion</button>
+        </div>
+
+        <div class="test-section">
+            <h2>3. Accès table admin_users</h2>
+            <div id="admin-table-status"></div>
+            <button onclick="testAdminTable()">Tester admin_users</button>
+        </div>
+
+        <div class="test-section">
+            <h2>4. Session active</h2>
+            <div id="session-status"></div>
+            <button onclick="checkSession()">Vérifier la session</button>
+            <button class="danger" onclick="clearSession()">Vider la session</button>
+        </div>
+
+        <div class="test-section">
+            <h2>5. Logs détaillés</h2>
+            <div id="logs"></div>
+            <button onclick="clearLogs()">Vider les logs</button>
+        </div>
+
+        <div class="test-section">
+            <h2>Actions rapides</h2>
+            <button onclick="clearCache()">Vider le cache complet</button>
+            <button onclick="goToBackoffice()">Aller au backoffice</button>
+        </div>
+    </div>
+
+    <script>
+        let supabase;
+        let logs = [];
+
+        function addLog(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            logs.push({ timestamp, message, type });
+            updateLogs();
+        }
+
+        function updateLogs() {
+            const logsDiv = document.getElementById('logs');
+            logsDiv.innerHTML = '<pre>' + logs.map(log =>
+                `[${log.timestamp}] ${log.message}`
+            ).join('\n') + '</pre>';
+        }
+
+        function showStatus(elementId, message, type = 'info') {
+            const div = document.getElementById(elementId);
+            div.innerHTML = `<div class="status ${type}">${message}</div>`;
+        }
+
+        function clearLogs() {
+            logs = [];
+            updateLogs();
+        }
+
+        async function testConfig() {
+            addLog('Test de configuration...', 'info');
+
+            const url = 'https://drohhxrkoequjphvabvq.supabase.co';
+            const anonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRyb2hoeHJrb2VxdWpwaHZhYnZxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk3ODM3NjAsImV4cCI6MjA3NTM1OTc2MH0.LP9fh10fY0nRDjpG4VW2yGZ5sT4BkiDalox8ToMbMlg';
+
+            if (!url || !anonKey) {
+                showStatus('config-status', '❌ Variables d\'environnement manquantes', 'error');
+                addLog('❌ Config manquante', 'error');
+                return;
+            }
+
+            showStatus('config-status', `✅ Config OK<br>URL: ${url}`, 'success');
+            addLog('✅ Configuration valide', 'success');
+
+            // Initialiser Supabase
+            try {
+                supabase = window.supabase.createClient(url, anonKey, {
+                    auth: {
+                        persistSession: true,
+                        autoRefreshToken: true,
+                        storageKey: 'taxiassur-auth-test'
+                    }
+                });
+                showStatus('config-status', '✅ Client Supabase créé avec succès', 'success');
+                addLog('✅ Client Supabase initialisé', 'success');
+            } catch (error) {
+                showStatus('config-status', `❌ Erreur création client: ${error.message}`, 'error');
+                addLog(`❌ Erreur: ${error.message}`, 'error');
+            }
+        }
+
+        async function testConnection() {
+            if (!supabase) {
+                await testConfig();
+            }
+
+            addLog('Test de connexion à Supabase...', 'info');
+
+            try {
+                const start = Date.now();
+                const { data, error } = await supabase.from('admin_users').select('count', { count: 'exact', head: true });
+                const duration = Date.now() - start;
+
+                if (error) {
+                    showStatus('connection-status', `❌ Erreur: ${error.message}`, 'error');
+                    addLog(`❌ Connexion échouée: ${error.message}`, 'error');
+                } else {
+                    showStatus('connection-status', `✅ Connexion OK (${duration}ms)`, 'success');
+                    addLog(`✅ Connexion réussie en ${duration}ms`, 'success');
+                }
+            } catch (error) {
+                showStatus('connection-status', `❌ Exception: ${error.message}`, 'error');
+                addLog(`❌ Exception: ${error.message}`, 'error');
+            }
+        }
+
+        async function testAdminTable() {
+            if (!supabase) {
+                await testConfig();
+            }
+
+            addLog('Test d\'accès à admin_users...', 'info');
+
+            try {
+                const start = Date.now();
+                const { data, error } = await supabase
+                    .from('admin_users')
+                    .select('id, email, full_name, role, is_active')
+                    .eq('is_active', true);
+
+                const duration = Date.now() - start;
+
+                if (error) {
+                    showStatus('admin-table-status', `❌ Erreur RLS: ${error.message}<br><code>${error.code}</code>`, 'error');
+                    addLog(`❌ Erreur admin_users: ${error.message}`, 'error');
+                } else {
+                    const message = `✅ Table accessible (${duration}ms)<br>` +
+                        `Nombre d'admins actifs: ${data?.length || 0}`;
+
+                    if (data && data.length > 0) {
+                        const adminList = data.map(u => `• ${u.full_name} (${u.email}) - ${u.role}`).join('<br>');
+                        showStatus('admin-table-status', message + '<br><br>' + adminList, 'success');
+                        addLog(`✅ ${data.length} admin(s) trouvé(s)`, 'success');
+                    } else {
+                        showStatus('admin-table-status', message + '<br>⚠️ Aucun admin actif trouvé', 'warning');
+                        addLog('⚠️ Aucun admin actif', 'warning');
+                    }
+                }
+            } catch (error) {
+                showStatus('admin-table-status', `❌ Exception: ${error.message}`, 'error');
+                addLog(`❌ Exception: ${error.message}`, 'error');
+            }
+        }
+
+        async function checkSession() {
+            if (!supabase) {
+                await testConfig();
+            }
+
+            addLog('Vérification de la session...', 'info');
+
+            try {
+                const { data: { session }, error } = await supabase.auth.getSession();
+
+                if (error) {
+                    showStatus('session-status', `❌ Erreur: ${error.message}`, 'error');
+                    addLog(`❌ Erreur session: ${error.message}`, 'error');
+                } else if (session) {
+                    const message = `✅ Session active<br>` +
+                        `Email: ${session.user.email}<br>` +
+                        `Expire: ${new Date(session.expires_at * 1000).toLocaleString()}`;
+                    showStatus('session-status', message, 'success');
+                    addLog(`✅ Session active pour ${session.user.email}`, 'success');
+                } else {
+                    showStatus('session-status', '⚠️ Aucune session active', 'warning');
+                    addLog('⚠️ Pas de session', 'warning');
+                }
+            } catch (error) {
+                showStatus('session-status', `❌ Exception: ${error.message}`, 'error');
+                addLog(`❌ Exception: ${error.message}`, 'error');
+            }
+        }
+
+        async function clearSession() {
+            if (!supabase) {
+                await testConfig();
+            }
+
+            addLog('Nettoyage de la session...', 'info');
+
+            try {
+                await supabase.auth.signOut();
+                showStatus('session-status', '✅ Session supprimée', 'success');
+                addLog('✅ Session nettoyée', 'success');
+            } catch (error) {
+                showStatus('session-status', `❌ Erreur: ${error.message}`, 'error');
+                addLog(`❌ Erreur: ${error.message}`, 'error');
+            }
+        }
+
+        function clearCache() {
+            addLog('Nettoyage complet du cache...', 'info');
+
+            localStorage.clear();
+            sessionStorage.clear();
+
+            addLog('✅ Cache vidé', 'success');
+            alert('Cache vidé ! La page va se recharger.');
+            location.reload();
+        }
+
+        function goToBackoffice() {
+            window.location.href = '/backoffice';
+        }
+
+        // Auto-test au chargement
+        window.onload = async () => {
+            addLog('🚀 Diagnostic démarré', 'info');
+            await testConfig();
+            await testConnection();
+            await testAdminTable();
+            await checkSession();
+            addLog('✅ Diagnostic terminé', 'success');
+        };
+    </script>
+</body>
+</html>

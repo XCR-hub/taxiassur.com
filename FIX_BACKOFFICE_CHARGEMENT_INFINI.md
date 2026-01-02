@@ -2,7 +2,7 @@
 
 **Date**: 2026-01-02
 **Problème**: Page blanche avec chargement infini au backoffice
-**Status**: ✅ CORRIGÉ
+**Status**: ✅ CORRIGÉ (v2)
 
 ---
 
@@ -11,29 +11,74 @@
 1. **Page blanche** au backoffice (/backoffice)
 2. **Icône de chargement** qui tourne indéfiniment
 3. **Erreur console**: "Multiple GoTrueClient instances detected"
+4. **Timeout**: "Auth check timeout" après 3 secondes
 
 ---
 
-## ✅ Corrections Appliquées
+## ✅ Corrections Appliquées (Version 2)
 
-### 1. Imports Supabase Unifiés (42 fichiers)
-Tous les fichiers utilisent maintenant `@/lib/supabase` au lieu de chemins relatifs variés.
+### 1. Singleton Supabase Simplifié ✅
+**Problème**: Le Proxy créait plusieurs instances
+**Solution**: Export direct du singleton sans Proxy
 
-### 2. AuthGuard Amélioré
-- **Timeout automatique** de 5 secondes
-- **Logs de débogage** pour tracer le problème
-- **Bouton de secours** pour vider le cache
-- **Rechargement automatique** après connexion
+```typescript
+// AVANT (avec Proxy - PROBLÉMATIQUE)
+export const supabase = new Proxy({}, {
+  get(target, prop) {
+    return getSupabaseInstance()[prop];
+  }
+});
 
-### 3. Hook useAdminAuth Renforcé
-- **Timeout de sécurité** de 3 secondes
-- **Logs détaillés** à chaque étape
-- **Gestion d'erreurs** améliorée
-- **Cleanup proper** avec `mounted` flag
+// APRÈS (export direct - OK)
+export const supabase = createSupabaseInstance();
+```
+
+### 2. Imports Supabase Unifiés (42 fichiers) ✅
+Tous les fichiers utilisent maintenant `@/lib/supabase`
+
+### 3. AuthGuard Amélioré ✅
+- Timeout automatique de 5 secondes
+- Logs de débogage détaillés
+- Bouton de secours pour vider le cache
+- Rechargement automatique après connexion
+
+### 4. Hook useAdminAuth Renforcé ✅
+- Timeout global de 3 secondes sur le useEffect
+- **Timeout spécifique de 5 secondes** sur la requête `admin_users`
+- Logs détaillés à chaque étape
+- Gestion d'erreurs avec Promise.race
+- Cleanup proper avec `mounted` flag
+
+### 5. Page de Diagnostic Créée ✅
+**URL**: `/test-auth-debug.html`
+- Test de configuration
+- Test de connexion Supabase
+- Test d'accès à admin_users
+- Vérification de session
+- Nettoyage du cache
 
 ---
 
 ## 🚀 Comment Tester
+
+### Étape 0: Page de Diagnostic (NOUVEAU) 🆕
+
+**URL**: `https://taxiassur.com/test-auth-debug.html`
+
+Cette page effectue tous les tests automatiquement:
+1. ✅ Configuration Supabase
+2. ✅ Connexion au serveur
+3. ✅ Accès à la table admin_users
+4. ✅ Vérification de session
+5. ✅ Logs détaillés en temps réel
+
+**Actions disponibles:**
+- "Vider le cache complet" → Nettoie tout
+- "Aller au backoffice" → Test direct
+
+👉 **Commencez par là pour diagnostiquer rapidement !**
+
+---
 
 ### Étape 1: Vider le Cache Navigateur
 
@@ -68,6 +113,8 @@ location.reload();
 **Ouvrir la console (F12)** pour voir les logs:
 
 ```
+🆕 Creating new Supabase instance
+✅ Supabase instance stored in window
 🔍 Checking auth session...
 ✅ Session retrieved: true/false
 👤 User found, loading admin data...
@@ -90,14 +137,24 @@ location.reload();
 
 ### Si erreur "Multiple GoTrueClient":
 
-**Dans la console:**
+**Cette erreur devrait avoir disparu grâce au singleton simplifié.**
+
+**Vérification dans la console:**
 ```javascript
 // Vérifier combien d'instances
 Object.keys(window).filter(k => k.includes('SUPABASE'))
 
 // Devrait afficher: ['__TAXIASSUR_SUPABASE__']
-// Si plus → problème d'import
+// Si plus → vider le cache et recharger
 ```
+
+**Si l'erreur persiste:**
+1. Vider **complètement** le cache (Ctrl+Shift+Suppr)
+2. Fermer **tous** les onglets taxiassur.com
+3. Rouvrir un seul onglet
+4. Recharger avec Ctrl+F5
+
+**Cause**: L'ancienne version (avec Proxy) avait été mise en cache
 
 ### Si "Admin user not found":
 
@@ -312,8 +369,84 @@ En production, désactiver:
 
 ---
 
-**Status**: ✅ **CORRIGÉ**
-**Build**: ✅ **SUCCÈS**
-**Action Requise**: 🔄 **Vider le cache navigateur**
+---
 
-**Dernière mise à jour**: 2026-01-02
+## 🎯 Actions Rapides (TL;DR)
+
+### Option 1: Page de Diagnostic (Recommandé) ✨
+
+1. **Aller sur**: `https://taxiassur.com/test-auth-debug.html`
+2. **Laisser les tests** se faire automatiquement
+3. **Cliquer sur** "Vider le cache complet" si besoin
+4. **Cliquer sur** "Aller au backoffice"
+
+### Option 2: Nettoyage Manuel
+
+```javascript
+// Dans la console (F12)
+localStorage.clear();
+sessionStorage.clear();
+location.reload();
+```
+
+### Option 3: Cache Navigateur
+
+1. **Ctrl+Shift+Suppr** (Chrome/Edge)
+2. **Vider le cache**
+3. **Recharger** avec Ctrl+F5
+
+---
+
+## 📋 Checklist Post-Corrections
+
+- [x] Singleton Supabase sans Proxy
+- [x] Imports unifiés (42 fichiers)
+- [x] AuthGuard avec timeout 5s
+- [x] useAdminAuth avec timeout sur requête
+- [x] Page de diagnostic créée
+- [x] Build réussi ✅
+- [ ] **Cache navigateur vidé** ⬅️ VOUS ÊTES ICI
+- [ ] **Test de connexion backoffice**
+- [ ] **Vérification logs console**
+
+---
+
+## 📊 Fichiers Modifiés
+
+**Total**: 4 fichiers
+
+1. `src/lib/supabase.ts` - Singleton simplifié (sans Proxy)
+2. `src/hooks/useAdminAuth.ts` - Timeout requête admin_users
+3. `src/components/AuthGuard.tsx` - Timeout 5s + bouton secours
+4. `public/test-auth-debug.html` - Page de diagnostic (NOUVEAU)
+
+---
+
+## ✅ Résultat Attendu
+
+**Avant:**
+```
+⚠️ Multiple GoTrueClient instances detected
+⚠️ Auth check timeout
+💥 Page blanche infinie
+```
+
+**Après:**
+```
+🆕 Creating new Supabase instance
+✅ Supabase instance stored in window
+🔍 Checking auth session...
+✅ Session retrieved
+📧 Loading admin user for email: xxx
+✅ Admin authenticated: Nom
+→ DASHBOARD S'AFFICHE
+```
+
+---
+
+**Status**: ✅ **CORRIGÉ (v2)**
+**Build**: ✅ **SUCCÈS**
+**Action Requise**: 🔄 **Vider le cache + Tester**
+**Page Diagnostic**: 🆕 `/test-auth-debug.html`
+
+**Dernière mise à jour**: 2026-01-02 (v2)

@@ -90,18 +90,28 @@ export function useAdminAuth() {
     try {
       console.log('📧 Loading admin user for email:', email);
 
-      const { data: adminUser, error } = await supabase
+      // Créer une promesse de timeout
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new Error('Timeout: admin_users query took too long')), 5000);
+      });
+
+      // Créer la requête
+      const queryPromise = supabase
         .from('admin_users')
         .select('*')
         .eq('email', email)
         .eq('is_active', true)
         .maybeSingle();
 
-      if (error) {
-        console.error('❌ Error loading admin user:', error);
-        throw error;
+      // Race entre la requête et le timeout
+      const result = await Promise.race([queryPromise, timeoutPromise]);
+
+      if ('error' in result && result.error) {
+        console.error('❌ Error loading admin user:', result.error);
+        throw result.error;
       }
 
+      const adminUser = 'data' in result ? result.data : null;
       console.log('👤 Admin user data:', adminUser ? 'Found' : 'Not found');
 
       if (adminUser) {
@@ -119,6 +129,7 @@ export function useAdminAuth() {
     } catch (error) {
       console.error('❌ Error in loadAdminUser:', error);
       logger.error('Erreur lors du chargement admin:', error);
+      // Important: ne pas bloquer l'app - permettre d'afficher le formulaire
       setState({ user: null, loading: false, isAuthenticated: false });
     }
   };

@@ -10,18 +10,15 @@ declare global {
   }
 }
 
-// Singleton instance - created once and reused
-let supabaseInstance: ReturnType<typeof createClient> | null = null;
-
-const getSupabaseInstance = () => {
+// Create singleton instance immediately
+const createSupabaseInstance = () => {
   // Check global instance first to prevent HMR duplicates
   if (typeof window !== 'undefined' && window.__TAXIASSUR_SUPABASE__) {
+    console.log('♻️ Using existing Supabase instance from window');
     return window.__TAXIASSUR_SUPABASE__;
   }
 
-  if (supabaseInstance) {
-    return supabaseInstance;
-  }
+  console.log('🆕 Creating new Supabase instance');
 
   let supabaseUrl: string;
   let supabaseAnonKey: string;
@@ -36,29 +33,26 @@ const getSupabaseInstance = () => {
     supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRyb2hoeHJrb2VxdWpwaHZhYnZxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk3ODM3NjAsImV4cCI6MjA3NTM1OTc2MH0.LP9fh10fY0nRDjpG4VW2yGZ5sT4BkiDalox8ToMbMlg';
   }
 
-  supabaseInstance = createClient(supabaseUrl, supabaseAnonKey, {
+  const instance = createClient(supabaseUrl, supabaseAnonKey, {
     auth: {
       persistSession: true,
       autoRefreshToken: true,
-      storageKey: 'taxiassur-auth'
+      storageKey: 'taxiassur-auth',
+      detectSessionInUrl: true
     }
   });
 
   // Store in window to prevent HMR duplicates
   if (typeof window !== 'undefined') {
-    window.__TAXIASSUR_SUPABASE__ = supabaseInstance;
+    window.__TAXIASSUR_SUPABASE__ = instance;
+    console.log('✅ Supabase instance stored in window');
   }
 
-  return supabaseInstance;
+  return instance;
 };
 
-// Export using getter to ensure singleton across all imports
-export const supabase = new Proxy({} as ReturnType<typeof createClient>, {
-  get(target, prop) {
-    const instance = getSupabaseInstance();
-    return (instance as any)[prop];
-  }
-});
+// Export singleton directly - NO PROXY
+export const supabase = createSupabaseInstance();
 
 // Supabase ADMIN client with Service Role Key (WRITE operations from backoffice)
 // Bypasses RLS - Use only for authenticated admin operations
