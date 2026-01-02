@@ -25,10 +25,39 @@ export function useAdminAuth() {
 
   useEffect(() => {
     let mounted = true;
+    let authInitialized = false;
 
     const initAuth = async () => {
-      if (mounted) {
-        await checkAuth();
+      if (!mounted) return;
+
+      try {
+        console.log('🔍 Checking auth session...');
+
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+
+        if (!mounted) return;
+
+        if (sessionError) {
+          console.error('❌ Session error:', sessionError);
+          setState({ user: null, loading: false, isAuthenticated: false });
+          return;
+        }
+
+        console.log('✅ Session retrieved:', !!session);
+        authInitialized = true;
+
+        if (session?.user) {
+          console.log('👤 User found, loading admin data...');
+          await loadAdminUser(session.user.email!);
+        } else {
+          console.log('🚫 No session found');
+          setState({ user: null, loading: false, isAuthenticated: false });
+        }
+      } catch (error) {
+        console.error('❌ Error in initAuth:', error);
+        if (mounted) {
+          setState({ user: null, loading: false, isAuthenticated: false });
+        }
       }
     };
 
@@ -47,11 +76,11 @@ export function useAdminAuth() {
     });
 
     const timeout = setTimeout(() => {
-      if (mounted) {
-        console.warn('⚠️ Auth check timeout');
+      if (mounted && !authInitialized) {
+        console.warn('⚠️ Auth initialization timeout');
         setState(prev => ({ ...prev, loading: false }));
       }
-    }, 3000);
+    }, 8000);
 
     return () => {
       mounted = false;
@@ -60,39 +89,12 @@ export function useAdminAuth() {
     };
   }, []);
 
-  const checkAuth = async () => {
-    try {
-      console.log('🔍 Checking auth session...');
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-
-      if (sessionError) {
-        console.error('❌ Session error:', sessionError);
-        throw sessionError;
-      }
-
-      console.log('✅ Session retrieved:', !!session);
-
-      if (session?.user) {
-        console.log('👤 User found, loading admin data...');
-        await loadAdminUser(session.user.email!);
-      } else {
-        console.log('🚫 No session found');
-        setState({ user: null, loading: false, isAuthenticated: false });
-      }
-    } catch (error) {
-      console.error('❌ Error checking auth:', error);
-      logger.error('Erreur lors de la vérification auth:', error);
-      setState({ user: null, loading: false, isAuthenticated: false });
-    }
-  };
-
   const loadAdminUser = async (email: string) => {
     try {
       console.log('📧 Loading admin user for email:', email);
 
-      // Créer une promesse de timeout
       const timeoutPromise = new Promise<never>((_, reject) => {
-        setTimeout(() => reject(new Error('Timeout: admin_users query took too long')), 5000);
+        setTimeout(() => reject(new Error('Timeout: admin_users query took too long')), 3000);
       });
 
       // Créer la requête
