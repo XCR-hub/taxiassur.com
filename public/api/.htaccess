@@ -1,0 +1,37 @@
+# Configuration Apache pour API PHP TaxiAssur.com
+# Force le traitement des fichiers PHP
+
+# Activer PHP
+<IfModule mod_php.c>
+    php_flag display_errors Off
+    php_flag log_errors On
+</IfModule>
+
+# Headers CORS pour API
+<IfModule mod_headers.c>
+    Header always set Access-Control-Allow-Origin "*"
+    Header always set Access-Control-Allow-Methods "GET, POST, OPTIONS"
+    Header always set Access-Control-Allow-Headers "Content-Type, X-Requested-With, Authorization"
+    Header always set Content-Type "application/json; charset=UTF-8"
+</IfModule>
+
+# Traiter les requêtes OPTIONS (CORS preflight)
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteCond %{REQUEST_METHOD} OPTIONS
+    RewriteRule ^(.*)$ $1 [R=200,L]
+</IfModule>
+
+# Protection - Interdire l'accès aux fichiers de config
+<Files "config.php">
+    Order allow,deny
+    Deny from all
+</Files>
+
+<Files "load-env.php">
+    Order allow,deny
+    Deny from all
+</Files>
+
+# Permettre l'exécution PHP
+AddHandler application/x-httpd-php .php

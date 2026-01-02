@@ -70,8 +70,13 @@ const Hero: React.FC = () => {
         })
       });
 
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        throw new Error('Le serveur a retourné une réponse non-JSON');
+      }
+
       const result = await response.json();
-      
+
       if (result.success || result.ok) {
         window.location.href = '/merci';
       } else {

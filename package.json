@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build && npm run copy:api",
+    "copy:api": "mkdir -p dist/api dist/content dist/feeds dist/webhooks && cp -r public/api/* dist/api/ 2>/dev/null || true && cp -r public/content/* dist/content/ 2>/dev/null || true && cp -r public/feeds/* dist/feeds/ 2>/dev/null || true && cp -r public/webhooks/* dist/webhooks/ 2>/dev/null || true",
     "build:analyze": "vite build --mode analyze",
     "lint": "eslint .",
     "preview": "vite preview",
