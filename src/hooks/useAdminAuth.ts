@@ -89,7 +89,24 @@ export function useAdminAuth() {
       try {
         console.log('🔍 Checking auth session...');
 
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        const cachedSession = localStorage.getItem('taxiassur-auth');
+        if (!cachedSession || cachedSession === 'null') {
+          console.log('⚡ No cached session, showing login immediately');
+          setState({ user: null, loading: false, isAuthenticated: false });
+          authInitialized = true;
+          return;
+        }
+
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error('Session check timeout')), 3000);
+        });
+
+        const sessionPromise = supabase.auth.getSession();
+
+        const { data: { session }, error: sessionError } = await Promise.race([
+          sessionPromise,
+          timeoutPromise
+        ]) as any;
 
         if (!mounted) return;
 
@@ -137,7 +154,7 @@ export function useAdminAuth() {
         console.warn('⚠️ Auth initialization timeout - showing login');
         setState({ user: null, loading: false, isAuthenticated: false });
       }
-    }, 10000);
+    }, 5000);
 
     return () => {
       mounted = false;

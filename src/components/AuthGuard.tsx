@@ -10,6 +10,7 @@ interface AuthGuardProps {
 const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
   const { user, loading, isAuthenticated, signOut } = useAdminAuth();
   const [timeout, setTimeout] = useState(false);
+  const [startTime] = useState(() => performance.now());
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -17,7 +18,7 @@ const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
         console.error('⚠️ AuthGuard timeout: chargement trop long');
         setTimeout(true);
       }
-    }, 7000);
+    }, 4000);
 
     return () => window.clearTimeout(timer);
   }, [loading]);
@@ -25,6 +26,18 @@ const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
   useEffect(() => {
     console.log('🔐 AuthGuard state:', { loading, isAuthenticated, hasUser: !!user });
   }, [loading, isAuthenticated, user]);
+
+  useEffect(() => {
+    if (!loading && (isAuthenticated || !user)) {
+      const endTime = performance.now();
+      const duration = Math.round(endTime - startTime);
+      console.log(`⏱️ Auth initialization took: ${duration}ms`);
+
+      if (duration > 3000) {
+        console.warn('⚠️ Slow auth initialization detected:', duration + 'ms');
+      }
+    }
+  }, [loading, isAuthenticated, user, startTime]);
 
   if (timeout && loading) {
     return (

@@ -62,8 +62,7 @@ function getSupabaseInstance() {
         fetch: (url, options = {}) => {
           return fetch(url, {
             ...options,
-            // Ajouter un timeout de 10s max pour toutes les requêtes
-            signal: AbortSignal.timeout(10000)
+            signal: AbortSignal.timeout(5000)
           });
         }
       }
