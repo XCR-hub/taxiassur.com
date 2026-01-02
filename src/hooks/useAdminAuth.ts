@@ -24,20 +24,29 @@ export function useAdminAuth() {
   });
 
   const isLoadingUserRef = React.useRef(false);
+  const lastLoadEmailRef = React.useRef<string>('');
+  const loadTimestampRef = React.useRef<number>(0);
 
   const loadAdminUser = React.useCallback(async (email: string) => {
-    if (isLoadingUserRef.current) {
-      console.log('⏳ Already loading user, skipping...');
+    // Éviter les appels dupliqués dans les 5 secondes
+    const now = Date.now();
+    if (
+      isLoadingUserRef.current ||
+      (lastLoadEmailRef.current === email && now - loadTimestampRef.current < 5000)
+    ) {
+      console.log('⏳ Skipping duplicate load request');
       return;
     }
 
     isLoadingUserRef.current = true;
+    lastLoadEmailRef.current = email;
+    loadTimestampRef.current = now;
 
     try {
       console.log('📧 Loading admin user for email:', email);
 
       const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Admin user load timeout')), 2000);
+        setTimeout(() => reject(new Error('Admin user load timeout')), 10000);
       });
 
       const userPromise = supabase
@@ -170,7 +179,7 @@ export function useAdminAuth() {
         console.log('✅ Valid session found, verifying with Supabase...');
 
         const timeoutPromise = new Promise((_, reject) => {
-          setTimeout(() => reject(new Error('Session check timeout')), 5000); // 5s au lieu de 2s
+          setTimeout(() => reject(new Error('Session check timeout')), 10000);
         });
 
         const sessionPromise = supabase.auth.getSession();
@@ -217,13 +226,18 @@ export function useAdminAuth() {
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('🔐 Auth state changed:', event, 'Session:', !!session);
 
-      if (!mounted || isLoadingUserRef.current) return;
+      if (!mounted) return;
 
+      // Ne charger l'utilisateur QUE lors du SIGNED_IN initial
+      // Ignorer TOKEN_REFRESHED et autres événements qui ne nécessitent pas de reload
       if (event === 'SIGNED_IN' && session?.user) {
         await loadAdminUser(session.user.email!);
       } else if (event === 'SIGNED_OUT') {
+        localStorage.removeItem('taxiassur-auth');
+        localStorage.removeItem('taxiassur_user');
         setState({ user: null, loading: false, isAuthenticated: false });
       }
+      // Ignorer tous les autres événements (TOKEN_REFRESHED, USER_UPDATED, etc.)
     });
 
     const timeout = setTimeout(() => {
@@ -231,7 +245,7 @@ export function useAdminAuth() {
         console.warn('⚠️ Auth initialization timeout - showing login');
         setState({ user: null, loading: false, isAuthenticated: false });
       }
-    }, 3000);
+    }, 8000);
 
     return () => {
       mounted = false;

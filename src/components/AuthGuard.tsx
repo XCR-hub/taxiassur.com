@@ -18,7 +18,7 @@ const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
         console.error('⚠️ AuthGuard timeout: chargement trop long');
         setTimeout(true);
       }
-    }, 3000);
+    }, 15000);
 
     return () => window.clearTimeout(timer);
   }, [loading]);
@@ -31,10 +31,15 @@ const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
     if (!loading && (isAuthenticated || !user)) {
       const endTime = performance.now();
       const duration = Math.round(endTime - startTime);
-      console.log(`⏱️ Auth initialization took: ${duration}ms`);
 
-      if (duration > 3000) {
-        console.warn('⚠️ Slow auth initialization detected:', duration + 'ms');
+      if (duration < 100) {
+        console.log(`⚡ Fast auth: ${duration}ms`);
+      } else if (duration < 1000) {
+        console.log(`✅ Auth completed: ${duration}ms`);
+      } else if (duration < 3000) {
+        console.log(`⏱️ Auth completed: ${duration}ms`);
+      } else {
+        console.warn(`⚠️ Slow auth: ${duration}ms`);
       }
     }
   }, [loading, isAuthenticated, user, startTime]);
