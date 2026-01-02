@@ -44,6 +44,16 @@ async function fetchLocalContent<T>(type: string, schema: any): Promise<T[]> {
           break;
         }
 
+        // Vérifier que la réponse est bien du JSON
+        const contentType = fileResponse.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+          if (index === 0) {
+            const knownFiles = await loadKnownFiles(type);
+            return knownFiles.map(f => schema.parse(f)).filter((item: any) => item.status === 'published');
+          }
+          break;
+        }
+
         const data = await fileResponse.json();
         const validated = schema.parse(data);
         if (validated.status === 'published') {
@@ -52,6 +62,14 @@ async function fetchLocalContent<T>(type: string, schema: any): Promise<T[]> {
         index++;
       } catch (err) {
         logger.warn(`Error loading ${type}/index-${index}.json:`, err);
+        if (index === 0) {
+          try {
+            const knownFiles = await loadKnownFiles(type);
+            return knownFiles.map(f => schema.parse(f)).filter((item: any) => item.status === 'published');
+          } catch (e) {
+            logger.error(`Failed to load known files for ${type}:`, e);
+          }
+        }
         break;
       }
     }
@@ -123,8 +141,12 @@ async function loadKnownFiles(type: string): Promise<any[]> {
     try {
       const response = await fetch(`/content/${type}/${file}.json`);
       if (response.ok) {
-        const data = await response.json();
-        items.push(data);
+        // Vérifier que c'est bien du JSON
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const data = await response.json();
+          items.push(data);
+        }
       }
     } catch (err) {
       logger.warn(`Failed to load ${type}/${file}.json:`, err);
@@ -139,7 +161,13 @@ async function fetchLocalItem<T>(type: string, id: string, schema: any): Promise
   try {
     const response = await fetch(`/content/${type}/${id}.json`);
     if (!response.ok) return null;
-    
+
+    // Vérifier que c'est bien du JSON
+    const contentType = response.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      return null;
+    }
+
     const data = await response.json();
     const validated = schema.parse(data);
     return validated.status === 'published' ? validated : null;

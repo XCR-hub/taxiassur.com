@@ -58,8 +58,11 @@ const NewsManager: React.FC = () => {
       // Fallback sur fichier JSON statique
       const response = await fetch('/content/processed-news.json');
       if (response.ok) {
-        const data = await response.json();
-        setProcessedNews(Array.isArray(data) ? data : []);
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const data = await response.json();
+          setProcessedNews(Array.isArray(data) ? data : []);
+        }
       }
     } catch (error) {
       logger.error('Failed to load processed news:', error);

@@ -15,7 +15,12 @@ async function fetchLocalContent<T>(type: string, schema: any): Promise<T[]> {
         try {
           const fileResponse = await fetch(`/content/${type}/index-${index}.json`);
           if (!fileResponse.ok) break;
-          
+
+          const contentType = fileResponse.headers.get('content-type');
+          if (!contentType || !contentType.includes('application/json')) {
+            break;
+          }
+
           const data = await fileResponse.json();
           const validated = schema.parse(data);
           items.push(validated);

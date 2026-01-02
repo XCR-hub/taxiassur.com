@@ -79,7 +79,12 @@ export class PopupManager {
     try {
       const response = await fetch('/content/popups.json');
       if (!response.ok) return [];
-      
+
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        return [];
+      }
+
       const data = await response.json();
       this.configs = Array.isArray(data) ? data.map(item => PopupConfigSchema.parse(item)) : [];
       return this.configs;

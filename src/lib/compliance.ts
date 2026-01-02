@@ -41,9 +41,12 @@ export class GDPRCompliance {
           try {
             const fileResponse = await fetch(`/content/consents/${filename}`);
             if (fileResponse.ok) {
-              const data = await fileResponse.json();
-              const validated = ConsentSchema.parse(data);
-              consents.push(validated);
+              const contentType = fileResponse.headers.get('content-type');
+              if (contentType && contentType.includes('application/json')) {
+                const data = await fileResponse.json();
+                const validated = ConsentSchema.parse(data);
+                consents.push(validated);
+              }
             }
           } catch (error) {
             logger.warn(`Failed to load consent ${filename}:`, error);
@@ -110,7 +113,12 @@ export class GDPRCompliance {
     try {
       const response = await fetch('/content/suppressions.json');
       if (!response.ok) return [];
-      
+
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        return [];
+      }
+
       const data = await response.json();
       return Object.values(data).filter((record: any) => record.email === email);
     } catch {

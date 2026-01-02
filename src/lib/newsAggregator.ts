@@ -116,8 +116,11 @@ export class NewsAggregator {
     try {
       const response = await fetch('/content/news-sources.json');
       if (response.ok) {
-        const data = await response.json();
-        this.sources = Array.isArray(data) ? data.map(item => NewsSourceSchema.parse(item)) : DEFAULT_NEWS_SOURCES;
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const data = await response.json();
+          this.sources = Array.isArray(data) ? data.map(item => NewsSourceSchema.parse(item)) : DEFAULT_NEWS_SOURCES;
+        }
       }
     } catch (error) {
       logger.warn('Failed to load news sources, using defaults:', error);
@@ -129,8 +132,11 @@ export class NewsAggregator {
     try {
       const response = await fetch('/content/processed-news.json');
       if (response.ok) {
-        const data = await response.json();
-        this.processedNews = Array.isArray(data) ? data.map(item => ProcessedNewsSchema.parse(item)) : [];
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const data = await response.json();
+          this.processedNews = Array.isArray(data) ? data.map(item => ProcessedNewsSchema.parse(item)) : [];
+        }
       }
     } catch (error) {
       logger.warn('Failed to load processed news:', error);

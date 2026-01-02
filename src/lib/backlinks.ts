@@ -41,7 +41,12 @@ export async function getBacklinks(): Promise<Backlink[]> {
   try {
     const response = await fetch('/content/backlinks.json');
     if (!response.ok) return [];
-    
+
+    const contentType = response.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      return [];
+    }
+
     const data = await response.json();
     return Array.isArray(data) ? data.map(item => BacklinkSchema.parse(item)) : [];
   } catch (error) {
@@ -54,7 +59,12 @@ export async function getPartners(): Promise<Partner[]> {
   try {
     const response = await fetch('/content/partners.json');
     if (!response.ok) return [];
-    
+
+    const contentType = response.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      return [];
+    }
+
     const data = await response.json();
     return Array.isArray(data) ? data.map(item => PartnerSchema.parse(item)) : [];
   } catch (error) {
