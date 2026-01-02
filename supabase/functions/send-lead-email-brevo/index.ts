@@ -37,35 +37,216 @@ Deno.serve(async (req: Request) => {
 
     // Email à l'équipe TaxiAssur
     const teamEmailBody = `
-      <h2>🎯 Nouveau Lead Reçu</h2>
-      <p><strong>Nom :</strong> ${lead.nom_prenom}</p>
-      <p><strong>Téléphone :</strong> ${lead.telephone}</p>
-      <p><strong>Email :</strong> ${lead.email}</p>
-      <p><strong>Ville :</strong> ${lead.ville}</p>
-      <p><strong>Statut :</strong> ${lead.statut}</p>
-      ${lead.immatriculation ? `<p><strong>Immatriculation :</strong> ${lead.immatriculation}</p>` : ""}
-      <p><strong>Date :</strong> ${new Date(lead.created_at).toLocaleString("fr-FR")}</p>
-      <hr>
-      <p><a href="https://taxiassur.com/backoffice/leads">Voir dans le CRM</a></p>
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; background: #f3f4f6; }
+          .container { max-width: 650px; margin: 0 auto; padding: 20px; }
+          .header { background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color: white; padding: 25px; text-align: center; border-radius: 10px 10px 0 0; }
+          .content { background: #ffffff; padding: 30px; border: 1px solid #e5e7eb; }
+          .alert-box { background: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; margin: 20px 0; }
+          .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0; }
+          .info-item { background: #f9fafb; padding: 15px; border-radius: 8px; border: 1px solid #e5e7eb; }
+          .info-label { color: #6b7280; font-size: 12px; text-transform: uppercase; margin-bottom: 5px; }
+          .info-value { color: #1f2937; font-weight: bold; font-size: 16px; }
+          .cta-button { background: #10b981; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; display: inline-block; font-weight: bold; margin: 20px 0; text-align: center; }
+          .footer { background: #1f2937; color: white; padding: 20px; text-align: center; font-size: 12px; border-radius: 0 0 10px 10px; }
+          .priority-badge { background: #ef4444; color: white; padding: 5px 15px; border-radius: 20px; font-size: 12px; font-weight: bold; display: inline-block; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1 style="margin: 0; font-size: 32px;">🎯 NOUVEAU LEAD</h1>
+            <p style="margin: 10px 0 0 0; font-size: 16px;">Traitement prioritaire requis</p>
+          </div>
+
+          <div class="content">
+            <div class="alert-box">
+              <strong>⚡ ACTION REQUISE :</strong> Contactez ce prospect dans les <strong>15 minutes</strong>
+            </div>
+
+            <h2 style="color: #1f2937; margin-top: 0;">Informations du prospect</h2>
+
+            <div class="info-grid">
+              <div class="info-item">
+                <div class="info-label">Nom complet</div>
+                <div class="info-value">${lead.nom_prenom}</div>
+              </div>
+
+              <div class="info-item">
+                <div class="info-label">📞 Téléphone</div>
+                <div class="info-value"><a href="tel:${lead.telephone}" style="color: #10b981; text-decoration: none;">${lead.telephone}</a></div>
+              </div>
+
+              <div class="info-item">
+                <div class="info-label">📧 Email</div>
+                <div class="info-value"><a href="mailto:${lead.email}" style="color: #3b82f6; text-decoration: none; font-size: 14px;">${lead.email}</a></div>
+              </div>
+
+              <div class="info-item">
+                <div class="info-label">📍 Ville</div>
+                <div class="info-value">${lead.ville}</div>
+              </div>
+
+              <div class="info-item">
+                <div class="info-label">👤 Statut professionnel</div>
+                <div class="info-value">${lead.statut}</div>
+              </div>
+
+              ${lead.immatriculation ? `
+              <div class="info-item">
+                <div class="info-label">🚗 Immatriculation</div>
+                <div class="info-value">${lead.immatriculation}</div>
+              </div>
+              ` : ""}
+
+              <div class="info-item">
+                <div class="info-label">⏰ Date de demande</div>
+                <div class="info-value">${new Date(lead.created_at).toLocaleString("fr-FR", {
+                  dateStyle: "short",
+                  timeStyle: "short"
+                })}</div>
+              </div>
+
+              <div class="info-item">
+                <div class="info-label">🆔 ID Lead</div>
+                <div class="info-value" style="font-size: 12px; font-family: monospace;">${lead.id}</div>
+              </div>
+            </div>
+
+            <h3 style="color: #1f2937;">📋 Prochaines actions</h3>
+            <ol style="color: #4b5563; line-height: 1.8;">
+              <li>☎️ Appeler le prospect au <strong>${lead.telephone}</strong></li>
+              <li>✅ Qualifier le besoin et confirmer les informations</li>
+              <li>📄 Demander l'envoi des 5 documents requis</li>
+              <li>💰 Préparer et envoyer le devis sous 24h</li>
+            </ol>
+
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="https://taxiassur.com/backoffice/crm-commercial" class="cta-button">
+                📊 OUVRIR LE CRM
+              </a>
+              <br>
+              <a href="https://taxiassur.com/backoffice/leads" style="color: #3b82f6; text-decoration: none; font-size: 14px;">
+                Voir tous les leads →
+              </a>
+            </div>
+
+            <div style="background: #eff6ff; border: 1px solid #3b82f6; padding: 15px; border-radius: 8px;">
+              <strong>💡 Rappel :</strong> L'email automatique de confirmation avec demande de documents a été envoyé au prospect.
+            </div>
+          </div>
+
+          <div class="footer">
+            <strong>TaxiAssur CRM</strong><br>
+            Notification automatique | Ne pas répondre à cet email
+          </div>
+        </div>
+      </body>
+      </html>
     `;
 
-    // Email de confirmation au client
+    // Email de confirmation au client avec demande de documents
     const clientEmailBody = `
-      <h2>Merci pour votre demande de devis !</h2>
-      <p>Bonjour ${lead.nom_prenom},</p>
-      <p>Nous avons bien reçu votre demande de devis pour une assurance taxi à ${lead.ville}.</p>
-      <p>Notre équipe d'experts va analyser votre profil et vous recontactera dans les <strong>15 minutes</strong> au <strong>${lead.telephone}</strong>.</p>
-      <h3>Vos informations :</h3>
-      <ul>
-        <li><strong>Téléphone :</strong> ${lead.telephone}</li>
-        <li><strong>Email :</strong> ${lead.email}</li>
-        <li><strong>Ville :</strong> ${lead.ville}</li>
-        <li><strong>Statut :</strong> ${lead.statut}</li>
-        ${lead.immatriculation ? `<li><strong>Immatriculation :</strong> ${lead.immatriculation}</li>` : ""}
-      </ul>
-      <p>À très bientôt,<br>L'équipe TaxiAssur</p>
-      <hr>
-      <p style="font-size: 12px; color: #666;">TaxiAssur.com - Courtier spécialisé en assurance taxi</p>
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background: linear-gradient(135deg, #f59e0b 0%, #eab308 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+          .content { background: #ffffff; padding: 30px; border: 1px solid #e5e7eb; }
+          .success-icon { font-size: 48px; margin-bottom: 20px; }
+          .highlight { background: #fef3c7; padding: 15px; border-left: 4px solid #f59e0b; margin: 20px 0; }
+          .documents { background: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0; }
+          .document-item { padding: 10px 0; border-bottom: 1px solid #e5e7eb; }
+          .document-item:last-child { border-bottom: none; }
+          .cta-button { background: #10b981; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; display: inline-block; font-weight: bold; margin: 20px 0; }
+          .footer { background: #f9fafb; padding: 20px; text-align: center; font-size: 12px; color: #6b7280; border-radius: 0 0 10px 10px; }
+          .info-box { background: #eff6ff; border: 1px solid #3b82f6; padding: 15px; border-radius: 8px; margin: 15px 0; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <div class="success-icon">✅</div>
+            <h1 style="margin: 0; font-size: 28px;">DEMANDE REÇUE !</h1>
+            <p style="margin: 10px 0 0 0; font-size: 18px;">Félicitations ${lead.nom_prenom} !</p>
+          </div>
+
+          <div class="content">
+            <h2 style="color: #1f2937;">Merci pour votre confiance</h2>
+            <p>Nous avons bien reçu votre demande de devis pour une <strong>assurance taxi à ${lead.ville}</strong>.</p>
+
+            <div class="highlight">
+              <strong>⏱️ Réponse rapide garantie :</strong><br>
+              Notre expert vous contacte dans les <strong>15 minutes</strong> au <strong>${lead.telephone}</strong>
+            </div>
+
+            <h3 style="color: #1f2937;">📋 Documents requis pour votre devis</h3>
+            <p>Pour accélérer le traitement de votre dossier et obtenir votre devis <strong>sous 24h</strong>, merci de nous transmettre ces 5 pièces :</p>
+
+            <div class="documents">
+              <div class="document-item">
+                <strong>1. Licence de taxi professionnelle</strong><br>
+                <span style="color: #6b7280; font-size: 14px;">En cours de validité</span>
+              </div>
+              <div class="document-item">
+                <strong>2. Permis de conduire</strong><br>
+                <span style="color: #6b7280; font-size: 14px;">Recto-verso, lisible</span>
+              </div>
+              <div class="document-item">
+                <strong>3. Pièce d'identité</strong><br>
+                <span style="color: #6b7280; font-size: 14px;">CNI ou passeport valide</span>
+              </div>
+              <div class="document-item">
+                <strong>4. Carte grise du véhicule</strong><br>
+                <span style="color: #6b7280; font-size: 14px;">Certificat d'immatriculation</span>
+              </div>
+              <div class="document-item">
+                <strong>5. Relevé d'information</strong><br>
+                <span style="color: #6b7280; font-size: 14px;">De votre assureur précédent (si vous en avez un)</span>
+              </div>
+            </div>
+
+            <div style="text-align: center;">
+              <a href="mailto:team@taxiassur.com?subject=Documents%20pour%20mon%20devis%20-%20${encodeURIComponent(lead.nom_prenom)}" class="cta-button">
+                📧 ENVOYER MES DOCUMENTS
+              </a>
+              <p style="color: #6b7280; font-size: 14px;">Cliquez pour nous envoyer vos documents par email</p>
+            </div>
+
+            <div class="info-box">
+              <strong>ℹ️ Vos informations enregistrées :</strong><br>
+              <ul style="margin: 10px 0 0 0; padding-left: 20px;">
+                <li>Téléphone : ${lead.telephone}</li>
+                <li>Email : ${lead.email}</li>
+                <li>Ville : ${lead.ville}</li>
+                <li>Statut : ${lead.statut}</li>
+                ${lead.immatriculation ? `<li>Immatriculation : ${lead.immatriculation}</li>` : ""}
+              </ul>
+            </div>
+
+            <h3 style="color: #1f2937;">📞 Besoin d'aide ?</h3>
+            <p>Notre équipe est disponible pour répondre à toutes vos questions :</p>
+            <p>
+              <strong>Téléphone :</strong> <a href="tel:0180855786" style="color: #10b981; text-decoration: none;">01 80 85 57 86</a><br>
+              <strong>Email :</strong> <a href="mailto:team@taxiassur.com" style="color: #10b981; text-decoration: none;">team@taxiassur.com</a>
+            </p>
+          </div>
+
+          <div class="footer">
+            <strong>TaxiAssur.com</strong><br>
+            Courtier spécialisé en assurance taxi et VTC<br>
+            01 80 85 57 86 | team@taxiassur.com
+          </div>
+        </div>
+      </body>
+      </html>
     `;
 
     // Envoi email à l'équipe
