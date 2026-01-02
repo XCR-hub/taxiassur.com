@@ -23,48 +23,76 @@ declare global {
   }
 }
 
-// Initialize ONCE - no lazy loading to avoid issues
+// LAZY singleton - instance created on first getter call ONLY
 let _instance: ReturnType<typeof createClient> | null = null;
+let _isCreating = false;
 
-function initSupabaseInstance() {
-  // Return existing instance from window (HMR safe)
+function getSupabaseInstance() {
+  // CRITICAL: Always check window first to prevent duplicates
   if (typeof window !== 'undefined' && window.__TAXIASSUR_SUPABASE__) {
-    console.log('♻️ Reusing Supabase from window');
     return window.__TAXIASSUR_SUPABASE__;
   }
 
-  // Return module-level cache
+  // Return cached module instance
   if (_instance) {
-    console.log('♻️ Reusing Supabase from cache');
     return _instance;
   }
 
-  // Create new instance
-  console.log('🆕 Creating Supabase instance');
-
-  const url = getEnvVar('VITE_SUPABASE_URL') || FALLBACK_URL;
-  const key = getEnvVar('VITE_SUPABASE_ANON_KEY') || FALLBACK_KEY;
-
-  const instance = createClient(url, key, {
-    auth: {
-      persistSession: true,
-      autoRefreshToken: true,
-      storageKey: 'taxiassur-auth',
-      detectSessionInUrl: true
-    }
-  });
-
-  // Cache globally
-  _instance = instance;
-  if (typeof window !== 'undefined') {
-    window.__TAXIASSUR_SUPABASE__ = instance;
+  // Prevent concurrent creation
+  if (_isCreating) {
+    throw new Error('Supabase instance is being created, please wait');
   }
 
-  return instance;
+  // Create new instance
+  _isCreating = true;
+  try {
+    console.log('🆕 Creating Supabase instance (lazy)');
+
+    const url = getEnvVar('VITE_SUPABASE_URL') || FALLBACK_URL;
+    const key = getEnvVar('VITE_SUPABASE_ANON_KEY') || FALLBACK_KEY;
+
+    const instance = createClient(url, key, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        storageKey: 'taxiassur-auth',
+        detectSessionInUrl: true
+      }
+    });
+
+    // Cache globally (MOST IMPORTANT)
+    _instance = instance;
+    if (typeof window !== 'undefined') {
+      window.__TAXIASSUR_SUPABASE__ = instance;
+    }
+
+    return instance;
+  } finally {
+    _isCreating = false;
+  }
 }
 
-// Export singleton instance directly
-export const supabaseInstance = initSupabaseInstance();
+// Export getter function - NOT a direct instance
+export function getSupabaseInstanceLazy() {
+  return getSupabaseInstance();
+}
+
+// For backwards compatibility, export a Proxy that calls getter
+const lazyProxy = new Proxy({} as ReturnType<typeof createClient>, {
+  get(_, prop) {
+    const instance = getSupabaseInstance();
+    const value = instance[prop as keyof typeof instance];
+
+    // Bind functions to maintain 'this' context
+    if (typeof value === 'function') {
+      return value.bind(instance);
+    }
+
+    return value;
+  }
+});
+
+export const supabaseInstance = lazyProxy;
 
 // Admin client
 let _adminInstance: ReturnType<typeof createClient> | null = null;

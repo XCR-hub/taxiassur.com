@@ -1,6 +1,5 @@
 import { BlogPost, FaqEntry, Review, Offer, BlogPostSchema, FaqEntrySchema, ReviewSchema, OfferSchema } from './schema';
-import { createClient } from '@supabase/supabase-js';
-import { getSupabaseUrl, getSupabaseAnonKey } from './env';
+import { supabase } from '@/lib/supabase';
 import { generateCityPages } from './ping';
 import { logger } from '@/lib/logger';
 
@@ -21,17 +20,8 @@ export interface CityPage {
   created_at?: string;
 }
 
-// Configuration Supabase (optionnelle)
-const supabaseUrl = getSupabaseUrl();
-const supabaseKey = getSupabaseAnonKey();
-
-logger.log('🔧 Supabase Config:', {
-  url: supabaseUrl || 'NOT_CONFIGURED',
-  keyPrefix: supabaseKey ? supabaseKey.substring(0, 20) + '...' : 'NOT_CONFIGURED',
-  enabled: !!(supabaseUrl && supabaseKey)
-});
-
-const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null;
+// Use singleton Supabase instance - NEVER create new instances
+logger.log('🔧 Content module using singleton Supabase instance');
 
 // Fonction utilitaire pour lire les fichiers JSON locaux
 async function fetchLocalContent<T>(type: string, schema: any): Promise<T[]> {
