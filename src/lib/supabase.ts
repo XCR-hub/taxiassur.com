@@ -52,8 +52,13 @@ const getSupabaseInstance = () => {
   return supabaseInstance;
 };
 
-// Export singleton instance directly - initialized on first import
-export const supabase = getSupabaseInstance();
+// Export using getter to ensure singleton across all imports
+export const supabase = new Proxy({} as ReturnType<typeof createClient>, {
+  get(target, prop) {
+    const instance = getSupabaseInstance();
+    return (instance as any)[prop];
+  }
+});
 
 // Supabase ADMIN client with Service Role Key (WRITE operations from backoffice)
 // Bypasses RLS - Use only for authenticated admin operations
@@ -75,6 +80,7 @@ export const getSupabaseAdmin = () => {
       auth: {
         persistSession: false,
         autoRefreshToken: false,
+        detectSessionInUrl: false,
         storageKey: 'taxiassur-admin-auth'
       }
     });
