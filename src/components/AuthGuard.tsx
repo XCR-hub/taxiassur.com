@@ -18,7 +18,7 @@ const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
         console.error('⚠️ AuthGuard timeout: chargement trop long');
         setTimeout(true);
       }
-    }, 4000);
+    }, 3000);
 
     return () => window.clearTimeout(timer);
   }, [loading]);
@@ -65,10 +65,11 @@ const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center">
+        <div className="text-center bg-white rounded-xl shadow-lg p-8 max-w-sm">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Vérification de l'authentification...</p>
+          <p className="text-gray-900 font-medium mb-1">Vérification en cours...</p>
+          <p className="text-gray-600 text-sm">Connexion à votre compte</p>
         </div>
       </div>
     );

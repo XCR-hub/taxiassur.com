@@ -60,10 +60,13 @@ function getSupabaseInstance() {
       },
       global: {
         fetch: (url, options = {}) => {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 3000);
+
           return fetch(url, {
             ...options,
-            signal: AbortSignal.timeout(5000)
-          });
+            signal: controller.signal
+          }).finally(() => clearTimeout(timeoutId));
         }
       }
     });

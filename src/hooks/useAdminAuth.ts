@@ -36,12 +36,21 @@ export function useAdminAuth() {
     try {
       console.log('📧 Loading admin user for email:', email);
 
-      const { data: adminUser, error } = await supabase
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Admin user load timeout')), 2000);
+      });
+
+      const userPromise = supabase
         .from('admin_users')
         .select('*')
         .eq('email', email)
         .eq('is_active', true)
         .maybeSingle();
+
+      const { data: adminUser, error } = await Promise.race([
+        userPromise,
+        timeoutPromise
+      ]) as any;
 
       if (error) {
         console.error('❌ Error loading admin user:', error);
@@ -83,30 +92,60 @@ export function useAdminAuth() {
     let mounted = true;
     let authInitialized = false;
 
+    const validateCachedSession = () => {
+      try {
+        const stored = localStorage.getItem('taxiassur-auth');
+        if (!stored || stored === 'null' || stored === 'undefined') return null;
+
+        const parsed = JSON.parse(stored);
+        if (!parsed?.access_token || !parsed?.expires_at) return null;
+
+        const expiresAt = parsed.expires_at * 1000;
+        if (Date.now() >= expiresAt) {
+          console.log('🔄 Session expired, clearing cache');
+          localStorage.removeItem('taxiassur-auth');
+          return null;
+        }
+
+        return parsed;
+      } catch (e) {
+        console.warn('⚠️ Error parsing cached session:', e);
+        localStorage.removeItem('taxiassur-auth');
+        return null;
+      }
+    };
+
     const initAuth = async () => {
       if (!mounted) return;
 
       try {
         console.log('🔍 Checking auth session...');
 
-        const cachedSession = localStorage.getItem('taxiassur-auth');
-        if (!cachedSession || cachedSession === 'null') {
-          console.log('⚡ No cached session, showing login immediately');
+        const cached = validateCachedSession();
+        if (!cached) {
+          console.log('⚡ No valid cached session, showing login immediately');
           setState({ user: null, loading: false, isAuthenticated: false });
           authInitialized = true;
           return;
         }
 
+        console.log('✅ Valid cached session found, verifying with Supabase...');
+
         const timeoutPromise = new Promise((_, reject) => {
-          setTimeout(() => reject(new Error('Session check timeout')), 3000);
+          setTimeout(() => reject(new Error('Session check timeout')), 2000);
         });
 
         const sessionPromise = supabase.auth.getSession();
 
-        const { data: { session }, error: sessionError } = await Promise.race([
+        const result = await Promise.race([
           sessionPromise,
           timeoutPromise
-        ]) as any;
+        ]).catch(err => {
+          console.warn('⚠️ Session check timeout, using cached session');
+          return { data: { session: cached }, error: null };
+        });
+
+        const { data: { session }, error: sessionError } = result as any;
 
         if (!mounted) return;
 
@@ -116,7 +155,7 @@ export function useAdminAuth() {
           return;
         }
 
-        console.log('✅ Session retrieved:', !!session);
+        console.log('✅ Session verified:', !!session);
         authInitialized = true;
 
         if (session?.user) {
@@ -154,7 +193,7 @@ export function useAdminAuth() {
         console.warn('⚠️ Auth initialization timeout - showing login');
         setState({ user: null, loading: false, isAuthenticated: false });
       }
-    }, 5000);
+    }, 3000);
 
     return () => {
       mounted = false;
