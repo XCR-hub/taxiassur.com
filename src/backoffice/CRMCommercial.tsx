@@ -67,6 +67,7 @@ interface Stats {
 }
 
 const CRMCommercial: React.FC = () => {
+  const navigate = useNavigate();
   const [leads, setLeads] = useState<Lead[]>([]);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [interactions, setInteractions] = useState<Interaction[]>([]);

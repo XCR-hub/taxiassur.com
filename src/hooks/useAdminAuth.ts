@@ -28,11 +28,11 @@ export function useAdminAuth() {
   const loadTimestampRef = React.useRef<number>(0);
 
   const loadAdminUser = React.useCallback(async (email: string) => {
-    // Éviter les appels dupliqués dans les 5 secondes
+    // Éviter les appels dupliqués dans les 30 secondes
     const now = Date.now();
     if (
       isLoadingUserRef.current ||
-      (lastLoadEmailRef.current === email && now - loadTimestampRef.current < 5000)
+      (lastLoadEmailRef.current === email && now - loadTimestampRef.current < 30000)
     ) {
       console.log('⏳ Skipping duplicate load request');
       return;
@@ -45,13 +45,15 @@ export function useAdminAuth() {
     try {
       console.log('📧 Loading admin user for email:', email);
 
+      // Timeout augmenté à 30 secondes
       const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Admin user load timeout')), 10000);
+        setTimeout(() => reject(new Error('Admin user load timeout')), 30000);
       });
 
+      // Requête simple et directe
       const userPromise = supabase
         .from('admin_users')
-        .select('*')
+        .select('id, email, full_name, role, is_active')
         .eq('email', email)
         .eq('is_active', true)
         .maybeSingle();
@@ -72,9 +74,14 @@ export function useAdminAuth() {
       if (adminUser) {
         console.log('✅ Admin authenticated:', adminUser.full_name);
 
-        // Sauvegarder l'utilisateur dans localStorage pour éviter de redemander
-        localStorage.setItem('taxiassur_user', JSON.stringify(adminUser));
+        // Sauvegarder l'utilisateur dans localStorage avec timestamp
+        const userCache = {
+          ...adminUser,
+          cachedAt: Date.now()
+        };
+        localStorage.setItem('taxiassur_user', JSON.stringify(userCache));
 
+        // Update last_login de manière asynchrone (ne pas bloquer)
         supabase
           .from('admin_users')
           .update({ last_login: new Date().toISOString() })
@@ -111,12 +118,22 @@ export function useAdminAuth() {
         if (userStr) {
           const user = JSON.parse(userStr);
           if (user && user.id) {
-            console.log('✅ User found in cache:', user.full_name);
-            return user;
+            // Vérifier si le cache est encore valide (moins de 4 heures)
+            const cacheAge = Date.now() - (user.cachedAt || 0);
+            const fourHours = 4 * 60 * 60 * 1000;
+
+            if (cacheAge < fourHours) {
+              console.log('✅ User found in cache:', user.full_name, '(age:', Math.round(cacheAge / 60000), 'min)');
+              return user;
+            } else {
+              console.log('⏰ Cached user expired, will refresh');
+              localStorage.removeItem('taxiassur_user');
+            }
           }
         }
       } catch (e) {
         console.warn('⚠️ Error reading cached user:', e);
+        localStorage.removeItem('taxiassur_user');
       }
       return null;
     };
@@ -175,11 +192,11 @@ export function useAdminAuth() {
           return;
         }
 
-        // Sinon vérifier avec Supabase (mais avec timeout plus long)
+        // Sinon vérifier avec Supabase (timeout augmenté)
         console.log('✅ Valid session found, verifying with Supabase...');
 
         const timeoutPromise = new Promise((_, reject) => {
-          setTimeout(() => reject(new Error('Session check timeout')), 10000);
+          setTimeout(() => reject(new Error('Session check timeout')), 30000);
         });
 
         const sessionPromise = supabase.auth.getSession();
@@ -228,6 +245,16 @@ export function useAdminAuth() {
 
       if (!mounted) return;
 
+      // Sauvegarder la session dans le cache à chaque changement
+      if (session) {
+        localStorage.setItem('taxiassur-auth', JSON.stringify({
+          access_token: session.access_token,
+          refresh_token: session.refresh_token,
+          expires_at: session.expires_at,
+          user: session.user
+        }));
+      }
+
       // Ne charger l'utilisateur QUE lors du SIGNED_IN initial
       // Ignorer TOKEN_REFRESHED et autres événements qui ne nécessitent pas de reload
       if (event === 'SIGNED_IN' && session?.user) {
@@ -245,7 +272,7 @@ export function useAdminAuth() {
         console.warn('⚠️ Auth initialization timeout - showing login');
         setState({ user: null, loading: false, isAuthenticated: false });
       }
-    }, 8000);
+    }, 30000);
 
     return () => {
       mounted = false;
