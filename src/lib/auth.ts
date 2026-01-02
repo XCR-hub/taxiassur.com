@@ -93,7 +93,8 @@ export const authenticateUser = async (
 };
 
 export const getCurrentUser = (): AdminUser | null => {
-  const userStr = sessionStorage.getItem('taxiassur_user');
+  // Essayer d'abord localStorage, puis sessionStorage pour rétrocompatibilité
+  const userStr = localStorage.getItem('taxiassur_user') || sessionStorage.getItem('taxiassur_user');
   if (!userStr) return null;
   try {
     return JSON.parse(userStr);
@@ -103,7 +104,8 @@ export const getCurrentUser = (): AdminUser | null => {
 };
 
 export const getCurrentPermissions = (): UserPermission[] => {
-  const permsStr = sessionStorage.getItem('taxiassur_permissions');
+  // Essayer d'abord localStorage, puis sessionStorage pour rétrocompatibilité
+  const permsStr = localStorage.getItem('taxiassur_permissions') || sessionStorage.getItem('taxiassur_permissions');
   if (!permsStr) return [];
   try {
     return JSON.parse(permsStr);
@@ -136,7 +138,12 @@ export const hasPermission = (permissionType: string, action: 'view' | 'edit' | 
 };
 
 export const logout = () => {
+  // Nettoyer les deux storages pour assurer la déconnexion complète
   sessionStorage.removeItem('taxiassur_auth');
   sessionStorage.removeItem('taxiassur_user');
   sessionStorage.removeItem('taxiassur_permissions');
+  localStorage.removeItem('taxiassur_auth');
+  localStorage.removeItem('taxiassur_user');
+  localStorage.removeItem('taxiassur_permissions');
+  localStorage.removeItem('taxiassur-auth');
 };

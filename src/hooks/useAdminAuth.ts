@@ -63,6 +63,9 @@ export function useAdminAuth() {
       if (adminUser) {
         console.log('✅ Admin authenticated:', adminUser.full_name);
 
+        // Sauvegarder l'utilisateur dans localStorage pour éviter de redemander
+        localStorage.setItem('taxiassur_user', JSON.stringify(adminUser));
+
         supabase
           .from('admin_users')
           .update({ last_login: new Date().toISOString() })
@@ -92,6 +95,23 @@ export function useAdminAuth() {
     let mounted = true;
     let authInitialized = false;
 
+    // Vérifier si l'utilisateur est déjà en cache local (ne pas redemander à chaque navigation)
+    const getCachedUser = () => {
+      try {
+        const userStr = localStorage.getItem('taxiassur_user');
+        if (userStr) {
+          const user = JSON.parse(userStr);
+          if (user && user.id) {
+            console.log('✅ User found in cache:', user.full_name);
+            return user;
+          }
+        }
+      } catch (e) {
+        console.warn('⚠️ Error reading cached user:', e);
+      }
+      return null;
+    };
+
     const validateCachedSession = () => {
       try {
         const stored = localStorage.getItem('taxiassur-auth');
@@ -104,6 +124,7 @@ export function useAdminAuth() {
         if (Date.now() >= expiresAt) {
           console.log('🔄 Session expired, clearing cache');
           localStorage.removeItem('taxiassur-auth');
+          localStorage.removeItem('taxiassur_user');
           return null;
         }
 
@@ -121,18 +142,35 @@ export function useAdminAuth() {
       try {
         console.log('🔍 Checking auth session...');
 
-        const cached = validateCachedSession();
-        if (!cached) {
+        // AMÉLIORATION 1 : Vérifier d'abord le cache utilisateur local
+        const cachedUser = getCachedUser();
+        const cachedSession = validateCachedSession();
+
+        // Si on a un utilisateur en cache ET une session valide, utiliser directement
+        if (cachedUser && cachedSession) {
+          console.log('⚡ Using cached user, no server check needed');
+          setState({
+            user: cachedUser,
+            loading: false,
+            isAuthenticated: true,
+          });
+          authInitialized = true;
+          return;
+        }
+
+        // Si pas de session valide, afficher login immédiatement
+        if (!cachedSession) {
           console.log('⚡ No valid cached session, showing login immediately');
           setState({ user: null, loading: false, isAuthenticated: false });
           authInitialized = true;
           return;
         }
 
-        console.log('✅ Valid cached session found, verifying with Supabase...');
+        // Sinon vérifier avec Supabase (mais avec timeout plus long)
+        console.log('✅ Valid session found, verifying with Supabase...');
 
         const timeoutPromise = new Promise((_, reject) => {
-          setTimeout(() => reject(new Error('Session check timeout')), 2000);
+          setTimeout(() => reject(new Error('Session check timeout')), 5000); // 5s au lieu de 2s
         });
 
         const sessionPromise = supabase.auth.getSession();
@@ -142,7 +180,7 @@ export function useAdminAuth() {
           timeoutPromise
         ]).catch(err => {
           console.warn('⚠️ Session check timeout, using cached session');
-          return { data: { session: cached }, error: null };
+          return { data: { session: cachedSession }, error: null };
         });
 
         const { data: { session }, error: sessionError } = result as any;
@@ -205,7 +243,17 @@ export function useAdminAuth() {
   const signOut = async () => {
     try {
       await supabase.auth.signOut();
+
+      // Nettoyer tous les caches
+      localStorage.removeItem('taxiassur-auth');
+      localStorage.removeItem('taxiassur_user');
+      localStorage.removeItem('taxiassur_permissions');
+      sessionStorage.clear();
+
       setState({ user: null, loading: false, isAuthenticated: false });
+
+      // Rediriger vers login
+      window.location.href = '/backoffice';
     } catch (error) {
       logger.error('Erreur lors de la déconnexion:', error);
     }
