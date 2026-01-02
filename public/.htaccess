@@ -65,6 +65,8 @@
     RewriteRule ^devis-instantane$ /contact [R=301,L]
 
     # Exclure les fichiers assets (CSS, JS, images, fonts)
+    RewriteCond %{REQUEST_URI} !^/api/
+    RewriteCond %{REQUEST_URI} !^/webhooks/
     RewriteCond %{REQUEST_URI} !^/assets/
     RewriteCond %{REQUEST_URI} !^/content/
     RewriteCond %{REQUEST_URI} !^/feeds/
@@ -80,6 +82,7 @@
     RewriteCond %{REQUEST_URI} !\.svg$
     RewriteCond %{REQUEST_URI} !\.woff$
     RewriteCond %{REQUEST_URI} !\.woff2$
+    RewriteCond %{REQUEST_URI} !\.php$
 
     # Redirection pour React Router (SPA) seulement si pas un fichier
     RewriteCond %{REQUEST_FILENAME} !-f
