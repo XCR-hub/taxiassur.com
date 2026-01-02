@@ -1,10 +1,12 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Send, Loader2, CheckCircle, AlertCircle, Mail, TrendingUp, Rocket, Home } from 'lucide-react';
 import { getSupabaseUrl } from '../lib/env';
 import { logger } from '@/lib/logger';
 
 export default function CampaignLauncher() {
-  const [isGenerating, setIsGenerating] = useState(false);
+  const navigate = useNavigate();
+const [isGenerating, setIsGenerating] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [results, setResults] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
@@ -100,13 +102,10 @@ export default function CampaignLauncher() {
             <Rocket size={32} />
             <h2 className="text-2xl font-bold">Lancement de Campagne Automatique</h2>
           </div>
-          <a
-            href="/backoffice"
-            className="flex items-center space-x-2 px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors"
-          >
+          <button onClick={() => navigate("/backoffice")} className="flex items-center space-x-2 px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors">
             <Home size={20} />
             <span>Retour</span>
-          </a>
+          </button>
         </div>
         <p className="text-orange-100">
           Générez et envoyez des emails ultra-personnalisés en 2 clics

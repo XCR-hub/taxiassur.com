@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Brain, Zap, TrendingUp, Users, Target, Activity, RefreshCw, CheckCircle, AlertTriangle, Code, Rocket, Database, BarChart3, Home } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import Card from '../components/Card';
@@ -45,7 +46,8 @@ interface Deployment {
 }
 
 export default function AIAutonomousDashboard() {
-  const [metrics, setMetrics] = useState<AIMetrics | null>(null);
+  const navigate = useNavigate();
+const [metrics, setMetrics] = useState<AIMetrics | null>(null);
   const [decisions, setDecisions] = useState<AIDecision[]>([]);
   const [suggestions, setSuggestions] = useState<CodeSuggestion[]>([]);
   const [deployments, setDeployments] = useState<Deployment[]>([]);
@@ -198,13 +200,10 @@ export default function AIAutonomousDashboard() {
                 <span>{aiRunning ? 'Analyse en cours...' : 'Lancer Analyse IA'}</span>
               </button>
 
-              <a
-                href="/backoffice"
-                className="bg-orange-600 hover:bg-orange-700 text-white font-medium px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
-              >
+              <button onClick={() => navigate("/backoffice")} className="bg-orange-600 hover:bg-orange-700 text-white font-medium px-4 py-2 rounded-lg transition-colors flex items-center space-x-2">
                 <Home size={16} />
                 <span>Accueil</span>
-              </a>
+              </button>
             </div>
           </div>
         </div>

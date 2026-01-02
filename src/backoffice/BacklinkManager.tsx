@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Link, Plus, ExternalLink, CheckCircle, XCircle, Clock, Home } from 'lucide-react';
 import { getBacklinks, addBacklink, type Backlink } from '../lib/backlinks';
 import { verifyBacklink } from '../lib/ping';
@@ -81,7 +82,8 @@ const BacklinkManager: React.FC = () => {
   };
 
   const getStatusIcon = (status: string) => {
-    switch (status) {
+  const navigate = useNavigate();
+switch (status) {
       case 'active':
         return <CheckCircle className="text-green-600" size={16} />;
       case 'lost':
@@ -143,13 +145,10 @@ const BacklinkManager: React.FC = () => {
               </div>
             </div>
             
-            <a
-              href="/backoffice"
-              className="bg-orange-600 hover:bg-orange-700 text-white font-medium px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
-            >
+            <button onClick={() => navigate("/backoffice")} className="bg-orange-600 hover:bg-orange-700 text-white font-medium px-4 py-2 rounded-lg transition-colors flex items-center space-x-2">
               <Home size={16} />
               <span>Accueil Backoffice</span>
-            </a>
+            </button>
           </div>
         </div>
       </header>

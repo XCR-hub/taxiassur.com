@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { logger } from '@/lib/logger';
 import {
   Phone, Mail, MessageSquare, Calendar, FileText, CheckCircle,
@@ -259,7 +260,8 @@ const CRMCommercial: React.FC = () => {
   };
 
   const handleNewNotification = (payload: any) => {
-    setNotifications(prev => [payload.new, ...prev]);
+  const navigate = useNavigate();
+setNotifications(prev => [payload.new, ...prev]);
 
     if ('Notification' in window && Notification.permission === 'granted') {
       new Notification('TaxiAssur CRM', {
@@ -543,13 +545,10 @@ const CRMCommercial: React.FC = () => {
                 Automatisations
               </a>
 
-              <a
-                href="/backoffice"
-                className="flex items-center gap-2 bg-gray-900 hover:bg-gray-800 text-white font-bold py-2 px-4 rounded-lg transition-colors"
-              >
+              <button onClick={() => navigate("/backoffice")} className="flex items-center gap-2 bg-gray-900 hover:bg-gray-800 text-white font-bold py-2 px-4 rounded-lg transition-colors">
                 <Users size={18} />
                 Menu Admin
-              </a>
+              </button>
 
               <div className="relative">
                 {notifications.length > 0 && (

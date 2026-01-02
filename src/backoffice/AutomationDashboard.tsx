@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { logger } from '@/lib/logger';
 import {
   Zap, Activity, CheckCircle, XCircle, Clock, TrendingUp,
@@ -244,7 +245,8 @@ const AutomationDashboard: React.FC = () => {
   };
 
   const getActionIcon = (actionType: string) => {
-    switch (actionType) {
+  const navigate = useNavigate();
+switch (actionType) {
       case 'send_email': return Mail;
       case 'send_sms': return MessageSquare;
       case 'create_task': return FileText;
@@ -316,13 +318,10 @@ const AutomationDashboard: React.FC = () => {
                 )}
               </button>
 
-              <a
-                href="/backoffice"
-                className="flex items-center gap-2 bg-gray-900 hover:bg-gray-800 text-white font-bold py-2 px-4 rounded-lg transition-colors"
-              >
+              <button onClick={() => navigate("/backoffice")} className="flex items-center gap-2 bg-gray-900 hover:bg-gray-800 text-white font-bold py-2 px-4 rounded-lg transition-colors">
                 <Users size={18} />
                 Menu Admin
-              </a>
+              </button>
             </div>
           </div>
 

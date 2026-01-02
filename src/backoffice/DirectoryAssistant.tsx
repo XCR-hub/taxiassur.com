@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Globe, ExternalLink, Copy, CheckCircle, Clock, AlertTriangle, Plus, Home } from 'lucide-react';
 import { getDirectories, submitToDirectory } from '../lib/partners';
 import { Directory } from '../lib/schema';
@@ -31,7 +32,8 @@ const DirectoryAssistant: React.FC = () => {
   };
 
   const generateSubmissionContent = (directory: Directory) => {
-    const siteUrl = import.meta.env.VITE_SITE_URL || 'https://taxiassur.com';
+  const navigate = useNavigate();
+const siteUrl = import.meta.env.VITE_SITE_URL || 'https://taxiassur.com';
     
     return {
       name: 'TaxiAssur - Assurance Taxi Professionnelle',
@@ -230,13 +232,10 @@ UTM Link: ${content.url}
                 </div>
               </div>
               
-              <a
-                href="/backoffice"
-                className="bg-orange-600 hover:bg-orange-700 text-white font-medium px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
-              >
+              <button onClick={() => navigate("/backoffice")} className="bg-orange-600 hover:bg-orange-700 text-white font-medium px-4 py-2 rounded-lg transition-colors flex items-center space-x-2">
                 <Home size={16} />
                 <span>Accueil Backoffice</span>
-              </a>
+              </button>
             </div>
           </div>
         </header>

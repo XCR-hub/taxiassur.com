@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { FileText, Mail, HelpCircle, Plus, CreditCard as Edit, Trash2, Send, Users, Calendar, Save, Eye, EyeOff, Home } from 'lucide-react';
 import TestAutomationButton from './TestAutomationButton';
 import { logger } from '@/lib/logger';
@@ -283,7 +284,8 @@ const ContentManager: React.FC = () => {
   };
 
   const editArticle = (article: Article) => {
-    setEditingArticle(article);
+  const navigate = useNavigate();
+setEditingArticle(article);
     setArticleForm({
       title: article.title,
       summary: article.summary,
@@ -370,13 +372,10 @@ const ContentManager: React.FC = () => {
               </div>
             </div>
             
-            <a
-              href="/backoffice"
-              className="bg-orange-600 hover:bg-orange-700 text-white font-medium px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
-            >
+            <button onClick={() => navigate("/backoffice")} className="bg-orange-600 hover:bg-orange-700 text-white font-medium px-4 py-2 rounded-lg transition-colors flex items-center space-x-2">
               <Home size={16} />
               <span>Accueil Backoffice</span>
-            </a>
+            </button>
           </div>
         </div>
       </header>

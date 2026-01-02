@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Shield, Download, Trash2, Eye, Calendar, Mail, AlertTriangle, CheckCircle, Home, FileText, Activity, TrendingUp, RefreshCw, Users, Clock } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import Card from '../components/Card';
@@ -191,7 +192,8 @@ const ComplianceCenter: React.FC = () => {
   };
 
   const exportConsentLedger = () => {
-    const csvContent = [
+  const navigate = useNavigate();
+const csvContent = [
       ['ID', 'Email', 'Base Légale', 'Objectif', 'Collecté Le', 'Collecté Par', 'Statut', 'Opt-out Le'].join(','),
       ...consents.map(consent => [
         consent.id,
@@ -290,13 +292,10 @@ const ComplianceCenter: React.FC = () => {
                 <span>{liveMode ? 'Live' : 'Manuel'}</span>
               </button>
 
-              <a
-                href="/backoffice"
-                className="bg-orange-600 hover:bg-orange-700 text-white font-medium px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
-              >
+              <button onClick={() => navigate("/backoffice")} className="bg-orange-600 hover:bg-orange-700 text-white font-medium px-4 py-2 rounded-lg transition-colors flex items-center space-x-2">
                 <Home size={16} />
                 <span>Accueil</span>
-              </a>
+              </button>
             </div>
           </div>
         </div>
