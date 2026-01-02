@@ -32,11 +32,11 @@ Deno.serve(async (req: Request) => {
     let leadContext: any = null;
     if (body.lead_id) {
       const { data: lead } = await supabase
-        .from('crm_leads_enhanced')
+        .from('leads')
         .select('*, crm_interactions(*)')
         .eq('id', body.lead_id)
         .single();
-      
+
       leadContext = lead;
     }
 
