@@ -10,6 +10,7 @@ import TestAutomationButton from './TestAutomationButton';
 import { logger } from '@/lib/logger';
 
 const SeoTools: React.FC = () => {
+  const navigate = useNavigate();
   const [seoData, setSeoData] = useState({
     lastSitemapUpdate: '',
     totalUrls: 0,

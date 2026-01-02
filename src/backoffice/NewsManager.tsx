@@ -8,6 +8,7 @@ import TestAutomationButton from './TestAutomationButton';
 import { logger } from '@/lib/logger';
 
 const NewsManager: React.FC = () => {
+  const navigate = useNavigate();
   const { isRunning: isActive, lastUpdate, newsCount, error, startNewsSystem: startSystem, stopNewsSystem: stopSystem } = useNewsSystem();
   const stats = { sources: 5, processed: newsCount, published: 1, interval: '6h' };
   const [processedNews, setProcessedNews] = useState<ProcessedNews[]>([]);

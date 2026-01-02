@@ -19,6 +19,7 @@ interface ConversionData {
 }
 
 const ConversionAnalytics: React.FC = () => {
+  const navigate = useNavigate();
   const [data, setData] = useState<ConversionData | null>(null);
   const [loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState('7d');

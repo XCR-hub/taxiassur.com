@@ -21,6 +21,7 @@ interface Lead {
 }
 
 const LeadMarketplace: React.FC = () => {
+  const navigate = useNavigate();
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState({
