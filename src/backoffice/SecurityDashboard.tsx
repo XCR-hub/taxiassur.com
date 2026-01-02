@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Shield, AlertTriangle, Activity, Lock, Eye, TrendingUp, Users, Globe, Home, RefreshCw, Download, BarChart3, Clock, CheckCircle, XCircle } from 'lucide-react';
 import Card from '../components/Card';
 import { supabase } from '@/lib/supabase';
@@ -61,7 +62,8 @@ const SecurityDashboard: React.FC = () => {
   }, [timeRange, liveMode]);
 
   const getTimeRangeQuery = () => {
-    const now = new Date();
+  const navigate = useNavigate();
+const now = new Date();
     let timeAgo = new Date();
 
     switch (timeRange) {
@@ -267,13 +269,10 @@ const SecurityDashboard: React.FC = () => {
               </p>
             </div>
             <div className="flex items-center space-x-3">
-              <a
-                href="/backoffice"
-                className="px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors flex items-center space-x-2"
-              >
+              <button onClick={() => navigate("/backoffice")} className="px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors flex items-center space-x-2">
                 <Home size={18} />
                 <span>Accueil</span>
-              </a>
+              </button>
               <button
                 onClick={exportSecurityReport}
                 className="px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors flex items-center space-x-2"

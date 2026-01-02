@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Play, Pause, RefreshCw, Eye, Settings, TrendingUp, Clock, Zap, Globe, Home, Sparkles } from 'lucide-react';
 import { useNewsSystem } from '../lib/newsAggregator';
 import { ProcessedNews } from '../lib/newsAggregator';
@@ -210,13 +211,10 @@ const NewsManager: React.FC = () => {
                 </div>
               </div>
               
-              <a
-                href="/backoffice"
-                className="bg-orange-600 hover:bg-orange-700 text-white font-medium px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
-              >
+              <button onClick={() => navigate("/backoffice")} className="bg-orange-600 hover:bg-orange-700 text-white font-medium px-4 py-2 rounded-lg transition-colors flex items-center space-x-2">
                 <Home size={16} />
                 <span>Accueil Backoffice</span>
-              </a>
+              </button>
             </div>
           </div>
         </header>

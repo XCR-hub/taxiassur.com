@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { DatabaseZap, CheckCircle, AlertCircle, Loader2, Home } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
@@ -186,7 +187,8 @@ const PROSPECTS = [
 ];
 
 export default function ProspectSeeder() {
-  const [isSeeding, setIsSeeding] = useState(false);
+  const navigate = useNavigate();
+const [isSeeding, setIsSeeding] = useState(false);
   const [results, setResults] = useState<any[]>([]);
   const [summary, setSummary] = useState<{ success: number; errors: number } | null>(null);
 
@@ -243,13 +245,10 @@ export default function ProspectSeeder() {
             <DatabaseZap size={32} />
             <h2 className="text-2xl font-bold">Seeding Prospects Partenaires</h2>
           </div>
-          <a
-            href="/backoffice"
-            className="flex items-center space-x-2 px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors"
-          >
+          <button onClick={() => navigate("/backoffice")} className="flex items-center space-x-2 px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors">
             <Home size={20} />
             <span>Retour</span>
-          </a>
+          </button>
         </div>
         <p className="text-orange-100">
           Ajouter 20 prospects de qualité dans la base de données pour lancer les campagnes d'outreach

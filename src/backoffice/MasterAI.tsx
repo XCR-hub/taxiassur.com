@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { logger } from '@/lib/logger';
 import {
   Brain, Zap, TrendingUp, AlertTriangle, CheckCircle, Activity,
@@ -63,7 +64,8 @@ interface DashboardData {
 }
 
 export default function MasterAI() {
-  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
+  const navigate = useNavigate();
+const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [isAutoMode, setIsAutoMode] = useState(true);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
   const [loading, setLoading] = useState(true);
@@ -213,13 +215,10 @@ export default function MasterAI() {
             </div>
           </div>
 
-          <a
-            href="/backoffice"
-            className="bg-orange-600 hover:bg-orange-500 text-white font-medium px-4 py-2 rounded-lg transition-colors flex items-center space-x-2 shadow-lg"
-          >
+          <button onClick={() => navigate("/backoffice")} className="bg-orange-600 hover:bg-orange-500 text-white font-medium px-4 py-2 rounded-lg transition-colors flex items-center space-x-2 shadow-lg">
             <Home size={16} />
             <span>Accueil Backoffice</span>
-          </a>
+          </button>
         </div>
 
         {/* Status Bar */}

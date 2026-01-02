@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Globe, Plus, Star, MapPin, Mail, Phone, Home } from 'lucide-react';
 import { getPartners, addPartner, type Partner } from '../lib/backlinks';
 import Card from '../components/Card';
@@ -77,7 +78,8 @@ const PartnerManager: React.FC = () => {
   };
 
   const getCategoryColor = (category: string) => {
-    const colors = {
+  const navigate = useNavigate();
+const colors = {
       directory: 'bg-orange-100 text-orange-800',
       equipment: 'bg-green-100 text-green-800',
       service: 'bg-orange-100 text-orange-800',
@@ -138,13 +140,10 @@ const PartnerManager: React.FC = () => {
               </div>
             </div>
             
-            <a
-              href="/backoffice"
-              className="bg-orange-600 hover:bg-orange-700 text-white font-medium px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
-            >
+            <button onClick={() => navigate("/backoffice")} className="bg-orange-600 hover:bg-orange-700 text-white font-medium px-4 py-2 rounded-lg transition-colors flex items-center space-x-2">
               <Home size={16} />
               <span>Accueil Backoffice</span>
-            </a>
+            </button>
           </div>
         </div>
       </header>

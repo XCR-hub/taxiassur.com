@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Eye, CheckCircle, XCircle, Mail, Globe, Calendar, User, Tag, MessageSquare, Home } from 'lucide-react';
 import { getProspects, saveProspect, saveConsent } from '../lib/partners';
 import { generateUnsubscribeToken, generateUnsubscribeUrl } from '../lib/outreach';
@@ -109,7 +110,8 @@ const ProspectReview: React.FC = () => {
   };
 
   const getTypeColor = (type: Prospect['type']) => {
-    const colors = {
+  const navigate = useNavigate();
+const colors = {
       annuaire: 'bg-orange-100 text-orange-800',
       asso: 'bg-green-100 text-green-800',
       blog: 'bg-orange-100 text-orange-800',
@@ -170,13 +172,10 @@ const ProspectReview: React.FC = () => {
                 </div>
               </div>
               
-              <a
-                href="/backoffice"
-                className="bg-orange-600 hover:bg-orange-700 text-white font-medium px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
-              >
+              <button onClick={() => navigate("/backoffice")} className="bg-orange-600 hover:bg-orange-700 text-white font-medium px-4 py-2 rounded-lg transition-colors flex items-center space-x-2">
                 <Home size={16} />
                 <span>Accueil Backoffice</span>
-              </a>
+              </button>
             </div>
           </div>
         </header>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Users, UserPlus, Shield, Lock, Mail, Eye, EyeOff, Edit2, Trash2, CheckCircle, XCircle, Search, Filter, RefreshCw, Key, Send } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
@@ -258,7 +259,8 @@ const UserManagement: React.FC = () => {
   };
 
   const openPermissionsModal = (user: AdminUser) => {
-    setSelectedUser(user);
+  const navigate = useNavigate();
+setSelectedUser(user);
     const perms = permissions[user.id] || [];
     const permsMap: { [key: string]: { view: boolean; edit: boolean; delete: boolean } } = {};
 
@@ -340,13 +342,10 @@ const UserManagement: React.FC = () => {
             <RefreshCw size={18} />
             Actualiser
           </button>
-          <a
-            href="/backoffice"
-            className="flex items-center gap-2 bg-gray-800 hover:bg-gray-700 text-white px-4 py-3 rounded-xl font-bold transition-all border border-gray-700"
-          >
+          <button onClick={() => navigate("/backoffice")} className="flex items-center gap-2 bg-gray-800 hover:bg-gray-700 text-white px-4 py-3 rounded-xl font-bold transition-all border border-gray-700">
             <Shield size={18} />
             Accueil Admin
-          </a>
+          </button>
           <button
             onClick={() => setShowAddModal(true)}
             className="flex items-center gap-2 bg-gradient-to-r from-amber-500 to-yellow-500 text-black px-6 py-3 rounded-xl font-bold hover:shadow-lg transition-all"

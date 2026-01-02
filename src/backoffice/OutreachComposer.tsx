@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Send, Mail, Clock, AlertTriangle, CheckCircle, Eye, Copy, Home } from 'lucide-react';
 import { getProspects, getOutreaches, saveOutreach, sendOutreach } from '../lib/partners';
 import { getTemplates, renderTemplate, generateUnsubscribeToken, validateEmailContent } from '../lib/outreach';
@@ -52,7 +53,8 @@ const OutreachComposer: React.FC = () => {
   );
 
   const handleTemplateChange = (templateId: string) => {
-    setSelectedTemplate(templateId);
+  const navigate = useNavigate();
+setSelectedTemplate(templateId);
     setEmailValidation(null);
   };
 
@@ -195,13 +197,10 @@ const OutreachComposer: React.FC = () => {
                 </div>
               </div>
               
-              <a
-                href="/backoffice"
-                className="bg-orange-600 hover:bg-orange-700 text-white font-medium px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
-              >
+              <button onClick={() => navigate("/backoffice")} className="bg-orange-600 hover:bg-orange-700 text-white font-medium px-4 py-2 rounded-lg transition-colors flex items-center space-x-2">
                 <Home size={16} />
                 <span>Accueil Backoffice</span>
-              </a>
+              </button>
             </div>
           </div>
         </header>

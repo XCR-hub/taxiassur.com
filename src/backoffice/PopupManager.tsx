@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Plus, CreditCard as Edit, Trash2, Eye, EyeOff, Copy, Save, X, Monitor, Smartphone, Tablet, Home, TrendingUp, BarChart3 } from 'lucide-react';
 import { PopupConfig, PopupConfigSchema, PopupManager } from '../lib/popup';
 import Card from '../components/Card';
@@ -29,7 +30,8 @@ const PopupManagerBackoffice: React.FC = () => {
   };
 
   const loadAnalytics = () => {
-    const data = JSON.parse(localStorage.getItem('popup_analytics') || '{}');
+  const navigate = useNavigate();
+const data = JSON.parse(localStorage.getItem('popup_analytics') || '{}');
     setAnalytics(data);
   };
 
@@ -724,13 +726,10 @@ const PopupManagerBackoffice: React.FC = () => {
                 </div>
               </div>
               
-              <a
-                href="/backoffice"
-                className="bg-orange-600 hover:bg-orange-700 text-white font-medium px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
-              >
+              <button onClick={() => navigate("/backoffice")} className="bg-orange-600 hover:bg-orange-700 text-white font-medium px-4 py-2 rounded-lg transition-colors flex items-center space-x-2">
                 <Home size={16} />
                 <span>Accueil Backoffice</span>
-              </a>
+              </button>
             </div>
           </div>
         </header>

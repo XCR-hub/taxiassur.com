@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { logger } from '@/lib/logger';
 import {
   Users, Eye, Phone, Mail, FileText, CheckCircle, XCircle, Euro,
@@ -10,6 +11,7 @@ import { formatDate } from '../lib/utils';
 import ElectronicSignature from '../components/ElectronicSignature';
 
 const LeadManager: React.FC = () => {
+  const navigate = useNavigate();
   const [leads, setLeads] = useState<Lead[]>([]);
   const [filteredLeads, setFilteredLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
@@ -235,13 +237,13 @@ const LeadManager: React.FC = () => {
                 <TrendingUp size={18} />
                 <span>Actualiser</span>
               </button>
-              <a
-                href="/backoffice"
+              <button
+                onClick={() => navigate('/backoffice')}
                 className="flex items-center space-x-2 bg-gray-100 hover:bg-gray-200 text-gray-900 font-bold py-2 px-4 rounded-lg transition-colors"
               >
                 <Home size={18} />
                 <span>Accueil</span>
-              </a>
+              </button>
             </div>
           </div>
         </div>

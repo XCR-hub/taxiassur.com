@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { MessageSquare, Send, User, Check, CheckCheck, Clock, AlertCircle, Tag, UserPlus } from 'lucide-react';
 import { logger } from '@/lib/logger';
@@ -43,7 +44,8 @@ interface Template {
 }
 
 export default function WhatsAppManager() {
-  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const navigate = useNavigate();
+const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [messageText, setMessageText] = useState('');
@@ -216,13 +218,10 @@ export default function WhatsAppManager() {
               </h1>
               <p className="text-gray-600">Gérez vos conversations WhatsApp Business</p>
             </div>
-            <a
-              href="/backoffice"
-              className="flex items-center space-x-2 bg-gray-100 hover:bg-gray-200 text-gray-900 font-bold py-2 px-4 rounded-lg transition-colors"
-            >
+            <button onClick={() => navigate("/backoffice")} className="flex items-center space-x-2 bg-gray-100 hover:bg-gray-200 text-gray-900 font-bold py-2 px-4 rounded-lg transition-colors">
               <User size={18} />
               <span>Accueil Admin</span>
-            </a>
+            </button>
           </div>
         </div>
       </div>

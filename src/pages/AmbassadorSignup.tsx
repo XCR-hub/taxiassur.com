@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Award, Share2, DollarSign, TrendingUp, Copy, CheckCircle } from 'lucide-react';
 import { createAmbassador } from '../lib/referral';
 
 const AmbassadorSignup: React.FC = () => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -157,12 +159,12 @@ const AmbassadorSignup: React.FC = () => {
           </div>
 
           <div className="mt-6 text-center">
-            <a
-              href="/backoffice"
-              className="text-yellow-400 hover:text-orange-300 font-semibold"
+            <button
+              onClick={() => navigate('/backoffice')}
+              className="text-yellow-400 hover:text-orange-300 font-semibold bg-transparent border-0 cursor-pointer"
             >
               → Accéder à mon espace ambassadeur
-            </a>
+            </button>
           </div>
         </div>
       </div>
