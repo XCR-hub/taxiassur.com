@@ -1,0 +1,270 @@
+@media print {
+  @page {
+    margin: 1.5cm;
+    size: A4 portrait;
+  }
+
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+
+  body {
+    font-size: 12pt;
+    line-height: 1.5;
+    color: #000;
+    background: #fff;
+  }
+
+  header,
+  nav,
+  footer,
+  .no-print,
+  .sidebar,
+  .back-button,
+  button:not(.print-button),
+  .chat-widget,
+  .modal,
+  .toast,
+  .tooltip {
+    display: none !important;
+  }
+
+  main {
+    margin: 0 !important;
+    padding: 0 !important;
+    max-width: 100% !important;
+  }
+
+  .print-container {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .print-header {
+    margin-bottom: 2cm;
+    border-bottom: 2px solid #000;
+    padding-bottom: 0.5cm;
+  }
+
+  .print-logo {
+    max-width: 150px;
+    height: auto;
+  }
+
+  .print-title {
+    font-size: 24pt;
+    font-weight: bold;
+    margin: 1cm 0 0.5cm;
+  }
+
+  .print-subtitle {
+    font-size: 14pt;
+    color: #666;
+    margin-bottom: 0.5cm;
+  }
+
+  .print-section {
+    margin: 1cm 0;
+    page-break-inside: avoid;
+  }
+
+  .print-section-title {
+    font-size: 16pt;
+    font-weight: bold;
+    margin-bottom: 0.5cm;
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 0.25cm;
+  }
+
+  .print-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0.5cm 0;
+    page-break-inside: avoid;
+  }
+
+  .print-table th,
+  .print-table td {
+    border: 1px solid #ddd;
+    padding: 8pt;
+    text-align: left;
+  }
+
+  .print-table th {
+    background-color: #f5f5f5 !important;
+    font-weight: bold;
+  }
+
+  .print-table tbody tr:nth-child(even) {
+    background-color: #fafafa !important;
+  }
+
+  .print-info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5cm;
+    margin: 0.5cm 0;
+  }
+
+  .print-info-item {
+    margin-bottom: 0.5cm;
+  }
+
+  .print-info-label {
+    font-weight: bold;
+    margin-bottom: 0.1cm;
+  }
+
+  .print-info-value {
+    color: #333;
+  }
+
+  .print-signature-area {
+    margin-top: 2cm;
+    padding-top: 1cm;
+    border-top: 1px solid #ccc;
+  }
+
+  .print-signature-box {
+    width: 6cm;
+    height: 3cm;
+    border: 1px solid #ccc;
+    margin: 0.5cm 0;
+    page-break-inside: avoid;
+  }
+
+  .print-footer {
+    margin-top: 2cm;
+    padding-top: 0.5cm;
+    border-top: 1px solid #ccc;
+    font-size: 10pt;
+    color: #666;
+    page-break-inside: avoid;
+  }
+
+  .print-page-break {
+    page-break-before: always;
+  }
+
+  .print-avoid-break {
+    page-break-inside: avoid;
+  }
+
+  .print-terms {
+    font-size: 9pt;
+    color: #666;
+    margin-top: 1cm;
+    line-height: 1.4;
+  }
+
+  .print-highlight {
+    background-color: #ffffcc !important;
+    padding: 0.2cm;
+  }
+
+  .print-important {
+    font-weight: bold;
+    color: #d32f2f !important;
+  }
+
+  .print-price-box {
+    border: 2px solid #000;
+    padding: 0.5cm;
+    margin: 0.5cm 0;
+    text-align: center;
+    page-break-inside: avoid;
+  }
+
+  .print-price-amount {
+    font-size: 20pt;
+    font-weight: bold;
+    color: #000 !important;
+  }
+
+  .print-qr-code {
+    max-width: 3cm;
+    height: auto;
+  }
+
+  .print-barcode {
+    max-width: 100%;
+    height: auto;
+  }
+
+  a[href]:after {
+    content: none !important;
+  }
+
+  a {
+    text-decoration: underline;
+    color: #000;
+  }
+
+  img {
+    max-width: 100%;
+    page-break-inside: avoid;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    page-break-after: avoid;
+    page-break-inside: avoid;
+  }
+
+  ul, ol {
+    page-break-inside: avoid;
+  }
+
+  .print-watermark {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(-45deg);
+    font-size: 72pt;
+    opacity: 0.1;
+    color: #ccc;
+    z-index: -1;
+    pointer-events: none;
+  }
+
+  .print-confidential {
+    position: fixed;
+    top: 0;
+    right: 0;
+    padding: 0.3cm;
+    background-color: #f44336 !important;
+    color: #fff !important;
+    font-weight: bold;
+    font-size: 10pt;
+  }
+
+  .print-draft {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(-45deg);
+    font-size: 120pt;
+    opacity: 0.05;
+    color: #000;
+    z-index: -1;
+    pointer-events: none;
+    font-weight: bold;
+  }
+}
+
+.print-only {
+  display: none;
+}
+
+@media print {
+  .print-only {
+    display: block !important;
+  }
+}
+
+@media print and (orientation: landscape) {
+  @page {
+    size: A4 landscape;
+  }
+}
