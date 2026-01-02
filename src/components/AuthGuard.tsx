@@ -62,7 +62,7 @@ const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
   }
 
   if (!isAuthenticated) {
-    return <AdminLogin onSuccess={() => window.location.reload()} />;
+    return <AdminLogin onSuccess={() => {}} />;
   }
 
   return (

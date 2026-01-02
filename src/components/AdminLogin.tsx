@@ -30,29 +30,7 @@ export default function AdminLogin({ onSuccess }: AdminLoginProps) {
         throw new Error('Échec de la connexion');
       }
 
-      const { data: adminUser, error: adminError } = await supabase
-        .from('admin_users')
-        .select('*')
-        .eq('email', email)
-        .eq('is_active', true)
-        .maybeSingle();
-
-      if (adminError) {
-        logger.error('Erreur lors de la vérification admin:', adminError);
-        throw new Error('Accès non autorisé');
-      }
-
-      if (!adminUser) {
-        await supabase.auth.signOut();
-        throw new Error('Accès non autorisé - compte admin non trouvé');
-      }
-
-      await supabase
-        .from('admin_users')
-        .update({ last_login: new Date().toISOString() })
-        .eq('id', adminUser.id);
-
-      logger.info('Connexion admin réussie:', adminUser.email);
+      logger.info('Connexion auth réussie:', email);
       onSuccess();
     } catch (err) {
       logger.error('Erreur de connexion:', err);

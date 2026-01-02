@@ -93,31 +93,30 @@ export function useAdminAuth() {
     try {
       console.log('📧 Loading admin user for email:', email);
 
-      const timeoutPromise = new Promise<never>((_, reject) => {
-        setTimeout(() => reject(new Error('Timeout: admin_users query took too long')), 3000);
-      });
-
-      // Créer la requête
-      const queryPromise = supabase
+      const { data: adminUser, error } = await supabase
         .from('admin_users')
         .select('*')
         .eq('email', email)
         .eq('is_active', true)
         .maybeSingle();
 
-      // Race entre la requête et le timeout
-      const result = await Promise.race([queryPromise, timeoutPromise]);
-
-      if ('error' in result && result.error) {
-        console.error('❌ Error loading admin user:', result.error);
-        throw result.error;
+      if (error) {
+        console.error('❌ Error loading admin user:', error);
+        throw error;
       }
 
-      const adminUser = 'data' in result ? result.data : null;
       console.log('👤 Admin user data:', adminUser ? 'Found' : 'Not found');
 
       if (adminUser) {
         console.log('✅ Admin authenticated:', adminUser.full_name);
+
+        supabase
+          .from('admin_users')
+          .update({ last_login: new Date().toISOString() })
+          .eq('id', adminUser.id)
+          .then(() => console.log('📝 Last login updated'))
+          .catch(err => console.warn('⚠️ Could not update last_login:', err));
+
         setState({
           user: adminUser as AdminUser,
           loading: false,
@@ -131,7 +130,6 @@ export function useAdminAuth() {
     } catch (error) {
       console.error('❌ Error in loadAdminUser:', error);
       logger.error('Erreur lors du chargement admin:', error);
-      // Important: ne pas bloquer l'app - permettre d'afficher le formulaire
       setState({ user: null, loading: false, isAuthenticated: false });
     }
   };
