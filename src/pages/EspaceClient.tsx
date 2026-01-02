@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Shield, FileCheck, Bell, Clock, CreditCard, Download, Upload, CheckCircle, Star, Zap, Lock, Smartphone, Calendar, Award, Mail, Eye, EyeOff } from 'lucide-react';
 import SEOHead from '../components/SEOHead';
+import Header from '../components/Header';
+import Footer from '../components/Footer';
 import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
 
@@ -58,6 +60,8 @@ export default function EspaceClient() {
         description="Accédez à votre espace client TaxiAssur : gestion contrat, documents, sinistres, paiements. Disponible 24/7 sur ordinateur et mobile. Service client primé."
         canonical="https://taxiassur.com/espace-client"
       />
+
+      <Header />
 
       <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
 
@@ -574,6 +578,8 @@ export default function EspaceClient() {
         </section>
 
       </div>
+
+      <Footer />
     </>
   );
 }
