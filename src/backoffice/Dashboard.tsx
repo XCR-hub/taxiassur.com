@@ -20,10 +20,15 @@ const Dashboard: React.FC = () => {
     partners: 0
   });
   
-  const [leadStats, setLeadStats] = useState({
-    today: 1,
-    week: 1,
-    month: 1,
+  const [leadStats, setLeadStats] = useState<{
+    today: number;
+    week: number;
+    month: number;
+    topCities: Array<{ city: string; count: number }>;
+  }>({
+    today: 0,
+    week: 0,
+    month: 0,
     topCities: []
   });
   
@@ -115,12 +120,24 @@ const Dashboard: React.FC = () => {
       const webhookResult = await pingWebhook();
       setWebhookStatus(webhookResult.ok ? 'success' : 'error');
       
+      // Calculer les vraies villes avec leurs counts
+      const cityCount = realLeads.reduce((acc, lead) => {
+        const city = lead.city || 'Non renseigné';
+        acc[city] = (acc[city] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
+
+      const topCities = Object.entries(cityCount)
+        .map(([city, count]) => ({ city, count }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 5);
+
       // Utiliser les vraies stats de leads
       setLeadStats({
         today: leadsToday,
         week: leadsWeek,
         month: leadsMonth,
-        topCities: ['Paris', 'Lyon', 'Marseille', 'Toulouse', 'Nice']
+        topCities
       });
       
       // Santé du système - Données réelles
@@ -451,14 +468,18 @@ const Dashboard: React.FC = () => {
                 Top Villes
               </h3>
               <div className="space-y-3">
-                {leadStats.topCities.map((city, index) => (
-                  <div key={city} className="flex items-center justify-between p-3 bg-amber-100 rounded-lg border border-amber-200">
-                    <span className="font-bold text-amber-900">{index + 1}. {city}</span>
+                {leadStats.topCities.length > 0 ? leadStats.topCities.map((cityData, index) => (
+                  <div key={cityData.city} className="flex items-center justify-between p-3 bg-amber-100 rounded-lg border border-amber-200">
+                    <span className="font-bold text-amber-900">{index + 1}. {cityData.city}</span>
                     <span className="text-xs bg-amber-200 text-amber-900 px-3 py-1 rounded-full font-bold border border-amber-300">
-                      {Math.floor(Math.random() * 20) + 5} leads
+                      {cityData.count} {cityData.count > 1 ? 'leads' : 'lead'}
                     </span>
                   </div>
-                ))}
+                )) : (
+                  <div className="text-center text-amber-700 py-4">
+                    Aucune donnée disponible
+                  </div>
+                )}
               </div>
             </div>
           </div>

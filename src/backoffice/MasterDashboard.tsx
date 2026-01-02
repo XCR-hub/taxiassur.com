@@ -75,14 +75,14 @@ const MasterDashboard: React.FC = () => {
         const pending_quotes = leadsData.filter(l => l.status === 'nouveau' || l.status === 'contacte').length;
 
         setStats({
-          active_sessions: Math.floor(Math.random() * 5), // Simulé
+          active_sessions: 0,
           today_sessions: leadsData.length,
           today_conversions,
           today_quote_requests: leadsData.length,
           pending_quotes,
-          avg_session_duration: 3.5,
-          top_traffic_source: 'Google',
-          top_city: 'Paris'
+          avg_session_duration: 0,
+          top_traffic_source: 'Direct',
+          top_city: 'N/A'
         });
       }
     } catch (error) {
