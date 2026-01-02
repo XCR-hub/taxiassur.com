@@ -11,11 +11,11 @@ interface LeadPayload {
   table: string;
   record: {
     id: string;
-    nom_prenom: string;
-    telephone: string;
+    name: string;
+    phone: string;
     email: string;
-    ville: string;
-    statut: string;
+    city: string;
+    status: string;
     immatriculation?: string;
     access_token?: string;
     created_at: string;
@@ -73,12 +73,12 @@ Deno.serve(async (req: Request) => {
             <div class="info-grid">
               <div class="info-item">
                 <div class="info-label">Nom complet</div>
-                <div class="info-value">${lead.nom_prenom}</div>
+                <div class="info-value">${lead.name}</div>
               </div>
 
               <div class="info-item">
                 <div class="info-label">📞 Téléphone</div>
-                <div class="info-value"><a href="tel:${lead.telephone}" style="color: #10b981; text-decoration: none;">${lead.telephone}</a></div>
+                <div class="info-value"><a href="tel:${lead.phone}" style="color: #10b981; text-decoration: none;">${lead.phone}</a></div>
               </div>
 
               <div class="info-item">
@@ -88,12 +88,12 @@ Deno.serve(async (req: Request) => {
 
               <div class="info-item">
                 <div class="info-label">📍 Ville</div>
-                <div class="info-value">${lead.ville}</div>
+                <div class="info-value">${lead.city}</div>
               </div>
 
               <div class="info-item">
                 <div class="info-label">👤 Statut professionnel</div>
-                <div class="info-value">${lead.statut}</div>
+                <div class="info-value">${lead.status}</div>
               </div>
 
               ${lead.immatriculation ? `
@@ -119,7 +119,7 @@ Deno.serve(async (req: Request) => {
 
             <h3 style="color: #1f2937;">📋 Prochaines actions</h3>
             <ol style="color: #4b5563; line-height: 1.8;">
-              <li>☎️ Appeler le prospect au <strong>${lead.telephone}</strong></li>
+              <li>☎️ Appeler le prospect au <strong>${lead.phone}</strong></li>
               <li>✅ Qualifier le besoin et confirmer les informations</li>
               <li>📄 Vérifier l'envoi des 7 documents requis (incluant autorisation stationnement + RIB)</li>
               <li>💰 Préparer et envoyer le devis sous 24h</li>
@@ -174,16 +174,16 @@ Deno.serve(async (req: Request) => {
           <div class="header">
             <div class="success-icon">✅</div>
             <h1 style="margin: 0; font-size: 28px;">DEMANDE REÇUE !</h1>
-            <p style="margin: 10px 0 0 0; font-size: 18px;">Félicitations ${lead.nom_prenom} !</p>
+            <p style="margin: 10px 0 0 0; font-size: 18px;">Félicitations ${lead.name} !</p>
           </div>
 
           <div class="content">
             <h2 style="color: #1f2937;">Merci pour votre confiance</h2>
-            <p>Nous avons bien reçu votre demande de devis pour une <strong>assurance taxi à ${lead.ville}</strong>.</p>
+            <p>Nous avons bien reçu votre demande de devis pour une <strong>assurance taxi à ${lead.city}</strong>.</p>
 
             <div class="highlight">
               <strong>⏱️ Réponse rapide garantie :</strong><br>
-              Notre expert vous contacte dans les <strong>15 minutes</strong> au <strong>${lead.telephone}</strong>
+              Notre expert vous contacte dans les <strong>15 minutes</strong> au <strong>${lead.phone}</strong>
             </div>
 
             <h3 style="color: #1f2937;">📋 Documents requis pour votre devis</h3>
@@ -233,10 +233,10 @@ Deno.serve(async (req: Request) => {
             <div class="info-box">
               <strong>ℹ️ Vos informations enregistrées :</strong><br>
               <ul style="margin: 10px 0 0 0; padding-left: 20px;">
-                <li>Téléphone : ${lead.telephone}</li>
+                <li>Téléphone : ${lead.phone}</li>
                 <li>Email : ${lead.email}</li>
-                <li>Ville : ${lead.ville}</li>
-                <li>Statut : ${lead.statut}</li>
+                <li>Ville : ${lead.city}</li>
+                <li>Statut : ${lead.status}</li>
                 ${lead.immatriculation ? `<li>Immatriculation : ${lead.immatriculation}</li>` : ""}
               </ul>
             </div>
@@ -274,7 +274,7 @@ Deno.serve(async (req: Request) => {
         to: [
           { email: "team@taxiassur.com", name: "Équipe TaxiAssur" },
         ],
-        subject: `🎯 Nouveau Lead : ${lead.nom_prenom} - ${lead.ville}`,
+        subject: `🎯 Nouveau Lead : ${lead.name} - ${lead.city}`,
         htmlContent: teamEmailBody,
       }),
     });
@@ -298,7 +298,7 @@ Deno.serve(async (req: Request) => {
           email: "team@taxiassur.com",
         },
         to: [
-          { email: lead.email, name: lead.nom_prenom },
+          { email: lead.email, name: lead.name },
         ],
         subject: "Votre demande de devis assurance taxi",
         htmlContent: clientEmailBody,
