@@ -89,7 +89,16 @@ export function useAdminAuth() {
       try {
         console.log('🔍 Checking auth session...');
 
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Session timeout')), 5000)
+        );
+
+        const sessionPromise = supabase.auth.getSession();
+
+        const { data: { session }, error: sessionError } = await Promise.race([
+          sessionPromise,
+          timeoutPromise
+        ]) as any;
 
         if (!mounted) return;
 
@@ -112,6 +121,7 @@ export function useAdminAuth() {
       } catch (error) {
         console.error('❌ Error in initAuth:', error);
         if (mounted) {
+          console.log('⚡ Showing login form immediately');
           setState({ user: null, loading: false, isAuthenticated: false });
         }
       }
@@ -133,10 +143,10 @@ export function useAdminAuth() {
 
     const timeout = setTimeout(() => {
       if (mounted && !authInitialized) {
-        console.warn('⚠️ Auth initialization timeout');
-        setState(prev => ({ ...prev, loading: false }));
+        console.warn('⚠️ Auth initialization timeout - showing login');
+        setState({ user: null, loading: false, isAuthenticated: false });
       }
-    }, 15000);
+    }, 6000);
 
     return () => {
       mounted = false;

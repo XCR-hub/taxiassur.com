@@ -17,7 +17,7 @@ const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
         console.error('⚠️ AuthGuard timeout: chargement trop long');
         setTimeout(true);
       }
-    }, 15000);
+    }, 7000);
 
     return () => window.clearTimeout(timer);
   }, [loading]);
