@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Shield, AlertTriangle, Activity, Lock, Eye, TrendingUp, Users, Globe, Home, RefreshCw, Download, BarChart3, Clock, CheckCircle, XCircle } from 'lucide-react';
 import Card from '../components/Card';
-import { supabase } from '../lib/supabase';
+import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
 
 interface SecurityLog {

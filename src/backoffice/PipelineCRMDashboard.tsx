@@ -16,7 +16,7 @@ import {
   Eye,
   Download
 } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { supabase } from '@/lib/supabase';
 
 interface LeadWithStatus {
   lead_id: string;

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Users, UserPlus, Shield, Lock, Mail, Eye, EyeOff, Edit2, Trash2, CheckCircle, XCircle, Search, Filter, RefreshCw, Key, Send } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
 
 interface AdminUser {

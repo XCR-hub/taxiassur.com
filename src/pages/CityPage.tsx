@@ -10,7 +10,7 @@ import { generateCityPages } from '../lib/ping';
 import { MapPin, Phone, CheckCircle, Users, Award, TrendingDown, Shield, Clock, Star, Target, Zap, Crown, Gift } from 'lucide-react';
 import Card from '../components/Card';
 import StickyCTA from '../components/StickyCTA';
-import { supabase } from '../lib/supabase';
+import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
 
 interface CityPageData {

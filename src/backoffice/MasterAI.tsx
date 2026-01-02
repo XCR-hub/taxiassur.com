@@ -6,7 +6,7 @@ import {
   Shield, Database, Globe, Mail, Share2, Search, Link, FileText,
   Users, DollarSign, Award, Rocket, Cpu, Network, Home
 } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { supabase } from '@/lib/supabase';
 
 interface SystemHealth {
   database: number;

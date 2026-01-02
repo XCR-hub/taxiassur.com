@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Users, Calendar, Activity, TrendingUp, Database, ArrowRight } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
 
 interface LeadStats {

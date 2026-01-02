@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, Shield, Award, TrendingUp, Users, Clock, Phone } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
 
 interface SmartConversionSystemProps {

@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { FileText, Shield, CreditCard, Bell, TrendingUp, Calendar, CheckCircle, Clock, AlertCircle } from 'lucide-react';
 import ClientLayout from '../../components/client/ClientLayout';
 import SEOHead from '../../components/SEOHead';
-import { supabase } from '../../lib/supabase';
+import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
 
 export default function ClientDashboard() {

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { PlayCircle, CheckCircle, XCircle, Loader } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { supabase } from '@/lib/supabase';
 
 interface AutomationTest {
   name: string;

@@ -7,7 +7,7 @@ import {
   Download, Target, BarChart3, Activity, DollarSign, Zap, Eye,
   ArrowRight, Star, Tag, ExternalLink, RefreshCw, TrendingDown
 } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { supabase } from '@/lib/supabase';
 
 interface Lead {
   id: string;

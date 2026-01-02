@@ -3,7 +3,7 @@ import { User, Mail, Phone, MapPin, Shield, Calendar, Lock, CreditCard } from 'l
 import ClientLayout from '../../components/client/ClientLayout';
 import SEOHead from '../../components/SEOHead';
 import { useEffect, useState } from 'react';
-import { supabase } from '../../lib/supabase';
+import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
 
 export default function ClientProfil() {

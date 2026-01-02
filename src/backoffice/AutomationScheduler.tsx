@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Calendar, Clock, Zap, Play, Pause, Settings, TrendingUp, FileText, HelpCircle, BarChart3, RefreshCw, Eye, Hash, CheckCircle, AlertCircle, Sparkles } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
 
 interface ScheduleConfig {

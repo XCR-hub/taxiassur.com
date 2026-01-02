@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { Calendar, Clock, Tag, ArrowLeft, TrendingUp, ExternalLink } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { supabase } from '@/lib/supabase';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { logger } from '@/lib/logger';

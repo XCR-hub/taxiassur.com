@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Activity, TrendingUp, Zap, Target, Brain, AlertTriangle, CheckCircle, Clock } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { supabase } from '@/lib/supabase';
 import BackButton from './BackButton';
 import { logger } from '@/lib/logger';
 

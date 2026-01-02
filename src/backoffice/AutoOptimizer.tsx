@@ -5,7 +5,7 @@ import {
   AlertTriangle, TrendingUp, BarChart3, Target, Sparkles,
   Clock, Activity, TestTube, Eye, AlertCircle
 } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { supabase } from '@/lib/supabase';
 
 interface Automation {
   id: string;

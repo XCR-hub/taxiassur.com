@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Brain, Zap, TrendingUp, Users, Target, Activity, RefreshCw, CheckCircle, AlertTriangle, Code, Rocket, Database, BarChart3, Home } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { supabase } from '@/lib/supabase';
 import Card from '../components/Card';
 import { logger } from '@/lib/logger';
 

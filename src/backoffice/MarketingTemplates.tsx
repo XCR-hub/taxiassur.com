@@ -4,7 +4,7 @@ import Card from '../components/Card';
 import marketingTemplates from '../data/marketing-templates.json';
 import HelpPanel from '../components/HelpPanel';
 import { getHelpConfig } from '../lib/help-configs';
-import { supabase } from '../lib/supabase';
+import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
 
 interface CopyHistory {

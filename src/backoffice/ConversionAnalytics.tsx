@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { TrendingUp, Users, Target, MousePointer, Clock, BarChart3, PieChart, Activity, Home } from 'lucide-react';
 import Card from '../components/Card';
-import { supabase } from '../lib/supabase';
+import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
 
 interface ConversionData {

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Shield, Download, Trash2, Eye, Calendar, Mail, AlertTriangle, CheckCircle, Home, FileText, Activity, TrendingUp, RefreshCw, Users, Clock } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { supabase } from '@/lib/supabase';
 import Card from '../components/Card';
 import { logger } from '@/lib/logger';
 

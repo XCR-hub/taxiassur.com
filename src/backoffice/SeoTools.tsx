@@ -4,7 +4,7 @@ import { pingSearchEngines } from '../lib/ping';
 import { regenerateFeeds } from '../lib/feeds';
 import { generateCityPages } from '../lib/ping';
 import Card from '../components/Card';
-import { supabase } from '../lib/supabase';
+import { supabase } from '@/lib/supabase';
 import TestAutomationButton from './TestAutomationButton';
 import { logger } from '@/lib/logger';
 

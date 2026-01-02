@@ -6,7 +6,7 @@ import {
   BarChart3, Zap, Globe, Mail, FileText, MessageSquare,
   ArrowUp, ArrowDown, Minus
 } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { supabase } from '@/lib/supabase';
 import NavigationMenu from './NavigationMenu';
 import LeadCRM from './LeadCRM';
 

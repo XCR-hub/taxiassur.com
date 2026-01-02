@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Calendar, Clock, Tag, ExternalLink, TrendingUp } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { supabase } from '@/lib/supabase';
 import { stripHtml, createSmartExcerpt } from '../lib/text-utils';
 import Footer from '../components/Footer';
 import Header from '../components/Header';

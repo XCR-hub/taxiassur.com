@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Shield, FileCheck, Bell, Clock, CreditCard, Download, Upload, CheckCircle, Star, Zap, Lock, Smartphone, Calendar, Award, Mail, Eye, EyeOff } from 'lucide-react';
 import SEOHead from '../components/SEOHead';
-import { supabase } from '../lib/supabase';
+import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
 
 export default function EspaceClient() {

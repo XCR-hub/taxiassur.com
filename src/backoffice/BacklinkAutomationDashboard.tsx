@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Mail, Send, Eye, CheckCircle, XCircle, TrendingUp, Activity, BarChart3, Clock, Link2, Zap, Home } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../lib/supabase';
+import { supabase } from '@/lib/supabase';
 import Card from '../components/Card';
 import { logger } from '@/lib/logger';
 

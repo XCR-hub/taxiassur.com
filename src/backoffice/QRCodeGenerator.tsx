@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { QrCode, Download, Copy, CheckCircle, Users, Link as LinkIcon, RefreshCw, Eye, Printer, FileImage, Sparkles, BarChart3, TrendingUp } from 'lucide-react';
 import Card from '../components/Card';
-import { supabase } from '../lib/supabase';
+import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
 
 interface Ambassador {

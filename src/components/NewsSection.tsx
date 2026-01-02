@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Calendar, TrendingUp, Newspaper, ArrowRight } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { supabase } from '@/lib/supabase';
 import { stripHtml, createSmartExcerpt } from '../lib/text-utils';
 import { logger } from '@/lib/logger';
 

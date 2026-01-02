@@ -6,7 +6,7 @@ import {
   Mail, MessageSquare, Phone, FileText, Calendar, Users,
   RefreshCw, AlertCircle, ArrowRight, Eye
 } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { supabase } from '@/lib/supabase';
 
 interface AutomationRule {
   id: string;

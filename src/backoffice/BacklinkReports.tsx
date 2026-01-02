@@ -6,7 +6,7 @@ import {
   Link2, Activity, Calendar, Filter, Download, RefreshCw, Home
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../lib/supabase';
+import { supabase } from '@/lib/supabase';
 import Card from '../components/Card';
 import TestAutomationButton from './TestAutomationButton';
 

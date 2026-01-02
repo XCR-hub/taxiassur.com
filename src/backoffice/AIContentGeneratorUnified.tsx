@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Sparkles, Loader2, Copy, Check, Download, Home, Save, FileText, MapPin, HelpCircle, Image as ImageIcon, Tag, Clock } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { supabase } from '../lib/supabase';
+import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
 
 interface UnifiedContent {

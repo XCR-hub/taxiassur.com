@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { TrendingUp, Search, Zap, Target, BarChart3, Lightbulb, RefreshCw, Home } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { analyzeContentOpportunities, saveContentOpportunities, ContentOpportunity } from '../lib/trendAnalyzer';
-import { supabase } from '../lib/supabase';
+import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
 
 export default function TrendAnalyzer() {

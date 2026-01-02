@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { DatabaseZap, CheckCircle, AlertCircle, Loader2, Home } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { supabase } from '@/lib/supabase';
 
 const PROSPECTS = [
   {

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Users, Euro, Clock, Target, TrendingUp, Eye, Download, Filter, Calendar, Home } from 'lucide-react';
 import Card from '../components/Card';
-import { supabase } from '../lib/supabase';
+import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
 
 interface Lead {
