@@ -24,10 +24,20 @@ export function useAdminAuth() {
   });
 
   useEffect(() => {
-    checkAuth();
+    let mounted = true;
+
+    const initAuth = async () => {
+      if (mounted) {
+        await checkAuth();
+      }
+    };
+
+    initAuth();
 
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
-      logger.debug('Auth state changed:', event);
+      console.log('🔐 Auth state changed:', event, 'Session:', !!session);
+
+      if (!mounted) return;
 
       if (event === 'SIGNED_IN' && session?.user) {
         await loadAdminUser(session.user.email!);
@@ -36,21 +46,41 @@ export function useAdminAuth() {
       }
     });
 
+    const timeout = setTimeout(() => {
+      if (mounted) {
+        console.warn('⚠️ Auth check timeout');
+        setState(prev => ({ ...prev, loading: false }));
+      }
+    }, 3000);
+
     return () => {
+      mounted = false;
+      clearTimeout(timeout);
       authListener.subscription.unsubscribe();
     };
   }, []);
 
   const checkAuth = async () => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      console.log('🔍 Checking auth session...');
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+
+      if (sessionError) {
+        console.error('❌ Session error:', sessionError);
+        throw sessionError;
+      }
+
+      console.log('✅ Session retrieved:', !!session);
 
       if (session?.user) {
+        console.log('👤 User found, loading admin data...');
         await loadAdminUser(session.user.email!);
       } else {
+        console.log('🚫 No session found');
         setState({ user: null, loading: false, isAuthenticated: false });
       }
     } catch (error) {
+      console.error('❌ Error checking auth:', error);
       logger.error('Erreur lors de la vérification auth:', error);
       setState({ user: null, loading: false, isAuthenticated: false });
     }
@@ -58,6 +88,8 @@ export function useAdminAuth() {
 
   const loadAdminUser = async (email: string) => {
     try {
+      console.log('📧 Loading admin user for email:', email);
+
       const { data: adminUser, error } = await supabase
         .from('admin_users')
         .select('*')
@@ -65,19 +97,27 @@ export function useAdminAuth() {
         .eq('is_active', true)
         .maybeSingle();
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Error loading admin user:', error);
+        throw error;
+      }
+
+      console.log('👤 Admin user data:', adminUser ? 'Found' : 'Not found');
 
       if (adminUser) {
+        console.log('✅ Admin authenticated:', adminUser.full_name);
         setState({
           user: adminUser as AdminUser,
           loading: false,
           isAuthenticated: true,
         });
       } else {
+        console.warn('⚠️ Admin user not found or inactive, signing out');
         await supabase.auth.signOut();
         setState({ user: null, loading: false, isAuthenticated: false });
       }
     } catch (error) {
+      console.error('❌ Error in loadAdminUser:', error);
       logger.error('Erreur lors du chargement admin:', error);
       setState({ user: null, loading: false, isAuthenticated: false });
     }

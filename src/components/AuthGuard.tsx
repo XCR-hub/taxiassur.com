@@ -1,5 +1,5 @@
-import React from 'react';
-import { LogOut } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { LogOut, RefreshCw } from 'lucide-react';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import AdminLogin from './AdminLogin';
 
@@ -9,17 +9,60 @@ interface AuthGuardProps {
 
 const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
   const { user, loading, isAuthenticated, signOut } = useAdminAuth();
+  const [timeout, setTimeout] = useState(false);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      if (loading) {
+        console.error('⚠️ AuthGuard timeout: chargement trop long');
+        setTimeout(true);
+      }
+    }, 5000);
+
+    return () => window.clearTimeout(timer);
+  }, [loading]);
+
+  useEffect(() => {
+    console.log('🔐 AuthGuard state:', { loading, isAuthenticated, hasUser: !!user });
+  }, [loading, isAuthenticated, user]);
+
+  if (timeout && loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center max-w-md">
+          <RefreshCw className="w-16 h-16 text-red-500 mx-auto mb-4" />
+          <h2 className="text-xl font-bold text-gray-900 mb-2">Délai de connexion dépassé</h2>
+          <p className="text-gray-600 mb-4">
+            L'authentification prend trop de temps. Cela peut être dû à un problème de connexion ou à des données en cache.
+          </p>
+          <button
+            onClick={() => {
+              localStorage.clear();
+              sessionStorage.clear();
+              window.location.href = '/backoffice';
+            }}
+            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Vider le cache et réessayer
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Vérification de l'authentification...</p>
+        </div>
       </div>
     );
   }
 
   if (!isAuthenticated) {
-    return <AdminLogin onSuccess={() => {}} />;
+    return <AdminLogin onSuccess={() => window.location.reload()} />;
   }
 
   return (
