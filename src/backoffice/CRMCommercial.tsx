@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { logger } from '@/lib/logger';
 import {
   Phone, Mail, MessageSquare, Calendar, FileText, CheckCircle,
@@ -68,6 +68,7 @@ interface Stats {
 
 const CRMCommercial: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [leads, setLeads] = useState<Lead[]>([]);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [interactions, setInteractions] = useState<Interaction[]>([]);
@@ -104,6 +105,16 @@ const CRMCommercial: React.FC = () => {
     loadNotifications();
     loadStats();
 
+    // Vérifier si un lead spécifique est demandé dans l'URL
+    const leadIdFromUrl = searchParams.get('lead');
+    if (leadIdFromUrl) {
+      console.log('📧 Lead ID from URL:', leadIdFromUrl);
+      // Charger et ouvrir ce lead automatiquement
+      setTimeout(() => {
+        loadAndSelectLeadById(leadIdFromUrl);
+      }, 1000);
+    }
+
     const notifSubscription = supabase
       .channel('crm_notifications')
       .on('postgres_changes', {
@@ -124,7 +135,7 @@ const CRMCommercial: React.FC = () => {
       notifSubscription.unsubscribe();
       clearInterval(interval);
     };
-  }, []);
+  }, [searchParams]);
 
   useEffect(() => {
     if (selectedLead) {
@@ -166,6 +177,66 @@ const CRMCommercial: React.FC = () => {
         pipeline_value: totalValue,
         this_month_conversions: signedThisMonth
       });
+    }
+  };
+
+  const loadAndSelectLeadById = async (leadId: string) => {
+    try {
+      console.log('🔍 Loading lead with ID:', leadId);
+
+      const { data: leadData, error } = await supabase
+        .from('leads')
+        .select('id, name, email, phone, city, status, lead_status, behavior_score, prime_realisee, created_at, contacted_at, devis_envoye_at, client_at, assigned_to, notes')
+        .eq('id', leadId)
+        .maybeSingle();
+
+      if (error) {
+        console.error('❌ Error loading lead:', error);
+        logger.error('Error loading specific lead:', error);
+        return;
+      }
+
+      if (!leadData) {
+        console.warn('⚠️ Lead not found with ID:', leadId);
+        return;
+      }
+
+      console.log('✅ Lead found:', leadData.name);
+
+      // Transform to match interface
+      const transformedLead: Lead = {
+        id: leadData.id,
+        email: leadData.email,
+        phone: leadData.phone,
+        first_name: leadData.name?.split(' ')[0] || '',
+        last_name: leadData.name?.split(' ').slice(1).join(' ') || '',
+        company_name: '',
+        activity_type: leadData.status || 'taxi',
+        vehicle_count: 1,
+        lead_score: leadData.behavior_score || 0,
+        conversion_probability: leadData.behavior_score || 0,
+        stage: mapLeadStatusToStage(leadData.lead_status),
+        status: leadData.lead_status || 'nouveau',
+        created_at: leadData.created_at,
+        last_contact_at: leadData.contacted_at || null,
+        next_followup_at: null,
+        estimated_value: Number(leadData.prime_realisee) || 0,
+      };
+
+      // Sélectionner le lead automatiquement
+      setSelectedLead(transformedLead);
+
+      // Scroller vers le détail du lead
+      setTimeout(() => {
+        const detailElement = document.querySelector('[data-lead-detail]');
+        if (detailElement) {
+          detailElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 300);
+
+    } catch (error) {
+      console.error('❌ Error in loadAndSelectLeadById:', error);
+      logger.error('Error loading and selecting lead:', error);
     }
   };
 
