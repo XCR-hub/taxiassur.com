@@ -95,57 +95,261 @@ Deno.serve(async (req: Request) => {
       <html>
       <head>
         <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <style>
-          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; background: #f3f4f6; }
-          .container { max-width: 650px; margin: 0 auto; padding: 20px; }
-          .header { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 25px; text-align: center; border-radius: 10px 10px 0 0; }
-          .content { background: #ffffff; padding: 30px; border: 1px solid #e5e7eb; }
-          .alert-box { background: #d1fae5; border-left: 4px solid #10b981; padding: 15px; margin: 20px 0; }
-          .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0; }
-          .info-item { background: #f9fafb; padding: 15px; border-radius: 8px; border: 1px solid #e5e7eb; }
-          .info-label { color: #6b7280; font-size: 12px; text-transform: uppercase; margin-bottom: 5px; }
-          .info-value { color: #1f2937; font-weight: bold; font-size: 16px; word-break: break-all; }
-          .cta-button { background: #3b82f6; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; display: inline-block; font-weight: bold; margin: 20px 0; text-align: center; }
-          .footer { background: #1f2937; color: white; padding: 20px; text-align: center; font-size: 12px; border-radius: 0 0 10px 10px; }
-          .document-badge { background: #10b981; color: white; padding: 8px 15px; border-radius: 20px; font-size: 14px; font-weight: bold; display: inline-block; }
+          * { margin: 0; padding: 0; box-sizing: border-box; }
+          body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            line-height: 1.6;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+          }
+          .email-wrapper {
+            max-width: 680px;
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+          }
+          .header {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            padding: 40px 30px;
+            text-align: center;
+            position: relative;
+          }
+          .logo-container {
+            background: white;
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+          }
+          .logo {
+            width: 90px;
+            height: 90px;
+          }
+          .header h1 {
+            color: white;
+            font-size: 36px;
+            font-weight: 800;
+            margin: 0 0 10px 0;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.2);
+          }
+          .header p {
+            color: #d1fae5;
+            font-size: 18px;
+            font-weight: 500;
+          }
+          .content {
+            padding: 40px 30px;
+          }
+          .alert-banner {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 20px rgba(245, 158, 11, 0.3);
+            text-align: center;
+          }
+          .alert-banner strong {
+            font-size: 20px;
+            display: block;
+            margin-bottom: 5px;
+          }
+          .section-title {
+            color: #10b981;
+            font-size: 24px;
+            font-weight: 700;
+            margin: 30px 0 20px 0;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #10b981;
+          }
+          .document-badge {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-size: 18px;
+            font-weight: 700;
+            display: inline-block;
+            box-shadow: 0 8px 20px rgba(59, 130, 246, 0.4);
+            margin: 20px 0;
+          }
+          .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 25px 0;
+          }
+          .info-card {
+            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 8px 20px rgba(251, 191, 36, 0.3);
+            transition: transform 0.3s;
+          }
+          .info-card.blue {
+            background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
+            box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
+          }
+          .info-card.green {
+            background: linear-gradient(135deg, #34d399 0%, #10b981 100%);
+            box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);
+          }
+          .info-card.purple {
+            background: linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%);
+            box-shadow: 0 8px 20px rgba(139, 92, 246, 0.3);
+          }
+          .info-label {
+            color: white;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+            font-weight: 600;
+            opacity: 0.9;
+          }
+          .info-value {
+            color: white;
+            font-weight: 700;
+            font-size: 16px;
+            word-break: break-word;
+          }
+          .info-value a {
+            color: white;
+            text-decoration: none;
+            border-bottom: 2px solid rgba(255,255,255,0.5);
+          }
+          .actions-section {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            padding: 25px;
+            border-radius: 15px;
+            margin: 30px 0;
+            box-shadow: 0 8px 20px rgba(254, 243, 199, 0.5);
+          }
+          .actions-title {
+            color: #92400e;
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 15px;
+          }
+          .actions-section li {
+            color: #78350f;
+            font-weight: 600;
+            margin: 10px 0;
+            padding-left: 10px;
+          }
+          .cta-container {
+            text-align: center;
+            margin: 40px 0;
+          }
+          .cta-button {
+            background: linear-gradient(135deg, #ec4899 0%, #db2777 100%);
+            color: white;
+            padding: 18px 40px;
+            text-decoration: none;
+            border-radius: 50px;
+            display: inline-block;
+            font-weight: 700;
+            font-size: 18px;
+            box-shadow: 0 10px 30px rgba(236, 72, 153, 0.4);
+            transition: transform 0.3s;
+          }
+          .cta-button:hover {
+            transform: translateY(-2px);
+          }
+          .secondary-link {
+            color: #3b82f6;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 15px;
+            margin-top: 15px;
+            display: inline-block;
+          }
+          .info-banner {
+            background: linear-gradient(135deg, #a5f3fc 0%, #67e8f9 100%);
+            border-left: 5px solid #06b6d4;
+            padding: 20px;
+            border-radius: 10px;
+            color: #164e63;
+            font-weight: 600;
+            box-shadow: 0 8px 20px rgba(103, 232, 249, 0.3);
+          }
+          .footer {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+          }
+          .footer-logo {
+            font-size: 24px;
+            font-weight: 800;
+            color: #10b981;
+            margin-bottom: 10px;
+          }
+          .footer p {
+            color: #94a3b8;
+            font-size: 13px;
+            margin: 5px 0;
+          }
+          @media (max-width: 600px) {
+            .info-grid {
+              grid-template-columns: 1fr;
+            }
+          }
         </style>
       </head>
       <body>
-        <div class="container">
+        <div class="email-wrapper">
+          <!-- Header avec logo -->
           <div class="header">
-            <h1 style="margin: 0; font-size: 32px;">📤 NOUVEAU DOCUMENT</h1>
-            <p style="margin: 10px 0 0 0; font-size: 16px;">Un document vient d'être uploadé</p>
+            <div class="logo-container">
+              <svg class="logo" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="50" cy="50" r="45" fill="#10b981"/>
+                <path d="M30 40 L70 40 L70 60 L30 60 Z" fill="white"/>
+                <circle cx="35" cy="70" r="8" fill="white"/>
+                <circle cx="65" cy="70" r="8" fill="white"/>
+                <rect x="45" y="25" width="10" height="15" fill="white"/>
+              </svg>
+            </div>
+            <h1>📤 NOUVEAU DOCUMENT</h1>
+            <p>Un document vient d'être uploadé sur TaxiAssur</p>
           </div>
 
           <div class="content">
-            <div class="alert-box">
-              <strong>✅ Document reçu :</strong> Un nouveau document a été déposé par <strong>${lead.name}</strong>
+            <!-- Bannière d'alerte -->
+            <div class="alert-banner">
+              <strong>🎉 Document reçu avec succès !</strong>
+              <p style="margin: 5px 0 0 0; font-size: 16px;">${lead.name} a déposé un nouveau document</p>
             </div>
 
-            <h2 style="color: #1f2937; margin-top: 0;">Informations du document</h2>
-
-            <div style="text-align: center; margin: 20px 0;">
-              <span class="document-badge">📄 ${documentTypeName}</span>
+            <!-- Section document -->
+            <h2 class="section-title">📄 Informations du document</h2>
+            <div style="text-align: center;">
+              <span class="document-badge">${documentTypeName}</span>
             </div>
 
             <div class="info-grid">
-              <div class="info-item">
-                <div class="info-label">Nom du fichier</div>
-                <div class="info-value" style="font-size: 14px;">${document.file_name}</div>
+              <div class="info-card blue">
+                <div class="info-label">📝 Nom du fichier</div>
+                <div class="info-value">${document.file_name}</div>
               </div>
-
-              <div class="info-item">
-                <div class="info-label">Taille</div>
+              <div class="info-card green">
+                <div class="info-label">💾 Taille du fichier</div>
                 <div class="info-value">${formatFileSize(document.file_size)}</div>
               </div>
-
-              <div class="info-item">
-                <div class="info-label">Type de fichier</div>
+              <div class="info-card purple">
+                <div class="info-label">📋 Type de fichier</div>
                 <div class="info-value">${document.mime_type}</div>
               </div>
-
-              <div class="info-item">
-                <div class="info-label">Date d'upload</div>
+              <div class="info-card">
+                <div class="info-label">⏰ Date d'upload</div>
                 <div class="info-value">${new Date(document.uploaded_at).toLocaleString("fr-FR", {
                   dateStyle: "short",
                   timeStyle: "short"
@@ -153,56 +357,61 @@ Deno.serve(async (req: Request) => {
               </div>
             </div>
 
-            <h2 style="color: #1f2937;">Informations du prospect</h2>
-
+            <!-- Section prospect -->
+            <h2 class="section-title">👤 Informations du prospect</h2>
             <div class="info-grid">
-              <div class="info-item">
-                <div class="info-label">Nom complet</div>
+              <div class="info-card green">
+                <div class="info-label">👤 Nom complet</div>
                 <div class="info-value">${lead.name}</div>
               </div>
-
-              <div class="info-item">
+              <div class="info-card blue">
                 <div class="info-label">📞 Téléphone</div>
-                <div class="info-value"><a href="tel:${lead.phone}" style="color: #10b981; text-decoration: none;">${lead.phone}</a></div>
+                <div class="info-value"><a href="tel:${lead.phone}">${lead.phone}</a></div>
               </div>
-
-              <div class="info-item">
+              <div class="info-card purple">
                 <div class="info-label">📧 Email</div>
-                <div class="info-value"><a href="mailto:${lead.email}" style="color: #3b82f6; text-decoration: none; font-size: 14px;">${lead.email}</a></div>
+                <div class="info-value"><a href="mailto:${lead.email}">${lead.email}</a></div>
               </div>
-
-              <div class="info-item">
+              <div class="info-card">
                 <div class="info-label">📍 Ville</div>
                 <div class="info-value">${lead.city}</div>
               </div>
             </div>
 
-            <h3 style="color: #1f2937;">📋 Actions à effectuer</h3>
-            <ol style="color: #4b5563; line-height: 1.8;">
-              <li>✅ Vérifier la validité du document</li>
-              <li>📝 Mettre à jour le statut dans le CRM</li>
-              <li>📞 Contacter le prospect si le document est incomplet ou illisible</li>
-              <li>💰 Continuer le processus de devis si tous les documents sont reçus</li>
-            </ol>
+            <!-- Actions à effectuer -->
+            <div class="actions-section">
+              <div class="actions-title">📋 Actions à effectuer</div>
+              <ol>
+                <li>✅ Vérifier la validité du document</li>
+                <li>📝 Mettre à jour le statut dans le CRM</li>
+                <li>📞 Contacter le prospect si nécessaire</li>
+                <li>💰 Continuer le processus de devis</li>
+              </ol>
+            </div>
 
-            <div style="text-align: center; margin: 30px 0;">
+            <!-- CTA -->
+            <div class="cta-container">
               <a href="https://taxiassur.com/backoffice/crm-commercial?lead=${document.lead_id}" class="cta-button">
-                📊 OUVRIR LE DOSSIER
+                🚀 OUVRIR LE DOSSIER
               </a>
               <br>
-              <a href="https://taxiassur.com/backoffice/leads" style="color: #3b82f6; text-decoration: none; font-size: 14px;">
+              <a href="https://taxiassur.com/backoffice/leads" class="secondary-link">
                 Voir tous les leads →
               </a>
             </div>
 
-            <div style="background: #eff6ff; border: 1px solid #3b82f6; padding: 15px; border-radius: 8px;">
-              <strong>💡 Rappel :</strong> Le document est accessible dans l'espace documents du lead.
+            <!-- Info banner -->
+            <div class="info-banner">
+              <strong>💡 Accès rapide :</strong> Le document est directement accessible dans l'espace documents du lead dans votre CRM.
             </div>
           </div>
 
+          <!-- Footer -->
           <div class="footer">
-            <strong>TaxiAssur CRM</strong><br>
-            Notification automatique | Ne pas répondre à cet email
+            <div class="footer-logo">🚕 TaxiAssur</div>
+            <p><strong>Système de Notification Automatique</strong></p>
+            <p>Ne pas répondre à cet email</p>
+            <p style="margin-top: 15px;">© 2026 TaxiAssur - Tous droits réservés</p>
           </div>
         </div>
       </body>
