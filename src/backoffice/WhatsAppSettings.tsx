@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
-import { Settings, Check, AlertCircle, Copy, ExternalLink, MessageSquare, Phone, Key, Webhook, CheckCircle } from 'lucide-react';
+import { Settings, Check, AlertCircle, Copy, ExternalLink, MessageSquare, Phone, Key, Webhook, CheckCircle, Home } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import Card from '../components/Card';
 
 export default function WhatsAppSettings() {
+  const navigate = useNavigate();
   const [config, setConfig] = useState({
     accountSid: '',
     authToken: '',
@@ -71,12 +73,21 @@ export default function WhatsAppSettings() {
               Paramétrez votre intégration Twilio WhatsApp
             </p>
           </div>
-          <a
-            href="/backoffice/whatsapp"
-            className="bg-green-600 hover:bg-green-700 text-white font-medium px-6 py-3 rounded-lg transition-colors"
-          >
-            Accéder au Chat
-          </a>
+          <div className="flex gap-3">
+            <button
+              onClick={() => navigate('/backoffice/crm-commercial')}
+              className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-6 py-3 rounded-lg transition-colors flex items-center gap-2"
+            >
+              <Home size={20} />
+              Accueil CRM
+            </button>
+            <a
+              href="/backoffice/whatsapp"
+              className="bg-green-600 hover:bg-green-700 text-white font-medium px-6 py-3 rounded-lg transition-colors inline-flex items-center"
+            >
+              Accéder au Chat
+            </a>
+          </div>
         </div>
 
         {/* Status Card */}

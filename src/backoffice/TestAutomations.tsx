@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Play, CheckCircle, XCircle, Loader, RefreshCw, Zap } from 'lucide-react';
+import { Play, CheckCircle, XCircle, Loader, RefreshCw, Zap, Home } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 
 interface TestResult {
@@ -11,6 +12,7 @@ interface TestResult {
 }
 
 export default function TestAutomations() {
+  const navigate = useNavigate();
   const [results, setResults] = useState<Record<string, TestResult>>({});
   const [isTestingAll, setIsTestingAll] = useState(false);
 
@@ -205,6 +207,13 @@ export default function TestAutomations() {
         </div>
 
         <div className="flex gap-3">
+          <button
+            onClick={() => navigate('/backoffice/crm-commercial')}
+            className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-all flex items-center gap-2"
+          >
+            <Home className="w-5 h-5" />
+            Accueil CRM
+          </button>
           <button
             onClick={resetResults}
             disabled={isTestingAll || totalCount === 0}

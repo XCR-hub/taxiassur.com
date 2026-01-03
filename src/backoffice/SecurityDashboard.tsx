@@ -269,9 +269,9 @@ const now = new Date();
               </p>
             </div>
             <div className="flex items-center space-x-3">
-              <button onClick={() => navigate("/backoffice")} className="px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors flex items-center space-x-2">
+              <button onClick={() => navigate("/backoffice/crm-commercial")} className="px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors flex items-center space-x-2">
                 <Home size={18} />
-                <span>Accueil</span>
+                <span>Accueil CRM</span>
               </button>
               <button
                 onClick={exportSecurityReport}

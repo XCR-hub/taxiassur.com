@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { BarChart3, Users, FileText, Link, RefreshCw, Globe, TrendingUp, MapPin, Mail, Calendar, Activity, Shield, Search, Eye, Euro, Handshake, Plus, DatabaseZap, Send, Clock, Award } from 'lucide-react';
+import { BarChart3, Users, FileText, Link, RefreshCw, Globe, TrendingUp, MapPin, Mail, Calendar, Activity, Shield, Search, Eye, Euro, Handshake, Plus, DatabaseZap, Send, Clock, Award, Home } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { getBlogPosts, getFaqEntries, getReviews, getOffers } from '../lib/content';
 import { getBacklinks, getPartners } from '../lib/backlinks';
 import { pingSearchEngines } from '../lib/ping';
@@ -11,6 +12,7 @@ import Card from '../components/Card';
 import { logger } from '@/lib/logger';
 
 const Dashboard: React.FC = () => {
+  const navigate = useNavigate();
   const [stats, setStats] = useState({
     posts: 0,
     faqs: 0,
@@ -224,6 +226,13 @@ const Dashboard: React.FC = () => {
               </div>
               
               <div className="flex items-center space-x-4">
+                <button
+                  onClick={() => navigate('/backoffice/crm-commercial')}
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
+                >
+                  <Home size={16} />
+                  <span>Accueil CRM</span>
+                </button>
                 <a
                   href="/"
                   target="_blank"

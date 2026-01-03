@@ -71,6 +71,34 @@ Deno.serve(async (req: Request) => {
 
     const lead = leads[0];
 
+    // Download document from storage to attach to email
+    let documentBase64 = "";
+    try {
+      const storageResponse = await fetch(
+        `${SUPABASE_URL}/storage/v1/object/prospect-documents/${document.file_path}`,
+        {
+          headers: {
+            Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+          },
+        }
+      );
+
+      if (storageResponse.ok) {
+        const fileBlob = await storageResponse.blob();
+        const fileBuffer = await fileBlob.arrayBuffer();
+        const base64String = btoa(
+          String.fromCharCode(...new Uint8Array(fileBuffer))
+        );
+        documentBase64 = base64String;
+        console.log(`✅ Document downloaded and converted to base64: ${document.file_name}`);
+      } else {
+        console.warn(`⚠️ Could not download document: ${storageResponse.statusText}`);
+      }
+    } catch (storageError) {
+      console.error("Error downloading document:", storageError);
+      // Continue without attachment if download fails
+    }
+
     const documentTypes: Record<string, string> = {
       licence_taxi: "Licence de taxi professionnelle",
       permis_conduire: "Permis de conduire",
@@ -418,6 +446,30 @@ Deno.serve(async (req: Request) => {
       </html>
     `;
 
+    // Build email payload with optional attachment
+    const emailPayload: any = {
+      sender: {
+        name: "TaxiAssur Notifications",
+        email: "team@taxiassur.com",
+      },
+      to: [
+        { email: "team@taxiassur.com", name: "Équipe TaxiAssur" },
+      ],
+      subject: `📤 Nouveau document : ${documentTypeName} - ${lead.name}`,
+      htmlContent: emailBody,
+    };
+
+    // Add attachment if document was successfully downloaded
+    if (documentBase64) {
+      emailPayload.attachment = [
+        {
+          content: documentBase64,
+          name: document.file_name,
+        },
+      ];
+      console.log(`📎 Attachment added to email: ${document.file_name}`);
+    }
+
     const emailResponse = await fetch("https://api.brevo.com/v3/smtp/email", {
       method: "POST",
       headers: {
@@ -425,17 +477,7 @@ Deno.serve(async (req: Request) => {
         "api-key": BREVO_API_KEY,
         "content-type": "application/json",
       },
-      body: JSON.stringify({
-        sender: {
-          name: "TaxiAssur Notifications",
-          email: "team@taxiassur.com",
-        },
-        to: [
-          { email: "team@taxiassur.com", name: "Équipe TaxiAssur" },
-        ],
-        subject: `📤 Nouveau document : ${documentTypeName} - ${lead.name}`,
-        htmlContent: emailBody,
-      }),
+      body: JSON.stringify(emailPayload),
     });
 
     if (!emailResponse.ok) {

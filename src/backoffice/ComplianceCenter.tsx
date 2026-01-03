@@ -292,9 +292,9 @@ const csvContent = [
                 <span>{liveMode ? 'Live' : 'Manuel'}</span>
               </button>
 
-              <button onClick={() => navigate("/backoffice")} className="bg-orange-600 hover:bg-orange-700 text-white font-medium px-4 py-2 rounded-lg transition-colors flex items-center space-x-2">
+              <button onClick={() => navigate("/backoffice/crm-commercial")} className="bg-orange-600 hover:bg-orange-700 text-white font-medium px-4 py-2 rounded-lg transition-colors flex items-center space-x-2">
                 <Home size={16} />
-                <span>Accueil</span>
+                <span>Accueil CRM</span>
               </button>
             </div>
           </div>
