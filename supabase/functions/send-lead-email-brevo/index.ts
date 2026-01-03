@@ -257,16 +257,18 @@ Deno.serve(async (req: Request) => {
             padding: 30px;
             background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
             border-radius: 20px;
+            border: 3px solid #f59e0b;
           }
           .cta-section p {
-            color: #92400e;
-            font-weight: 600;
+            color: #92400e !important;
+            font-weight: 700 !important;
             margin-bottom: 20px;
-            font-size: 16px;
+            font-size: 18px !important;
           }
           .cta-button {
-            background: linear-gradient(135deg, #ec4899 0%, #db2777 100%);
-            color: white;
+            background: #ec4899;
+            background-image: linear-gradient(135deg, #ec4899 0%, #db2777 100%);
+            color: #ffffff !important;
             padding: 18px 40px;
             text-decoration: none;
             border-radius: 50px;
@@ -275,6 +277,10 @@ Deno.serve(async (req: Request) => {
             font-size: 18px;
             box-shadow: 0 10px 30px rgba(236, 72, 153, 0.4);
             margin-top: 15px;
+            border: 2px solid #db2777;
+          }
+          .cta-button span {
+            color: #ffffff !important;
           }
           .info-box {
             background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
@@ -411,12 +417,12 @@ Deno.serve(async (req: Request) => {
             </div>
 
             <div class="cta-section">
-              <p>Uploadez vos documents maintenant et obtenez votre devis en express !</p>
-              <a href="https://taxiassur.com/espace-documents?token=${lead.access_token}" class="cta-button" style="text-decoration: none;">
-                📤 UPLOADER MES DOCUMENTS
+              <p style="color: #92400e;">Uploadez vos documents maintenant et obtenez votre devis en express !</p>
+              <a href="https://taxiassur.com/espace-documents?token=${lead.access_token}" class="cta-button" style="text-decoration: none; color: #ffffff !important; background-color: #ec4899; background-image: linear-gradient(135deg, #ec4899 0%, #db2777 100%); display: inline-block; padding: 18px 40px; border-radius: 50px; font-weight: 700; font-size: 18px; box-shadow: 0 10px 30px rgba(236, 72, 153, 0.4);">
+                <span style="color: #ffffff !important;">📤 UPLOADER MES DOCUMENTS</span>
               </a>
               <p style="color: #92400e; font-size: 14px; margin-top: 15px;">
-                Vous pouvez aussi les envoyer par email à <a href="mailto:team@taxiassur.com" style="color: #db2777;">team@taxiassur.com</a>
+                Vous pouvez aussi les envoyer par email à <a href="mailto:team@taxiassur.com" style="color: #db2777; font-weight: 600;">team@taxiassur.com</a>
               </p>
             </div>
 

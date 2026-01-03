@@ -69,6 +69,10 @@ export default function NavigationMenu() {
                   <Users className="w-5 h-5" />
                   <span>💼 CRM Commercial</span>
                 </Link>
+                <Link to="/backoffice/crm-universal" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg font-semibold transition-all shadow-lg border-2 border-blue-300 text-sm">
+                  <Brain className="w-5 h-5" />
+                  <span>🌐 CRM Universel IA</span>
+                </Link>
                 <Link to="/backoffice/whatsapp" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm">
                   <MessageSquare className="w-5 h-5" />
                   <span>💬 WhatsApp</span>

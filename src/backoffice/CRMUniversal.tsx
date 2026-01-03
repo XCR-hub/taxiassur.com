@@ -79,6 +79,40 @@ const CRMUniversal: React.FC = () => {
   const loadData = async () => {
     setLoading(true);
     try {
+      // Charger d'abord les leads de la table principale
+      let leadsQuery = supabase
+        .from('leads')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(100);
+
+      const { data: leadsData, error: leadsError } = await leadsQuery;
+
+      if (leadsError) {
+        console.error('Erreur chargement leads:', leadsError);
+      }
+
+      // Transformer les leads en unified_contacts format
+      const transformedContacts = (leadsData || []).map(lead => ({
+        id: lead.id,
+        email: lead.email || '',
+        name: lead.name || '',
+        company_name: '',
+        website: '',
+        phone: lead.phone || '',
+        contact_type: lead.status === 'taxi' ? 'prospect_taxi' : 'unknown' as const,
+        status: (lead.lead_status === 'nouveau' ? 'new' :
+                 lead.lead_status === 'contacté' ? 'contacted' :
+                 lead.lead_status === 'client' ? 'converted' : 'new') as const,
+        source: 'website',
+        classification_confidence: lead.behavior_score || 0,
+        conversion_score: lead.behavior_score || 0,
+        last_contact_at: lead.contacted_at || lead.created_at,
+        created_at: lead.created_at,
+        ai_notes: { notes: lead.notes }
+      }));
+
+      // Essayer aussi de charger unified_contacts s'il existe
       let query = supabase
         .from('unified_contacts')
         .select('*')
@@ -98,7 +132,10 @@ const CRMUniversal: React.FC = () => {
 
       const { data: contactsData, error: contactsError } = await query.limit(100);
 
-      if (contactsError) throw contactsError;
+      // Combiner les deux sources, prioriser unified_contacts
+      const finalContacts = contactsData && contactsData.length > 0
+        ? contactsData
+        : transformedContacts;
 
       const { data: campaignsData } = await supabase
         .from('unified_email_campaigns')
@@ -112,44 +149,49 @@ const CRMUniversal: React.FC = () => {
         .order('created_at', { ascending: false })
         .limit(20);
 
-      const { count: totalCount } = await supabase
+      // Compter depuis unified_contacts si disponible, sinon depuis leads
+      let { count: totalCount } = await supabase
         .from('unified_contacts')
         .select('*', { count: 'exact', head: true });
 
+      if (!totalCount) {
+        const { count: leadsCount } = await supabase
+          .from('leads')
+          .select('*', { count: 'exact', head: true });
+        totalCount = leadsCount || 0;
+      }
+
       const { count: newCount } = await supabase
-        .from('unified_contacts')
+        .from('leads')
         .select('*', { count: 'exact', head: true })
-        .eq('status', 'new');
+        .eq('lead_status', 'nouveau');
 
       const { count: conversationsCount } = await supabase
-        .from('email_conversations')
+        .from('crm_interactions')
         .select('*', { count: 'exact', head: true })
         .gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString());
 
       const { count: prospectsTaxiCount } = await supabase
-        .from('unified_contacts')
+        .from('leads')
         .select('*', { count: 'exact', head: true })
-        .eq('contact_type', 'prospect_taxi');
+        .eq('status', 'taxi');
 
       const { count: clientsCount } = await supabase
-        .from('unified_contacts')
+        .from('leads')
         .select('*', { count: 'exact', head: true })
-        .eq('contact_type', 'client');
+        .eq('lead_status', 'client');
 
       const { count: partnersMediaCount } = await supabase
-        .from('unified_contacts')
-        .select('*', { count: 'exact', head: true })
-        .eq('contact_type', 'partner_media');
+        .from('partners')
+        .select('*', { count: 'exact', head: true });
 
       const { count: partnersDirectoryCount } = await supabase
-        .from('unified_contacts')
-        .select('*', { count: 'exact', head: true })
-        .eq('contact_type', 'partner_directory');
+        .from('outreach_prospects')
+        .select('*', { count: 'exact', head: true });
 
       const { count: backlinkSitesCount } = await supabase
-        .from('unified_contacts')
-        .select('*', { count: 'exact', head: true })
-        .eq('contact_type', 'backlink_site');
+        .from('backlinks_sites')
+        .select('*', { count: 'exact', head: true });
 
       const { count: aiDecisionsTodayCount } = await supabase
         .from('ai_decision_log')
@@ -157,13 +199,13 @@ const CRMUniversal: React.FC = () => {
         .gte('created_at', new Date(new Date().setHours(0, 0, 0, 0)).toISOString());
 
       const { count: convertedCount } = await supabase
-        .from('unified_contacts')
+        .from('leads')
         .select('*', { count: 'exact', head: true })
-        .eq('status', 'converted');
+        .eq('lead_status', 'client');
 
       const conversionRate = totalCount ? ((convertedCount || 0) / totalCount * 100) : 0;
 
-      setContacts(contactsData || []);
+      setContacts(finalContacts || []);
       setCampaigns(campaignsData || []);
       setAIDecisions(decisionsData || []);
       setStats({
