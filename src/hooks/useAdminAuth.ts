@@ -28,11 +28,13 @@ export function useAdminAuth() {
   const loadTimestampRef = React.useRef<number>(0);
 
   const loadAdminUser = React.useCallback(async (email: string) => {
-    // Éviter les appels dupliqués dans les 30 secondes
+    const startTime = Date.now();
+
+    // Éviter les appels dupliqués dans les 60 secondes
     const now = Date.now();
     if (
       isLoadingUserRef.current ||
-      (lastLoadEmailRef.current === email && now - loadTimestampRef.current < 30000)
+      (lastLoadEmailRef.current === email && now - loadTimestampRef.current < 60000)
     ) {
       console.log('⏳ Skipping duplicate load request');
       return;
@@ -42,28 +44,45 @@ export function useAdminAuth() {
     lastLoadEmailRef.current = email;
     loadTimestampRef.current = now;
 
+    // AbortController pour annuler vraiment la requête
+    const abortController = new AbortController();
+
     try {
       console.log('📧 Loading admin user for email:', email);
 
-      // Timeout augmenté à 30 secondes
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Admin user load timeout')), 30000);
-      });
+      // Timeout réduit à 10 secondes (beaucoup plus raisonnable)
+      const timeoutId = setTimeout(() => {
+        console.error('⏱️ Admin load timeout after 10s, aborting...');
+        abortController.abort();
+      }, 10000);
 
-      // Requête simple et directe
-      const userPromise = supabase
-        .from('admin_users')
-        .select('id, email, full_name, role, is_active')
-        .eq('email', email)
-        .eq('is_active', true)
-        .maybeSingle();
-
+      // Requête avec timeout réel
       const { data: adminUser, error } = await Promise.race([
-        userPromise,
-        timeoutPromise
-      ]) as any;
+        supabase
+          .from('admin_users')
+          .select('id, email, full_name, role, is_active')
+          .eq('email', email)
+          .eq('is_active', true)
+          .abortSignal(abortController.signal)
+          .maybeSingle(),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('Admin user load timeout')), 10000)
+        )
+      ]);
+
+      clearTimeout(timeoutId);
+
+      const loadTime = Date.now() - startTime;
+      if (loadTime > 5000) {
+        console.warn(`⚠️ Slow auth: ${loadTime}ms`);
+      }
 
       if (error) {
+        if (error.message === 'AbortError' || error.message.includes('abort')) {
+          console.error('❌ Request aborted due to timeout');
+          setState({ user: null, loading: false, isAuthenticated: false });
+          return;
+        }
         console.error('❌ Error loading admin user:', error);
         setState({ user: null, loading: false, isAuthenticated: false });
         return;
@@ -98,12 +117,20 @@ export function useAdminAuth() {
         console.warn('⚠️ Admin user not found or inactive');
         setState({ user: null, loading: false, isAuthenticated: false });
       }
-    } catch (error) {
-      console.error('❌ Error in loadAdminUser:', error);
-      logger.error('Erreur lors du chargement admin:', error);
+    } catch (error: any) {
+      const loadTime = Date.now() - startTime;
+
+      if (error.name === 'AbortError' || error.message?.includes('timeout')) {
+        console.error(`❌ Timeout after ${loadTime}ms, stopping request`);
+      } else {
+        console.error('❌ Error in loadAdminUser:', error);
+        logger.error('Erreur lors du chargement admin:', error);
+      }
+
       setState({ user: null, loading: false, isAuthenticated: false });
     } finally {
       isLoadingUserRef.current = false;
+      abortController.abort(); // S'assurer que la requête est annulée
     }
   }, []);
 
@@ -192,18 +219,14 @@ export function useAdminAuth() {
           return;
         }
 
-        // Sinon vérifier avec Supabase (timeout augmenté)
+        // Sinon vérifier avec Supabase (timeout réduit à 8 secondes)
         console.log('✅ Valid session found, verifying with Supabase...');
 
-        const timeoutPromise = new Promise((_, reject) => {
-          setTimeout(() => reject(new Error('Session check timeout')), 30000);
-        });
-
-        const sessionPromise = supabase.auth.getSession();
-
         const result = await Promise.race([
-          sessionPromise,
-          timeoutPromise
+          supabase.auth.getSession(),
+          new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('Session check timeout')), 8000)
+          )
         ]).catch(err => {
           console.warn('⚠️ Session check timeout, using cached session');
           return { data: { session: cachedSession }, error: null };
@@ -269,10 +292,10 @@ export function useAdminAuth() {
 
     const timeout = setTimeout(() => {
       if (mounted && !authInitialized) {
-        console.warn('⚠️ Auth initialization timeout - showing login');
+        console.warn('⚠️ Auth initialization timeout (15s) - showing login');
         setState({ user: null, loading: false, isAuthenticated: false });
       }
-    }, 30000);
+    }, 15000);
 
     return () => {
       mounted = false;

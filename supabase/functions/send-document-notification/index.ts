@@ -191,7 +191,7 @@ Deno.serve(async (req: Request) => {
             margin-bottom: 5px;
           }
           .section-title {
-            color: #10b981;
+            color: #10b981 !important;
             font-size: 24px;
             font-weight: 700;
             margin: 30px 0 20px 0;
@@ -235,7 +235,7 @@ Deno.serve(async (req: Request) => {
             box-shadow: 0 8px 20px rgba(139, 92, 246, 0.3);
           }
           .info-label {
-            color: white;
+            color: #ffffff !important;
             font-size: 11px;
             text-transform: uppercase;
             letter-spacing: 1px;
@@ -244,13 +244,13 @@ Deno.serve(async (req: Request) => {
             opacity: 0.9;
           }
           .info-value {
-            color: white;
+            color: #ffffff !important;
             font-weight: 700;
             font-size: 16px;
             word-break: break-word;
           }
           .info-value a {
-            color: white;
+            color: #ffffff !important;
             text-decoration: none;
             border-bottom: 2px solid rgba(255,255,255,0.5);
           }
@@ -260,15 +260,16 @@ Deno.serve(async (req: Request) => {
             border-radius: 15px;
             margin: 30px 0;
             box-shadow: 0 8px 20px rgba(254, 243, 199, 0.5);
+            border: 3px solid #f59e0b;
           }
           .actions-title {
-            color: #92400e;
+            color: #92400e !important;
             font-size: 20px;
             font-weight: 700;
             margin-bottom: 15px;
           }
           .actions-section li {
-            color: #78350f;
+            color: #78350f !important;
             font-weight: 600;
             margin: 10px 0;
             padding-left: 10px;
@@ -278,8 +279,9 @@ Deno.serve(async (req: Request) => {
             margin: 40px 0;
           }
           .cta-button {
-            background: linear-gradient(135deg, #ec4899 0%, #db2777 100%);
-            color: white;
+            background: #ec4899;
+            background-image: linear-gradient(135deg, #ec4899 0%, #db2777 100%);
+            color: #ffffff !important;
             padding: 18px 40px;
             text-decoration: none;
             border-radius: 50px;
@@ -288,9 +290,13 @@ Deno.serve(async (req: Request) => {
             font-size: 18px;
             box-shadow: 0 10px 30px rgba(236, 72, 153, 0.4);
             transition: transform 0.3s;
+            border: 2px solid #db2777;
           }
           .cta-button:hover {
             transform: translateY(-2px);
+          }
+          .cta-button span {
+            color: #ffffff !important;
           }
           .secondary-link {
             color: #3b82f6;
@@ -305,9 +311,12 @@ Deno.serve(async (req: Request) => {
             border-left: 5px solid #06b6d4;
             padding: 20px;
             border-radius: 10px;
-            color: #164e63;
+            color: #164e63 !important;
             font-weight: 600;
             box-shadow: 0 8px 20px rgba(103, 232, 249, 0.3);
+          }
+          .info-banner strong {
+            color: #164e63 !important;
           }
           .footer {
             background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
@@ -419,11 +428,11 @@ Deno.serve(async (req: Request) => {
 
             <!-- CTA -->
             <div class="cta-container">
-              <a href="https://taxiassur.com/backoffice/crm-commercial?lead=${document.lead_id}" class="cta-button">
-                🚀 OUVRIR LE DOSSIER
+              <a href="https://taxiassur.com/backoffice/crm-commercial?lead=${document.lead_id}" class="cta-button" style="text-decoration: none; color: #ffffff !important; background-color: #ec4899; background-image: linear-gradient(135deg, #ec4899 0%, #db2777 100%); display: inline-block; padding: 18px 40px; border-radius: 50px; font-weight: 700; font-size: 18px; box-shadow: 0 10px 30px rgba(236, 72, 153, 0.4); border: 2px solid #db2777;">
+                <span style="color: #ffffff !important;">🚀 OUVRIR LE DOSSIER</span>
               </a>
               <br>
-              <a href="https://taxiassur.com/backoffice/leads" class="secondary-link">
+              <a href="https://taxiassur.com/backoffice/leads" class="secondary-link" style="color: #3b82f6; text-decoration: none; font-weight: 600; font-size: 15px; margin-top: 15px; display: inline-block;">
                 Voir tous les leads →
               </a>
             </div>
