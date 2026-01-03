@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { MapPin, Plus, Loader, CheckCircle, XCircle, AlertCircle, Image, FileText, Newspaper, HelpCircle } from 'lucide-react';
+import { MapPin, Plus, Loader, CheckCircle, XCircle, AlertCircle, Image, FileText, Newspaper, HelpCircle, Home } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import Card from '../components/Card';
 import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
@@ -25,6 +26,7 @@ interface GenerationResult {
 }
 
 const CityPageGenerator: React.FC = () => {
+  const navigate = useNavigate();
   const [cityName, setCityName] = useState('');
   const [dept, setDept] = useState('');
   const [region, setRegion] = useState('');
@@ -122,18 +124,27 @@ const CityPageGenerator: React.FC = () => {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      <div className="flex items-center space-x-3 mb-6">
-        <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
-          <MapPin size={24} className="text-white" />
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center space-x-3">
+          <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
+            <MapPin size={24} className="text-white" />
+          </div>
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">
+              Générateur de Pages Ville
+            </h1>
+            <p className="text-gray-600">
+              Créez automatiquement des pages SEO pour chaque ville avec l'IA
+            </p>
+          </div>
         </div>
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">
-            Générateur de Pages Ville
-          </h1>
-          <p className="text-gray-600">
-            Créez automatiquement des pages SEO pour chaque ville avec l'IA
-          </p>
-        </div>
+        <button
+          onClick={() => navigate('/backoffice/crm-commercial')}
+          className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-6 py-3 rounded-lg transition-colors flex items-center gap-2"
+        >
+          <Home size={20} />
+          Accueil CRM
+        </button>
       </div>
 
       {result && (

@@ -6,6 +6,7 @@ import Card from '../components/Card';
 import { logger } from '@/lib/logger';
 
 const PopupManagerBackoffice: React.FC = () => {
+  const navigate = useNavigate();
   const [popups, setPopups] = useState<PopupConfig[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingPopup, setEditingPopup] = useState<PopupConfig | null>(null);
@@ -30,8 +31,7 @@ const PopupManagerBackoffice: React.FC = () => {
   };
 
   const loadAnalytics = () => {
-  const navigate = useNavigate();
-const data = JSON.parse(localStorage.getItem('popup_analytics') || '{}');
+    const data = JSON.parse(localStorage.getItem('popup_analytics') || '{}');
     setAnalytics(data);
   };
 
@@ -726,9 +726,9 @@ const data = JSON.parse(localStorage.getItem('popup_analytics') || '{}');
                 </div>
               </div>
               
-              <button onClick={() => navigate("/backoffice")} className="bg-orange-600 hover:bg-orange-700 text-white font-medium px-4 py-2 rounded-lg transition-colors flex items-center space-x-2">
+              <button onClick={() => navigate("/backoffice/crm-commercial")} className="bg-orange-600 hover:bg-orange-700 text-white font-medium px-4 py-2 rounded-lg transition-colors flex items-center space-x-2">
                 <Home size={16} />
-                <span>Accueil Backoffice</span>
+                <span>Accueil CRM</span>
               </button>
             </div>
           </div>

@@ -7,6 +7,7 @@ import Card from '../components/Card';
 import { logger } from '@/lib/logger';
 
 const BacklinkManager: React.FC = () => {
+  const navigate = useNavigate();
   const [backlinks, setBacklinks] = useState<Backlink[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
@@ -82,8 +83,7 @@ const BacklinkManager: React.FC = () => {
   };
 
   const getStatusIcon = (status: string) => {
-  const navigate = useNavigate();
-switch (status) {
+    switch (status) {
       case 'active':
         return <CheckCircle className="text-green-600" size={16} />;
       case 'lost':
@@ -145,9 +145,9 @@ switch (status) {
               </div>
             </div>
             
-            <button onClick={() => navigate("/backoffice")} className="bg-orange-600 hover:bg-orange-700 text-white font-medium px-4 py-2 rounded-lg transition-colors flex items-center space-x-2">
+            <button onClick={() => navigate("/backoffice/crm-commercial")} className="bg-orange-600 hover:bg-orange-700 text-white font-medium px-4 py-2 rounded-lg transition-colors flex items-center space-x-2">
               <Home size={16} />
-              <span>Accueil Backoffice</span>
+              <span>Accueil CRM</span>
             </button>
           </div>
         </div>
