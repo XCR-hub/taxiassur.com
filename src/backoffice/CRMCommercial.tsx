@@ -226,13 +226,18 @@ const CRMCommercial: React.FC = () => {
   };
 
   const loadLeadDetails = async (leadId: string) => {
-    const [interactionsRes, documentsRes, suggestionsRes] = await Promise.all([
+    const [interactionsRes, crmDocsRes, prospectDocsRes, suggestionsRes] = await Promise.all([
       supabase.from('crm_interactions')
         .select('*')
         .eq('lead_id', leadId)
         .order('created_at', { ascending: false }),
 
       supabase.from('crm_documents')
+        .select('*')
+        .eq('lead_id', leadId)
+        .order('uploaded_at', { ascending: false }),
+
+      supabase.from('prospect_documents')
         .select('*')
         .eq('lead_id', leadId)
         .order('uploaded_at', { ascending: false }),
@@ -245,7 +250,19 @@ const CRMCommercial: React.FC = () => {
     ]);
 
     if (interactionsRes.data) setInteractions(interactionsRes.data);
-    if (documentsRes.data) setDocuments(documentsRes.data);
+
+    const allDocuments = [
+      ...(crmDocsRes.data || []),
+      ...(prospectDocsRes.data || []).map(doc => ({
+        ...doc,
+        document_type: doc.document_type,
+        file_name: doc.file_name,
+        uploaded_at: doc.uploaded_at,
+        status: doc.status
+      }))
+    ].sort((a, b) => new Date(b.uploaded_at).getTime() - new Date(a.uploaded_at).getTime());
+
+    setDocuments(allDocuments);
     if (suggestionsRes.data) setAISuggestions(suggestionsRes.data);
   };
 
@@ -1068,27 +1085,38 @@ setNotifications(prev => [payload.new, ...prev]);
                           </div>
 
                           <div className="space-y-3">
-                            {documents.map(doc => (
-                              <div key={doc.id} className="flex items-center justify-between p-5 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
-                                <div className="flex items-center gap-4">
-                                  <FileText className="text-gray-400" size={32} />
-                                  <div>
-                                    <div className="font-bold text-gray-900 text-lg">{doc.file_name}</div>
-                                    <div className="text-sm text-gray-600">
-                                      Type: {doc.document_type} • {new Date(doc.uploaded_at).toLocaleDateString('fr-FR')}
+                            {documents.map(doc => {
+                              const isProspectDoc = doc.file_path && doc.file_path.includes('/');
+
+                              return (
+                                <div key={doc.id} className="flex items-center justify-between p-5 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors border-l-4" style={{ borderLeftColor: isProspectDoc ? '#10b981' : '#3b82f6' }}>
+                                  <div className="flex items-center gap-4">
+                                    <FileText className={isProspectDoc ? 'text-green-500' : 'text-blue-500'} size={32} />
+                                    <div>
+                                      <div className="flex items-center gap-2 mb-1">
+                                        <div className="font-bold text-gray-900 text-lg">{doc.file_name}</div>
+                                        {isProspectDoc && (
+                                          <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full font-bold">
+                                            📤 Prospect
+                                          </span>
+                                        )}
+                                      </div>
+                                      <div className="text-sm text-gray-600">
+                                        Type: {doc.document_type} • {new Date(doc.uploaded_at).toLocaleDateString('fr-FR')} à {new Date(doc.uploaded_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                                      </div>
                                     </div>
                                   </div>
-                                </div>
 
-                                <span className={`px-4 py-2 rounded-lg text-sm font-bold ${
-                                  doc.status === 'validated' ? 'bg-green-100 text-green-800' :
-                                  doc.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                                  'bg-red-100 text-red-800'
-                                }`}>
-                                  {doc.status}
-                                </span>
-                              </div>
-                            ))}
+                                  <span className={`px-4 py-2 rounded-lg text-sm font-bold ${
+                                    doc.status === 'validated' ? 'bg-green-100 text-green-800' :
+                                    doc.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                                    'bg-red-100 text-red-800'
+                                  }`}>
+                                    {doc.status}
+                                  </span>
+                                </div>
+                              );
+                            })}
 
                             {documents.length === 0 && (
                               <div className="text-center py-16 text-gray-500">

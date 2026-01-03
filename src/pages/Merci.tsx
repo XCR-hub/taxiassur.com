@@ -4,25 +4,16 @@ import { CheckCircle, Phone, Upload, ArrowRight, FileText } from 'lucide-react';
 const Merci: React.FC = () => {
   useEffect(() => {
     document.title = 'Merci ! Votre demande a été reçue - TaxiAssur.com';
-
-    const metaDescription = document.createElement('meta');
-    metaDescription.name = 'description';
-    metaDescription.content = 'Demande reçue ! Votre expert TaxiAssur vous recontacte rapidement. Uploadez vos documents maintenant.';
-    document.head.appendChild(metaDescription);
-
-    return () => {
-      metaDescription.remove();
-    };
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
       <div className="w-full max-w-2xl">
 
         {/* Success header */}
-        <div className="bg-gradient-to-r from-green-500 via-emerald-500 to-green-500 p-1 rounded-2xl mb-6">
+        <div className="bg-green-500 p-1 rounded-2xl mb-6">
           <div className="bg-gray-900 p-8 rounded-xl text-center">
-            <CheckCircle className="text-green-400 mx-auto mb-4 animate-bounce" size={64} />
+            <CheckCircle className="text-green-400 mx-auto mb-4" size={64} />
             <h1 className="text-4xl md:text-5xl font-black text-white mb-3">
               ✅ DEMANDE REÇUE !
             </h1>
@@ -33,10 +24,10 @@ const Merci: React.FC = () => {
         </div>
 
         {/* CALL TO ACTION - UPLOAD DOCUMENTS */}
-        <div className="bg-gradient-to-r from-amber-500 via-yellow-500 to-amber-500 p-1 rounded-2xl mb-6 animate-pulse">
+        <div className="bg-amber-500 p-1 rounded-2xl mb-6">
           <div className="bg-gray-900 p-6 rounded-xl">
             <div className="text-center">
-              <div className="inline-flex items-center gap-2 bg-red-500 text-white px-4 py-2 rounded-full text-sm font-bold mb-4 animate-bounce">
+              <div className="inline-flex items-center gap-2 bg-red-500 text-white px-4 py-2 rounded-full text-sm font-bold mb-4">
                 ⚡ ACTION IMMÉDIATE REQUISE
               </div>
 
@@ -50,7 +41,7 @@ const Merci: React.FC = () => {
 
               <a
                 href="/espace-documents?from=merci"
-                className="inline-flex items-center gap-3 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-black text-xl py-5 px-10 rounded-2xl transition-all duration-300 shadow-2xl shadow-green-500/50 hover:shadow-green-500/70 hover:scale-105 mb-4"
+                className="inline-flex items-center gap-3 bg-green-500 hover:bg-green-600 text-white font-black text-xl py-5 px-10 rounded-2xl transition-colors mb-4"
               >
                 <Upload size={28} />
                 UPLOADER MAINTENANT
