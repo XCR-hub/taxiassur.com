@@ -1,5 +1,5 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-import { createClient } from 'npm:@supabase/supabase-js@2';
+import { createClient } from 'jsr:@supabase/supabase-js@2';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -7,238 +7,167 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
 };
 
+interface BrevoInboundEmail {
+  uuid: string;
+  sender: { email: string; name?: string };
+  to: Array<{ email: string; name?: string }>;
+  subject: string;
+  text?: string;
+  html?: string;
+  date: string;
+  messageId: string;
+  inReplyTo?: string;
+  headers?: Record<string, string>;
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 200, headers: corsHeaders });
   }
 
   try {
+    const startTime = Date.now();
+    const payload: BrevoInboundEmail = await req.json();
+    
+    console.log('📧 Email entrant reçu:', {
+      from: payload.sender.email,
+      to: payload.to[0]?.email,
+      subject: payload.subject,
+      messageId: payload.messageId
+    });
+
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const openaiKey = Deno.env.get('OPENAI_API_KEY');
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const emailData = await req.json();
+    const senderEmail = payload.sender.email.toLowerCase();
+    const senderName = payload.sender.name || '';
+    const recipientEmail = payload.to[0]?.email || 'contact@taxiassur.com';
+    const subject = payload.subject || '(Sans objet)';
+    const content = payload.text || '';
+    const htmlContent = payload.html || '';
+    const threadId = payload.inReplyTo || payload.messageId;
 
-    console.log('[Email Handler] Received email from:', emailData.from);
-
-    const { data: lead } = await supabase
-      .from('leads')
+    // Étape 1: Trouver ou créer le contact
+    let contact;
+    const { data: existingContact } = await supabase
+      .from('unified_contacts')
       .select('*')
-      .eq('email', emailData.from)
+      .eq('email', senderEmail)
       .maybeSingle();
 
-    if (!lead) {
-      console.log('[Email Handler] Creating new lead from email');
+    if (existingContact) {
+      contact = existingContact;
+      console.log('✅ Contact existant trouvé:', contact.id);
       
-      const { data: newLead } = await supabase
-        .from('leads')
+      // Mettre à jour last_contact_at
+      await supabase
+        .from('unified_contacts')
+        .update({ 
+          last_contact_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', contact.id);
+    } else {
+      // Créer nouveau contact
+      const { data: newContact, error: createError } = await supabase
+        .from('unified_contacts')
         .insert({
-          email: emailData.from,
-          name: emailData.fromName || emailData.from.split('@')[0],
-          source: 'email_inbound',
+          email: senderEmail,
+          name: senderName,
+          contact_type: 'unknown',
           status: 'new',
-          score: 50,
-          metadata: {
-            first_email_subject: emailData.subject,
-            first_email_date: new Date().toISOString()
-          }
+          source: 'inbound_email',
+          last_contact_at: new Date().toISOString(),
+          classification_confidence: 0
         })
         .select()
         .single();
 
-      if (newLead) {
-        await processInboundEmail(supabase, newLead, emailData, openaiKey);
+      if (createError) {
+        console.error('❌ Erreur création contact:', createError);
+        throw createError;
       }
-    } else {
-      console.log('[Email Handler] Updating existing lead');
-      
-      await supabase
-        .from('crm_lead_activities')
-        .insert({
-          lead_id: lead.id,
-          activity_type: 'email_received',
-          activity_details: {
-            subject: emailData.subject,
-            preview: emailData.text?.substring(0, 200)
-          },
-          score_impact: 10
-        });
 
-      await supabase
-        .from('leads')
-        .update({ 
-          score: (lead.score || 0) + 10,
-          last_contact_at: new Date().toISOString()
-        })
-        .eq('id', lead.id);
-
-      await processInboundEmail(supabase, lead, emailData, openaiKey);
+      contact = newContact;
+      console.log('🆕 Nouveau contact créé:', contact.id);
     }
 
-    return new Response(
-      JSON.stringify({ success: true, message: 'Email processed' }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
-  } catch (error) {
-    console.error('[Email Handler] Error:', error);
-    return new Response(
-      JSON.stringify({ success: false, error: error.message }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
-  }
-});
+    // Étape 2: Enregistrer la conversation
+    const { data: conversation, error: convError } = await supabase
+      .from('email_conversations')
+      .insert({
+        contact_id: contact.id,
+        thread_id: threadId,
+        direction: 'inbound',
+        subject: subject,
+        content: content,
+        html_content: htmlContent,
+        sender_email: senderEmail,
+        recipient_email: recipientEmail,
+        brevo_message_id: payload.messageId,
+        classification: 'pending',
+        sentiment: 'neutral',
+        auto_response_sent: false,
+        requires_human_review: false
+      })
+      .select()
+      .single();
 
-async function processInboundEmail(supabase: any, lead: any, emailData: any, openaiKey?: string) {
-  const intent = await detectIntent(emailData.text, openaiKey);
-  
-  console.log('[Email Handler] Detected intent:', intent);
+    if (convError) {
+      console.error('❌ Erreur enregistrement conversation:', convError);
+      throw convError;
+    }
 
-  if (intent === 'request_quote') {
-    await handleQuoteRequest(supabase, lead, emailData);
-  } else if (intent === 'question') {
-    await handleQuestion(supabase, lead, emailData, openaiKey);
-  } else if (intent === 'complaint') {
-    await handleComplaint(supabase, lead, emailData);
-  } else if (intent === 'interested') {
-    await handleInterest(supabase, lead, emailData);
-  } else {
-    await handleGeneral(supabase, lead, emailData);
-  }
-}
+    console.log('💾 Conversation enregistrée:', conversation.id);
 
-async function detectIntent(text: string, openaiKey?: string) {
-  if (!text) return 'unknown';
-
-  const lowerText = text.toLowerCase();
-
-  if (lowerText.includes('devis') || lowerText.includes('tarif') || lowerText.includes('prix') || lowerText.includes('coût')) {
-    return 'request_quote';
-  }
-
-  if (lowerText.includes('question') || lowerText.includes('comment') || lowerText.includes('pourquoi') || lowerText.includes('?')) {
-    return 'question';
-  }
-
-  if (lowerText.includes('problème') || lowerText.includes('insatisfait') || lowerText.includes('mécontent')) {
-    return 'complaint';
-  }
-
-  if (lowerText.includes('intéressé') || lowerText.includes('souhait') || lowerText.includes('voudrais')) {
-    return 'interested';
-  }
-
-  return 'general';
-}
-
-async function handleQuoteRequest(supabase: any, lead: any, emailData: any) {
-  await supabase
-    .from('leads')
-    .update({ 
-      status: 'quote_requested',
-      score: (lead.score || 0) + 30
-    })
-    .eq('id', lead.id);
-
-  await supabase
-    .from('smart_alerts')
-    .insert({
-      alert_type: 'high_priority_lead',
-      severity: 'high',
-      title: 'Demande de devis par email',
-      description: `${lead.name} (${lead.email}) a demandé un devis`,
-      affected_components: ['sales'],
-      sent_to: ['sales@taxiassur.fr']
-    });
-
-  const autoResponse = `Bonjour ${lead.name},\n\nMerci pour votre demande de devis !\n\nNous avons bien reçu votre message et notre équipe vous préparera une offre personnalisée dans les plus brefs délais.\n\nEn attendant, vous pouvez obtenir une estimation instantanée sur notre site : https://taxiassur.fr\n\nCordialement,\nL'équipe TaxiAssur`;
-
-  await sendEmail(supabase, lead.email, 'Votre demande de devis', autoResponse);
-}
-
-async function handleQuestion(supabase: any, lead: any, emailData: any, openaiKey?: string) {
-  await supabase
-    .from('leads')
-    .update({ 
-      status: 'engaged',
-      score: (lead.score || 0) + 15
-    })
-    .eq('id', lead.id);
-
-  const autoResponse = `Bonjour ${lead.name},\n\nMerci pour votre question !\n\nNous avons bien reçu votre message et notre équipe vous répondra dans les meilleurs délais.\n\nEn attendant, vous trouverez peut-être votre réponse dans notre FAQ : https://taxiassur.fr/faq\n\nCordialement,\nL'équipe TaxiAssur`;
-
-  await sendEmail(supabase, lead.email, 'Ré: ' + emailData.subject, autoResponse);
-}
-
-async function handleComplaint(supabase: any, lead: any, emailData: any) {
-  await supabase
-    .from('leads')
-    .update({ 
-      status: 'requires_attention',
-      score: Math.max((lead.score || 0) - 20, 0)
-    })
-    .eq('id', lead.id);
-
-  await supabase
-    .from('smart_alerts')
-    .insert({
-      alert_type: 'customer_complaint',
-      severity: 'critical',
-      title: 'Réclamation client',
-      description: `${lead.name} (${lead.email}) a envoyé une réclamation`,
-      affected_components: ['customer_service'],
-      sent_to: ['support@taxiassur.fr']
-    });
-
-  const autoResponse = `Bonjour ${lead.name},\n\nNous sommes sincèrement désolés pour cette situation.\n\nVotre message a été transmis en priorité à notre service client qui vous contactera dans les plus brefs délais pour résoudre ce problème.\n\nCordialement,\nL'équipe TaxiAssur`;
-
-  await sendEmail(supabase, lead.email, 'Ré: ' + emailData.subject, autoResponse);
-}
-
-async function handleInterest(supabase: any, lead: any, emailData: any) {
-  await supabase
-    .from('leads')
-    .update({ 
-      status: 'interested',
-      score: (lead.score || 0) + 25
-    })
-    .eq('id', lead.id);
-
-  const autoResponse = `Bonjour ${lead.name},\n\nMerci pour votre intérêt pour nos services !\n\nNous sommes ravis de pouvoir vous accompagner. Un conseiller vous contactera très prochainement pour discuter de vos besoins spécifiques.\n\nCordialement,\nL'équipe TaxiAssur`;
-
-  await sendEmail(supabase, lead.email, 'Bienvenue chez TaxiAssur', autoResponse);
-}
-
-async function handleGeneral(supabase: any, lead: any, emailData: any) {
-  await supabase
-    .from('leads')
-    .update({ 
-      score: (lead.score || 0) + 5,
-      last_contact_at: new Date().toISOString()
-    })
-    .eq('id', lead.id);
-
-  const autoResponse = `Bonjour ${lead.name},\n\nMerci pour votre message !\n\nNous avons bien reçu votre email et nous vous répondrons dans les meilleurs délais.\n\nCordialement,\nL'équipe TaxiAssur`;
-
-  await sendEmail(supabase, lead.email, 'Ré: ' + emailData.subject, autoResponse);
-}
-
-async function sendEmail(supabase: any, to: string, subject: string, body: string) {
-  try {
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY')!;
-
-    await fetch(`${supabaseUrl}/functions/v1/send-email`, {
+    // Étape 3: Appeler l'IA Classifier de manière asynchrone
+    const classifierUrl = `${supabaseUrl}/functions/v1/ai-email-classifier`;
+    
+    // Fire and forget - pas besoin d'attendre la réponse
+    fetch(classifierUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${supabaseKey}`
       },
-      body: JSON.stringify({ to, subject, body })
-    });
+      body: JSON.stringify({
+        conversation_id: conversation.id,
+        contact_id: contact.id,
+        email_content: content,
+        subject: subject,
+        sender_email: senderEmail
+      })
+    }).catch(err => console.error('⚠️ Erreur appel classifier:', err));
 
-    console.log('[Email Handler] Auto-response sent to:', to);
+    const executionTime = Date.now() - startTime;
+    console.log(`✅ Email traité en ${executionTime}ms`);
+
+    return new Response(
+      JSON.stringify({ 
+        success: true, 
+        message: 'Email reçu et traité',
+        contact_id: contact.id,
+        conversation_id: conversation.id,
+        execution_time_ms: executionTime
+      }),
+      { 
+        headers: { ...corsHeaders, "Content-Type": "application/json" }, 
+        status: 200 
+      }
+    );
+
   } catch (error) {
-    console.error('[Email Handler] Failed to send email:', error);
+    console.error("❌ Erreur traitement email entrant:", error);
+    return new Response(
+      JSON.stringify({ 
+        success: false, 
+        error: error.message 
+      }),
+      { 
+        status: 500, 
+        headers: { ...corsHeaders, "Content-Type": "application/json" } 
+      }
+    );
   }
-}
+});
