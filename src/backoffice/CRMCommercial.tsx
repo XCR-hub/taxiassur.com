@@ -346,19 +346,48 @@ setNotifications(prev => [payload.new, ...prev]);
       return;
     }
 
-    const { error } = await supabase.from('crm_interactions').insert({
-      lead_id: selectedLead.id,
-      type: 'email',
-      direction: 'outbound',
-      subject: emailForm.subject,
-      content: emailForm.content,
-      to_email: selectedLead.email
-    });
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-crm-email`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            to_email: selectedLead.email,
+            to_name: `${selectedLead.first_name || ''} ${selectedLead.last_name || ''}`.trim() || selectedLead.email,
+            subject: emailForm.subject,
+            content: emailForm.content,
+            lead_id: selectedLead.id
+          })
+        }
+      );
 
-    if (!error) {
-      alert('Email envoyé !');
-      setEmailForm({ subject: '', content: '' });
-      loadLeadDetails(selectedLead.id);
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || 'Erreur lors de l\'envoi');
+      }
+
+      const { error } = await supabase.from('crm_interactions').insert({
+        lead_id: selectedLead.id,
+        type: 'email',
+        direction: 'outbound',
+        subject: emailForm.subject,
+        content: emailForm.content,
+        to_email: selectedLead.email
+      });
+
+      if (!error) {
+        alert('✅ Email envoyé avec succès !');
+        setEmailForm({ subject: '', content: '' });
+        loadLeadDetails(selectedLead.id);
+      }
+    } catch (error) {
+      logger.error('Error sending email:', error);
+      alert('❌ Erreur lors de l\'envoi de l\'email : ' + error.message);
     }
   };
 
