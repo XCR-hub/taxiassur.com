@@ -284,9 +284,9 @@ Consultez le détail dans la console (F12)`);
                 </div>
               </div>
 
-              <button onClick={() => navigate("/backoffice")} className="bg-white/20 hover:bg-white/30 text-white font-medium px-4 py-2 rounded-lg transition-colors flex items-center space-x-2 backdrop-blur-sm">
+              <button onClick={() => navigate("/backoffice/crm-commercial")} className="bg-white/20 hover:bg-white/30 text-white font-medium px-4 py-2 rounded-lg transition-colors flex items-center space-x-2 backdrop-blur-sm">
                 <Home size={16} />
-                <span>Accueil Backoffice</span>
+                <span>Accueil CRM</span>
               </button>
             </div>
           </div>
