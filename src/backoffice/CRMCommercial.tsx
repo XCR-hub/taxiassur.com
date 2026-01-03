@@ -9,6 +9,8 @@ import {
   ArrowRight, Star, Tag, ExternalLink, RefreshCw, TrendingDown
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import DocumentsViewer from './DocumentsViewer';
+import EmailTrendline from './EmailTrendline';
 
 interface Lead {
   id: string;
@@ -84,7 +86,7 @@ const CRMCommercial: React.FC = () => {
     this_month_conversions: 0
   });
 
-  const [activeTab, setActiveTab] = useState<'overview' | 'interactions' | 'documents' | 'ai'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'interactions' | 'documents' | 'ai' | 'analytics'>('overview');
   const [filter, setFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'list' | 'kanban'>('list');
@@ -1007,6 +1009,7 @@ setNotifications(prev => [payload.new, ...prev]);
                           { key: 'overview', label: 'Vue d\'ensemble', icon: TrendingUp },
                           { key: 'interactions', label: 'Interactions', icon: MessageSquare },
                           { key: 'documents', label: 'Documents', icon: FileText },
+                          { key: 'analytics', label: 'Analytics Emails', icon: BarChart3 },
                           { key: 'ai', label: 'IA Suggestions', icon: Sparkles }
                         ].map(tab => (
                           <button
@@ -1185,64 +1188,12 @@ setNotifications(prev => [payload.new, ...prev]);
                         </div>
                       )}
 
-                      {activeTab === 'documents' && (
-                        <div className="space-y-4">
-                          <div className="flex items-center justify-between">
-                            <h4 className="font-black text-gray-900 text-xl">Documents du prospect</h4>
+                      {activeTab === 'documents' && selectedLead && (
+                        <DocumentsViewer leadId={selectedLead.id} />
+                      )}
 
-                            <label className="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg cursor-pointer transition-all">
-                              <Upload size={18} />
-                              Upload document
-                              <input
-                                type="file"
-                                onChange={handleFileUpload}
-                                className="hidden"
-                              />
-                            </label>
-                          </div>
-
-                          <div className="space-y-3">
-                            {documents.map(doc => {
-                              const isProspectDoc = doc.file_path && doc.file_path.includes('/');
-
-                              return (
-                                <div key={doc.id} className="flex items-center justify-between p-5 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors border-l-4" style={{ borderLeftColor: isProspectDoc ? '#10b981' : '#3b82f6' }}>
-                                  <div className="flex items-center gap-4">
-                                    <FileText className={isProspectDoc ? 'text-green-500' : 'text-blue-500'} size={32} />
-                                    <div>
-                                      <div className="flex items-center gap-2 mb-1">
-                                        <div className="font-bold text-gray-900 text-lg">{doc.file_name}</div>
-                                        {isProspectDoc && (
-                                          <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full font-bold">
-                                            📤 Prospect
-                                          </span>
-                                        )}
-                                      </div>
-                                      <div className="text-sm text-gray-600">
-                                        Type: {doc.document_type} • {new Date(doc.uploaded_at).toLocaleDateString('fr-FR')} à {new Date(doc.uploaded_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
-                                      </div>
-                                    </div>
-                                  </div>
-
-                                  <span className={`px-4 py-2 rounded-lg text-sm font-bold ${
-                                    doc.status === 'validated' ? 'bg-green-100 text-green-800' :
-                                    doc.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                                    'bg-red-100 text-red-800'
-                                  }`}>
-                                    {doc.status}
-                                  </span>
-                                </div>
-                              );
-                            })}
-
-                            {documents.length === 0 && (
-                              <div className="text-center py-16 text-gray-500">
-                                <FileText className="mx-auto mb-4 text-gray-300" size={64} />
-                                <p className="font-medium text-lg">Aucun document uploadé</p>
-                              </div>
-                            )}
-                          </div>
-                        </div>
+                      {activeTab === 'analytics' && selectedLead && (
+                        <EmailTrendline leadId={selectedLead.id} period="month" />
                       )}
 
                       {activeTab === 'ai' && (
