@@ -95,6 +95,7 @@ const CRMCommercial: React.FC = () => {
   const [quickNote, setQuickNote] = useState('');
   const [isImproving, setIsImproving] = useState(false);
   const [showQuickActions, setShowQuickActions] = useState(false);
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
 
   const stages = ['Nouveau Lead', 'Premier Contact', 'Qualifié', 'Devis Envoyé', 'Négociation', 'Accord Verbal', 'Contrat Signé', 'Perdu'];
 
@@ -359,11 +360,19 @@ setNotifications(prev => [payload.new, ...prev]);
 
   const sendEmail = async () => {
     if (!selectedLead || !emailForm.subject || !emailForm.content) {
-      alert('Veuillez remplir tous les champs');
+      alert('⚠️ Veuillez remplir tous les champs (sujet et contenu)');
       return;
     }
 
+    setIsSendingEmail(true);
+
     try {
+      logger.log('📧 Envoi email à:', selectedLead.email);
+
+      // Créer un timeout de 30 secondes
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
+
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-crm-email`,
         {
@@ -378,17 +387,30 @@ setNotifications(prev => [payload.new, ...prev]);
             subject: emailForm.subject,
             content: emailForm.content,
             lead_id: selectedLead.id
-          })
+          }),
+          signal: controller.signal
         }
       );
 
-      const result = await response.json();
+      clearTimeout(timeoutId);
 
-      if (!response.ok || !result.success) {
-        throw new Error(result.error || 'Erreur lors de l\'envoi');
+      logger.log('📬 Réponse serveur:', response.status);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        logger.error('❌ Erreur HTTP:', errorText);
+        throw new Error(`Erreur ${response.status}: ${errorText}`);
       }
 
-      const { error } = await supabase.from('crm_interactions').insert({
+      const result = await response.json();
+      logger.log('✅ Résultat:', result);
+
+      if (!result.success) {
+        throw new Error(result.error || 'Erreur inconnue lors de l\'envoi');
+      }
+
+      // Enregistrer l'interaction dans la base
+      const { error: dbError } = await supabase.from('crm_interactions').insert({
         lead_id: selectedLead.id,
         type: 'email',
         direction: 'outbound',
@@ -397,14 +419,29 @@ setNotifications(prev => [payload.new, ...prev]);
         to_email: selectedLead.email
       });
 
-      if (!error) {
-        alert('✅ Email envoyé avec succès !');
-        setEmailForm({ subject: '', content: '' });
-        loadLeadDetails(selectedLead.id);
+      if (dbError) {
+        logger.error('⚠️ Erreur BDD (interaction):', dbError);
       }
-    } catch (error) {
-      logger.error('Error sending email:', error);
-      alert('❌ Erreur lors de l\'envoi de l\'email : ' + error.message);
+
+      // Succès !
+      alert('✅ Email envoyé avec succès à ' + selectedLead.email + ' !\n\nUn email de confirmation sera visible dans l\'onglet Interactions.');
+      setEmailForm({ subject: '', content: '' });
+
+      // Recharger les détails du lead
+      await loadLeadDetails(selectedLead.id);
+
+    } catch (error: any) {
+      logger.error('❌ Erreur envoi email:', error);
+
+      if (error.name === 'AbortError') {
+        alert('⏱️ Timeout: L\'envoi a pris trop de temps (>30s).\n\nVérifiez votre connexion internet et réessayez.');
+      } else if (error.message.includes('BREVO_API_KEY')) {
+        alert('🔑 Configuration manquante: La clé API Brevo n\'est pas configurée.\n\nContactez l\'administrateur système.');
+      } else {
+        alert('❌ Erreur lors de l\'envoi de l\'email:\n\n' + error.message + '\n\nVérifiez:\n- Que l\'adresse email est valide\n- Votre connexion internet\n- Les logs de la console (F12)');
+      }
+    } finally {
+      setIsSendingEmail(false);
     }
   };
 
@@ -1001,11 +1038,20 @@ setNotifications(prev => [payload.new, ...prev]);
 
                               <button
                                 onClick={sendEmail}
-                                disabled={!emailForm.subject || !emailForm.content}
-                                className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg disabled:opacity-50 transition-all"
+                                disabled={!emailForm.subject || !emailForm.content || isSendingEmail}
+                                className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                               >
-                                <Send size={18} />
-                                Envoyer
+                                {isSendingEmail ? (
+                                  <>
+                                    <RefreshCw size={18} className="animate-spin" />
+                                    Envoi en cours...
+                                  </>
+                                ) : (
+                                  <>
+                                    <Send size={18} />
+                                    Envoyer
+                                  </>
+                                )}
                               </button>
                             </div>
                           </div>
