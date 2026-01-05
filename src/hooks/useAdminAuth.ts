@@ -167,7 +167,15 @@ export function useAdminAuth() {
 
     const validateCachedSession = () => {
       try {
-        const stored = localStorage.getItem('taxiassur-auth');
+        // Vérifier d'abord la clé standard de Supabase
+        const supabaseKey = `sb-${import.meta.env.VITE_SUPABASE_URL?.split('//')[1]?.split('.')[0]}-auth-token`;
+        let stored = localStorage.getItem(supabaseKey);
+
+        // Fallback sur notre clé custom
+        if (!stored || stored === 'null' || stored === 'undefined') {
+          stored = localStorage.getItem('taxiassur-auth');
+        }
+
         if (!stored || stored === 'null' || stored === 'undefined') return null;
 
         const parsed = JSON.parse(stored);
@@ -176,23 +184,24 @@ export function useAdminAuth() {
         const expiresAt = parsed.expires_at * 1000;
         const timeUntilExpiry = expiresAt - Date.now();
 
-        // Si expire dans moins de 5 min, considérer valide quand même
-        // (AdminSessionKeepAlive va le rafraîchir)
-        if (timeUntilExpiry < -5 * 60 * 1000) {
-          console.log('🔄 Session expired (>5min), will re-authenticate');
+        // AMÉLIORATION : Accepter les sessions jusqu'à 30 min expirées
+        // (le keep-alive va les rafraîchir automatiquement)
+        if (timeUntilExpiry < -30 * 60 * 1000) {
+          console.log('🔄 Session expired >30min, will re-authenticate');
           localStorage.removeItem('taxiassur-auth');
           localStorage.removeItem('taxiassur_user');
           return null;
         }
 
         if (timeUntilExpiry < 0) {
-          console.log('⏰ Session just expired, but will be refreshed by keep-alive');
+          console.log('⏰ Session expired, will be refreshed by keep-alive');
+        } else {
+          console.log(`✅ Valid session (expires in ${Math.round(timeUntilExpiry / 60000)} min)`);
         }
 
         return parsed;
       } catch (e) {
         console.warn('⚠️ Error parsing cached session:', e);
-        localStorage.removeItem('taxiassur-auth');
         return null;
       }
     };
@@ -209,26 +218,25 @@ export function useAdminAuth() {
 
         // Si on a un utilisateur en cache ET une session valide, utiliser directement
         if (cachedUser && cachedSession) {
-          console.log('⚡ Using cached user, no server check needed');
+          console.log('⚡ Using cached user (fast path)');
           setState({
             user: cachedUser,
             loading: false,
             isAuthenticated: true,
           });
           authInitialized = true;
+          // Vérifier quand même la session en arrière-plan (pas de await)
+          supabase.auth.getSession().then(({ data: { session } }) => {
+            if (!session && mounted) {
+              console.warn('⚠️ Background check: session expired, requesting login');
+              setState({ user: null, loading: false, isAuthenticated: false });
+            }
+          });
           return;
         }
 
-        // Si pas de session valide, afficher login immédiatement
-        if (!cachedSession) {
-          console.log('⚡ No valid cached session, showing login immediately');
-          setState({ user: null, loading: false, isAuthenticated: false });
-          authInitialized = true;
-          return;
-        }
-
-        // Sinon vérifier avec Supabase (timeout réduit à 8 secondes)
-        console.log('✅ Valid session found, verifying with Supabase...');
+        // TOUJOURS vérifier avec Supabase, même si pas de cache
+        console.log('🔍 Verifying session with Supabase...');
 
         const result = await Promise.race([
           supabase.auth.getSession(),

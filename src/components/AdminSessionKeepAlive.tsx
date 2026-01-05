@@ -28,20 +28,37 @@ const AdminSessionKeepAlive: React.FC = () => {
         }
 
         if (!session) {
-          console.warn('⚠️ Session perdue, pas de refresh');
+          console.warn('⚠️ Session perdue, redirection vers login');
+          navigate('/backoffice');
           return;
         }
 
+        // AMÉLIORATION : Toujours rafraîchir, même si pas expiré
         const { data, error: refreshError } = await supabase.auth.refreshSession();
 
         if (refreshError) {
           console.error('Erreur refresh session:', refreshError);
+          // Si erreur de refresh, essayer de récupérer la session
+          const { data: { session: currentSession } } = await supabase.auth.getSession();
+          if (!currentSession) {
+            console.error('❌ Plus de session valide, redirection');
+            navigate('/backoffice');
+          }
           return;
         }
 
         if (data.session) {
-          console.log('✅ Session admin refreshée automatiquement');
+          console.log('✅ Session admin refreshée (expires:',
+            new Date(data.session.expires_at! * 1000).toLocaleTimeString('fr-FR'), ')');
           lastActivityRef.current = Date.now();
+
+          // Sauvegarder dans le cache custom
+          localStorage.setItem('taxiassur-auth', JSON.stringify({
+            access_token: data.session.access_token,
+            refresh_token: data.session.refresh_token,
+            expires_at: data.session.expires_at,
+            user: data.session.user
+          }));
         }
       } catch (err) {
         console.error('Erreur refresh token:', err);
@@ -89,10 +106,13 @@ const AdminSessionKeepAlive: React.FC = () => {
       window.addEventListener(event, trackActivity, { passive: true });
     });
 
+    // AMÉLIORATION : Refresh plus fréquent (toutes les 30 secondes au lieu de 2 minutes)
     refreshIntervalRef.current = setInterval(() => {
       checkAndRefreshIfNeeded();
-    }, 2 * 60 * 1000);
+    }, 30 * 1000); // 30 secondes
 
+    // IMPORTANT : Rafraîchir immédiatement au chargement de la page
+    console.log('🔄 Refresh initial au chargement de la page backoffice');
     refreshSession();
 
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
