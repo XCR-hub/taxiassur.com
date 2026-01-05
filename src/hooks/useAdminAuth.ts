@@ -145,15 +145,15 @@ export function useAdminAuth() {
         if (userStr) {
           const user = JSON.parse(userStr);
           if (user && user.id) {
-            // Vérifier si le cache est encore valide (moins de 4 heures)
+            // Cache valide 7 JOURS (comme la session)
             const cacheAge = Date.now() - (user.cachedAt || 0);
-            const fourHours = 4 * 60 * 60 * 1000;
+            const sevenDays = 7 * 24 * 60 * 60 * 1000;
 
-            if (cacheAge < fourHours) {
+            if (cacheAge < sevenDays) {
               console.log('✅ User found in cache:', user.full_name, '(age:', Math.round(cacheAge / 60000), 'min)');
               return user;
             } else {
-              console.log('⏰ Cached user expired, will refresh');
+              console.log('⏰ Cached user expired after 7 days, will refresh');
               localStorage.removeItem('taxiassur_user');
             }
           }
@@ -174,11 +174,19 @@ export function useAdminAuth() {
         if (!parsed?.access_token || !parsed?.expires_at) return null;
 
         const expiresAt = parsed.expires_at * 1000;
-        if (Date.now() >= expiresAt) {
-          console.log('🔄 Session expired, clearing cache');
+        const timeUntilExpiry = expiresAt - Date.now();
+
+        // Si expire dans moins de 5 min, considérer valide quand même
+        // (AdminSessionKeepAlive va le rafraîchir)
+        if (timeUntilExpiry < -5 * 60 * 1000) {
+          console.log('🔄 Session expired (>5min), will re-authenticate');
           localStorage.removeItem('taxiassur-auth');
           localStorage.removeItem('taxiassur_user');
           return null;
+        }
+
+        if (timeUntilExpiry < 0) {
+          console.log('⏰ Session just expired, but will be refreshed by keep-alive');
         }
 
         return parsed;
@@ -278,16 +286,28 @@ export function useAdminAuth() {
         }));
       }
 
-      // Ne charger l'utilisateur QUE lors du SIGNED_IN initial
-      // Ignorer TOKEN_REFRESHED et autres événements qui ne nécessitent pas de reload
+      // Charger l'utilisateur lors du SIGNED_IN initial
       if (event === 'SIGNED_IN' && session?.user) {
         await loadAdminUser(session.user.email!);
+      } else if (event === 'TOKEN_REFRESHED') {
+        // Sur refresh token, mettre à jour le timestamp du cache utilisateur
+        console.log('🔄 Token refreshed, updating cache timestamp');
+        const userStr = localStorage.getItem('taxiassur_user');
+        if (userStr) {
+          try {
+            const user = JSON.parse(userStr);
+            user.cachedAt = Date.now();
+            localStorage.setItem('taxiassur_user', JSON.stringify(user));
+          } catch (e) {
+            console.warn('⚠️ Could not update cache timestamp:', e);
+          }
+        }
       } else if (event === 'SIGNED_OUT') {
         localStorage.removeItem('taxiassur-auth');
         localStorage.removeItem('taxiassur_user');
         setState({ user: null, loading: false, isAuthenticated: false });
       }
-      // Ignorer tous les autres événements (TOKEN_REFRESHED, USER_UPDATED, etc.)
+      // Ignorer les autres événements (USER_UPDATED, etc.)
     });
 
     const timeout = setTimeout(() => {
