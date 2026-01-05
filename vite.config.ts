@@ -80,6 +80,17 @@ export default defineConfig(({ mode }) => ({
     minify: 'terser',
     target: 'es2015',
     chunkSizeWarningLimit: 1000,
+    modulePreload: {
+      polyfill: true,
+      resolveDependencies: (filename, deps) => {
+        // Only preload critical chunks, not all dependencies
+        return deps.filter(dep =>
+          dep.includes('vendor-react') ||
+          dep.includes('vendor-supabase') ||
+          dep.includes('lib-core')
+        );
+      }
+    },
     rollupOptions: {
       external: ['@sentry/react'],
       output: {
