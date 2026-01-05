@@ -56,12 +56,13 @@ function getSupabaseInstance() {
         persistSession: true,
         autoRefreshToken: true,
         storageKey: 'taxiassur-auth',
-        detectSessionInUrl: false
+        detectSessionInUrl: false,
+        flowType: 'pkce'
       },
       global: {
         fetch: (url, options = {}) => {
           const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 3000);
+          const timeoutId = setTimeout(() => controller.abort(), 30000);
 
           return fetch(url, {
             ...options,
