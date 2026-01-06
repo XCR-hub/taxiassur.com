@@ -4,7 +4,7 @@ import {
   Zap, FileEdit, Newspaper, Package, TrendingUp, FileText,
   Search, Link2, Mail, Eye, Plus, Send,
   UserCircle, Clock, Megaphone, Shield, Globe, Settings, BookOpen,
-  QrCode, MessageSquare, Brain, MapPin, UserCog
+  QrCode, MessageSquare, Brain, MapPin, UserCog, Sparkles
 } from 'lucide-react';
 import { getCurrentUser, hasPermission } from '../lib/auth';
 
@@ -65,13 +65,9 @@ export default function NavigationMenu() {
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
             {canViewCRM && (
               <>
-                <Link to="/backoffice/leads" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-lg font-semibold transition-all shadow-lg border-2 border-green-300 text-sm animate-pulse">
-                  <Users className="w-5 h-5" />
-                  <span>💼 CRM Commercial</span>
-                </Link>
-                <Link to="/backoffice/crm-universal" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg font-semibold transition-all shadow-lg border-2 border-blue-300 text-sm">
-                  <Brain className="w-5 h-5" />
-                  <span>🌐 CRM Universel IA</span>
+                <Link to="/backoffice/crm" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-lg font-semibold transition-all shadow-2xl border-2 border-purple-300 text-sm animate-pulse">
+                  <Sparkles className="w-5 h-5" />
+                  <span>✨ CRM Master Ultra-Complet</span>
                 </Link>
                 <Link to="/backoffice/whatsapp" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm">
                   <MessageSquare className="w-5 h-5" />
@@ -80,10 +76,6 @@ export default function NavigationMenu() {
                 <Link to="/backoffice/whatsapp-settings" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm">
                   <Settings className="w-5 h-5" />
                   <span>⚙️ Config WhatsApp</span>
-                </Link>
-                <Link to="/backoffice/lead-manager" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm">
-                  <Users className="w-5 h-5" />
-                  <span>Vue Simple Leads</span>
                 </Link>
               </>
             )}

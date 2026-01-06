@@ -105,6 +105,7 @@ const AutomationDashboard = lazy(() => import('./backoffice/AutomationDashboard'
 const AutonomousSystemDashboard = lazy(() => import('./backoffice/AutonomousSystemDashboard'));
 const PipelineCRMDashboard = lazy(() => import('./backoffice/PipelineCRMDashboard'));
 const CRMUniversal = lazy(() => import('./backoffice/CRMUniversal'));
+const CRMMaster = lazy(() => import('./backoffice/CRMMaster'));
 const EspaceClient = lazy(() => import('./pages/EspaceClient'));
 const ClientDashboard = lazy(() => import('./pages/client/ClientDashboard'));
 const ClientDocuments = lazy(() => import('./pages/client/ClientDocuments'));
@@ -547,19 +548,27 @@ export const router = createBrowserRouter([
       },
       {
         path: '/backoffice/leads',
-        element: <AuthGuard><SuspenseWrapper><CRMCommercial /></SuspenseWrapper></AuthGuard>
+        element: <Navigate to="/backoffice/crm" replace />
       },
       {
-        path: '/backoffice/crm-commercial',
-        element: <AuthGuard><SuspenseWrapper><CRMCommercial /></SuspenseWrapper></AuthGuard>
+        path: '/backoffice/crm',
+        element: <AuthGuard><SuspenseWrapper><CRMMaster /></SuspenseWrapper></AuthGuard>
+      },
+      {
+        path: '/backoffice/crm-master',
+        element: <Navigate to="/backoffice/crm" replace />
       },
       {
         path: '/backoffice/crm-universal',
-        element: <AuthGuard><SuspenseWrapper><CRMUniversal /></SuspenseWrapper></AuthGuard>
+        element: <Navigate to="/backoffice/crm" replace />
+      },
+      {
+        path: '/backoffice/crm-commercial',
+        element: <Navigate to="/backoffice/crm" replace />
       },
       {
         path: '/backoffice/pipeline-crm',
-        element: <AuthGuard><SuspenseWrapper><PipelineCRMDashboard /></SuspenseWrapper></AuthGuard>
+        element: <Navigate to="/backoffice/crm" replace />
       },
       {
         path: '/backoffice/automations',
