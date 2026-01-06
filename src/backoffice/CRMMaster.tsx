@@ -147,14 +147,13 @@ const CRMMaster: React.FC = () => {
   const loadAllData = async () => {
     setLoading(true);
     try {
-      await Promise.all([
-        loadContacts(),
-        loadCampaigns(),
-        loadAIDecisions()
-      ]);
+      await loadContacts();
+      setLoading(false);
+
+      loadCampaigns();
+      loadAIDecisions();
     } catch (error) {
       logger.error('Erreur chargement données CRM:', error);
-    } finally {
       setLoading(false);
     }
   };
@@ -164,12 +163,14 @@ const CRMMaster: React.FC = () => {
       const { data: leadsData, error: leadsError } = await supabase
         .from('leads')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(500);
 
       const { data: unifiedData, error: unifiedError } = await supabase
         .from('unified_contacts')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(200);
 
       if (leadsError) logger.error('Erreur leads:', leadsError);
       if (unifiedError) logger.error('Erreur unified:', unifiedError);
@@ -287,7 +288,8 @@ const CRMMaster: React.FC = () => {
         .from('crm_interactions')
         .select('*')
         .eq('lead_id', contactId)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(50);
 
       if (error) {
         logger.error('Erreur chargement interactions:', error);
@@ -306,7 +308,8 @@ const CRMMaster: React.FC = () => {
         .from('lead_documents')
         .select('*')
         .eq('lead_id', contactId)
-        .order('uploaded_at', { ascending: false });
+        .order('uploaded_at', { ascending: false })
+        .limit(20);
 
       if (error) {
         logger.error('Erreur chargement documents:', error);
@@ -325,7 +328,7 @@ const CRMMaster: React.FC = () => {
         .from('email_campaigns')
         .select('*')
         .order('created_at', { ascending: false })
-        .limit(10);
+        .limit(5);
 
       if (!error && data) {
         setCampaigns(data);
@@ -341,7 +344,7 @@ const CRMMaster: React.FC = () => {
         .from('ai_decisions_log')
         .select('*')
         .order('created_at', { ascending: false })
-        .limit(20);
+        .limit(10);
 
       if (!error && data) {
         setAiDecisions(data);
