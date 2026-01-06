@@ -45,6 +45,9 @@ const ContentManager = lazy(() => import('./backoffice/ContentManager'));
 const SeoTools = lazy(() => import('./backoffice/SeoTools'));
 const SecurityDashboard = lazy(() => import('./backoffice/SecurityDashboard'));
 const ConversionAnalytics = lazy(() => import('./backoffice/ConversionAnalytics'));
+const AnalyticsDashboard = lazy(() => import('./backoffice/AnalyticsDashboard'));
+const ToastDemo = lazy(() => import('./backoffice/ToastDemo'));
+const DataTableDemo = lazy(() => import('./backoffice/DataTableDemo'));
 // PartnerFinder supprimé - redirige vers BacklinkReports
 const ProspectReview = lazy(() => import('./backoffice/ProspectReview'));
 const OutreachComposer = lazy(() => import('./backoffice/OutreachComposer'));
@@ -448,7 +451,19 @@ export const router = createBrowserRouter([
   },
   {
     path: '/backoffice/analytics',
+    element: <AuthGuard><SuspenseWrapper><AnalyticsDashboard /></SuspenseWrapper></AuthGuard>
+  },
+  {
+    path: '/backoffice/conversion-analytics',
     element: <AuthGuard><SuspenseWrapper><ConversionAnalytics /></SuspenseWrapper></AuthGuard>
+  },
+  {
+    path: '/backoffice/toast-demo',
+    element: <AuthGuard><SuspenseWrapper><ToastDemo /></SuspenseWrapper></AuthGuard>
+  },
+  {
+    path: '/backoffice/datatable-demo',
+    element: <AuthGuard><SuspenseWrapper><DataTableDemo /></SuspenseWrapper></AuthGuard>
   },
   {
     path: '/backoffice/partner-finder',
