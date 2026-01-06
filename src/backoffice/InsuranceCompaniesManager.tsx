@@ -14,6 +14,7 @@ interface InsuranceCompany {
   logo_url: string | null;
   contact_email: string | null;
   contact_phone: string | null;
+  contact_hours: string | null;
   website: string | null;
   description: string | null;
   is_active: boolean;
@@ -51,6 +52,7 @@ export default function InsuranceCompaniesManager() {
     logo_url: '',
     contact_email: '',
     contact_phone: '',
+    contact_hours: '',
     website: '',
     description: '',
     is_active: true,
@@ -110,6 +112,7 @@ export default function InsuranceCompaniesManager() {
       logo_url: company.logo_url || '',
       contact_email: company.contact_email || '',
       contact_phone: company.contact_phone || '',
+      contact_hours: company.contact_hours || '',
       website: company.website || '',
       description: company.description || '',
       is_active: company.is_active,
@@ -225,6 +228,7 @@ export default function InsuranceCompaniesManager() {
       logo_url: '',
       contact_email: '',
       contact_phone: '',
+      contact_hours: '',
       website: '',
       description: '',
       is_active: true,
@@ -300,6 +304,11 @@ export default function InsuranceCompaniesManager() {
                 {company.contact_phone && (
                   <div className="text-gray-400">
                     <span className="font-semibold">Tél:</span> {company.contact_phone}
+                  </div>
+                )}
+                {company.contact_hours && (
+                  <div className="text-gray-400">
+                    <span className="font-semibold">Horaires:</span> {company.contact_hours}
                   </div>
                 )}
                 {company.website && (
@@ -416,6 +425,17 @@ export default function InsuranceCompaniesManager() {
                 className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white"
               />
             </div>
+          </div>
+
+          <div>
+            <label className="block text-gray-400 text-sm mb-2">Horaires de contact</label>
+            <input
+              type="text"
+              placeholder="Ex: Lundi au vendredi de 9h00 à 12h00 et de 14h00 à 17h00"
+              value={formData.contact_hours}
+              onChange={(e) => setFormData({ ...formData, contact_hours: e.target.value })}
+              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white"
+            />
           </div>
 
           <div>
