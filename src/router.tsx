@@ -50,6 +50,8 @@ const ToastDemo = lazy(() => import('./backoffice/ToastDemo'));
 const DataTableDemo = lazy(() => import('./backoffice/DataTableDemo'));
 const KanbanDemo = lazy(() => import('./backoffice/KanbanDemo'));
 const FileUploaderDemo = lazy(() => import('./backoffice/FileUploaderDemo'));
+const CalendarDemo = lazy(() => import('./backoffice/CalendarDemo'));
+const TooltipDemo = lazy(() => import('./backoffice/TooltipDemo'));
 // PartnerFinder supprimé - redirige vers BacklinkReports
 const ProspectReview = lazy(() => import('./backoffice/ProspectReview'));
 const OutreachComposer = lazy(() => import('./backoffice/OutreachComposer'));
@@ -474,6 +476,14 @@ export const router = createBrowserRouter([
   {
     path: '/backoffice/fileuploader-demo',
     element: <AuthGuard><SuspenseWrapper><FileUploaderDemo /></SuspenseWrapper></AuthGuard>
+  },
+  {
+    path: '/backoffice/calendar-demo',
+    element: <AuthGuard><SuspenseWrapper><CalendarDemo /></SuspenseWrapper></AuthGuard>
+  },
+  {
+    path: '/backoffice/tooltip-demo',
+    element: <AuthGuard><SuspenseWrapper><TooltipDemo /></SuspenseWrapper></AuthGuard>
   },
   {
     path: '/backoffice/partner-finder',
