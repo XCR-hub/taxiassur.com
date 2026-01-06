@@ -17,6 +17,7 @@ import {
   Download
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import LeadCompanyQuotes from './LeadCompanyQuotes';
 
 interface LeadWithStatus {
   lead_id: string;
@@ -353,6 +354,11 @@ export default function PipelineCRMDashboard() {
                     </div>
                   ))}
                 </div>
+              </div>
+
+              {/* Validation Compagnies */}
+              <div className="p-6 border-b border-gray-200">
+                <LeadCompanyQuotes leadId={selectedLead.lead_id} />
               </div>
 
               {/* Historique des communications */}

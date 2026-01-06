@@ -54,6 +54,7 @@ const CalendarDemo = lazy(() => import('./backoffice/CalendarDemo'));
 const TooltipDemo = lazy(() => import('./backoffice/TooltipDemo'));
 const UIComponentsDemo = lazy(() => import('./backoffice/UIComponentsDemo'));
 const ProgressTimelineDemo = lazy(() => import('./backoffice/ProgressTimelineDemo'));
+const InsuranceCompaniesManager = lazy(() => import('./backoffice/InsuranceCompaniesManager'));
 // PartnerFinder supprimé - redirige vers BacklinkReports
 const ProspectReview = lazy(() => import('./backoffice/ProspectReview'));
 const OutreachComposer = lazy(() => import('./backoffice/OutreachComposer'));
@@ -494,6 +495,10 @@ export const router = createBrowserRouter([
   {
     path: '/backoffice/progress-timeline-demo',
     element: <AuthGuard><SuspenseWrapper><ProgressTimelineDemo /></SuspenseWrapper></AuthGuard>
+  },
+  {
+    path: '/backoffice/insurance-companies',
+    element: <AuthGuard><SuspenseWrapper><InsuranceCompaniesManager /></SuspenseWrapper></AuthGuard>
   },
   {
     path: '/backoffice/partner-finder',
