@@ -3,8 +3,6 @@ import { RouterProvider } from 'react-router-dom';
 import { router } from './router';
 import PerformanceOptimizer from './components/PerformanceOptimizer';
 import AITaxiBackground from './components/AITaxiBackground';
-import AIChatBot from './components/AIChatBot';
-import AdminSessionKeepAlive from './components/AdminSessionKeepAlive';
 import { ToastProvider } from './contexts/ToastContext';
 import { ModalProvider } from './contexts/ModalContext';
 
@@ -13,7 +11,6 @@ function App() {
     <ToastProvider>
       <ModalProvider>
         <PerformanceOptimizer>
-          <AdminSessionKeepAlive />
           <AITaxiBackground intensity="low" />
           <React.Suspense fallback={
             <div className="min-h-screen bg-gray-950 flex items-center justify-center">
@@ -27,7 +24,6 @@ function App() {
           }>
             <RouterProvider router={router} />
           </React.Suspense>
-          <AIChatBot />
         </PerformanceOptimizer>
       </ModalProvider>
     </ToastProvider>
