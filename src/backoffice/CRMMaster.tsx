@@ -848,21 +848,21 @@ const CRMMaster: React.FC = () => {
                 <div className="grid grid-cols-2 gap-4 mb-6">
                   <div>
                     <p className="text-sm text-gray-600">Email</p>
-                    <p className="font-medium">{selectedContact.email}</p>
+                    <p className="font-medium text-gray-900">{selectedContact.email}</p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Téléphone</p>
-                    <p className="font-medium">{selectedContact.phone || 'N/A'}</p>
+                    <p className="font-medium text-gray-900">{selectedContact.phone || 'N/A'}</p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Type</p>
-                    <p className="font-medium">
+                    <p className="font-medium text-gray-900">
                       {CONTACT_TYPES.find(t => t.id === selectedContact.contact_type)?.label}
                     </p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Stage</p>
-                    <p className="font-medium">
+                    <p className="font-medium text-gray-900">
                       {STAGES.find(s => s.id === selectedContact.stage)?.label}
                     </p>
                   </div>
@@ -870,12 +870,12 @@ const CRMMaster: React.FC = () => {
 
                 <div className="space-y-6">
                   <div>
-                    <h3 className="text-lg font-semibold mb-3">Interactions ({interactions.length})</h3>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-3">Interactions ({interactions.length})</h3>
                     <div className="space-y-2 max-h-60 overflow-y-auto">
                       {interactions.map(interaction => (
                         <div key={interaction.id} className="bg-gray-50 p-3 rounded-lg">
                           <div className="flex items-center gap-2 mb-1">
-                            <span className="text-sm font-medium">{interaction.type}</span>
+                            <span className="text-sm font-medium text-gray-900">{interaction.type}</span>
                             <span className="text-xs text-gray-500">
                               {new Date(interaction.created_at).toLocaleDateString('fr-FR')}
                             </span>
@@ -889,7 +889,7 @@ const CRMMaster: React.FC = () => {
                   </div>
 
                   <div>
-                    <h3 className="text-lg font-semibold mb-3">Documents ({documents.length})</h3>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-3">Documents ({documents.length})</h3>
                     <DocumentsViewer leadId={selectedContact.id} />
                   </div>
                 </div>
