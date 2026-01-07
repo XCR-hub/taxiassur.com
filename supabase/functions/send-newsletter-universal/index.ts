@@ -7,6 +7,105 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Client-Info, Apikey',
 };
 
+function base64Encode(str: string): string {
+  return btoa(str);
+}
+
+function addLinkTracking(html: string, trackingId: string, supabaseUrl: string): string {
+  const urlRegex = /href="([^"]+)"/gi;
+  return html.replace(urlRegex, (match, url) => {
+    if (url.startsWith('mailto:') || url.startsWith('tel:') || url.startsWith('#')) {
+      return match;
+    }
+    const trackedUrl = `${supabaseUrl}/functions/v1/track-email-click?id=${trackingId}&url=${encodeURIComponent(url)}`;
+    return `href="${trackedUrl}"`;
+  });
+}
+
+function addTrackingPixel(html: string, trackingId: string, supabaseUrl: string): string {
+  const pixelUrl = `${supabaseUrl}/functions/v1/track-email-open?id=${trackingId}`;
+  const pixel = `<img src="${pixelUrl}" width="1" height="1" style="display:none;" alt="" />`;
+  if (html.includes('</body>')) {
+    return html.replace('</body>', `${pixel}</body>`);
+  }
+  return html + pixel;
+}
+
+async function sendEmailSMTP(
+  to: string,
+  toName: string,
+  subject: string,
+  htmlBody: string,
+  fromEmail: string = "contact@taxiassur.com",
+  fromName: string = "TaxiAssur"
+): Promise<void> {
+  const SMTP_HOST = "smtp.ionos.fr";
+  const SMTP_PORT = 587;
+  const SMTP_USER = Deno.env.get("IONOS_EMAIL_USER") || "team@taxiassur.com";
+  const SMTP_PASS = Deno.env.get("IONOS_EMAIL_PASSWORD");
+
+  if (!SMTP_PASS) throw new Error("IONOS_EMAIL_PASSWORD not configured");
+
+  const conn = await Deno.connect({ hostname: SMTP_HOST, port: SMTP_PORT });
+  const encoder = new TextEncoder();
+  const decoder = new TextDecoder();
+
+  async function readResponse(): Promise<string> {
+    const buffer = new Uint8Array(1024);
+    const n = await conn.read(buffer);
+    return n === null ? "" : decoder.decode(buffer.subarray(0, n));
+  }
+
+  async function sendCommand(command: string): Promise<string> {
+    await conn.write(encoder.encode(command + "\r\n"));
+    return await readResponse();
+  }
+
+  try {
+    await readResponse();
+    await sendCommand(`EHLO taxiassur.com`);
+    await sendCommand("STARTTLS");
+    const tlsConn = await Deno.startTls(conn, { hostname: SMTP_HOST });
+
+    async function readResponseTLS(): Promise<string> {
+      const buffer = new Uint8Array(1024);
+      const n = await tlsConn.read(buffer);
+      return n === null ? "" : decoder.decode(buffer.subarray(0, n));
+    }
+
+    async function sendCommandTLS(command: string): Promise<string> {
+      await tlsConn.write(encoder.encode(command + "\r\n"));
+      return await readResponseTLS();
+    }
+
+    await sendCommandTLS(`EHLO taxiassur.com`);
+    await sendCommandTLS("AUTH LOGIN");
+    await sendCommandTLS(base64Encode(SMTP_USER));
+    await sendCommandTLS(base64Encode(SMTP_PASS));
+    await sendCommandTLS(`MAIL FROM:<${fromEmail}>`);
+    await sendCommandTLS(`RCPT TO:<${to}>`);
+    await sendCommandTLS("DATA");
+
+    const emailContent = [
+      `From: ${fromName} <${fromEmail}>`,
+      `To: ${toName} <${to}>`,
+      `Subject: ${subject}`,
+      `MIME-Version: 1.0`,
+      `Content-Type: text/html; charset=UTF-8`,
+      ``,
+      htmlBody,
+      `.`,
+    ].join("\r\n");
+
+    await sendCommandTLS(emailContent);
+    await sendCommandTLS("QUIT");
+    tlsConn.close();
+  } catch (error) {
+    conn.close();
+    throw error;
+  }
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { status: 200, headers: corsHeaders });
@@ -15,9 +114,6 @@ Deno.serve(async (req: Request) => {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const brevoKey = Deno.env.get('BREVO_API_KEY')!;
-    const sendgridKey = Deno.env.get('SENDGRID_API_KEY')!;
-
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const { campaign_id, test_mode = false, test_email } = await req.json();
@@ -38,12 +134,12 @@ Deno.serve(async (req: Request) => {
 
     if (campaignError || !campaign) {
       return new Response(
-        JSON.stringify({ error: 'Campagne introuvable', details: campaignError }),
+        JSON.stringify({ error: 'Campagne introuvable' }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Récupérer les abonnés actifs ou email de test
+    // Récupérer les abonnés
     let recipients = [];
     if (test_mode && test_email) {
       recipients = [{ email: test_email, name: 'Test' }];
@@ -62,19 +158,12 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    // Sélectionner le provider optimal
-    const { data: provider, error: providerError } = await supabase
-      .rpc('select_optimal_email_provider');
-
-    const selectedProvider = provider || 'brevo';
-    console.log(`🔧 Provider sélectionné: ${selectedProvider}`);
-
     // Marquer la campagne comme en cours
     await supabase
       .from('newsletter_campaigns')
       .update({
         status: 'sending',
-        provider_used: selectedProvider,
+        provider_used: 'ionos',
         sent_at: new Date().toISOString()
       })
       .eq('id', campaign_id);
@@ -82,117 +171,78 @@ Deno.serve(async (req: Request) => {
     let sentCount = 0;
     let errorCount = 0;
 
-    // Envoyer les emails
+    // Envoyer les emails avec tracking
     for (const recipient of recipients) {
       try {
-        let emailSent = false;
+        let emailBody = campaign.content;
 
-        if (selectedProvider === 'brevo' && brevoKey) {
-          const brevoResponse = await fetch('https://api.brevo.com/v3/smtp/email', {
-            method: 'POST',
-            headers: {
-              'api-key': brevoKey,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              sender: { name: 'TaxiAssur', email: 'contact@taxiassur.com' },
-              to: [{ email: recipient.email, name: recipient.name || '' }],
-              subject: campaign.subject,
-              htmlContent: campaign.content_html,
-              tags: ['newsletter', campaign_id]
-            }),
-          });
+        // Créer le tracking pour cet email
+        const { data: emailRecord } = await supabase
+          .from('email_sends')
+          .insert({
+            email_to: recipient.email,
+            email_from: 'contact@taxiassur.com',
+            subject: campaign.subject,
+            body_html: emailBody,
+            status: 'sent'
+          })
+          .select('tracking_id')
+          .single();
 
-          if (brevoResponse.ok) {
-            emailSent = true;
-            const brevoData = await brevoResponse.json();
-            
-            // Enregistrer l'envoi
-            await supabase.from('email_send_log').insert({
-              recipient_email: recipient.email,
-              subject: campaign.subject,
-              provider_used: 'brevo',
-              status: 'sent',
-              message_id: brevoData.messageId,
-              campaign_id: campaign_id
-            });
-          }
-        } else if (selectedProvider === 'sendgrid' && sendgridKey) {
-          const sendgridResponse = await fetch('https://api.sendgrid.com/v3/mail/send', {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${sendgridKey}`,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              from: { email: 'contact@taxiassur.com', name: 'TaxiAssur' },
-              personalizations: [{
-                to: [{ email: recipient.email, name: recipient.name || '' }]
-              }],
-              subject: campaign.subject,
-              content: [{ type: 'text/html', value: campaign.content_html }]
-            }),
-          });
+        const trackingId = emailRecord?.tracking_id;
 
-          if (sendgridResponse.ok || sendgridResponse.status === 202) {
-            emailSent = true;
-            const sendgridMsgId = sendgridResponse.headers.get('X-Message-Id');
-            
-            // Enregistrer l'envoi
-            await supabase.from('email_send_log').insert({
-              recipient_email: recipient.email,
-              subject: campaign.subject,
-              provider_used: 'sendgrid',
-              status: 'sent',
-              message_id: sendgridMsgId,
-              campaign_id: campaign_id
-            });
-          }
+        // Ajouter le tracking
+        if (trackingId) {
+          emailBody = addLinkTracking(emailBody, trackingId, supabaseUrl);
+          emailBody = addTrackingPixel(emailBody, trackingId, supabaseUrl);
         }
 
-        if (emailSent) {
-          sentCount++;
-          // Incrémenter les compteurs du provider
-          await supabase.rpc('increment_provider_counters', { p_provider: selectedProvider });
-        } else {
-          errorCount++;
-        }
+        await sendEmailSMTP(
+          recipient.email,
+          recipient.name || '',
+          campaign.subject,
+          emailBody,
+          'contact@taxiassur.com',
+          'TaxiAssur'
+        );
 
-        // Délai pour éviter le rate limiting
-        await new Promise(resolve => setTimeout(resolve, 100));
-
-      } catch (error) {
-        console.error(`❌ Erreur envoi à ${recipient.email}:`, error);
+        sentCount++;
+      } catch (emailError) {
+        console.error(`❌ Erreur envoi à ${recipient.email}:`, emailError);
         errorCount++;
       }
+
+      // Pause pour éviter le rate limiting
+      await new Promise(resolve => setTimeout(resolve, 200));
     }
 
-    // Mettre à jour les stats de la campagne
+    // Mettre à jour la campagne
     await supabase
       .from('newsletter_campaigns')
       .update({
-        status: errorCount === 0 ? 'sent' : 'partial',
-        total_sent: sentCount,
-        completed_at: new Date().toISOString()
+        status: 'sent',
+        sent_count: sentCount,
+        error_count: errorCount
       })
       .eq('id', campaign_id);
+
+    console.log(`✅ Newsletter envoyée: ${sentCount} succès, ${errorCount} erreurs`);
 
     return new Response(
       JSON.stringify({
         success: true,
-        campaign_id,
-        provider_used: selectedProvider,
         sent_count: sentCount,
         error_count: errorCount,
-        test_mode
+        total: recipients.length,
+        provider: 'ionos'
       }),
-      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error) {
-    console.error('❌ Erreur fonction send-newsletter-universal:', error);
+    console.error('❌ Error:', error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ success: false, error: error.message }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }

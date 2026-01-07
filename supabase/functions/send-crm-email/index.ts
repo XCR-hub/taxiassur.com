@@ -1,5 +1,5 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-import { createClient } from "jsr:@supabase/supabase-js@2";
+import { createClient } from "npm:@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -15,6 +15,115 @@ interface EmailRequest {
   lead_id?: string;
 }
 
+function base64Encode(str: string): string {
+  return btoa(str);
+}
+
+function addLinkTracking(html: string, trackingId: string, supabaseUrl: string): string {
+  const urlRegex = /href="([^"]+)"/gi;
+  return html.replace(urlRegex, (match, url) => {
+    if (url.startsWith('mailto:') || url.startsWith('tel:') || url.startsWith('#')) {
+      return match;
+    }
+    const trackedUrl = `${supabaseUrl}/functions/v1/track-email-click?id=${trackingId}&url=${encodeURIComponent(url)}`;
+    return `href="${trackedUrl}"`;
+  });
+}
+
+function addTrackingPixel(html: string, trackingId: string, supabaseUrl: string): string {
+  const pixelUrl = `${supabaseUrl}/functions/v1/track-email-open?id=${trackingId}`;
+  const pixel = `<img src="${pixelUrl}" width="1" height="1" style="display:none;" alt="" />`;
+  if (html.includes('</body>')) {
+    return html.replace('</body>', `${pixel}</body>`);
+  }
+  return html + pixel;
+}
+
+async function sendEmailSMTP(
+  to: string,
+  toName: string,
+  subject: string,
+  htmlBody: string,
+  fromEmail: string = "team@taxiassur.com",
+  fromName: string = "TaxiAssur"
+): Promise<void> {
+  const SMTP_HOST = "smtp.ionos.fr";
+  const SMTP_PORT = 587;
+  const SMTP_USER = Deno.env.get("IONOS_EMAIL_USER") || "team@taxiassur.com";
+  const SMTP_PASS = Deno.env.get("IONOS_EMAIL_PASSWORD");
+
+  if (!SMTP_PASS) {
+    throw new Error("IONOS_EMAIL_PASSWORD not configured");
+  }
+
+  const conn = await Deno.connect({
+    hostname: SMTP_HOST,
+    port: SMTP_PORT,
+  });
+
+  const encoder = new TextEncoder();
+  const decoder = new TextDecoder();
+
+  async function readResponse(): Promise<string> {
+    const buffer = new Uint8Array(1024);
+    const n = await conn.read(buffer);
+    if (n === null) return "";
+    return decoder.decode(buffer.subarray(0, n));
+  }
+
+  async function sendCommand(command: string): Promise<string> {
+    await conn.write(encoder.encode(command + "\r\n"));
+    return await readResponse();
+  }
+
+  try {
+    await readResponse();
+    await sendCommand(`EHLO taxiassur.com`);
+    await sendCommand("STARTTLS");
+
+    const tlsConn = await Deno.startTls(conn, { hostname: SMTP_HOST });
+
+    async function readResponseTLS(): Promise<string> {
+      const buffer = new Uint8Array(1024);
+      const n = await tlsConn.read(buffer);
+      if (n === null) return "";
+      return decoder.decode(buffer.subarray(0, n));
+    }
+
+    async function sendCommandTLS(command: string): Promise<string> {
+      await tlsConn.write(encoder.encode(command + "\r\n"));
+      return await readResponseTLS();
+    }
+
+    await sendCommandTLS(`EHLO taxiassur.com`);
+    await sendCommandTLS("AUTH LOGIN");
+    await sendCommandTLS(base64Encode(SMTP_USER));
+    await sendCommandTLS(base64Encode(SMTP_PASS));
+    await sendCommandTLS(`MAIL FROM:<${fromEmail}>`);
+    await sendCommandTLS(`RCPT TO:<${to}>`);
+    await sendCommandTLS("DATA");
+
+    const emailContent = [
+      `From: ${fromName} <${fromEmail}>`,
+      `To: ${toName} <${to}>`,
+      `Subject: ${subject}`,
+      `MIME-Version: 1.0`,
+      `Content-Type: text/html; charset=UTF-8`,
+      `Content-Transfer-Encoding: 8bit`,
+      ``,
+      htmlBody,
+      `.`,
+    ].join("\r\n");
+
+    await sendCommandTLS(emailContent);
+    await sendCommandTLS("QUIT");
+    tlsConn.close();
+  } catch (error) {
+    conn.close();
+    throw error;
+  }
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 200, headers: corsHeaders });
@@ -22,32 +131,17 @@ Deno.serve(async (req: Request) => {
 
   try {
     const body = await req.json();
-    console.log("📧 CRM Email Request received:", {
-      to_email: body.to_email,
-      subject: body.subject,
-      has_content: !!body.content,
-      lead_id: body.lead_id
-    });
-
     const { to_email, to_name, subject, content, lead_id }: EmailRequest = body;
 
     if (!to_email || !subject || !content) {
-      console.error("❌ Missing required fields:", { to_email: !!to_email, subject: !!subject, content: !!content });
-      throw new Error("Champs obligatoires manquants: " +
-        (!to_email ? "email " : "") +
-        (!subject ? "sujet " : "") +
-        (!content ? "contenu" : ""));
+      throw new Error("Champs obligatoires manquants");
     }
 
-    const BREVO_API_KEY = Deno.env.get("BREVO_API_KEY");
-    if (!BREVO_API_KEY) {
-      console.error("❌ BREVO_API_KEY not found in environment");
-      throw new Error("BREVO_API_KEY not configured");
-    }
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
 
-    console.log("✅ Brevo API Key found, length:", BREVO_API_KEY.length);
-
-    const emailBody = `
+    let emailBody = `
       <!DOCTYPE html>
       <html>
       <head>
@@ -74,26 +168,10 @@ Deno.serve(async (req: Request) => {
             padding: 40px 30px;
             text-align: center;
           }
-          .logo-container {
-            background: white;
-            width: 120px;
-            height: 120px;
-            margin: 0 auto 20px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-          }
-          .logo {
-            width: 90px;
-            height: 90px;
-          }
           .header h1 {
             color: white;
             font-size: 28px;
             font-weight: 800;
-            text-shadow: 0 2px 10px rgba(0,0,0,0.2);
           }
           .content {
             padding: 40px 30px;
@@ -125,7 +203,6 @@ Deno.serve(async (req: Request) => {
             display: inline-block;
             font-weight: 700;
             font-size: 16px;
-            box-shadow: 0 10px 30px rgba(236, 72, 153, 0.4);
             margin-top: 15px;
           }
           .contact-banner {
@@ -135,64 +212,17 @@ Deno.serve(async (req: Request) => {
             text-align: center;
             margin: 25px 0;
           }
-          .contact-banner h3 {
-            color: #164e63;
-            font-size: 20px;
-            font-weight: 700;
-            margin-bottom: 15px;
-          }
-          .contact-info {
-            display: flex;
-            justify-content: center;
-            gap: 30px;
-            flex-wrap: wrap;
-            margin-top: 15px;
-          }
-          .contact-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            color: #164e63;
-            font-weight: 600;
-          }
           .footer {
             background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
             color: white;
             padding: 30px;
             text-align: center;
           }
-          .footer-logo {
-            font-size: 24px;
-            font-weight: 800;
-            color: #10b981;
-            margin-bottom: 10px;
-          }
-          .footer p {
-            color: #94a3b8;
-            font-size: 13px;
-            margin: 5px 0;
-          }
-          .signature {
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 2px solid #e5e7eb;
-            color: #6b7280;
-            font-size: 14px;
-          }
         </style>
       </head>
       <body>
         <div class="email-wrapper">
           <div class="header">
-            <div class="logo-container">
-              <svg class="logo" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="50" cy="50" r="45" fill="#10b981"/>
-                <path d="M30 40 L70 40 L70 60 L30 60 Z" fill="white"/>
-                <circle cx="35" cy="70" r="8" fill="white"/>
-                <circle cx="65" cy="70" r="8" fill="white"/>
-                <rect x="45" y="25" width="10" height="15" fill="white"/>
-              </svg>
-            </div>
             <h1>🚕 TaxiAssur</h1>
           </div>
 
@@ -207,96 +237,71 @@ Deno.serve(async (req: Request) => {
               <p style="color: #92400e; font-weight: 600; margin-bottom: 10px;">
                 Vous avez une question ? Nous sommes là pour vous !
               </p>
-              <a href="mailto:contact@taxiassur.com" class="cta-button">
+              <a href="mailto:team@taxiassur.com" class="cta-button">
                 💬 Répondre à ce message
               </a>
             </div>
 
             <div class="contact-banner">
-              <h3>📞 Restons en contact</h3>
-              <div class="contact-info">
-                <div class="contact-item">
-                  <span>📧</span>
-                  <span>contact@taxiassur.com</span>
-                </div>
-                <div class="contact-item">
-                  <span>📱</span>
-                  <span>01 XX XX XX XX</span>
-                </div>
-                <div class="contact-item">
-                  <span>🌐</span>
-                  <span>www.taxiassur.com</span>
-                </div>
-              </div>
+              <h3 style="color: #164e63; font-size: 20px; margin-bottom: 15px;">📞 Restons en contact</h3>
+              <p style="color: #164e63; font-weight: 600;">
+                📧 team@taxiassur.com | 📞 01 80 85 57 86
+              </p>
             </div>
 
-            <div class="signature">
-              <p style="font-weight: 600; color: #374151; margin-bottom: 5px;">
-                Cordialement,
-              </p>
-              <p style="font-weight: 700; color: #10b981; font-size: 16px;">
-                L'équipe TaxiAssur
-              </p>
-              <p style="font-style: italic; font-size: 13px;">
-                Votre partenaire assurance pour professionnels du taxi
-              </p>
+            <div style="margin-top: 30px; padding-top: 20px; border-top: 2px solid #e5e7eb; color: #6b7280;">
+              <p style="font-weight: 600; color: #374151;">Cordialement,</p>
+              <p style="font-weight: 700; color: #10b981; font-size: 16px; margin-top: 5px;">L'équipe TaxiAssur</p>
             </div>
           </div>
 
           <div class="footer">
-            <div class="footer-logo">🚕 TaxiAssur</div>
-            <p><strong>L'assurance qui vous accompagne</strong></p>
-            <p style="margin-top: 15px;">© 2026 TaxiAssur - Tous droits réservés</p>
+            <div style="font-size: 24px; font-weight: 800; color: #10b981; margin-bottom: 10px;">🚕 TaxiAssur</div>
+            <p>© 2026 TaxiAssur - Tous droits réservés</p>
           </div>
         </div>
       </body>
       </html>
     `;
 
-    console.log("📤 Sending to Brevo API...");
+    // Créer le tracking
+    const { data: emailRecord } = await supabase
+      .from('email_sends')
+      .insert({
+        lead_id: lead_id || null,
+        email_to: to_email,
+        email_from: "team@taxiassur.com",
+        subject: subject,
+        body_html: emailBody,
+        body_text: content,
+        status: 'sent'
+      })
+      .select('tracking_id')
+      .single();
 
-    const emailPayload = {
-      sender: {
-        name: "TaxiAssur",
-        email: "contact@taxiassur.com",
-      },
-      to: [
-        { email: to_email, name: to_name || "" },
-      ],
-      subject: subject,
-      htmlContent: emailBody,
-    };
+    const trackingId = emailRecord?.tracking_id;
 
-    const emailResponse = await fetch("https://api.brevo.com/v3/smtp/email", {
-      method: "POST",
-      headers: {
-        "accept": "application/json",
-        "api-key": BREVO_API_KEY,
-        "content-type": "application/json",
-      },
-      body: JSON.stringify(emailPayload),
-    });
-
-    console.log("📬 Brevo response status:", emailResponse.status);
-
-    if (!emailResponse.ok) {
-      const errorText = await emailResponse.text();
-      console.error("❌ Brevo API error:", {
-        status: emailResponse.status,
-        statusText: emailResponse.statusText,
-        body: errorText
-      });
-      throw new Error(`Brevo API error (${emailResponse.status}): ${errorText}`);
+    // Ajouter le tracking
+    if (trackingId) {
+      emailBody = addLinkTracking(emailBody, trackingId, supabaseUrl);
+      emailBody = addTrackingPixel(emailBody, trackingId, supabaseUrl);
     }
 
-    const brevoResult = await emailResponse.json();
-    console.log("✅ Email sent successfully to", to_email, "- Message ID:", brevoResult.messageId);
+    console.log("📤 Envoi email CRM IONOS avec tracking:", trackingId);
 
+    await sendEmailSMTP(
+      to_email,
+      to_name || "",
+      subject,
+      emailBody,
+      "team@taxiassur.com",
+      "TaxiAssur"
+    );
+
+    console.log("✅ Email CRM envoyé avec succès à", to_email);
+
+    // Enregistrer l'interaction CRM
     if (lead_id) {
-      const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-      const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-      const supabase = createClient(supabaseUrl, supabaseKey);
-
       await supabase.from('crm_interactions').insert({
         lead_id: lead_id,
         type: 'email',
@@ -304,18 +309,16 @@ Deno.serve(async (req: Request) => {
         subject: subject,
         content: content,
         to_email: to_email,
-        from_email: 'team@taxiassur.com',
-        brevo_message_id: brevoResult.messageId
+        from_email: 'team@taxiassur.com'
       });
-      console.log("✅ Email interaction logged in CRM");
     }
 
     return new Response(
       JSON.stringify({
         success: true,
-        message: "Email envoyé avec succès",
+        message: "Email envoyé avec succès via IONOS avec tracking",
         to: to_email,
-        messageId: brevoResult.messageId
+        tracking_id: trackingId
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -323,7 +326,7 @@ Deno.serve(async (req: Request) => {
       }
     );
   } catch (error) {
-    console.error("❌ Error sending email:", error);
+    console.error("❌ Error sending CRM email:", error);
     return new Response(
       JSON.stringify({
         success: false,
