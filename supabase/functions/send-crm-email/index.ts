@@ -20,16 +20,31 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    const { to_email, to_name, subject, content, lead_id }: EmailRequest = await req.json();
+    const body = await req.json();
+    console.log("📧 CRM Email Request received:", {
+      to_email: body.to_email,
+      subject: body.subject,
+      has_content: !!body.content,
+      lead_id: body.lead_id
+    });
+
+    const { to_email, to_name, subject, content, lead_id }: EmailRequest = body;
 
     if (!to_email || !subject || !content) {
-      throw new Error("Champs obligatoires manquants");
+      console.error("❌ Missing required fields:", { to_email: !!to_email, subject: !!subject, content: !!content });
+      throw new Error("Champs obligatoires manquants: " +
+        (!to_email ? "email " : "") +
+        (!subject ? "sujet " : "") +
+        (!content ? "contenu" : ""));
     }
 
     const BREVO_API_KEY = Deno.env.get("BREVO_API_KEY");
     if (!BREVO_API_KEY) {
+      console.error("❌ BREVO_API_KEY not found in environment");
       throw new Error("BREVO_API_KEY not configured");
     }
+
+    console.log("✅ Brevo API Key found, length:", BREVO_API_KEY.length);
 
     const emailBody = `
       <!DOCTYPE html>
@@ -237,6 +252,20 @@ Deno.serve(async (req: Request) => {
       </html>
     `;
 
+    console.log("📤 Sending to Brevo API...");
+
+    const emailPayload = {
+      sender: {
+        name: "TaxiAssur",
+        email: "contact@taxiassur.com",
+      },
+      to: [
+        { email: to_email, name: to_name || "" },
+      ],
+      subject: subject,
+      htmlContent: emailBody,
+    };
+
     const emailResponse = await fetch("https://api.brevo.com/v3/smtp/email", {
       method: "POST",
       headers: {
@@ -244,32 +273,30 @@ Deno.serve(async (req: Request) => {
         "api-key": BREVO_API_KEY,
         "content-type": "application/json",
       },
-      body: JSON.stringify({
-        sender: {
-          name: "TaxiAssur",
-          email: "contact@taxiassur.com",
-        },
-        to: [
-          { email: to_email, name: to_name || "" },
-        ],
-        subject: subject,
-        htmlContent: emailBody,
-      }),
+      body: JSON.stringify(emailPayload),
     });
 
+    console.log("📬 Brevo response status:", emailResponse.status);
+
     if (!emailResponse.ok) {
-      const error = await emailResponse.text();
-      console.error("Brevo email error:", error);
-      throw new Error(`Failed to send email: ${error}`);
+      const errorText = await emailResponse.text();
+      console.error("❌ Brevo API error:", {
+        status: emailResponse.status,
+        statusText: emailResponse.statusText,
+        body: errorText
+      });
+      throw new Error(`Brevo API error (${emailResponse.status}): ${errorText}`);
     }
 
-    console.log(`✅ Email sent successfully to ${to_email}`);
+    const brevoResult = await emailResponse.json();
+    console.log("✅ Email sent successfully to", to_email, "- Message ID:", brevoResult.messageId);
 
     return new Response(
       JSON.stringify({
         success: true,
         message: "Email envoyé avec succès",
-        to: to_email
+        to: to_email,
+        messageId: brevoResult.messageId
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -277,7 +304,7 @@ Deno.serve(async (req: Request) => {
       }
     );
   } catch (error) {
-    console.error("Error sending email:", error);
+    console.error("❌ Error sending email:", error);
     return new Response(
       JSON.stringify({
         success: false,

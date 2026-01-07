@@ -482,14 +482,15 @@ setNotifications(prev => [payload.new, ...prev]);
         throw new Error(result.error || 'Erreur inconnue lors de l\'envoi');
       }
 
-      // Enregistrer l'interaction dans la base
+      // Enregistrer l'interaction dans la base avec le message_id Brevo
       const { error: dbError } = await supabase.from('crm_interactions').insert({
         lead_id: selectedLead.id,
         type: 'email',
         direction: 'outbound',
         subject: emailForm.subject,
         content: emailForm.content,
-        to_email: selectedLead.email
+        to_email: selectedLead.email,
+        brevo_message_id: result.messageId || null
       });
 
       if (dbError) {

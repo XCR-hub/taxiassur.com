@@ -42,6 +42,34 @@ Deno.serve(async (req: Request) => {
 
       if (fetchError || !tracking) {
         console.log(`No tracking found for message ${messageId}`);
+
+        // Tenter de trouver dans crm_interactions pour les emails CRM
+        const { data: interaction } = await supabase
+          .from('crm_interactions')
+          .select('*')
+          .eq('brevo_message_id', messageId)
+          .maybeSingle();
+
+        if (interaction) {
+          // Mettre à jour l'interaction CRM
+          const crmUpdates: any = {};
+
+          if (eventType === 'opened' || eventType === 'open') {
+            crmUpdates.opened_at = event.date || new Date().toISOString();
+            console.log(`👀 CRM Email opened: ${email}`);
+          } else if (eventType === 'click' || eventType === 'clicked') {
+            crmUpdates.clicked_at = event.date || new Date().toISOString();
+            console.log(`👆 CRM Email clicked: ${email}`);
+          }
+
+          if (Object.keys(crmUpdates).length > 0) {
+            await supabase
+              .from('crm_interactions')
+              .update(crmUpdates)
+              .eq('id', interaction.id);
+          }
+        }
+
         continue;
       }
 
