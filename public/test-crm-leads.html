@@ -53,7 +53,7 @@
     const SUPABASE_URL = 'https://drohhxrkoequjphvabvq.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRyb2hoeHJrb2VxdWpwaHZhYnZxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk3ODM3NjAsImV4cCI6MjA3NTM1OTc2MH0.LP9fh10fY0nRDjpG4VW2yGZ5sT4BkiDalox8ToMbMlg';
 
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    const testSupabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
       auth: {
         persistSession: true,
         autoRefreshToken: true,
@@ -75,7 +75,7 @@ Storage: ${localStorage.getItem('taxiassur-auth') ? 'Session trouvée' : 'Pas de
       showResult('<div class="status info">Test authentification...</div>');
 
       try {
-        const { data, error } = await supabase.auth.getSession();
+        const { data, error } = await testSupabase.auth.getSession();
 
         if (error) {
           showResult(`<div class="status error"><strong>Erreur:</strong> ${error.message}</div>`);
@@ -105,7 +105,7 @@ Storage: ${localStorage.getItem('taxiassur-auth') ? 'Session trouvée' : 'Pas de
       showResult('<div class="status info">Chargement des leads...</div>');
 
       try {
-        const { data, error, count } = await supabase
+        const { data, error, count } = await testSupabase
           .from('leads')
           .select('*', { count: 'exact' })
           .order('created_at', { ascending: false })
@@ -173,7 +173,7 @@ Storage: ${localStorage.getItem('taxiassur-auth') ? 'Session trouvée' : 'Pas de
       showResult('<div class="status info">Chargement des contacts unifiés...</div>');
 
       try {
-        const { data, error } = await supabase
+        const { data, error } = await testSupabase
           .from('unified_contacts')
           .select('*')
           .order('created_at', { ascending: false })
