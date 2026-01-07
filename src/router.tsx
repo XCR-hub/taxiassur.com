@@ -106,6 +106,7 @@ const AutonomousSystemDashboard = lazy(() => import('./backoffice/AutonomousSyst
 const PipelineCRMDashboard = lazy(() => import('./backoffice/PipelineCRMDashboard'));
 const CRMUniversal = lazy(() => import('./backoffice/CRMUniversal'));
 const CRMMaster = lazy(() => import('./backoffice/CRMMaster'));
+const CRMSaaSDashboard = lazy(() => import('./backoffice/CRMSaaSDashboard'));
 const EspaceClient = lazy(() => import('./pages/EspaceClient'));
 const ClientDashboard = lazy(() => import('./pages/client/ClientDashboard'));
 const ClientDocuments = lazy(() => import('./pages/client/ClientDocuments'));
@@ -557,7 +558,7 @@ export const router = createBrowserRouter([
       },
       {
         path: '/backoffice/crm',
-        element: <AuthGuard><SuspenseWrapper><CRMMaster /></SuspenseWrapper></AuthGuard>
+        element: <AuthGuard><SuspenseWrapper><CRMSaaSDashboard /></SuspenseWrapper></AuthGuard>
       },
       {
         path: '/backoffice/crm-master',
