@@ -27,6 +27,28 @@ function base64Encode(str: string): string {
   return btoa(str);
 }
 
+// Fonction pour ajouter le tracking aux liens
+function addLinkTracking(html: string, trackingId: string, supabaseUrl: string): string {
+  const urlRegex = /href="([^"]+)"/gi;
+  return html.replace(urlRegex, (match, url) => {
+    // Ne pas tracker les liens mailto: et tel:
+    if (url.startsWith('mailto:') || url.startsWith('tel:') || url.startsWith('#')) {
+      return match;
+    }
+    // Créer l'URL de tracking
+    const trackedUrl = `${supabaseUrl}/functions/v1/track-email-click?id=${trackingId}&url=${encodeURIComponent(url)}`;
+    return `href="${trackedUrl}"`;
+  });
+}
+
+// Fonction pour ajouter le pixel de tracking
+function addTrackingPixel(html: string, trackingId: string, supabaseUrl: string): string {
+  const pixelUrl = `${supabaseUrl}/functions/v1/track-email-open?id=${trackingId}`;
+  const pixel = `<img src="${pixelUrl}" width="1" height="1" style="display:none;" alt="" />`;
+  // Ajouter le pixel juste avant la fermeture du body
+  return html.replace('</body>', `${pixel}</body>`);
+}
+
 async function sendEmailSMTP(
   to: string,
   toName: string,
@@ -121,7 +143,41 @@ Deno.serve(async (req: Request) => {
     const payload: LeadPayload = await req.json();
     const lead = payload.record;
 
-    const teamEmailBody = `
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // Créer un tracking_id unique pour l'email équipe
+    const { data: teamEmailRecord } = await supabase
+      .from('email_sends')
+      .insert({
+        lead_id: lead.id,
+        email_to: 'team@taxiassur.com',
+        email_from: 'team@taxiassur.com',
+        subject: `🎯 Nouveau Lead : ${lead.name} - ${lead.city}`,
+        status: 'sent'
+      })
+      .select('tracking_id')
+      .single();
+
+    const teamTrackingId = teamEmailRecord?.tracking_id;
+
+    // Créer un tracking_id unique pour l'email client
+    const { data: clientEmailRecord } = await supabase
+      .from('email_sends')
+      .insert({
+        lead_id: lead.id,
+        email_to: lead.email,
+        email_from: 'team@taxiassur.com',
+        subject: 'Votre demande de devis assurance taxi',
+        status: 'sent'
+      })
+      .select('tracking_id')
+      .single();
+
+    const clientTrackingId = clientEmailRecord?.tracking_id;
+
+    let teamEmailBody = `
       <!DOCTYPE html>
       <html>
       <head>
@@ -225,7 +281,7 @@ Deno.serve(async (req: Request) => {
       </html>
     `;
 
-    const clientEmailBody = `
+    let clientEmailBody = `
       <!DOCTYPE html>
       <html>
       <head>
@@ -379,6 +435,17 @@ Deno.serve(async (req: Request) => {
       </html>
     `;
 
+    // Ajouter le tracking aux emails
+    if (teamTrackingId) {
+      teamEmailBody = addLinkTracking(teamEmailBody, teamTrackingId, supabaseUrl);
+      teamEmailBody = addTrackingPixel(teamEmailBody, teamTrackingId, supabaseUrl);
+    }
+
+    if (clientTrackingId) {
+      clientEmailBody = addLinkTracking(clientEmailBody, clientTrackingId, supabaseUrl);
+      clientEmailBody = addTrackingPixel(clientEmailBody, clientTrackingId, supabaseUrl);
+    }
+
     await sendEmailSMTP(
       "team@taxiassur.com",
       "Équipe TaxiAssur",
@@ -400,10 +467,6 @@ Deno.serve(async (req: Request) => {
     );
 
     console.log(`✅ Email client envoyé pour lead ${lead.id}`);
-
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
 
     await supabase.from('crm_interactions').insert([
       {
@@ -429,8 +492,12 @@ Deno.serve(async (req: Request) => {
     return new Response(
       JSON.stringify({
         success: true,
-        message: "Emails sent via IONOS SMTP",
-        lead_id: lead.id
+        message: "Emails sent via IONOS SMTP with tracking",
+        lead_id: lead.id,
+        tracking: {
+          team_tracking_id: teamTrackingId,
+          client_tracking_id: clientTrackingId
+        }
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
