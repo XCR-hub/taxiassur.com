@@ -421,90 +421,217 @@ const CRMMaster: React.FC = () => {
 
   const renderOverview = () => (
     <div className="space-y-6">
+      <div className="bg-gradient-to-r from-purple-900/40 to-pink-900/40 rounded-xl border border-purple-500/30 p-6 backdrop-blur-sm mb-6">
+        <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+          <Zap className="w-6 h-6 text-yellow-400" />
+          Actions Rapides
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <button
+            onClick={() => setShowContactModal(true)}
+            className="flex items-center gap-3 p-4 bg-slate-800/50 hover:bg-slate-800 rounded-lg transition-all border border-purple-500/30 hover:border-purple-500 text-left group"
+          >
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+              <UserPlus className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h3 className="font-medium text-white">Nouveau Contact</h3>
+              <p className="text-xs text-purple-200">Ajouter un prospect</p>
+            </div>
+          </button>
+
+          <button
+            onClick={() => {
+              setActiveTab('contacts');
+              setFilterStage('new');
+            }}
+            className="flex items-center gap-3 p-4 bg-slate-800/50 hover:bg-slate-800 rounded-lg transition-all border border-purple-500/30 hover:border-purple-500 text-left group"
+          >
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+              <Target className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h3 className="font-medium text-white">Nouveaux Leads</h3>
+              <p className="text-xs text-purple-200">Contacts à traiter</p>
+            </div>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('campaigns')}
+            className="flex items-center gap-3 p-4 bg-slate-800/50 hover:bg-slate-800 rounded-lg transition-all border border-purple-500/30 hover:border-purple-500 text-left group"
+          >
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+              <Send className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h3 className="font-medium text-white">Campagnes</h3>
+              <p className="text-xs text-purple-200">Gérer vos emails</p>
+            </div>
+          </button>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-6 text-white shadow-lg">
+        <div
+          onClick={() => setActiveTab('contacts')}
+          className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-6 text-white shadow-lg hover:shadow-2xl hover:scale-105 transition-all cursor-pointer"
+        >
           <div className="flex items-center justify-between mb-4">
             <Users className="w-8 h-8 opacity-80" />
             <span className="text-2xl font-bold">{stats.total}</span>
           </div>
           <h3 className="text-sm font-medium opacity-90">Total Contacts</h3>
           <p className="text-xs opacity-75 mt-1">+{stats.thisMonth} ce mois</p>
+          <div className="mt-3 flex items-center gap-1 text-xs font-medium opacity-80">
+            Voir tous <ArrowRight className="w-3 h-3" />
+          </div>
         </div>
 
-        <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-6 text-white shadow-lg">
+        <div
+          onClick={() => {
+            setActiveTab('contacts');
+            setFilterStage('closed_won');
+          }}
+          className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-6 text-white shadow-lg hover:shadow-2xl hover:scale-105 transition-all cursor-pointer"
+        >
           <div className="flex items-center justify-between mb-4">
             <CheckCircle className="w-8 h-8 opacity-80" />
             <span className="text-2xl font-bold">{stats.clients}</span>
           </div>
           <h3 className="text-sm font-medium opacity-90">Clients</h3>
           <p className="text-xs opacity-75 mt-1">{stats.conversionRate}% conversion</p>
+          <div className="mt-3 flex items-center gap-1 text-xs font-medium opacity-80">
+            Voir clients <ArrowRight className="w-3 h-3" />
+          </div>
         </div>
 
-        <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl p-6 text-white shadow-lg">
+        <div
+          onClick={() => {
+            setActiveTab('contacts');
+            setFilterType('prospect_taxi');
+          }}
+          className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl p-6 text-white shadow-lg hover:shadow-2xl hover:scale-105 transition-all cursor-pointer"
+        >
           <div className="flex items-center justify-between mb-4">
             <Target className="w-8 h-8 opacity-80" />
             <span className="text-2xl font-bold">{stats.prospects}</span>
           </div>
           <h3 className="text-sm font-medium opacity-90">Prospects Actifs</h3>
           <p className="text-xs opacity-75 mt-1">Score moyen: {stats.avgScore}/100</p>
+          <div className="mt-3 flex items-center gap-1 text-xs font-medium opacity-80">
+            Voir prospects <ArrowRight className="w-3 h-3" />
+          </div>
         </div>
 
-        <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-6 text-white shadow-lg">
+        <div
+          onClick={() => setActiveTab('pipeline')}
+          className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-6 text-white shadow-lg hover:shadow-2xl hover:scale-105 transition-all cursor-pointer"
+        >
           <div className="flex items-center justify-between mb-4">
             <DollarSign className="w-8 h-8 opacity-80" />
             <span className="text-2xl font-bold">{(stats.pipelineValue / 1000).toFixed(0)}K</span>
           </div>
           <h3 className="text-sm font-medium opacity-90">Valeur Pipeline</h3>
           <p className="text-xs opacity-75 mt-1">Opportunités en cours</p>
+          <div className="mt-3 flex items-center gap-1 text-xs font-medium opacity-80">
+            Voir pipeline <ArrowRight className="w-3 h-3" />
+          </div>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <TrendingUp className="w-5 h-5 text-blue-600" />
-            Dernières Campagnes
-          </h3>
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-lg hover:border-purple-300 transition-all">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold flex items-center gap-2">
+              <TrendingUp className="w-5 h-5 text-blue-600" />
+              Dernières Campagnes
+            </h3>
+            <button
+              onClick={() => setActiveTab('campaigns')}
+              className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
+            >
+              Voir tout
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
           <div className="space-y-3">
-            {campaigns.slice(0, 5).map(campaign => (
-              <div key={campaign.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <div className="flex-1">
-                  <h4 className="font-medium text-sm">{campaign.name}</h4>
-                  <p className="text-xs text-gray-600 mt-1">
-                    {campaign.total_sent} envoyés • {campaign.total_opened} ouvertures
-                  </p>
-                </div>
-                <div className="text-right">
-                  <span className="text-lg font-bold text-green-600">
-                    {campaign.conversion_rate.toFixed(1)}%
-                  </span>
-                  <p className="text-xs text-gray-600">conversion</p>
-                </div>
+            {campaigns.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                <Send className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+                <p className="text-sm">Aucune campagne récente</p>
               </div>
-            ))}
+            ) : (
+              campaigns.slice(0, 5).map(campaign => (
+                <div
+                  key={campaign.id}
+                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors"
+                  onClick={() => setActiveTab('campaigns')}
+                >
+                  <div className="flex-1">
+                    <h4 className="font-medium text-sm text-gray-900">{campaign.name}</h4>
+                    <p className="text-xs text-gray-600 mt-1">
+                      {campaign.total_sent} envoyés • {campaign.total_opened} ouvertures
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-lg font-bold text-green-600">
+                      {campaign.conversion_rate.toFixed(1)}%
+                    </span>
+                    <p className="text-xs text-gray-600">conversion</p>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <Brain className="w-5 h-5 text-purple-600" />
-            Décisions IA Récentes
-          </h3>
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-lg hover:border-purple-300 transition-all">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold flex items-center gap-2">
+              <Brain className="w-5 h-5 text-purple-600" />
+              Décisions IA Récentes
+            </h3>
+            <button
+              onClick={() => setActiveTab('analytics')}
+              className="text-sm text-purple-600 hover:text-purple-700 font-medium flex items-center gap-1"
+            >
+              Voir tout
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
           <div className="space-y-3 max-h-80 overflow-y-auto">
-            {aiDecisions.slice(0, 8).map(decision => (
-              <div key={decision.id} className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
-                <div className={`w-2 h-2 rounded-full mt-2 ${decision.success ? 'bg-green-500' : 'bg-red-500'}`} />
-                <div className="flex-1 min-w-0">
-                  <h4 className="font-medium text-sm text-gray-900">{decision.decision_type}</h4>
-                  <p className="text-xs text-gray-600 mt-1">
-                    Agent: {decision.ai_agent} • Confiance: {(decision.confidence_score * 100).toFixed(0)}%
-                  </p>
-                  <p className="text-xs text-slate-300 mt-1">
-                    {new Date(decision.created_at).toLocaleString('fr-FR')}
-                  </p>
-                </div>
+            {aiDecisions.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                <Brain className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+                <p className="text-sm">Aucune décision IA récente</p>
               </div>
-            ))}
+            ) : (
+              aiDecisions.slice(0, 8).map(decision => (
+                <div
+                  key={decision.id}
+                  className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors"
+                  onClick={() => {
+                    if (decision.contact_id) {
+                      loadContactDetails(decision.contact_id);
+                    }
+                  }}
+                >
+                  <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${decision.success ? 'bg-green-500' : 'bg-red-500'}`} />
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-medium text-sm text-gray-900">{decision.decision_type}</h4>
+                    <p className="text-xs text-gray-600 mt-1">
+                      Agent: {decision.ai_agent} • Confiance: {(decision.confidence_score * 100).toFixed(0)}%
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {new Date(decision.created_at).toLocaleString('fr-FR')}
+                    </p>
+                  </div>
+                  {decision.contact_id && (
+                    <ChevronRight className="w-4 h-4 text-gray-400 flex-shrink-0 mt-1" />
+                  )}
+                </div>
+              ))
+            )}
           </div>
         </div>
       </div>
@@ -577,7 +704,7 @@ const CRMMaster: React.FC = () => {
                     {contactTypeInfo?.label}
                   </span>
 
-                  <span className="text-xs text-slate-300">
+                  <span className="text-xs text-gray-500">
                     {new Date(contact.created_at).toLocaleDateString('fr-FR')}
                   </span>
                 </div>
@@ -628,10 +755,21 @@ const CRMMaster: React.FC = () => {
       )}
 
       {filteredContacts.length === 0 && (
-        <div className="text-center py-12">
-          <Users className="w-16 h-16 text-slate-500 mx-auto mb-4" />
+        <div className="text-center py-12 bg-slate-800/30 rounded-xl border border-purple-500/20">
+          <Users className="w-16 h-16 text-purple-400 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-white mb-2">Aucun contact trouvé</h3>
-          <p className="text-slate-400">Essayez de modifier vos filtres ou votre recherche</p>
+          <p className="text-purple-200">Essayez de modifier vos filtres ou votre recherche</p>
+          <button
+            onClick={() => {
+              setSearchQuery('');
+              setFilterType('all');
+              setFilterStage('all');
+              setFilterSource('all');
+            }}
+            className="mt-4 px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors"
+          >
+            Réinitialiser les filtres
+          </button>
         </div>
       )}
     </div>
@@ -671,7 +809,7 @@ const CRMMaster: React.FC = () => {
                       <p className="text-xs text-gray-600 mb-2">{contact.company_name}</p>
                     )}
                     <div className="flex items-center justify-between">
-                      <span className="text-xs text-slate-300">Score: {contact.lead_score}</span>
+                      <span className="text-xs text-gray-700">Score: {contact.lead_score}</span>
                       {contact.estimated_value && (
                         <span className="text-xs font-medium text-green-600">
                           {contact.estimated_value.toLocaleString()} €
