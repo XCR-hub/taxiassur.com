@@ -1,4 +1,5 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { createClient } from "jsr:@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -290,6 +291,24 @@ Deno.serve(async (req: Request) => {
 
     const brevoResult = await emailResponse.json();
     console.log("✅ Email sent successfully to", to_email, "- Message ID:", brevoResult.messageId);
+
+    if (lead_id) {
+      const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+      const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+      const supabase = createClient(supabaseUrl, supabaseKey);
+
+      await supabase.from('crm_interactions').insert({
+        lead_id: lead_id,
+        type: 'email',
+        direction: 'outbound',
+        subject: subject,
+        content: content,
+        to_email: to_email,
+        from_email: 'team@taxiassur.com',
+        brevo_message_id: brevoResult.messageId
+      });
+      console.log("✅ Email interaction logged in CRM");
+    }
 
     return new Response(
       JSON.stringify({

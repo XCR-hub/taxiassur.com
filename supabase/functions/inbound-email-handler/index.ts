@@ -121,6 +121,19 @@ Deno.serve(async (req: Request) => {
 
     console.log('💾 Conversation enregistrée:', conversation.id);
 
+    // Enregistrer dans crm_interactions pour le CRM
+    await supabase.from('crm_interactions').insert({
+      lead_id: contact.id,
+      type: 'email',
+      direction: 'inbound',
+      subject: subject,
+      content: content,
+      from_email: senderEmail,
+      to_email: recipientEmail,
+      brevo_message_id: payload.messageId
+    });
+    console.log('✅ Interaction CRM enregistrée');
+
     // Étape 3: Appeler l'IA Classifier de manière asynchrone
     const classifierUrl = `${supabaseUrl}/functions/v1/ai-email-classifier`;
     

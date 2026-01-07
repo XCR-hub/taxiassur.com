@@ -1,4 +1,5 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { createClient } from "jsr:@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -519,6 +520,31 @@ Deno.serve(async (req: Request) => {
     }
 
     console.log(`✅ Emails sent successfully for lead ${lead.id}`);
+
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    await supabase.from('crm_interactions').insert([
+      {
+        lead_id: lead.id,
+        type: 'email',
+        direction: 'outbound',
+        subject: `🎯 Nouveau Lead : ${lead.name} - ${lead.city}`,
+        content: 'Email de notification interne envoyé à l\'équipe',
+        to_email: 'team@taxiassur.com',
+        from_email: 'team@taxiassur.com'
+      },
+      {
+        lead_id: lead.id,
+        type: 'email',
+        direction: 'outbound',
+        subject: 'Votre demande de devis assurance taxi',
+        content: clientEmailBody,
+        to_email: lead.email,
+        from_email: 'team@taxiassur.com'
+      }
+    ]);
 
     return new Response(
       JSON.stringify({ success: true, message: "Emails sent" }),

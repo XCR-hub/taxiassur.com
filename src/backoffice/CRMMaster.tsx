@@ -13,6 +13,7 @@ import {
 import { supabase } from '@/lib/supabase';
 import DocumentsViewer from './DocumentsViewer';
 import EmailTrendline from './EmailTrendline';
+import EmailComposer from './EmailComposer';
 
 interface Contact {
   id: string;
@@ -1063,24 +1064,130 @@ const CRMMaster: React.FC = () => {
 
                 <div className="space-y-6">
                   <div>
-                    <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
-                      <Activity className="w-5 h-5 text-purple-400" />
-                      Interactions ({interactions.length})
-                    </h3>
-                    <div className="space-y-2 max-h-60 overflow-y-auto">
-                      {interactions.map(interaction => (
-                        <div key={interaction.id} className="bg-slate-800/50 backdrop-blur-sm border border-purple-500/20 p-4 rounded-xl hover:border-purple-500/40 transition-all">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="text-sm font-medium text-white">{interaction.type}</span>
-                            <span className="text-xs text-purple-300">
-                              {new Date(interaction.created_at).toLocaleDateString('fr-FR')}
-                            </span>
-                          </div>
-                          {interaction.subject && (
-                            <p className="text-sm text-gray-300">{interaction.subject}</p>
-                          )}
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+                        <Activity className="w-5 h-5 text-purple-400" />
+                        Interactions ({interactions.length})
+                      </h3>
+                      <button
+                        onClick={() => setShowEmailComposer(true)}
+                        className="px-3 py-1.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-sm rounded-lg hover:from-purple-500 hover:to-pink-500 transition-all flex items-center gap-2"
+                      >
+                        <Mail className="w-4 h-4" />
+                        Envoyer Email
+                      </button>
+                    </div>
+                    <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2">
+                      {interactions.length === 0 ? (
+                        <div className="bg-slate-800/30 backdrop-blur-sm border border-purple-500/10 p-6 rounded-xl text-center">
+                          <Activity className="w-8 h-8 text-gray-500 mx-auto mb-2" />
+                          <p className="text-gray-400 text-sm">Aucune interaction pour le moment</p>
                         </div>
-                      ))}
+                      ) : (
+                        interactions.map(interaction => {
+                          const getIcon = () => {
+                            switch (interaction.type) {
+                              case 'email': return <Mail className="w-5 h-5" />;
+                              case 'call': return <Phone className="w-5 h-5" />;
+                              case 'sms': return <MessageSquare className="w-5 h-5" />;
+                              case 'whatsapp': return <MessageSquare className="w-5 h-5" />;
+                              case 'meeting': return <Calendar className="w-5 h-5" />;
+                              default: return <FileText className="w-5 h-5" />;
+                            }
+                          };
+
+                          const getTypeColor = () => {
+                            switch (interaction.type) {
+                              case 'email': return 'text-blue-400 bg-blue-500/10 border-blue-500/30';
+                              case 'call': return 'text-green-400 bg-green-500/10 border-green-500/30';
+                              case 'sms': return 'text-yellow-400 bg-yellow-500/10 border-yellow-500/30';
+                              case 'whatsapp': return 'text-green-400 bg-green-500/10 border-green-500/30';
+                              case 'meeting': return 'text-purple-400 bg-purple-500/10 border-purple-500/30';
+                              default: return 'text-gray-400 bg-gray-500/10 border-gray-500/30';
+                            }
+                          };
+
+                          const isInbound = interaction.direction === 'inbound';
+
+                          return (
+                            <div
+                              key={interaction.id}
+                              className="bg-slate-800/50 backdrop-blur-sm border border-purple-500/20 p-4 rounded-xl hover:border-purple-500/40 transition-all"
+                            >
+                              <div className="flex items-start gap-3">
+                                <div className={`p-2 rounded-lg border ${getTypeColor()}`}>
+                                  {getIcon()}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2 mb-1 flex-wrap">
+                                    <span className="text-sm font-medium text-white capitalize">
+                                      {interaction.type}
+                                    </span>
+                                    <span className={`text-xs px-2 py-0.5 rounded-full ${
+                                      isInbound
+                                        ? 'bg-green-500/20 text-green-300'
+                                        : 'bg-blue-500/20 text-blue-300'
+                                    }`}>
+                                      {isInbound ? 'Entrant' : 'Sortant'}
+                                    </span>
+                                    {interaction.type === 'email' && interaction.opened_at && (
+                                      <span className="text-xs px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 flex items-center gap-1">
+                                        <Eye className="w-3 h-3" />
+                                        Ouvert
+                                      </span>
+                                    )}
+                                    {interaction.type === 'email' && interaction.clicked_at && (
+                                      <span className="text-xs px-2 py-0.5 rounded-full bg-pink-500/20 text-pink-300 flex items-center gap-1">
+                                        <MousePointer className="w-3 h-3" />
+                                        Cliqué
+                                      </span>
+                                    )}
+                                  </div>
+
+                                  {interaction.subject && (
+                                    <p className="text-sm font-medium text-white mb-1">
+                                      {interaction.subject}
+                                    </p>
+                                  )}
+
+                                  {interaction.content && (
+                                    <p className="text-sm text-gray-400 line-clamp-2">
+                                      {interaction.content}
+                                    </p>
+                                  )}
+
+                                  {interaction.ai_summary && (
+                                    <div className="mt-2 p-2 bg-purple-500/10 rounded-lg border border-purple-500/20">
+                                      <p className="text-xs text-purple-300 flex items-center gap-1">
+                                        <Brain className="w-3 h-3" />
+                                        {interaction.ai_summary}
+                                      </p>
+                                    </div>
+                                  )}
+
+                                  <div className="flex items-center gap-3 mt-2 text-xs text-gray-500">
+                                    <span className="flex items-center gap-1">
+                                      <Clock className="w-3 h-3" />
+                                      {new Date(interaction.created_at).toLocaleString('fr-FR', {
+                                        day: '2-digit',
+                                        month: 'short',
+                                        year: 'numeric',
+                                        hour: '2-digit',
+                                        minute: '2-digit'
+                                      })}
+                                    </span>
+                                    {interaction.response_time_minutes && (
+                                      <span className="text-purple-400">
+                                        Réponse: {interaction.response_time_minutes}min
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })
+                      )}
                     </div>
                   </div>
 
@@ -1095,6 +1202,18 @@ const CRMMaster: React.FC = () => {
               </div>
             </div>
           </div>
+        )}
+
+        {showEmailComposer && selectedContact && (
+          <EmailComposer
+            contact={selectedContact}
+            onClose={() => setShowEmailComposer(false)}
+            onSent={() => {
+              if (selectedContact) {
+                loadInteractions(selectedContact.id);
+              }
+            }}
+          />
         )}
       </div>
     </div>
