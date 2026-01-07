@@ -8,8 +8,23 @@
 
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 
-  <!-- Optimized preconnects - only for critical resources -->
+  <!-- Critical DNS prefetch and preconnect -->
+  <link rel="dns-prefetch" href="https://drohhxrkoequjphvabvq.supabase.co" />
   <link rel="preconnect" href="https://drohhxrkoequjphvabvq.supabase.co" crossorigin />
+
+  <!-- Preload critical resources -->
+  <link rel="modulepreload" href="/src/main.tsx" />
+  <link rel="preload" href="/env-config.js" as="script" />
+
+  <!-- Inline critical CSS for instant paint -->
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:system-ui,-apple-system,sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased}
+    #root{min-height:100vh;display:flex;flex-direction:column}
+    .loading-screen{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#fff;z-index:9999}
+    .loading-spinner{width:40px;height:40px;border:4px solid #f3f3f3;border-top:4px solid #000;border-radius:50%;animation:spin 1s linear infinite}
+    @keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
+  </style>
 
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://taxiassur.com/" />
@@ -18,10 +33,19 @@
   <meta property="og:image" content="https://taxiassur.com/logo-600x300.png" />
 
   <title>TaxiAssur - Devis Assurance Taxi Gratuit & Personnalisé</title>
+
+  <!-- Load env config with high priority -->
   <script src="/env-config.js"></script>
 </head>
 <body>
-  <div id="root"></div>
-  <script type="module" src="/src/main.tsx"></script>
+  <!-- Show loading spinner immediately -->
+  <div id="root">
+    <div class="loading-screen">
+      <div class="loading-spinner"></div>
+    </div>
+  </div>
+
+  <!-- Defer main script for better FCP -->
+  <script type="module" src="/src/main.tsx" defer></script>
 </body>
 </html>

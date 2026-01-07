@@ -78,15 +78,13 @@ export default defineConfig(({ mode }) => ({
     assetsDir: 'assets',
     sourcemap: false,
     minify: 'terser',
-    target: 'es2015',
-    chunkSizeWarningLimit: 1000,
+    target: 'es2020',
+    chunkSizeWarningLimit: 500,
     modulePreload: {
-      polyfill: true,
+      polyfill: false,
       resolveDependencies: (filename, deps) => {
-        // Only preload critical chunks, not all dependencies
         return deps.filter(dep =>
           dep.includes('vendor-react') ||
-          dep.includes('vendor-supabase') ||
           dep.includes('lib-core')
         );
       }
@@ -143,20 +141,38 @@ export default defineConfig(({ mode }) => ({
     },
     copyPublicDir: true,
     emptyOutDir: true,
-    assetsInlineLimit: 4096,
+    assetsInlineLimit: 8192,
     cssCodeSplit: true,
     terserOptions: {
       compress: {
-        drop_console: false,
+        drop_console: true,
         drop_debugger: true,
-        passes: 2,
-        pure_funcs: ['console.log']
+        passes: 3,
+        pure_funcs: ['console.log', 'console.info', 'console.debug'],
+        pure_getters: true,
+        unsafe: true,
+        unsafe_comps: true,
+        unsafe_math: true,
+        unsafe_methods: true,
+        arguments: true,
+        booleans_as_integers: true,
+        reduce_vars: true,
+        reduce_funcs: true,
+        toplevel: true,
+        keep_fargs: false,
+        keep_infinity: true
       },
       mangle: {
-        safari10: true
+        safari10: true,
+        toplevel: true,
+        properties: {
+          regex: /^_/
+        }
       },
       format: {
-        comments: false
+        comments: false,
+        ecma: 2020,
+        ascii_only: true
       }
     }
   },

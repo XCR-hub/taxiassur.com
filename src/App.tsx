@@ -1,30 +1,45 @@
-import React from 'react';
+import React, { lazy, Suspense, useState, useEffect } from 'react';
 import { RouterProvider } from 'react-router-dom';
 import { router } from './router';
-import PerformanceOptimizer from './components/PerformanceOptimizer';
-import AITaxiBackground from './components/AITaxiBackground';
 import { ToastProvider } from './contexts/ToastContext';
 import { ModalProvider } from './contexts/ModalContext';
 
+const PerformanceOptimizer = lazy(() => import('./components/PerformanceOptimizer'));
+const AITaxiBackground = lazy(() => import('./components/AITaxiBackground'));
+
+const SimpleFallback = () => (
+  <div style={{
+    minHeight: '100vh',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    background: '#000'
+  }}>
+    <div className="loading-spinner"></div>
+  </div>
+);
+
 function App() {
+  const [showEnhancements, setShowEnhancements] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setShowEnhancements(true), 500);
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
     <ToastProvider>
       <ModalProvider>
-        <PerformanceOptimizer>
-          <AITaxiBackground intensity="low" />
-          <React.Suspense fallback={
-            <div className="min-h-screen bg-gray-950 flex items-center justify-center">
-              <div className="text-center">
-                <div className="w-16 h-16 bg-gradient-to-r from-amber-500 to-yellow-500 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
-                  <span className="text-black font-bold text-xl">🚖</span>
-                </div>
-                <p className="text-white font-medium">Chargement TaxiAssur...</p>
-              </div>
-            </div>
-          }>
-            <RouterProvider router={router} />
-          </React.Suspense>
-        </PerformanceOptimizer>
+        {showEnhancements && (
+          <Suspense fallback={null}>
+            <PerformanceOptimizer>
+              <AITaxiBackground intensity="low" />
+            </PerformanceOptimizer>
+          </Suspense>
+        )}
+        <Suspense fallback={<SimpleFallback />}>
+          <RouterProvider router={router} />
+        </Suspense>
       </ModalProvider>
     </ToastProvider>
   );
