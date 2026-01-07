@@ -71,6 +71,7 @@ const EmailComposer: React.FC<EmailComposerProps> = ({ contact, onClose, onSent 
           data: {
             lead_id: contact.id,
             to: contact.email,
+            to_name: `${contact.first_name || ''} ${contact.last_name || ''}`.trim() || contact.email,
             subject: subject,
             html_content: content.replace(/\n/g, '<br>')
           }

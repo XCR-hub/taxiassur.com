@@ -24,21 +24,34 @@ Deno.serve(async (req: Request) => {
 
     switch (body.action) {
       case 'send_email': {
-        const { to, subject, html_content, template_key } = body.data;
-        
-        const result = await sendEmailBrevo(to, subject, html_content);
-        
-        await supabase.from('crm_interactions').insert({
-          lead_id: body.data.lead_id,
-          type: 'email',
-          direction: 'outbound',
-          subject,
-          content: html_content,
-          to_email: to
+        const { to, subject, html_content, template_key, lead_id } = body.data;
+
+        // Appel de la fonction send-crm-email via HTTP
+        const emailResponse = await fetch(`${supabaseUrl}/functions/v1/send-crm-email`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${supabaseKey}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            to_email: to,
+            to_name: body.data.to_name || '',
+            subject: subject,
+            content: html_content,
+            lead_id: lead_id
+          })
         });
-        
+
+        const emailResult = await emailResponse.json();
+
+        if (!emailResponse.ok) {
+          throw new Error(emailResult.error || 'Erreur envoi email');
+        }
+
+        console.log('✅ Email envoyé via IONOS à', to, '- Tracking:', emailResult.tracking_id);
+
         return new Response(
-          JSON.stringify({ success: true, result }),
+          JSON.stringify({ success: true, result: emailResult }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
@@ -95,39 +108,6 @@ Deno.serve(async (req: Request) => {
     );
   }
 });
-
-async function sendEmailBrevo(
-  to: string,
-  subject: string,
-  htmlContent: string
-): Promise<any> {
-  const brevoKey = Deno.env.get('BREVO_API_KEY');
-  
-  if (!brevoKey) {
-    console.log('⚠️ Brevo not configured, simulating email');
-    return { simulated: true, to, subject };
-  }
-
-  const response = await fetch('https://api.brevo.com/v3/smtp/email', {
-    method: 'POST',
-    headers: {
-      'Accept': 'application/json',
-      'Content-Type': 'application/json',
-      'api-key': brevoKey
-    },
-    body: JSON.stringify({
-      sender: {
-        name: 'TaxiAssur.com',
-        email: Deno.env.get('BREVO_SENDER_EMAIL') || 'contact@taxiassur.com'
-      },
-      to: [{ email: to }],
-      subject,
-      htmlContent
-    })
-  });
-
-  return await response.json();
-}
 
 async function generateAttestationPDF(data: any): Promise<any> {
   console.log('📄 Génération attestation pour:', data.contract_id);
