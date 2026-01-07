@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test CRM Leads</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #f3f4f6;
+    }
+    .container {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    h1 { color: #1f2937; }
+    .status { padding: 10px; border-radius: 5px; margin: 10px 0; }
+    .success { background: #d1fae5; color: #065f46; }
+    .error { background: #fee2e2; color: #991b1b; }
+    .info { background: #dbeafe; color: #1e40af; }
+    pre { background: #1f2937; color: #f3f4f6; padding: 15px; border-radius: 5px; overflow-x: auto; }
+    button { background: #3b82f6; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; margin: 5px; }
+    button:hover { background: #2563eb; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { padding: 12px; text-align: left; border-bottom: 1px solid #e5e7eb; }
+    th { background: #f9fafb; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔍 Diagnostic CRM Leads</h1>
+
+    <div id="config" class="status info">
+      <strong>Configuration Supabase:</strong>
+      <div id="config-details"></div>
+    </div>
+
+    <button onclick="testLeadsQuery()">Test Requête Leads</button>
+    <button onclick="testUnifiedContacts()">Test Unified Contacts</button>
+    <button onclick="testAuth()">Test Authentification</button>
+    <button onclick="clearCache()">Vider le cache</button>
+
+    <div id="results"></div>
+  </div>
+
+  <script>
+    const SUPABASE_URL = 'https://drohhxrkoequjphvabvq.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRyb2hoeHJrb2VxdWpwaHZhYnZxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk3ODM3NjAsImV4cCI6MjA3NTM1OTc2MH0.LP9fh10fY0nRDjpG4VW2yGZ5sT4BkiDalox8ToMbMlg';
+
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        storageKey: 'taxiassur-auth'
+      }
+    });
+
+    document.getElementById('config-details').innerHTML = `
+      <pre>URL: ${SUPABASE_URL}
+Key: ${SUPABASE_ANON_KEY.substring(0, 50)}...
+Storage: ${localStorage.getItem('taxiassur-auth') ? 'Session trouvée' : 'Pas de session'}</pre>
+    `;
+
+    function showResult(html) {
+      document.getElementById('results').innerHTML = html;
+    }
+
+    async function testAuth() {
+      showResult('<div class="status info">Test authentification...</div>');
+
+      try {
+        const { data, error } = await supabase.auth.getSession();
+
+        if (error) {
+          showResult(`<div class="status error"><strong>Erreur:</strong> ${error.message}</div>`);
+          return;
+        }
+
+        if (data.session) {
+          showResult(`
+            <div class="status success">
+              <strong>✅ Session active</strong>
+              <pre>${JSON.stringify({
+                user: data.session.user.email,
+                role: data.session.user.role,
+                expires_at: new Date(data.session.expires_at * 1000).toLocaleString()
+              }, null, 2)}</pre>
+            </div>
+          `);
+        } else {
+          showResult(`<div class="status error"><strong>❌ Pas de session active</strong><p>Vous devez vous connecter au backoffice d'abord.</p></div>`);
+        }
+      } catch (err) {
+        showResult(`<div class="status error"><strong>Erreur:</strong> ${err.message}</div>`);
+      }
+    }
+
+    async function testLeadsQuery() {
+      showResult('<div class="status info">Chargement des leads...</div>');
+
+      try {
+        const { data, error, count } = await supabase
+          .from('leads')
+          .select('*', { count: 'exact' })
+          .order('created_at', { ascending: false })
+          .range(0, 99);
+
+        if (error) {
+          showResult(`
+            <div class="status error">
+              <strong>❌ Erreur Supabase:</strong>
+              <pre>${JSON.stringify(error, null, 2)}</pre>
+            </div>
+          `);
+          return;
+        }
+
+        if (!data || data.length === 0) {
+          showResult(`
+            <div class="status error">
+              <strong>⚠️ Aucun lead trouvé</strong>
+              <p>Total dans la base: ${count || 0}</p>
+              <p>Vérifiez les politiques RLS ou votre authentification.</p>
+            </div>
+          `);
+          return;
+        }
+
+        const tableHtml = `
+          <div class="status success">
+            <strong>✅ ${data.length} leads trouvés (Total: ${count})</strong>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Nom</th>
+                <th>Email</th>
+                <th>Téléphone</th>
+                <th>Ville</th>
+                <th>Statut</th>
+                <th>Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${data.slice(0, 10).map(lead => `
+                <tr>
+                  <td>${lead.first_name} ${lead.last_name}</td>
+                  <td>${lead.email}</td>
+                  <td>${lead.phone}</td>
+                  <td>${lead.city}</td>
+                  <td><span style="background:#dbeafe;padding:3px 8px;border-radius:3px;font-size:12px">${lead.lead_status || lead.status}</span></td>
+                  <td>${new Date(lead.created_at).toLocaleDateString('fr-FR')}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+          ${data.length > 10 ? `<p style="color:#6b7280;margin-top:10px">... et ${data.length - 10} autres</p>` : ''}
+        `;
+
+        showResult(tableHtml);
+      } catch (err) {
+        showResult(`<div class="status error"><strong>Exception:</strong> ${err.message}</div>`);
+      }
+    }
+
+    async function testUnifiedContacts() {
+      showResult('<div class="status info">Chargement des contacts unifiés...</div>');
+
+      try {
+        const { data, error } = await supabase
+          .from('unified_contacts')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .range(0, 49);
+
+        if (error) {
+          showResult(`
+            <div class="status error">
+              <strong>❌ Erreur:</strong>
+              <pre>${JSON.stringify(error, null, 2)}</pre>
+            </div>
+          `);
+          return;
+        }
+
+        showResult(`
+          <div class="status success">
+            <strong>✅ ${data ? data.length : 0} contacts unifiés trouvés</strong>
+            <pre>${JSON.stringify(data?.slice(0, 3), null, 2)}</pre>
+          </div>
+        `);
+      } catch (err) {
+        showResult(`<div class="status error"><strong>Exception:</strong> ${err.message}</div>`);
+      }
+    }
+
+    function clearCache() {
+      localStorage.clear();
+      sessionStorage.clear();
+      showResult('<div class="status success"><strong>✅ Cache vidé</strong><p>Rechargez la page.</p></div>');
+    }
+
+    // Auto-test au chargement
+    window.addEventListener('load', () => {
+      testAuth();
+    });
+  </script>
+</body>
+</html>

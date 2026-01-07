@@ -166,6 +166,8 @@ const CRMMaster: React.FC = () => {
 
   const loadContacts = async (append = false) => {
     try {
+      logger.info('🔍 Chargement des contacts...', { append, currentPage, pageSize });
+
       const offset = append ? currentPage * pageSize : 0;
       const { data: leadsData, error: leadsError, count: leadsCount } = await supabase
         .from('leads')
@@ -173,11 +175,15 @@ const CRMMaster: React.FC = () => {
         .order('created_at', { ascending: false })
         .range(offset, offset + pageSize - 1);
 
+      logger.info('📊 Leads reçus:', { count: leadsData?.length, total: leadsCount, error: leadsError });
+
       const { data: unifiedData, error: unifiedError } = await supabase
         .from('unified_contacts')
         .select('*')
         .order('created_at', { ascending: false })
         .range(offset, offset + Math.floor(pageSize / 2) - 1);
+
+      logger.info('📊 Unified reçus:', { count: unifiedData?.length, error: unifiedError });
 
       if (leadsError) logger.error('Erreur leads:', leadsError);
       if (unifiedError) logger.error('Erreur unified:', unifiedError);
@@ -249,6 +255,8 @@ const CRMMaster: React.FC = () => {
 
       const newContacts = Array.from(emailMap.values());
 
+      logger.info('✅ Contacts fusionnés:', { count: newContacts.length, append });
+
       if (append) {
         setContacts(prev => [...prev, ...newContacts]);
       } else {
@@ -259,8 +267,10 @@ const CRMMaster: React.FC = () => {
         setTotalContacts(leadsCount);
         setHasMore((offset + pageSize) < leadsCount);
       }
+
+      logger.info('✅ État mis à jour:', { totalContacts: leadsCount, hasMore: (offset + pageSize) < leadsCount });
     } catch (error) {
-      logger.error('Erreur fusion contacts:', error);
+      logger.error('❌ Erreur fusion contacts:', error);
     }
   };
 
@@ -760,6 +770,15 @@ const CRMMaster: React.FC = () => {
           <Users className="w-16 h-16 text-purple-400 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-white mb-2">Aucun contact trouvé</h3>
           <p className="text-purple-200">Essayez de modifier vos filtres ou votre recherche</p>
+          <div className="mt-4 p-4 bg-slate-900/50 rounded-lg text-left">
+            <p className="text-xs text-gray-400 mb-2">Debug Info:</p>
+            <pre className="text-xs text-gray-300">{JSON.stringify({
+              totalContacts: contacts.length,
+              totalInDB: totalContacts,
+              filters: { searchQuery, filterType, filterStage, filterSource },
+              loading
+            }, null, 2)}</pre>
+          </div>
           <button
             onClick={() => {
               setSearchQuery('');
