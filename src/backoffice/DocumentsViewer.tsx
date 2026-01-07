@@ -15,7 +15,7 @@ interface Document {
   file_size?: number;
   mime_type?: string;
   status: string;
-  uploaded_at: string;
+  upload_date: string;
   verified_at?: string;
   verified_by?: string;
   notes?: string;
@@ -47,7 +47,7 @@ const DocumentsViewer: React.FC<DocumentsViewerProps> = ({ leadId, clientId, com
       let query = supabase
         .from('prospect_documents')
         .select('*')
-        .order('uploaded_at', { ascending: false });
+        .order('upload_date', { ascending: false });
 
       if (leadId) {
         query = query.eq('lead_id', leadId);
@@ -321,7 +321,7 @@ const DocumentsViewer: React.FC<DocumentsViewerProps> = ({ leadId, clientId, com
                 </div>
                 <div className="flex items-center gap-2">
                   <Calendar className="w-4 h-4 text-purple-400" />
-                  <span>{new Date(doc.uploaded_at).toLocaleDateString('fr-FR')}</span>
+                  <span>{new Date(doc.upload_date).toLocaleDateString('fr-FR')}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <File className="w-4 h-4 text-purple-400" />
@@ -373,7 +373,7 @@ const DocumentsViewer: React.FC<DocumentsViewerProps> = ({ leadId, clientId, com
                     {getDocumentTypeLabel(doc.document_type)}
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-300">
-                    {new Date(doc.uploaded_at).toLocaleDateString('fr-FR')}
+                    {new Date(doc.upload_date).toLocaleDateString('fr-FR')}
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-300">
                     {formatFileSize(doc.file_size)}

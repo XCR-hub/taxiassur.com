@@ -64,7 +64,7 @@ interface Document {
   file_name: string;
   document_type: string;
   status: string;
-  uploaded_at: string;
+  upload_date: string;
 }
 
 interface Campaign {
@@ -308,7 +308,7 @@ const CRMMaster: React.FC = () => {
         .from('lead_documents')
         .select('*')
         .eq('lead_id', contactId)
-        .order('uploaded_at', { ascending: false })
+        .order('upload_date', { ascending: false })
         .limit(20);
 
       if (error) {

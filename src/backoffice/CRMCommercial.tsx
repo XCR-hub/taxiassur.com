@@ -46,7 +46,7 @@ interface Document {
   file_name: string;
   document_type: string;
   status: string;
-  uploaded_at: string;
+  upload_date: string;
 }
 
 interface AISuggestion {
@@ -309,12 +309,12 @@ const CRMCommercial: React.FC = () => {
       supabase.from('crm_documents')
         .select('*')
         .eq('lead_id', leadId)
-        .order('uploaded_at', { ascending: false }),
+        .order('upload_date', { ascending: false }),
 
       supabase.from('prospect_documents')
         .select('*')
         .eq('lead_id', leadId)
-        .order('uploaded_at', { ascending: false }),
+        .order('upload_date', { ascending: false }),
 
       supabase.from('crm_ai_suggestions')
         .select('*')
@@ -331,10 +331,10 @@ const CRMCommercial: React.FC = () => {
         ...doc,
         document_type: doc.document_type,
         file_name: doc.file_name,
-        uploaded_at: doc.uploaded_at,
+        upload_date: doc.upload_date,
         status: doc.status
       }))
-    ].sort((a, b) => new Date(b.uploaded_at).getTime() - new Date(a.uploaded_at).getTime());
+    ].sort((a, b) => new Date(b.upload_date).getTime() - new Date(a.upload_date).getTime());
 
     setDocuments(allDocuments);
     if (suggestionsRes.data) setAISuggestions(suggestionsRes.data);
