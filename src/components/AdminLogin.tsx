@@ -31,6 +31,10 @@ export default function AdminLogin({ onSuccess }: AdminLoginProps) {
       }
 
       logger.info('Connexion auth réussie:', email);
+
+      // Attendre que la session soit sauvegardée
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
       onSuccess();
     } catch (err) {
       logger.error('Erreur de connexion:', err);
