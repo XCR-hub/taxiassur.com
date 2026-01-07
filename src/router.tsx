@@ -113,6 +113,11 @@ const ClientSinistres = lazy(() => import('./pages/client/ClientSinistres'));
 const ClientPaiements = lazy(() => import('./pages/client/ClientPaiements'));
 const ClientNotifications = lazy(() => import('./pages/client/ClientNotifications'));
 const ClientProfil = lazy(() => import('./pages/client/ClientProfil'));
+const EmailMarketingHub = lazy(() => import('./backoffice/EmailMarketingHub'));
+const SmartTemplatesManager = lazy(() => import('./backoffice/SmartTemplatesManager'));
+const ABTestingManager = lazy(() => import('./backoffice/ABTestingManager'));
+const NotificationsManager = lazy(() => import('./backoffice/NotificationsManager'));
+const EmailAdvancedAnalytics = lazy(() => import('./backoffice/EmailAdvancedAnalytics'));
 
 const LoadingFallback = () => (
   <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-black flex items-center justify-center">
@@ -581,6 +586,26 @@ export const router = createBrowserRouter([
       {
         path: '/backoffice/whatsapp-settings',
         element: <AuthGuard><SuspenseWrapper><WhatsAppSettings /></SuspenseWrapper></AuthGuard>
+      },
+      {
+        path: '/backoffice/email-marketing',
+        element: <AuthGuard><SuspenseWrapper><EmailMarketingHub /></SuspenseWrapper></AuthGuard>
+      },
+      {
+        path: '/backoffice/smart-templates',
+        element: <AuthGuard><SuspenseWrapper><SmartTemplatesManager /></SuspenseWrapper></AuthGuard>
+      },
+      {
+        path: '/backoffice/ab-testing',
+        element: <AuthGuard><SuspenseWrapper><ABTestingManager /></SuspenseWrapper></AuthGuard>
+      },
+      {
+        path: '/backoffice/notifications',
+        element: <AuthGuard><SuspenseWrapper><NotificationsManager /></SuspenseWrapper></AuthGuard>
+      },
+      {
+        path: '/backoffice/email-analytics',
+        element: <AuthGuard><SuspenseWrapper><EmailAdvancedAnalytics /></SuspenseWrapper></AuthGuard>
       },
       {
         path: '/auth/youtube/callback',
