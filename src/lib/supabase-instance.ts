@@ -56,52 +56,7 @@ function getSupabaseInstance() {
         persistSession: true,
         autoRefreshToken: true,
         storageKey: 'taxiassur-auth',
-        detectSessionInUrl: false,
-        flowType: 'pkce'
-      },
-      global: {
-        fetch: async (url, options = {}) => {
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 30000);
-
-          try {
-            const response = await fetch(url, {
-              ...options,
-              signal: controller.signal,
-              headers: {
-                ...options.headers,
-              }
-            });
-            clearTimeout(timeoutId);
-            return response;
-          } catch (error) {
-            clearTimeout(timeoutId);
-
-            // Silently handle token refresh failures
-            if (url.includes('/auth/v1/token')) {
-              const errorName = (error as Error).name;
-              if (errorName === 'AbortError' || errorName === 'TypeError') {
-                console.warn('⚠️ Token refresh failed - using existing session');
-                return new Response(JSON.stringify({ error: 'refresh_failed' }), {
-                  status: 200, // Return 200 to avoid cascade failures
-                  headers: { 'Content-Type': 'application/json' }
-                });
-              }
-            }
-
-            // For network errors on data fetches, return empty result instead of throwing
-            if ((error as Error).name === 'TypeError' && (error as Error).message === 'Failed to fetch') {
-              console.warn('⚠️ Network error for:', url);
-              // Return a valid empty response to prevent cascade failures
-              return new Response(JSON.stringify({ data: null, error: { message: 'Network unavailable', code: 'network_error' } }), {
-                status: 200,
-                headers: { 'Content-Type': 'application/json' }
-              });
-            }
-
-            throw error;
-          }
-        }
+        detectSessionInUrl: true
       }
     });
 
