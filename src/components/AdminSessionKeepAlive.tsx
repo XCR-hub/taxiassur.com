@@ -59,6 +59,13 @@ const AdminSessionKeepAlive: React.FC = () => {
             expires_at: data.session.expires_at,
             user: data.session.user
           }));
+
+          // Appeler la fonction keep-alive côté serveur
+          try {
+            await supabase.rpc('keep_admin_session_alive');
+          } catch (rpcErr) {
+            console.warn('Keep-alive RPC échoué (non critique):', rpcErr);
+          }
         }
       } catch (err) {
         console.error('Erreur refresh token:', err);
@@ -106,10 +113,11 @@ const AdminSessionKeepAlive: React.FC = () => {
       window.addEventListener(event, trackActivity, { passive: true });
     });
 
-    // AMÉLIORATION : Refresh plus fréquent (toutes les 30 secondes au lieu de 2 minutes)
+    // AMÉLIORATION : Refresh toutes les 1 minute pour maintenir la session active
+    // Plus de déconnexion automatique !
     refreshIntervalRef.current = setInterval(() => {
-      checkAndRefreshIfNeeded();
-    }, 30 * 1000); // 30 secondes
+      refreshSession(); // Refresh systématique pour maintenir la session
+    }, 60 * 1000); // 1 minute
 
     // IMPORTANT : Rafraîchir immédiatement au chargement de la page
     console.log('🔄 Refresh initial au chargement de la page backoffice');

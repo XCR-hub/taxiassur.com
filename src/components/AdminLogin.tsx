@@ -32,6 +32,22 @@ export default function AdminLogin({ onSuccess }: AdminLoginProps) {
 
       logger.info('Connexion auth réussie:', email);
 
+      // Sauvegarder la session dans localStorage pour persistance
+      if (data.session) {
+        localStorage.setItem('taxiassur-admin-session', JSON.stringify({
+          access_token: data.session.access_token,
+          refresh_token: data.session.refresh_token,
+          expires_at: data.session.expires_at,
+          user: data.session.user,
+          timestamp: Date.now()
+        }));
+
+        // Marquer comme session admin permanente
+        localStorage.setItem('taxiassur-admin-permanent', 'true');
+
+        logger.info('✅ Session admin sauvegardée (permanente)');
+      }
+
       // Attendre que la session soit sauvegardée
       await new Promise(resolve => setTimeout(resolve, 1000));
 
