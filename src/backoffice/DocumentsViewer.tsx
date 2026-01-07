@@ -195,20 +195,20 @@ const DocumentsViewer: React.FC<DocumentsViewerProps> = ({ leadId, clientId, com
       {/* Header & Stats */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h3 className="text-2xl font-bold text-gray-900">Documents</h3>
-          <p className="text-gray-600 mt-1">{stats.total} document(s) au total</p>
+          <h3 className="text-2xl font-bold text-white">Documents</h3>
+          <p className="text-purple-300 mt-1">{stats.total} document(s) au total</p>
         </div>
 
         <div className="flex items-center gap-3">
           <button
             onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
-            className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors"
+            className="p-2 rounded-lg border border-purple-500/30 hover:bg-slate-800 transition-colors text-purple-300"
           >
             {viewMode === 'grid' ? <List className="w-5 h-5" /> : <Grid className="w-5 h-5" />}
           </button>
           <button
             onClick={loadDocuments}
-            className="flex items-center gap-2 px-4 py-2 bg-pink-500 text-white rounded-lg hover:bg-pink-600 transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:from-purple-600 hover:to-pink-600 transition-all shadow-lg shadow-purple-500/50"
           >
             <RefreshCw className="w-4 h-4" />
             Actualiser
@@ -218,43 +218,43 @@ const DocumentsViewer: React.FC<DocumentsViewerProps> = ({ leadId, clientId, com
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-xl border border-blue-200">
+        <div className="bg-gradient-to-br from-blue-900/50 to-blue-800/50 p-4 rounded-xl border border-blue-500/30 backdrop-blur-sm hover:border-blue-500/50 transition-all">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-blue-600 text-sm font-semibold">Total</p>
-              <p className="text-3xl font-bold text-blue-700">{stats.total}</p>
+              <p className="text-blue-300 text-sm font-semibold">Total</p>
+              <p className="text-3xl font-bold text-blue-100">{stats.total}</p>
             </div>
-            <FileText className="w-10 h-10 text-blue-500 opacity-50" />
+            <FileText className="w-10 h-10 text-blue-400 opacity-50" />
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-green-50 to-green-100 p-4 rounded-xl border border-green-200">
+        <div className="bg-gradient-to-br from-green-900/50 to-green-800/50 p-4 rounded-xl border border-green-500/30 backdrop-blur-sm hover:border-green-500/50 transition-all">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-green-600 text-sm font-semibold">Vérifiés</p>
-              <p className="text-3xl font-bold text-green-700">{stats.verified}</p>
+              <p className="text-green-300 text-sm font-semibold">Vérifiés</p>
+              <p className="text-3xl font-bold text-green-100">{stats.verified}</p>
             </div>
-            <CheckCircle className="w-10 h-10 text-green-500 opacity-50" />
+            <CheckCircle className="w-10 h-10 text-green-400 opacity-50" />
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 p-4 rounded-xl border border-yellow-200">
+        <div className="bg-gradient-to-br from-yellow-900/50 to-yellow-800/50 p-4 rounded-xl border border-yellow-500/30 backdrop-blur-sm hover:border-yellow-500/50 transition-all">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-yellow-600 text-sm font-semibold">En attente</p>
-              <p className="text-3xl font-bold text-yellow-700">{stats.pending}</p>
+              <p className="text-yellow-300 text-sm font-semibold">En attente</p>
+              <p className="text-3xl font-bold text-yellow-100">{stats.pending}</p>
             </div>
-            <Clock className="w-10 h-10 text-yellow-500 opacity-50" />
+            <Clock className="w-10 h-10 text-yellow-400 opacity-50" />
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-red-50 to-red-100 p-4 rounded-xl border border-red-200">
+        <div className="bg-gradient-to-br from-red-900/50 to-red-800/50 p-4 rounded-xl border border-red-500/30 backdrop-blur-sm hover:border-red-500/50 transition-all">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-red-600 text-sm font-semibold">Rejetés</p>
-              <p className="text-3xl font-bold text-red-700">{stats.rejected}</p>
+              <p className="text-red-300 text-sm font-semibold">Rejetés</p>
+              <p className="text-3xl font-bold text-red-100">{stats.rejected}</p>
             </div>
-            <XCircle className="w-10 h-10 text-red-500 opacity-50" />
+            <XCircle className="w-10 h-10 text-red-400 opacity-50" />
           </div>
         </div>
       </div>
@@ -263,23 +263,23 @@ const DocumentsViewer: React.FC<DocumentsViewerProps> = ({ leadId, clientId, com
       <div className="flex items-center gap-4 flex-wrap">
         <div className="flex-1 min-w-[200px]">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-purple-400" />
             <input
               type="text"
               placeholder="Rechercher un document..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+              className="w-full pl-10 pr-4 py-2 bg-slate-800/50 border border-purple-500/30 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-white placeholder-gray-400 backdrop-blur-sm"
             />
           </div>
         </div>
 
         <div className="flex items-center gap-2">
-          <Filter className="w-5 h-5 text-gray-400" />
+          <Filter className="w-5 h-5 text-purple-400" />
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+            className="px-4 py-2 bg-slate-800/50 border border-purple-500/30 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-white backdrop-blur-sm"
           >
             <option value="all">Tous les statuts</option>
             <option value="pending">En attente</option>
@@ -292,17 +292,17 @@ const DocumentsViewer: React.FC<DocumentsViewerProps> = ({ leadId, clientId, com
 
       {/* Documents Grid/List */}
       {filteredDocuments.length === 0 ? (
-        <div className="text-center py-12 bg-gray-50 rounded-xl border-2 border-dashed border-gray-300">
-          <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-600 text-lg font-semibold">Aucun document trouvé</p>
-          <p className="text-gray-500 mt-2">Les documents uploadés apparaîtront ici</p>
+        <div className="text-center py-12 bg-slate-800/30 rounded-xl border-2 border-dashed border-purple-500/30 backdrop-blur-sm">
+          <FileText className="w-16 h-16 text-purple-400 mx-auto mb-4" />
+          <p className="text-white text-lg font-semibold">Aucun document trouvé</p>
+          <p className="text-gray-400 mt-2">Les documents uploadés apparaîtront ici</p>
         </div>
       ) : viewMode === 'grid' ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredDocuments.map((doc) => (
             <div
               key={doc.id}
-              className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-lg transition-all cursor-pointer group"
+              className="bg-slate-800/50 border border-purple-500/20 rounded-xl p-6 hover:border-purple-500/50 hover:shadow-lg hover:shadow-purple-500/20 transition-all cursor-pointer group backdrop-blur-sm"
               onClick={() => previewDocument(doc)}
             >
               <div className="flex items-start justify-between mb-4">
@@ -310,36 +310,36 @@ const DocumentsViewer: React.FC<DocumentsViewerProps> = ({ leadId, clientId, com
                 {getStatusBadge(doc.status)}
               </div>
 
-              <h4 className="font-bold text-gray-900 mb-2 truncate group-hover:text-pink-600 transition-colors">
+              <h4 className="font-bold text-white mb-2 truncate group-hover:text-purple-400 transition-colors">
                 {doc.file_name}
               </h4>
 
-              <div className="space-y-2 text-sm text-gray-600">
+              <div className="space-y-2 text-sm text-gray-300">
                 <div className="flex items-center gap-2">
-                  <Tag className="w-4 h-4" />
+                  <Tag className="w-4 h-4 text-purple-400" />
                   <span>{getDocumentTypeLabel(doc.document_type)}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Calendar className="w-4 h-4" />
+                  <Calendar className="w-4 h-4 text-purple-400" />
                   <span>{new Date(doc.uploaded_at).toLocaleDateString('fr-FR')}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <File className="w-4 h-4" />
+                  <File className="w-4 h-4 text-purple-400" />
                   <span>{formatFileSize(doc.file_size)}</span>
                 </div>
               </div>
 
-              <div className="flex items-center gap-2 mt-4 pt-4 border-t border-gray-100">
+              <div className="flex items-center gap-2 mt-4 pt-4 border-t border-purple-500/20">
                 <button
                   onClick={(e) => { e.stopPropagation(); downloadDocument(doc); }}
-                  className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-pink-50 text-pink-600 rounded-lg hover:bg-pink-100 transition-colors"
+                  className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-gradient-to-r from-purple-500/20 to-pink-500/20 text-purple-300 rounded-lg hover:from-purple-500/30 hover:to-pink-500/30 transition-all border border-purple-500/30"
                 >
                   <Download className="w-4 h-4" />
                   Télécharger
                 </button>
                 <button
                   onClick={(e) => { e.stopPropagation(); previewDocument(doc); }}
-                  className="flex items-center justify-center gap-2 px-3 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors"
+                  className="flex items-center justify-center gap-2 px-3 py-2 bg-blue-500/20 text-blue-300 rounded-lg hover:bg-blue-500/30 transition-all border border-blue-500/30"
                 >
                   <Eye className="w-4 h-4" />
                 </button>
@@ -348,34 +348,34 @@ const DocumentsViewer: React.FC<DocumentsViewerProps> = ({ leadId, clientId, com
           ))}
         </div>
       ) : (
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        <div className="bg-slate-800/50 rounded-xl border border-purple-500/20 overflow-hidden backdrop-blur-sm">
           <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
+            <thead className="bg-slate-900/50 border-b border-purple-500/30">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Document</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Type</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Date</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Taille</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Statut</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Actions</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-purple-300 uppercase">Document</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-purple-300 uppercase">Type</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-purple-300 uppercase">Date</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-purple-300 uppercase">Taille</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-purple-300 uppercase">Statut</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-purple-300 uppercase">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200">
+            <tbody className="divide-y divide-purple-500/20">
               {filteredDocuments.map((doc) => (
-                <tr key={doc.id} className="hover:bg-gray-50 transition-colors">
+                <tr key={doc.id} className="hover:bg-slate-700/30 transition-colors">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       {getDocumentIcon(doc.mime_type, doc.file_name)}
-                      <span className="font-medium text-gray-900">{doc.file_name}</span>
+                      <span className="font-medium text-white">{doc.file_name}</span>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-600">
+                  <td className="px-6 py-4 text-sm text-gray-300">
                     {getDocumentTypeLabel(doc.document_type)}
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-600">
+                  <td className="px-6 py-4 text-sm text-gray-300">
                     {new Date(doc.uploaded_at).toLocaleDateString('fr-FR')}
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-600">
+                  <td className="px-6 py-4 text-sm text-gray-300">
                     {formatFileSize(doc.file_size)}
                   </td>
                   <td className="px-6 py-4">
@@ -385,14 +385,14 @@ const DocumentsViewer: React.FC<DocumentsViewerProps> = ({ leadId, clientId, com
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => previewDocument(doc)}
-                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                        className="p-2 text-blue-400 hover:bg-blue-500/20 rounded-lg transition-colors"
                         title="Aperçu"
                       >
                         <Eye className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => downloadDocument(doc)}
-                        className="p-2 text-pink-600 hover:bg-pink-50 rounded-lg transition-colors"
+                        className="p-2 text-purple-400 hover:bg-purple-500/20 rounded-lg transition-colors"
                         title="Télécharger"
                       >
                         <Download className="w-4 h-4" />
@@ -408,51 +408,51 @@ const DocumentsViewer: React.FC<DocumentsViewerProps> = ({ leadId, clientId, com
 
       {/* Preview Modal */}
       {selectedDoc && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
-            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+        <div className="fixed inset-0 bg-black bg-opacity-70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-2xl border border-purple-500/30 max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col shadow-2xl">
+            <div className="flex items-center justify-between p-6 border-b border-purple-500/30 bg-gradient-to-r from-slate-900 via-purple-900/20 to-slate-900">
               <div>
-                <h3 className="text-xl font-bold text-gray-900">{selectedDoc.file_name}</h3>
-                <p className="text-gray-600 mt-1">{getDocumentTypeLabel(selectedDoc.document_type)}</p>
+                <h3 className="text-xl font-bold text-white">{selectedDoc.file_name}</h3>
+                <p className="text-purple-300 mt-1">{getDocumentTypeLabel(selectedDoc.document_type)}</p>
               </div>
               <button
                 onClick={() => { setSelectedDoc(null); setPreviewUrl(null); }}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                className="p-2 hover:bg-slate-800 rounded-lg transition-colors text-gray-400 hover:text-white"
               >
-                <XCircle className="w-6 h-6 text-gray-600" />
+                <XCircle className="w-6 h-6" />
               </button>
             </div>
 
-            <div className="flex-1 overflow-auto p-6 bg-gray-50">
+            <div className="flex-1 overflow-auto p-6 bg-slate-900/50">
               {previewUrl ? (
                 selectedDoc.mime_type?.includes('image') ? (
-                  <img src={previewUrl} alt={selectedDoc.file_name} className="max-w-full h-auto mx-auto rounded-lg shadow-lg" />
+                  <img src={previewUrl} alt={selectedDoc.file_name} className="max-w-full h-auto mx-auto rounded-lg shadow-2xl border border-purple-500/20" />
                 ) : selectedDoc.mime_type?.includes('pdf') ? (
-                  <iframe src={previewUrl} className="w-full h-[600px] rounded-lg shadow-lg" />
+                  <iframe src={previewUrl} className="w-full h-[600px] rounded-lg shadow-2xl border border-purple-500/20" />
                 ) : (
                   <div className="text-center py-12">
-                    <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                    <p className="text-gray-600">Aperçu non disponible pour ce type de fichier</p>
+                    <FileText className="w-16 h-16 text-purple-400 mx-auto mb-4" />
+                    <p className="text-white">Aperçu non disponible pour ce type de fichier</p>
                   </div>
                 )
               ) : (
                 <div className="flex items-center justify-center py-12">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-500"></div>
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
                 </div>
               )}
             </div>
 
-            <div className="flex items-center gap-4 p-6 border-t border-gray-200 bg-white">
+            <div className="flex items-center gap-4 p-6 border-t border-purple-500/30 bg-gradient-to-r from-slate-900 via-purple-900/20 to-slate-900">
               <button
                 onClick={() => downloadDocument(selectedDoc)}
-                className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-pink-500 text-white rounded-lg hover:bg-pink-600 transition-colors font-semibold"
+                className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:from-purple-600 hover:to-pink-600 transition-all font-semibold shadow-lg shadow-purple-500/50"
               >
                 <Download className="w-5 h-5" />
                 Télécharger
               </button>
               <button
                 onClick={() => { setSelectedDoc(null); setPreviewUrl(null); }}
-                className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-semibold"
+                className="px-6 py-3 border border-purple-500/30 text-white rounded-lg hover:bg-slate-800 transition-colors font-semibold"
               >
                 Fermer
               </button>

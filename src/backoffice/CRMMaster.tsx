@@ -658,34 +658,34 @@ const CRMMaster: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900/20 to-slate-900 flex items-center justify-center">
         <div className="text-center">
-          <RefreshCw className="w-12 h-12 text-blue-600 animate-spin mx-auto mb-4" />
-          <p className="text-gray-600">Chargement du CRM Master...</p>
+          <RefreshCw className="w-12 h-12 text-purple-500 animate-spin mx-auto mb-4" />
+          <p className="text-purple-300">Chargement du CRM Master...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900/20 to-slate-900">
       <div className="max-w-[1920px] mx-auto p-6">
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-4">
               <button
                 onClick={() => navigate('/backoffice')}
-                className="p-2 hover:bg-white rounded-lg transition-colors"
+                className="p-2 hover:bg-slate-800 rounded-lg transition-colors border border-purple-500/30"
                 title="Retour au dashboard"
               >
-                <Home className="w-6 h-6 text-gray-600" />
+                <Home className="w-6 h-6 text-purple-400" />
               </button>
               <div>
-                <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-                  <Sparkles className="w-8 h-8 text-purple-600" />
+                <h1 className="text-3xl font-bold text-white flex items-center gap-3">
+                  <Sparkles className="w-8 h-8 text-purple-500 animate-pulse" />
                   CRM Master Ultra-Complet
                 </h1>
-                <p className="text-gray-600 mt-1">
+                <p className="text-purple-300 mt-1">
                   Gestion unifiée de tous vos contacts, prospects et clients
                 </p>
               </div>
@@ -694,14 +694,14 @@ const CRMMaster: React.FC = () => {
             <div className="flex items-center gap-3">
               <button
                 onClick={loadAllData}
-                className="flex items-center gap-2 px-4 py-2 bg-white text-gray-700 rounded-lg hover:bg-gray-50 transition-colors shadow-sm"
+                className="flex items-center gap-2 px-4 py-2 bg-slate-800/50 text-purple-300 rounded-lg hover:bg-slate-800 transition-colors shadow-lg border border-purple-500/30"
               >
                 <RefreshCw className="w-4 h-4" />
                 Actualiser
               </button>
               <button
                 onClick={() => setShowContactModal(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
+                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:from-purple-600 hover:to-pink-600 transition-all shadow-lg shadow-purple-500/50"
               >
                 <Plus className="w-4 h-4" />
                 Nouveau Contact
@@ -712,10 +712,10 @@ const CRMMaster: React.FC = () => {
           <div className="flex gap-2 mb-6">
             <button
               onClick={() => setActiveTab('overview')}
-              className={`px-4 py-2 rounded-lg transition-colors ${
+              className={`px-4 py-2 rounded-lg transition-all ${
                 activeTab === 'overview'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-white text-gray-700 hover:bg-gray-50'
+                  ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg shadow-purple-500/50'
+                  : 'bg-slate-800/50 text-purple-300 hover:bg-slate-800 border border-purple-500/30'
               }`}
             >
               <BarChart3 className="w-4 h-4 inline mr-2" />
@@ -723,10 +723,10 @@ const CRMMaster: React.FC = () => {
             </button>
             <button
               onClick={() => setActiveTab('contacts')}
-              className={`px-4 py-2 rounded-lg transition-colors ${
+              className={`px-4 py-2 rounded-lg transition-all ${
                 activeTab === 'contacts'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-white text-gray-700 hover:bg-gray-50'
+                  ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg shadow-purple-500/50'
+                  : 'bg-slate-800/50 text-purple-300 hover:bg-slate-800 border border-purple-500/30'
               }`}
             >
               <Users className="w-4 h-4 inline mr-2" />
@@ -734,10 +734,10 @@ const CRMMaster: React.FC = () => {
             </button>
             <button
               onClick={() => setActiveTab('pipeline')}
-              className={`px-4 py-2 rounded-lg transition-colors ${
+              className={`px-4 py-2 rounded-lg transition-all ${
                 activeTab === 'pipeline'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-white text-gray-700 hover:bg-gray-50'
+                  ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg shadow-purple-500/50'
+                  : 'bg-slate-800/50 text-purple-300 hover:bg-slate-800 border border-purple-500/30'
               }`}
             >
               <Target className="w-4 h-4 inline mr-2" />
@@ -745,10 +745,10 @@ const CRMMaster: React.FC = () => {
             </button>
             <button
               onClick={() => setActiveTab('campaigns')}
-              className={`px-4 py-2 rounded-lg transition-colors ${
+              className={`px-4 py-2 rounded-lg transition-all ${
                 activeTab === 'campaigns'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-white text-gray-700 hover:bg-gray-50'
+                  ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg shadow-purple-500/50'
+                  : 'bg-slate-800/50 text-purple-300 hover:bg-slate-800 border border-purple-500/30'
               }`}
             >
               <Send className="w-4 h-4 inline mr-2" />
@@ -756,10 +756,10 @@ const CRMMaster: React.FC = () => {
             </button>
             <button
               onClick={() => setActiveTab('analytics')}
-              className={`px-4 py-2 rounded-lg transition-colors ${
+              className={`px-4 py-2 rounded-lg transition-all ${
                 activeTab === 'analytics'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-white text-gray-700 hover:bg-gray-50'
+                  ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg shadow-purple-500/50'
+                  : 'bg-slate-800/50 text-purple-300 hover:bg-slate-800 border border-purple-500/30'
               }`}
             >
               <Activity className="w-4 h-4 inline mr-2" />
@@ -768,17 +768,17 @@ const CRMMaster: React.FC = () => {
           </div>
 
           {activeTab === 'contacts' && (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6">
+            <div className="bg-slate-800/50 rounded-xl shadow-lg border border-purple-500/30 p-4 mb-6 backdrop-blur-sm">
               <div className="flex flex-wrap gap-4">
                 <div className="flex-1 min-w-[300px]">
                   <div className="relative">
-                    <Search className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <Search className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-purple-400" />
                     <input
                       type="text"
                       placeholder="Rechercher un contact..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full pl-10 pr-4 py-2 bg-slate-900/50 border border-purple-500/30 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-white placeholder-gray-400"
                     />
                   </div>
                 </div>
@@ -786,7 +786,7 @@ const CRMMaster: React.FC = () => {
                 <select
                   value={filterType}
                   onChange={(e) => setFilterType(e.target.value)}
-                  className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="px-4 py-2 bg-slate-900/50 border border-purple-500/30 rounded-lg focus:ring-2 focus:ring-purple-500 text-white"
                 >
                   <option value="all">Tous les types</option>
                   {CONTACT_TYPES.map(type => (
@@ -797,7 +797,7 @@ const CRMMaster: React.FC = () => {
                 <select
                   value={filterStage}
                   onChange={(e) => setFilterStage(e.target.value)}
-                  className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="px-4 py-2 bg-slate-900/50 border border-purple-500/30 rounded-lg focus:ring-2 focus:ring-purple-500 text-white"
                 >
                   <option value="all">Tous les stages</option>
                   {STAGES.map(stage => (
@@ -826,19 +826,30 @@ const CRMMaster: React.FC = () => {
         )}
 
         {selectedContact && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-              <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex items-center justify-between">
-                <h2 className="text-2xl font-bold text-gray-900">
-                  {selectedContact.first_name} {selectedContact.last_name}
-                </h2>
+          <div className="fixed inset-0 bg-black bg-opacity-70 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+            <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-2xl shadow-2xl border border-purple-500/30 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="sticky top-0 bg-gradient-to-r from-slate-900 via-purple-900/20 to-slate-900 border-b border-purple-500/30 p-6 flex items-center justify-between backdrop-blur-sm">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-purple-500/50">
+                    {selectedContact.first_name?.[0]}{selectedContact.last_name?.[0]}
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold text-white">
+                      {selectedContact.first_name} {selectedContact.last_name}
+                    </h2>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Sparkles className="w-4 h-4 text-purple-400" />
+                      <span className="text-purple-300 text-sm">Score: {selectedContact.lead_score || 0}/100</span>
+                    </div>
+                  </div>
+                </div>
                 <button
                   onClick={() => {
                     setSelectedContact(null);
                     setInteractions([]);
                     setDocuments([]);
                   }}
-                  className="text-gray-400 hover:text-gray-600"
+                  className="text-gray-400 hover:text-white transition-colors hover:bg-slate-800 p-2 rounded-lg"
                 >
                   <XCircle className="w-6 h-6" />
                 </button>
@@ -846,23 +857,35 @@ const CRMMaster: React.FC = () => {
 
               <div className="p-6">
                 <div className="grid grid-cols-2 gap-4 mb-6">
-                  <div>
-                    <p className="text-sm text-gray-600">Email</p>
-                    <p className="font-medium text-gray-900">{selectedContact.email}</p>
+                  <div className="bg-slate-800/50 backdrop-blur-sm border border-purple-500/20 rounded-xl p-4 hover:border-purple-500/40 transition-all">
+                    <p className="text-sm text-purple-300 mb-2 flex items-center gap-2">
+                      <Mail className="w-4 h-4" />
+                      Email
+                    </p>
+                    <p className="font-medium text-white">{selectedContact.email}</p>
                   </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Téléphone</p>
-                    <p className="font-medium text-gray-900">{selectedContact.phone || 'N/A'}</p>
+                  <div className="bg-slate-800/50 backdrop-blur-sm border border-purple-500/20 rounded-xl p-4 hover:border-purple-500/40 transition-all">
+                    <p className="text-sm text-purple-300 mb-2 flex items-center gap-2">
+                      <Phone className="w-4 h-4" />
+                      Téléphone
+                    </p>
+                    <p className="font-medium text-white">{selectedContact.phone || 'N/A'}</p>
                   </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Type</p>
-                    <p className="font-medium text-gray-900">
+                  <div className="bg-slate-800/50 backdrop-blur-sm border border-purple-500/20 rounded-xl p-4 hover:border-purple-500/40 transition-all">
+                    <p className="text-sm text-purple-300 mb-2 flex items-center gap-2">
+                      <Tag className="w-4 h-4" />
+                      Type
+                    </p>
+                    <p className="font-medium text-white">
                       {CONTACT_TYPES.find(t => t.id === selectedContact.contact_type)?.label}
                     </p>
                   </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Stage</p>
-                    <p className="font-medium text-gray-900">
+                  <div className="bg-slate-800/50 backdrop-blur-sm border border-purple-500/20 rounded-xl p-4 hover:border-purple-500/40 transition-all">
+                    <p className="text-sm text-purple-300 mb-2 flex items-center gap-2">
+                      <Target className="w-4 h-4" />
+                      Stage
+                    </p>
+                    <p className="font-medium text-white">
                       {STAGES.find(s => s.id === selectedContact.stage)?.label}
                     </p>
                   </div>
@@ -870,18 +893,21 @@ const CRMMaster: React.FC = () => {
 
                 <div className="space-y-6">
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-3">Interactions ({interactions.length})</h3>
+                    <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
+                      <Activity className="w-5 h-5 text-purple-400" />
+                      Interactions ({interactions.length})
+                    </h3>
                     <div className="space-y-2 max-h-60 overflow-y-auto">
                       {interactions.map(interaction => (
-                        <div key={interaction.id} className="bg-gray-50 p-3 rounded-lg">
+                        <div key={interaction.id} className="bg-slate-800/50 backdrop-blur-sm border border-purple-500/20 p-4 rounded-xl hover:border-purple-500/40 transition-all">
                           <div className="flex items-center gap-2 mb-1">
-                            <span className="text-sm font-medium text-gray-900">{interaction.type}</span>
-                            <span className="text-xs text-gray-500">
+                            <span className="text-sm font-medium text-white">{interaction.type}</span>
+                            <span className="text-xs text-purple-300">
                               {new Date(interaction.created_at).toLocaleDateString('fr-FR')}
                             </span>
                           </div>
                           {interaction.subject && (
-                            <p className="text-sm text-gray-700">{interaction.subject}</p>
+                            <p className="text-sm text-gray-300">{interaction.subject}</p>
                           )}
                         </div>
                       ))}
@@ -889,7 +915,10 @@ const CRMMaster: React.FC = () => {
                   </div>
 
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-3">Documents ({documents.length})</h3>
+                    <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
+                      <FileText className="w-5 h-5 text-purple-400" />
+                      Documents ({documents.length})
+                    </h3>
                     <DocumentsViewer leadId={selectedContact.id} />
                   </div>
                 </div>
