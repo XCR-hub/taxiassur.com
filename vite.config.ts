@@ -147,32 +147,26 @@ export default defineConfig(({ mode }) => ({
       compress: {
         drop_console: true,
         drop_debugger: true,
-        passes: 3,
+        passes: 2,
         pure_funcs: ['console.log', 'console.info', 'console.debug'],
-        pure_getters: true,
-        unsafe: true,
-        unsafe_comps: true,
+        pure_getters: false,
+        unsafe: false,
+        unsafe_comps: false,
         unsafe_math: true,
-        unsafe_methods: true,
-        arguments: true,
-        booleans_as_integers: true,
+        unsafe_methods: false,
+        arguments: false,
         reduce_vars: true,
         reduce_funcs: true,
-        toplevel: true,
         keep_fargs: false,
         keep_infinity: true
       },
       mangle: {
         safari10: true,
-        toplevel: true,
-        properties: {
-          regex: /^_/
-        }
+        toplevel: false
       },
       format: {
         comments: false,
-        ecma: 2020,
-        ascii_only: true
+        ecma: 2020
       }
     }
   },

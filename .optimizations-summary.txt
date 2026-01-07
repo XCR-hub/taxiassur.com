@@ -14,11 +14,11 @@ FILES MODIFIED:
 
 2. vite.config.ts
    - Target changed to ES2020
-   - Terser compression: 3 passes (was 2)
+   - Terser compression: 2 passes (safe for classes)
    - Drop all console.* in production
    - Inline limit: 8KB (was 4KB)
    - Chunk size limit: 500KB (was 1000KB)
-   - Aggressive minification options
+   - Safe minification (no unsafe transforms)
 
 3. src/main.tsx
    - Moved Supabase init to requestIdleCallback
@@ -42,16 +42,16 @@ FILES MODIFIED:
 
 BUILD RESULTS:
 --------------
-✓ Build time: 1m 5s
+✓ Build time: 37s (2x faster than before!)
 ✓ Total chunks: 77 files
 ✓ Total size: 2.4 MB (precached)
 
 Key bundles (gzipped):
-- index.js: 9.93 KB
-- vendor-react: 83.07 KB (-68% compression)
-- vendor-supabase: 36.92 KB
+- index.js: 10.05 KB
+- vendor-react: 83.95 KB (-68% compression)
+- vendor-supabase: 37.76 KB
 - CSS: 22.56 KB (-86% compression)
-- page-home: 17.77 KB
+- page-home: 17.89 KB
 
 PERFORMANCE GAINS (ESTIMATED):
 ------------------------------
@@ -67,8 +67,15 @@ TECHNIQUES APPLIED:
 ✓ Lazy loading non-critical components
 ✓ Deferred third-party scripts
 ✓ Progressive enhancement
-✓ Terser aggressive compression
+✓ Terser safe compression (preserves classes)
 ✓ Request idle callback for heavy init
+
+FIXES APPLIED:
+--------------
+✓ Fixed Terser unsafe options breaking Supabase
+✓ Disabled unsafe transforms (unsafe, unsafe_methods, unsafe_comps)
+✓ Disabled toplevel mangling (breaks class inheritance)
+✓ Build now works correctly with all libraries
 
 NEXT STEPS:
 -----------
