@@ -9,14 +9,15 @@ interface AuthGuardProps {
 
 const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
   const { user, loading, isAuthenticated, signOut } = useAdminAuth();
-  const [timeout, setTimeout] = useState(false);
+  const [isTimeout, setIsTimeout] = useState(false);
   const [startTime] = useState(() => performance.now());
+  const [forceRecheck, setForceRecheck] = useState(0);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
       if (loading) {
         console.error('⚠️ AuthGuard timeout: chargement trop long');
-        setTimeout(true);
+        setIsTimeout(true);
       }
     }, 15000);
 
@@ -44,7 +45,7 @@ const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
     }
   }, [loading, isAuthenticated, user, startTime]);
 
-  if (timeout && loading) {
+  if (isTimeout && loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center max-w-md">
@@ -81,7 +82,12 @@ const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
   }
 
   if (!isAuthenticated) {
-    return <AdminLogin onSuccess={() => {}} />;
+    return <AdminLogin onSuccess={() => {
+      console.log('✅ Login success, reloading to update auth state...');
+      window.setTimeout(() => {
+        window.location.reload();
+      }, 500);
+    }} />;
   }
 
   return (
