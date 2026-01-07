@@ -130,6 +130,11 @@ const CRMMaster: React.FC = () => {
   const [filterStage, setFilterStage] = useState<string>('all');
   const [filterSource, setFilterSource] = useState<string>('all');
 
+  const [pageSize] = useState(100);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const [totalContacts, setTotalContacts] = useState(0);
+
   const [showContactModal, setShowContactModal] = useState(false);
   const [showInteractionModal, setShowInteractionModal] = useState(false);
   const [showEmailComposer, setShowEmailComposer] = useState(false);
@@ -158,19 +163,20 @@ const CRMMaster: React.FC = () => {
     }
   };
 
-  const loadContacts = async () => {
+  const loadContacts = async (append = false) => {
     try {
-      const { data: leadsData, error: leadsError } = await supabase
+      const offset = append ? currentPage * pageSize : 0;
+      const { data: leadsData, error: leadsError, count: leadsCount } = await supabase
         .from('leads')
-        .select('*')
+        .select('*', { count: 'exact' })
         .order('created_at', { ascending: false })
-        .limit(500);
+        .range(offset, offset + pageSize - 1);
 
       const { data: unifiedData, error: unifiedError } = await supabase
         .from('unified_contacts')
         .select('*')
         .order('created_at', { ascending: false })
-        .limit(200);
+        .range(offset, offset + Math.floor(pageSize / 2) - 1);
 
       if (leadsError) logger.error('Erreur leads:', leadsError);
       if (unifiedError) logger.error('Erreur unified:', unifiedError);
@@ -240,7 +246,18 @@ const CRMMaster: React.FC = () => {
         });
       }
 
-      setContacts(Array.from(emailMap.values()));
+      const newContacts = Array.from(emailMap.values());
+
+      if (append) {
+        setContacts(prev => [...prev, ...newContacts]);
+      } else {
+        setContacts(newContacts);
+      }
+
+      if (leadsCount !== null) {
+        setTotalContacts(leadsCount);
+        setHasMore((offset + pageSize) < leadsCount);
+      }
     } catch (error) {
       logger.error('Erreur fusion contacts:', error);
     }
@@ -482,7 +499,7 @@ const CRMMaster: React.FC = () => {
                   <p className="text-xs text-gray-600 mt-1">
                     Agent: {decision.ai_agent} • Confiance: {(decision.confidence_score * 100).toFixed(0)}%
                   </p>
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-xs text-slate-300 mt-1">
                     {new Date(decision.created_at).toLocaleString('fr-FR')}
                   </p>
                 </div>
@@ -560,7 +577,7 @@ const CRMMaster: React.FC = () => {
                     {contactTypeInfo?.label}
                   </span>
 
-                  <span className="text-xs text-gray-500">
+                  <span className="text-xs text-slate-300">
                     {new Date(contact.created_at).toLocaleDateString('fr-FR')}
                   </span>
                 </div>
@@ -595,11 +612,26 @@ const CRMMaster: React.FC = () => {
         );
       })}
 
+      {hasMore && filteredContacts.length > 0 && (
+        <div className="flex justify-center mt-6">
+          <button
+            onClick={() => {
+              setCurrentPage(prev => prev + 1);
+              loadContacts(true);
+            }}
+            className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:from-purple-600 hover:to-pink-600 transition-all shadow-lg shadow-purple-500/50"
+          >
+            <RefreshCw className="w-4 h-4" />
+            Charger plus ({totalContacts - contacts.length} restants)
+          </button>
+        </div>
+      )}
+
       {filteredContacts.length === 0 && (
         <div className="text-center py-12">
-          <Users className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">Aucun contact trouvé</h3>
-          <p className="text-gray-600">Essayez de modifier vos filtres ou votre recherche</p>
+          <Users className="w-16 h-16 text-slate-500 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-white mb-2">Aucun contact trouvé</h3>
+          <p className="text-slate-400">Essayez de modifier vos filtres ou votre recherche</p>
         </div>
       )}
     </div>
@@ -639,7 +671,7 @@ const CRMMaster: React.FC = () => {
                       <p className="text-xs text-gray-600 mb-2">{contact.company_name}</p>
                     )}
                     <div className="flex items-center justify-between">
-                      <span className="text-xs text-gray-500">Score: {contact.lead_score}</span>
+                      <span className="text-xs text-slate-300">Score: {contact.lead_score}</span>
                       {contact.estimated_value && (
                         <span className="text-xs font-medium text-green-600">
                           {contact.estimated_value.toLocaleString()} €
@@ -685,7 +717,7 @@ const CRMMaster: React.FC = () => {
                   <Sparkles className="w-8 h-8 text-purple-500 animate-pulse" />
                   CRM Master Ultra-Complet
                 </h1>
-                <p className="text-purple-300 mt-1">
+                <p className="text-slate-200 mt-1">
                   Gestion unifiée de tous vos contacts, prospects et clients
                 </p>
               </div>
@@ -694,7 +726,7 @@ const CRMMaster: React.FC = () => {
             <div className="flex items-center gap-3">
               <button
                 onClick={loadAllData}
-                className="flex items-center gap-2 px-4 py-2 bg-slate-800/50 text-purple-300 rounded-lg hover:bg-slate-800 transition-colors shadow-lg border border-purple-500/30"
+                className="flex items-center gap-2 px-4 py-2 bg-slate-800/50 text-slate-100 rounded-lg hover:bg-slate-800 transition-colors shadow-lg border border-purple-500/30"
               >
                 <RefreshCw className="w-4 h-4" />
                 Actualiser
@@ -715,7 +747,7 @@ const CRMMaster: React.FC = () => {
               className={`px-4 py-2 rounded-lg transition-all ${
                 activeTab === 'overview'
                   ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg shadow-purple-500/50'
-                  : 'bg-slate-800/50 text-purple-300 hover:bg-slate-800 border border-purple-500/30'
+                  : 'bg-slate-800/50 text-slate-100 hover:bg-slate-800 border border-purple-500/30'
               }`}
             >
               <BarChart3 className="w-4 h-4 inline mr-2" />
@@ -726,7 +758,7 @@ const CRMMaster: React.FC = () => {
               className={`px-4 py-2 rounded-lg transition-all ${
                 activeTab === 'contacts'
                   ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg shadow-purple-500/50'
-                  : 'bg-slate-800/50 text-purple-300 hover:bg-slate-800 border border-purple-500/30'
+                  : 'bg-slate-800/50 text-slate-100 hover:bg-slate-800 border border-purple-500/30'
               }`}
             >
               <Users className="w-4 h-4 inline mr-2" />
@@ -737,7 +769,7 @@ const CRMMaster: React.FC = () => {
               className={`px-4 py-2 rounded-lg transition-all ${
                 activeTab === 'pipeline'
                   ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg shadow-purple-500/50'
-                  : 'bg-slate-800/50 text-purple-300 hover:bg-slate-800 border border-purple-500/30'
+                  : 'bg-slate-800/50 text-slate-100 hover:bg-slate-800 border border-purple-500/30'
               }`}
             >
               <Target className="w-4 h-4 inline mr-2" />
@@ -748,7 +780,7 @@ const CRMMaster: React.FC = () => {
               className={`px-4 py-2 rounded-lg transition-all ${
                 activeTab === 'campaigns'
                   ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg shadow-purple-500/50'
-                  : 'bg-slate-800/50 text-purple-300 hover:bg-slate-800 border border-purple-500/30'
+                  : 'bg-slate-800/50 text-slate-100 hover:bg-slate-800 border border-purple-500/30'
               }`}
             >
               <Send className="w-4 h-4 inline mr-2" />
@@ -759,7 +791,7 @@ const CRMMaster: React.FC = () => {
               className={`px-4 py-2 rounded-lg transition-all ${
                 activeTab === 'analytics'
                   ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg shadow-purple-500/50'
-                  : 'bg-slate-800/50 text-purple-300 hover:bg-slate-800 border border-purple-500/30'
+                  : 'bg-slate-800/50 text-slate-100 hover:bg-slate-800 border border-purple-500/30'
               }`}
             >
               <Activity className="w-4 h-4 inline mr-2" />

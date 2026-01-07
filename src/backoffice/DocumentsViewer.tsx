@@ -69,7 +69,7 @@ const DocumentsViewer: React.FC<DocumentsViewerProps> = ({ leadId, clientId, com
   };
 
   const getDocumentIcon = (mimeType?: string, fileName?: string) => {
-    if (!mimeType && !fileName) return <File className="w-8 h-8 text-gray-400" />;
+    if (!mimeType && !fileName) return <File className="w-8 h-8 text-slate-300" />;
 
     const type = mimeType || '';
     const name = fileName || '';
@@ -83,7 +83,7 @@ const DocumentsViewer: React.FC<DocumentsViewerProps> = ({ leadId, clientId, com
     if (type.includes('zip') || type.includes('rar') || /\.(zip|rar|7z)$/i.test(name)) {
       return <Archive className="w-8 h-8 text-yellow-500" />;
     }
-    return <File className="w-8 h-8 text-gray-400" />;
+    return <File className="w-8 h-8 text-slate-300" />;
   };
 
   const getStatusBadge = (status: string) => {
@@ -196,13 +196,13 @@ const DocumentsViewer: React.FC<DocumentsViewerProps> = ({ leadId, clientId, com
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h3 className="text-2xl font-bold text-white">Documents</h3>
-          <p className="text-purple-300 mt-1">{stats.total} document(s) au total</p>
+          <p className="text-slate-200 mt-1">{stats.total} document(s) au total</p>
         </div>
 
         <div className="flex items-center gap-3">
           <button
             onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
-            className="p-2 rounded-lg border border-purple-500/30 hover:bg-slate-800 transition-colors text-purple-300"
+            className="p-2 rounded-lg border border-purple-500/30 hover:bg-slate-800 transition-colors text-slate-200"
           >
             {viewMode === 'grid' ? <List className="w-5 h-5" /> : <Grid className="w-5 h-5" />}
           </button>
@@ -295,7 +295,7 @@ const DocumentsViewer: React.FC<DocumentsViewerProps> = ({ leadId, clientId, com
         <div className="text-center py-12 bg-slate-800/30 rounded-xl border-2 border-dashed border-purple-500/30 backdrop-blur-sm">
           <FileText className="w-16 h-16 text-purple-400 mx-auto mb-4" />
           <p className="text-white text-lg font-semibold">Aucun document trouvé</p>
-          <p className="text-gray-400 mt-2">Les documents uploadés apparaîtront ici</p>
+          <p className="text-slate-300 mt-2">Les documents uploadés apparaîtront ici</p>
         </div>
       ) : viewMode === 'grid' ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -332,7 +332,7 @@ const DocumentsViewer: React.FC<DocumentsViewerProps> = ({ leadId, clientId, com
               <div className="flex items-center gap-2 mt-4 pt-4 border-t border-purple-500/20">
                 <button
                   onClick={(e) => { e.stopPropagation(); downloadDocument(doc); }}
-                  className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-gradient-to-r from-purple-500/20 to-pink-500/20 text-purple-300 rounded-lg hover:from-purple-500/30 hover:to-pink-500/30 transition-all border border-purple-500/30"
+                  className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-gradient-to-r from-purple-500/20 to-pink-500/20 text-slate-200 rounded-lg hover:from-purple-500/30 hover:to-pink-500/30 transition-all border border-purple-500/30"
                 >
                   <Download className="w-4 h-4" />
                   Télécharger
@@ -352,12 +352,12 @@ const DocumentsViewer: React.FC<DocumentsViewerProps> = ({ leadId, clientId, com
           <table className="w-full">
             <thead className="bg-slate-900/50 border-b border-purple-500/30">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-purple-300 uppercase">Document</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-purple-300 uppercase">Type</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-purple-300 uppercase">Date</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-purple-300 uppercase">Taille</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-purple-300 uppercase">Statut</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-purple-300 uppercase">Actions</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-200 uppercase">Document</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-200 uppercase">Type</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-200 uppercase">Date</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-200 uppercase">Taille</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-200 uppercase">Statut</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-200 uppercase">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-purple-500/20">
@@ -413,11 +413,11 @@ const DocumentsViewer: React.FC<DocumentsViewerProps> = ({ leadId, clientId, com
             <div className="flex items-center justify-between p-6 border-b border-purple-500/30 bg-gradient-to-r from-slate-900 via-purple-900/20 to-slate-900">
               <div>
                 <h3 className="text-xl font-bold text-white">{selectedDoc.file_name}</h3>
-                <p className="text-purple-300 mt-1">{getDocumentTypeLabel(selectedDoc.document_type)}</p>
+                <p className="text-slate-200 mt-1">{getDocumentTypeLabel(selectedDoc.document_type)}</p>
               </div>
               <button
                 onClick={() => { setSelectedDoc(null); setPreviewUrl(null); }}
-                className="p-2 hover:bg-slate-800 rounded-lg transition-colors text-gray-400 hover:text-white"
+                className="p-2 hover:bg-slate-800 rounded-lg transition-colors text-slate-300 hover:text-white"
               >
                 <XCircle className="w-6 h-6" />
               </button>
