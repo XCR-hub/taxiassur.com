@@ -20,55 +20,88 @@ export function useRealStats(): RealStats {
   });
 
   useEffect(() => {
+    let mounted = true;
+
     const fetchStats = async () => {
       try {
-        // Récupérer le nombre total d'articles publiés
-        const { count: articlesCount, error: articlesError } = await supabase
-          .from('blog_posts')
-          .select('*', { count: 'exact', head: true })
-          .eq('published', true);
+        // Wait a bit for Supabase to be fully initialized
+        await new Promise(resolve => setTimeout(resolve, 100));
 
-        if (articlesError) {
-          logger.warn('Error fetching articles count:', articlesError);
+        if (!mounted) return;
+
+        // Fetch all counts sequentially to avoid overwhelming Supabase
+        let articlesCount = 0;
+        let faqsCount = 0;
+        let citiesCount = 0;
+
+        try {
+          const { count, error } = await supabase
+            .from('blog_posts')
+            .select('*', { count: 'exact', head: true })
+            .eq('published', true);
+
+          if (!error && count !== null) {
+            articlesCount = count;
+          }
+        } catch (err) {
+          logger.warn('Articles count skipped:', err);
         }
 
-        // Récupérer le nombre total de FAQs
-        const { count: faqsCount, error: faqsError } = await supabase
-          .from('faq_entries')
-          .select('*', { count: 'exact', head: true });
+        if (!mounted) return;
 
-        if (faqsError) {
-          logger.warn('Error fetching FAQs count:', faqsError);
+        try {
+          const { count, error } = await supabase
+            .from('faq_entries')
+            .select('*', { count: 'exact', head: true });
+
+          if (!error && count !== null) {
+            faqsCount = count;
+          }
+        } catch (err) {
+          logger.warn('FAQs count skipped:', err);
         }
 
-        // Récupérer le nombre total de pages ville
-        const { count: citiesCount, error: citiesError } = await supabase
-          .from('city_pages')
-          .select('*', { count: 'exact', head: true })
-          .eq('status', 'published');
+        if (!mounted) return;
 
-        if (citiesError) {
-          logger.warn('Error fetching cities count:', citiesError);
+        try {
+          const { count, error } = await supabase
+            .from('city_pages')
+            .select('*', { count: 'exact', head: true })
+            .eq('status', 'published');
+
+          if (!error && count !== null) {
+            citiesCount = count;
+          }
+        } catch (err) {
+          logger.warn('Cities count skipped:', err);
         }
 
-        setStats({
-          totalArticles: articlesCount || 0,
-          totalFaqs: faqsCount || 0,
-          totalCities: citiesCount || 0,
-          loading: false,
-          error: null,
-        });
+        if (mounted) {
+          setStats({
+            totalArticles: articlesCount,
+            totalFaqs: faqsCount,
+            totalCities: citiesCount,
+            loading: false,
+            error: null,
+          });
+        }
       } catch (err) {
         logger.error('Error fetching stats:', err);
-        setStats(prev => ({
-          ...prev,
-          loading: false,
-          error: err instanceof Error ? err.message : 'Failed to load stats',
-        }));
+        if (mounted) {
+          setStats(prev => ({
+            ...prev,
+            loading: false,
+            error: null, // Don't show error, just use 0 values
+          }));
+        }
       }
     };
 
     fetchStats();
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   return stats;

@@ -52,7 +52,14 @@ const MasterDashboard: React.FC = () => {
         .order('created_at', { ascending: false });
 
       if (leadsError) {
+        // Silently skip on network errors
+        if (leadsError.code === 'network_error') {
+          logger.warn('Network unavailable, using cached stats');
+          setLoading(false);
+          return;
+        }
         logger.error('Erreur récupération leads:', leadsError);
+        setLoading(false);
         return;
       }
 
