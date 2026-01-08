@@ -30,7 +30,7 @@ import BackButton from './BackButton';
 import LostLeadRecontactModal from './LostLeadRecontactModal';
 
 const CRMLeadDetail: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+  const { leadId } = useParams<{ leadId: string }>();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [lead, setLead] = useState<CRMLead | null>(null);
@@ -45,8 +45,8 @@ const CRMLeadDetail: React.FC = () => {
   const [pendingStatusChange, setPendingStatusChange] = useState<any>(null);
 
   useEffect(() => {
-    if (id) loadLeadData(id);
-  }, [id]);
+    if (leadId) loadLeadData(leadId);
+  }, [leadId]);
 
   const loadLeadData = async (leadId: string) => {
     setLoading(true);

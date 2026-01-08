@@ -109,29 +109,42 @@ export const channelEngineService = {
     channel?: CommunicationChannel;
     requiresAction?: boolean;
   }) {
+    // Charger depuis email_replies
     let query = supabase
-      .from('crm_inbox')
+      .from('email_replies')
       .select(`
-        *,
+        id,
+        lead_id,
+        from_email,
+        subject,
+        body,
+        replied_at,
+        sentiment,
+        is_processed,
+        ai_summary,
+        ai_response,
         leads!inner(id, full_name, email, phone)
       `)
-      .order('received_at', { ascending: false });
-
-    if (filters?.status) {
-      query = query.eq('status', filters.status);
-    }
-
-    if (filters?.channel) {
-      query = query.eq('channel', filters.channel);
-    }
-
-    if (filters?.requiresAction !== undefined) {
-      query = query.eq('requires_action', filters.requiresAction);
-    }
+      .order('replied_at', { ascending: false })
+      .limit(100);
 
     const { data, error } = await query;
     if (error) throw error;
-    return data as InboxMessage[];
+
+    // Adapter au format InboxMessage
+    return (data || []).map((reply: any) => ({
+      id: reply.id,
+      lead_id: reply.lead_id,
+      lead_name: reply.leads?.full_name || reply.from_email,
+      channel: 'email' as CommunicationChannel,
+      snippet: reply.body?.substring(0, 200) || reply.subject,
+      status: reply.is_processed ? 'read' : 'unread',
+      sentiment: reply.sentiment as any,
+      requires_action: !reply.is_processed,
+      ai_summary: reply.ai_summary,
+      ai_suggested_response: reply.ai_response,
+      received_at: reply.replied_at
+    })) as InboxMessage[];
   },
 
   async getConversation(leadId: string, channel?: CommunicationChannel) {

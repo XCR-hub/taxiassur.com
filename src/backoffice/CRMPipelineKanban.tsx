@@ -40,13 +40,35 @@ const CRMPipelineKanban: React.FC = () => {
   const handleDrop = async (targetStatus: PipelineStatus) => {
     if (!draggedLead) return;
 
+    const oldStatus = draggedLead.pipeline_status;
+
+    // Mise à jour optimiste pour feedback immédiat
+    setKanbanData(prev => {
+      const newData = { ...prev };
+
+      // Retirer du statut ancien
+      if (newData[oldStatus]) {
+        newData[oldStatus] = newData[oldStatus].filter(l => l.id !== draggedLead.id);
+      }
+
+      // Ajouter au nouveau statut
+      if (newData[targetStatus]) {
+        newData[targetStatus] = [...newData[targetStatus], { ...draggedLead, pipeline_status: targetStatus }];
+      } else {
+        newData[targetStatus] = [{ ...draggedLead, pipeline_status: targetStatus }];
+      }
+
+      return newData;
+    });
+
+    setDraggedLead(null);
+
     try {
       await pipelineService.updateLeadStatus(draggedLead.id, targetStatus);
-      await loadKanbanData();
     } catch (error) {
       console.error('Failed to update lead:', error);
-    } finally {
-      setDraggedLead(null);
+      // En cas d'erreur, recharger les données
+      await loadKanbanData();
     }
   };
 

@@ -82,38 +82,93 @@ export const templatesService = {
     category?: SmartTemplate['category'];
     search?: string;
   }) {
+    // Charger depuis smart_email_templates (adapté)
     let query = supabase
-      .from('crm_smart_templates')
+      .from('smart_email_templates')
       .select('*')
-      .eq('is_active', true)
       .order('name');
 
-    if (filters?.channel) {
-      query = query.eq('channel', filters.channel);
-    }
-
-    if (filters?.category) {
-      query = query.eq('category', filters.category);
-    }
-
     if (filters?.search) {
-      query = query.or(`name.ilike.%${filters.search}%,description.ilike.%${filters.search}%`);
+      query = query.ilike('name', `%${filters.search}%`);
     }
 
     const { data, error } = await query;
     if (error) throw error;
-    return data as SmartTemplate[];
+
+    // Adapter le format
+    return (data || []).map((t: any) => ({
+      id: t.id,
+      name: t.name,
+      description: t.name,
+      channel: 'email' as CommunicationChannel,
+      template_type: t.contact_type || 'general',
+      category: 'sales' as any,
+      subject: t.subject_template,
+      body: t.html_template,
+      variables: Object.keys(t.variables || {}).map(key => ({
+        key,
+        label: key,
+        type: 'text' as const,
+        default_value: t.variables[key],
+        required: false
+      })),
+      ai_personalization_enabled: t.ai_personalization_enabled || false,
+      tone: 'friendly' as const,
+      language: 'fr',
+      version: 1,
+      is_active: true,
+      performance: {
+        sent_count: t.times_used || 0,
+        open_rate: 0,
+        reply_rate: 0,
+        conversion_rate: parseFloat(t.conversion_rate || '0')
+      },
+      created_at: t.created_at,
+      updated_at: t.updated_at
+    })) as SmartTemplate[];
   },
 
   async getTemplate(id: string) {
     const { data, error } = await supabase
-      .from('crm_smart_templates')
+      .from('smart_email_templates')
       .select('*')
       .eq('id', id)
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
-    return data as SmartTemplate;
+    if (!data) throw new Error('Template not found');
+
+    // Adapter le format
+    return {
+      id: data.id,
+      name: data.name,
+      description: data.name,
+      channel: 'email' as CommunicationChannel,
+      template_type: data.contact_type || 'general',
+      category: 'sales' as any,
+      subject: data.subject_template,
+      body: data.html_template,
+      variables: Object.keys(data.variables || {}).map(key => ({
+        key,
+        label: key,
+        type: 'text' as const,
+        default_value: data.variables[key],
+        required: false
+      })),
+      ai_personalization_enabled: data.ai_personalization_enabled || false,
+      tone: 'friendly' as const,
+      language: 'fr',
+      version: 1,
+      is_active: true,
+      performance: {
+        sent_count: data.times_used || 0,
+        open_rate: 0,
+        reply_rate: 0,
+        conversion_rate: parseFloat(data.conversion_rate || '0')
+      },
+      created_at: data.created_at,
+      updated_at: data.updated_at
+    } as SmartTemplate;
   },
 
   async createTemplate(template: Omit<SmartTemplate, 'id' | 'created_at' | 'updated_at' | 'performance'>) {

@@ -113,15 +113,14 @@ const AdminSessionKeepAlive: React.FC = () => {
       window.addEventListener(event, trackActivity, { passive: true });
     });
 
-    // AMÉLIORATION : Refresh toutes les 1 minute pour maintenir la session active
-    // Plus de déconnexion automatique !
+    // Refresh toutes les 5 minutes (pas trop souvent pour éviter les déconnexions)
     refreshIntervalRef.current = setInterval(() => {
-      refreshSession(); // Refresh systématique pour maintenir la session
-    }, 60 * 1000); // 1 minute
+      checkAndRefreshIfNeeded();
+    }, 5 * 60 * 1000); // 5 minutes
 
-    // IMPORTANT : Rafraîchir immédiatement au chargement de la page
-    console.log('🔄 Refresh initial au chargement de la page backoffice');
-    refreshSession();
+    // Vérification initiale au chargement
+    console.log('🔄 Vérification session initiale');
+    checkAndRefreshIfNeeded();
 
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'TOKEN_REFRESHED') {
