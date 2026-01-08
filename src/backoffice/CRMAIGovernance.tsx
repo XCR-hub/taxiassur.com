@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Bot, Brain, Sparkles, TrendingUp, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { Bot, Brain, Sparkles, TrendingUp, CheckCircle, XCircle, AlertCircle, Clock } from 'lucide-react';
 import { aiGovernanceService, AIDecision, AI_AGENTS, AIAgent } from '@/lib/crm-ai-governance';
 import { AIDecisionCard } from '@/components/crm/AIDecisionCard';
 import BackButton from './BackButton';

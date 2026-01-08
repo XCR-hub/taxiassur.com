@@ -108,6 +108,15 @@ const CRMUniversal = lazy(() => import('./backoffice/CRMUniversal'));
 const CRMMaster = lazy(() => import('./backoffice/CRMMaster'));
 const CRMSaaSDashboard = lazy(() => import('./backoffice/CRMSaaSDashboard'));
 const CRMKiller = lazy(() => import('./backoffice/CRMKiller'));
+const CRMKillerDashboard = lazy(() => import('./backoffice/CRMKillerDashboard'));
+const CRMPipelineKanban = lazy(() => import('./backoffice/CRMPipelineKanban'));
+const CRMInboxMulticanal = lazy(() => import('./backoffice/CRMInboxMulticanal'));
+const CRMProductionManager = lazy(() => import('./backoffice/CRMProductionManager'));
+const CRMRetentionCenter = lazy(() => import('./backoffice/CRMRetentionCenter'));
+const CRMTemplatesManager = lazy(() => import('./backoffice/CRMTemplatesManager'));
+const CRMAIGovernance = lazy(() => import('./backoffice/CRMAIGovernance'));
+const CRMLeadDetail = lazy(() => import('./backoffice/CRMLeadDetail'));
+const CRMAdminSettings = lazy(() => import('./backoffice/CRMAdminSettings'));
 const EspaceClient = lazy(() => import('./pages/EspaceClient'));
 const ClientDashboard = lazy(() => import('./pages/client/ClientDashboard'));
 const ClientDocuments = lazy(() => import('./pages/client/ClientDocuments'));
@@ -560,6 +569,38 @@ export const router = createBrowserRouter([
       {
         path: '/backoffice/crm',
         element: <AuthGuard><SuspenseWrapper><CRMKiller /></SuspenseWrapper></AuthGuard>
+      },
+      {
+        path: '/backoffice/crm-killer/pipeline',
+        element: <AuthGuard><SuspenseWrapper><CRMPipelineKanban /></SuspenseWrapper></AuthGuard>
+      },
+      {
+        path: '/backoffice/crm-killer/inbox',
+        element: <AuthGuard><SuspenseWrapper><CRMInboxMulticanal /></SuspenseWrapper></AuthGuard>
+      },
+      {
+        path: '/backoffice/crm-killer/production',
+        element: <AuthGuard><SuspenseWrapper><CRMProductionManager /></SuspenseWrapper></AuthGuard>
+      },
+      {
+        path: '/backoffice/crm-killer/retention',
+        element: <AuthGuard><SuspenseWrapper><CRMRetentionCenter /></SuspenseWrapper></AuthGuard>
+      },
+      {
+        path: '/backoffice/crm-killer/templates',
+        element: <AuthGuard><SuspenseWrapper><CRMTemplatesManager /></SuspenseWrapper></AuthGuard>
+      },
+      {
+        path: '/backoffice/crm-killer/ia',
+        element: <AuthGuard><SuspenseWrapper><CRMAIGovernance /></SuspenseWrapper></AuthGuard>
+      },
+      {
+        path: '/backoffice/crm-killer/lead/:leadId',
+        element: <AuthGuard><SuspenseWrapper><CRMLeadDetail /></SuspenseWrapper></AuthGuard>
+      },
+      {
+        path: '/backoffice/crm-killer/settings',
+        element: <AuthGuard><SuspenseWrapper><CRMAdminSettings /></SuspenseWrapper></AuthGuard>
       },
       {
         path: '/backoffice/crm-old',
