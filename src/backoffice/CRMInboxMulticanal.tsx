@@ -61,15 +61,21 @@ const CRMInboxMulticanal: React.FC = () => {
 
       if (error) {
         console.error('Erreur synchronisation emails:', error);
-        alert('Erreur lors de la synchronisation des emails');
+        const errorMsg = error.message || JSON.stringify(error);
+        alert(`Erreur : ${errorMsg}`);
       } else {
         console.log('Synchronisation réussie:', data);
-        alert(`${data.message || 'Synchronisation terminée'}`);
-        await loadMessages();
+
+        if (data && data.success === false) {
+          alert(`Erreur : ${data.error || 'Erreur inconnue'}`);
+        } else {
+          alert(`${data?.message || 'Synchronisation terminée'}`);
+          await loadMessages();
+        }
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Erreur:', err);
-      alert('Erreur lors de la synchronisation');
+      alert(`Erreur : ${err.message || 'Erreur lors de la synchronisation'}`);
     } finally {
       setSyncing(false);
     }
