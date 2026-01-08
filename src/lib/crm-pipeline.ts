@@ -1,25 +1,25 @@
 import { supabase } from './supabase';
 
 export type PipelineStatus =
-  | 'nouveau_lead'
-  | 'contact_initial'
-  | 'qualification'
-  | 'devis_envoye'
-  | 'negociation'
-  | 'documents_attente'
-  | 'documents_recus'
-  | 'analyse_risque'
-  | 'validation_souscription'
-  | 'signature_attente'
-  | 'signature_obtenue'
-  | 'paiement_attente'
-  | 'paiement_confirme'
-  | 'production_cours'
-  | 'contrat_actif'
-  | 'renouvellement_prevu'
-  | 'resilie'
-  | 'perdu'
-  | 'archive';
+  | 'NEW_LEAD'
+  | 'CONTACT_ATTEMPTED'
+  | 'CONTACT_CONFIRMED'
+  | 'DOCUMENTS_REQUIRED'
+  | 'DOCUMENTS_PARTIAL'
+  | 'READY_FOR_QUOTE'
+  | 'QUOTE_SENT'
+  | 'NO_RESPONSE'
+  | 'RELANCE_ACTIVE'
+  | 'SIGNATURE_PENDING'
+  | 'SIGNED'
+  | 'PAYMENT_PENDING'
+  | 'ACTIVE_CLIENT'
+  | 'CROSS_SELLING'
+  | 'RISK_CHURN'
+  | 'CLIENT_LOST'
+  | 'SINISTER'
+  | 'ATTESTATION_REQUEST'
+  | 'SUPPORT_ASSISTANCE';
 
 export interface PipelineTransition {
   from: PipelineStatus;
@@ -30,49 +30,49 @@ export interface PipelineTransition {
 }
 
 export const PIPELINE_STATUSES: Record<PipelineStatus, { label: string; color: string; icon: string }> = {
-  nouveau_lead: { label: 'Nouveau Lead', color: 'blue', icon: '🆕' },
-  contact_initial: { label: 'Contact Initial', color: 'indigo', icon: '📞' },
-  qualification: { label: 'Qualification', color: 'purple', icon: '🎯' },
-  devis_envoye: { label: 'Devis Envoyé', color: 'yellow', icon: '📄' },
-  negociation: { label: 'Négociation', color: 'amber', icon: '💬' },
-  documents_attente: { label: 'Docs en Attente', color: 'orange', icon: '⏳' },
-  documents_recus: { label: 'Docs Reçus', color: 'lime', icon: '📥' },
-  analyse_risque: { label: 'Analyse Risque', color: 'cyan', icon: '🔍' },
-  validation_souscription: { label: 'Validation Souscription', color: 'teal', icon: '✓' },
-  signature_attente: { label: 'Signature en Attente', color: 'emerald', icon: '✍️' },
-  signature_obtenue: { label: 'Signature Obtenue', color: 'green', icon: '✅' },
-  paiement_attente: { label: 'Paiement en Attente', color: 'yellow', icon: '💰' },
-  paiement_confirme: { label: 'Paiement Confirmé', color: 'lime', icon: '💳' },
-  production_cours: { label: 'Production en Cours', color: 'blue', icon: '⚙️' },
-  contrat_actif: { label: 'Contrat Actif', color: 'green', icon: '🎉' },
-  renouvellement_prevu: { label: 'Renouvellement Prévu', color: 'purple', icon: '🔄' },
-  resilie: { label: 'Résilié', color: 'red', icon: '❌' },
-  perdu: { label: 'Perdu', color: 'gray', icon: '😢' },
-  archive: { label: 'Archivé', color: 'gray', icon: '📦' }
+  NEW_LEAD: { label: 'Nouveau Lead', color: 'blue', icon: '🆕' },
+  CONTACT_ATTEMPTED: { label: 'Contact Tenté', color: 'indigo', icon: '📞' },
+  CONTACT_CONFIRMED: { label: 'Contact Confirmé', color: 'purple', icon: '✅' },
+  DOCUMENTS_REQUIRED: { label: 'Docs Requis', color: 'orange', icon: '📋' },
+  DOCUMENTS_PARTIAL: { label: 'Docs Partiels', color: 'yellow', icon: '📄' },
+  READY_FOR_QUOTE: { label: 'Prêt pour Devis', color: 'lime', icon: '🎯' },
+  QUOTE_SENT: { label: 'Devis Envoyé', color: 'cyan', icon: '📨' },
+  NO_RESPONSE: { label: 'Sans Réponse', color: 'gray', icon: '❓' },
+  RELANCE_ACTIVE: { label: 'Relance Active', color: 'amber', icon: '🔔' },
+  SIGNATURE_PENDING: { label: 'Signature en Attente', color: 'emerald', icon: '✍️' },
+  SIGNED: { label: 'Signé', color: 'green', icon: '✅' },
+  PAYMENT_PENDING: { label: 'Paiement en Attente', color: 'yellow', icon: '💰' },
+  ACTIVE_CLIENT: { label: 'Client Actif', color: 'green', icon: '🎉' },
+  CROSS_SELLING: { label: 'Cross-sell', color: 'purple', icon: '🎁' },
+  RISK_CHURN: { label: 'Risque Churn', color: 'red', icon: '⚠️' },
+  CLIENT_LOST: { label: 'Client Perdu', color: 'gray', icon: '😢' },
+  SINISTER: { label: 'Sinistre', color: 'red', icon: '🚨' },
+  ATTESTATION_REQUEST: { label: 'Demande Attestation', color: 'blue', icon: '📜' },
+  SUPPORT_ASSISTANCE: { label: 'Assistance', color: 'teal', icon: '💬' }
 };
 
 export const PIPELINE_TRANSITIONS: PipelineTransition[] = [
-  { from: 'nouveau_lead', to: 'contact_initial', label: 'Contacter', autoActions: ['send_welcome_email'] },
-  { from: 'contact_initial', to: 'qualification', label: 'Qualifier' },
-  { from: 'qualification', to: 'devis_envoye', label: 'Envoyer Devis', autoActions: ['generate_quote', 'send_quote_email'] },
-  { from: 'devis_envoye', to: 'negociation', label: 'Négocier' },
-  { from: 'negociation', to: 'documents_attente', label: 'Demander Docs', autoActions: ['send_documents_request'] },
-  { from: 'documents_attente', to: 'documents_recus', label: 'Docs Reçus' },
-  { from: 'documents_recus', to: 'analyse_risque', label: 'Analyser' },
-  { from: 'analyse_risque', to: 'validation_souscription', label: 'Valider' },
-  { from: 'validation_souscription', to: 'signature_attente', label: 'Demander Signature', autoActions: ['send_signature_request'] },
-  { from: 'signature_attente', to: 'signature_obtenue', label: 'Signature OK' },
-  { from: 'signature_obtenue', to: 'paiement_attente', label: 'Demander Paiement', autoActions: ['send_payment_link'] },
-  { from: 'paiement_attente', to: 'paiement_confirme', label: 'Paiement Reçu' },
-  { from: 'paiement_confirme', to: 'production_cours', label: 'Lancer Production', autoActions: ['notify_production_team'] },
-  { from: 'production_cours', to: 'contrat_actif', label: 'Activer Contrat', autoActions: ['send_contract_confirmation', 'schedule_renewal'] },
-  { from: 'contrat_actif', to: 'renouvellement_prevu', label: 'Renouveler' },
-  { from: 'renouvellement_prevu', to: 'contrat_actif', label: 'Renouvellement OK', autoActions: ['extend_contract'] },
-  { from: 'contrat_actif', to: 'resilie', label: 'Résilier', requiresNote: true },
-  { from: 'devis_envoye', to: 'perdu', label: 'Marquer Perdu', requiresNote: true },
-  { from: 'negociation', to: 'perdu', label: 'Marquer Perdu', requiresNote: true },
-  { from: 'perdu', to: 'archive', label: 'Archiver' },
-  { from: 'resilie', to: 'archive', label: 'Archiver' }
+  { from: 'NEW_LEAD', to: 'CONTACT_ATTEMPTED', label: 'Tenter Contact', autoActions: ['send_welcome_email'] },
+  { from: 'CONTACT_ATTEMPTED', to: 'CONTACT_CONFIRMED', label: 'Confirmer Contact' },
+  { from: 'CONTACT_CONFIRMED', to: 'DOCUMENTS_REQUIRED', label: 'Demander Docs', autoActions: ['send_documents_request'] },
+  { from: 'DOCUMENTS_REQUIRED', to: 'DOCUMENTS_PARTIAL', label: 'Docs Partiels' },
+  { from: 'DOCUMENTS_PARTIAL', to: 'READY_FOR_QUOTE', label: 'Compléter Docs' },
+  { from: 'READY_FOR_QUOTE', to: 'QUOTE_SENT', label: 'Envoyer Devis', autoActions: ['generate_quote', 'send_quote_email'] },
+  { from: 'QUOTE_SENT', to: 'SIGNATURE_PENDING', label: 'Demander Signature', autoActions: ['send_signature_request'] },
+  { from: 'QUOTE_SENT', to: 'NO_RESPONSE', label: 'Sans Réponse' },
+  { from: 'NO_RESPONSE', to: 'RELANCE_ACTIVE', label: 'Relancer', autoActions: ['send_followup'] },
+  { from: 'RELANCE_ACTIVE', to: 'QUOTE_SENT', label: 'Relance OK' },
+  { from: 'SIGNATURE_PENDING', to: 'SIGNED', label: 'Signature Obtenue' },
+  { from: 'SIGNED', to: 'PAYMENT_PENDING', label: 'Demander Paiement', autoActions: ['send_payment_link'] },
+  { from: 'PAYMENT_PENDING', to: 'ACTIVE_CLIENT', label: 'Activer Client', autoActions: ['send_contract_confirmation'] },
+  { from: 'ACTIVE_CLIENT', to: 'CROSS_SELLING', label: 'Cross-sell' },
+  { from: 'ACTIVE_CLIENT', to: 'RISK_CHURN', label: 'Risque Départ' },
+  { from: 'RISK_CHURN', to: 'ACTIVE_CLIENT', label: 'Rétention OK' },
+  { from: 'RISK_CHURN', to: 'CLIENT_LOST', label: 'Client Perdu', requiresNote: true },
+  { from: 'ACTIVE_CLIENT', to: 'SINISTER', label: 'Déclarer Sinistre' },
+  { from: 'ACTIVE_CLIENT', to: 'ATTESTATION_REQUEST', label: 'Demande Attestation' },
+  { from: 'ACTIVE_CLIENT', to: 'SUPPORT_ASSISTANCE', label: 'Demande Assistance' },
+  { from: 'QUOTE_SENT', to: 'CLIENT_LOST', label: 'Marquer Perdu', requiresNote: true }
 ];
 
 export interface CRMLead {

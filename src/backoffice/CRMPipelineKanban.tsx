@@ -65,17 +65,17 @@ const CRMPipelineKanban: React.FC = () => {
   }, [kanbanData, search]);
 
   const visibleStatuses: PipelineStatus[] = [
-    'nouveau_lead',
-    'contact_initial',
-    'qualification',
-    'devis_envoye',
-    'negociation',
-    'documents_attente',
-    'documents_recus',
-    'signature_attente',
-    'paiement_attente',
-    'production_cours',
-    'contrat_actif'
+    'NEW_LEAD',
+    'CONTACT_ATTEMPTED',
+    'CONTACT_CONFIRMED',
+    'DOCUMENTS_REQUIRED',
+    'DOCUMENTS_PARTIAL',
+    'READY_FOR_QUOTE',
+    'QUOTE_SENT',
+    'SIGNATURE_PENDING',
+    'SIGNED',
+    'PAYMENT_PENDING',
+    'ACTIVE_CLIENT'
   ];
 
   if (loading) {
@@ -196,13 +196,13 @@ const CRMPipelineKanban: React.FC = () => {
           </div>
           <div className="text-center">
             <div className="text-2xl font-bold text-green-600">
-              {(filteredKanbanData['contrat_actif'] || []).length}
+              {(filteredKanbanData['ACTIVE_CLIENT'] || []).length}
             </div>
             <div className="text-xs text-gray-600">Actifs</div>
           </div>
           <div className="text-center">
             <div className="text-2xl font-bold text-orange-600">
-              {(filteredKanbanData['documents_attente'] || []).length}
+              {(filteredKanbanData['DOCUMENTS_REQUIRED'] || []).length}
             </div>
             <div className="text-xs text-gray-600">En Attente</div>
           </div>

@@ -62,10 +62,10 @@ const CRMKillerDashboard: React.FC = () => {
         pipelineService.getKanbanData()
       ]);
 
-      const activeContracts = leads.filter(l => l.status === 'contrat_actif').length;
-      const pendingDocs = leads.filter(l => l.status === 'documents_attente').length;
-      const pendingPayments = leads.filter(l => l.status === 'paiement_attente').length;
-      const renewalOps = leads.filter(l => l.status === 'renouvellement_prevu').length;
+      const activeContracts = leads.filter(l => l.status === 'ACTIVE_CLIENT').length;
+      const pendingDocs = leads.filter(l => l.status === 'DOCUMENTS_REQUIRED').length;
+      const pendingPayments = leads.filter(l => l.status === 'PAYMENT_PENDING').length;
+      const renewalOps = leads.filter(l => l.status === 'CROSS_SELLING').length;
 
       setStats({
         total_leads: leads.length,

@@ -29,7 +29,7 @@ const CRMProductionManager: React.FC = () => {
     try {
       const allLeads = await pipelineService.getLeads();
       const productionLeads = allLeads.filter(lead =>
-        ['documents_attente', 'documents_recus', 'signature_attente', 'paiement_attente', 'production_cours'].includes(lead.status)
+        ['DOCUMENTS_REQUIRED', 'DOCUMENTS_PARTIAL', 'SIGNATURE_PENDING', 'PAYMENT_PENDING', 'SIGNED'].includes(lead.status)
       );
       setLeads(productionLeads);
       if (productionLeads.length > 0) {
@@ -61,10 +61,10 @@ const CRMProductionManager: React.FC = () => {
   };
 
   const stats = {
-    pending_docs: leads.filter(l => l.status === 'documents_attente').length,
-    pending_payments: leads.filter(l => l.status === 'paiement_attente').length,
-    pending_signatures: leads.filter(l => l.status === 'signature_attente').length,
-    in_production: leads.filter(l => l.status === 'production_cours').length
+    pending_docs: leads.filter(l => l.status === 'DOCUMENTS_REQUIRED').length,
+    pending_payments: leads.filter(l => l.status === 'PAYMENT_PENDING').length,
+    pending_signatures: leads.filter(l => l.status === 'SIGNATURE_PENDING').length,
+    in_production: leads.filter(l => l.status === 'SIGNED').length
   };
 
   if (loading) {
