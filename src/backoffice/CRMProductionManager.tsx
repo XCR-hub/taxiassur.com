@@ -29,7 +29,7 @@ const CRMProductionManager: React.FC = () => {
     try {
       const allLeads = await pipelineService.getLeads();
       const productionLeads = allLeads.filter(lead =>
-        ['documents_attente', 'documents_recus', 'signature_attente', 'paiement_attente', 'production_cours'].includes(lead.pipeline_status)
+        ['documents_attente', 'documents_recus', 'signature_attente', 'paiement_attente', 'production_cours'].includes(lead.status)
       );
       setLeads(productionLeads);
       if (productionLeads.length > 0) {
@@ -61,10 +61,10 @@ const CRMProductionManager: React.FC = () => {
   };
 
   const stats = {
-    pending_docs: leads.filter(l => l.pipeline_status === 'documents_attente').length,
-    pending_payments: leads.filter(l => l.pipeline_status === 'paiement_attente').length,
-    pending_signatures: leads.filter(l => l.pipeline_status === 'signature_attente').length,
-    in_production: leads.filter(l => l.pipeline_status === 'production_cours').length
+    pending_docs: leads.filter(l => l.status === 'documents_attente').length,
+    pending_payments: leads.filter(l => l.status === 'paiement_attente').length,
+    pending_signatures: leads.filter(l => l.status === 'signature_attente').length,
+    in_production: leads.filter(l => l.status === 'production_cours').length
   };
 
   if (loading) {
@@ -85,7 +85,7 @@ const CRMProductionManager: React.FC = () => {
     <div className="min-h-screen bg-gray-50">
       <div className="bg-gradient-to-r from-orange-600 to-red-600 text-white">
         <div className="max-w-7xl mx-auto px-6 py-8">
-          <BackButton />
+          <BackButton to="/backoffice/crm" />
           <h1 className="text-4xl font-bold mb-4">Manager de Production</h1>
           <p className="text-orange-100 mb-6">Documents, Signatures et Paiements</p>
 
@@ -141,7 +141,7 @@ const CRMProductionManager: React.FC = () => {
                   <div className="text-xs text-gray-600">{lead.email}</div>
                   <div className="flex items-center gap-2 mt-2">
                     <span className="text-xs px-2 py-1 bg-orange-100 text-orange-700 rounded-full">
-                      {lead.pipeline_status.replace(/_/g, ' ')}
+                      {lead.status.replace(/_/g, ' ')}
                     </span>
                   </div>
                 </button>

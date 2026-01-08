@@ -77,14 +77,17 @@ export const PIPELINE_TRANSITIONS: PipelineTransition[] = [
 
 export interface CRMLead {
   id: string;
+  first_name?: string;
+  last_name?: string;
   full_name: string;
   email: string;
   phone: string;
   company_name?: string;
   city?: string;
-  pipeline_status: PipelineStatus;
+  status: PipelineStatus;
   assigned_to?: string;
   source?: string;
+  lead_score?: number;
   quality_score?: number;
   retention_score?: number;
   last_contact?: string;
@@ -114,12 +117,12 @@ export const pipelineService = {
     search?: string;
   }) {
     let query = supabase
-      .from('leads')
+      .from('crm_leads')
       .select('*')
       .order('updated_at', { ascending: false });
 
     if (filters?.status) {
-      query = query.eq('pipeline_status', filters.status);
+      query = query.eq('status', filters.status);
     }
 
     if (filters?.assignedTo) {
@@ -131,23 +134,31 @@ export const pipelineService = {
     }
 
     if (filters?.search) {
-      query = query.or(`full_name.ilike.%${filters.search}%,email.ilike.%${filters.search}%,phone.ilike.%${filters.search}%`);
+      query = query.or(`first_name.ilike.%${filters.search}%,last_name.ilike.%${filters.search}%,email.ilike.%${filters.search}%,phone.ilike.%${filters.search}%`);
     }
 
     const { data, error } = await query;
     if (error) throw error;
-    return data as CRMLead[];
+
+    return (data || []).map(lead => ({
+      ...lead,
+      full_name: `${lead.first_name || ''} ${lead.last_name || ''}`.trim() || lead.email
+    })) as CRMLead[];
   },
 
   async getLead(id: string) {
     const { data, error } = await supabase
-      .from('leads')
+      .from('crm_leads')
       .select('*')
       .eq('id', id)
       .single();
 
     if (error) throw error;
-    return data as CRMLead;
+
+    return {
+      ...data,
+      full_name: `${data.first_name || ''} ${data.last_name || ''}`.trim() || data.email
+    } as CRMLead;
   },
 
   async updateLeadStatus(
@@ -157,9 +168,9 @@ export const pipelineService = {
     userId?: string
   ) {
     const { data: lead, error: leadError } = await supabase
-      .from('leads')
+      .from('crm_leads')
       .update({
-        pipeline_status: newStatus,
+        status: newStatus,
         updated_at: new Date().toISOString()
       })
       .eq('id', leadId)
@@ -175,7 +186,7 @@ export const pipelineService = {
         event_type: 'status_change',
         title: `Statut changé vers ${PIPELINE_STATUSES[newStatus].label}`,
         description: note,
-        metadata: { from_status: lead.pipeline_status, to_status: newStatus },
+        metadata: { from_status: lead.status, to_status: newStatus },
         created_by: userId,
         created_at: new Date().toISOString()
       });
@@ -232,7 +243,7 @@ export const pipelineService = {
 
   async assignLead(leadId: string, userId: string) {
     const { data, error } = await supabase
-      .from('leads')
+      .from('crm_leads')
       .update({ assigned_to: userId })
       .eq('id', leadId)
       .select()
@@ -248,7 +259,7 @@ export const pipelineService = {
 
     Object.keys(PIPELINE_STATUSES).forEach(status => {
       kanban[status as PipelineStatus] = leads.filter(
-        lead => lead.pipeline_status === status
+        lead => lead.status === status
       );
     });
 

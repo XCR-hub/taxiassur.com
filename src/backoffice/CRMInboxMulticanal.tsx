@@ -61,7 +61,7 @@ const CRMInboxMulticanal: React.FC = () => {
   return (
     <div className="h-screen bg-gray-50 flex flex-col">
       <div className="bg-white border-b px-6 py-4">
-        <BackButton />
+        <BackButton to="/backoffice/crm" />
         <div className="flex items-center justify-between mb-4">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Inbox Multicanal</h1>

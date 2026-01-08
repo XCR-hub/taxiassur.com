@@ -90,7 +90,7 @@ const CRMLeadDetail: React.FC = () => {
     setEditing(false);
   };
 
-  const availableTransitions = lead ? pipelineService.getAvailableTransitions(lead.pipeline_status) : [];
+  const availableTransitions = lead ? pipelineService.getAvailableTransitions(lead.status) : [];
 
   if (loading || !lead) {
     return (
@@ -106,13 +106,13 @@ const CRMLeadDetail: React.FC = () => {
     );
   }
 
-  const statusInfo = PIPELINE_STATUSES[lead.pipeline_status];
+  const statusInfo = PIPELINE_STATUSES[lead.status];
 
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
         <div className="max-w-7xl mx-auto px-6 py-8">
-          <BackButton />
+          <BackButton to="/backoffice/crm-killer/pipeline" label="Retour au pipeline" showHomeIcon={false} />
           <div className="flex items-start justify-between mb-6">
             <div className="flex items-start gap-4">
               <div className="w-20 h-20 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center text-3xl">

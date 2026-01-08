@@ -93,7 +93,7 @@ const CRMTemplatesManager: React.FC = () => {
     <div className="min-h-screen bg-gray-50">
       <div className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white">
         <div className="max-w-7xl mx-auto px-6 py-8">
-          <BackButton />
+          <BackButton to="/backoffice/crm" />
           <div className="flex items-center justify-between mb-6">
             <div>
               <h1 className="text-4xl font-bold mb-2">Manager de Templates</h1>

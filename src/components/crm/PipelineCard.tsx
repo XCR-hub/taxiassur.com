@@ -20,7 +20,7 @@ export const PipelineCard: React.FC<PipelineCardProps> = ({
   isDragging,
   className
 }) => {
-  const statusInfo = PIPELINE_STATUSES[lead.pipeline_status];
+  const statusInfo = PIPELINE_STATUSES[lead.status];
 
   const getScoreColor = (score?: number) => {
     if (!score) return 'text-gray-400';
