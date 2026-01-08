@@ -4,6 +4,7 @@ import { lazy, Suspense } from 'react';
 import ScrollToTop from './components/ScrollToTop';
 import AuthGuard from './components/AuthGuard';
 import RootLayout from './components/RootLayout';
+import RouteErrorFallback from './components/RouteErrorFallback';
 
 const Home = lazy(() => import('./pages/Home'));
 const Blog = lazy(() => import('./pages/Blog'));
@@ -147,35 +148,8 @@ const SuspenseWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) 
   </Suspense>
 );
 
-// Error boundary component for better error handling
-const ErrorBoundary: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-      <div className="text-center">
-        <h1 className="text-2xl font-bold text-gray-900 mb-4">
-          Oops ! Une erreur s'est produite
-        </h1>
-        <p className="text-gray-600 mb-6">
-          Nous nous excusons pour ce désagrément. Veuillez réessayer ou nous contacter.
-        </p>
-        <div className="space-x-4">
-          <a 
-            href="/" 
-            className="bg-orange-600 hover:bg-orange-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
-          >
-            Retour à l'accueil
-          </a>
-          <a 
-            href="tel:0180855786" 
-            className="border border-orange-600 text-orange-600 hover:bg-orange-50 font-medium py-2 px-4 rounded-lg transition-colors"
-          >
-            01 80 85 57 86
-          </a>
-        </div>
-      </div>
-    </div>
-  );
-};
+// Note: ErrorBoundary is now a proper class component in src/components/ErrorBoundary.tsx
+// For route errors, we use RouteErrorFallback component
 
 export const router = createBrowserRouter([
   {
@@ -184,252 +158,252 @@ export const router = createBrowserRouter([
       {
         path: '/',
         element: <SuspenseWrapper><Home /></SuspenseWrapper>,
-        errorElement: <ErrorBoundary><Navigate to="/" replace /></ErrorBoundary>
+        errorElement: <RouteErrorFallback />
       },
       {
         path: '/assurance-taxi',
         element: <SuspenseWrapper><AssuranceTaxi /></SuspenseWrapper>,
-        errorElement: <ErrorBoundary><Navigate to="/" replace /></ErrorBoundary>
+        errorElement: <RouteErrorFallback />
       },
       {
         path: '/rc-professionnelle',
         element: <SuspenseWrapper><RCProfessionnelle /></SuspenseWrapper>,
-        errorElement: <ErrorBoundary><Navigate to="/" replace /></ErrorBoundary>
+        errorElement: <RouteErrorFallback />
       },
       {
         path: '/flotte-vehicules',
         element: <SuspenseWrapper><FlotteVehicules /></SuspenseWrapper>,
-        errorElement: <ErrorBoundary><Navigate to="/" replace /></ErrorBoundary>
+        errorElement: <RouteErrorFallback />
       },
       {
         path: '/conseil-personnalise',
         element: <SuspenseWrapper><ConseilPersonnalise /></SuspenseWrapper>,
-        errorElement: <ErrorBoundary><Navigate to="/" replace /></ErrorBoundary>
+        errorElement: <RouteErrorFallback />
       },
       {
         path: '/gestion-sinistres',
         element: <SuspenseWrapper><GestionSinistres /></SuspenseWrapper>,
-        errorElement: <ErrorBoundary><Navigate to="/" replace /></ErrorBoundary>
+        errorElement: <RouteErrorFallback />
       },
       {
         path: '/taxis-sinistres',
         element: <SuspenseWrapper><TaxisSinistres /></SuspenseWrapper>,
-        errorElement: <ErrorBoundary><Navigate to="/" replace /></ErrorBoundary>
+        errorElement: <RouteErrorFallback />
       },
       {
         path: '/prix-assurance-taxi',
         element: <SuspenseWrapper><PrixAssuranceTaxi /></SuspenseWrapper>,
-        errorElement: <ErrorBoundary><Navigate to="/" replace /></ErrorBoundary>
+        errorElement: <RouteErrorFallback />
       },
       {
         path: '/assurance-taxi-vtc',
         element: <SuspenseWrapper><AssuranceTaxiVTC /></SuspenseWrapper>,
-        errorElement: <ErrorBoundary><Navigate to="/" replace /></ErrorBoundary>
+        errorElement: <RouteErrorFallback />
       },
       {
         path: '/assurance-taxi-paris',
         element: <SuspenseWrapper><AssuranceTaxiParis /></SuspenseWrapper>,
-        errorElement: <ErrorBoundary><Navigate to="/" replace /></ErrorBoundary>
+        errorElement: <RouteErrorFallback />
       },
       {
         path: '/assurance-moto-taxi',
         element: <SuspenseWrapper><AssuranceMotoTaxi /></SuspenseWrapper>,
-        errorElement: <ErrorBoundary><Navigate to="/" replace /></ErrorBoundary>
+        errorElement: <RouteErrorFallback />
       },
       {
         path: '/quelle-assurance-pour-taxi',
         element: <SuspenseWrapper><QuelleAssuranceTaxi /></SuspenseWrapper>,
-        errorElement: <ErrorBoundary><Navigate to="/" replace /></ErrorBoundary>
+        errorElement: <RouteErrorFallback />
       },
       {
         path: '/assurance-obligatoire-taxi',
         element: <SuspenseWrapper><AssuranceObligatoireTaxi /></SuspenseWrapper>,
-        errorElement: <ErrorBoundary><Navigate to="/" replace /></ErrorBoundary>
+        errorElement: <RouteErrorFallback />
       },
       {
         path: '/assurance-taxi-lyon',
         element: <SuspenseWrapper><AssuranceTaxiLyon /></SuspenseWrapper>,
-        errorElement: <ErrorBoundary><Navigate to="/" replace /></ErrorBoundary>
+        errorElement: <RouteErrorFallback />
       },
       {
         path: '/assurance-taxi-marseille',
         element: <SuspenseWrapper><AssuranceTaxiMarseille /></SuspenseWrapper>,
-        errorElement: <ErrorBoundary><Navigate to="/" replace /></ErrorBoundary>
+        errorElement: <RouteErrorFallback />
       },
       {
         path: '/assurance-taxi-toulouse',
         element: <SuspenseWrapper><AssuranceTaxiToulouse /></SuspenseWrapper>,
-        errorElement: <ErrorBoundary><Navigate to="/" replace /></ErrorBoundary>
+        errorElement: <RouteErrorFallback />
       },
       {
         path: '/assurance-taxi-nice',
         element: <SuspenseWrapper><AssuranceTaxiNice /></SuspenseWrapper>,
-        errorElement: <ErrorBoundary><Navigate to="/" replace /></ErrorBoundary>
+        errorElement: <RouteErrorFallback />
       },
       {
         path: '/assurance-taxi-bordeaux',
         element: <SuspenseWrapper><AssuranceTaxiBordeaux /></SuspenseWrapper>,
-        errorElement: <ErrorBoundary><Navigate to="/" replace /></ErrorBoundary>
+        errorElement: <RouteErrorFallback />
       },
       {
         path: '/blog',
         element: <SuspenseWrapper><Blog /></SuspenseWrapper>,
-        errorElement: <ErrorBoundary><Navigate to="/blog" replace /></ErrorBoundary>
+        errorElement: <RouteErrorFallback />
       },
       {
         path: '/blog/:id',
         element: <SuspenseWrapper><Post /></SuspenseWrapper>,
-        errorElement: <ErrorBoundary><Navigate to="/blog" replace /></ErrorBoundary>
+        errorElement: <RouteErrorFallback />
       },
       {
         path: '/actualites',
         element: <SuspenseWrapper><Actualites /></SuspenseWrapper>,
-        errorElement: <ErrorBoundary><Navigate to="/" replace /></ErrorBoundary>
+        errorElement: <RouteErrorFallback />
       },
       {
         path: '/actualites/:slug',
         element: <SuspenseWrapper><NewsArticle /></SuspenseWrapper>,
-        errorElement: <ErrorBoundary><Navigate to="/actualites" replace /></ErrorBoundary>
+        errorElement: <RouteErrorFallback />
       },
       {
         path: '/faq',
         element: <SuspenseWrapper><FAQ /></SuspenseWrapper>,
-        errorElement: <ErrorBoundary><Navigate to="/" replace /></ErrorBoundary>
+        errorElement: <RouteErrorFallback />
       },
       {
         path: '/avis',
         element: <SuspenseWrapper><Reviews /></SuspenseWrapper>,
-        errorElement: <ErrorBoundary><Navigate to="/" replace /></ErrorBoundary>
+        errorElement: <RouteErrorFallback />
       },
       {
         path: '/offres',
         element: <SuspenseWrapper><Offers /></SuspenseWrapper>,
-        errorElement: <ErrorBoundary><Navigate to="/" replace /></ErrorBoundary>
+        errorElement: <RouteErrorFallback />
       },
       {
         path: '/offres/:id',
         element: <SuspenseWrapper><OfferPage /></SuspenseWrapper>,
-        errorElement: <ErrorBoundary><Navigate to="/offres" replace /></ErrorBoundary>
+        errorElement: <RouteErrorFallback />
       },
       {
         path: '/contact',
         element: <SuspenseWrapper><Contact /></SuspenseWrapper>,
-        errorElement: <ErrorBoundary><Navigate to="/" replace /></ErrorBoundary>
+        errorElement: <RouteErrorFallback />
       },
       {
         path: '/merci',
         element: <SuspenseWrapper><Merci /></SuspenseWrapper>,
-        errorElement: <ErrorBoundary><Navigate to="/" replace /></ErrorBoundary>
+        errorElement: <RouteErrorFallback />
       },
       {
         path: '/espace-documents',
         element: <SuspenseWrapper><ProspectDocuments /></SuspenseWrapper>,
-        errorElement: <ErrorBoundary><Navigate to="/" replace /></ErrorBoundary>
+        errorElement: <RouteErrorFallback />
       },
       {
         path: '/mentions-legales',
         element: <SuspenseWrapper><Legal /></SuspenseWrapper>,
-        errorElement: <ErrorBoundary><Navigate to="/" replace /></ErrorBoundary>
+        errorElement: <RouteErrorFallback />
       },
       {
         path: '/legal',
         element: <SuspenseWrapper><Legal /></SuspenseWrapper>,
-        errorElement: <ErrorBoundary><Navigate to="/" replace /></ErrorBoundary>
+        errorElement: <RouteErrorFallback />
       },
       {
         path: '/politique-confidentialite',
         element: <SuspenseWrapper><Policy /></SuspenseWrapper>,
-        errorElement: <ErrorBoundary><Navigate to="/" replace /></ErrorBoundary>
+        errorElement: <RouteErrorFallback />
       },
       {
         path: '/policy',
         element: <SuspenseWrapper><Policy /></SuspenseWrapper>,
-        errorElement: <ErrorBoundary><Navigate to="/" replace /></ErrorBoundary>
+        errorElement: <RouteErrorFallback />
       },
       {
         path: '/conditions-generales',
         element: <SuspenseWrapper><Conditions /></SuspenseWrapper>,
-        errorElement: <ErrorBoundary><Navigate to="/" replace /></ErrorBoundary>
+        errorElement: <RouteErrorFallback />
       },
       {
         path: '/conditions',
         element: <SuspenseWrapper><Conditions /></SuspenseWrapper>,
-        errorElement: <ErrorBoundary><Navigate to="/" replace /></ErrorBoundary>
+        errorElement: <RouteErrorFallback />
       },
       {
         path: '/plan-du-site',
         element: <SuspenseWrapper><SitemapPage /></SuspenseWrapper>,
-        errorElement: <ErrorBoundary><Navigate to="/" replace /></ErrorBoundary>
+        errorElement: <RouteErrorFallback />
       },
       {
         path: '/newsletter',
         element: <SuspenseWrapper><NewsletterPage /></SuspenseWrapper>,
-        errorElement: <ErrorBoundary><Navigate to="/" replace /></ErrorBoundary>
+        errorElement: <RouteErrorFallback />
       },
       {
         path: '/confiance-certifications',
         element: <SuspenseWrapper><ConfianceEtCertifications /></SuspenseWrapper>,
-        errorElement: <ErrorBoundary><Navigate to="/" replace /></ErrorBoundary>
+        errorElement: <RouteErrorFallback />
       },
       {
         path: '/espace-client',
         element: <SuspenseWrapper><EspaceClient /></SuspenseWrapper>,
-        errorElement: <ErrorBoundary><Navigate to="/" replace /></ErrorBoundary>
+        errorElement: <RouteErrorFallback />
       },
       {
         path: '/client/dashboard',
         element: <SuspenseWrapper><ClientDashboard /></SuspenseWrapper>,
-        errorElement: <ErrorBoundary><Navigate to="/espace-client" replace /></ErrorBoundary>
+        errorElement: <RouteErrorFallback />
       },
       {
         path: '/client/documents',
         element: <SuspenseWrapper><ClientDocuments /></SuspenseWrapper>,
-        errorElement: <ErrorBoundary><Navigate to="/espace-client" replace /></ErrorBoundary>
+        errorElement: <RouteErrorFallback />
       },
       {
         path: '/client/sinistres',
         element: <SuspenseWrapper><ClientSinistres /></SuspenseWrapper>,
-        errorElement: <ErrorBoundary><Navigate to="/espace-client" replace /></ErrorBoundary>
+        errorElement: <RouteErrorFallback />
       },
       {
         path: '/client/paiements',
         element: <SuspenseWrapper><ClientPaiements /></SuspenseWrapper>,
-        errorElement: <ErrorBoundary><Navigate to="/espace-client" replace /></ErrorBoundary>
+        errorElement: <RouteErrorFallback />
       },
       {
         path: '/client/notifications',
         element: <SuspenseWrapper><ClientNotifications /></SuspenseWrapper>,
-        errorElement: <ErrorBoundary><Navigate to="/espace-client" replace /></ErrorBoundary>
+        errorElement: <RouteErrorFallback />
       },
       {
         path: '/client/profil',
         element: <SuspenseWrapper><ClientProfil /></SuspenseWrapper>,
-        errorElement: <ErrorBoundary><Navigate to="/espace-client" replace /></ErrorBoundary>
+        errorElement: <RouteErrorFallback />
       },
       {
         path: '/partenaires',
         element: <SuspenseWrapper><Partners /></SuspenseWrapper>,
-        errorElement: <ErrorBoundary><Navigate to="/" replace /></ErrorBoundary>
+        errorElement: <RouteErrorFallback />
       },
       {
         path: '/programme-partenaires',
         element: <SuspenseWrapper><PartnershipPage /></SuspenseWrapper>,
-        errorElement: <ErrorBoundary><Navigate to="/" replace /></ErrorBoundary>
+        errorElement: <RouteErrorFallback />
       },
       {
         path: '/devenir-partenaire',
         element: <SuspenseWrapper><PartnershipPage /></SuspenseWrapper>,
-        errorElement: <ErrorBoundary><Navigate to="/" replace /></ErrorBoundary>
+        errorElement: <RouteErrorFallback />
       },
       {
         path: '/villes',
         element: <SuspenseWrapper><CityIndex /></SuspenseWrapper>,
-        errorElement: <ErrorBoundary><Navigate to="/" replace /></ErrorBoundary>
+        errorElement: <RouteErrorFallback />
       },
       {
         path: '/ville/:city',
         element: <SuspenseWrapper><CityPage /></SuspenseWrapper>,
-        errorElement: <ErrorBoundary><Navigate to="/villes" replace /></ErrorBoundary>
+        errorElement: <RouteErrorFallback />
       },
       {
         path: '*',

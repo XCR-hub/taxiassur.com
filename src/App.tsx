@@ -3,6 +3,7 @@ import { RouterProvider } from 'react-router-dom';
 import { router } from './router';
 import { ToastProvider } from './contexts/ToastContext';
 import { ModalProvider } from './contexts/ModalContext';
+import ErrorBoundary from './components/ErrorBoundary';
 
 const PerformanceOptimizer = lazy(() => import('./components/PerformanceOptimizer'));
 const AITaxiBackground = lazy(() => import('./components/AITaxiBackground'));
@@ -28,20 +29,22 @@ function App() {
   }, []);
 
   return (
-    <ToastProvider>
-      <ModalProvider>
-        {showEnhancements && (
-          <Suspense fallback={null}>
-            <PerformanceOptimizer>
-              <AITaxiBackground intensity="low" />
-            </PerformanceOptimizer>
+    <ErrorBoundary>
+      <ToastProvider>
+        <ModalProvider>
+          {showEnhancements && (
+            <Suspense fallback={null}>
+              <PerformanceOptimizer>
+                <AITaxiBackground intensity="low" />
+              </PerformanceOptimizer>
+            </Suspense>
+          )}
+          <Suspense fallback={<SimpleFallback />}>
+            <RouterProvider router={router} />
           </Suspense>
-        )}
-        <Suspense fallback={<SimpleFallback />}>
-          <RouterProvider router={router} />
-        </Suspense>
-      </ModalProvider>
-    </ToastProvider>
+        </ModalProvider>
+      </ToastProvider>
+    </ErrorBoundary>
   );
 }
 
