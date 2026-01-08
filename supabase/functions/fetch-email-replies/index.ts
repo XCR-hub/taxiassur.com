@@ -42,18 +42,17 @@ Deno.serve(async (req: Request) => {
     const lock = await client.getMailboxLock('INBOX');
     
     try {
-      // Récupérer les emails non lus des 7 derniers jours
+      // Récupérer TOUS les emails des 30 derniers jours (lus et non-lus)
       const messages = [];
       const searchCriteria = {
-        since: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // 7 jours
-        unseen: true
+        since: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // 30 jours
       };
 
       for await (const message of client.fetch(searchCriteria, { envelope: true, source: true })) {
         messages.push(message);
       }
 
-      console.log(`📧 ${messages.length} emails non lus trouvés`);
+      console.log(`📧 ${messages.length} emails trouvés (30 derniers jours)`);
 
       const processedReplies = [];
 
@@ -104,6 +103,20 @@ Deno.serve(async (req: Request) => {
             sentiment = 'negative';
           }
 
+          // Vérifier si cet email n'existe pas déjà (éviter les doublons)
+          const { data: existingReply } = await supabase
+            .from('email_replies')
+            .select('id')
+            .eq('from_email', fromEmail)
+            .eq('subject', subject)
+            .eq('replied_at', parsed.date || new Date().toISOString())
+            .maybeSingle();
+
+          if (existingReply) {
+            console.log('⚠️ Email déjà enregistré, ignoré');
+            continue;
+          }
+
           // Enregistrer la réponse
           const { data: reply, error: insertError } = await supabase
             .from('email_replies')
@@ -129,9 +142,6 @@ Deno.serve(async (req: Request) => {
           } else {
             console.log('✅ Réponse enregistrée:', reply.id);
             processedReplies.push(reply);
-
-            // Marquer l'email comme lu
-            await client.messageFlagsAdd(message.uid, ['\\Seen']);
           }
 
         } catch (parseError) {

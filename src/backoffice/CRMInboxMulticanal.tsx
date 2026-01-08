@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { Mail, MessageSquare, Phone, Filter, CheckCircle, Archive, Bot } from 'lucide-react';
+import { Mail, MessageSquare, Phone, Filter, CheckCircle, Archive, Bot, RefreshCw } from 'lucide-react';
 import { channelEngineService, InboxMessage, CommunicationChannel } from '@/lib/crm-channel-engine';
 import { MessagePreview } from '@/components/crm/MessagePreview';
 import BackButton from './BackButton';
+import { supabase } from '@/lib/supabase';
 
 const CRMInboxMulticanal: React.FC = () => {
   const [loading, setLoading] = useState(true);
+  const [syncing, setSyncing] = useState(false);
   const [messages, setMessages] = useState<InboxMessage[]>([]);
   const [selectedMessage, setSelectedMessage] = useState<InboxMessage | null>(null);
   const [filter, setFilter] = useState<'all' | 'unread' | 'requires_action'>('all');
@@ -52,6 +54,27 @@ const CRMInboxMulticanal: React.FC = () => {
     console.log('AI Response:', response);
   };
 
+  const handleSyncEmails = async () => {
+    setSyncing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('fetch-email-replies');
+
+      if (error) {
+        console.error('Erreur synchronisation emails:', error);
+        alert('Erreur lors de la synchronisation des emails');
+      } else {
+        console.log('Synchronisation réussie:', data);
+        alert(`${data.message || 'Synchronisation terminée'}`);
+        await loadMessages();
+      }
+    } catch (err) {
+      console.error('Erreur:', err);
+      alert('Erreur lors de la synchronisation');
+    } finally {
+      setSyncing(false);
+    }
+  };
+
   const stats = {
     total: messages.length,
     unread: messages.filter(m => m.status === 'unread').length,
@@ -68,6 +91,14 @@ const CRMInboxMulticanal: React.FC = () => {
             <p className="text-gray-600">Tous vos messages en un seul endroit</p>
           </div>
           <div className="flex items-center gap-4">
+            <button
+              onClick={handleSyncEmails}
+              disabled={syncing}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <RefreshCw size={16} className={syncing ? 'animate-spin' : ''} />
+              {syncing ? 'Synchronisation...' : 'Synchroniser emails'}
+            </button>
             <div className="text-center px-4 py-2 bg-blue-100 rounded-lg">
               <div className="text-2xl font-bold text-blue-600">{stats.unread}</div>
               <div className="text-xs text-blue-700">Non lus</div>
