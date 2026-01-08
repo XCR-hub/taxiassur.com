@@ -1,6 +1,6 @@
 # ✅ FIX COMPLET : Connexion Admin & Ouverture Leads
 
-**Date** : 2026-01-08  
+**Date** : 2026-01-08
 **Tous les problèmes sont corrigés !** 🎉
 
 ---
@@ -17,7 +17,13 @@
 - Navigation fonctionne
 - Page de détails s'ouvre
 
-### 3. Erreurs JavaScript ✅
+### 3. Nouveaux leads invisibles dans le pipeline ✅ **NOUVEAU**
+- **Problème** : Les formulaires insèrent dans `leads`, le CRM lit depuis `crm_leads`
+- **Solution** : Trigger de synchronisation automatique créé
+- Chaque nouveau lead est automatiquement copié vers `crm_leads`
+- Mapping des statuts : "nouveau" → NEW_LEAD, "contacté" → CONTACT_CONFIRMED
+
+### 4. Erreurs JavaScript ✅
 - Double déclaration `supabase` corrigée
 - `runAllTests` accessible
 - Compatibilité maximale
@@ -57,9 +63,43 @@ URL: https://taxiassur.com/backoffice/crm-killer/pipeline
 - Cliquez sur n'importe quel lead
 - ✅ La page de détails s'ouvre !
 
+### 4. Test Nouveau Lead **IMPORTANT**
+URL: https://taxiassur.com (page d'accueil)
+- Remplir le formulaire de contact
+- Soumettre
+- Aller sur https://taxiassur.com/backoffice/crm-killer/pipeline
+- ✅ Le nouveau lead doit apparaître dans la colonne "Nouveau Lead"
+
 ---
 
 ## 🐛 SI ÇA NE FONCTIONNE PAS
+
+### Nouveau lead n'apparaît pas dans le pipeline ?
+
+**1. Vérifier la synchronisation**
+```sql
+-- Dans Supabase SQL Editor
+SELECT COUNT(*) FROM leads;
+SELECT COUNT(*) FROM crm_leads;
+-- Les deux devraient avoir le même nombre
+```
+
+**2. Vérifier le trigger**
+```sql
+-- Dans Supabase SQL Editor
+SELECT * FROM pg_trigger WHERE tgname = 'sync_new_lead_to_crm';
+-- Doit retourner une ligne
+```
+
+**3. Test manuel**
+```sql
+-- Créer un lead de test
+INSERT INTO leads (name, email, phone, city, status)
+VALUES ('Test', 'test@test.com', '0600000000', 'Paris', 'taxi');
+
+-- Vérifier qu'il est copié dans crm_leads
+SELECT * FROM crm_leads WHERE email = 'test@test.com';
+```
 
 ### Lead ne s'ouvre pas ?
 
@@ -91,14 +131,17 @@ https://taxiassur.com/backoffice/crm-killer/lead/32ee7c9e-00f8-4cbf-8f14-7136319
 
 ## ✅ CHECKLIST
 
-- [x] Build réussi (51 secondes)
+- [x] Build réussi (53 secondes)
 - [x] Erreurs JavaScript corrigées
 - [x] Bug kanban corrigé
+- [x] **Trigger synchronisation leads → crm_leads créé**
+- [x] Migration Supabase appliquée avec succès
 - [x] Fichiers diagnostic copiés dans /dist/
 - [x] Documentation complète
 - [ ] **Upload sur IONOS**
 - [ ] **Test connexion**
 - [ ] **Test ouverture lead**
+- [ ] **Test création nouveau lead via formulaire**
 
 ---
 
