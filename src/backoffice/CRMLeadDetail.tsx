@@ -50,6 +50,7 @@ const CRMLeadDetail: React.FC = () => {
 
   const loadLeadData = async (leadId: string) => {
     setLoading(true);
+    console.log('Loading lead data for:', leadId);
     try {
       const [
         leadData,
@@ -65,6 +66,12 @@ const CRMLeadDetail: React.FC = () => {
         retentionService.getRetentionScore(leadId)
       ]);
 
+      console.log('Lead data loaded:', leadData);
+      console.log('Timeline:', timelineData);
+      console.log('Decisions:', decisionsData);
+      console.log('Documents:', docsData);
+      console.log('Retention score:', scoreData);
+
       setLead(leadData);
       setTimeline(timelineData);
       setAiDecisions(decisionsData);
@@ -73,6 +80,7 @@ const CRMLeadDetail: React.FC = () => {
       setEditedNotes(leadData.notes || '');
     } catch (error) {
       console.error('Failed to load lead:', error);
+      console.error('Error details:', error);
     } finally {
       setLoading(false);
     }

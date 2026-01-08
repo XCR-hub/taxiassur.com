@@ -196,7 +196,10 @@ const CRMPipelineKanban: React.FC = () => {
                       <PipelineCard
                         key={lead.id}
                         lead={lead}
-                        onClick={() => navigate(`/backoffice/crm-killer/lead/${lead.id}`)}
+                        onClick={() => {
+                          console.log('Navigating to lead:', lead.id, lead);
+                          navigate(`/backoffice/crm-killer/lead/${lead.id}`);
+                        }}
                         onDragStart={() => handleDragStart(lead)}
                         isDragging={draggedLead?.id === lead.id}
                       />
