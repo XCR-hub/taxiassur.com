@@ -40,7 +40,7 @@ const CRMPipelineKanban: React.FC = () => {
   const handleDrop = async (targetStatus: PipelineStatus) => {
     if (!draggedLead) return;
 
-    const oldStatus = draggedLead.pipeline_status;
+    const oldStatus = draggedLead.status;
 
     // Mise à jour optimiste pour feedback immédiat
     setKanbanData(prev => {
@@ -53,9 +53,9 @@ const CRMPipelineKanban: React.FC = () => {
 
       // Ajouter au nouveau statut
       if (newData[targetStatus]) {
-        newData[targetStatus] = [...newData[targetStatus], { ...draggedLead, pipeline_status: targetStatus }];
+        newData[targetStatus] = [...newData[targetStatus], { ...draggedLead, status: targetStatus }];
       } else {
-        newData[targetStatus] = [{ ...draggedLead, pipeline_status: targetStatus }];
+        newData[targetStatus] = [{ ...draggedLead, status: targetStatus }];
       }
 
       return newData;
