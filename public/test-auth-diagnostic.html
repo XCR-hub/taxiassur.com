@@ -127,10 +127,6 @@
             overflow-x: auto;
             margin-top: 12px;
         }
-        .icon-success { color: #48bb78; }
-        .icon-error { color: #f56565; }
-        .icon-warning { color: #ed8936; }
-        .icon-info { color: #4299e1; }
         .loading {
             display: inline-block;
             width: 20px;
@@ -168,7 +164,7 @@
 
         <div class="section">
             <h2>🔍 Tests Automatiques</h2>
-            <button class="btn" onclick="runAllTests()">Lancer les Tests</button>
+            <button class="btn" id="runTestsBtn">Lancer les Tests</button>
             <div id="testResults"></div>
         </div>
 
@@ -179,25 +175,33 @@
     </div>
 
     <script>
+        // Configuration Supabase
         const SUPABASE_URL = 'https://xxunrkyfavznfoxfqgci.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh4dW5ya3lmYXZ6bmZveGZxZ2NpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQ3MTA0MTQsImV4cCI6MjA1MDI4NjQxNH0.vc-LKqBJPKK5NmA1dBFCt1aR9EVyZN5L0q-FBdLVBzo';
 
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        let supabaseClient = null;
+
+        // Initialiser Supabase
+        function initSupabase() {
+            if (!supabaseClient && window.supabase) {
+                supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            }
+            return supabaseClient;
+        }
 
         // Fonction d'affichage de test
-        function displayTest(name, result, status, details = '') {
+        function displayTest(name, result, status, details) {
+            details = details || '';
             const icon = status === 'success' ? '✅' : status === 'error' ? '❌' : status === 'warning' ? '⚠️' : 'ℹ️';
-            return `
-                <div class="test-item ${status}">
-                    <div class="test-name">${icon} ${name}</div>
-                    <div class="test-result">${result}</div>
-                    ${details ? `<div class="code-block">${details}</div>` : ''}
-                </div>
-            `;
+            return '<div class="test-item ' + status + '">' +
+                '<div class="test-name">' + icon + ' ' + name + '</div>' +
+                '<div class="test-result">' + result + '</div>' +
+                (details ? '<div class="code-block">' + details + '</div>' : '') +
+                '</div>';
         }
 
         // Test de connexion
-        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
@@ -208,19 +212,27 @@
             btn.innerHTML = '<span class="loading"></span> Connexion en cours...';
             resultDiv.innerHTML = '';
 
+            const sb = initSupabase();
+            if (!sb) {
+                resultDiv.innerHTML = displayTest('Erreur', 'Impossible d\'initialiser Supabase', 'error');
+                btn.disabled = false;
+                btn.textContent = 'Tester la Connexion';
+                return;
+            }
+
             try {
                 console.log('🔐 Tentative de connexion:', email);
 
-                const { data, error } = await supabase.auth.signInWithPassword({
-                    email,
-                    password
+                const { data, error } = await sb.auth.signInWithPassword({
+                    email: email,
+                    password: password
                 });
 
                 if (error) throw error;
 
                 if (data.user) {
                     // Vérifier l'utilisateur admin
-                    const { data: adminUser, error: adminError } = await supabase
+                    const { data: adminUser, error: adminError } = await sb
                         .from('admin_users')
                         .select('*')
                         .eq('email', email)
@@ -228,36 +240,36 @@
 
                     let html = displayTest(
                         'Authentification Supabase',
-                        `✅ Connexion réussie pour ${email}`,
+                        '✅ Connexion réussie pour ' + email,
                         'success',
-                        `User ID: ${data.user.id}\nSession: ${data.session ? 'Active' : 'Inactive'}`
+                        'User ID: ' + data.user.id + '\nSession: ' + (data.session ? 'Active' : 'Inactive')
                     );
 
                     if (adminError) {
                         html += displayTest(
                             'Vérification Admin',
-                            `❌ Erreur: ${adminError.message}`,
+                            '❌ Erreur: ' + adminError.message,
                             'error',
                             JSON.stringify(adminError, null, 2)
                         );
                     } else if (adminUser) {
                         html += displayTest(
                             'Profil Admin',
-                            `✅ Utilisateur trouvé: ${adminUser.full_name} (${adminUser.role})`,
+                            '✅ Utilisateur trouvé: ' + adminUser.full_name + ' (' + adminUser.role + ')',
                             'success',
-                            `Email: ${adminUser.email}\nActif: ${adminUser.is_active}\nRôle: ${adminUser.role}`
+                            'Email: ' + adminUser.email + '\nActif: ' + adminUser.is_active + '\nRôle: ' + adminUser.role
                         );
 
                         // Tester les permissions
-                        const { data: permissions, error: permError } = await supabase
+                        const { data: permissions, error: permError } = await sb
                             .from('user_permissions')
                             .select('*')
                             .eq('user_id', adminUser.id);
 
-                        if (!permError) {
+                        if (!permError && permissions) {
                             html += displayTest(
                                 'Permissions',
-                                `✅ ${permissions.length} permission(s) configurée(s)`,
+                                '✅ ' + permissions.length + ' permission(s) configurée(s)',
                                 'success',
                                 JSON.stringify(permissions, null, 2)
                             );
@@ -267,7 +279,7 @@
                             'Profil Admin',
                             '❌ Utilisateur non trouvé dans admin_users',
                             'error',
-                            `L'authentification a réussi mais l'utilisateur n'existe pas dans la table admin_users.\nCréez l'utilisateur avec:\n\nINSERT INTO admin_users (id, email, full_name, role, is_active)\nVALUES ('${data.user.id}', '${email}', 'Master Admin', 'master', true);`
+                            'L\'authentification a réussi mais l\'utilisateur n\'existe pas dans la table admin_users.\nCréez l\'utilisateur avec:\n\nINSERT INTO admin_users (id, email, full_name, role, is_active)\nVALUES (\'' + data.user.id + '\', \'' + email + '\', \'Master Admin\', \'master\', true);'
                         );
                     }
 
@@ -283,7 +295,7 @@
                 console.error('Erreur:', err);
                 resultDiv.innerHTML = displayTest(
                     'Connexion',
-                    `❌ Erreur: ${err.message}`,
+                    '❌ Erreur: ' + err.message,
                     'error',
                     JSON.stringify(err, null, 2)
                 );
@@ -294,77 +306,86 @@
         });
 
         // Tests automatiques
-        async function runAllTests() {
+        document.getElementById('runTestsBtn').addEventListener('click', async function() {
             const resultsDiv = document.getElementById('testResults');
             resultsDiv.innerHTML = '<div class="loading"></div> Tests en cours...';
             let html = '';
 
+            const sb = initSupabase();
+            if (!sb) {
+                resultsDiv.innerHTML = displayTest('Erreur', 'Impossible d\'initialiser Supabase', 'error');
+                return;
+            }
+
             // Test 1: Connexion Supabase
             try {
-                const { data, error } = await supabase.from('admin_users').select('count').limit(1);
+                const { data, error } = await sb.from('admin_users').select('count').limit(1);
                 html += displayTest(
                     '1. Connexion Supabase',
-                    error ? `❌ ${error.message}` : '✅ Connexion établie',
+                    error ? '❌ ' + error.message : '✅ Connexion établie',
                     error ? 'error' : 'success'
                 );
             } catch (err) {
-                html += displayTest('1. Connexion Supabase', `❌ ${err.message}`, 'error');
+                html += displayTest('1. Connexion Supabase', '❌ ' + err.message, 'error');
             }
 
             // Test 2: Table admin_users
             try {
-                const { data, error } = await supabase
+                const { data, error } = await sb
                     .from('admin_users')
                     .select('email, full_name, role, is_active')
                     .order('created_at', { ascending: false })
                     .limit(5);
 
                 if (error) throw error;
+                const details = data.map(function(u) {
+                    return u.full_name + ' (' + u.email + ') - ' + u.role + ' - ' + (u.is_active ? 'Actif' : 'Inactif');
+                }).join('\n');
                 html += displayTest(
                     '2. Table admin_users',
-                    `✅ ${data.length} utilisateur(s) trouvé(s)`,
+                    '✅ ' + data.length + ' utilisateur(s) trouvé(s)',
                     'success',
-                    data.map(u => `${u.full_name} (${u.email}) - ${u.role} - ${u.is_active ? 'Actif' : 'Inactif'}`).join('\n')
+                    details
                 );
             } catch (err) {
-                html += displayTest('2. Table admin_users', `❌ ${err.message}`, 'error');
+                html += displayTest('2. Table admin_users', '❌ ' + err.message, 'error');
             }
 
             // Test 3: Session active
             try {
-                const { data: { session }, error } = await supabase.auth.getSession();
+                const { data: { session }, error } = await sb.auth.getSession();
                 html += displayTest(
                     '3. Session Active',
-                    session ? `✅ Session trouvée pour ${session.user.email}` : '⚠️ Aucune session active',
+                    session ? '✅ Session trouvée pour ' + session.user.email : '⚠️ Aucune session active',
                     session ? 'success' : 'warning',
-                    session ? `Expire: ${new Date(session.expires_at * 1000).toLocaleString('fr-FR')}` : ''
+                    session ? 'Expire: ' + new Date(session.expires_at * 1000).toLocaleString('fr-FR') : ''
                 );
             } catch (err) {
-                html += displayTest('3. Session Active', `❌ ${err.message}`, 'error');
+                html += displayTest('3. Session Active', '❌ ' + err.message, 'error');
             }
 
             // Test 4: RLS Policies
             try {
-                const { data, error } = await supabase
+                const { data, error } = await sb
                     .from('admin_users')
                     .select('*')
                     .limit(1);
 
                 html += displayTest(
                     '4. RLS Policies',
-                    error ? `⚠️ ${error.message}` : '✅ Accès autorisé',
-                    error?.code === '42501' ? 'warning' : (error ? 'error' : 'success'),
+                    error ? '⚠️ ' + error.message : '✅ Accès autorisé',
+                    error && error.code === '42501' ? 'warning' : (error ? 'error' : 'success'),
                     error ? 'Les politiques RLS bloquent l\'accès sans authentification (normal)' : ''
                 );
             } catch (err) {
-                html += displayTest('4. RLS Policies', `❌ ${err.message}`, 'error');
+                html += displayTest('4. RLS Policies', '❌ ' + err.message, 'error');
             }
 
             resultsDiv.innerHTML = html;
-        }
+        });
 
         // État du système
-        async function checkSystemStatus() {
+        function checkSystemStatus() {
             const statusDiv = document.getElementById('systemStatus');
             let html = '';
 
@@ -387,15 +408,18 @@
             // Vérifier URL et clés
             html += displayTest(
                 'Configuration',
-                `Supabase URL: ${SUPABASE_URL}\nClé configurée: ${SUPABASE_ANON_KEY.substring(0, 20)}...`,
+                'Supabase URL: ' + SUPABASE_URL + '\nClé configurée: ' + SUPABASE_ANON_KEY.substring(0, 20) + '...',
                 'info'
             );
 
             statusDiv.innerHTML = html;
         }
 
-        // Charger l'état au démarrage
-        checkSystemStatus();
+        // Initialiser au chargement
+        setTimeout(function() {
+            initSupabase();
+            checkSystemStatus();
+        }, 100);
     </script>
 </body>
 </html>
