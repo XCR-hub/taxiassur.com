@@ -17,6 +17,7 @@ export type PipelineStatus =
   | 'CROSS_SELLING'
   | 'RISK_CHURN'
   | 'CLIENT_LOST'
+  | 'LOST_RECONTACT_SCHEDULED'
   | 'SINISTER'
   | 'ATTESTATION_REQUEST'
   | 'SUPPORT_ASSISTANCE';
@@ -45,7 +46,8 @@ export const PIPELINE_STATUSES: Record<PipelineStatus, { label: string; color: s
   ACTIVE_CLIENT: { label: 'Client Actif', color: 'green', icon: '🎉' },
   CROSS_SELLING: { label: 'Cross-sell', color: 'purple', icon: '🎁' },
   RISK_CHURN: { label: 'Risque Churn', color: 'red', icon: '⚠️' },
-  CLIENT_LOST: { label: 'Client Perdu', color: 'gray', icon: '😢' },
+  CLIENT_LOST: { label: 'Perdu Définitif', color: 'gray', icon: '❌' },
+  LOST_RECONTACT_SCHEDULED: { label: 'Perdu - Recontact Programmé', color: 'slate', icon: '📅' },
   SINISTER: { label: 'Sinistre', color: 'red', icon: '🚨' },
   ATTESTATION_REQUEST: { label: 'Demande Attestation', color: 'blue', icon: '📜' },
   SUPPORT_ASSISTANCE: { label: 'Assistance', color: 'teal', icon: '💬' }
@@ -68,11 +70,17 @@ export const PIPELINE_TRANSITIONS: PipelineTransition[] = [
   { from: 'ACTIVE_CLIENT', to: 'CROSS_SELLING', label: 'Cross-sell' },
   { from: 'ACTIVE_CLIENT', to: 'RISK_CHURN', label: 'Risque Départ' },
   { from: 'RISK_CHURN', to: 'ACTIVE_CLIENT', label: 'Rétention OK' },
-  { from: 'RISK_CHURN', to: 'CLIENT_LOST', label: 'Client Perdu', requiresNote: true },
+  { from: 'RISK_CHURN', to: 'CLIENT_LOST', label: 'Perdu Définitif', requiresNote: true },
+  { from: 'RISK_CHURN', to: 'LOST_RECONTACT_SCHEDULED', label: 'Programmer Recontact', requiresNote: true },
   { from: 'ACTIVE_CLIENT', to: 'SINISTER', label: 'Déclarer Sinistre' },
   { from: 'ACTIVE_CLIENT', to: 'ATTESTATION_REQUEST', label: 'Demande Attestation' },
   { from: 'ACTIVE_CLIENT', to: 'SUPPORT_ASSISTANCE', label: 'Demande Assistance' },
-  { from: 'QUOTE_SENT', to: 'CLIENT_LOST', label: 'Marquer Perdu', requiresNote: true }
+  { from: 'QUOTE_SENT', to: 'CLIENT_LOST', label: 'Perdu Définitif', requiresNote: true },
+  { from: 'QUOTE_SENT', to: 'LOST_RECONTACT_SCHEDULED', label: 'Programmer Recontact', requiresNote: true },
+  { from: 'NO_RESPONSE', to: 'LOST_RECONTACT_SCHEDULED', label: 'Programmer Recontact', requiresNote: true },
+  { from: 'RELANCE_ACTIVE', to: 'LOST_RECONTACT_SCHEDULED', label: 'Programmer Recontact', requiresNote: true },
+  { from: 'LOST_RECONTACT_SCHEDULED', to: 'NEW_LEAD', label: 'Réactiver (Auto)', autoActions: ['send_recontact_email'] },
+  { from: 'LOST_RECONTACT_SCHEDULED', to: 'CLIENT_LOST', label: 'Abandonner Définitivement' }
 ];
 
 export interface CRMLead {
@@ -165,14 +173,22 @@ export const pipelineService = {
     leadId: string,
     newStatus: PipelineStatus,
     note?: string,
-    userId?: string
+    userId?: string,
+    recontactDate?: string
   ) {
+    const updateData: any = {
+      status: newStatus,
+      updated_at: new Date().toISOString()
+    };
+
+    if (newStatus === 'LOST_RECONTACT_SCHEDULED' && recontactDate) {
+      updateData.recontact_scheduled_date = recontactDate;
+      updateData.lost_reason = note || 'Non spécifié';
+    }
+
     const { data: lead, error: leadError } = await supabase
       .from('crm_leads')
-      .update({
-        status: newStatus,
-        updated_at: new Date().toISOString()
-      })
+      .update(updateData)
       .eq('id', leadId)
       .select()
       .single();
@@ -186,7 +202,11 @@ export const pipelineService = {
         event_type: 'status_change',
         title: `Statut changé vers ${PIPELINE_STATUSES[newStatus].label}`,
         description: note,
-        metadata: { from_status: lead.status, to_status: newStatus },
+        metadata: {
+          from_status: lead.status,
+          to_status: newStatus,
+          recontact_date: recontactDate
+        },
         created_by: userId,
         created_at: new Date().toISOString()
       });

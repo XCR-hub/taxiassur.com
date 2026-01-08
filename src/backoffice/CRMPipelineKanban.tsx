@@ -75,7 +75,8 @@ const CRMPipelineKanban: React.FC = () => {
     'SIGNATURE_PENDING',
     'SIGNED',
     'PAYMENT_PENDING',
-    'ACTIVE_CLIENT'
+    'ACTIVE_CLIENT',
+    'LOST_RECONTACT_SCHEDULED'
   ];
 
   if (loading) {

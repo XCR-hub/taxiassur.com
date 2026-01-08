@@ -27,6 +27,7 @@ import { AIDecisionCard } from '@/components/crm/AIDecisionCard';
 import { DocumentChecklist } from '@/components/crm/DocumentChecklist';
 import { RetentionScore } from '@/components/crm/RetentionScore';
 import BackButton from './BackButton';
+import LostLeadRecontactModal from './LostLeadRecontactModal';
 
 const CRMLeadDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -40,6 +41,8 @@ const CRMLeadDetail: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'timeline' | 'documents' | 'ia' | 'retention'>('timeline');
   const [editing, setEditing] = useState(false);
   const [editedNotes, setEditedNotes] = useState('');
+  const [showRecontactModal, setShowRecontactModal] = useState(false);
+  const [pendingStatusChange, setPendingStatusChange] = useState<any>(null);
 
   useEffect(() => {
     if (id) loadLeadData(id);
@@ -77,11 +80,37 @@ const CRMLeadDetail: React.FC = () => {
 
   const handleStatusChange = async (newStatus: any) => {
     if (!lead) return;
+
+    if (newStatus === 'LOST_RECONTACT_SCHEDULED') {
+      setPendingStatusChange(newStatus);
+      setShowRecontactModal(true);
+      return;
+    }
+
     try {
       await pipelineService.updateLeadStatus(lead.id, newStatus);
       await loadLeadData(lead.id);
     } catch (error) {
       console.error('Failed to update status:', error);
+    }
+  };
+
+  const handleRecontactConfirm = async (date: string, reason: string) => {
+    if (!lead || !pendingStatusChange) return;
+
+    try {
+      await pipelineService.updateLeadStatus(
+        lead.id,
+        pendingStatusChange,
+        reason,
+        undefined,
+        date
+      );
+      setShowRecontactModal(false);
+      setPendingStatusChange(null);
+      await loadLeadData(lead.id);
+    } catch (error) {
+      console.error('Failed to schedule recontact:', error);
     }
   };
 
@@ -359,6 +388,17 @@ const CRMLeadDetail: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {showRecontactModal && (
+        <LostLeadRecontactModal
+          leadName={lead.full_name}
+          onConfirm={handleRecontactConfirm}
+          onCancel={() => {
+            setShowRecontactModal(false);
+            setPendingStatusChange(null);
+          }}
+        />
+      )}
     </div>
   );
 };
