@@ -129,6 +129,7 @@ const SmartTemplatesManager = lazy(() => import('./backoffice/SmartTemplatesMana
 const ABTestingManager = lazy(() => import('./backoffice/ABTestingManager'));
 const NotificationsManager = lazy(() => import('./backoffice/NotificationsManager'));
 const EmailAdvancedAnalytics = lazy(() => import('./backoffice/EmailAdvancedAnalytics'));
+const EmailInboxManager = lazy(() => import('./backoffice/EmailInboxManager'));
 
 const LoadingFallback = () => (
   <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-black flex items-center justify-center">
@@ -601,6 +602,10 @@ export const router = createBrowserRouter([
       {
         path: '/backoffice/crm-killer/settings',
         element: <AuthGuard><SuspenseWrapper><CRMAdminSettings /></SuspenseWrapper></AuthGuard>
+      },
+      {
+        path: '/backoffice/crm-killer/email-inbox',
+        element: <AuthGuard><SuspenseWrapper><EmailInboxManager /></SuspenseWrapper></AuthGuard>
       },
       {
         path: '/backoffice/crm-old',
