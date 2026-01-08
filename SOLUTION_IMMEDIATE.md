@@ -1,60 +1,48 @@
-# 🚨 SOLUTION IMMÉDIATE - PAGE NOIRE
+# ⚡ SOLUTION IMMÉDIATE - Erreurs React #130 + Supabase
 
-## Le problème
-Le fichier `page-home-CeLwdU1V.js` manque sur votre serveur IONOS.
+## 🎯 Problèmes Corrigés
 
-## ✅ Solution (2 méthodes)
+1. **Erreur React #130** - Configuration TypeScript manquante
+2. **"Failed to fetch"** - URLs Supabase obsolètes
 
-### Méthode 1 : Via Espace Client IONOS (LA PLUS SIMPLE)
+## 📦 Fichier Prêt
 
-1. **Connectez-vous** : https://www.ionos.fr/login
-2. Cliquez sur **Hébergement** dans le menu
-3. Cliquez sur **Gestionnaire de fichiers**
-4. **SUPPRIMEZ TOUT** dans le dossier racine (ou public_html)
-5. Cliquez sur **Upload** ou **Téléverser**
-6. Sélectionnez **TOUT** dans votre dossier local `dist/`
-7. Attendez la fin du transfert (100%)
-8. Videz cache navigateur : `Ctrl + Shift + Delete` → Cocher "Images et fichiers" → Valider
-9. Rechargez : `Ctrl + F5`
+**`dist-upload-latest.zip`** (758 KB)
 
-### Méthode 2 : Via FTP avec FileZilla
+## 🚀 3 Étapes - 10 Minutes
 
-1. **Téléchargez FileZilla** : https://filezilla-project.org/download.php?type=client
-2. **Ouvrez FileZilla**
-3. **Connectez-vous** :
-   - Hôte : Trouvez dans Espace IONOS → Hébergement → Accès FTP
-   - Identifiant : Votre nom d'utilisateur FTP IONOS
-   - Mot de passe : Votre mot de passe FTP IONOS
-   - Port : 21 (ou 22 pour SFTP)
-4. **Côté droit** (serveur) : Supprimez TOUT
-5. **Côté gauche** (local) : Naviguez vers votre dossier `dist/`
-6. **Sélectionnez TOUT** dans dist/ et **glissez vers la droite**
-7. Attendez la fin du transfert
-8. Videz cache : `Ctrl + Shift + Delete`
-9. Rechargez : `Ctrl + F5`
+### 1️⃣ Upload (5 min)
 
-## 📋 Liste des fichiers critiques à vérifier
+Uploadez **tout le contenu** de `dist/` sur IONOS
 
-Vérifiez que ces fichiers existent sur le serveur :
-```
-/index.html
-/assets/index-uFzAOoDh.js
-/assets/page-home-CeLwdU1V.js  ← CELUI-CI MANQUE !
-/assets/vendor-react-BRfBPHqF.js
-/assets/lib-core-BHIWUWWH.js
-/assets/index-BEhlV1BT.css
-/env-config.js
-```
+### 2️⃣ CORS Supabase (3 min) ⚠️ OBLIGATOIRE
 
-## ⚡ Après l'upload
+1. https://supabase.com/dashboard → Projet `drohhxrkoequjphvabvq`
+2. Settings → API → Ajoutez `https://taxiassur.com`
+3. Settings → Authentication → Site URL: `https://taxiassur.com`
+4. Save
 
-1. Ouvrez https://taxiassur.com
-2. Appuyez sur `F12` pour ouvrir la console
-3. Vérifiez qu'il n'y a plus d'erreur rouge
-4. Si ça marche, fermez la console et profitez !
+**Sans ça, rien ne fonctionnera!**
 
-## 🔧 Si le problème persiste
+### 3️⃣ Test (2 min)
 
-Envoyez-moi :
-1. Une capture d'écran de la console (F12)
-2. La liste des fichiers présents dans `/assets/` sur votre serveur
+1. https://taxiassur.com/test-auth-diagnostic.html
+2. Console (F12): Aucune erreur React #130
+3. Test connexion: `master@taxiassur.com`
+
+## 📁 Documentation
+
+- `FIX_COMPLET_2026-01-08.md` - Guide complet
+- `GUIDE_CONFIGURATION_CORS_SUPABASE.md` - Configuration détaillée
+- `ACTION_IMMEDIATE.md` - Checklist rapide
+
+## ✅ Checklist
+
+- [ ] ZIP uploadé
+- [ ] CORS configuré
+- [ ] Cache vidé (Ctrl+Shift+R)
+- [ ] Tests OK
+
+---
+
+**Tout est prêt!** 🚀
