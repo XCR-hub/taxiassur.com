@@ -71,6 +71,26 @@ export default function AdminLogin({ onSuccess }: AdminLoginProps) {
           <p className="text-gray-700 mt-2 font-medium">Connexion administrateur sécurisée</p>
         </div>
 
+        <div className="mb-6 bg-blue-50 border-2 border-blue-200 rounded-lg p-4">
+          <p className="text-sm text-blue-800 mb-2 font-medium">🔧 Outils de diagnostic :</p>
+          <div className="flex gap-2">
+            <a
+              href="/test-auth-diagnostic.html"
+              target="_blank"
+              className="text-xs px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+            >
+              Test Connexion
+            </a>
+            <a
+              href="/reset-admin-password.html"
+              target="_blank"
+              className="text-xs px-3 py-2 bg-orange-600 text-white rounded hover:bg-orange-700 transition-colors"
+            >
+              Réinitialiser MDP
+            </a>
+          </div>
+        </div>
+
         <form onSubmit={handleLogin} className="space-y-6">
           {error && (
             <div className="bg-red-50 border-2 border-red-300 rounded-lg p-4 flex items-start gap-3">
