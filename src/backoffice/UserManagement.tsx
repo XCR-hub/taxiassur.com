@@ -105,61 +105,40 @@ const UserManagement: React.FC = () => {
 
       setSending(true);
 
-      const { data: authData, error: authError } = await supabase.auth.admin.inviteUserByEmail(
-        newUser.email,
-        {
-          data: {
-            full_name: newUser.full_name,
-            role: newUser.role
-          },
-          redirectTo: `${window.location.origin}/auth/set-password`
-        }
-      );
+      const permissions = Object.entries(userPermissions)
+        .filter(([_, perms]) => perms.view || perms.edit || perms.delete)
+        .map(([type, perms]) => ({
+          type,
+          view: perms.view,
+          edit: perms.edit,
+          delete: perms.delete
+        }));
 
-      if (authError) {
-        logger.error('Auth error:', authError);
-        alert(`Erreur lors de l'invitation: ${authError.message}`);
+      const { data, error } = await supabase.functions.invoke('invite-admin-user', {
+        body: {
+          email: newUser.email,
+          full_name: newUser.full_name,
+          role: newUser.role,
+          permissions
+        }
+      });
+
+      if (error) {
+        logger.error('Edge function error:', error);
+        alert(`Erreur lors de l'invitation: ${error.message}`);
         return;
       }
 
-      if (authData.user) {
-        const { error: dbError } = await supabase
-          .from('admin_users')
-          .insert([{
-            id: authData.user.id,
-            email: newUser.email,
-            full_name: newUser.full_name,
-            role: newUser.role,
-            is_active: true,
-            mfa_enabled: false
-          }]);
-
-        if (dbError) {
-          logger.error('Database error:', dbError);
-          alert('Erreur lors de la sauvegarde des données utilisateur');
-          return;
-        }
-
-        for (const [permType, perms] of Object.entries(userPermissions)) {
-          if (perms.view || perms.edit || perms.delete) {
-            await supabase
-              .from('user_permissions')
-              .insert([{
-                user_id: authData.user.id,
-                permission_type: permType,
-                can_view: perms.view,
-                can_edit: perms.edit,
-                can_delete: perms.delete
-              }]);
-          }
-        }
+      if (!data || !data.success) {
+        alert(`Erreur: ${data?.error || 'Erreur inconnue'}`);
+        return;
       }
 
-      alert(`Invitation envoyée avec succès à ${newUser.email} ! L'utilisateur va recevoir un email pour créer son mot de passe.`);
+      alert(data.message || `Invitation envoyée avec succès à ${newUser.email} ! L'utilisateur va recevoir un email pour créer son mot de passe.`);
       setShowAddModal(false);
       setNewUser({ email: '', full_name: '', role: 'collaborator' });
       setUserPermissions({});
-      loadUsers();
+      await loadUsers();
     } catch (error) {
       logger.error('Error inviting user:', error);
       alert('Erreur lors de l\'invitation de l\'utilisateur');
@@ -172,15 +151,23 @@ const UserManagement: React.FC = () => {
     try {
       setSending(true);
 
-      const { error } = await supabase.auth.admin.inviteUserByEmail(
-        email,
-        {
-          redirectTo: `${window.location.origin}/auth/set-password`
-        }
-      );
+      const user = users.find(u => u.email === email);
+      if (!user) {
+        alert('Utilisateur non trouvé');
+        return;
+      }
 
-      if (error) {
-        alert(`Erreur: ${error.message}`);
+      const { data, error } = await supabase.functions.invoke('invite-admin-user', {
+        body: {
+          email: user.email,
+          full_name: user.full_name,
+          role: user.role,
+          permissions: []
+        }
+      });
+
+      if (error || !data?.success) {
+        alert(`Erreur: ${error?.message || data?.error || 'Erreur inconnue'}`);
         return;
       }
 
