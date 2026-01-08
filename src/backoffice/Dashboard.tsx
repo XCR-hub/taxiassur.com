@@ -8,6 +8,7 @@ import { regenerateFeeds, pingWebhook } from '../lib/feeds';
 import { checkUptime, getSEOScore } from '../lib/analytics';
 import { getLeads } from '../lib/leads';
 import AdminPing from '../components/AdminPing';
+import AdminSessionKeepAlive from '../components/AdminSessionKeepAlive';
 import Card from '../components/Card';
 import { logger } from '@/lib/logger';
 
@@ -205,7 +206,8 @@ const Dashboard: React.FC = () => {
   }
 
   return (
-    
+    <>
+      <AdminSessionKeepAlive />
       <div className="min-h-screen bg-gray-50">
         {/* Single Header - Clean Design */}
         <header className="bg-white border-b-2 border-gray-200 shadow-sm">
@@ -737,7 +739,7 @@ const Dashboard: React.FC = () => {
         </div>
         </main>
       </div>
-    
+    </>
   );
 };
 

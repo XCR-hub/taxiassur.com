@@ -56,9 +56,31 @@ function getSupabaseInstance() {
         persistSession: true,
         autoRefreshToken: true,
         storageKey: 'taxiassur-auth',
-        detectSessionInUrl: true
+        detectSessionInUrl: true,
+        flowType: 'pkce'
+      },
+      global: {
+        headers: {
+          'x-client-info': 'taxiassur-crm'
+        }
       }
     });
+
+    // Auto-refresh session toutes les 10 minutes pour admin
+    if (typeof window !== 'undefined') {
+      setInterval(async () => {
+        try {
+          const { data: { session } } = await instance.auth.getSession();
+          if (session) {
+            // Rafraîchir automatiquement
+            await instance.auth.refreshSession();
+            console.log('🔄 Session auto-refreshed');
+          }
+        } catch (error) {
+          console.error('Failed to auto-refresh session:', error);
+        }
+      }, 10 * 60 * 1000); // 10 minutes
+    }
 
     // Cache globally (MOST IMPORTANT)
     _instance = instance;

@@ -109,13 +109,14 @@ export const channelEngineService = {
     channel?: CommunicationChannel;
     requiresAction?: boolean;
   }) {
-    // Charger depuis email_replies
+    // Charger depuis email_replies avec LEFT join pour inclure les emails sans lead
     let query = supabase
       .from('email_replies')
       .select(`
         id,
         lead_id,
         from_email,
+        from_name,
         subject,
         body,
         replied_at,
@@ -123,21 +124,48 @@ export const channelEngineService = {
         is_processed,
         ai_summary,
         ai_response,
-        leads!inner(id, full_name, email, phone)
+        crm_leads(id, first_name, last_name, email, phone)
       `)
       .order('replied_at', { ascending: false })
       .limit(100);
 
     const { data, error } = await query;
-    if (error) throw error;
+
+    if (error) {
+      console.error('Error loading inbox:', error);
+      // Si erreur, charger sans jointure
+      const { data: simpleData, error: simpleError } = await supabase
+        .from('email_replies')
+        .select('*')
+        .order('replied_at', { ascending: false })
+        .limit(100);
+
+      if (simpleError) throw simpleError;
+
+      return (simpleData || []).map((reply: any) => ({
+        id: reply.id,
+        lead_id: reply.lead_id || '',
+        lead_name: reply.from_name || reply.from_email,
+        channel: 'email' as CommunicationChannel,
+        snippet: reply.body?.substring(0, 200) || reply.subject || '',
+        status: reply.is_processed ? 'read' : 'unread',
+        sentiment: reply.sentiment as any,
+        requires_action: !reply.is_processed,
+        ai_summary: reply.ai_summary,
+        ai_suggested_response: reply.ai_response,
+        received_at: reply.replied_at
+      })) as InboxMessage[];
+    }
 
     // Adapter au format InboxMessage
     return (data || []).map((reply: any) => ({
       id: reply.id,
-      lead_id: reply.lead_id,
-      lead_name: reply.leads?.full_name || reply.from_email,
+      lead_id: reply.lead_id || '',
+      lead_name: reply.crm_leads?.first_name
+        ? `${reply.crm_leads.first_name} ${reply.crm_leads.last_name}`.trim()
+        : reply.from_name || reply.from_email,
       channel: 'email' as CommunicationChannel,
-      snippet: reply.body?.substring(0, 200) || reply.subject,
+      snippet: reply.body?.substring(0, 200) || reply.subject || '',
       status: reply.is_processed ? 'read' : 'unread',
       sentiment: reply.sentiment as any,
       requires_action: !reply.is_processed,
