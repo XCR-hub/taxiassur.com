@@ -31,6 +31,7 @@ import {
 import { pipelineService, CRMLead, PIPELINE_STATUSES } from '@/lib/crm-pipeline';
 import { supabase } from '@/lib/supabase';
 import BackButton from './BackButton';
+import QuoteManager from './QuoteManager';
 
 interface Message {
   id: string;
@@ -733,6 +734,14 @@ const CRMLeadDetail: React.FC = () => {
               )}
             </div>
 
+            {/* Gestion des Devis */}
+            <QuoteManager
+              lead={lead}
+              onQuoteSent={() => {
+                loadMessages(lead.id);
+              }}
+            />
+
             {/* Historique des échanges */}
             <div className="bg-white rounded-xl shadow-lg border-2 border-gray-200 p-6">
               <div className="flex items-center justify-between mb-6">
@@ -1216,6 +1225,7 @@ const CRMLeadDetail: React.FC = () => {
                   <option value="licence_taxi">Licence Taxi</option>
                   <option value="carte_identite">Carte d'Identité</option>
                   <option value="rib">RIB</option>
+                  <option value="devis">Devis</option>
                   <option value="contrat_signe">Contrat Signé</option>
                   <option value="autorisation_stationnement">Autorisation Stationnement</option>
                   <option value="autre">Autre</option>
