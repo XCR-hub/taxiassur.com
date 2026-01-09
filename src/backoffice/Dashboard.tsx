@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { BarChart3, Users, FileText, Link, RefreshCw, Globe, TrendingUp, MapPin, Mail, Activity, Shield, Eye, Award, Home, LogOut, Clock, AlertCircle, LayoutDashboard, Inbox, FileCheck, Bot, MessageSquare, Zap } from 'lucide-react';
+import { BarChart3, Users, FileText, Link, RefreshCw, Globe, TrendingUp, MapPin, Mail, Activity, Shield, Eye, Award, Home, LogOut, Clock, AlertCircle, LayoutDashboard, Inbox, FileCheck, Bot, MessageSquare, Zap, Power, PlayCircle, PauseCircle, CheckCircle, XCircle, AlertTriangle, Brain, Sparkles, TrendingDown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { getBlogPosts, getFaqEntries, getReviews, getOffers } from '../lib/content';
 import { getBacklinks, getPartners } from '../lib/backlinks';
@@ -46,6 +46,127 @@ const Dashboard: React.FC = () => {
     responseTime: 'N/A',
     seoScore: 95
   });
+
+  // IA Master Status
+  const [aiMasterStatus, setAiMasterStatus] = useState({
+    is_active: true,
+    mode: 'auto_total_24_7',
+    global_health: 81,
+    system_checks: {
+      api: 100,
+      seo: 5,
+      content: 100,
+      database: 100,
+      automation: 100
+    }
+  });
+
+  // Automations Status
+  const [automations, setAutomations] = useState<Array<{
+    id: string;
+    name: string;
+    enabled: boolean;
+    last_run: string | null;
+    run_count: number;
+    success_count: number;
+    error_count: number;
+    description: string;
+  }>>([]);
+
+  // AI Metrics temps réel
+  const [aiMetrics, setAiMetrics] = useState({
+    decisionsToday: 0,
+    autonomousActions: 0,
+    emailsProcessed: 0,
+    contentGenerated: 0,
+    learningEvents: 0,
+    councilDebates: 0
+  });
+
+  // AI Recent Errors/Logs
+  const [aiLogs, setAiLogs] = useState<Array<{
+    timestamp: string;
+    type: 'error' | 'warning' | 'info';
+    message: string;
+    source: string;
+  }>>([]);
+
+  // Charger les données IA
+  const loadAIData = useCallback(async () => {
+    try {
+      // 1. AI Master Status
+      const { data: masterStatus } = await supabase
+        .from('ai_master_status')
+        .select('*')
+        .limit(1)
+        .maybeSingle();
+
+      if (masterStatus) {
+        setAiMasterStatus(masterStatus);
+      }
+
+      // 2. Automations Status
+      const { data: autoStatus } = await supabase
+        .from('automation_status')
+        .select('*')
+        .order('name');
+
+      if (autoStatus) {
+        setAutomations(autoStatus);
+      }
+
+      // 3. AI Metrics (décisions aujourd'hui)
+      const today = new Date().toISOString().split('T')[0];
+
+      const [decisionsRes, actionsRes, emailsRes, learningRes] = await Promise.all([
+        supabase
+          .from('ai_decisions')
+          .select('id', { count: 'exact', head: true })
+          .gte('created_at', today),
+        supabase
+          .from('ai_autonomous_actions')
+          .select('id', { count: 'exact', head: true })
+          .gte('created_at', today),
+        supabase
+          .from('email_responses')
+          .select('id', { count: 'exact', head: true })
+          .gte('sent_at', today),
+        supabase
+          .from('ai_learning_events')
+          .select('id', { count: 'exact', head: true })
+          .gte('created_at', today)
+      ]);
+
+      setAiMetrics({
+        decisionsToday: decisionsRes.count || 0,
+        autonomousActions: actionsRes.count || 0,
+        emailsProcessed: emailsRes.count || 0,
+        contentGenerated: 0, // TODO
+        learningEvents: learningRes.count || 0,
+        councilDebates: 0 // TODO
+      });
+
+      // 4. Recent AI Logs (dernières 10 erreurs)
+      const { data: cronHistory } = await supabase
+        .from('cron_execution_history')
+        .select('*')
+        .eq('status', 'failed')
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      if (cronHistory) {
+        const logs = cronHistory.map(log => ({
+          timestamp: log.created_at,
+          type: 'error' as const,
+          message: log.error_message || 'Erreur inconnue',
+          source: log.job_name
+        }));
+        setAiLogs(logs);
+      }
+    } catch (error) {
+      logger.error('Failed to load AI data:', error);
+    }
+  }, []);
 
   const loadDashboardData = useCallback(async (showLoader = true) => {
     if (showLoader) setIsLoading(true);
@@ -132,6 +253,9 @@ const Dashboard: React.FC = () => {
       });
 
       setLastUpdate(new Date());
+
+      // Charger les données IA
+      await loadAIData();
     } catch (error) {
       logger.error('Failed to load dashboard data:', error);
       setError('Erreur lors du chargement des données');
@@ -139,7 +263,7 @@ const Dashboard: React.FC = () => {
       if (showLoader) setIsLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [loadAIData]);
 
   // Chargement initial
   useEffect(() => {
@@ -226,6 +350,50 @@ const Dashboard: React.FC = () => {
       window.location.href = '/backoffice';
     }
   }, [signOut]);
+
+  // Toggle AI Master ON/OFF
+  const toggleAIMaster = async () => {
+    try {
+      const newStatus = !aiMasterStatus.is_active;
+      const { error } = await supabase
+        .from('ai_master_status')
+        .update({
+          is_active: newStatus,
+          last_update: new Date().toISOString()
+        })
+        .eq('id', '308b0757-77e6-4425-b5c0-2cf2dae48eba');
+
+      if (!error) {
+        setAiMasterStatus(prev => ({ ...prev, is_active: newStatus }));
+        alert(newStatus ? 'IA Master ACTIVÉE ✅' : 'IA Master DÉSACTIVÉE ⚠️');
+      }
+    } catch (error) {
+      alert('Erreur lors du changement de statut IA');
+    }
+  };
+
+  // Toggle Automation individuelle
+  const toggleAutomation = async (id: string, currentStatus: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('automation_status')
+        .update({
+          enabled: !currentStatus,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', id);
+
+      if (!error) {
+        setAutomations(prev =>
+          prev.map(auto =>
+            auto.id === id ? { ...auto, enabled: !currentStatus } : auto
+          )
+        );
+      }
+    } catch (error) {
+      alert('Erreur lors du changement de statut automation');
+    }
+  };
 
   // Afficher le formulaire de connexion si pas authentifié
   if (authLoading) {
@@ -654,6 +822,175 @@ const Dashboard: React.FC = () => {
                 </div>
               </div>
             </div>
+
+            {/* IA MASTER CONTROL - NOUVEAU */}
+            <div className="bg-gradient-to-br from-purple-50 to-pink-100 rounded-2xl shadow-lg border-2 border-purple-300 p-8 mb-8">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-bold text-purple-900 flex items-center">
+                  <Brain className="mr-2 text-purple-700" size={28} />
+                  Contrôle IA Master - An 3050
+                </h2>
+                <button
+                  onClick={toggleAIMaster}
+                  className={`flex items-center gap-3 px-6 py-3 rounded-lg font-bold transition-all shadow-lg hover:shadow-xl ${
+                    aiMasterStatus.is_active
+                      ? 'bg-green-600 hover:bg-green-700 text-white'
+                      : 'bg-red-600 hover:bg-red-700 text-white'
+                  }`}
+                >
+                  <Power size={24} />
+                  <span>{aiMasterStatus.is_active ? 'IA ACTIVE' : 'IA DÉSACTIVÉE'}</span>
+                  {aiMasterStatus.is_active ? <CheckCircle size={20} /> : <XCircle size={20} />}
+                </button>
+              </div>
+
+              {/* System Checks */}
+              <div className="grid grid-cols-3 md:grid-cols-6 gap-4 mb-6">
+                <div className="bg-white rounded-lg p-4 border-2 border-purple-200 text-center">
+                  <div className="text-2xl font-bold text-purple-900">{aiMasterStatus.global_health}%</div>
+                  <div className="text-xs font-bold text-purple-700">Global Health</div>
+                </div>
+                {Object.entries(aiMasterStatus.system_checks).map(([key, value]) => (
+                  <div key={key} className="bg-white rounded-lg p-4 border-2 border-purple-200 text-center">
+                    <div className={`text-2xl font-bold ${value >= 90 ? 'text-green-600' : value >= 50 ? 'text-orange-600' : 'text-red-600'}`}>
+                      {value}%
+                    </div>
+                    <div className="text-xs font-bold text-gray-700 uppercase">{key}</div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Mode */}
+              <div className="bg-white rounded-lg p-4 border-2 border-purple-200">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="text-purple-600" size={20} />
+                    <span className="font-bold text-gray-800">Mode IA:</span>
+                  </div>
+                  <span className="px-4 py-2 bg-purple-100 text-purple-900 font-bold rounded-lg border-2 border-purple-300">
+                    {aiMasterStatus.mode.toUpperCase()}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* AI METRICS TEMPS RÉEL */}
+            <div className="bg-gradient-to-br from-cyan-50 to-blue-100 rounded-2xl shadow-lg border-2 border-cyan-300 p-8 mb-8">
+              <h2 className="text-2xl font-bold text-cyan-900 mb-6 flex items-center">
+                <Activity className="mr-2 text-cyan-700" size={28} />
+                Métriques IA Temps Réel (Aujourd'hui)
+              </h2>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg p-6 text-center text-white shadow-lg">
+                  <Bot className="mx-auto mb-2" size={28} />
+                  <div className="text-3xl font-bold mb-1">{aiMetrics.decisionsToday}</div>
+                  <div className="text-sm font-bold">Décisions IA</div>
+                </div>
+                <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg p-6 text-center text-white shadow-lg">
+                  <Zap className="mx-auto mb-2" size={28} />
+                  <div className="text-3xl font-bold mb-1">{aiMetrics.autonomousActions}</div>
+                  <div className="text-sm font-bold">Actions Auto</div>
+                </div>
+                <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-lg p-6 text-center text-white shadow-lg">
+                  <Mail className="mx-auto mb-2" size={28} />
+                  <div className="text-3xl font-bold mb-1">{aiMetrics.emailsProcessed}</div>
+                  <div className="text-sm font-bold">Emails IA</div>
+                </div>
+                <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg p-6 text-center text-white shadow-lg">
+                  <FileText className="mx-auto mb-2" size={28} />
+                  <div className="text-3xl font-bold mb-1">{aiMetrics.contentGenerated}</div>
+                  <div className="text-sm font-bold">Content Gen</div>
+                </div>
+                <div className="bg-gradient-to-br from-pink-500 to-pink-600 rounded-lg p-6 text-center text-white shadow-lg">
+                  <Brain className="mx-auto mb-2" size={28} />
+                  <div className="text-3xl font-bold mb-1">{aiMetrics.learningEvents}</div>
+                  <div className="text-sm font-bold">Learning</div>
+                </div>
+                <div className="bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-lg p-6 text-center text-white shadow-lg">
+                  <Users className="mx-auto mb-2" size={28} />
+                  <div className="text-3xl font-bold mb-1">{aiMetrics.councilDebates}</div>
+                  <div className="text-sm font-bold">Council</div>
+                </div>
+              </div>
+            </div>
+
+            {/* AUTOMATIONS CONTROL */}
+            <div className="bg-gradient-to-br from-yellow-50 to-amber-100 rounded-2xl shadow-lg border-2 border-yellow-300 p-8 mb-8">
+              <h2 className="text-2xl font-bold text-yellow-900 mb-6 flex items-center">
+                <Zap className="mr-2 text-yellow-700" size={28} />
+                Contrôle Automations ({automations.length})
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {automations.slice(0, 9).map((automation) => (
+                  <div
+                    key={automation.id}
+                    className="bg-white rounded-lg p-4 border-2 border-yellow-200 shadow-lg"
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        {automation.enabled ? (
+                          <CheckCircle className="text-green-600" size={20} />
+                        ) : (
+                          <XCircle className="text-red-600" size={20} />
+                        )}
+                        <span className="font-bold text-gray-900 text-sm">{automation.description}</span>
+                      </div>
+                      <button
+                        onClick={() => toggleAutomation(automation.id, automation.enabled)}
+                        className={`p-2 rounded-lg transition-colors ${
+                          automation.enabled
+                            ? 'bg-green-100 hover:bg-green-200 text-green-700'
+                            : 'bg-red-100 hover:bg-red-200 text-red-700'
+                        }`}
+                      >
+                        {automation.enabled ? <PauseCircle size={20} /> : <PlayCircle size={20} />}
+                      </button>
+                    </div>
+                    <div className="flex items-center gap-4 text-xs text-gray-600">
+                      <span>✅ {automation.success_count}</span>
+                      <span>❌ {automation.error_count}</span>
+                      <span>Total: {automation.run_count}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {automations.length > 9 && (
+                <div className="mt-4 text-center">
+                  <button className="text-yellow-700 hover:text-yellow-900 font-bold">
+                    Voir toutes les automations ({automations.length}) →
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* AI LOGS & ALERTS */}
+            {aiLogs.length > 0 && (
+              <div className="bg-gradient-to-br from-red-50 to-orange-100 rounded-2xl shadow-lg border-2 border-red-300 p-8 mb-8">
+                <h2 className="text-2xl font-bold text-red-900 mb-6 flex items-center">
+                  <AlertTriangle className="mr-2 text-red-700" size={28} />
+                  Alertes & Erreurs IA Récentes
+                </h2>
+                <div className="space-y-3">
+                  {aiLogs.slice(0, 5).map((log, index) => (
+                    <div
+                      key={index}
+                      className="bg-white rounded-lg p-4 border-2 border-red-200 flex items-start gap-4"
+                    >
+                      <AlertTriangle className="text-red-600 flex-shrink-0" size={20} />
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="font-bold text-gray-900">{log.source}</span>
+                          <span className="text-xs text-gray-600">
+                            {new Date(log.timestamp).toLocaleString('fr-FR')}
+                          </span>
+                        </div>
+                        <div className="text-sm text-gray-700">{log.message}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* CRM Killer Hub - Nouveau */}
             <div className="bg-gradient-to-br from-blue-50 to-indigo-100 rounded-2xl shadow-lg border-2 border-blue-300 p-8 mb-8">
