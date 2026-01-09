@@ -384,21 +384,40 @@ const CRMLeadDetail: React.FC = () => {
           </div>
 
           {/* Actions de transition */}
-          {availableTransitions.length > 0 && (
-            <div className="flex items-center gap-3 flex-wrap">
-              <span className="text-blue-100 font-medium">Actions rapides:</span>
-              {availableTransitions.map((transition) => (
-                <button
-                  key={transition.to}
-                  onClick={() => handleStatusChange(transition.to)}
-                  className="px-4 py-2 bg-white/20 hover:bg-white/30 backdrop-blur-lg rounded-lg font-medium transition-all flex items-center gap-2 shadow-lg border border-white/20 hover:border-white/40"
-                >
-                  {transition.label}
-                  <ArrowRight size={16} />
-                </button>
-              ))}
-            </div>
-          )}
+          <div className="flex items-center gap-3 flex-wrap">
+            <span className="text-blue-100 font-medium">Actions rapides:</span>
+
+            {/* Bouton Demander Docs */}
+            <button
+              onClick={() => {
+                const template = emailTemplates.find(t => t.id === 'documents');
+                if (template) {
+                  setEmailForm({
+                    template: 'documents',
+                    subject: template.subject,
+                    body: template.body
+                  });
+                  setShowEmailModal(true);
+                }
+              }}
+              className="px-4 py-2 bg-amber-500/90 hover:bg-amber-600 backdrop-blur-lg rounded-lg font-medium transition-all flex items-center gap-2 shadow-lg border border-amber-400/50 hover:border-amber-300"
+            >
+              <FileText size={16} />
+              Demander Docs
+              <ArrowRight size={16} />
+            </button>
+
+            {availableTransitions.map((transition) => (
+              <button
+                key={transition.to}
+                onClick={() => handleStatusChange(transition.to)}
+                className="px-4 py-2 bg-white/20 hover:bg-white/30 backdrop-blur-lg rounded-lg font-medium transition-all flex items-center gap-2 shadow-lg border border-white/20 hover:border-white/40"
+              >
+                {transition.label}
+                <ArrowRight size={16} />
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -462,7 +481,7 @@ const CRMLeadDetail: React.FC = () => {
                       type="text"
                       value={editForm.first_name}
                       onChange={(e) => setEditForm({ ...editForm, first_name: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 placeholder-gray-400"
                     />
                   </div>
                   <div>
@@ -471,7 +490,7 @@ const CRMLeadDetail: React.FC = () => {
                       type="text"
                       value={editForm.last_name}
                       onChange={(e) => setEditForm({ ...editForm, last_name: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 placeholder-gray-400"
                     />
                   </div>
                   <div>
@@ -480,7 +499,7 @@ const CRMLeadDetail: React.FC = () => {
                       type="email"
                       value={editForm.email}
                       onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 placeholder-gray-400"
                     />
                   </div>
                   <div>
@@ -489,7 +508,7 @@ const CRMLeadDetail: React.FC = () => {
                       type="tel"
                       value={editForm.phone}
                       onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 placeholder-gray-400"
                     />
                   </div>
                   <div>
@@ -498,7 +517,7 @@ const CRMLeadDetail: React.FC = () => {
                       type="text"
                       value={editForm.city}
                       onChange={(e) => setEditForm({ ...editForm, city: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 placeholder-gray-400"
                     />
                   </div>
                   <div>
@@ -507,7 +526,7 @@ const CRMLeadDetail: React.FC = () => {
                       type="text"
                       value={editForm.company_name}
                       onChange={(e) => setEditForm({ ...editForm, company_name: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 placeholder-gray-400"
                     />
                   </div>
                   <div className="col-span-2">
@@ -516,7 +535,7 @@ const CRMLeadDetail: React.FC = () => {
                       value={editForm.internal_notes}
                       onChange={(e) => setEditForm({ ...editForm, internal_notes: e.target.value })}
                       rows={4}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 placeholder-gray-400"
                       placeholder="Notes pour l'équipe..."
                     />
                   </div>
@@ -757,7 +776,7 @@ const CRMLeadDetail: React.FC = () => {
                       });
                     }
                   }}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
                 >
                   <option value="">Sélectionner un template</option>
                   {emailTemplates.map(t => (
@@ -771,7 +790,7 @@ const CRMLeadDetail: React.FC = () => {
                   type="text"
                   value={emailForm.subject}
                   onChange={(e) => setEmailForm({ ...emailForm, subject: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 placeholder-gray-400"
                   placeholder="Sujet de l'email"
                 />
               </div>
@@ -781,7 +800,7 @@ const CRMLeadDetail: React.FC = () => {
                   value={emailForm.body}
                   onChange={(e) => setEmailForm({ ...emailForm, body: e.target.value })}
                   rows={10}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 placeholder-gray-400"
                   placeholder="Corps de l'email..."
                 />
                 <p className="text-xs text-gray-500 mt-2">
@@ -833,7 +852,7 @@ const CRMLeadDetail: React.FC = () => {
                       });
                     }
                   }}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 bg-white text-gray-900"
                 >
                   <option value="">Sélectionner un template</option>
                   {smsTemplates.map(t => (
@@ -848,7 +867,7 @@ const CRMLeadDetail: React.FC = () => {
                   onChange={(e) => setSmsForm({ ...smsForm, message: e.target.value })}
                   rows={4}
                   maxLength={160}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 bg-white text-gray-900 placeholder-gray-400"
                   placeholder="Votre message SMS..."
                 />
                 <p className="text-xs text-gray-500 mt-2">
@@ -900,7 +919,7 @@ const CRMLeadDetail: React.FC = () => {
                       });
                     }
                   }}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 bg-white text-gray-900"
                 >
                   <option value="">Sélectionner un template</option>
                   {whatsappTemplates.map(t => (
@@ -914,7 +933,7 @@ const CRMLeadDetail: React.FC = () => {
                   value={whatsappForm.message}
                   onChange={(e) => setWhatsappForm({ ...whatsappForm, message: e.target.value })}
                   rows={6}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 bg-white text-gray-900 placeholder-gray-400"
                   placeholder="Votre message WhatsApp..."
                 />
               </div>

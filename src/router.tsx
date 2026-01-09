@@ -558,43 +558,53 @@ export const router = createBrowserRouter([
       },
       {
         path: '/backoffice/crm',
-        element: <AuthGuard><SuspenseWrapper><CRMKiller /></SuspenseWrapper></AuthGuard>
+        element: <AuthGuard><SuspenseWrapper><CRMKiller /></SuspenseWrapper></AuthGuard>,
+        errorElement: <RouteErrorFallback />
       },
       {
         path: '/backoffice/crm-killer/pipeline',
-        element: <AuthGuard><SuspenseWrapper><CRMPipelineKanban /></SuspenseWrapper></AuthGuard>
+        element: <AuthGuard><SuspenseWrapper><CRMPipelineKanban /></SuspenseWrapper></AuthGuard>,
+        errorElement: <RouteErrorFallback />
       },
       {
         path: '/backoffice/crm-killer/inbox',
-        element: <AuthGuard><SuspenseWrapper><CRMInboxMulticanal /></SuspenseWrapper></AuthGuard>
+        element: <AuthGuard><SuspenseWrapper><CRMInboxMulticanal /></SuspenseWrapper></AuthGuard>,
+        errorElement: <RouteErrorFallback />
       },
       {
         path: '/backoffice/crm-killer/production',
-        element: <AuthGuard><SuspenseWrapper><CRMProductionManager /></SuspenseWrapper></AuthGuard>
+        element: <AuthGuard><SuspenseWrapper><CRMProductionManager /></SuspenseWrapper></AuthGuard>,
+        errorElement: <RouteErrorFallback />
       },
       {
         path: '/backoffice/crm-killer/retention',
-        element: <AuthGuard><SuspenseWrapper><CRMRetentionCenter /></SuspenseWrapper></AuthGuard>
+        element: <AuthGuard><SuspenseWrapper><CRMRetentionCenter /></SuspenseWrapper></AuthGuard>,
+        errorElement: <RouteErrorFallback />
       },
       {
         path: '/backoffice/crm-killer/templates',
-        element: <AuthGuard><SuspenseWrapper><CRMTemplatesManager /></SuspenseWrapper></AuthGuard>
+        element: <AuthGuard><SuspenseWrapper><CRMTemplatesManager /></SuspenseWrapper></AuthGuard>,
+        errorElement: <RouteErrorFallback />
       },
       {
         path: '/backoffice/crm-killer/ia',
-        element: <AuthGuard><SuspenseWrapper><CRMAIGovernance /></SuspenseWrapper></AuthGuard>
+        element: <AuthGuard><SuspenseWrapper><CRMAIGovernance /></SuspenseWrapper></AuthGuard>,
+        errorElement: <RouteErrorFallback />
       },
       {
         path: '/backoffice/crm-killer/lead/:leadId',
-        element: <AuthGuard><SuspenseWrapper><CRMLeadDetail /></SuspenseWrapper></AuthGuard>
+        element: <AuthGuard><SuspenseWrapper><CRMLeadDetail /></SuspenseWrapper></AuthGuard>,
+        errorElement: <RouteErrorFallback />
       },
       {
         path: '/backoffice/crm-killer/settings',
-        element: <AuthGuard><SuspenseWrapper><CRMAdminSettings /></SuspenseWrapper></AuthGuard>
+        element: <AuthGuard><SuspenseWrapper><CRMAdminSettings /></SuspenseWrapper></AuthGuard>,
+        errorElement: <RouteErrorFallback />
       },
       {
         path: '/backoffice/crm-killer/email-inbox',
-        element: <AuthGuard><SuspenseWrapper><EmailInboxManager /></SuspenseWrapper></AuthGuard>
+        element: <AuthGuard><SuspenseWrapper><EmailInboxManager /></SuspenseWrapper></AuthGuard>,
+        errorElement: <RouteErrorFallback />
       },
       {
         path: '/backoffice/crm-old',
