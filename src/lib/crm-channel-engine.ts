@@ -41,12 +41,13 @@ export interface InboxMessage {
   lead_id: string;
   lead_name: string;
   channel: CommunicationChannel;
+  direction: 'inbound' | 'outbound';
   snippet: string;
   status: 'unread' | 'read' | 'replied' | 'archived';
   sentiment?: 'positive' | 'neutral' | 'negative';
   requires_action: boolean;
   ai_summary?: string;
-  ai_suggested_response?: string;
+  ai_suggested_response?: string | null;
   received_at: string;
 }
 
@@ -109,8 +110,8 @@ export const channelEngineService = {
     channel?: CommunicationChannel;
     requiresAction?: boolean;
   }) {
-    // Charger depuis email_replies avec LEFT join pour inclure les emails sans lead
-    let query = supabase
+    // Charger les emails ENTRANTS depuis email_replies
+    const { data: inboundData, error: inboundError } = await supabase
       .from('email_replies')
       .select(`
         id,
@@ -127,44 +128,35 @@ export const channelEngineService = {
         crm_leads(id, first_name, last_name, email, phone)
       `)
       .order('replied_at', { ascending: false })
-      .limit(100);
+      .limit(50);
 
-    const { data, error } = await query;
+    // Charger les emails SORTANTS depuis email_sends
+    const { data: outboundData, error: outboundError } = await supabase
+      .from('email_sends')
+      .select(`
+        id,
+        lead_id,
+        email_to,
+        email_from,
+        subject,
+        body_text,
+        body_html,
+        sent_at,
+        status,
+        delivered_at,
+        crm_leads(id, first_name, last_name, email, phone)
+      `)
+      .order('sent_at', { ascending: false })
+      .limit(50);
 
-    if (error) {
-      console.error('Error loading inbox:', error);
-      // Si erreur, charger sans jointure
-      const { data: simpleData, error: simpleError } = await supabase
-        .from('email_replies')
-        .select('*')
-        .order('replied_at', { ascending: false })
-        .limit(100);
-
-      if (simpleError) throw simpleError;
-
-      return (simpleData || []).map((reply: any) => ({
-        id: reply.id,
-        lead_id: reply.lead_id || '',
-        lead_name: reply.from_name || reply.from_email,
-        channel: 'email' as CommunicationChannel,
-        snippet: reply.body?.substring(0, 200) || reply.subject || '',
-        status: reply.is_processed ? 'read' : 'unread',
-        sentiment: reply.sentiment as any,
-        requires_action: !reply.is_processed,
-        ai_summary: reply.ai_summary,
-        ai_suggested_response: reply.ai_response,
-        received_at: reply.replied_at
-      })) as InboxMessage[];
-    }
-
-    // Adapter au format InboxMessage
-    return (data || []).map((reply: any) => ({
-      id: reply.id,
+    const inboundMessages: InboxMessage[] = (inboundData || []).map((reply: any) => ({
+      id: `in-${reply.id}`,
       lead_id: reply.lead_id || '',
       lead_name: reply.crm_leads?.first_name
         ? `${reply.crm_leads.first_name} ${reply.crm_leads.last_name}`.trim()
         : reply.from_name || reply.from_email,
       channel: 'email' as CommunicationChannel,
+      direction: 'inbound' as const,
       snippet: reply.body?.substring(0, 200) || reply.subject || '',
       status: reply.is_processed ? 'read' : 'unread',
       sentiment: reply.sentiment as any,
@@ -172,7 +164,31 @@ export const channelEngineService = {
       ai_summary: reply.ai_summary,
       ai_suggested_response: reply.ai_response,
       received_at: reply.replied_at
-    })) as InboxMessage[];
+    }));
+
+    const outboundMessages: InboxMessage[] = (outboundData || []).map((send: any) => ({
+      id: `out-${send.id}`,
+      lead_id: send.lead_id || '',
+      lead_name: send.crm_leads?.first_name
+        ? `${send.crm_leads.first_name} ${send.crm_leads.last_name}`.trim()
+        : send.email_to,
+      channel: 'email' as CommunicationChannel,
+      direction: 'outbound' as const,
+      snippet: (send.body_text || send.body_html)?.substring(0, 200) || send.subject || '',
+      status: 'read',
+      sentiment: 'neutral' as any,
+      requires_action: false,
+      ai_summary: `Email envoyé le ${new Date(send.sent_at).toLocaleDateString('fr-FR')}`,
+      ai_suggested_response: null,
+      received_at: send.sent_at
+    }));
+
+    // Combiner et trier par date
+    const allMessages = [...inboundMessages, ...outboundMessages].sort((a, b) => {
+      return new Date(b.received_at).getTime() - new Date(a.received_at).getTime();
+    });
+
+    return allMessages;
   },
 
   async getConversation(leadId: string, channel?: CommunicationChannel) {

@@ -53,7 +53,7 @@ export const MessagePreview: React.FC<MessagePreviewProps> = ({
     : (message.direction === 'outbound' ? message.to : message.from);
 
   const displayDirection = isInboxMessage
-    ? 'Reçu'
+    ? (message.direction === 'outbound' ? 'Envoyé' : 'Reçu')
     : (message.direction === 'outbound' ? 'Envoyé' : 'Reçu');
 
   const displayBody = isInboxMessage
@@ -71,14 +71,20 @@ export const MessagePreview: React.FC<MessagePreviewProps> = ({
         'bg-white border-l-4 p-4 cursor-pointer hover:bg-gray-50 transition-colors',
         isSelected ? 'border-l-blue-600 bg-blue-50' : 'border-l-transparent',
         (!isInboxMessage && message.direction === 'inbound' && !isSelected) && 'border-l-green-400',
-        (isInboxMessage && !isSelected) && 'border-l-green-400'
+        (!isInboxMessage && message.direction === 'outbound' && !isSelected) && 'border-l-blue-300',
+        (isInboxMessage && message.direction === 'inbound' && !isSelected) && 'border-l-green-400',
+        (isInboxMessage && message.direction === 'outbound' && !isSelected) && 'border-l-blue-300'
       )}
     >
       <div className="flex items-start justify-between mb-2">
         <div className="flex items-center gap-2">
           <div className={cn(
             'w-8 h-8 rounded-full flex items-center justify-center',
-            (!isInboxMessage && message.direction === 'outbound')
+            (isInboxMessage && message.direction === 'outbound')
+              ? 'bg-blue-100 text-blue-700'
+              : (isInboxMessage && message.direction === 'inbound')
+              ? 'bg-green-100 text-green-700'
+              : (!isInboxMessage && message.direction === 'outbound')
               ? 'bg-blue-100 text-blue-700'
               : 'bg-green-100 text-green-700'
           )}>

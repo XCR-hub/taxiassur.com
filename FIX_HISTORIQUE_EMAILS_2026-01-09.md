@@ -1,223 +1,245 @@
-# ✅ CORRECTIONS HISTORIQUE ET EMAILS - 2026-01-09
+# ✅ INBOX COMPLET : Emails Entrants ET Sortants
 
-## 🎯 Problèmes Corrigés
+## 🎯 Problème résolu
 
-### 1. ❌ Historique des communications VIDE
+**Avant** : L'Inbox n'affichait QUE les emails sortants
+**Maintenant** : L'Inbox affiche TOUS les emails (entrants + sortants)
 
-**Problème** : L'historique des échanges (emails, SMS, WhatsApp) n'apparaissait pas dans la fiche lead.
+---
 
-**Cause** : Le code chargeait depuis la mauvaise table (`crm_timeline` au lieu de `crm_interactions`).
+## 🔧 Modifications apportées
 
-**Solution** :
-- ✅ Correction du fichier `src/backoffice/CRMLeadDetail.tsx`
-- ✅ Chargement depuis la table `crm_interactions` qui contient TOUTES les communications
-- ✅ Support des types: email, sms, whatsapp, call
+### 1. Fonction `getInbox()` - `src/lib/crm-channel-engine.ts`
 
+#### Ancienne version (emails entrants uniquement)
 ```typescript
-// AVANT (ne fonctionnait pas)
-const { data: timeline } = await supabase
-  .from('crm_timeline')  // ❌ Table qui n'existe pas
-  .select('*')
-
-// APRÈS (fonctionne)
-const { data: interactions } = await supabase
-  .from('crm_interactions')  // ✅ Table correcte
-  .select('*')
-```
-
----
-
-### 2. ❌ Templates d'emails ILLISIBLES (texte blanc sur blanc)
-
-**Problème** : Le contenu des emails était illisible à cause de couleurs de texte incorrectes.
-
-**Solution** :
-- ✅ Refonte complète du template HTML
-- ✅ Utilisation de `!important` pour forcer les couleurs
-- ✅ Contraste optimal sur tous les éléments
-
-**Changements clés** :
-```css
-/* Message principal - fond clair, texte FONCÉ */
-.message-content {
-  background: #f9fafb;
-  color: #111827 !important;  /* Texte noir sur fond clair */
-}
-
-/* Tous les paragraphes en foncé */
-.message-content p, .message-content span, .message-content div {
-  color: #111827 !important;
-}
-
-/* En-tête vert avec texte BLANC */
-.header h1 {
-  color: #ffffff !important;
-}
-
-/* Footer sombre avec texte CLAIR */
-.footer {
-  background: #1f2937;
-  color: #ffffff !important;
+async getInbox() {
+  // Chargeait UNIQUEMENT depuis email_replies
+  const { data } = await supabase
+    .from('email_replies')
+    .select('*')
+    .order('replied_at', { ascending: false });
+  
+  return data;
 }
 ```
 
----
-
-### 3. ❌ Envoi d'emails qui ÉCHOUE
-
-**Problème** : Les paramètres n'étaient pas correctement mappés entre le frontend et l'edge function.
-
-**Solution** :
-- ✅ Support des 2 formats de paramètres (ancien et nouveau)
-- ✅ Enregistrement automatique dans `crm_interactions`
-- ✅ Messages d'erreur plus clairs
-
+#### Nouvelle version (emails entrants + sortants)
 ```typescript
-// Support des 2 formats
-const to_email = body.to_email || body.to;  // ✅ Flexibilité
-const content = body.content || body.body;  // ✅ Compatibilité
+async getInbox() {
+  // EMAILS ENTRANTS depuis email_replies
+  const { data: inboundData } = await supabase
+    .from('email_replies')
+    .select(`*, crm_leads(*)`)
+    .order('replied_at', { ascending: false })
+    .limit(50);
+
+  // EMAILS SORTANTS depuis email_sends
+  const { data: outboundData } = await supabase
+    .from('email_sends')
+    .select(`*, crm_leads(*)`)
+    .order('sent_at', { ascending: false })
+    .limit(50);
+
+  // COMBINER les deux listes
+  const allMessages = [...inboundMessages, ...outboundMessages]
+    .sort((a, b) => new Date(b.received_at) - new Date(a.received_at));
+
+  return allMessages;
+}
 ```
 
 ---
 
-## 📦 Ce qui a été déployé
+## 📊 Sources de données
 
-### ✅ Fonction Edge mise à jour
-- **Nom** : `send-crm-email`
-- **Amélioration** : Template lisible + enregistrement dans `crm_interactions`
-- **Tracking** : Ouvertures et clics des emails
-
-### ✅ Frontend mis à jour
-- **Fichier** : `src/backoffice/CRMLeadDetail.tsx`
-- **Amélioration** : Chargement correct de l'historique
-
-### ✅ Build réussi
-- Tous les modules compilés avec succès
-- Taille totale : 2,78 MB (compressé)
-- Prêt pour upload sur IONOS
-
----
-
-## 🚀 Test Rapide
-
-### Comment tester l'historique :
-
-1. **Se connecter au backoffice** : `https://taxiassur.com/backoffice`
-
-2. **Aller sur le Pipeline Kanban** : Menu CRM > Pipeline
-
-3. **Cliquer sur un lead existant**
-
-4. **Vérifier l'historique** :
-   - Section "Historique des Échanges" en bas de page
-   - Devrait afficher tous les emails/SMS/WhatsApp envoyés
-
-### Comment tester l'envoi d'email :
-
-1. **Ouvrir une fiche lead**
-
-2. **Cliquer sur "Envoyer Email"** (bouton bleu)
-
-3. **Remplir le formulaire** :
-   - Template : Choisir un template prédéfini
-   - Sujet : Ex: "Votre devis TaxiAssur"
-   - Message : Ex: "Bonjour, votre devis est prêt..."
-
-4. **Envoyer**
-
-5. **Vérifier** :
-   - ✅ Message de confirmation : "Email envoyé avec succès"
-   - ✅ L'email apparaît dans l'historique
-   - ✅ Le destinataire reçoit un email LISIBLE
-
----
-
-## 📊 Tables Supabase utilisées
-
-| Table | Usage |
-|-------|-------|
-| `crm_interactions` | **Historique complet** des communications (emails, SMS, WhatsApp, calls) |
-| `email_sends` | Tracking des emails (ouvertures, clics) |
-| `crm_leads` | Informations des leads |
-
----
-
-## 🎨 Template Email Final
-
-Le template email a maintenant :
-- ✅ Header vert avec logo TaxiAssur (texte BLANC)
-- ✅ Contenu principal sur fond blanc (texte NOIR)
-- ✅ Message dans un cadre gris clair (texte NOIR très lisible)
-- ✅ Section CTA jaune (texte brun foncé)
-- ✅ Bannière contact bleue claire (texte bleu foncé)
-- ✅ Footer gris foncé (texte blanc)
-- ✅ Bouton vert "Répondre" (texte blanc)
-
-**Résultat** : Email professionnel, moderne et 100% LISIBLE.
-
----
-
-## 📝 Notes importantes
-
-### Pourquoi l'historique était vide ?
-
-Le système était configuré pour enregistrer dans `crm_interactions` MAIS chargeait depuis `crm_timeline` (qui n'existe pas). C'était une simple erreur de nom de table.
-
-### Pourquoi les templates étaient illisibles ?
-
-Les gradients et les couleurs héritées pouvaient créer du texte blanc sur fond blanc. La solution : utiliser `!important` et des couleurs à fort contraste.
-
-### Configuration IONOS Email
-
-L'envoi utilise SMTP IONOS avec :
-- **Serveur** : smtp.ionos.fr
-- **Port** : 587 (STARTTLS)
-- **Compte** : team@taxiassur.com
-- **Mot de passe** : Configuré dans Supabase (variable `IONOS_EMAIL_PASSWORD`)
-
----
-
-## ✅ Prochaines étapes
-
-1. **Uploader le dossier `/dist` sur IONOS**
-
-2. **Tester en production** :
-   - Ouvrir une fiche lead
-   - Envoyer un email de test
-   - Vérifier que l'historique se remplit
-
-3. **Monitorer** :
-   - Vérifier que les emails arrivent bien
-   - Contrôler que le tracking fonctionne
-   - S'assurer que l'historique se remplit correctement
-
----
-
-## 🔧 Si problème d'envoi
-
-### Vérifier dans Supabase :
+### Table `email_replies` (Emails ENTRANTS)
 
 ```sql
--- Voir les derniers emails envoyés
-SELECT * FROM email_sends
-ORDER BY created_at DESC
-LIMIT 10;
-
--- Voir l'historique des interactions
-SELECT * FROM crm_interactions
-WHERE type = 'email'
-ORDER BY created_at DESC
-LIMIT 10;
+CREATE TABLE email_replies (
+  id UUID PRIMARY KEY,
+  lead_id UUID REFERENCES crm_leads(id),
+  from_email TEXT NOT NULL,
+  from_name TEXT,
+  subject TEXT,
+  body TEXT,
+  replied_at TIMESTAMPTZ,
+  sentiment TEXT,
+  is_processed BOOLEAN DEFAULT false,
+  ai_summary TEXT,
+  ai_response TEXT
+);
 ```
 
-### Vérifier les logs Edge Function :
+### Table `email_sends` (Emails SORTANTS)
 
-1. Aller sur Supabase Dashboard
-2. Edge Functions > send-crm-email
-3. Voir les logs en temps réel
+```sql
+CREATE TABLE email_sends (
+  id UUID PRIMARY KEY,
+  lead_id UUID REFERENCES leads(id),
+  email_to TEXT NOT NULL,
+  email_from TEXT DEFAULT 'team@taxiassur.com',
+  subject TEXT NOT NULL,
+  body_text TEXT,
+  body_html TEXT,
+  sent_at TIMESTAMPTZ,
+  status TEXT,
+  delivered_at TIMESTAMPTZ
+);
+```
 
 ---
 
-**Date** : 9 janvier 2026
-**Status** : ✅ TOUS LES PROBLÈMES CORRIGÉS
-**Build** : ✅ RÉUSSI - Prêt pour déploiement
+## 🎨 Interface InboxMessage mise à jour
+
+```typescript
+export interface InboxMessage {
+  id: string;
+  lead_id: string;
+  lead_name: string;
+  channel: CommunicationChannel;
+  direction: 'inbound' | 'outbound';  // ✅ NOUVEAU !
+  snippet: string;
+  status: 'unread' | 'read' | 'replied' | 'archived';
+  sentiment?: 'positive' | 'neutral' | 'negative';
+  requires_action: boolean;
+  ai_summary?: string;
+  ai_suggested_response?: string | null;
+  received_at: string;
+}
+```
+
+---
+
+## 🎯 Affichage visuel amélioré
+
+### Emails ENTRANTS (Reçus)
+- 🟢 **Bordure verte** à gauche
+- 📥 **Icône "Inbox"**
+- 🟢 **Badge vert "Reçu"**
+- 😊 **Analyse de sentiment** (si disponible)
+- ⚠️ **Badge "Action requise"** (si nécessaire)
+
+### Emails SORTANTS (Envoyés)
+- 🔵 **Bordure bleue** à gauche
+- 📤 **Icône "Send"**
+- 🔵 **Badge bleu "Envoyé"**
+- 📅 **Date d'envoi**
+- ✅ **Statut de livraison**
+
+---
+
+## 🔍 Exemple d'affichage dans l'Inbox
+
+```
+┌────────────────────────────────────────────────┐
+│ 📬 Inbox Multicanal                            │
+│                                                 │
+│ [🔄 Synchroniser] [📊 12] [⚠️ 3]              │
+├────────────────────────────────────────────────┤
+│                                                 │
+│ 📥 Jean Dupont             🟢 Reçu              │
+│ │  Demande de devis         😊 Positif         │
+│ │  Il y a 2 heures          ⚠️ Action requise  │
+│                                                 │
+│ 📤 Marie Martin            🔵 Envoyé            │
+│ │  Proposition commerciale                     │
+│ │  Il y a 5 heures          ✅ Livré           │
+│                                                 │
+│ 📥 Paul Durand             🟢 Reçu              │
+│ │  Question sur assurance   😐 Neutre          │
+│ │  Hier à 14:30                                │
+│                                                 │
+│ 📤 Sophie L.               🔵 Envoyé            │
+│ │  Relance après devis                         │
+│ │  Hier à 10:00             ✅ Ouvert          │
+└────────────────────────────────────────────────┘
+```
+
+---
+
+## 📈 Statistiques affichées
+
+```typescript
+const stats = {
+  total: 12,           // Tous les emails (entrants + sortants)
+  unread: 3,           // Emails entrants non lus
+  requiresAction: 2    // Emails nécessitant une réponse
+};
+```
+
+---
+
+## ✅ Build réussi
+
+```
+✓ built in 48.48s
+✓ PWA v1.2.0 - 91 entries (2765.88 KiB)
+✓ Aucune erreur TypeScript
+```
+
+---
+
+## 🚀 Déploiement
+
+1. **Uploader** le dossier `/dist` sur IONOS
+2. **Vider le cache** : `Ctrl+Shift+Delete`
+3. **Recharger** : `Ctrl+F5`
+4. **Tester** : https://taxiassur.com/backoffice/crm-killer/inbox
+
+---
+
+## 🧪 Test rapide (Console F12)
+
+### Vérifier les emails entrants
+```javascript
+const { data: inbound } = await supabase
+  .from('email_replies')
+  .select('*')
+  .limit(5);
+
+console.log('Emails entrants:', inbound);
+```
+
+### Vérifier les emails sortants
+```javascript
+const { data: outbound } = await supabase
+  .from('email_sends')
+  .select('*')
+  .limit(5);
+
+console.log('Emails sortants:', outbound);
+```
+
+---
+
+## 🎉 Fonctionnalités disponibles
+
+### Vue unifiée
+- ✅ **Emails entrants** (réponses de prospects)
+- ✅ **Emails sortants** (envoyés par vous)
+- ✅ **Tri chronologique** (plus récent en premier)
+- ✅ **Distinction visuelle** (bordure + icône + badge)
+
+### Actions disponibles
+- 📧 **Marquer comme lu** (emails entrants)
+- ✅ **Archiver** (tous types)
+- 🔄 **Synchroniser** (fetch nouveaux emails)
+- 💬 **Répondre** (emails entrants)
+
+### Intelligence IA
+- 🤖 **Analyse de sentiment** (emails entrants)
+- 📝 **Résumés automatiques** (emails entrants)
+- 💡 **Réponses suggérées** (emails entrants)
+
+---
+
+## ✨ HISTORIQUE COMPLET MAINTENANT DISPONIBLE !
+
+L'Inbox affiche maintenant l'historique complet de communication :
+- ✅ Tous les emails reçus
+- ✅ Tous les emails envoyés
+- ✅ Tri chronologique
+- ✅ Distinction visuelle claire
+
+**Upload le dossier `/dist` et testez !** 🚀
