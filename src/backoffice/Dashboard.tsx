@@ -15,6 +15,13 @@ import { logger } from '@/lib/logger';
 import { supabase } from '@/lib/supabase';
 import { useTheme } from '@/contexts/ThemeContext';
 
+// Cache système - 5 minutes
+const CACHE_DURATION = 5 * 60 * 1000;
+const dashboardCache = {
+  data: null as any,
+  timestamp: 0
+};
+
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const { isAuthenticated, loading: authLoading, user, signOut } = useAdminAuth();
@@ -223,6 +230,17 @@ const Dashboard: React.FC = () => {
   }, []);
 
   const loadDashboardData = useCallback(async (showLoader = true) => {
+    // Vérifier le cache d'abord (sauf si refresh forcé)
+    const now = Date.now();
+    if (dashboardCache.data && (now - dashboardCache.timestamp) < CACHE_DURATION && showLoader) {
+      setStats(dashboardCache.data.stats);
+      setRealLeadStats(dashboardCache.data.realLeadStats);
+      setTopCities(dashboardCache.data.topCities);
+      setLastUpdate(new Date(dashboardCache.timestamp));
+      setIsLoading(false);
+      return;
+    }
+
     if (showLoader) setIsLoading(true);
     setError(null);
 
@@ -313,6 +331,26 @@ const Dashboard: React.FC = () => {
         loadAIData(),
         loadSystemStats()
       ]);
+
+      // Mettre à jour le cache
+      dashboardCache.data = {
+        stats: {
+          posts: posts.length,
+          faqs: faqs.length,
+          reviews: reviews.length,
+          offers: offers.length,
+          backlinks: backlinks.length,
+          partners: partners.length
+        },
+        realLeadStats: {
+          today: leadsToday,
+          week: leadsWeek,
+          month: leadsMonth,
+          total: realLeads.length
+        },
+        topCities: topCitiesData
+      };
+      dashboardCache.timestamp = Date.now();
     } catch (error) {
       logger.error('Failed to load dashboard data:', error);
       setError('Erreur lors du chargement des données');
