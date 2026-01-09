@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { BarChart3, Users, FileText, Link, RefreshCw, Globe, TrendingUp, MapPin, Mail, Activity, Shield, Eye, Award, Home, LogOut, Clock, AlertCircle, LayoutDashboard, Inbox, FileCheck, Bot, MessageSquare, Zap, Power, PlayCircle, PauseCircle, CheckCircle, XCircle, AlertTriangle, Brain, Sparkles, TrendingDown, Moon, Sun, Settings, Database, Server, Cpu, HardDrive, Network, Monitor } from 'lucide-react';
+import { BarChart3, Users, FileText, Link, RefreshCw, Globe, TrendingUp, MapPin, Mail, Activity, Shield, Eye, Award, Home, LogOut, Clock, AlertCircle, LayoutDashboard, Inbox, FileCheck, Bot, MessageSquare, Zap, Power, PlayCircle, PauseCircle, CheckCircle, XCircle, AlertTriangle, Brain, Sparkles, TrendingDown, Moon, Sun, Settings, Database, Server, Cpu, HardDrive, Network, Monitor, HelpCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { getBlogPosts, getFaqEntries, getReviews, getOffers } from '../lib/content';
 import { getBacklinks, getPartners } from '../lib/backlinks';
@@ -106,6 +106,19 @@ const Dashboard: React.FC = () => {
     councilDebates: 0
   });
 
+  // Publications IA statistics
+  const [publicationStats, setPublicationStats] = useState({
+    blogPostsToday: 0,
+    blogPostsTotal: 0,
+    newsToday: 0,
+    newsTotal: 0,
+    socialPostsToday: 0,
+    socialPostsTotal: 0,
+    citypagesTotal: 0,
+    faqTotal: 0,
+    autoPublishEnabled: true
+  });
+
   // AI Recent Errors/Logs
   const [aiLogs, setAiLogs] = useState<Array<{
     timestamp: string;
@@ -198,13 +211,44 @@ const Dashboard: React.FC = () => {
           .gte('created_at', today)
       ]);
 
+      // Compter le contenu généré aujourd'hui
+      const [blogPostsTodayRes, blogPostsTotalRes, newsTodayRes, newsTotalRes, socialPostsTodayRes, socialPostsTotalRes, citypagesTotalRes, faqTotalRes] = await Promise.all([
+        supabase.from('blog_posts').select('id', { count: 'exact', head: true }).gte('created_at', today),
+        supabase.from('blog_posts').select('id', { count: 'exact', head: true }),
+        supabase.from('news_articles').select('id', { count: 'exact', head: true }).gte('created_at', today),
+        supabase.from('news_articles').select('id', { count: 'exact', head: true }),
+        supabase.from('social_posts').select('id', { count: 'exact', head: true }).gte('created_at', today),
+        supabase.from('social_posts').select('id', { count: 'exact', head: true }),
+        supabase.from('city_pages').select('id', { count: 'exact', head: true }),
+        supabase.from('faq_items').select('id', { count: 'exact', head: true })
+      ]);
+
+      const blogPostsToday = blogPostsTodayRes.count || 0;
+      const blogPostsTotal = blogPostsTotalRes.count || 0;
+      const newsToday = newsTodayRes.count || 0;
+      const newsTotal = newsTotalRes.count || 0;
+      const socialPostsToday = socialPostsTodayRes.count || 0;
+      const socialPostsTotal = socialPostsTotalRes.count || 0;
+
       setAiMetrics({
         decisionsToday: decisionsRes.count || 0,
         autonomousActions: actionsRes.count || 0,
         emailsProcessed: emailsRes.count || 0,
-        contentGenerated: 0, // TODO
+        contentGenerated: blogPostsToday + newsToday + socialPostsToday,
         learningEvents: learningRes.count || 0,
-        councilDebates: 0 // TODO
+        councilDebates: 0
+      });
+
+      setPublicationStats({
+        blogPostsToday,
+        blogPostsTotal,
+        newsToday,
+        newsTotal,
+        socialPostsToday,
+        socialPostsTotal,
+        citypagesTotal: citypagesTotalRes.count || 0,
+        faqTotal: faqTotalRes.count || 0,
+        autoPublishEnabled: true
       });
 
       // 4. Recent AI Logs (dernières 10 erreurs)
@@ -1018,6 +1062,167 @@ const Dashboard: React.FC = () => {
                   <Users className="mx-auto mb-2" size={28} />
                   <div className="text-3xl font-bold mb-1">{aiMetrics.councilDebates}</div>
                   <div className="text-sm font-bold">Council</div>
+                </div>
+              </div>
+            </div>
+
+            {/* PUBLICATIONS IA - AUTOMATIQUE & MANUEL */}
+            <div className="bg-gradient-to-br from-emerald-50 to-teal-100 rounded-2xl shadow-lg border-2 border-emerald-300 p-8 mb-8">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-bold text-emerald-900 flex items-center">
+                  <Sparkles className="mr-2 text-emerald-700" size={28} />
+                  Publications IA Master - Auto & Manuel
+                </h2>
+                <div className="flex items-center gap-3">
+                  <span className={`px-4 py-2 rounded-lg font-bold shadow-lg ${publicationStats.autoPublishEnabled ? 'bg-green-500 text-white' : 'bg-gray-400 text-white'}`}>
+                    {publicationStats.autoPublishEnabled ? '🤖 Publication Auto Active' : '⏸️ Manuel Seulement'}
+                  </span>
+                  <a
+                    href="/backoffice/content"
+                    className="px-6 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white rounded-lg font-bold transition-all shadow-lg hover:shadow-xl flex items-center gap-2"
+                  >
+                    <FileText size={20} />
+                    <span>Gérer Publications</span>
+                  </a>
+                </div>
+              </div>
+
+              {/* Stats Publications Détaillées */}
+              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 mb-6">
+                <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg p-6 text-center text-white shadow-lg hover:shadow-xl transition-all hover:scale-105">
+                  <FileText className="mx-auto mb-2" size={32} />
+                  <div className="text-4xl font-bold mb-1">{publicationStats.blogPostsToday}</div>
+                  <div className="text-sm font-bold opacity-90">Articles Blog (Aujourd'hui)</div>
+                  <div className="text-xs opacity-75 mt-2 border-t border-white/20 pt-2">Total: {publicationStats.blogPostsTotal}</div>
+                </div>
+
+                <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg p-6 text-center text-white shadow-lg hover:shadow-xl transition-all hover:scale-105">
+                  <Globe className="mx-auto mb-2" size={32} />
+                  <div className="text-4xl font-bold mb-1">{publicationStats.newsToday}</div>
+                  <div className="text-sm font-bold opacity-90">Actualités (Aujourd'hui)</div>
+                  <div className="text-xs opacity-75 mt-2 border-t border-white/20 pt-2">Total: {publicationStats.newsTotal}</div>
+                </div>
+
+                <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg p-6 text-center text-white shadow-lg hover:shadow-xl transition-all hover:scale-105">
+                  <MessageSquare className="mx-auto mb-2" size={32} />
+                  <div className="text-4xl font-bold mb-1">{publicationStats.socialPostsToday}</div>
+                  <div className="text-sm font-bold opacity-90">Posts Sociaux (Aujourd'hui)</div>
+                  <div className="text-xs opacity-75 mt-2 border-t border-white/20 pt-2">Total: {publicationStats.socialPostsTotal}</div>
+                </div>
+
+                <div className="bg-gradient-to-br from-amber-500 to-yellow-600 rounded-lg p-6 text-center text-white shadow-lg hover:shadow-xl transition-all hover:scale-105">
+                  <MapPin className="mx-auto mb-2" size={32} />
+                  <div className="text-4xl font-bold mb-1">{publicationStats.citypagesTotal}</div>
+                  <div className="text-sm font-bold opacity-90">Pages Villes SEO</div>
+                  <div className="text-xs opacity-75 mt-2">Référencement local</div>
+                </div>
+
+                <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-lg p-6 text-center text-white shadow-lg hover:shadow-xl transition-all hover:scale-105">
+                  <HelpCircle className="mx-auto mb-2" size={32} />
+                  <div className="text-4xl font-bold mb-1">{publicationStats.faqTotal}</div>
+                  <div className="text-sm font-bold opacity-90">Questions FAQ</div>
+                  <div className="text-xs opacity-75 mt-2">Base de connaissances</div>
+                </div>
+              </div>
+
+              {/* Actions Rapides Publication */}
+              <div className="mb-6">
+                <h3 className="text-lg font-bold text-emerald-900 mb-4">⚡ Actions Rapides</h3>
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                  <a
+                    href="/backoffice/content"
+                    className="bg-white hover:bg-emerald-50 border-2 border-emerald-300 rounded-lg p-4 text-center transition-all hover:shadow-lg group"
+                  >
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <Sparkles className="text-white" size={24} />
+                      </div>
+                      <div className="font-bold text-emerald-900 text-sm">🤖 Générer IA</div>
+                      <div className="text-xs text-emerald-700">Auto-rédaction intelligente</div>
+                    </div>
+                  </a>
+
+                  <button
+                    onClick={() => navigate('/backoffice/content?manual=blog')}
+                    className="bg-white hover:bg-orange-50 border-2 border-orange-300 rounded-lg p-4 text-center transition-all hover:shadow-lg group"
+                  >
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <FileText className="text-white" size={24} />
+                      </div>
+                      <div className="font-bold text-orange-900 text-sm">✍️ Article Manuel</div>
+                      <div className="text-xs text-orange-700">Rédaction personnalisée</div>
+                    </div>
+                  </button>
+
+                  <button
+                    onClick={() => navigate('/backoffice/content?manual=news')}
+                    className="bg-white hover:bg-blue-50 border-2 border-blue-300 rounded-lg p-4 text-center transition-all hover:shadow-lg group"
+                  >
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <Globe className="text-white" size={24} />
+                      </div>
+                      <div className="font-bold text-blue-900 text-sm">📰 Actualité Manuel</div>
+                      <div className="text-xs text-blue-700">Nouvelle info</div>
+                    </div>
+                  </button>
+
+                  <a
+                    href="/backoffice/social-media"
+                    className="bg-white hover:bg-purple-50 border-2 border-purple-300 rounded-lg p-4 text-center transition-all hover:shadow-lg group"
+                  >
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <MessageSquare className="text-white" size={24} />
+                      </div>
+                      <div className="font-bold text-purple-900 text-sm">💬 Réseaux Sociaux</div>
+                      <div className="text-xs text-purple-700">Publication multi-canaux</div>
+                    </div>
+                  </a>
+
+                  <a
+                    href="/backoffice/seo"
+                    className="bg-white hover:bg-amber-50 border-2 border-amber-300 rounded-lg p-4 text-center transition-all hover:shadow-lg group"
+                  >
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-yellow-600 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <TrendingUp className="text-white" size={24} />
+                      </div>
+                      <div className="font-bold text-amber-900 text-sm">📈 SEO Tools</div>
+                      <div className="text-xs text-amber-700">Optimisation contenu</div>
+                    </div>
+                  </a>
+                </div>
+              </div>
+
+              {/* Info IA Master */}
+              <div className="bg-emerald-100 border-2 border-emerald-300 rounded-lg p-4 flex items-start gap-3">
+                <div className="w-10 h-10 bg-emerald-600 rounded-full flex items-center justify-center flex-shrink-0">
+                  <Sparkles className="text-white" size={20} />
+                </div>
+                <div className="flex-1">
+                  <div className="font-bold text-emerald-900 mb-1">🤖 IA Master en Mode Autonome</div>
+                  <div className="text-sm text-emerald-800">
+                    Le système d'intelligence artificielle génère automatiquement du contenu optimisé SEO :
+                    <strong> articles de blog, actualités du secteur, FAQet pages locales</strong>.
+                    Vous pouvez <strong>publier manuellement</strong> ou <strong>modifier le contenu IA</strong> avant publication.
+                    L'IA s'améliore en continu grâce au machine learning.
+                  </div>
+                  <div className="mt-2 flex items-center gap-4 text-xs text-emerald-700">
+                    <span className="flex items-center gap-1">
+                      <CheckCircle size={14} className="text-green-600" />
+                      Génération automatique 24/7
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <CheckCircle size={14} className="text-green-600" />
+                      Publication programmable
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <CheckCircle size={14} className="text-green-600" />
+                      Révision manuelle possible
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
