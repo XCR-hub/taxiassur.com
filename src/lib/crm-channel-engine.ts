@@ -258,14 +258,21 @@ export const channelEngineService = {
     // Retirer le préfixe "in-" ou "out-" si présent
     const realId = messageId.replace(/^(in-|out-)/, '');
 
-    const { data, error } = await supabase.functions.invoke('ai-email-responder', {
+    console.log('🤖 Génération réponse IA pour:', realId);
+
+    const { data, error } = await supabase.functions.invoke('generate-inbox-response', {
       body: {
         message_id: realId,
         context
       }
     });
 
-    if (error) throw error;
+    if (error) {
+      console.error('❌ Erreur génération IA:', error);
+      throw error;
+    }
+
+    console.log('✅ Réponse IA générée:', data?.response?.substring(0, 100));
     return data;
   },
 

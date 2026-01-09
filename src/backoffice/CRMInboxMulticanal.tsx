@@ -48,10 +48,30 @@ const CRMInboxMulticanal: React.FC = () => {
     await loadMessages();
   };
 
+  const [generatingResponse, setGeneratingResponse] = useState(false);
+  const [aiResponse, setAiResponse] = useState<string>('');
+  const [showAiResponse, setShowAiResponse] = useState(false);
+
   const handleGenerateResponse = async () => {
     if (!selectedMessage) return;
-    const response = await channelEngineService.generateAIResponse(selectedMessage.id);
-    console.log('AI Response:', response);
+
+    setGeneratingResponse(true);
+    try {
+      const response = await channelEngineService.generateAIResponse(selectedMessage.id);
+      console.log('✅ AI Response reçue:', response);
+
+      if (response && response.success) {
+        setAiResponse(response.response);
+        setShowAiResponse(true);
+      } else {
+        alert('❌ Erreur: ' + (response?.error || 'Réponse invalide'));
+      }
+    } catch (error: any) {
+      console.error('❌ Erreur génération IA:', error);
+      alert('❌ Erreur lors de la génération: ' + (error.message || 'Erreur inconnue'));
+    } finally {
+      setGeneratingResponse(false);
+    }
   };
 
   const handleSyncEmails = async () => {
@@ -271,20 +291,69 @@ const CRMInboxMulticanal: React.FC = () => {
               </div>
 
               <div className="bg-white border-t p-6">
+                {generatingResponse && (
+                  <div className="mb-4 p-3 bg-purple-50 border border-purple-200 rounded-lg flex items-center gap-2">
+                    <RefreshCw className="animate-spin text-purple-600" size={16} />
+                    <span className="text-purple-800 text-sm">
+                      Génération de la réponse avec l'IA...
+                    </span>
+                  </div>
+                )}
+
+                {showAiResponse && aiResponse && (
+                  <div className="mb-4 p-4 bg-gradient-to-r from-purple-50 to-blue-50 border-2 border-purple-300 rounded-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Bot className="text-purple-600" size={20} />
+                      <span className="font-semibold text-purple-900">Réponse générée par IA</span>
+                    </div>
+                    <div
+                      className="prose prose-sm max-w-none text-gray-800"
+                      dangerouslySetInnerHTML={{ __html: aiResponse }}
+                    />
+                    <div className="flex gap-2 mt-3">
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(aiResponse.replace(/<[^>]*>/g, ''));
+                          alert('✅ Réponse copiée dans le presse-papier !');
+                        }}
+                        className="px-3 py-1 text-xs bg-white border border-purple-300 text-purple-700 rounded hover:bg-purple-50"
+                      >
+                        Copier
+                      </button>
+                      <button
+                        onClick={() => setShowAiResponse(false)}
+                        className="px-3 py-1 text-xs bg-white border border-gray-300 text-gray-600 rounded hover:bg-gray-50"
+                      >
+                        Masquer
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 <textarea
                   className="w-full p-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-3"
-                  rows={4}
-                  placeholder="Votre réponse..."
+                  rows={6}
+                  placeholder="Écrivez votre réponse ou générez-en une avec l'IA..."
+                  value={aiResponse ? aiResponse.replace(/<[^>]*>/g, '') : ''}
+                  onChange={(e) => setAiResponse(e.target.value)}
                 />
                 <div className="flex justify-between">
                   <button
                     onClick={handleGenerateResponse}
-                    className="px-4 py-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-colors flex items-center gap-2"
+                    disabled={generatingResponse || !selectedMessage}
+                    className="px-4 py-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <Bot size={16} />
-                    Générer avec IA
+                    {generatingResponse ? (
+                      <RefreshCw className="animate-spin" size={16} />
+                    ) : (
+                      <Bot size={16} />
+                    )}
+                    {generatingResponse ? 'Génération...' : 'Générer avec IA'}
                   </button>
-                  <button className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
+                  <button
+                    disabled={!aiResponse}
+                    className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
                     Envoyer
                   </button>
                 </div>
