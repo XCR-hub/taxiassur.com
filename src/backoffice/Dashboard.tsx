@@ -1064,7 +1064,10 @@ const Dashboard: React.FC = () => {
               </div>
               {automations.length > 9 && (
                 <div className="mt-4 text-center">
-                  <button className="text-yellow-700 hover:text-yellow-900 font-bold">
+                  <button
+                    onClick={() => navigate('/backoffice/automations')}
+                    className="text-yellow-700 hover:text-yellow-900 font-bold transition-colors"
+                  >
                     Voir toutes les automations ({automations.length}) →
                   </button>
                 </div>
