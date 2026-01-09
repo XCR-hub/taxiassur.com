@@ -25,7 +25,8 @@ import {
   Plus,
   Trash2,
   Eye,
-  RefreshCw
+  RefreshCw,
+  Award
 } from 'lucide-react';
 import { pipelineService, CRMLead, PIPELINE_STATUSES } from '@/lib/crm-pipeline';
 import { supabase } from '@/lib/supabase';
