@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { BarChart3, Users, FileText, Link, RefreshCw, Globe, TrendingUp, MapPin, Mail, Calendar, Activity, Shield, Search, Eye, Euro, Handshake, Plus, DatabaseZap, Send, Clock, Award, Home } from 'lucide-react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { BarChart3, Users, FileText, Link, RefreshCw, Globe, TrendingUp, MapPin, Mail, Activity, Shield, Eye, Award, Home, LogOut, Clock, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { getBlogPosts, getFaqEntries, getReviews, getOffers } from '../lib/content';
 import { getBacklinks, getPartners } from '../lib/backlinks';
@@ -9,11 +9,15 @@ import { checkUptime, getSEOScore } from '../lib/analytics';
 import { getLeads } from '../lib/leads';
 import AdminPing from '../components/AdminPing';
 import AdminSessionKeepAlive from '../components/AdminSessionKeepAlive';
-import Card from '../components/Card';
+import AdminLogin from '../components/AdminLogin';
+import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { logger } from '@/lib/logger';
+import { supabase } from '@/lib/supabase';
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
+  const { isAuthenticated, loading: authLoading, user, signOut } = useAdminAuth();
+
   const [stats, setStats] = useState({
     posts: 0,
     faqs: 0,
@@ -22,28 +26,7 @@ const Dashboard: React.FC = () => {
     backlinks: 0,
     partners: 0
   });
-  
-  const [leadStats, setLeadStats] = useState<{
-    today: number;
-    week: number;
-    month: number;
-    topCities: Array<{ city: string; count: number }>;
-  }>({
-    today: 0,
-    week: 0,
-    month: 0,
-    topCities: []
-  });
-  
-  const [webhookStatus, setWebhookStatus] = useState<'idle' | 'success' | 'error'>('idle');
-  const [lastUpdate, setLastUpdate] = useState<string>('');
-  const [isLoading, setIsLoading] = useState(true);
-  const [systemHealth, setSystemHealth] = useState({
-    uptime: '99.9%',
-    responseTime: 'N/A',
-    lastBackup: 'N/A',
-    seoScore: 95
-  });
+
   const [realLeadStats, setRealLeadStats] = useState({
     today: 0,
     week: 0,
@@ -51,17 +34,27 @@ const Dashboard: React.FC = () => {
     total: 0
   });
 
-  useEffect(() => {
-    loadDashboardData();
-  }, []);
+  const [topCities, setTopCities] = useState<Array<{ city: string; count: number }>>([]);
+  const [webhookStatus, setWebhookStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
+  const [isLoading, setIsLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const loadDashboardData = async () => {
-    setIsLoading(true);
+  const [systemHealth, setSystemHealth] = useState({
+    uptime: '99.9%',
+    responseTime: 'N/A',
+    seoScore: 95
+  });
+
+  const loadDashboardData = useCallback(async (showLoader = true) => {
+    if (showLoader) setIsLoading(true);
+    setError(null);
+
     try {
-      // Charger les vrais leads depuis Supabase
+      // Charger les leads en premier (données importantes)
       const realLeads = await getLeads();
 
-      // Calculer les stats réelles des leads
       const now = new Date();
       const today = now.toDateString();
       const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
@@ -85,7 +78,22 @@ const Dashboard: React.FC = () => {
         month: leadsMonth,
         total: realLeads.length
       });
-      
+
+      // Calculer top villes
+      const cityCount = realLeads.reduce((acc, lead) => {
+        const city = lead.city || 'Non renseigné';
+        acc[city] = (acc[city] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
+
+      const topCitiesData = Object.entries(cityCount)
+        .map(([city, count]) => ({ city, count }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 5);
+
+      setTopCities(topCitiesData);
+
+      // Charger le contenu en parallèle
       const [posts, faqs, reviews, offers, backlinks, partners] = await Promise.all([
         getBlogPosts(),
         getFaqEntries(),
@@ -104,61 +112,82 @@ const Dashboard: React.FC = () => {
         partners: partners.length
       });
 
-      // Trouver la dernière mise à jour
-      const allDates = [
-        ...posts.map(p => p.updatedAt || p.createdAt),
-        ...faqs.map(f => f.updatedAt),
-        ...reviews.map(r => r.createdAt),
-        ...offers.map(o => o.updatedAt)
-      ];
-
-      if (allDates.length > 0) {
-        const latest = allDates.reduce((latest, current) => 
-          new Date(current) > new Date(latest) ? current : latest
-        );
-        setLastUpdate(latest);
-      }
-
-      // Vérifier le webhook
-      const webhookResult = await pingWebhook();
-      setWebhookStatus(webhookResult.ok ? 'success' : 'error');
-      
-      // Calculer les vraies villes avec leurs counts
-      const cityCount = realLeads.reduce((acc, lead) => {
-        const city = lead.city || 'Non renseigné';
-        acc[city] = (acc[city] || 0) + 1;
-        return acc;
-      }, {} as Record<string, number>);
-
-      const topCities = Object.entries(cityCount)
-        .map(([city, count]) => ({ city, count }))
-        .sort((a, b) => b.count - a.count)
-        .slice(0, 5);
-
-      // Utiliser les vraies stats de leads
-      setLeadStats({
-        today: leadsToday,
-        week: leadsWeek,
-        month: leadsMonth,
-        topCities
+      // Vérifier le webhook (non bloquant)
+      pingWebhook().then(result => {
+        setWebhookStatus(result.ok ? 'success' : 'error');
+      }).catch(() => {
+        setWebhookStatus('error');
       });
-      
-      // Santé du système - Données réelles
-      const uptimeCheck = await checkUptime();
-      const seoScore = await getSEOScore();
+
+      // Santé du système
+      const [uptimeCheck, seoScore] = await Promise.all([
+        checkUptime(),
+        getSEOScore()
+      ]);
 
       setSystemHealth({
         uptime: uptimeCheck.online ? '99.9%' : '0%',
         responseTime: uptimeCheck.responseTime > 0 ? `${uptimeCheck.responseTime}ms` : 'N/A',
-        lastBackup: '2 heures',
         seoScore
       });
+
+      setLastUpdate(new Date());
     } catch (error) {
       logger.error('Failed to load dashboard data:', error);
+      setError('Erreur lors du chargement des données');
     } finally {
-      setIsLoading(false);
+      if (showLoader) setIsLoading(false);
+      setRefreshing(false);
     }
-  };
+  }, []);
+
+  // Chargement initial
+  useEffect(() => {
+    if (isAuthenticated && !authLoading) {
+      loadDashboardData();
+    }
+  }, [isAuthenticated, authLoading, loadDashboardData]);
+
+  // Auto-refresh toutes les 2 minutes
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    const interval = setInterval(() => {
+      loadDashboardData(false);
+    }, 120000); // 2 minutes
+
+    return () => clearInterval(interval);
+  }, [isAuthenticated, loadDashboardData]);
+
+  // Realtime updates pour les leads
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    const channel = supabase
+      .channel('dashboard_leads_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'crm_leads'
+        },
+        () => {
+          console.log('Lead updated, refreshing stats...');
+          loadDashboardData(false);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [isAuthenticated, loadDashboardData]);
+
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await loadDashboardData(false);
+  }, [loadDashboardData]);
 
   const handleRegenerateFeeds = async () => {
     try {
@@ -177,7 +206,7 @@ const Dashboard: React.FC = () => {
     try {
       const sitemapUrl = `${import.meta.env.VITE_SITE_URL}/feeds/sitemap.xml`;
       const result = await pingSearchEngines(sitemapUrl);
-      
+
       if (result.success) {
         alert('Moteurs de recherche notifiés avec succès !');
       } else {
@@ -188,29 +217,63 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  if (isLoading) {
+  const handleLogout = useCallback(async () => {
+    try {
+      await signOut();
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Force reload même en cas d'erreur
+      window.location.href = '/backoffice';
+    }
+  }, [signOut]);
+
+  // Afficher le formulaire de connexion si pas authentifié
+  if (authLoading) {
     return (
-      <div className="p-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="animate-pulse">
-            <div className="h-8 bg-gray-200 rounded mb-8"></div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {[...Array(6)].map((_, i) => (
-                <div key={i} className="h-32 bg-gray-200 rounded"></div>
-              ))}
-            </div>
-          </div>  
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <RefreshCw className="animate-spin mx-auto mb-4 text-orange-600" size={48} />
+          <p className="text-gray-700 font-medium">Vérification de la session...</p>
         </div>
       </div>
-    );      
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <AdminLogin onSuccess={() => window.location.reload()} />;
+  }
+
+  // Loading skeleton
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <div className="p-8">
+          <div className="max-w-7xl mx-auto">
+            <div className="animate-pulse">
+              <div className="h-32 bg-gray-200 rounded-xl mb-8"></div>
+              <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-6 mb-8">
+                {[...Array(6)].map((_, i) => (
+                  <div key={i} className="h-32 bg-gray-200 rounded-xl"></div>
+                ))}
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                {[...Array(4)].map((_, i) => (
+                  <div key={i} className="h-32 bg-gray-200 rounded-xl"></div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
     <>
       <AdminSessionKeepAlive />
       <div className="min-h-screen bg-gray-50">
-        {/* Single Header - Clean Design */}
-        <header className="bg-white border-b-2 border-gray-200 shadow-sm">
+        {/* Header */}
+        <header className="bg-white border-b-2 border-gray-200 shadow-sm sticky top-0 z-10">
           <div className="max-w-7xl mx-auto px-6 py-4">
             <div className="flex justify-between items-center">
               <div className="flex items-center space-x-4">
@@ -221,39 +284,57 @@ const Dashboard: React.FC = () => {
                   <h1 className="text-2xl font-bold text-gray-900">
                     Backoffice TaxiAssur
                   </h1>
-                  <p className="text-sm text-gray-600">
-                    Administration et pilotage SEO
-                  </p>
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <span>Administration et pilotage SEO</span>
+                    {refreshing && (
+                      <>
+                        <span>•</span>
+                        <RefreshCw className="animate-spin" size={12} />
+                        <span>Actualisation...</span>
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
-              
+
               <div className="flex items-center space-x-4">
+                <button
+                  onClick={handleRefresh}
+                  disabled={refreshing}
+                  className="border-2 border-gray-300 hover:bg-gray-50 text-gray-700 font-medium px-4 py-2 rounded-lg transition-colors flex items-center space-x-2 disabled:opacity-50"
+                >
+                  <RefreshCw size={16} className={refreshing ? 'animate-spin' : ''} />
+                  <span>Actualiser</span>
+                </button>
+
                 <button
                   onClick={() => navigate('/backoffice/crm-commercial')}
                   className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
                 >
                   <Home size={16} />
-                  <span>Accueil CRM</span>
+                  <span>CRM</span>
                 </button>
+
                 <a
                   href="/"
                   target="_blank"
+                  rel="noopener noreferrer"
                   className="bg-orange-600 hover:bg-orange-700 text-white font-medium px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
                 >
                   <Globe size={16} />
                   <span>Voir le Site</span>
                 </a>
+
                 <div className="text-right">
-                  <p className="text-sm text-gray-600">Connecté en tant qu'</p>
-                  <p className="font-semibold text-gray-900">Administrateur</p>
+                  <p className="text-sm text-gray-600">Connecté en tant que</p>
+                  <p className="font-semibold text-gray-900">{user?.full_name || 'Admin'}</p>
                 </div>
+
                 <button
-                  onClick={() => {
-                    sessionStorage.removeItem('taxiassur_auth');
-                    window.location.reload();
-                  }}
+                  onClick={handleLogout}
                   className="bg-red-500 hover:bg-red-600 text-white font-medium px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
                 >
+                  <LogOut size={16} />
                   <span>Déconnexion</span>
                 </button>
               </div>
@@ -263,480 +344,317 @@ const Dashboard: React.FC = () => {
 
         {/* Content */}
         <main className="p-8">
-        <div className="max-w-7xl mx-auto">
-          {/* Dashboard Header - Improved Readability */}
-          <div className="bg-gradient-to-br from-orange-50 to-yellow-50 rounded-2xl shadow-lg border-2 border-orange-200 p-8 mb-8">
-            <div className="flex justify-between items-center">
-              <div>
-                <h1 className="text-4xl font-bold text-orange-900 mb-3">
-                  📊 Dashboard TaxiAssur
-                </h1>
-                <p className="text-xl text-orange-700">
-                  Pilotage SEO, contenu et acquisition de leads
-                </p>
-              </div>
-              <div className="flex items-center space-x-6">
-                <AdminPing />
-                <div className="text-right">
-                  <p className="text-sm text-orange-600">Dernière MAJ</p>
-                  <p className="font-semibold text-orange-900">{new Date().toLocaleString('fr-FR')}</p>
+          <div className="max-w-7xl mx-auto">
+            {/* Dashboard Header */}
+            <div className="bg-gradient-to-br from-orange-50 to-yellow-50 rounded-2xl shadow-lg border-2 border-orange-200 p-8 mb-8">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h1 className="text-4xl font-bold text-orange-900 mb-3">
+                    Dashboard TaxiAssur
+                  </h1>
+                  <p className="text-xl text-orange-700">
+                    Pilotage SEO, contenu et acquisition de leads
+                  </p>
                 </div>
+                <div className="flex items-center space-x-6">
+                  <AdminPing />
+                  <div className="text-right">
+                    <div className="flex items-center gap-2 text-sm text-orange-600 mb-1">
+                      <Clock size={14} />
+                      <span>Dernière MAJ</span>
+                    </div>
+                    <p className="font-semibold text-orange-900">
+                      {lastUpdate.toLocaleString('fr-FR')}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Live update indicator */}
+              <div className="mt-4 flex items-center gap-2 text-sm text-orange-700">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <span>Mise à jour automatique activée (2 min)</span>
               </div>
             </div>
-          </div>
 
-          {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-6 mb-8">
-            <a 
-              href="/blog"
-              target="_blank"
-              className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl shadow-lg border-2 border-orange-300 p-6 text-center hover:shadow-xl transition-all duration-300 hover:scale-105 block"
-            >
-              <FileText className="mx-auto mb-2 text-orange-700" size={24} />
-              <div className="text-3xl font-bold text-orange-900 mb-1">{stats.posts}</div>
-              <div className="text-sm font-bold text-orange-700">Articles</div>
-            </a>
+            {/* Error message */}
+            {error && (
+              <div className="mb-8 p-4 bg-red-50 border-2 border-red-200 rounded-lg flex items-center gap-2 text-red-800">
+                <AlertCircle size={20} />
+                <span>{error}</span>
+                <button
+                  onClick={() => setError(null)}
+                  className="ml-auto text-red-600 hover:text-red-800"
+                >
+                  ✕
+                </button>
+              </div>
+            )}
 
-            <a 
-              href="/faq"
-              target="_blank"
-              className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl shadow-lg border-2 border-green-300 p-6 text-center hover:shadow-xl transition-all duration-300 hover:scale-105 block"
-            >
-              <BarChart3 className="mx-auto mb-2 text-green-700" size={24} />
-              <div className="text-3xl font-bold text-green-900 mb-1">{stats.faqs}</div>
-              <div className="text-sm font-bold text-green-700">FAQ</div>
-            </a>
+            {/* Stats Cards - Content */}
+            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-6 mb-8">
+              <a
+                href="/blog"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl shadow-lg border-2 border-orange-300 p-6 text-center hover:shadow-xl transition-all duration-300 hover:scale-105 block"
+              >
+                <FileText className="mx-auto mb-2 text-orange-700" size={24} />
+                <div className="text-3xl font-bold text-orange-900 mb-1">{stats.posts}</div>
+                <div className="text-sm font-bold text-orange-700">Articles</div>
+              </a>
 
-            <a 
-              href="/avis"
-              target="_blank"
-              className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl shadow-lg border-2 border-orange-300 p-6 text-center hover:shadow-xl transition-all duration-300 hover:scale-105 block"
-            >
-              <Users className="mx-auto mb-2 text-orange-700" size={24} />
-              <div className="text-3xl font-bold text-orange-900 mb-1">{stats.reviews}</div>
-              <div className="text-sm font-bold text-orange-700">Avis</div>
-            </a>
+              <a
+                href="/faq"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl shadow-lg border-2 border-green-300 p-6 text-center hover:shadow-xl transition-all duration-300 hover:scale-105 block"
+              >
+                <BarChart3 className="mx-auto mb-2 text-green-700" size={24} />
+                <div className="text-3xl font-bold text-green-900 mb-1">{stats.faqs}</div>
+                <div className="text-sm font-bold text-green-700">FAQ</div>
+              </a>
 
-            <a 
-              href="/offres"
-              target="_blank"
-              className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl shadow-lg border-2 border-orange-300 p-6 text-center hover:shadow-xl transition-all duration-300 hover:scale-105 block"
-            >
-              <TrendingUp className="mx-auto mb-2 text-orange-700" size={24} />
-              <div className="text-3xl font-bold text-orange-900 mb-1">{stats.offers}</div>
-              <div className="text-sm font-bold text-orange-700">Offres</div>
-            </a>
+              <a
+                href="/avis"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl shadow-lg border-2 border-orange-300 p-6 text-center hover:shadow-xl transition-all duration-300 hover:scale-105 block"
+              >
+                <Users className="mx-auto mb-2 text-orange-700" size={24} />
+                <div className="text-3xl font-bold text-orange-900 mb-1">{stats.reviews}</div>
+                <div className="text-sm font-bold text-orange-700">Avis</div>
+              </a>
 
-            <a 
-              href="/backoffice/backlinks"
-              className="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-xl shadow-lg border-2 border-yellow-300 p-6 text-center hover:shadow-xl transition-all duration-300 hover:scale-105 block"
-            >
-              <Link className="mx-auto mb-2 text-yellow-700" size={24} />
-              <div className="text-3xl font-bold text-yellow-900 mb-1">{stats.backlinks}</div>
-              <div className="text-sm font-bold text-yellow-700">Backlinks</div>
-            </a>
+              <a
+                href="/offres"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl shadow-lg border-2 border-orange-300 p-6 text-center hover:shadow-xl transition-all duration-300 hover:scale-105 block"
+              >
+                <TrendingUp className="mx-auto mb-2 text-orange-700" size={24} />
+                <div className="text-3xl font-bold text-orange-900 mb-1">{stats.offers}</div>
+                <div className="text-sm font-bold text-orange-700">Offres</div>
+              </a>
 
-            <a 
-              href="/backoffice/partners"
-              className="bg-gradient-to-br from-pink-50 to-pink-100 rounded-xl shadow-lg border-2 border-pink-300 p-6 text-center hover:shadow-xl transition-all duration-300 hover:scale-105 block"
-            >
-              <Globe className="mx-auto mb-2 text-pink-700" size={24} />
-              <div className="text-3xl font-bold text-pink-900 mb-1">{stats.partners}</div>
-              <div className="text-sm font-bold text-pink-700">Partenaires</div>
-            </a>
-          </div>
+              <a
+                href="/backoffice/backlinks"
+                className="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-xl shadow-lg border-2 border-yellow-300 p-6 text-center hover:shadow-xl transition-all duration-300 hover:scale-105 block"
+              >
+                <Link className="mx-auto mb-2 text-yellow-700" size={24} />
+                <div className="text-3xl font-bold text-yellow-900 mb-1">{stats.backlinks}</div>
+                <div className="text-sm font-bold text-yellow-700">Backlinks</div>
+              </a>
 
-          {/* Lead Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <a 
-              href="/backoffice/lead-manager"
-              className="bg-gradient-to-br from-green-50 to-emerald-100 rounded-xl shadow-lg border-2 border-green-300 p-6 text-center hover:shadow-xl transition-all duration-300 hover:scale-105 block"
-            >
-              <Calendar className="mx-auto mb-2 text-green-700" size={24} />
-              <div className="text-3xl font-bold text-green-800 mb-1">{realLeadStats.today}</div>
-              <div className="text-sm font-bold text-green-700">Leads aujourd'hui</div>
-            </a>
-            
-            <a 
-              href="/backoffice/lead-manager"
-              className="bg-gradient-to-br from-orange-50 to-yellow-100 rounded-xl shadow-lg border-2 border-orange-300 p-6 text-center hover:shadow-xl transition-all duration-300 hover:scale-105 block"
-            >
-              <Activity className="mx-auto mb-2 text-orange-700" size={24} />
-              <div className="text-3xl font-bold text-orange-800 mb-1">{realLeadStats.week}</div>
-              <div className="text-sm font-bold text-orange-700">Cette semaine</div>
-            </a>
-            
-            <a 
-              href="/backoffice/lead-manager"
-              className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl shadow-lg border-2 border-orange-300 p-6 text-center hover:shadow-xl transition-all duration-300 hover:scale-105 block"
-            >
-              <TrendingUp className="mx-auto mb-2 text-orange-700" size={24} />
-              <div className="text-3xl font-bold text-orange-800 mb-1">{realLeadStats.month}</div>
-              <div className="text-sm font-bold text-orange-700">Ce mois</div>
-            </a>
-            
-            <a 
-              href="/villes"
-              target="_blank"
-              className="bg-gradient-to-br from-amber-50 to-yellow-100 rounded-xl shadow-lg border-2 border-amber-300 p-6 text-center hover:shadow-xl transition-all duration-300 hover:scale-105 block"
-            >
-              <MapPin className="mx-auto mb-2 text-amber-700" size={24} />
-              <div className="text-2xl font-bold text-amber-800 mb-1">Top 5</div>
-              <div className="text-sm font-bold text-amber-700">Villes actives</div>
-            </a>
-          </div>
+              <a
+                href="/backoffice/partners"
+                className="bg-gradient-to-br from-pink-50 to-pink-100 rounded-xl shadow-lg border-2 border-pink-300 p-6 text-center hover:shadow-xl transition-all duration-300 hover:scale-105 block"
+              >
+                <Globe className="mx-auto mb-2 text-pink-700" size={24} />
+                <div className="text-3xl font-bold text-pink-900 mb-1">{stats.partners}</div>
+                <div className="text-sm font-bold text-pink-700">Partenaires</div>
+              </a>
+            </div>
 
-          {/* Status & Actions */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-            <div className="bg-gradient-to-br from-green-50 to-emerald-100 rounded-xl shadow-lg border-2 border-green-300 p-6">
-              <h3 className="text-xl font-bold text-green-900 mb-6 flex items-center">
-                <Activity className="mr-2 text-green-700" size={20} />
-                État du Système
-              </h3>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="font-bold text-gray-800">Webhook Make</span>
-                  <span className={`px-3 py-1 rounded-full text-sm font-bold ${
-                    webhookStatus === 'success' 
-                      ? 'bg-green-200 text-green-900 border-2 border-green-400' 
-                      : 'bg-red-200 text-red-900 border-2 border-red-400'
-                  }`}>
-                    {webhookStatus === 'success' ? 'Actif' : 'Erreur'}
-                  </span>
-                </div>
-                
-                {systemHealth && (
-                  <>
-                    <div className="flex items-center justify-between">
-                      <span className="font-bold text-gray-800">Uptime</span>
-                      <span className="text-sm text-green-800 font-bold">{systemHealth.uptime}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="font-bold text-gray-800">Temps réponse</span>
-                      <span className="text-sm text-orange-800 font-bold">{systemHealth.responseTime}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="font-bold text-gray-800">Score SEO</span>
-                      <span className="text-sm text-orange-800 font-bold">{systemHealth.seoScore}/100</span>
-                    </div>
-                  </>
-                )}
-                
-                {lastUpdate && (
+            {/* Lead Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+              <a
+                href="/backoffice/lead-manager"
+                className="bg-gradient-to-br from-green-50 to-emerald-100 rounded-xl shadow-lg border-2 border-green-300 p-6 text-center hover:shadow-xl transition-all duration-300 hover:scale-105 block"
+              >
+                <TrendingUp className="mx-auto mb-2 text-green-700" size={24} />
+                <div className="text-3xl font-bold text-green-800 mb-1">{realLeadStats.today}</div>
+                <div className="text-sm font-bold text-green-700">Leads aujourd'hui</div>
+              </a>
+
+              <a
+                href="/backoffice/lead-manager"
+                className="bg-gradient-to-br from-orange-50 to-yellow-100 rounded-xl shadow-lg border-2 border-orange-300 p-6 text-center hover:shadow-xl transition-all duration-300 hover:scale-105 block"
+              >
+                <Activity className="mx-auto mb-2 text-orange-700" size={24} />
+                <div className="text-3xl font-bold text-orange-800 mb-1">{realLeadStats.week}</div>
+                <div className="text-sm font-bold text-orange-700">Cette semaine</div>
+              </a>
+
+              <a
+                href="/backoffice/lead-manager"
+                className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl shadow-lg border-2 border-orange-300 p-6 text-center hover:shadow-xl transition-all duration-300 hover:scale-105 block"
+              >
+                <TrendingUp className="mx-auto mb-2 text-orange-700" size={24} />
+                <div className="text-3xl font-bold text-orange-800 mb-1">{realLeadStats.month}</div>
+                <div className="text-sm font-bold text-orange-700">Ce mois</div>
+              </a>
+
+              <a
+                href="/backoffice/crm-killer/pipeline"
+                className="bg-gradient-to-br from-amber-50 to-yellow-100 rounded-xl shadow-lg border-2 border-amber-300 p-6 text-center hover:shadow-xl transition-all duration-300 hover:scale-105 block"
+              >
+                <MapPin className="mx-auto mb-2 text-amber-700" size={24} />
+                <div className="text-3xl font-bold text-amber-800 mb-1">{realLeadStats.total}</div>
+                <div className="text-sm font-bold text-amber-700">Total leads</div>
+              </a>
+            </div>
+
+            {/* Status & Actions Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+              {/* System Health */}
+              <div className="bg-gradient-to-br from-green-50 to-emerald-100 rounded-xl shadow-lg border-2 border-green-300 p-6">
+                <h3 className="text-xl font-bold text-green-900 mb-6 flex items-center">
+                  <Activity className="mr-2 text-green-700" size={20} />
+                  État du Système
+                </h3>
+                <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <span className="font-bold text-gray-800">Dernière MAJ</span>
-                    <span className="text-sm text-gray-900 font-bold bg-gray-200 px-2 py-1 rounded">
-                      {new Date(lastUpdate).toLocaleDateString('fr-FR')}
+                    <span className="font-bold text-gray-800">Webhook Make</span>
+                    <span className={`px-3 py-1 rounded-full text-sm font-bold ${
+                      webhookStatus === 'success'
+                        ? 'bg-green-200 text-green-900 border-2 border-green-400'
+                        : 'bg-red-200 text-red-900 border-2 border-red-400'
+                    }`}>
+                      {webhookStatus === 'success' ? 'Actif' : 'Erreur'}
                     </span>
                   </div>
-                )}
-              </div>
-            </div>
 
-            <div className="bg-gradient-to-br from-orange-50 to-yellow-100 rounded-xl shadow-lg border-2 border-orange-300 p-6">
-              <h3 className="text-xl font-bold text-orange-900 mb-6 flex items-center">
-                <RefreshCw className="mr-2 text-orange-700" size={20} />
-                Actions Rapides
-              </h3>
-              <div className="space-y-4">
-                <button
-                  onClick={handleRegenerateFeeds}
-                  className="w-full flex items-center justify-center space-x-2 bg-orange-700 hover:bg-orange-800 text-white font-bold py-3 px-4 rounded-lg transition-colors shadow-lg hover:shadow-xl"
-                >
-                  <RefreshCw size={16} />
-                  <span>Régénérer Feeds</span>
-                </button>
-                
-                <button
-                  onClick={handlePingSearchEngines}
-                  className="w-full flex items-center justify-center space-x-2 bg-green-700 hover:bg-green-800 text-white font-bold py-3 px-4 rounded-lg transition-colors shadow-lg hover:shadow-xl"
-                >
-                  <Globe size={16} />
-                  <span>Ping Moteurs</span>
-                </button>
-
-                <a
-                  href="/backoffice/seo-strategy"
-                  className="w-full flex items-center justify-center space-x-2 bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-3 px-4 rounded-lg transition-colors shadow-lg hover:shadow-xl"
-                >
-                  <Award size={16} />
-                  <span>Stratégie n°1 SEO</span>
-                </a>
-
-                <button
-                  onClick={loadDashboardData}
-                  className="w-full flex items-center justify-center space-x-2 bg-gray-700 hover:bg-slate-800 text-white font-bold py-3 px-4 rounded-lg transition-colors shadow-lg hover:shadow-xl"
-                >
-                  <RefreshCw size={16} />
-                  <span>Actualiser</span>
-                </button>
-              </div>
-            </div>
-
-            <div className="bg-gradient-to-br from-amber-50 to-yellow-100 rounded-xl shadow-lg border-2 border-amber-300 p-6">
-              <h3 className="text-xl font-bold text-amber-900 mb-6 flex items-center">
-                <MapPin className="mr-2 text-amber-700" size={20} />
-                Top Villes
-              </h3>
-              <div className="space-y-3">
-                {leadStats.topCities.length > 0 ? leadStats.topCities.map((cityData, index) => (
-                  <div key={cityData.city} className="flex items-center justify-between p-3 bg-amber-100 rounded-lg border border-amber-200">
-                    <span className="font-bold text-amber-900">{index + 1}. {cityData.city}</span>
-                    <span className="text-xs bg-amber-200 text-amber-900 px-3 py-1 rounded-full font-bold border border-amber-300">
-                      {cityData.count} {cityData.count > 1 ? 'leads' : 'lead'}
-                    </span>
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-gray-800">Uptime</span>
+                    <span className="text-sm text-green-800 font-bold">{systemHealth.uptime}</span>
                   </div>
-                )) : (
-                  <div className="text-center text-amber-700 py-4">
-                    Aucune donnée disponible
+
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-gray-800">Temps réponse</span>
+                    <span className="text-sm text-orange-800 font-bold">{systemHealth.responseTime}</span>
                   </div>
-                )}
+
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-gray-800">Score SEO</span>
+                    <span className="text-sm text-orange-800 font-bold">{systemHealth.seoScore}/100</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Quick Actions */}
+              <div className="bg-gradient-to-br from-orange-50 to-yellow-100 rounded-xl shadow-lg border-2 border-orange-300 p-6">
+                <h3 className="text-xl font-bold text-orange-900 mb-6 flex items-center">
+                  <RefreshCw className="mr-2 text-orange-700" size={20} />
+                  Actions Rapides
+                </h3>
+                <div className="space-y-3">
+                  <button
+                    onClick={handleRegenerateFeeds}
+                    className="w-full flex items-center justify-center space-x-2 bg-orange-700 hover:bg-orange-800 text-white font-bold py-3 px-4 rounded-lg transition-colors shadow-lg hover:shadow-xl"
+                  >
+                    <RefreshCw size={16} />
+                    <span>Régénérer Feeds</span>
+                  </button>
+
+                  <button
+                    onClick={handlePingSearchEngines}
+                    className="w-full flex items-center justify-center space-x-2 bg-green-700 hover:bg-green-800 text-white font-bold py-3 px-4 rounded-lg transition-colors shadow-lg hover:shadow-xl"
+                  >
+                    <Globe size={16} />
+                    <span>Ping Moteurs</span>
+                  </button>
+
+                  <a
+                    href="/backoffice/seo-strategy"
+                    className="w-full flex items-center justify-center space-x-2 bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-3 px-4 rounded-lg transition-colors shadow-lg hover:shadow-xl"
+                  >
+                    <Award size={16} />
+                    <span>Stratégie n°1 SEO</span>
+                  </a>
+                </div>
+              </div>
+
+              {/* Top Cities */}
+              <div className="bg-gradient-to-br from-amber-50 to-yellow-100 rounded-xl shadow-lg border-2 border-amber-300 p-6">
+                <h3 className="text-xl font-bold text-amber-900 mb-6 flex items-center">
+                  <MapPin className="mr-2 text-amber-700" size={20} />
+                  Top Villes
+                </h3>
+                <div className="space-y-3">
+                  {topCities.length > 0 ? topCities.map((cityData, index) => (
+                    <div key={cityData.city} className="flex items-center justify-between p-3 bg-amber-100 rounded-lg border border-amber-200">
+                      <span className="font-bold text-amber-900">{index + 1}. {cityData.city}</span>
+                      <span className="text-xs bg-amber-200 text-amber-900 px-3 py-1 rounded-full font-bold border border-amber-300">
+                        {cityData.count} {cityData.count > 1 ? 'leads' : 'lead'}
+                      </span>
+                    </div>
+                  )) : (
+                    <div className="text-center text-amber-700 py-4">
+                      Aucune donnée disponible
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Quick Links - Content & CRM */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+              <div className="bg-gradient-to-br from-orange-50 to-yellow-100 rounded-xl shadow-lg border-2 border-orange-300 p-6">
+                <h3 className="text-xl font-bold text-orange-900 mb-6 flex items-center">
+                  <Globe className="mr-2 text-orange-700" size={20} />
+                  Gestion Contenu
+                </h3>
+                <div className="grid grid-cols-3 gap-4">
+                  <a
+                    href="/backoffice/content"
+                    className="text-center p-6 bg-orange-100 border-2 border-orange-300 rounded-lg hover:bg-orange-200 transition-colors group shadow-lg hover:shadow-xl"
+                  >
+                    <FileText className="mx-auto mb-2 text-orange-700 group-hover:scale-110 transition-transform" size={24} />
+                    <div className="text-sm font-bold text-orange-900">Publication</div>
+                  </a>
+
+                  <a
+                    href="/backoffice/lead-manager"
+                    className="text-center p-6 bg-orange-100 border-2 border-orange-300 rounded-lg hover:bg-orange-200 transition-colors group shadow-lg hover:shadow-xl"
+                  >
+                    <Users className="mx-auto mb-2 text-orange-700 group-hover:scale-110 transition-transform" size={24} />
+                    <div className="text-sm font-bold text-orange-900">Leads</div>
+                  </a>
+
+                  <a
+                    href="/backoffice/seo"
+                    className="text-center p-6 bg-green-100 border-2 border-green-300 rounded-lg hover:bg-green-200 transition-colors group shadow-lg hover:shadow-xl"
+                  >
+                    <TrendingUp className="mx-auto mb-2 text-green-700 group-hover:scale-110 transition-transform" size={24} />
+                    <div className="text-sm font-bold text-green-900">SEO Tools</div>
+                  </a>
+                </div>
+              </div>
+
+              <div className="bg-gradient-to-br from-green-50 to-emerald-100 rounded-xl shadow-lg border-2 border-green-300 p-6">
+                <h3 className="text-xl font-bold text-green-900 mb-6 flex items-center">
+                  <Shield className="mr-2 text-green-700" size={20} />
+                  Conformité & SEO
+                </h3>
+                <div className="grid grid-cols-3 gap-4">
+                  <a
+                    href="/backoffice/compliance"
+                    className="text-center p-6 bg-green-100 border-2 border-green-300 rounded-lg hover:bg-green-200 transition-colors group shadow-lg hover:shadow-xl"
+                  >
+                    <Shield className="mx-auto mb-2 text-green-700 group-hover:scale-110 transition-transform" size={24} />
+                    <div className="text-sm font-bold text-green-900">RGPD</div>
+                  </a>
+
+                  <a
+                    href="/backoffice/directory"
+                    className="text-center p-6 bg-orange-100 border-2 border-orange-300 rounded-lg hover:bg-orange-200 transition-colors group shadow-lg hover:shadow-xl"
+                  >
+                    <Globe className="mx-auto mb-2 text-orange-700 group-hover:scale-110 transition-transform" size={24} />
+                    <div className="text-sm font-bold text-orange-900">Annuaires</div>
+                  </a>
+
+                  <a
+                    href="/backoffice/popups"
+                    className="text-center p-6 bg-orange-100 border-2 border-orange-300 rounded-lg hover:bg-orange-200 transition-colors group shadow-lg hover:shadow-xl"
+                  >
+                    <Eye className="mx-auto mb-2 text-orange-700 group-hover:scale-110 transition-transform" size={24} />
+                    <div className="text-sm font-bold text-orange-900">Popups</div>
+                  </a>
+                </div>
               </div>
             </div>
           </div>
-
-          {/* Quick Links */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-            <div className="bg-gradient-to-br from-orange-50 to-yellow-100 rounded-xl shadow-lg border-2 border-orange-300 p-6">
-              <h3 className="text-xl font-bold text-orange-900 mb-6 flex items-center">
-                <Users className="mr-2 text-orange-700" size={20} />
-                Acquisition Partenaires
-              </h3>
-              <div className="grid grid-cols-4 gap-4">
-                <a
-                  href="/backoffice/backlink-prospector"
-                  className="text-center p-4 bg-red-100 border-2 border-red-300 rounded-lg hover:bg-red-200 transition-colors group shadow-lg hover:shadow-xl"
-                >
-                  <Link className="mx-auto mb-2 text-red-700 group-hover:scale-110 transition-transform" size={20} />
-                  <div className="text-sm font-bold text-red-900">Backlink AI</div>
-                </a>
-
-                <a
-                  href="/backoffice/backlink-automation"
-                  className="text-center p-4 bg-orange-100 border-2 border-orange-300 rounded-lg hover:bg-orange-200 transition-colors group shadow-lg hover:shadow-xl"
-                >
-                  <Activity className="mx-auto mb-2 text-orange-700 group-hover:scale-110 transition-transform" size={20} />
-                  <div className="text-sm font-bold text-orange-900">Auto Backlinks</div>
-                </a>
-
-                <a
-                  href="/backoffice/partner-finder"
-                  className="text-center p-4 bg-orange-100 border-2 border-orange-300 rounded-lg hover:bg-orange-200 transition-colors group shadow-lg hover:shadow-xl"
-                >
-                  <Search className="mx-auto mb-2 text-orange-700 group-hover:scale-110 transition-transform" size={20} />
-                  <div className="text-sm font-bold text-orange-900">Partner Finder</div>
-                </a>
-
-                <a
-                  href="/backoffice/prospect-review"
-                  className="text-center p-4 bg-green-100 border-2 border-green-300 rounded-lg hover:bg-green-200 transition-colors group shadow-lg hover:shadow-xl"
-                >
-                  <Eye className="mx-auto mb-2 text-green-700 group-hover:scale-110 transition-transform" size={20} />
-                  <div className="text-sm font-bold text-green-900">Review</div>
-                </a>
-
-                <a
-                  href="/backoffice/outreach"
-                  className="text-center p-4 bg-orange-100 border-2 border-orange-300 rounded-lg hover:bg-orange-200 transition-colors group shadow-lg hover:shadow-xl"
-                >
-                  <Mail className="mx-auto mb-2 text-orange-700 group-hover:scale-110 transition-transform" size={20} />
-                  <div className="text-sm font-bold text-orange-900">Outreach</div>
-                </a>
-              </div>
-
-              <div className="mt-4 space-y-3">
-                <a
-                  href="/backoffice/ai-generator"
-                  className="w-full flex items-center justify-center space-x-3 bg-gradient-to-r from-orange-600 to-orange-600 hover:from-orange-700 hover:to-orange-700 text-white font-bold py-4 px-6 rounded-lg transition-all shadow-lg hover:shadow-xl"
-                >
-                  <Plus size={20} />
-                  <span>Générateur de Contenu IA</span>
-                </a>
-                <a
-                  href="/backoffice/automation-scheduler"
-                  className="w-full flex items-center justify-center space-x-3 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-yellow-700 hover:to-orange-700 text-white font-bold py-4 px-6 rounded-lg transition-all shadow-lg hover:shadow-xl"
-                >
-                  <Clock size={20} />
-                  <span>⚡ Planification Automatique</span>
-                </a>
-                <a
-                  href="/backoffice/trend-analyzer"
-                  className="w-full flex items-center justify-center space-x-3 bg-gradient-to-r from-orange-600 to-pink-600 hover:from-orange-700 hover:to-pink-700 text-white font-bold py-4 px-6 rounded-lg transition-all shadow-lg hover:shadow-xl"
-                >
-                  <TrendingUp size={20} />
-                  <span>📊 Analyse des Tendances</span>
-                </a>
-                <a
-                  href="/backoffice/seed-prospects"
-                  className="w-full flex items-center justify-center space-x-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold py-4 px-6 rounded-lg transition-all shadow-lg hover:shadow-xl"
-                >
-                  <DatabaseZap size={20} />
-                  <span>Ajouter 20 Prospects</span>
-                </a>
-                <a
-                  href="/backoffice/launch-campaign"
-                  className="w-full flex items-center justify-center space-x-3 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white font-bold py-4 px-6 rounded-lg transition-all shadow-lg hover:shadow-xl animate-pulse"
-                >
-                  <Send size={20} />
-                  <span>🚀 Lancer Campagne</span>
-                </a>
-              </div>
-            </div>
-
-            <div className="bg-gradient-to-br from-green-50 to-emerald-100 rounded-xl shadow-lg border-2 border-green-300 p-6">
-              <h3 className="text-xl font-bold text-green-900 mb-6 flex items-center">
-                <Shield className="mr-2 text-green-700" size={20} />
-                Conformité & SEO
-              </h3>
-              <div className="grid grid-cols-3 gap-4">
-                <a
-                  href="/backoffice/compliance"
-                  className="text-center p-4 bg-green-100 border-2 border-green-300 rounded-lg hover:bg-green-200 transition-colors group shadow-lg hover:shadow-xl"
-                >
-                  <Shield className="mx-auto mb-2 text-green-700 group-hover:scale-110 transition-transform" size={20} />
-                  <div className="text-sm font-bold text-green-900">RGPD</div>
-                </a>
-                
-                <a
-                  href="/backoffice/directory"
-                  className="text-center p-4 bg-orange-100 border-2 border-orange-300 rounded-lg hover:bg-orange-200 transition-colors group shadow-lg hover:shadow-xl"
-                >
-                  <Globe className="mx-auto mb-2 text-orange-700 group-hover:scale-110 transition-transform" size={20} />
-                  <div className="text-sm font-bold text-orange-900">Annuaires</div>
-                </a>
-                
-                <a
-                  href="/backoffice/popups"
-                  className="text-center p-4 bg-orange-100 border-2 border-orange-300 rounded-lg hover:bg-orange-200 transition-colors group shadow-lg hover:shadow-xl"
-                >
-                  <Eye className="mx-auto mb-2 text-orange-700 group-hover:scale-110 transition-transform" size={20} />
-                  <div className="text-sm font-bold text-orange-900">Popups</div>
-                </a>
-              </div>
-            </div>
-          </div>
-
-          {/* Liens externes utiles */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-            <div className="bg-gradient-to-br from-orange-50 to-yellow-100 rounded-xl shadow-lg border-2 border-orange-300 p-6">
-              <h3 className="text-xl font-bold text-orange-900 mb-6 flex items-center">
-                <Globe className="mr-2 text-orange-700" size={20} />
-                Gestion Contenu
-              </h3>
-              <div className="grid grid-cols-3 gap-6">
-                <a
-                  href="/backoffice/content"
-                  className="text-center p-6 bg-orange-100 border-2 border-orange-300 rounded-lg hover:bg-orange-200 transition-colors group shadow-lg hover:shadow-xl"
-                >
-                  <FileText className="mx-auto mb-2 text-orange-700 group-hover:scale-110 transition-transform" size={24} />
-                  <div className="text-sm font-bold text-orange-900">Publication Manuelle</div>
-                </a>
-                
-                <a
-                  href="/backoffice/lead-manager"
-                  className="text-center p-6 bg-orange-100 border-2 border-orange-300 rounded-lg hover:bg-orange-200 transition-colors group shadow-lg hover:shadow-xl"
-                >
-                  <Users className="mx-auto mb-2 text-orange-700 group-hover:scale-110 transition-transform" size={24} />
-                  <div className="text-sm font-bold text-orange-900">Gestion Leads</div>
-                </a>
-                
-                <a
-                  href="/backoffice/seo"
-                  className="text-center p-6 bg-green-100 border-2 border-green-300 rounded-lg hover:bg-green-200 transition-colors group shadow-lg hover:shadow-xl"
-                >
-                  <TrendingUp className="mx-auto mb-2 text-green-700 group-hover:scale-110 transition-transform" size={24} />
-                  <div className="text-sm font-bold text-green-900">SEO Tools</div>
-                </a>
-              </div>
-            </div>
-
-            <div className="bg-gradient-to-br from-orange-50 to-pink-100 rounded-xl shadow-lg border-2 border-orange-300 p-6">
-              <h3 className="text-xl font-bold text-orange-900 mb-6 flex items-center">
-                <Users className="mr-2 text-orange-700" size={20} />
-                Marketplace & Partenaires
-              </h3>
-              <div className="grid grid-cols-2 gap-6">
-                <a
-                  href="/backoffice/lead-marketplace"
-                  className="text-center p-6 bg-green-100 border-2 border-green-300 rounded-lg hover:bg-green-200 transition-colors group shadow-lg hover:shadow-xl"
-                >
-                  <Users className="mx-auto mb-2 text-green-700 group-hover:scale-110 transition-transform" size={24} />
-                  <div className="text-sm font-bold text-green-900">Leads Marketplace</div>
-                </a>
-                
-                <a
-                  href="/backoffice/partner-portal"
-                  className="text-center p-6 bg-pink-100 border-2 border-pink-300 rounded-lg hover:bg-pink-200 transition-colors group shadow-lg hover:shadow-xl"
-                >
-                  <Euro className="mx-auto mb-2 text-pink-700 group-hover:scale-110 transition-transform" size={24} />
-                  <div className="text-sm font-bold text-pink-900">Portail Courtiers</div>
-                </a>
-              </div>
-            </div>
-          </div>
-
-          {/* Liens externes */}
-          <div className="bg-gradient-to-br from-gray-50 to-slate-100 rounded-xl shadow-lg border-2 border-gray-300 p-6">
-            <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
-              <Globe className="mr-2 text-gray-700" size={20} />
-              Outils & Liens Utiles
-            </h3>
-            <div className="grid grid-cols-2 md:grid-cols-6 gap-6">
-              <a
-                href="/test-webhook.html"
-                target="_blank"
-                className="text-center p-6 bg-green-100 border-2 border-green-300 rounded-lg hover:bg-green-200 transition-colors group shadow-lg hover:shadow-xl"
-              >
-                <Activity className="mx-auto mb-2 text-green-700 group-hover:scale-110 transition-transform" size={24} />
-                <div className="text-sm font-bold text-green-900">Test Webhook</div>
-              </a>
-              
-              <a
-                href="/server-check.php"
-                target="_blank"
-                className="text-center p-6 bg-red-100 border-2 border-red-300 rounded-lg hover:bg-red-200 transition-colors group shadow-lg hover:shadow-xl"
-              >
-                <Shield className="mx-auto mb-2 text-red-700 group-hover:scale-110 transition-transform" size={24} />
-                <div className="text-sm font-bold text-red-900">Check Serveur</div>
-              </a>
-              
-              <a
-                href="/deploy-guide.html"
-                target="_blank"
-                className="text-center p-6 bg-orange-100 border-2 border-orange-300 rounded-lg hover:bg-orange-200 transition-colors group shadow-lg hover:shadow-xl"
-              >
-                <FileText className="mx-auto mb-2 text-orange-700 group-hover:scale-110 transition-transform" size={24} />
-                <div className="text-sm font-bold text-orange-900">Guide Deploy</div>
-              </a>
-              
-              <a
-                href="/"
-                target="_blank"
-                className="text-center p-6 bg-amber-100 border-2 border-amber-300 rounded-lg hover:bg-amber-200 transition-colors group shadow-lg hover:shadow-xl"
-              >
-                <Globe className="mx-auto mb-2 text-amber-700 group-hover:scale-110 transition-transform" size={24} />
-                <div className="text-sm font-bold text-amber-900">Site Public</div>
-              </a>
-              
-              <a
-                href="/backoffice/news"
-                className="text-center p-6 bg-orange-100 border-2 border-orange-300 rounded-lg hover:bg-orange-200 transition-colors group shadow-lg hover:shadow-xl"
-              >
-                <TrendingUp className="mx-auto mb-2 text-orange-700 group-hover:scale-110 transition-transform" size={24} />
-                <div className="text-sm font-bold text-orange-900">Actualités IA</div>
-              </a>
-              
-              <a
-                href="/programme-partenaires"
-                target="_blank"
-                className="text-center p-6 bg-yellow-100 border-2 border-yellow-300 rounded-lg hover:bg-yellow-200 transition-colors group shadow-lg hover:shadow-xl"
-              >
-                <Handshake className="mx-auto mb-2 text-yellow-700 group-hover:scale-110 transition-transform" size={24} />
-                <div className="text-sm font-bold text-yellow-900">Programme Partenaires</div>
-              </a>
-            </div>
-          </div>
-        </div>
         </main>
       </div>
     </>
