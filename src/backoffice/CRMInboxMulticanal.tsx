@@ -156,7 +156,7 @@ const CRMInboxMulticanal: React.FC = () => {
       setSyncing(true);
 
       const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/fetch-real-emails`,
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/sync-all-emails`,
         {
           method: 'POST',
           headers: {
