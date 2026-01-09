@@ -16,16 +16,57 @@ interface AdminAuthState {
   isAuthenticated: boolean;
 }
 
+// Cache global partagé entre toutes les instances du hook
+let globalAuthState: AdminAuthState | null = null;
+let globalAuthInitialized = false;
+
 export function useAdminAuth() {
-  const [state, setState] = useState<AdminAuthState>({
-    user: null,
-    loading: true,
-    isAuthenticated: false,
+  const [state, setState] = useState<AdminAuthState>(() => {
+    // Utiliser le cache global SI déjà initialisé
+    if (globalAuthInitialized && globalAuthState) {
+      console.log('⚡ Using global auth cache (instant)');
+      return globalAuthState;
+    }
+
+    // Sinon, essayer le localStorage
+    try {
+      const userStr = localStorage.getItem('taxiassur_user');
+      if (userStr) {
+        const user = JSON.parse(userStr);
+        if (user && user.id) {
+          const cacheAge = Date.now() - (user.cachedAt || 0);
+          const sevenDays = 7 * 24 * 60 * 60 * 1000;
+
+          if (cacheAge < sevenDays) {
+            console.log('⚡ Fast init from localStorage');
+            return {
+              user: user,
+              loading: false,
+              isAuthenticated: true,
+            };
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('⚠️ Error reading cached user:', e);
+    }
+
+    return {
+      user: null,
+      loading: true,
+      isAuthenticated: false,
+    };
   });
 
   const isLoadingUserRef = React.useRef(false);
   const lastLoadEmailRef = React.useRef<string>('');
   const loadTimestampRef = React.useRef<number>(0);
+
+  const updateGlobalState = (newState: AdminAuthState) => {
+    globalAuthState = newState;
+    globalAuthInitialized = true;
+    setState(newState);
+  };
 
   const loadAdminUser = React.useCallback(async (email: string) => {
     const startTime = Date.now();
@@ -44,19 +85,16 @@ export function useAdminAuth() {
     lastLoadEmailRef.current = email;
     loadTimestampRef.current = now;
 
-    // AbortController pour annuler vraiment la requête
     const abortController = new AbortController();
 
     try {
       console.log('📧 Loading admin user for email:', email);
 
-      // Timeout réduit à 10 secondes (beaucoup plus raisonnable)
       const timeoutId = setTimeout(() => {
         console.error('⏱️ Admin load timeout after 10s, aborting...');
         abortController.abort();
       }, 10000);
 
-      // Requête avec timeout réel
       const { data: adminUser, error } = await Promise.race([
         supabase
           .from('admin_users')
@@ -80,11 +118,11 @@ export function useAdminAuth() {
       if (error) {
         if (error.message === 'AbortError' || error.message.includes('abort')) {
           console.error('❌ Request aborted due to timeout');
-          setState({ user: null, loading: false, isAuthenticated: false });
+          updateGlobalState({ user: null, loading: false, isAuthenticated: false });
           return;
         }
         console.error('❌ Error loading admin user:', error);
-        setState({ user: null, loading: false, isAuthenticated: false });
+        updateGlobalState({ user: null, loading: false, isAuthenticated: false });
         return;
       }
 
@@ -93,14 +131,13 @@ export function useAdminAuth() {
       if (adminUser) {
         console.log('✅ Admin authenticated:', adminUser.full_name);
 
-        // Sauvegarder l'utilisateur dans localStorage avec timestamp
         const userCache = {
           ...adminUser,
           cachedAt: Date.now()
         };
         localStorage.setItem('taxiassur_user', JSON.stringify(userCache));
 
-        // Update last_login de manière asynchrone (ne pas bloquer)
+        // Update last_login async (ne pas bloquer)
         supabase
           .from('admin_users')
           .update({ last_login: new Date().toISOString() })
@@ -108,14 +145,14 @@ export function useAdminAuth() {
           .then(() => console.log('📝 Last login updated'))
           .catch(err => console.warn('⚠️ Could not update last_login:', err));
 
-        setState({
+        updateGlobalState({
           user: adminUser as AdminUser,
           loading: false,
           isAuthenticated: true,
         });
       } else {
         console.warn('⚠️ Admin user not found or inactive');
-        setState({ user: null, loading: false, isAuthenticated: false });
+        updateGlobalState({ user: null, loading: false, isAuthenticated: false });
       }
     } catch (error: any) {
       const loadTime = Date.now() - startTime;
@@ -127,25 +164,28 @@ export function useAdminAuth() {
         logger.error('Erreur lors du chargement admin:', error);
       }
 
-      setState({ user: null, loading: false, isAuthenticated: false });
+      updateGlobalState({ user: null, loading: false, isAuthenticated: false });
     } finally {
       isLoadingUserRef.current = false;
-      abortController.abort(); // S'assurer que la requête est annulée
+      abortController.abort();
     }
   }, []);
 
   useEffect(() => {
     let mounted = true;
-    let authInitialized = false;
 
-    // Vérifier si l'utilisateur est déjà en cache local (ne pas redemander à chaque navigation)
+    // Si déjà authentifié via le cache global, ne rien faire
+    if (globalAuthInitialized && globalAuthState?.isAuthenticated) {
+      console.log('✅ Already authenticated via global cache');
+      return;
+    }
+
     const getCachedUser = () => {
       try {
         const userStr = localStorage.getItem('taxiassur_user');
         if (userStr) {
           const user = JSON.parse(userStr);
           if (user && user.id) {
-            // Cache valide 7 JOURS (comme la session)
             const cacheAge = Date.now() - (user.cachedAt || 0);
             const sevenDays = 7 * 24 * 60 * 60 * 1000;
 
@@ -167,11 +207,9 @@ export function useAdminAuth() {
 
     const validateCachedSession = () => {
       try {
-        // Vérifier d'abord la clé standard de Supabase
         const supabaseKey = `sb-${import.meta.env.VITE_SUPABASE_URL?.split('//')[1]?.split('.')[0]}-auth-token`;
         let stored = localStorage.getItem(supabaseKey);
 
-        // Fallback sur notre clé custom
         if (!stored || stored === 'null' || stored === 'undefined') {
           stored = localStorage.getItem('taxiassur-auth');
         }
@@ -181,14 +219,10 @@ export function useAdminAuth() {
         const parsed = JSON.parse(stored);
         if (!parsed?.access_token) return null;
 
-        // AMÉLIORATION MAJEURE : Ne pas vérifier l'expiration si on a un cache utilisateur valide
-        // Le keep-alive va rafraîchir automatiquement la session
-        // On ne force la reconnexion que si la session est très ancienne (7 jours)
         if (parsed.expires_at) {
           const expiresAt = parsed.expires_at * 1000;
           const timeUntilExpiry = expiresAt - Date.now();
 
-          // Seulement rejeter si expirée depuis plus de 7 JOURS (aligné avec le cache utilisateur)
           if (timeUntilExpiry < -7 * 24 * 60 * 60 * 1000) {
             console.log('🔄 Session expired >7 days, will re-authenticate');
             localStorage.removeItem('taxiassur-auth');
@@ -216,36 +250,31 @@ export function useAdminAuth() {
       try {
         console.log('🔍 Checking auth session...');
 
-        // AMÉLIORATION 1 : Vérifier d'abord le cache utilisateur local
         const cachedUser = getCachedUser();
         const cachedSession = validateCachedSession();
 
-        // Si on a un utilisateur en cache ET une session valide, utiliser directement
+        // FAST PATH : Si on a un utilisateur en cache ET une session, utiliser directement
         if (cachedUser && cachedSession) {
-          console.log('⚡ Using cached user (fast path)');
-          setState({
+          console.log('⚡ Using cached user (ULTRA fast path)');
+          updateGlobalState({
             user: cachedUser,
             loading: false,
             isAuthenticated: true,
           });
-          authInitialized = true;
-          // NE PAS vérifier en arrière-plan - le keep-alive s'en charge
-          // La vérification forcée causait des déconnexions intempestives
-          console.log('✅ Session cache utilisée - keep-alive actif');
-          return;
+          return; // STOP ICI - pas de vérification Supabase
         }
 
-        // TOUJOURS vérifier avec Supabase, même si pas de cache
-        console.log('🔍 Verifying session with Supabase...');
+        // Seulement si pas de cache : vérifier avec Supabase
+        console.log('🔍 No valid cache, verifying with Supabase...');
 
         const result = await Promise.race([
           supabase.auth.getSession(),
           new Promise((_, reject) =>
-            setTimeout(() => reject(new Error('Session check timeout')), 8000)
+            setTimeout(() => reject(new Error('Session check timeout')), 5000)
           )
         ]).catch(err => {
-          console.warn('⚠️ Session check timeout, using cached session');
-          return { data: { session: cachedSession }, error: null };
+          console.warn('⚠️ Session check timeout');
+          return { data: { session: null }, error: null };
         });
 
         const { data: { session }, error: sessionError } = result as any;
@@ -254,25 +283,23 @@ export function useAdminAuth() {
 
         if (sessionError) {
           console.error('❌ Session error:', sessionError);
-          setState({ user: null, loading: false, isAuthenticated: false });
+          updateGlobalState({ user: null, loading: false, isAuthenticated: false });
           return;
         }
 
         console.log('✅ Session verified:', !!session);
-        authInitialized = true;
 
         if (session?.user) {
           console.log('👤 User found, loading admin data...');
           await loadAdminUser(session.user.email!);
         } else {
           console.log('🚫 No session found');
-          setState({ user: null, loading: false, isAuthenticated: false });
+          updateGlobalState({ user: null, loading: false, isAuthenticated: false });
         }
       } catch (error) {
         console.error('❌ Error in initAuth:', error);
         if (mounted) {
-          console.log('⚡ Showing login form immediately');
-          setState({ user: null, loading: false, isAuthenticated: false });
+          updateGlobalState({ user: null, loading: false, isAuthenticated: false });
         }
       }
     };
@@ -280,11 +307,10 @@ export function useAdminAuth() {
     initAuth();
 
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('🔐 Auth state changed:', event, 'Session:', !!session);
+      console.log('🔐 Auth state changed:', event);
 
       if (!mounted) return;
 
-      // Sauvegarder la session dans le cache à chaque changement
       if (session) {
         localStorage.setItem('taxiassur-auth', JSON.stringify({
           access_token: session.access_token,
@@ -294,11 +320,9 @@ export function useAdminAuth() {
         }));
       }
 
-      // Charger l'utilisateur lors du SIGNED_IN initial
       if (event === 'SIGNED_IN' && session?.user) {
         await loadAdminUser(session.user.email!);
       } else if (event === 'TOKEN_REFRESHED') {
-        // Sur refresh token, mettre à jour le timestamp du cache utilisateur
         console.log('🔄 Token refreshed, updating cache timestamp');
         const userStr = localStorage.getItem('taxiassur_user');
         if (userStr) {
@@ -313,21 +337,14 @@ export function useAdminAuth() {
       } else if (event === 'SIGNED_OUT') {
         localStorage.removeItem('taxiassur-auth');
         localStorage.removeItem('taxiassur_user');
-        setState({ user: null, loading: false, isAuthenticated: false });
+        globalAuthState = null;
+        globalAuthInitialized = false;
+        updateGlobalState({ user: null, loading: false, isAuthenticated: false });
       }
-      // Ignorer les autres événements (USER_UPDATED, etc.)
     });
-
-    const timeout = setTimeout(() => {
-      if (mounted && !authInitialized) {
-        console.warn('⚠️ Auth initialization timeout (15s) - showing login');
-        setState({ user: null, loading: false, isAuthenticated: false });
-      }
-    }, 15000);
 
     return () => {
       mounted = false;
-      clearTimeout(timeout);
       authListener.subscription.unsubscribe();
     };
   }, [loadAdminUser]);
@@ -336,15 +353,16 @@ export function useAdminAuth() {
     try {
       await supabase.auth.signOut();
 
-      // Nettoyer tous les caches
       localStorage.removeItem('taxiassur-auth');
       localStorage.removeItem('taxiassur_user');
       localStorage.removeItem('taxiassur_permissions');
       sessionStorage.clear();
 
-      setState({ user: null, loading: false, isAuthenticated: false });
+      globalAuthState = null;
+      globalAuthInitialized = false;
 
-      // Rediriger vers login
+      updateGlobalState({ user: null, loading: false, isAuthenticated: false });
+
       window.location.href = '/backoffice';
     } catch (error) {
       logger.error('Erreur lors de la déconnexion:', error);
