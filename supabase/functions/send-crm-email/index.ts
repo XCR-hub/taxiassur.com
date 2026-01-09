@@ -131,10 +131,15 @@ Deno.serve(async (req: Request) => {
 
   try {
     const body = await req.json();
-    const { to_email, to_name, subject, content, lead_id }: EmailRequest = body;
+    // Support both old and new parameter names
+    const to_email = body.to_email || body.to;
+    const to_name = body.to_name || body.name || "";
+    const subject = body.subject;
+    const content = body.content || body.body;
+    const lead_id = body.lead_id;
 
     if (!to_email || !subject || !content) {
-      throw new Error("Champs obligatoires manquants");
+      throw new Error("Champs obligatoires manquants: to/to_email, subject, content/body");
     }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -152,16 +157,17 @@ Deno.serve(async (req: Request) => {
           body {
             font-family: 'Segoe UI', Arial, sans-serif;
             line-height: 1.6;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #f3f4f6;
             padding: 20px;
+            color: #1f2937;
           }
           .email-wrapper {
             max-width: 680px;
             margin: 0 auto;
             background: #ffffff;
-            border-radius: 20px;
+            border-radius: 16px;
             overflow: hidden;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
           }
           .header {
             background: linear-gradient(135deg, #10b981 0%, #059669 100%);
@@ -169,54 +175,108 @@ Deno.serve(async (req: Request) => {
             text-align: center;
           }
           .header h1 {
-            color: white;
+            color: #ffffff !important;
             font-size: 28px;
             font-weight: 800;
+            margin: 0;
           }
           .content {
             padding: 40px 30px;
+            background: #ffffff;
+            color: #1f2937;
+          }
+          .content h2 {
+            color: #111827 !important;
+            font-size: 24px;
+            margin-bottom: 20px;
+            font-weight: 700;
           }
           .message-content {
-            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-            border-left: 5px solid #3b82f6;
+            background: #f9fafb;
+            border-left: 4px solid #10b981;
             padding: 25px;
-            border-radius: 15px;
+            border-radius: 8px;
             margin: 25px 0;
-            color: #1e293b;
+            color: #111827 !important;
             font-size: 16px;
             line-height: 1.8;
             white-space: pre-wrap;
           }
+          .message-content p, .message-content span, .message-content div {
+            color: #111827 !important;
+          }
           .cta-section {
             text-align: center;
-            margin: 35px 0;
+            margin: 30px 0;
             padding: 25px;
-            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-            border-radius: 15px;
+            background: #fef3c7;
+            border-radius: 12px;
+          }
+          .cta-section p {
+            color: #78350f !important;
+            font-weight: 600;
+            margin-bottom: 15px;
+            font-size: 16px;
           }
           .cta-button {
-            background: linear-gradient(135deg, #ec4899 0%, #db2777 100%);
-            color: white;
-            padding: 16px 36px;
+            background: #10b981;
+            color: #ffffff !important;
+            padding: 14px 32px;
             text-decoration: none;
-            border-radius: 50px;
+            border-radius: 8px;
             display: inline-block;
             font-weight: 700;
             font-size: 16px;
-            margin-top: 15px;
+            margin-top: 10px;
           }
           .contact-banner {
-            background: linear-gradient(135deg, #a5f3fc 0%, #67e8f9 100%);
-            border-radius: 15px;
+            background: #e0f2fe;
+            border-radius: 12px;
             padding: 25px;
             text-align: center;
             margin: 25px 0;
           }
+          .contact-banner h3 {
+            color: #0c4a6e !important;
+            font-size: 20px;
+            margin-bottom: 12px;
+            font-weight: 700;
+          }
+          .contact-banner p {
+            color: #0c4a6e !important;
+            font-weight: 600;
+            font-size: 16px;
+          }
+          .signature {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 2px solid #e5e7eb;
+          }
+          .signature p {
+            color: #4b5563 !important;
+            font-weight: 600;
+            margin: 5px 0;
+          }
+          .signature .team {
+            color: #10b981 !important;
+            font-weight: 700;
+            font-size: 18px;
+          }
           .footer {
-            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-            color: white;
+            background: #1f2937;
+            color: #ffffff !important;
             padding: 30px;
             text-align: center;
+          }
+          .footer div {
+            font-size: 24px;
+            font-weight: 800;
+            color: #10b981 !important;
+            margin-bottom: 10px;
+          }
+          .footer p {
+            color: #d1d5db !important;
+            margin: 5px 0;
           }
         </style>
       </head>
@@ -227,36 +287,32 @@ Deno.serve(async (req: Request) => {
           </div>
 
           <div class="content">
-            <h2 style="color: #1e293b; font-size: 24px; margin-bottom: 10px;">Bonjour ${to_name || ""},</h2>
+            <h2>Bonjour ${to_name || ""},</h2>
 
             <div class="message-content">
               ${content.replace(/\n/g, '<br>')}
             </div>
 
             <div class="cta-section">
-              <p style="color: #92400e; font-weight: 600; margin-bottom: 10px;">
-                Vous avez une question ? Nous sommes là pour vous !
-              </p>
+              <p>Vous avez une question ? Nous sommes là pour vous !</p>
               <a href="mailto:team@taxiassur.com" class="cta-button">
                 💬 Répondre à ce message
               </a>
             </div>
 
             <div class="contact-banner">
-              <h3 style="color: #164e63; font-size: 20px; margin-bottom: 15px;">📞 Restons en contact</h3>
-              <p style="color: #164e63; font-weight: 600;">
-                📧 team@taxiassur.com | 📞 01 80 85 57 86
-              </p>
+              <h3>📞 Restons en contact</h3>
+              <p>📧 team@taxiassur.com | 📞 01 80 85 57 86</p>
             </div>
 
-            <div style="margin-top: 30px; padding-top: 20px; border-top: 2px solid #e5e7eb; color: #6b7280;">
-              <p style="font-weight: 600; color: #374151;">Cordialement,</p>
-              <p style="font-weight: 700; color: #10b981; font-size: 16px; margin-top: 5px;">L'équipe TaxiAssur</p>
+            <div class="signature">
+              <p>Cordialement,</p>
+              <p class="team">L'équipe TaxiAssur</p>
             </div>
           </div>
 
           <div class="footer">
-            <div style="font-size: 24px; font-weight: 800; color: #10b981; margin-bottom: 10px;">🚕 TaxiAssur</div>
+            <div>🚕 TaxiAssur</div>
             <p>© 2026 TaxiAssur - Tous droits réservés</p>
           </div>
         </div>

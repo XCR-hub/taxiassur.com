@@ -137,25 +137,27 @@ const CRMLeadDetail: React.FC = () => {
   const loadMessages = async (leadId: string) => {
     setLoadingMessages(true);
     try {
-      // Charger depuis crm_timeline et autres sources
-      const { data: timeline } = await supabase
-        .from('crm_timeline')
+      // Charger depuis crm_interactions (emails, SMS, WhatsApp, calls)
+      const { data: interactions, error } = await supabase
+        .from('crm_interactions')
         .select('*')
         .eq('lead_id', leadId)
         .order('created_at', { ascending: false });
 
-      if (timeline) {
-        const formatted: Message[] = timeline.map((t: any) => ({
-          id: t.id,
-          type: t.event_type === 'email_sent' ? 'email' :
-                t.event_type === 'sms_sent' ? 'sms' :
-                t.event_type === 'whatsapp_sent' ? 'whatsapp' :
-                t.event_type === 'note_added' ? 'note' : 'system',
-          content: t.metadata?.message || t.metadata?.content || t.description,
-          subject: t.metadata?.subject,
-          sent_at: t.created_at,
-          status: t.metadata?.status || 'sent',
-          sent_by: t.created_by
+      if (error) {
+        console.error('Error loading interactions:', error);
+        return;
+      }
+
+      if (interactions) {
+        const formatted: Message[] = interactions.map((interaction: any) => ({
+          id: interaction.id,
+          type: interaction.type || 'system',
+          content: interaction.content || interaction.summary || '',
+          subject: interaction.subject,
+          sent_at: interaction.created_at,
+          status: interaction.metadata?.status || 'sent',
+          sent_by: interaction.created_by || 'system'
         }));
         setMessages(formatted);
       }
