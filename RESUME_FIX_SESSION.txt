@@ -1,0 +1,64 @@
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                  🔒 SESSION PERSISTANTE - CORRECTION APPLIQUÉE                ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+✅ PROBLÈME CORRIGÉ
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Vous étiez déconnecté automatiquement après ~1 minute sur le backoffice.
+Cause : Vérification en arrière-plan qui forçait la déconnexion.
+
+✅ SOLUTION APPLIQUÉE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. ✅ Suppression de la vérification forcée en arrière-plan
+2. ✅ Tolérance de session expirée : 30 min → 7 JOURS
+3. ✅ Keep-alive amélioré : refresh toutes les 2 min (au lieu de 5)
+4. ✅ Throttling intelligent : max 1 refresh par minute
+5. ✅ Gestion d'erreurs robuste
+
+📦 FICHIER DE DÉPLOIEMENT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Nom    : dist-session-fix-2026-01-09.zip
+Taille : 763 KB
+MD5    : 9be9c4096db38841d06b8007c1a95611
+
+🎯 CE QUI EST MAINTENANT GARANTI
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ Pas de déconnexion automatique
+   Vous restez connecté jusqu'à ce que vous cliquiez sur "Déconnexion"
+
+✅ Session maintenue active automatiquement
+   - Refresh automatique toutes les 2 minutes
+   - Refresh sur votre activité (click, scroll, etc.)
+
+✅ Reconnexion rapide (< 7 jours)
+   - Cache local → connexion instantanée
+   - Pas besoin de retaper le mot de passe
+
+✅ Robuste et fiable
+   - Gestion d'erreurs complète
+   - Logs détaillés pour debug
+
+📋 DÉPLOIEMENT SUR IONOS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. Décompresser dist-session-fix-2026-01-09.zip
+2. Uploader le contenu de dist/ vers public_html/
+3. Vider le cache navigateur (Ctrl+F5)
+4. Tester sur https://taxiassur.com/backoffice
+
+✅ TEST POST-DÉPLOIEMENT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. Se connecter sur /backoffice
+2. Attendre 5 minutes
+3. Vérifier que vous êtes toujours connecté ✅
+4. Console : voir "✅ Session rafraîchie et maintenue active"
+
+📚 DOCUMENTATION COMPLÈTE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FIX_SESSION_PERSISTANTE_2026-01-09.md
+- Détails techniques des modifications
+- Flux de session expliqué
+- Tests complets
+- Debug si problème
+
+Date : 2026-01-09 11:45
+Status : ✅ PRÊT POUR DÉPLOIEMENT

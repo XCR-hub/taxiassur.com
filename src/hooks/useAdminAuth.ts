@@ -179,24 +179,28 @@ export function useAdminAuth() {
         if (!stored || stored === 'null' || stored === 'undefined') return null;
 
         const parsed = JSON.parse(stored);
-        if (!parsed?.access_token || !parsed?.expires_at) return null;
+        if (!parsed?.access_token) return null;
 
-        const expiresAt = parsed.expires_at * 1000;
-        const timeUntilExpiry = expiresAt - Date.now();
+        // AMÉLIORATION MAJEURE : Ne pas vérifier l'expiration si on a un cache utilisateur valide
+        // Le keep-alive va rafraîchir automatiquement la session
+        // On ne force la reconnexion que si la session est très ancienne (7 jours)
+        if (parsed.expires_at) {
+          const expiresAt = parsed.expires_at * 1000;
+          const timeUntilExpiry = expiresAt - Date.now();
 
-        // AMÉLIORATION : Accepter les sessions jusqu'à 30 min expirées
-        // (le keep-alive va les rafraîchir automatiquement)
-        if (timeUntilExpiry < -30 * 60 * 1000) {
-          console.log('🔄 Session expired >30min, will re-authenticate');
-          localStorage.removeItem('taxiassur-auth');
-          localStorage.removeItem('taxiassur_user');
-          return null;
-        }
+          // Seulement rejeter si expirée depuis plus de 7 JOURS (aligné avec le cache utilisateur)
+          if (timeUntilExpiry < -7 * 24 * 60 * 60 * 1000) {
+            console.log('🔄 Session expired >7 days, will re-authenticate');
+            localStorage.removeItem('taxiassur-auth');
+            localStorage.removeItem('taxiassur_user');
+            return null;
+          }
 
-        if (timeUntilExpiry < 0) {
-          console.log('⏰ Session expired, will be refreshed by keep-alive');
-        } else {
-          console.log(`✅ Valid session (expires in ${Math.round(timeUntilExpiry / 60000)} min)`);
+          if (timeUntilExpiry < 0) {
+            console.log('⏰ Session technique expirée mais cache valide - keep-alive actif');
+          } else {
+            console.log(`✅ Session active (expire dans ${Math.round(timeUntilExpiry / 60000)} min)`);
+          }
         }
 
         return parsed;
@@ -225,13 +229,9 @@ export function useAdminAuth() {
             isAuthenticated: true,
           });
           authInitialized = true;
-          // Vérifier quand même la session en arrière-plan (pas de await)
-          supabase.auth.getSession().then(({ data: { session } }) => {
-            if (!session && mounted) {
-              console.warn('⚠️ Background check: session expired, requesting login');
-              setState({ user: null, loading: false, isAuthenticated: false });
-            }
-          });
+          // NE PAS vérifier en arrière-plan - le keep-alive s'en charge
+          // La vérification forcée causait des déconnexions intempestives
+          console.log('✅ Session cache utilisée - keep-alive actif');
           return;
         }
 
