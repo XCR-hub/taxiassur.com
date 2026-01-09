@@ -35,9 +35,18 @@ export const PipelineCard: React.FC<PipelineCardProps> = ({
       onDragStart={onDragStart}
       onDragEnd={onDragEnd}
       onClick={onClick}
+      role="button"
+      tabIndex={0}
+      aria-label={`Lead: ${lead.full_name} - ${statusInfo.label}`}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onClick?.();
+        }
+      }}
       className={cn(
-        'bg-white rounded-lg shadow-sm border-2 border-gray-200 p-4 cursor-move hover:shadow-md transition-all duration-200',
-        isDragging && 'opacity-50 scale-95',
+        'bg-white rounded-lg shadow-sm border-2 border-gray-200 p-4 cursor-move hover:shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500',
+        isDragging && 'opacity-50 scale-95 rotate-2',
         'hover:border-blue-300',
         className
       )}
