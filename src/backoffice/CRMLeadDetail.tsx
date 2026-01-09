@@ -32,6 +32,7 @@ import { pipelineService, CRMLead, PIPELINE_STATUSES } from '@/lib/crm-pipeline'
 import { supabase } from '@/lib/supabase';
 import BackButton from './BackButton';
 import QuoteManager from './QuoteManager';
+import ElectronicSignature from '@/components/ElectronicSignature';
 
 interface Message {
   id: string;
@@ -307,17 +308,20 @@ const CRMLeadDetail: React.FC = () => {
         return;
       }
 
+      console.log('📊 Interactions chargées:', interactions?.length || 0);
+
       if (interactions) {
         const formatted: Message[] = interactions.map((interaction: any) => ({
           id: interaction.id,
           type: interaction.type || 'system',
-          content: interaction.content || interaction.summary || '',
-          subject: interaction.subject,
+          content: interaction.content || interaction.summary || 'Contenu non disponible',
+          subject: interaction.subject || `${interaction.type} - ${interaction.direction}`,
           sent_at: interaction.created_at,
-          status: interaction.metadata?.status || 'sent',
-          sent_by: interaction.created_by || 'system'
+          status: interaction.status || interaction.metadata?.status || 'sent',
+          sent_by: interaction.created_by || (interaction.direction === 'inbound' ? 'Client' : 'TaxiAssur')
         }));
         setMessages(formatted);
+        console.log('✅ Messages formatés:', formatted.length);
       }
     } catch (error) {
       console.error('Failed to load messages:', error);
@@ -742,6 +746,16 @@ const CRMLeadDetail: React.FC = () => {
               }}
             />
 
+            {/* Signature Électronique */}
+            <div className="bg-white rounded-xl shadow-lg border-2 border-purple-200 p-6">
+              <ElectronicSignature
+                leadId={lead.id}
+                leadName={`${lead.first_name} ${lead.last_name}`.trim()}
+                leadEmail={lead.email}
+                leadPhone={lead.phone}
+              />
+            </div>
+
             {/* Historique des échanges */}
             <div className="bg-white rounded-xl shadow-lg border-2 border-gray-200 p-6">
               <div className="flex items-center justify-between mb-6">
@@ -796,10 +810,18 @@ const CRMLeadDetail: React.FC = () => {
                             {msg.status}
                           </span>
                         </div>
-                        <p className="text-gray-700 text-sm mb-2">{msg.content}</p>
-                        <div className="flex items-center gap-2 text-xs text-gray-500">
-                          <Clock size={12} />
-                          <span>{new Date(msg.sent_at).toLocaleString('fr-FR')}</span>
+                        <p className="text-gray-700 text-sm mb-2 whitespace-pre-wrap">{msg.content}</p>
+                        <div className="flex items-center gap-4 text-xs text-gray-500">
+                          <div className="flex items-center gap-1">
+                            <Clock size={12} />
+                            <span>{new Date(msg.sent_at).toLocaleString('fr-FR')}</span>
+                          </div>
+                          {msg.sent_by && (
+                            <div className="flex items-center gap-1">
+                              <User size={12} />
+                              <span>{msg.sent_by}</span>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
