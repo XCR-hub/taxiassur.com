@@ -110,51 +110,32 @@ export const channelEngineService = {
     channel?: CommunicationChannel;
     requiresAction?: boolean;
   }) {
-    // Charger les emails ENTRANTS depuis email_replies
+    // Charger les emails ENTRANTS depuis email_replies (SANS jointure pour éviter les erreurs)
     const { data: inboundData, error: inboundError } = await supabase
       .from('email_replies')
-      .select(`
-        id,
-        lead_id,
-        from_email,
-        from_name,
-        subject,
-        body,
-        replied_at,
-        sentiment,
-        is_processed,
-        ai_summary,
-        ai_response,
-        crm_leads(id, first_name, last_name, email, phone)
-      `)
+      .select('*')
       .order('replied_at', { ascending: false })
       .limit(50);
 
-    // Charger les emails SORTANTS depuis email_sends
+    if (inboundError) {
+      console.error('Erreur chargement emails entrants:', inboundError);
+    }
+
+    // Charger les emails SORTANTS depuis email_sends (SANS jointure pour éviter les erreurs)
     const { data: outboundData, error: outboundError } = await supabase
       .from('email_sends')
-      .select(`
-        id,
-        lead_id,
-        email_to,
-        email_from,
-        subject,
-        body_text,
-        body_html,
-        sent_at,
-        status,
-        delivered_at,
-        crm_leads(id, first_name, last_name, email, phone)
-      `)
+      .select('*')
       .order('sent_at', { ascending: false })
       .limit(50);
+
+    if (outboundError) {
+      console.error('Erreur chargement emails sortants:', outboundError);
+    }
 
     const inboundMessages: InboxMessage[] = (inboundData || []).map((reply: any) => ({
       id: `in-${reply.id}`,
       lead_id: reply.lead_id || '',
-      lead_name: reply.crm_leads?.first_name
-        ? `${reply.crm_leads.first_name} ${reply.crm_leads.last_name}`.trim()
-        : reply.from_name || reply.from_email,
+      lead_name: reply.from_name || reply.from_email || 'Inconnu',
       channel: 'email' as CommunicationChannel,
       direction: 'inbound' as const,
       snippet: reply.body?.substring(0, 200) || reply.subject || '',
@@ -169,9 +150,7 @@ export const channelEngineService = {
     const outboundMessages: InboxMessage[] = (outboundData || []).map((send: any) => ({
       id: `out-${send.id}`,
       lead_id: send.lead_id || '',
-      lead_name: send.crm_leads?.first_name
-        ? `${send.crm_leads.first_name} ${send.crm_leads.last_name}`.trim()
-        : send.email_to,
+      lead_name: send.email_to || 'Inconnu',
       channel: 'email' as CommunicationChannel,
       direction: 'outbound' as const,
       snippet: (send.body_text || send.body_html)?.substring(0, 200) || send.subject || '',
@@ -182,6 +161,9 @@ export const channelEngineService = {
       ai_suggested_response: null,
       received_at: send.sent_at
     }));
+
+    console.log(`📥 Emails entrants: ${inboundMessages.length}`);
+    console.log(`📤 Emails sortants: ${outboundMessages.length}`);
 
     // Combiner et trier par date
     const allMessages = [...inboundMessages, ...outboundMessages].sort((a, b) => {
