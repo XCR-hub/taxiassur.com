@@ -415,7 +415,8 @@ export const router = createBrowserRouter([
       },
       {
         path: '/backoffice',
-        element: <AuthGuard><SuspenseWrapper><MasterDashboard /></SuspenseWrapper></AuthGuard>
+        element: <SuspenseWrapper><Dashboard /></SuspenseWrapper>,
+        errorElement: <RouteErrorFallback />
       },
       {
         path: '/admin/dashboard',
@@ -426,8 +427,9 @@ export const router = createBrowserRouter([
         element: <Navigate to="/backoffice/leads" replace />
       },
       {
-        path: '/backoffice/old-dashboard',
-        element: <AuthGuard><SuspenseWrapper><Dashboard /></SuspenseWrapper></AuthGuard>
+        path: '/backoffice/master-dashboard',
+        element: <AuthGuard><SuspenseWrapper><MasterDashboard /></SuspenseWrapper></AuthGuard>,
+        errorElement: <RouteErrorFallback />
       },
       {
         path: '/backoffice/backlinks',
