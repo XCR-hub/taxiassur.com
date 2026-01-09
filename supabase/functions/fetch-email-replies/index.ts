@@ -73,26 +73,29 @@ Deno.serve(async (req: Request) => {
             continue;
           }
 
-          // Chercher si c'est une réponse à un de nos emails
+          // Chercher si c'est une réponse à un de nos emails (CRM ou ancien système)
           const { data: lead } = await supabase
-            .from('leads')
+            .from('crm_leads')
             .select('id')
             .eq('email', fromEmail)
             .maybeSingle();
 
           if (!lead) {
             console.log('⚠️ Pas de lead correspondant pour:', fromEmail);
-            continue;
+            // Tenter dans l'ancienne table leads
+            const { data: oldLead } = await supabase
+              .from('leads')
+              .select('id')
+              .eq('email', fromEmail)
+              .maybeSingle();
+
+            if (!oldLead) {
+              console.log('⚠️ Pas de lead dans leads non plus');
+              continue;
+            }
           }
 
-          // Chercher l'email envoyé correspondant
-          const { data: emailSend } = await supabase
-            .from('email_sends')
-            .select('id')
-            .eq('lead_id', lead.id)
-            .order('sent_at', { ascending: false })
-            .limit(1)
-            .maybeSingle();
+          const leadId = lead?.id;
 
           // Analyse du sentiment basique
           let sentiment = 'neutral';
@@ -103,45 +106,64 @@ Deno.serve(async (req: Request) => {
             sentiment = 'negative';
           }
 
-          // Vérifier si cet email n'existe pas déjà (éviter les doublons)
-          const { data: existingReply } = await supabase
-            .from('email_replies')
+          // Vérifier si cet email n'existe pas déjà dans email_inbox
+          const { data: existingInbox } = await supabase
+            .from('email_inbox')
             .select('id')
             .eq('from_email', fromEmail)
             .eq('subject', subject)
-            .eq('replied_at', parsed.date || new Date().toISOString())
+            .eq('received_at', parsed.date || new Date().toISOString())
             .maybeSingle();
 
-          if (existingReply) {
-            console.log('⚠️ Email déjà enregistré, ignoré');
+          if (existingInbox) {
+            console.log('⚠️ Email déjà enregistré dans inbox, ignoré');
             continue;
           }
 
-          // Enregistrer la réponse
-          const { data: reply, error: insertError } = await supabase
-            .from('email_replies')
+          // Déterminer l'intention basique
+          let intent = 'general';
+          const lowerSubjectBody = (subject + ' ' + body).toLowerCase();
+          if (lowerSubjectBody.match(/devis|tarif|prix|combien/)) {
+            intent = 'quote_request';
+          } else if (lowerSubjectBody.match(/question|renseignement|info/)) {
+            intent = 'information';
+          } else if (lowerSubjectBody.match(/intéressé|souscri|contrat/)) {
+            intent = 'interested';
+          } else if (lowerSubjectBody.match(/réclama|problème|erreur/)) {
+            intent = 'complaint';
+          }
+
+          // Enregistrer dans email_inbox (table utilisée par le dashboard)
+          const { data: inboxEmail, error: insertError } = await supabase
+            .from('email_inbox')
             .insert({
-              email_send_id: emailSend?.id || null,
-              lead_id: lead.id,
               from_email: fromEmail,
+              from_name: parsed.from?.value?.[0]?.name || fromEmail,
+              to_email: 'team@taxiassur.com',
               subject: subject,
               body: body,
-              replied_at: parsed.date || new Date().toISOString(),
+              html_body: parsed.html || null,
+              received_at: parsed.date || new Date().toISOString(),
+              processed: false,
+              intent: intent,
               sentiment: sentiment,
-              is_processed: false,
+              priority: sentiment === 'negative' ? 9 : (sentiment === 'positive' ? 3 : 5),
+              auto_reply_sent: false,
+              lead_id: leadId || null,
               metadata: {
                 message_id: parsed.messageId,
-                in_reply_to: parsed.inReplyTo
+                in_reply_to: parsed.inReplyTo,
+                from_name: parsed.from?.value?.[0]?.name
               }
             })
             .select()
             .single();
 
           if (insertError) {
-            console.error('❌ Erreur insertion réponse:', insertError);
+            console.error('❌ Erreur insertion inbox:', insertError);
           } else {
-            console.log('✅ Réponse enregistrée:', reply.id);
-            processedReplies.push(reply);
+            console.log('✅ Email enregistré dans inbox:', inboxEmail.id);
+            processedReplies.push(inboxEmail);
           }
 
         } catch (parseError) {
@@ -155,8 +177,9 @@ Deno.serve(async (req: Request) => {
       return new Response(
         JSON.stringify({
           success: true,
-          message: `${processedReplies.length} réponses traitées`,
-          replies: processedReplies
+          message: `${processedReplies.length} emails récupérés`,
+          emails: processedReplies,
+          count: processedReplies.length
         }),
         {
           headers: {

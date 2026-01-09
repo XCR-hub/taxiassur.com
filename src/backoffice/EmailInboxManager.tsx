@@ -88,16 +88,31 @@ const EmailInboxManager: React.FC = () => {
     try {
       logger.info('🔄 Synchronisation emails IMAP...');
 
+      // Garder la session active pendant l'appel long
+      const session = await supabase.auth.getSession();
+      if (!session.data.session) {
+        throw new Error('Session expirée');
+      }
+
+      // Appel à la fonction avec timeout plus long
       const { data, error } = await supabase.functions.invoke('fetch-email-replies', {
-        body: {}
+        body: {},
+        headers: {
+          'Authorization': `Bearer ${session.data.session.access_token}`
+        }
       });
 
-      if (error) throw error;
+      if (error) {
+        logger.error('Erreur invoke:', error);
+        throw error;
+      }
 
       logger.info('✅ Synchronisation terminée:', data);
+      alert(`✅ ${data?.count || 0} emails récupérés !`);
       await loadEmails();
     } catch (error) {
       logger.error('❌ Erreur synchronisation:', error);
+      alert('❌ Erreur: ' + (error as Error).message);
       alert('Erreur lors de la synchronisation des emails. Vérifiez la configuration IMAP.');
     } finally {
       setSyncing(false);

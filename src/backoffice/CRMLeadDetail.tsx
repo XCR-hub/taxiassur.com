@@ -78,8 +78,21 @@ const CRMLeadDetail: React.FC = () => {
 
   const [smsForm, setSmsForm] = useState({
     message: '',
-    template: ''
   });
+
+  // États pour la gestion des documents
+  const [documents, setDocuments] = useState<any[]>([]);
+  const [loadingDocuments, setLoadingDocuments] = useState(false);
+  const [uploadingDocument, setUploadingDocument] = useState(false);
+  const [showDocumentModal, setShowDocumentModal] = useState(false);
+  const [uploadForm, setUploadForm] = useState({
+    documentType: 'carte_grise',
+    file: null as File | null,
+    notes: ''
+  });
+
+  // État pour demande avis Google
+  const [sendingReview, setSendingReview] = useState(false);
 
   const [whatsappForm, setWhatsappForm] = useState({
     message: '',
@@ -127,10 +140,153 @@ const CRMLeadDetail: React.FC = () => {
 
       // Charger l'historique des messages
       await loadMessages(id);
+      // Charger les documents
+      await loadDocuments(id);
     } catch (error) {
       console.error('Failed to load lead:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Charger les documents
+  const loadDocuments = async (id: string) => {
+    setLoadingDocuments(true);
+    try {
+      const { data, error } = await supabase
+        .from('crm_lead_documents')
+        .select('*')
+        .eq('lead_id', id)
+        .order('uploaded_at', { ascending: false });
+
+      if (error) throw error;
+      setDocuments(data || []);
+    } catch (error) {
+      console.error('Erreur chargement documents:', error);
+    } finally {
+      setLoadingDocuments(false);
+    }
+  };
+
+  // Upload de document
+  const handleDocumentUpload = async () => {
+    if (!leadId || !uploadForm.file) {
+      alert('Veuillez sélectionner un fichier');
+      return;
+    }
+
+    setUploadingDocument(true);
+    try {
+      // 1. Upload du fichier dans Storage
+      const fileExt = uploadForm.file.name.split('.').pop();
+      const fileName = `${leadId}/${uploadForm.documentType}_${Date.now()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('crm-documents')
+        .upload(fileName, uploadForm.file);
+
+      if (uploadError) throw uploadError;
+
+      // 2. Créer l'enregistrement en base
+      const { error: dbError } = await supabase
+        .from('crm_lead_documents')
+        .insert({
+          lead_id: leadId,
+          document_type: uploadForm.documentType,
+          file_name: uploadForm.file.name,
+          file_path: fileName,
+          file_size: uploadForm.file.size,
+          mime_type: uploadForm.file.type,
+          status: 'pending',
+          notes: uploadForm.notes,
+          uploaded_by: 'admin'
+        });
+
+      if (dbError) throw dbError;
+
+      alert('✅ Document uploadé avec succès ! Email automatique envoyé au client.');
+      setShowDocumentModal(false);
+      setUploadForm({
+        documentType: 'carte_grise',
+        file: null,
+        notes: ''
+      });
+      await loadDocuments(leadId);
+    } catch (error) {
+      console.error('Erreur upload:', error);
+      alert('❌ Erreur lors de l\'upload: ' + (error as Error).message);
+    } finally {
+      setUploadingDocument(false);
+    }
+  };
+
+  // Valider un document
+  const handleValidateDocument = async (docId: string) => {
+    try {
+      const { error } = await supabase
+        .from('crm_lead_documents')
+        .update({
+          status: 'validated',
+          validated_by: 'admin',
+          validated_at: new Date().toISOString()
+        })
+        .eq('id', docId);
+
+      if (error) throw error;
+
+      alert('✅ Document validé !');
+      if (leadId) await loadDocuments(leadId);
+    } catch (error) {
+      console.error('Erreur validation:', error);
+      alert('❌ Erreur: ' + (error as Error).message);
+    }
+  };
+
+  // Envoyer demande d'avis Google
+  const handleSendReviewRequest = async () => {
+    if (!lead?.email) {
+      alert('Pas d\'email pour ce lead');
+      return;
+    }
+
+    setSendingReview(true);
+    try {
+      const reviewUrl = 'https://g.page/r/YOUR_GOOGLE_REVIEW_LINK/review';
+
+      // 1. Enregistrer la demande
+      const { error: insertError } = await supabase
+        .from('crm_review_requests')
+        .insert({
+          lead_id: leadId,
+          request_type: 'google',
+          sent_to: lead.email,
+          sent_via: 'email',
+          review_url: reviewUrl,
+          status: 'sent'
+        });
+
+      if (insertError) throw insertError;
+
+      // 2. Envoyer l'email (via edge function send-crm-email)
+      const { error: emailError } = await supabase.functions.invoke('send-crm-email', {
+        body: {
+          to: lead.email,
+          template: 'review_request',
+          data: {
+            first_name: lead.first_name,
+            review_url: reviewUrl
+          }
+        }
+      });
+
+      if (emailError) throw emailError;
+
+      alert('✅ Demande d\'avis Google envoyée !');
+    } catch (error) {
+      console.error('Erreur envoi avis:', error);
+      alert('❌ Erreur: ' + (error as Error).message);
+    } finally {
+      setSendingReview(false);
     }
   };
 
@@ -676,6 +832,83 @@ const CRMLeadDetail: React.FC = () => {
               </div>
             </div>
 
+            {/* Documents du Lead */}
+            <div className="bg-white rounded-xl shadow-lg border-2 border-purple-200 p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-bold text-gray-900 flex items-center gap-2">
+                  <Upload size={20} className="text-purple-600" />
+                  Documents ({documents.length})
+                </h3>
+                <button
+                  onClick={() => setShowDocumentModal(true)}
+                  className="px-3 py-1 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center gap-1 text-sm"
+                >
+                  <Plus size={16} />
+                  Ajouter
+                </button>
+              </div>
+
+              <div className="space-y-2 max-h-96 overflow-y-auto">
+                {loadingDocuments ? (
+                  <div className="text-center py-4 text-gray-500">Chargement...</div>
+                ) : documents.length === 0 ? (
+                  <div className="text-center py-4 text-gray-500">Aucun document</div>
+                ) : (
+                  documents.map((doc) => (
+                    <div key={doc.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200 hover:border-purple-300 transition-colors">
+                      <div className="flex-1">
+                        <div className="font-medium text-gray-900 text-sm">
+                          {doc.document_type.replace(/_/g, ' ')}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          {new Date(doc.uploaded_at).toLocaleDateString('fr-FR')}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {doc.status === 'validated' ? (
+                          <span className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-medium">
+                            ✓ Validé
+                          </span>
+                        ) : doc.status === 'rejected' ? (
+                          <span className="px-2 py-1 bg-red-100 text-red-700 rounded text-xs font-medium">
+                            ✗ Refusé
+                          </span>
+                        ) : (
+                          <>
+                            <button
+                              onClick={() => handleValidateDocument(doc.id)}
+                              className="p-1 text-green-600 hover:bg-green-50 rounded"
+                              title="Valider"
+                            >
+                              <CheckCircle size={18} />
+                            </button>
+                            <button
+                              className="p-1 text-orange-600 hover:bg-orange-50 rounded"
+                              title="Télécharger"
+                            >
+                              <Download size={18} />
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              {/* Bouton demande avis Google */}
+              <div className="mt-4 pt-4 border-t border-gray-200">
+                <button
+                  onClick={handleSendReviewRequest}
+                  disabled={sendingReview}
+                  className="w-full px-4 py-3 bg-gradient-to-r from-yellow-500 to-orange-500 text-white rounded-lg hover:from-yellow-600 hover:to-orange-600 transition-all flex items-center justify-center gap-2 shadow-lg disabled:opacity-50"
+                >
+                  <Award size={18} />
+                  {sendingReview ? 'Envoi...' : 'Demander Avis Google'}
+                </button>
+              </div>
+            </div>
+
             {/* Statistiques du lead */}
             <div className="bg-white rounded-xl shadow-lg border-2 border-gray-200 p-6">
               <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
@@ -945,6 +1178,102 @@ const CRMLeadDetail: React.FC = () => {
                 <Send size={20} />
                 Envoyer via WhatsApp
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Upload Document */}
+      {showDocumentModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-gradient-to-r from-purple-600 to-purple-700 p-6 rounded-t-xl">
+              <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+                  <Upload size={24} />
+                  Upload Document
+                </h2>
+                <button
+                  onClick={() => setShowDocumentModal(false)}
+                  className="text-white/80 hover:text-white transition-colors p-2 hover:bg-white/10 rounded-lg"
+                >
+                  <X size={24} />
+                </button>
+              </div>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Type de document</label>
+                <select
+                  value={uploadForm.documentType}
+                  onChange={(e) => setUploadForm({ ...uploadForm, documentType: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 bg-white text-gray-900"
+                >
+                  <option value="carte_grise">Carte Grise</option>
+                  <option value="permis_conduire">Permis de Conduire</option>
+                  <option value="licence_taxi">Licence Taxi</option>
+                  <option value="carte_identite">Carte d'Identité</option>
+                  <option value="rib">RIB</option>
+                  <option value="contrat_signe">Contrat Signé</option>
+                  <option value="autorisation_stationnement">Autorisation Stationnement</option>
+                  <option value="autre">Autre</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Fichier</label>
+                <input
+                  type="file"
+                  accept="image/*,application/pdf,.doc,.docx"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      setUploadForm({ ...uploadForm, file });
+                    }
+                  }}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 bg-white text-gray-900"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Formats acceptés : Images, PDF, Word. Max 50MB
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Notes (optionnel)</label>
+                <textarea
+                  value={uploadForm.notes}
+                  onChange={(e) => setUploadForm({ ...uploadForm, notes: e.target.value })}
+                  rows={3}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 bg-white text-gray-900 placeholder-gray-400"
+                  placeholder="Notes additionnelles..."
+                />
+              </div>
+
+              <button
+                onClick={handleDocumentUpload}
+                disabled={uploadingDocument || !uploadForm.file}
+                className="w-full px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg"
+              >
+                {uploadingDocument ? (
+                  <>
+                    <RefreshCw size={20} className="animate-spin" />
+                    Upload en cours...
+                  </>
+                ) : (
+                  <>
+                    <Upload size={20} />
+                    Upload Document
+                  </>
+                )}
+              </button>
+
+              <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                <p className="text-sm text-blue-800 flex items-center gap-2">
+                  <AlertCircle size={16} />
+                  <span>Un email automatique sera envoyé au client après l'upload pour le notifier.</span>
+                </p>
+              </div>
             </div>
           </div>
         </div>
