@@ -7,17 +7,23 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
 };
 
-interface NewsArticle {
+interface BlogPost {
   title: string;
   content: string;
   excerpt: string;
   category: string;
   tags: string[];
-  image_url: string;
+  keywords: string[];
+  featured_image: string;
+  image_alt: string;
   slug: string;
-  status: 'published';
-  published_at: string;
-  score: number;
+  published: boolean;
+  meta_title: string;
+  meta_description: string;
+  author_name: string;
+  reading_time: number;
+  naturalness_score: number;
+  writing_style: string;
 }
 
 Deno.serve(async (req: Request) => {
@@ -41,11 +47,11 @@ Deno.serve(async (req: Request) => {
     twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
 
     const { data: recentArticles, error: checkError } = await supabase
-      .from('news_articles')
-      .select('id, published_at')
-      .eq('status', 'published')
-      .gte('published_at', twoDaysAgo.toISOString())
-      .order('published_at', { ascending: false })
+      .from('blog_posts')
+      .select('id, created_at')
+      .eq('published', true)
+      .gte('created_at', twoDaysAgo.toISOString())
+      .order('created_at', { ascending: false })
       .limit(1);
 
     if (checkError) {
@@ -57,7 +63,7 @@ Deno.serve(async (req: Request) => {
       return new Response(
         JSON.stringify({
           message: 'Article déjà publié récemment',
-          lastPublished: recentArticles[0].published_at
+          lastPublished: recentArticles[0].created_at
         }),
         {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -115,12 +121,12 @@ Deno.serve(async (req: Request) => {
       try {
         // Récupérer les images déjà utilisées pour éviter les doublons
         const { data: usedImages } = await supabase
-          .from('news_articles')
-          .select('image_url')
-          .not('image_url', 'is', null)
+          .from('blog_posts')
+          .select('featured_image')
+          .not('featured_image', 'is', null)
           .limit(100);
 
-        const usedUrls = usedImages?.map(a => a.image_url) || [];
+        const usedUrls = usedImages?.map(a => a.featured_image) || [];
 
         // Rechercher sur Pexels avec variation de page pour garantir l'unicité
         const randomPage = Math.floor(Math.random() * 20) + 1; // Page entre 1 et 20
@@ -218,26 +224,35 @@ Deno.serve(async (req: Request) => {
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '')
       .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '')
-      + '-' + Date.now();
+      .replace(/^-+|-+$/g, '');
+
+    // Calculer le temps de lecture (environ 200 mots par minute)
+    const wordCount = content.split(/\s+/).length;
+    const readingTime = Math.ceil(wordCount / 200);
 
     // Créer l'article
-    const newArticle: NewsArticle = {
+    const newArticle: BlogPost = {
       title: selectedTopic.title,
       content,
       excerpt,
       category: selectedTopic.category,
       tags: selectedTopic.tags,
-      image_url: imageUrl,
+      keywords: selectedTopic.tags,
+      featured_image: imageUrl,
+      image_alt: `Photo illustrant ${selectedTopic.title.toLowerCase()}`,
       slug,
-      status: 'published',
-      published_at: new Date().toISOString(),
-      score: Math.floor(Math.random() * 20) + 80 // Score entre 80 et 100
+      published: true,
+      meta_title: selectedTopic.title + ' | TaxiAssur',
+      meta_description: excerpt,
+      author_name: 'Équipe TaxiAssur',
+      reading_time: readingTime,
+      naturalness_score: Math.floor(Math.random() * 10) + 90, // Score entre 90 et 100
+      writing_style: 'professionnel'
     };
 
     // Insérer dans la base de données
     const { data: insertedArticle, error: insertError } = await supabase
-      .from('news_articles')
+      .from('blog_posts')
       .insert(newArticle)
       .select()
       .single();
@@ -256,8 +271,8 @@ Deno.serve(async (req: Request) => {
           id: insertedArticle.id,
           title: insertedArticle.title,
           slug: insertedArticle.slug,
-          image_url: insertedArticle.image_url,
-          published_at: insertedArticle.published_at
+          featured_image: insertedArticle.featured_image,
+          created_at: insertedArticle.created_at
         }
       }),
       {
