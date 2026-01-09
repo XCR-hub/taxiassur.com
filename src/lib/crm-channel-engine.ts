@@ -193,8 +193,8 @@ export const channelEngineService = {
 
   async markAsRead(messageId: string) {
     const { data, error } = await supabase
-      .from('crm_inbox')
-      .update({ status: 'read' })
+      .from('email_replies')
+      .update({ is_processed: true })
       .eq('id', messageId)
       .select()
       .single();
@@ -205,8 +205,8 @@ export const channelEngineService = {
 
   async markAsReplied(messageId: string) {
     const { data, error } = await supabase
-      .from('crm_inbox')
-      .update({ status: 'replied' })
+      .from('email_replies')
+      .update({ is_processed: true })
       .eq('id', messageId)
       .select()
       .single();
@@ -217,8 +217,8 @@ export const channelEngineService = {
 
   async archiveMessage(messageId: string) {
     const { data, error } = await supabase
-      .from('crm_inbox')
-      .update({ status: 'archived' })
+      .from('email_replies')
+      .update({ is_processed: true })
       .eq('id', messageId)
       .select()
       .single();
@@ -293,9 +293,9 @@ export const channelEngineService = {
 
   async getUnreadCount() {
     const { count, error } = await supabase
-      .from('crm_inbox')
+      .from('email_replies')
       .select('*', { count: 'exact', head: true })
-      .eq('status', 'unread');
+      .eq('is_processed', false);
 
     if (error) throw error;
     return count || 0;
@@ -303,10 +303,9 @@ export const channelEngineService = {
 
   async getRequiresActionCount() {
     const { count, error } = await supabase
-      .from('crm_inbox')
+      .from('email_replies')
       .select('*', { count: 'exact', head: true })
-      .eq('requires_action', true)
-      .neq('status', 'archived');
+      .eq('is_processed', false);
 
     if (error) throw error;
     return count || 0;
