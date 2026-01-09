@@ -470,7 +470,8 @@ export const router = createBrowserRouter([
       },
       {
         path: '/backoffice/analytics',
-        element: <AuthGuard><SuspenseWrapper><AnalyticsDashboard /></SuspenseWrapper></AuthGuard>
+        element: <AuthGuard><SuspenseWrapper><AnalyticsDashboard /></SuspenseWrapper></AuthGuard>,
+        errorElement: <RouteErrorFallback />
       },
       {
         path: '/backoffice/conversion-analytics',
@@ -632,7 +633,8 @@ export const router = createBrowserRouter([
       },
       {
         path: '/backoffice/whatsapp',
-        element: <AuthGuard><SuspenseWrapper><WhatsAppManager /></SuspenseWrapper></AuthGuard>
+        element: <AuthGuard><SuspenseWrapper><WhatsAppManager /></SuspenseWrapper></AuthGuard>,
+        errorElement: <RouteErrorFallback />
       },
       {
         path: '/backoffice/whatsapp-settings',
@@ -640,7 +642,8 @@ export const router = createBrowserRouter([
       },
       {
         path: '/backoffice/email-marketing',
-        element: <AuthGuard><SuspenseWrapper><EmailMarketingHub /></SuspenseWrapper></AuthGuard>
+        element: <AuthGuard><SuspenseWrapper><EmailMarketingHub /></SuspenseWrapper></AuthGuard>,
+        errorElement: <RouteErrorFallback />
       },
       {
         path: '/backoffice/smart-templates',
