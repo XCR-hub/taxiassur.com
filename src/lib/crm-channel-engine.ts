@@ -110,18 +110,22 @@ export const channelEngineService = {
     channel?: CommunicationChannel;
     requiresAction?: boolean;
   }) {
-    // Charger les emails ENTRANTS depuis email_replies (SANS jointure pour éviter les erreurs)
+    console.log('📥 Chargement inbox avec filtres:', filters);
+
+    // Charger les emails ENTRANTS depuis email_inbox (table correcte)
     const { data: inboundData, error: inboundError } = await supabase
-      .from('email_replies')
+      .from('email_inbox')
       .select('*')
-      .order('replied_at', { ascending: false })
+      .order('received_at', { ascending: false })
       .limit(50);
 
     if (inboundError) {
       console.error('Erreur chargement emails entrants:', inboundError);
     }
 
-    // Charger les emails SORTANTS depuis email_sends (SANS jointure pour éviter les erreurs)
+    console.log('📧 Emails inbox trouvés:', inboundData?.length || 0);
+
+    // Charger les emails SORTANTS depuis email_sends
     const { data: outboundData, error: outboundError } = await supabase
       .from('email_sends')
       .select('*')
@@ -132,19 +136,21 @@ export const channelEngineService = {
       console.error('Erreur chargement emails sortants:', outboundError);
     }
 
-    const inboundMessages: InboxMessage[] = (inboundData || []).map((reply: any) => ({
-      id: `in-${reply.id}`,
-      lead_id: reply.lead_id || '',
-      lead_name: reply.from_name || reply.from_email || 'Inconnu',
+    console.log('📤 Emails envoyés trouvés:', outboundData?.length || 0);
+
+    const inboundMessages: InboxMessage[] = (inboundData || []).map((inbox: any) => ({
+      id: `in-${inbox.id}`,
+      lead_id: inbox.lead_id || '',
+      lead_name: inbox.from_name || inbox.from_email || 'Inconnu',
       channel: 'email' as CommunicationChannel,
       direction: 'inbound' as const,
-      snippet: reply.body?.substring(0, 200) || reply.subject || '',
-      status: reply.is_processed ? 'read' : 'unread',
-      sentiment: reply.sentiment as any,
-      requires_action: !reply.is_processed,
-      ai_summary: reply.ai_summary,
-      ai_suggested_response: reply.ai_response,
-      received_at: reply.replied_at
+      snippet: inbox.body?.substring(0, 200) || inbox.subject || '',
+      status: inbox.processed ? 'read' : 'unread',
+      sentiment: inbox.sentiment as any,
+      requires_action: !inbox.processed,
+      ai_summary: inbox.ai_summary,
+      ai_suggested_response: inbox.ai_response,
+      received_at: inbox.received_at
     }));
 
     const outboundMessages: InboxMessage[] = (outboundData || []).map((send: any) => ({
@@ -190,10 +196,13 @@ export const channelEngineService = {
   },
 
   async markAsRead(messageId: string) {
+    // Retirer le préfixe "in-" ou "out-" si présent
+    const realId = messageId.replace(/^(in-|out-)/, '');
+
     const { data, error } = await supabase
-      .from('email_replies')
-      .update({ is_processed: true })
-      .eq('id', messageId)
+      .from('email_inbox')
+      .update({ processed: true })
+      .eq('id', realId)
       .select()
       .single();
 
@@ -202,10 +211,12 @@ export const channelEngineService = {
   },
 
   async markAsReplied(messageId: string) {
+    const realId = messageId.replace(/^(in-|out-)/, '');
+
     const { data, error } = await supabase
-      .from('email_replies')
-      .update({ is_processed: true })
-      .eq('id', messageId)
+      .from('email_inbox')
+      .update({ processed: true })
+      .eq('id', realId)
       .select()
       .single();
 
@@ -214,10 +225,12 @@ export const channelEngineService = {
   },
 
   async archiveMessage(messageId: string) {
+    const realId = messageId.replace(/^(in-|out-)/, '');
+
     const { data, error } = await supabase
-      .from('email_replies')
-      .update({ is_processed: true })
-      .eq('id', messageId)
+      .from('email_inbox')
+      .update({ processed: true })
+      .eq('id', realId)
       .select()
       .single();
 
@@ -242,9 +255,12 @@ export const channelEngineService = {
   },
 
   async generateAIResponse(messageId: string, context?: any) {
+    // Retirer le préfixe "in-" ou "out-" si présent
+    const realId = messageId.replace(/^(in-|out-)/, '');
+
     const { data, error } = await supabase.functions.invoke('ai-email-responder', {
       body: {
-        message_id: messageId,
+        message_id: realId,
         context
       }
     });
@@ -291,9 +307,9 @@ export const channelEngineService = {
 
   async getUnreadCount() {
     const { count, error } = await supabase
-      .from('email_replies')
+      .from('email_inbox')
       .select('*', { count: 'exact', head: true })
-      .eq('is_processed', false);
+      .eq('processed', false);
 
     if (error) throw error;
     return count || 0;

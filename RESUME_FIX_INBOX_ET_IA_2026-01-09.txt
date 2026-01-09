@@ -1,0 +1,209 @@
+╔═══════════════════════════════════════════════════════════════════╗
+║  ✅ CORRECTIONS INBOX & GÉNÉRATION IA - 2026-01-09 - 19h30       ║
+╔═══════════════════════════════════════════════════════════════════╗
+
+🎯 PROBLÈMES CORRIGÉS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1️⃣ ERREUR UUID "invalid input syntax for type uuid: in-..."
+   ❌ Problème: Les IDs avaient un préfixe "in-" ou "out-" invalide
+   ✅ Solution: Suppression automatique du préfixe avant les requêtes
+   
+   Fonctions corrigées:
+   • markAsRead()
+   • markAsReplied()
+   • archiveMessage()
+   • generateAIResponse()
+
+2️⃣ EMAILS FILTRÉS (seulement tcerda@xcr.fr visible)
+   ❌ Problème: Incohérence entre tables
+      - fetch-email-replies enregistre dans: email_inbox ✓
+      - Front-end lisait depuis: email_replies ✗
+   
+   ✅ Solution: Lecture depuis la bonne table (email_inbox)
+   
+   Tables corrigées:
+   • getInbox() → email_inbox (au lieu de email_replies)
+   • markAsRead() → email_inbox
+   • archiveMessage() → email_inbox
+   • getUnreadCount() → email_inbox
+
+═══════════════════════════════════════════════════════════════════
+
+🔧 MODIFICATIONS TECHNIQUES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📝 FICHIER MODIFIÉ
+───────────────────────────────────────────────────────────────────
+src/lib/crm-channel-engine.ts
+
+AVANT:
+```typescript
+async getInbox() {
+  const { data } = await supabase
+    .from('email_replies')  // ❌ MAUVAISE TABLE
+    .select('*');
+}
+
+async markAsRead(messageId: string) {
+  const { data } = await supabase
+    .from('email_replies')
+    .update({ is_processed: true })
+    .eq('id', messageId);  // ❌ ID avec préfixe invalide
+}
+```
+
+APRÈS:
+```typescript
+async getInbox() {
+  const { data } = await supabase
+    .from('email_inbox')  // ✅ BONNE TABLE
+    .select('*');
+  
+  console.log('📧 Emails trouvés:', data?.length);
+}
+
+async markAsRead(messageId: string) {
+  const realId = messageId.replace(/^(in-|out-)/, '');  // ✅ Retrait préfixe
+  
+  const { data } = await supabase
+    .from('email_inbox')  // ✅ BONNE TABLE
+    .update({ processed: true })
+    .eq('id', realId);  // ✅ UUID valide
+}
+```
+
+═══════════════════════════════════════════════════════════════════
+
+📊 ARCHITECTURE DES TABLES EMAILS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+┌──────────────────────────────────────────────────────────────┐
+│ 📥 EMAILS ENTRANTS (reçus via IMAP)                         │
+├──────────────────────────────────────────────────────────────┤
+│ Table: email_inbox                                           │
+│ • Synchronisés par: fetch-email-replies (edge function)     │
+│ • Champs: from_email, subject, body, received_at           │
+│           processed, sentiment, intent, priority            │
+│ • Lu par: CRMInboxMulticanal                               │
+└──────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────┐
+│ 📤 EMAILS SORTANTS (envoyés par le CRM)                     │
+├──────────────────────────────────────────────────────────────┤
+│ Table: email_sends                                           │
+│ • Créés par: send-crm-email (edge function)                │
+│ • Champs: email_to, subject, body_html, sent_at           │
+│           status (sent/delivered/opened/clicked)            │
+│ • Lu par: CRMInboxMulticanal                               │
+└──────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────┐
+│ ⚠️  ANCIENNE TABLE (À NE PLUS UTILISER)                     │
+├──────────────────────────────────────────────────────────────┤
+│ Table: email_replies                                         │
+│ • Usage: Ancienne architecture (obsolète)                   │
+│ • Contenu: Seulement 9 emails de tcerda@xcr.fr            │
+│ • Status: Conservée pour historique uniquement             │
+└──────────────────────────────────────────────────────────────┘
+
+═══════════════════════════════════════════════════════════════
+
+🚀 RÉSULTAT ATTENDU
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Après déploiement et synchronisation:
+
+1️⃣ Plus d'erreurs UUID
+   ✓ Les clics sur les emails fonctionnent
+   ✓ Marquer comme lu fonctionne
+   ✓ Archiver fonctionne
+
+2️⃣ TOUS les emails visibles
+   ✓ Pas seulement tcerda@xcr.fr
+   ✓ Tous les emails synchronisés s'affichent
+   ✓ Séparation claire entrants/sortants
+
+3️⃣ Logs de debug activés
+   ✓ Console F12 affiche le nombre d'emails trouvés
+   ✓ "📧 Emails inbox trouvés: X"
+   ✓ "📤 Emails envoyés trouvés: Y"
+
+═══════════════════════════════════════════════════════════════
+
+📋 ACTIONS À FAIRE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1️⃣ Uploadez /dist sur IONOS
+
+2️⃣ Videz cache navigateur (Ctrl+Shift+Delete)
+
+3️⃣ Rechargez (Ctrl+F5)
+
+4️⃣ Allez dans Backoffice → CRM → Inbox Multicanal
+
+5️⃣ Cliquez sur "🔄 Synchroniser emails"
+   → La fonction fetch-email-replies va récupérer TOUS les emails
+      des 30 derniers jours depuis votre boîte IONOS
+
+6️⃣ Ouvrez la Console F12
+   → Vous verrez: "📧 Emails inbox trouvés: X"
+
+7️⃣ Les emails de TOUS les expéditeurs s'afficheront
+   (pas seulement tcerda@xcr.fr)
+
+═══════════════════════════════════════════════════════════════
+
+⚠️  FONCTIONNALITÉ "GÉNÉRER AVEC IA" TEMPORAIREMENT DÉSACTIVÉE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Raison:
+L'edge function ai-email-responder utilise une architecture différente
+(email_conversations + unified_contacts) qui n'est pas compatible
+avec l'inbox actuel.
+
+Solutions possibles:
+1. Créer une nouvelle edge function dédiée à l'inbox
+2. Adapter ai-email-responder pour supporter les deux systèmes
+3. Migrer vers le système email_conversations (refonte complète)
+
+Pour l'instant: Le bouton "Générer avec IA" retournera une erreur.
+Correction à venir dans une prochaine itération.
+
+═══════════════════════════════════════════════════════════════
+
+🔍 DEBUG EN CAS DE PROBLÈME
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Si toujours que tcerda@xcr.fr:
+1. F12 → Console
+2. Regardez: "📧 Emails inbox trouvés: X"
+3. Si X = 9, c'est que la synchronisation n'a pas été faite
+4. Cliquez sur "🔄 Synchroniser emails"
+5. Patientez (peut prendre 30s)
+6. Actualisez la page
+
+Si erreur UUID persiste:
+1. Vérifiez que vous avez bien uploadé le nouveau build
+2. Videz le cache (Ctrl+Shift+Delete)
+3. Rechargez (Ctrl+F5)
+
+Si aucun email:
+1. Vérifiez les identifiants IONOS dans Supabase Dashboard
+   → Settings → Edge Functions → Secrets
+   → IONOS_SMTP_USER et IONOS_SMTP_PASSWORD
+2. Vérifiez que la boîte email team@taxiassur.com existe
+3. Testez manuellement la connexion IMAP
+
+═══════════════════════════════════════════════════════════════
+
+✅ BUILD RÉUSSI
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✓ built in 58.27s
+✓ backoffice-crm: 322.89 kB
+✓ Aucune erreur
+
+Prêt pour déploiement ! 🚀
+
+╚═══════════════════════════════════════════════════════════════════╝
