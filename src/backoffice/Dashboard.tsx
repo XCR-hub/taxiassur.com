@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { BarChart3, Users, FileText, Link, RefreshCw, Globe, TrendingUp, MapPin, Mail, Activity, Shield, Eye, Award, Home, LogOut, Clock, AlertCircle } from 'lucide-react';
+import { BarChart3, Users, FileText, Link, RefreshCw, Globe, TrendingUp, MapPin, Mail, Activity, Shield, Eye, Award, Home, LogOut, Clock, AlertCircle, LayoutDashboard, Inbox, FileCheck, Bot, MessageSquare, Zap } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { getBlogPosts, getFaqEntries, getReviews, getOffers } from '../lib/content';
 import { getBacklinks, getPartners } from '../lib/backlinks';
@@ -308,11 +308,11 @@ const Dashboard: React.FC = () => {
                 </button>
 
                 <button
-                  onClick={() => navigate('/backoffice/crm-commercial')}
+                  onClick={() => navigate('/backoffice/crm')}
                   className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
                 >
                   <Home size={16} />
-                  <span>CRM</span>
+                  <span>CRM Killer</span>
                 </button>
 
                 <a
@@ -459,7 +459,7 @@ const Dashboard: React.FC = () => {
             {/* Lead Stats */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
               <a
-                href="/backoffice/lead-manager"
+                href="/backoffice/crm"
                 className="bg-gradient-to-br from-green-50 to-emerald-100 rounded-xl shadow-lg border-2 border-green-300 p-6 text-center hover:shadow-xl transition-all duration-300 hover:scale-105 block"
               >
                 <TrendingUp className="mx-auto mb-2 text-green-700" size={24} />
@@ -468,7 +468,7 @@ const Dashboard: React.FC = () => {
               </a>
 
               <a
-                href="/backoffice/lead-manager"
+                href="/backoffice/crm"
                 className="bg-gradient-to-br from-orange-50 to-yellow-100 rounded-xl shadow-lg border-2 border-orange-300 p-6 text-center hover:shadow-xl transition-all duration-300 hover:scale-105 block"
               >
                 <Activity className="mx-auto mb-2 text-orange-700" size={24} />
@@ -477,7 +477,7 @@ const Dashboard: React.FC = () => {
               </a>
 
               <a
-                href="/backoffice/lead-manager"
+                href="/backoffice/crm"
                 className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl shadow-lg border-2 border-orange-300 p-6 text-center hover:shadow-xl transition-all duration-300 hover:scale-105 block"
               >
                 <TrendingUp className="mx-auto mb-2 text-orange-700" size={24} />
@@ -605,11 +605,11 @@ const Dashboard: React.FC = () => {
                   </a>
 
                   <a
-                    href="/backoffice/lead-manager"
+                    href="/backoffice/crm"
                     className="text-center p-6 bg-orange-100 border-2 border-orange-300 rounded-lg hover:bg-orange-200 transition-colors group shadow-lg hover:shadow-xl"
                   >
                     <Users className="mx-auto mb-2 text-orange-700 group-hover:scale-110 transition-transform" size={24} />
-                    <div className="text-sm font-bold text-orange-900">Leads</div>
+                    <div className="text-sm font-bold text-orange-900">CRM Killer</div>
                   </a>
 
                   <a
@@ -652,6 +652,111 @@ const Dashboard: React.FC = () => {
                     <div className="text-sm font-bold text-orange-900">Popups</div>
                   </a>
                 </div>
+              </div>
+            </div>
+
+            {/* CRM Killer Hub - Nouveau */}
+            <div className="bg-gradient-to-br from-blue-50 to-indigo-100 rounded-2xl shadow-lg border-2 border-blue-300 p-8 mb-8">
+              <h2 className="text-2xl font-bold text-blue-900 mb-6 flex items-center">
+                <Zap className="mr-2 text-blue-700" size={28} />
+                CRM Killer Hub - An 3050
+              </h2>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                <a
+                  href="/backoffice/crm-killer/pipeline"
+                  className="text-center p-6 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg hover:shadow-xl transition-all duration-300 hover:scale-105 group"
+                >
+                  <LayoutDashboard className="mx-auto mb-2 text-white group-hover:scale-110 transition-transform" size={28} />
+                  <div className="text-sm font-bold text-white">Pipeline Kanban</div>
+                </a>
+
+                <a
+                  href="/backoffice/crm-killer/inbox"
+                  className="text-center p-6 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg hover:shadow-xl transition-all duration-300 hover:scale-105 group"
+                >
+                  <Inbox className="mx-auto mb-2 text-white group-hover:scale-110 transition-transform" size={28} />
+                  <div className="text-sm font-bold text-white">Inbox Multicanal</div>
+                </a>
+
+                <a
+                  href="/backoffice/crm-killer/production"
+                  className="text-center p-6 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg hover:shadow-xl transition-all duration-300 hover:scale-105 group"
+                >
+                  <FileCheck className="mx-auto mb-2 text-white group-hover:scale-110 transition-transform" size={28} />
+                  <div className="text-sm font-bold text-white">Production</div>
+                </a>
+
+                <a
+                  href="/backoffice/crm-killer/retention"
+                  className="text-center p-6 bg-gradient-to-br from-green-500 to-green-600 rounded-lg hover:shadow-xl transition-all duration-300 hover:scale-105 group"
+                >
+                  <Shield className="mx-auto mb-2 text-white group-hover:scale-110 transition-transform" size={28} />
+                  <div className="text-sm font-bold text-white">Rétention</div>
+                </a>
+
+                <a
+                  href="/backoffice/crm-killer/ia"
+                  className="text-center p-6 bg-gradient-to-br from-pink-500 to-pink-600 rounded-lg hover:shadow-xl transition-all duration-300 hover:scale-105 group"
+                >
+                  <Bot className="mx-auto mb-2 text-white group-hover:scale-110 transition-transform" size={28} />
+                  <div className="text-sm font-bold text-white">IA Governance</div>
+                </a>
+
+                <a
+                  href="/backoffice/crm-killer/templates"
+                  className="text-center p-6 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-lg hover:shadow-xl transition-all duration-300 hover:scale-105 group"
+                >
+                  <Mail className="mx-auto mb-2 text-white group-hover:scale-110 transition-transform" size={28} />
+                  <div className="text-sm font-bold text-white">Templates</div>
+                </a>
+
+                <a
+                  href="/backoffice/email-marketing"
+                  className="text-center p-6 bg-gradient-to-br from-cyan-500 to-cyan-600 rounded-lg hover:shadow-xl transition-all duration-300 hover:scale-105 group"
+                >
+                  <Mail className="mx-auto mb-2 text-white group-hover:scale-110 transition-transform" size={28} />
+                  <div className="text-sm font-bold text-white">Email Marketing</div>
+                </a>
+
+                <a
+                  href="/backoffice/analytics"
+                  className="text-center p-6 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-lg hover:shadow-xl transition-all duration-300 hover:scale-105 group"
+                >
+                  <BarChart3 className="mx-auto mb-2 text-white group-hover:scale-110 transition-transform" size={28} />
+                  <div className="text-sm font-bold text-white">Analytics</div>
+                </a>
+
+                <a
+                  href="/backoffice/whatsapp"
+                  className="text-center p-6 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-lg hover:shadow-xl transition-all duration-300 hover:scale-105 group"
+                >
+                  <MessageSquare className="mx-auto mb-2 text-white group-hover:scale-110 transition-transform" size={28} />
+                  <div className="text-sm font-bold text-white">WhatsApp</div>
+                </a>
+
+                <a
+                  href="/backoffice/automations"
+                  className="text-center p-6 bg-gradient-to-br from-red-500 to-red-600 rounded-lg hover:shadow-xl transition-all duration-300 hover:scale-105 group"
+                >
+                  <Zap className="mx-auto mb-2 text-white group-hover:scale-110 transition-transform" size={28} />
+                  <div className="text-sm font-bold text-white">Automations</div>
+                </a>
+
+                <a
+                  href="/backoffice/master-dashboard"
+                  className="text-center p-6 bg-gradient-to-br from-violet-500 to-violet-600 rounded-lg hover:shadow-xl transition-all duration-300 hover:scale-105 group"
+                >
+                  <Activity className="mx-auto mb-2 text-white group-hover:scale-110 transition-transform" size={28} />
+                  <div className="text-sm font-bold text-white">Master AI</div>
+                </a>
+
+                <a
+                  href="/backoffice/newsletter"
+                  className="text-center p-6 bg-gradient-to-br from-teal-500 to-teal-600 rounded-lg hover:shadow-xl transition-all duration-300 hover:scale-105 group"
+                >
+                  <Mail className="mx-auto mb-2 text-white group-hover:scale-110 transition-transform" size={28} />
+                  <div className="text-sm font-bold text-white">Newsletter</div>
+                </a>
               </div>
             </div>
           </div>
