@@ -10,134 +10,321 @@ import {
   TrendingUp,
   MessageSquare,
   FileText,
-  CreditCard,
   Bot,
   ArrowRight,
   Edit,
   Save,
-  X
+  X,
+  Send,
+  History,
+  Upload,
+  Download,
+  Clock,
+  CheckCircle,
+  AlertCircle,
+  Plus,
+  Trash2,
+  Eye,
+  RefreshCw
 } from 'lucide-react';
 import { pipelineService, CRMLead, PIPELINE_STATUSES } from '@/lib/crm-pipeline';
-import { aiGovernanceService } from '@/lib/crm-ai-governance';
-import { channelEngineService } from '@/lib/crm-channel-engine';
-import { productionService } from '@/lib/crm-production';
-import { retentionService } from '@/lib/crm-retention';
-import { TimelineEvent } from '@/components/crm/TimelineEvent';
-import { AIDecisionCard } from '@/components/crm/AIDecisionCard';
-import { DocumentChecklist } from '@/components/crm/DocumentChecklist';
-import { RetentionScore } from '@/components/crm/RetentionScore';
+import { supabase } from '@/lib/supabase';
 import BackButton from './BackButton';
-import LostLeadRecontactModal from './LostLeadRecontactModal';
+
+interface Message {
+  id: string;
+  type: 'email' | 'sms' | 'whatsapp' | 'note' | 'system';
+  content: string;
+  subject?: string;
+  sent_at: string;
+  status: 'sent' | 'delivered' | 'read' | 'failed';
+  sent_by?: string;
+}
 
 const CRMLeadDetail: React.FC = () => {
   const { leadId } = useParams<{ leadId: string }>();
   const navigate = useNavigate();
+
+  // États principaux
   const [loading, setLoading] = useState(true);
   const [lead, setLead] = useState<CRMLead | null>(null);
-  const [timeline, setTimeline] = useState<any[]>([]);
-  const [aiDecisions, setAiDecisions] = useState<any[]>([]);
-  const [documents, setDocuments] = useState<any[]>([]);
-  const [retentionScore, setRetentionScore] = useState<any>(null);
-  const [activeTab, setActiveTab] = useState<'timeline' | 'documents' | 'ia' | 'retention'>('timeline');
   const [editing, setEditing] = useState(false);
-  const [editedNotes, setEditedNotes] = useState('');
-  const [showRecontactModal, setShowRecontactModal] = useState(false);
-  const [pendingStatusChange, setPendingStatusChange] = useState<any>(null);
+  const [saving, setSaving] = useState(false);
+
+  // États pour les communications
+  const [showEmailModal, setShowEmailModal] = useState(false);
+  const [showSMSModal, setShowSMSModal] = useState(false);
+  const [showWhatsAppModal, setShowWhatsAppModal] = useState(false);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [loadingMessages, setLoadingMessages] = useState(false);
+
+  // États pour le formulaire d'édition
+  const [editForm, setEditForm] = useState({
+    first_name: '',
+    last_name: '',
+    email: '',
+    phone: '',
+    city: '',
+    company_name: '',
+    internal_notes: ''
+  });
+
+  // États pour les communications
+  const [emailForm, setEmailForm] = useState({
+    subject: '',
+    body: '',
+    template: ''
+  });
+
+  const [smsForm, setSmsForm] = useState({
+    message: '',
+    template: ''
+  });
+
+  const [whatsappForm, setWhatsappForm] = useState({
+    message: '',
+    template: ''
+  });
+
+  // Templates prédéfinis
+  const emailTemplates = [
+    { id: 'welcome', name: 'Email de bienvenue', subject: 'Bienvenue chez TaxiAssur', body: 'Bonjour {{first_name}},\n\nNous sommes ravis de vous accueillir...' },
+    { id: 'follow_up', name: 'Relance', subject: 'Votre demande de devis', body: 'Bonjour {{first_name}},\n\nNous revenons vers vous concernant...' },
+    { id: 'quote', name: 'Envoi de devis', subject: 'Votre devis personnalisé', body: 'Bonjour {{first_name}},\n\nVeuillez trouver ci-joint votre devis...' },
+    { id: 'documents', name: 'Demande documents', subject: 'Documents nécessaires', body: 'Bonjour {{first_name}},\n\nPour finaliser votre dossier...' }
+  ];
+
+  const smsTemplates = [
+    { id: 'welcome', name: 'Bienvenue', message: 'Bonjour {{first_name}}, merci pour votre demande. Un conseiller vous contacte sous 24h. TaxiAssur' },
+    { id: 'reminder', name: 'Rappel RDV', message: 'Rappel: RDV téléphonique aujourd\'hui à {{time}}. À tout de suite ! TaxiAssur' },
+    { id: 'documents', name: 'Documents reçus', message: 'Documents bien reçus ! Nous traitons votre dossier. Réponse sous 48h. TaxiAssur' }
+  ];
+
+  const whatsappTemplates = [
+    { id: 'welcome', name: 'Bienvenue', message: 'Bonjour {{first_name}} 👋\n\nMerci pour votre confiance ! Je suis votre conseiller dédié.\n\nComment puis-je vous aider ?' },
+    { id: 'quote_ready', name: 'Devis prêt', message: 'Bonne nouvelle {{first_name}} ! 🎉\n\nVotre devis est prêt. Voulez-vous que je vous l\'envoie par email ?' },
+    { id: 'follow_up', name: 'Suivi personnalisé', message: 'Bonjour {{first_name}},\n\nAvez-vous des questions sur votre devis ? Je suis là pour vous accompagner 🤝' }
+  ];
 
   useEffect(() => {
     if (leadId) loadLeadData(leadId);
   }, [leadId]);
 
-  const loadLeadData = async (leadId: string) => {
+  const loadLeadData = async (id: string) => {
     setLoading(true);
-    console.log('Loading lead data for:', leadId);
     try {
-      const [
-        leadData,
-        timelineData,
-        decisionsData,
-        docsData,
-        scoreData
-      ] = await Promise.all([
-        pipelineService.getLead(leadId),
-        pipelineService.getTimeline(leadId),
-        aiGovernanceService.getDecisions(leadId),
-        productionService.getDocuments(leadId),
-        retentionService.getRetentionScore(leadId)
-      ]);
-
-      console.log('Lead data loaded:', leadData);
-      console.log('Timeline:', timelineData);
-      console.log('Decisions:', decisionsData);
-      console.log('Documents:', docsData);
-      console.log('Retention score:', scoreData);
-
+      const leadData = await pipelineService.getLead(id);
       setLead(leadData);
-      setTimeline(timelineData);
-      setAiDecisions(decisionsData);
-      setDocuments(docsData);
-      setRetentionScore(scoreData);
-      setEditedNotes(leadData.notes || '');
+      setEditForm({
+        first_name: leadData.first_name || '',
+        last_name: leadData.last_name || '',
+        email: leadData.email || '',
+        phone: leadData.phone || '',
+        city: leadData.city || '',
+        company_name: leadData.company_name || '',
+        internal_notes: (leadData as any).internal_notes || ''
+      });
+
+      // Charger l'historique des messages
+      await loadMessages(id);
     } catch (error) {
       console.error('Failed to load lead:', error);
-      console.error('Error details:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleStatusChange = async (newStatus: any) => {
-    if (!lead) return;
-
-    if (newStatus === 'LOST_RECONTACT_SCHEDULED') {
-      setPendingStatusChange(newStatus);
-      setShowRecontactModal(true);
-      return;
-    }
-
+  const loadMessages = async (leadId: string) => {
+    setLoadingMessages(true);
     try {
-      await pipelineService.updateLeadStatus(lead.id, newStatus);
-      await loadLeadData(lead.id);
+      // Charger depuis crm_timeline et autres sources
+      const { data: timeline } = await supabase
+        .from('crm_timeline')
+        .select('*')
+        .eq('lead_id', leadId)
+        .order('created_at', { ascending: false });
+
+      if (timeline) {
+        const formatted: Message[] = timeline.map((t: any) => ({
+          id: t.id,
+          type: t.event_type === 'email_sent' ? 'email' :
+                t.event_type === 'sms_sent' ? 'sms' :
+                t.event_type === 'whatsapp_sent' ? 'whatsapp' :
+                t.event_type === 'note_added' ? 'note' : 'system',
+          content: t.metadata?.message || t.metadata?.content || t.description,
+          subject: t.metadata?.subject,
+          sent_at: t.created_at,
+          status: t.metadata?.status || 'sent',
+          sent_by: t.created_by
+        }));
+        setMessages(formatted);
+      }
     } catch (error) {
-      console.error('Failed to update status:', error);
+      console.error('Failed to load messages:', error);
+    } finally {
+      setLoadingMessages(false);
     }
   };
 
-  const handleRecontactConfirm = async (date: string, reason: string) => {
-    if (!lead || !pendingStatusChange) return;
+  const handleSave = async () => {
+    if (!lead) return;
+    setSaving(true);
 
     try {
-      await pipelineService.updateLeadStatus(
-        lead.id,
-        pendingStatusChange,
-        reason,
-        undefined,
-        date
-      );
-      setShowRecontactModal(false);
-      setPendingStatusChange(null);
+      const { error } = await supabase
+        .from('crm_leads')
+        .update({
+          first_name: editForm.first_name,
+          last_name: editForm.last_name,
+          email: editForm.email,
+          phone: editForm.phone,
+          city: editForm.city,
+          company_name: editForm.company_name,
+          internal_notes: editForm.internal_notes,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', lead.id);
+
+      if (error) throw error;
+
       await loadLeadData(lead.id);
+      setEditing(false);
+      alert('✅ Modifications enregistrées !');
     } catch (error) {
-      console.error('Failed to schedule recontact:', error);
+      console.error('Save error:', error);
+      alert('❌ Erreur lors de la sauvegarde');
+    } finally {
+      setSaving(false);
     }
   };
 
-  const handleSaveNotes = async () => {
+  const handleSendEmail = async () => {
     if (!lead) return;
-    setEditing(false);
+
+    try {
+      // Remplacer les variables
+      let body = emailForm.body;
+      body = body.replace(/\{\{first_name\}\}/g, lead.first_name || '');
+      body = body.replace(/\{\{last_name\}\}/g, lead.last_name || '');
+      body = body.replace(/\{\{company_name\}\}/g, lead.company_name || '');
+
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-crm-email`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
+        },
+        body: JSON.stringify({
+          to: lead.email,
+          subject: emailForm.subject,
+          body: body,
+          lead_id: lead.id
+        })
+      });
+
+      if (response.ok) {
+        alert('✅ Email envoyé avec succès !');
+        setShowEmailModal(false);
+        setEmailForm({ subject: '', body: '', template: '' });
+        await loadMessages(lead.id);
+      } else {
+        alert('❌ Erreur lors de l\'envoi');
+      }
+    } catch (error) {
+      console.error('Email error:', error);
+      alert('❌ Erreur lors de l\'envoi');
+    }
+  };
+
+  const handleSendSMS = async () => {
+    if (!lead) return;
+
+    try {
+      let message = smsForm.message;
+      message = message.replace(/\{\{first_name\}\}/g, lead.first_name || '');
+
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-sms`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
+        },
+        body: JSON.stringify({
+          to: lead.phone,
+          message: message,
+          lead_id: lead.id
+        })
+      });
+
+      if (response.ok) {
+        alert('✅ SMS envoyé avec succès !');
+        setShowSMSModal(false);
+        setSmsForm({ message: '', template: '' });
+        await loadMessages(lead.id);
+      } else {
+        alert('❌ Erreur lors de l\'envoi');
+      }
+    } catch (error) {
+      console.error('SMS error:', error);
+      alert('❌ Erreur lors de l\'envoi');
+    }
+  };
+
+  const handleSendWhatsApp = async () => {
+    if (!lead) return;
+
+    try {
+      let message = whatsappForm.message;
+      message = message.replace(/\{\{first_name\}\}/g, lead.first_name || '');
+
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-whatsapp`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
+        },
+        body: JSON.stringify({
+          to: lead.phone,
+          message: message,
+          lead_id: lead.id
+        })
+      });
+
+      if (response.ok) {
+        alert('✅ WhatsApp envoyé avec succès !');
+        setShowWhatsAppModal(false);
+        setWhatsappForm({ message: '', template: '' });
+        await loadMessages(lead.id);
+      } else {
+        alert('❌ Erreur lors de l\'envoi');
+      }
+    } catch (error) {
+      console.error('WhatsApp error:', error);
+      alert('❌ Erreur lors de l\'envoi');
+    }
+  };
+
+  const handleStatusChange = async (newStatus: string) => {
+    if (!lead) return;
+
+    try {
+      await pipelineService.updateLeadStatus(lead.id, newStatus as any);
+      await loadLeadData(lead.id);
+      alert('✅ Statut mis à jour !');
+    } catch (error) {
+      console.error('Status change error:', error);
+      alert('❌ Erreur lors de la mise à jour');
+    }
   };
 
   const availableTransitions = lead ? pipelineService.getAvailableTransitions(lead.status) : [];
 
   if (loading || !lead) {
     return (
-      <div className="min-h-screen bg-gray-50 p-8">
-        <div className="max-w-7xl mx-auto animate-pulse">
-          <div className="h-48 bg-gray-200 rounded-xl mb-6"></div>
-          <div className="grid grid-cols-3 gap-6">
-            <div className="col-span-2 h-96 bg-gray-200 rounded-xl"></div>
-            <div className="h-96 bg-gray-200 rounded-xl"></div>
-          </div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <RefreshCw className="w-12 h-12 text-blue-600 animate-spin mx-auto mb-4" />
+          <p className="text-gray-600">Chargement des données...</p>
         </div>
       </div>
     );
@@ -147,29 +334,31 @@ const CRMLeadDetail: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
+      {/* Header avec gradient */}
+      <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 text-white">
         <div className="max-w-7xl mx-auto px-6 py-8">
           <BackButton to="/backoffice/crm-killer/pipeline" label="Retour au pipeline" showHomeIcon={false} />
+
           <div className="flex items-start justify-between mb-6">
             <div className="flex items-start gap-4">
-              <div className="w-20 h-20 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center text-3xl">
+              <div className="w-20 h-20 rounded-2xl bg-white/20 backdrop-blur-lg flex items-center justify-center text-4xl shadow-xl border-2 border-white/30">
                 {statusInfo.icon}
               </div>
               <div>
-                <h1 className="text-3xl font-bold mb-2">{lead.full_name}</h1>
+                <h1 className="text-4xl font-bold mb-2 drop-shadow-lg">{lead.full_name}</h1>
                 <div className="flex items-center gap-4 text-blue-100">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 bg-white/10 px-3 py-1 rounded-lg">
                     <Mail size={16} />
-                    {lead.email}
+                    <span>{lead.email}</span>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 bg-white/10 px-3 py-1 rounded-lg">
                     <Phone size={16} />
-                    {lead.phone}
+                    <span>{lead.phone}</span>
                   </div>
                   {lead.city && (
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 bg-white/10 px-3 py-1 rounded-lg">
                       <MapPin size={16} />
-                      {lead.city}
+                      <span>{lead.city}</span>
                     </div>
                   )}
                 </div>
@@ -177,24 +366,30 @@ const CRMLeadDetail: React.FC = () => {
             </div>
 
             <div className="text-right">
-              <div className="inline-block px-4 py-2 bg-white/20 backdrop-blur rounded-lg mb-2">
-                <div className="text-sm text-blue-100">Statut</div>
-                <div className="font-bold">{statusInfo.label}</div>
+              <div className="inline-flex items-center gap-3 px-6 py-3 bg-white/20 backdrop-blur-lg rounded-xl shadow-xl border-2 border-white/30 mb-3">
+                <div>
+                  <div className="text-sm text-blue-100">Statut</div>
+                  <div className="font-bold text-xl">{statusInfo.label}</div>
+                </div>
               </div>
               {lead.quality_score && (
-                <div className="text-2xl font-bold">{lead.quality_score}% qualité</div>
+                <div className="flex items-center justify-end gap-2">
+                  <div className="text-sm text-blue-100">Qualité:</div>
+                  <div className="text-3xl font-bold">{lead.quality_score}%</div>
+                </div>
               )}
             </div>
           </div>
 
+          {/* Actions de transition */}
           {availableTransitions.length > 0 && (
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-blue-100">Actions:</span>
+            <div className="flex items-center gap-3 flex-wrap">
+              <span className="text-blue-100 font-medium">Actions rapides:</span>
               {availableTransitions.map((transition) => (
                 <button
                   key={transition.to}
                   onClick={() => handleStatusChange(transition.to)}
-                  className="px-4 py-2 bg-white/20 hover:bg-white/30 backdrop-blur rounded-lg font-medium transition-colors flex items-center gap-2"
+                  className="px-4 py-2 bg-white/20 hover:bg-white/30 backdrop-blur-lg rounded-lg font-medium transition-all flex items-center gap-2 shadow-lg border border-white/20 hover:border-white/40"
                 >
                   {transition.label}
                   <ArrowRight size={16} />
@@ -205,44 +400,22 @@ const CRMLeadDetail: React.FC = () => {
         </div>
       </div>
 
+      {/* Corps principal */}
       <div className="max-w-7xl mx-auto px-6 py-8">
-        <div className="grid grid-cols-3 gap-6 mb-6">
-          <div className="bg-white rounded-xl border-2 border-gray-200 p-4">
-            <div className="text-sm text-gray-600 mb-1">Créé le</div>
-            <div className="font-bold text-gray-900">
-              {new Date(lead.created_at).toLocaleDateString('fr-FR')}
-            </div>
-          </div>
-          {lead.last_contact && (
-            <div className="bg-white rounded-xl border-2 border-gray-200 p-4">
-              <div className="text-sm text-gray-600 mb-1">Dernier contact</div>
-              <div className="font-bold text-gray-900">
-                {new Date(lead.last_contact).toLocaleDateString('fr-FR')}
-              </div>
-            </div>
-          )}
-          {lead.next_followup && (
-            <div className="bg-white rounded-xl border-2 border-yellow-300 p-4">
-              <div className="text-sm text-yellow-600 mb-1">Prochain suivi</div>
-              <div className="font-bold text-yellow-900">
-                {new Date(lead.next_followup).toLocaleDateString('fr-FR')}
-              </div>
-            </div>
-          )}
-        </div>
-
-        <div className="grid grid-cols-3 gap-6">
-          <div className="col-span-2 space-y-6">
-            <div className="bg-white rounded-xl border-2 border-gray-200 p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                  <MessageSquare size={24} />
-                  Notes
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Colonne principale */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Informations du lead */}
+            <div className="bg-white rounded-xl shadow-lg border-2 border-gray-200 p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                  <User size={24} className="text-blue-600" />
+                  Informations du Lead
                 </h2>
                 {!editing ? (
                   <button
                     onClick={() => setEditing(true)}
-                    className="text-blue-600 hover:text-blue-700 font-medium flex items-center gap-2"
+                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                   >
                     <Edit size={16} />
                     Modifier
@@ -250,18 +423,27 @@ const CRMLeadDetail: React.FC = () => {
                 ) : (
                   <div className="flex gap-2">
                     <button
-                      onClick={handleSaveNotes}
-                      className="text-green-600 hover:text-green-700 font-medium flex items-center gap-2"
+                      onClick={handleSave}
+                      disabled={saving}
+                      className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
                     >
                       <Save size={16} />
-                      Enregistrer
+                      {saving ? 'Enregistrement...' : 'Enregistrer'}
                     </button>
                     <button
                       onClick={() => {
                         setEditing(false);
-                        setEditedNotes(lead.notes || '');
+                        setEditForm({
+                          first_name: lead.first_name || '',
+                          last_name: lead.last_name || '',
+                          email: lead.email || '',
+                          phone: lead.phone || '',
+                          city: lead.city || '',
+                          company_name: lead.company_name || '',
+                          internal_notes: (lead as any).internal_notes || ''
+                        });
                       }}
-                      className="text-red-600 hover:text-red-700 font-medium flex items-center gap-2"
+                      className="flex items-center gap-2 px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
                     >
                       <X size={16} />
                       Annuler
@@ -269,123 +451,266 @@ const CRMLeadDetail: React.FC = () => {
                   </div>
                 )}
               </div>
+
               {editing ? (
-                <textarea
-                  value={editedNotes}
-                  onChange={(e) => setEditedNotes(e.target.value)}
-                  className="w-full h-32 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Ajoutez des notes..."
-                />
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Prénom</label>
+                    <input
+                      type="text"
+                      value={editForm.first_name}
+                      onChange={(e) => setEditForm({ ...editForm, first_name: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Nom</label>
+                    <input
+                      type="text"
+                      value={editForm.last_name}
+                      onChange={(e) => setEditForm({ ...editForm, last_name: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                    <input
+                      type="email"
+                      value={editForm.email}
+                      onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Téléphone</label>
+                    <input
+                      type="tel"
+                      value={editForm.phone}
+                      onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Ville</label>
+                    <input
+                      type="text"
+                      value={editForm.city}
+                      onChange={(e) => setEditForm({ ...editForm, city: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Société</label>
+                    <input
+                      type="text"
+                      value={editForm.company_name}
+                      onChange={(e) => setEditForm({ ...editForm, company_name: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div className="col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Notes internes</label>
+                    <textarea
+                      value={editForm.internal_notes}
+                      onChange={(e) => setEditForm({ ...editForm, internal_notes: e.target.value })}
+                      rows={4}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      placeholder="Notes pour l'équipe..."
+                    />
+                  </div>
+                </div>
               ) : (
-                <p className="text-gray-700 whitespace-pre-wrap">
-                  {lead.notes || 'Aucune note'}
-                </p>
+                <div className="grid grid-cols-2 gap-6">
+                  <div>
+                    <div className="text-sm text-gray-600 mb-1">Prénom</div>
+                    <div className="font-medium text-gray-900">{lead.first_name || '—'}</div>
+                  </div>
+                  <div>
+                    <div className="text-sm text-gray-600 mb-1">Nom</div>
+                    <div className="font-medium text-gray-900">{lead.last_name || '—'}</div>
+                  </div>
+                  <div>
+                    <div className="text-sm text-gray-600 mb-1">Email</div>
+                    <div className="font-medium text-gray-900">{lead.email}</div>
+                  </div>
+                  <div>
+                    <div className="text-sm text-gray-600 mb-1">Téléphone</div>
+                    <div className="font-medium text-gray-900">{lead.phone}</div>
+                  </div>
+                  <div>
+                    <div className="text-sm text-gray-600 mb-1">Ville</div>
+                    <div className="font-medium text-gray-900">{lead.city || '—'}</div>
+                  </div>
+                  <div>
+                    <div className="text-sm text-gray-600 mb-1">Société</div>
+                    <div className="font-medium text-gray-900">{lead.company_name || '—'}</div>
+                  </div>
+                  <div className="col-span-2">
+                    <div className="text-sm text-gray-600 mb-1">Notes internes</div>
+                    <div className="font-medium text-gray-900 whitespace-pre-wrap">
+                      {(lead as any).internal_notes || 'Aucune note'}
+                    </div>
+                  </div>
+                </div>
               )}
             </div>
 
-            <div className="bg-white rounded-xl border-2 border-gray-200 p-6">
-              <div className="flex items-center gap-4 mb-6 border-b">
-                {(['timeline', 'documents', 'ia', 'retention'] as const).map((tab) => (
-                  <button
-                    key={tab}
-                    onClick={() => setActiveTab(tab)}
-                    className={`px-4 py-3 font-medium transition-colors border-b-2 ${
-                      activeTab === tab
-                        ? 'text-blue-600 border-blue-600'
-                        : 'text-gray-600 border-transparent hover:text-gray-900'
-                    }`}
-                  >
-                    {tab === 'timeline' && 'Timeline'}
-                    {tab === 'documents' && 'Documents'}
-                    {tab === 'ia' && 'IA Décisions'}
-                    {tab === 'retention' && 'Rétention'}
-                  </button>
-                ))}
+            {/* Historique des échanges */}
+            <div className="bg-white rounded-xl shadow-lg border-2 border-gray-200 p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                  <History size={24} className="text-purple-600" />
+                  Historique des Échanges
+                </h2>
+                <button
+                  onClick={() => loadMessages(lead.id)}
+                  disabled={loadingMessages}
+                  className="flex items-center gap-2 px-3 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  <RefreshCw size={16} className={loadingMessages ? 'animate-spin' : ''} />
+                  Actualiser
+                </button>
               </div>
 
-              <div>
-                {activeTab === 'timeline' && (
-                  <div className="space-y-4">
-                    {timeline.map((event, index) => (
-                      <TimelineEvent
-                        key={event.id}
-                        event={event}
-                        isLast={index === timeline.length - 1}
-                      />
-                    ))}
+              <div className="space-y-4 max-h-[600px] overflow-y-auto">
+                {messages.length === 0 ? (
+                  <div className="text-center py-12 text-gray-500">
+                    <History className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                    <p>Aucun échange enregistré</p>
                   </div>
-                )}
-
-                {activeTab === 'documents' && (
-                  <DocumentChecklist documents={documents} />
-                )}
-
-                {activeTab === 'ia' && (
-                  <div className="space-y-4">
-                    {aiDecisions.length === 0 ? (
-                      <div className="text-center py-12 text-gray-500">
-                        Aucune décision IA pour ce lead
+                ) : (
+                  messages.map((msg) => (
+                    <div key={msg.id} className="flex gap-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
+                        msg.type === 'email' ? 'bg-blue-100 text-blue-600' :
+                        msg.type === 'sms' ? 'bg-green-100 text-green-600' :
+                        msg.type === 'whatsapp' ? 'bg-emerald-100 text-emerald-600' :
+                        msg.type === 'note' ? 'bg-yellow-100 text-yellow-600' :
+                        'bg-gray-100 text-gray-600'
+                      }`}>
+                        {msg.type === 'email' && <Mail size={20} />}
+                        {msg.type === 'sms' && <MessageSquare size={20} />}
+                        {msg.type === 'whatsapp' && <Phone size={20} />}
+                        {msg.type === 'note' && <FileText size={20} />}
+                        {msg.type === 'system' && <Bot size={20} />}
                       </div>
-                    ) : (
-                      aiDecisions.map((decision) => (
-                        <AIDecisionCard
-                          key={decision.id}
-                          decision={decision}
-                          onApprove={async () => {
-                            await aiGovernanceService.approveDecision(decision.id, 'admin');
-                            await loadLeadData(lead.id);
-                          }}
-                          onReject={async () => {
-                            await aiGovernanceService.rejectDecision(decision.id);
-                            await loadLeadData(lead.id);
-                          }}
-                        />
-                      ))
-                    )}
-                  </div>
-                )}
-
-                {activeTab === 'retention' && retentionScore && (
-                  <RetentionScore score={retentionScore} />
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold text-gray-900 capitalize">{msg.type}</span>
+                            {msg.subject && <span className="text-sm text-gray-600">• {msg.subject}</span>}
+                          </div>
+                          <span className={`px-2 py-1 rounded text-xs font-medium ${
+                            msg.status === 'sent' ? 'bg-blue-100 text-blue-700' :
+                            msg.status === 'delivered' ? 'bg-green-100 text-green-700' :
+                            msg.status === 'read' ? 'bg-purple-100 text-purple-700' :
+                            'bg-red-100 text-red-700'
+                          }`}>
+                            {msg.status}
+                          </span>
+                        </div>
+                        <p className="text-gray-700 text-sm mb-2">{msg.content}</p>
+                        <div className="flex items-center gap-2 text-xs text-gray-500">
+                          <Clock size={12} />
+                          <span>{new Date(msg.sent_at).toLocaleString('fr-FR')}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))
                 )}
               </div>
             </div>
           </div>
 
+          {/* Colonne latérale - Actions rapides */}
           <div className="space-y-6">
-            {retentionScore && (
-              <RetentionScore score={retentionScore} compact />
-            )}
-
-            <div className="bg-white rounded-xl border-2 border-gray-200 p-6">
-              <h3 className="font-bold text-gray-900 mb-4">Actions Rapides</h3>
-              <div className="space-y-2">
-                <button className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2">
-                  <Mail size={16} />
+            {/* Actions de communication */}
+            <div className="bg-white rounded-xl shadow-lg border-2 border-gray-200 p-6">
+              <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <Send size={20} className="text-blue-600" />
+                Communications
+              </h3>
+              <div className="space-y-3">
+                <button
+                  onClick={() => setShowEmailModal(true)}
+                  className="w-full px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all flex items-center justify-center gap-2 shadow-lg"
+                >
+                  <Mail size={18} />
                   Envoyer Email
                 </button>
-                <button className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2">
-                  <MessageSquare size={16} />
+                <button
+                  onClick={() => setShowSMSModal(true)}
+                  className="w-full px-4 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 transition-all flex items-center justify-center gap-2 shadow-lg"
+                >
+                  <MessageSquare size={18} />
                   Envoyer SMS
                 </button>
-                <button className="w-full px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center gap-2">
-                  <Bot size={16} />
-                  Convoquer Council IA
+                <button
+                  onClick={() => setShowWhatsAppModal(true)}
+                  className="w-full px-4 py-3 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white rounded-lg hover:from-emerald-700 hover:to-emerald-800 transition-all flex items-center justify-center gap-2 shadow-lg"
+                >
+                  <Phone size={18} />
+                  Envoyer WhatsApp
                 </button>
               </div>
             </div>
 
+            {/* Statistiques du lead */}
+            <div className="bg-white rounded-xl shadow-lg border-2 border-gray-200 p-6">
+              <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <TrendingUp size={20} className="text-purple-600" />
+                Statistiques
+              </h3>
+              <div className="space-y-4">
+                <div>
+                  <div className="text-sm text-gray-600 mb-1">Score de qualité</div>
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1 h-3 bg-gray-200 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-gradient-to-r from-blue-500 to-purple-500"
+                        style={{ width: `${lead.quality_score || 0}%` }}
+                      />
+                    </div>
+                    <span className="font-bold text-gray-900">{lead.quality_score || 0}%</span>
+                  </div>
+                </div>
+                <div>
+                  <div className="text-sm text-gray-600 mb-1">Créé le</div>
+                  <div className="font-medium text-gray-900">
+                    {new Date(lead.created_at).toLocaleDateString('fr-FR', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
+                    })}
+                  </div>
+                </div>
+                {lead.last_contact_at && (
+                  <div>
+                    <div className="text-sm text-gray-600 mb-1">Dernier contact</div>
+                    <div className="font-medium text-gray-900">
+                      {new Date(lead.last_contact_at).toLocaleDateString('fr-FR')}
+                    </div>
+                  </div>
+                )}
+                <div>
+                  <div className="text-sm text-gray-600 mb-1">Source</div>
+                  <div className="font-medium text-gray-900 capitalize">{lead.source || 'Inconnu'}</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Tags */}
             {lead.tags && lead.tags.length > 0 && (
-              <div className="bg-white rounded-xl border-2 border-gray-200 p-6">
+              <div className="bg-white rounded-xl shadow-lg border-2 border-gray-200 p-6">
                 <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
-                  <Tag size={20} />
+                  <Tag size={20} className="text-pink-600" />
                   Tags
                 </h3>
                 <div className="flex flex-wrap gap-2">
                   {lead.tags.map((tag, index) => (
                     <span
                       key={index}
-                      className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm"
+                      className="px-3 py-1 bg-gradient-to-r from-pink-100 to-purple-100 text-pink-700 rounded-full text-sm font-medium"
                     >
                       {tag}
                     </span>
@@ -397,15 +722,211 @@ const CRMLeadDetail: React.FC = () => {
         </div>
       </div>
 
-      {showRecontactModal && (
-        <LostLeadRecontactModal
-          leadName={lead.full_name}
-          onConfirm={handleRecontactConfirm}
-          onCancel={() => {
-            setShowRecontactModal(false);
-            setPendingStatusChange(null);
-          }}
-        />
+      {/* Modal Email */}
+      {showEmailModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                  <Mail className="text-blue-600" />
+                  Envoyer un Email
+                </h2>
+                <button
+                  onClick={() => setShowEmailModal(false)}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <X size={24} />
+                </button>
+              </div>
+            </div>
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Template</label>
+                <select
+                  value={emailForm.template}
+                  onChange={(e) => {
+                    const template = emailTemplates.find(t => t.id === e.target.value);
+                    if (template) {
+                      setEmailForm({
+                        template: e.target.value,
+                        subject: template.subject,
+                        body: template.body
+                      });
+                    }
+                  }}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">Sélectionner un template</option>
+                  {emailTemplates.map(t => (
+                    <option key={t.id} value={t.id}>{t.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Sujet</label>
+                <input
+                  type="text"
+                  value={emailForm.subject}
+                  onChange={(e) => setEmailForm({ ...emailForm, subject: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  placeholder="Sujet de l'email"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Message</label>
+                <textarea
+                  value={emailForm.body}
+                  onChange={(e) => setEmailForm({ ...emailForm, body: e.target.value })}
+                  rows={10}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  placeholder="Corps de l'email..."
+                />
+                <p className="text-xs text-gray-500 mt-2">
+                  Variables disponibles: {'{{first_name}}'}, {'{{last_name}}'}, {'{{company_name}}'}
+                </p>
+              </div>
+              <button
+                onClick={handleSendEmail}
+                disabled={!emailForm.subject || !emailForm.body}
+                className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                <Send size={20} />
+                Envoyer l'Email
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal SMS */}
+      {showSMSModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full">
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                  <MessageSquare className="text-green-600" />
+                  Envoyer un SMS
+                </h2>
+                <button
+                  onClick={() => setShowSMSModal(false)}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <X size={24} />
+                </button>
+              </div>
+            </div>
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Template</label>
+                <select
+                  value={smsForm.template}
+                  onChange={(e) => {
+                    const template = smsTemplates.find(t => t.id === e.target.value);
+                    if (template) {
+                      setSmsForm({
+                        template: e.target.value,
+                        message: template.message
+                      });
+                    }
+                  }}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                >
+                  <option value="">Sélectionner un template</option>
+                  {smsTemplates.map(t => (
+                    <option key={t.id} value={t.id}>{t.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Message (160 caractères max)</label>
+                <textarea
+                  value={smsForm.message}
+                  onChange={(e) => setSmsForm({ ...smsForm, message: e.target.value })}
+                  rows={4}
+                  maxLength={160}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                  placeholder="Votre message SMS..."
+                />
+                <p className="text-xs text-gray-500 mt-2">
+                  {smsForm.message.length}/160 caractères
+                </p>
+              </div>
+              <button
+                onClick={handleSendSMS}
+                disabled={!smsForm.message}
+                className="w-full px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                <Send size={20} />
+                Envoyer le SMS
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal WhatsApp */}
+      {showWhatsAppModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full">
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                  <Phone className="text-emerald-600" />
+                  Envoyer un WhatsApp
+                </h2>
+                <button
+                  onClick={() => setShowWhatsAppModal(false)}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <X size={24} />
+                </button>
+              </div>
+            </div>
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Template</label>
+                <select
+                  value={whatsappForm.template}
+                  onChange={(e) => {
+                    const template = whatsappTemplates.find(t => t.id === e.target.value);
+                    if (template) {
+                      setWhatsappForm({
+                        template: e.target.value,
+                        message: template.message
+                      });
+                    }
+                  }}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
+                >
+                  <option value="">Sélectionner un template</option>
+                  {whatsappTemplates.map(t => (
+                    <option key={t.id} value={t.id}>{t.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Message</label>
+                <textarea
+                  value={whatsappForm.message}
+                  onChange={(e) => setWhatsappForm({ ...whatsappForm, message: e.target.value })}
+                  rows={6}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
+                  placeholder="Votre message WhatsApp..."
+                />
+              </div>
+              <button
+                onClick={handleSendWhatsApp}
+                disabled={!whatsappForm.message}
+                className="w-full px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                <Send size={20} />
+                Envoyer via WhatsApp
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
