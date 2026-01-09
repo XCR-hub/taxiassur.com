@@ -132,6 +132,8 @@ const NotificationsManager = lazy(() => import('./backoffice/NotificationsManage
 const EmailAdvancedAnalytics = lazy(() => import('./backoffice/EmailAdvancedAnalytics'));
 const EmailInboxManager = lazy(() => import('./backoffice/EmailInboxManager'));
 const NewsletterDashboard = lazy(() => import('./backoffice/NewsletterDashboard'));
+const NewsletterSubscribe = lazy(() => import('./pages/NewsletterSubscribe'));
+const NewsletterUnsubscribe = lazy(() => import('./pages/NewsletterUnsubscribe'));
 
 const LoadingFallback = () => (
   <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-black flex items-center justify-center">
@@ -294,6 +296,16 @@ export const router = createBrowserRouter([
       {
         path: '/merci',
         element: <SuspenseWrapper><Merci /></SuspenseWrapper>,
+        errorElement: <RouteErrorFallback />
+      },
+      {
+        path: '/newsletter/subscribe',
+        element: <SuspenseWrapper><NewsletterSubscribe /></SuspenseWrapper>,
+        errorElement: <RouteErrorFallback />
+      },
+      {
+        path: '/newsletter/unsubscribe',
+        element: <SuspenseWrapper><NewsletterUnsubscribe /></SuspenseWrapper>,
         errorElement: <RouteErrorFallback />
       },
       {

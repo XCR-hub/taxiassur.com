@@ -1,6 +1,7 @@
 import React from 'react';
 import { Shield, Phone, Mail, MapPin, Facebook, Twitter, Linkedin, Share2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import NewsletterFooterWidget from './NewsletterFooterWidget';
 
 const Footer: React.FC = () => {
   const services = [
@@ -32,7 +33,7 @@ const Footer: React.FC = () => {
   return (
     <footer className="bg-black border-t border-gray-800">
       <div className="container-max py-12">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
           {/* Company Info */}
           <div>
             <div className="flex items-center space-x-3 mb-6">
@@ -206,6 +207,11 @@ const Footer: React.FC = () => {
                 Devis Gratuit
               </a>
             </div>
+          </div>
+
+          {/* Newsletter */}
+          <div>
+            <NewsletterFooterWidget />
           </div>
         </div>
 
