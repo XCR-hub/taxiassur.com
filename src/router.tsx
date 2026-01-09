@@ -48,14 +48,6 @@ const SeoTools = lazy(() => import('./backoffice/SeoTools'));
 const SecurityDashboard = lazy(() => import('./backoffice/SecurityDashboard'));
 const ConversionAnalytics = lazy(() => import('./backoffice/ConversionAnalytics'));
 const AnalyticsDashboard = lazy(() => import('./backoffice/AnalyticsDashboard'));
-const ToastDemo = lazy(() => import('./backoffice/ToastDemo'));
-const DataTableDemo = lazy(() => import('./backoffice/DataTableDemo'));
-const KanbanDemo = lazy(() => import('./backoffice/KanbanDemo'));
-const FileUploaderDemo = lazy(() => import('./backoffice/FileUploaderDemo'));
-const CalendarDemo = lazy(() => import('./backoffice/CalendarDemo'));
-const TooltipDemo = lazy(() => import('./backoffice/TooltipDemo'));
-const UIComponentsDemo = lazy(() => import('./backoffice/UIComponentsDemo'));
-const ProgressTimelineDemo = lazy(() => import('./backoffice/ProgressTimelineDemo'));
 const InsuranceCompaniesManager = lazy(() => import('./backoffice/InsuranceCompaniesManager'));
 const QuickDocumentsUpload = lazy(() => import('./backoffice/QuickDocumentsUpload'));
 // PartnerFinder supprimé - redirige vers BacklinkReports
@@ -476,38 +468,6 @@ export const router = createBrowserRouter([
       {
         path: '/backoffice/conversion-analytics',
         element: <AuthGuard><SuspenseWrapper><ConversionAnalytics /></SuspenseWrapper></AuthGuard>
-      },
-      {
-        path: '/backoffice/toast-demo',
-        element: <AuthGuard><SuspenseWrapper><ToastDemo /></SuspenseWrapper></AuthGuard>
-      },
-      {
-        path: '/backoffice/datatable-demo',
-        element: <AuthGuard><SuspenseWrapper><DataTableDemo /></SuspenseWrapper></AuthGuard>
-      },
-      {
-        path: '/backoffice/kanban-demo',
-        element: <AuthGuard><SuspenseWrapper><KanbanDemo /></SuspenseWrapper></AuthGuard>
-      },
-      {
-        path: '/backoffice/fileuploader-demo',
-        element: <AuthGuard><SuspenseWrapper><FileUploaderDemo /></SuspenseWrapper></AuthGuard>
-      },
-      {
-        path: '/backoffice/calendar-demo',
-        element: <AuthGuard><SuspenseWrapper><CalendarDemo /></SuspenseWrapper></AuthGuard>
-      },
-      {
-        path: '/backoffice/tooltip-demo',
-        element: <AuthGuard><SuspenseWrapper><TooltipDemo /></SuspenseWrapper></AuthGuard>
-      },
-      {
-        path: '/backoffice/ui-components-demo',
-        element: <AuthGuard><SuspenseWrapper><UIComponentsDemo /></SuspenseWrapper></AuthGuard>
-      },
-      {
-        path: '/backoffice/progress-timeline-demo',
-        element: <AuthGuard><SuspenseWrapper><ProgressTimelineDemo /></SuspenseWrapper></AuthGuard>
       },
       {
         path: '/backoffice/insurance-companies',

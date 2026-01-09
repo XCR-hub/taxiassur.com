@@ -119,10 +119,23 @@ export default defineConfig(({ mode }) => ({
             if (id.includes('Backlink') || id.includes('SEO') || id.includes('Content')) {
               return 'backoffice-seo';
             }
-            if (id.includes('Social') || id.includes('WhatsApp') || id.includes('Campaign')) {
+            if (id.includes('Social') || id.includes('WhatsApp') || id.includes('Campaign') || id.includes('Email')) {
               return 'backoffice-marketing';
             }
+            if (id.includes('Analytics') || id.includes('Dashboard') && !id.includes('Master')) {
+              return 'backoffice-analytics';
+            }
             return 'backoffice-core';
+          }
+
+          // Séparer les charts dans leur propre chunk
+          if (id.includes('/components/charts/')) {
+            return 'charts';
+          }
+
+          // Séparer l'espace client
+          if (id.includes('/components/client/') || id.includes('/pages/client/')) {
+            return 'client-portal';
           }
 
           if (id.includes('/lib/supabase') || id.includes('/lib/auth')) {
