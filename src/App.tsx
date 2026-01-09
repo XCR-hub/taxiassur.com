@@ -3,6 +3,7 @@ import { RouterProvider } from 'react-router-dom';
 import { router } from './router';
 import { ToastProvider } from './contexts/ToastContext';
 import { ModalProvider } from './contexts/ModalContext';
+import { ThemeProvider } from './contexts/ThemeContext';
 import ErrorBoundary from './components/ErrorBoundary';
 
 const PerformanceOptimizer = lazy(() => import('./components/PerformanceOptimizer'));
@@ -30,20 +31,22 @@ function App() {
 
   return (
     <ErrorBoundary>
-      <ToastProvider>
-        <ModalProvider>
-          {showEnhancements && (
-            <Suspense fallback={null}>
-              <PerformanceOptimizer>
-                <AITaxiBackground intensity="low" />
-              </PerformanceOptimizer>
+      <ThemeProvider>
+        <ToastProvider>
+          <ModalProvider>
+            {showEnhancements && (
+              <Suspense fallback={null}>
+                <PerformanceOptimizer>
+                  <AITaxiBackground intensity="low" />
+                </PerformanceOptimizer>
+              </Suspense>
+            )}
+            <Suspense fallback={<SimpleFallback />}>
+              <RouterProvider router={router} />
             </Suspense>
-          )}
-          <Suspense fallback={<SimpleFallback />}>
-            <RouterProvider router={router} />
-          </Suspense>
-        </ModalProvider>
-      </ToastProvider>
+          </ModalProvider>
+        </ToastProvider>
+      </ThemeProvider>
     </ErrorBoundary>
   );
 }
