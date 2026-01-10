@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Activity, TrendingUp, Zap, Target, Brain, AlertTriangle, CheckCircle, Clock } from 'lucide-react';
+import { Activity, TrendingUp, Zap, Target, Brain, AlertTriangle, CheckCircle, Clock, ArrowLeft } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
-import BackButton from './BackButton';
+import { useNavigate } from 'react-router-dom';
 import { logger } from '@/lib/logger';
 
 interface AIDecision {
@@ -32,6 +32,7 @@ interface AIKeyword {
 }
 
 const AIMasterDashboard: React.FC = () => {
+  const navigate = useNavigate();
   const [decisions, setDecisions] = useState<AIDecision[]>([]);
   const [metrics, setMetrics] = useState<AIMetric[]>([]);
   const [keywords, setKeywords] = useState<AIKeyword[]>([]);
@@ -117,7 +118,15 @@ const AIMasterDashboard: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="bg-gradient-to-r from-purple-600 to-indigo-700 text-white py-8 px-6">
-        <BackButton />
+        <div className="max-w-7xl mx-auto mb-4">
+          <button
+            onClick={() => navigate('/backoffice/crm')}
+            className="flex items-center gap-2 px-4 py-2 text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition"
+          >
+            <ArrowLeft size={20} />
+            Retour
+          </button>
+        </div>
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-between">
             <div>

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Mail, Save, RefreshCw, CheckCircle, AlertCircle, Eye, EyeOff } from 'lucide-react';
-import BackButton from './BackButton';
+import { Mail, Save, RefreshCw, CheckCircle, AlertCircle, Eye, EyeOff, ArrowLeft } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 interface EmailAccount {
   id: string;
@@ -17,6 +17,7 @@ interface EmailAccount {
 }
 
 export default function EmailAccountSettings() {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
@@ -160,7 +161,13 @@ export default function EmailAccountSettings() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-8">
       <div className="max-w-4xl mx-auto">
-        <BackButton />
+        <button
+          onClick={() => navigate('/backoffice/crm')}
+          className="mb-6 flex items-center gap-2 px-4 py-2 text-slate-300 hover:text-white hover:bg-slate-800/50 rounded-lg transition"
+        >
+          <ArrowLeft size={20} />
+          Retour
+        </button>
 
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-white mb-3">

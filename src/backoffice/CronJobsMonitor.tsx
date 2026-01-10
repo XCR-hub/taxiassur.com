@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { RefreshCw, CheckCircle, XCircle, Clock, Zap, Activity } from 'lucide-react';
-import BackButton from './BackButton';
+import { RefreshCw, CheckCircle, XCircle, Clock, Zap, Activity, ArrowLeft } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 interface CronJob {
   jobid: number;
@@ -18,6 +18,7 @@ interface CronStats {
 }
 
 export default function CronJobsMonitor() {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [jobs, setJobs] = useState<CronJob[]>([]);
   const [stats, setStats] = useState<CronStats>({ total: 0, active: 0, inactive: 0 });
@@ -115,7 +116,13 @@ export default function CronJobsMonitor() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-8">
       <div className="max-w-7xl mx-auto">
-        <BackButton />
+        <button
+          onClick={() => navigate('/backoffice/crm')}
+          className="mb-6 flex items-center gap-2 px-4 py-2 text-slate-300 hover:text-white hover:bg-slate-800/50 rounded-lg transition"
+        >
+          <ArrowLeft size={20} />
+          Retour
+        </button>
 
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-white mb-3 flex items-center gap-3">
