@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🔑 Connexion Admin - TaxiAssur</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .container {
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      padding: 40px;
+      max-width: 500px;
+      width: 100%;
+    }
+
+    .logo {
+      text-align: center;
+      font-size: 48px;
+      margin-bottom: 10px;
+    }
+
+    h1 {
+      text-align: center;
+      color: #1e293b;
+      font-size: 28px;
+      margin-bottom: 10px;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #64748b;
+      font-size: 14px;
+      margin-bottom: 30px;
+    }
+
+    .credentials {
+      background: #f1f5f9;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 30px;
+      border: 2px solid #e2e8f0;
+    }
+
+    .credential-item {
+      margin-bottom: 20px;
+    }
+
+    .credential-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .label {
+      display: block;
+      color: #475569;
+      font-weight: 600;
+      margin-bottom: 8px;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .value-container {
+      display: flex;
+      align-items: center;
+      background: white;
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 12px;
+      position: relative;
+    }
+
+    .value {
+      flex: 1;
+      font-family: 'Courier New', monospace;
+      font-size: 16px;
+      color: #1e293b;
+      font-weight: 600;
+      word-break: break-all;
+    }
+
+    .copy-btn {
+      background: #3b82f6;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      margin-left: 10px;
+      white-space: nowrap;
+      transition: all 0.2s;
+    }
+
+    .copy-btn:hover {
+      background: #2563eb;
+      transform: scale(1.05);
+    }
+
+    .copy-btn.copied {
+      background: #10b981;
+    }
+
+    .warning {
+      background: #fef3c7;
+      border: 2px solid #fbbf24;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 30px;
+    }
+
+    .warning-title {
+      color: #92400e;
+      font-weight: 700;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .warning-text {
+      color: #78350f;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .special-chars {
+      background: white;
+      padding: 12px;
+      border-radius: 8px;
+      margin-top: 10px;
+      font-family: 'Courier New', monospace;
+      font-size: 20px;
+      text-align: center;
+      letter-spacing: 4px;
+      color: #dc2626;
+      font-weight: 700;
+    }
+
+    .action-btn {
+      width: 100%;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      padding: 16px;
+      border-radius: 12px;
+      font-size: 18px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s;
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+      margin-bottom: 15px;
+    }
+
+    .action-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+    }
+
+    .action-btn.secondary {
+      background: #64748b;
+      box-shadow: 0 4px 15px rgba(100, 116, 139, 0.3);
+    }
+
+    .action-btn.secondary:hover {
+      background: #475569;
+    }
+
+    .info {
+      background: #dbeafe;
+      border: 2px solid #3b82f6;
+      border-radius: 12px;
+      padding: 16px;
+      margin-top: 20px;
+      text-align: center;
+    }
+
+    .info-text {
+      color: #1e40af;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .info-link {
+      color: #2563eb;
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    .info-link:hover {
+      text-decoration: underline;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .copying {
+      animation: pulse 1s infinite;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo">🔑</div>
+    <h1>Connexion Admin</h1>
+    <p class="subtitle">TaxiAssur Backoffice</p>
+
+    <div class="credentials">
+      <div class="credential-item">
+        <span class="label">📧 Email</span>
+        <div class="value-container">
+          <span class="value" id="email">master@taxiassur.com</span>
+          <button class="copy-btn" onclick="copyText('email')">Copier</button>
+        </div>
+      </div>
+
+      <div class="credential-item">
+        <span class="label">🔒 Mot de passe</span>
+        <div class="value-container">
+          <span class="value" id="password">TaxiAssur2025!,&</span>
+          <button class="copy-btn" onclick="copyText('password')">Copier</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="warning">
+      <div class="warning-title">
+        ⚠️ Attention aux caractères spéciaux
+      </div>
+      <p class="warning-text">
+        Le mot de passe contient des caractères spéciaux.
+        <strong>Utilisez le bouton "Copier"</strong> pour éviter les erreurs de frappe.
+      </p>
+      <div class="special-chars">! , &</div>
+    </div>
+
+    <button class="action-btn" onclick="goToBackoffice()">
+      🚀 Aller au Backoffice
+    </button>
+
+    <button class="action-btn secondary" onclick="copyAll()">
+      📋 Copier Email + Mot de passe
+    </button>
+
+    <div class="info">
+      <p class="info-text">
+        <strong>💡 Astuce :</strong> Une fois sur la page de connexion,
+        collez l'email puis le mot de passe avec Ctrl+V (Cmd+V sur Mac).
+      </p>
+      <p class="info-text" style="margin-top: 10px;">
+        <strong>🔗 URL directe :</strong><br>
+        <a href="https://taxiassur.com/backoffice" class="info-link" target="_blank">
+          taxiassur.com/backoffice
+        </a>
+      </p>
+    </div>
+  </div>
+
+  <script>
+    function copyText(id) {
+      const element = document.getElementById(id);
+      const text = element.textContent;
+      const button = element.nextElementSibling;
+
+      navigator.clipboard.writeText(text).then(() => {
+        const originalText = button.textContent;
+        button.textContent = '✓ Copié !';
+        button.classList.add('copied');
+
+        setTimeout(() => {
+          button.textContent = originalText;
+          button.classList.remove('copied');
+        }, 2000);
+      });
+    }
+
+    function copyAll() {
+      const email = document.getElementById('email').textContent;
+      const password = document.getElementById('password').textContent;
+      const text = `Email: ${email}\nMot de passe: ${password}`;
+
+      navigator.clipboard.writeText(text).then(() => {
+        const button = event.target;
+        const originalText = button.textContent;
+        button.textContent = '✓ Tout copié !';
+        button.classList.add('copied');
+        button.classList.add('copying');
+
+        setTimeout(() => {
+          button.textContent = originalText;
+          button.classList.remove('copied');
+          button.classList.remove('copying');
+        }, 2000);
+      });
+    }
+
+    function goToBackoffice() {
+      const button = event.target;
+      button.textContent = '⏳ Redirection...';
+      button.classList.add('copying');
+
+      setTimeout(() => {
+        window.location.href = 'https://taxiassur.com/backoffice';
+      }, 500);
+    }
+  </script>
+</body>
+</html>
