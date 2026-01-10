@@ -30,7 +30,6 @@ import {
 } from 'lucide-react';
 import { pipelineService, CRMLead, PIPELINE_STATUSES } from '@/lib/crm-pipeline';
 import { supabase } from '@/lib/supabase';
-import BackButton from './BackButton';
 import QuoteManager from './QuoteManager';
 import ElectronicSignature from '@/components/ElectronicSignature';
 
@@ -501,8 +500,6 @@ const CRMLeadDetail: React.FC = () => {
       {/* Header avec gradient */}
       <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 text-white">
         <div className="max-w-7xl mx-auto px-6 py-8">
-          <BackButton to="/backoffice/crm-killer/pipeline" label="Retour au pipeline" showHomeIcon={false} />
-
           <div className="flex items-start justify-between mb-6">
             <div className="flex items-start gap-4">
               <div className="w-20 h-20 rounded-2xl bg-white/20 backdrop-blur-lg flex items-center justify-center text-4xl shadow-xl border-2 border-white/30">

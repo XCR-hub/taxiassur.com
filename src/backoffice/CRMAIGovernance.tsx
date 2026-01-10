@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { Bot, Brain, Sparkles, TrendingUp, CheckCircle, XCircle, AlertCircle, Clock } from 'lucide-react';
 import { aiGovernanceService, AIDecision, AI_AGENTS, AIAgent } from '@/lib/crm-ai-governance';
 import { AIDecisionCard } from '@/components/crm/AIDecisionCard';
-import BackButton from './BackButton';
 
 const CRMAIGovernance: React.FC = () => {
   const [loading, setLoading] = useState(true);
@@ -76,7 +75,6 @@ const CRMAIGovernance: React.FC = () => {
     <div className="min-h-screen bg-gray-50">
       <div className="bg-gradient-to-r from-pink-600 to-purple-600 text-white">
         <div className="max-w-7xl mx-auto px-6 py-8">
-          <BackButton to="/backoffice/crm" />
           <div className="flex items-center gap-3 mb-4">
             <Brain size={48} />
             <div>

@@ -648,11 +648,6 @@ export const router = createBrowserRouter([
         errorElement: <RouteErrorFallback />
       },
       {
-        path: '/backoffice/automations',
-        element: <AuthGuard><SuspenseWrapper><CronJobsMonitor /></SuspenseWrapper></AuthGuard>,
-        errorElement: <RouteErrorFallback />
-      },
-      {
         path: '/backoffice/crm-old',
         element: <AuthGuard><SuspenseWrapper><CRMSaaSDashboard /></SuspenseWrapper></AuthGuard>
       },

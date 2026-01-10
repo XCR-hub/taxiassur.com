@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { Plus, Search, Filter, RefreshCw, AlertCircle, TrendingUp, Clock } from 'lucide-react';
 import { pipelineService, PIPELINE_STATUSES, PipelineStatus, CRMLead } from '@/lib/crm-pipeline';
 import { PipelineCard } from '@/components/crm/PipelineCard';
-import BackButton from './BackButton';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/lib/supabase';
 
@@ -223,7 +222,6 @@ const CRMPipelineKanban: React.FC = () => {
         <div className="max-w-full px-6 py-4">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <BackButton to="/backoffice/crm" />
               <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
                 Pipeline Kanban
                 {refreshing && (

@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Settings, Users, Bell, Shield, Database, Zap, Mail, MessageSquare, Bot, Save, CheckCircle } from 'lucide-react';
-import BackButton from './BackButton';
 import { supabase } from '@/lib/supabase';
 
 interface CRMSettings {
@@ -138,7 +137,6 @@ const CRMAdminSettings: React.FC = () => {
     <div className="min-h-screen bg-gray-50">
       <div className="bg-gradient-to-r from-gray-900 to-gray-800 text-white">
         <div className="max-w-7xl mx-auto px-6 py-8">
-          <BackButton />
           <div className="flex items-center gap-3">
             <Settings size={40} />
             <div>

@@ -17,7 +17,6 @@ import {
   AlertCircle,
   Settings,
 } from 'lucide-react';
-import BackButton from './BackButton';
 import { supabase } from '@/lib/supabase';
 
 interface EmailMessage {
@@ -304,7 +303,6 @@ const CRMInboxMulticanal: React.FC = () => {
   return (
     <div className="h-screen bg-gray-50 flex flex-col">
       <div className="bg-gradient-to-r from-blue-900 to-blue-800 text-white px-6 py-6">
-        <BackButton />
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-4xl font-bold">Inbox Multicanal</h1>

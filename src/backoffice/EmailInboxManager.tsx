@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Mail, RefreshCw, Download, Check, X, User, Calendar, MessageCircle, AlertCircle } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
-import BackButton from './BackButton';
 
 interface EmailInbox {
   id: string;
@@ -211,7 +210,6 @@ const EmailInboxManager: React.FC = () => {
     <div className="min-h-screen bg-gray-50">
       <div className="bg-white border-b sticky top-0 z-10 shadow-sm">
         <div className="max-w-7xl mx-auto px-6 py-4">
-          <BackButton to="/backoffice/crm" />
           <div className="flex items-center justify-between mb-4">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">

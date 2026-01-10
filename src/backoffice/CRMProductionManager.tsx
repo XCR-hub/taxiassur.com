@@ -3,7 +3,6 @@ import { FileText, CheckCircle, Clock, Upload, CreditCard, PenTool, AlertTriangl
 import { pipelineService } from '@/lib/crm-pipeline';
 import { productionService } from '@/lib/crm-production';
 import { DocumentChecklist } from '@/components/crm/DocumentChecklist';
-import BackButton from './BackButton';
 
 const CRMProductionManager: React.FC = () => {
   const [loading, setLoading] = useState(true);
@@ -85,7 +84,6 @@ const CRMProductionManager: React.FC = () => {
     <div className="min-h-screen bg-gray-50">
       <div className="bg-gradient-to-r from-orange-600 to-red-600 text-white">
         <div className="max-w-7xl mx-auto px-6 py-8">
-          <BackButton to="/backoffice/crm" />
           <h1 className="text-4xl font-bold mb-4">Manager de Production</h1>
           <p className="text-orange-100 mb-6">Documents, Signatures et Paiements</p>
 
