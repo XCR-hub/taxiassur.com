@@ -158,10 +158,10 @@ const CRMInboxMulticanal: React.FC = () => {
     try {
       setSyncing(true);
       setSyncStatus('syncing');
-      setSyncMessage('Connexion au serveur IMAP IONOS...');
+      setSyncMessage('🔄 Synchronisation des emails et affectation aux leads...');
 
       const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/sync-ionos-imap`,
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/sync-all-emails-complete`,
         {
           method: 'POST',
           headers: {
@@ -172,25 +172,39 @@ const CRMInboxMulticanal: React.FC = () => {
       );
 
       const result = await response.json();
-      console.log('Sync result:', result);
+      console.log('Complete sync result:', result);
 
       if (result.success) {
         setSyncStatus('success');
-        const { inserted, skipped, total_retrieved } = result.stats || {};
-        setSyncMessage(`✅ Synchronisation réussie ! ${inserted} nouveaux emails, ${skipped} déjà synchronisés, ${total_retrieved} emails récupérés.`);
+        const {
+          emails_retrieved,
+          emails_inserted,
+          emails_linked,
+          leads_created,
+          interactions_created
+        } = result.stats || {};
+
+        setSyncMessage(
+          `✅ Synchronisation complète réussie !\n\n` +
+          `📧 ${emails_retrieved || 0} emails récupérés (${emails_inserted || 0} nouveaux)\n` +
+          `👤 ${leads_created || 0} nouveaux leads créés\n` +
+          `🔗 ${emails_linked || 0} emails affectés aux leads\n` +
+          `💬 ${interactions_created || 0} interactions enregistrées`
+        );
+
         await loadMessages();
         await loadStats();
 
         setTimeout(() => {
           setSyncStatus('idle');
           setSyncMessage('');
-        }, 5000);
+        }, 8000);
       } else {
         setSyncStatus('error');
         setSyncMessage(result.error || result.message || 'Erreur lors de la synchronisation');
 
-        if (result.note) {
-          setSyncMessage(prev => `${prev}\n\n💡 ${result.note}`);
+        if (result.details?.errors?.length > 0) {
+          setSyncMessage(prev => `${prev}\n\n⚠️ Détails: ${result.details.errors.join(', ')}`);
         }
       }
     } catch (error) {
