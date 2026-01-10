@@ -56,6 +56,9 @@ const OutreachComposer = lazy(() => import('./backoffice/OutreachComposer'));
 const ComplianceCenter = lazy(() => import('./backoffice/ComplianceCenter'));
 const AuthCallbackYoutube = lazy(() => import('./pages/AuthCallbackYoutube'));
 const AuthCallbackLinkedin = lazy(() => import('./pages/AuthCallbackLinkedin'));
+const AuthCallbackTwitter = lazy(() => import('./pages/AuthCallbackTwitter'));
+const AuthCallbackPinterest = lazy(() => import('./pages/AuthCallbackPinterest'));
+const SocialConnectionsManager = lazy(() => import('./backoffice/SocialConnectionsManager'));
 const DirectoryAssistant = lazy(() => import('./backoffice/DirectoryAssistant'));
 const PopupManager = lazy(() => import('./backoffice/PopupManager'));
 const NewsManager = lazy(() => import('./backoffice/NewsManager'));
@@ -632,6 +635,26 @@ export const router = createBrowserRouter([
       {
         path: '/auth/linkedin/callback',
         element: <SuspenseWrapper><AuthCallbackLinkedin /></SuspenseWrapper>
+      },
+      {
+        path: '/auth/callback/youtube',
+        element: <SuspenseWrapper><AuthCallbackYoutube /></SuspenseWrapper>
+      },
+      {
+        path: '/auth/callback/linkedin',
+        element: <SuspenseWrapper><AuthCallbackLinkedin /></SuspenseWrapper>
+      },
+      {
+        path: '/auth/callback/twitter',
+        element: <SuspenseWrapper><AuthCallbackTwitter /></SuspenseWrapper>
+      },
+      {
+        path: '/auth/callback/pinterest',
+        element: <SuspenseWrapper><AuthCallbackPinterest /></SuspenseWrapper>
+      },
+      {
+        path: '/backoffice/social-connections',
+        element: <AuthGuard><SuspenseWrapper><SocialConnectionsManager /></SuspenseWrapper></AuthGuard>
       },
       {
         path: '/backoffice/lead-manager',
