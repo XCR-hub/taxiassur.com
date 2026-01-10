@@ -15,6 +15,7 @@ import {
   Send,
   Archive,
   AlertCircle,
+  Settings,
 } from 'lucide-react';
 import BackButton from './BackButton';
 import { supabase } from '@/lib/supabase';
@@ -465,12 +466,64 @@ const CRMInboxMulticanal: React.FC = () => {
               <p className="text-gray-600 mt-4">Chargement des emails...</p>
             </div>
           ) : messages.length === 0 ? (
-            <div className="text-center py-12">
-              <Mail size={48} className="text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-600 text-lg">Aucun email trouvé</p>
-              <p className="text-gray-500 text-sm mt-2">
-                Cliquez sur "Synchroniser" pour récupérer vos emails
+            <div className="text-center py-12 max-w-2xl mx-auto">
+              <Mail size={64} className="text-gray-300 mx-auto mb-6" />
+              <h3 className="text-gray-800 text-2xl font-semibold mb-3">Aucun email trouvé</h3>
+              <p className="text-gray-600 mb-6">
+                Votre inbox est vide. Pour commencer à recevoir vos emails :
               </p>
+
+              <div className="space-y-4 text-left bg-blue-50 border-2 border-blue-200 rounded-xl p-6">
+                <div className="flex items-start gap-4">
+                  <div className="bg-blue-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold flex-shrink-0">
+                    1
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-semibold text-gray-800 mb-1">Configurez votre mot de passe IMAP</p>
+                    <p className="text-sm text-gray-600 mb-2">
+                      Allez dans la configuration email pour ajouter votre mot de passe IONOS
+                    </p>
+                    <a
+                      href="/backoffice/email-settings"
+                      className="inline-flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 font-medium"
+                    >
+                      <Settings size={16} />
+                      Configurer maintenant →
+                    </a>
+                  </div>
+                </div>
+
+                <div className="border-t-2 border-blue-200 pt-4"></div>
+
+                <div className="flex items-start gap-4">
+                  <div className="bg-blue-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold flex-shrink-0">
+                    2
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-semibold text-gray-800 mb-1">Synchronisez vos emails</p>
+                    <p className="text-sm text-gray-600 mb-2">
+                      Cliquez sur le bouton "Synchroniser" en haut de page
+                    </p>
+                    <button
+                      onClick={syncEmails}
+                      disabled={syncing}
+                      className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm font-medium disabled:opacity-50"
+                    >
+                      <RefreshCw size={16} className={syncing ? 'animate-spin' : ''} />
+                      {syncing ? 'Synchronisation...' : 'Synchroniser maintenant'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-6 text-sm text-gray-500">
+                <p>
+                  💡 Besoin d'aide ? Consultez le{' '}
+                  <a href="#" className="text-blue-600 hover:underline">
+                    guide de configuration
+                  </a>
+                </p>
+              </div>
             </div>
           ) : (
             <div className="space-y-2">
