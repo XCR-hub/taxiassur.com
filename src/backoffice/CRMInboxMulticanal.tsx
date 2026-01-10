@@ -14,6 +14,7 @@ import {
   CheckCircle,
   Send,
   Archive,
+  AlertCircle,
 } from 'lucide-react';
 import BackButton from './BackButton';
 import { supabase } from '@/lib/supabase';
@@ -47,6 +48,8 @@ const CRMInboxMulticanal: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'date' | 'priority'>('date');
   const [stats, setStats] = useState({ total: 0, unread: 0, leads: 0, starred: 0 });
+  const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'success' | 'error'>('idle');
+  const [syncMessage, setSyncMessage] = useState('');
 
   useEffect(() => {
     loadMessages();
@@ -154,9 +157,11 @@ const CRMInboxMulticanal: React.FC = () => {
   const syncEmails = async () => {
     try {
       setSyncing(true);
+      setSyncStatus('syncing');
+      setSyncMessage('Connexion au serveur IMAP IONOS...');
 
       const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/sync-all-emails`,
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/sync-ionos-imap`,
         {
           method: 'POST',
           headers: {
@@ -167,17 +172,31 @@ const CRMInboxMulticanal: React.FC = () => {
       );
 
       const result = await response.json();
+      console.log('Sync result:', result);
 
       if (result.success) {
+        setSyncStatus('success');
+        const { inserted, skipped, total_retrieved } = result.stats || {};
+        setSyncMessage(`✅ Synchronisation réussie ! ${inserted} nouveaux emails, ${skipped} déjà synchronisés, ${total_retrieved} emails récupérés.`);
         await loadMessages();
         await loadStats();
-        alert(`${result.totalFetched} nouveaux emails synchronisés !`);
+
+        setTimeout(() => {
+          setSyncStatus('idle');
+          setSyncMessage('');
+        }, 5000);
       } else {
-        alert('Erreur lors de la synchronisation');
+        setSyncStatus('error');
+        setSyncMessage(result.error || result.message || 'Erreur lors de la synchronisation');
+
+        if (result.note) {
+          setSyncMessage(prev => `${prev}\n\n💡 ${result.note}`);
+        }
       }
     } catch (error) {
       console.error('Error syncing emails:', error);
-      alert('Erreur lors de la synchronisation');
+      setSyncStatus('error');
+      setSyncMessage(`❌ Erreur réseau : ${error instanceof Error ? error.message : 'Impossible de contacter le serveur'}`);
     } finally {
       setSyncing(false);
     }
@@ -318,6 +337,21 @@ const CRMInboxMulticanal: React.FC = () => {
             <div className="text-blue-200 text-sm">Favoris</div>
           </div>
         </div>
+
+        {syncMessage && (
+          <div className={`mt-4 p-4 rounded-lg ${
+            syncStatus === 'success' ? 'bg-green-100 text-green-800' :
+            syncStatus === 'error' ? 'bg-red-100 text-red-800' :
+            'bg-blue-100 text-blue-800'
+          }`}>
+            <div className="flex items-start gap-3">
+              {syncStatus === 'syncing' && <RefreshCw className="animate-spin flex-shrink-0 mt-0.5" size={20} />}
+              {syncStatus === 'success' && <CheckCircle className="flex-shrink-0 mt-0.5" size={20} />}
+              {syncStatus === 'error' && <AlertCircle className="flex-shrink-0 mt-0.5" size={20} />}
+              <div className="flex-1 whitespace-pre-wrap text-sm">{syncMessage}</div>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="flex-1 overflow-hidden flex flex-col">
