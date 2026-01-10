@@ -105,6 +105,7 @@ const CRMMaster = lazy(() => import('./backoffice/CRMMaster'));
 const CRMSaaSDashboard = lazy(() => import('./backoffice/CRMSaaSDashboard'));
 const CRMKiller = lazy(() => import('./backoffice/CRMKiller'));
 const CRMKillerDashboard = lazy(() => import('./backoffice/CRMKillerDashboard'));
+const CRMLayout = lazy(() => import('./backoffice/CRMLayout'));
 const CRMPipelineKanban = lazy(() => import('./backoffice/CRMPipelineKanban'));
 const CRMInboxMulticanal = lazy(() => import('./backoffice/CRMInboxMulticanal'));
 const EmailAccountSettings = lazy(() => import('./backoffice/EmailAccountSettings'));
@@ -466,11 +467,6 @@ export const router = createBrowserRouter([
         element: <AuthGuard><SuspenseWrapper><UserManagement /></SuspenseWrapper></AuthGuard>
       },
       {
-        path: '/backoffice/analytics',
-        element: <AuthGuard><SuspenseWrapper><AnalyticsDashboard /></SuspenseWrapper></AuthGuard>,
-        errorElement: <RouteErrorFallback />
-      },
-      {
         path: '/backoffice/conversion-analytics',
         element: <AuthGuard><SuspenseWrapper><ConversionAnalytics /></SuspenseWrapper></AuthGuard>
       },
@@ -524,18 +520,127 @@ export const router = createBrowserRouter([
       },
       {
         path: '/backoffice/crm',
-        element: <AuthGuard><SuspenseWrapper><CRMKiller /></SuspenseWrapper></AuthGuard>,
-        errorElement: <RouteErrorFallback />
+        element: <AuthGuard><SuspenseWrapper><CRMLayout /></SuspenseWrapper></AuthGuard>,
+        errorElement: <RouteErrorFallback />,
+        children: [
+          {
+            index: true,
+            element: <CRMKillerDashboard />,
+            errorElement: <RouteErrorFallback />
+          }
+        ]
       },
       {
-        path: '/backoffice/crm-killer/pipeline',
-        element: <AuthGuard><SuspenseWrapper><CRMPipelineKanban /></SuspenseWrapper></AuthGuard>,
-        errorElement: <RouteErrorFallback />
+        path: '/backoffice/crm-killer',
+        element: <AuthGuard><SuspenseWrapper><CRMLayout /></SuspenseWrapper></AuthGuard>,
+        errorElement: <RouteErrorFallback />,
+        children: [
+          {
+            path: 'pipeline',
+            element: <CRMPipelineKanban />,
+            errorElement: <RouteErrorFallback />
+          },
+          {
+            path: 'inbox',
+            element: <CRMInboxMulticanal />,
+            errorElement: <RouteErrorFallback />
+          },
+          {
+            path: 'production',
+            element: <CRMProductionManager />,
+            errorElement: <RouteErrorFallback />
+          },
+          {
+            path: 'retention',
+            element: <CRMRetentionCenter />,
+            errorElement: <RouteErrorFallback />
+          },
+          {
+            path: 'templates',
+            element: <CRMTemplatesManager />,
+            errorElement: <RouteErrorFallback />
+          },
+          {
+            path: 'ia',
+            element: <CRMAIGovernance />,
+            errorElement: <RouteErrorFallback />
+          },
+          {
+            path: 'lead/:leadId',
+            element: <CRMLeadDetail />,
+            errorElement: <RouteErrorFallback />
+          },
+          {
+            path: 'settings',
+            element: <CRMAdminSettings />,
+            errorElement: <RouteErrorFallback />
+          },
+          {
+            path: 'email-inbox',
+            element: <EmailInboxManager />,
+            errorElement: <RouteErrorFallback />
+          }
+        ]
       },
       {
-        path: '/backoffice/crm-killer/inbox',
-        element: <AuthGuard><SuspenseWrapper><CRMInboxMulticanal /></SuspenseWrapper></AuthGuard>,
-        errorElement: <RouteErrorFallback />
+        path: '/backoffice/email-marketing',
+        element: <AuthGuard><SuspenseWrapper><CRMLayout /></SuspenseWrapper></AuthGuard>,
+        errorElement: <RouteErrorFallback />,
+        children: [
+          {
+            index: true,
+            element: <EmailMarketingHub />,
+            errorElement: <RouteErrorFallback />
+          }
+        ]
+      },
+      {
+        path: '/backoffice/whatsapp',
+        element: <AuthGuard><SuspenseWrapper><CRMLayout /></SuspenseWrapper></AuthGuard>,
+        errorElement: <RouteErrorFallback />,
+        children: [
+          {
+            index: true,
+            element: <WhatsAppManager />,
+            errorElement: <RouteErrorFallback />
+          }
+        ]
+      },
+      {
+        path: '/backoffice/analytics',
+        element: <AuthGuard><SuspenseWrapper><CRMLayout /></SuspenseWrapper></AuthGuard>,
+        errorElement: <RouteErrorFallback />,
+        children: [
+          {
+            index: true,
+            element: <AnalyticsDashboard />,
+            errorElement: <RouteErrorFallback />
+          }
+        ]
+      },
+      {
+        path: '/backoffice/automations',
+        element: <AuthGuard><SuspenseWrapper><CRMLayout /></SuspenseWrapper></AuthGuard>,
+        errorElement: <RouteErrorFallback />,
+        children: [
+          {
+            index: true,
+            element: <CronJobsMonitor />,
+            errorElement: <RouteErrorFallback />
+          }
+        ]
+      },
+      {
+        path: '/backoffice/newsletter',
+        element: <AuthGuard><SuspenseWrapper><CRMLayout /></SuspenseWrapper></AuthGuard>,
+        errorElement: <RouteErrorFallback />,
+        children: [
+          {
+            index: true,
+            element: <NewsletterDashboard />,
+            errorElement: <RouteErrorFallback />
+          }
+        ]
       },
       {
         path: '/backoffice/email-settings',
@@ -545,41 +650,6 @@ export const router = createBrowserRouter([
       {
         path: '/backoffice/automations',
         element: <AuthGuard><SuspenseWrapper><CronJobsMonitor /></SuspenseWrapper></AuthGuard>,
-        errorElement: <RouteErrorFallback />
-      },
-      {
-        path: '/backoffice/crm-killer/production',
-        element: <AuthGuard><SuspenseWrapper><CRMProductionManager /></SuspenseWrapper></AuthGuard>,
-        errorElement: <RouteErrorFallback />
-      },
-      {
-        path: '/backoffice/crm-killer/retention',
-        element: <AuthGuard><SuspenseWrapper><CRMRetentionCenter /></SuspenseWrapper></AuthGuard>,
-        errorElement: <RouteErrorFallback />
-      },
-      {
-        path: '/backoffice/crm-killer/templates',
-        element: <AuthGuard><SuspenseWrapper><CRMTemplatesManager /></SuspenseWrapper></AuthGuard>,
-        errorElement: <RouteErrorFallback />
-      },
-      {
-        path: '/backoffice/crm-killer/ia',
-        element: <AuthGuard><SuspenseWrapper><CRMAIGovernance /></SuspenseWrapper></AuthGuard>,
-        errorElement: <RouteErrorFallback />
-      },
-      {
-        path: '/backoffice/crm-killer/lead/:leadId',
-        element: <AuthGuard><SuspenseWrapper><CRMLeadDetail /></SuspenseWrapper></AuthGuard>,
-        errorElement: <RouteErrorFallback />
-      },
-      {
-        path: '/backoffice/crm-killer/settings',
-        element: <AuthGuard><SuspenseWrapper><CRMAdminSettings /></SuspenseWrapper></AuthGuard>,
-        errorElement: <RouteErrorFallback />
-      },
-      {
-        path: '/backoffice/crm-killer/email-inbox',
-        element: <AuthGuard><SuspenseWrapper><EmailInboxManager /></SuspenseWrapper></AuthGuard>,
         errorElement: <RouteErrorFallback />
       },
       {
@@ -603,22 +673,8 @@ export const router = createBrowserRouter([
         element: <Navigate to="/backoffice/crm" replace />
       },
       {
-        path: '/backoffice/automations',
-        element: <AuthGuard><SuspenseWrapper><AutomationDashboard /></SuspenseWrapper></AuthGuard>
-      },
-      {
-        path: '/backoffice/whatsapp',
-        element: <AuthGuard><SuspenseWrapper><WhatsAppManager /></SuspenseWrapper></AuthGuard>,
-        errorElement: <RouteErrorFallback />
-      },
-      {
         path: '/backoffice/whatsapp-settings',
         element: <AuthGuard><SuspenseWrapper><WhatsAppSettings /></SuspenseWrapper></AuthGuard>
-      },
-      {
-        path: '/backoffice/email-marketing',
-        element: <AuthGuard><SuspenseWrapper><EmailMarketingHub /></SuspenseWrapper></AuthGuard>,
-        errorElement: <RouteErrorFallback />
       },
       {
         path: '/backoffice/smart-templates',
@@ -635,10 +691,6 @@ export const router = createBrowserRouter([
       {
         path: '/backoffice/email-analytics',
         element: <AuthGuard><SuspenseWrapper><EmailAdvancedAnalytics /></SuspenseWrapper></AuthGuard>
-      },
-      {
-        path: '/backoffice/newsletter',
-        element: <AuthGuard><SuspenseWrapper><NewsletterDashboard /></SuspenseWrapper></AuthGuard>
       },
       {
         path: '/auth/youtube/callback',
