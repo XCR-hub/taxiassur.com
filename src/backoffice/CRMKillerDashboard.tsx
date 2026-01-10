@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard,
   Users,
@@ -34,15 +34,23 @@ import {
   ArrowRight,
   TrendingDown,
   Eye,
-  RefreshCw
+  RefreshCw,
+  Send,
+  FileText,
+  UserPlus,
+  Sparkles,
+  Brain,
+  ThumbsUp,
+  ThumbsDown,
+  Bell,
+  ChevronRight,
+  Home,
+  LogOut,
+  Menu,
+  X
 } from 'lucide-react';
-import { pipelineService } from '@/lib/crm-pipeline';
-import { aiGovernanceService } from '@/lib/crm-ai-governance';
-import { channelEngineService } from '@/lib/crm-channel-engine';
-import { retentionService } from '@/lib/crm-retention';
-import { AIDecisionCard } from '@/components/crm/AIDecisionCard';
 import { supabase } from '@/lib/supabase';
-import BackButton from './BackButton';
+import { useAdminAuth } from '@/hooks/useAdminAuth';
 
 interface DashboardStats {
   total_leads: number;
@@ -59,25 +67,24 @@ interface DashboardStats {
   total_revenue: number;
 }
 
-interface Contact {
+interface RecentLead {
   id: string;
   email: string;
   phone: string;
   first_name?: string;
   last_name?: string;
-  company_name?: string;
-  contact_type: string;
-  stage: string;
-  lead_score: number;
-  conversion_probability: number;
+  status: string;
   created_at: string;
-  last_contact_at?: string;
+  lead_score?: number;
 }
 
 const CRMKillerDashboard: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { user, signOut } = useAdminAuth();
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'overview' | 'contacts' | 'pipeline' | 'campaigns' | 'analytics'>('overview');
+  const [refreshing, setRefreshing] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const [stats, setStats] = useState<DashboardStats>({
     total_leads: 0,
@@ -94,55 +101,131 @@ const CRMKillerDashboard: React.FC = () => {
     total_revenue: 0
   });
 
+  const [recentLeads, setRecentLeads] = useState<RecentLead[]>([]);
   const [recentAIDecisions, setRecentAIDecisions] = useState<any[]>([]);
-  const [pipelineDistribution, setPipelineDistribution] = useState<Record<string, number>>({});
-  const [recentContacts, setRecentContacts] = useState<Contact[]>([]);
-  const [campaigns, setCampaigns] = useState<any[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filterType, setFilterType] = useState('all');
+
+  // Menu items avec icônes et badges
+  const menuItems = [
+    {
+      id: 'overview',
+      label: 'Vue d\'ensemble',
+      icon: LayoutDashboard,
+      path: '/backoffice/crm',
+      badge: null
+    },
+    {
+      id: 'pipeline',
+      label: 'Pipeline Kanban',
+      icon: Target,
+      path: '/backoffice/crm-killer/pipeline',
+      badge: null
+    },
+    {
+      id: 'inbox',
+      label: 'Inbox Multicanal',
+      icon: Inbox,
+      path: '/backoffice/crm-killer/inbox',
+      badge: stats.unread_messages || null
+    },
+    {
+      id: 'production',
+      label: 'Production',
+      icon: FileCheck,
+      path: '/backoffice/crm-killer/production',
+      badge: (stats.pending_documents + stats.pending_payments) || null
+    },
+    {
+      id: 'retention',
+      label: 'Rétention',
+      icon: Shield,
+      path: '/backoffice/crm-killer/retention',
+      badge: stats.at_risk_clients || null
+    },
+    {
+      id: 'ia',
+      label: 'IA Governance',
+      icon: Bot,
+      path: '/backoffice/crm-killer/ia',
+      badge: stats.ai_decisions_pending || null
+    },
+    {
+      id: 'templates',
+      label: 'Templates',
+      icon: FileText,
+      path: '/backoffice/crm-killer/templates',
+      badge: null
+    },
+    {
+      id: 'email-marketing',
+      label: 'Email Marketing',
+      icon: Mail,
+      path: '/backoffice/email-marketing',
+      badge: null
+    },
+    {
+      id: 'whatsapp',
+      label: 'WhatsApp',
+      icon: MessageSquare,
+      path: '/backoffice/whatsapp',
+      badge: null
+    },
+    {
+      id: 'analytics',
+      label: 'Analytics',
+      icon: BarChart3,
+      path: '/backoffice/analytics',
+      badge: null
+    },
+    {
+      id: 'automations',
+      label: 'Automations',
+      icon: Zap,
+      path: '/backoffice/automations',
+      badge: null
+    },
+    {
+      id: 'newsletter',
+      label: 'Newsletter',
+      icon: Send,
+      path: '/backoffice/newsletter',
+      badge: null
+    }
+  ];
 
   useEffect(() => {
     loadDashboardData();
 
-    // Rafraîchir toutes les 30 secondes
     const interval = setInterval(loadDashboardData, 30000);
     return () => clearInterval(interval);
   }, []);
 
   const loadDashboardData = async () => {
-    setLoading(true);
+    if (!loading) setRefreshing(true);
+
     try {
-      const [
-        leads,
-        aiDecisions,
-        unreadCount,
-        criticalAlerts,
-        kanbanData
-      ] = await Promise.all([
-        pipelineService.getLeads(),
-        aiGovernanceService.getDecisions(undefined, 'pending'),
-        channelEngineService.getUnreadCount(),
-        retentionService.getCriticalAlertsCount(),
-        pipelineService.getKanbanData()
+      const [leadsRes, aiDecisionsRes, unreadCount, criticalAlerts] = await Promise.all([
+        supabase.from('crm_leads').select('*').order('created_at', { ascending: false }),
+        supabase.from('ai_decisions').select('*').eq('status', 'pending').limit(5),
+        supabase.from('channel_messages').select('id', { count: 'exact', head: true }).eq('is_read', false),
+        supabase.from('crm_retention_alerts').select('id', { count: 'exact', head: true }).eq('alert_type', 'churn_risk')
       ]);
 
-      // Calculer les stats
+      const leads = leadsRes.data || [];
+      const aiDecisions = aiDecisionsRes.data || [];
+
       const activeContracts = leads.filter(l => l.status === 'ACTIVE_CLIENT').length;
       const pendingDocs = leads.filter(l => l.status === 'DOCUMENTS_REQUIRED').length;
       const pendingPayments = leads.filter(l => l.status === 'PAYMENT_PENDING').length;
       const renewalOps = leads.filter(l => l.status === 'CROSS_SELLING').length;
 
-      // Nouveaux leads aujourd'hui
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       const newToday = leads.filter(l => new Date(l.created_at) >= today).length;
 
-      // Taux de conversion
       const closedWon = leads.filter(l => l.status === 'ACTIVE_CLIENT').length;
       const conversionRate = leads.length > 0 ? (closedWon / leads.length) * 100 : 0;
 
-      // Valeur moyenne
-      const avgValue = 1200; // À calculer depuis les vraies données
+      const avgValue = 1200;
       const totalRevenue = activeContracts * avgValue;
 
       setStats({
@@ -150,9 +233,9 @@ const CRMKillerDashboard: React.FC = () => {
         active_contracts: activeContracts,
         pending_documents: pendingDocs,
         pending_payments: pendingPayments,
-        unread_messages: unreadCount,
+        unread_messages: unreadCount.count || 0,
         ai_decisions_pending: aiDecisions.length,
-        at_risk_clients: criticalAlerts,
+        at_risk_clients: criticalAlerts.count || 0,
         renewal_opportunities: renewalOps,
         new_leads_today: newToday,
         conversion_rate: Math.round(conversionRate),
@@ -160,646 +243,431 @@ const CRMKillerDashboard: React.FC = () => {
         total_revenue: totalRevenue
       });
 
-      setRecentAIDecisions(aiDecisions.slice(0, 3));
+      setRecentLeads(leads.slice(0, 5).map(l => ({
+        id: l.id,
+        email: l.email,
+        phone: l.phone,
+        first_name: l.first_name,
+        last_name: l.last_name,
+        status: l.status,
+        created_at: l.created_at,
+        lead_score: l.lead_score
+      })));
 
-      // Distribution pipeline
-      const distribution: Record<string, number> = {};
-      Object.entries(kanbanData).forEach(([status, leadsArray]) => {
-        if ((leadsArray as any[]).length > 0) {
-          distribution[status] = (leadsArray as any[]).length;
-        }
-      });
-      setPipelineDistribution(distribution);
-
-      // Charger les contacts récents
-      await loadRecentContacts();
-
-      // Charger les campagnes
-      await loadCampaigns();
+      setRecentAIDecisions(aiDecisions);
 
     } catch (error) {
       console.error('Failed to load dashboard:', error);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   };
 
-  const loadRecentContacts = async () => {
-    try {
-      const { data: leadsData } = await supabase
-        .from('leads')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(10);
-
-      if (leadsData) {
-        const contacts: Contact[] = leadsData.map(lead => ({
-          id: lead.id,
-          email: lead.email,
-          phone: lead.phone,
-          first_name: lead.first_name,
-          last_name: lead.last_name,
-          company_name: lead.company_name,
-          contact_type: 'prospect_taxi',
-          stage: lead.status || 'new',
-          lead_score: lead.lead_score || 0,
-          conversion_probability: lead.conversion_probability || 0,
-          created_at: lead.created_at,
-          last_contact_at: lead.last_contact_at
-        }));
-        setRecentContacts(contacts);
-      }
-    } catch (error) {
-      console.error('Failed to load contacts:', error);
-    }
+  const handleRefresh = () => {
+    loadDashboardData();
   };
 
-  const loadCampaigns = async () => {
-    try {
-      const { data } = await supabase
-        .from('email_campaigns')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(5);
-
-      if (data) {
-        setCampaigns(data);
-      }
-    } catch (error) {
-      console.error('Failed to load campaigns:', error);
-    }
+  const handleLogout = async () => {
+    await signOut();
+    navigate('/backoffice');
   };
-
-  const quickActions = [
-    {
-      title: 'Pipeline Kanban',
-      description: 'Vue kanban du pipeline complet',
-      icon: LayoutDashboard,
-      color: 'from-blue-500 to-blue-600',
-      path: '/backoffice/crm-killer/pipeline'
-    },
-    {
-      title: 'Inbox Multicanal',
-      description: 'Messages email/SMS/WhatsApp',
-      icon: Inbox,
-      color: 'from-purple-500 to-purple-600',
-      path: '/backoffice/crm-killer/inbox',
-      badge: stats.unread_messages
-    },
-    {
-      title: 'Production',
-      description: 'Documents, signature, paiement',
-      icon: FileCheck,
-      color: 'from-orange-500 to-orange-600',
-      path: '/backoffice/crm-killer/production',
-      badge: stats.pending_documents + stats.pending_payments
-    },
-    {
-      title: 'Rétention',
-      description: 'Anti-churn & cross-sell',
-      icon: Shield,
-      color: 'from-green-500 to-green-600',
-      path: '/backoffice/crm-killer/retention',
-      badge: stats.at_risk_clients
-    },
-    {
-      title: 'IA Governance',
-      description: 'Council & décisions IA',
-      icon: Bot,
-      color: 'from-pink-500 to-pink-600',
-      path: '/backoffice/crm-killer/ia',
-      badge: stats.ai_decisions_pending
-    },
-    {
-      title: 'Templates',
-      description: 'Templates multicanaux & A/B tests',
-      icon: Mail,
-      color: 'from-indigo-500 to-indigo-600',
-      path: '/backoffice/crm-killer/templates'
-    },
-    {
-      title: 'Email Marketing Hub',
-      description: 'Campagnes & newsletters',
-      icon: Mail,
-      color: 'from-cyan-500 to-cyan-600',
-      path: '/backoffice/email-marketing'
-    },
-    {
-      title: 'Analytics',
-      description: 'Rapports & statistiques',
-      icon: BarChart3,
-      color: 'from-yellow-500 to-yellow-600',
-      path: '/backoffice/analytics'
-    },
-    {
-      title: 'WhatsApp Manager',
-      description: 'Gestion conversations WhatsApp',
-      icon: MessageSquare,
-      color: 'from-emerald-500 to-emerald-600',
-      path: '/backoffice/whatsapp'
-    }
-  ];
-
-  const kpiCards = [
-    {
-      title: 'Total Leads',
-      value: stats.total_leads,
-      icon: Users,
-      color: 'text-blue-600 bg-blue-100',
-      change: `+${stats.new_leads_today} aujourd'hui`,
-      trend: 'up'
-    },
-    {
-      title: 'Contrats Actifs',
-      value: stats.active_contracts,
-      icon: CheckCircle,
-      color: 'text-green-600 bg-green-100',
-      change: `${stats.conversion_rate}% conv.`,
-      trend: 'up'
-    },
-    {
-      title: 'Chiffre d\'Affaires',
-      value: `${Math.round(stats.total_revenue / 1000)}K€`,
-      icon: Euro,
-      color: 'text-emerald-600 bg-emerald-100',
-      change: `${stats.avg_deal_value}€ moy.`,
-      trend: 'up'
-    },
-    {
-      title: 'Messages Non Lus',
-      value: stats.unread_messages,
-      icon: Mail,
-      color: 'text-purple-600 bg-purple-100',
-      urgent: stats.unread_messages > 10
-    },
-    {
-      title: 'Docs en Attente',
-      value: stats.pending_documents,
-      icon: Clock,
-      color: 'text-orange-600 bg-orange-100',
-      urgent: stats.pending_documents > 5
-    },
-    {
-      title: 'Paiements en Attente',
-      value: stats.pending_payments,
-      icon: DollarSign,
-      color: 'text-yellow-600 bg-yellow-100',
-      urgent: stats.pending_payments > 3
-    },
-    {
-      title: 'Clients à Risque',
-      value: stats.at_risk_clients,
-      icon: AlertTriangle,
-      color: 'text-red-600 bg-red-100',
-      urgent: stats.at_risk_clients > 0
-    },
-    {
-      title: 'Opportunités',
-      value: stats.renewal_opportunities,
-      icon: TrendingUp,
-      color: 'text-teal-600 bg-teal-100'
-    },
-    {
-      title: 'Décisions IA',
-      value: stats.ai_decisions_pending,
-      icon: Bot,
-      color: 'text-pink-600 bg-pink-100',
-      urgent: stats.ai_decisions_pending > 5
-    }
-  ];
-
-  const tabs = [
-    { id: 'overview', label: 'Vue d\'ensemble', icon: LayoutDashboard },
-    { id: 'contacts', label: 'Contacts', icon: Users },
-    { id: 'pipeline', label: 'Pipeline', icon: Target },
-    { id: 'campaigns', label: 'Campagnes', icon: Mail },
-    { id: 'analytics', label: 'Analytics', icon: BarChart3 }
-  ];
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 p-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="animate-pulse space-y-6">
-            <div className="h-32 bg-gray-200 rounded-xl"></div>
-            <div className="grid grid-cols-3 gap-6">
-              {[...Array(9)].map((_, i) => (
-                <div key={i} className="h-32 bg-gray-200 rounded-xl"></div>
-              ))}
-            </div>
-          </div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <RefreshCw className="animate-spin mx-auto mb-4 text-blue-600" size={48} />
+          <p className="text-gray-700 font-medium">Chargement du CRM...</p>
         </div>
       </div>
     );
   }
 
+  const currentPath = location.pathname;
+  const isOverview = currentPath === '/backoffice/crm';
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header avec gradient */}
-      <div className="bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900 text-white">
-        <div className="max-w-7xl mx-auto px-6 py-8">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <BackButton />
-              <h1 className="text-4xl font-bold mb-2 flex items-center gap-3">
-                <Zap className="text-yellow-400" size={40} />
-                CRM Killer Dashboard
-              </h1>
-              <p className="text-blue-200 text-lg">
-                Système de gestion client ultra-automatisé avec IA collaborative
-              </p>
-            </div>
-            <div className="flex items-center gap-3">
-              <button
-                onClick={loadDashboardData}
-                className="px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg font-medium transition-colors flex items-center gap-2"
-              >
-                <RefreshCw size={20} />
-                Actualiser
-              </button>
-              <button
-                onClick={() => navigate('/backoffice/crm-killer/settings')}
-                className="px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg font-medium transition-colors flex items-center gap-2"
-              >
-                <Settings size={20} />
-                Paramètres
-              </button>
-            </div>
-          </div>
-
-          {/* KPI Cards */}
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-9 gap-4">
-            {kpiCards.map((kpi, index) => {
-              const Icon = kpi.icon;
-              return (
-                <div
-                  key={index}
-                  className={`bg-white/10 backdrop-blur-sm rounded-xl p-4 border ${
-                    kpi.urgent ? 'border-red-400 animate-pulse' : 'border-white/20'
-                  }`}
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <div className={`w-10 h-10 rounded-lg ${kpi.color} flex items-center justify-center`}>
-                      <Icon size={20} />
-                    </div>
-                  </div>
-                  <div className="text-3xl font-bold mb-1">{kpi.value}</div>
-                  <div className="text-sm text-blue-200">{kpi.title}</div>
-                  {kpi.change && (
-                    <div className={`text-xs mt-1 ${kpi.trend === 'up' ? 'text-green-400' : 'text-gray-400'}`}>
-                      {kpi.change}
-                    </div>
-                  )}
+    <div className="flex h-screen bg-gray-50 overflow-hidden">
+      {/* SIDEBAR À GAUCHE - FIXE */}
+      <aside className={`bg-gradient-to-b from-gray-900 via-blue-900 to-purple-900 text-white transition-all duration-300 flex flex-col ${sidebarOpen ? 'w-64' : 'w-20'}`}>
+        {/* Logo & Toggle */}
+        <div className="p-4 flex items-center justify-between border-b border-white/10">
+          {sidebarOpen ? (
+            <>
+              <div className="flex items-center gap-2">
+                <Zap className="text-yellow-400" size={28} />
+                <div>
+                  <div className="font-bold text-lg">CRM Killer</div>
+                  <div className="text-xs text-blue-200">by TaxiAssur</div>
                 </div>
-              );
-            })}
-          </div>
+              </div>
+              <button onClick={() => setSidebarOpen(false)} className="hover:bg-white/10 p-2 rounded-lg transition-colors">
+                <X size={20} />
+              </button>
+            </>
+          ) : (
+            <button onClick={() => setSidebarOpen(true)} className="hover:bg-white/10 p-2 rounded-lg transition-colors mx-auto">
+              <Menu size={24} />
+            </button>
+          )}
         </div>
-      </div>
 
-      {/* Tabs */}
-      <div className="bg-white border-b sticky top-0 z-10 shadow-sm">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="flex items-center gap-1">
-            {tabs.map((tab) => {
-              const Icon = tab.icon;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id as any)}
-                  className={`px-6 py-4 font-medium transition-colors flex items-center gap-2 border-b-2 ${
-                    activeTab === tab.id
-                      ? 'text-blue-600 border-blue-600'
-                      : 'text-gray-600 border-transparent hover:text-gray-900'
-                  }`}
-                >
-                  <Icon size={18} />
-                  {tab.label}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      </div>
+        {/* Navigation Menu */}
+        <nav className="flex-1 overflow-y-auto py-4">
+          {menuItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = currentPath === item.path;
 
-      {/* Content */}
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        {activeTab === 'overview' && (
-          <>
-            {/* Actions Rapides */}
-            <div className="mb-8">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">Actions Rapides</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {quickActions.map((action, index) => {
-                  const Icon = action.icon;
-                  return (
-                    <button
-                      key={index}
-                      onClick={() => navigate(action.path)}
-                      className="relative bg-white rounded-xl border-2 border-gray-200 p-6 hover:border-blue-400 hover:shadow-lg transition-all text-left group"
-                    >
-                      {action.badge && action.badge > 0 && (
-                        <div className="absolute top-4 right-4 w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center text-sm font-bold">
-                          {action.badge}
-                        </div>
-                      )}
-                      <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${action.color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
-                        <Icon size={28} className="text-white" />
-                      </div>
-                      <h3 className="font-bold text-gray-900 mb-1">{action.title}</h3>
-                      <p className="text-sm text-gray-600">{action.description}</p>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* AI Decisions */}
-            {recentAIDecisions.length > 0 && (
-              <div className="mb-8">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                    <Bot className="text-pink-600" size={28} />
-                    Décisions IA en Attente
-                  </h2>
-                  <button
-                    onClick={() => navigate('/backoffice/crm-killer/ia')}
-                    className="text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
-                  >
-                    Voir tout <ArrowRight size={16} />
-                  </button>
-                </div>
-                <div className="grid gap-4">
-                  {recentAIDecisions.map((decision) => (
-                    <AIDecisionCard
-                      key={decision.id}
-                      decision={decision}
-                      onApprove={async () => {
-                        await aiGovernanceService.approveDecision(decision.id, 'admin');
-                        loadDashboardData();
-                      }}
-                      onReject={async () => {
-                        await aiGovernanceService.rejectDecision(decision.id);
-                        loadDashboardData();
-                      }}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Pipeline Distribution */}
-            <div className="bg-white rounded-xl border-2 border-gray-200 p-6 mb-8">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-                <Target size={28} />
-                Distribution Pipeline
-              </h2>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                {Object.entries(pipelineDistribution).map(([status, count]) => (
-                  <div key={status} className="text-center p-4 bg-gray-50 rounded-lg border border-gray-200 hover:border-blue-300 transition-colors cursor-pointer" onClick={() => navigate('/backoffice/crm-killer/pipeline')}>
-                    <div className="text-3xl font-bold text-blue-600 mb-2">{count}</div>
-                    <div className="text-xs text-gray-600 uppercase">{status.replace(/_/g, ' ')}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Contacts récents */}
-            <div className="bg-white rounded-xl border-2 border-gray-200 p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                  <Users size={28} />
-                  Contacts Récents
-                </h2>
-                <button
-                  onClick={() => setActiveTab('contacts')}
-                  className="text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
-                >
-                  Voir tout <ArrowRight size={16} />
-                </button>
-              </div>
-              <div className="space-y-2">
-                {recentContacts.slice(0, 5).map((contact) => (
-                  <div
-                    key={contact.id}
-                    onClick={() => navigate(`/backoffice/crm-killer/lead/${contact.id}`)}
-                    className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold">
-                        {contact.first_name?.[0] || contact.email[0].toUpperCase()}
-                      </div>
-                      <div>
-                        <div className="font-semibold text-gray-900">
-                          {contact.first_name} {contact.last_name}
-                        </div>
-                        <div className="text-sm text-gray-600">{contact.email}</div>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-sm font-medium text-blue-600">Score: {contact.lead_score}%</div>
-                      <div className="text-xs text-gray-500">{new Date(contact.created_at).toLocaleDateString('fr-FR')}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </>
-        )}
-
-        {activeTab === 'contacts' && (
-          <div className="bg-white rounded-xl border-2 border-gray-200 p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-gray-900">Tous les Contacts</h2>
+            return (
               <button
-                onClick={() => navigate('/backoffice/crm-killer/pipeline')}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+                key={item.id}
+                onClick={() => navigate(item.path)}
+                className={`w-full flex items-center gap-3 px-4 py-3 transition-all relative group ${
+                  isActive
+                    ? 'bg-white/20 text-white border-r-4 border-yellow-400'
+                    : 'text-blue-100 hover:bg-white/10 hover:text-white'
+                }`}
               >
-                <Plus size={20} />
-                Nouveau Contact
-              </button>
-            </div>
-
-            <div className="mb-4 flex items-center gap-4">
-              <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-                <input
-                  type="text"
-                  placeholder="Rechercher par nom, email, téléphone..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-              <select
-                value={filterType}
-                onChange={(e) => setFilterType(e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="all">Tous types</option>
-                <option value="prospect_taxi">Prospects Taxi</option>
-                <option value="client">Clients</option>
-                <option value="partner">Partenaires</option>
-              </select>
-            </div>
-
-            <div className="space-y-2">
-              {recentContacts.map((contact) => (
-                <div
-                  key={contact.id}
-                  onClick={() => navigate(`/backoffice/crm-killer/lead/${contact.id}`)}
-                  className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors border border-gray-200"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold text-lg">
-                      {contact.first_name?.[0] || contact.email[0].toUpperCase()}
-                    </div>
-                    <div>
-                      <div className="font-semibold text-gray-900 flex items-center gap-2">
-                        {contact.first_name} {contact.last_name}
-                        {contact.company_name && (
-                          <span className="text-sm text-gray-600">• {contact.company_name}</span>
-                        )}
-                      </div>
-                      <div className="text-sm text-gray-600 flex items-center gap-3">
-                        <span>{contact.email}</span>
-                        <span>•</span>
-                        <span>{contact.phone}</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <div className="text-right">
-                      <div className="text-sm font-medium text-blue-600">Score: {contact.lead_score}%</div>
-                      <div className="text-xs text-gray-500">Conv: {contact.conversion_probability}%</div>
-                    </div>
-                    <div className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
-                      {contact.stage.replace(/_/g, ' ')}
-                    </div>
-                    <ArrowRight size={20} className="text-gray-400" />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'pipeline' && (
-          <div className="bg-white rounded-xl border-2 border-gray-200 p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-gray-900">Pipeline de Vente</h2>
-              <button
-                onClick={() => navigate('/backoffice/crm-killer/pipeline')}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
-              >
-                <Eye size={20} />
-                Vue Kanban Complète
-              </button>
-            </div>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-              {Object.entries(pipelineDistribution).map(([status, count]) => (
-                <div key={status} className="p-6 bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl border-2 border-blue-200">
-                  <div className="text-4xl font-bold text-blue-600 mb-2">{count}</div>
-                  <div className="text-sm text-gray-700 font-medium uppercase">{status.replace(/_/g, ' ')}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'campaigns' && (
-          <div className="bg-white rounded-xl border-2 border-gray-200 p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-gray-900">Campagnes Email</h2>
-              <button
-                onClick={() => navigate('/backoffice/email-marketing')}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
-              >
-                <Plus size={20} />
-                Nouvelle Campagne
-              </button>
-            </div>
-            {campaigns.length === 0 ? (
-              <div className="text-center py-12 text-gray-500">
-                <Mail size={48} className="mx-auto mb-4 text-gray-300" />
-                <p>Aucune campagne active</p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {campaigns.map((campaign) => (
-                  <div key={campaign.id} className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-semibold text-gray-900">{campaign.name}</h3>
-                      <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm">
-                        {campaign.status}
+                <Icon size={22} className="flex-shrink-0" />
+                {sidebarOpen && (
+                  <>
+                    <span className="font-medium flex-1 text-left">{item.label}</span>
+                    {item.badge && item.badge > 0 && (
+                      <span className="bg-red-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center">
+                        {item.badge}
                       </span>
+                    )}
+                  </>
+                )}
+                {!sidebarOpen && item.badge && item.badge > 0 && (
+                  <span className="absolute top-2 right-2 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                    {item.badge}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </nav>
+
+        {/* User Section en bas */}
+        <div className="border-t border-white/10 p-4">
+          <button
+            onClick={() => navigate('/backoffice/crm-killer/settings')}
+            className={`w-full flex items-center gap-3 px-3 py-2 hover:bg-white/10 rounded-lg transition-colors mb-2 ${!sidebarOpen && 'justify-center'}`}
+          >
+            <Settings size={20} />
+            {sidebarOpen && <span>Paramètres</span>}
+          </button>
+
+          {sidebarOpen && (
+            <div className="bg-white/10 rounded-lg p-3 mb-2">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-8 h-8 bg-yellow-400 rounded-full flex items-center justify-center text-gray-900 font-bold">
+                  {user?.full_name?.[0] || 'A'}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-medium truncate">{user?.full_name || 'Admin'}</div>
+                  <div className="text-xs text-blue-200 truncate">{user?.email}</div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <button
+            onClick={() => navigate('/backoffice')}
+            className={`w-full flex items-center gap-3 px-3 py-2 hover:bg-white/10 rounded-lg transition-colors mb-2 ${!sidebarOpen && 'justify-center'}`}
+          >
+            <Home size={20} />
+            {sidebarOpen && <span>Dashboard Principal</span>}
+          </button>
+
+          <button
+            onClick={handleLogout}
+            className={`w-full flex items-center gap-3 px-3 py-2 bg-red-500/20 hover:bg-red-500/30 rounded-lg transition-colors ${!sidebarOpen && 'justify-center'}`}
+          >
+            <LogOut size={20} />
+            {sidebarOpen && <span>Déconnexion</span>}
+          </button>
+        </div>
+      </aside>
+
+      {/* CONTENU PRINCIPAL À DROITE */}
+      <main className="flex-1 flex flex-col overflow-hidden">
+        {/* Header avec Search */}
+        <header className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-4 flex-1">
+            <div className="relative flex-1 max-w-lg">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+              <input
+                type="text"
+                placeholder="Rechercher un lead, contact, email..."
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handleRefresh}
+              disabled={refreshing}
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
+              title="Actualiser"
+            >
+              <RefreshCw size={20} className={`text-gray-600 ${refreshing ? 'animate-spin' : ''}`} />
+            </button>
+
+            <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors relative" title="Notifications">
+              <Bell size={20} className="text-gray-600" />
+              {(stats.unread_messages + stats.ai_decisions_pending) > 0 && (
+                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+              )}
+            </button>
+          </div>
+        </header>
+
+        {/* Contenu Scrollable */}
+        <div className="flex-1 overflow-y-auto">
+          {isOverview ? (
+            <div className="p-6">
+              {/* KPIs Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+                <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="p-3 bg-blue-100 rounded-lg">
+                      <Users className="text-blue-600" size={24} />
                     </div>
-                    <div className="grid grid-cols-4 gap-4 text-sm">
-                      <div>
-                        <div className="text-gray-600">Envoyés</div>
-                        <div className="text-xl font-bold text-blue-600">{campaign.total_sent || 0}</div>
-                      </div>
-                      <div>
-                        <div className="text-gray-600">Ouverts</div>
-                        <div className="text-xl font-bold text-green-600">{campaign.total_opened || 0}</div>
-                      </div>
-                      <div>
-                        <div className="text-gray-600">Clics</div>
-                        <div className="text-xl font-bold text-purple-600">{campaign.total_clicked || 0}</div>
-                      </div>
-                      <div>
-                        <div className="text-gray-600">Conversions</div>
-                        <div className="text-xl font-bold text-orange-600">{campaign.total_converted || 0}</div>
-                      </div>
+                    <TrendingUp className="text-green-500" size={20} />
+                  </div>
+                  <div className="text-3xl font-bold text-gray-900 mb-1">{stats.total_leads}</div>
+                  <div className="text-sm text-gray-600 mb-2">Total Leads</div>
+                  <div className="text-xs text-green-600 font-medium">+{stats.new_leads_today} aujourd'hui</div>
+                </div>
+
+                <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="p-3 bg-green-100 rounded-lg">
+                      <CheckCircle className="text-green-600" size={24} />
+                    </div>
+                    <Activity className="text-green-500" size={20} />
+                  </div>
+                  <div className="text-3xl font-bold text-gray-900 mb-1">{stats.active_contracts}</div>
+                  <div className="text-sm text-gray-600 mb-2">Contrats Actifs</div>
+                  <div className="text-xs text-gray-500">Taux: {stats.conversion_rate}%</div>
+                </div>
+
+                <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="p-3 bg-orange-100 rounded-lg">
+                      <Euro className="text-orange-600" size={24} />
+                    </div>
+                    <DollarSign className="text-orange-500" size={20} />
+                  </div>
+                  <div className="text-3xl font-bold text-gray-900 mb-1">{stats.total_revenue.toLocaleString()}€</div>
+                  <div className="text-sm text-gray-600 mb-2">Revenu Total</div>
+                  <div className="text-xs text-gray-500">Moy: {stats.avg_deal_value}€</div>
+                </div>
+
+                <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="p-3 bg-purple-100 rounded-lg">
+                      <Inbox className="text-purple-600" size={24} />
+                    </div>
+                    {stats.unread_messages > 0 && (
+                      <span className="bg-red-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center">
+                        {stats.unread_messages}
+                      </span>
+                    )}
+                  </div>
+                  <div className="text-3xl font-bold text-gray-900 mb-1">{stats.unread_messages}</div>
+                  <div className="text-sm text-gray-600 mb-2">Messages Non Lus</div>
+                  <div className="text-xs text-gray-500">{stats.ai_decisions_pending} décisions IA</div>
+                </div>
+              </div>
+
+              {/* Alertes */}
+              {(stats.pending_documents > 0 || stats.pending_payments > 0 || stats.at_risk_clients > 0) && (
+                <div className="bg-yellow-50 border-l-4 border-yellow-400 rounded-lg p-6 mb-6">
+                  <div className="flex items-center gap-2 mb-4">
+                    <AlertTriangle className="text-yellow-600" size={24} />
+                    <h3 className="text-lg font-bold text-yellow-900">Actions Requises</h3>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {stats.pending_documents > 0 && (
+                      <button
+                        onClick={() => navigate('/backoffice/crm-killer/production')}
+                        className="bg-white hover:bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-left transition-all"
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <FileCheck className="text-yellow-600" size={20} />
+                          <span className="text-2xl font-bold text-yellow-900">{stats.pending_documents}</span>
+                        </div>
+                        <div className="text-sm font-medium text-yellow-900">Documents En Attente</div>
+                      </button>
+                    )}
+
+                    {stats.pending_payments > 0 && (
+                      <button
+                        onClick={() => navigate('/backoffice/crm-killer/production')}
+                        className="bg-white hover:bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-left transition-all"
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <Euro className="text-yellow-600" size={20} />
+                          <span className="text-2xl font-bold text-yellow-900">{stats.pending_payments}</span>
+                        </div>
+                        <div className="text-sm font-medium text-yellow-900">Paiements En Attente</div>
+                      </button>
+                    )}
+
+                    {stats.at_risk_clients > 0 && (
+                      <button
+                        onClick={() => navigate('/backoffice/crm-killer/retention')}
+                        className="bg-white hover:bg-red-50 border border-red-200 rounded-lg p-4 text-left transition-all"
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <Shield className="text-red-600" size={20} />
+                          <span className="text-2xl font-bold text-red-900">{stats.at_risk_clients}</span>
+                        </div>
+                        <div className="text-sm font-medium text-red-900">Clients à Risque</div>
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Leads Récents & Décisions IA */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                {/* Leads Récents */}
+                <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
+                  <div className="p-6 border-b border-gray-200">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                        <Users className="text-blue-600" size={20} />
+                        Leads Récents
+                      </h3>
+                      <button
+                        onClick={() => navigate('/backoffice/crm-killer/pipeline')}
+                        className="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center gap-1"
+                      >
+                        Voir tout
+                        <ChevronRight size={16} />
+                      </button>
                     </div>
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
 
-        {activeTab === 'analytics' && (
-          <div className="space-y-6">
-            <div className="bg-white rounded-xl border-2 border-gray-200 p-6">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">Statistiques Avancées</h2>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                <div className="text-center p-6 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl">
-                  <div className="text-4xl font-bold text-blue-600 mb-2">{stats.conversion_rate}%</div>
-                  <div className="text-sm text-gray-700 font-medium">Taux de Conversion</div>
+                  <div className="p-4 space-y-2">
+                    {recentLeads.length > 0 ? recentLeads.map(lead => (
+                      <button
+                        key={lead.id}
+                        onClick={() => navigate(`/backoffice/crm-killer/lead/${lead.id}`)}
+                        className="w-full bg-gray-50 hover:bg-blue-50 border border-gray-200 hover:border-blue-300 rounded-lg p-4 text-left transition-all"
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="font-medium text-gray-900">
+                            {lead.first_name} {lead.last_name}
+                          </div>
+                          <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded font-medium">
+                            {lead.status}
+                          </span>
+                        </div>
+                        <div className="text-sm text-gray-600">{lead.email}</div>
+                        <div className="text-xs text-gray-500 mt-1">
+                          {new Date(lead.created_at).toLocaleString('fr-FR')}
+                        </div>
+                      </button>
+                    )) : (
+                      <div className="text-center text-gray-500 py-8">
+                        Aucun lead récent
+                      </div>
+                    )}
+                  </div>
                 </div>
-                <div className="text-center p-6 bg-gradient-to-br from-green-50 to-green-100 rounded-xl">
-                  <div className="text-4xl font-bold text-green-600 mb-2">{stats.avg_deal_value}€</div>
-                  <div className="text-sm text-gray-700 font-medium">Valeur Moyenne</div>
+
+                {/* Décisions IA */}
+                <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
+                  <div className="p-6 border-b border-gray-200">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                        <Brain className="text-purple-600" size={20} />
+                        Décisions IA
+                      </h3>
+                      <button
+                        onClick={() => navigate('/backoffice/crm-killer/ia')}
+                        className="text-purple-600 hover:text-purple-800 text-sm font-medium flex items-center gap-1"
+                      >
+                        Voir tout
+                        <ChevronRight size={16} />
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="p-4 space-y-3">
+                    {recentAIDecisions.length > 0 ? recentAIDecisions.map(decision => (
+                      <div
+                        key={decision.id}
+                        className="bg-purple-50 border border-purple-200 rounded-lg p-4"
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="font-medium text-purple-900">
+                            {decision.decision_type}
+                          </div>
+                          <span className="text-xs bg-purple-200 text-purple-800 px-2 py-1 rounded font-medium">
+                            {decision.confidence}%
+                          </span>
+                        </div>
+                        <div className="text-sm text-purple-700 mb-3">{decision.recommendation}</div>
+                        <div className="flex gap-2">
+                          <button className="flex-1 bg-green-500 hover:bg-green-600 text-white text-sm font-medium px-3 py-2 rounded transition-colors flex items-center justify-center gap-1">
+                            <ThumbsUp size={14} />
+                            Approuver
+                          </button>
+                          <button className="flex-1 bg-red-500 hover:bg-red-600 text-white text-sm font-medium px-3 py-2 rounded transition-colors flex items-center justify-center gap-1">
+                            <ThumbsDown size={14} />
+                            Refuser
+                          </button>
+                        </div>
+                      </div>
+                    )) : (
+                      <div className="text-center text-gray-500 py-8">
+                        Aucune décision en attente
+                      </div>
+                    )}
+                  </div>
                 </div>
-                <div className="text-center p-6 bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl">
-                  <div className="text-4xl font-bold text-purple-600 mb-2">{Math.round(stats.total_revenue / 1000)}K€</div>
-                  <div className="text-sm text-gray-700 font-medium">CA Total</div>
+              </div>
+
+              {/* Opportunités */}
+              {stats.renewal_opportunities > 0 && (
+                <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-lg font-bold text-green-900 mb-2 flex items-center gap-2">
+                        <Target className="text-green-600" size={24} />
+                        Opportunités de Cross-Selling
+                      </h3>
+                      <div className="text-3xl font-bold text-green-900 mb-1">{stats.renewal_opportunities}</div>
+                      <div className="text-sm text-green-700">Clients prêts pour des offres additionnelles</div>
+                    </div>
+                    <button
+                      onClick={() => navigate('/backoffice/crm-killer/retention')}
+                      className="bg-green-600 hover:bg-green-700 text-white font-bold px-6 py-3 rounded-lg transition-colors flex items-center gap-2"
+                    >
+                      Voir les opportunités
+                      <ArrowRight size={18} />
+                    </button>
+                  </div>
                 </div>
-                <div className="text-center p-6 bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl">
-                  <div className="text-4xl font-bold text-orange-600 mb-2">{stats.new_leads_today}</div>
-                  <div className="text-sm text-gray-700 font-medium">Nouveaux Aujourd'hui</div>
-                </div>
+              )}
+            </div>
+          ) : (
+            <div className="p-6">
+              <div className="text-center text-gray-500 py-12">
+                <p className="mb-4">Utilisez le menu latéral pour naviguer</p>
               </div>
             </div>
-
-            <div className="bg-white rounded-xl border-2 border-gray-200 p-6">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">Rapports Détaillés</h2>
-              <div className="text-center py-8 text-gray-500">
-                <BarChart3 size={48} className="mx-auto mb-4 text-gray-300" />
-                <p className="mb-4">Accédez aux rapports complets et graphiques détaillés</p>
-                <button
-                  onClick={() => navigate('/backoffice/analytics')}
-                  className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors inline-flex items-center gap-2"
-                >
-                  <BarChart3 size={20} />
-                  Ouvrir Analytics
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      </main>
     </div>
   );
 };
