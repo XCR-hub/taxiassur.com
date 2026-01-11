@@ -1,0 +1,27 @@
+═══════════════════════════════════════════════════════
+  IDENTIFIANTS ADMINISTRATEUR TAXIASSUR
+  Mis à jour : 11 janvier 2026
+═══════════════════════════════════════════════════════
+
+📧 EMAIL
+master@taxiassur.com
+
+🔑 MOT DE PASSE
+TaxiAssur2025!,&
+
+🔗 URL CONNEXION
+https://taxiassur.com/admin-dashboard
+
+═══════════════════════════════════════════════════════
+
+⚠️ IMPORTANT :
+Le mot de passe contient des caractères spéciaux : ! , &
+Copiez-collez exactement sans modification !
+
+═══════════════════════════════════════════════════════
+
+✅ Status : VÉRIFIÉ ET FONCTIONNEL
+✅ Compte : ACTIF
+✅ Rôle : MASTER (accès complet)
+
+═══════════════════════════════════════════════════════
