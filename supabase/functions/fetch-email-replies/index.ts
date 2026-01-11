@@ -22,11 +22,11 @@ Deno.serve(async (req: Request) => {
     // Configuration IMAP IONOS
     const imapConfig = {
       host: Deno.env.get('IONOS_IMAP_HOST') || 'imap.ionos.fr',
-      port: 993,
+      port: parseInt(Deno.env.get('IONOS_IMAP_PORT') || '993'),
       secure: true,
       auth: {
-        user: Deno.env.get('IONOS_SMTP_USER') || 'team@taxiassur.com',
-        pass: Deno.env.get('IONOS_SMTP_PASSWORD') || ''
+        user: Deno.env.get('IONOS_EMAIL_USER') || 'team@taxiassur.com',
+        pass: Deno.env.get('IONOS_EMAIL_PASSWORD') || ''
       },
       logger: false
     };

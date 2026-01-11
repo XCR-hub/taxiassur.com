@@ -165,10 +165,10 @@ Deno.serve(async (req) => {
     }
 
     const account = accounts[0];
-    const imapHost = account.imap_host || 'imap.ionos.fr';
-    const imapPort = account.imap_port || 993;
-    const imapUser = account.imap_username || account.email;
-    const imapPassword = account.imap_password_encrypted;
+    const imapHost = account.imap_host || Deno.env.get('IONOS_IMAP_HOST') || 'imap.ionos.fr';
+    const imapPort = account.imap_port || parseInt(Deno.env.get('IONOS_IMAP_PORT') || '993');
+    const imapUser = account.imap_username || account.email || Deno.env.get('IONOS_EMAIL_USER');
+    const imapPassword = account.imap_password_encrypted || Deno.env.get('IONOS_EMAIL_PASSWORD');
 
     console.log(`Connecting to IMAP: ${imapHost}:${imapPort} as ${imapUser}`);
 
