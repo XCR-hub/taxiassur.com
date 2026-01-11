@@ -15,7 +15,8 @@ import {
   DollarSign,
   ArrowRight,
   RefreshCw,
-  Inbox
+  Inbox,
+  ChevronRight
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
