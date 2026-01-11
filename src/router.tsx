@@ -134,6 +134,7 @@ const NewsletterDashboard = lazy(() => import('./backoffice/NewsletterDashboard'
 const NewsletterSubscribe = lazy(() => import('./pages/NewsletterSubscribe'));
 const NewsletterUnsubscribe = lazy(() => import('./pages/NewsletterUnsubscribe'));
 const LLMDashboard = lazy(() => import('./backoffice/LLMDashboard'));
+const LLMCouncilDashboard = lazy(() => import('./backoffice/LLMCouncilDashboard'));
 
 const LoadingFallback = () => (
   <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-black flex items-center justify-center">
@@ -700,6 +701,11 @@ export const router = createBrowserRouter([
       {
         path: '/backoffice/llm-dashboard',
         element: <AuthGuard><SuspenseWrapper><LLMDashboard /></SuspenseWrapper></AuthGuard>,
+        errorElement: <RouteErrorFallback />
+      },
+      {
+        path: '/backoffice/llm-council',
+        element: <AuthGuard><SuspenseWrapper><LLMCouncilDashboard /></SuspenseWrapper></AuthGuard>,
         errorElement: <RouteErrorFallback />
       },
       {

@@ -115,13 +115,17 @@ export default function NavigationMenu() {
             ⚡ CONTENU & GÉNÉRATION IA
           </h3>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-            <Link to="/backoffice/llm-dashboard" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white rounded-lg font-semibold transition-all shadow-2xl border-2 border-cyan-300 text-sm animate-pulse">
+            <Link to="/backoffice/llm-dashboard" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white rounded-lg font-semibold transition-all shadow-2xl border-2 border-cyan-300 text-sm">
               <Brain className="w-5 h-5" />
-              <span>🧠 LLM Multi-Agents</span>
+              <span>LLM Multi-Agents</span>
             </Link>
-            <Link to="/backoffice/ai-autonomous" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-lg font-semibold transition-all shadow-lg border-2 border-purple-300 text-sm animate-pulse">
+            <Link to="/backoffice/llm-council" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white rounded-lg font-semibold transition-all shadow-2xl border-2 border-amber-300 text-sm animate-pulse">
+              <Users className="w-5 h-5" />
+              <span>LLM Council</span>
+            </Link>
+            <Link to="/backoffice/ai-autonomous" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-lg font-semibold transition-all shadow-lg border-2 border-purple-300 text-sm">
               <Brain className="w-5 h-5" />
-              <span>🤖 IA Autonome</span>
+              <span>IA Autonome</span>
             </Link>
             <Link to="/backoffice/ai-generator" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm">
               <Zap className="w-5 h-5" />
