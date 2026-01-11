@@ -7,8 +7,9 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
 };
 
-const OPENROUTER_API_KEY = Deno.env.get("OPENROUTER_API_KEY");
 const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
+const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
+const HUGGINGFACE_API_KEY = Deno.env.get("HUGGINGFACE_API_KEY");
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
@@ -31,143 +32,175 @@ interface LLMResponse {
   anonymous_id: string;
 }
 
-interface RankingResult {
-  reviewer_model_id: string;
-  rankings: {
-    anonymous_id: string;
-    accuracy_score: number;
-    insight_score: number;
-    clarity_score: number;
-    reasoning: string;
-  }[];
-}
-
-async function callLLM(config: LLMConfig, messages: any[], apiKey: string | undefined): Promise<LLMResponse> {
+async function callOpenAI(model: string, messages: any[], config: LLMConfig): Promise<LLMResponse> {
   const startTime = Date.now();
   const anonymousId = `model_${Math.random().toString(36).substring(2, 8)}`;
   
-  const apiKeyToUse = apiKey || OPENAI_API_KEY;
-  const baseUrl = apiKey ? "https://openrouter.ai/api/v1" : "https://api.openai.com/v1";
-  const modelId = apiKey ? config.model_id : "gpt-4o";
+  if (!OPENAI_API_KEY) {
+    return { model_id: config.model_id, display_name: config.display_name, content: "", tokens_used: 0, latency_ms: 0, error: "OpenAI API key not configured", anonymous_id: anonymousId };
+  }
   
   try {
-    const response = await fetch(`${baseUrl}/chat/completions`, {
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
-      headers: {
-        "Authorization": `Bearer ${apiKeyToUse}`,
-        "Content-Type": "application/json",
-        ...(apiKey ? {
-          "HTTP-Referer": "https://taxiassur.com",
-          "X-Title": "TaxiAssur LLM Council"
-        } : {})
-      },
-      body: JSON.stringify({
-        model: modelId,
-        messages,
-        temperature: config.temperature,
-        max_tokens: config.max_tokens,
-      }),
+      headers: { "Authorization": `Bearer ${OPENAI_API_KEY}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ model, messages, temperature: config.temperature, max_tokens: config.max_tokens }),
     });
     
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`API error: ${response.status} - ${errorText}`);
-    }
-    
+    if (!response.ok) throw new Error(`OpenAI error: ${response.status}`);
     const data = await response.json();
-    const latency = Date.now() - startTime;
     
     return {
       model_id: config.model_id,
       display_name: config.display_name,
       content: data.choices[0].message.content,
       tokens_used: data.usage?.total_tokens || 0,
-      latency_ms: latency,
+      latency_ms: Date.now() - startTime,
       anonymous_id: anonymousId,
     };
   } catch (error) {
-    return {
-      model_id: config.model_id,
-      display_name: config.display_name,
-      content: "",
-      tokens_used: 0,
-      latency_ms: Date.now() - startTime,
-      error: error instanceof Error ? error.message : "Unknown error",
-      anonymous_id: anonymousId,
-    };
+    return { model_id: config.model_id, display_name: config.display_name, content: "", tokens_used: 0, latency_ms: Date.now() - startTime, error: error instanceof Error ? error.message : "Unknown error", anonymous_id: anonymousId };
   }
 }
 
-async function getReviewPrompt(responses: LLMResponse[], query: string): string {
-  const responsesText = responses
-    .filter(r => r.content && !r.error)
-    .map((r, i) => `\n=== Response ${r.anonymous_id} ===\n${r.content}\n`)
-    .join("\n");
+async function callGemini(model: string, messages: any[], config: LLMConfig): Promise<LLMResponse> {
+  const startTime = Date.now();
+  const anonymousId = `model_${Math.random().toString(36).substring(2, 8)}`;
+  
+  if (!GEMINI_API_KEY) {
+    return { model_id: config.model_id, display_name: config.display_name, content: "", tokens_used: 0, latency_ms: 0, error: "Gemini API key not configured", anonymous_id: anonymousId };
+  }
+  
+  try {
+    const geminiMessages = messages.map(m => ({
+      role: m.role === "assistant" ? "model" : "user",
+      parts: [{ text: m.content }]
+    })).filter(m => m.role !== "system");
     
-  return `You are a judge evaluating AI responses to a user query. Your task is to rank the responses based on accuracy, insight, and clarity.
-
-USER QUERY:
-${query}
-
-RESPONSES TO EVALUATE:
-${responsesText}
-
-For each response, provide:
-1. accuracy_score (1-10): How factually correct and relevant is the answer?
-2. insight_score (1-10): How insightful and valuable is the response?
-3. clarity_score (1-10): How clear and well-structured is the writing?
-4. brief_reasoning: 1-2 sentence explanation
-
-Respond in JSON format:
-{
-  "rankings": [
-    {
-      "anonymous_id": "model_xxx",
-      "accuracy_score": 8,
-      "insight_score": 7,
-      "clarity_score": 9,
-      "reasoning": "Clear and accurate response..."
+    const systemPrompt = messages.find(m => m.role === "system")?.content || "";
+    if (systemPrompt && geminiMessages.length > 0) {
+      geminiMessages[0].parts[0].text = `${systemPrompt}\n\n${geminiMessages[0].parts[0].text}`;
     }
-  ]
-}`;
+    
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: geminiMessages,
+          generationConfig: { temperature: config.temperature, maxOutputTokens: config.max_tokens }
+        }),
+      }
+    );
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Gemini error: ${response.status} - ${errorText}`);
+    }
+    
+    const data = await response.json();
+    const content = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+    
+    return {
+      model_id: config.model_id,
+      display_name: config.display_name,
+      content,
+      tokens_used: data.usageMetadata?.totalTokenCount || 0,
+      latency_ms: Date.now() - startTime,
+      anonymous_id: anonymousId,
+    };
+  } catch (error) {
+    return { model_id: config.model_id, display_name: config.display_name, content: "", tokens_used: 0, latency_ms: Date.now() - startTime, error: error instanceof Error ? error.message : "Unknown error", anonymous_id: anonymousId };
+  }
 }
 
-async function getChairmanPrompt(query: string, responses: LLMResponse[], rankings: RankingResult[]): string {
+async function callHuggingFace(model: string, messages: any[], config: LLMConfig): Promise<LLMResponse> {
+  const startTime = Date.now();
+  const anonymousId = `model_${Math.random().toString(36).substring(2, 8)}`;
+  
+  if (!HUGGINGFACE_API_KEY) {
+    return { model_id: config.model_id, display_name: config.display_name, content: "", tokens_used: 0, latency_ms: 0, error: "HuggingFace API key not configured", anonymous_id: anonymousId };
+  }
+  
+  try {
+    const prompt = messages.map(m => {
+      if (m.role === "system") return `<|system|>${m.content}</s>`;
+      if (m.role === "user") return `<|user|>${m.content}</s>`;
+      return `<|assistant|>${m.content}</s>`;
+    }).join("\n") + "\n<|assistant|>";
+    
+    const response = await fetch(
+      `https://api-inference.huggingface.co/models/${model}`,
+      {
+        method: "POST",
+        headers: { "Authorization": `Bearer ${HUGGINGFACE_API_KEY}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          inputs: prompt,
+          parameters: { max_new_tokens: config.max_tokens, temperature: config.temperature, return_full_text: false }
+        }),
+      }
+    );
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`HuggingFace error: ${response.status} - ${errorText}`);
+    }
+    
+    const data = await response.json();
+    const content = Array.isArray(data) ? data[0]?.generated_text || "" : data.generated_text || "";
+    
+    return {
+      model_id: config.model_id,
+      display_name: config.display_name,
+      content: content.replace(/<\|.*?\|>/g, "").trim(),
+      tokens_used: Math.ceil(content.length / 4),
+      latency_ms: Date.now() - startTime,
+      anonymous_id: anonymousId,
+    };
+  } catch (error) {
+    return { model_id: config.model_id, display_name: config.display_name, content: "", tokens_used: 0, latency_ms: Date.now() - startTime, error: error instanceof Error ? error.message : "Unknown error", anonymous_id: anonymousId };
+  }
+}
+
+async function callLLM(config: LLMConfig, messages: any[]): Promise<LLMResponse> {
+  const provider = config.provider.toLowerCase();
+  const modelId = config.model_id;
+  
+  switch (provider) {
+    case "openai":
+      return callOpenAI(modelId.replace("openai/", ""), messages, config);
+    case "google":
+      return callGemini(modelId.replace("google/", ""), messages, config);
+    case "huggingface":
+    case "meta":
+    case "mistral":
+      return callHuggingFace(modelId.replace(/^(huggingface|meta|mistral)\//, ""), messages, config);
+    default:
+      return callOpenAI("gpt-4o", messages, config);
+  }
+}
+
+function getReviewPrompt(responses: LLMResponse[], query: string): string {
+  const responsesText = responses
+    .filter(r => r.content && !r.error)
+    .map((r) => `\n=== Response ${r.anonymous_id} ===\n${r.content}\n`)
+    .join("\n");
+    
+  return `You are a judge evaluating AI responses. Rank them on accuracy, insight, and clarity (1-10 each).\n\nUSER QUERY:\n${query}\n\nRESPONSES:\n${responsesText}\n\nRespond in JSON:\n{\n  "rankings": [\n    {"anonymous_id": "model_xxx", "accuracy_score": 8, "insight_score": 7, "clarity_score": 9, "reasoning": "..."}\n  ]\n}`;
+}
+
+function getChairmanPrompt(query: string, responses: LLMResponse[], rankings: any[]): string {
   const responsesText = responses
     .filter(r => r.content && !r.error)
     .map((r) => {
-      const avgScores = rankings
-        .flatMap(rk => rk.rankings)
-        .filter(rk => rk.anonymous_id === r.anonymous_id);
-      
-      const avgAccuracy = avgScores.length > 0 
-        ? avgScores.reduce((a, b) => a + b.accuracy_score, 0) / avgScores.length 
-        : 0;
-      const avgInsight = avgScores.length > 0 
-        ? avgScores.reduce((a, b) => a + b.insight_score, 0) / avgScores.length 
-        : 0;
-        
-      return `\n=== ${r.display_name} (Avg Accuracy: ${avgAccuracy.toFixed(1)}, Insight: ${avgInsight.toFixed(1)}) ===\n${r.content}\n`;
+      const avgScores = rankings.flatMap(rk => rk.rankings || []).filter(rk => rk.anonymous_id === r.anonymous_id);
+      const avgAcc = avgScores.length > 0 ? avgScores.reduce((a, b) => a + (b.accuracy_score || 0), 0) / avgScores.length : 0;
+      return `\n=== ${r.display_name} (Accuracy: ${avgAcc.toFixed(1)}) ===\n${r.content}\n`;
     })
     .join("\n");
     
-  return `You are the Chairman of an LLM Council. Multiple AI models have provided responses to a user query, and they have reviewed each other's work.
-
-Your task is to synthesize the best parts of all responses into a single, comprehensive final answer.
-
-USER QUERY:
-${query}
-
-MODEL RESPONSES WITH PEER REVIEW SCORES:
-${responsesText}
-
-Now, write the definitive final response that:
-1. Incorporates the most accurate information from all responses
-2. Addresses any conflicting viewpoints
-3. Is clear, comprehensive, and actionable
-4. Credits insights where appropriate (e.g., "As noted by the council...")
-
-Provide your final synthesized response:`;
+  return `You are the Chairman of an LLM Council. Synthesize the best parts of all responses into one comprehensive answer.\n\nUSER QUERY:\n${query}\n\nMODEL RESPONSES WITH SCORES:\n${responsesText}\n\nProvide the definitive final response:`;
 }
 
 Deno.serve(async (req: Request) => {
@@ -180,10 +213,7 @@ Deno.serve(async (req: Request) => {
     const { query, session_id, single_turn } = await req.json();
     
     if (!query) {
-      return new Response(
-        JSON.stringify({ error: "Query is required" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ error: "Query is required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
     
     const startTime = Date.now();
@@ -205,33 +235,22 @@ Deno.serve(async (req: Request) => {
     if (!sessionId) {
       const { data: newSession } = await supabase
         .from("llm_council_sessions")
-        .insert({
-          query,
-          status: "processing",
-          chairman_model: chairmanConfig.model_id,
-        })
+        .insert({ query, status: "processing", chairman_model: chairmanConfig.model_id })
         .select()
         .single();
       sessionId = newSession?.id;
     }
     
-    await supabase.from("llm_council_messages").insert({
-      session_id: sessionId,
-      role: "user",
-      content: query,
-    });
+    await supabase.from("llm_council_messages").insert({ session_id: sessionId, role: "user", content: query });
     
     console.log(`[LLM Council] Stage 1: Gathering ${councilModels.length} responses...`);
     
     const messages = [
-      { role: "system", content: "You are an expert AI assistant. Provide accurate, insightful, and helpful responses. Be concise but thorough." },
+      { role: "system", content: "You are an expert AI assistant for TaxiAssur, a French taxi insurance company. Provide accurate, insightful, and helpful responses in French when the query is in French." },
       { role: "user", content: query }
     ];
     
-    const responsePromises = councilModels.slice(0, 5).map(config => 
-      callLLM(config, messages, OPENROUTER_API_KEY)
-    );
-    
+    const responsePromises = councilModels.slice(0, 5).map(config => callLLM(config, messages));
     const responses = await Promise.all(responsePromises);
     const validResponses = responses.filter(r => r.content && !r.error);
     
@@ -251,40 +270,33 @@ Deno.serve(async (req: Request) => {
     
     console.log(`[LLM Council] Stage 1 complete: ${validResponses.length}/${responses.length} successful`);
     
-    let rankings: RankingResult[] = [];
+    let rankings: any[] = [];
     let finalResponse = "";
     let consensusScore = 0;
     
     if (!single_turn && validResponses.length > 1) {
       console.log(`[LLM Council] Stage 2: Cross-review...`);
       
-      const reviewPrompt = await getReviewPrompt(validResponses, query);
+      const reviewPrompt = getReviewPrompt(validResponses, query);
+      const reviewMessages = [
+        { role: "system", content: "You are an expert judge. Respond only with valid JSON." },
+        { role: "user", content: reviewPrompt }
+      ];
       
       const reviewPromises = councilModels.slice(0, 3).map(async config => {
-        const reviewMessages = [
-          { role: "system", content: "You are an expert judge. Respond only with valid JSON." },
-          { role: "user", content: reviewPrompt }
-        ];
-        
-        const reviewResp = await callLLM(config, reviewMessages, OPENROUTER_API_KEY);
-        
+        const reviewResp = await callLLM(config, reviewMessages);
         try {
           const jsonMatch = reviewResp.content.match(/\{[\s\S]*\}/);
           if (jsonMatch) {
             const parsed = JSON.parse(jsonMatch[0]);
-            return {
-              reviewer_model_id: config.model_id,
-              rankings: parsed.rankings || [],
-            };
+            return { reviewer_model_id: config.model_id, rankings: parsed.rankings || [] };
           }
-        } catch {
-          console.error(`Failed to parse review from ${config.model_id}`);
-        }
+        } catch { console.error(`Failed to parse review from ${config.model_id}`); }
         return null;
       });
       
       const reviewResults = await Promise.all(reviewPromises);
-      rankings = reviewResults.filter(r => r !== null) as RankingResult[];
+      rankings = reviewResults.filter(r => r !== null);
       
       for (const ranking of rankings) {
         for (const rank of ranking.rankings) {
@@ -302,21 +314,20 @@ Deno.serve(async (req: Request) => {
       }
       
       console.log(`[LLM Council] Stage 2 complete: ${rankings.length} reviews`);
-      
       console.log(`[LLM Council] Stage 3: Chairman synthesis...`);
       
-      const chairmanPrompt = await getChairmanPrompt(query, validResponses, rankings);
+      const chairmanPrompt = getChairmanPrompt(query, validResponses, rankings);
       const chairmanMessages = [
         { role: "system", content: "You are the Chairman of an LLM Council. Synthesize multiple AI responses into one comprehensive answer." },
         { role: "user", content: chairmanPrompt }
       ];
       
-      const chairmanResp = await callLLM(chairmanConfig, chairmanMessages, OPENROUTER_API_KEY);
+      const chairmanResp = await callLLM(chairmanConfig, chairmanMessages);
       finalResponse = chairmanResp.content;
       
-      const allScores = rankings.flatMap(r => r.rankings);
+      const allScores = rankings.flatMap(r => r.rankings || []);
       if (allScores.length > 0) {
-        const avgScore = allScores.reduce((a, b) => a + (b.accuracy_score + b.insight_score + b.clarity_score) / 3, 0) / allScores.length;
+        const avgScore = allScores.reduce((a, b) => a + ((b.accuracy_score || 0) + (b.insight_score || 0) + (b.clarity_score || 0)) / 3, 0) / allScores.length;
         consensusScore = avgScore * 10;
       }
       
@@ -330,17 +341,14 @@ Deno.serve(async (req: Request) => {
     const totalTokens = responses.reduce((a, b) => a + b.tokens_used, 0);
     const processingTime = Date.now() - startTime;
     
-    await supabase
-      .from("llm_council_sessions")
-      .update({
-        final_response: finalResponse,
-        status: "completed",
-        consensus_score: consensusScore,
-        total_tokens_used: totalTokens,
-        processing_time_ms: processingTime,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", sessionId);
+    await supabase.from("llm_council_sessions").update({
+      final_response: finalResponse,
+      status: "completed",
+      consensus_score: consensusScore,
+      total_tokens_used: totalTokens,
+      processing_time_ms: processingTime,
+      updated_at: new Date().toISOString(),
+    }).eq("id", sessionId);
       
     await supabase.from("llm_council_messages").insert({
       session_id: sessionId,
@@ -363,10 +371,7 @@ Deno.serve(async (req: Request) => {
           latency_ms: r.latency_ms,
           error: r.error,
         })),
-        rankings: rankings.map(r => ({
-          reviewer: r.reviewer_model_id,
-          rankings: r.rankings,
-        })),
+        rankings: rankings.map(r => ({ reviewer: r.reviewer_model_id, rankings: r.rankings })),
         final_response: finalResponse,
         chairman_model: chairmanConfig.display_name,
         consensus_score: Math.round(consensusScore),
