@@ -2,9 +2,9 @@ import { Link } from 'react-router-dom';
 import {
   Users, DollarSign, BarChart3, PieChart, Handshake,
   Zap, FileEdit, Newspaper, Package, TrendingUp, FileText,
-  Search, Link2, Mail, Eye, Plus, Send,
+  Search, Link2, Mail, Eye, Plus, Send, Building2, FileCheck, Inbox,
   UserCircle, Clock, Megaphone, Shield, Globe, Settings, BookOpen,
-  QrCode, MessageSquare, Brain, MapPin, UserCog, Sparkles
+  QrCode, MessageSquare, Brain, MapPin, UserCog, Sparkles, Receipt
 } from 'lucide-react';
 import { getCurrentUser, hasPermission } from '../lib/auth';
 
@@ -223,12 +223,44 @@ export default function NavigationMenu() {
         </div>
       )}
 
+      {/* Production & Compagnies d'Assurance */}
+      {canViewCRM && (
+        <div className="bg-gradient-to-r from-blue-900/40 to-indigo-900/40 border-2 border-blue-500/60 rounded-xl p-6 shadow-2xl">
+          <h3 className="text-blue-400 font-extrabold text-xl mb-4 flex items-center gap-3 uppercase tracking-wide">
+            <Building2 className="w-7 h-7 animate-pulse" />
+            🏢 PRODUCTION & COMPAGNIES
+          </h3>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+            <Link to="/backoffice/insurance-companies" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg font-semibold transition-all shadow-lg border-2 border-blue-300 text-sm animate-pulse">
+              <Building2 className="w-5 h-5" />
+              <span>🏢 Compagnies Assurance</span>
+            </Link>
+            <Link to="/backoffice/quotes" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm">
+              <Receipt className="w-5 h-5" />
+              <span>Gestion Devis</span>
+            </Link>
+            <Link to="/backoffice/documents" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-violet-500 to-violet-600 hover:from-violet-600 hover:to-violet-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm">
+              <FileCheck className="w-5 h-5" />
+              <span>Documents</span>
+            </Link>
+            <Link to="/backoffice/crm-killer/inbox" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-sky-500 to-sky-600 hover:from-sky-600 hover:to-sky-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm">
+              <Inbox className="w-5 h-5" />
+              <span>Boite Email</span>
+            </Link>
+            <Link to="/backoffice/newsletter" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-teal-500 to-teal-600 hover:from-teal-600 hover:to-teal-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm">
+              <Mail className="w-5 h-5" />
+              <span>Newsletter</span>
+            </Link>
+          </div>
+        </div>
+      )}
+
       {/* Automatisation & Réseaux Sociaux */}
       {(canViewSettings || canViewSocialMedia) && (
         <div className="bg-gradient-to-r from-red-900/40 to-orange-900/40 border-2 border-red-500/60 rounded-xl p-6 shadow-2xl">
           <h3 className="text-red-400 font-extrabold text-xl mb-4 flex items-center gap-3 uppercase tracking-wide">
             <Settings className="w-7 h-7 animate-pulse" />
-            ⚙️ AUTOMATISATION & RÉSEAUX SOCIAUX
+            ⚙️ AUTOMATISATION & RESEAUX SOCIAUX
           </h3>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
             {canViewSettings && (

@@ -50,7 +50,8 @@ const ConversionAnalytics = lazy(() => import('./backoffice/ConversionAnalytics'
 const AnalyticsDashboard = lazy(() => import('./backoffice/AnalyticsDashboard'));
 const InsuranceCompaniesManager = lazy(() => import('./backoffice/InsuranceCompaniesManager'));
 const QuickDocumentsUpload = lazy(() => import('./backoffice/QuickDocumentsUpload'));
-// PartnerFinder supprimé - redirige vers BacklinkReports
+const QuoteManager = lazy(() => import('./backoffice/QuoteManager'));
+const DocumentsViewer = lazy(() => import('./backoffice/DocumentsViewer'));
 const ProspectReview = lazy(() => import('./backoffice/ProspectReview'));
 const OutreachComposer = lazy(() => import('./backoffice/OutreachComposer'));
 const ComplianceCenter = lazy(() => import('./backoffice/ComplianceCenter'));
@@ -473,6 +474,14 @@ export const router = createBrowserRouter([
       {
         path: '/backoffice/insurance-companies',
         element: <AuthGuard><SuspenseWrapper><InsuranceCompaniesManager /></SuspenseWrapper></AuthGuard>
+      },
+      {
+        path: '/backoffice/quotes',
+        element: <AuthGuard><SuspenseWrapper><QuoteManager /></SuspenseWrapper></AuthGuard>
+      },
+      {
+        path: '/backoffice/documents',
+        element: <AuthGuard><SuspenseWrapper><DocumentsViewer /></SuspenseWrapper></AuthGuard>
       },
       {
         path: '/backoffice/quick-documents-upload',

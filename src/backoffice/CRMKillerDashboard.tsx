@@ -16,7 +16,8 @@ import {
   ArrowRight,
   RefreshCw,
   Inbox,
-  ChevronRight
+  ChevronRight,
+  Brain
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
