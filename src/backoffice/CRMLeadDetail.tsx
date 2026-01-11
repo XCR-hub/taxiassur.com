@@ -295,33 +295,59 @@ const CRMLeadDetail: React.FC = () => {
   const loadMessages = async (leadId: string) => {
     setLoadingMessages(true);
     try {
-      // Charger depuis crm_interactions (emails, SMS, WhatsApp, calls)
-      const { data: interactions, error } = await supabase
+      // Charger depuis crm_interactions
+      const { data: interactions } = await supabase
         .from('crm_interactions')
         .select('*')
         .eq('lead_id', leadId)
         .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('Error loading interactions:', error);
-        return;
-      }
+      // Charger depuis email_messages
+      const { data: emails } = await supabase
+        .from('email_messages')
+        .select('*')
+        .eq('lead_id', leadId)
+        .order('created_at', { ascending: false });
 
-      console.log('📊 Interactions chargées:', interactions?.length || 0);
+      const allMessages: Message[] = [];
 
+      // Formater les interactions
       if (interactions) {
-        const formatted: Message[] = interactions.map((interaction: any) => ({
-          id: interaction.id,
-          type: interaction.type || 'system',
-          content: interaction.content || interaction.summary || 'Contenu non disponible',
-          subject: interaction.subject || `${interaction.type} - ${interaction.direction}`,
-          sent_at: interaction.created_at,
-          status: interaction.status || interaction.metadata?.status || 'sent',
-          sent_by: interaction.created_by || (interaction.direction === 'inbound' ? 'Client' : 'TaxiAssur')
-        }));
-        setMessages(formatted);
-        console.log('✅ Messages formatés:', formatted.length);
+        interactions.forEach((interaction: any) => {
+          allMessages.push({
+            id: interaction.id,
+            type: interaction.type || 'system',
+            content: interaction.content || interaction.summary || 'Contenu non disponible',
+            subject: interaction.subject || `${interaction.type} - ${interaction.direction}`,
+            sent_at: interaction.created_at,
+            status: interaction.status || interaction.metadata?.status || 'sent',
+            sent_by: interaction.created_by || (interaction.direction === 'inbound' ? 'Client' : 'TaxiAssur')
+          });
+        });
       }
+
+      // Formater les emails
+      if (emails) {
+        emails.forEach((email: any) => {
+          const bodyText = email.body_text || '';
+          const preview = bodyText.length > 300 ? bodyText.substring(0, 300) + '...' : bodyText;
+          allMessages.push({
+            id: email.id,
+            type: 'email',
+            content: preview,
+            subject: email.subject,
+            sent_at: email.received_at || email.sent_at || email.created_at,
+            status: email.status === 'sent' ? 'sent' : email.is_read ? 'read' : 'delivered',
+            sent_by: email.direction === 'inbound' ? email.from_name || email.from_email : 'TaxiAssur'
+          });
+        });
+      }
+
+      // Trier par date décroissante
+      allMessages.sort((a, b) => new Date(b.sent_at).getTime() - new Date(a.sent_at).getTime());
+
+      setMessages(allMessages);
+      console.log('✅ Messages chargés:', allMessages.length, '(interactions:', interactions?.length || 0, '+ emails:', emails?.length || 0, ')');
     } catch (error) {
       console.error('Failed to load messages:', error);
     } finally {

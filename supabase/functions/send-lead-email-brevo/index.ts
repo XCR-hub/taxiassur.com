@@ -37,6 +37,16 @@ Deno.serve(async (req: Request) => {
       throw new Error("BREVO_API_KEY not configured");
     }
 
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    const { data: account } = await supabase
+      .from('email_accounts')
+      .select('id')
+      .eq('email', 'team@taxiassur.com')
+      .single();
+
     const teamEmailBody = `
       <!DOCTYPE html>
       <html>
@@ -521,10 +531,6 @@ Deno.serve(async (req: Request) => {
 
     console.log(`✅ Emails sent successfully for lead ${lead.id}`);
 
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
     await supabase.from('crm_interactions').insert([
       {
         lead_id: lead.id,
@@ -545,6 +551,41 @@ Deno.serve(async (req: Request) => {
         from_email: 'team@taxiassur.com'
       }
     ]);
+
+    if (account) {
+      await supabase.from('email_messages').insert([
+        {
+          account_id: account.id,
+          lead_id: lead.id,
+          message_id: `lead-notif-${lead.id}-${Date.now()}`,
+          from_email: 'team@taxiassur.com',
+          from_name: 'TaxiAssur Notifications',
+          to_emails: ['team@taxiassur.com'],
+          subject: `🎯 Nouveau Lead : ${lead.name} - ${lead.city}`,
+          body_text: `Nouveau lead: ${lead.name} - ${lead.city}`,
+          body_html: teamEmailBody,
+          direction: 'outbound',
+          status: 'sent',
+          provider: 'brevo',
+          sent_at: new Date().toISOString()
+        },
+        {
+          account_id: account.id,
+          lead_id: lead.id,
+          message_id: `lead-client-${lead.id}-${Date.now()}`,
+          from_email: 'team@taxiassur.com',
+          from_name: 'TaxiAssur',
+          to_emails: [lead.email],
+          subject: 'Votre demande de devis assurance taxi',
+          body_text: 'Demande de devis reçue',
+          body_html: clientEmailBody,
+          direction: 'outbound',
+          status: 'sent',
+          provider: 'brevo',
+          sent_at: new Date().toISOString()
+        }
+      ]);
+    }
 
     return new Response(
       JSON.stringify({ success: true, message: "Emails sent" }),
