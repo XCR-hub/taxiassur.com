@@ -38,41 +38,8 @@ class MonitoringService {
 
   private async initializeSentry(dsn: string) {
     try {
-      const Sentry = await import(/* @vite-ignore */ '@sentry/react').catch(() => null);
-
-      if (!Sentry) {
-        logger.info('Sentry package not installed, monitoring disabled');
-        return;
-      }
-
-      Sentry.init({
-        dsn,
-        environment: this.environment,
-        integrations: [
-          Sentry.browserTracingIntegration(),
-          Sentry.replayIntegration({
-            maskAllText: true,
-            blockAllMedia: true,
-          }),
-        ],
-        tracesSampleRate: this.environment === 'production' ? 0.1 : 1.0,
-        replaysSessionSampleRate: 0.1,
-        replaysOnErrorSampleRate: 1.0,
-        beforeSend(event, hint) {
-          if (event.exception) {
-            const error = hint.originalException;
-            if (error instanceof Error) {
-              if (error.message.includes('ResizeObserver')) {
-                return null;
-              }
-            }
-          }
-          return event;
-        },
-      });
-
-      this.sentryEnabled = true;
-      logger.info('Sentry monitoring initialized');
+      logger.info('Sentry monitoring disabled in this build');
+      this.sentryEnabled = false;
     } catch (error) {
       logger.info('Sentry not available, continuing without monitoring');
     }
@@ -147,17 +114,6 @@ class MonitoringService {
       tags,
     });
 
-    if (this.sentryEnabled && typeof window !== 'undefined') {
-      import(/* @vite-ignore */ '@sentry/react').then((Sentry) => {
-        Sentry.captureException(error, {
-          level: this.mapSeverityToSentryLevel(severity),
-          contexts: { custom: context },
-          user: userId ? { id: userId } : undefined,
-          tags,
-        });
-      }).catch(() => {});
-    }
-
     if (this.environment === 'production' && severity === 'critical') {
       this.sendAlertToBackend(report);
     }
@@ -169,43 +125,18 @@ class MonitoringService {
       rating: metric.rating,
       metadata: metric.metadata,
     });
-
-    if (this.sentryEnabled && typeof window !== 'undefined') {
-      import(/* @vite-ignore */ '@sentry/react').then((Sentry) => {
-        Sentry.metrics.distribution(metric.name, metric.value, {
-          tags: metric.metadata as Record<string, string>,
-        });
-      }).catch(() => {});
-    }
   }
 
   setUser(userId: string, email?: string, username?: string) {
-    if (this.sentryEnabled && typeof window !== 'undefined') {
-      import(/* @vite-ignore */ '@sentry/react').then((Sentry) => {
-        Sentry.setUser({ id: userId, email, username });
-      }).catch(() => {});
-    }
+    logger.info('User set', { userId, email, username });
   }
 
   clearUser() {
-    if (this.sentryEnabled && typeof window !== 'undefined') {
-      import(/* @vite-ignore */ '@sentry/react').then((Sentry) => {
-        Sentry.setUser(null);
-      }).catch(() => {});
-    }
+    logger.info('User cleared');
   }
 
   addBreadcrumb(message: string, category?: string, data?: Record<string, any>) {
-    if (this.sentryEnabled && typeof window !== 'undefined') {
-      import(/* @vite-ignore */ '@sentry/react').then((Sentry) => {
-        Sentry.addBreadcrumb({
-          message,
-          category,
-          data,
-          level: 'info',
-        });
-      }).catch(() => {});
-    }
+    logger.info('Breadcrumb', { message, category, data });
   }
 
   private mapSeverityToSentryLevel(severity: string): 'fatal' | 'error' | 'warning' | 'info' | 'debug' {
