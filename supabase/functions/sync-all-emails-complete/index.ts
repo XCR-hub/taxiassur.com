@@ -8,140 +8,167 @@ const corsHeaders = {
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, {
-      status: 200,
-      headers: corsHeaders,
-    });
+    return new Response(null, { status: 200, headers: corsHeaders });
   }
 
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+    const brevoApiKey = Deno.env.get('BREVO_API_KEY');
+    const supabase = createClient(supabaseUrl, supabaseKey);
 
-    console.log('Starting complete email sync and lead assignment...');
+    console.log('Starting complete email sync...');
 
-    const results = {
-      imap_sync: null as any,
-      lead_assignment: null as any,
-      success: true,
-      errors: [] as string[],
+    const stats = {
+      emails_retrieved: 0,
+      emails_inserted: 0,
+      emails_skipped: 0,
+      emails_linked: 0,
+      leads_created: 0,
+      interactions_created: 0,
+      errors: 0,
     };
 
-    // Étape 1 : Synchroniser les emails depuis IMAP (avec timeout)
-    try {
-      console.log('Step 1: Syncing emails from IMAP...');
+    // Step 1: Sync emails from Brevo
+    if (brevoApiKey) {
+      console.log('Syncing emails from Brevo API...');
+      let offset = 0;
+      const batchSize = 100;
 
-      // Créer un timeout de 30 secondes pour éviter le blocage
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000);
-
-      try {
-        const imapResponse = await fetch(
-          `${supabaseUrl}/functions/v1/sync-ionos-imap`,
+      while (stats.emails_retrieved < 500) {
+        const response = await fetch(
+          `https://api.brevo.com/v3/smtp/emails?limit=${batchSize}&offset=${offset}&sort=desc`,
           {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${supabaseAnonKey}`,
-              'Content-Type': 'application/json',
-            },
-            signal: controller.signal,
+            method: 'GET',
+            headers: { 'accept': 'application/json', 'api-key': brevoApiKey },
           }
         );
 
-        clearTimeout(timeoutId);
+        if (!response.ok) break;
 
-        if (!imapResponse.ok) {
-          const errorText = await imapResponse.text();
-          throw new Error(`IMAP sync failed (${imapResponse.status}): ${errorText.substring(0, 200)}`);
+        const data = await response.json();
+        if (!data.transactionalEmails || data.transactionalEmails.length === 0) break;
+
+        for (const email of data.transactionalEmails) {
+          stats.emails_retrieved++;
+          const messageId = email.messageId || email.uuid || `brevo-${Date.now()}-${Math.random()}`;
+
+          const { data: existing } = await supabase
+            .from('email_messages')
+            .select('id')
+            .eq('message_id', messageId)
+            .maybeSingle();
+
+          if (existing) {
+            stats.emails_skipped++;
+            continue;
+          }
+
+          const toEmails = email.to ? (Array.isArray(email.to) ? email.to.map((t: any) => t.email || t) : [email.to]) : [];
+
+          const { error: insertError } = await supabase.from('email_messages').insert({
+            message_id: messageId,
+            from_email: email.from || 'team@taxiassur.com',
+            from_name: email.from || 'TaxiAssur',
+            to_emails: toEmails.filter(Boolean),
+            to_names: toEmails.filter(Boolean),
+            subject: email.subject || '(Pas de sujet)',
+            body_text: email.textContent || '',
+            body_html: email.htmlContent || '',
+            received_at: email.date || new Date().toISOString(),
+            sent_at: email.date || new Date().toISOString(),
+            direction: 'outbound',
+            status: 'sent',
+            channel: 'email',
+            provider: 'brevo',
+            is_read: true,
+            has_attachments: false,
+            metadata: { brevo_uuid: email.uuid, template_id: email.templateId },
+          });
+
+          if (insertError) {
+            stats.errors++;
+          } else {
+            stats.emails_inserted++;
+          }
         }
 
-        results.imap_sync = await imapResponse.json();
-        console.log('IMAP sync completed:', results.imap_sync);
-      } catch (fetchError: any) {
-        clearTimeout(timeoutId);
-        if (fetchError.name === 'AbortError') {
-          throw new Error('IMAP sync timeout after 30 seconds. Check Supabase secrets configuration.');
-        }
-        throw fetchError;
+        offset += batchSize;
+        if (data.transactionalEmails.length < batchSize) break;
       }
-    } catch (imapError: any) {
-      console.error('IMAP sync error:', imapError);
-      results.errors.push(`IMAP sync: ${imapError.message}`);
-      // Ne pas marquer comme échec total, continuer avec Brevo
-      console.log('Continuing without IONOS IMAP sync...');
+
+      console.log(`Retrieved ${stats.emails_retrieved} emails, inserted ${stats.emails_inserted}`);
+    } else {
+      console.log('BREVO_API_KEY not configured');
     }
 
-    // Étape 2 : Affecter les emails aux leads
-    try {
-      console.log('Step 2: Assigning emails to leads...');
-      
-      const assignResponse = await fetch(
-        `${supabaseUrl}/functions/v1/sync-emails-to-leads`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${supabaseAnonKey}`,
-            'Content-Type': 'application/json',
-          },
+    // Step 2: Link emails to leads
+    console.log('Linking emails to leads...');
+    const { data: unlinkedEmails } = await supabase
+      .from('email_messages')
+      .select('id, from_email, to_emails, direction')
+      .is('lead_id', null)
+      .limit(500);
+
+    if (unlinkedEmails) {
+      for (const email of unlinkedEmails) {
+        const emailToMatch = email.direction === 'inbound'
+          ? email.from_email
+          : (email.to_emails?.[0] || null);
+
+        if (!emailToMatch) continue;
+
+        const { data: lead } = await supabase
+          .from('leads')
+          .select('id')
+          .eq('email', emailToMatch)
+          .maybeSingle();
+
+        if (lead) {
+          await supabase
+            .from('email_messages')
+            .update({ lead_id: lead.id, auto_matched: true })
+            .eq('id', email.id);
+          stats.emails_linked++;
+
+          await supabase.from('crm_interactions').insert({
+            lead_id: lead.id,
+            type: email.direction === 'inbound' ? 'email_received' : 'email_sent',
+            channel: 'email',
+            content: `Email: ${email.id}`,
+            metadata: { email_id: email.id },
+          });
+          stats.interactions_created++;
         }
-      );
-
-      if (!assignResponse.ok) {
-        const errorText = await assignResponse.text();
-        throw new Error(`Lead assignment failed: ${errorText}`);
       }
-
-      results.lead_assignment = await assignResponse.json();
-      console.log('Lead assignment completed:', results.lead_assignment);
-    } catch (assignError) {
-      console.error('Lead assignment error:', assignError);
-      results.errors.push(`Lead assignment: ${assignError.message}`);
-      results.success = false;
     }
 
-    // Calculer les statistiques globales
-    const totalStats = {
-      emails_retrieved: results.imap_sync?.stats?.total_retrieved || 0,
-      emails_inserted: results.imap_sync?.stats?.inserted || 0,
-      emails_skipped: results.imap_sync?.stats?.skipped || 0,
-      leads_created: results.lead_assignment?.stats?.leads_created || 0,
-      emails_linked: results.lead_assignment?.stats?.emails_linked || 0,
-      interactions_created: results.lead_assignment?.stats?.interactions_created || 0,
-      total_errors: (results.imap_sync?.stats?.errors || 0) + (results.lead_assignment?.stats?.errors || 0),
-    };
+    // Update last sync time
+    await supabase
+      .from('email_accounts')
+      .update({ last_sync_at: new Date().toISOString() })
+      .eq('email', 'team@taxiassur.com');
 
-    const finalResponse = {
-      success: results.success && results.errors.length === 0,
-      message: results.success 
-        ? 'Complete email sync and lead assignment finished successfully'
-        : 'Email sync completed with some errors',
-      stats: totalStats,
-      details: results,
-      timestamp: new Date().toISOString(),
-    };
+    const hasEmails = stats.emails_retrieved > 0 || stats.emails_inserted > 0;
 
-    console.log('Complete sync finished:', finalResponse);
-
-    return new Response(
-      JSON.stringify(finalResponse),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: results.success ? 200 : 207, // 207 Multi-Status if partial success
-      }
-    );
-
-  } catch (error) {
-    console.error('Fatal error in sync-all-emails-complete:', error);
     return new Response(
       JSON.stringify({
-        success: false,
-        error: error.message,
-        timestamp: new Date().toISOString(),
+        success: true,
+        message: hasEmails
+          ? `Synchronisation terminee: ${stats.emails_inserted} nouveaux emails`
+          : 'Aucun email recupere - verifiez BREVO_API_KEY dans les secrets Supabase',
+        stats,
+        note: !brevoApiKey ? 'BREVO_API_KEY non configure' : undefined,
       }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      }
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+
+  } catch (error: any) {
+    console.error('Fatal error:', error);
+    return new Response(
+      JSON.stringify({ success: false, error: error.message }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });
