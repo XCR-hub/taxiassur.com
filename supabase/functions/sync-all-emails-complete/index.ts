@@ -6,6 +6,74 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Client-Info, Apikey',
 };
 
+function decodeQuotedPrintable(str: string): string {
+  return str
+    .replace(/=\r?\n/g, '')
+    .replace(/=([0-9A-Fa-f]{2})/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)));
+}
+
+function decodeBase64(str: string): string {
+  try {
+    return decodeURIComponent(escape(atob(str.replace(/\s/g, ''))));
+  } catch {
+    try { return atob(str.replace(/\s/g, '')); } catch { return str; }
+  }
+}
+
+function decodeMimeHeader(header: string): string {
+  return header.replace(/=\?([^?]+)\?([BQbq])\?([^?]*)\?=/g, (_, charset, encoding, text) => {
+    try {
+      if (encoding.toUpperCase() === 'B') return decodeBase64(text);
+      if (encoding.toUpperCase() === 'Q') return decodeQuotedPrintable(text.replace(/_/g, ' '));
+    } catch {}
+    return text;
+  });
+}
+
+function extractHtmlContent(raw: string): { text: string; html: string } {
+  let text = '', html = '';
+  const boundaryMatch = raw.match(/boundary="?([^"\s;]+)"?/i);
+  
+  if (boundaryMatch) {
+    const boundary = boundaryMatch[1];
+    const parts = raw.split(new RegExp(`--${boundary.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'g'));
+    
+    for (const part of parts) {
+      const isQP = /Content-Transfer-Encoding:\s*quoted-printable/i.test(part);
+      const isB64 = /Content-Transfer-Encoding:\s*base64/i.test(part);
+      const isHtml = /Content-Type:\s*text\/html/i.test(part);
+      const isText = /Content-Type:\s*text\/plain/i.test(part);
+      
+      const bodyStart = part.indexOf('\r\n\r\n');
+      if (bodyStart === -1) continue;
+      
+      let content = part.substring(bodyStart + 4).trim();
+      if (isQP) content = decodeQuotedPrintable(content);
+      else if (isB64) content = decodeBase64(content);
+      
+      if (isHtml && !html) html = content;
+      else if (isText && !text) text = content;
+    }
+  } else {
+    const isQP = /Content-Transfer-Encoding:\s*quoted-printable/i.test(raw);
+    const isB64 = /Content-Transfer-Encoding:\s*base64/i.test(raw);
+    const isHtml = /Content-Type:\s*text\/html/i.test(raw);
+    
+    let content = raw;
+    const bodyStart = raw.indexOf('\r\n\r\n');
+    if (bodyStart !== -1) content = raw.substring(bodyStart + 4);
+    
+    if (isQP) content = decodeQuotedPrintable(content);
+    else if (isB64) content = decodeBase64(content);
+    
+    if (isHtml) html = content;
+    else text = content;
+  }
+  
+  if (html && !text) text = html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+  return { text, html };
+}
+
 class IMAPClient {
   private conn: Deno.TlsConn | null = null;
   private reader: ReadableStreamDefaultReader<Uint8Array> | null = null;
@@ -19,10 +87,7 @@ class IMAPClient {
       this.reader = this.conn.readable.getReader();
       const greeting = await this.readResponse();
       return greeting.includes('OK') || greeting.includes('*');
-    } catch (error) {
-      console.error('IMAP connection error:', error);
-      return false;
-    }
+    } catch (e) { console.error('IMAP error:', e); return false; }
   }
 
   private async readResponse(): Promise<string> {
@@ -42,7 +107,7 @@ class IMAPClient {
     const tagPattern = new RegExp(`^${tag} `, 'm');
     const startTime = Date.now();
     while (!tagPattern.test(response)) {
-      if (Date.now() - startTime > 20000) throw new Error('IMAP timeout');
+      if (Date.now() - startTime > 30000) throw new Error('IMAP timeout');
       const { value, done } = await this.reader.read();
       if (done) break;
       response += this.decoder.decode(value);
@@ -57,15 +122,15 @@ class IMAPClient {
     return await this.readUntilTag(tag);
   }
 
-  async login(username: string, password: string): Promise<boolean> {
-    const response = await this.sendCommand(`LOGIN "${username}" "${password}"`);
-    return response.includes('OK');
+  async login(u: string, p: string): Promise<boolean> {
+    const r = await this.sendCommand(`LOGIN "${u}" "${p}"`);
+    return r.includes('OK');
   }
 
-  async selectMailbox(mailbox: string): Promise<{ exists: number }> {
-    const response = await this.sendCommand(`SELECT "${mailbox}"`);
-    const existsMatch = response.match(/(\d+) EXISTS/);
-    return { exists: existsMatch ? parseInt(existsMatch[1]) : 0 };
+  async selectMailbox(m: string): Promise<{ exists: number }> {
+    const r = await this.sendCommand(`SELECT "${m}"`);
+    const match = r.match(/(\d+) EXISTS/);
+    return { exists: match ? parseInt(match[1]) : 0 };
   }
 
   async fetchHeaders(start: number, end: number): Promise<Array<{ uid: string; subject: string; from: string; date: string; seq: number }>> {
@@ -83,8 +148,8 @@ class IMAPClient {
       if (uidMatch) {
         emails.push({
           uid: msgIdMatch ? msgIdMatch[1] : `uid-${uidMatch[1]}`,
-          from: fromMatch ? fromMatch[1].replace(/\r\n\s+/g, ' ').trim() : 'Unknown',
-          subject: subjectMatch ? subjectMatch[1].replace(/\r\n\s+/g, ' ').trim() : '(Pas de sujet)',
+          from: decodeMimeHeader(fromMatch ? fromMatch[1].replace(/\r\n\s+/g, ' ').trim() : 'Unknown'),
+          subject: decodeMimeHeader(subjectMatch ? subjectMatch[1].replace(/\r\n\s+/g, ' ').trim() : '(Pas de sujet)'),
           date: dateMatch ? dateMatch[1].trim() : new Date().toISOString(),
           seq,
         });
@@ -93,21 +158,16 @@ class IMAPClient {
     return emails;
   }
 
-  async fetchBody(seq: number): Promise<string> {
+  async fetchFullEmail(seq: number): Promise<{ text: string; html: string }> {
     try {
-      const response = await this.sendCommand(`FETCH ${seq} BODY.PEEK[TEXT]`);
-      const bodyMatch = response.match(/BODY\[TEXT\]\s*(?:\{\d+\})?\r\n([\s\S]*?)(?=\r\nA\d+|$)/);
-      return bodyMatch ? bodyMatch[1].trim().substring(0, 50000) : '';
-    } catch {
-      return '';
-    }
+      const response = await this.sendCommand(`FETCH ${seq} BODY.PEEK[]`);
+      const bodyMatch = response.match(/BODY\[\]\s*\{(\d+)\}\r\n([\s\S]*)/);
+      if (bodyMatch) return extractHtmlContent(bodyMatch[2]);
+      return { text: '', html: '' };
+    } catch { return { text: '', html: '' }; }
   }
 
-  async logout(): Promise<void> {
-    try { await this.sendCommand('LOGOUT'); } catch {}
-    await this.close();
-  }
-
+  async logout(): Promise<void> { try { await this.sendCommand('LOGOUT'); } catch {} await this.close(); }
   async close(): Promise<void> {
     try {
       if (this.reader) { await this.reader.cancel(); this.reader = null; }
@@ -117,180 +177,89 @@ class IMAPClient {
 }
 
 Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { status: 200, headers: corsHeaders });
-  }
+  if (req.method === 'OPTIONS') return new Response(null, { status: 200, headers: corsHeaders });
 
   try {
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const supabase = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
+    console.log('Complete email sync with decoding...');
 
-    console.log('Starting complete email sync via native IMAP...');
+    const stats = { mailbox_total: 0, retrieved: 0, inserted: 0, skipped: 0, linked: 0, errors: 0 };
 
-    const stats = {
-      mailbox_total: 0,
-      retrieved: 0,
-      inserted: 0,
-      skipped: 0,
-      linked: 0,
-      errors: 0,
-    };
-
-    // Get account config
-    const { data: account } = await supabase
-      .from('email_accounts')
-      .select('*')
-      .eq('email', 'team@taxiassur.com')
-      .single();
-
-    if (!account || !account.imap_password_encrypted) {
-      return new Response(
-        JSON.stringify({ success: false, error: 'Email account not configured', stats }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    const { data: account } = await supabase.from('email_accounts').select('*').eq('email', 'team@taxiassur.com').single();
+    if (!account?.imap_password_encrypted) {
+      return new Response(JSON.stringify({ success: false, error: 'Compte email non configure', stats }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    const imapHost = account.imap_host || 'imap.ionos.fr';
-    const imapPort = account.imap_port || 993;
-    const username = account.imap_username || 'team@taxiassur.com';
-    const password = account.imap_password_encrypted;
-
-    // Connect via native IMAP
     const imap = new IMAPClient();
-    const connected = await imap.connect(imapHost, imapPort);
-    if (!connected) {
-      return new Response(
-        JSON.stringify({ success: false, error: 'IMAP connection failed', stats }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    if (!await imap.connect(account.imap_host || 'imap.ionos.fr', account.imap_port || 993)) {
+      return new Response(JSON.stringify({ success: false, error: 'Connexion IMAP echouee' }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
-
-    const loggedIn = await imap.login(username, password);
-    if (!loggedIn) {
+    if (!await imap.login(account.imap_username || 'team@taxiassur.com', account.imap_password_encrypted)) {
       await imap.close();
-      return new Response(
-        JSON.stringify({ success: false, error: 'IMAP authentication failed', stats }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      return new Response(JSON.stringify({ success: false, error: 'Auth IMAP echouee' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
     const mailbox = await imap.selectMailbox('INBOX');
     stats.mailbox_total = mailbox.exists;
-    console.log(`INBOX: ${mailbox.exists} emails`);
 
     if (mailbox.exists > 0) {
       const start = Math.max(1, mailbox.exists - 99);
       const emails = await imap.fetchHeaders(start, mailbox.exists);
-      console.log(`Fetched ${emails.length} headers`);
 
       for (const email of emails) {
         stats.retrieved++;
-
-        const { data: existing } = await supabase
-          .from('email_messages')
-          .select('id')
-          .eq('message_id', email.uid)
-          .maybeSingle();
-
-        if (existing) {
-          stats.skipped++;
-          continue;
-        }
+        const { data: existing } = await supabase.from('email_messages').select('id').eq('message_id', email.uid).maybeSingle();
+        if (existing) { stats.skipped++; continue; }
 
         const fromMatch = email.from.match(/(?:"?([^"<]+)"?\s*)?<?([^>\s]+@[^>\s]+)>?/);
         const fromName = fromMatch?.[1]?.trim() || '';
         const fromEmail = fromMatch?.[2]?.trim() || email.from;
 
         let receivedAt: string;
-        try {
-          const d = new Date(email.date);
-          receivedAt = isNaN(d.getTime()) ? new Date().toISOString() : d.toISOString();
-        } catch {
-          receivedAt = new Date().toISOString();
-        }
+        try { const d = new Date(email.date); receivedAt = isNaN(d.getTime()) ? new Date().toISOString() : d.toISOString(); }
+        catch { receivedAt = new Date().toISOString(); }
 
-        const bodyText = await imap.fetchBody(email.seq);
+        const { text, html } = await imap.fetchFullEmail(email.seq);
 
         const { error } = await supabase.from('email_messages').insert({
           account_id: account.id,
           message_id: email.uid,
           from_email: fromEmail,
           from_name: fromName,
-          to_emails: [username],
+          to_emails: [account.imap_username || 'team@taxiassur.com'],
           subject: email.subject,
-          body_text: bodyText,
+          body_text: text.substring(0, 100000),
+          body_html: html.substring(0, 500000),
           received_at: receivedAt,
           direction: 'inbound',
           status: 'received',
           provider: 'ionos-imap',
           is_read: false,
         });
-
-        if (error) {
-          stats.errors++;
-          console.error('Insert error:', error.message);
-        } else {
-          stats.inserted++;
-        }
+        if (error) stats.errors++; else stats.inserted++;
       }
     }
 
     await imap.logout();
 
-    // Link unlinked emails to leads
-    const { data: unlinkedEmails } = await supabase
-      .from('email_messages')
-      .select('id, from_email, to_emails, direction')
-      .is('lead_id', null)
-      .eq('auto_matched', false)
-      .limit(200);
-
-    if (unlinkedEmails) {
-      for (const email of unlinkedEmails) {
-        const emailToMatch = email.direction === 'inbound'
-          ? email.from_email
-          : (email.to_emails?.[0] || null);
-
+    const { data: unlinked } = await supabase.from('email_messages').select('id, from_email, to_emails, direction').is('lead_id', null).eq('auto_matched', false).limit(200);
+    if (unlinked) {
+      for (const e of unlinked) {
+        const emailToMatch = e.direction === 'inbound' ? e.from_email : (e.to_emails?.[0] || null);
         if (!emailToMatch) continue;
-
-        const { data: lead } = await supabase
-          .from('leads')
-          .select('id')
-          .eq('email', emailToMatch)
-          .maybeSingle();
-
+        const { data: lead } = await supabase.from('leads').select('id').eq('email', emailToMatch).maybeSingle();
         if (lead) {
-          await supabase
-            .from('email_messages')
-            .update({ lead_id: lead.id, auto_matched: true })
-            .eq('id', email.id);
+          await supabase.from('email_messages').update({ lead_id: lead.id, auto_matched: true }).eq('id', e.id);
           stats.linked++;
         }
       }
     }
 
-    // Update last sync
-    await supabase
-      .from('email_accounts')
-      .update({ last_sync_at: new Date().toISOString() })
-      .eq('id', account.id);
+    await supabase.from('email_accounts').update({ last_sync_at: new Date().toISOString() }).eq('id', account.id);
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        message: `Synchronisation IMAP terminee: ${stats.inserted} nouveaux emails`,
-        stats,
-        provider: 'ionos-imap-native',
-      }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
-
+    return new Response(JSON.stringify({ success: true, message: `Sync: ${stats.inserted} nouveaux emails`, stats, provider: 'ionos-imap-native' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   } catch (error: any) {
     console.error('Sync error:', error);
-    return new Response(
-      JSON.stringify({ success: false, error: error.message }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return new Response(JSON.stringify({ success: false, error: error.message }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   }
 });
