@@ -45,7 +45,7 @@ Deno.serve(async (req: Request) => {
       .from('email_accounts')
       .select('id')
       .eq('email', 'team@taxiassur.com')
-      .single();
+      .maybeSingle();
 
     const teamEmailBody = `
       <!DOCTYPE html>
@@ -70,13 +70,13 @@ Deno.serve(async (req: Request) => {
       <body>
         <div class="container">
           <div class="header">
-            <h1 style="margin: 0; font-size: 32px;">🎯 NOUVEAU LEAD</h1>
+            <h1 style="margin: 0; font-size: 32px;">NOUVEAU LEAD</h1>
             <p style="margin: 10px 0 0 0; font-size: 16px;">Traitement prioritaire requis</p>
           </div>
 
           <div class="content">
             <div class="alert-box">
-              <strong>⚡ ACTION REQUISE :</strong> Contactez ce prospect dans les <strong>15 minutes</strong>
+              <strong>ACTION REQUISE :</strong> Contactez ce prospect dans les <strong>15 minutes</strong>
             </div>
 
             <h2 style="color: #1f2937; margin-top: 0;">Informations du prospect</h2>
@@ -88,34 +88,34 @@ Deno.serve(async (req: Request) => {
               </div>
 
               <div class="info-item">
-                <div class="info-label">📞 Téléphone</div>
+                <div class="info-label">Telephone</div>
                 <div class="info-value"><a href="tel:${lead.phone}" style="color: #10b981; text-decoration: none;">${lead.phone}</a></div>
               </div>
 
               <div class="info-item">
-                <div class="info-label">📧 Email</div>
+                <div class="info-label">Email</div>
                 <div class="info-value"><a href="mailto:${lead.email}" style="color: #3b82f6; text-decoration: none; font-size: 14px;">${lead.email}</a></div>
               </div>
 
               <div class="info-item">
-                <div class="info-label">📍 Ville</div>
+                <div class="info-label">Ville</div>
                 <div class="info-value">${lead.city}</div>
               </div>
 
               <div class="info-item">
-                <div class="info-label">👤 Statut professionnel</div>
+                <div class="info-label">Statut professionnel</div>
                 <div class="info-value">${lead.status}</div>
               </div>
 
               ${lead.immatriculation ? `
               <div class="info-item">
-                <div class="info-label">🚗 Immatriculation</div>
+                <div class="info-label">Immatriculation</div>
                 <div class="info-value">${lead.immatriculation}</div>
               </div>
               ` : ""}
 
               <div class="info-item">
-                <div class="info-label">⏰ Date de demande</div>
+                <div class="info-label">Date de demande</div>
                 <div class="info-value">${new Date(lead.created_at).toLocaleString("fr-FR", {
                   dateStyle: "short",
                   timeStyle: "short"
@@ -123,37 +123,37 @@ Deno.serve(async (req: Request) => {
               </div>
 
               <div class="info-item">
-                <div class="info-label">🆔 ID Lead</div>
+                <div class="info-label">ID Lead</div>
                 <div class="info-value" style="font-size: 12px; font-family: monospace;">${lead.id}</div>
               </div>
             </div>
 
-            <h3 style="color: #1f2937;">📋 Prochaines actions</h3>
+            <h3 style="color: #1f2937;">Prochaines actions</h3>
             <ol style="color: #4b5563; line-height: 1.8;">
-              <li>☎️ Appeler le prospect au <strong>${lead.phone}</strong></li>
-              <li>✅ Qualifier le besoin et confirmer les informations</li>
-              <li>📄 Vérifier l'envoi des 7 documents requis (incluant autorisation stationnement + RIB)</li>
-              <li>💰 Préparer et envoyer le devis sous 24h</li>
+              <li>Appeler le prospect au <strong>${lead.phone}</strong></li>
+              <li>Qualifier le besoin et confirmer les informations</li>
+              <li>Verifier l'envoi des 7 documents requis</li>
+              <li>Preparer et envoyer le devis sous 24h</li>
             </ol>
 
             <div style="text-align: center; margin: 30px 0;">
-              <a href="https://taxiassur.com/backoffice/crm-commercial" class="cta-button">
-                📊 OUVRIR LE CRM
+              <a href="https://taxiassur.com/backoffice/crm-killer/lead/${lead.id}" class="cta-button">
+                VOIR CE LEAD
               </a>
               <br>
-              <a href="https://taxiassur.com/backoffice/leads" style="color: #3b82f6; text-decoration: none; font-size: 14px;">
-                Voir tous les leads →
+              <a href="https://taxiassur.com/backoffice/crm-killer/pipeline" style="color: #3b82f6; text-decoration: none; font-size: 14px;">
+                Voir tous les leads
               </a>
             </div>
 
             <div style="background: #eff6ff; border: 1px solid #3b82f6; padding: 15px; border-radius: 8px;">
-              <strong>💡 Rappel :</strong> L'email automatique de confirmation avec demande de documents a été envoyé au prospect.
+              <strong>Rappel :</strong> L'email automatique de confirmation avec demande de documents a ete envoye au prospect.
             </div>
           </div>
 
           <div class="footer">
             <strong>TaxiAssur CRM</strong><br>
-            Notification automatique | Ne pas répondre à cet email
+            Notification automatique | Ne pas repondre a cet email
           </div>
         </div>
       </body>
@@ -187,21 +187,6 @@ Deno.serve(async (req: Request) => {
             padding: 40px 30px;
             text-align: center;
           }
-          .logo-container {
-            background: white;
-            width: 120px;
-            height: 120px;
-            margin: 0 auto 20px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-          }
-          .logo {
-            width: 90px;
-            height: 90px;
-          }
           .header h1 {
             color: white;
             font-size: 32px;
@@ -224,11 +209,6 @@ Deno.serve(async (req: Request) => {
             border-radius: 15px;
             margin: 25px 0;
             text-align: center;
-          }
-          .success-banner strong {
-            font-size: 18px;
-            display: block;
-            margin-bottom: 10px;
           }
           .documents-section {
             background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
@@ -270,12 +250,6 @@ Deno.serve(async (req: Request) => {
             border-radius: 20px;
             border: 3px solid #f59e0b;
           }
-          .cta-section p {
-            color: #92400e !important;
-            font-weight: 700 !important;
-            margin-bottom: 20px;
-            font-size: 18px !important;
-          }
           .cta-button {
             background: #ec4899;
             background-image: linear-gradient(135deg, #ec4899 0%, #db2777 100%);
@@ -287,11 +261,6 @@ Deno.serve(async (req: Request) => {
             font-weight: 700;
             font-size: 18px;
             box-shadow: 0 10px 30px rgba(236, 72, 153, 0.4);
-            margin-top: 15px;
-            border: 2px solid #db2777;
-          }
-          .cta-button span {
-            color: #ffffff !important;
           }
           .info-box {
             background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
@@ -315,9 +284,6 @@ Deno.serve(async (req: Request) => {
             padding: 8px 0;
             border-bottom: 1px solid #93c5fd;
           }
-          .info-box li:last-child {
-            border-bottom: none;
-          }
           .contact-banner {
             background: linear-gradient(135deg, #a5f3fc 0%, #67e8f9 100%);
             border-radius: 15px;
@@ -330,20 +296,6 @@ Deno.serve(async (req: Request) => {
             font-size: 22px;
             font-weight: 700;
             margin-bottom: 15px;
-          }
-          .contact-info {
-            display: flex;
-            justify-content: center;
-            gap: 30px;
-            flex-wrap: wrap;
-            margin-top: 15px;
-          }
-          .contact-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            color: #164e63;
-            font-weight: 600;
           }
           .footer {
             background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
@@ -367,110 +319,92 @@ Deno.serve(async (req: Request) => {
       <body>
         <div class="email-wrapper">
           <div class="header">
-            <div class="logo-container">
-              <svg class="logo" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="50" cy="50" r="45" fill="#10b981"/>
-                <path d="M30 40 L70 40 L70 60 L30 60 Z" fill="white"/>
-                <circle cx="35" cy="70" r="8" fill="white"/>
-                <circle cx="65" cy="70" r="8" fill="white"/>
-                <rect x="45" y="25" width="10" height="15" fill="white"/>
-              </svg>
-            </div>
-            <h1>✅ DEMANDE REÇUE !</h1>
-            <div class="subtitle">Félicitations ${lead.name} !</div>
+            <h1>DEMANDE RECUE !</h1>
+            <div class="subtitle">Felicitations ${lead.name} !</div>
           </div>
 
           <div class="content">
             <h2 style="color: #1e293b; font-size: 24px; margin-bottom: 15px;">Merci pour votre confiance</h2>
             <p style="color: #475569; font-size: 16px; margin-bottom: 20px;">
-              Nous avons bien reçu votre demande de devis pour une <strong style="color: #10b981;">assurance taxi à ${lead.city}</strong>.
+              Nous avons bien recu votre demande de devis pour une <strong style="color: #10b981;">assurance taxi a ${lead.city}</strong>.
             </p>
 
             <div class="success-banner">
-              <strong>⏱️ Réponse rapide garantie</strong>
+              <strong>Reponse rapide garantie</strong>
               Notre expert vous contacte dans les <strong>15 minutes</strong> au <strong>${lead.phone}</strong>
             </div>
 
             <div class="documents-section">
-              <h3>📋 Documents requis pour votre devis</h3>
+              <h3>Documents requis pour votre devis</h3>
               <p style="color: #1e40af; text-align: center; margin-bottom: 20px; font-weight: 600;">
-                Pour obtenir votre devis <strong>sous 24h</strong>, merci de nous transmettre ces <strong>7 pièces</strong>
+                Pour obtenir votre devis <strong>sous 24h</strong>, merci de nous transmettre ces <strong>7 pieces</strong>
               </p>
 
               <div class="document-item">
-                <strong>1. 📜 Licence de taxi professionnelle</strong>
-                <span>En cours de validité</span>
+                <strong>1. Licence de taxi professionnelle</strong>
+                <span>En cours de validite</span>
               </div>
               <div class="document-item">
-                <strong>2. 🪚 Permis de conduire</strong>
+                <strong>2. Permis de conduire</strong>
                 <span>Recto-verso, lisible</span>
               </div>
               <div class="document-item">
-                <strong>3. 🆔 Pièce d'identité</strong>
+                <strong>3. Piece d'identite</strong>
                 <span>CNI ou passeport valide</span>
               </div>
               <div class="document-item">
-                <strong>4. 🚗 Carte grise du véhicule</strong>
+                <strong>4. Carte grise du vehicule</strong>
                 <span>Certificat d'immatriculation</span>
               </div>
               <div class="document-item">
-                <strong>5. 📊 Relevé d'information</strong>
-                <span>De votre assureur précédent (si applicable)</span>
+                <strong>5. Releve d'information</strong>
+                <span>De votre assureur precedent (si applicable)</span>
               </div>
               <div class="document-item">
-                <strong>6. 🅿️ Autorisation de stationnement</strong>
-                <span>Autorisation préfectorale de stationnement taxi</span>
+                <strong>6. Autorisation de stationnement</strong>
+                <span>Autorisation prefectorale de stationnement taxi</span>
               </div>
               <div class="document-item">
-                <strong>7. 🏦 RIB - Relevé d'Identité Bancaire</strong>
-                <span>Coordonnées bancaires complètes</span>
+                <strong>7. RIB - Releve d'Identite Bancaire</strong>
+                <span>Coordonnees bancaires completes</span>
               </div>
             </div>
 
             <div class="cta-section">
               <p style="color: #92400e;">Uploadez vos documents maintenant et obtenez votre devis en express !</p>
-              <a href="https://taxiassur.com/espace-documents?token=${lead.access_token}" class="cta-button" style="text-decoration: none; color: #ffffff !important; background-color: #ec4899; background-image: linear-gradient(135deg, #ec4899 0%, #db2777 100%); display: inline-block; padding: 18px 40px; border-radius: 50px; font-weight: 700; font-size: 18px; box-shadow: 0 10px 30px rgba(236, 72, 153, 0.4);">
-                <span style="color: #ffffff !important;">📤 UPLOADER MES DOCUMENTS</span>
+              <a href="https://taxiassur.com/espace-documents?token=${lead.access_token}" class="cta-button" style="text-decoration: none; color: #ffffff !important;">
+                UPLOADER MES DOCUMENTS
               </a>
               <p style="color: #92400e; font-size: 14px; margin-top: 15px;">
-                Vous pouvez aussi les envoyer par email à <a href="mailto:team@taxiassur.com" style="color: #db2777; font-weight: 600;">team@taxiassur.com</a>
+                Vous pouvez aussi les envoyer par email a <a href="mailto:team@taxiassur.com" style="color: #db2777; font-weight: 600;">team@taxiassur.com</a>
               </p>
             </div>
 
             <div class="info-box">
-              <strong>ℹ️ Vos informations enregistrées</strong>
+              <strong>Vos informations enregistrees</strong>
               <ul>
-                <li>📞 Téléphone : ${lead.phone}</li>
-                <li>📧 Email : ${lead.email}</li>
-                <li>📍 Ville : ${lead.city}</li>
-                <li>👤 Statut : ${lead.status}</li>
-                ${lead.immatriculation ? `<li>🚗 Immatriculation : ${lead.immatriculation}</li>` : ""}
+                <li>Telephone : ${lead.phone}</li>
+                <li>Email : ${lead.email}</li>
+                <li>Ville : ${lead.city}</li>
+                <li>Statut : ${lead.status}</li>
+                ${lead.immatriculation ? `<li>Immatriculation : ${lead.immatriculation}</li>` : ""}
               </ul>
             </div>
 
             <div class="contact-banner">
-              <h3>📞 Besoin d'aide ?</h3>
+              <h3>Besoin d'aide ?</h3>
               <p style="color: #0e7490; margin-bottom: 15px;">
-                Notre équipe est disponible pour répondre à toutes vos questions
+                Notre equipe est disponible pour repondre a toutes vos questions
               </p>
-              <div class="contact-info">
-                <div class="contact-item">
-                  <span>📞</span>
-                  <a href="tel:0180855786" style="color: #164e63; text-decoration: none; font-weight: 700;">01 80 85 57 86</a>
-                </div>
-                <div class="contact-item">
-                  <span>📧</span>
-                  <a href="mailto:team@taxiassur.com" style="color: #164e63; text-decoration: none; font-weight: 700;">team@taxiassur.com</a>
-                </div>
-              </div>
+              <p><a href="tel:0180855786" style="color: #164e63; text-decoration: none; font-weight: 700;">01 80 85 57 86</a> | <a href="mailto:team@taxiassur.com" style="color: #164e63; text-decoration: none; font-weight: 700;">team@taxiassur.com</a></p>
             </div>
           </div>
 
           <div class="footer">
-            <div class="footer-logo">🚕 TaxiAssur</div>
-            <p><strong>Courtier spécialisé en assurance taxi et VTC</strong></p>
+            <div class="footer-logo">TaxiAssur</div>
+            <p><strong>Courtier specialise en assurance taxi et VTC</strong></p>
             <p style="margin-top: 15px;">01 80 85 57 86 | team@taxiassur.com</p>
-            <p style="margin-top: 10px;">© 2026 TaxiAssur - Tous droits réservés</p>
+            <p style="margin-top: 10px;">2026 TaxiAssur - Tous droits reserves</p>
           </div>
         </div>
       </body>
@@ -490,9 +424,9 @@ Deno.serve(async (req: Request) => {
           email: "team@taxiassur.com",
         },
         to: [
-          { email: "team@taxiassur.com", name: "Équipe TaxiAssur" },
+          { email: "team@taxiassur.com", name: "Equipe TaxiAssur" },
         ],
-        subject: `🎯 Nouveau Lead : ${lead.name} - ${lead.city}`,
+        subject: `Nouveau Lead : ${lead.name} - ${lead.city}`,
         htmlContent: teamEmailBody,
       }),
     });
@@ -529,15 +463,15 @@ Deno.serve(async (req: Request) => {
       throw new Error(`Failed to send client email: ${error}`);
     }
 
-    console.log(`✅ Emails sent successfully for lead ${lead.id}`);
+    console.log(`Emails sent successfully for lead ${lead.id}`);
 
     await supabase.from('crm_interactions').insert([
       {
         lead_id: lead.id,
         type: 'email',
         direction: 'outbound',
-        subject: `🎯 Nouveau Lead : ${lead.name} - ${lead.city}`,
-        content: 'Email de notification interne envoyé à l\'équipe',
+        subject: `Nouveau Lead : ${lead.name} - ${lead.city}`,
+        content: 'Email de notification interne envoye a l equipe',
         to_email: 'team@taxiassur.com',
         from_email: 'team@taxiassur.com'
       },
@@ -546,7 +480,7 @@ Deno.serve(async (req: Request) => {
         type: 'email',
         direction: 'outbound',
         subject: 'Votre demande de devis assurance taxi',
-        content: clientEmailBody,
+        content: 'Email de confirmation envoye au client',
         to_email: lead.email,
         from_email: 'team@taxiassur.com'
       }
@@ -561,7 +495,7 @@ Deno.serve(async (req: Request) => {
           from_email: 'team@taxiassur.com',
           from_name: 'TaxiAssur Notifications',
           to_emails: ['team@taxiassur.com'],
-          subject: `🎯 Nouveau Lead : ${lead.name} - ${lead.city}`,
+          subject: `Nouveau Lead : ${lead.name} - ${lead.city}`,
           body_text: `Nouveau lead: ${lead.name} - ${lead.city}`,
           body_html: teamEmailBody,
           direction: 'outbound',
@@ -577,7 +511,7 @@ Deno.serve(async (req: Request) => {
           from_name: 'TaxiAssur',
           to_emails: [lead.email],
           subject: 'Votre demande de devis assurance taxi',
-          body_text: 'Demande de devis reçue',
+          body_text: 'Demande de devis recue',
           body_html: clientEmailBody,
           direction: 'outbound',
           status: 'sent',
