@@ -1,0 +1,14 @@
+# Ignorer les fichiers partagés lors du déploiement
+# Les fichiers _shared ne sont PAS des edge functions standalone
+_shared/
+functions/_shared/
+
+# Ignorer les fichiers de configuration
+.git/
+node_modules/
+*.test.ts
+*.test.js
+*.spec.ts
+*.spec.js
+README.md
+.DS_Store
