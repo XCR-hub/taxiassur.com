@@ -10,6 +10,8 @@ const corsHeaders = {
 const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
 const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
 const HUGGINGFACE_API_KEY = Deno.env.get("HUGGINGFACE_API_KEY");
+const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
+const OPENROUTER_API_KEY = Deno.env.get("OPENROUTER_API_KEY");
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
@@ -63,6 +65,54 @@ async function callOpenAI(model: string, messages: any[], config: LLMConfig): Pr
   }
 }
 
+async function callAnthropic(model: string, messages: any[], config: LLMConfig): Promise<LLMResponse> {
+  const startTime = Date.now();
+  const anonymousId = `model_${Math.random().toString(36).substring(2, 8)}`;
+  
+  if (!ANTHROPIC_API_KEY) {
+    return { model_id: config.model_id, display_name: config.display_name, content: "", tokens_used: 0, latency_ms: 0, error: "Anthropic API key not configured", anonymous_id: anonymousId };
+  }
+  
+  try {
+    const systemMessage = messages.find(m => m.role === "system")?.content || "";
+    const nonSystemMessages = messages.filter(m => m.role !== "system");
+    
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "x-api-key": ANTHROPIC_API_KEY,
+        "anthropic-version": "2023-06-01",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model,
+        max_tokens: config.max_tokens,
+        system: systemMessage,
+        messages: nonSystemMessages,
+      }),
+    });
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Anthropic error: ${response.status} - ${errorText}`);
+    }
+    
+    const data = await response.json();
+    const content = data.content?.[0]?.text || "";
+    
+    return {
+      model_id: config.model_id,
+      display_name: config.display_name,
+      content,
+      tokens_used: (data.usage?.input_tokens || 0) + (data.usage?.output_tokens || 0),
+      latency_ms: Date.now() - startTime,
+      anonymous_id: anonymousId,
+    };
+  } catch (error) {
+    return { model_id: config.model_id, display_name: config.display_name, content: "", tokens_used: 0, latency_ms: Date.now() - startTime, error: error instanceof Error ? error.message : "Unknown error", anonymous_id: anonymousId };
+  }
+}
+
 async function callGemini(model: string, messages: any[], config: LLMConfig): Promise<LLMResponse> {
   const startTime = Date.now();
   const anonymousId = `model_${Math.random().toString(36).substring(2, 8)}`;
@@ -107,6 +157,46 @@ async function callGemini(model: string, messages: any[], config: LLMConfig): Pr
       display_name: config.display_name,
       content,
       tokens_used: data.usageMetadata?.totalTokenCount || 0,
+      latency_ms: Date.now() - startTime,
+      anonymous_id: anonymousId,
+    };
+  } catch (error) {
+    return { model_id: config.model_id, display_name: config.display_name, content: "", tokens_used: 0, latency_ms: Date.now() - startTime, error: error instanceof Error ? error.message : "Unknown error", anonymous_id: anonymousId };
+  }
+}
+
+async function callOpenRouter(model: string, messages: any[], config: LLMConfig): Promise<LLMResponse> {
+  const startTime = Date.now();
+  const anonymousId = `model_${Math.random().toString(36).substring(2, 8)}`;
+  
+  if (!OPENROUTER_API_KEY) {
+    return { model_id: config.model_id, display_name: config.display_name, content: "", tokens_used: 0, latency_ms: 0, error: "OpenRouter API key not configured", anonymous_id: anonymousId };
+  }
+  
+  try {
+    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
+        "Content-Type": "application/json",
+        "HTTP-Referer": "https://taxiassur.fr",
+        "X-Title": "TaxiAssur LLM Council",
+      },
+      body: JSON.stringify({ model, messages, temperature: config.temperature, max_tokens: config.max_tokens }),
+    });
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`OpenRouter error: ${response.status} - ${errorText}`);
+    }
+    
+    const data = await response.json();
+    
+    return {
+      model_id: config.model_id,
+      display_name: config.display_name,
+      content: data.choices?.[0]?.message?.content || "",
+      tokens_used: data.usage?.total_tokens || 0,
       latency_ms: Date.now() - startTime,
       anonymous_id: anonymousId,
     };
@@ -170,14 +260,18 @@ async function callLLM(config: LLMConfig, messages: any[]): Promise<LLMResponse>
   switch (provider) {
     case "openai":
       return callOpenAI(modelId.replace("openai/", ""), messages, config);
+    case "anthropic":
+      return callAnthropic(modelId.replace("anthropic/", ""), messages, config);
     case "google":
       return callGemini(modelId.replace("google/", ""), messages, config);
+    case "openrouter":
+      return callOpenRouter(modelId.replace("openrouter/", ""), messages, config);
     case "huggingface":
     case "meta":
     case "mistral":
       return callHuggingFace(modelId.replace(/^(huggingface|meta|mistral)\//, ""), messages, config);
     default:
-      return callOpenAI("gpt-4o", messages, config);
+      return callOpenRouter(modelId, messages, config);
   }
 }
 
@@ -250,7 +344,7 @@ Deno.serve(async (req: Request) => {
       { role: "user", content: query }
     ];
     
-    const responsePromises = councilModels.slice(0, 5).map(config => callLLM(config, messages));
+    const responsePromises = councilModels.slice(0, 6).map(config => callLLM(config, messages));
     const responses = await Promise.all(responsePromises);
     const validResponses = responses.filter(r => r.content && !r.error);
     
