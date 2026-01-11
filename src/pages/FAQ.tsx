@@ -29,10 +29,10 @@ const FAQ: React.FC = () => {
   return (
     <>
       <SEOHead
-        title="FAQ Assurance Taxi - Questions Fréquentes Expert | TaxiAssur"
-        description="❓ FAQ assurance taxi TaxiAssur : réponses expert ✓ Tarifs détaillés ✓ Garanties expliquées ✓ Démarches simplifiées ✓ Documents requis ✓ Conseils pro ✓ Guide complet"
+        title="FAQ Assurance Taxi - Meilleure Assurance Taxi Pas Chere France | Questions Expert | TaxiAssur"
+        description="❓ FAQ assurance taxi TaxiAssur : meilleure assurance taxi pas chere France ✓ Comparatif prix conseils ✓ Best cheap taxi insurance France ✓ Taxi insurance tips pricing ✓ Reponses expert ✓ Tarifs detailles ✓ Garanties expliquees"
         canonical="/faq"
-        keywords="FAQ assurance taxi, questions fréquentes taxi, aide assurance taxi, guide assurance taxi, réponses expert taxi, tarifs assurance taxi, garanties taxi, démarches taxi"
+        keywords="meilleure assurance taxi pas chere France, assurance taxi comparatif prix conseils, best cheap taxi insurance France, taxi insurance tips pricing France, FAQ assurance taxi, questions frequentes taxi, aide assurance taxi, guide assurance taxi, reponses expert taxi, tarifs assurance taxi, garanties taxi"
       />
       <JsonLd type="faq" data={faqs} />
       <JsonLd type="breadcrumb" data={breadcrumbs} />

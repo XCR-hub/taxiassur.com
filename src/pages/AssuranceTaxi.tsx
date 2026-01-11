@@ -51,10 +51,10 @@ const AssuranceTaxi: React.FC = () => {
   return (
     <>
       <SEOHead
-        title="Assurance Taxi Pas Cher | Devis Gratuit 2min | Comparateur | TaxiAssur"
-        description="🚖 Assurance taxi professionnelle avec TaxiAssur, courtier spécialisé. Devis assurance taxi gratuit 2min ✓ Comparateur assurance taxi ✓ Assurance VTC ✓ Assurance chauffeur ✓ Assurance flotte taxi ✓ RC pro taxi ✓ Assurance taxi en ligne ✓ Économisez 35% ✓ ORIAS"
+        title="Meilleure Assurance Taxi Pas Chere France | Comparatif Prix Conseils | TaxiAssur"
+        description="🚖 Meilleure assurance taxi pas chere France ✓ Comparatif prix conseils ✓ Best cheap taxi insurance France ✓ Taxi insurance tips pricing ✓ Devis gratuit 2min ✓ Comparateur assurance taxi ✓ Assurance VTC ✓ RC pro taxi ✓ Economisez 35% ✓ ORIAS"
         canonical="/assurance-taxi"
-        keywords="assurance taxi, assurance VTC, assurance chauffeur, assurance taxi pas cher, rc pro taxi, devis assurance taxi, comparateur assurance taxi, assurance taxi en ligne, assurance flotte taxi, courtier assurance taxi"
+        keywords="meilleure assurance taxi pas chere France, assurance taxi comparatif prix conseils, best cheap taxi insurance France, taxi insurance tips pricing France, assurance taxi, assurance VTC, assurance chauffeur, rc pro taxi, devis assurance taxi, comparateur assurance taxi, assurance taxi en ligne, assurance flotte taxi, courtier assurance taxi, cheap taxi insurance tips"
       />
       <JsonLd type="breadcrumb" data={breadcrumbs} />
       <JsonLd type="organization" />

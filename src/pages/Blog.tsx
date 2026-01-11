@@ -20,10 +20,10 @@ const Blog: React.FC = () => {
   return (
     <>
       <SEOHead
-        title="Blog Assurance Taxi - Actualités Expert et Conseils Pro | TaxiAssur"
-        description="📰 Blog assurance taxi TaxiAssur : actualités expert ✓ Conseils pro ✓ Guides pratiques ✓ Réglementation 2025 ✓ Optimisation tarifs ✓ Spécialiste taxi depuis septembre 2025"
+        title="Blog Assurance Taxi - Meilleure Assurance Taxi Pas Chere France | Conseils Expert | TaxiAssur"
+        description="📰 Blog assurance taxi TaxiAssur : meilleure assurance taxi pas chere France ✓ Comparatif prix conseils ✓ Best cheap taxi insurance France ✓ Taxi insurance tips pricing ✓ Actualites expert ✓ Guides pratiques ✓ Reglementation 2025"
         canonical="/blog"
-        keywords="blog assurance taxi, actualités assurance taxi, conseils expert taxi, guides pratiques taxi, réglementation taxi 2025, optimisation assurance taxi, news taxi professionnel"
+        keywords="meilleure assurance taxi pas chere France, assurance taxi comparatif prix conseils, best cheap taxi insurance France, taxi insurance tips pricing France, blog assurance taxi, actualites assurance taxi, conseils expert taxi, guides pratiques taxi, reglementation taxi 2025, optimisation assurance taxi, cheap taxi insurance tips"
       />
       <JsonLd type="breadcrumb" data={breadcrumbs} />
       <JsonLd type="organization" />

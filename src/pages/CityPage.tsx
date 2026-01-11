@@ -553,10 +553,10 @@ const CityPage: React.FC = () => {
   return (
     <>
       <Seo
-        title={`Assurance Taxi ${cityData.city} - Devis Gratuit & Immédiat`}
-        description={`Comparez les meilleures offres d'assurance taxi à ${cityData.city}. Devis gratuit en 2 minutes. Experts locaux. Économisez jusqu'à 35%.`}
+        title={`Assurance Taxi ${cityData.city} - Meilleure Assurance Taxi Pas Chere | Devis Gratuit`}
+        description={`Meilleure assurance taxi pas chere a ${cityData.city}. Comparatif prix conseils. Best cheap taxi insurance ${cityData.city}. Devis gratuit 2min. Economisez 35%.`}
         canonical={`/ville/${cityData.slug}`}
-        keywords={`assurance taxi ${cityData.city}, assurance chauffeur taxi ${cityData.city}, devis assurance taxi ${cityData.city}`}
+        keywords={`meilleure assurance taxi pas chere France, assurance taxi comparatif prix conseils, best cheap taxi insurance France, taxi insurance tips pricing France, assurance taxi ${cityData.city}, assurance chauffeur taxi ${cityData.city}, devis assurance taxi ${cityData.city}, cheap taxi insurance ${cityData.city}`}
       />
       <JsonLd type="breadcrumb" data={breadcrumbs} />
 
