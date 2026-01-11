@@ -201,10 +201,29 @@ const CRMInboxMulticanal: React.FC = () => {
         }, 8000);
       } else {
         setSyncStatus('error');
-        setSyncMessage(result.error || result.message || 'Erreur lors de la synchronisation');
+        let errorMsg = result.error || result.message || 'Erreur lors de la synchronisation';
+
+        // Si c'est une erreur de configuration IONOS
+        if (errorMsg.includes('IONOS') || errorMsg.includes('credentials') || errorMsg.includes('502 Bad Gateway')) {
+          errorMsg = `⚠️ Configuration IONOS Email manquante\n\n` +
+            `Les identifiants IONOS ne sont pas configurés dans Supabase.\n\n` +
+            `📝 Action requise :\n` +
+            `1. Aller sur Supabase Dashboard\n` +
+            `2. Project Settings > Edge Functions > Secrets\n` +
+            `3. Ajouter : IONOS_EMAIL_PASSWORD = TaxiAssur2025!,&\n` +
+            `4. Ajouter : IONOS_EMAIL_USER = team@taxiassur.com\n\n` +
+            `En attendant, la synchronisation Brevo continue de fonctionner.`;
+        }
+
+        setSyncMessage(errorMsg);
 
         if (result.details?.errors?.length > 0) {
-          setSyncMessage(prev => `${prev}\n\n⚠️ Détails: ${result.details.errors.join(', ')}`);
+          const details = result.details.errors
+            .filter((e: string) => !e.includes('502 Bad Gateway'))
+            .join('\n');
+          if (details) {
+            setSyncMessage(prev => `${prev}\n\n⚠️ Détails: ${details}`);
+          }
         }
       }
     } catch (error) {

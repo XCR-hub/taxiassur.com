@@ -27,32 +27,48 @@ Deno.serve(async (req) => {
       errors: [] as string[],
     };
 
-    // Étape 1 : Synchroniser les emails depuis IMAP
+    // Étape 1 : Synchroniser les emails depuis IMAP (avec timeout)
     try {
       console.log('Step 1: Syncing emails from IMAP...');
-      
-      const imapResponse = await fetch(
-        `${supabaseUrl}/functions/v1/sync-ionos-imap`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${supabaseAnonKey}`,
-            'Content-Type': 'application/json',
-          },
+
+      // Créer un timeout de 30 secondes pour éviter le blocage
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+      try {
+        const imapResponse = await fetch(
+          `${supabaseUrl}/functions/v1/sync-ionos-imap`,
+          {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${supabaseAnonKey}`,
+              'Content-Type': 'application/json',
+            },
+            signal: controller.signal,
+          }
+        );
+
+        clearTimeout(timeoutId);
+
+        if (!imapResponse.ok) {
+          const errorText = await imapResponse.text();
+          throw new Error(`IMAP sync failed (${imapResponse.status}): ${errorText.substring(0, 200)}`);
         }
-      );
 
-      if (!imapResponse.ok) {
-        const errorText = await imapResponse.text();
-        throw new Error(`IMAP sync failed: ${errorText}`);
+        results.imap_sync = await imapResponse.json();
+        console.log('IMAP sync completed:', results.imap_sync);
+      } catch (fetchError: any) {
+        clearTimeout(timeoutId);
+        if (fetchError.name === 'AbortError') {
+          throw new Error('IMAP sync timeout after 30 seconds. Check Supabase secrets configuration.');
+        }
+        throw fetchError;
       }
-
-      results.imap_sync = await imapResponse.json();
-      console.log('IMAP sync completed:', results.imap_sync);
-    } catch (imapError) {
+    } catch (imapError: any) {
       console.error('IMAP sync error:', imapError);
       results.errors.push(`IMAP sync: ${imapError.message}`);
-      results.success = false;
+      // Ne pas marquer comme échec total, continuer avec Brevo
+      console.log('Continuing without IONOS IMAP sync...');
     }
 
     // Étape 2 : Affecter les emails aux leads
