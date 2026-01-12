@@ -32,7 +32,7 @@ import { pipelineService, CRMLead, PIPELINE_STATUSES } from '@/lib/crm-pipeline'
 import { supabase } from '@/lib/supabase';
 import QuoteManager from './QuoteManager';
 import ElectronicSignature from '@/components/ElectronicSignature';
-import { DocumentChecklistPanelV2, EmailComposerModal, DocumentRequestsManager } from '@/components/crm';
+import { DocumentChecklistPanelV2, EmailComposerModal, DocumentRequestsManager, CommercialChecklist, LeadInsuranceCompanies } from '@/components/crm';
 
 interface Message {
   id: string;
@@ -803,6 +803,17 @@ const CRMLeadDetail: React.FC = () => {
                 leadPhone={lead.phone}
               />
             </div>
+
+            {/* Checklist Commercial - Suivi des étapes */}
+            <CommercialChecklist
+              leadId={lead.id}
+              productType="auto"
+            />
+
+            {/* Compagnies d'assurance contactées */}
+            <LeadInsuranceCompanies
+              leadId={lead.id}
+            />
 
             {/* Historique des échanges */}
             <div className="bg-white rounded-xl shadow-lg border-2 border-gray-200 p-6">
