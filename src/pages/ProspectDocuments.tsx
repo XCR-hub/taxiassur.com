@@ -75,33 +75,60 @@ const ProspectDocuments: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [anonClient, setAnonClient] = useState<any>(null);
 
   useEffect(() => {
-    if (token) {
+    const initClient = async () => {
+      const { createClient } = await import('@supabase/supabase-js');
+      const client = createClient(
+        import.meta.env.VITE_SUPABASE_URL,
+        import.meta.env.VITE_SUPABASE_ANON_KEY,
+        {
+          auth: {
+            persistSession: false,
+            autoRefreshToken: false
+          }
+        }
+      );
+      setAnonClient(client);
+    };
+    initClient();
+  }, []);
+
+  useEffect(() => {
+    if (token && anonClient) {
       loadLeadInfo();
     }
-  }, [token]);
+  }, [token, anonClient]);
 
   useEffect(() => {
-    if (leadInfo?.id) {
+    if (leadInfo?.id && anonClient) {
       loadDocuments();
     }
-  }, [leadInfo]);
+  }, [leadInfo, anonClient]);
 
   const loadLeadInfo = async () => {
+    if (!anonClient) return;
+
     try {
-      const { data: leadData, error: leadError } = await supabase
+      const { data: leadData, error: leadError } = await anonClient
         .from('crm_leads')
         .select('*')
         .eq('access_token', token)
         .maybeSingle();
 
-      if (leadError) throw leadError;
+      if (leadError) {
+        console.error('Error loading lead:', leadError);
+        throw leadError;
+      }
 
       if (leadData) {
         setLeadInfo(leadData);
+      } else {
+        setError('Lien invalide ou expiré');
       }
     } catch (err: any) {
+      console.error('Load lead error:', err);
       setError('Lien invalide ou expiré');
     } finally {
       setLoading(false);
@@ -109,10 +136,10 @@ const ProspectDocuments: React.FC = () => {
   };
 
   const loadDocuments = async () => {
-    if (!leadInfo?.id) return;
+    if (!leadInfo?.id || !anonClient) return;
 
     try {
-      const { data, error } = await supabase
+      const { data, error } = await anonClient
         .from('prospect_documents')
         .select('*')
         .eq('lead_id', leadInfo.id)
@@ -126,22 +153,17 @@ const ProspectDocuments: React.FC = () => {
   };
 
   const handleFileUpload = async (documentType: string, file: File) => {
-    if (!token) return;
+    if (!token || !leadInfo?.id || !anonClient) return;
 
     setUploading(documentType);
     setError(null);
     setSuccess(null);
 
     try {
-      const { data: leadId } = await supabase
-        .rpc('get_lead_id_from_token', { token_value: token });
-
-      if (!leadId) throw new Error('Token invalide');
-
       const fileExt = file.name.split('.').pop();
       const fileName = `${token}/${documentType}_${Date.now()}.${fileExt}`;
 
-      const { error: uploadError } = await supabase.storage
+      const { error: uploadError } = await anonClient.storage
         .from('prospect-documents')
         .upload(fileName, file, {
           cacheControl: '3600',
@@ -150,10 +172,10 @@ const ProspectDocuments: React.FC = () => {
 
       if (uploadError) throw uploadError;
 
-      const { error: dbError } = await supabase
+      const { error: dbError } = await anonClient
         .from('prospect_documents')
         .insert({
-          lead_id: leadId,
+          lead_id: leadInfo.id,
           document_type: documentType,
           file_name: file.name,
           file_path: fileName,
@@ -220,7 +242,7 @@ const ProspectDocuments: React.FC = () => {
               Espace Documents
             </h1>
             <p className="text-xl text-amber-400 font-bold mb-4">
-              Bonjour {leadInfo.name}
+              Bonjour {leadInfo.first_name || 'Prospect'}
             </p>
             <p className="text-gray-300">
               Uploadez vos documents pour accélérer le traitement de votre dossier
