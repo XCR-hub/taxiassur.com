@@ -32,7 +32,7 @@ import { pipelineService, CRMLead, PIPELINE_STATUSES } from '@/lib/crm-pipeline'
 import { supabase } from '@/lib/supabase';
 import QuoteManager from './QuoteManager';
 import ElectronicSignature from '@/components/ElectronicSignature';
-import { DocumentChecklistPanel, EmailComposerModal, DocumentRequestsManager } from '@/components/crm';
+import { DocumentChecklistPanelV2, EmailComposerModal, DocumentRequestsManager } from '@/components/crm';
 
 interface Message {
   id: string;
@@ -925,9 +925,12 @@ const CRMLeadDetail: React.FC = () => {
             </div>
 
             {/* Document Checklist Panel */}
-            <DocumentChecklistPanel
+            <DocumentChecklistPanelV2
               leadId={lead.id}
-              onDocumentUpload={() => loadDocuments(lead.id)}
+              leadEmail={lead.email}
+              leadFirstName={lead.first_name}
+              accessToken={lead.access_token}
+              onDocumentsComplete={() => loadLeadData(lead.id)}
               onRequestDocuments={handleRequestDocuments}
             />
 

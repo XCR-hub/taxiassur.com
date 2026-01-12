@@ -15,6 +15,7 @@ const Offers = lazy(() => import('./pages/Offers'));
 const Contact = lazy(() => import('./pages/Contact'));
 const Merci = lazy(() => import('./pages/Merci'));
 const ProspectDocuments = lazy(() => import('./pages/ProspectDocuments'));
+const EspaceProspect = lazy(() => import('./pages/EspaceProspect'));
 const Legal = lazy(() => import('./pages/Legal'));
 const Policy = lazy(() => import('./pages/Policy'));
 const Conditions = lazy(() => import('./pages/Conditions'));
@@ -319,6 +320,21 @@ export const router = createBrowserRouter([
       {
         path: '/prospect/documents/:token',
         element: <SuspenseWrapper><ProspectDocuments /></SuspenseWrapper>,
+        errorElement: <RouteErrorFallback />
+      },
+      {
+        path: '/espace-prospect',
+        element: <SuspenseWrapper><EspaceProspect /></SuspenseWrapper>,
+        errorElement: <RouteErrorFallback />
+      },
+      {
+        path: '/espace-prospect/:token',
+        element: <SuspenseWrapper><EspaceProspect /></SuspenseWrapper>,
+        errorElement: <RouteErrorFallback />
+      },
+      {
+        path: '/prospect/:token',
+        element: <SuspenseWrapper><EspaceProspect /></SuspenseWrapper>,
         errorElement: <RouteErrorFallback />
       },
       {
