@@ -14,7 +14,8 @@ import {
   AlertCircle,
   Loader,
   Edit,
-  RefreshCw
+  RefreshCw,
+  Building2
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import type { CRMLead, PipelineStatus } from '@/lib/crm-pipeline';
@@ -30,6 +31,15 @@ interface QuoteTemplate {
   tone: string;
 }
 
+interface InsuranceCompany {
+  id: string;
+  name: string;
+  code: string;
+  contact_email: string | null;
+  contact_phone: string | null;
+  description: string | null;
+}
+
 interface QuoteHistory {
   id: string;
   sent_via: string;
@@ -41,6 +51,8 @@ interface QuoteHistory {
   opened_at: string | null;
   clicked_at: string | null;
   downloaded_at: string | null;
+  insurance_company_id: string | null;
+  insurance_company?: InsuranceCompany;
 }
 
 interface QuoteManagerProps {
@@ -65,13 +77,31 @@ const QuoteManager: React.FC<QuoteManagerProps> = ({ lead, onQuoteSent, onStatus
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isBlocked, setIsBlocked] = useState(false);
   const [blockingDocs, setBlockingDocs] = useState<any[]>([]);
+  const [insuranceCompanies, setInsuranceCompanies] = useState<InsuranceCompany[]>([]);
+  const [selectedCompany, setSelectedCompany] = useState<InsuranceCompany | null>(null);
 
   useEffect(() => {
     loadTemplates();
     loadHistory();
     loadLatestQuote();
     checkQuoteLock();
+    loadInsuranceCompanies();
   }, [lead.id]);
+
+  const loadInsuranceCompanies = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('insurance_companies')
+        .select('id, name, code, contact_email, contact_phone, description')
+        .eq('is_active', true)
+        .order('priority_order');
+
+      if (error) throw error;
+      setInsuranceCompanies(data || []);
+    } catch (err) {
+      console.error('Error loading insurance companies:', err);
+    }
+  };
 
   const checkQuoteLock = async () => {
     try {
@@ -146,7 +176,10 @@ const QuoteManager: React.FC<QuoteManagerProps> = ({ lead, onQuoteSent, onStatus
     try {
       const { data, error } = await supabase
         .from('crm_quote_history')
-        .select('*')
+        .select(`
+          *,
+          insurance_company:insurance_companies(id, name, code)
+        `)
         .eq('lead_id', lead.id)
         .order('sent_at', { ascending: false });
 
@@ -245,7 +278,12 @@ const QuoteManager: React.FC<QuoteManagerProps> = ({ lead, onQuoteSent, onStatus
 
   const handleSendQuote = async () => {
     if (isBlocked) {
-      alert('❌ Impossible d\'envoyer le devis : des documents complémentaires sont requis.');
+      alert('Impossible d\'envoyer le devis : des documents complementaires sont requis.');
+      return;
+    }
+
+    if (!selectedCompany) {
+      alert('Veuillez selectionner une compagnie d\'assurance !');
       return;
     }
 
@@ -255,7 +293,7 @@ const QuoteManager: React.FC<QuoteManagerProps> = ({ lead, onQuoteSent, onStatus
     }
 
     if (!customBody.trim()) {
-      alert('Le message ne peut pas être vide !');
+      alert('Le message ne peut pas etre vide !');
       return;
     }
 
@@ -269,6 +307,7 @@ const QuoteManager: React.FC<QuoteManagerProps> = ({ lead, onQuoteSent, onStatus
           lead_id: lead.id,
           document_id: uploadedQuote.id,
           template_id: selectedTemplate?.id,
+          insurance_company_id: selectedCompany.id,
           sent_via: selectedChannel,
           sent_to: recipient,
           subject: selectedChannel === 'email' ? customSubject : null,
@@ -573,10 +612,38 @@ const QuoteManager: React.FC<QuoteManagerProps> = ({ lead, onQuoteSent, onStatus
                   </div>
                 </div>
 
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    <Building2 className="inline mr-2" size={16} />
+                    Compagnie d'assurance *
+                  </label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                    {insuranceCompanies.map(company => (
+                      <button
+                        key={company.id}
+                        onClick={() => setSelectedCompany(company)}
+                        className={`p-3 rounded-lg border-2 text-left transition-all ${
+                          selectedCompany?.id === company.id
+                            ? 'border-orange-600 bg-orange-50'
+                            : 'border-gray-200 hover:border-orange-300'
+                        }`}
+                      >
+                        <p className={`font-semibold text-sm ${selectedCompany?.id === company.id ? 'text-orange-700' : 'text-gray-700'}`}>
+                          {company.name}
+                        </p>
+                        <p className="text-xs text-gray-500">{company.code}</p>
+                      </button>
+                    ))}
+                  </div>
+                  {!selectedCompany && (
+                    <p className="text-sm text-red-500 mt-2">Selectionnez une compagnie pour envoyer le devis</p>
+                  )}
+                </div>
+
                 {templates.length > 0 && (
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Template (adapté au statut : {lead.status})
+                      Template (adapte au statut : {lead.status})
                     </label>
                     <select
                       value={selectedTemplate?.id || ''}
@@ -682,16 +749,21 @@ const QuoteManager: React.FC<QuoteManagerProps> = ({ lead, onQuoteSent, onStatus
                       <div className="flex items-start gap-3 flex-1">
                         {getStatusIcon(item.status)}
                         <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
+                          <div className="flex items-center gap-2 mb-1 flex-wrap">
                             <span className="font-medium text-gray-900">
                               {item.sent_via.toUpperCase()}
                             </span>
+                            {item.insurance_company && (
+                              <span className="text-xs px-2 py-1 bg-orange-100 text-orange-700 rounded-full font-semibold">
+                                {item.insurance_company.name}
+                              </span>
+                            )}
                             <span className="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded-full">
                               {item.lead_status_at_send}
                             </span>
                           </div>
                           <p className="text-sm text-gray-600">
-                            À : <span className="font-medium">{item.sent_to}</span>
+                            A : <span className="font-medium">{item.sent_to}</span>
                           </p>
                           {item.subject && (
                             <p className="text-sm text-gray-700 mt-1">

@@ -1,5 +1,5 @@
-import React from 'react';
-import { User, Calendar, Tag, TrendingUp, Mail, Phone } from 'lucide-react';
+import React, { useRef, useState } from 'react';
+import { Calendar, Tag, TrendingUp, Mail, Phone } from 'lucide-react';
 import { CRMLead, PIPELINE_STATUSES } from '@/lib/crm-pipeline';
 import { cn } from '@/lib/utils';
 
@@ -21,6 +21,8 @@ export const PipelineCard: React.FC<PipelineCardProps> = ({
   className
 }) => {
   const statusInfo = PIPELINE_STATUSES[lead.status];
+  const isDraggingRef = useRef(false);
+  const mouseDownPos = useRef<{ x: number; y: number } | null>(null);
 
   const getScoreColor = (score?: number) => {
     if (!score) return 'text-gray-400';
@@ -29,12 +31,50 @@ export const PipelineCard: React.FC<PipelineCardProps> = ({
     return 'text-red-600';
   };
 
+  const handleDragStart = (e: React.DragEvent) => {
+    isDraggingRef.current = true;
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', lead.id);
+    onDragStart?.(e);
+  };
+
+  const handleDragEnd = (e: React.DragEvent) => {
+    setTimeout(() => {
+      isDraggingRef.current = false;
+    }, 100);
+    onDragEnd?.(e);
+  };
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    mouseDownPos.current = { x: e.clientX, y: e.clientY };
+  };
+
+  const handleClick = (e: React.MouseEvent) => {
+    if (isDraggingRef.current) {
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
+
+    if (mouseDownPos.current) {
+      const dx = Math.abs(e.clientX - mouseDownPos.current.x);
+      const dy = Math.abs(e.clientY - mouseDownPos.current.y);
+      if (dx > 5 || dy > 5) {
+        e.preventDefault();
+        return;
+      }
+    }
+
+    onClick?.();
+  };
+
   return (
     <div
-      draggable
-      onDragStart={onDragStart}
-      onDragEnd={onDragEnd}
-      onClick={onClick}
+      draggable={true}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+      onMouseDown={handleMouseDown}
+      onClick={handleClick}
       role="button"
       tabIndex={0}
       aria-label={`Lead: ${lead.full_name} - ${statusInfo.label}`}
@@ -45,9 +85,9 @@ export const PipelineCard: React.FC<PipelineCardProps> = ({
         }
       }}
       className={cn(
-        'bg-white rounded-lg shadow-sm border-2 border-gray-200 p-4 cursor-move hover:shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500',
-        isDragging && 'opacity-50 scale-95 rotate-2',
-        'hover:border-blue-300',
+        'bg-white rounded-lg shadow-sm border-2 border-gray-200 p-4 cursor-grab hover:shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500',
+        isDragging && 'opacity-50 scale-95 rotate-2 cursor-grabbing',
+        'hover:border-blue-300 active:cursor-grabbing',
         className
       )}
     >
