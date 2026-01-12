@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useParams, Link } from 'react-router-dom';
 import { Upload, CheckCircle, AlertCircle, FileText, Loader2, X, Download } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { createClient } from '@supabase/supabase-js';
 
 interface DocumentType {
   id: string;
@@ -78,19 +78,29 @@ const ProspectDocuments: React.FC = () => {
   const [anonClient, setAnonClient] = useState<any>(null);
 
   useEffect(() => {
-    const initClient = async () => {
-      const { createClient } = await import('@supabase/supabase-js');
-      const client = createClient(
-        import.meta.env.VITE_SUPABASE_URL,
-        import.meta.env.VITE_SUPABASE_ANON_KEY,
-        {
+    const initClient = () => {
+      try {
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://drohhxrkoequjphvabvq.supabase.co';
+        const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRyb2hoeHJrb2VxdWpwaHZhYnZxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk3ODM3NjAsImV4cCI6MjA3NTM1OTc2MH0.LP9fh10fY0nRDjpG4VW2yGZ5sT4BkiDalox8ToMbMlg';
+
+        console.log('🔧 Initializing anon client for prospect documents');
+        console.log('URL:', supabaseUrl);
+
+        const client = createClient(supabaseUrl, supabaseKey, {
           auth: {
             persistSession: false,
-            autoRefreshToken: false
+            autoRefreshToken: false,
+            detectSessionInUrl: false
           }
-        }
-      );
-      setAnonClient(client);
+        });
+
+        setAnonClient(client);
+        console.log('✅ Anon client initialized');
+      } catch (error) {
+        console.error('❌ Error initializing anon client:', error);
+        setError('Erreur de configuration');
+        setLoading(false);
+      }
     };
     initClient();
   }, []);
@@ -108,7 +118,12 @@ const ProspectDocuments: React.FC = () => {
   }, [leadInfo, anonClient]);
 
   const loadLeadInfo = async () => {
-    if (!anonClient) return;
+    if (!anonClient) {
+      console.log('⚠️ Anon client not ready yet');
+      return;
+    }
+
+    console.log('🔍 Loading lead info for token:', token?.substring(0, 20) + '...');
 
     try {
       const { data: leadData, error: leadError } = await anonClient
@@ -117,18 +132,22 @@ const ProspectDocuments: React.FC = () => {
         .eq('access_token', token)
         .maybeSingle();
 
+      console.log('📊 Query result:', { leadData, leadError });
+
       if (leadError) {
-        console.error('Error loading lead:', leadError);
+        console.error('❌ Error loading lead:', leadError);
         throw leadError;
       }
 
       if (leadData) {
+        console.log('✅ Lead found:', leadData.first_name, leadData.email);
         setLeadInfo(leadData);
       } else {
+        console.log('⚠️ No lead found for this token');
         setError('Lien invalide ou expiré');
       }
     } catch (err: any) {
-      console.error('Load lead error:', err);
+      console.error('❌ Load lead error:', err);
       setError('Lien invalide ou expiré');
     } finally {
       setLoading(false);

@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Accès Prospect - TaxiAssur</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #fff;
+        }
+        .container {
+            background: #2a2a2a;
+            padding: 30px;
+            border-radius: 10px;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #444;
+            border-radius: 5px;
+            background: #333;
+            color: #fff;
+        }
+        button {
+            background: #f59e0b;
+            color: #000;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        button:hover {
+            background: #d97706;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+        }
+        .success {
+            background: #10b981;
+            color: #000;
+        }
+        .error {
+            background: #ef4444;
+            color: #fff;
+        }
+        .info {
+            background: #3b82f6;
+            color: #fff;
+        }
+        pre {
+            background: #1a1a1a;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Test Accès Prospect</h1>
+        <p>Test de l'accès anonyme aux données prospect via token</p>
+
+        <label for="token">Token d'accès:</label>
+        <input
+            type="text"
+            id="token"
+            placeholder="Entrez le token d'accès"
+            value="abad70754f988c31533bfa8ce962a4ce4f7f15c1a547fdf4f9a2bf099fd98912"
+        >
+
+        <button onclick="testAccess()">🔍 Tester l'accès</button>
+
+        <div id="result"></div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://drohhxrkoequjphvabvq.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRyb2hoeHJrb2VxdWpwaHZhYnZxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk3ODM3NjAsImV4cCI6MjA3NTM1OTc2MH0.LP9fh10fY0nRDjpG4VW2yGZ5sT4BkiDalox8ToMbMlg';
+
+        async function testAccess() {
+            const resultDiv = document.getElementById('result');
+            const token = document.getElementById('token').value;
+
+            if (!token) {
+                resultDiv.innerHTML = '<div class="result error">❌ Veuillez entrer un token</div>';
+                return;
+            }
+
+            resultDiv.innerHTML = '<div class="result info">⏳ Test en cours...</div>';
+
+            try {
+                console.log('🔧 Creating Supabase client...');
+                console.log('URL:', SUPABASE_URL);
+                console.log('Token:', token.substring(0, 20) + '...');
+
+                // Create a fresh anonymous client
+                const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+                    auth: {
+                        persistSession: false,
+                        autoRefreshToken: false,
+                        detectSessionInUrl: false
+                    }
+                });
+
+                console.log('✅ Client created');
+
+                // Test query
+                console.log('🔍 Querying crm_leads...');
+                const { data, error } = await supabase
+                    .from('crm_leads')
+                    .select('*')
+                    .eq('access_token', token)
+                    .maybeSingle();
+
+                console.log('📊 Query result:', { data, error });
+
+                if (error) {
+                    throw error;
+                }
+
+                if (data) {
+                    resultDiv.innerHTML = `
+                        <div class="result success">
+                            <h3>✅ Accès réussi !</h3>
+                            <p><strong>Nom:</strong> ${data.first_name} ${data.last_name || ''}</p>
+                            <p><strong>Email:</strong> ${data.email}</p>
+                            <p><strong>Téléphone:</strong> ${data.phone || 'N/A'}</p>
+                            <p><strong>ID Lead:</strong> ${data.id}</p>
+                            <details>
+                                <summary>Données complètes</summary>
+                                <pre>${JSON.stringify(data, null, 2)}</pre>
+                            </details>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = '<div class="result error">⚠️ Token invalide ou expiré</div>';
+                }
+
+            } catch (error) {
+                console.error('❌ Error:', error);
+                resultDiv.innerHTML = `
+                    <div class="result error">
+                        <h3>❌ Erreur</h3>
+                        <p>${error.message}</p>
+                        <pre>${JSON.stringify(error, null, 2)}</pre>
+                    </div>
+                `;
+            }
+        }
+
+        // Auto-test on load if token is present
+        window.addEventListener('load', () => {
+            const token = document.getElementById('token').value;
+            if (token) {
+                console.log('🚀 Auto-testing with pre-filled token');
+                testAccess();
+            }
+        });
+    </script>
+</body>
+</html>
