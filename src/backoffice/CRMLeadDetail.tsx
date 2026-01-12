@@ -32,7 +32,7 @@ import { pipelineService, CRMLead, PIPELINE_STATUSES } from '@/lib/crm-pipeline'
 import { supabase } from '@/lib/supabase';
 import QuoteManager from './QuoteManager';
 import ElectronicSignature from '@/components/ElectronicSignature';
-import { DocumentChecklistPanel, EmailComposerModal } from '@/components/crm';
+import { DocumentChecklistPanel, EmailComposerModal, DocumentRequestsManager } from '@/components/crm';
 
 interface Message {
   id: string;
@@ -927,6 +927,14 @@ const CRMLeadDetail: React.FC = () => {
               onDocumentUpload={() => loadDocuments(lead.id)}
               onRequestDocuments={handleRequestDocuments}
             />
+
+            {/* Documents Complémentaires (Flexibles) */}
+            <div className="bg-white rounded-xl shadow-lg border-2 border-purple-200 p-6">
+              <DocumentRequestsManager
+                leadId={lead.id}
+                onRefresh={() => loadLeadData(lead.id)}
+              />
+            </div>
 
             {/* Statistiques du lead */}
             <div className="bg-white rounded-xl shadow-lg border-2 border-gray-200 p-6">

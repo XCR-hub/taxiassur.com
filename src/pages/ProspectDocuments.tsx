@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams, useParams, Link } from 'react-router-dom';
 import { Upload, CheckCircle, AlertCircle, FileText, Loader2, X, Download } from 'lucide-react';
 import { createClient } from '@supabase/supabase-js';
+import ComplementaryDocuments from '@/components/client/ComplementaryDocuments';
 
 interface DocumentType {
   id: string;
@@ -374,6 +375,20 @@ const ProspectDocuments: React.FC = () => {
             );
           })}
         </div>
+
+        {/* Documents Complémentaires */}
+        {leadInfo?.id && anonClient && (
+          <div className="mb-8">
+            <ComplementaryDocuments
+              leadId={leadInfo.id}
+              anonClient={anonClient}
+              onDocumentUploaded={() => {
+                setSuccess('Document complémentaire envoyé avec succès !');
+                setTimeout(() => setSuccess(null), 5000);
+              }}
+            />
+          </div>
+        )}
 
         {/* Footer */}
         <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-6 text-center">
