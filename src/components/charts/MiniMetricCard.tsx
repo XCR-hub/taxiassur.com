@@ -5,39 +5,44 @@ interface MiniMetricCardProps {
   value: string | number;
   trend: string;
   icon: LucideIcon;
-  color: 'blue' | 'green' | 'orange' | 'purple' | 'red';
+  color: 'blue' | 'green' | 'orange' | 'cyan' | 'red';
 }
 
 const colorMap = {
   blue: {
-    bg: 'from-blue-50 to-blue-100',
-    border: 'border-blue-300',
-    icon: 'text-blue-700',
-    text: 'text-blue-900'
+    bg: 'bg-blue-500/10',
+    border: 'border-blue-500/30',
+    icon: 'text-blue-400',
+    text: 'text-blue-400',
+    value: 'text-white'
   },
   green: {
-    bg: 'from-green-50 to-green-100',
-    border: 'border-green-300',
-    icon: 'text-green-700',
-    text: 'text-green-900'
+    bg: 'bg-green-500/10',
+    border: 'border-green-500/30',
+    icon: 'text-green-400',
+    text: 'text-green-400',
+    value: 'text-white'
   },
   orange: {
-    bg: 'from-orange-50 to-orange-100',
-    border: 'border-orange-300',
-    icon: 'text-orange-700',
-    text: 'text-orange-900'
+    bg: 'bg-orange-500/10',
+    border: 'border-orange-500/30',
+    icon: 'text-orange-400',
+    text: 'text-orange-400',
+    value: 'text-white'
   },
-  purple: {
-    bg: 'from-purple-50 to-purple-100',
-    border: 'border-purple-300',
-    icon: 'text-purple-700',
-    text: 'text-purple-900'
+  cyan: {
+    bg: 'bg-cyan-500/10',
+    border: 'border-cyan-500/30',
+    icon: 'text-cyan-400',
+    text: 'text-cyan-400',
+    value: 'text-white'
   },
   red: {
-    bg: 'from-red-50 to-red-100',
-    border: 'border-red-300',
-    icon: 'text-red-700',
-    text: 'text-red-900'
+    bg: 'bg-red-500/10',
+    border: 'border-red-500/30',
+    icon: 'text-red-400',
+    text: 'text-red-400',
+    value: 'text-white'
   }
 };
 
@@ -52,15 +57,17 @@ export function MiniMetricCard({
   const trendIsPositive = trend.startsWith('+');
 
   return (
-    <div className={`bg-gradient-to-br ${colors.bg} rounded-xl shadow-lg border-2 ${colors.border} p-6 hover:shadow-xl transition-all`}>
-      <div className="flex items-start justify-between mb-4">
+    <div className={`${colors.bg} rounded-xl border ${colors.border} p-6 hover:scale-[1.02] transition-all duration-300`}>
+      <div className="flex items-start justify-between">
         <div className="flex-1">
-          <div className="flex items-center gap-2 mb-2">
-            <Icon className={`${colors.icon} w-5 h-5`} />
-            <p className={`text-sm font-semibold ${colors.text}`}>{title}</p>
+          <div className="flex items-center gap-2 mb-3">
+            <div className={`w-10 h-10 rounded-lg ${colors.bg} flex items-center justify-center`}>
+              <Icon className={`${colors.icon} w-5 h-5`} />
+            </div>
           </div>
-          <p className={`text-3xl font-bold ${colors.text}`}>{value}</p>
-          <p className={`text-xs font-semibold ${trendIsPositive ? 'text-green-700' : 'text-red-700'} mt-1`}>
+          <p className="text-sm text-gray-400 mb-1">{title}</p>
+          <p className={`text-3xl font-bold ${colors.value}`}>{value}</p>
+          <p className={`text-xs font-medium mt-2 ${trendIsPositive ? 'text-green-400' : 'text-red-400'}`}>
             {trend} vs période précédente
           </p>
         </div>
