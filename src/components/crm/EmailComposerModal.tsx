@@ -32,6 +32,7 @@ interface LeadInfo {
   phone?: string;
   company_name?: string;
   city?: string;
+  access_token?: string;
 }
 
 interface LegalDocument {
@@ -51,6 +52,7 @@ interface EmailComposerModalProps {
   defaultTemplate?: string;
   defaultSubject?: string;
   defaultBody?: string;
+  missingDocuments?: string[];
 }
 
 const EMAIL_TEMPLATES: EmailTemplate[] = [
@@ -61,107 +63,244 @@ const EMAIL_TEMPLATES: EmailTemplate[] = [
     subject: 'Bienvenue chez TaxiAssur - Votre demande de devis',
     body: `Bonjour {{first_name}},
 
-Merci d'avoir choisi TaxiAssur pour votre assurance taxi.
+Merci d'avoir choisi TaxiAssur pour votre assurance taxi !
 
-Nous avons bien reçu votre demande et un conseiller dédié vous contactera dans les prochaines 24 heures pour étudier votre dossier.
+Nous avons bien recu votre demande de devis. Un conseiller dedie vous contactera dans les prochaines 24 heures pour etudier votre dossier.
 
-En attendant, n'hésitez pas à nous contacter si vous avez des questions.
+Pour accelerer le traitement de votre demande, vous pouvez des maintenant telecharger vos documents via votre espace securise :
+
+>> Acceder a mon espace documents : {{upload_link}}
+
+Documents necessaires :
+- Carte grise du vehicule
+- Permis de conduire
+- Licence taxi / Autorisation de Stationnement (ADS)
+- Piece d'identite (recto/verso)
+- RIB
+
+En attendant, n'hesitez pas a nous contacter si vous avez des questions.
 
 Cordialement,
-L'équipe TaxiAssur
-01 76 39 00 60`
+L'equipe TaxiAssur
+Tel : 01 76 39 00 60
+www.taxiassur.com`
   },
   {
     id: 'documents_request',
     name: 'Demande de documents',
     category: 'Documents',
-    subject: 'Documents nécessaires pour votre devis - TaxiAssur',
+    subject: 'Documents necessaires pour votre dossier - TaxiAssur',
     body: `Bonjour {{first_name}},
 
-Pour finaliser votre dossier d'assurance taxi, nous avons besoin des documents suivants :
+Pour finaliser votre dossier d'assurance taxi et vous transmettre votre devis personnalise, nous avons besoin des documents suivants :
 
-- Carte grise du véhicule
-- Permis de conduire
-- Licence taxi / ADS
-- Pièce d'identité
-- RIB
+{{missing_documents}}
 
-Vous pouvez nous les envoyer par retour d'email ou via votre espace client.
+>> TELEVERSEZ VOS DOCUMENTS EN TOUTE SECURITE :
+{{upload_link}}
+
+Ce lien est personnel et securise. Vos documents sont proteges et traites en toute confidentialite.
+
+Si vous avez des questions ou besoin d'aide, n'hesitez pas a nous contacter au 01 76 39 00 60.
 
 Cordialement,
-L'équipe TaxiAssur`
+L'equipe TaxiAssur
+www.taxiassur.com`
+  },
+  {
+    id: 'documents_reminder',
+    name: 'Relance documents manquants',
+    category: 'Documents',
+    subject: 'Rappel : Documents en attente pour votre devis taxi',
+    body: `Bonjour {{first_name}},
+
+Nous revenons vers vous car votre dossier est en attente de documents.
+
+Pour obtenir votre devis personnalise, il nous manque encore :
+
+{{missing_documents}}
+
+Telechargez vos documents en quelques clics via votre espace securise :
+{{upload_link}}
+
+Nous traitons votre dossier des reception de vos documents !
+
+A tres bientot,
+L'equipe TaxiAssur
+01 76 39 00 60`
   },
   {
     id: 'quote_send',
     name: 'Envoi de devis',
     category: 'Devis',
-    subject: 'Votre devis personnalisé - TaxiAssur',
+    subject: 'Votre devis d\'assurance taxi personnalise - TaxiAssur',
     body: `Bonjour {{first_name}},
 
-Suite à notre échange, veuillez trouver ci-joint votre devis d'assurance taxi personnalisé.
+Suite a notre echange, veuillez trouver ci-joint votre devis d'assurance taxi personnalise.
 
-Points clés de votre offre :
-- Couverture tous risques
-- Assistance 24h/24
+VOTRE OFFRE EN RESUME :
+- Couverture tous risques adaptee aux taxis
+- Assistance 24h/24 et 7j/7
 - Protection juridique incluse
+- Vehicule de remplacement en cas de sinistre
 
 Ce devis est valable 30 jours.
 
-Pour toute question ou pour valider ce devis, n'hésitez pas à me contacter.
+PROCHAINE ETAPE :
+Pour valider ce devis et souscrire, vous pouvez :
+1. Nous rappeler au 01 76 39 00 60
+2. Repondre a cet email
+3. Telecharger les documents complementaires sur votre espace :
+   {{upload_link}}
+
+Je reste a votre disposition pour toute question.
 
 Cordialement,
-L'équipe TaxiAssur
+L'equipe TaxiAssur
 01 76 39 00 60`
   },
   {
-    id: 'follow_up',
-    name: 'Relance commerciale',
+    id: 'follow_up_quote',
+    name: 'Relance devis',
     category: 'Relance',
-    subject: 'Avez-vous reçu notre devis ? - TaxiAssur',
+    subject: 'Votre devis taxi vous attend - TaxiAssur',
     body: `Bonjour {{first_name}},
 
-Je me permets de revenir vers vous concernant le devis que nous vous avons envoyé.
+Je me permets de revenir vers vous concernant le devis d'assurance taxi que nous vous avons transmis.
 
 Avez-vous eu le temps de l'examiner ? Avez-vous des questions ?
 
-Je reste à votre disposition pour en discuter et adapter l'offre si nécessaire.
+Pour rappel, votre offre comprend :
+- Une couverture complete adaptee a votre activite
+- Une assistance 24h/24
+- Des garanties professionnelles incluses
+
+Si vous souhaitez modifier votre offre ou obtenir plus d'informations, je suis a votre disposition.
+
+>> Consulter votre espace : {{upload_link}}
 
 Cordialement,
-L'équipe TaxiAssur`
+L'equipe TaxiAssur
+01 76 39 00 60`
+  },
+  {
+    id: 'documents_incomplete',
+    name: 'Documents incomplets / illisibles',
+    category: 'Documents',
+    subject: 'Verification documents - Action requise - TaxiAssur',
+    body: `Bonjour {{first_name}},
+
+Nous avons bien recu vos documents, mais certains necessitent une nouvelle transmission :
+
+{{missing_documents}}
+
+Motif : Document illisible / incomplete / non valide
+
+Merci de telecharger a nouveau ces documents via votre espace securise :
+{{upload_link}}
+
+Conseil : Assurez-vous que les documents sont bien lisibles et que toutes les informations sont visibles.
+
+Nous restons a votre disposition.
+
+Cordialement,
+L'equipe TaxiAssur
+01 76 39 00 60`
   },
   {
     id: 'documents_received',
-    name: 'Documents reçus',
+    name: 'Documents recus - Confirmation',
     category: 'Documents',
-    subject: 'Documents bien reçus - TaxiAssur',
+    subject: 'Documents bien recus - TaxiAssur',
     body: `Bonjour {{first_name}},
 
-Nous vous confirmons la bonne réception de vos documents.
+Nous vous confirmons la bonne reception de vos documents.
 
-Notre équipe va procéder à leur vérification et vous tiendra informé de la suite de votre dossier dans les plus brefs délais.
+Notre equipe va proceder a leur verification et vous transmettra votre devis personnalise dans les plus brefs delais (sous 24-48h ouvrees).
+
+Vous pouvez suivre l'avancement de votre dossier sur votre espace :
+{{upload_link}}
+
+A tres bientot !
 
 Cordialement,
-L'équipe TaxiAssur`
+L'equipe TaxiAssur
+01 76 39 00 60`
   },
   {
     id: 'contract_ready',
-    name: 'Contrat prêt à signer',
+    name: 'Contrat pret a signer',
     category: 'Contrat',
-    subject: 'Votre contrat est prêt - TaxiAssur',
+    subject: 'Votre contrat est pret ! - TaxiAssur',
     body: `Bonjour {{first_name}},
 
-Excellente nouvelle ! Votre contrat d'assurance taxi est prêt.
+Excellente nouvelle ! Votre contrat d'assurance taxi est pret.
 
-Veuillez trouver ci-joint les documents contractuels suivants :
-- Conditions particulières
-- Conditions générales
-- IPID (fiche d'information)
-- Mandat de prélèvement SEPA
+Veuillez trouver ci-joint les documents contractuels :
+- Conditions Particulieres
+- Conditions Generales
+- IPID (Document d'Information Produit)
+- Mandat de prelevement SEPA
 
-Pour finaliser votre souscription, merci de nous retourner le mandat SEPA signé.
+POUR FINALISER VOTRE SOUSCRIPTION :
+1. Verifiez les informations sur les Conditions Particulieres
+2. Signez le mandat de prelevement SEPA
+3. Telechargez les documents signes sur votre espace securise :
+   {{upload_link}}
+
+Des reception des documents signes, votre couverture sera active sous 24h et vous recevrez votre attestation d'assurance par email.
+
+Je reste a votre disposition pour toute question.
 
 Cordialement,
-L'équipe TaxiAssur`
+L'equipe TaxiAssur
+01 76 39 00 60`
+  },
+  {
+    id: 'attestation_sent',
+    name: 'Attestation envoyee',
+    category: 'Contrat',
+    subject: 'Votre attestation d\'assurance taxi - TaxiAssur',
+    body: `Bonjour {{first_name}},
+
+Felicitations ! Votre contrat d'assurance taxi est maintenant actif.
+
+Veuillez trouver ci-joint votre attestation d'assurance.
+
+Vous pouvez telecharger tous vos documents contractuels depuis votre espace :
+{{upload_link}}
+
+RAPPEL IMPORTANT :
+- Conservez une copie de l'attestation dans votre vehicule
+- En cas de sinistre, contactez-nous au 01 76 39 00 60
+
+Merci de votre confiance !
+
+Cordialement,
+L'equipe TaxiAssur
+01 76 39 00 60
+www.taxiassur.com`
+  },
+  {
+    id: 'renewal_reminder',
+    name: 'Rappel echeance contrat',
+    category: 'Relance',
+    subject: 'Echeance de votre contrat taxi - TaxiAssur',
+    body: `Bonjour {{first_name}},
+
+Votre contrat d'assurance taxi arrive bientot a echeance.
+
+Pour assurer la continuite de votre couverture, nous vous invitons a :
+1. Verifier vos informations (vehicule, adresse, etc.)
+2. Nous transmettre tout changement de situation
+3. Mettre a jour vos documents si necessaire :
+   {{upload_link}}
+
+Si vous souhaitez modifier votre contrat ou obtenir un nouveau devis, contactez-nous.
+
+Cordialement,
+L'equipe TaxiAssur
+01 76 39 00 60`
   }
 ];
 
@@ -172,7 +311,8 @@ export function EmailComposerModal({
   onEmailSent,
   defaultTemplate,
   defaultSubject,
-  defaultBody
+  defaultBody,
+  missingDocuments
 }: EmailComposerModalProps) {
   const [subject, setSubject] = useState(defaultSubject || '');
   const [body, setBody] = useState(defaultBody || '');
@@ -193,17 +333,39 @@ export function EmailComposerModal({
     const template = EMAIL_TEMPLATES.find(t => t.id === templateId);
     if (template) {
       setSelectedTemplate(templateId);
-      setSubject(replaceVariables(template.subject));
-      setBody(replaceVariables(template.body));
+      setSubject(replaceVariables(template.subject, missingDocuments));
+      setBody(replaceVariables(template.body, missingDocuments));
     }
   };
 
-  const replaceVariables = (text: string) => {
+  const getUploadLink = () => {
+    if (lead.access_token) {
+      return `https://taxiassur.com/prospect/documents/${lead.access_token}`;
+    }
+    return 'https://taxiassur.com/espace-client';
+  };
+
+  const replaceVariables = (text: string, missingDocs?: string[]) => {
+    const uploadLink = getUploadLink();
+
+    let missingDocsText = '';
+    if (missingDocs && missingDocs.length > 0) {
+      missingDocsText = missingDocs.map(doc => `- ${doc}`).join('\n');
+    } else {
+      missingDocsText = `- Carte grise du vehicule
+- Permis de conduire
+- Licence taxi / ADS
+- Piece d'identite
+- RIB`;
+    }
+
     return text
       .replace(/\{\{first_name\}\}/g, lead.first_name || 'Monsieur/Madame')
       .replace(/\{\{last_name\}\}/g, lead.last_name || '')
       .replace(/\{\{company_name\}\}/g, lead.company_name || '')
-      .replace(/\{\{city\}\}/g, lead.city || '');
+      .replace(/\{\{city\}\}/g, lead.city || '')
+      .replace(/\{\{upload_link\}\}/g, uploadLink)
+      .replace(/\{\{missing_documents\}\}/g, missingDocsText);
   };
 
   const handleSend = async () => {
@@ -372,7 +534,7 @@ export function EmailComposerModal({
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900 placeholder-gray-400 text-base leading-relaxed resize-none"
                 />
                 <p className="text-xs text-gray-500 mt-1.5">
-                  Variables: {'{'}{'{'}'first_name'{'}'}{'}'},  {'{'}{'{'}'last_name'{'}'}{'}'},  {'{'}{'{'}'company_name'{'}'}{'}'}
+                  Variables disponibles : {'{{first_name}}'}, {'{{last_name}}'}, {'{{upload_link}}'}, {'{{missing_documents}}'}
                 </p>
               </div>
 

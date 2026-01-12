@@ -514,26 +514,19 @@ const CRMLeadDetail: React.FC = () => {
 
   const availableTransitions = lead ? pipelineService.getAvailableTransitions(lead.status) : [];
 
+  const [emailMissingDocs, setEmailMissingDocs] = useState<string[]>([]);
+
   const handleRequestDocuments = (missingDocs: string[]) => {
-    const docsList = missingDocs.join('\n- ');
-    setEmailDefaultSubject('Documents nécessaires pour votre dossier - TaxiAssur');
-    setEmailDefaultBody(`Bonjour ${lead?.first_name || ''},
-
-Pour finaliser votre dossier d'assurance taxi, nous avons besoin des documents suivants :
-
-- ${docsList}
-
-Vous pouvez nous les envoyer par retour d'email ou via votre espace client.
-
-Cordialement,
-L'équipe TaxiAssur
-01 76 39 00 60`);
+    setEmailMissingDocs(missingDocs);
+    setEmailDefaultSubject('');
+    setEmailDefaultBody('');
     setEmailModalOpen(true);
   };
 
   const openEmailComposer = (template?: string) => {
     setEmailDefaultSubject('');
     setEmailDefaultBody('');
+    setEmailMissingDocs([]);
     setEmailModalOpen(true);
   };
 
@@ -1009,6 +1002,7 @@ L'équipe TaxiAssur
           setEmailModalOpen(false);
           setEmailDefaultSubject('');
           setEmailDefaultBody('');
+          setEmailMissingDocs([]);
         }}
         lead={{
           id: lead.id,
@@ -1017,11 +1011,13 @@ L'équipe TaxiAssur
           email: lead.email,
           phone: lead.phone,
           company_name: lead.company_name,
-          city: lead.city
+          city: lead.city,
+          access_token: (lead as any).access_token
         }}
         onEmailSent={() => loadMessages(lead.id)}
         defaultSubject={emailDefaultSubject}
         defaultBody={emailDefaultBody}
+        missingDocuments={emailMissingDocs}
       />
 
       {/* Modal SMS */}
