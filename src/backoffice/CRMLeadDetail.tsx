@@ -46,7 +46,8 @@ import {
   LeadQuotesContracts,
   LeadIntelligencePanel,
   LeadHeader,
-  LeadWorkflowTabs
+  LeadWorkflowTabs,
+  LeadAutomationCenter
 } from '@/components/crm';
 import type { WorkflowTab } from '@/components/crm';
 
@@ -99,6 +100,8 @@ const CRMLeadDetail: React.FC = () => {
   const [documentsMissing, setDocumentsMissing] = useState(0);
   const [quotesCount, setQuotesCount] = useState(0);
   const [hasContract, setHasContract] = useState(false);
+  const [pendingAISuggestions, setPendingAISuggestions] = useState(0);
+  const [scheduledFollowUps, setScheduledFollowUps] = useState(0);
 
   const smsTemplates = [
     { id: 'welcome', name: 'Bienvenue', message: 'Bonjour {{first_name}}, merci pour votre demande. Un conseiller vous contacte sous 24h. TaxiAssur' },
@@ -144,10 +147,12 @@ const CRMLeadDetail: React.FC = () => {
 
   const loadStats = async (id: string) => {
     try {
-      const [docsResult, quotesResult, contractResult] = await Promise.all([
+      const [docsResult, quotesResult, contractResult, suggestionsResult, followUpsResult] = await Promise.all([
         supabase.from('crm_lead_documents').select('status').eq('lead_id', id),
         supabase.from('crm_lead_quotes').select('id').eq('lead_id', id),
-        supabase.from('crm_contracts').select('id').eq('lead_id', id).eq('status', 'signed')
+        supabase.from('crm_contracts').select('id').eq('lead_id', id).eq('status', 'signed'),
+        supabase.from('crm_ai_suggestions').select('id').eq('lead_id', id).eq('status', 'pending'),
+        supabase.from('crm_scheduled_followups').select('id').eq('lead_id', id).eq('status', 'scheduled')
       ]);
 
       const docs = docsResult.data || [];
@@ -158,6 +163,8 @@ const CRMLeadDetail: React.FC = () => {
       setDocumentsMissing(Math.max(0, 5 - validatedDocs));
       setQuotesCount(quotesResult.data?.length || 0);
       setHasContract((contractResult.data?.length || 0) > 0);
+      setPendingAISuggestions(suggestionsResult.data?.length || 0);
+      setScheduledFollowUps(followUpsResult.data?.length || 0);
     } catch (error) {
       console.error('Error loading stats:', error);
     }
@@ -379,7 +386,9 @@ const CRMLeadDetail: React.FC = () => {
     quotesCount,
     hasContract,
     unreadMessages: messages.filter(m => m.direction === 'inbound' && m.status !== 'read').length,
-    totalInteractions: messages.length
+    totalInteractions: messages.length,
+    pendingAISuggestions,
+    scheduledFollowUps
   };
 
   return (
@@ -625,6 +634,23 @@ const CRMLeadDetail: React.FC = () => {
                   leadPhone={lead.phone}
                 />
               </div>
+            )}
+
+            {activeTab === 'automations' && (
+              <LeadAutomationCenter
+                leadId={lead.id}
+                leadStatus={lead.status}
+                leadEmail={lead.email}
+                leadPhone={lead.phone}
+                leadFirstName={lead.first_name}
+                leadLastName={lead.last_name}
+                accessToken={(lead as any).access_token}
+                onActionTaken={() => {
+                  loadMessages(lead.id);
+                  loadLeadData(lead.id);
+                  loadStats(lead.id);
+                }}
+              />
             )}
 
             {activeTab === 'communication' && (

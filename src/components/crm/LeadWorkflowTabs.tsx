@@ -7,10 +7,11 @@ import {
   MessageSquare,
   History,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  Bot
 } from 'lucide-react';
 
-export type WorkflowTab = 'overview' | 'documents' | 'quotes' | 'contract' | 'communication' | 'history';
+export type WorkflowTab = 'overview' | 'documents' | 'quotes' | 'contract' | 'communication' | 'automations' | 'history';
 
 interface TabConfig {
   id: WorkflowTab;
@@ -30,6 +31,8 @@ interface LeadWorkflowTabsProps {
     hasContract: boolean;
     unreadMessages: number;
     totalInteractions: number;
+    pendingAISuggestions?: number;
+    scheduledFollowUps?: number;
   };
 }
 
@@ -69,6 +72,13 @@ export const LeadWorkflowTabs: React.FC<LeadWorkflowTabsProps> = ({
       label: 'Communication',
       icon: <MessageSquare className="w-4 h-4" />,
       badge: stats.unreadMessages > 0 ? stats.unreadMessages : undefined
+    },
+    {
+      id: 'automations',
+      label: 'Automations IA',
+      icon: <Bot className="w-4 h-4" />,
+      badge: stats.pendingAISuggestions || stats.scheduledFollowUps,
+      status: (stats.pendingAISuggestions || 0) > 0 ? 'warning' : undefined
     },
     {
       id: 'history',
