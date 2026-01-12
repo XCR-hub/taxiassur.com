@@ -32,6 +32,7 @@ import { pipelineService, CRMLead, PIPELINE_STATUSES } from '@/lib/crm-pipeline'
 import { supabase } from '@/lib/supabase';
 import QuoteManager from './QuoteManager';
 import ElectronicSignature from '@/components/ElectronicSignature';
+import { DocumentChecklistPanel, EmailComposerModal } from '@/components/crm';
 
 interface Message {
   id: string;
@@ -59,6 +60,11 @@ const CRMLeadDetail: React.FC = () => {
   const [showWhatsAppModal, setShowWhatsAppModal] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [loadingMessages, setLoadingMessages] = useState(false);
+
+  // Email composer state
+  const [emailModalOpen, setEmailModalOpen] = useState(false);
+  const [emailDefaultSubject, setEmailDefaultSubject] = useState('');
+  const [emailDefaultBody, setEmailDefaultBody] = useState('');
 
   // États pour le formulaire d'édition
   const [editForm, setEditForm] = useState({
@@ -508,6 +514,29 @@ const CRMLeadDetail: React.FC = () => {
 
   const availableTransitions = lead ? pipelineService.getAvailableTransitions(lead.status) : [];
 
+  const handleRequestDocuments = (missingDocs: string[]) => {
+    const docsList = missingDocs.join('\n- ');
+    setEmailDefaultSubject('Documents nécessaires pour votre dossier - TaxiAssur');
+    setEmailDefaultBody(`Bonjour ${lead?.first_name || ''},
+
+Pour finaliser votre dossier d'assurance taxi, nous avons besoin des documents suivants :
+
+- ${docsList}
+
+Vous pouvez nous les envoyer par retour d'email ou via votre espace client.
+
+Cordialement,
+L'équipe TaxiAssur
+01 76 39 00 60`);
+    setEmailModalOpen(true);
+  };
+
+  const openEmailComposer = (template?: string) => {
+    setEmailDefaultSubject('');
+    setEmailDefaultBody('');
+    setEmailModalOpen(true);
+  };
+
   if (loading || !lead) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -864,7 +893,7 @@ const CRMLeadDetail: React.FC = () => {
               </h3>
               <div className="space-y-3">
                 <button
-                  onClick={() => setShowEmailModal(true)}
+                  onClick={() => openEmailComposer()}
                   className="w-full px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all flex items-center justify-center gap-2 shadow-lg"
                 >
                   <Mail size={18} />
@@ -885,71 +914,6 @@ const CRMLeadDetail: React.FC = () => {
                   Envoyer WhatsApp
                 </button>
               </div>
-            </div>
-
-            {/* Documents du Lead */}
-            <div className="bg-white rounded-xl shadow-lg border-2 border-purple-200 p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-bold text-gray-900 flex items-center gap-2">
-                  <Upload size={20} className="text-purple-600" />
-                  Documents ({documents.length})
-                </h3>
-                <button
-                  onClick={() => setShowDocumentModal(true)}
-                  className="px-3 py-1 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center gap-1 text-sm"
-                >
-                  <Plus size={16} />
-                  Ajouter
-                </button>
-              </div>
-
-              <div className="space-y-2 max-h-96 overflow-y-auto">
-                {loadingDocuments ? (
-                  <div className="text-center py-4 text-gray-500">Chargement...</div>
-                ) : documents.length === 0 ? (
-                  <div className="text-center py-4 text-gray-500">Aucun document</div>
-                ) : (
-                  documents.map((doc) => (
-                    <div key={doc.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200 hover:border-purple-300 transition-colors">
-                      <div className="flex-1">
-                        <div className="font-medium text-gray-900 text-sm">
-                          {doc.document_type.replace(/_/g, ' ')}
-                        </div>
-                        <div className="text-xs text-gray-500">
-                          {new Date(doc.uploaded_at).toLocaleDateString('fr-FR')}
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {doc.status === 'validated' ? (
-                          <span className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-medium">
-                            ✓ Validé
-                          </span>
-                        ) : doc.status === 'rejected' ? (
-                          <span className="px-2 py-1 bg-red-100 text-red-700 rounded text-xs font-medium">
-                            ✗ Refusé
-                          </span>
-                        ) : (
-                          <>
-                            <button
-                              onClick={() => handleValidateDocument(doc.id)}
-                              className="p-1 text-green-600 hover:bg-green-50 rounded"
-                              title="Valider"
-                            >
-                              <CheckCircle size={18} />
-                            </button>
-                            <button
-                              className="p-1 text-orange-600 hover:bg-orange-50 rounded"
-                              title="Télécharger"
-                            >
-                              <Download size={18} />
-                            </button>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
 
               {/* Bouton demande avis Google */}
               <div className="mt-4 pt-4 border-t border-gray-200">
@@ -963,6 +927,13 @@ const CRMLeadDetail: React.FC = () => {
                 </button>
               </div>
             </div>
+
+            {/* Document Checklist Panel */}
+            <DocumentChecklistPanel
+              leadId={lead.id}
+              onDocumentUpload={() => loadDocuments(lead.id)}
+              onRequestDocuments={handleRequestDocuments}
+            />
 
             {/* Statistiques du lead */}
             <div className="bg-white rounded-xl shadow-lg border-2 border-gray-200 p-6">
@@ -1031,82 +1002,27 @@ const CRMLeadDetail: React.FC = () => {
         </div>
       </div>
 
-      {/* Modal Email */}
-      {showEmailModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b border-gray-200">
-              <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                  <Mail className="text-blue-600" />
-                  Envoyer un Email
-                </h2>
-                <button
-                  onClick={() => setShowEmailModal(false)}
-                  className="text-gray-500 hover:text-gray-700"
-                >
-                  <X size={24} />
-                </button>
-              </div>
-            </div>
-            <div className="p-6 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Template</label>
-                <select
-                  value={emailForm.template}
-                  onChange={(e) => {
-                    const template = emailTemplates.find(t => t.id === e.target.value);
-                    if (template) {
-                      setEmailForm({
-                        template: e.target.value,
-                        subject: template.subject,
-                        body: template.body
-                      });
-                    }
-                  }}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
-                >
-                  <option value="">Sélectionner un template</option>
-                  {emailTemplates.map(t => (
-                    <option key={t.id} value={t.id}>{t.name}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Sujet</label>
-                <input
-                  type="text"
-                  value={emailForm.subject}
-                  onChange={(e) => setEmailForm({ ...emailForm, subject: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 placeholder-gray-400"
-                  placeholder="Sujet de l'email"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Message</label>
-                <textarea
-                  value={emailForm.body}
-                  onChange={(e) => setEmailForm({ ...emailForm, body: e.target.value })}
-                  rows={10}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 placeholder-gray-400"
-                  placeholder="Corps de l'email..."
-                />
-                <p className="text-xs text-gray-500 mt-2">
-                  Variables disponibles: {'{{first_name}}'}, {'{{last_name}}'}, {'{{company_name}}'}
-                </p>
-              </div>
-              <button
-                onClick={handleSendEmail}
-                disabled={!emailForm.subject || !emailForm.body}
-                className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-              >
-                <Send size={20} />
-                Envoyer l'Email
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Email Composer Modal */}
+      <EmailComposerModal
+        isOpen={emailModalOpen}
+        onClose={() => {
+          setEmailModalOpen(false);
+          setEmailDefaultSubject('');
+          setEmailDefaultBody('');
+        }}
+        lead={{
+          id: lead.id,
+          first_name: lead.first_name,
+          last_name: lead.last_name,
+          email: lead.email,
+          phone: lead.phone,
+          company_name: lead.company_name,
+          city: lead.city
+        }}
+        onEmailSent={() => loadMessages(lead.id)}
+        defaultSubject={emailDefaultSubject}
+        defaultBody={emailDefaultBody}
+      />
 
       {/* Modal SMS */}
       {showSMSModal && (
