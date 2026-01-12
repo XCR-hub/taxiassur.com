@@ -789,6 +789,9 @@ const CRMLeadDetail: React.FC = () => {
               onQuoteSent={() => {
                 loadMessages(lead.id);
               }}
+              onStatusChange={() => {
+                loadLeadData(lead.id);
+              }}
             />
 
             {/* Signature Électronique */}

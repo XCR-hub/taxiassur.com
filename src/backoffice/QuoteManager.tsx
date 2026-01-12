@@ -46,9 +46,10 @@ interface QuoteHistory {
 interface QuoteManagerProps {
   lead: CRMLead;
   onQuoteSent?: () => void;
+  onStatusChange?: () => void;
 }
 
-const QuoteManager: React.FC<QuoteManagerProps> = ({ lead, onQuoteSent }) => {
+const QuoteManager: React.FC<QuoteManagerProps> = ({ lead, onQuoteSent, onStatusChange }) => {
   const [activeTab, setActiveTab] = useState<'upload' | 'send' | 'history'>('upload');
   const [uploading, setUploading] = useState(false);
   const [sending, setSending] = useState(false);
@@ -62,12 +63,33 @@ const QuoteManager: React.FC<QuoteManagerProps> = ({ lead, onQuoteSent }) => {
   const [history, setHistory] = useState<QuoteHistory[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isBlocked, setIsBlocked] = useState(false);
+  const [blockingDocs, setBlockingDocs] = useState<any[]>([]);
 
   useEffect(() => {
     loadTemplates();
     loadHistory();
     loadLatestQuote();
+    checkQuoteLock();
   }, [lead.id]);
+
+  const checkQuoteLock = async () => {
+    try {
+      const { data, error } = await supabase.rpc('check_document_locks', {
+        p_lead_id: lead.id
+      });
+
+      if (error) throw error;
+
+      if (data && data.length > 0) {
+        const lockInfo = data[0];
+        setIsBlocked(!lockInfo.can_generate_quote);
+        setBlockingDocs(lockInfo.blocking_docs || []);
+      }
+    } catch (err) {
+      console.error('Error checking quote lock:', err);
+    }
+  };
 
   useEffect(() => {
     if (selectedTemplate) {
@@ -222,6 +244,11 @@ const QuoteManager: React.FC<QuoteManagerProps> = ({ lead, onQuoteSent }) => {
   };
 
   const handleSendQuote = async () => {
+    if (isBlocked) {
+      alert('❌ Impossible d\'envoyer le devis : des documents complémentaires sont requis.');
+      return;
+    }
+
     if (!uploadedQuote) {
       alert('Uploadez d\'abord un devis !');
       return;
@@ -277,6 +304,38 @@ const QuoteManager: React.FC<QuoteManagerProps> = ({ lead, onQuoteSent }) => {
         console.error('Send error:', sendError);
       }
 
+      if (lead.status !== 'QUOTE_SENT' && lead.status !== 'SIGNATURE_PENDING' && lead.status !== 'SIGNED' && lead.status !== 'ACTIVE_CLIENT') {
+        const { error: statusError } = await supabase
+          .from('crm_leads')
+          .update({
+            status: 'QUOTE_SENT',
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', lead.id);
+
+        if (statusError) {
+          console.error('Status update error:', statusError);
+        } else {
+          await supabase
+            .from('crm_interactions')
+            .insert({
+              lead_id: lead.id,
+              type: 'status_change',
+              direction: 'outbound',
+              channel: 'system',
+              subject: 'Statut mis à jour automatiquement',
+              content: `Statut passé à "Devis Envoyé" suite à l'envoi du devis par ${selectedChannel.toUpperCase()}`,
+              metadata: {
+                from_status: lead.status,
+                to_status: 'QUOTE_SENT',
+                reason: 'quote_sent'
+              }
+            });
+
+          if (onStatusChange) onStatusChange();
+        }
+      }
+
       alert(`✅ Devis envoyé par ${selectedChannel.toUpperCase()} !`);
       await loadHistory();
       if (onQuoteSent) onQuoteSent();
@@ -310,6 +369,27 @@ const QuoteManager: React.FC<QuoteManagerProps> = ({ lead, onQuoteSent }) => {
           Gestion des Devis
         </h3>
       </div>
+
+      {isBlocked && (
+        <div className="m-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="text-red-600 flex-shrink-0 mt-0.5" size={20} />
+            <div>
+              <p className="font-semibold text-red-800">Envoi de devis bloqué</p>
+              <p className="text-sm text-red-700 mt-1">
+                Des documents complémentaires sont requis avant de pouvoir générer/envoyer un devis.
+              </p>
+              {blockingDocs.length > 0 && (
+                <ul className="mt-2 text-sm text-red-600 list-disc list-inside">
+                  {blockingDocs.map((doc: any, idx: number) => (
+                    <li key={idx}>{doc.titre}</li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="flex border-b border-gray-200">
         <button
