@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useSearchParams, Link } from 'react-router-dom';
+import { useSearchParams, useParams, Link } from 'react-router-dom';
 import { Upload, CheckCircle, AlertCircle, FileText, Loader2, X, Download } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
@@ -66,7 +66,8 @@ const DOCUMENT_TYPES: DocumentType[] = [
 
 const ProspectDocuments: React.FC = () => {
   const [searchParams] = useSearchParams();
-  const token = searchParams.get('token');
+  const params = useParams<{ token: string }>();
+  const token = params.token || searchParams.get('token');
 
   const [leadInfo, setLeadInfo] = useState<any>(null);
   const [uploadedDocuments, setUploadedDocuments] = useState<UploadedDocument[]>([]);
@@ -78,25 +79,26 @@ const ProspectDocuments: React.FC = () => {
   useEffect(() => {
     if (token) {
       loadLeadInfo();
-      loadDocuments();
     }
   }, [token]);
 
+  useEffect(() => {
+    if (leadInfo?.id) {
+      loadDocuments();
+    }
+  }, [leadInfo]);
+
   const loadLeadInfo = async () => {
     try {
-      const { data, error } = await supabase
-        .rpc('get_lead_id_from_token', { token_value: token });
+      const { data: leadData, error: leadError } = await supabase
+        .from('crm_leads')
+        .select('*')
+        .eq('access_token', token)
+        .maybeSingle();
 
-      if (error) throw error;
+      if (leadError) throw leadError;
 
-      if (data) {
-        const { data: leadData, error: leadError } = await supabase
-          .from('leads')
-          .select('*')
-          .eq('id', data)
-          .single();
-
-        if (leadError) throw leadError;
+      if (leadData) {
         setLeadInfo(leadData);
       }
     } catch (err: any) {
@@ -107,16 +109,13 @@ const ProspectDocuments: React.FC = () => {
   };
 
   const loadDocuments = async () => {
+    if (!leadInfo?.id) return;
+
     try {
-      const { data: leadId } = await supabase
-        .rpc('get_lead_id_from_token', { token_value: token });
-
-      if (!leadId) return;
-
       const { data, error } = await supabase
         .from('prospect_documents')
         .select('*')
-        .eq('lead_id', leadId)
+        .eq('lead_id', leadInfo.id)
         .order('uploaded_at', { ascending: false });
 
       if (error) throw error;

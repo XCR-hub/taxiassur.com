@@ -315,6 +315,11 @@ export const router = createBrowserRouter([
         errorElement: <RouteErrorFallback />
       },
       {
+        path: '/prospect/documents/:token',
+        element: <SuspenseWrapper><ProspectDocuments /></SuspenseWrapper>,
+        errorElement: <RouteErrorFallback />
+      },
+      {
         path: '/mentions-legales',
         element: <SuspenseWrapper><Legal /></SuspenseWrapper>,
         errorElement: <RouteErrorFallback />
