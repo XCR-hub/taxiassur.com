@@ -32,7 +32,7 @@ import { pipelineService, CRMLead, PIPELINE_STATUSES } from '@/lib/crm-pipeline'
 import { supabase } from '@/lib/supabase';
 import QuoteManager from './QuoteManager';
 import ElectronicSignature from '@/components/ElectronicSignature';
-import { DocumentChecklistPanelV2, EmailComposerModal, DocumentRequestsManager, CommercialChecklist, LeadInsuranceCompanies } from '@/components/crm';
+import { DocumentChecklistPanelV2, EmailComposerModal, DocumentRequestsManager, CommercialChecklist, LeadInsuranceCompanies, LeadQuotesContracts } from '@/components/crm';
 
 interface Message {
   id: string;
@@ -813,6 +813,12 @@ const CRMLeadDetail: React.FC = () => {
             {/* Compagnies d'assurance contactées */}
             <LeadInsuranceCompanies
               leadId={lead.id}
+            />
+
+            {/* Devis et Contrats */}
+            <LeadQuotesContracts
+              leadId={lead.id}
+              leadEmail={lead.email}
             />
 
             {/* Historique des échanges */}

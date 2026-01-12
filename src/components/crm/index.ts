@@ -11,3 +11,4 @@ export { TimelineEvent } from './TimelineEvent';
 export { DocumentRequestsManager } from './DocumentRequestsManager';
 export { CommercialChecklist } from './CommercialChecklist';
 export { LeadInsuranceCompanies } from './LeadInsuranceCompanies';
+export { LeadQuotesContracts } from './LeadQuotesContracts';

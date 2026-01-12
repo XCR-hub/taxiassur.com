@@ -63,11 +63,14 @@ export default function InsuranceCompaniesManager() {
     document_name: '',
     document_type: 'conditions_generales',
     file_url: '',
+    file: null as File | null,
     is_mandatory: true,
     send_with_quote: true,
     send_with_contract: false,
     description: ''
   });
+
+  const [uploadingFile, setUploadingFile] = useState(false);
 
   useEffect(() => {
     loadCompanies();
@@ -177,30 +180,84 @@ export default function InsuranceCompaniesManager() {
     if (!selectedCompany) return;
 
     setSaving(true);
+    setUploadingFile(true);
     try {
+      let fileUrl = documentFormData.file_url;
+      let fileSize: number | null = null;
+      let mimeType: string | null = null;
+
+      // Si un fichier est sélectionné, l'uploader dans Storage
+      if (documentFormData.file) {
+        const file = documentFormData.file;
+        const fileExt = file.name.split('.').pop();
+        const fileName = `company-documents/${selectedCompany.code}/${documentFormData.document_type}_${Date.now()}.${fileExt}`;
+
+        // Upload du fichier
+        const { error: uploadError } = await supabase.storage
+          .from('crm-documents')
+          .upload(fileName, file, {
+            cacheControl: '3600',
+            upsert: false
+          });
+
+        if (uploadError) {
+          console.error('Erreur upload:', uploadError);
+          throw new Error(`Erreur upload: ${uploadError.message}`);
+        }
+
+        // Obtenir l'URL publique
+        const { data: { publicUrl } } = supabase.storage
+          .from('crm-documents')
+          .getPublicUrl(fileName);
+
+        fileUrl = publicUrl;
+        fileSize = file.size;
+        mimeType = file.type;
+      }
+
+      // Vérifier qu'on a bien une URL
+      if (!fileUrl) {
+        alert('Veuillez sélectionner un fichier ou entrer une URL');
+        return;
+      }
+
+      // Insérer dans la base de données
       const { error } = await supabase
         .from('company_documents')
         .insert([{
           company_id: selectedCompany.id,
-          ...documentFormData
+          document_name: documentFormData.document_name,
+          document_type: documentFormData.document_type,
+          file_url: fileUrl,
+          file_size: fileSize,
+          mime_type: mimeType,
+          is_mandatory: documentFormData.is_mandatory,
+          send_with_quote: documentFormData.send_with_quote,
+          send_with_contract: documentFormData.send_with_contract,
+          description: documentFormData.description
         }]);
 
       if (error) throw error;
+
       await loadDocuments(selectedCompany.id);
       setDocumentFormData({
         document_name: '',
         document_type: 'conditions_generales',
         file_url: '',
+        file: null,
         is_mandatory: true,
         send_with_quote: true,
         send_with_contract: false,
         description: ''
       });
+
+      alert('✅ Document ajouté avec succès !');
     } catch (error) {
       console.error('Erreur ajout document:', error);
-      alert('Erreur lors de l\'ajout du document');
+      alert('Erreur lors de l\'ajout du document: ' + (error as Error).message);
     } finally {
       setSaving(false);
+      setUploadingFile(false);
     }
   };
 
@@ -529,13 +586,45 @@ export default function InsuranceCompaniesManager() {
               </div>
 
               <div>
-                <label className="block text-gray-400 text-sm mb-2">URL du fichier</label>
+                <label className="block text-gray-400 text-sm mb-2">Upload de fichier</label>
+                <input
+                  type="file"
+                  accept=".pdf,.doc,.docx"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0] || null;
+                    setDocumentFormData({
+                      ...documentFormData,
+                      file,
+                      file_url: '' // Reset URL si fichier sélectionné
+                    });
+                  }}
+                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700"
+                />
+                {documentFormData.file && (
+                  <div className="mt-2 text-sm text-green-500 flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4" />
+                    {documentFormData.file.name} ({(documentFormData.file.size / 1024).toFixed(0)} Ko)
+                  </div>
+                )}
+              </div>
+
+              <div className="text-center text-gray-500 text-sm">
+                OU
+              </div>
+
+              <div>
+                <label className="block text-gray-400 text-sm mb-2">URL du fichier (si hébergé ailleurs)</label>
                 <input
                   type="url"
                   value={documentFormData.file_url}
-                  onChange={(e) => setDocumentFormData({ ...documentFormData, file_url: e.target.value })}
+                  onChange={(e) => setDocumentFormData({
+                    ...documentFormData,
+                    file_url: e.target.value,
+                    file: null // Reset fichier si URL entrée
+                  })}
                   className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white"
                   placeholder="https://..."
+                  disabled={!!documentFormData.file}
                 />
               </div>
 
@@ -581,11 +670,20 @@ export default function InsuranceCompaniesManager() {
 
               <button
                 onClick={handleSaveDocument}
-                disabled={saving || !documentFormData.document_name || !documentFormData.file_url}
+                disabled={saving || !documentFormData.document_name || (!documentFormData.file && !documentFormData.file_url)}
                 className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white px-4 py-2 rounded-lg flex items-center justify-center gap-2"
               >
-                <Plus className="w-4 h-4" />
-                Ajouter le document
+                {uploadingFile ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    Upload en cours...
+                  </>
+                ) : (
+                  <>
+                    <Plus className="w-4 h-4" />
+                    {documentFormData.file ? 'Uploader et ajouter' : 'Ajouter le document'}
+                  </>
+                )}
               </button>
             </div>
           </div>
