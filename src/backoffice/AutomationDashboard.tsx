@@ -244,9 +244,10 @@ const AutomationDashboard: React.FC = () => {
     }
   };
 
-  const getActionIcon = (actionType: string) => {
   const navigate = useNavigate();
-switch (actionType) {
+
+  const getActionIcon = (actionType: string) => {
+    switch (actionType) {
       case 'send_email': return Mail;
       case 'send_sms': return MessageSquare;
       case 'create_task': return FileText;
@@ -294,10 +295,10 @@ switch (actionType) {
               <button
                 onClick={generateSuggestions}
                 disabled={isExecuting}
-                className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-lg transition-colors disabled:opacity-50"
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg transition-colors disabled:opacity-50"
               >
                 <Sparkles size={18} />
-                Suggérer Actions
+                Suggerer Actions
               </button>
 
               <button
@@ -342,12 +343,12 @@ switch (actionType) {
               <div className="text-xs opacity-90 mt-1">Actives</div>
             </div>
 
-            <div className="bg-gradient-to-br from-purple-500 to-pink-500 text-white rounded-lg p-4">
+            <div className="bg-gradient-to-br from-cyan-500 to-teal-500 text-white rounded-lg p-4">
               <div className="flex items-center justify-between mb-2">
                 <Activity size={20} className="opacity-80" />
               </div>
               <div className="text-2xl font-black">{stats.today_executions}</div>
-              <div className="text-xs opacity-90 mt-1">Exécutions Aujourd'hui</div>
+              <div className="text-xs opacity-90 mt-1">Executions Aujourd'hui</div>
             </div>
 
             <div className="bg-gradient-to-br from-orange-500 to-red-500 text-white rounded-lg p-4">

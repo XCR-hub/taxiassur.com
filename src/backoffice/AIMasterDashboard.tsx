@@ -105,7 +105,7 @@ const AIMasterDashboard: React.FC = () => {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <Brain className="mx-auto mb-4 animate-pulse text-purple-600" size={48} />
+          <Brain className="mx-auto mb-4 animate-pulse text-blue-600" size={48} />
           <p className="text-gray-600">Chargement IA Master...</p>
         </div>
       </div>
@@ -117,7 +117,7 @@ const AIMasterDashboard: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="bg-gradient-to-r from-purple-600 to-indigo-700 text-white py-8 px-6">
+      <div className="bg-gradient-to-r from-gray-900 to-blue-900 text-white py-8 px-6">
         <div className="max-w-7xl mx-auto mb-4">
           <button
             onClick={() => navigate('/backoffice/crm')}
@@ -134,19 +134,19 @@ const AIMasterDashboard: React.FC = () => {
                 <Brain className="mr-3" size={40} />
                 IA MASTER AUTONOME
               </h1>
-              <p className="text-purple-100 text-lg">
-                Système d'optimisation continue - Objectif: Leader #1 Assurance Taxi France
+              <p className="text-blue-200 text-lg">
+                Systeme d'optimisation continue - Objectif: Leader #1 Assurance Taxi France
               </p>
             </div>
             <button
               onClick={executeAIMaster}
               disabled={executing}
-              className="bg-white text-purple-600 px-6 py-3 rounded-lg font-bold hover:bg-purple-50 transition-all disabled:opacity-50 flex items-center"
+              className="bg-white text-blue-700 px-6 py-3 rounded-lg font-bold hover:bg-blue-50 transition-all disabled:opacity-50 flex items-center"
             >
               {executing ? (
                 <>
                   <Clock className="mr-2 animate-spin" size={20} />
-                  Exécution...
+                  Execution...
                 </>
               ) : (
                 <>
@@ -183,7 +183,7 @@ const AIMasterDashboard: React.FC = () => {
 
           <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
             <div className="flex items-center justify-between mb-2">
-              <Activity className="text-purple-600" size={24} />
+              <Activity className="text-cyan-600" size={24} />
               <span className="text-sm text-gray-500">Trafic</span>
             </div>
             <div className="text-3xl font-black text-gray-900">{latestMetric.organic_traffic || 0}</div>
@@ -192,11 +192,11 @@ const AIMasterDashboard: React.FC = () => {
 
           <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
             <div className="flex items-center justify-between mb-2">
-              <Brain className="text-indigo-600" size={24} />
+              <Brain className="text-blue-600" size={24} />
               <span className="text-sm text-gray-500">Actions IA</span>
             </div>
             <div className="text-3xl font-black text-gray-900">{decisions.length}</div>
-            <div className="text-sm text-gray-600">Décisions Prises</div>
+            <div className="text-sm text-gray-600">Decisions Prises</div>
           </div>
         </div>
 
@@ -287,36 +287,36 @@ const AIMasterDashboard: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-gradient-to-r from-purple-100 to-indigo-100 p-6 rounded-xl border border-purple-200">
-          <h2 className="text-xl font-black mb-4 text-purple-900">🎯 Statut du Système</h2>
+        <div className="bg-gradient-to-r from-blue-50 to-cyan-50 p-6 rounded-xl border border-blue-200">
+          <h2 className="text-xl font-black mb-4 text-blue-900">Statut du Systeme</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="bg-white p-4 rounded-lg">
               <h3 className="font-bold mb-2 text-gray-900">Automatisations Actives</h3>
               <ul className="text-sm text-gray-700 space-y-1">
-                <li>✅ Exécution IA Master: Toutes les heures</li>
-                <li>✅ Email notifications: 9h et 18h</li>
-                <li>✅ Analyse performance: Continue</li>
-                <li>✅ Optimisation SEO: Automatique</li>
-                <li>✅ Génération contenu: 24/7</li>
+                <li className="flex items-center gap-2"><CheckCircle size={14} className="text-green-500" /> Execution IA Master: Toutes les heures</li>
+                <li className="flex items-center gap-2"><CheckCircle size={14} className="text-green-500" /> Email notifications: 9h et 18h</li>
+                <li className="flex items-center gap-2"><CheckCircle size={14} className="text-green-500" /> Analyse performance: Continue</li>
+                <li className="flex items-center gap-2"><CheckCircle size={14} className="text-green-500" /> Optimisation SEO: Automatique</li>
+                <li className="flex items-center gap-2"><CheckCircle size={14} className="text-green-500" /> Generation contenu: 24/7</li>
               </ul>
             </div>
             <div className="bg-white p-4 rounded-lg">
               <h3 className="font-bold mb-2 text-gray-900">Permissions IA</h3>
               <ul className="text-sm text-gray-700 space-y-1">
-                <li>✅ Création de contenu automatique</li>
-                <li>✅ Modification des stratégies SEO</li>
-                <li>✅ Optimisation des conversions</li>
-                <li>✅ Ajustement des pop-ups</li>
-                <li>✅ Gestion autonome complète</li>
+                <li className="flex items-center gap-2"><CheckCircle size={14} className="text-green-500" /> Creation de contenu automatique</li>
+                <li className="flex items-center gap-2"><CheckCircle size={14} className="text-green-500" /> Modification des strategies SEO</li>
+                <li className="flex items-center gap-2"><CheckCircle size={14} className="text-green-500" /> Optimisation des conversions</li>
+                <li className="flex items-center gap-2"><CheckCircle size={14} className="text-green-500" /> Ajustement des pop-ups</li>
+                <li className="flex items-center gap-2"><CheckCircle size={14} className="text-green-500" /> Gestion autonome complete</li>
               </ul>
             </div>
           </div>
-          <div className="mt-4 p-4 bg-purple-600 text-white rounded-lg">
+          <div className="mt-4 p-4 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-lg">
             <p className="font-bold text-center text-lg">
-              🚀 OBJECTIF: DEVENIR LE LEADER #1 DE L'ASSURANCE TAXI EN FRANCE
+              OBJECTIF: DEVENIR LE LEADER #1 DE L'ASSURANCE TAXI EN FRANCE
             </p>
-            <p className="text-center text-sm mt-2 text-purple-100">
-              L'IA travaille 24/7 de manière autonome pour atteindre cet objectif
+            <p className="text-center text-sm mt-2 text-blue-100">
+              L'IA travaille 24/7 de maniere autonome pour atteindre cet objectif
             </p>
           </div>
         </div>

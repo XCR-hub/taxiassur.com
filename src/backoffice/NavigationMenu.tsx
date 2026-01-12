@@ -5,9 +5,25 @@ import {
   Search, Link2, Mail, Eye, Plus, Send, Building2, FileCheck, Inbox,
   UserCircle, Clock, Megaphone, Shield, Globe, Settings, BookOpen,
   QrCode, MessageSquare, Brain, MapPin, UserCog, Sparkles, Receipt,
-  ClipboardList
+  ClipboardList, LayoutDashboard, Target, Activity, Bell
 } from 'lucide-react';
 import { getCurrentUser, hasPermission } from '../lib/auth';
+
+interface NavLink {
+  to: string;
+  icon: React.ElementType;
+  label: string;
+  highlight?: boolean;
+  badge?: string;
+}
+
+interface NavSection {
+  title: string;
+  icon: React.ElementType;
+  color: string;
+  links: NavLink[];
+  permission?: boolean;
+}
 
 export default function NavigationMenu() {
   const currentUser = getCurrentUser();
@@ -22,344 +38,223 @@ export default function NavigationMenu() {
   const canViewSocialMedia = isMaster || hasPermission('social_media', 'view');
   const canViewSettings = isMaster || hasPermission('settings', 'view');
 
+  const sections: NavSection[] = [
+    {
+      title: 'Administration',
+      icon: UserCog,
+      color: 'slate',
+      permission: isMaster,
+      links: [
+        { to: '/backoffice/users', icon: Users, label: 'Utilisateurs' },
+        { to: '/backoffice/security', icon: Shield, label: 'Securite' },
+        { to: '/backoffice/compliance', icon: FileCheck, label: 'Conformite' },
+        { to: '/backoffice/test-automations', icon: Zap, label: 'Test Auto' },
+        { to: '/', icon: Globe, label: 'Voir Site' },
+      ],
+    },
+    {
+      title: 'CRM & Pipeline',
+      icon: Target,
+      color: 'blue',
+      permission: canViewCRM,
+      links: [
+        { to: '/backoffice/crm', icon: Sparkles, label: 'CRM Dashboard', highlight: true },
+        { to: '/backoffice/quote-queue', icon: ClipboardList, label: 'File Devis', highlight: true },
+        { to: '/backoffice/crm-killer/pipeline', icon: BarChart3, label: 'Pipeline Kanban' },
+        { to: '/backoffice/crm-killer/inbox', icon: Inbox, label: 'Inbox' },
+        { to: '/backoffice/crm-killer/production', icon: FileCheck, label: 'Production' },
+        { to: '/backoffice/crm-killer/retention', icon: Shield, label: 'Retention' },
+        { to: '/backoffice/crm-killer/ia', icon: Brain, label: 'IA CRM' },
+        { to: '/backoffice/crm-killer/templates', icon: FileText, label: 'Templates' },
+      ],
+    },
+    {
+      title: 'Communication',
+      icon: MessageSquare,
+      color: 'green',
+      permission: canViewCRM,
+      links: [
+        { to: '/backoffice/whatsapp', icon: MessageSquare, label: 'WhatsApp' },
+        { to: '/backoffice/email-marketing', icon: Mail, label: 'Email Marketing' },
+        { to: '/backoffice/newsletter', icon: Mail, label: 'Newsletter' },
+        { to: '/backoffice/notifications', icon: Bell, label: 'Notifications' },
+      ],
+    },
+    {
+      title: 'Marketplace',
+      icon: DollarSign,
+      color: 'amber',
+      permission: canViewMarketplace,
+      links: [
+        { to: '/backoffice/lead-marketplace', icon: DollarSign, label: 'Marketplace' },
+        { to: '/backoffice/partner-portal', icon: Handshake, label: 'Portail Courtier' },
+        { to: '/backoffice/partners', icon: UserCircle, label: 'Partenaires' },
+      ],
+    },
+    {
+      title: 'Production & Compagnies',
+      icon: Building2,
+      color: 'sky',
+      permission: canViewCRM,
+      links: [
+        { to: '/backoffice/insurance-companies', icon: Building2, label: 'Compagnies', highlight: true },
+        { to: '/backoffice/insurance-companies-stats', icon: BarChart3, label: 'Stats Compagnies' },
+        { to: '/backoffice/quotes', icon: Receipt, label: 'Gestion Devis' },
+        { to: '/backoffice/documents', icon: FileCheck, label: 'Documents' },
+      ],
+    },
+    {
+      title: 'IA & Automatisation',
+      icon: Brain,
+      color: 'cyan',
+      permission: canViewContentIA || canViewSettings,
+      links: [
+        { to: '/backoffice/llm-dashboard', icon: Brain, label: 'LLM Agents', highlight: true },
+        { to: '/backoffice/llm-council', icon: Users, label: 'LLM Council', highlight: true },
+        { to: '/backoffice/ai-autonomous', icon: Zap, label: 'IA Autonome' },
+        { to: '/backoffice/master-ai', icon: Brain, label: 'IA Maitre' },
+        { to: '/backoffice/automations', icon: Activity, label: 'Automations' },
+        { to: '/backoffice/automation-scheduler', icon: Clock, label: 'Scheduler' },
+        { to: '/backoffice/auto-optimizer', icon: TrendingUp, label: 'Auto-Optimizer' },
+      ],
+    },
+    {
+      title: 'Contenu',
+      icon: FileEdit,
+      color: 'orange',
+      permission: canViewContentIA,
+      links: [
+        { to: '/backoffice/ai-generator', icon: Zap, label: 'Generateur IA' },
+        { to: '/backoffice/content', icon: FileEdit, label: 'Contenu' },
+        { to: '/backoffice/news', icon: Newspaper, label: 'Actualites' },
+        { to: '/backoffice/popups', icon: Package, label: 'Popups' },
+        { to: '/backoffice/generate-cities', icon: MapPin, label: 'Pages Ville' },
+        { to: '/backoffice/trend-analyzer', icon: TrendingUp, label: 'Trends' },
+      ],
+    },
+    {
+      title: 'SEO & Backlinks',
+      icon: Search,
+      color: 'emerald',
+      permission: canViewSEO || canViewBacklinks,
+      links: [
+        { to: '/backoffice/seo', icon: Search, label: 'SEO Tools' },
+        { to: '/backoffice/seo-strategy', icon: Target, label: 'Strategie SEO' },
+        { to: '/backoffice/backlinks', icon: Link2, label: 'Backlinks' },
+        { to: '/backoffice/backlink-prospector', icon: Search, label: 'Prospecteur' },
+        { to: '/backoffice/backlink-automation', icon: Zap, label: 'Auto Backlinks' },
+        { to: '/backoffice/outreach', icon: Mail, label: 'Outreach' },
+      ],
+    },
+    {
+      title: 'Reseaux Sociaux',
+      icon: Megaphone,
+      color: 'rose',
+      permission: canViewSocialMedia,
+      links: [
+        { to: '/backoffice/social-media', icon: Megaphone, label: 'Social Media' },
+        { to: '/backoffice/marketing-templates', icon: FileText, label: 'Templates' },
+        { to: '/backoffice/qr-codes', icon: QrCode, label: 'QR Codes' },
+      ],
+    },
+    {
+      title: 'Analytics',
+      icon: PieChart,
+      color: 'pink',
+      permission: canViewAnalytics,
+      links: [
+        { to: '/backoffice/analytics', icon: PieChart, label: 'Analytics' },
+        { to: '/backoffice/old-dashboard', icon: LayoutDashboard, label: 'Dashboard Pro' },
+        { to: '/backoffice/conversion', icon: TrendingUp, label: 'Conversions' },
+      ],
+    },
+  ];
+
+  const getColorClasses = (color: string, highlight?: boolean) => {
+    const colors: Record<string, { bg: string; hover: string; border: string }> = {
+      slate: { bg: 'from-slate-600 to-slate-700', hover: 'hover:from-slate-700 hover:to-slate-800', border: 'border-slate-400' },
+      blue: { bg: 'from-blue-600 to-blue-700', hover: 'hover:from-blue-700 hover:to-blue-800', border: 'border-blue-400' },
+      green: { bg: 'from-green-600 to-green-700', hover: 'hover:from-green-700 hover:to-green-800', border: 'border-green-400' },
+      amber: { bg: 'from-amber-500 to-amber-600', hover: 'hover:from-amber-600 hover:to-amber-700', border: 'border-amber-400' },
+      sky: { bg: 'from-sky-600 to-sky-700', hover: 'hover:from-sky-700 hover:to-sky-800', border: 'border-sky-400' },
+      cyan: { bg: 'from-cyan-600 to-cyan-700', hover: 'hover:from-cyan-700 hover:to-cyan-800', border: 'border-cyan-400' },
+      orange: { bg: 'from-orange-500 to-orange-600', hover: 'hover:from-orange-600 hover:to-orange-700', border: 'border-orange-400' },
+      emerald: { bg: 'from-emerald-600 to-emerald-700', hover: 'hover:from-emerald-700 hover:to-emerald-800', border: 'border-emerald-400' },
+      rose: { bg: 'from-rose-500 to-rose-600', hover: 'hover:from-rose-600 hover:to-rose-700', border: 'border-rose-400' },
+      pink: { bg: 'from-pink-500 to-pink-600', hover: 'hover:from-pink-600 hover:to-pink-700', border: 'border-pink-400' },
+    };
+    const c = colors[color] || colors.slate;
+    return highlight
+      ? `bg-gradient-to-r ${c.bg} ${c.hover} border-2 ${c.border} shadow-lg`
+      : `bg-gradient-to-r ${c.bg} ${c.hover} shadow-md`;
+  };
+
+  const getSectionBg = (color: string) => {
+    const bgs: Record<string, string> = {
+      slate: 'from-slate-800/50 to-slate-900/50 border-slate-600/50',
+      blue: 'from-blue-900/40 to-blue-950/40 border-blue-600/50',
+      green: 'from-green-900/40 to-green-950/40 border-green-600/50',
+      amber: 'from-amber-900/40 to-amber-950/40 border-amber-600/50',
+      sky: 'from-sky-900/40 to-sky-950/40 border-sky-600/50',
+      cyan: 'from-cyan-900/40 to-cyan-950/40 border-cyan-600/50',
+      orange: 'from-orange-900/40 to-orange-950/40 border-orange-600/50',
+      emerald: 'from-emerald-900/40 to-emerald-950/40 border-emerald-600/50',
+      rose: 'from-rose-900/40 to-rose-950/40 border-rose-600/50',
+      pink: 'from-pink-900/40 to-pink-950/40 border-pink-600/50',
+    };
+    return bgs[color] || bgs.slate;
+  };
+
+  const getTitleColor = (color: string) => {
+    const colors: Record<string, string> = {
+      slate: 'text-slate-300',
+      blue: 'text-blue-300',
+      green: 'text-green-300',
+      amber: 'text-amber-300',
+      sky: 'text-sky-300',
+      cyan: 'text-cyan-300',
+      orange: 'text-orange-300',
+      emerald: 'text-emerald-300',
+      rose: 'text-rose-300',
+      pink: 'text-pink-300',
+    };
+    return colors[color] || 'text-gray-300';
+  };
+
   return (
-    <div className="mb-8 space-y-6">
-      {/* Gestion des Utilisateurs - Master Seulement */}
-      {isMaster && (
-        <div className="bg-gradient-to-r from-purple-900/40 to-indigo-900/40 border-2 border-purple-500/60 rounded-xl p-6 shadow-2xl">
-          <h3 className="text-purple-400 font-extrabold text-xl mb-4 flex items-center gap-3 uppercase tracking-wide">
-            <UserCog className="w-7 h-7 animate-pulse" />
-            👑 ADMINISTRATION MASTER
-          </h3>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-            <Link to="/backoffice/users" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm">
-              <Users className="w-5 h-5" />
-              <span>Gestion Utilisateurs</span>
-            </Link>
-            <Link to="/backoffice/security" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm">
-              <Shield className="w-5 h-5" />
-              <span>Sécurité</span>
-            </Link>
-            <Link to="/backoffice/compliance" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-rose-500 to-rose-600 hover:from-rose-600 hover:to-rose-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm">
-              <Shield className="w-5 h-5" />
-              <span>Conformité</span>
-            </Link>
-            <Link to="/backoffice/test-automations" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-600 hover:to-amber-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm">
-              <Zap className="w-5 h-5" />
-              <span>Test Automatisations</span>
-            </Link>
-            <a href="/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white rounded-lg font-semibold transition-all shadow-md text-sm">
-              <Globe className="w-5 h-5" />
-              <span>Voir le site</span>
-            </a>
-          </div>
-        </div>
-      )}
+    <div className="space-y-4">
+      {sections.map((section) => {
+        if (section.permission === false) return null;
 
-      {/* Leads & Marketplace */}
-      {(canViewCRM || canViewMarketplace || canViewAnalytics) && (
-        <div className="bg-gradient-to-r from-yellow-900/40 to-amber-900/40 border-2 border-yellow-500/60 rounded-xl p-6 shadow-2xl">
-          <h3 className="text-yellow-400 font-extrabold text-xl mb-4 flex items-center gap-3 uppercase tracking-wide">
-            <DollarSign className="w-7 h-7 animate-pulse" />
-            💰 LEADS & MARKETPLACE
-          </h3>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-            {canViewCRM && (
-              <>
-                <Link to="/backoffice/crm" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-lg font-semibold transition-all shadow-2xl border-2 border-purple-300 text-sm animate-pulse">
-                  <Sparkles className="w-5 h-5" />
-                  <span>CRM Master Ultra-Complet</span>
-                </Link>
-                <Link to="/backoffice/quote-queue" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-lg font-semibold transition-all shadow-2xl border-2 border-green-300 text-sm">
-                  <ClipboardList className="w-5 h-5" />
-                  <span>File Devis</span>
-                </Link>
-                <Link to="/backoffice/whatsapp" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm">
-                  <MessageSquare className="w-5 h-5" />
-                  <span>WhatsApp</span>
-                </Link>
-                <Link to="/backoffice/whatsapp-settings" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm">
-                  <Settings className="w-5 h-5" />
-                  <span>⚙️ Config WhatsApp</span>
-                </Link>
-              </>
-            )}
-            {canViewMarketplace && (
-              <>
-                <Link to="/backoffice/lead-marketplace" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm">
-                  <DollarSign className="w-5 h-5" />
-                  <span>Marketplace</span>
-                </Link>
-                <Link to="/backoffice/partner-portal" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm">
-                  <Handshake className="w-5 h-5" />
-                  <span>Portail Courtier</span>
-                </Link>
-              </>
-            )}
-            {canViewAnalytics && (
-              <>
-                <Link to="/backoffice/analytics" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-pink-500 to-pink-600 hover:from-pink-600 hover:to-pink-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm">
-                  <PieChart className="w-5 h-5" />
-                  <span>Analytics</span>
-                </Link>
-                <Link to="/backoffice/old-dashboard" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm">
-                  <BarChart3 className="w-5 h-5" />
-                  <span>Dashboard Pro</span>
-                </Link>
-              </>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Contenu & IA */}
-      {canViewContentIA && (
-        <div className="bg-gradient-to-r from-orange-900/40 to-red-900/40 border-2 border-orange-500/60 rounded-xl p-6 shadow-2xl">
-          <h3 className="text-orange-400 font-extrabold text-xl mb-4 flex items-center gap-3 uppercase tracking-wide">
-            <Zap className="w-7 h-7 animate-pulse" />
-            ⚡ CONTENU & GÉNÉRATION IA
-          </h3>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-            <Link to="/backoffice/llm-dashboard" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white rounded-lg font-semibold transition-all shadow-2xl border-2 border-cyan-300 text-sm">
-              <Brain className="w-5 h-5" />
-              <span>LLM Multi-Agents</span>
-            </Link>
-            <Link to="/backoffice/llm-council" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white rounded-lg font-semibold transition-all shadow-2xl border-2 border-amber-300 text-sm animate-pulse">
-              <Users className="w-5 h-5" />
-              <span>LLM Council</span>
-            </Link>
-            <Link to="/backoffice/ai-autonomous" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-lg font-semibold transition-all shadow-lg border-2 border-purple-300 text-sm">
-              <Brain className="w-5 h-5" />
-              <span>IA Autonome</span>
-            </Link>
-            <Link to="/backoffice/ai-generator" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm">
-              <Zap className="w-5 h-5" />
-              <span>Générateur IA</span>
-            </Link>
-            <Link to="/backoffice/content" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white rounded-lg font-semibold transition-all shadow-md text-sm">
-              <FileEdit className="w-5 h-5" />
-              <span>Contenu Manuel</span>
-            </Link>
-            <Link to="/backoffice/news" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm">
-              <Newspaper className="w-5 h-5" />
-              <span>Actualités</span>
-            </Link>
-            <Link to="/backoffice/popups" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm">
-              <Package className="w-5 h-5" />
-              <span>Popups</span>
-            </Link>
-            <Link to="/backoffice/trend-analyzer" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm">
-              <TrendingUp className="w-5 h-5" />
-              <span>Trends</span>
-            </Link>
-            <Link to="/backoffice/directory" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-rose-500 to-rose-600 hover:from-rose-600 hover:to-rose-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm">
-              <FileText className="w-5 h-5" />
-              <span>Annuaires</span>
-            </Link>
-            <Link to="/backoffice/generate-cities" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm">
-              <MapPin className="w-5 h-5" />
-              <span>Pages Ville IA</span>
-            </Link>
-          </div>
-        </div>
-      )}
-
-      {/* SEO & Backlinks */}
-      {(canViewSEO || canViewBacklinks) && (
-        <div className="bg-gradient-to-r from-green-900/40 to-emerald-900/40 border-2 border-green-500/60 rounded-xl p-6 shadow-2xl">
-          <h3 className="text-green-400 font-extrabold text-xl mb-4 flex items-center gap-3 uppercase tracking-wide">
-            <Search className="w-7 h-7 animate-pulse" />
-            🔍 SEO & BACKLINKS
-          </h3>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-            {canViewSEO && (
-              <>
-                <Link to="/backoffice/seo" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm">
-                  <Search className="w-5 h-5" />
-                  <span>SEO Tools</span>
-                </Link>
-                <Link to="/backoffice/seo-strategy" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm">
-                  <TrendingUp className="w-5 h-5" />
-                  <span>Stratégie SEO</span>
-                </Link>
-              </>
-            )}
-            {canViewBacklinks && (
-              <>
-                <Link to="/backoffice/backlinks" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-lg font-semibold transition-all shadow-md text-sm">
-                  <Link2 className="w-5 h-5" />
-                  <span>Backlinks</span>
-                </Link>
-                <Link to="/backoffice/backlink-prospector" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm">
-                  <Search className="w-5 h-5" />
-                  <span>Prospecteur</span>
-                </Link>
-                <Link to="/backoffice/backlink-automation" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-cyan-500 to-cyan-600 hover:from-cyan-600 hover:to-cyan-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm">
-                  <Zap className="w-5 h-5" />
-                  <span>Auto Backlinks</span>
-                </Link>
-                <Link to="/backoffice/outreach" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-teal-500 to-teal-600 hover:from-teal-600 hover:to-teal-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm">
-                  <Mail className="w-5 h-5" />
-                  <span>Outreach</span>
-                </Link>
-              </>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Partenaires & Prospects */}
-      {canViewCRM && (
-        <div className="bg-gradient-to-r from-cyan-900/40 to-sky-900/40 border-2 border-cyan-500/60 rounded-xl p-6 shadow-2xl">
-          <h3 className="text-cyan-400 font-extrabold text-xl mb-4 flex items-center gap-3 uppercase tracking-wide">
-            <UserCircle className="w-7 h-7 animate-pulse" />
-            🤝 PARTENAIRES & PROSPECTS
-          </h3>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-            <Link to="/backoffice/partners" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-cyan-500 to-cyan-600 hover:from-cyan-600 hover:to-cyan-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm">
-              <UserCircle className="w-5 h-5" />
-              <span>Partenaires</span>
-            </Link>
-            <Link to="/backoffice/prospects" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm">
-              <Eye className="w-5 h-5" />
-              <span>Prospects</span>
-            </Link>
-            <Link to="/backoffice/seed-prospects" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-cyan-600 to-cyan-700 hover:from-cyan-700 hover:to-cyan-800 text-white rounded-lg font-semibold transition-all shadow-md text-sm">
-              <Plus className="w-5 h-5" />
-              <span>Seed DB</span>
-            </Link>
-            <Link to="/backoffice/launch-campaign" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-sky-500 to-sky-600 hover:from-sky-600 hover:to-sky-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm">
-              <Send className="w-5 h-5" />
-              <span>Campagnes</span>
-            </Link>
-          </div>
-        </div>
-      )}
-
-      {/* Production & Compagnies d'Assurance */}
-      {canViewCRM && (
-        <div className="bg-gradient-to-r from-blue-900/40 to-indigo-900/40 border-2 border-blue-500/60 rounded-xl p-6 shadow-2xl">
-          <h3 className="text-blue-400 font-extrabold text-xl mb-4 flex items-center gap-3 uppercase tracking-wide">
-            <Building2 className="w-7 h-7 animate-pulse" />
-            🏢 PRODUCTION & COMPAGNIES
-          </h3>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-            <Link to="/backoffice/insurance-companies" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg font-semibold transition-all shadow-lg border-2 border-blue-300 text-sm animate-pulse">
-              <Building2 className="w-5 h-5" />
-              <span>🏢 Compagnies Assurance</span>
-            </Link>
-            <Link to="/backoffice/insurance-companies-stats" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white rounded-lg font-semibold transition-all shadow-lg border-2 border-orange-300 text-sm">
-              <BarChart3 className="w-5 h-5" />
-              <span>📊 Stats Compagnies</span>
-            </Link>
-            <Link to="/backoffice/quotes" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm">
-              <Receipt className="w-5 h-5" />
-              <span>Gestion Devis</span>
-            </Link>
-            <Link to="/backoffice/documents" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-violet-500 to-violet-600 hover:from-violet-600 hover:to-violet-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm">
-              <FileCheck className="w-5 h-5" />
-              <span>Documents</span>
-            </Link>
-            <Link to="/backoffice/crm-killer/inbox" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-sky-500 to-sky-600 hover:from-sky-600 hover:to-sky-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm">
-              <Inbox className="w-5 h-5" />
-              <span>Boite Email</span>
-            </Link>
-            <Link to="/backoffice/newsletter" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-teal-500 to-teal-600 hover:from-teal-600 hover:to-teal-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm">
-              <Mail className="w-5 h-5" />
-              <span>Newsletter</span>
-            </Link>
-          </div>
-        </div>
-      )}
-
-      {/* Automatisation & Réseaux Sociaux */}
-      {(canViewSettings || canViewSocialMedia) && (
-        <div className="bg-gradient-to-r from-red-900/40 to-orange-900/40 border-2 border-red-500/60 rounded-xl p-6 shadow-2xl">
-          <h3 className="text-red-400 font-extrabold text-xl mb-4 flex items-center gap-3 uppercase tracking-wide">
-            <Settings className="w-7 h-7 animate-pulse" />
-            ⚙️ AUTOMATISATION & RESEAUX SOCIAUX
-          </h3>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-            {canViewSettings && (
-              <>
-                <Link to="/backoffice/master-ai" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-purple-500 to-purple-700 hover:from-purple-600 hover:to-purple-800 text-white rounded-lg font-semibold transition-all shadow-2xl border-2 border-purple-300 text-sm animate-pulse">
-                  <Brain className="w-5 h-5" />
-                  <span>🤖 IA Maître</span>
-                </Link>
-                <Link to="/backoffice/auto-optimizer" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm">
-                  <Zap className="w-5 h-5" />
-                  <span>Auto-Optimisation</span>
-                </Link>
-                <Link to="/backoffice/automation-scheduler" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white rounded-lg font-semibold transition-all shadow-md text-sm">
-                  <Clock className="w-5 h-5" />
-                  <span>Scheduler</span>
-                </Link>
-              </>
-            )}
-            {canViewSocialMedia && (
-              <>
-                <Link to="/backoffice/social-media" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-teal-500 to-teal-600 hover:from-teal-600 hover:to-teal-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm">
-                  <Megaphone className="w-5 h-5" />
-                  <span>Réseaux Sociaux</span>
-                </Link>
-                <Link to="/backoffice/marketing-templates" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-pink-500 to-pink-600 hover:from-pink-600 hover:to-pink-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm">
-                  <MessageSquare className="w-5 h-5" />
-                  <span>Templates Marketing</span>
-                </Link>
-                <Link to="/backoffice/qr-codes" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-cyan-500 to-cyan-600 hover:from-cyan-600 hover:to-cyan-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm">
-                  <QrCode className="w-5 h-5" />
-                  <span>QR Codes</span>
-                </Link>
-              </>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Documentation & Guides */}
-      <div className="bg-gradient-to-r from-slate-900/40 to-gray-900/40 border-2 border-gray-500/60 rounded-xl p-6 shadow-2xl">
-        <h3 className="text-gray-400 font-extrabold text-xl mb-4 flex items-center gap-3 uppercase tracking-wide">
-          <BookOpen className="w-7 h-7 animate-pulse" />
-          📚 DOCUMENTATION & GUIDES
-        </h3>
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-          <Link
-            to="/backoffice"
-            className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm"
+        return (
+          <div
+            key={section.title}
+            className={`bg-gradient-to-r ${getSectionBg(section.color)} border rounded-xl p-5`}
           >
-            <BookOpen className="w-5 h-5" />
-            <span>Toutes les pages</span>
-          </Link>
-          <Link
-            to="/backoffice/security"
-            className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-slate-600 to-slate-700 hover:from-slate-700 hover:to-slate-800 text-white rounded-lg font-semibold transition-all shadow-md text-sm"
-          >
-            <Shield className="w-5 h-5" />
-            <span>Config Sécurité</span>
-          </Link>
-          <Link
-            to="/backoffice/compliance"
-            className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white rounded-lg font-semibold transition-all shadow-md text-sm"
-          >
-            <Shield className="w-5 h-5" />
-            <span>Config API</span>
-          </Link>
-          <Link
-            to="/backoffice/master-ai"
-            className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm"
-          >
-            <Brain className="w-5 h-5" />
-            <span>Config IA</span>
-          </Link>
-          <Link
-            to="/backoffice/seo-strategy"
-            className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-cyan-500 to-cyan-600 hover:from-cyan-600 hover:to-cyan-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm"
-          >
-            <TrendingUp className="w-5 h-5" />
-            <span>Stratégie SEO</span>
-          </Link>
-        </div>
-      </div>
+            <h3 className={`${getTitleColor(section.color)} font-bold text-lg mb-4 flex items-center gap-2`}>
+              <section.icon className="w-5 h-5" />
+              {section.title}
+            </h3>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-2">
+              {section.links.map((link) => (
+                <Link
+                  key={link.to}
+                  to={link.to}
+                  className={`flex items-center gap-2 px-3 py-2.5 text-white rounded-lg font-medium transition-all text-sm ${getColorClasses(section.color, link.highlight)}`}
+                >
+                  <link.icon className="w-4 h-4 flex-shrink-0" />
+                  <span className="truncate">{link.label}</span>
+                  {link.badge && (
+                    <span className="ml-auto bg-white/20 text-xs px-1.5 py-0.5 rounded-full">
+                      {link.badge}
+                    </span>
+                  )}
+                </Link>
+              ))}
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }

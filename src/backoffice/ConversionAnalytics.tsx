@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { TrendingUp, Users, Target, MousePointer, Clock, BarChart3, PieChart, Activity, Home } from 'lucide-react';
+import { TrendingUp, Users, Target, MousePointer, Clock, BarChart3, PieChart, Activity, Home, RefreshCw, Download, Filter } from 'lucide-react';
 import Card from '../components/Card';
 import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
@@ -43,7 +43,7 @@ const ConversionAnalytics: React.FC = () => {
       cutoffDate.setDate(cutoffDate.getDate() - daysAgo);
 
       const { data: leads, error } = await supabase
-        .from('leads')
+        .from('crm_leads')
         .select('*')
         .gte('created_at', cutoffDate.toISOString())
         .order('created_at', { ascending: false });
@@ -183,33 +183,42 @@ const ConversionAnalytics: React.FC = () => {
     : '0';
 
   return (
-    
-      <div className="min-h-screen bg-gray-50 p-8">
-        {/* Header with Home Button */}
-        <header className="bg-white border-b-2 border-gray-200 shadow-sm mb-8">
-          <div className="max-w-7xl mx-auto px-6 py-4">
-            <div className="flex justify-between items-center">
-              <div className="flex items-center space-x-4">
-                <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-pink-500 rounded-xl flex items-center justify-center shadow-lg">
-                  <BarChart3 className="text-white" size={20} />
-                </div>
-                <div>
-                  <h1 className="text-2xl font-bold text-gray-900">
-                    Analytics de Conversion
-                  </h1>
-                  <p className="text-sm text-gray-600">
-                    Optimisation et suivi des performances commerciales
-                  </p>
-                </div>
+    <div className="min-h-screen bg-gray-50">
+      <header className="bg-white border-b border-gray-200 sticky top-0 z-20 shadow-sm">
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center space-x-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-xl flex items-center justify-center shadow-lg">
+                <BarChart3 className="text-white" size={24} />
               </div>
-              
-              <button onClick={() => navigate("/backoffice")} className="bg-orange-600 hover:bg-orange-700 text-white font-medium px-4 py-2 rounded-lg transition-colors flex items-center space-x-2">
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">
+                  Analytics de Conversion
+                </h1>
+                <p className="text-sm text-gray-600">
+                  Optimisation et suivi des performances commerciales
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <button
+                onClick={loadConversionData}
+                className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition text-gray-700 font-medium"
+              >
+                <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
+                Actualiser
+              </button>
+              <button onClick={() => navigate("/backoffice")} className="bg-gray-900 hover:bg-gray-800 text-white font-medium px-4 py-2 rounded-lg transition-colors flex items-center gap-2">
                 <Home size={16} />
-                <span>Accueil Backoffice</span>
+                <span>Backoffice</span>
               </button>
             </div>
           </div>
-        </header>
+        </div>
+      </header>
+
+      <div className="p-8">
 
         <div className="max-w-7xl mx-auto">
           <div className="flex justify-between items-center mb-8">
@@ -545,7 +554,7 @@ const ConversionAnalytics: React.FC = () => {
           </Card>
         </div>
       </div>
-    
+    </div>
   );
 };
 
