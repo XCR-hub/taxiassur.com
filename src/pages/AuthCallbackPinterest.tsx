@@ -31,6 +31,14 @@ export default function AuthCallbackPinterest() {
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
       const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
+      const clientId = import.meta.env.VITE_PINTEREST_APP_ID;
+      const clientSecret = import.meta.env.VITE_PINTEREST_APP_SECRET;
+      const redirectUri = import.meta.env.VITE_PINTEREST_REDIRECT_URI || `${window.location.origin}/auth/callback/pinterest`;
+
+      if (!clientId || !clientSecret) {
+        throw new Error('Pinterest credentials not configured (VITE_PINTEREST_APP_ID, VITE_PINTEREST_APP_SECRET)');
+      }
+
       const response = await fetch(`${supabaseUrl}/functions/v1/pinterest-oauth-exchange`, {
         method: 'POST',
         headers: {
@@ -38,7 +46,12 @@ export default function AuthCallbackPinterest() {
           'Authorization': `Bearer ${supabaseAnonKey}`,
           'apikey': supabaseAnonKey
         },
-        body: JSON.stringify({ code })
+        body: JSON.stringify({
+          code,
+          clientId,
+          clientSecret,
+          redirectUri
+        })
       });
 
       if (!response.ok) {
