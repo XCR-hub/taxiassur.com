@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   User,
@@ -26,13 +26,29 @@ import {
   Trash2,
   Eye,
   RefreshCw,
-  Award
+  Award,
+  ArrowLeft,
+  Building2,
+  PhoneCall,
+  Zap,
+  ChevronDown
 } from 'lucide-react';
 import { pipelineService, CRMLead, PIPELINE_STATUSES } from '@/lib/crm-pipeline';
 import { supabase } from '@/lib/supabase';
 import QuoteManager from './QuoteManager';
 import ElectronicSignature from '@/components/ElectronicSignature';
-import { DocumentChecklistPanelV2, EmailComposerModal, DocumentRequestsManager, CommercialChecklist, LeadInsuranceCompanies, LeadQuotesContracts } from '@/components/crm';
+import {
+  DocumentChecklistPanelV2,
+  EmailComposerModal,
+  DocumentRequestsManager,
+  CommercialChecklist,
+  LeadInsuranceCompanies,
+  LeadQuotesContracts,
+  LeadIntelligencePanel,
+  LeadHeader,
+  LeadWorkflowTabs
+} from '@/components/crm';
+import type { WorkflowTab } from '@/components/crm';
 
 interface Message {
   id: string;
@@ -42,31 +58,30 @@ interface Message {
   sent_at: string;
   status: 'sent' | 'delivered' | 'read' | 'failed';
   sent_by?: string;
+  direction?: 'inbound' | 'outbound';
 }
 
 const CRMLeadDetail: React.FC = () => {
   const { leadId } = useParams<{ leadId: string }>();
   const navigate = useNavigate();
 
-  // États principaux
   const [loading, setLoading] = useState(true);
   const [lead, setLead] = useState<CRMLead | null>(null);
+  const [activeTab, setActiveTab] = useState<WorkflowTab>('overview');
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  // États pour les communications
-  const [showEmailModal, setShowEmailModal] = useState(false);
-  const [showSMSModal, setShowSMSModal] = useState(false);
-  const [showWhatsAppModal, setShowWhatsAppModal] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [loadingMessages, setLoadingMessages] = useState(false);
 
-  // Email composer state
   const [emailModalOpen, setEmailModalOpen] = useState(false);
   const [emailDefaultSubject, setEmailDefaultSubject] = useState('');
   const [emailDefaultBody, setEmailDefaultBody] = useState('');
+  const [emailMissingDocs, setEmailMissingDocs] = useState<string[]>([]);
 
-  // États pour le formulaire d'édition
+  const [showSMSModal, setShowSMSModal] = useState(false);
+  const [showWhatsAppModal, setShowWhatsAppModal] = useState(false);
+
   const [editForm, setEditForm] = useState({
     first_name: '',
     last_name: '',
@@ -77,54 +92,24 @@ const CRMLeadDetail: React.FC = () => {
     internal_notes: ''
   });
 
-  // États pour les communications
-  const [emailForm, setEmailForm] = useState({
-    subject: '',
-    body: '',
-    template: ''
-  });
+  const [smsForm, setSmsForm] = useState({ message: '' });
+  const [whatsappForm, setWhatsappForm] = useState({ message: '' });
 
-  const [smsForm, setSmsForm] = useState({
-    message: '',
-  });
-
-  // États pour la gestion des documents
-  const [documents, setDocuments] = useState<any[]>([]);
-  const [loadingDocuments, setLoadingDocuments] = useState(false);
-  const [uploadingDocument, setUploadingDocument] = useState(false);
-  const [showDocumentModal, setShowDocumentModal] = useState(false);
-  const [uploadForm, setUploadForm] = useState({
-    documentType: 'carte_grise',
-    file: null as File | null,
-    notes: ''
-  });
-
-  // État pour demande avis Google
-  const [sendingReview, setSendingReview] = useState(false);
-
-  const [whatsappForm, setWhatsappForm] = useState({
-    message: '',
-    template: ''
-  });
-
-  // Templates prédéfinis
-  const emailTemplates = [
-    { id: 'welcome', name: 'Email de bienvenue', subject: 'Bienvenue chez TaxiAssur', body: 'Bonjour {{first_name}},\n\nNous sommes ravis de vous accueillir...' },
-    { id: 'follow_up', name: 'Relance', subject: 'Votre demande de devis', body: 'Bonjour {{first_name}},\n\nNous revenons vers vous concernant...' },
-    { id: 'quote', name: 'Envoi de devis', subject: 'Votre devis personnalisé', body: 'Bonjour {{first_name}},\n\nVeuillez trouver ci-joint votre devis...' },
-    { id: 'documents', name: 'Demande documents', subject: 'Documents nécessaires', body: 'Bonjour {{first_name}},\n\nPour finaliser votre dossier...' }
-  ];
+  const [documentsComplete, setDocumentsComplete] = useState(false);
+  const [documentsMissing, setDocumentsMissing] = useState(0);
+  const [quotesCount, setQuotesCount] = useState(0);
+  const [hasContract, setHasContract] = useState(false);
 
   const smsTemplates = [
     { id: 'welcome', name: 'Bienvenue', message: 'Bonjour {{first_name}}, merci pour votre demande. Un conseiller vous contacte sous 24h. TaxiAssur' },
-    { id: 'reminder', name: 'Rappel RDV', message: 'Rappel: RDV téléphonique aujourd\'hui à {{time}}. À tout de suite ! TaxiAssur' },
-    { id: 'documents', name: 'Documents reçus', message: 'Documents bien reçus ! Nous traitons votre dossier. Réponse sous 48h. TaxiAssur' }
+    { id: 'reminder', name: 'Rappel RDV', message: 'Rappel: RDV telephonique aujourd\'hui. A tout de suite ! TaxiAssur' },
+    { id: 'documents', name: 'Documents recus', message: 'Documents bien recus ! Nous traitons votre dossier. Reponse sous 48h. TaxiAssur' }
   ];
 
   const whatsappTemplates = [
-    { id: 'welcome', name: 'Bienvenue', message: 'Bonjour {{first_name}} 👋\n\nMerci pour votre confiance ! Je suis votre conseiller dédié.\n\nComment puis-je vous aider ?' },
-    { id: 'quote_ready', name: 'Devis prêt', message: 'Bonne nouvelle {{first_name}} ! 🎉\n\nVotre devis est prêt. Voulez-vous que je vous l\'envoie par email ?' },
-    { id: 'follow_up', name: 'Suivi personnalisé', message: 'Bonjour {{first_name}},\n\nAvez-vous des questions sur votre devis ? Je suis là pour vous accompagner 🤝' }
+    { id: 'welcome', name: 'Bienvenue', message: 'Bonjour {{first_name}}\n\nMerci pour votre confiance ! Je suis votre conseiller dedie.\n\nComment puis-je vous aider ?' },
+    { id: 'quote_ready', name: 'Devis pret', message: 'Bonne nouvelle {{first_name}} !\n\nVotre devis est pret. Voulez-vous que je vous l\'envoie par email ?' },
+    { id: 'follow_up', name: 'Suivi personnalise', message: 'Bonjour {{first_name}},\n\nAvez-vous des questions sur votre devis ? Je suis la pour vous accompagner' }
   ];
 
   useEffect(() => {
@@ -146,10 +131,10 @@ const CRMLeadDetail: React.FC = () => {
         internal_notes: (leadData as any).internal_notes || ''
       });
 
-      // Charger l'historique des messages
-      await loadMessages(id);
-      // Charger les documents
-      await loadDocuments(id);
+      await Promise.all([
+        loadMessages(id),
+        loadStats(id)
+      ]);
     } catch (error) {
       console.error('Failed to load lead:', error);
     } finally {
@@ -157,184 +142,62 @@ const CRMLeadDetail: React.FC = () => {
     }
   };
 
-  // Charger les documents
-  const loadDocuments = async (id: string) => {
-    setLoadingDocuments(true);
+  const loadStats = async (id: string) => {
     try {
-      const { data, error } = await supabase
-        .from('crm_lead_documents')
-        .select('*')
-        .eq('lead_id', id)
-        .order('uploaded_at', { ascending: false });
+      const [docsResult, quotesResult, contractResult] = await Promise.all([
+        supabase.from('crm_lead_documents').select('status').eq('lead_id', id),
+        supabase.from('crm_lead_quotes').select('id').eq('lead_id', id),
+        supabase.from('crm_contracts').select('id').eq('lead_id', id).eq('status', 'signed')
+      ]);
 
-      if (error) throw error;
-      setDocuments(data || []);
+      const docs = docsResult.data || [];
+      const validatedDocs = docs.filter(d => d.status === 'validated').length;
+      const pendingDocs = docs.filter(d => d.status === 'pending').length;
+
+      setDocumentsComplete(validatedDocs >= 5);
+      setDocumentsMissing(Math.max(0, 5 - validatedDocs));
+      setQuotesCount(quotesResult.data?.length || 0);
+      setHasContract((contractResult.data?.length || 0) > 0);
     } catch (error) {
-      console.error('Erreur chargement documents:', error);
-    } finally {
-      setLoadingDocuments(false);
-    }
-  };
-
-  // Upload de document
-  const handleDocumentUpload = async () => {
-    if (!leadId || !uploadForm.file) {
-      alert('Veuillez sélectionner un fichier');
-      return;
-    }
-
-    setUploadingDocument(true);
-    try {
-      // 1. Upload du fichier dans Storage
-      const fileExt = uploadForm.file.name.split('.').pop();
-      const fileName = `${leadId}/${uploadForm.documentType}_${Date.now()}.${fileExt}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('crm-documents')
-        .upload(fileName, uploadForm.file);
-
-      if (uploadError) throw uploadError;
-
-      // 2. Créer l'enregistrement en base
-      const { error: dbError } = await supabase
-        .from('crm_lead_documents')
-        .insert({
-          lead_id: leadId,
-          document_type: uploadForm.documentType,
-          file_name: uploadForm.file.name,
-          file_path: fileName,
-          file_size: uploadForm.file.size,
-          mime_type: uploadForm.file.type,
-          status: 'pending',
-          notes: uploadForm.notes,
-          uploaded_by: 'admin'
-        });
-
-      if (dbError) throw dbError;
-
-      alert('✅ Document uploadé avec succès ! Email automatique envoyé au client.');
-      setShowDocumentModal(false);
-      setUploadForm({
-        documentType: 'carte_grise',
-        file: null,
-        notes: ''
-      });
-      await loadDocuments(leadId);
-    } catch (error) {
-      console.error('Erreur upload:', error);
-      alert('❌ Erreur lors de l\'upload: ' + (error as Error).message);
-    } finally {
-      setUploadingDocument(false);
-    }
-  };
-
-  // Valider un document
-  const handleValidateDocument = async (docId: string) => {
-    try {
-      const { error } = await supabase
-        .from('crm_lead_documents')
-        .update({
-          status: 'validated',
-          validated_by: 'admin',
-          validated_at: new Date().toISOString()
-        })
-        .eq('id', docId);
-
-      if (error) throw error;
-
-      alert('✅ Document validé !');
-      if (leadId) await loadDocuments(leadId);
-    } catch (error) {
-      console.error('Erreur validation:', error);
-      alert('❌ Erreur: ' + (error as Error).message);
-    }
-  };
-
-  // Envoyer demande d'avis Google
-  const handleSendReviewRequest = async () => {
-    if (!lead?.email) {
-      alert('Pas d\'email pour ce lead');
-      return;
-    }
-
-    setSendingReview(true);
-    try {
-      const reviewUrl = 'https://g.page/r/YOUR_GOOGLE_REVIEW_LINK/review';
-
-      // 1. Enregistrer la demande
-      const { error: insertError } = await supabase
-        .from('crm_review_requests')
-        .insert({
-          lead_id: leadId,
-          request_type: 'google',
-          sent_to: lead.email,
-          sent_via: 'email',
-          review_url: reviewUrl,
-          status: 'sent'
-        });
-
-      if (insertError) throw insertError;
-
-      // 2. Envoyer l'email (via edge function send-crm-email)
-      const { error: emailError } = await supabase.functions.invoke('send-crm-email', {
-        body: {
-          to: lead.email,
-          template: 'review_request',
-          data: {
-            first_name: lead.first_name,
-            review_url: reviewUrl
-          }
-        }
-      });
-
-      if (emailError) throw emailError;
-
-      alert('✅ Demande d\'avis Google envoyée !');
-    } catch (error) {
-      console.error('Erreur envoi avis:', error);
-      alert('❌ Erreur: ' + (error as Error).message);
-    } finally {
-      setSendingReview(false);
+      console.error('Error loading stats:', error);
     }
   };
 
   const loadMessages = async (leadId: string) => {
     setLoadingMessages(true);
     try {
-      // Charger depuis crm_interactions
-      const { data: interactions } = await supabase
-        .from('crm_interactions')
-        .select('*')
-        .eq('lead_id', leadId)
-        .order('created_at', { ascending: false });
-
-      // Charger depuis email_messages
-      const { data: emails } = await supabase
-        .from('email_messages')
-        .select('*')
-        .eq('lead_id', leadId)
-        .order('created_at', { ascending: false });
+      const [interactionsResult, emailsResult] = await Promise.all([
+        supabase
+          .from('crm_interactions')
+          .select('*')
+          .eq('lead_id', leadId)
+          .order('created_at', { ascending: false }),
+        supabase
+          .from('email_messages')
+          .select('*')
+          .eq('lead_id', leadId)
+          .order('created_at', { ascending: false })
+      ]);
 
       const allMessages: Message[] = [];
 
-      // Formater les interactions
-      if (interactions) {
-        interactions.forEach((interaction: any) => {
+      if (interactionsResult.data) {
+        interactionsResult.data.forEach((interaction: any) => {
           allMessages.push({
             id: interaction.id,
             type: interaction.type || 'system',
             content: interaction.content || interaction.summary || 'Contenu non disponible',
             subject: interaction.subject || `${interaction.type} - ${interaction.direction}`,
             sent_at: interaction.created_at,
-            status: interaction.status || interaction.metadata?.status || 'sent',
-            sent_by: interaction.created_by || (interaction.direction === 'inbound' ? 'Client' : 'TaxiAssur')
+            status: interaction.status || 'sent',
+            sent_by: interaction.created_by || (interaction.direction === 'inbound' ? 'Client' : 'TaxiAssur'),
+            direction: interaction.direction
           });
         });
       }
 
-      // Formater les emails
-      if (emails) {
-        emails.forEach((email: any) => {
+      if (emailsResult.data) {
+        emailsResult.data.forEach((email: any) => {
           const bodyText = email.body_text || '';
           const preview = bodyText.length > 300 ? bodyText.substring(0, 300) + '...' : bodyText;
           allMessages.push({
@@ -344,16 +207,14 @@ const CRMLeadDetail: React.FC = () => {
             subject: email.subject,
             sent_at: email.received_at || email.sent_at || email.created_at,
             status: email.status === 'sent' ? 'sent' : email.is_read ? 'read' : 'delivered',
-            sent_by: email.direction === 'inbound' ? email.from_name || email.from_email : 'TaxiAssur'
+            sent_by: email.direction === 'inbound' ? email.from_name || email.from_email : 'TaxiAssur',
+            direction: email.direction
           });
         });
       }
 
-      // Trier par date décroissante
       allMessages.sort((a, b) => new Date(b.sent_at).getTime() - new Date(a.sent_at).getTime());
-
       setMessages(allMessages);
-      console.log('✅ Messages chargés:', allMessages.length, '(interactions:', interactions?.length || 0, '+ emails:', emails?.length || 0, ')');
     } catch (error) {
       console.error('Failed to load messages:', error);
     } finally {
@@ -384,50 +245,23 @@ const CRMLeadDetail: React.FC = () => {
 
       await loadLeadData(lead.id);
       setEditing(false);
-      alert('✅ Modifications enregistrées !');
     } catch (error) {
       console.error('Save error:', error);
-      alert('❌ Erreur lors de la sauvegarde');
+      alert('Erreur lors de la sauvegarde');
     } finally {
       setSaving(false);
     }
   };
 
-  const handleSendEmail = async () => {
+  const handleStatusChange = async (newStatus: string) => {
     if (!lead) return;
 
     try {
-      // Remplacer les variables
-      let body = emailForm.body;
-      body = body.replace(/\{\{first_name\}\}/g, lead.first_name || '');
-      body = body.replace(/\{\{last_name\}\}/g, lead.last_name || '');
-      body = body.replace(/\{\{company_name\}\}/g, lead.company_name || '');
-
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-crm-email`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
-        },
-        body: JSON.stringify({
-          to: lead.email,
-          subject: emailForm.subject,
-          body: body,
-          lead_id: lead.id
-        })
-      });
-
-      if (response.ok) {
-        alert('✅ Email envoyé avec succès !');
-        setShowEmailModal(false);
-        setEmailForm({ subject: '', body: '', template: '' });
-        await loadMessages(lead.id);
-      } else {
-        alert('❌ Erreur lors de l\'envoi');
-      }
+      await pipelineService.updateLeadStatus(lead.id, newStatus as any);
+      await loadLeadData(lead.id);
     } catch (error) {
-      console.error('Email error:', error);
-      alert('❌ Erreur lors de l\'envoi');
+      console.error('Status change error:', error);
+      alert('Erreur lors de la mise a jour');
     }
   };
 
@@ -452,16 +286,12 @@ const CRMLeadDetail: React.FC = () => {
       });
 
       if (response.ok) {
-        alert('✅ SMS envoyé avec succès !');
         setShowSMSModal(false);
-        setSmsForm({ message: '', template: '' });
+        setSmsForm({ message: '' });
         await loadMessages(lead.id);
-      } else {
-        alert('❌ Erreur lors de l\'envoi');
       }
     } catch (error) {
       console.error('SMS error:', error);
-      alert('❌ Erreur lors de l\'envoi');
     }
   };
 
@@ -486,35 +316,14 @@ const CRMLeadDetail: React.FC = () => {
       });
 
       if (response.ok) {
-        alert('✅ WhatsApp envoyé avec succès !');
         setShowWhatsAppModal(false);
-        setWhatsappForm({ message: '', template: '' });
+        setWhatsappForm({ message: '' });
         await loadMessages(lead.id);
-      } else {
-        alert('❌ Erreur lors de l\'envoi');
       }
     } catch (error) {
       console.error('WhatsApp error:', error);
-      alert('❌ Erreur lors de l\'envoi');
     }
   };
-
-  const handleStatusChange = async (newStatus: string) => {
-    if (!lead) return;
-
-    try {
-      await pipelineService.updateLeadStatus(lead.id, newStatus as any);
-      await loadLeadData(lead.id);
-      alert('✅ Statut mis à jour !');
-    } catch (error) {
-      console.error('Status change error:', error);
-      alert('❌ Erreur lors de la mise à jour');
-    }
-  };
-
-  const availableTransitions = lead ? pipelineService.getAvailableTransitions(lead.status) : [];
-
-  const [emailMissingDocs, setEmailMissingDocs] = useState<string[]>([]);
 
   const handleRequestDocuments = (missingDocs: string[]) => {
     setEmailMissingDocs(missingDocs);
@@ -523,498 +332,587 @@ const CRMLeadDetail: React.FC = () => {
     setEmailModalOpen(true);
   };
 
-  const openEmailComposer = (template?: string) => {
+  const openEmailComposer = () => {
     setEmailDefaultSubject('');
     setEmailDefaultBody('');
     setEmailMissingDocs([]);
     setEmailModalOpen(true);
   };
 
+  const handleSuggestedAction = (action: string) => {
+    switch (action) {
+      case 'send_followup':
+      case 'contact':
+      case 'first_contact':
+        openEmailComposer();
+        break;
+      case 'request_docs':
+        setActiveTab('documents');
+        break;
+      case 'create_quote':
+        setActiveTab('quotes');
+        break;
+      case 'followup_quote':
+        setActiveTab('quotes');
+        break;
+      default:
+        break;
+    }
+  };
+
+  const availableTransitions = lead ? pipelineService.getAvailableTransitions(lead.status) : [];
+
   if (loading || !lead) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <RefreshCw className="w-12 h-12 text-blue-600 animate-spin mx-auto mb-4" />
-          <p className="text-gray-600">Chargement des données...</p>
+          <p className="text-gray-600">Chargement des donnees...</p>
         </div>
       </div>
     );
   }
 
-  const statusInfo = PIPELINE_STATUSES[lead.status];
+  const tabStats = {
+    documentsComplete,
+    documentsMissing,
+    quotesCount,
+    hasContract,
+    unreadMessages: messages.filter(m => m.direction === 'inbound' && m.status !== 'read').length,
+    totalInteractions: messages.length
+  };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header avec gradient */}
-      <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 text-white">
-        <div className="max-w-7xl mx-auto px-6 py-8">
-          <div className="flex items-start justify-between mb-6">
-            <div className="flex items-start gap-4">
-              <div className="w-20 h-20 rounded-2xl bg-white/20 backdrop-blur-lg flex items-center justify-center text-4xl shadow-xl border-2 border-white/30">
-                {statusInfo.icon}
-              </div>
-              <div>
-                <h1 className="text-4xl font-bold mb-2 drop-shadow-lg">{lead.full_name}</h1>
-                <div className="flex items-center gap-4 text-blue-100">
-                  <div className="flex items-center gap-2 bg-white/10 px-3 py-1 rounded-lg">
-                    <Mail size={16} />
-                    <span>{lead.email}</span>
-                  </div>
-                  <div className="flex items-center gap-2 bg-white/10 px-3 py-1 rounded-lg">
-                    <Phone size={16} />
-                    <span>{lead.phone}</span>
-                  </div>
-                  {lead.city && (
-                    <div className="flex items-center gap-2 bg-white/10 px-3 py-1 rounded-lg">
-                      <MapPin size={16} />
-                      <span>{lead.city}</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
+    <div className="min-h-screen bg-gray-100">
+      <div className="sticky top-0 z-40 bg-white border-b border-gray-200 px-6 py-3">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <button
+            onClick={() => navigate('/backoffice/crm-killer')}
+            className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5" />
+            <span>Retour au pipeline</span>
+          </button>
 
-            <div className="text-right">
-              <div className="inline-flex items-center gap-3 px-6 py-3 bg-white/20 backdrop-blur-lg rounded-xl shadow-xl border-2 border-white/30 mb-3">
-                <div>
-                  <div className="text-sm text-blue-100">Statut</div>
-                  <div className="font-bold text-xl">{statusInfo.label}</div>
-                </div>
-              </div>
-              {lead.quality_score && (
-                <div className="flex items-center justify-end gap-2">
-                  <div className="text-sm text-blue-100">Qualité:</div>
-                  <div className="text-3xl font-bold">{lead.quality_score}%</div>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Actions de transition */}
-          <div className="flex items-center gap-3 flex-wrap">
-            <span className="text-blue-100 font-medium">Actions rapides:</span>
-
-            {/* Bouton Demander Docs */}
+          <div className="flex items-center gap-3">
             <button
-              onClick={() => {
-                const template = emailTemplates.find(t => t.id === 'documents');
-                if (template) {
-                  setEmailForm({
-                    template: 'documents',
-                    subject: template.subject,
-                    body: template.body
-                  });
-                  setShowEmailModal(true);
-                }
-              }}
-              className="px-4 py-2 bg-amber-500/90 hover:bg-amber-600 backdrop-blur-lg rounded-lg font-medium transition-all flex items-center gap-2 shadow-lg border border-amber-400/50 hover:border-amber-300"
+              onClick={() => window.location.reload()}
+              className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors"
+              title="Actualiser"
             >
-              <FileText size={16} />
-              Demander Docs
-              <ArrowRight size={16} />
+              <RefreshCw className="w-5 h-5" />
             </button>
-
-            {availableTransitions.map((transition) => (
-              <button
-                key={transition.to}
-                onClick={() => handleStatusChange(transition.to)}
-                className="px-4 py-2 bg-white/20 hover:bg-white/30 backdrop-blur-lg rounded-lg font-medium transition-all flex items-center gap-2 shadow-lg border border-white/20 hover:border-white/40"
-              >
-                {transition.label}
-                <ArrowRight size={16} />
-              </button>
-            ))}
           </div>
         </div>
       </div>
 
-      {/* Corps principal */}
-      <div className="max-w-7xl mx-auto px-6 py-8">
+      <LeadHeader
+        lead={{
+          ...lead,
+          access_token: (lead as any).access_token
+        }}
+        onStatusChange={handleStatusChange}
+        availableTransitions={availableTransitions}
+      />
+
+      <LeadWorkflowTabs
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        stats={tabStats}
+      />
+
+      <div className="max-w-7xl mx-auto px-6 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Colonne principale */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Informations du lead */}
-            <div className="bg-white rounded-xl shadow-lg border-2 border-gray-200 p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                  <User size={24} className="text-blue-600" />
-                  Informations du Lead
-                </h2>
-                {!editing ? (
-                  <button
-                    onClick={() => setEditing(true)}
-                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                  >
-                    <Edit size={16} />
-                    Modifier
-                  </button>
-                ) : (
-                  <div className="flex gap-2">
-                    <button
-                      onClick={handleSave}
-                      disabled={saving}
-                      className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
-                    >
-                      <Save size={16} />
-                      {saving ? 'Enregistrement...' : 'Enregistrer'}
-                    </button>
-                    <button
-                      onClick={() => {
-                        setEditing(false);
-                        setEditForm({
-                          first_name: lead.first_name || '',
-                          last_name: lead.last_name || '',
-                          email: lead.email || '',
-                          phone: lead.phone || '',
-                          city: lead.city || '',
-                          company_name: lead.company_name || '',
-                          internal_notes: (lead as any).internal_notes || ''
-                        });
-                      }}
-                      className="flex items-center gap-2 px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
-                    >
-                      <X size={16} />
-                      Annuler
-                    </button>
+            {activeTab === 'overview' && (
+              <>
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                      <User className="w-5 h-5 text-blue-600" />
+                      Informations du Lead
+                    </h2>
+                    {!editing ? (
+                      <button
+                        onClick={() => setEditing(true)}
+                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+                      >
+                        <Edit className="w-4 h-4" />
+                        Modifier
+                      </button>
+                    ) : (
+                      <div className="flex gap-2">
+                        <button
+                          onClick={handleSave}
+                          disabled={saving}
+                          className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm disabled:opacity-50"
+                        >
+                          <Save className="w-4 h-4" />
+                          {saving ? 'Enregistrement...' : 'Enregistrer'}
+                        </button>
+                        <button
+                          onClick={() => {
+                            setEditing(false);
+                            setEditForm({
+                              first_name: lead.first_name || '',
+                              last_name: lead.last_name || '',
+                              email: lead.email || '',
+                              phone: lead.phone || '',
+                              city: lead.city || '',
+                              company_name: lead.company_name || '',
+                              internal_notes: (lead as any).internal_notes || ''
+                            });
+                          }}
+                          className="flex items-center gap-2 px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors text-sm"
+                        >
+                          <X className="w-4 h-4" />
+                          Annuler
+                        </button>
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
 
-              {editing ? (
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Prénom</label>
-                    <input
-                      type="text"
-                      value={editForm.first_name}
-                      onChange={(e) => setEditForm({ ...editForm, first_name: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 placeholder-gray-400"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Nom</label>
-                    <input
-                      type="text"
-                      value={editForm.last_name}
-                      onChange={(e) => setEditForm({ ...editForm, last_name: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 placeholder-gray-400"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
-                    <input
-                      type="email"
-                      value={editForm.email}
-                      onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 placeholder-gray-400"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Téléphone</label>
-                    <input
-                      type="tel"
-                      value={editForm.phone}
-                      onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 placeholder-gray-400"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Ville</label>
-                    <input
-                      type="text"
-                      value={editForm.city}
-                      onChange={(e) => setEditForm({ ...editForm, city: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 placeholder-gray-400"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Société</label>
-                    <input
-                      type="text"
-                      value={editForm.company_name}
-                      onChange={(e) => setEditForm({ ...editForm, company_name: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 placeholder-gray-400"
-                    />
-                  </div>
-                  <div className="col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Notes internes</label>
-                    <textarea
-                      value={editForm.internal_notes}
-                      onChange={(e) => setEditForm({ ...editForm, internal_notes: e.target.value })}
-                      rows={4}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 placeholder-gray-400"
-                      placeholder="Notes pour l'équipe..."
-                    />
-                  </div>
-                </div>
-              ) : (
-                <div className="grid grid-cols-2 gap-6">
-                  <div>
-                    <div className="text-sm text-gray-600 mb-1">Prénom</div>
-                    <div className="font-medium text-gray-900">{lead.first_name || '—'}</div>
-                  </div>
-                  <div>
-                    <div className="text-sm text-gray-600 mb-1">Nom</div>
-                    <div className="font-medium text-gray-900">{lead.last_name || '—'}</div>
-                  </div>
-                  <div>
-                    <div className="text-sm text-gray-600 mb-1">Email</div>
-                    <div className="font-medium text-gray-900">{lead.email}</div>
-                  </div>
-                  <div>
-                    <div className="text-sm text-gray-600 mb-1">Téléphone</div>
-                    <div className="font-medium text-gray-900">{lead.phone}</div>
-                  </div>
-                  <div>
-                    <div className="text-sm text-gray-600 mb-1">Ville</div>
-                    <div className="font-medium text-gray-900">{lead.city || '—'}</div>
-                  </div>
-                  <div>
-                    <div className="text-sm text-gray-600 mb-1">Société</div>
-                    <div className="font-medium text-gray-900">{lead.company_name || '—'}</div>
-                  </div>
-                  <div className="col-span-2">
-                    <div className="text-sm text-gray-600 mb-1">Notes internes</div>
-                    <div className="font-medium text-gray-900 whitespace-pre-wrap">
-                      {(lead as any).internal_notes || 'Aucune note'}
+                  {editing ? (
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Prenom</label>
+                        <input
+                          type="text"
+                          value={editForm.first_name}
+                          onChange={(e) => setEditForm({ ...editForm, first_name: e.target.value })}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Nom</label>
+                        <input
+                          type="text"
+                          value={editForm.last_name}
+                          onChange={(e) => setEditForm({ ...editForm, last_name: e.target.value })}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                        <input
+                          type="email"
+                          value={editForm.email}
+                          onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Telephone</label>
+                        <input
+                          type="tel"
+                          value={editForm.phone}
+                          onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Ville</label>
+                        <input
+                          type="text"
+                          value={editForm.city}
+                          onChange={(e) => setEditForm({ ...editForm, city: e.target.value })}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Societe</label>
+                        <input
+                          type="text"
+                          value={editForm.company_name}
+                          onChange={(e) => setEditForm({ ...editForm, company_name: e.target.value })}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
+                        />
+                      </div>
+                      <div className="col-span-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Notes internes</label>
+                        <textarea
+                          value={editForm.internal_notes}
+                          onChange={(e) => setEditForm({ ...editForm, internal_notes: e.target.value })}
+                          rows={4}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
+                          placeholder="Notes pour l'equipe..."
+                        />
+                      </div>
                     </div>
+                  ) : (
+                    <div className="grid grid-cols-2 gap-6">
+                      <div>
+                        <div className="text-sm text-gray-500 mb-1">Prenom</div>
+                        <div className="font-medium text-gray-900">{lead.first_name || '-'}</div>
+                      </div>
+                      <div>
+                        <div className="text-sm text-gray-500 mb-1">Nom</div>
+                        <div className="font-medium text-gray-900">{lead.last_name || '-'}</div>
+                      </div>
+                      <div>
+                        <div className="text-sm text-gray-500 mb-1">Email</div>
+                        <div className="font-medium text-gray-900">{lead.email}</div>
+                      </div>
+                      <div>
+                        <div className="text-sm text-gray-500 mb-1">Telephone</div>
+                        <div className="font-medium text-gray-900">{lead.phone}</div>
+                      </div>
+                      <div>
+                        <div className="text-sm text-gray-500 mb-1">Ville</div>
+                        <div className="font-medium text-gray-900">{lead.city || '-'}</div>
+                      </div>
+                      <div>
+                        <div className="text-sm text-gray-500 mb-1">Societe</div>
+                        <div className="font-medium text-gray-900">{lead.company_name || '-'}</div>
+                      </div>
+                      <div className="col-span-2">
+                        <div className="text-sm text-gray-500 mb-1">Notes internes</div>
+                        <div className="font-medium text-gray-900 whitespace-pre-wrap bg-gray-50 rounded-lg p-3">
+                          {(lead as any).internal_notes || 'Aucune note'}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <CommercialChecklist leadId={lead.id} productType="auto" />
+              </>
+            )}
+
+            {activeTab === 'documents' && (
+              <>
+                <DocumentChecklistPanelV2
+                  leadId={lead.id}
+                  leadEmail={lead.email}
+                  leadFirstName={lead.first_name}
+                  accessToken={(lead as any).access_token}
+                  onDocumentsComplete={() => loadLeadData(lead.id)}
+                  onRequestDocuments={handleRequestDocuments}
+                />
+
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                  <DocumentRequestsManager
+                    leadId={lead.id}
+                    onRefresh={() => loadLeadData(lead.id)}
+                  />
+                </div>
+              </>
+            )}
+
+            {activeTab === 'quotes' && (
+              <>
+                <LeadInsuranceCompanies leadId={lead.id} />
+
+                <QuoteManager
+                  lead={lead}
+                  onQuoteSent={() => loadMessages(lead.id)}
+                  onStatusChange={() => loadLeadData(lead.id)}
+                />
+
+                <LeadQuotesContracts
+                  leadId={lead.id}
+                  leadEmail={lead.email}
+                />
+              </>
+            )}
+
+            {activeTab === 'contract' && (
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <ElectronicSignature
+                  leadId={lead.id}
+                  leadName={`${lead.first_name} ${lead.last_name}`.trim()}
+                  leadEmail={lead.email}
+                  leadPhone={lead.phone}
+                />
+              </div>
+            )}
+
+            {activeTab === 'communication' && (
+              <div className="space-y-6">
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                  <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                    <Send className="w-5 h-5 text-blue-600" />
+                    Envoyer un message
+                  </h2>
+
+                  <div className="grid grid-cols-3 gap-4">
+                    <button
+                      onClick={openEmailComposer}
+                      className="p-4 bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all shadow-md"
+                    >
+                      <Mail className="w-8 h-8 mx-auto mb-2" />
+                      <span className="font-medium">Email</span>
+                    </button>
+
+                    <button
+                      onClick={() => setShowSMSModal(true)}
+                      className="p-4 bg-gradient-to-br from-green-500 to-green-600 text-white rounded-xl hover:from-green-600 hover:to-green-700 transition-all shadow-md"
+                    >
+                      <MessageSquare className="w-8 h-8 mx-auto mb-2" />
+                      <span className="font-medium">SMS</span>
+                    </button>
+
+                    <button
+                      onClick={() => setShowWhatsAppModal(true)}
+                      className="p-4 bg-gradient-to-br from-emerald-500 to-emerald-600 text-white rounded-xl hover:from-emerald-600 hover:to-emerald-700 transition-all shadow-md"
+                    >
+                      <Phone className="w-8 h-8 mx-auto mb-2" />
+                      <span className="font-medium">WhatsApp</span>
+                    </button>
                   </div>
                 </div>
-              )}
-            </div>
 
-            {/* Gestion des Devis */}
-            <QuoteManager
-              lead={lead}
-              onQuoteSent={() => {
-                loadMessages(lead.id);
-              }}
-              onStatusChange={() => {
-                loadLeadData(lead.id);
-              }}
-            />
-
-            {/* Signature Électronique */}
-            <div className="bg-white rounded-xl shadow-lg border-2 border-purple-200 p-6">
-              <ElectronicSignature
-                leadId={lead.id}
-                leadName={`${lead.first_name} ${lead.last_name}`.trim()}
-                leadEmail={lead.email}
-                leadPhone={lead.phone}
-              />
-            </div>
-
-            {/* Checklist Commercial - Suivi des étapes */}
-            <CommercialChecklist
-              leadId={lead.id}
-              productType="auto"
-            />
-
-            {/* Compagnies d'assurance contactées */}
-            <LeadInsuranceCompanies
-              leadId={lead.id}
-            />
-
-            {/* Devis et Contrats */}
-            <LeadQuotesContracts
-              leadId={lead.id}
-              leadEmail={lead.email}
-            />
-
-            {/* Historique des échanges */}
-            <div className="bg-white rounded-xl shadow-lg border-2 border-gray-200 p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                  <History size={24} className="text-purple-600" />
-                  Historique des Échanges
-                </h2>
-                <button
-                  onClick={() => loadMessages(lead.id)}
-                  disabled={loadingMessages}
-                  className="flex items-center gap-2 px-3 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                >
-                  <RefreshCw size={16} className={loadingMessages ? 'animate-spin' : ''} />
-                  Actualiser
-                </button>
-              </div>
-
-              <div className="space-y-4 max-h-[600px] overflow-y-auto">
-                {messages.length === 0 ? (
-                  <div className="text-center py-12 text-gray-500">
-                    <History className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                    <p>Aucun échange enregistré</p>
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                      <History className="w-5 h-5 text-blue-600" />
+                      Conversation recente
+                    </h2>
+                    <button
+                      onClick={() => loadMessages(lead.id)}
+                      disabled={loadingMessages}
+                      className="flex items-center gap-2 px-3 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors text-sm"
+                    >
+                      <RefreshCw className={`w-4 h-4 ${loadingMessages ? 'animate-spin' : ''}`} />
+                      Actualiser
+                    </button>
                   </div>
-                ) : (
-                  messages.map((msg) => (
-                    <div key={msg.id} className="flex gap-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+
+                  <div className="space-y-3 max-h-[500px] overflow-y-auto">
+                    {messages.slice(0, 10).map((msg) => (
+                      <div
+                        key={msg.id}
+                        className={`flex gap-3 p-4 rounded-lg border ${
+                          msg.direction === 'inbound'
+                            ? 'bg-blue-50 border-blue-200'
+                            : 'bg-gray-50 border-gray-200'
+                        }`}
+                      >
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
+                          msg.type === 'email' ? 'bg-blue-100 text-blue-600' :
+                          msg.type === 'sms' ? 'bg-green-100 text-green-600' :
+                          msg.type === 'whatsapp' ? 'bg-emerald-100 text-emerald-600' :
+                          'bg-gray-100 text-gray-600'
+                        }`}>
+                          {msg.type === 'email' && <Mail className="w-5 h-5" />}
+                          {msg.type === 'sms' && <MessageSquare className="w-5 h-5" />}
+                          {msg.type === 'whatsapp' && <Phone className="w-5 h-5" />}
+                          {msg.type === 'system' && <Bot className="w-5 h-5" />}
+                          {msg.type === 'note' && <FileText className="w-5 h-5" />}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="font-medium text-gray-900 text-sm">{msg.sent_by}</span>
+                            <span className="text-xs text-gray-500">
+                              {new Date(msg.sent_at).toLocaleString('fr-FR')}
+                            </span>
+                          </div>
+                          {msg.subject && (
+                            <div className="text-sm font-medium text-gray-700 mb-1">{msg.subject}</div>
+                          )}
+                          <p className="text-sm text-gray-600 line-clamp-3">{msg.content}</p>
+                        </div>
+                      </div>
+                    ))}
+
+                    {messages.length === 0 && (
+                      <div className="text-center py-12 text-gray-500">
+                        <MessageSquare className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                        <p>Aucun message</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'history' && (
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                    <History className="w-5 h-5 text-blue-600" />
+                    Historique complet ({messages.length})
+                  </h2>
+                  <button
+                    onClick={() => loadMessages(lead.id)}
+                    disabled={loadingMessages}
+                    className="flex items-center gap-2 px-3 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors text-sm"
+                  >
+                    <RefreshCw className={`w-4 h-4 ${loadingMessages ? 'animate-spin' : ''}`} />
+                    Actualiser
+                  </button>
+                </div>
+
+                <div className="space-y-3 max-h-[700px] overflow-y-auto">
+                  {messages.map((msg) => (
+                    <div
+                      key={msg.id}
+                      className={`flex gap-3 p-4 rounded-lg border ${
+                        msg.direction === 'inbound'
+                          ? 'bg-blue-50 border-blue-200'
+                          : 'bg-gray-50 border-gray-200'
+                      }`}
+                    >
                       <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
                         msg.type === 'email' ? 'bg-blue-100 text-blue-600' :
                         msg.type === 'sms' ? 'bg-green-100 text-green-600' :
                         msg.type === 'whatsapp' ? 'bg-emerald-100 text-emerald-600' :
-                        msg.type === 'note' ? 'bg-yellow-100 text-yellow-600' :
                         'bg-gray-100 text-gray-600'
                       }`}>
-                        {msg.type === 'email' && <Mail size={20} />}
-                        {msg.type === 'sms' && <MessageSquare size={20} />}
-                        {msg.type === 'whatsapp' && <Phone size={20} />}
-                        {msg.type === 'note' && <FileText size={20} />}
-                        {msg.type === 'system' && <Bot size={20} />}
+                        {msg.type === 'email' && <Mail className="w-5 h-5" />}
+                        {msg.type === 'sms' && <MessageSquare className="w-5 h-5" />}
+                        {msg.type === 'whatsapp' && <Phone className="w-5 h-5" />}
+                        {msg.type === 'system' && <Bot className="w-5 h-5" />}
+                        {msg.type === 'note' && <FileText className="w-5 h-5" />}
                       </div>
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between mb-2">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between mb-1">
                           <div className="flex items-center gap-2">
-                            <span className="font-semibold text-gray-900 capitalize">{msg.type}</span>
-                            {msg.subject && <span className="text-sm text-gray-600">• {msg.subject}</span>}
+                            <span className="font-medium text-gray-900 text-sm">{msg.sent_by}</span>
+                            <span className={`px-2 py-0.5 rounded text-xs ${
+                              msg.status === 'read' ? 'bg-green-100 text-green-700' :
+                              msg.status === 'delivered' ? 'bg-blue-100 text-blue-700' :
+                              'bg-gray-100 text-gray-700'
+                            }`}>
+                              {msg.status}
+                            </span>
                           </div>
-                          <span className={`px-2 py-1 rounded text-xs font-medium ${
-                            msg.status === 'sent' ? 'bg-blue-100 text-blue-700' :
-                            msg.status === 'delivered' ? 'bg-green-100 text-green-700' :
-                            msg.status === 'read' ? 'bg-purple-100 text-purple-700' :
-                            'bg-red-100 text-red-700'
-                          }`}>
-                            {msg.status}
+                          <span className="text-xs text-gray-500">
+                            {new Date(msg.sent_at).toLocaleString('fr-FR')}
                           </span>
                         </div>
-                        <p className="text-gray-700 text-sm mb-2 whitespace-pre-wrap">{msg.content}</p>
-                        <div className="flex items-center gap-4 text-xs text-gray-500">
-                          <div className="flex items-center gap-1">
-                            <Clock size={12} />
-                            <span>{new Date(msg.sent_at).toLocaleString('fr-FR')}</span>
-                          </div>
-                          {msg.sent_by && (
-                            <div className="flex items-center gap-1">
-                              <User size={12} />
-                              <span>{msg.sent_by}</span>
-                            </div>
-                          )}
-                        </div>
+                        {msg.subject && (
+                          <div className="text-sm font-medium text-gray-700 mb-1">{msg.subject}</div>
+                        )}
+                        <p className="text-sm text-gray-600 whitespace-pre-wrap">{msg.content}</p>
                       </div>
                     </div>
-                  ))
-                )}
+                  ))}
+
+                  {messages.length === 0 && (
+                    <div className="text-center py-12 text-gray-500">
+                      <History className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                      <p>Aucun historique</p>
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
-          {/* Colonne latérale - Actions rapides */}
           <div className="space-y-6">
-            {/* Actions de communication */}
-            <div className="bg-white rounded-xl shadow-lg border-2 border-gray-200 p-6">
+            <LeadIntelligencePanel
+              leadId={lead.id}
+              leadStatus={lead.status}
+              leadData={{
+                created_at: lead.created_at,
+                last_contact_at: lead.last_contact_at,
+                email: lead.email,
+                phone: lead.phone,
+                quality_score: lead.quality_score
+              }}
+              documentsComplete={documentsComplete}
+              hasQuotes={quotesCount > 0}
+              onSuggestedAction={handleSuggestedAction}
+            />
+
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
               <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
-                <Send size={20} className="text-blue-600" />
-                Communications
+                <Zap className="w-5 h-5 text-yellow-500" />
+                Actions rapides
               </h3>
-              <div className="space-y-3">
+              <div className="space-y-2">
                 <button
-                  onClick={() => openEmailComposer()}
-                  className="w-full px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all flex items-center justify-center gap-2 shadow-lg"
+                  onClick={openEmailComposer}
+                  className="w-full px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
                 >
-                  <Mail size={18} />
+                  <Mail className="w-4 h-4" />
                   Envoyer Email
                 </button>
                 <button
-                  onClick={() => setShowSMSModal(true)}
-                  className="w-full px-4 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 transition-all flex items-center justify-center gap-2 shadow-lg"
+                  onClick={() => {
+                    if (lead.phone) {
+                      window.open(`tel:${lead.phone}`, '_blank');
+                    }
+                  }}
+                  className="w-full px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
                 >
-                  <MessageSquare size={18} />
-                  Envoyer SMS
+                  <PhoneCall className="w-4 h-4" />
+                  Appeler
                 </button>
                 <button
-                  onClick={() => setShowWhatsAppModal(true)}
-                  className="w-full px-4 py-3 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white rounded-lg hover:from-emerald-700 hover:to-emerald-800 transition-all flex items-center justify-center gap-2 shadow-lg"
+                  onClick={() => setActiveTab('documents')}
+                  className="w-full px-4 py-3 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors flex items-center justify-center gap-2"
                 >
-                  <Phone size={18} />
-                  Envoyer WhatsApp
-                </button>
-              </div>
-
-              {/* Bouton demande avis Google */}
-              <div className="mt-4 pt-4 border-t border-gray-200">
-                <button
-                  onClick={handleSendReviewRequest}
-                  disabled={sendingReview}
-                  className="w-full px-4 py-3 bg-gradient-to-r from-yellow-500 to-orange-500 text-white rounded-lg hover:from-yellow-600 hover:to-orange-600 transition-all flex items-center justify-center gap-2 shadow-lg disabled:opacity-50"
-                >
-                  <Award size={18} />
-                  {sendingReview ? 'Envoi...' : 'Demander Avis Google'}
+                  <FileText className="w-4 h-4" />
+                  Demander documents
                 </button>
               </div>
             </div>
 
-            {/* Document Checklist Panel */}
-            <DocumentChecklistPanelV2
-              leadId={lead.id}
-              leadEmail={lead.email}
-              leadFirstName={lead.first_name}
-              accessToken={lead.access_token}
-              onDocumentsComplete={() => loadLeadData(lead.id)}
-              onRequestDocuments={handleRequestDocuments}
-            />
-
-            {/* Documents Complémentaires (Flexibles) */}
-            <div className="bg-white rounded-xl shadow-lg border-2 border-purple-200 p-6">
-              <DocumentRequestsManager
-                leadId={lead.id}
-                onRefresh={() => loadLeadData(lead.id)}
-              />
-            </div>
-
-            {/* Statistiques du lead */}
-            <div className="bg-white rounded-xl shadow-lg border-2 border-gray-200 p-6">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
               <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
-                <TrendingUp size={20} className="text-purple-600" />
+                <TrendingUp className="w-5 h-5 text-blue-600" />
                 Statistiques
               </h3>
               <div className="space-y-4">
                 <div>
-                  <div className="text-sm text-gray-600 mb-1">Score de qualité</div>
-                  <div className="flex items-center gap-2">
-                    <div className="flex-1 h-3 bg-gray-200 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-gradient-to-r from-blue-500 to-purple-500"
-                        style={{ width: `${lead.quality_score || 0}%` }}
-                      />
-                    </div>
-                    <span className="font-bold text-gray-900">{lead.quality_score || 0}%</span>
+                  <div className="flex items-center justify-between text-sm mb-1">
+                    <span className="text-gray-600">Score qualite</span>
+                    <span className="font-semibold text-gray-900">{lead.quality_score || 0}%</span>
+                  </div>
+                  <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full transition-all duration-500 ${
+                        (lead.quality_score || 0) >= 70 ? 'bg-green-500' :
+                        (lead.quality_score || 0) >= 40 ? 'bg-yellow-500' : 'bg-red-500'
+                      }`}
+                      style={{ width: `${lead.quality_score || 0}%` }}
+                    />
                   </div>
                 </div>
-                <div>
-                  <div className="text-sm text-gray-600 mb-1">Créé le</div>
-                  <div className="font-medium text-gray-900">
-                    {new Date(lead.created_at).toLocaleDateString('fr-FR', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric'
-                    })}
+
+                <div className="grid grid-cols-2 gap-4 pt-2">
+                  <div className="text-center p-3 bg-gray-50 rounded-lg">
+                    <div className="text-2xl font-bold text-gray-900">{quotesCount}</div>
+                    <div className="text-xs text-gray-500">Devis</div>
+                  </div>
+                  <div className="text-center p-3 bg-gray-50 rounded-lg">
+                    <div className="text-2xl font-bold text-gray-900">{messages.length}</div>
+                    <div className="text-xs text-gray-500">Echanges</div>
                   </div>
                 </div>
-                {lead.last_contact_at && (
-                  <div>
-                    <div className="text-sm text-gray-600 mb-1">Dernier contact</div>
-                    <div className="font-medium text-gray-900">
-                      {new Date(lead.last_contact_at).toLocaleDateString('fr-FR')}
-                    </div>
+
+                <div className="pt-2 space-y-2 text-sm">
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-600">Cree le</span>
+                    <span className="text-gray-900">{new Date(lead.created_at).toLocaleDateString('fr-FR')}</span>
                   </div>
-                )}
-                <div>
-                  <div className="text-sm text-gray-600 mb-1">Source</div>
-                  <div className="font-medium text-gray-900 capitalize">{lead.source || 'Inconnu'}</div>
+                  {lead.last_contact_at && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-600">Dernier contact</span>
+                      <span className="text-gray-900">{new Date(lead.last_contact_at).toLocaleDateString('fr-FR')}</span>
+                    </div>
+                  )}
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-600">Source</span>
+                    <span className="text-gray-900 capitalize">{lead.source || 'Inconnu'}</span>
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* Tags */}
             {lead.tags && lead.tags.length > 0 && (
-              <div className="bg-white rounded-xl shadow-lg border-2 border-gray-200 p-6">
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                 <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
-                  <Tag size={20} className="text-pink-600" />
+                  <Tag className="w-5 h-5 text-blue-600" />
                   Tags
                 </h3>
                 <div className="flex flex-wrap gap-2">
                   {lead.tags.map((tag, index) => (
                     <span
                       key={index}
-                      className="px-3 py-1 bg-gradient-to-r from-pink-100 to-purple-100 text-pink-700 rounded-full text-sm font-medium"
+                      className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium"
                     >
                       {tag}
                     </span>
@@ -1026,7 +924,6 @@ const CRMLeadDetail: React.FC = () => {
         </div>
       </div>
 
-      {/* Email Composer Modal */}
       <EmailComposerModal
         isOpen={emailModalOpen}
         onClose={() => {
@@ -1051,228 +948,111 @@ const CRMLeadDetail: React.FC = () => {
         missingDocuments={emailMissingDocs}
       />
 
-      {/* Modal SMS */}
       {showSMSModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full">
+          <div className="bg-white rounded-xl shadow-xl max-w-lg w-full">
             <div className="p-6 border-b border-gray-200">
               <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                  <MessageSquare className="text-green-600" />
+                <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                  <MessageSquare className="w-5 h-5 text-green-600" />
                   Envoyer un SMS
                 </h2>
-                <button
-                  onClick={() => setShowSMSModal(false)}
-                  className="text-gray-500 hover:text-gray-700"
-                >
-                  <X size={24} />
+                <button onClick={() => setShowSMSModal(false)} className="text-gray-400 hover:text-gray-600">
+                  <X className="w-6 h-6" />
                 </button>
               </div>
             </div>
             <div className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Template</label>
+                <label className="block text-sm font-medium text-gray-900 mb-2">Template</label>
                 <select
-                  value={smsForm.template}
+                  value=""
                   onChange={(e) => {
                     const template = smsTemplates.find(t => t.id === e.target.value);
-                    if (template) {
-                      setSmsForm({
-                        template: e.target.value,
-                        message: template.message
-                      });
-                    }
+                    if (template) setSmsForm({ message: template.message });
                   }}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 bg-white text-gray-900"
+                  className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg bg-white text-gray-900"
                 >
-                  <option value="">Sélectionner un template</option>
+                  <option value="">Choisir un template</option>
                   {smsTemplates.map(t => (
                     <option key={t.id} value={t.id}>{t.name}</option>
                   ))}
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Message (160 caractères max)</label>
+                <label className="block text-sm font-medium text-gray-900 mb-2">Message</label>
                 <textarea
                   value={smsForm.message}
-                  onChange={(e) => setSmsForm({ ...smsForm, message: e.target.value })}
+                  onChange={(e) => setSmsForm({ message: e.target.value })}
                   rows={4}
                   maxLength={160}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 bg-white text-gray-900 placeholder-gray-400"
-                  placeholder="Votre message SMS..."
+                  className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg bg-white text-gray-900"
+                  placeholder="Votre message..."
                 />
-                <p className="text-xs text-gray-500 mt-2">
-                  {smsForm.message.length}/160 caractères
-                </p>
+                <p className="text-xs text-gray-500 mt-1">{smsForm.message.length}/160</p>
               </div>
               <button
                 onClick={handleSendSMS}
                 disabled={!smsForm.message}
-                className="w-full px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="w-full px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 flex items-center justify-center gap-2"
               >
-                <Send size={20} />
-                Envoyer le SMS
+                <Send className="w-5 h-5" />
+                Envoyer
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Modal WhatsApp */}
       {showWhatsAppModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full">
+          <div className="bg-white rounded-xl shadow-xl max-w-lg w-full">
             <div className="p-6 border-b border-gray-200">
               <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                  <Phone className="text-emerald-600" />
-                  Envoyer un WhatsApp
+                <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                  <Phone className="w-5 h-5 text-emerald-600" />
+                  Envoyer via WhatsApp
                 </h2>
-                <button
-                  onClick={() => setShowWhatsAppModal(false)}
-                  className="text-gray-500 hover:text-gray-700"
-                >
-                  <X size={24} />
+                <button onClick={() => setShowWhatsAppModal(false)} className="text-gray-400 hover:text-gray-600">
+                  <X className="w-6 h-6" />
                 </button>
               </div>
             </div>
             <div className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Template</label>
+                <label className="block text-sm font-medium text-gray-900 mb-2">Template</label>
                 <select
-                  value={whatsappForm.template}
+                  value=""
                   onChange={(e) => {
                     const template = whatsappTemplates.find(t => t.id === e.target.value);
-                    if (template) {
-                      setWhatsappForm({
-                        template: e.target.value,
-                        message: template.message
-                      });
-                    }
+                    if (template) setWhatsappForm({ message: template.message });
                   }}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 bg-white text-gray-900"
+                  className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg bg-white text-gray-900"
                 >
-                  <option value="">Sélectionner un template</option>
+                  <option value="">Choisir un template</option>
                   {whatsappTemplates.map(t => (
                     <option key={t.id} value={t.id}>{t.name}</option>
                   ))}
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Message</label>
+                <label className="block text-sm font-medium text-gray-900 mb-2">Message</label>
                 <textarea
                   value={whatsappForm.message}
-                  onChange={(e) => setWhatsappForm({ ...whatsappForm, message: e.target.value })}
+                  onChange={(e) => setWhatsappForm({ message: e.target.value })}
                   rows={6}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 bg-white text-gray-900 placeholder-gray-400"
-                  placeholder="Votre message WhatsApp..."
+                  className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg bg-white text-gray-900"
+                  placeholder="Votre message..."
                 />
               </div>
               <button
                 onClick={handleSendWhatsApp}
                 disabled={!whatsappForm.message}
-                className="w-full px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="w-full px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50 flex items-center justify-center gap-2"
               >
-                <Send size={20} />
-                Envoyer via WhatsApp
+                <Send className="w-5 h-5" />
+                Envoyer
               </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Modal Upload Document */}
-      {showDocumentModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-gradient-to-r from-purple-600 to-purple-700 p-6 rounded-t-xl">
-              <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-                  <Upload size={24} />
-                  Upload Document
-                </h2>
-                <button
-                  onClick={() => setShowDocumentModal(false)}
-                  className="text-white/80 hover:text-white transition-colors p-2 hover:bg-white/10 rounded-lg"
-                >
-                  <X size={24} />
-                </button>
-              </div>
-            </div>
-
-            <div className="p-6 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Type de document</label>
-                <select
-                  value={uploadForm.documentType}
-                  onChange={(e) => setUploadForm({ ...uploadForm, documentType: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 bg-white text-gray-900"
-                >
-                  <option value="carte_grise">Carte Grise</option>
-                  <option value="permis_conduire">Permis de Conduire</option>
-                  <option value="licence_taxi">Licence Taxi</option>
-                  <option value="carte_identite">Carte d'Identité</option>
-                  <option value="rib">RIB</option>
-                  <option value="devis">Devis</option>
-                  <option value="contrat_signe">Contrat Signé</option>
-                  <option value="autorisation_stationnement">Autorisation Stationnement</option>
-                  <option value="autre">Autre</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Fichier</label>
-                <input
-                  type="file"
-                  accept="image/*,application/pdf,.doc,.docx"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) {
-                      setUploadForm({ ...uploadForm, file });
-                    }
-                  }}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 bg-white text-gray-900"
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  Formats acceptés : Images, PDF, Word. Max 50MB
-                </p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Notes (optionnel)</label>
-                <textarea
-                  value={uploadForm.notes}
-                  onChange={(e) => setUploadForm({ ...uploadForm, notes: e.target.value })}
-                  rows={3}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 bg-white text-gray-900 placeholder-gray-400"
-                  placeholder="Notes additionnelles..."
-                />
-              </div>
-
-              <button
-                onClick={handleDocumentUpload}
-                disabled={uploadingDocument || !uploadForm.file}
-                className="w-full px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg"
-              >
-                {uploadingDocument ? (
-                  <>
-                    <RefreshCw size={20} className="animate-spin" />
-                    Upload en cours...
-                  </>
-                ) : (
-                  <>
-                    <Upload size={20} />
-                    Upload Document
-                  </>
-                )}
-              </button>
-
-              <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                <p className="text-sm text-blue-800 flex items-center gap-2">
-                  <AlertCircle size={16} />
-                  <span>Un email automatique sera envoyé au client après l'upload pour le notifier.</span>
-                </p>
-              </div>
             </div>
           </div>
         </div>

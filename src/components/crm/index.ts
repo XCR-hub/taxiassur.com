@@ -12,3 +12,7 @@ export { DocumentRequestsManager } from './DocumentRequestsManager';
 export { CommercialChecklist } from './CommercialChecklist';
 export { LeadInsuranceCompanies } from './LeadInsuranceCompanies';
 export { LeadQuotesContracts } from './LeadQuotesContracts';
+export { LeadIntelligencePanel } from './LeadIntelligencePanel';
+export { LeadHeader } from './LeadHeader';
+export { LeadWorkflowTabs } from './LeadWorkflowTabs';
+export type { WorkflowTab } from './LeadWorkflowTabs';
