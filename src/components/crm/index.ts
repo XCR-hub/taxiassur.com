@@ -9,6 +9,7 @@ export { PipelineCard } from './PipelineCard';
 export { RetentionScore } from './RetentionScore';
 export { TimelineEvent } from './TimelineEvent';
 export { DocumentRequestsManager } from './DocumentRequestsManager';
+export { LeadAutomationCenter } from './LeadAutomationCenter';
 export { CommercialChecklist } from './CommercialChecklist';
 export { LeadInsuranceCompanies } from './LeadInsuranceCompanies';
 export { LeadQuotesContracts } from './LeadQuotesContracts';
