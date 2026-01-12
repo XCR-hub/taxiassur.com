@@ -3,169 +3,152 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Test Accès Prospect - TaxiAssur</title>
+    <title>Test Accès Prospect Documents</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 50px auto;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 900px;
+            margin: 40px auto;
             padding: 20px;
-            background: #1a1a1a;
-            color: #fff;
+            background: #0f172a;
+            color: #e2e8f0;
         }
         .container {
-            background: #2a2a2a;
+            background: #1e293b;
             padding: 30px;
-            border-radius: 10px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+        h1 {
+            color: #f59e0b;
+            border-bottom: 3px solid #f59e0b;
+            padding-bottom: 10px;
+        }
+        .test-section {
+            background: #334155;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            border-left: 4px solid #3b82f6;
+        }
+        button {
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            margin: 5px;
+        }
+        button:hover {
+            background: #059669;
+        }
+        .result {
+            background: #1e293b;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 6px;
+            border: 1px solid #475569;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .success {
+            color: #10b981;
+            background: #064e3b;
+            border-color: #10b981;
+        }
+        .error {
+            color: #ef4444;
+            background: #7f1d1d;
+            border-color: #ef4444;
         }
         input {
             width: 100%;
             padding: 10px;
             margin: 10px 0;
-            border: 1px solid #444;
-            border-radius: 5px;
-            background: #333;
-            color: #fff;
+            border: 1px solid #475569;
+            border-radius: 6px;
+            background: #1e293b;
+            color: #e2e8f0;
+            font-size: 14px;
         }
-        button {
-            background: #f59e0b;
-            color: #000;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-        button:hover {
-            background: #d97706;
-        }
-        .result {
-            margin-top: 20px;
-            padding: 15px;
-            border-radius: 5px;
-        }
-        .success {
-            background: #10b981;
-            color: #000;
-        }
-        .error {
-            background: #ef4444;
-            color: #fff;
-        }
-        .info {
-            background: #3b82f6;
-            color: #fff;
-        }
-        pre {
-            background: #1a1a1a;
-            padding: 10px;
-            border-radius: 5px;
-            overflow-x: auto;
+        .url-display {
+            background: #0f172a;
+            padding: 12px;
+            border-radius: 6px;
+            margin: 10px 0;
+            font-family: monospace;
+            word-break: break-all;
+            color: #22d3ee;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🧪 Test Accès Prospect</h1>
-        <p>Test de l'accès anonyme aux données prospect via token</p>
-
-        <label for="token">Token d'accès:</label>
-        <input
-            type="text"
-            id="token"
-            placeholder="Entrez le token d'accès"
-            value="abad70754f988c31533bfa8ce962a4ce4f7f15c1a547fdf4f9a2bf099fd98912"
-        >
-
-        <button onclick="testAccess()">🔍 Tester l'accès</button>
-
-        <div id="result"></div>
+        <h1>Test Accès Prospect Documents</h1>
+        <div class="test-section">
+            <label>Token:</label>
+            <input type="text" id="token" value="25d97e3616d2d8eaa049ab8cd81a8688d7bc2188928d4107bb9df93c6e3a0077" />
+            <div class="url-display">
+                URL: <span id="testUrl"></span>
+            </div>
+            <button onclick="testAccess()">Tester Accès</button>
+            <button onclick="openPortal()">Ouvrir Portail</button>
+        </div>
+        <div id="results"></div>
     </div>
-
     <script>
         const SUPABASE_URL = 'https://drohhxrkoequjphvabvq.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRyb2hoeHJrb2VxdWpwaHZhYnZxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk3ODM3NjAsImV4cCI6MjA3NTM1OTc2MH0.LP9fh10fY0nRDjpG4VW2yGZ5sT4BkiDalox8ToMbMlg';
-
-        async function testAccess() {
-            const resultDiv = document.getElementById('result');
+        
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        function updateUrl() {
             const token = document.getElementById('token').value;
-
-            if (!token) {
-                resultDiv.innerHTML = '<div class="result error">❌ Veuillez entrer un token</div>';
-                return;
-            }
-
-            resultDiv.innerHTML = '<div class="result info">⏳ Test en cours...</div>';
-
+            document.getElementById('testUrl').textContent = `/prospect/documents/${token}`;
+        }
+        
+        document.getElementById('token').addEventListener('input', updateUrl);
+        updateUrl();
+        
+        async function testAccess() {
+            const token = document.getElementById('token').value;
+            const results = document.getElementById('results');
+            results.innerHTML = '<div class="result">Test en cours...</div>';
+            
             try {
-                console.log('🔧 Creating Supabase client...');
-                console.log('URL:', SUPABASE_URL);
-                console.log('Token:', token.substring(0, 20) + '...');
-
-                // Create a fresh anonymous client
-                const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-                    auth: {
-                        persistSession: false,
-                        autoRefreshToken: false,
-                        detectSessionInUrl: false
-                    }
-                });
-
-                console.log('✅ Client created');
-
-                // Test query
-                console.log('🔍 Querying crm_leads...');
                 const { data, error } = await supabase
                     .from('crm_leads')
-                    .select('*')
+                    .select('id, first_name, email')
                     .eq('access_token', token)
                     .maybeSingle();
-
-                console.log('📊 Query result:', { data, error });
-
+                
                 if (error) {
-                    throw error;
+                    results.innerHTML = `<div class="result error">Erreur: ${JSON.stringify(error)}</div>`;
+                    return;
                 }
-
+                
                 if (data) {
-                    resultDiv.innerHTML = `
-                        <div class="result success">
-                            <h3>✅ Accès réussi !</h3>
-                            <p><strong>Nom:</strong> ${data.first_name} ${data.last_name || ''}</p>
-                            <p><strong>Email:</strong> ${data.email}</p>
-                            <p><strong>Téléphone:</strong> ${data.phone || 'N/A'}</p>
-                            <p><strong>ID Lead:</strong> ${data.id}</p>
-                            <details>
-                                <summary>Données complètes</summary>
-                                <pre>${JSON.stringify(data, null, 2)}</pre>
-                            </details>
-                        </div>
-                    `;
+                    results.innerHTML = `<div class="result success">✅ Lead trouvé: ${data.first_name} (${data.email})<br>ID: ${data.id}</div>`;
                 } else {
-                    resultDiv.innerHTML = '<div class="result error">⚠️ Token invalide ou expiré</div>';
+                    results.innerHTML = `<div class="result error">❌ Token invalide</div>`;
                 }
-
-            } catch (error) {
-                console.error('❌ Error:', error);
-                resultDiv.innerHTML = `
-                    <div class="result error">
-                        <h3>❌ Erreur</h3>
-                        <p>${error.message}</p>
-                        <pre>${JSON.stringify(error, null, 2)}</pre>
-                    </div>
-                `;
+            } catch (err) {
+                results.innerHTML = `<div class="result error">Exception: ${err.message}</div>`;
             }
         }
-
-        // Auto-test on load if token is present
-        window.addEventListener('load', () => {
+        
+        function openPortal() {
             const token = document.getElementById('token').value;
-            if (token) {
-                console.log('🚀 Auto-testing with pre-filled token');
-                testAccess();
-            }
-        });
+            window.open(`/prospect/documents/${token}`, '_blank');
+        }
     </script>
 </body>
 </html>
