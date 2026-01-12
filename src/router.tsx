@@ -136,6 +136,7 @@ const NewsletterSubscribe = lazy(() => import('./pages/NewsletterSubscribe'));
 const NewsletterUnsubscribe = lazy(() => import('./pages/NewsletterUnsubscribe'));
 const LLMDashboard = lazy(() => import('./backoffice/LLMDashboard'));
 const LLMCouncilDashboard = lazy(() => import('./backoffice/LLMCouncilDashboard'));
+const QuoteQueueDashboard = lazy(() => import('./backoffice/QuoteQueueDashboard'));
 
 const LoadingFallback = () => (
   <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-black flex items-center justify-center">
@@ -599,6 +600,23 @@ export const router = createBrowserRouter([
           {
             path: 'email-inbox',
             element: <EmailInboxManager />,
+            errorElement: <RouteErrorFallback />
+          },
+          {
+            path: 'quote-queue',
+            element: <QuoteQueueDashboard />,
+            errorElement: <RouteErrorFallback />
+          }
+        ]
+      },
+      {
+        path: '/backoffice/quote-queue',
+        element: <AuthGuard><SuspenseWrapper><CRMLayout /></SuspenseWrapper></AuthGuard>,
+        errorElement: <RouteErrorFallback />,
+        children: [
+          {
+            index: true,
+            element: <QuoteQueueDashboard />,
             errorElement: <RouteErrorFallback />
           }
         ]

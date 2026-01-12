@@ -4,7 +4,8 @@ import {
   Zap, FileEdit, Newspaper, Package, TrendingUp, FileText,
   Search, Link2, Mail, Eye, Plus, Send, Building2, FileCheck, Inbox,
   UserCircle, Clock, Megaphone, Shield, Globe, Settings, BookOpen,
-  QrCode, MessageSquare, Brain, MapPin, UserCog, Sparkles, Receipt
+  QrCode, MessageSquare, Brain, MapPin, UserCog, Sparkles, Receipt,
+  ClipboardList
 } from 'lucide-react';
 import { getCurrentUser, hasPermission } from '../lib/auth';
 
@@ -67,11 +68,15 @@ export default function NavigationMenu() {
               <>
                 <Link to="/backoffice/crm" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-lg font-semibold transition-all shadow-2xl border-2 border-purple-300 text-sm animate-pulse">
                   <Sparkles className="w-5 h-5" />
-                  <span>✨ CRM Master Ultra-Complet</span>
+                  <span>CRM Master Ultra-Complet</span>
+                </Link>
+                <Link to="/backoffice/quote-queue" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-lg font-semibold transition-all shadow-2xl border-2 border-green-300 text-sm">
+                  <ClipboardList className="w-5 h-5" />
+                  <span>File Devis</span>
                 </Link>
                 <Link to="/backoffice/whatsapp" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm">
                   <MessageSquare className="w-5 h-5" />
-                  <span>💬 WhatsApp</span>
+                  <span>WhatsApp</span>
                 </Link>
                 <Link to="/backoffice/whatsapp-settings" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm">
                   <Settings className="w-5 h-5" />
