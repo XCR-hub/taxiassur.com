@@ -49,6 +49,7 @@ const SecurityDashboard = lazy(() => import('./backoffice/SecurityDashboard'));
 const ConversionAnalytics = lazy(() => import('./backoffice/ConversionAnalytics'));
 const AnalyticsDashboard = lazy(() => import('./backoffice/AnalyticsDashboard'));
 const InsuranceCompaniesManager = lazy(() => import('./backoffice/InsuranceCompaniesManager'));
+const InsuranceCompaniesStats = lazy(() => import('./backoffice/InsuranceCompaniesStats'));
 const QuickDocumentsUpload = lazy(() => import('./backoffice/QuickDocumentsUpload'));
 const QuoteManager = lazy(() => import('./backoffice/QuoteManager'));
 const DocumentsViewer = lazy(() => import('./backoffice/DocumentsViewer'));
@@ -481,6 +482,10 @@ export const router = createBrowserRouter([
       {
         path: '/backoffice/insurance-companies',
         element: <AuthGuard><SuspenseWrapper><InsuranceCompaniesManager /></SuspenseWrapper></AuthGuard>
+      },
+      {
+        path: '/backoffice/insurance-companies-stats',
+        element: <AuthGuard><SuspenseWrapper><InsuranceCompaniesStats /></SuspenseWrapper></AuthGuard>
       },
       {
         path: '/backoffice/quotes',

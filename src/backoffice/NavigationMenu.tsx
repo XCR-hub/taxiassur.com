@@ -243,6 +243,10 @@ export default function NavigationMenu() {
               <Building2 className="w-5 h-5" />
               <span>🏢 Compagnies Assurance</span>
             </Link>
+            <Link to="/backoffice/insurance-companies-stats" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white rounded-lg font-semibold transition-all shadow-lg border-2 border-orange-300 text-sm">
+              <BarChart3 className="w-5 h-5" />
+              <span>📊 Stats Compagnies</span>
+            </Link>
             <Link to="/backoffice/quotes" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white rounded-lg font-semibold transition-all shadow-md text-sm">
               <Receipt className="w-5 h-5" />
               <span>Gestion Devis</span>
