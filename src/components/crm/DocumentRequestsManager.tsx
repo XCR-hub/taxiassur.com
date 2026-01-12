@@ -439,13 +439,13 @@ export const DocumentRequestsManager: React.FC<DocumentRequestsManagerProps> = (
 
               <form onSubmit={handleCreateRequest} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Phase du cycle <span className="text-red-500">*</span>
+                  <label className="block text-sm font-bold text-gray-900 mb-2">
+                    Phase du cycle <span className="text-red-600">*</span>
                   </label>
                   <select
                     value={createForm.phase}
                     onChange={(e) => setCreateForm({ ...createForm, phase: e.target.value as any })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-4 py-2 border-2 border-gray-400 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
                     required
                   >
                     <option value="avant_devis">📋 Avant devis</option>
@@ -454,33 +454,33 @@ export const DocumentRequestsManager: React.FC<DocumentRequestsManagerProps> = (
                     <option value="gestion">🔄 En gestion</option>
                   </select>
                   {createForm.phase === 'avant_devis' && (
-                    <p className="mt-1 text-xs text-blue-600">
+                    <p className="mt-1 text-xs text-blue-600 font-medium">
                       ℹ️ Bloquera la génération de devis si marqué comme bloquant
                     </p>
                   )}
                   {createForm.phase === 'avant_contrat' && (
-                    <p className="mt-1 text-xs text-orange-600">
+                    <p className="mt-1 text-xs text-orange-600 font-medium">
                       ⚠️ Bloquera la signature et le paiement si marqué comme bloquant
                     </p>
                   )}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Titre du document <span className="text-red-500">*</span>
+                  <label className="block text-sm font-bold text-gray-900 mb-2">
+                    Titre du document <span className="text-red-600">*</span>
                   </label>
                   <input
                     type="text"
                     value={createForm.titre}
                     onChange={(e) => setCreateForm({ ...createForm, titre: e.target.value })}
                     placeholder="Ex: Justificatif d'activité réelle"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-4 py-2 border-2 border-gray-400 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900 placeholder-gray-500"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-bold text-gray-900 mb-2">
                     Description / Instructions
                   </label>
                   <textarea
@@ -488,12 +488,12 @@ export const DocumentRequestsManager: React.FC<DocumentRequestsManagerProps> = (
                     onChange={(e) => setCreateForm({ ...createForm, description: e.target.value })}
                     placeholder="Expliquez au client quel document fournir et pourquoi..."
                     rows={3}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-4 py-2 border-2 border-gray-400 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900 placeholder-gray-500"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-bold text-gray-900 mb-2">
                     Compagnie d'assurance (optionnel)
                   </label>
                   <input
@@ -501,7 +501,7 @@ export const DocumentRequestsManager: React.FC<DocumentRequestsManagerProps> = (
                     value={createForm.compagnie}
                     onChange={(e) => setCreateForm({ ...createForm, compagnie: e.target.value })}
                     placeholder="Ex: AXA, Generali..."
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-4 py-2 border-2 border-gray-400 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900 placeholder-gray-500"
                   />
                 </div>
 
@@ -511,9 +511,9 @@ export const DocumentRequestsManager: React.FC<DocumentRequestsManagerProps> = (
                       type="checkbox"
                       checked={createForm.obligatoire}
                       onChange={(e) => setCreateForm({ ...createForm, obligatoire: e.target.checked })}
-                      className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                      className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500 border-2 border-gray-400"
                     />
-                    <span className="text-sm text-gray-700">Document obligatoire</span>
+                    <span className="text-sm font-semibold text-gray-900">Document obligatoire</span>
                   </label>
 
                   <label className="flex items-center gap-2 cursor-pointer">
@@ -521,10 +521,10 @@ export const DocumentRequestsManager: React.FC<DocumentRequestsManagerProps> = (
                       type="checkbox"
                       checked={createForm.bloquant}
                       onChange={(e) => setCreateForm({ ...createForm, bloquant: e.target.checked })}
-                      className="w-4 h-4 text-red-600 rounded focus:ring-red-500"
+                      className="w-5 h-5 text-red-600 rounded focus:ring-red-500 border-2 border-gray-400"
                     />
-                    <span className="text-sm text-gray-700 flex items-center gap-1">
-                      <Lock className="w-3 h-3" />
+                    <span className="text-sm font-semibold text-gray-900 flex items-center gap-1">
+                      <Lock className="w-4 h-4" />
                       Bloquant (empêche progression)
                     </span>
                   </label>
