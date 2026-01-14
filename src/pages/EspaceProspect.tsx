@@ -108,27 +108,41 @@ const EspaceProspect: React.FC = () => {
   }, []);
 
   const loadLeadInfo = useCallback(async () => {
-    if (!anonClient || !token) return;
+    if (!anonClient || !token) {
+      console.log('Missing anonClient or token:', { hasClient: !!anonClient, token });
+      setError('Configuration manquante');
+      setLoading(false);
+      return;
+    }
+
+    console.log('Loading lead info with token:', token);
 
     try {
+      // Utiliser la fonction RPC sécurisée au lieu de la requête directe
       const { data: leadData, error: leadError } = await anonClient
-        .from('crm_leads')
-        .select('*')
-        .eq('access_token', token)
+        .rpc('get_lead_by_token', { p_token: token })
         .maybeSingle();
 
-      if (leadError) throw leadError;
+      console.log('Lead query result:', { data: leadData, error: leadError });
+
+      if (leadError) {
+        console.error('Lead query error:', leadError);
+        throw leadError;
+      }
 
       if (leadData) {
+        console.log('Lead found:', leadData.id);
         setLeadInfo(leadData);
         if (leadData.converted_to_client) {
           setActiveTab('contrat');
         }
       } else {
-        setError('Lien invalide ou expire');
+        console.warn('No lead found for token');
+        setError('Lien invalide ou expire. Verifiez que le lien est correct.');
       }
     } catch (err: any) {
-      setError('Lien invalide ou expire');
+      console.error('Error loading lead:', err);
+      setError(`Erreur: ${err.message || 'Lien invalide ou expire'}`);
     } finally {
       setLoading(false);
     }
@@ -141,27 +155,25 @@ const EspaceProspect: React.FC = () => {
   }, [token, anonClient, loadLeadInfo]);
 
   const loadDocuments = useCallback(async () => {
-    if (!leadInfo?.id || !anonClient) return;
+    if (!token || !anonClient) return;
 
     try {
+      // Utiliser la fonction RPC sécurisée
       const { data, error } = await anonClient
-        .from('prospect_documents')
-        .select('*')
-        .eq('lead_id', leadInfo.id)
-        .order('uploaded_at', { ascending: false });
+        .rpc('get_prospect_documents_by_token', { p_token: token });
 
       if (error) throw error;
       setUploadedDocuments(data || []);
     } catch (err) {
       console.error('Error loading documents:', err);
     }
-  }, [leadInfo, anonClient]);
+  }, [token, anonClient]);
 
   useEffect(() => {
-    if (leadInfo?.id && anonClient) {
+    if (token && anonClient && leadInfo) {
       loadDocuments();
     }
-  }, [leadInfo, anonClient, loadDocuments]);
+  }, [token, anonClient, leadInfo, loadDocuments]);
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -171,7 +183,7 @@ const EspaceProspect: React.FC = () => {
   };
 
   const handleFileUpload = async (documentType: string, file: File) => {
-    if (!token || !leadInfo?.id || !anonClient) return;
+    if (!token || !anonClient) return;
 
     setUploading(documentType);
     setError(null);
@@ -181,6 +193,7 @@ const EspaceProspect: React.FC = () => {
       const fileExt = file.name.split('.').pop();
       const fileName = `${token}/${documentType}_${Date.now()}.${fileExt}`;
 
+      // Upload vers Storage
       const { error: uploadError } = await anonClient.storage
         .from('prospect-documents')
         .upload(fileName, file, {
@@ -190,17 +203,14 @@ const EspaceProspect: React.FC = () => {
 
       if (uploadError) throw uploadError;
 
-      const { error: dbError } = await anonClient
-        .from('prospect_documents')
-        .insert({
-          lead_id: leadInfo.id,
-          document_type: documentType,
-          file_name: file.name,
-          file_path: fileName,
-          file_size: file.size,
-          mime_type: file.type,
-          status: 'pending'
-        });
+      // Utiliser la fonction RPC pour créer le document
+      const { error: dbError } = await anonClient.rpc('upload_prospect_document_by_token', {
+        p_token: token,
+        p_document_type: documentType,
+        p_file_name: file.name,
+        p_file_path: fileName,
+        p_file_size: file.size
+      });
 
       if (dbError) throw dbError;
 
