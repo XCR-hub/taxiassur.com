@@ -18,6 +18,95 @@ interface LeadNotificationRequest {
   access_token?: string;
 }
 
+function base64Encode(str: string): string {
+  return btoa(str);
+}
+
+async function sendEmailSMTP(
+  to: string,
+  toName: string,
+  subject: string,
+  htmlBody: string,
+  fromEmail: string = "team@taxiassur.com",
+  fromName: string = "TaxiAssur"
+): Promise<void> {
+  const SMTP_HOST = Deno.env.get("IONOS_SMTP_HOST") || "smtp.ionos.fr";
+  const SMTP_PORT = parseInt(Deno.env.get("IONOS_SMTP_PORT") || "465");
+  const SMTP_USER = Deno.env.get("IONOS_EMAIL_USER") || "team@taxiassur.com";
+  const SMTP_PASS = Deno.env.get("IONOS_EMAIL_PASSWORD");
+
+  if (!SMTP_PASS) {
+    throw new Error("IONOS_EMAIL_PASSWORD not configured");
+  }
+
+  const conn = await Deno.connect({
+    hostname: SMTP_HOST,
+    port: SMTP_PORT,
+  });
+
+  const encoder = new TextEncoder();
+  const decoder = new TextDecoder();
+
+  async function readResponse(): Promise<string> {
+    const buffer = new Uint8Array(1024);
+    const n = await conn.read(buffer);
+    if (n === null) return "";
+    return decoder.decode(buffer.subarray(0, n));
+  }
+
+  async function sendCommand(command: string): Promise<string> {
+    await conn.write(encoder.encode(command + "\r\n"));
+    return await readResponse();
+  }
+
+  try {
+    await readResponse();
+    await sendCommand(`EHLO taxiassur.com`);
+    await sendCommand("STARTTLS");
+
+    const tlsConn = await Deno.startTls(conn, { hostname: SMTP_HOST });
+
+    async function readResponseTLS(): Promise<string> {
+      const buffer = new Uint8Array(1024);
+      const n = await tlsConn.read(buffer);
+      if (n === null) return "";
+      return decoder.decode(buffer.subarray(0, n));
+    }
+
+    async function sendCommandTLS(command: string): Promise<string> {
+      await tlsConn.write(encoder.encode(command + "\r\n"));
+      return await readResponseTLS();
+    }
+
+    await sendCommandTLS(`EHLO taxiassur.com`);
+    await sendCommandTLS("AUTH LOGIN");
+    await sendCommandTLS(base64Encode(SMTP_USER));
+    await sendCommandTLS(base64Encode(SMTP_PASS));
+    await sendCommandTLS(`MAIL FROM:<${fromEmail}>`);
+    await sendCommandTLS(`RCPT TO:<${to}>`);
+    await sendCommandTLS("DATA");
+
+    const emailContent = [
+      `From: ${fromName} <${fromEmail}>`,
+      `To: ${toName} <${to}>`,
+      `Subject: ${subject}`,
+      `MIME-Version: 1.0`,
+      `Content-Type: text/html; charset=UTF-8`,
+      `Content-Transfer-Encoding: 8bit`,
+      ``,
+      htmlBody,
+      `.`,
+    ].join("\r\n");
+
+    await sendCommandTLS(emailContent);
+    await sendCommandTLS("QUIT");
+    tlsConn.close();
+  } catch (error) {
+    conn.close();
+    throw error;
+  }
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 200, headers: corsHeaders });
@@ -25,19 +114,9 @@ Deno.serve(async (req: Request) => {
 
   try {
     const lead: LeadNotificationRequest = await req.json();
-    console.log("Sending notification for lead:", lead.lead_id);
+    console.log("Sending notification for lead via IONOS SMTP:", lead.lead_id);
 
-    const BREVO_API_KEY = Deno.env.get("BREVO_API_KEY");
-    
-    if (!BREVO_API_KEY) {
-      console.error("BREVO_API_KEY not configured");
-      return new Response(
-        JSON.stringify({ success: false, error: "Email service not configured" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    const prospectSpaceUrl = lead.access_token 
+    const prospectSpaceUrl = lead.access_token
       ? `https://taxiassur.com/espace-prospect/${lead.access_token}`
       : "https://taxiassur.com/espace-documents";
 
@@ -106,7 +185,7 @@ Deno.serve(async (req: Request) => {
       </div>
     </div>
     <div class="footer">
-      <strong>TaxiAssur CRM</strong> - Notification automatique
+      <strong>TaxiAssur CRM</strong> - Notification automatique via IONOS SMTP
     </div>
   </div>
 </body>
@@ -181,35 +260,52 @@ Deno.serve(async (req: Request) => {
 </body>
 </html>`;
 
-    const emailPromises = [
-      sendBrevoEmail(BREVO_API_KEY, {
-        to: "team@taxiassur.com",
-        toName: "Equipe TaxiAssur",
-        subject: `[TAXIASSUR] Nouveau Lead - ${lead.name} - ${lead.city}`,
-        html: teamEmailHtml
-      }),
-      sendBrevoEmail(BREVO_API_KEY, {
-        to: "commercial@xcr.fr",
-        toName: "Commercial XCR",
-        subject: `[TAXIASSUR] Nouveau Lead - ${lead.name} - ${lead.city}`,
-        html: teamEmailHtml
-      }),
-      sendBrevoEmail(BREVO_API_KEY, {
-        to: lead.email,
-        toName: lead.name,
-        subject: "Demande confirmee ! Votre expert TaxiAssur vous recontacte rapidement",
-        html: clientEmailHtml
-      })
-    ];
+    let sent = 0;
+    const errors: string[] = [];
 
-    const results = await Promise.allSettled(emailPromises);
-    const sent = results.filter(r => r.status === "fulfilled").length;
-    const failed = results.filter(r => r.status === "rejected");
-
-    console.log(`Emails sent: ${sent}/3`);
-    if (failed.length > 0) {
-      console.error("Failed emails:", failed.map(r => r.status === "rejected" ? r.reason : ""));
+    try {
+      await sendEmailSMTP(
+        "team@taxiassur.com",
+        "Equipe TaxiAssur",
+        `[TAXIASSUR] Nouveau Lead - ${lead.name} - ${lead.city}`,
+        teamEmailHtml
+      );
+      sent++;
+      console.log("Email sent to team@taxiassur.com");
+    } catch (err) {
+      console.error("Failed to send to team:", err);
+      errors.push(`team: ${err.message}`);
     }
+
+    try {
+      await sendEmailSMTP(
+        "commercial@xcr.fr",
+        "Commercial XCR",
+        `[TAXIASSUR] Nouveau Lead - ${lead.name} - ${lead.city}`,
+        teamEmailHtml
+      );
+      sent++;
+      console.log("Email sent to commercial@xcr.fr");
+    } catch (err) {
+      console.error("Failed to send to commercial:", err);
+      errors.push(`commercial: ${err.message}`);
+    }
+
+    try {
+      await sendEmailSMTP(
+        lead.email,
+        lead.name,
+        "Demande confirmee ! Votre expert TaxiAssur vous recontacte rapidement",
+        clientEmailHtml
+      );
+      sent++;
+      console.log(`Email sent to client: ${lead.email}`);
+    } catch (err) {
+      console.error("Failed to send to client:", err);
+      errors.push(`client: ${err.message}`);
+    }
+
+    console.log(`Emails sent via IONOS SMTP: ${sent}/3`);
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -221,7 +317,7 @@ Deno.serve(async (req: Request) => {
         type: "email",
         direction: "outbound",
         subject: `[TAXIASSUR] Nouveau Lead - ${lead.name}`,
-        content: "Email de notification interne envoye a l'equipe",
+        content: "Email de notification interne envoye a l'equipe via IONOS SMTP",
         to_email: "team@taxiassur.com",
         from_email: "team@taxiassur.com"
       },
@@ -230,18 +326,19 @@ Deno.serve(async (req: Request) => {
         type: "email",
         direction: "outbound",
         subject: "Demande confirmee ! Votre expert TaxiAssur vous recontacte rapidement",
-        content: "Email de confirmation envoye au prospect",
+        content: "Email de confirmation envoye au prospect via IONOS SMTP",
         to_email: lead.email,
         from_email: "team@taxiassur.com"
       }
     ]);
 
     return new Response(
-      JSON.stringify({ 
-        success: true, 
-        message: `${sent} emails sent successfully`,
+      JSON.stringify({
+        success: true,
+        message: `${sent} emails sent successfully via IONOS SMTP`,
         emails_sent: sent,
-        emails_failed: failed.length
+        emails_failed: 3 - sent,
+        errors: errors.length > 0 ? errors : undefined
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
@@ -249,41 +346,11 @@ Deno.serve(async (req: Request) => {
   } catch (error) {
     console.error("Send notification error:", error);
     return new Response(
-      JSON.stringify({ 
-        success: false, 
-        error: error instanceof Error ? error.message : "Unknown error" 
+      JSON.stringify({
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error"
       }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });
-
-async function sendBrevoEmail(apiKey: string, params: {
-  to: string;
-  toName: string;
-  subject: string;
-  html: string;
-}): Promise<void> {
-  const response = await fetch("https://api.brevo.com/v3/smtp/email", {
-    method: "POST",
-    headers: {
-      "Accept": "application/json",
-      "Content-Type": "application/json",
-      "api-key": apiKey
-    },
-    body: JSON.stringify({
-      sender: { name: "TaxiAssur", email: "contact@em5892.taxiassur.com" },
-      to: [{ email: params.to, name: params.toName }],
-      subject: params.subject,
-      htmlContent: params.html
-    })
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error(`Brevo error for ${params.to}:`, errorText);
-    throw new Error(`Brevo API error: ${response.status}`);
-  }
-
-  console.log(`Email sent to ${params.to}`);
-}

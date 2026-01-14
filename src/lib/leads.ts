@@ -354,7 +354,6 @@ export async function createLead(input: CreateLeadInput): Promise<{ success: boo
       .insert({
         first_name: firstName,
         last_name: lastName,
-        full_name: input.name,
         email: input.email,
         phone: input.phone,
         city: input.city,
