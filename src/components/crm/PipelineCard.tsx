@@ -1,7 +1,8 @@
-import React, { useRef, useState } from 'react';
-import { Calendar, Tag, TrendingUp, Mail, Phone } from 'lucide-react';
+import React, { useRef, useState, useEffect } from 'react';
+import { Calendar, Tag, TrendingUp, Mail, Phone, FileCheck, CreditCard, Clock, CheckCircle2, AlertCircle } from 'lucide-react';
 import { CRMLead, PIPELINE_STATUSES } from '@/lib/crm-pipeline';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/lib/supabase';
 
 interface PipelineCardProps {
   lead: CRMLead;
@@ -10,6 +11,15 @@ interface PipelineCardProps {
   onDragEnd?: () => void;
   isDragging?: boolean;
   className?: string;
+}
+
+interface LeadIndicators {
+  documentsComplete: boolean;
+  documentsMissing: number;
+  hasQuote: boolean;
+  hasSignature: boolean;
+  paymentStatus: 'none' | 'pending' | 'paid';
+  daysInPipeline: number;
 }
 
 export const PipelineCard: React.FC<PipelineCardProps> = ({
@@ -23,6 +33,46 @@ export const PipelineCard: React.FC<PipelineCardProps> = ({
   const statusInfo = PIPELINE_STATUSES[lead.status];
   const isDraggingRef = useRef(false);
   const mouseDownPos = useRef<{ x: number; y: number } | null>(null);
+  const [indicators, setIndicators] = useState<LeadIndicators>({
+    documentsComplete: false,
+    documentsMissing: 7,
+    hasQuote: false,
+    hasSignature: false,
+    paymentStatus: 'none',
+    daysInPipeline: 0
+  });
+
+  useEffect(() => {
+    const loadIndicators = async () => {
+      try {
+        const [docsResult, quotesResult, contractResult] = await Promise.all([
+          supabase.from('crm_lead_documents').select('status').eq('lead_id', lead.id),
+          supabase.from('crm_lead_quotes').select('id, status').eq('lead_id', lead.id),
+          supabase.from('lead_contracts').select('status, down_payment_status').eq('lead_id', lead.id).limit(1)
+        ]);
+
+        const docs = docsResult.data || [];
+        const validatedDocs = docs.filter(d => d.status === 'validated').length;
+        const quotes = quotesResult.data || [];
+        const contract = contractResult.data?.[0];
+
+        const daysInPipeline = Math.floor((Date.now() - new Date(lead.created_at).getTime()) / (1000 * 60 * 60 * 24));
+
+        setIndicators({
+          documentsComplete: validatedDocs >= 5,
+          documentsMissing: Math.max(0, 5 - validatedDocs),
+          hasQuote: quotes.length > 0,
+          hasSignature: contract?.status === 'signed',
+          paymentStatus: contract?.down_payment_status === 'paid' ? 'paid' : contract?.down_payment_status === 'pending' ? 'pending' : 'none',
+          daysInPipeline
+        });
+      } catch (error) {
+        console.error('Error loading indicators:', error);
+      }
+    };
+
+    loadIndicators();
+  }, [lead.id, lead.created_at]);
 
   const getScoreColor = (score?: number) => {
     if (!score) return 'text-gray-400';
@@ -139,22 +189,73 @@ export const PipelineCard: React.FC<PipelineCardProps> = ({
         )}
       </div>
 
-      <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between">
-        {lead.last_contact && (
-          <div className="flex items-center text-xs text-gray-500">
-            <Calendar size={12} className="mr-1" />
-            <span>{new Date(lead.last_contact).toLocaleDateString('fr-FR')}</span>
+      <div className="mt-3 pt-3 border-t border-gray-100">
+        <div className="flex items-center gap-2 mb-2">
+          <div
+            className={cn(
+              'flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium',
+              indicators.documentsComplete
+                ? 'bg-green-100 text-green-700'
+                : 'bg-orange-100 text-orange-700'
+            )}
+            title={indicators.documentsComplete ? 'Documents complets' : `${indicators.documentsMissing} doc(s) manquant(s)`}
+          >
+            <FileCheck size={10} />
+            {indicators.documentsComplete ? 'OK' : indicators.documentsMissing}
           </div>
-        )}
 
-        {lead.retention_score && (
-          <div className="flex items-center text-xs">
-            <TrendingUp size={12} className="mr-1" />
-            <span className={getScoreColor(lead.retention_score)}>
-              {lead.retention_score}%
-            </span>
-          </div>
-        )}
+          {indicators.hasQuote && (
+            <div className="flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-cyan-100 text-cyan-700" title="Devis envoye">
+              <CheckCircle2 size={10} />
+              Devis
+            </div>
+          )}
+
+          {indicators.paymentStatus === 'paid' && (
+            <div className="flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-green-100 text-green-700" title="Paiement recu">
+              <CreditCard size={10} />
+              Paye
+            </div>
+          )}
+
+          {indicators.paymentStatus === 'pending' && (
+            <div className="flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-700" title="En attente de paiement">
+              <CreditCard size={10} />
+              Attente
+            </div>
+          )}
+
+          {indicators.daysInPipeline > 7 && (
+            <div
+              className={cn(
+                'flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium',
+                indicators.daysInPipeline > 14 ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'
+              )}
+              title={`${indicators.daysInPipeline} jours dans le pipeline`}
+            >
+              <Clock size={10} />
+              {indicators.daysInPipeline}j
+            </div>
+          )}
+        </div>
+
+        <div className="flex items-center justify-between">
+          {lead.last_contact && (
+            <div className="flex items-center text-xs text-gray-500">
+              <Calendar size={12} className="mr-1" />
+              <span>{new Date(lead.last_contact).toLocaleDateString('fr-FR')}</span>
+            </div>
+          )}
+
+          {lead.retention_score && (
+            <div className="flex items-center text-xs">
+              <TrendingUp size={12} className="mr-1" />
+              <span className={getScoreColor(lead.retention_score)}>
+                {lead.retention_score}%
+              </span>
+            </div>
+          )}
+        </div>
       </div>
 
       {lead.tags && lead.tags.length > 0 && (

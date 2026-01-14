@@ -12,6 +12,7 @@ export type PipelineStatus =
   | 'RELANCE_ACTIVE'
   | 'SIGNATURE_PENDING'
   | 'SIGNED'
+  | 'DOWN_PAYMENT_REQUIRED'
   | 'PAYMENT_PENDING'
   | 'ACTIVE_CLIENT'
   | 'CROSS_SELLING'
@@ -42,6 +43,7 @@ export const PIPELINE_STATUSES: Record<PipelineStatus, { label: string; color: s
   RELANCE_ACTIVE: { label: 'Relance Active', color: 'amber', icon: '🔔' },
   SIGNATURE_PENDING: { label: 'Signature en Attente', color: 'emerald', icon: '✍️' },
   SIGNED: { label: 'Signé', color: 'green', icon: '✅' },
+  DOWN_PAYMENT_REQUIRED: { label: 'Comptant Requis', color: 'orange', icon: '💳' },
   PAYMENT_PENDING: { label: 'Paiement en Attente', color: 'yellow', icon: '💰' },
   ACTIVE_CLIENT: { label: 'Client Actif', color: 'green', icon: '🎉' },
   CROSS_SELLING: { label: 'Cross-sell', color: 'purple', icon: '🎁' },
@@ -59,28 +61,35 @@ export const PIPELINE_TRANSITIONS: PipelineTransition[] = [
   { from: 'CONTACT_CONFIRMED', to: 'DOCUMENTS_REQUIRED', label: 'Demander Docs', autoActions: ['send_documents_request'] },
   { from: 'DOCUMENTS_REQUIRED', to: 'DOCUMENTS_PARTIAL', label: 'Docs Partiels' },
   { from: 'DOCUMENTS_PARTIAL', to: 'READY_FOR_QUOTE', label: 'Compléter Docs' },
+  { from: 'DOCUMENTS_REQUIRED', to: 'READY_FOR_QUOTE', label: 'Docs Complets' },
   { from: 'READY_FOR_QUOTE', to: 'QUOTE_SENT', label: 'Envoyer Devis', autoActions: ['generate_quote', 'send_quote_email'] },
   { from: 'QUOTE_SENT', to: 'SIGNATURE_PENDING', label: 'Demander Signature', autoActions: ['send_signature_request'] },
   { from: 'QUOTE_SENT', to: 'NO_RESPONSE', label: 'Sans Réponse' },
   { from: 'NO_RESPONSE', to: 'RELANCE_ACTIVE', label: 'Relancer', autoActions: ['send_followup'] },
   { from: 'RELANCE_ACTIVE', to: 'QUOTE_SENT', label: 'Relance OK' },
   { from: 'SIGNATURE_PENDING', to: 'SIGNED', label: 'Signature Obtenue' },
-  { from: 'SIGNED', to: 'PAYMENT_PENDING', label: 'Demander Paiement', autoActions: ['send_payment_link'] },
+  { from: 'SIGNED', to: 'DOWN_PAYMENT_REQUIRED', label: 'Comptant Requis', autoActions: ['create_cic_payment_link'] },
+  { from: 'SIGNED', to: 'PAYMENT_PENDING', label: 'Paiement Mensuel', autoActions: ['send_payment_link'] },
+  { from: 'DOWN_PAYMENT_REQUIRED', to: 'ACTIVE_CLIENT', label: 'Comptant Recu', autoActions: ['send_contract_confirmation'] },
+  { from: 'DOWN_PAYMENT_REQUIRED', to: 'PAYMENT_PENDING', label: 'Attente Paiement' },
   { from: 'PAYMENT_PENDING', to: 'ACTIVE_CLIENT', label: 'Activer Client', autoActions: ['send_contract_confirmation'] },
   { from: 'ACTIVE_CLIENT', to: 'CROSS_SELLING', label: 'Cross-sell' },
-  { from: 'ACTIVE_CLIENT', to: 'RISK_CHURN', label: 'Risque Départ' },
-  { from: 'RISK_CHURN', to: 'ACTIVE_CLIENT', label: 'Rétention OK' },
-  { from: 'RISK_CHURN', to: 'CLIENT_LOST', label: 'Perdu Définitif', requiresNote: true },
+  { from: 'ACTIVE_CLIENT', to: 'RISK_CHURN', label: 'Risque Depart' },
+  { from: 'RISK_CHURN', to: 'ACTIVE_CLIENT', label: 'Retention OK' },
+  { from: 'RISK_CHURN', to: 'CLIENT_LOST', label: 'Perdu Definitif', requiresNote: true },
   { from: 'RISK_CHURN', to: 'LOST_RECONTACT_SCHEDULED', label: 'Programmer Recontact', requiresNote: true },
-  { from: 'ACTIVE_CLIENT', to: 'SINISTER', label: 'Déclarer Sinistre' },
+  { from: 'ACTIVE_CLIENT', to: 'SINISTER', label: 'Declarer Sinistre' },
   { from: 'ACTIVE_CLIENT', to: 'ATTESTATION_REQUEST', label: 'Demande Attestation' },
   { from: 'ACTIVE_CLIENT', to: 'SUPPORT_ASSISTANCE', label: 'Demande Assistance' },
-  { from: 'QUOTE_SENT', to: 'CLIENT_LOST', label: 'Perdu Définitif', requiresNote: true },
+  { from: 'SINISTER', to: 'ACTIVE_CLIENT', label: 'Sinistre Clos' },
+  { from: 'ATTESTATION_REQUEST', to: 'ACTIVE_CLIENT', label: 'Attestation Envoyee' },
+  { from: 'SUPPORT_ASSISTANCE', to: 'ACTIVE_CLIENT', label: 'Assistance Terminee' },
+  { from: 'QUOTE_SENT', to: 'CLIENT_LOST', label: 'Perdu Definitif', requiresNote: true },
   { from: 'QUOTE_SENT', to: 'LOST_RECONTACT_SCHEDULED', label: 'Programmer Recontact', requiresNote: true },
   { from: 'NO_RESPONSE', to: 'LOST_RECONTACT_SCHEDULED', label: 'Programmer Recontact', requiresNote: true },
   { from: 'RELANCE_ACTIVE', to: 'LOST_RECONTACT_SCHEDULED', label: 'Programmer Recontact', requiresNote: true },
-  { from: 'LOST_RECONTACT_SCHEDULED', to: 'NEW_LEAD', label: 'Réactiver (Auto)', autoActions: ['send_recontact_email'] },
-  { from: 'LOST_RECONTACT_SCHEDULED', to: 'CLIENT_LOST', label: 'Abandonner Définitivement' }
+  { from: 'LOST_RECONTACT_SCHEDULED', to: 'NEW_LEAD', label: 'Reactiver (Auto)', autoActions: ['send_recontact_email'] },
+  { from: 'LOST_RECONTACT_SCHEDULED', to: 'CLIENT_LOST', label: 'Abandonner Definitivement' }
 ];
 
 export interface CRMLead {

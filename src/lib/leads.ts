@@ -379,180 +379,33 @@ export async function createLead(input: CreateLeadInput): Promise<{ success: boo
 }
 
 async function sendLeadNotificationEmails(lead: any): Promise<void> {
-  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-  const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-  if (!supabaseUrl || !supabaseAnonKey) {
-    logger.warn('Supabase credentials not configured, skipping email');
-    return;
-  }
-
-  // Email de confirmation au client
-  const clientEmailSubject = '✅ Demande de devis reçue - TaxiAssur';
-  const clientEmailHtml = `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <style>
-    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-    .header { background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%); color: white; padding: 30px; text-align: center; }
-    .content { padding: 30px; max-width: 600px; margin: 0 auto; }
-    .info-box { background: #f0f9ff; border-left: 4px solid #3b82f6; padding: 15px; margin: 20px 0; }
-    .button { display: inline-block; background: #3b82f6; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; margin: 20px 0; }
-    .footer { background: #f8f9fa; padding: 20px; text-align: center; margin-top: 30px; font-size: 0.9em; color: #666; }
-  </style>
-</head>
-<body>
-  <div class="header">
-    <h1>🚕 TaxiAssur</h1>
-    <p>Votre demande de devis a bien été reçue</p>
-  </div>
-
-  <div class="content">
-    <p>Bonjour <strong>${lead.name}</strong>,</p>
-
-    <p>Nous avons bien reçu votre demande de devis pour l'assurance taxi/VTC. Notre équipe va l'étudier dans les plus brefs délais.</p>
-
-    <div class="info-box">
-      <h3>📋 Récapitulatif de votre demande</h3>
-      <ul>
-        <li><strong>Nom:</strong> ${lead.name}</li>
-        <li><strong>Email:</strong> ${lead.email}</li>
-        <li><strong>Téléphone:</strong> ${lead.phone}</li>
-        <li><strong>Ville:</strong> ${lead.city}</li>
-        <li><strong>Type d'activité:</strong> ${lead.status || 'Non précisé'}</li>
-        <li><strong>Immatriculation:</strong> ${lead.immatriculation || 'Non renseignée'}</li>
-      </ul>
-    </div>
-
-    <p><strong>⏱️ Délai de réponse:</strong> Nous vous contacterons sous 24 heures ouvrées.</p>
-
-    <p><strong>📞 Besoin d'aide ?</strong> N'hésitez pas à nous appeler au <strong>01 80 85 57 81</strong></p>
-
-    <div style="text-align: center;">
-      <a href="https://taxiassur.com" class="button">Visitez notre site</a>
-    </div>
-  </div>
-
-  <div class="footer">
-    <p><strong>TaxiAssur - L'assurance des professionnels du taxi et VTC</strong></p>
-    <p>📧 team@taxiassur.com | ☎️ 01 80 85 57 81</p>
-    <p style="margin-top: 15px; font-size: 0.85em;">
-      Vous recevez cet email suite à votre demande de devis sur taxiassur.com
-    </p>
-  </div>
-</body>
-</html>`;
-
-  // Email de notification à l'équipe
-  const teamEmailSubject = `🎯 Nouveau lead: ${lead.name} - ${lead.city}`;
-  const teamEmailHtml = `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <style>
-    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-    .header { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 20px; text-align: center; }
-    .content { padding: 20px; }
-    .lead-box { background: #f0fdf4; border: 2px solid #10b981; padding: 20px; margin: 20px 0; border-radius: 8px; }
-    .info-line { padding: 8px 0; border-bottom: 1px solid #e5e7eb; }
-    .button { display: inline-block; background: #10b981; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; margin: 15px 0; }
-    .footer { background: #f8f9fa; padding: 15px; text-align: center; margin-top: 20px; font-size: 0.9em; color: #666; }
-  </style>
-</head>
-<body>
-  <div class="header">
-    <h1>🎯 NOUVEAU LEAD</h1>
-    <p>Demande de devis reçue</p>
-  </div>
-
-  <div class="content">
-    <div class="lead-box">
-      <h2>👤 Informations du Lead</h2>
-
-      <div class="info-line">
-        <strong>Nom:</strong> ${lead.name}
-      </div>
-      <div class="info-line">
-        <strong>Email:</strong> <a href="mailto:${lead.email}">${lead.email}</a>
-      </div>
-      <div class="info-line">
-        <strong>Téléphone:</strong> <a href="tel:${lead.phone}">${lead.phone}</a>
-      </div>
-      <div class="info-line">
-        <strong>Ville:</strong> ${lead.city}
-      </div>
-      <div class="info-line">
-        <strong>Type d'activité:</strong> ${lead.status || 'Non précisé'}
-      </div>
-      <div class="info-line">
-        <strong>Immatriculation:</strong> ${lead.immatriculation || 'Non renseignée'}
-      </div>
-      <div class="info-line">
-        <strong>Source:</strong> ${lead.source || 'website_form'}
-      </div>
-    </div>
-
-    <p><strong>⚡ Action requise:</strong> Contacter ce lead dans les 24 heures pour maximiser les chances de conversion.</p>
-
-    <div style="text-align: center;">
-      <a href="https://taxiassur.com/backoffice/crm" class="button">Voir dans le CRM</a>
-    </div>
-  </div>
-
-  <div class="footer">
-    <p>TaxiAssur CRM - Notification automatique</p>
-  </div>
-</body>
-</html>`;
-
   try {
-    // Envoyer email au client
-    const clientResponse = await fetch(`${supabaseUrl}/functions/v1/send-email`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${supabaseAnonKey}`,
-      },
-      body: JSON.stringify({
-        to: lead.email,
-        subject: clientEmailSubject,
-        html: clientEmailHtml,
-      }),
+    const { data, error } = await supabase.functions.invoke('send-lead-notification', {
+      body: {
+        lead_id: lead.id,
+        name: lead.name,
+        email: lead.email,
+        phone: lead.phone,
+        city: lead.city,
+        status: lead.status || 'taxi',
+        immatriculation: lead.immatriculation || '',
+        access_token: lead.access_token
+      }
     });
 
-    if (clientResponse.ok) {
-      logger.log('✅ Email de confirmation envoyé au client:', lead.email);
-    } else {
-      const error = await clientResponse.text();
-      logger.warn('⚠️ Erreur envoi email client:', error);
+    if (error) {
+      logger.error('Notification edge function error:', error);
+      throw error;
     }
 
-    // Envoyer email à l'équipe
-    const teamResponse = await fetch(`${supabaseUrl}/functions/v1/send-email`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${supabaseAnonKey}`,
-      },
-      body: JSON.stringify({
-        to: 'team@taxiassur.com',
-        subject: teamEmailSubject,
-        html: teamEmailHtml,
-      }),
-    });
-
-    if (teamResponse.ok) {
-      logger.log('✅ Email de notification envoyé à l\'équipe');
+    if (data?.success) {
+      logger.log(`Notifications sent: ${data.emails_sent} emails`);
     } else {
-      const error = await teamResponse.text();
-      logger.warn('⚠️ Erreur envoi email équipe:', error);
+      logger.warn('Notification response:', data);
     }
-  } catch (error) {
-    logger.error('❌ Erreur lors de l\'envoi des emails:', error);
-    throw error;
+  } catch (err) {
+    logger.error('Failed to send lead notifications:', err);
+    throw err;
   }
 }
 

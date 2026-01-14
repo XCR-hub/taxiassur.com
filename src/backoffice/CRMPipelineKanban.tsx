@@ -203,6 +203,7 @@ const CRMPipelineKanban: React.FC = () => {
     'QUOTE_SENT',
     'SIGNATURE_PENDING',
     'SIGNED',
+    'DOWN_PAYMENT_REQUIRED',
     'PAYMENT_PENDING',
     'ACTIVE_CLIENT',
     'LOST_RECONTACT_SCHEDULED'
