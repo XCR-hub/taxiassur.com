@@ -1,12 +1,12 @@
 import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Search, Filter, RefreshCw, AlertCircle, TrendingUp, Clock } from 'lucide-react';
+import { Plus, Search, Filter, RefreshCw, AlertCircle, TrendingUp, Clock, Zap } from 'lucide-react';
 import { pipelineService, PIPELINE_STATUSES, PipelineStatus, CRMLead } from '@/lib/crm-pipeline';
 import { PipelineCard } from '@/components/crm/PipelineCard';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/lib/supabase';
 
-const CRMPipelineKanban: React.FC = () => {
+const CRMPipelineKanbanOptimized: React.FC = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -17,7 +17,7 @@ const CRMPipelineKanban: React.FC = () => {
   const [dragOverStatus, setDragOverStatus] = useState<PipelineStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
-  const [updateCount, setUpdateCount] = useState(0);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const autoRefreshInterval = useRef<NodeJS.Timeout | null>(null);
   const realtimeChannel = useRef<any>(null);
 
@@ -29,7 +29,7 @@ const CRMPipelineKanban: React.FC = () => {
     return () => clearTimeout(timer);
   }, [search]);
 
-  // Load kanban data
+  // Load kanban data with error handling
   const loadKanbanData = useCallback(async (showLoader = true) => {
     if (showLoader) setLoading(true);
     setError(null);
@@ -38,10 +38,9 @@ const CRMPipelineKanban: React.FC = () => {
       const data = await pipelineService.getKanbanData();
       setKanbanData(data);
       setLastUpdate(new Date());
-      setUpdateCount(prev => prev + 1);
     } catch (error) {
       console.error('Failed to load kanban:', error);
-      setError('Erreur lors du chargement des données. Veuillez réessayer.');
+      setError('Erreur lors du chargement. Cliquez sur Actualiser pour réessayer.');
     } finally {
       if (showLoader) setLoading(false);
       setRefreshing(false);
@@ -69,7 +68,7 @@ const CRMPipelineKanban: React.FC = () => {
   // Realtime subscription
   useEffect(() => {
     realtimeChannel.current = supabase
-      .channel('crm_leads_changes')
+      .channel('crm_leads_pipeline_changes')
       .on(
         'postgres_changes',
         {
@@ -98,21 +97,24 @@ const CRMPipelineKanban: React.FC = () => {
 
   const handleDragStart = useCallback((lead: CRMLead) => {
     setDraggedLead(lead);
+    document.body.style.cursor = 'grabbing';
   }, []);
 
   const handleDragEnd = useCallback(() => {
     setDraggedLead(null);
     setDragOverStatus(null);
+    document.body.style.cursor = '';
   }, []);
 
   const handleDragOver = useCallback((e: React.DragEvent, status: PipelineStatus) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
-    setDragOverStatus(status);
-  }, []);
+    if (dragOverStatus !== status) {
+      setDragOverStatus(status);
+    }
+  }, [dragOverStatus]);
 
   const handleDragLeave = useCallback((e: React.DragEvent) => {
-    // Only clear if leaving the column container, not child elements
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
     if (
       e.clientX < rect.left ||
@@ -136,21 +138,22 @@ const CRMPipelineKanban: React.FC = () => {
     if (oldStatus === targetStatus) {
       setDraggedLead(null);
       setDragOverStatus(null);
+      document.body.style.cursor = '';
       return;
     }
 
     const updatedLead = { ...draggedLead, status: targetStatus };
+    const oldStatusLabel = PIPELINE_STATUSES[oldStatus].label;
+    const newStatusLabel = PIPELINE_STATUSES[targetStatus].label;
 
-    // Optimistic update with smooth transition
+    // Optimistic update
     setKanbanData(prev => {
       const newData = { ...prev };
 
-      // Remove from old column
       if (newData[oldStatus]) {
         newData[oldStatus] = newData[oldStatus].filter(l => l.id !== draggedLead.id);
       }
 
-      // Add to new column at the top
       if (newData[targetStatus]) {
         newData[targetStatus] = [updatedLead, ...newData[targetStatus]];
       } else {
@@ -162,15 +165,18 @@ const CRMPipelineKanban: React.FC = () => {
 
     setDraggedLead(null);
     setDragOverStatus(null);
+    document.body.style.cursor = '';
+
+    // Show success message
+    setSuccessMessage(`${draggedLead.full_name} déplacé de "${oldStatusLabel}" vers "${newStatusLabel}"`);
+    setTimeout(() => setSuccessMessage(null), 3000);
 
     try {
       await pipelineService.updateLeadStatus(draggedLead.id, targetStatus);
-      // Refresh to get server state
       setTimeout(() => loadKanbanData(false), 1000);
     } catch (error) {
       console.error('Failed to update lead:', error);
-      setError('Erreur lors de la mise à jour. Restauration...');
-      // Rollback on error
+      setError('Erreur lors de la mise à jour. Restauration en cours...');
       await loadKanbanData(false);
     }
   }, [draggedLead, loadKanbanData]);
@@ -224,12 +230,12 @@ const CRMPipelineKanban: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 p-8">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-8">
         <div className="animate-pulse">
-          <div className="h-20 bg-gray-200 rounded-xl mb-6"></div>
+          <div className="h-20 bg-gradient-to-r from-gray-200 to-gray-300 rounded-xl mb-6"></div>
           <div className="flex gap-4 overflow-x-auto">
             {[...Array(6)].map((_, i) => (
-              <div key={i} className="w-80 h-96 bg-gray-200 rounded-xl flex-shrink-0"></div>
+              <div key={i} className="w-80 h-96 bg-gradient-to-br from-gray-200 to-gray-300 rounded-xl flex-shrink-0"></div>
             ))}
           </div>
         </div>
@@ -238,20 +244,21 @@ const CRMPipelineKanban: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/20 to-gray-100">
       {/* Header */}
-      <div className="bg-white border-b sticky top-0 z-10 shadow-sm">
+      <div className="bg-white border-b sticky top-0 z-10 shadow-sm backdrop-blur-sm bg-white/95">
         <div className="max-w-full px-6 py-4">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
-                Pipeline Kanban
+              <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+                <Zap className="text-blue-600" size={32} />
+                Pipeline Kanban Pro
                 {refreshing && (
                   <RefreshCw className="animate-spin text-blue-600" size={24} />
                 )}
               </h1>
               <div className="flex items-center gap-3 text-sm text-gray-600 mt-1">
-                <span>Gestion visuelle du cycle de vie client</span>
+                <span>Gestion visuelle ultra-rapide avec drag & drop optimisé</span>
                 <span className="text-gray-400">•</span>
                 <div className="flex items-center gap-1">
                   <Clock size={14} />
@@ -264,20 +271,28 @@ const CRMPipelineKanban: React.FC = () => {
               <button
                 onClick={handleRefresh}
                 disabled={refreshing}
-                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors flex items-center gap-2 disabled:opacity-50"
+                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-all flex items-center gap-2 disabled:opacity-50 hover:shadow-md"
               >
                 <RefreshCw size={20} className={refreshing ? 'animate-spin' : ''} />
                 Actualiser
               </button>
               <button
                 onClick={() => navigate('/backoffice/crm-killer')}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center gap-2"
+                className="px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg font-medium hover:from-blue-700 hover:to-blue-800 transition-all flex items-center gap-2 shadow-md hover:shadow-lg"
               >
                 <Plus size={20} />
                 Nouveau Lead
               </button>
             </div>
           </div>
+
+          {/* Success message */}
+          {successMessage && (
+            <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2 text-green-800 animate-in slide-in-from-top">
+              <Zap size={20} className="text-green-600" />
+              <span className="font-medium">{successMessage}</span>
+            </div>
+          )}
 
           {/* Error message */}
           {error && (
@@ -286,7 +301,7 @@ const CRMPipelineKanban: React.FC = () => {
               <span>{error}</span>
               <button
                 onClick={() => setError(null)}
-                className="ml-auto text-red-600 hover:text-red-800"
+                className="ml-auto text-red-600 hover:text-red-800 font-bold"
               >
                 ✕
               </button>
@@ -302,34 +317,42 @@ const CRMPipelineKanban: React.FC = () => {
                 placeholder="Rechercher par nom, email, téléphone, entreprise ou ville..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
               />
+              {search && (
+                <button
+                  onClick={() => setSearch('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  ✕
+                </button>
+              )}
             </div>
-            <button className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2">
+            <button className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-all flex items-center gap-2 hover:shadow-md">
               <Filter size={20} />
               Filtres
             </button>
           </div>
 
           {/* Quick stats */}
-          <div className="flex items-center gap-4 mt-4 p-3 bg-gray-50 rounded-lg">
+          <div className="flex items-center gap-4 mt-4 p-3 bg-gradient-to-r from-gray-50 to-blue-50 rounded-lg border border-gray-200">
             <div className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-              <span className="text-sm text-gray-600">
-                Mise à jour automatique
+              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+              <span className="text-sm font-medium text-gray-700">
+                Synchronisation en temps réel
               </span>
             </div>
             <div className="text-gray-400">•</div>
             <div className="text-sm text-gray-600">
-              <span className="font-semibold">{statistics.total}</span> leads
+              <span className="font-bold text-gray-900">{statistics.total}</span> leads
             </div>
             <div className="text-gray-400">•</div>
             <div className="text-sm text-gray-600">
-              <span className="font-semibold">{statistics.newLeads}</span> nouveaux
+              <span className="font-bold text-blue-600">{statistics.newLeads}</span> nouveaux
             </div>
             <div className="text-gray-400">•</div>
             <div className="text-sm text-gray-600">
-              Qualité moyenne: <span className="font-semibold">{statistics.avgQuality}%</span>
+              Qualité: <span className="font-bold text-green-600">{statistics.avgQuality}%</span>
             </div>
           </div>
         </div>
@@ -337,8 +360,8 @@ const CRMPipelineKanban: React.FC = () => {
 
       {/* Dragging indicator */}
       {draggedLead && (
-        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 pointer-events-none">
-          <div className="bg-blue-600 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 animate-bounce">
+        <div className="fixed top-24 left-1/2 -translate-x-1/2 z-50 pointer-events-none">
+          <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 animate-bounce">
             <div className="w-3 h-3 bg-white rounded-full animate-pulse"></div>
             <span className="font-bold">
               Déplacement de {draggedLead.full_name}...
@@ -440,27 +463,27 @@ const CRMPipelineKanban: React.FC = () => {
       </div>
 
       {/* Statistics panel */}
-      <div className="fixed bottom-6 right-6 bg-white rounded-lg shadow-lg border-2 border-gray-200 p-4 z-40">
-        <div className="flex items-center gap-4">
+      <div className="fixed bottom-6 right-6 bg-white rounded-xl shadow-2xl border-2 border-gray-200 p-5 z-40">
+        <div className="flex items-center gap-5">
           <div className="text-center">
             <div className="text-2xl font-bold text-blue-600">
               {statistics.total}
             </div>
-            <div className="text-xs text-gray-600">Total</div>
+            <div className="text-xs text-gray-600 font-medium">Total</div>
           </div>
           <div className="w-px h-12 bg-gray-200"></div>
           <div className="text-center">
             <div className="text-2xl font-bold text-green-600">
               {statistics.active}
             </div>
-            <div className="text-xs text-gray-600">Actifs</div>
+            <div className="text-xs text-gray-600 font-medium">Actifs</div>
           </div>
           <div className="w-px h-12 bg-gray-200"></div>
           <div className="text-center">
             <div className="text-2xl font-bold text-orange-600">
               {statistics.pending}
             </div>
-            <div className="text-xs text-gray-600">En Attente</div>
+            <div className="text-xs text-gray-600 font-medium">En Attente</div>
           </div>
           <div className="w-px h-12 bg-gray-200"></div>
           <div className="text-center">
@@ -470,7 +493,7 @@ const CRMPipelineKanban: React.FC = () => {
                 {statistics.avgQuality}%
               </div>
             </div>
-            <div className="text-xs text-gray-600">Qualité</div>
+            <div className="text-xs text-gray-600 font-medium">Qualité</div>
           </div>
         </div>
       </div>
@@ -478,4 +501,4 @@ const CRMPipelineKanban: React.FC = () => {
   );
 };
 
-export default CRMPipelineKanban;
+export default CRMPipelineKanbanOptimized;

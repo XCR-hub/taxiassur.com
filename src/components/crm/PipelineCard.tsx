@@ -6,8 +6,8 @@ import { cn } from '@/lib/utils';
 interface PipelineCardProps {
   lead: CRMLead;
   onClick?: () => void;
-  onDragStart?: (e: React.DragEvent) => void;
-  onDragEnd?: (e: React.DragEvent) => void;
+  onDragStart?: () => void;
+  onDragEnd?: () => void;
   isDragging?: boolean;
   className?: string;
 }
@@ -35,14 +35,23 @@ export const PipelineCard: React.FC<PipelineCardProps> = ({
     isDraggingRef.current = true;
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/plain', lead.id);
-    onDragStart?.(e);
+
+    // Create drag image
+    const dragImage = e.currentTarget.cloneNode(true) as HTMLElement;
+    dragImage.style.opacity = '0.8';
+    dragImage.style.transform = 'rotate(3deg)';
+    document.body.appendChild(dragImage);
+    e.dataTransfer.setDragImage(dragImage, 50, 50);
+    setTimeout(() => document.body.removeChild(dragImage), 0);
+
+    onDragStart?.();
   };
 
   const handleDragEnd = (e: React.DragEvent) => {
     setTimeout(() => {
       isDraggingRef.current = false;
     }, 100);
-    onDragEnd?.(e);
+    onDragEnd?.();
   };
 
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -85,9 +94,11 @@ export const PipelineCard: React.FC<PipelineCardProps> = ({
         }
       }}
       className={cn(
-        'bg-white rounded-lg shadow-sm border-2 border-gray-200 p-4 cursor-grab hover:shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500',
-        isDragging && 'opacity-50 scale-95 rotate-2 cursor-grabbing',
-        'hover:border-blue-300 active:cursor-grabbing',
+        'bg-white rounded-lg shadow-sm border-2 border-gray-200 p-4 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500',
+        isDragging
+          ? 'opacity-30 scale-95 cursor-grabbing border-blue-400'
+          : 'cursor-grab hover:shadow-lg hover:border-blue-300 hover:-translate-y-1',
+        'active:cursor-grabbing active:scale-98',
         className
       )}
     >
