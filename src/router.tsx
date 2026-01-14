@@ -574,6 +574,10 @@ export const router = createBrowserRouter([
         errorElement: <RouteErrorFallback />,
         children: [
           {
+            index: true,
+            element: <Navigate to="/backoffice/crm-killer/pipeline" replace />
+          },
+          {
             path: 'pipeline',
             element: <CRMPipelineKanban />,
             errorElement: <RouteErrorFallback />

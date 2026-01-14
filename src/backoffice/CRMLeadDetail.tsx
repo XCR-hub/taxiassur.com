@@ -397,7 +397,7 @@ const CRMLeadDetail: React.FC = () => {
       <div className="sticky top-0 z-40 bg-white border-b border-gray-200 px-6 py-3">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <button
-            onClick={() => navigate('/backoffice/crm-killer')}
+            onClick={() => navigate('/backoffice/crm-killer/pipeline')}
             className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
