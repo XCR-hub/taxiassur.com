@@ -1,9 +1,0 @@
-# Protection du dossier webhooks
-<Files "*.php">
-    Order Allow,Deny
-    Allow from all
-</Files>
-
-# Logs d'erreur pour debug
-php_flag log_errors on
-php_value error_log /tmp/php_errors.log
