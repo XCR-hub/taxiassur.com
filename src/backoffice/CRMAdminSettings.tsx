@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Settings, Users, Bell, Shield, Database, Zap, Mail, MessageSquare, Bot, Save, CheckCircle } from 'lucide-react';
+import { Settings, Users, Bell, Shield, Database, Zap, Mail, MessageSquare, Bot, Save, CheckCircle, X, UserPlus, Trash2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
 interface CRMSettings {
@@ -26,6 +26,15 @@ interface CRMSettings {
     churn_alerts: boolean;
     missing_documents: boolean;
   };
+}
+
+interface AdminUser {
+  id: string;
+  email: string;
+  full_name: string;
+  role: string;
+  is_active: boolean;
+  created_at: string;
 }
 
 const CRMAdminSettings: React.FC = () => {
@@ -57,9 +66,19 @@ const CRMAdminSettings: React.FC = () => {
   });
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [users, setUsers] = useState<AdminUser[]>([]);
+  const [loadingUsers, setLoadingUsers] = useState(false);
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  const [inviteForm, setInviteForm] = useState({
+    email: '',
+    full_name: '',
+    role: 'collaborator'
+  });
+  const [inviting, setInviting] = useState(false);
 
   useEffect(() => {
     loadSettings();
+    loadUsers();
   }, []);
 
   const loadSettings = async () => {
@@ -122,6 +141,78 @@ const CRMAdminSettings: React.FC = () => {
       alert('Erreur lors de la sauvegarde des paramètres');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const loadUsers = async () => {
+    setLoadingUsers(true);
+    try {
+      const { data, error } = await supabase
+        .from('admin_users')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setUsers(data || []);
+    } catch (error) {
+      console.error('Erreur chargement utilisateurs:', error);
+    } finally {
+      setLoadingUsers(false);
+    }
+  };
+
+  const inviteUser = async () => {
+    if (!inviteForm.email || !inviteForm.full_name) {
+      alert('Email et nom complet requis');
+      return;
+    }
+
+    setInviting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('invite-admin-user', {
+        body: {
+          email: inviteForm.email,
+          full_name: inviteForm.full_name,
+          role: inviteForm.role
+        }
+      });
+
+      if (error) throw error;
+
+      if (data.success) {
+        alert(`Invitation envoyée avec succès à ${inviteForm.email}`);
+        setShowInviteModal(false);
+        setInviteForm({ email: '', full_name: '', role: 'collaborator' });
+        loadUsers();
+      } else {
+        alert(data.error || 'Erreur lors de l\'invitation');
+      }
+    } catch (error: any) {
+      console.error('Erreur invitation:', error);
+      alert(error.message || 'Erreur lors de l\'invitation');
+    } finally {
+      setInviting(false);
+    }
+  };
+
+  const deleteUser = async (userId: string, email: string) => {
+    if (!confirm(`Voulez-vous vraiment supprimer l'utilisateur ${email} ?`)) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('admin_users')
+        .update({ is_active: false })
+        .eq('id', userId);
+
+      if (error) throw error;
+
+      alert('Utilisateur désactivé avec succès');
+      loadUsers();
+    } catch (error) {
+      console.error('Erreur suppression:', error);
+      alert('Erreur lors de la suppression');
     }
   };
 
@@ -269,31 +360,55 @@ const CRMAdminSettings: React.FC = () => {
               <div>
                 <h2 className="text-2xl font-bold text-gray-900 mb-6">Gestion des Utilisateurs</h2>
                 <div className="mb-6">
-                  <button className="px-6 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors">
-                    + Inviter un utilisateur
+                  <button
+                    onClick={() => setShowInviteModal(true)}
+                    className="flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors"
+                  >
+                    <UserPlus size={20} />
+                    Inviter un utilisateur
                   </button>
                 </div>
 
-                <div className="space-y-3">
-                  {['admin@taxiassur.com', 'commercial@taxiassur.com', 'support@taxiassur.com'].map((email, idx) => (
-                    <div key={idx} className="flex items-center justify-between p-4 border-2 border-gray-200 rounded-lg">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center font-bold text-blue-700">
-                          {email[0].toUpperCase()}
-                        </div>
-                        <div>
-                          <div className="font-semibold text-gray-900">{email}</div>
-                          <div className="text-sm text-gray-600">
-                            {idx === 0 ? 'Administrateur' : idx === 1 ? 'Commercial' : 'Support'}
-                          </div>
-                        </div>
+                {loadingUsers ? (
+                  <div className="text-center py-8">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+                    <p className="text-gray-600 mt-4">Chargement...</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {users.length === 0 ? (
+                      <div className="text-center py-8 text-gray-500">
+                        Aucun utilisateur trouvé
                       </div>
-                      <button className="px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors">
-                        Supprimer
-                      </button>
-                    </div>
-                  ))}
-                </div>
+                    ) : (
+                      users.filter(u => u.is_active).map((user) => (
+                        <div key={user.id} className="flex items-center justify-between p-4 border-2 border-gray-200 rounded-lg">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center font-bold text-blue-700">
+                              {user.email[0].toUpperCase()}
+                            </div>
+                            <div>
+                              <div className="font-semibold text-gray-900">{user.email}</div>
+                              <div className="text-sm text-gray-600 capitalize">
+                                {user.role === 'master' ? 'Master Admin' : user.role}
+                                {user.full_name && ` • ${user.full_name}`}
+                              </div>
+                            </div>
+                          </div>
+                          {user.role !== 'master' && (
+                            <button
+                              onClick={() => deleteUser(user.id, user.email)}
+                              className="flex items-center gap-2 px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            >
+                              <Trash2 size={16} />
+                              Supprimer
+                            </button>
+                          )}
+                        </div>
+                      ))
+                    )}
+                  </div>
+                )}
               </div>
             )}
 
@@ -547,6 +662,97 @@ const CRMAdminSettings: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {showInviteModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-2xl p-8 max-w-md w-full mx-4">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-2xl font-bold text-gray-900">Inviter un utilisateur</h3>
+              <button
+                onClick={() => setShowInviteModal(false)}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Email *
+                </label>
+                <input
+                  type="email"
+                  value={inviteForm.email}
+                  onChange={(e) => setInviteForm({ ...inviteForm, email: e.target.value })}
+                  placeholder="utilisateur@exemple.com"
+                  className="w-full px-4 py-2 bg-white text-gray-900 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Nom complet *
+                </label>
+                <input
+                  type="text"
+                  value={inviteForm.full_name}
+                  onChange={(e) => setInviteForm({ ...inviteForm, full_name: e.target.value })}
+                  placeholder="Jean Dupont"
+                  className="w-full px-4 py-2 bg-white text-gray-900 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Rôle
+                </label>
+                <select
+                  value={inviteForm.role}
+                  onChange={(e) => setInviteForm({ ...inviteForm, role: e.target.value })}
+                  className="w-full px-4 py-2 bg-white text-gray-900 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="collaborator">Collaborateur</option>
+                  <option value="admin">Administrateur</option>
+                  <option value="commercial">Commercial</option>
+                  <option value="support">Support</option>
+                </select>
+              </div>
+
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm text-blue-800">
+                <p className="font-medium mb-1">Un email d'invitation sera envoyé</p>
+                <p>L'utilisateur pourra définir son mot de passe lors de sa première connexion.</p>
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button
+                  onClick={() => setShowInviteModal(false)}
+                  className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors"
+                >
+                  Annuler
+                </button>
+                <button
+                  onClick={inviteUser}
+                  disabled={inviting || !inviteForm.email || !inviteForm.full_name}
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {inviting ? (
+                    <>
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                      Envoi...
+                    </>
+                  ) : (
+                    <>
+                      <UserPlus size={20} />
+                      Inviter
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
