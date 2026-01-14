@@ -21,7 +21,8 @@ import {
   Menu,
   X,
   Search,
-  RefreshCw
+  RefreshCw,
+  Copy
 } from 'lucide-react';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { NotificationCenter } from '@/components/NotificationCenter';
@@ -91,6 +92,13 @@ const CRMLayout: React.FC = () => {
       icon: Shield,
       path: '/backoffice/crm-killer/retention',
       badge: stats.at_risk_clients || null
+    },
+    {
+      id: 'duplicates',
+      label: 'Doublons',
+      icon: Copy,
+      path: '/backoffice/crm/duplicates',
+      badge: null
     },
     {
       id: 'ia',

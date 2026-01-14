@@ -140,6 +140,7 @@ const LLMDashboard = lazy(() => import('./backoffice/LLMDashboard'));
 const LLMCouncilDashboard = lazy(() => import('./backoffice/LLMCouncilDashboard'));
 const QuoteQueueDashboard = lazy(() => import('./backoffice/QuoteQueueDashboard'));
 const ManualLeadCreation = lazy(() => import('./backoffice/ManualLeadCreation'));
+const DuplicateLeadsManager = lazy(() => import('./backoffice/DuplicateLeadsManager'));
 
 const LoadingFallback = () => (
   <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-black flex items-center justify-center">
@@ -576,6 +577,11 @@ export const router = createBrowserRouter([
           {
             path: 'create-lead',
             element: <ManualLeadCreation />,
+            errorElement: <RouteErrorFallback />
+          },
+          {
+            path: 'duplicates',
+            element: <DuplicateLeadsManager />,
             errorElement: <RouteErrorFallback />
           }
         ]
