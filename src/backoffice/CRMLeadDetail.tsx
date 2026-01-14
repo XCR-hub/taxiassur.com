@@ -50,7 +50,8 @@ import {
   LeadAutomationCenter,
   PendingAttachmentsPanel,
   LeadQuotesManager,
-  DocumentValidationManager
+  DocumentValidationManager,
+  DownPaymentManager
 } from '@/components/crm';
 import type { WorkflowTab } from '@/components/crm';
 
@@ -106,6 +107,16 @@ const CRMLeadDetail: React.FC = () => {
   const [pendingAISuggestions, setPendingAISuggestions] = useState(0);
   const [scheduledFollowUps, setScheduledFollowUps] = useState(0);
 
+  const [contractData, setContractData] = useState<{
+    id: string;
+    requires_down_payment: boolean;
+    down_payment_amount: number;
+    down_payment_status: string;
+    down_payment_link: string;
+    down_payment_paid_at: string;
+    down_payment_transaction_id: string;
+  } | null>(null);
+
   const smsTemplates = [
     { id: 'welcome', name: 'Bienvenue', message: 'Bonjour {{first_name}}, merci pour votre demande. Un conseiller vous contacte sous 24h. TaxiAssur' },
     { id: 'reminder', name: 'Rappel RDV', message: 'Rappel: RDV telephonique aujourd\'hui. A tout de suite ! TaxiAssur' },
@@ -150,17 +161,17 @@ const CRMLeadDetail: React.FC = () => {
 
   const loadStats = async (id: string) => {
     try {
-      const [docsResult, quotesResult, contractResult, suggestionsResult, followUpsResult] = await Promise.all([
+      const [docsResult, quotesResult, contractResult, suggestionsResult, followUpsResult, contractDetailsResult] = await Promise.all([
         supabase.from('crm_lead_documents').select('status').eq('lead_id', id),
         supabase.from('crm_lead_quotes').select('id').eq('lead_id', id),
         supabase.from('crm_contracts').select('id').eq('lead_id', id).eq('status', 'signed'),
         supabase.from('crm_ai_suggestions').select('id').eq('lead_id', id).eq('status', 'pending'),
-        supabase.from('crm_scheduled_followups').select('id').eq('lead_id', id).eq('status', 'scheduled')
+        supabase.from('crm_scheduled_followups').select('id').eq('lead_id', id).eq('status', 'scheduled'),
+        supabase.from('lead_contracts').select('*').eq('lead_id', id).order('created_at', { ascending: false }).limit(1)
       ]);
 
       const docs = docsResult.data || [];
       const validatedDocs = docs.filter(d => d.status === 'validated').length;
-      const pendingDocs = docs.filter(d => d.status === 'pending').length;
 
       setDocumentsComplete(validatedDocs >= 5);
       setDocumentsMissing(Math.max(0, 5 - validatedDocs));
@@ -168,6 +179,19 @@ const CRMLeadDetail: React.FC = () => {
       setHasContract((contractResult.data?.length || 0) > 0);
       setPendingAISuggestions(suggestionsResult.data?.length || 0);
       setScheduledFollowUps(followUpsResult.data?.length || 0);
+
+      if (contractDetailsResult.data && contractDetailsResult.data.length > 0) {
+        const contract = contractDetailsResult.data[0];
+        setContractData({
+          id: contract.id,
+          requires_down_payment: contract.requires_down_payment || false,
+          down_payment_amount: contract.down_payment_amount || 0,
+          down_payment_status: contract.down_payment_status || 'pending',
+          down_payment_link: contract.down_payment_link || '',
+          down_payment_paid_at: contract.down_payment_paid_at || '',
+          down_payment_transaction_id: contract.down_payment_transaction_id || ''
+        });
+      }
     } catch (error) {
       console.error('Error loading stats:', error);
     }
@@ -653,13 +677,45 @@ const CRMLeadDetail: React.FC = () => {
             )}
 
             {activeTab === 'contract' && (
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                <ElectronicSignature
+              <div className="space-y-6">
+                <DownPaymentManager
+                  contractId={contractData?.id || ''}
                   leadId={lead.id}
-                  leadName={`${lead.first_name} ${lead.last_name}`.trim()}
-                  leadEmail={lead.email}
-                  leadPhone={lead.phone}
+                  currentStatus={contractData?.down_payment_status as any}
+                  currentAmount={contractData?.down_payment_amount || 0}
+                  requiresPayment={contractData?.requires_down_payment || false}
+                  paymentLink={contractData?.down_payment_link}
+                  paidAt={contractData?.down_payment_paid_at}
+                  transactionId={contractData?.down_payment_transaction_id}
+                  onPaymentUpdated={() => {
+                    loadStats(lead.id);
+                  }}
                 />
+
+                {(!contractData?.requires_down_payment || contractData?.down_payment_status === 'paid') && (
+                  <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <ElectronicSignature
+                      leadId={lead.id}
+                      leadName={`${lead.first_name} ${lead.last_name}`.trim()}
+                      leadEmail={lead.email}
+                      leadPhone={lead.phone}
+                    />
+                  </div>
+                )}
+
+                {contractData?.requires_down_payment && contractData?.down_payment_status !== 'paid' && (
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-6">
+                    <div className="flex items-start gap-3">
+                      <AlertCircle className="w-6 h-6 text-yellow-600 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <h3 className="font-semibold text-yellow-900 mb-1">Signature bloquee</h3>
+                        <p className="text-sm text-yellow-800">
+                          Le client doit d'abord regler le comptant de {contractData?.down_payment_amount?.toFixed(2)} EUR avant de pouvoir signer le contrat.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
