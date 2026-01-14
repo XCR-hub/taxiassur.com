@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { Calendar, Tag, TrendingUp, Mail, Phone, FileCheck, CreditCard, Clock, CheckCircle2, AlertCircle, Building2, PenTool, AlertTriangle, Euro } from 'lucide-react';
+import { Calendar, Tag, TrendingUp, Mail, Phone, FileCheck, CreditCard, Clock, Building2, PenTool, AlertTriangle, Euro, Zap, Loader2, CheckCircle, XCircle } from 'lucide-react';
 import { CRMLead, PIPELINE_STATUSES } from '@/lib/crm-pipeline';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/lib/supabase';
@@ -25,6 +25,9 @@ interface LeadIndicators {
   daysInPipeline: number;
   needsRelance: boolean;
   lastInteractionDays: number;
+  pendingAutomations: number;
+  lastAutomationResult: 'success' | 'failed' | null;
+  automationCount: number;
 }
 
 export const PipelineCard: React.FC<PipelineCardProps> = ({
@@ -49,17 +52,22 @@ export const PipelineCard: React.FC<PipelineCardProps> = ({
     downPaymentAmount: null,
     daysInPipeline: 0,
     needsRelance: false,
-    lastInteractionDays: 0
+    lastInteractionDays: 0,
+    pendingAutomations: 0,
+    lastAutomationResult: null,
+    automationCount: 0
   });
 
   useEffect(() => {
     const loadIndicators = async () => {
       try {
-        const [docsResult, companyQuotesResult, contractResult, interactionsResult] = await Promise.all([
+        const [docsResult, companyQuotesResult, contractResult, interactionsResult, automationsResult, leadDataResult] = await Promise.all([
           supabase.from('crm_lead_documents').select('status').eq('lead_id', lead.id),
           supabase.from('lead_company_quotes').select('status').eq('lead_id', lead.id),
           supabase.from('lead_contracts').select('status, down_payment_status, down_payment_amount').eq('lead_id', lead.id).limit(1),
-          supabase.from('crm_interactions').select('created_at').eq('lead_id', lead.id).order('created_at', { ascending: false }).limit(1)
+          supabase.from('crm_interactions').select('created_at').eq('lead_id', lead.id).order('created_at', { ascending: false }).limit(1),
+          supabase.from('pipeline_action_queue').select('id').eq('lead_id', lead.id).in('status', ['pending', 'processing']),
+          supabase.from('crm_leads').select('last_automation_result, automation_count').eq('id', lead.id).maybeSingle()
         ]);
 
         const docs = docsResult.data || [];
@@ -71,6 +79,8 @@ export const PipelineCard: React.FC<PipelineCardProps> = ({
 
         const contract = contractResult.data?.[0];
         const lastInteraction = interactionsResult.data?.[0];
+        const pendingAutomations = automationsResult.data?.length || 0;
+        const leadData = leadDataResult.data;
 
         const daysInPipeline = Math.floor((Date.now() - new Date(lead.created_at).getTime()) / (1000 * 60 * 60 * 24));
         const lastInteractionDays = lastInteraction
@@ -97,7 +107,10 @@ export const PipelineCard: React.FC<PipelineCardProps> = ({
           downPaymentAmount: contract?.down_payment_amount || null,
           daysInPipeline,
           needsRelance: lastInteractionDays >= 3 && !['ACTIVE_CLIENT', 'LOST', 'CANCELLED'].includes(lead.status),
-          lastInteractionDays
+          lastInteractionDays,
+          pendingAutomations,
+          lastAutomationResult: leadData?.last_automation_result as 'success' | 'failed' | null,
+          automationCount: leadData?.automation_count || 0
         });
       } catch (error) {
         console.error('Error loading indicators:', error);
@@ -299,6 +312,39 @@ export const PipelineCard: React.FC<PipelineCardProps> = ({
             >
               <Clock size={10} />
               {indicators.daysInPipeline}j
+            </div>
+          )}
+
+          {indicators.pendingAutomations > 0 && (
+            <div
+              className="flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-700 animate-pulse"
+              title={`${indicators.pendingAutomations} action(s) en cours`}
+            >
+              <Loader2 size={10} className="animate-spin" />
+              {indicators.pendingAutomations}
+            </div>
+          )}
+
+          {indicators.automationCount > 0 && indicators.pendingAutomations === 0 && (
+            <div
+              className={cn(
+                'flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium',
+                indicators.lastAutomationResult === 'success'
+                  ? 'bg-emerald-100 text-emerald-700'
+                  : indicators.lastAutomationResult === 'failed'
+                    ? 'bg-red-100 text-red-700'
+                    : 'bg-gray-100 text-gray-600'
+              )}
+              title={`${indicators.automationCount} automatisations executees`}
+            >
+              {indicators.lastAutomationResult === 'success' ? (
+                <CheckCircle size={10} />
+              ) : indicators.lastAutomationResult === 'failed' ? (
+                <XCircle size={10} />
+              ) : (
+                <Zap size={10} />
+              )}
+              {indicators.automationCount}
             </div>
           )}
         </div>

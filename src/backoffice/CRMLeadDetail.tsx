@@ -31,7 +31,9 @@ import {
   Building2,
   PhoneCall,
   Zap,
-  ChevronDown
+  ChevronDown,
+  Loader2,
+  Activity
 } from 'lucide-react';
 import { pipelineService, CRMLead, PIPELINE_STATUSES } from '@/lib/crm-pipeline';
 import { supabase } from '@/lib/supabase';
@@ -115,6 +117,14 @@ const CRMLeadDetail: React.FC = () => {
     down_payment_link: string;
     down_payment_paid_at: string;
     down_payment_transaction_id: string;
+  } | null>(null);
+
+  const [statusChanging, setStatusChanging] = useState(false);
+  const [automationFeedback, setAutomationFeedback] = useState<{
+    show: boolean;
+    success: boolean;
+    message: string;
+    actionsQueued: number;
   } | null>(null);
 
   const smsTemplates = [
@@ -290,12 +300,43 @@ const CRMLeadDetail: React.FC = () => {
   const handleStatusChange = async (newStatus: string) => {
     if (!lead) return;
 
+    setStatusChanging(true);
+    setAutomationFeedback(null);
+
     try {
-      await pipelineService.updateLeadStatus(lead.id, newStatus as any);
+      const result = await pipelineService.updateLeadStatus(lead.id, newStatus as any);
+
+      if (result.actionsQueued > 0) {
+        setAutomationFeedback({
+          show: true,
+          success: true,
+          message: `Statut mis a jour. ${result.actionsQueued} action(s) automatique(s) declenchee(s).`,
+          actionsQueued: result.actionsQueued
+        });
+      } else {
+        setAutomationFeedback({
+          show: true,
+          success: true,
+          message: 'Statut mis a jour avec succes.',
+          actionsQueued: 0
+        });
+      }
+
       await loadLeadData(lead.id);
+
+      setTimeout(() => {
+        setAutomationFeedback(null);
+      }, 5000);
     } catch (error) {
       console.error('Status change error:', error);
-      alert('Erreur lors de la mise a jour');
+      setAutomationFeedback({
+        show: true,
+        success: false,
+        message: 'Erreur lors de la mise a jour du statut.',
+        actionsQueued: 0
+      });
+    } finally {
+      setStatusChanging(false);
     }
   };
 
@@ -450,6 +491,50 @@ const CRMLeadDetail: React.FC = () => {
         onStatusChange={handleStatusChange}
         availableTransitions={availableTransitions}
       />
+
+      {statusChanging && (
+        <div className="bg-blue-50 border-b border-blue-200 px-6 py-3">
+          <div className="max-w-7xl mx-auto flex items-center gap-3">
+            <Loader2 className="w-5 h-5 text-blue-600 animate-spin" />
+            <span className="text-blue-800 font-medium">Mise a jour du statut et declenchement des automations...</span>
+          </div>
+        </div>
+      )}
+
+      {automationFeedback?.show && (
+        <div className={`border-b px-6 py-3 ${
+          automationFeedback.success
+            ? 'bg-green-50 border-green-200'
+            : 'bg-red-50 border-red-200'
+        }`}>
+          <div className="max-w-7xl mx-auto flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              {automationFeedback.success ? (
+                <CheckCircle className="w-5 h-5 text-green-600" />
+              ) : (
+                <AlertCircle className="w-5 h-5 text-red-600" />
+              )}
+              <span className={`font-medium ${
+                automationFeedback.success ? 'text-green-800' : 'text-red-800'
+              }`}>
+                {automationFeedback.message}
+              </span>
+              {automationFeedback.actionsQueued > 0 && (
+                <span className="flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded-full text-sm">
+                  <Activity className="w-4 h-4" />
+                  {automationFeedback.actionsQueued} action(s)
+                </span>
+              )}
+            </div>
+            <button
+              onClick={() => setAutomationFeedback(null)}
+              className="text-gray-500 hover:text-gray-700"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+      )}
 
       <LeadWorkflowTabs
         activeTab={activeTab}

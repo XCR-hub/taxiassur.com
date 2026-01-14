@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Bot,
   Mail,
@@ -23,9 +23,14 @@ import {
   Settings,
   TrendingUp,
   Target,
-  UserPlus
+  UserPlus,
+  Loader2,
+  RotateCcw,
+  Activity,
+  List
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { pipelineService, PendingAutomation, AutomationStats } from '@/lib/crm-pipeline';
 
 interface AISuggestion {
   id: string;
@@ -79,10 +84,78 @@ export const LeadAutomationCenter: React.FC<LeadAutomationCenterProps> = ({
   const [prospectSpaceUrl, setProspectSpaceUrl] = useState('');
   const [copiedUrl, setCopiedUrl] = useState(false);
 
+  const [pendingActions, setPendingActions] = useState<PendingAutomation[]>([]);
+  const [automationHistory, setAutomationHistory] = useState<any[]>([]);
+  const [automationStats, setAutomationStats] = useState<AutomationStats[]>([]);
+  const [showHistory, setShowHistory] = useState(false);
+  const [retryingAction, setRetryingAction] = useState<string | null>(null);
+  const [cancellingAction, setCancellingAction] = useState<string | null>(null);
+
   useEffect(() => {
     loadData();
     generateProspectSpaceUrl();
+    loadPipelineAutomations();
   }, [leadId]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      loadPipelineAutomations();
+    }, 10000);
+    return () => clearInterval(interval);
+  }, [leadId]);
+
+  const loadPipelineAutomations = useCallback(async () => {
+    try {
+      const [pending, history, stats] = await Promise.all([
+        pipelineService.getPendingAutomations(leadId),
+        pipelineService.getAutomationHistory(leadId, 20),
+        pipelineService.getAutomationStats(leadId)
+      ]);
+      setPendingActions(pending);
+      setAutomationHistory(history);
+      setAutomationStats(stats);
+    } catch (error) {
+      console.error('Error loading pipeline automations:', error);
+    }
+  }, [leadId]);
+
+  const handleRetryAction = async (actionId: string) => {
+    setRetryingAction(actionId);
+    try {
+      await pipelineService.retryFailedAction(actionId);
+      await loadPipelineAutomations();
+      onActionTaken?.();
+    } catch (error) {
+      console.error('Error retrying action:', error);
+    } finally {
+      setRetryingAction(null);
+    }
+  };
+
+  const handleCancelAction = async (actionId: string) => {
+    setCancellingAction(actionId);
+    try {
+      await pipelineService.cancelPendingAction(actionId);
+      await loadPipelineAutomations();
+    } catch (error) {
+      console.error('Error cancelling action:', error);
+    } finally {
+      setCancellingAction(null);
+    }
+  };
+
+  const handleTriggerManualAction = async (actionType: string) => {
+    try {
+      await pipelineService.queueManualAction(leadId, actionType, {
+        source: 'manual_trigger',
+        triggered_by: 'commercial'
+      });
+      await loadPipelineAutomations();
+      onActionTaken?.();
+    } catch (error) {
+      console.error('Error triggering manual action:', error);
+    }
+  };
 
   const generateProspectSpaceUrl = () => {
     if (accessToken) {
@@ -405,6 +478,25 @@ L'equipe TaxiAssur`,
     }
   };
 
+  const formatActionType = (actionType: string): string => {
+    const actionLabels: Record<string, string> = {
+      'send_welcome_email': 'Email de bienvenue',
+      'send_documents_request': 'Demande de documents',
+      'send_quote_email': 'Envoi du devis',
+      'send_signature_request': 'Demande de signature',
+      'send_followup': 'Email de relance',
+      'send_payment_link': 'Lien de paiement',
+      'create_payment_link': 'Creation lien paiement',
+      'notify_commercial': 'Notification commercial',
+      'update_crm': 'Mise a jour CRM',
+      'send_confirmation': 'Confirmation',
+      'activate_contract': 'Activation contrat',
+      'archive_lead': 'Archivage lead',
+      'schedule_review': 'Planifier revision'
+    };
+    return actionLabels[actionType] || actionType.replace(/_/g, ' ');
+  };
+
   if (loading) {
     return (
       <div className="bg-white rounded-xl shadow-lg border-2 border-gray-200 p-6">
@@ -484,6 +576,176 @@ L'equipe TaxiAssur`,
             <div className="text-2xl font-bold">78%</div>
           </div>
         </div>
+      </div>
+
+      {/* Pipeline Actions Queue - Real-time Status */}
+      <div className="bg-white rounded-xl shadow-lg border-2 border-gray-200">
+        <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+          <h3 className="font-bold text-gray-900 flex items-center gap-2">
+            <Activity size={20} className="text-cyan-600" />
+            Actions Pipeline en cours
+            {pendingActions.length > 0 && (
+              <span className="ml-2 px-2 py-0.5 bg-cyan-100 text-cyan-700 text-xs font-semibold rounded-full animate-pulse">
+                {pendingActions.length} en attente
+              </span>
+            )}
+          </h3>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowHistory(!showHistory)}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition-colors ${
+                showHistory ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              <List size={14} />
+              Historique
+            </button>
+            <button
+              onClick={loadPipelineAutomations}
+              className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              <RefreshCw size={16} />
+            </button>
+          </div>
+        </div>
+
+        {pendingActions.length > 0 ? (
+          <div className="divide-y divide-gray-100">
+            {pendingActions.map((action) => (
+              <div key={action.id} className="p-4 hover:bg-gray-50 transition-colors">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                      action.status === 'processing'
+                        ? 'bg-blue-100 text-blue-600'
+                        : 'bg-amber-100 text-amber-600'
+                    }`}>
+                      {action.status === 'processing' ? (
+                        <Loader2 size={20} className="animate-spin" />
+                      ) : (
+                        <Clock size={20} />
+                      )}
+                    </div>
+                    <div>
+                      <div className="font-medium text-gray-900">
+                        {formatActionType(action.action_type)}
+                      </div>
+                      <div className="text-sm text-gray-500 flex items-center gap-2">
+                        <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                          action.status === 'processing'
+                            ? 'bg-blue-100 text-blue-700'
+                            : 'bg-amber-100 text-amber-700'
+                        }`}>
+                          {action.status === 'processing' ? 'En cours' : 'En attente'}
+                        </span>
+                        <span>Priorite: {action.priority}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-gray-400">
+                      {new Date(action.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                    <button
+                      onClick={() => handleCancelAction(action.id)}
+                      disabled={cancellingAction === action.id}
+                      className="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors disabled:opacity-50"
+                      title="Annuler cette action"
+                    >
+                      {cancellingAction === action.id ? (
+                        <Loader2 size={16} className="animate-spin" />
+                      ) : (
+                        <XCircle size={16} />
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="p-6 text-center text-gray-500">
+            <CheckCircle className="w-10 h-10 text-green-400 mx-auto mb-2" />
+            <p>Aucune action en attente</p>
+            <p className="text-sm text-gray-400 mt-1">Les actions sont declenchees automatiquement lors des changements de statut</p>
+          </div>
+        )}
+
+        {showHistory && automationHistory.length > 0 && (
+          <div className="border-t border-gray-200 bg-gray-50 p-4">
+            <h4 className="text-sm font-medium text-gray-700 mb-3">Historique des actions recentes</h4>
+            <div className="space-y-2 max-h-64 overflow-y-auto">
+              {automationHistory.map((log: any) => (
+                <div
+                  key={log.id}
+                  className={`flex items-center justify-between p-3 rounded-lg border ${
+                    log.status === 'completed' ? 'bg-green-50 border-green-200' :
+                    log.status === 'failed' ? 'bg-red-50 border-red-200' :
+                    'bg-gray-50 border-gray-200'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                      log.status === 'completed' ? 'bg-green-100 text-green-600' :
+                      log.status === 'failed' ? 'bg-red-100 text-red-600' :
+                      'bg-gray-100 text-gray-600'
+                    }`}>
+                      {log.status === 'completed' ? <CheckCircle size={16} /> :
+                       log.status === 'failed' ? <XCircle size={16} /> :
+                       <Clock size={16} />}
+                    </div>
+                    <div>
+                      <div className="text-sm font-medium text-gray-900">
+                        {formatActionType(log.action_type)}
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        {new Date(log.executed_at || log.created_at).toLocaleString('fr-FR')}
+                        {log.execution_time_ms && ` - ${log.execution_time_ms}ms`}
+                      </div>
+                    </div>
+                  </div>
+                  {log.status === 'failed' && (
+                    <button
+                      onClick={() => handleRetryAction(log.action_id)}
+                      disabled={retryingAction === log.action_id}
+                      className="flex items-center gap-1 px-3 py-1 bg-amber-100 text-amber-700 rounded-lg text-sm hover:bg-amber-200 transition-colors disabled:opacity-50"
+                    >
+                      {retryingAction === log.action_id ? (
+                        <Loader2 size={14} className="animate-spin" />
+                      ) : (
+                        <RotateCcw size={14} />
+                      )}
+                      Relancer
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {automationStats.length > 0 && (
+          <div className="border-t border-gray-200 p-4 bg-gradient-to-r from-gray-50 to-blue-50">
+            <h4 className="text-sm font-medium text-gray-700 mb-3">Statistiques d'automatisation</h4>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {automationStats.slice(0, 4).map((stat) => (
+                <div key={stat.action_type} className="bg-white rounded-lg p-3 border border-gray-200">
+                  <div className="text-xs text-gray-500 mb-1">{formatActionType(stat.action_type)}</div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-lg font-bold text-gray-900">{stat.total_count}</span>
+                    <span className={`text-xs font-medium px-2 py-0.5 rounded ${
+                      stat.success_rate >= 90 ? 'bg-green-100 text-green-700' :
+                      stat.success_rate >= 70 ? 'bg-yellow-100 text-yellow-700' :
+                      'bg-red-100 text-red-700'
+                    }`}>
+                      {stat.success_rate.toFixed(0)}%
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Espace Prospect - Lien rapide */}
@@ -753,32 +1015,44 @@ L'equipe TaxiAssur`,
       <div className="bg-gradient-to-r from-gray-50 to-blue-50 rounded-xl border-2 border-gray-200 p-4">
         <h3 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
           <Zap size={18} className="text-amber-500" />
-          Actions Rapides Commercial
+          Declencher une action Pipeline
         </h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <button className="flex flex-col items-center gap-2 p-3 bg-white rounded-lg border border-gray-200 hover:border-blue-300 hover:shadow-md transition-all">
+          <button
+            onClick={() => handleTriggerManualAction('send_followup')}
+            className="flex flex-col items-center gap-2 p-3 bg-white rounded-lg border border-gray-200 hover:border-blue-300 hover:shadow-md transition-all"
+          >
             <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
               <Mail size={20} className="text-blue-600" />
             </div>
-            <span className="text-sm font-medium text-gray-700">Email rapide</span>
+            <span className="text-sm font-medium text-gray-700">Email relance</span>
           </button>
-          <button className="flex flex-col items-center gap-2 p-3 bg-white rounded-lg border border-gray-200 hover:border-green-300 hover:shadow-md transition-all">
+          <button
+            onClick={() => handleTriggerManualAction('send_documents_request')}
+            className="flex flex-col items-center gap-2 p-3 bg-white rounded-lg border border-gray-200 hover:border-amber-300 hover:shadow-md transition-all"
+          >
+            <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center">
+              <Send size={20} className="text-amber-600" />
+            </div>
+            <span className="text-sm font-medium text-gray-700">Demande docs</span>
+          </button>
+          <button
+            onClick={() => handleTriggerManualAction('notify_commercial')}
+            className="flex flex-col items-center gap-2 p-3 bg-white rounded-lg border border-gray-200 hover:border-green-300 hover:shadow-md transition-all"
+          >
             <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
               <Phone size={20} className="text-green-600" />
             </div>
-            <span className="text-sm font-medium text-gray-700">Appel direct</span>
+            <span className="text-sm font-medium text-gray-700">Notifier equipe</span>
           </button>
-          <button className="flex flex-col items-center gap-2 p-3 bg-white rounded-lg border border-gray-200 hover:border-amber-300 hover:shadow-md transition-all">
-            <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center">
-              <Calendar size={20} className="text-amber-600" />
-            </div>
-            <span className="text-sm font-medium text-gray-700">Planifier RDV</span>
-          </button>
-          <button className="flex flex-col items-center gap-2 p-3 bg-white rounded-lg border border-gray-200 hover:border-cyan-300 hover:shadow-md transition-all">
+          <button
+            onClick={() => handleTriggerManualAction('send_quote_email')}
+            className="flex flex-col items-center gap-2 p-3 bg-white rounded-lg border border-gray-200 hover:border-cyan-300 hover:shadow-md transition-all"
+          >
             <div className="w-10 h-10 bg-cyan-100 rounded-full flex items-center justify-center">
-              <Settings size={20} className="text-cyan-600" />
+              <Target size={20} className="text-cyan-600" />
             </div>
-            <span className="text-sm font-medium text-gray-700">Parametres IA</span>
+            <span className="text-sm font-medium text-gray-700">Envoyer devis</span>
           </button>
         </div>
       </div>

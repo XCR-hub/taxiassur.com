@@ -1,5 +1,30 @@
 import { supabase } from './supabase';
 
+export interface PipelineActionResult {
+  success: boolean;
+  message: string;
+  actionsQueued: number;
+  details?: Record<string, unknown>;
+}
+
+export interface PendingAutomation {
+  id: string;
+  action_type: string;
+  status: string;
+  priority: number;
+  scheduled_at: string;
+  created_at: string;
+}
+
+export interface AutomationStats {
+  action_type: string;
+  total_count: number;
+  success_count: number;
+  failed_count: number;
+  pending_count: number;
+  success_rate: number;
+}
+
 export type PipelineStatus =
   | 'NEW_LEAD'
   | 'CONTACT_ATTEMPTED'
@@ -258,16 +283,118 @@ export const pipelineService = {
     return data;
   },
 
-  async triggerAutoActions(leadId: string, actions: string[]) {
-    const { data, error } = await supabase.functions.invoke('crm-automation-engine', {
-      body: {
-        lead_id: leadId,
-        actions
+  async triggerAutoActions(leadId: string, actions: string[]): Promise<PipelineActionResult> {
+    try {
+      const { data, error } = await supabase.functions.invoke('pipeline-action-executor', {
+        body: {
+          action: 'process_queue',
+          lead_id: leadId,
+          limit: 10
+        }
+      });
+
+      if (error) {
+        console.error('Auto-action trigger error:', error);
+        return { success: false, message: error.message, actionsQueued: 0 };
       }
+
+      return {
+        success: true,
+        message: 'Actions queued successfully',
+        actionsQueued: actions.length,
+        details: data
+      };
+    } catch (err) {
+      console.error('triggerAutoActions error:', err);
+      return { success: false, message: 'Failed to trigger actions', actionsQueued: 0 };
+    }
+  },
+
+  async queueManualAction(
+    leadId: string,
+    actionType: string,
+    params: Record<string, unknown> = {},
+    userId?: string
+  ): Promise<{ success: boolean; queueId?: string }> {
+    const { data, error } = await supabase.rpc('queue_pipeline_action', {
+      p_lead_id: leadId,
+      p_action_type: actionType,
+      p_action_params: params,
+      p_triggered_by: 'manual',
+      p_user_id: userId || null,
+      p_priority: 8,
+      p_delay_minutes: 0
     });
 
-    if (error) throw error;
-    return data;
+    if (error) {
+      console.error('Queue action error:', error);
+      return { success: false };
+    }
+
+    return { success: true, queueId: data };
+  },
+
+  async getPendingAutomations(leadId: string): Promise<PendingAutomation[]> {
+    const { data, error } = await supabase
+      .from('pipeline_action_queue')
+      .select('id, action_type, status, priority, scheduled_at, created_at')
+      .eq('lead_id', leadId)
+      .in('status', ['pending', 'processing'])
+      .order('priority', { ascending: false });
+
+    if (error) {
+      console.error('Get pending automations error:', error);
+      return [];
+    }
+
+    return data || [];
+  },
+
+  async getAutomationHistory(leadId: string, limit = 20): Promise<any[]> {
+    const { data, error } = await supabase
+      .from('pipeline_action_logs')
+      .select('*')
+      .eq('lead_id', leadId)
+      .order('created_at', { ascending: false })
+      .limit(limit);
+
+    if (error) {
+      console.error('Get automation history error:', error);
+      return [];
+    }
+
+    return data || [];
+  },
+
+  async getAutomationStats(): Promise<AutomationStats[]> {
+    const { data, error } = await supabase.rpc('get_pipeline_action_stats');
+
+    if (error) {
+      console.error('Get automation stats error:', error);
+      return [];
+    }
+
+    return data || [];
+  },
+
+  async cancelPendingAction(actionId: string): Promise<boolean> {
+    const { error } = await supabase
+      .from('pipeline_action_queue')
+      .update({ status: 'cancelled' })
+      .eq('id', actionId)
+      .eq('status', 'pending');
+
+    return !error;
+  },
+
+  async retryFailedAction(actionId: string): Promise<boolean> {
+    const { error } = await supabase
+      .from('pipeline_action_queue')
+      .update({ status: 'pending', attempts: 0 })
+      .eq('id', actionId)
+      .eq('status', 'failed');
+
+    return !error;
   },
 
   async assignLead(leadId: string, userId: string) {
