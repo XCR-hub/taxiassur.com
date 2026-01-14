@@ -34,12 +34,15 @@ export function ChatWidget() {
 
     const userMessage: Message = {
       id: Date.now().toString(),
-      text: inputValue,
+      text: inputValue.trim(),
       sender: 'user',
       timestamp: Date.now(),
     };
 
-    setMessages((prev) => [...prev, userMessage]);
+    setMessages((prev) => {
+      if (!Array.isArray(prev)) return [userMessage];
+      return [...prev, userMessage];
+    });
     setInputValue('');
 
     setTimeout(() => {
@@ -49,7 +52,10 @@ export function ChatWidget() {
         sender: 'agent',
         timestamp: Date.now(),
       };
-      setMessages((prev) => [...prev, agentMessage]);
+      setMessages((prev) => {
+        if (!Array.isArray(prev)) return [agentMessage];
+        return [...prev, agentMessage];
+      });
     }, 1000);
   };
 
@@ -82,7 +88,7 @@ export function ChatWidget() {
           </div>
 
           <div className="flex-1 overflow-y-auto p-4">
-            {messages.map((message) => (
+            {Array.isArray(messages) && messages.map((message) => (
               <div
                 key={message.id}
                 className={`mb-4 flex ${

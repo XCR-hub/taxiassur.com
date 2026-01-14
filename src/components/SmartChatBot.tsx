@@ -52,8 +52,11 @@ const SmartChatBot: React.FC = () => {
       id: Date.now().toString(),
       timestamp: new Date()
     };
-    
-    setMessages(prev => [...prev, newMessage]);
+
+    setMessages(prev => {
+      if (!Array.isArray(prev)) return [newMessage];
+      return [...prev, newMessage];
+    });
   };
 
   const simulateTyping = (duration: number = 1500) => {
@@ -231,6 +234,13 @@ const SmartChatBot: React.FC = () => {
         throw new Error('Configuration manquante');
       }
 
+      // Limit conversation history and message length to prevent "input too long" errors
+      const safeMessages = Array.isArray(messages) ? messages : [];
+      const recentMessages = safeMessages.slice(-5).map(m => ({
+        role: m.type === 'user' ? 'user' : 'assistant',
+        content: (m.message || '').substring(0, 500) // Limit to 500 chars
+      }));
+
       const response = await fetch(`${supabaseUrl}/functions/v1/chatbot`, {
         method: 'POST',
         headers: {
@@ -238,23 +248,23 @@ const SmartChatBot: React.FC = () => {
           'Authorization': `Bearer ${supabaseKey}`
         },
         body: JSON.stringify({
-          message: userMessage,
-          context: {
-            userContext,
-            previousMessages: messages.slice(-5).map(m => ({ role: m.type === 'user' ? 'user' : 'assistant', content: m.message }))
-          }
+          messages: [...recentMessages, {
+            role: 'user',
+            content: userMessage.substring(0, 500)
+          }]
         })
       });
 
       if (!response.ok) {
-        throw new Error('API error');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'API error');
       }
 
       const data = await response.json();
 
       addMessage({
         type: 'bot',
-        message: data.response || "Merci pour votre message ! Un expert peut vous répondre pour plus de précisions.",
+        message: data.message || data.response || "Merci pour votre message ! Un expert peut vous répondre pour plus de précisions.",
         options: [
           { text: "📞 Appeler un expert", action: "call" },
           { text: "📝 Demander un devis", action: "convert" }
@@ -309,7 +319,7 @@ const SmartChatBot: React.FC = () => {
 
           {/* Messages */}
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            {messages.map(message => (
+            {Array.isArray(messages) && messages.map(message => (
               <div key={message.id} className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}>
                 <div className={`max-w-xs p-3 rounded-lg ${
                   message.type === 'user' 

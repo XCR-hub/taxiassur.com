@@ -93,6 +93,7 @@ export default defineConfig(({ mode }) => ({
       external: ['@sentry/react'],
       output: {
         manualChunks(id) {
+          // Vendor chunks first to avoid circular dependencies
           if (id.includes('node_modules')) {
             if (id.includes('react') || id.includes('scheduler')) {
               return 'vendor-react';
@@ -109,39 +110,48 @@ export default defineConfig(({ mode }) => ({
             return 'vendor';
           }
 
-          if (id.includes('/backoffice/')) {
-            if (id.includes('CRM') || id.includes('Lead') || id.includes('Pipeline')) {
-              return 'backoffice-crm';
-            }
-            if (id.includes('AI') || id.includes('Master') || id.includes('Autonomous')) {
-              return 'backoffice-ai';
-            }
-            if (id.includes('Backlink') || id.includes('SEO') || id.includes('Content')) {
-              return 'backoffice-seo';
-            }
-            if (id.includes('Social') || id.includes('WhatsApp') || id.includes('Campaign') || id.includes('Email')) {
-              return 'backoffice-marketing';
-            }
-            if (id.includes('Analytics') || id.includes('Dashboard') && !id.includes('Master')) {
-              return 'backoffice-analytics';
-            }
-            return 'backoffice-core';
+          // Core lib before backoffice to prevent circular dependencies
+          if (id.includes('/lib/')) {
+            return 'lib-core';
           }
 
-          // Séparer les charts dans leur propre chunk
+          // Charts before backoffice to prevent circular dependencies
           if (id.includes('/components/charts/')) {
             return 'charts';
           }
 
-          // Séparer l'espace client
+          // Backoffice chunks - order matters to prevent circular deps
+          if (id.includes('/backoffice/')) {
+            // CRM first as it's most used
+            if (id.includes('CRM') || id.includes('Lead') || id.includes('Pipeline')) {
+              return 'backoffice-crm';
+            }
+            // AI after CRM
+            if (id.includes('AI') || id.includes('Master') || id.includes('Autonomous')) {
+              return 'backoffice-ai';
+            }
+            // Marketing
+            if (id.includes('Social') || id.includes('WhatsApp') || id.includes('Campaign') || id.includes('Email')) {
+              return 'backoffice-marketing';
+            }
+            // SEO
+            if (id.includes('Backlink') || id.includes('SEO') || id.includes('Content')) {
+              return 'backoffice-seo';
+            }
+            // Analytics
+            if (id.includes('Analytics') || id.includes('Dashboard') && !id.includes('Master')) {
+              return 'backoffice-analytics';
+            }
+            // Core last as fallback
+            return 'backoffice-core';
+          }
+
+          // Client portal
           if (id.includes('/components/client/') || id.includes('/pages/client/')) {
             return 'client-portal';
           }
 
-          if (id.includes('/lib/supabase') || id.includes('/lib/auth')) {
-            return 'lib-core';
-          }
-
+          // Pages split by route
           if (id.includes('/pages/')) {
             const match = id.match(/pages\/([^/]+)/);
             if (match) return `page-${match[1].toLowerCase().replace('.tsx', '')}`;

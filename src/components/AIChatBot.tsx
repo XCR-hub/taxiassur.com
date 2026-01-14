@@ -49,6 +49,7 @@ export default function AIChatBot() {
     };
 
     setMessages(prev => {
+      if (!Array.isArray(prev)) return [userMessage];
       const updated = [...prev, userMessage];
       return updated.length > MAX_MESSAGES ? updated.slice(-MAX_MESSAGES) : updated;
     });
@@ -64,6 +65,16 @@ export default function AIChatBot() {
         throw new Error('Supabase not configured');
       }
 
+      // Limit conversation history to prevent "input too long" errors
+      const safeMessages = Array.isArray(messages) ? messages : [];
+      const recentMessages = safeMessages.slice(-10);
+      const conversationMessages = recentMessages
+        .map(m => ({
+          role: m.role,
+          content: (m.content || '').substring(0, 500) // Limit each message to 500 chars
+        }))
+        .concat([{ role: 'user', content: (userMessage.content || '').substring(0, 500) }]);
+
       const response = await fetch(`${supabaseUrl}/functions/v1/chatbot`, {
         method: 'POST',
         headers: {
@@ -71,26 +82,25 @@ export default function AIChatBot() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          messages: messages.map(m => ({
-            role: m.role,
-            content: m.content
-          })).concat([{ role: 'user', content: userMessage.content }])
+          messages: conversationMessages
         }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to get response');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to get response');
       }
 
       const data = await response.json();
 
       const assistantMessage: Message = {
         role: 'assistant',
-        content: data.message,
+        content: data.message || data.response || "Je n'ai pas pu générer une réponse.",
         timestamp: new Date()
       };
 
       setMessages(prev => {
+        if (!Array.isArray(prev)) return [assistantMessage];
         const updated = [...prev, assistantMessage];
         return updated.length > MAX_MESSAGES ? updated.slice(-MAX_MESSAGES) : updated;
       });
@@ -102,6 +112,7 @@ export default function AIChatBot() {
         timestamp: new Date()
       };
       setMessages(prev => {
+        if (!Array.isArray(prev)) return [errorMessage];
         const updated = [...prev, errorMessage];
         return updated.length > MAX_MESSAGES ? updated.slice(-MAX_MESSAGES) : updated;
       });
@@ -164,7 +175,7 @@ export default function AIChatBot() {
       </div>
 
       <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-white border border-yellow-100">
-        {messages.map((message, index) => (
+        {Array.isArray(messages) && messages.map((message, index) => (
           <div
             key={index}
             className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
