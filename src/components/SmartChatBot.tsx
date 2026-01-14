@@ -32,10 +32,10 @@ const SmartChatBot: React.FC = () => {
     const welcomeMessage: ChatMessage = {
       id: 'welcome',
       type: 'bot',
-      message: "👋 Bonjour ! Je suis l'assistant TaxiAssur. Comment puis-je vous aider avec votre assurance taxi ?",
+      message: "👋 Bonjour ! Je suis Tissya, votre assistante TaxiAssur. Je suis ravie de vous accompagner dans votre projet d'assurance taxi. Comment puis-je vous aider aujourd'hui ?",
       timestamp: new Date(),
       options: [
-        { text: "💰 Obtenir un devis", action: "devis" },
+        { text: "💰 Obtenir un devis gratuit", action: "devis" },
         { text: "❓ Poser une question", action: "question" },
         { text: "📞 Être rappelé", action: "callback" },
         { text: "💬 Discuter avec un expert", action: "human" }
@@ -71,11 +71,11 @@ const SmartChatBot: React.FC = () => {
         setTimeout(() => {
           addMessage({
             type: 'bot',
-            message: "Parfait ! Pour vous proposer le meilleur devis, j'ai besoin de quelques informations. Quel est votre statut ?",
+            message: "Excellent choix ! 🎯 Je vais vous aider à obtenir les meilleurs tarifs. Pour commencer, quel est votre statut professionnel ?",
             options: [
-              { text: "🚖 Taxi (licence)", action: "status", value: "taxi" },
+              { text: "🚖 Taxi avec licence", action: "status", value: "taxi" },
               { text: "🚗 VTC", action: "status", value: "vtc" },
-              { text: "🚐 Autre transport", action: "status", value: "autre" }
+              { text: "🚐 Transport spécialisé", action: "status", value: "autre" }
             ]
           });
         }, 1500);
@@ -88,13 +88,13 @@ const SmartChatBot: React.FC = () => {
         setTimeout(() => {
           addMessage({
             type: 'bot',
-            message: `Excellent ! En tant que ${value}, vous pouvez économiser jusqu'à 35% avec nos tarifs négociés. Dans quelle ville exercez-vous ?`,
+            message: `Parfait ! 👍 En tant que ${value}, nos clients économisent en moyenne 30-35% grâce à nos tarifs négociés avec 5 compagnies majeures. Dans quelle ville exercez-vous principalement ?`,
             options: [
-              { text: "🏙️ Paris", action: "city", value: "Paris" },
-              { text: "🦁 Lyon", action: "city", value: "Lyon" },
-              { text: "⚓ Marseille", action: "city", value: "Marseille" },
-              { text: "🌹 Toulouse", action: "city", value: "Toulouse" },
-              { text: "🏖️ Autre ville", action: "city_other" }
+              { text: "🏙️ Paris / Île-de-France", action: "city", value: "Paris" },
+              { text: "🦁 Lyon / Rhône", action: "city", value: "Lyon" },
+              { text: "⚓ Marseille / PACA", action: "city", value: "Marseille" },
+              { text: "🌹 Toulouse / Occitanie", action: "city", value: "Toulouse" },
+              { text: "🗺️ Autre région", action: "city_other" }
             ]
           });
         }, 1500);
@@ -107,9 +107,9 @@ const SmartChatBot: React.FC = () => {
         setTimeout(() => {
           addMessage({
             type: 'bot',
-            message: `Parfait ! À ${value}, nos clients économisent en moyenne 580€/an. Voulez-vous que je vous mette en relation avec votre expert local pour un devis personnalisé ?`,
+            message: `Super ! 🎉 À ${value}, nos clients économisent en moyenne 580€/an sur leur assurance. Nous comparons 5 compagnies (GENERALI, MFA, +Simple, Solly Azar, ZEPHIR) pour vous garantir le meilleur tarif. Souhaitez-vous recevoir votre devis personnalisé gratuit ?`,
             options: [
-              { text: "✅ Oui, je veux mon devis", action: "convert" },
+              { text: "✅ Oui, je veux mon devis gratuit", action: "convert" },
               { text: "📞 Préférer être rappelé", action: "callback" },
               { text: "❓ J'ai d'autres questions", action: "questions" }
             ]
@@ -190,10 +190,10 @@ const SmartChatBot: React.FC = () => {
 
       case 'faq':
         const faqAnswers: Record<string, string> = {
-          prix: "Nos tarifs négociés vous font économiser jusqu'à 35% ! Prix moyen : 1200-2500€/an selon votre profil. Demandez votre devis gratuit pour connaître votre tarif exact.",
-          documents: "Simple ! Carte professionnelle taxi + Permis + Carte d'identité + Carte grise + Relevé d'informations. Notre équipe vous guide étape par étape.",
-          delai: "Ultra-rapide ! Attestation par email sous 2h ouvrées. En urgence, transmission immédiate possible !",
-          resiliation: "Oui, 100% légal ! Loi Hamon : résiliation gratuite après 1 an. Nous nous occupons de toutes les démarches pour vous."
+          prix: "💰 Excellent question ! Nos tarifs négociés vous font économiser 30-35% en moyenne. Prix moyen : 1200-2500€/an pour un conducteur expérimenté, selon ville et profil. Nous comparons 5 compagnies pour vous ! Demandez votre devis gratuit pour connaître votre tarif exact en 24h.",
+          documents: "📋 C'est très simple ! Documents nécessaires : Licence taxi/Carte VTC + Permis de conduire + Pièce d'identité + Carte grise + Relevé d'informations (de votre ancien assureur) + RIB. Notre équipe vous guide à chaque étape et valide chaque document pour accélérer le processus.",
+          delai: "⚡ Nous sommes ultra-rapides ! Attestation d'assurance envoyée par email sous 2h ouvrées une fois le dossier complet. En cas d'urgence absolue, transmission immédiate possible le jour même ! Appelez-nous au 01 80 85 57 86.",
+          resiliation: "🔄 Oui, c'est 100% légal et gratuit ! Grâce à la Loi Hamon, vous pouvez résilier votre assurance actuelle sans frais après 1 an de contrat. Bonne nouvelle : nous nous occupons de TOUTES les démarches administratives pour vous. Vous n'avez rien à faire !"
         };
         
         addMessage({ type: 'user', message: `Question sur ${value}` });
@@ -295,8 +295,8 @@ const SmartChatBot: React.FC = () => {
                 <Bot size={16} />
               </div>
               <div>
-                <h4 className="font-bold">Assistant TaxiAssur</h4>
-                <p className="text-xs text-yellow-100">En ligne • Répond en 2min</p>
+                <h4 className="font-bold">Tissya</h4>
+                <p className="text-xs text-yellow-100">En ligne • Répond instantanément</p>
               </div>
             </div>
             <button

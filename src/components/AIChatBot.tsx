@@ -16,7 +16,7 @@ export default function AIChatBot() {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: 'assistant',
-      content: "Bonjour ! Je suis votre assistant d'assurance taxi. Comment puis-je vous aider aujourd'hui ?",
+      content: "👋 Bonjour ! Je suis Tissya, votre assistante personnelle TaxiAssur. Je suis là pour vous guider dans votre démarche d'assurance taxi et répondre à toutes vos questions. Comment puis-je vous aider aujourd'hui ?",
       timestamp: new Date()
     }
   ]);
@@ -98,7 +98,7 @@ export default function AIChatBot() {
       logger.error('Error:', error);
       const errorMessage: Message = {
         role: 'assistant',
-        content: "Le chatbot AI nécessite une configuration Supabase. Pour l'instant, contactez-nous au 01 80 85 57 86 ou via notre formulaire de contact.",
+        content: "Je rencontre une petite difficulté technique momentanée. Pas de souci ! Vous pouvez nous contacter directement au 01 80 85 57 86 ou via notre formulaire de contact. Notre équipe vous répondra immédiatement. 😊",
         timestamp: new Date()
       };
       setMessages(prev => {
@@ -118,10 +118,12 @@ export default function AIChatBot() {
   };
 
   const quickActions = [
-    { label: "Devis gratuit", text: "Je voudrais un devis gratuit" },
-    { label: "Prix moyen", text: "Quel est le prix moyen d'une assurance taxi ?" },
-    { label: "RC Pro", text: "Qu'est-ce que la RC professionnelle ?" },
-    { label: "VTC vs Taxi", text: "Quelle différence entre assurance VTC et Taxi ?" },
+    { label: "💰 Devis gratuit", text: "Je voudrais obtenir un devis gratuit pour mon taxi" },
+    { label: "📋 Documents", text: "Quels documents dois-je fournir ?" },
+    { label: "💶 Tarifs", text: "Combien coûte une assurance taxi ?" },
+    { label: "⚡ Délai", text: "En combien de temps puis-je être assuré ?" },
+    { label: "🛡️ Garanties", text: "Quelles garanties sont recommandées ?" },
+    { label: "📞 Contact", text: "Comment vous joindre ?" },
   ];
 
   if (!isOpen) {
@@ -148,8 +150,8 @@ export default function AIChatBot() {
             <span className="absolute -top-1 -right-1 bg-green-400 w-3 h-3 rounded-full border-2 border-white"></span>
           </div>
           <div>
-            <h3 className="font-bold text-lg">Assistant TaxiAssur</h3>
-            <p className="text-xs text-orange-100">Propulsé par ChatGPT</p>
+            <h3 className="font-bold text-lg">Tissya</h3>
+            <p className="text-xs text-orange-100">Votre assistante TaxiAssur • IA</p>
           </div>
         </div>
         <button
@@ -196,8 +198,11 @@ export default function AIChatBot() {
       </div>
 
       {messages.length === 1 && (
-        <div className="px-4 py-2 bg-white border-t border-yellow-200">
-          <p className="text-xs text-gray-600 mb-2 font-medium">Questions rapides :</p>
+        <div className="px-4 py-3 bg-gradient-to-br from-orange-50 to-amber-50 border-t border-yellow-200">
+          <p className="text-xs text-gray-700 mb-3 font-semibold flex items-center">
+            <span className="mr-2">💡</span>
+            Questions fréquentes :
+          </p>
           <div className="grid grid-cols-2 gap-2">
             {quickActions.map((action, index) => (
               <button
@@ -206,12 +211,15 @@ export default function AIChatBot() {
                   setInput(action.text);
                   setTimeout(() => sendMessage(), 100);
                 }}
-                className="text-xs bg-gray-100 hover:bg-orange-50 text-gray-700 hover:text-orange-600 rounded-lg px-3 py-2 transition-colors text-left"
+                className="text-xs bg-white hover:bg-orange-100 text-gray-700 hover:text-orange-700 rounded-lg px-3 py-2.5 transition-all shadow-sm hover:shadow-md text-left font-medium border border-orange-100"
               >
                 {action.label}
               </button>
             ))}
           </div>
+          <p className="text-xs text-gray-500 mt-3 text-center italic">
+            Ou posez votre question directement à Tissya
+          </p>
         </div>
       )}
 
