@@ -343,19 +343,30 @@ export async function createLead(input: CreateLeadInput): Promise<{ success: boo
   try {
     logger.log('Creating lead in Supabase:', { name: input.name, email: input.email });
 
+    const nameParts = input.name.trim().split(/\s+/);
+    const firstName = nameParts[0] || 'Client';
+    const lastName = nameParts.slice(1).join(' ') || '';
+
+    const vehicleType = input.status === 'vtc' ? 'VTC' : input.status === 'autre' ? 'Autre' : 'Taxi';
+
     const { data, error } = await supabase
-      .from('leads')
+      .from('crm_leads')
       .insert({
-        name: input.name,
+        first_name: firstName,
+        last_name: lastName,
+        full_name: input.name,
         email: input.email,
         phone: input.phone,
         city: input.city,
-        status: input.status,
-        immatriculation: input.immatriculation || '',
-        lead_status: 'nouveau',
         source: input.source || 'website',
-        notes: input.notes || '',
-        created_at: new Date().toISOString()
+        status: 'NEW_LEAD',
+        metadata: {
+          vehicle_type: vehicleType,
+          immatriculation: input.immatriculation || '',
+          notes: input.notes || ''
+        },
+        consent_phone: true,
+        consent_marketing: true
       })
       .select('*, access_token')
       .single();
@@ -365,9 +376,13 @@ export async function createLead(input: CreateLeadInput): Promise<{ success: boo
       return { success: false, error: error.message };
     }
 
-    logger.log('Lead created successfully:', data?.id);
+    logger.log('Lead created successfully in crm_leads:', data?.id);
 
-    sendLeadNotificationEmails(data).catch(err => {
+    sendLeadNotificationEmails({
+      ...data,
+      name: input.name,
+      status: input.status
+    }).catch(err => {
       logger.warn('Email notification failed (non-blocking):', err);
     });
 
