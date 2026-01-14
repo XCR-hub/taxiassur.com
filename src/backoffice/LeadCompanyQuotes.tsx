@@ -39,6 +39,12 @@ interface CompanyQuote {
   company: InsuranceCompany;
 }
 
+interface RefusalReason {
+  code: string;
+  label: string;
+  description: string | null;
+}
+
 interface Props {
   leadId: string;
 }
@@ -47,11 +53,13 @@ export default function LeadCompanyQuotes({ leadId }: Props) {
   const [lead, setLead] = useState<Lead | null>(null);
   const [quotes, setQuotes] = useState<CompanyQuote[]>([]);
   const [documents, setDocuments] = useState<any[]>([]);
+  const [refusalReasons, setRefusalReasons] = useState<RefusalReason[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedQuote, setSelectedQuote] = useState<CompanyQuote | null>(null);
   const [isQuoteModalOpen, setIsQuoteModalOpen] = useState(false);
   const [isRefusalModalOpen, setIsRefusalModalOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [allMandatoryProcessed, setAllMandatoryProcessed] = useState(false);
 
   const [quoteFormData, setQuoteFormData] = useState({
     quote_amount: '',
@@ -60,6 +68,7 @@ export default function LeadCompanyQuotes({ leadId }: Props) {
   });
 
   const [refusalFormData, setRefusalFormData] = useState({
+    refusal_reason_code: '',
     refusal_reason: '',
     refusal_screenshot_url: '',
     notes: ''
@@ -67,12 +76,13 @@ export default function LeadCompanyQuotes({ leadId }: Props) {
 
   useEffect(() => {
     loadData();
+    loadRefusalReasons();
   }, [leadId]);
 
   const loadData = async () => {
     try {
-      const [leadRes, quotesRes] = await Promise.all([
-        supabase.from('leads').select('*').eq('id', leadId).single(),
+      const [leadRes, quotesRes, mandatoryCheckRes] = await Promise.all([
+        supabase.from('crm_leads').select('*').eq('id', leadId).maybeSingle(),
         supabase
           .from('lead_company_quotes')
           .select(`
@@ -80,18 +90,43 @@ export default function LeadCompanyQuotes({ leadId }: Props) {
             company:insurance_companies(*)
           `)
           .eq('lead_id', leadId)
-          .order('company(priority_order)', { ascending: true })
+          .order('created_at', { ascending: true }),
+        supabase.rpc('check_all_mandatory_companies_processed', { p_lead_id: leadId })
       ]);
 
-      if (leadRes.error) throw leadRes.error;
+      if (leadRes.error && leadRes.error.code !== 'PGRST116') throw leadRes.error;
       if (quotesRes.error) throw quotesRes.error;
 
-      setLead(leadRes.data);
+      if (leadRes.data) {
+        setLead({
+          id: leadRes.data.id,
+          name: `${leadRes.data.first_name || ''} ${leadRes.data.last_name || ''}`.trim() || leadRes.data.email,
+          email: leadRes.data.email,
+          phone: leadRes.data.phone,
+          city: leadRes.data.city || ''
+        });
+      }
       setQuotes(quotesRes.data || []);
+      setAllMandatoryProcessed(mandatoryCheckRes.data || false);
     } catch (error) {
       console.error('Erreur chargement:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadRefusalReasons = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('company_quote_refusal_reasons')
+        .select('*')
+        .eq('is_active', true)
+        .order('display_order', { ascending: true });
+
+      if (error) throw error;
+      setRefusalReasons(data || []);
+    } catch (error) {
+      console.error('Erreur chargement motifs refus:', error);
     }
   };
 
@@ -124,6 +159,7 @@ export default function LeadCompanyQuotes({ leadId }: Props) {
   const handleSubmitRefusal = (quote: CompanyQuote) => {
     setSelectedQuote(quote);
     setRefusalFormData({
+      refusal_reason_code: '',
       refusal_reason: quote.refusal_reason || '',
       refusal_screenshot_url: quote.refusal_screenshot_url || '',
       notes: quote.notes || ''
@@ -167,8 +203,8 @@ export default function LeadCompanyQuotes({ leadId }: Props) {
   };
 
   const saveRefusal = async () => {
-    if (!selectedQuote || !refusalFormData.refusal_reason) {
-      alert('Veuillez indiquer le motif de refus');
+    if (!selectedQuote || !refusalFormData.refusal_reason_code) {
+      alert('Veuillez sélectionner le motif de refus');
       return;
     }
 
@@ -176,11 +212,16 @@ export default function LeadCompanyQuotes({ leadId }: Props) {
     try {
       const { data: { user } } = await supabase.auth.getUser();
 
+      const selectedReason = refusalReasons.find(r => r.code === refusalFormData.refusal_reason_code);
+      const fullRefusalReason = selectedReason
+        ? `${selectedReason.label}${refusalFormData.notes ? ` - ${refusalFormData.notes}` : ''}`
+        : refusalFormData.notes;
+
       const { error } = await supabase
         .from('lead_company_quotes')
         .update({
           status: 'refused',
-          refusal_reason: refusalFormData.refusal_reason,
+          refusal_reason: fullRefusalReason,
           refusal_screenshot_url: refusalFormData.refusal_screenshot_url,
           notes: refusalFormData.notes,
           submitted_by: user?.id,
@@ -468,7 +509,7 @@ export default function LeadCompanyQuotes({ leadId }: Props) {
       <Modal
         isOpen={isRefusalModalOpen}
         onClose={() => setIsRefusalModalOpen(false)}
-        title={`Déclarer un refus - ${selectedQuote?.company.name}`}
+        title={`Declarer un refus - ${selectedQuote?.company.name}`}
         size="lg"
       >
         <div className="space-y-4">
@@ -476,26 +517,36 @@ export default function LeadCompanyQuotes({ leadId }: Props) {
             <div className="flex items-start gap-3">
               <AlertTriangle className="w-5 h-5 text-red-500 flex-shrink-0 mt-1" />
               <div className="text-sm text-gray-300">
-                Indiquez clairement le motif de refus de la compagnie.
-                Une capture d'écran du refus est recommandée.
+                Selectionnez le motif de refus de la compagnie.
+                Une capture d'ecran du refus est recommandee pour la tracabilite.
               </div>
             </div>
           </div>
 
           <div>
             <label className="block text-gray-400 text-sm mb-2">Motif du refus *</label>
-            <textarea
-              value={refusalFormData.refusal_reason}
-              onChange={(e) => setRefusalFormData({ ...refusalFormData, refusal_reason: e.target.value })}
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white"
-              rows={4}
-              placeholder="Exemple: Refus pour sinistralité trop élevée..."
+            <select
+              value={refusalFormData.refusal_reason_code}
+              onChange={(e) => setRefusalFormData({ ...refusalFormData, refusal_reason_code: e.target.value })}
+              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white"
               required
-            />
+            >
+              <option value="">-- Selectionnez un motif --</option>
+              {refusalReasons.map((reason) => (
+                <option key={reason.code} value={reason.code}>
+                  {reason.label}
+                </option>
+              ))}
+            </select>
+            {refusalFormData.refusal_reason_code && (
+              <p className="text-gray-500 text-sm mt-2">
+                {refusalReasons.find(r => r.code === refusalFormData.refusal_reason_code)?.description}
+              </p>
+            )}
           </div>
 
           <div>
-            <label className="block text-gray-400 text-sm mb-2">Capture d'écran du refus</label>
+            <label className="block text-gray-400 text-sm mb-2">Capture d'ecran du refus (recommande)</label>
             <input
               type="url"
               value={refusalFormData.refusal_screenshot_url}
@@ -504,17 +555,18 @@ export default function LeadCompanyQuotes({ leadId }: Props) {
               placeholder="https://..."
             />
             <p className="text-gray-500 text-xs mt-1">
-              Uploadez la capture d'écran et collez l'URL ici
+              Uploadez la capture d'ecran et collez l'URL ici
             </p>
           </div>
 
           <div>
-            <label className="block text-gray-400 text-sm mb-2">Notes internes</label>
+            <label className="block text-gray-400 text-sm mb-2">Details complementaires</label>
             <textarea
               value={refusalFormData.notes}
               onChange={(e) => setRefusalFormData({ ...refusalFormData, notes: e.target.value })}
               className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white"
               rows={2}
+              placeholder="Informations supplementaires sur le refus..."
             />
           </div>
         </div>
@@ -528,7 +580,7 @@ export default function LeadCompanyQuotes({ leadId }: Props) {
           </button>
           <button
             onClick={saveRefusal}
-            disabled={saving || !refusalFormData.refusal_reason}
+            disabled={saving || !refusalFormData.refusal_reason_code}
             className="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white rounded-lg flex items-center gap-2"
           >
             <XCircle className="w-4 h-4" />
