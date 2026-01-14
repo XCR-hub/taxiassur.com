@@ -47,7 +47,8 @@ import {
   LeadIntelligencePanel,
   LeadHeader,
   LeadWorkflowTabs,
-  LeadAutomationCenter
+  LeadAutomationCenter,
+  PendingAttachmentsPanel
 } from '@/components/crm';
 import type { WorkflowTab } from '@/components/crm';
 
@@ -590,6 +591,11 @@ const CRMLeadDetail: React.FC = () => {
 
             {activeTab === 'documents' && (
               <>
+                <PendingAttachmentsPanel
+                  leadId={lead.id}
+                  onAttachmentClassified={() => loadLeadData(lead.id)}
+                />
+
                 <DocumentChecklistPanelV2
                   leadId={lead.id}
                   leadEmail={lead.email}

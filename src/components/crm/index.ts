@@ -16,4 +16,5 @@ export { LeadQuotesContracts } from './LeadQuotesContracts';
 export { LeadIntelligencePanel } from './LeadIntelligencePanel';
 export { LeadHeader } from './LeadHeader';
 export { LeadWorkflowTabs } from './LeadWorkflowTabs';
+export { PendingAttachmentsPanel } from './PendingAttachmentsPanel';
 export type { WorkflowTab } from './LeadWorkflowTabs';
