@@ -66,7 +66,8 @@ const Hero: React.FC = () => {
       });
 
       if (response.success) {
-        window.location.href = '/merci';
+        const tokenParam = response.accessToken ? `?token=${response.accessToken}` : '';
+        window.location.href = `/merci${tokenParam}`;
       } else {
         setErrors([response.error || 'Erreur lors de l\'envoi. Veuillez réessayer.']);
       }

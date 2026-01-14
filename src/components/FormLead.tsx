@@ -52,8 +52,8 @@ const FormLead: React.FC = () => {
             event_label: 'form_submission'
           });
         }
-        // Redirection vers page de remerciement
-        window.location.href = '/merci';
+        const tokenParam = result.accessToken ? `?token=${result.accessToken}` : '';
+        window.location.href = `/merci${tokenParam}`;
       } else {
         logger.error('Form error:', result.error);
         alert(result.error || 'Erreur lors de l\'envoi. Veuillez réessayer.');

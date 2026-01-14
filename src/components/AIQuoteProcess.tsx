@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ArrowRight, CheckCircle, Sparkles, Zap, Shield, Clock, User, Mail, Phone, MapPin, Car, Send } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { logger } from '@/lib/logger';
+import { createLead } from '@/lib/leads';
 
 interface FormData {
   name: string;
@@ -64,27 +65,24 @@ const AIQuoteProcess: React.FC = () => {
 
   const handleSubmit = async () => {
     setIsProcessing(true);
-    setCurrentStep(3); // Processing step
+    setCurrentStep(3);
 
     try {
-      // Simulate AI processing
-      await new Promise(resolve => setTimeout(resolve, 3000));
-      
-      const response = await fetch('/api/lead.php', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ...formData,
-          honeypot: ''
-        })
-      });
-      
-      const result = await response.json();
+      await new Promise(resolve => setTimeout(resolve, 2000));
 
-      if (response.ok && (result.success || result.ok)) {
-        navigate('/merci');
+      const result = await createLead({
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        city: formData.city,
+        status: formData.status,
+        immatriculation: formData.immatriculation,
+        source: 'website-ai-process'
+      });
+
+      if (result.success) {
+        const tokenParam = result.accessToken ? `?token=${result.accessToken}` : '';
+        navigate(`/merci${tokenParam}`);
       } else {
         alert(result.error || 'Erreur lors de l\'envoi. Veuillez réessayer.');
         setCurrentStep(2);

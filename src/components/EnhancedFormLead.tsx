@@ -112,7 +112,8 @@ const EnhancedFormLead: React.FC = () => {
 
       if (result.success) {
         trackFormComplete();
-        navigate('/merci');
+        const tokenParam = result.accessToken ? `?token=${result.accessToken}` : '';
+        navigate(`/merci${tokenParam}`);
       } else {
         alert(result.error || 'Erreur lors de l\'envoi. Veuillez réessayer.');
       }
