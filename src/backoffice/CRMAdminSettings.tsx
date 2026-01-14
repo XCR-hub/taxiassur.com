@@ -75,10 +75,18 @@ const CRMAdminSettings: React.FC = () => {
     role: 'collaborator'
   });
   const [inviting, setInviting] = useState(false);
+  const [showIntegrationModal, setShowIntegrationModal] = useState<string | null>(null);
+  const [integrationSettings, setIntegrationSettings] = useState({
+    brevo: { api_key: '', sender_email: '', sender_name: '' },
+    whatsapp: { account_sid: '', auth_token: '', phone_number: '' },
+    supabase: { url: '', anon_key: '', service_key: '' },
+    stripe: { secret_key: '', publishable_key: '', webhook_secret: '' }
+  });
 
   useEffect(() => {
     loadSettings();
     loadUsers();
+    loadIntegrationSettings();
   }, []);
 
   const loadSettings = async () => {
@@ -213,6 +221,54 @@ const CRMAdminSettings: React.FC = () => {
     } catch (error) {
       console.error('Erreur suppression:', error);
       alert('Erreur lors de la suppression');
+    }
+  };
+
+  const loadIntegrationSettings = async () => {
+    try {
+      const { data } = await supabase
+        .from('crm_settings')
+        .select('integration_configs')
+        .single();
+
+      if (data?.integration_configs) {
+        setIntegrationSettings(prev => ({
+          ...prev,
+          ...data.integration_configs
+        }));
+      }
+    } catch (error) {
+      console.error('Erreur chargement intégrations:', error);
+    }
+  };
+
+  const saveIntegration = async (integration: string) => {
+    try {
+      const { data: currentSettings } = await supabase
+        .from('crm_settings')
+        .select('integration_configs')
+        .single();
+
+      const updatedConfigs = {
+        ...(currentSettings?.integration_configs || {}),
+        [integration]: integrationSettings[integration as keyof typeof integrationSettings]
+      };
+
+      const { error } = await supabase
+        .from('crm_settings')
+        .update({
+          integration_configs: updatedConfigs,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', '00000000-0000-0000-0000-000000000001');
+
+      if (error) throw error;
+
+      alert(`Configuration ${integration} sauvegardée avec succès`);
+      setShowIntegrationModal(null);
+    } catch (error) {
+      console.error('Erreur sauvegarde intégration:', error);
+      alert('Erreur lors de la sauvegarde');
     }
   };
 
@@ -519,7 +575,10 @@ const CRMAdminSettings: React.FC = () => {
                       </div>
                     </div>
                     <p className="text-sm text-gray-600 mb-4">Plateforme d'emailing</p>
-                    <button className="w-full px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
+                    <button
+                      onClick={() => setShowIntegrationModal('brevo')}
+                      className="w-full px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                    >
                       Configurer
                     </button>
                   </div>
@@ -533,7 +592,10 @@ const CRMAdminSettings: React.FC = () => {
                       </div>
                     </div>
                     <p className="text-sm text-gray-600 mb-4">Messagerie instantanée</p>
-                    <button className="w-full px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
+                    <button
+                      onClick={() => setShowIntegrationModal('whatsapp')}
+                      className="w-full px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                    >
                       Configurer
                     </button>
                   </div>
@@ -547,7 +609,10 @@ const CRMAdminSettings: React.FC = () => {
                       </div>
                     </div>
                     <p className="text-sm text-gray-600 mb-4">Base de données</p>
-                    <button className="w-full px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
+                    <button
+                      onClick={() => setShowIntegrationModal('supabase')}
+                      className="w-full px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                    >
                       Configurer
                     </button>
                   </div>
@@ -561,7 +626,10 @@ const CRMAdminSettings: React.FC = () => {
                       </div>
                     </div>
                     <p className="text-sm text-gray-600 mb-4">Paiements</p>
-                    <button className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                    <button
+                      onClick={() => setShowIntegrationModal('stripe')}
+                      className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    >
                       Connecter
                     </button>
                   </div>
@@ -662,6 +730,245 @@ const CRMAdminSettings: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {showIntegrationModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-2xl p-8 max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-2xl font-bold text-gray-900 capitalize">Configuration {showIntegrationModal}</h3>
+              <button
+                onClick={() => setShowIntegrationModal(null)}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              {showIntegrationModal === 'brevo' && (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Clé API Brevo
+                    </label>
+                    <input
+                      type="password"
+                      value={integrationSettings.brevo.api_key}
+                      onChange={(e) => setIntegrationSettings({
+                        ...integrationSettings,
+                        brevo: { ...integrationSettings.brevo, api_key: e.target.value }
+                      })}
+                      placeholder="xkeysib-..."
+                      className="w-full px-4 py-2 bg-white text-gray-900 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Email expéditeur
+                    </label>
+                    <input
+                      type="email"
+                      value={integrationSettings.brevo.sender_email}
+                      onChange={(e) => setIntegrationSettings({
+                        ...integrationSettings,
+                        brevo: { ...integrationSettings.brevo, sender_email: e.target.value }
+                      })}
+                      placeholder="noreply@taxiassur.com"
+                      className="w-full px-4 py-2 bg-white text-gray-900 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Nom expéditeur
+                    </label>
+                    <input
+                      type="text"
+                      value={integrationSettings.brevo.sender_name}
+                      onChange={(e) => setIntegrationSettings({
+                        ...integrationSettings,
+                        brevo: { ...integrationSettings.brevo, sender_name: e.target.value }
+                      })}
+                      placeholder="TaxiAssur"
+                      className="w-full px-4 py-2 bg-white text-gray-900 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                </>
+              )}
+
+              {showIntegrationModal === 'whatsapp' && (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Twilio Account SID
+                    </label>
+                    <input
+                      type="text"
+                      value={integrationSettings.whatsapp.account_sid}
+                      onChange={(e) => setIntegrationSettings({
+                        ...integrationSettings,
+                        whatsapp: { ...integrationSettings.whatsapp, account_sid: e.target.value }
+                      })}
+                      placeholder="AC..."
+                      className="w-full px-4 py-2 bg-white text-gray-900 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Auth Token
+                    </label>
+                    <input
+                      type="password"
+                      value={integrationSettings.whatsapp.auth_token}
+                      onChange={(e) => setIntegrationSettings({
+                        ...integrationSettings,
+                        whatsapp: { ...integrationSettings.whatsapp, auth_token: e.target.value }
+                      })}
+                      placeholder="..."
+                      className="w-full px-4 py-2 bg-white text-gray-900 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Numéro de téléphone WhatsApp
+                    </label>
+                    <input
+                      type="tel"
+                      value={integrationSettings.whatsapp.phone_number}
+                      onChange={(e) => setIntegrationSettings({
+                        ...integrationSettings,
+                        whatsapp: { ...integrationSettings.whatsapp, phone_number: e.target.value }
+                      })}
+                      placeholder="+33..."
+                      className="w-full px-4 py-2 bg-white text-gray-900 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                </>
+              )}
+
+              {showIntegrationModal === 'supabase' && (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      URL Supabase
+                    </label>
+                    <input
+                      type="url"
+                      value={integrationSettings.supabase.url}
+                      onChange={(e) => setIntegrationSettings({
+                        ...integrationSettings,
+                        supabase: { ...integrationSettings.supabase, url: e.target.value }
+                      })}
+                      placeholder="https://xxx.supabase.co"
+                      className="w-full px-4 py-2 bg-white text-gray-900 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Clé anonyme (anon)
+                    </label>
+                    <input
+                      type="password"
+                      value={integrationSettings.supabase.anon_key}
+                      onChange={(e) => setIntegrationSettings({
+                        ...integrationSettings,
+                        supabase: { ...integrationSettings.supabase, anon_key: e.target.value }
+                      })}
+                      placeholder="eyJ..."
+                      className="w-full px-4 py-2 bg-white text-gray-900 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Clé service (service_role)
+                    </label>
+                    <input
+                      type="password"
+                      value={integrationSettings.supabase.service_key}
+                      onChange={(e) => setIntegrationSettings({
+                        ...integrationSettings,
+                        supabase: { ...integrationSettings.supabase, service_key: e.target.value }
+                      })}
+                      placeholder="eyJ..."
+                      className="w-full px-4 py-2 bg-white text-gray-900 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                </>
+              )}
+
+              {showIntegrationModal === 'stripe' && (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Clé secrète Stripe
+                    </label>
+                    <input
+                      type="password"
+                      value={integrationSettings.stripe.secret_key}
+                      onChange={(e) => setIntegrationSettings({
+                        ...integrationSettings,
+                        stripe: { ...integrationSettings.stripe, secret_key: e.target.value }
+                      })}
+                      placeholder="sk_..."
+                      className="w-full px-4 py-2 bg-white text-gray-900 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Clé publique Stripe
+                    </label>
+                    <input
+                      type="text"
+                      value={integrationSettings.stripe.publishable_key}
+                      onChange={(e) => setIntegrationSettings({
+                        ...integrationSettings,
+                        stripe: { ...integrationSettings.stripe, publishable_key: e.target.value }
+                      })}
+                      placeholder="pk_..."
+                      className="w-full px-4 py-2 bg-white text-gray-900 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Secret Webhook
+                    </label>
+                    <input
+                      type="password"
+                      value={integrationSettings.stripe.webhook_secret}
+                      onChange={(e) => setIntegrationSettings({
+                        ...integrationSettings,
+                        stripe: { ...integrationSettings.stripe, webhook_secret: e.target.value }
+                      })}
+                      placeholder="whsec_..."
+                      className="w-full px-4 py-2 bg-white text-gray-900 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                </>
+              )}
+
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-sm text-yellow-800">
+                <p className="font-medium mb-1">Attention</p>
+                <p>Ces informations sensibles sont stockées de manière sécurisée et cryptées.</p>
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button
+                  onClick={() => setShowIntegrationModal(null)}
+                  className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors"
+                >
+                  Annuler
+                </button>
+                <button
+                  onClick={() => saveIntegration(showIntegrationModal)}
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                >
+                  <Save size={20} />
+                  Enregistrer
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showInviteModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
