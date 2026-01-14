@@ -482,7 +482,7 @@ setNotifications(prev => [payload.new, ...prev]);
         throw new Error(result.error || 'Erreur inconnue lors de l\'envoi');
       }
 
-      // Enregistrer l'interaction dans la base avec le message_id Brevo
+      // Enregistrer l'interaction dans la base avec le tracking_id IONOS
       const { error: dbError } = await supabase.from('crm_interactions').insert({
         lead_id: selectedLead.id,
         type: 'email',
@@ -490,7 +490,7 @@ setNotifications(prev => [payload.new, ...prev]);
         subject: emailForm.subject,
         content: emailForm.content,
         to_email: selectedLead.email,
-        brevo_message_id: result.messageId || null
+        metadata: { tracking_id: result.tracking_id || result.messageId || null }
       });
 
       if (dbError) {
@@ -509,8 +509,8 @@ setNotifications(prev => [payload.new, ...prev]);
 
       if (error.name === 'AbortError') {
         alert('⏱️ Timeout: L\'envoi a pris trop de temps (>30s).\n\nVérifiez votre connexion internet et réessayez.');
-      } else if (error.message.includes('BREVO_API_KEY')) {
-        alert('🔑 Configuration manquante: La clé API Brevo n\'est pas configurée.\n\nContactez l\'administrateur système.');
+      } else if (error.message.includes('IONOS_EMAIL_PASSWORD')) {
+        alert('🔑 Configuration manquante: Les identifiants IONOS ne sont pas configurés.\n\nContactez l\'administrateur système.');
       } else {
         alert('❌ Erreur lors de l\'envoi de l\'email:\n\n' + error.message + '\n\nVérifiez:\n- Que l\'adresse email est valide\n- Votre connexion internet\n- Les logs de la console (F12)');
       }
