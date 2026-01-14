@@ -339,7 +339,7 @@ export interface CreateLeadInput {
   notes?: string;
 }
 
-export async function createLead(input: CreateLeadInput): Promise<{ success: boolean; error?: string; leadId?: string }> {
+export async function createLead(input: CreateLeadInput): Promise<{ success: boolean; error?: string; leadId?: string; accessToken?: string }> {
   try {
     logger.log('Creating lead in Supabase:', { name: input.name, email: input.email });
 
@@ -357,7 +357,7 @@ export async function createLead(input: CreateLeadInput): Promise<{ success: boo
         notes: input.notes || '',
         created_at: new Date().toISOString()
       })
-      .select()
+      .select('*, access_token')
       .single();
 
     if (error) {
@@ -367,12 +367,11 @@ export async function createLead(input: CreateLeadInput): Promise<{ success: boo
 
     logger.log('Lead created successfully:', data?.id);
 
-    // Envoyer les emails de notification (ne pas attendre pour ne pas bloquer)
     sendLeadNotificationEmails(data).catch(err => {
       logger.warn('Email notification failed (non-blocking):', err);
     });
 
-    return { success: true, leadId: data?.id };
+    return { success: true, leadId: data?.id, accessToken: data?.access_token };
   } catch (error: any) {
     logger.error('Failed to create lead:', error);
     return { success: false, error: error.message || 'Une erreur est survenue' };

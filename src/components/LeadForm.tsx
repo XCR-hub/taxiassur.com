@@ -74,7 +74,8 @@ const LeadForm: React.FC = () => {
 
       if (result.success) {
         trackLeadSubmission(formData);
-        window.location.href = '/merci';
+        const tokenParam = result.accessToken ? `?token=${result.accessToken}` : '';
+        window.location.href = `/merci${tokenParam}`;
       } else {
         alert(result.error || 'Erreur lors de l\'envoi. Veuillez réessayer.');
       }

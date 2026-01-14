@@ -29,9 +29,8 @@ export async function submitLead(leadData: Lead): Promise<{ success: boolean; er
   }
 }
 
-export async function submitSecureLead(leadData: SecureLead): Promise<{ success: boolean; error?: string }> {
+export async function submitSecureLead(leadData: SecureLead): Promise<{ success: boolean; error?: string; accessToken?: string }> {
   try {
-    // Save lead to Supabase
     const { data: leadRecord, error: dbError } = await supabase
       .from('leads')
       .insert({
@@ -47,7 +46,7 @@ export async function submitSecureLead(leadData: SecureLead): Promise<{ success:
         source: 'website_form',
         lead_status: 'nouveau'
       })
-      .select()
+      .select('*, access_token')
       .single();
 
     if (dbError) {
@@ -106,9 +105,9 @@ export async function submitSecureLead(leadData: SecureLead): Promise<{ success:
       })
       .eq('id', leadRecord.id);
 
-    // Return success even if some emails failed (lead is saved)
     return {
       success: true,
+      accessToken: leadRecord?.access_token,
       emailsSent,
       emailsFailed: emailsFailed.length
     };

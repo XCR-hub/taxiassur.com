@@ -196,11 +196,11 @@ const EnhancedLeadForm: React.FC<EnhancedLeadFormProps> = ({
       if (result.success) {
         RateLimiter.recordSubmission(userIP);
         ConversionTracker.track('form_complete', { service, city });
-        
-        // Clear saved data
+
         localStorage.removeItem('taxiassur_form_data');
-        
-        navigate('/merci');
+
+        const tokenParam = result.accessToken ? `?token=${result.accessToken}` : '';
+        navigate(`/merci${tokenParam}`);
       } else {
         ConversionTracker.track('form_server_error', { error: result.error });
         alert(result.error || 'Erreur lors de l\'envoi. Veuillez réessayer.');
