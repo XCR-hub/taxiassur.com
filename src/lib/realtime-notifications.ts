@@ -21,17 +21,15 @@ class RealtimeNotificationManager {
   private channel: any = null;
 
   async initialize(userId?: string) {
-    if (!userId) return;
-
+    // Écouter les nouvelles notifications CRM (pour tous les admins)
     this.channel = supabase
-      .channel(`notifications:${userId}`)
+      .channel('crm_event_notifications')
       .on(
         'postgres_changes',
         {
           event: 'INSERT',
           schema: 'public',
-          table: 'notifications',
-          filter: `user_id=eq.${userId}`,
+          table: 'crm_event_notifications',
         },
         (payload) => {
           const notification = this.mapPayloadToNotification(payload.new);
@@ -40,14 +38,14 @@ class RealtimeNotificationManager {
       )
       .subscribe();
 
-    await this.loadNotifications(userId);
+    await this.loadNotifications();
   }
 
-  private async loadNotifications(userId: string) {
+  private async loadNotifications() {
+    // Charger toutes les notifications CRM récentes
     const { data } = await supabase
-      .from('notifications')
-      .select('*')
-      .eq('user_id', userId)
+      .from('crm_event_notifications')
+      .select('*, lead:crm_leads(first_name, last_name, email)')
       .order('created_at', { ascending: false })
       .limit(50);
 
@@ -57,16 +55,39 @@ class RealtimeNotificationManager {
   }
 
   private mapPayloadToNotification(payload: any): Notification {
+    const eventTypeMap: Record<string, NotificationType> = {
+      new_lead: 'success',
+      document_uploaded: 'info',
+      documents_complete: 'success',
+      quote_sent: 'info',
+      quote_accepted: 'success',
+      contract_signed: 'success',
+      payment_completed: 'success'
+    };
+
     return {
       id: payload.id,
-      type: payload.type,
-      title: payload.title,
+      type: eventTypeMap[payload.event_type] || 'info',
+      title: this.getEventTitle(payload.event_type),
       message: payload.message,
       timestamp: new Date(payload.created_at).getTime(),
-      read: payload.read || false,
-      actionUrl: payload.action_url,
-      actionLabel: payload.action_label,
+      read: payload.read_at !== null,
+      actionUrl: payload.lead_id ? `/backoffice/crm-commercial?lead=${payload.lead_id}` : undefined,
+      actionLabel: 'Voir le lead',
     };
+  }
+
+  private getEventTitle(eventType: string): string {
+    const titles: Record<string, string> = {
+      new_lead: '🎉 Nouveau Lead',
+      document_uploaded: '📄 Document Reçu',
+      documents_complete: '✅ Documents Complets',
+      quote_sent: '📧 Devis Envoyé',
+      quote_accepted: '🎊 Devis Accepté',
+      contract_signed: '✍️ Contrat Signé',
+      payment_completed: '💰 Paiement Reçu'
+    };
+    return titles[eventType] || '🔔 Notification';
   }
 
   subscribe(callback: NotificationCallback) {
@@ -93,8 +114,8 @@ class RealtimeNotificationManager {
       notification.read = true;
 
       await supabase
-        .from('notifications')
-        .update({ read: true })
+        .from('crm_event_notifications')
+        .update({ read_at: new Date().toISOString() })
         .eq('id', id);
     }
   }
@@ -102,25 +123,18 @@ class RealtimeNotificationManager {
   async markAllAsRead() {
     this.notifications.forEach((n) => (n.read = true));
 
-    const userId = (await supabase.auth.getUser()).data.user?.id;
-    if (userId) {
-      await supabase
-        .from('notifications')
-        .update({ read: true })
-        .eq('user_id', userId)
-        .eq('read', false);
-    }
+    await supabase
+      .from('crm_event_notifications')
+      .update({ read_at: new Date().toISOString() })
+      .is('read_at', null);
   }
 
   async clear() {
     this.notifications = [];
-    const userId = (await supabase.auth.getUser()).data.user?.id;
-    if (userId) {
-      await supabase
-        .from('notifications')
-        .delete()
-        .eq('user_id', userId);
-    }
+    await supabase
+      .from('crm_event_notifications')
+      .delete()
+      .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all
   }
 
   destroy() {

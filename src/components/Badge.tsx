@@ -3,7 +3,7 @@ import { X } from 'lucide-react';
 
 interface BadgeProps {
   children: ReactNode;
-  variant?: 'default' | 'primary' | 'success' | 'warning' | 'danger' | 'info' | 'outline';
+  variant?: 'default' | 'primary' | 'success' | 'warning' | 'danger' | 'error' | 'info' | 'outline';
   size?: 'sm' | 'md' | 'lg';
   rounded?: boolean;
   removable?: boolean;
@@ -26,11 +26,12 @@ export function Badge({
 }: BadgeProps) {
   const variantClasses = {
     default: 'bg-gray-700 text-gray-300 border-gray-600',
-    primary: 'bg-blue-500/10 text-blue-500 border-blue-500/30',
-    success: 'bg-green-500/10 text-green-500 border-green-500/30',
-    warning: 'bg-yellow-500/10 text-yellow-500 border-yellow-500/30',
-    danger: 'bg-red-500/10 text-red-500 border-red-500/30',
-    info: 'bg-purple-500/10 text-purple-500 border-purple-500/30',
+    primary: 'bg-blue-500/10 text-blue-400 border-blue-500/30',
+    success: 'bg-green-500/10 text-green-400 border-green-500/30',
+    warning: 'bg-yellow-500/20 text-yellow-300 border-yellow-500/40',
+    danger: 'bg-red-500/10 text-red-400 border-red-500/30',
+    error: 'bg-red-500/10 text-red-400 border-red-500/30',
+    info: 'bg-blue-500/10 text-blue-400 border-blue-500/30',
     outline: 'bg-transparent text-gray-400 border-gray-700'
   };
 

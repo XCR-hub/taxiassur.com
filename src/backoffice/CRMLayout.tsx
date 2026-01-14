@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Outlet } from 'react-router-dom';
 import {
   LayoutDashboard,
@@ -24,6 +24,8 @@ import {
   RefreshCw
 } from 'lucide-react';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
+import { NotificationCenter } from '@/components/NotificationCenter';
+import { notificationManager } from '@/lib/realtime-notifications';
 
 interface CRMStats {
   unread_messages: number;
@@ -45,6 +47,14 @@ const CRMLayout: React.FC = () => {
     at_risk_clients: 0,
     ai_decisions_pending: 0
   });
+
+  // Initialiser le système de notifications au chargement
+  useEffect(() => {
+    notificationManager.initialize();
+    return () => {
+      notificationManager.destroy();
+    };
+  }, []);
 
   const menuItems = [
     {
@@ -270,12 +280,7 @@ const CRMLayout: React.FC = () => {
               <RefreshCw size={20} className={`text-gray-600 ${refreshing ? 'animate-spin' : ''}`} />
             </button>
 
-            <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors relative" title="Notifications">
-              <Bell size={20} className="text-gray-600" />
-              {(stats.unread_messages + stats.ai_decisions_pending) > 0 && (
-                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-              )}
-            </button>
+            <NotificationCenter />
           </div>
         </header>
 
