@@ -50,6 +50,7 @@ import {
   LeadAutomationCenter,
   PendingAttachmentsPanel
 } from '@/components/crm';
+import LeadQuotesManager from '@/components/crm/LeadQuotesManager';
 import type { WorkflowTab } from '@/components/crm';
 
 interface Message {
@@ -616,6 +617,14 @@ const CRMLeadDetail: React.FC = () => {
 
             {activeTab === 'quotes' && (
               <>
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+                  <h2 className="text-xl font-bold mb-4">Gestion des Devis - 5 Compagnies Obligatoires</h2>
+                  <p className="text-sm text-gray-600 mb-4">
+                    Système complet de gestion des devis: traitez les 5 compagnies obligatoires (upload ou refus) et suivez les acceptations/refus du prospect.
+                  </p>
+                  <LeadQuotesManager leadId={lead.id} />
+                </div>
+
                 <LeadInsuranceCompanies leadId={lead.id} />
 
                 <QuoteManager

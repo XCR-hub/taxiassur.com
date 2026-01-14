@@ -7,6 +7,7 @@ import {
   Building, Calendar, Euro, FileCheck, Send, AlertTriangle
 } from 'lucide-react';
 import { createClient } from '@supabase/supabase-js';
+import ClientQuotesViewer from '../components/client/ClientQuotesViewer';
 
 interface DocumentStatus {
   status: 'missing' | 'uploaded' | 'validated' | 'rejected';
@@ -564,7 +565,7 @@ const EspaceProspect: React.FC = () => {
                 <FileText className="text-amber-400 mx-auto mb-4" size={48} />
                 <h3 className="text-xl font-bold text-white mb-2">Documents en attente</h3>
                 <p className="text-gray-400 mb-4">
-                  Veuillez d'abord completer tous les documents obligatoires pour recevoir votre devis.
+                  Veuillez d'abord completer tous les documents obligatoires pour recevoir vos devis.
                 </p>
                 <button
                   onClick={() => setActiveTab('documents')}
@@ -574,73 +575,15 @@ const EspaceProspect: React.FC = () => {
                   <ChevronRight size={18} />
                 </button>
               </div>
-            ) : leadInfo.quote_accepted_at ? (
-              <div className="bg-green-500/10 border border-green-500/30 rounded-xl p-8 text-center">
-                <CheckCircle2 className="text-green-400 mx-auto mb-4" size={48} />
-                <h3 className="text-xl font-bold text-white mb-2">Devis accepte</h3>
-                <p className="text-gray-400">
-                  Vous avez accepte le devis le {new Date(leadInfo.quote_accepted_at).toLocaleDateString('fr-FR')}.
-                  {leadInfo.quote_amount && (
-                    <span className="block text-2xl font-bold text-green-400 mt-2">
-                      {leadInfo.quote_amount.toLocaleString('fr-FR')} EUR/an
-                    </span>
-                  )}
-                </p>
-              </div>
-            ) : leadInfo.quote_amount ? (
-              <div className="bg-gray-800/50 border border-gray-700 rounded-xl overflow-hidden">
-                <div className="bg-gradient-to-r from-amber-500 to-yellow-500 p-6 text-center">
-                  <h3 className="text-2xl font-bold text-black mb-1">Votre Devis Personnalise</h3>
-                  <p className="text-black/70">Assurance Taxi - TaxiAssur</p>
-                </div>
-                <div className="p-6">
-                  <div className="text-center mb-6">
-                    <p className="text-gray-400 text-sm mb-1">Prime annuelle TTC</p>
-                    <p className="text-5xl font-black text-white">
-                      {leadInfo.quote_amount.toLocaleString('fr-FR')} <span className="text-2xl">EUR</span>
-                    </p>
-                    <p className="text-gray-400 text-sm mt-1">
-                      soit {(leadInfo.quote_amount / 12).toFixed(2)} EUR/mois
-                    </p>
-                  </div>
-
-                  <div className="grid md:grid-cols-2 gap-4 mb-6">
-                    <div className="bg-gray-700/50 rounded-lg p-4">
-                      <h4 className="font-semibold text-white mb-2">Garanties incluses</h4>
-                      <ul className="space-y-1 text-sm text-gray-400">
-                        <li className="flex items-center gap-2"><CheckCircle2 size={14} className="text-green-400" /> Responsabilite Civile</li>
-                        <li className="flex items-center gap-2"><CheckCircle2 size={14} className="text-green-400" /> Defense Recours</li>
-                        <li className="flex items-center gap-2"><CheckCircle2 size={14} className="text-green-400" /> Protection Juridique</li>
-                        <li className="flex items-center gap-2"><CheckCircle2 size={14} className="text-green-400" /> Assistance 24h/24</li>
-                      </ul>
-                    </div>
-                    <div className="bg-gray-700/50 rounded-lg p-4">
-                      <h4 className="font-semibold text-white mb-2">Vos informations</h4>
-                      <ul className="space-y-1 text-sm text-gray-400">
-                        <li><span className="text-gray-500">Nom:</span> {leadInfo.first_name} {leadInfo.last_name}</li>
-                        <li><span className="text-gray-500">Email:</span> {leadInfo.email}</li>
-                        <li><span className="text-gray-500">Tel:</span> {leadInfo.phone}</li>
-                        {leadInfo.city && <li><span className="text-gray-500">Ville:</span> {leadInfo.city}</li>}
-                      </ul>
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={acceptQuote}
-                    className="w-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white font-bold py-4 px-6 rounded-xl transition-all flex items-center justify-center gap-2"
-                  >
-                    <CheckCircle2 size={20} />
-                    J'accepte ce devis
-                  </button>
-                </div>
-              </div>
             ) : (
-              <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-8 text-center">
-                <Clock className="text-blue-400 mx-auto mb-4" size={48} />
-                <h3 className="text-xl font-bold text-white mb-2">Devis en preparation</h3>
-                <p className="text-gray-400">
-                  Notre equipe prepare votre devis personnalise. Vous recevrez une notification par email des qu'il sera pret.
-                </p>
+              <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-700 rounded-xl p-6">
+                <div className="mb-4">
+                  <h3 className="text-2xl font-bold text-white mb-2">Vos devis d'assurance</h3>
+                  <p className="text-gray-400">
+                    Comparez les offres des meilleures compagnies et choisissez celle qui vous convient.
+                  </p>
+                </div>
+                {leadInfo && <ClientQuotesViewer leadId={leadInfo.id} />}
               </div>
             )}
           </div>
