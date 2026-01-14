@@ -18,3 +18,5 @@ export { LeadHeader } from './LeadHeader';
 export { LeadWorkflowTabs } from './LeadWorkflowTabs';
 export { PendingAttachmentsPanel } from './PendingAttachmentsPanel';
 export type { WorkflowTab } from './LeadWorkflowTabs';
+export { default as LeadQuotesManager } from './LeadQuotesManager';
+export { default as DocumentValidationManager } from './DocumentValidationManager';

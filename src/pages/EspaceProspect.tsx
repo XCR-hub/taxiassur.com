@@ -8,6 +8,8 @@ import {
 } from 'lucide-react';
 import { createClient } from '@supabase/supabase-js';
 import ClientQuotesViewer from '../components/client/ClientQuotesViewer';
+import ClientSubscriptionForm from '../components/client/ClientSubscriptionForm';
+import CompanyDocumentsLibrary from '../components/client/CompanyDocumentsLibrary';
 
 interface DocumentStatus {
   status: 'missing' | 'uploaded' | 'validated' | 'rejected';
@@ -596,59 +598,26 @@ const EspaceProspect: React.FC = () => {
                 <Euro className="text-amber-400 mx-auto mb-4" size={48} />
                 <h3 className="text-xl font-bold text-white mb-2">Devis non accepte</h3>
                 <p className="text-gray-400 mb-4">
-                  Veuillez d'abord accepter votre devis pour proceder au paiement.
+                  Veuillez d'abord accepter votre devis pour renseigner vos informations bancaires.
                 </p>
                 <button
                   onClick={() => setActiveTab('devis')}
                   className="inline-flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-black font-bold py-3 px-6 rounded-xl transition-colors"
                 >
-                  Voir mon devis
+                  Voir mes devis
                   <ChevronRight size={18} />
                 </button>
               </div>
-            ) : leadInfo.payment_completed_at ? (
-              <div className="bg-green-500/10 border border-green-500/30 rounded-xl p-8 text-center">
-                <CheckCircle2 className="text-green-400 mx-auto mb-4" size={48} />
-                <h3 className="text-xl font-bold text-white mb-2">Paiement recu</h3>
-                <p className="text-gray-400">
-                  Votre paiement a ete effectue le {new Date(leadInfo.payment_completed_at).toLocaleDateString('fr-FR')}.
-                </p>
-                {leadInfo.payment_reference && (
-                  <p className="text-sm text-gray-500 mt-2">
-                    Reference: {leadInfo.payment_reference}
-                  </p>
-                )}
-              </div>
             ) : (
-              <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-6">
-                <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-                  <CreditCard className="text-amber-400" size={24} />
-                  Paiement du comptant
-                </h3>
-                <p className="text-gray-400 mb-6">
-                  Pour finaliser votre contrat, veuillez proceder au paiement du premier versement.
-                </p>
-
-                <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-6 text-center mb-6">
-                  <p className="text-gray-400 text-sm mb-1">Montant a regler</p>
-                  <p className="text-4xl font-black text-white">
-                    {leadInfo.quote_amount ? (leadInfo.quote_amount / 4).toFixed(2) : '---'} <span className="text-xl">EUR</span>
-                  </p>
-                  <p className="text-sm text-gray-400 mt-1">(25% du montant annuel)</p>
-                </div>
-
-                <div className="space-y-4">
-                  <a
-                    href="tel:0180855786"
-                    className="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-4 px-6 rounded-xl transition-colors flex items-center justify-center gap-2"
-                  >
-                    <Phone size={20} />
-                    Payer par telephone: 01 80 85 57 86
-                  </a>
-                  <p className="text-center text-sm text-gray-500">
-                    Ou par virement bancaire - les coordonnees vous seront envoyees par email
-                  </p>
-                </div>
+              <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-700 rounded-xl p-6">
+                <ClientSubscriptionForm
+                  leadId={leadInfo.id}
+                  acceptedQuoteId={leadInfo.selected_company_id || ''}
+                  onSubmit={() => {
+                    loadLeadInfo();
+                    setActiveTab('contrat');
+                  }}
+                />
               </div>
             )}
           </div>

@@ -48,9 +48,10 @@ import {
   LeadHeader,
   LeadWorkflowTabs,
   LeadAutomationCenter,
-  PendingAttachmentsPanel
+  PendingAttachmentsPanel,
+  LeadQuotesManager,
+  DocumentValidationManager
 } from '@/components/crm';
-import LeadQuotesManager from '@/components/crm/LeadQuotesManager';
 import type { WorkflowTab } from '@/components/crm';
 
 interface Message {
@@ -596,6 +597,17 @@ const CRMLeadDetail: React.FC = () => {
                   leadId={lead.id}
                   onAttachmentClassified={() => loadLeadData(lead.id)}
                 />
+
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+                  <h2 className="text-xl font-bold mb-4">Validation des Documents</h2>
+                  <p className="text-sm text-gray-600 mb-4">
+                    Validez ou refusez les documents uploadés par le prospect avec des motifs détaillés.
+                  </p>
+                  <DocumentValidationManager
+                    leadId={lead.id}
+                    onValidationChange={() => loadLeadData(lead.id)}
+                  />
+                </div>
 
                 <DocumentChecklistPanelV2
                   leadId={lead.id}
