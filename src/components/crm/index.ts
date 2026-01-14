@@ -20,3 +20,4 @@ export { PendingAttachmentsPanel } from './PendingAttachmentsPanel';
 export type { WorkflowTab } from './LeadWorkflowTabs';
 export { default as LeadQuotesManager } from './LeadQuotesManager';
 export { default as DocumentValidationManager } from './DocumentValidationManager';
+export { default as DownPaymentManager } from './DownPaymentManager';
