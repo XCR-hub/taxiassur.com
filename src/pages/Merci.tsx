@@ -154,38 +154,40 @@ const Merci: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-gray-800/30 border border-amber-500/30 rounded-2xl p-5 mb-6">
-          <div className="flex items-center gap-2 text-amber-400 mb-3">
-            <FileText size={20} />
-            <h3 className="font-bold">7 Documents requis (pour devis sous 24h)</h3>
+        <div className="bg-gradient-to-r from-amber-500/20 via-yellow-500/20 to-amber-500/20 border-2 border-amber-500 rounded-2xl p-6 mb-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="bg-amber-500 p-2 rounded-lg">
+              <FileText size={24} className="text-black" />
+            </div>
+            <h3 className="text-xl font-black text-white">7 Documents Requis (pour devis sous 24h)</h3>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-gray-300">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6 text-sm text-gray-300">
             <div className="flex items-center gap-2">
-              <CheckCircle size={14} className="text-gray-500" />
+              <CheckCircle size={16} className="text-amber-400" />
               <span>Licence de taxi</span>
             </div>
             <div className="flex items-center gap-2">
-              <CheckCircle size={14} className="text-gray-500" />
+              <CheckCircle size={16} className="text-amber-400" />
               <span>Permis de conduire</span>
             </div>
             <div className="flex items-center gap-2">
-              <CheckCircle size={14} className="text-gray-500" />
+              <CheckCircle size={16} className="text-amber-400" />
               <span>Piece d'identite</span>
             </div>
             <div className="flex items-center gap-2">
-              <CheckCircle size={14} className="text-gray-500" />
+              <CheckCircle size={16} className="text-amber-400" />
               <span>Carte grise</span>
             </div>
             <div className="flex items-center gap-2">
-              <CheckCircle size={14} className="text-gray-500" />
+              <CheckCircle size={16} className="text-amber-400" />
               <span>Releve d'information</span>
             </div>
             <div className="flex items-center gap-2">
-              <CheckCircle size={14} className="text-gray-500" />
+              <CheckCircle size={16} className="text-amber-400" />
               <span>Autorisation stationnement</span>
             </div>
             <div className="flex items-center gap-2">
-              <CheckCircle size={14} className="text-gray-500" />
+              <CheckCircle size={16} className="text-amber-400" />
               <span>RIB</span>
             </div>
           </div>
@@ -193,11 +195,11 @@ const Merci: React.FC = () => {
           {token && (
             <Link
               to={`/espace-prospect/${token}`}
-              className="mt-4 inline-flex items-center gap-2 text-amber-400 hover:text-amber-300 font-semibold transition-colors"
+              className="w-full flex items-center justify-center gap-3 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-black font-black text-lg py-4 px-6 rounded-xl transition-all shadow-lg hover:shadow-xl"
             >
-              <Upload size={16} />
-              Uploader mes documents maintenant
-              <ExternalLink size={14} />
+              <Upload size={24} />
+              UPLOADER MES DOCUMENTS MAINTENANT
+              <ArrowRight size={24} />
             </Link>
           )}
         </div>
