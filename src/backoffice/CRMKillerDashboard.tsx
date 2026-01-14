@@ -6,7 +6,8 @@ import {
   ArrowRight, RefreshCw, Inbox, ChevronRight, Brain,
   ThumbsUp, ThumbsDown, Clock, Phone, Mail, MessageSquare,
   FileText, Calendar, BarChart3, PieChart, ArrowUpRight,
-  ArrowDownRight, Sparkles, ClipboardList, Bell, Settings
+  ArrowDownRight, Sparkles, ClipboardList, Bell, Settings,
+  UserPlus
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
@@ -187,6 +188,7 @@ const CRMKillerDashboard: React.FC = () => {
   }, []);
 
   const quickActions: QuickAction[] = [
+    { label: 'Nouveau Lead', icon: UserPlus, path: '/backoffice/crm/create-lead', color: 'green' },
     { label: 'Pipeline', icon: BarChart3, path: '/backoffice/crm-killer/pipeline', color: 'blue' },
     { label: 'File Devis', icon: ClipboardList, path: '/backoffice/quote-queue', color: 'green', badge: stats.ready_for_quote },
     { label: 'Inbox', icon: Inbox, path: '/backoffice/crm-killer/inbox', color: 'purple', badge: stats.unread_messages },
@@ -267,6 +269,13 @@ const CRMKillerDashboard: React.FC = () => {
           </p>
         </div>
         <div className="flex items-center gap-3">
+          <button
+            onClick={() => navigate('/backoffice/crm/create-lead')}
+            className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium transition-all shadow-lg shadow-blue-600/25"
+          >
+            <UserPlus className="w-5 h-5" />
+            <span>Nouveau Lead</span>
+          </button>
           <button
             onClick={() => navigate('/backoffice/quote-queue')}
             className={`relative flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium transition-all ${
