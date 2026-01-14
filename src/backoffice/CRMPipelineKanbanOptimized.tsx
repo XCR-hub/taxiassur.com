@@ -199,18 +199,36 @@ const CRMPipelineKanbanOptimized: React.FC = () => {
     return filtered;
   }, [kanbanData, debouncedSearch]);
 
+  // Organisation des statuts par étapes du workflow
   const visibleStatuses: PipelineStatus[] = [
+    // Étape 1: Nouveau
     'NEW_LEAD',
+
+    // Étape 2: Contacté
     'CONTACT_ATTEMPTED',
     'CONTACT_CONFIRMED',
+
+    // Étape 3: Qualifié
     'DOCUMENTS_REQUIRED',
     'DOCUMENTS_PARTIAL',
     'READY_FOR_QUOTE',
+
+    // Étape 4: Devis envoyé
     'QUOTE_SENT',
+    'NO_RESPONSE',
+
+    // Étape 5: Négociation
+    'RELANCE_ACTIVE',
     'SIGNATURE_PENDING',
     'SIGNED',
+    'DOWN_PAYMENT_REQUIRED',
     'PAYMENT_PENDING',
+
+    // Étape 6: Gagné
     'ACTIVE_CLIENT',
+    'CROSS_SELLING',
+
+    // Perdu
     'LOST_RECONTACT_SCHEDULED'
   ];
 
