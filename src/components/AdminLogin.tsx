@@ -49,9 +49,12 @@ export default function AdminLogin({ onSuccess }: AdminLoginProps) {
       }
 
       // Attendre que la session soit sauvegardée
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise(resolve => setTimeout(resolve, 500));
 
-      onSuccess();
+      logger.info('✅ Connexion réussie, rechargement de la page...');
+
+      // Forcer un rechargement pour que AuthGuard détecte la nouvelle session
+      window.location.reload();
     } catch (err) {
       logger.error('Erreur de connexion:', err);
       setError(err instanceof Error ? err.message : 'Erreur de connexion');

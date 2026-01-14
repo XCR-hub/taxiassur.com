@@ -83,7 +83,8 @@ const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
 
   if (!isAuthenticated) {
     return <AdminLogin onSuccess={() => {
-      console.log('✅ Login success, waiting for auth state to update...');
+      console.log('✅ Login success, reloading page...');
+      setForceRecheck(prev => prev + 1);
     }} />;
   }
 
