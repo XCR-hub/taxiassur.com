@@ -38,11 +38,54 @@ interface EmailMessage {
   auto_matched: boolean;
 }
 
+interface ExtractedLeadInfo {
+  name?: string;
+  email?: string;
+  phone?: string;
+  city?: string;
+}
+
+const extractLeadInfoFromEmail = (email: EmailMessage): ExtractedLeadInfo | null => {
+  const text = email.body_text || '';
+  const html = email.body_html || '';
+  const content = text + ' ' + html;
+
+  if (!email.subject?.toLowerCase().includes('nouveau lead') &&
+      !email.subject?.toLowerCase().includes('new lead') &&
+      !content.toLowerCase().includes('nouveau lead')) {
+    return null;
+  }
+
+  const info: ExtractedLeadInfo = {};
+
+  const emailMatch = content.match(/(?:EMAIL|E-mail|Courriel)[:\s]*(?:<[^>]*>)*\s*([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/i);
+  if (emailMatch) info.email = emailMatch[1].toLowerCase();
+
+  const phoneMatch = content.match(/(?:TELEPHONE|Tel|Phone|Portable|Mobile)[:\s]*(?:<[^>]*>)*\s*(0[1-9][0-9]{8,9})/i);
+  if (phoneMatch) info.phone = phoneMatch[1];
+
+  const nameMatch = content.match(/(?:NOM COMPLET|Nom|Name)[:\s]*(?:<[^>]*>)*\s*([A-Za-zÀ-ÿ\s-]+?)(?:<|$|\n)/i);
+  if (nameMatch) info.name = nameMatch[1].trim();
+
+  const cityMatch = content.match(/(?:VILLE|City|Localisation)[:\s]*(?:<[^>]*>)*\s*([A-Za-zÀ-ÿ\s-]+?)(?:<|$|\n)/i);
+  if (cityMatch) info.city = cityMatch[1].trim();
+
+  const subjectMatch = email.subject?.match(/Nouveau Lead\s*:\s*([^-]+)\s*-\s*(.+)/i);
+  if (subjectMatch) {
+    if (!info.name) info.name = subjectMatch[1].trim();
+    if (!info.city) info.city = subjectMatch[2].trim();
+  }
+
+  return (info.email || info.phone || info.name) ? info : null;
+};
+
 const CRMInboxMulticanal: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [messages, setMessages] = useState<EmailMessage[]>([]);
   const [selectedMessage, setSelectedMessage] = useState<EmailMessage | null>(null);
+  const [foundLeadId, setFoundLeadId] = useState<string | null>(null);
+  const [extractedInfo, setExtractedInfo] = useState<ExtractedLeadInfo | null>(null);
   const [filter, setFilter] = useState<'all' | 'unread' | 'starred' | 'leads'>('all');
   const [directionFilter, setDirectionFilter] = useState<'all' | 'inbound' | 'outbound'>('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -60,6 +103,73 @@ const CRMInboxMulticanal: React.FC = () => {
     }, 30000);
     return () => clearInterval(interval);
   }, [filter, directionFilter, searchQuery, sortBy]);
+
+  useEffect(() => {
+    const findLeadFromNotification = async () => {
+      setFoundLeadId(null);
+      setExtractedInfo(null);
+
+      if (!selectedMessage) return;
+
+      if (selectedMessage.lead_id) {
+        setFoundLeadId(selectedMessage.lead_id);
+        return;
+      }
+
+      const info = extractLeadInfoFromEmail(selectedMessage);
+      if (!info) return;
+
+      setExtractedInfo(info);
+
+      try {
+        let query = supabase.from('crm_leads').select('id').limit(1);
+
+        if (info.email) {
+          const { data } = await query.eq('email', info.email).maybeSingle();
+          if (data) {
+            setFoundLeadId(data.id);
+            return;
+          }
+        }
+
+        if (info.phone) {
+          const cleanPhone = info.phone.replace(/\s/g, '');
+          const { data } = await supabase
+            .from('crm_leads')
+            .select('id')
+            .or(`phone.eq.${cleanPhone},phone.eq.${cleanPhone.replace(/^0/, '+33')}`)
+            .limit(1)
+            .maybeSingle();
+          if (data) {
+            setFoundLeadId(data.id);
+            return;
+          }
+        }
+
+        if (info.name) {
+          const nameParts = info.name.toLowerCase().split(/\s+/);
+          const { data } = await supabase
+            .from('crm_leads')
+            .select('id, first_name, last_name')
+            .limit(10);
+
+          if (data) {
+            const match = data.find(lead => {
+              const leadName = `${lead.first_name || ''} ${lead.last_name || ''}`.toLowerCase();
+              return nameParts.some(part => leadName.includes(part) && part.length > 2);
+            });
+            if (match) {
+              setFoundLeadId(match.id);
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error finding lead from notification:', error);
+      }
+    };
+
+    findLeadFromNotification();
+  }, [selectedMessage]);
 
   const loadStats = async () => {
     try {
@@ -683,9 +793,9 @@ const CRMInboxMulticanal: React.FC = () => {
                 </button>
 
                 <div className="flex items-center gap-2">
-                  {selectedMessage.lead_id && (
+                  {foundLeadId && (
                     <a
-                      href={`/backoffice/crm-killer/lead/${selectedMessage.lead_id}`}
+                      href={`/backoffice/crm-killer/lead/${foundLeadId}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
@@ -693,6 +803,12 @@ const CRMInboxMulticanal: React.FC = () => {
                       <ExternalLink size={16} />
                       Voir le lead
                     </a>
+                  )}
+                  {!foundLeadId && extractedInfo && (
+                    <div className="flex items-center gap-2 px-4 py-2 bg-yellow-100 text-yellow-800 rounded-lg text-sm">
+                      <AlertCircle size={16} />
+                      Lead non trouve ({extractedInfo.email || extractedInfo.phone || extractedInfo.name})
+                    </div>
                   )}
                   <button
                     onClick={() =>
