@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { Calendar, Tag, TrendingUp, Mail, Phone, FileCheck, CreditCard, Clock, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Calendar, Tag, TrendingUp, Mail, Phone, FileCheck, CreditCard, Clock, CheckCircle2, AlertCircle, Building2, PenTool, AlertTriangle, Euro } from 'lucide-react';
 import { CRMLead, PIPELINE_STATUSES } from '@/lib/crm-pipeline';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/lib/supabase';
@@ -14,12 +14,17 @@ interface PipelineCardProps {
 }
 
 interface LeadIndicators {
-  documentsComplete: boolean;
-  documentsMissing: number;
-  hasQuote: boolean;
+  documentsValidated: number;
+  documentsTotal: number;
+  companiesQuoted: number;
+  companiesRefused: number;
+  companiesTotal: number;
   hasSignature: boolean;
-  paymentStatus: 'none' | 'pending' | 'paid';
+  downPaymentStatus: 'none' | 'required' | 'pending' | 'paid';
+  downPaymentAmount: number | null;
   daysInPipeline: number;
+  needsRelance: boolean;
+  lastInteractionDays: number;
 }
 
 export const PipelineCard: React.FC<PipelineCardProps> = ({
@@ -34,37 +39,65 @@ export const PipelineCard: React.FC<PipelineCardProps> = ({
   const isDraggingRef = useRef(false);
   const mouseDownPos = useRef<{ x: number; y: number } | null>(null);
   const [indicators, setIndicators] = useState<LeadIndicators>({
-    documentsComplete: false,
-    documentsMissing: 7,
-    hasQuote: false,
+    documentsValidated: 0,
+    documentsTotal: 7,
+    companiesQuoted: 0,
+    companiesRefused: 0,
+    companiesTotal: 5,
     hasSignature: false,
-    paymentStatus: 'none',
-    daysInPipeline: 0
+    downPaymentStatus: 'none',
+    downPaymentAmount: null,
+    daysInPipeline: 0,
+    needsRelance: false,
+    lastInteractionDays: 0
   });
 
   useEffect(() => {
     const loadIndicators = async () => {
       try {
-        const [docsResult, quotesResult, contractResult] = await Promise.all([
+        const [docsResult, companyQuotesResult, contractResult, interactionsResult] = await Promise.all([
           supabase.from('crm_lead_documents').select('status').eq('lead_id', lead.id),
-          supabase.from('crm_lead_quotes').select('id, status').eq('lead_id', lead.id),
-          supabase.from('lead_contracts').select('status, down_payment_status').eq('lead_id', lead.id).limit(1)
+          supabase.from('lead_company_quotes').select('status').eq('lead_id', lead.id),
+          supabase.from('lead_contracts').select('status, down_payment_status, down_payment_amount').eq('lead_id', lead.id).limit(1),
+          supabase.from('crm_interactions').select('created_at').eq('lead_id', lead.id).order('created_at', { ascending: false }).limit(1)
         ]);
 
         const docs = docsResult.data || [];
         const validatedDocs = docs.filter(d => d.status === 'validated').length;
-        const quotes = quotesResult.data || [];
+
+        const companyQuotes = companyQuotesResult.data || [];
+        const quotedCompanies = companyQuotes.filter(q => q.status === 'quote_submitted' || q.status === 'validated').length;
+        const refusedCompanies = companyQuotes.filter(q => q.status === 'refused').length;
+
         const contract = contractResult.data?.[0];
+        const lastInteraction = interactionsResult.data?.[0];
 
         const daysInPipeline = Math.floor((Date.now() - new Date(lead.created_at).getTime()) / (1000 * 60 * 60 * 24));
+        const lastInteractionDays = lastInteraction
+          ? Math.floor((Date.now() - new Date(lastInteraction.created_at).getTime()) / (1000 * 60 * 60 * 24))
+          : daysInPipeline;
+
+        let downPaymentStatus: 'none' | 'required' | 'pending' | 'paid' = 'none';
+        if (contract?.down_payment_status === 'paid') {
+          downPaymentStatus = 'paid';
+        } else if (contract?.down_payment_status === 'pending') {
+          downPaymentStatus = 'pending';
+        } else if (lead.status === 'DOWN_PAYMENT_REQUIRED' || lead.status === 'SIGNED') {
+          downPaymentStatus = 'required';
+        }
 
         setIndicators({
-          documentsComplete: validatedDocs >= 5,
-          documentsMissing: Math.max(0, 5 - validatedDocs),
-          hasQuote: quotes.length > 0,
+          documentsValidated: validatedDocs,
+          documentsTotal: 7,
+          companiesQuoted: quotedCompanies,
+          companiesRefused: refusedCompanies,
+          companiesTotal: 5,
           hasSignature: contract?.status === 'signed',
-          paymentStatus: contract?.down_payment_status === 'paid' ? 'paid' : contract?.down_payment_status === 'pending' ? 'pending' : 'none',
-          daysInPipeline
+          downPaymentStatus,
+          downPaymentAmount: contract?.down_payment_amount || null,
+          daysInPipeline,
+          needsRelance: lastInteractionDays >= 3 && !['ACTIVE_CLIENT', 'LOST', 'CANCELLED'].includes(lead.status),
+          lastInteractionDays
         });
       } catch (error) {
         console.error('Error loading indicators:', error);
@@ -72,7 +105,7 @@ export const PipelineCard: React.FC<PipelineCardProps> = ({
     };
 
     loadIndicators();
-  }, [lead.id, lead.created_at]);
+  }, [lead.id, lead.created_at, lead.status]);
 
   const getScoreColor = (score?: number) => {
     if (!score) return 'text-gray-400';
@@ -190,38 +223,69 @@ export const PipelineCard: React.FC<PipelineCardProps> = ({
       </div>
 
       <div className="mt-3 pt-3 border-t border-gray-100">
-        <div className="flex items-center gap-2 mb-2">
+        {indicators.needsRelance && (
+          <div className="flex items-center gap-1 mb-2 px-2 py-1 rounded bg-red-50 border border-red-200">
+            <AlertTriangle size={12} className="text-red-600" />
+            <span className="text-xs font-medium text-red-700">Relance necessaire ({indicators.lastInteractionDays}j)</span>
+          </div>
+        )}
+
+        <div className="flex flex-wrap items-center gap-1.5 mb-2">
           <div
             className={cn(
               'flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium',
-              indicators.documentsComplete
+              indicators.documentsValidated >= 7
                 ? 'bg-green-100 text-green-700'
-                : 'bg-orange-100 text-orange-700'
+                : indicators.documentsValidated >= 4
+                  ? 'bg-yellow-100 text-yellow-700'
+                  : 'bg-orange-100 text-orange-700'
             )}
-            title={indicators.documentsComplete ? 'Documents complets' : `${indicators.documentsMissing} doc(s) manquant(s)`}
+            title={`${indicators.documentsValidated}/${indicators.documentsTotal} documents valides`}
           >
             <FileCheck size={10} />
-            {indicators.documentsComplete ? 'OK' : indicators.documentsMissing}
+            {indicators.documentsValidated}/{indicators.documentsTotal}
           </div>
 
-          {indicators.hasQuote && (
-            <div className="flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-cyan-100 text-cyan-700" title="Devis envoye">
-              <CheckCircle2 size={10} />
-              Devis
+          <div
+            className={cn(
+              'flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium',
+              (indicators.companiesQuoted + indicators.companiesRefused) >= 5
+                ? 'bg-green-100 text-green-700'
+                : indicators.companiesQuoted > 0
+                  ? 'bg-cyan-100 text-cyan-700'
+                  : 'bg-gray-100 text-gray-600'
+            )}
+            title={`${indicators.companiesQuoted} devis, ${indicators.companiesRefused} refus sur ${indicators.companiesTotal} compagnies`}
+          >
+            <Building2 size={10} />
+            {indicators.companiesQuoted + indicators.companiesRefused}/{indicators.companiesTotal}
+          </div>
+
+          {indicators.hasSignature && (
+            <div className="flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-700" title="Contrat signe">
+              <PenTool size={10} />
+              Signe
             </div>
           )}
 
-          {indicators.paymentStatus === 'paid' && (
-            <div className="flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-green-100 text-green-700" title="Paiement recu">
-              <CreditCard size={10} />
+          {indicators.downPaymentStatus === 'paid' && (
+            <div className="flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-green-100 text-green-700" title="Comptant recu">
+              <Euro size={10} />
               Paye
             </div>
           )}
 
-          {indicators.paymentStatus === 'pending' && (
-            <div className="flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-700" title="En attente de paiement">
-              <CreditCard size={10} />
+          {indicators.downPaymentStatus === 'pending' && (
+            <div className="flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-700 animate-pulse" title="En attente du comptant">
+              <Euro size={10} />
               Attente
+            </div>
+          )}
+
+          {indicators.downPaymentStatus === 'required' && (
+            <div className="flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-700" title="Comptant requis">
+              <CreditCard size={10} />
+              Comptant
             </div>
           )}
 

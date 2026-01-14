@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Search, Filter, RefreshCw, AlertCircle, TrendingUp, Clock } from 'lucide-react';
+import { Plus, Search, Filter, RefreshCw, AlertCircle, TrendingUp, Clock, FileText, Building2, Euro, PenTool, AlertTriangle } from 'lucide-react';
 import { pipelineService, PIPELINE_STATUSES, PipelineStatus, CRMLead } from '@/lib/crm-pipeline';
 import { PipelineCard } from '@/components/crm/PipelineCard';
 import { cn } from '@/lib/utils';
@@ -211,12 +211,28 @@ const CRMPipelineKanban: React.FC = () => {
 
   const statistics = useMemo(() => {
     const allLeads = Object.values(filteredKanbanData).flat();
+
+    const documentsStage = (filteredKanbanData['DOCUMENTS_REQUIRED'] || []).length +
+                           (filteredKanbanData['DOCUMENTS_PARTIAL'] || []).length;
+    const quoteStage = (filteredKanbanData['READY_FOR_QUOTE'] || []).length +
+                       (filteredKanbanData['QUOTE_SENT'] || []).length;
+    const signatureStage = (filteredKanbanData['SIGNATURE_PENDING'] || []).length +
+                           (filteredKanbanData['SIGNED'] || []).length;
+    const paymentStage = (filteredKanbanData['DOWN_PAYMENT_REQUIRED'] || []).length +
+                         (filteredKanbanData['PAYMENT_PENDING'] || []).length;
+
     return {
       total: allLeads.length,
       active: (filteredKanbanData['ACTIVE_CLIENT'] || []).length,
-      pending: (filteredKanbanData['DOCUMENTS_REQUIRED'] || []).length +
-               (filteredKanbanData['DOCUMENTS_PARTIAL'] || []).length,
       newLeads: (filteredKanbanData['NEW_LEAD'] || []).length,
+      contactStage: (filteredKanbanData['CONTACT_ATTEMPTED'] || []).length +
+                    (filteredKanbanData['CONTACT_CONFIRMED'] || []).length,
+      documentsStage,
+      quoteStage,
+      signatureStage,
+      paymentStage,
+      needsAction: (filteredKanbanData['NEW_LEAD'] || []).length +
+                   (filteredKanbanData['CONTACT_ATTEMPTED'] || []).length,
       avgQuality: allLeads.length > 0
         ? Math.round(allLeads.reduce((sum, l) => sum + (l.quality_score || 0), 0) / allLeads.length)
         : 0
@@ -312,25 +328,64 @@ const CRMPipelineKanban: React.FC = () => {
             </button>
           </div>
 
-          {/* Quick stats */}
-          <div className="flex items-center gap-4 mt-4 p-3 bg-gray-50 rounded-lg">
-            <div className="flex items-center gap-2">
+          {/* TaxiAssur Workflow Stats */}
+          <div className="mt-4 grid grid-cols-2 lg:grid-cols-7 gap-2">
+            {statistics.needsAction > 0 && (
+              <div className="flex items-center gap-2 px-3 py-2 bg-red-50 border border-red-200 rounded-lg">
+                <AlertTriangle size={16} className="text-red-600" />
+                <div>
+                  <div className="text-lg font-bold text-red-700">{statistics.needsAction}</div>
+                  <div className="text-xs text-red-600">Actions urgentes</div>
+                </div>
+              </div>
+            )}
+
+            <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg">
+              <FileText size={16} className="text-blue-600" />
+              <div>
+                <div className="text-lg font-bold text-blue-700">{statistics.documentsStage}</div>
+                <div className="text-xs text-blue-600">Documents</div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 px-3 py-2 bg-cyan-50 border border-cyan-200 rounded-lg">
+              <Building2 size={16} className="text-cyan-600" />
+              <div>
+                <div className="text-lg font-bold text-cyan-700">{statistics.quoteStage}</div>
+                <div className="text-xs text-cyan-600">Devis</div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 px-3 py-2 bg-indigo-50 border border-indigo-200 rounded-lg">
+              <PenTool size={16} className="text-indigo-600" />
+              <div>
+                <div className="text-lg font-bold text-indigo-700">{statistics.signatureStage}</div>
+                <div className="text-xs text-indigo-600">Signature</div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg">
+              <Euro size={16} className="text-amber-600" />
+              <div>
+                <div className="text-lg font-bold text-amber-700">{statistics.paymentStage}</div>
+                <div className="text-xs text-amber-600">Paiement</div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 px-3 py-2 bg-green-50 border border-green-200 rounded-lg">
+              <TrendingUp size={16} className="text-green-600" />
+              <div>
+                <div className="text-lg font-bold text-green-700">{statistics.active}</div>
+                <div className="text-xs text-green-600">Clients actifs</div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg">
               <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-              <span className="text-sm text-gray-600">
-                Mise à jour automatique
-              </span>
-            </div>
-            <div className="text-gray-400">•</div>
-            <div className="text-sm text-gray-600">
-              <span className="font-semibold">{statistics.total}</span> leads
-            </div>
-            <div className="text-gray-400">•</div>
-            <div className="text-sm text-gray-600">
-              <span className="font-semibold">{statistics.newLeads}</span> nouveaux
-            </div>
-            <div className="text-gray-400">•</div>
-            <div className="text-sm text-gray-600">
-              Qualité moyenne: <span className="font-semibold">{statistics.avgQuality}%</span>
+              <div>
+                <div className="text-sm font-bold text-gray-700">{statistics.total}</div>
+                <div className="text-xs text-gray-500">Total leads</div>
+              </div>
             </div>
           </div>
         </div>
@@ -440,38 +495,38 @@ const CRMPipelineKanban: React.FC = () => {
         </div>
       </div>
 
-      {/* Statistics panel */}
-      <div className="fixed bottom-6 right-6 bg-white rounded-lg shadow-lg border-2 border-gray-200 p-4 z-40">
-        <div className="flex items-center gap-4">
-          <div className="text-center">
-            <div className="text-2xl font-bold text-blue-600">
-              {statistics.total}
-            </div>
-            <div className="text-xs text-gray-600">Total</div>
+      {/* TaxiAssur Workflow Panel */}
+      <div className="fixed bottom-6 right-6 bg-white rounded-xl shadow-xl border-2 border-gray-200 p-4 z-40">
+        <div className="text-xs font-semibold text-gray-500 mb-3 uppercase tracking-wide">Workflow TaxiAssur</div>
+        <div className="flex items-center gap-3">
+          <div className="text-center px-2">
+            <div className="text-xl font-bold text-red-600">{statistics.needsAction}</div>
+            <div className="text-xs text-gray-500">Urgents</div>
           </div>
-          <div className="w-px h-12 bg-gray-200"></div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-green-600">
-              {statistics.active}
-            </div>
-            <div className="text-xs text-gray-600">Actifs</div>
+          <div className="text-gray-300">→</div>
+          <div className="text-center px-2">
+            <div className="text-xl font-bold text-blue-600">{statistics.documentsStage}</div>
+            <div className="text-xs text-gray-500">Docs</div>
           </div>
-          <div className="w-px h-12 bg-gray-200"></div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-orange-600">
-              {statistics.pending}
-            </div>
-            <div className="text-xs text-gray-600">En Attente</div>
+          <div className="text-gray-300">→</div>
+          <div className="text-center px-2">
+            <div className="text-xl font-bold text-cyan-600">{statistics.quoteStage}</div>
+            <div className="text-xs text-gray-500">Devis</div>
           </div>
-          <div className="w-px h-12 bg-gray-200"></div>
-          <div className="text-center">
-            <div className="flex items-center gap-1 justify-center">
-              <TrendingUp size={16} className="text-blue-600" />
-              <div className="text-2xl font-bold text-blue-600">
-                {statistics.avgQuality}%
-              </div>
-            </div>
-            <div className="text-xs text-gray-600">Qualité</div>
+          <div className="text-gray-300">→</div>
+          <div className="text-center px-2">
+            <div className="text-xl font-bold text-indigo-600">{statistics.signatureStage}</div>
+            <div className="text-xs text-gray-500">Sign.</div>
+          </div>
+          <div className="text-gray-300">→</div>
+          <div className="text-center px-2">
+            <div className="text-xl font-bold text-amber-600">{statistics.paymentStage}</div>
+            <div className="text-xs text-gray-500">Paiement</div>
+          </div>
+          <div className="text-gray-300">→</div>
+          <div className="text-center px-2 bg-green-50 rounded-lg py-1 px-3">
+            <div className="text-xl font-bold text-green-600">{statistics.active}</div>
+            <div className="text-xs text-green-600 font-medium">Clients</div>
           </div>
         </div>
       </div>
