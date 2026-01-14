@@ -44,13 +44,54 @@ const PIPELINE_STEPS = [
   { key: 'won', label: 'Gagne', order: 6 }
 ];
 
+// Mapping des statuts détaillés vers les étapes du pipeline
+const STATUS_TO_PIPELINE_STEP: Record<string, string> = {
+  // Étape 1: Nouveau
+  'NEW_LEAD': 'new',
+
+  // Étape 2: Contacté
+  'CONTACT_ATTEMPTED': 'contacted',
+  'CONTACT_CONFIRMED': 'contacted',
+
+  // Étape 3: Qualifié
+  'DOCUMENTS_REQUIRED': 'qualified',
+  'DOCUMENTS_PARTIAL': 'qualified',
+  'READY_FOR_QUOTE': 'qualified',
+
+  // Étape 4: Devis envoyé
+  'QUOTE_SENT': 'quote_sent',
+  'NO_RESPONSE': 'quote_sent',
+
+  // Étape 5: Négociation
+  'RELANCE_ACTIVE': 'negotiation',
+  'SIGNATURE_PENDING': 'negotiation',
+  'SIGNED': 'negotiation',
+  'DOWN_PAYMENT_REQUIRED': 'negotiation',
+  'PAYMENT_PENDING': 'negotiation',
+
+  // Étape 6: Gagné
+  'ACTIVE_CLIENT': 'won',
+  'CROSS_SELLING': 'won',
+
+  // Cas spéciaux (gardent leur position)
+  'RISK_CHURN': 'negotiation',
+  'CLIENT_LOST': 'negotiation',
+  'LOST_RECONTACT_SCHEDULED': 'negotiation',
+  'SINISTER': 'won',
+  'ATTESTATION_REQUEST': 'won',
+  'SUPPORT_ASSISTANCE': 'won'
+};
+
 export const LeadHeader: React.FC<LeadHeaderProps> = ({
   lead,
   onStatusChange,
   availableTransitions
 }) => {
   const statusInfo = PIPELINE_STATUSES[lead.status] || { label: lead.status, icon: '?' };
-  const currentStepOrder = PIPELINE_STEPS.find(s => s.key === lead.status)?.order || 0;
+
+  // Trouver l'étape du pipeline correspondant au statut actuel
+  const pipelineStep = STATUS_TO_PIPELINE_STEP[lead.status] || 'new';
+  const currentStepOrder = PIPELINE_STEPS.find(s => s.key === pipelineStep)?.order || 0;
   const prospectUrl = lead.access_token
     ? `${window.location.origin}/espace-prospect?token=${lead.access_token}`
     : null;
@@ -183,14 +224,31 @@ export const LeadHeader: React.FC<LeadHeaderProps> = ({
           <div className="flex items-center gap-1">
             {PIPELINE_STEPS.map((step, index) => {
               const isCompleted = step.order < currentStepOrder;
-              const isCurrent = step.key === lead.status;
-              const isAvailable = availableTransitions.some(t => t.to === step.key);
+              const isCurrent = step.key === pipelineStep;
+
+              // Trouver les statuts disponibles qui correspondent à cette étape du pipeline
+              const matchingTransitions = availableTransitions.filter(t =>
+                STATUS_TO_PIPELINE_STEP[t.to] === step.key
+              );
+              const isAvailable = matchingTransitions.length > 0;
+
+              // Si disponible, prendre la première transition correspondante
+              const targetStatus = matchingTransitions[0]?.to;
 
               return (
                 <React.Fragment key={step.key}>
                   <button
-                    onClick={() => isAvailable && onStatusChange(step.key)}
+                    onClick={() => isAvailable && targetStatus && onStatusChange(targetStatus)}
                     disabled={!isAvailable && !isCurrent}
+                    title={
+                      isCurrent
+                        ? `Étape actuelle: ${statusInfo.label}`
+                        : isAvailable && matchingTransitions[0]
+                        ? `Passer à: ${matchingTransitions[0].label}`
+                        : isCompleted
+                        ? 'Étape complétée'
+                        : 'Non disponible'
+                    }
                     className={`flex-1 py-2 px-3 rounded-lg text-xs font-medium transition-all ${
                       isCompleted
                         ? 'bg-green-100 text-green-700 border border-green-200'
