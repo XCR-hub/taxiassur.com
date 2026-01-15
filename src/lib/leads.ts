@@ -377,13 +377,19 @@ export async function createLead(input: CreateLeadInput): Promise<{ success: boo
 
     logger.log('Lead created successfully in crm_leads:', data?.id);
 
-    sendLeadNotificationEmails({
-      ...data,
-      name: input.name,
-      status: input.status
-    }).catch(err => {
-      logger.warn('Email notification failed (non-blocking):', err);
-    });
+    // Envoyer les emails IMMÉDIATEMENT et de manière synchrone
+    try {
+      await sendLeadNotificationEmails({
+        ...data,
+        name: input.name,
+        status: input.status,
+        immatriculation: input.immatriculation
+      });
+      logger.log('✅ Emails envoyés avec succès');
+    } catch (emailError) {
+      logger.error('❌ ERREUR EMAILS:', emailError);
+      // Ne pas bloquer la création du lead, mais logger l'erreur clairement
+    }
 
     return { success: true, leadId: data?.id, accessToken: data?.access_token };
   } catch (error: any) {
