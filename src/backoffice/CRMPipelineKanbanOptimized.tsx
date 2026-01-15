@@ -192,7 +192,7 @@ const CRMPipelineKanbanOptimized: React.FC = () => {
         lead.full_name?.toLowerCase().includes(searchLower) ||
         lead.email?.toLowerCase().includes(searchLower) ||
         lead.phone?.includes(debouncedSearch) ||
-        lead.company_name?.toLowerCase().includes(searchLower) ||
+        (lead as any).immatriculation?.toLowerCase().includes(searchLower) ||
         lead.city?.toLowerCase().includes(searchLower)
       );
     });

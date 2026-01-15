@@ -93,7 +93,7 @@ const CRMLeadDetail: React.FC = () => {
     email: '',
     phone: '',
     city: '',
-    company_name: '',
+    immatriculation: '',
     internal_notes: ''
   });
 
@@ -152,7 +152,7 @@ const CRMLeadDetail: React.FC = () => {
         email: leadData.email || '',
         phone: leadData.phone || '',
         city: leadData.city || '',
-        company_name: leadData.company_name || '',
+        immatriculation: (leadData as any).immatriculation || '',
         internal_notes: (leadData as any).internal_notes || ''
       });
 
@@ -277,7 +277,7 @@ const CRMLeadDetail: React.FC = () => {
           email: editForm.email,
           phone: editForm.phone,
           city: editForm.city,
-          company_name: editForm.company_name,
+          immatriculation: editForm.immatriculation,
           internal_notes: editForm.internal_notes,
           updated_at: new Date().toISOString()
         })
@@ -643,7 +643,7 @@ const CRMLeadDetail: React.FC = () => {
                               email: lead.email || '',
                               phone: lead.phone || '',
                               city: lead.city || '',
-                              company_name: lead.company_name || '',
+                              immatriculation: (lead as any).immatriculation || '',
                               internal_notes: (lead as any).internal_notes || ''
                             });
                           }}
@@ -704,12 +704,13 @@ const CRMLeadDetail: React.FC = () => {
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Societe</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Immatriculation</label>
                         <input
                           type="text"
-                          value={editForm.company_name}
-                          onChange={(e) => setEditForm({ ...editForm, company_name: e.target.value })}
+                          value={editForm.immatriculation}
+                          onChange={(e) => setEditForm({ ...editForm, immatriculation: e.target.value })}
                           className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
+                          placeholder="AA-123-BB"
                         />
                       </div>
                       <div className="col-span-2">
@@ -746,8 +747,8 @@ const CRMLeadDetail: React.FC = () => {
                         <div className="font-medium text-gray-900">{lead.city || '-'}</div>
                       </div>
                       <div>
-                        <div className="text-sm text-gray-500 mb-1">Societe</div>
-                        <div className="font-medium text-gray-900">{lead.company_name || '-'}</div>
+                        <div className="text-sm text-gray-500 mb-1">Immatriculation</div>
+                        <div className="font-medium text-gray-900">{(lead as any).immatriculation || '-'}</div>
                       </div>
                       <div className="col-span-2">
                         <div className="text-sm text-gray-500 mb-1">Notes internes</div>
@@ -1179,7 +1180,7 @@ const CRMLeadDetail: React.FC = () => {
           last_name: lead.last_name,
           email: lead.email,
           phone: lead.phone,
-          company_name: lead.company_name,
+          immatriculation: (lead as any).immatriculation,
           city: lead.city,
           access_token: (lead as any).access_token
         }}
