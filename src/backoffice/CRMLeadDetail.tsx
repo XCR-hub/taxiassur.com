@@ -35,14 +35,14 @@ import {
   Loader2,
   Activity
 } from 'lucide-react';
-import { pipelineService, CRMLead, PIPELINE_STATUSES } from '@/lib/crm-pipeline';
+import { pipelineService, CRMLead, PIPELINE_STATUSES, PipelineStatus } from '@/lib/crm-pipeline';
+import { QuickAction } from '@/lib/commercial-workflow';
 import { supabase } from '@/lib/supabase';
 import ElectronicSignature from '@/components/ElectronicSignature';
 import {
   DocumentChecklistPanelV2,
   EmailComposerModal,
   DocumentRequestsManager,
-  CommercialChecklist,
   LeadIntelligencePanel,
   LeadHeader,
   LeadWorkflowTabs,
@@ -50,7 +50,8 @@ import {
   PendingAttachmentsPanel,
   LeadQuotesManager,
   DocumentValidationManager,
-  DownPaymentManager
+  DownPaymentManager,
+  CommercialFollowupPanel
 } from '@/components/crm';
 import type { WorkflowTab } from '@/components/crm';
 
@@ -334,6 +335,71 @@ const CRMLeadDetail: React.FC = () => {
       });
     } finally {
       setStatusChanging(false);
+    }
+  };
+
+  const handleCommercialAction = async (action: QuickAction, additionalData?: { note?: string }) => {
+    if (!lead) return;
+
+    try {
+      if (action.type === 'status_change' && action.nextStatus) {
+        await pipelineService.updateLeadStatus(
+          lead.id,
+          action.nextStatus,
+          additionalData?.note,
+          undefined,
+          undefined
+        );
+
+        setAutomationFeedback({
+          show: true,
+          success: true,
+          message: `Statut changé vers ${PIPELINE_STATUSES[action.nextStatus].label}`,
+          actionsQueued: 0
+        });
+
+        setTimeout(() => setAutomationFeedback(null), 5000);
+
+        await loadLeadData(lead.id);
+      } else if (action.type === 'send_email' && action.emailTemplate) {
+        setEmailDefaultSubject(action.emailTemplate.subject);
+        setEmailDefaultBody(action.emailTemplate.body);
+        setEmailMissingDocs([]);
+        setEmailModalOpen(true);
+      } else if (action.type === 'send_sms') {
+        setShowSMSModal(true);
+      } else if (action.type === 'add_note') {
+        await pipelineService.addTimelineEvent({
+          lead_id: lead.id,
+          event_type: 'note',
+          title: 'Note ajoutée',
+          description: additionalData?.note || '',
+          metadata: {}
+        });
+
+        setAutomationFeedback({
+          show: true,
+          success: true,
+          message: 'Note ajoutée avec succès',
+          actionsQueued: 0
+        });
+
+        setTimeout(() => setAutomationFeedback(null), 3000);
+
+        await loadMessages(lead.id);
+      } else if (action.type === 'custom') {
+        console.log('Custom action:', action.id);
+      }
+    } catch (error) {
+      console.error('Commercial action error:', error);
+      setAutomationFeedback({
+        show: true,
+        success: false,
+        message: 'Erreur lors de l\'exécution de l\'action',
+        actionsQueued: 0
+      });
+
+      setTimeout(() => setAutomationFeedback(null), 5000);
     }
   };
 
@@ -693,7 +759,12 @@ const CRMLeadDetail: React.FC = () => {
                   )}
                 </div>
 
-                <CommercialChecklist leadId={lead.id} productType="auto" />
+                <CommercialFollowupPanel
+                  leadId={lead.id}
+                  currentStatus={lead.status as PipelineStatus}
+                  onAction={handleCommercialAction}
+                  disabled={false}
+                />
               </>
             )}
 

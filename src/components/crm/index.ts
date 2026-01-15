@@ -20,3 +20,4 @@ export { default as LeadQuotesManager } from './LeadQuotesManager';
 export { default as DocumentValidationManager } from './DocumentValidationManager';
 export { default as DownPaymentManager } from './DownPaymentManager';
 export { default as ManualLeadCreator } from './ManualLeadCreator';
+export { CommercialFollowupPanel } from './CommercialFollowupPanel';
