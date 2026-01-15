@@ -334,6 +334,33 @@ Deno.serve(async (req: Request) => {
               Notre expert vous contacte dans les <strong>15 minutes</strong> au <strong>${lead.phone}</strong>
             </div>
 
+            <div style="background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); border: 3px solid #10b981; padding: 30px; border-radius: 20px; margin: 30px 0;">
+              <h3 style="color: #065f46; font-size: 24px; font-weight: 800; margin-bottom: 20px; text-align: center;">
+                Votre Espace Personnel Securise
+              </h3>
+              <p style="color: #065f46; text-align: center; margin-bottom: 25px; font-weight: 600;">
+                Un espace dedie a ete cree pour vous permettre de :
+              </p>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 25px;">
+                <div style="background: white; padding: 15px; border-radius: 12px; text-align: center;">
+                  <div style="color: #10b981; font-size: 32px; margin-bottom: 10px;">📤</div>
+                  <strong style="color: #065f46; display: block;">Uploader vos documents</strong>
+                </div>
+                <div style="background: white; padding: 15px; border-radius: 12px; text-align: center;">
+                  <div style="color: #3b82f6; font-size: 32px; margin-bottom: 10px;">📄</div>
+                  <strong style="color: #065f46; display: block;">Consulter vos devis</strong>
+                </div>
+                <div style="background: white; padding: 15px; border-radius: 12px; text-align: center;">
+                  <div style="color: #f59e0b; font-size: 32px; margin-bottom: 10px;">⏱️</div>
+                  <strong style="color: #065f46; display: block;">Suivre votre dossier</strong>
+                </div>
+                <div style="background: white; padding: 15px; border-radius: 12px; text-align: center;">
+                  <div style="color: #10b981; font-size: 32px; margin-bottom: 10px;">🛡️</div>
+                  <strong style="color: #065f46; display: block;">Signer votre contrat</strong>
+                </div>
+              </div>
+            </div>
+
             <div class="documents-section">
               <h3>Documents requis pour votre devis</h3>
               <p style="color: #1e40af; text-align: center; margin-bottom: 20px; font-weight: 600;">
@@ -371,13 +398,50 @@ Deno.serve(async (req: Request) => {
             </div>
 
             <div class="cta-section">
-              <p style="color: #92400e;">Uploadez vos documents maintenant et obtenez votre devis en express !</p>
-              <a href="https://taxiassur.com/espace-documents?token=${lead.access_token}" class="cta-button" style="text-decoration: none; color: #ffffff !important;">
-                UPLOADER MES DOCUMENTS
+              <p style="color: #92400e; font-size: 18px; font-weight: 700; margin-bottom: 15px;">VOTRE ESPACE PERSONNEL SECURISE</p>
+              <p style="color: #92400e; margin-bottom: 20px;">Uploadez vos documents et suivez votre dossier en temps reel</p>
+              <a href="https://taxiassur.com/espace-prospect/${lead.access_token}" class="cta-button" style="text-decoration: none; color: #ffffff !important;">
+                ACCEDER A MON ESPACE
               </a>
-              <p style="color: #92400e; font-size: 14px; margin-top: 15px;">
-                Vous pouvez aussi les envoyer par email a <a href="mailto:team@taxiassur.com" style="color: #db2777; font-weight: 600;">team@taxiassur.com</a>
+              <p style="color: #92400e; font-size: 13px; margin-top: 15px;">
+                Lien securise et personnel - Conservez ce lien pour acceder a votre espace a tout moment
               </p>
+              <p style="color: #92400e; font-size: 14px; margin-top: 10px;">
+                Vous pouvez aussi envoyer vos documents par email a <a href="mailto:team@taxiassur.com" style="color: #db2777; font-weight: 600;">team@taxiassur.com</a>
+              </p>
+            </div>
+
+            <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border: 3px solid #f59e0b; padding: 30px; border-radius: 20px; margin: 30px 0;">
+              <h3 style="color: #92400e; font-size: 24px; font-weight: 800; margin-bottom: 20px; text-align: center;">
+                Ce qui va se passer
+              </h3>
+              <div style="background: white; padding: 20px; border-radius: 15px; margin: 15px 0;">
+                <div style="display: flex; align-items: start; gap: 20px;">
+                  <div style="background: #10b981; color: white; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 20px; flex-shrink: 0;">1</div>
+                  <div>
+                    <strong style="color: #1e293b; display: block; margin-bottom: 5px; font-size: 18px;">Appel de votre expert (sous 15 min)</strong>
+                    <span style="color: #64748b;">Analyse de vos besoins specifiques</span>
+                  </div>
+                </div>
+              </div>
+              <div style="background: white; padding: 20px; border-radius: 15px; margin: 15px 0;">
+                <div style="display: flex; align-items: start; gap: 20px;">
+                  <div style="background: #f59e0b; color: black; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 20px; flex-shrink: 0;">2</div>
+                  <div>
+                    <strong style="color: #1e293b; display: block; margin-bottom: 5px; font-size: 18px;">Devis personnalise</strong>
+                    <span style="color: #64748b;">Jusqu'a 35% d'economies garanties</span>
+                  </div>
+                </div>
+              </div>
+              <div style="background: white; padding: 20px; border-radius: 15px; margin: 15px 0;">
+                <div style="display: flex; align-items: start; gap: 20px;">
+                  <div style="background: #3b82f6; color: white; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 20px; flex-shrink: 0;">3</div>
+                  <div>
+                    <strong style="color: #1e293b; display: block; margin-bottom: 5px; font-size: 18px;">Souscription rapide</strong>
+                    <span style="color: #64748b;">Attestation sous 24h apres validation</span>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <div class="info-box">
