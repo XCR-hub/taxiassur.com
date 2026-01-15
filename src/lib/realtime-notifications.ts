@@ -75,7 +75,7 @@ class RealtimeNotificationManager {
       title: this.getEventTitle(eventType),
       message: payload?.message || 'Notification',
       timestamp: createdAt,
-      read: payload?.read_at !== null && payload?.read_at !== undefined,
+      read: payload?.is_read === true,
       actionUrl: payload?.lead_id ? `/backoffice/crm-commercial?lead=${payload.lead_id}` : undefined,
       actionLabel: 'Voir le lead',
     };
@@ -119,7 +119,7 @@ class RealtimeNotificationManager {
 
       await supabase
         .from('crm_event_notifications')
-        .update({ read_at: new Date().toISOString() })
+        .update({ is_read: true })
         .eq('id', id);
     }
   }
@@ -129,8 +129,8 @@ class RealtimeNotificationManager {
 
     await supabase
       .from('crm_event_notifications')
-      .update({ read_at: new Date().toISOString() })
-      .is('read_at', null);
+      .update({ is_read: true })
+      .eq('is_read', false);
   }
 
   async clear() {
