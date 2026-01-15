@@ -50,7 +50,7 @@ class RealtimeNotificationManager {
       .limit(50);
 
     if (data) {
-      this.notifications = data.map(this.mapPayloadToNotification);
+      this.notifications = data.map((item) => this.mapPayloadToNotification(item));
     }
   }
 
