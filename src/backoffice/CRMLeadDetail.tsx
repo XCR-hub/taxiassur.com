@@ -51,7 +51,8 @@ import {
   LeadQuotesManager,
   DocumentValidationManager,
   DownPaymentManager,
-  CommercialFollowupPanel
+  DynamicCommercialWorkflow,
+  LeadDeleteSecure
 } from '@/components/crm';
 import type { WorkflowTab } from '@/components/crm';
 
@@ -546,14 +547,23 @@ const CRMLeadDetail: React.FC = () => {
         </div>
       </div>
 
-      <LeadHeader
-        lead={{
-          ...lead,
-          access_token: (lead as any).access_token
-        }}
-        onStatusChange={handleStatusChange}
-        availableTransitions={availableTransitions}
-      />
+      <div className="mb-6 flex items-start justify-between gap-4">
+        <div className="flex-1">
+          <LeadHeader
+            lead={{
+              ...lead,
+              access_token: (lead as any).access_token
+            }}
+            onStatusChange={handleStatusChange}
+            availableTransitions={availableTransitions}
+          />
+        </div>
+        <LeadDeleteSecure
+          leadId={lead.id}
+          leadName={lead.full_name}
+          leadEmail={lead.email}
+        />
+      </div>
 
       {statusChanging && (
         <div className="bg-blue-50 border-b border-blue-200 px-6 py-3">
@@ -760,11 +770,18 @@ const CRMLeadDetail: React.FC = () => {
                   )}
                 </div>
 
-                <CommercialFollowupPanel
+                <DynamicCommercialWorkflow
                   leadId={lead.id}
                   currentStatus={lead.status as PipelineStatus}
-                  onAction={handleCommercialAction}
-                  disabled={false}
+                  leadData={{
+                    first_name: lead.first_name,
+                    last_name: lead.last_name,
+                    email: lead.email,
+                    phone: lead.phone,
+                    city: lead.city,
+                    access_token: (lead as any).access_token
+                  }}
+                  onStatusChange={() => loadLeadData(lead.id)}
                 />
               </>
             )}

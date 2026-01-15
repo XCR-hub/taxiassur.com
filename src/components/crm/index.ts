@@ -21,3 +21,5 @@ export { default as DocumentValidationManager } from './DocumentValidationManage
 export { default as DownPaymentManager } from './DownPaymentManager';
 export { default as ManualLeadCreator } from './ManualLeadCreator';
 export { CommercialFollowupPanel } from './CommercialFollowupPanel';
+export { DynamicCommercialWorkflow } from './DynamicCommercialWorkflow';
+export { LeadDeleteSecure } from './LeadDeleteSecure';
