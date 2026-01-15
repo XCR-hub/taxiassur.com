@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   User,
   Mail,
@@ -10,12 +10,9 @@ import {
   ChevronRight,
   Copy,
   ExternalLink,
-  CheckCircle,
-  Send,
-  Loader2
+  CheckCircle
 } from 'lucide-react';
 import { PIPELINE_STATUSES } from '@/lib/crm-pipeline';
-import { supabase } from '@/lib/supabase';
 
 interface LeadHeaderProps {
   lead: {
@@ -90,7 +87,6 @@ export const LeadHeader: React.FC<LeadHeaderProps> = ({
   onStatusChange,
   availableTransitions
 }) => {
-  const [sendingAccess, setSendingAccess] = useState(false);
   const statusInfo = PIPELINE_STATUSES[lead.status] || { label: lead.status, icon: '?' };
 
   // Trouver l'étape du pipeline correspondant au statut actuel
@@ -100,42 +96,8 @@ export const LeadHeader: React.FC<LeadHeaderProps> = ({
     ? `${window.location.origin}/espace-prospect?token=${lead.access_token}`
     : null;
 
-  const isActiveClient = lead.status === 'ACTIVE_CLIENT' || lead.status === 'CROSS_SELLING' || lead.status === 'SINISTER';
-
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
-  };
-
-  const handleSendClientAccess = async () => {
-    if (!confirm('Voulez-vous envoyer les accès à l\'espace client par email ?')) {
-      return;
-    }
-
-    setSendingAccess(true);
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-client-access`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session?.access_token || import.meta.env.VITE_SUPABASE_ANON_KEY}`
-        },
-        body: JSON.stringify({ lead_id: lead.id })
-      });
-
-      const result = await response.json();
-
-      if (result.success) {
-        alert(`✅ Email d'accès envoyé avec succès !\n\nMot de passe temporaire : ${result.temporary_password}\n\n⚠️ Conservez ce mot de passe en lieu sûr.`);
-      } else {
-        throw new Error(result.error || 'Erreur lors de l\'envoi');
-      }
-    } catch (error) {
-      console.error('Erreur:', error);
-      alert('❌ Erreur lors de l\'envoi des accès : ' + (error instanceof Error ? error.message : 'Erreur inconnue'));
-    } finally {
-      setSendingAccess(false);
-    }
   };
 
   const formatDate = (dateStr: string) => {
@@ -241,38 +203,17 @@ export const LeadHeader: React.FC<LeadHeaderProps> = ({
               </div>
             </div>
 
-            <div className="flex flex-col items-end gap-2">
-              {prospectUrl && !isActiveClient && (
-                <a
-                  href={prospectUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs text-blue-600 hover:text-blue-700 flex items-center gap-1"
-                >
-                  <ExternalLink className="w-3 h-3" />
-                  Voir espace prospect
-                </a>
-              )}
-              {isActiveClient && (
-                <button
-                  onClick={handleSendClientAccess}
-                  disabled={sendingAccess}
-                  className="text-xs bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  {sendingAccess ? (
-                    <>
-                      <Loader2 className="w-3 h-3 animate-spin" />
-                      Envoi en cours...
-                    </>
-                  ) : (
-                    <>
-                      <Send className="w-3 h-3" />
-                      Envoyer accès espace client
-                    </>
-                  )}
-                </button>
-              )}
-            </div>
+            {prospectUrl && (
+              <a
+                href={prospectUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-blue-600 hover:text-blue-700 flex items-center gap-1"
+              >
+                <ExternalLink className="w-3 h-3" />
+                Voir espace prospect
+              </a>
+            )}
           </div>
         </div>
 

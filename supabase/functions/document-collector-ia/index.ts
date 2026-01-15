@@ -39,7 +39,7 @@ async function sendReminderEmail(lead: any, missingDocs: string[]): Promise<bool
       <p>Pour finaliser votre devis d'assurance taxi, nous avons encore besoin des documents suivants :</p>
       <ul style="background: #f3f4f6; padding: 20px 40px; border-radius: 8px;">${missingList}</ul>
       <p style="margin-top: 20px;">
-        <a href="https://taxiassur.com/espace-prospect/${lead.access_token || lead.id}"
+        <a href="https://taxiassur.com/prospect/documents?token=${lead.access_token || lead.id}" 
            style="background: #2563eb; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: bold;">
           DEPOSER MES DOCUMENTS
         </a>

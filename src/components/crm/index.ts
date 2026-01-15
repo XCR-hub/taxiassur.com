@@ -23,4 +23,3 @@ export { default as ManualLeadCreator } from './ManualLeadCreator';
 export { CommercialFollowupPanel } from './CommercialFollowupPanel';
 export { DynamicCommercialWorkflow } from './DynamicCommercialWorkflow';
 export { LeadDeleteSecure } from './LeadDeleteSecure';
-export { default as DocumentBasket } from './DocumentBasket';

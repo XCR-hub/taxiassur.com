@@ -17,7 +17,7 @@ async function sendEmailSMTP(
   htmlBody: string
 ): Promise<void> {
   const SMTP_HOST = "smtp.ionos.fr";
-  const SMTP_PORT = parseInt(Deno.env.get("IONOS_SMTP_PORT") || "465");
+  const SMTP_PORT = 587;
   const SMTP_USER = Deno.env.get("IONOS_EMAIL_USER") || "team@taxiassur.com";
   const SMTP_PASS = Deno.env.get("IONOS_EMAIL_PASSWORD");
 

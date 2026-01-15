@@ -736,8 +736,6 @@ export const DynamicCommercialWorkflow: React.FC<Props> = ({
   const [loading, setLoading] = useState(false);
   const [noteText, setNoteText] = useState('');
   const [showNoteInput, setShowNoteInput] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [nextStepHint, setNextStepHint] = useState<string | null>(null);
 
   const workflow = WORKFLOW_BY_STATUS[currentStatus];
   const statusInfo = PIPELINE_STATUSES[currentStatus];
@@ -818,29 +816,10 @@ export const DynamicCommercialWorkflow: React.FC<Props> = ({
 
       setNoteText('');
       setShowNoteInput(null);
-
-      // Show success message
-      setSuccessMessage(`✅ Action "${action.label}" exécutée avec succès !`);
-
-      // Show next step hint
-      if (action.nextStatus) {
-        const nextWorkflow = WORKFLOW_BY_STATUS[action.nextStatus];
-        if (nextWorkflow && nextWorkflow.actions.length > 0) {
-          setNextStepHint(`📍 Prochaine étape : ${nextWorkflow.title}`);
-        }
-      }
-
-      // Clear messages after 5 seconds
-      setTimeout(() => {
-        setSuccessMessage(null);
-        setNextStepHint(null);
-      }, 5000);
-
-      // Reload lead data to show new workflow
       onStatusChange();
     } catch (error) {
       console.error('Error executing action:', error);
-      alert('❌ Erreur lors de l\'exécution de l\'action : ' + (error instanceof Error ? error.message : 'Erreur inconnue'));
+      alert('Erreur lors de l\'exécution de l\'action');
     } finally {
       setLoading(false);
     }
@@ -848,21 +827,6 @@ export const DynamicCommercialWorkflow: React.FC<Props> = ({
 
   return (
     <div className="bg-white rounded-xl border-2 border-gray-200 p-6">
-      {/* Success Message */}
-      {successMessage && (
-        <div className="mb-4 p-4 bg-green-50 border-2 border-green-500 rounded-lg animate-pulse">
-          <div className="flex items-center gap-3">
-            <CheckCircle className="w-6 h-6 text-green-600 flex-shrink-0" />
-            <div className="flex-1">
-              <p className="font-semibold text-green-900">{successMessage}</p>
-              {nextStepHint && (
-                <p className="text-sm text-green-700 mt-1">{nextStepHint}</p>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Current Stage Header */}
       <div className="mb-6">
         <div className="flex items-center gap-3 mb-2">
@@ -904,7 +868,7 @@ export const DynamicCommercialWorkflow: React.FC<Props> = ({
                             value={noteText}
                             onChange={(e) => setNoteText(e.target.value)}
                             placeholder="Ajoutez une note sur cette action..."
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                             rows={3}
                           />
                         </div>
