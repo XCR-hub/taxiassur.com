@@ -1,5 +1,5 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-import { createClient } from "npm:@supabase/supabase-js@2";
+import { createClient } from "jsr:@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -18,38 +18,69 @@ interface LeadNotificationRequest {
   access_token?: string;
 }
 
-async function sendEmailBrevo(
+async function sendEmailSMTP(
   to: string,
   toName: string,
   subject: string,
-  htmlContent: string
+  htmlBody: string,
+  fromEmail: string = "team@taxiassur.com",
+  fromName: string = "TaxiAssur"
 ): Promise<void> {
-  const BREVO_API_KEY = Deno.env.get("BREVO_API_KEY");
-  if (!BREVO_API_KEY) {
-    throw new Error("BREVO_API_KEY not configured");
+  const SMTP_HOST = Deno.env.get("IONOS_SMTP_HOST") || "smtp.ionos.fr";
+  const SMTP_PORT = parseInt(Deno.env.get("IONOS_SMTP_PORT") || "465");
+  const SMTP_USER = Deno.env.get("IONOS_EMAIL_USER") || "team@taxiassur.com";
+  const SMTP_PASS = Deno.env.get("IONOS_EMAIL_PASSWORD");
+
+  if (!SMTP_PASS) {
+    throw new Error("IONOS_EMAIL_PASSWORD not configured");
   }
 
-  const response = await fetch("https://api.brevo.com/v3/smtp/email", {
-    method: "POST",
-    headers: {
-      "accept": "application/json",
-      "api-key": BREVO_API_KEY,
-      "content-type": "application/json",
-    },
-    body: JSON.stringify({
-      sender: {
-        name: "TaxiAssur",
-        email: "team@taxiassur.com",
-      },
-      to: [{ email: to, name: toName }],
-      subject: subject,
-      htmlContent: htmlContent,
-    }),
+  const conn = await Deno.connect({
+    hostname: SMTP_HOST,
+    port: SMTP_PORT,
   });
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Brevo API error: ${response.status} - ${errorText}`);
+  const encoder = new TextEncoder();
+  const decoder = new TextDecoder();
+
+  async function readResponse(): Promise<string> {
+    const buffer = new Uint8Array(1024);
+    const n = await conn.read(buffer);
+    if (n === null) return "";
+    return decoder.decode(buffer.subarray(0, n));
+  }
+
+  async function sendCommand(cmd: string): Promise<string> {
+    await conn.write(encoder.encode(cmd + "\r\n"));
+    return await readResponse();
+  }
+
+  try {
+    await readResponse();
+    await sendCommand(`EHLO ${SMTP_HOST}`);
+    await sendCommand(`AUTH LOGIN`);
+    await sendCommand(btoa(SMTP_USER));
+    await sendCommand(btoa(SMTP_PASS));
+    await sendCommand(`MAIL FROM:<${fromEmail}>`);
+    await sendCommand(`RCPT TO:<${to}>`);
+    await sendCommand("DATA");
+
+    const emailContent = [
+      `From: "${fromName}" <${fromEmail}>`,
+      `To: "${toName}" <${to}>`,
+      `Subject: ${subject}`,
+      "MIME-Version: 1.0",
+      "Content-Type: text/html; charset=UTF-8",
+      "",
+      htmlBody,
+      ".",
+    ].join("\r\n");
+
+    await conn.write(encoder.encode(emailContent + "\r\n"));
+    await readResponse();
+    await sendCommand("QUIT");
+  } finally {
+    conn.close();
   }
 }
 
@@ -60,7 +91,7 @@ Deno.serve(async (req: Request) => {
 
   try {
     const lead: LeadNotificationRequest = await req.json();
-    console.log("Sending notification for lead via Brevo:", lead.lead_id);
+    console.log("Sending notification for lead via IONOS SMTP 465:", lead.lead_id);
 
     const prospectSpaceUrl = lead.access_token
       ? `https://taxiassur.com/espace-prospect/${lead.access_token}`
@@ -131,7 +162,7 @@ Deno.serve(async (req: Request) => {
       </div>
     </div>
     <div class="footer">
-      <strong>TaxiAssur CRM</strong> - Notification automatique via Brevo
+      <strong>TaxiAssur CRM</strong> - Notification automatique
     </div>
   </div>
 </body>
@@ -210,7 +241,7 @@ Deno.serve(async (req: Request) => {
     const errors: string[] = [];
 
     try {
-      await sendEmailBrevo(
+      await sendEmailSMTP(
         "team@taxiassur.com",
         "Équipe TaxiAssur",
         `[TAXIASSUR] Nouveau Lead - ${lead.name} - ${lead.city}`,
@@ -224,7 +255,7 @@ Deno.serve(async (req: Request) => {
     }
 
     try {
-      await sendEmailBrevo(
+      await sendEmailSMTP(
         "commercial@xcr.fr",
         "Commercial XCR",
         `[TAXIASSUR] Nouveau Lead - ${lead.name} - ${lead.city}`,
@@ -238,7 +269,7 @@ Deno.serve(async (req: Request) => {
     }
 
     try {
-      await sendEmailBrevo(
+      await sendEmailSMTP(
         lead.email,
         lead.name,
         "Demande confirmée ! Votre expert TaxiAssur vous recontacte rapidement",
@@ -251,7 +282,7 @@ Deno.serve(async (req: Request) => {
       errors.push(`client: ${err.message}`);
     }
 
-    console.log(`📧 Emails sent via Brevo: ${sent}/3`);
+    console.log(`📧 Emails sent via IONOS SMTP 465: ${sent}/3`);
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -264,7 +295,7 @@ Deno.serve(async (req: Request) => {
           type: "email",
           direction: "outbound",
           subject: `[TAXIASSUR] Nouveau Lead - ${lead.name}`,
-          content: "Email de notification interne envoyé à l'équipe via Brevo",
+          content: "Email de notification interne envoyé à l'équipe via IONOS SMTP",
           to_email: "team@taxiassur.com",
           from_email: "team@taxiassur.com"
         },
@@ -273,7 +304,7 @@ Deno.serve(async (req: Request) => {
           type: "email",
           direction: "outbound",
           subject: "Demande confirmée ! Votre expert TaxiAssur vous recontacte rapidement",
-          content: "Email de confirmation envoyé au prospect via Brevo",
+          content: "Email de confirmation envoyé au prospect via IONOS SMTP",
           to_email: lead.email,
           from_email: "team@taxiassur.com"
         }
@@ -283,7 +314,7 @@ Deno.serve(async (req: Request) => {
     return new Response(
       JSON.stringify({
         success: sent > 0,
-        message: `${sent} emails sent successfully via Brevo`,
+        message: `${sent} emails sent successfully via IONOS SMTP port 465`,
         emails_sent: sent,
         emails_failed: 3 - sent,
         errors: errors.length > 0 ? errors : undefined
