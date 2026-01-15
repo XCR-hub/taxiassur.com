@@ -268,15 +268,15 @@ async function generateResponse(supabase: any, lead: any, docsStatus: any, infoS
         body += `   • ${DOCUMENT_LABELS[doc] || doc}\n`;
       }
       body += `\n`;
-      body += `👉 Déposez vos documents en toute sécurité : https://taxiassur.fr/espace-client\n\n`;
+      body += `👉 Déposez vos documents en toute sécurité : https://taxiassur.com/espace-prospect/${lead?.access_token || lead?.id || 'documents'}\n\n`;
     }
 
     body += `Notre équipe vous contactera dans les plus brefs délais.\n\n`;
     body += `Besoin d'aide ? Appelez-nous au 01 80 85 57 86\n\n`;
     body += `Cordialement,\nL'équipe TaxiAssur\n`;
 
-    smsContent = `Bienvenue chez TaxiAssur ! Votre demande est bien reçue. Complétez votre dossier : taxiassur.fr/espace-client`;
-    whatsappContent = `Bonjour ${firstName} 👋\n\nVotre demande est bien reçue ! Pour accélérer votre devis, déposez vos documents ici : https://taxiassur.fr/espace-client\n\nÀ très vite !\n✨ TaxiAssur`;
+    smsContent = `Bienvenue chez TaxiAssur ! Votre demande est bien reçue. Complétez votre dossier : taxiassur.com/espace-prospect`;
+    whatsappContent = `Bonjour ${firstName} 👋\n\nVotre demande est bien reçue ! Pour accélérer votre devis, déposez vos documents ici : https://taxiassur.com/espace-prospect/${lead?.access_token || lead?.id || 'documents'}\n\nÀ très vite !\n✨ TaxiAssur`;
   } else {
     // Lead existant
     if (docsStatus.all_documents_present && infoStatus.all_info_present) {
@@ -292,9 +292,9 @@ async function generateResponse(supabase: any, lead: any, docsStatus: any, infoS
         body += `   • ${DOCUMENT_LABELS[doc] || doc}\n`;
       }
       
-      body += `\n👉 Déposez-les ici : https://taxiassur.fr/espace-client\n\nNotre équipe attend vos documents pour vous faire la meilleure offre !\n\nCordialement,\nL'équipe TaxiAssur`;
-      smsContent = `Documents manquants pour votre devis TaxiAssur. Déposez-les : taxiassur.fr/espace-client`;
-      whatsappContent = `Bonjour ${firstName},\n\nIl nous manque quelques documents pour votre devis. Déposez-les ici : https://taxiassur.fr/espace-client\n\n✨ TaxiAssur`;
+      body += `\n👉 Déposez-les ici : https://taxiassur.com/espace-prospect/${lead?.access_token || lead?.id || 'documents'}\n\nNotre équipe attend vos documents pour vous faire la meilleure offre !\n\nCordialement,\nL'équipe TaxiAssur`;
+      smsContent = `Documents manquants pour votre devis TaxiAssur. Déposez-les : taxiassur.com/espace-prospect`;
+      whatsappContent = `Bonjour ${firstName},\n\nIl nous manque quelques documents pour votre devis. Déposez-les ici : https://taxiassur.com/espace-prospect/${lead?.access_token || lead?.id || 'documents'}\n\n✨ TaxiAssur`;
     }
   }
 

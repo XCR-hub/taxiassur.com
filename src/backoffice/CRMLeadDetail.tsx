@@ -52,7 +52,8 @@ import {
   DocumentValidationManager,
   DownPaymentManager,
   DynamicCommercialWorkflow,
-  LeadDeleteSecure
+  LeadDeleteSecure,
+  DocumentBasket
 } from '@/components/crm';
 import type { WorkflowTab } from '@/components/crm';
 
@@ -820,6 +821,18 @@ const CRMLeadDetail: React.FC = () => {
                   />
                 </div>
               </>
+            )}
+
+            {activeTab === 'basket' && (
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <DocumentBasket
+                  caseId={lead.id}
+                  onDocumentClassified={() => {
+                    loadLeadData(lead.id);
+                    loadStats(lead.id);
+                  }}
+                />
+              </div>
             )}
 
             {activeTab === 'quotes' && (
