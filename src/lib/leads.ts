@@ -394,31 +394,32 @@ export async function createLead(input: CreateLeadInput): Promise<{ success: boo
 
 async function sendLeadNotificationEmails(lead: any): Promise<void> {
   try {
-    const { data, error } = await supabase.functions.invoke('send-lead-notification', {
+    const { data, error } = await supabase.functions.invoke('send-lead-email-brevo', {
       body: {
-        lead_id: lead.id,
-        name: lead.name,
-        email: lead.email,
-        phone: lead.phone,
-        city: lead.city,
-        status: lead.status || 'taxi',
-        immatriculation: lead.immatriculation || '',
-        access_token: lead.access_token
+        type: 'INSERT',
+        table: 'crm_leads',
+        record: {
+          id: lead.id,
+          name: lead.name,
+          email: lead.email,
+          phone: lead.phone,
+          city: lead.city,
+          status: lead.status || 'taxi',
+          immatriculation: lead.immatriculation || lead.metadata?.immatriculation || '',
+          access_token: lead.access_token,
+          created_at: lead.created_at || new Date().toISOString()
+        }
       }
     });
 
     if (error) {
-      logger.error('Notification edge function error:', error);
+      logger.error('Brevo notification error:', error);
       throw error;
     }
 
-    if (data?.success) {
-      logger.log(`Notifications sent: ${data.emails_sent} emails`);
-    } else {
-      logger.warn('Notification response:', data);
-    }
+    logger.log('Emails sent via Brevo successfully:', data);
   } catch (err) {
-    logger.error('Failed to send lead notifications:', err);
+    logger.error('Failed to send Brevo notifications:', err);
     throw err;
   }
 }
