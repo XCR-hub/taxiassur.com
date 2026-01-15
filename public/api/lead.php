@@ -326,17 +326,23 @@ try {
         $supabaseUrl = 'https://drohhxrkoequjphvabvq.supabase.co';
         $supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRyb2hoeHJrb2VxdWpwaHZhYnZxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk3ODM3NjAsImV4cCI6MjA3NTM1OTc2MH0.LP9fh10fY0nRDjpG4VW2yGZ5sT4BkiDalox8ToMbMlg';
 
+        // Séparer prénom et nom
+        $nameParts = explode(' ', $name, 2);
+        $firstName = $nameParts[0] ?? '';
+        $lastName = $nameParts[1] ?? $nameParts[0];
+
         $leadPayload = json_encode([
-            'name' => $name,
+            'first_name' => $firstName,
+            'last_name' => $lastName,
             'email' => $email,
             'phone' => $phone,
             'city' => $city,
-            'status' => $status,
             'immatriculation' => $immatriculation ?: null,
-            'source' => 'website_form'
+            'source' => 'website_form',
+            'status' => 'nouveau'
         ]);
 
-        $ch = curl_init($supabaseUrl . '/rest/v1/leads');
+        $ch = curl_init($supabaseUrl . '/rest/v1/crm_leads');
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_POSTFIELDS, $leadPayload);
