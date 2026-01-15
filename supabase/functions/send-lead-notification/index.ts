@@ -18,92 +18,38 @@ interface LeadNotificationRequest {
   access_token?: string;
 }
 
-function base64Encode(str: string): string {
-  return btoa(str);
-}
-
-async function sendEmailSMTP(
+async function sendEmailBrevo(
   to: string,
   toName: string,
   subject: string,
-  htmlBody: string,
-  fromEmail: string = "team@taxiassur.com",
-  fromName: string = "TaxiAssur"
+  htmlContent: string
 ): Promise<void> {
-  const SMTP_HOST = Deno.env.get("IONOS_SMTP_HOST") || "smtp.ionos.fr";
-  const SMTP_PORT = parseInt(Deno.env.get("IONOS_SMTP_PORT") || "587");
-  const SMTP_USER = Deno.env.get("IONOS_EMAIL_USER") || "team@taxiassur.com";
-  const SMTP_PASS = Deno.env.get("IONOS_EMAIL_PASSWORD");
-
-  if (!SMTP_PASS) {
-    throw new Error("IONOS_EMAIL_PASSWORD not configured");
+  const BREVO_API_KEY = Deno.env.get("BREVO_API_KEY");
+  if (!BREVO_API_KEY) {
+    throw new Error("BREVO_API_KEY not configured");
   }
 
-  const conn = await Deno.connect({
-    hostname: SMTP_HOST,
-    port: SMTP_PORT,
+  const response = await fetch("https://api.brevo.com/v3/smtp/email", {
+    method: "POST",
+    headers: {
+      "accept": "application/json",
+      "api-key": BREVO_API_KEY,
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      sender: {
+        name: "TaxiAssur",
+        email: "team@taxiassur.com",
+      },
+      to: [{ email: to, name: toName }],
+      subject: subject,
+      htmlContent: htmlContent,
+    }),
   });
 
-  const encoder = new TextEncoder();
-  const decoder = new TextDecoder();
-
-  async function readResponse(): Promise<string> {
-    const buffer = new Uint8Array(1024);
-    const n = await conn.read(buffer);
-    if (n === null) return "";
-    return decoder.decode(buffer.subarray(0, n));
-  }
-
-  async function sendCommand(command: string): Promise<string> {
-    await conn.write(encoder.encode(command + "\r\n"));
-    return await readResponse();
-  }
-
-  try {
-    await readResponse();
-    await sendCommand(`EHLO taxiassur.com`);
-    await sendCommand("STARTTLS");
-
-    const tlsConn = await Deno.startTls(conn, { hostname: SMTP_HOST });
-
-    async function readResponseTLS(): Promise<string> {
-      const buffer = new Uint8Array(1024);
-      const n = await tlsConn.read(buffer);
-      if (n === null) return "";
-      return decoder.decode(buffer.subarray(0, n));
-    }
-
-    async function sendCommandTLS(command: string): Promise<string> {
-      await tlsConn.write(encoder.encode(command + "\r\n"));
-      return await readResponseTLS();
-    }
-
-    await sendCommandTLS(`EHLO taxiassur.com`);
-    await sendCommandTLS("AUTH LOGIN");
-    await sendCommandTLS(base64Encode(SMTP_USER));
-    await sendCommandTLS(base64Encode(SMTP_PASS));
-    await sendCommandTLS(`MAIL FROM:<${fromEmail}>`);
-    await sendCommandTLS(`RCPT TO:<${to}>`);
-    await sendCommandTLS("DATA");
-
-    const emailContent = [
-      `From: ${fromName} <${fromEmail}>`,
-      `To: ${toName} <${to}>`,
-      `Subject: ${subject}`,
-      `MIME-Version: 1.0`,
-      `Content-Type: text/html; charset=UTF-8`,
-      `Content-Transfer-Encoding: 8bit`,
-      ``,
-      htmlBody,
-      `.`,
-    ].join("\r\n");
-
-    await sendCommandTLS(emailContent);
-    await sendCommandTLS("QUIT");
-    tlsConn.close();
-  } catch (error) {
-    conn.close();
-    throw error;
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Brevo API error: ${response.status} - ${errorText}`);
   }
 }
 
@@ -114,7 +60,7 @@ Deno.serve(async (req: Request) => {
 
   try {
     const lead: LeadNotificationRequest = await req.json();
-    console.log("Sending notification for lead via IONOS SMTP:", lead.lead_id);
+    console.log("Sending notification for lead via Brevo:", lead.lead_id);
 
     const prospectSpaceUrl = lead.access_token
       ? `https://taxiassur.com/espace-prospect/${lead.access_token}`
@@ -142,50 +88,50 @@ Deno.serve(async (req: Request) => {
 <body>
   <div class="container">
     <div class="header">
-      <h1 style="margin: 0; font-size: 28px;">NOUVEAU LEAD TAXIASSUR</h1>
+      <h1 style="margin: 0; font-size: 28px;">🚕 NOUVEAU LEAD TAXIASSUR</h1>
       <p style="margin: 10px 0 0 0;">Traitement prioritaire requis</p>
     </div>
     <div class="content">
       <div class="alert-box">
-        <strong>ACTION REQUISE :</strong> Contactez ce prospect dans les <strong>15 minutes</strong>
+        <strong>⚡ ACTION REQUISE :</strong> Contactez ce prospect dans les <strong>15 minutes</strong>
       </div>
-      <h2 style="color: #1f2937; margin-top: 0;">Informations du prospect</h2>
+      <h2 style="color: #1f2937; margin-top: 0;">📋 Informations du prospect</h2>
       <div class="info-grid">
         <div class="info-item">
           <div class="info-label">Nom complet</div>
           <div class="info-value">${lead.name}</div>
         </div>
         <div class="info-item">
-          <div class="info-label">Telephone</div>
+          <div class="info-label">📞 Téléphone</div>
           <div class="info-value"><a href="tel:${lead.phone}" style="color: #10b981; text-decoration: none;">${lead.phone}</a></div>
         </div>
         <div class="info-item">
-          <div class="info-label">Email</div>
+          <div class="info-label">📧 Email</div>
           <div class="info-value"><a href="mailto:${lead.email}" style="color: #3b82f6; text-decoration: none;">${lead.email}</a></div>
         </div>
         <div class="info-item">
-          <div class="info-label">Ville</div>
+          <div class="info-label">📍 Ville</div>
           <div class="info-value">${lead.city}</div>
         </div>
         <div class="info-item">
           <div class="info-label">Statut</div>
           <div class="info-value">${lead.status}</div>
         </div>
-        ${lead.immatriculation ? `<div class="info-item"><div class="info-label">Immatriculation</div><div class="info-value">${lead.immatriculation}</div></div>` : ""}
+        ${lead.immatriculation ? `<div class="info-item"><div class="info-label">🚗 Immatriculation</div><div class="info-value">${lead.immatriculation}</div></div>` : ""}
       </div>
-      <h3 style="color: #1f2937;">Prochaines actions</h3>
+      <h3 style="color: #1f2937;">✅ Prochaines actions</h3>
       <ol style="color: #4b5563; line-height: 1.8;">
         <li>Appeler le prospect au <strong>${lead.phone}</strong></li>
         <li>Qualifier le besoin et confirmer les informations</li>
-        <li>Verifier l'envoi des 7 documents requis</li>
-        <li>Preparer et envoyer le devis sous 24h</li>
+        <li>Vérifier l'envoi des 7 documents requis</li>
+        <li>Préparer et envoyer le devis sous 24h</li>
       </ol>
       <div style="text-align: center; margin: 30px 0;">
         <a href="https://taxiassur.com/backoffice/crm-commercial" class="cta-button">OUVRIR LE CRM</a>
       </div>
     </div>
     <div class="footer">
-      <strong>TaxiAssur CRM</strong> - Notification automatique via IONOS SMTP
+      <strong>TaxiAssur CRM</strong> - Notification automatique via Brevo
     </div>
   </div>
 </body>
@@ -214,46 +160,46 @@ Deno.serve(async (req: Request) => {
 <body>
   <div class="container">
     <div class="header">
-      <h1>DEMANDE RECUE !</h1>
+      <h1>✅ DEMANDE REÇUE !</h1>
       <p style="margin: 0; font-size: 18px;">Bonjour ${lead.name}</p>
     </div>
     <div class="content">
       <div class="success-box">
         <strong>Excellente nouvelle !</strong><br>
-        Votre demande de devis d'assurance taxi a ete confirmee avec succes.
+        Votre demande de devis d'assurance taxi a été confirmée avec succès.
       </div>
-      <h2 style="color: #1f2937;">Prochaines etapes</h2>
+      <h2 style="color: #1f2937;">🎯 Prochaines étapes</h2>
       <ul style="color: #4b5563;">
         <li>Votre expert TaxiAssur vous recontacte <strong>sous 15 minutes</strong></li>
-        <li>Analyse personnalisee de vos besoins</li>
-        <li>Proposition des meilleures offres du marche</li>
-        <li>Economies moyennes constatees : <strong>580 euros/an</strong></li>
+        <li>Analyse personnalisée de vos besoins</li>
+        <li>Proposition des meilleures offres du marché</li>
+        <li>Économies moyennes constatées : <strong>580 €/an</strong></li>
       </ul>
       <div class="docs-section">
-        <h3 style="color: #1e40af; margin-top: 0; text-align: center;">7 Documents requis</h3>
+        <h3 style="color: #1e40af; margin-top: 0; text-align: center;">📄 7 Documents requis</h3>
         <div class="doc-item"><strong>1.</strong> Licence de taxi professionnelle</div>
         <div class="doc-item"><strong>2.</strong> Permis de conduire (recto-verso)</div>
-        <div class="doc-item"><strong>3.</strong> Piece d'identite (CNI/passeport)</div>
-        <div class="doc-item"><strong>4.</strong> Carte grise du vehicule</div>
-        <div class="doc-item"><strong>5.</strong> Releve d'information assureur</div>
+        <div class="doc-item"><strong>3.</strong> Pièce d'identité (CNI/passeport)</div>
+        <div class="doc-item"><strong>4.</strong> Carte grise du véhicule</div>
+        <div class="doc-item"><strong>5.</strong> Relevé d'information assureur</div>
         <div class="doc-item"><strong>6.</strong> Autorisation de stationnement</div>
-        <div class="doc-item"><strong>7.</strong> RIB - Releve d'Identite Bancaire</div>
+        <div class="doc-item"><strong>7.</strong> RIB - Relevé d'Identité Bancaire</div>
       </div>
       <div style="text-align: center; background: #fef3c7; padding: 25px; border-radius: 15px; margin: 25px 0;">
-        <p style="color: #92400e; font-weight: bold; margin-bottom: 15px;">Uploadez vos documents maintenant !</p>
-        <a href="${prospectSpaceUrl}" class="cta-button">ACCEDER A MON ESPACE</a>
+        <p style="color: #92400e; font-weight: bold; margin-bottom: 15px;">📤 Uploadez vos documents maintenant !</p>
+        <a href="${prospectSpaceUrl}" class="cta-button">ACCÉDER À MON ESPACE</a>
       </div>
       <div class="contact-box">
-        <h3 style="color: #1e40af; margin-top: 0;">Besoin d'aide ?</h3>
+        <h3 style="color: #1e40af; margin-top: 0;">💬 Besoin d'aide ?</h3>
         <p style="margin: 10px 0;">
-          <strong>01 80 85 57 86</strong><br>
-          <a href="mailto:team@taxiassur.com" style="color: #1e40af;">team@taxiassur.com</a>
+          <strong>📞 01 80 85 57 86</strong><br>
+          <a href="mailto:team@taxiassur.com" style="color: #1e40af;">📧 team@taxiassur.com</a>
         </p>
       </div>
     </div>
     <div class="footer">
       <div style="font-size: 22px; font-weight: bold; color: #10b981; margin-bottom: 10px;">TaxiAssur</div>
-      <p>Courtier specialise en assurance taxi et VTC</p>
+      <p>Courtier spécialisé en assurance taxi et VTC</p>
       <p style="margin-top: 10px; font-size: 12px;">ORIAS 11 061 425 - Excellence Coverage Risks</p>
     </div>
   </div>
@@ -264,78 +210,80 @@ Deno.serve(async (req: Request) => {
     const errors: string[] = [];
 
     try {
-      await sendEmailSMTP(
+      await sendEmailBrevo(
         "team@taxiassur.com",
-        "Equipe TaxiAssur",
+        "Équipe TaxiAssur",
         `[TAXIASSUR] Nouveau Lead - ${lead.name} - ${lead.city}`,
         teamEmailHtml
       );
       sent++;
-      console.log("Email sent to team@taxiassur.com");
+      console.log("✅ Email sent to team@taxiassur.com");
     } catch (err) {
-      console.error("Failed to send to team:", err);
+      console.error("❌ Failed to send to team:", err);
       errors.push(`team: ${err.message}`);
     }
 
     try {
-      await sendEmailSMTP(
+      await sendEmailBrevo(
         "commercial@xcr.fr",
         "Commercial XCR",
         `[TAXIASSUR] Nouveau Lead - ${lead.name} - ${lead.city}`,
         teamEmailHtml
       );
       sent++;
-      console.log("Email sent to commercial@xcr.fr");
+      console.log("✅ Email sent to commercial@xcr.fr");
     } catch (err) {
-      console.error("Failed to send to commercial:", err);
+      console.error("❌ Failed to send to commercial:", err);
       errors.push(`commercial: ${err.message}`);
     }
 
     try {
-      await sendEmailSMTP(
+      await sendEmailBrevo(
         lead.email,
         lead.name,
-        "Demande confirmee ! Votre expert TaxiAssur vous recontacte rapidement",
+        "Demande confirmée ! Votre expert TaxiAssur vous recontacte rapidement",
         clientEmailHtml
       );
       sent++;
-      console.log(`Email sent to client: ${lead.email}`);
+      console.log(`✅ Email sent to client: ${lead.email}`);
     } catch (err) {
-      console.error("Failed to send to client:", err);
+      console.error("❌ Failed to send to client:", err);
       errors.push(`client: ${err.message}`);
     }
 
-    console.log(`Emails sent via IONOS SMTP: ${sent}/3`);
+    console.log(`📧 Emails sent via Brevo: ${sent}/3`);
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    await supabase.from("crm_interactions").insert([
-      {
-        lead_id: lead.lead_id,
-        type: "email",
-        direction: "outbound",
-        subject: `[TAXIASSUR] Nouveau Lead - ${lead.name}`,
-        content: "Email de notification interne envoye a l'equipe via IONOS SMTP",
-        to_email: "team@taxiassur.com",
-        from_email: "team@taxiassur.com"
-      },
-      {
-        lead_id: lead.lead_id,
-        type: "email",
-        direction: "outbound",
-        subject: "Demande confirmee ! Votre expert TaxiAssur vous recontacte rapidement",
-        content: "Email de confirmation envoye au prospect via IONOS SMTP",
-        to_email: lead.email,
-        from_email: "team@taxiassur.com"
-      }
-    ]);
+    if (sent > 0) {
+      await supabase.from("crm_interactions").insert([
+        {
+          lead_id: lead.lead_id,
+          type: "email",
+          direction: "outbound",
+          subject: `[TAXIASSUR] Nouveau Lead - ${lead.name}`,
+          content: "Email de notification interne envoyé à l'équipe via Brevo",
+          to_email: "team@taxiassur.com",
+          from_email: "team@taxiassur.com"
+        },
+        {
+          lead_id: lead.lead_id,
+          type: "email",
+          direction: "outbound",
+          subject: "Demande confirmée ! Votre expert TaxiAssur vous recontacte rapidement",
+          content: "Email de confirmation envoyé au prospect via Brevo",
+          to_email: lead.email,
+          from_email: "team@taxiassur.com"
+        }
+      ]);
+    }
 
     return new Response(
       JSON.stringify({
-        success: true,
-        message: `${sent} emails sent successfully via IONOS SMTP`,
+        success: sent > 0,
+        message: `${sent} emails sent successfully via Brevo`,
         emails_sent: sent,
         emails_failed: 3 - sent,
         errors: errors.length > 0 ? errors : undefined
@@ -344,7 +292,7 @@ Deno.serve(async (req: Request) => {
     );
 
   } catch (error) {
-    console.error("Send notification error:", error);
+    console.error("❌ Send notification error:", error);
     return new Response(
       JSON.stringify({
         success: false,
