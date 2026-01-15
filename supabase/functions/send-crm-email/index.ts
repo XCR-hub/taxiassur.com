@@ -48,7 +48,7 @@ async function sendEmailSMTP(
   fromName: string = "TaxiAssur"
 ): Promise<void> {
   const SMTP_HOST = "smtp.ionos.fr";
-  const SMTP_PORT = parseInt(Deno.env.get("IONOS_SMTP_PORT") || "465");
+  const SMTP_PORT = parseInt(Deno.env.get("IONOS_SMTP_PORT") || "587");
   const SMTP_USER = Deno.env.get("IONOS_EMAIL_USER") || "team@taxiassur.com";
   const SMTP_PASS = Deno.env.get("IONOS_EMAIL_PASSWORD");
 
@@ -131,7 +131,6 @@ Deno.serve(async (req: Request) => {
 
   try {
     const body = await req.json();
-    // Support both old and new parameter names
     const to_email = body.to_email || body.to;
     const to_name = body.to_name || body.name || "";
     const subject = body.subject;
@@ -320,7 +319,6 @@ Deno.serve(async (req: Request) => {
       </html>
     `;
 
-    // Créer le tracking
     const { data: emailRecord } = await supabase
       .from('email_sends')
       .insert({
@@ -337,7 +335,6 @@ Deno.serve(async (req: Request) => {
 
     const trackingId = emailRecord?.tracking_id;
 
-    // Ajouter le tracking
     if (trackingId) {
       emailBody = addLinkTracking(emailBody, trackingId, supabaseUrl);
       emailBody = addTrackingPixel(emailBody, trackingId, supabaseUrl);
@@ -356,7 +353,6 @@ Deno.serve(async (req: Request) => {
 
     console.log("✅ Email CRM envoyé avec succès à", to_email);
 
-    // Enregistrer l'interaction CRM
     if (lead_id) {
       await supabase.from('crm_interactions').insert({
         lead_id: lead_id,
