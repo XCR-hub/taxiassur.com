@@ -47,8 +47,8 @@ async function sendEmailSMTP(
   fromEmail: string = "team@taxiassur.com",
   fromName: string = "TaxiAssur"
 ): Promise<void> {
-  const SMTP_HOST = "smtp.ionos.fr";
-  const SMTP_PORT = parseInt(Deno.env.get("IONOS_SMTP_PORT") || "587");
+  const SMTP_HOST = Deno.env.get("IONOS_SMTP_HOST") || "smtp.ionos.fr";
+  const SMTP_PORT = parseInt(Deno.env.get("IONOS_SMTP_PORT") || "465");
   const SMTP_USER = Deno.env.get("IONOS_EMAIL_USER") || "team@taxiassur.com";
   const SMTP_PASS = Deno.env.get("IONOS_EMAIL_PASSWORD");
 
@@ -56,7 +56,8 @@ async function sendEmailSMTP(
     throw new Error("IONOS_EMAIL_PASSWORD not configured");
   }
 
-  const conn = await Deno.connect({
+  // Port 465 utilise SSL/TLS direct, pas STARTTLS
+  const conn = await Deno.connectTls({
     hostname: SMTP_HOST,
     port: SMTP_PORT,
   });
@@ -77,31 +78,21 @@ async function sendEmailSMTP(
   }
 
   try {
+    // Lire le banner du serveur
     await readResponse();
+
+    // Envoi de EHLO
     await sendCommand(`EHLO taxiassur.com`);
-    await sendCommand("STARTTLS");
 
-    const tlsConn = await Deno.startTls(conn, { hostname: SMTP_HOST });
+    // Authentification
+    await sendCommand("AUTH LOGIN");
+    await sendCommand(base64Encode(SMTP_USER));
+    await sendCommand(base64Encode(SMTP_PASS));
 
-    async function readResponseTLS(): Promise<string> {
-      const buffer = new Uint8Array(1024);
-      const n = await tlsConn.read(buffer);
-      if (n === null) return "";
-      return decoder.decode(buffer.subarray(0, n));
-    }
-
-    async function sendCommandTLS(command: string): Promise<string> {
-      await tlsConn.write(encoder.encode(command + "\r\n"));
-      return await readResponseTLS();
-    }
-
-    await sendCommandTLS(`EHLO taxiassur.com`);
-    await sendCommandTLS("AUTH LOGIN");
-    await sendCommandTLS(base64Encode(SMTP_USER));
-    await sendCommandTLS(base64Encode(SMTP_PASS));
-    await sendCommandTLS(`MAIL FROM:<${fromEmail}>`);
-    await sendCommandTLS(`RCPT TO:<${to}>`);
-    await sendCommandTLS("DATA");
+    // Envoi de l'email
+    await sendCommand(`MAIL FROM:<${fromEmail}>`);
+    await sendCommand(`RCPT TO:<${to}>`);
+    await sendCommand("DATA");
 
     const emailContent = [
       `From: ${fromName} <${fromEmail}>`,
@@ -115,9 +106,9 @@ async function sendEmailSMTP(
       `.`,
     ].join("\r\n");
 
-    await sendCommandTLS(emailContent);
-    await sendCommandTLS("QUIT");
-    tlsConn.close();
+    await sendCommand(emailContent);
+    await sendCommand("QUIT");
+    conn.close();
   } catch (error) {
     conn.close();
     throw error;
