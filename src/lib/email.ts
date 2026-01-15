@@ -31,22 +31,25 @@ export async function submitLead(leadData: Lead): Promise<{ success: boolean; er
 
 export async function submitSecureLead(leadData: SecureLead): Promise<{ success: boolean; error?: string; accessToken?: string }> {
   try {
+    // Séparer le nom en first_name et last_name
+    const nameParts = leadData.name.trim().split(' ');
+    const firstName = nameParts[0] || '';
+    const lastName = nameParts.slice(1).join(' ') || '';
+
+    // Insérer dans crm_leads (nouvelle table unifiée)
     const { data: leadRecord, error: dbError } = await supabase
-      .from('leads')
+      .from('crm_leads')
       .insert({
-        name: leadData.name,
+        first_name: firstName,
+        last_name: lastName,
         email: leadData.email,
         phone: leadData.phone,
         city: leadData.city,
-        status: leadData.status,
         immatriculation: leadData.immatriculation,
-        fingerprint: leadData.fingerprint,
-        behavior_score: leadData.behaviorScore,
-        time_on_page: leadData.timeOnPage,
-        source: 'website_form',
-        lead_status: 'nouveau'
+        status: 'NEW_LEAD',
+        source: 'website_form'
       })
-      .select('*, access_token')
+      .select('*, access_token, full_name')
       .single();
 
     if (dbError) {
@@ -56,13 +59,14 @@ export async function submitSecureLead(leadData: SecureLead): Promise<{ success:
 
     logger.info(`Lead created: ${leadRecord.id}`);
 
+    // Appeler l'edge function IMMÉDIATEMENT pour envoi instantané des emails
     sendLeadNotificationEmails({
       lead_id: leadRecord.id,
-      name: leadData.name,
+      name: leadRecord.full_name,
       email: leadData.email,
       phone: leadData.phone,
       city: leadData.city,
-      status: leadData.status,
+      status: leadRecord.status,
       immatriculation: leadData.immatriculation || '',
       access_token: leadRecord.access_token
     }).catch(err => {

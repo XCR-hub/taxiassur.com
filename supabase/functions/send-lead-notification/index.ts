@@ -27,7 +27,7 @@ async function sendEmailSMTP(
   fromName: string = "TaxiAssur"
 ): Promise<void> {
   const SMTP_HOST = Deno.env.get("IONOS_SMTP_HOST") || "smtp.ionos.fr";
-  const SMTP_PORT = parseInt(Deno.env.get("IONOS_SMTP_PORT") || "465");
+  const SMTP_PORT = parseInt(Deno.env.get("IONOS_SMTP_PORT") || "587");
   const SMTP_USER = Deno.env.get("IONOS_EMAIL_USER") || "team@taxiassur.com";
   const SMTP_PASS = Deno.env.get("IONOS_EMAIL_PASSWORD");
 
@@ -91,7 +91,7 @@ Deno.serve(async (req: Request) => {
 
   try {
     const lead: LeadNotificationRequest = await req.json();
-    console.log("Sending notification for lead via IONOS SMTP 465:", lead.lead_id);
+    console.log("Sending notification for lead via IONOS SMTP:", lead.lead_id);
 
     const prospectSpaceUrl = lead.access_token
       ? `https://taxiassur.com/espace-prospect/${lead.access_token}`
@@ -282,7 +282,7 @@ Deno.serve(async (req: Request) => {
       errors.push(`client: ${err.message}`);
     }
 
-    console.log(`📧 Emails sent via IONOS SMTP 465: ${sent}/3`);
+    console.log(`📧 Emails sent via IONOS SMTP: ${sent}/3`);
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -314,7 +314,7 @@ Deno.serve(async (req: Request) => {
     return new Response(
       JSON.stringify({
         success: sent > 0,
-        message: `${sent} emails sent successfully via IONOS SMTP port 465`,
+        message: `${sent} emails sent successfully via IONOS SMTP`,
         emails_sent: sent,
         emails_failed: 3 - sent,
         errors: errors.length > 0 ? errors : undefined
