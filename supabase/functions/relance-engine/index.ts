@@ -119,7 +119,7 @@ async function processQuoteReminders(): Promise<RelanceResult> {
         </div>
         <p>N'hesitez pas a consulter votre espace prospect pour accepter le devis ou nous poser vos questions.</p>
         <p style="margin-top: 20px;">
-          <a href="https://taxiassur.com/prospect/devis?token=${lead.access_token || lead.id}"
+          <a href="https://taxiassur.com/espace-prospect/${lead.access_token || lead.id}"
              style="background: #2563eb; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: bold;">
             CONSULTER MON DEVIS
           </a>
