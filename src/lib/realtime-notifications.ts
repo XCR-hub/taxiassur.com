@@ -50,7 +50,7 @@ class RealtimeNotificationManager {
       .limit(50);
 
     if (data) {
-      this.notifications = data.map((item) => this.mapPayloadToNotification(item));
+      this.notifications = data.map((item) => this.mapPayloadToNotification.call(this, item));
     }
   }
 
@@ -65,14 +65,18 @@ class RealtimeNotificationManager {
       payment_completed: 'success'
     };
 
+    // Protection contre les valeurs undefined
+    const eventType = payload?.event_type || 'unknown';
+    const createdAt = payload?.created_at ? new Date(payload.created_at).getTime() : Date.now();
+
     return {
-      id: payload.id,
-      type: eventTypeMap[payload.event_type] || 'info',
-      title: this.getEventTitle(payload.event_type),
-      message: payload.message,
-      timestamp: new Date(payload.created_at).getTime(),
-      read: payload.read_at !== null,
-      actionUrl: payload.lead_id ? `/backoffice/crm-commercial?lead=${payload.lead_id}` : undefined,
+      id: payload?.id || crypto.randomUUID(),
+      type: eventTypeMap[eventType] || 'info',
+      title: this.getEventTitle(eventType),
+      message: payload?.message || 'Notification',
+      timestamp: createdAt,
+      read: payload?.read_at !== null && payload?.read_at !== undefined,
+      actionUrl: payload?.lead_id ? `/backoffice/crm-commercial?lead=${payload.lead_id}` : undefined,
       actionLabel: 'Voir le lead',
     };
   }
