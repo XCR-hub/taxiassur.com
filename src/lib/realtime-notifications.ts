@@ -1,3 +1,4 @@
+import React from 'react';
 import { supabase } from './supabase';
 
 export type NotificationType = 'info' | 'success' | 'warning' | 'error';
@@ -21,6 +22,8 @@ class RealtimeNotificationManager {
   private channel: any = null;
 
   async initialize(userId?: string) {
+    console.log('[NotificationManager] Initializing...');
+
     // Écouter les nouvelles notifications CRM (pour tous les admins)
     this.channel = supabase
       .channel('crm_event_notifications')
@@ -32,26 +35,50 @@ class RealtimeNotificationManager {
           table: 'crm_event_notifications',
         },
         (payload) => {
+          console.log('[NotificationManager] New notification received:', payload.new);
           const notification = this.mapPayloadToNotification(payload.new);
           this.addNotification(notification);
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('[NotificationManager] Channel status:', status);
+      });
 
     await this.loadNotifications();
+    console.log('[NotificationManager] Loaded', this.notifications.length, 'notifications');
   }
 
   private async loadNotifications() {
+    console.log('[NotificationManager] Loading notifications from database...');
+
     // Charger toutes les notifications CRM récentes
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('crm_event_notifications')
       .select('*, lead:crm_leads(first_name, last_name, email)')
       .order('created_at', { ascending: false })
       .limit(50);
 
-    if (data) {
-      this.notifications = data.map((item) => this.mapPayloadToNotification.call(this, item));
+    if (error) {
+      console.error('[NotificationManager] Error loading notifications:', error);
+      return;
     }
+
+    if (data) {
+      console.log('[NotificationManager] Loaded', data.length, 'notifications from DB');
+      this.notifications = data.map((item) => this.mapPayloadToNotification.call(this, item));
+      // Notifier tous les subscribers que les notifications sont chargées
+      this.notifyAll();
+    }
+  }
+
+  private notifyAll() {
+    // Notifier tous les subscribers avec la liste complète des notifications
+    this.subscribers.forEach((callback) => {
+      // On envoie une notification factice pour déclencher le re-render
+      if (this.notifications.length > 0) {
+        callback(this.notifications[0]);
+      }
+    });
   }
 
   private mapPayloadToNotification(payload: any): Notification {
@@ -153,24 +180,43 @@ export const notificationManager = new RealtimeNotificationManager();
 
 export function useNotifications() {
   const [notifications, setNotifications] = React.useState<Notification[]>([]);
+  const [, setRefresh] = React.useState(0);
 
   React.useEffect(() => {
-    const unsubscribe = notificationManager.subscribe((notification) => {
-      setNotifications((prev) => [notification, ...prev]);
+    const unsubscribe = notificationManager.subscribe(() => {
+      // À chaque nouvelle notification ou changement, recharger toutes les notifications
+      setNotifications(notificationManager.getNotifications());
+      setRefresh(prev => prev + 1);
     });
 
+    // Charger les notifications initiales
     setNotifications(notificationManager.getNotifications());
 
-    return unsubscribe;
+    // Recharger périodiquement au cas où
+    const interval = setInterval(() => {
+      setNotifications(notificationManager.getNotifications());
+    }, 2000);
+
+    return () => {
+      unsubscribe();
+      clearInterval(interval);
+    };
   }, []);
 
   return {
     notifications,
     unreadCount: notifications.filter((n) => !n.read).length,
-    markAsRead: (id: string) => notificationManager.markAsRead(id),
-    markAllAsRead: () => notificationManager.markAllAsRead(),
-    clear: () => notificationManager.clear(),
+    markAsRead: async (id: string) => {
+      await notificationManager.markAsRead(id);
+      setNotifications(notificationManager.getNotifications());
+    },
+    markAllAsRead: async () => {
+      await notificationManager.markAllAsRead();
+      setNotifications(notificationManager.getNotifications());
+    },
+    clear: async () => {
+      await notificationManager.clear();
+      setNotifications([]);
+    },
   };
 }
-
-import React from 'react';
