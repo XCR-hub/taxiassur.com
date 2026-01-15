@@ -236,7 +236,13 @@ Deno.serve(async (req) => {
           provider: 'ionos-imap',
           is_read: false,
         });
-        if (error) stats.errors++; else stats.inserted++;
+        if (error) {
+          console.error('Insert error for email:', email.subject, 'Error:', JSON.stringify(error));
+          stats.errors++;
+        } else {
+          console.log('Successfully inserted email:', email.subject);
+          stats.inserted++;
+        }
       }
     }
 
