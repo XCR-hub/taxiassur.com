@@ -8,10 +8,11 @@ import {
   History,
   CheckCircle,
   AlertCircle,
-  Bot
+  Bot,
+  Inbox
 } from 'lucide-react';
 
-export type WorkflowTab = 'overview' | 'documents' | 'quotes' | 'contract' | 'communication' | 'automations' | 'history';
+export type WorkflowTab = 'overview' | 'documents' | 'basket' | 'quotes' | 'contract' | 'communication' | 'automations' | 'history';
 
 interface TabConfig {
   id: WorkflowTab;
@@ -27,6 +28,7 @@ interface LeadWorkflowTabsProps {
   stats: {
     documentsComplete: boolean;
     documentsMissing: number;
+    basketCount?: number;
     quotesCount: number;
     hasContract: boolean;
     unreadMessages: number;
@@ -53,6 +55,13 @@ export const LeadWorkflowTabs: React.FC<LeadWorkflowTabsProps> = ({
       icon: <FileText className="w-4 h-4" />,
       badge: stats.documentsMissing > 0 ? stats.documentsMissing : undefined,
       status: stats.documentsComplete ? 'complete' : stats.documentsMissing > 0 ? 'warning' : 'pending'
+    },
+    {
+      id: 'basket',
+      label: 'Panier Email',
+      icon: <Inbox className="w-4 h-4" />,
+      badge: stats.basketCount || 0,
+      status: (stats.basketCount || 0) > 0 ? 'warning' : undefined
     },
     {
       id: 'quotes',
