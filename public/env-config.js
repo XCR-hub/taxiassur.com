@@ -12,7 +12,7 @@ window.ENV_CONFIG = {
   VITE_GOOGLE_CSE_API_KEY: 'AIzaSyB1wcpdbB3AJW0Mxx6tihEVVjPsIIFY-9o',
   VITE_GOOGLE_CSE_CX: '73ba86b5aae9b4add',
   VITE_SMTP_HOST: 'smtp.ionos.fr',
-  VITE_SMTP_PORT: '587',
+  VITE_SMTP_PORT: '465',
   VITE_SMTP_USER: 'team@taxiassur.com',
   VITE_SMTP_PASSWORD: 'TAXIassur!,',
   VITE_IMAP_HOST: 'imap.ionos.fr',

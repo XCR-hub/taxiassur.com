@@ -31,7 +31,9 @@
     "backup:critical": "node scripts/backup-system.js critical",
     "recovery:list": "node scripts/disaster-recovery.js list",
     "recovery:verify": "node scripts/disaster-recovery.js verify",
-    "recovery:restore": "node scripts/disaster-recovery.js restore"
+    "recovery:restore": "node scripts/disaster-recovery.js restore",
+    "update:ionos-secrets": "bash scripts/update-ionos-secrets.sh",
+    "test:ionos": "node scripts/test-ionos-connection.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4",
