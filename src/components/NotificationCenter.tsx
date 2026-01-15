@@ -6,12 +6,16 @@ export function NotificationCenter() {
   const [isOpen, setIsOpen] = useState(false);
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
 
+  // Debug: afficher dans le titre du bouton
+  const debugInfo = `${notifications.length} notifications (${unreadCount} non lues)`;
+
   return (
     <div className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="relative rounded-lg p-2 hover:bg-gray-100 dark:hover:bg-gray-800"
         aria-label="Notifications"
+        title={debugInfo}
       >
         <Bell className="h-5 w-5 text-gray-700 dark:text-gray-300" />
         {unreadCount > 0 && (

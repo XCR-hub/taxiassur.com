@@ -85,58 +85,49 @@ class RealtimeNotificationManager {
     const eventTypeMap: Record<string, NotificationType> = {
       new_lead: 'success',
       document_uploaded: 'info',
-      documents_complete: 'success',
-      quote_sent: 'info',
-      quote_accepted: 'success',
-      contract_signed: 'success',
-      payment_completed: 'success'
+      status_change: 'info',
+      ai_decision: 'warning',
+      email_received: 'info',
     };
 
-    // Protection contre les valeurs undefined
-    const eventType = payload?.event_type || 'unknown';
-    const createdAt = payload?.created_at ? new Date(payload.created_at).getTime() : Date.now();
+    const leadName = payload.lead
+      ? `${payload.lead.first_name || ''} ${payload.lead.last_name || ''}`.trim() || payload.lead.email
+      : 'Lead inconnu';
 
     return {
-      id: payload?.id || crypto.randomUUID(),
-      type: eventTypeMap[eventType] || 'info',
-      title: this.getEventTitle(eventType),
-      message: payload?.message || 'Notification',
-      timestamp: createdAt,
-      read: payload?.is_read === true,
-      actionUrl: payload?.lead_id ? `/backoffice/crm-commercial?lead=${payload.lead_id}` : undefined,
-      actionLabel: 'Voir le lead',
+      id: payload.id,
+      type: eventTypeMap[payload.event_type] || 'info',
+      title: payload.event_type === 'document_uploaded'
+        ? 'Nouveau document'
+        : payload.event_type === 'new_lead'
+        ? 'Nouveau prospect'
+        : 'Notification',
+      message: payload.message || `Événement: ${payload.event_type}`,
+      timestamp: new Date(payload.created_at).getTime(),
+      read: payload.is_read || false,
+      actionUrl: payload.lead_id ? `/backoffice/crm-killer/pipeline?lead=${payload.lead_id}` : undefined,
+      actionLabel: 'Voir le prospect',
     };
-  }
-
-  private getEventTitle(eventType: string): string {
-    const titles: Record<string, string> = {
-      new_lead: '🎉 Nouveau Lead',
-      document_uploaded: '📄 Document Reçu',
-      documents_complete: '✅ Documents Complets',
-      quote_sent: '📧 Devis Envoyé',
-      quote_accepted: '🎊 Devis Accepté',
-      contract_signed: '✍️ Contrat Signé',
-      payment_completed: '💰 Paiement Reçu'
-    };
-    return titles[eventType] || '🔔 Notification';
-  }
-
-  subscribe(callback: NotificationCallback) {
-    this.subscribers.add(callback);
-    return () => this.subscribers.delete(callback);
   }
 
   private addNotification(notification: Notification) {
-    this.notifications.unshift(notification);
+    this.notifications = [notification, ...this.notifications];
+
+    // Notifier tous les subscribers
     this.subscribers.forEach((callback) => callback(notification));
   }
 
-  getNotifications(): Notification[] {
-    return [...this.notifications];
+  subscribe(callback: NotificationCallback): () => void {
+    this.subscribers.add(callback);
+
+    // Retourner la fonction de désabonnement
+    return () => {
+      this.subscribers.delete(callback);
+    };
   }
 
-  getUnreadCount(): number {
-    return this.notifications.filter((n) => !n.read).length;
+  getNotifications(): Notification[] {
+    return this.notifications;
   }
 
   async markAsRead(id: string) {
@@ -144,6 +135,7 @@ class RealtimeNotificationManager {
     if (notification) {
       notification.read = true;
 
+      // Mettre à jour dans Supabase
       await supabase
         .from('crm_event_notifications')
         .update({ is_read: true })
@@ -154,18 +146,15 @@ class RealtimeNotificationManager {
   async markAllAsRead() {
     this.notifications.forEach((n) => (n.read = true));
 
+    // Mettre à jour dans Supabase
     await supabase
       .from('crm_event_notifications')
       .update({ is_read: true })
       .eq('is_read', false);
   }
 
-  async clear() {
+  clear() {
     this.notifications = [];
-    await supabase
-      .from('crm_event_notifications')
-      .delete()
-      .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all
   }
 
   destroy() {
@@ -180,42 +169,107 @@ export const notificationManager = new RealtimeNotificationManager();
 
 export function useNotifications() {
   const [notifications, setNotifications] = React.useState<Notification[]>([]);
-  const [, setRefresh] = React.useState(0);
+
+  // Fonction pour charger directement depuis la base
+  const loadNotifications = React.useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('crm_event_notifications')
+        .select('*, lead:crm_leads(first_name, last_name, email)')
+        .order('created_at', { ascending: false })
+        .limit(50);
+
+      if (error) {
+        console.error('[useNotifications] Error:', error);
+        return;
+      }
+
+      if (data) {
+        const mapped = data.map((item): Notification => {
+          const eventTypeMap: Record<string, NotificationType> = {
+            new_lead: 'success',
+            document_uploaded: 'info',
+            status_change: 'info',
+            ai_decision: 'warning',
+            email_received: 'info',
+          };
+
+          const leadName = item.lead
+            ? `${item.lead.first_name || ''} ${item.lead.last_name || ''}`.trim() || item.lead.email
+            : 'Lead inconnu';
+
+          return {
+            id: item.id,
+            type: eventTypeMap[item.event_type] || 'info',
+            title: item.event_type === 'document_uploaded'
+              ? 'Nouveau document'
+              : item.event_type === 'new_lead'
+              ? 'Nouveau prospect'
+              : 'Notification',
+            message: item.message || `Événement: ${item.event_type}`,
+            timestamp: new Date(item.created_at).getTime(),
+            read: item.is_read || false,
+            actionUrl: item.lead_id ? `/backoffice/crm-killer/pipeline?lead=${item.lead_id}` : undefined,
+            actionLabel: 'Voir le prospect',
+          };
+        });
+
+        setNotifications(mapped);
+      }
+    } catch (error) {
+      console.error('[useNotifications] Exception:', error);
+    }
+  }, []);
 
   React.useEffect(() => {
-    const unsubscribe = notificationManager.subscribe(() => {
-      // À chaque nouvelle notification ou changement, recharger toutes les notifications
-      setNotifications(notificationManager.getNotifications());
-      setRefresh(prev => prev + 1);
-    });
+    // Charger immédiatement
+    loadNotifications();
 
-    // Charger les notifications initiales
-    setNotifications(notificationManager.getNotifications());
+    // S'abonner aux changements en temps réel
+    const channel = supabase
+      .channel('notifications_updates')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'crm_event_notifications',
+        },
+        () => {
+          loadNotifications();
+        }
+      )
+      .subscribe();
 
-    // Recharger périodiquement au cas où
-    const interval = setInterval(() => {
-      setNotifications(notificationManager.getNotifications());
-    }, 2000);
+    // Recharger toutes les 5 secondes
+    const interval = setInterval(loadNotifications, 5000);
 
     return () => {
-      unsubscribe();
+      channel.unsubscribe();
       clearInterval(interval);
     };
-  }, []);
+  }, [loadNotifications]);
 
   return {
     notifications,
     unreadCount: notifications.filter((n) => !n.read).length,
     markAsRead: async (id: string) => {
-      await notificationManager.markAsRead(id);
-      setNotifications(notificationManager.getNotifications());
+      await supabase
+        .from('crm_event_notifications')
+        .update({ is_read: true })
+        .eq('id', id);
+
+      await loadNotifications();
     },
     markAllAsRead: async () => {
-      await notificationManager.markAllAsRead();
-      setNotifications(notificationManager.getNotifications());
+      await supabase
+        .from('crm_event_notifications')
+        .update({ is_read: true })
+        .eq('is_read', false);
+
+      await loadNotifications();
     },
     clear: async () => {
-      await notificationManager.clear();
       setNotifications([]);
     },
   };
