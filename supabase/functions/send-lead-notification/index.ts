@@ -27,7 +27,7 @@ async function sendEmailSMTP(
   fromName: string = "TaxiAssur"
 ): Promise<void> {
   const SMTP_HOST = Deno.env.get("IONOS_SMTP_HOST") || "smtp.ionos.fr";
-  const SMTP_PORT = parseInt(Deno.env.get("IONOS_SMTP_PORT") || "587");
+  const SMTP_PORT = parseInt(Deno.env.get("IONOS_SMTP_PORT") || "465");
   const SMTP_USER = Deno.env.get("IONOS_EMAIL_USER") || "team@taxiassur.com";
   const SMTP_PASS = Deno.env.get("IONOS_EMAIL_PASSWORD");
 
@@ -66,8 +66,8 @@ async function sendEmailSMTP(
     await sendCommand("DATA");
 
     const emailContent = [
-      `From: "${fromName}" <${fromEmail}>`,
-      `To: "${toName}" <${to}>`,
+      `From: \"${fromName}\" <${fromEmail}>`,
+      `To: \"${toName}\" <${to}>`,
       `Subject: ${subject}`,
       "MIME-Version: 1.0",
       "Content-Type: text/html; charset=UTF-8",
@@ -101,7 +101,7 @@ Deno.serve(async (req: Request) => {
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8">
+  <meta charset=\"UTF-8\">
   <style>
     body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; background: #f3f4f6; margin: 0; padding: 20px; }
     .container { max-width: 650px; margin: 0 auto; }
@@ -117,51 +117,51 @@ Deno.serve(async (req: Request) => {
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <h1 style="margin: 0; font-size: 28px;">🚕 NOUVEAU LEAD TAXIASSUR</h1>
-      <p style="margin: 10px 0 0 0;">Traitement prioritaire requis</p>
+  <div class=\"container\">
+    <div class=\"header\">
+      <h1 style=\"margin: 0; font-size: 28px;\">🚕 NOUVEAU LEAD TAXIASSUR</h1>
+      <p style=\"margin: 10px 0 0 0;\">Traitement prioritaire requis</p>
     </div>
-    <div class="content">
-      <div class="alert-box">
+    <div class=\"content\">
+      <div class=\"alert-box\">
         <strong>⚡ ACTION REQUISE :</strong> Contactez ce prospect dans les <strong>15 minutes</strong>
       </div>
-      <h2 style="color: #1f2937; margin-top: 0;">📋 Informations du prospect</h2>
-      <div class="info-grid">
-        <div class="info-item">
-          <div class="info-label">Nom complet</div>
-          <div class="info-value">${lead.name}</div>
+      <h2 style=\"color: #1f2937; margin-top: 0;\">📋 Informations du prospect</h2>
+      <div class=\"info-grid\">
+        <div class=\"info-item\">
+          <div class=\"info-label\">Nom complet</div>
+          <div class=\"info-value\">${lead.name}</div>
         </div>
-        <div class="info-item">
-          <div class="info-label">📞 Téléphone</div>
-          <div class="info-value"><a href="tel:${lead.phone}" style="color: #10b981; text-decoration: none;">${lead.phone}</a></div>
+        <div class=\"info-item\">
+          <div class=\"info-label\">📞 Téléphone</div>
+          <div class=\"info-value\"><a href=\"tel:${lead.phone}\" style=\"color: #10b981; text-decoration: none;\">${lead.phone}</a></div>
         </div>
-        <div class="info-item">
-          <div class="info-label">📧 Email</div>
-          <div class="info-value"><a href="mailto:${lead.email}" style="color: #3b82f6; text-decoration: none;">${lead.email}</a></div>
+        <div class=\"info-item\">
+          <div class=\"info-label\">📧 Email</div>
+          <div class=\"info-value\"><a href=\"mailto:${lead.email}\" style=\"color: #3b82f6; text-decoration: none;\">${lead.email}</a></div>
         </div>
-        <div class="info-item">
-          <div class="info-label">📍 Ville</div>
-          <div class="info-value">${lead.city}</div>
+        <div class=\"info-item\">
+          <div class=\"info-label\">📍 Ville</div>
+          <div class=\"info-value\">${lead.city}</div>
         </div>
-        <div class="info-item">
-          <div class="info-label">Statut</div>
-          <div class="info-value">${lead.status}</div>
+        <div class=\"info-item\">
+          <div class=\"info-label\">Statut</div>
+          <div class=\"info-value\">${lead.status}</div>
         </div>
-        ${lead.immatriculation ? `<div class="info-item"><div class="info-label">🚗 Immatriculation</div><div class="info-value">${lead.immatriculation}</div></div>` : ""}
+        ${lead.immatriculation ? `<div class=\"info-item\"><div class=\"info-label\">🚗 Immatriculation</div><div class=\"info-value\">${lead.immatriculation}</div></div>` : ""}
       </div>
-      <h3 style="color: #1f2937;">✅ Prochaines actions</h3>
-      <ol style="color: #4b5563; line-height: 1.8;">
+      <h3 style=\"color: #1f2937;\">✅ Prochaines actions</h3>
+      <ol style=\"color: #4b5563; line-height: 1.8;\">
         <li>Appeler le prospect au <strong>${lead.phone}</strong></li>
         <li>Qualifier le besoin et confirmer les informations</li>
         <li>Vérifier l'envoi des 7 documents requis</li>
         <li>Préparer et envoyer le devis sous 24h</li>
       </ol>
-      <div style="text-align: center; margin: 30px 0;">
-        <a href="https://taxiassur.com/backoffice/crm-commercial" class="cta-button">OUVRIR LE CRM</a>
+      <div style=\"text-align: center; margin: 30px 0;\">
+        <a href=\"https://taxiassur.com/backoffice/crm-commercial\" class=\"cta-button\">OUVRIR LE CRM</a>
       </div>
     </div>
-    <div class="footer">
+    <div class=\"footer\">
       <strong>TaxiAssur CRM</strong> - Notification automatique
     </div>
   </div>
@@ -172,8 +172,8 @@ Deno.serve(async (req: Request) => {
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset=\"UTF-8\">
+  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">
   <style>
     body { font-family: Arial, sans-serif; line-height: 1.6; background: #f3f4f6; margin: 0; padding: 20px; }
     .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
@@ -189,49 +189,49 @@ Deno.serve(async (req: Request) => {
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="header">
+  <div class=\"container\">
+    <div class=\"header\">
       <h1>✅ DEMANDE REÇUE !</h1>
-      <p style="margin: 0; font-size: 18px;">Bonjour ${lead.name}</p>
+      <p style=\"margin: 0; font-size: 18px;\">Bonjour ${lead.name}</p>
     </div>
-    <div class="content">
-      <div class="success-box">
+    <div class=\"content\">
+      <div class=\"success-box\">
         <strong>Excellente nouvelle !</strong><br>
         Votre demande de devis d'assurance taxi a été confirmée avec succès.
       </div>
-      <h2 style="color: #1f2937;">🎯 Prochaines étapes</h2>
-      <ul style="color: #4b5563;">
+      <h2 style=\"color: #1f2937;\">🎯 Prochaines étapes</h2>
+      <ul style=\"color: #4b5563;\">
         <li>Votre expert TaxiAssur vous recontacte <strong>sous 15 minutes</strong></li>
         <li>Analyse personnalisée de vos besoins</li>
         <li>Proposition des meilleures offres du marché</li>
         <li>Économies moyennes constatées : <strong>580 €/an</strong></li>
       </ul>
-      <div class="docs-section">
-        <h3 style="color: #1e40af; margin-top: 0; text-align: center;">📄 7 Documents requis</h3>
-        <div class="doc-item"><strong>1.</strong> Licence de taxi professionnelle</div>
-        <div class="doc-item"><strong>2.</strong> Permis de conduire (recto-verso)</div>
-        <div class="doc-item"><strong>3.</strong> Pièce d'identité (CNI/passeport)</div>
-        <div class="doc-item"><strong>4.</strong> Carte grise du véhicule</div>
-        <div class="doc-item"><strong>5.</strong> Relevé d'information assureur</div>
-        <div class="doc-item"><strong>6.</strong> Autorisation de stationnement</div>
-        <div class="doc-item"><strong>7.</strong> RIB - Relevé d'Identité Bancaire</div>
+      <div class=\"docs-section\">
+        <h3 style=\"color: #1e40af; margin-top: 0; text-align: center;\">📄 7 Documents requis</h3>
+        <div class=\"doc-item\"><strong>1.</strong> Licence de taxi professionnelle</div>
+        <div class=\"doc-item\"><strong>2.</strong> Permis de conduire (recto-verso)</div>
+        <div class=\"doc-item\"><strong>3.</strong> Pièce d'identité (CNI/passeport)</div>
+        <div class=\"doc-item\"><strong>4.</strong> Carte grise du véhicule</div>
+        <div class=\"doc-item\"><strong>5.</strong> Relevé d'information assureur</div>
+        <div class=\"doc-item\"><strong>6.</strong> Autorisation de stationnement</div>
+        <div class=\"doc-item\"><strong>7.</strong> RIB - Relevé d'Identité Bancaire</div>
       </div>
-      <div style="text-align: center; background: #fef3c7; padding: 25px; border-radius: 15px; margin: 25px 0;">
-        <p style="color: #92400e; font-weight: bold; margin-bottom: 15px;">📤 Uploadez vos documents maintenant !</p>
-        <a href="${prospectSpaceUrl}" class="cta-button">ACCÉDER À MON ESPACE</a>
+      <div style=\"text-align: center; background: #fef3c7; padding: 25px; border-radius: 15px; margin: 25px 0;\">
+        <p style=\"color: #92400e; font-weight: bold; margin-bottom: 15px;\">📤 Uploadez vos documents maintenant !</p>
+        <a href=\"${prospectSpaceUrl}\" class=\"cta-button\">ACCÉDER À MON ESPACE</a>
       </div>
-      <div class="contact-box">
-        <h3 style="color: #1e40af; margin-top: 0;">💬 Besoin d'aide ?</h3>
-        <p style="margin: 10px 0;">
+      <div class=\"contact-box\">
+        <h3 style=\"color: #1e40af; margin-top: 0;\">💬 Besoin d'aide ?</h3>
+        <p style=\"margin: 10px 0;\">
           <strong>📞 01 80 85 57 86</strong><br>
-          <a href="mailto:team@taxiassur.com" style="color: #1e40af;">📧 team@taxiassur.com</a>
+          <a href=\"mailto:team@taxiassur.com\" style=\"color: #1e40af;\">📧 team@taxiassur.com</a>
         </p>
       </div>
     </div>
-    <div class="footer">
-      <div style="font-size: 22px; font-weight: bold; color: #10b981; margin-bottom: 10px;">TaxiAssur</div>
+    <div class=\"footer\">
+      <div style=\"font-size: 22px; font-weight: bold; color: #10b981; margin-bottom: 10px;\">TaxiAssur</div>
       <p>Courtier spécialisé en assurance taxi et VTC</p>
-      <p style="margin-top: 10px; font-size: 12px;">ORIAS 11 061 425 - Excellence Coverage Risks</p>
+      <p style=\"margin-top: 10px; font-size: 12px;\">ORIAS 11 061 425 - Excellence Coverage Risks</p>
     </div>
   </div>
 </body>
