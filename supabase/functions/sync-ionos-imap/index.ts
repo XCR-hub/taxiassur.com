@@ -246,7 +246,8 @@ Deno.serve(async (req) => {
     stats.mailbox_total = mailbox.exists;
 
     if (mailbox.exists > 0) {
-      const start = Math.max(1, mailbox.exists - 49);
+      const BATCH_SIZE = 15;
+      const start = Math.max(1, mailbox.exists - (BATCH_SIZE - 1));
       const emails = await imap.fetchHeaders(start, mailbox.exists);
 
       for (const email of emails) {
@@ -268,8 +269,8 @@ Deno.serve(async (req) => {
           from_name: fromMatch?.[1]?.trim() || '',
           to_emails: [account.imap_username || 'team@taxiassur.com'],
           subject: email.subject,
-          body_text: text.substring(0, 100000),
-          body_html: html.substring(0, 500000),
+          body_text: text.substring(0, 50000),
+          body_html: html.substring(0, 200000),
           received_at: receivedAt,
           direction: 'inbound',
           status: 'received',
