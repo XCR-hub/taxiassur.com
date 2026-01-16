@@ -30,6 +30,8 @@ interface LeadIntelligencePanelProps {
   documentsComplete: boolean;
   hasQuotes: boolean;
   onSuggestedAction?: (action: string) => void;
+  pendingAutomations?: number;
+  scheduledFollowUps?: number;
 }
 
 interface AIInsight {
@@ -48,7 +50,9 @@ export const LeadIntelligencePanel: React.FC<LeadIntelligencePanelProps> = ({
   leadData,
   documentsComplete,
   hasQuotes,
-  onSuggestedAction
+  onSuggestedAction,
+  pendingAutomations = 0,
+  scheduledFollowUps = 0
 }) => {
   const [insights, setInsights] = useState<AIInsight[]>([]);
   const [nextBestAction, setNextBestAction] = useState<string>('');
@@ -273,6 +277,31 @@ export const LeadIntelligencePanel: React.FC<LeadIntelligencePanelProps> = ({
             <span className="font-semibold text-cyan-300">Prochaine action recommandee</span>
           </div>
           <p className="text-white font-medium">{nextBestAction}</p>
+        </div>
+      )}
+
+      {(pendingAutomations > 0 || scheduledFollowUps > 0) && (
+        <div className="bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-500/30 rounded-lg p-4 mb-6">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <Zap className="w-5 h-5 text-purple-400" />
+              <span className="font-semibold text-purple-300">Automations IA</span>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            {pendingAutomations > 0 && (
+              <div className="bg-slate-700/50 rounded-lg p-3">
+                <div className="text-2xl font-bold text-white">{pendingAutomations}</div>
+                <div className="text-xs text-slate-400">Actions en attente</div>
+              </div>
+            )}
+            {scheduledFollowUps > 0 && (
+              <div className="bg-slate-700/50 rounded-lg p-3">
+                <div className="text-2xl font-bold text-white">{scheduledFollowUps}</div>
+                <div className="text-xs text-slate-400">Relances programmées</div>
+              </div>
+            )}
+          </div>
         </div>
       )}
 

@@ -158,13 +158,63 @@ class IMAPClient {
     return emails;
   }
 
-  async fetchFullEmail(seq: number): Promise<{ text: string; html: string }> {
+  async fetchFullEmail(seq: number): Promise<{ text: string; html: string; attachments: Array<{ filename: string; contentType: string; size: number; data: Uint8Array }> }> {
     try {
+      const attachments: Array<{ filename: string; contentType: string; size: number; data: Uint8Array }> = [];
+
+      const structResponse = await this.sendCommand(`FETCH ${seq} BODYSTRUCTURE`);
+      const parts: Array<{ section: string; filename: string; contentType: string; size: number }> = [];
+
+      const fileMatch = structResponse.matchAll(/"attachment"[^)]*"filename"\s+"([^"]+)"/gi);
+      let partNum = 2;
+      for (const match of fileMatch) {
+        parts.push({
+          section: partNum.toString(),
+          filename: match[1],
+          contentType: 'application/octet-stream',
+          size: 0
+        });
+        partNum++;
+      }
+
+      for (const part of parts) {
+        try {
+          const dataResp = await this.sendCommand(`FETCH ${seq} BODY.PEEK[${part.section}]`);
+          const dataMatch = dataResp.match(/BODY\[[^\]]+\]\s*\{(\d+)\}\r\n([\s\S]*?)(?:\r\n\* |\r\nA\d+)/);
+          if (dataMatch && dataMatch[2]) {
+            const base64Data = dataMatch[2].replace(/\r?\n/g, '').trim();
+            try {
+              const binaryString = atob(base64Data);
+              const bytes = new Uint8Array(binaryString.length);
+              for (let i = 0; i < binaryString.length; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+              }
+              attachments.push({
+                filename: part.filename,
+                contentType: part.contentType,
+                size: bytes.length,
+                data: bytes
+              });
+            } catch (e) {
+              console.error('Failed to decode attachment:', part.filename, e);
+            }
+          }
+        } catch (e) {
+          console.error('Failed to fetch attachment part:', part.filename, e);
+        }
+      }
+
       const response = await this.sendCommand(`FETCH ${seq} BODY.PEEK[]`);
       const bodyMatch = response.match(/BODY\[\]\s*\{(\d+)\}\r\n([\s\S]*)/);
-      if (bodyMatch) return extractHtmlContent(bodyMatch[2]);
-      return { text: '', html: '' };
-    } catch { return { text: '', html: '' }; }
+      if (bodyMatch) {
+        const content = extractHtmlContent(bodyMatch[2]);
+        return { ...content, attachments };
+      }
+      return { text: '', html: '', attachments };
+    } catch (e) {
+      console.error('Error fetching email:', e);
+      return { text: '', html: '', attachments: [] };
+    }
   }
 
   async logout(): Promise<void> { try { await this.sendCommand('LOGOUT'); } catch {} await this.close(); }
@@ -219,9 +269,9 @@ Deno.serve(async (req) => {
         try { const d = new Date(email.date); receivedAt = isNaN(d.getTime()) ? new Date().toISOString() : d.toISOString(); }
         catch { receivedAt = new Date().toISOString(); }
 
-        const { text, html } = await imap.fetchFullEmail(email.seq);
+        const { text, html, attachments } = await imap.fetchFullEmail(email.seq);
 
-        const { error } = await supabase.from('email_messages').insert({
+        const { data: insertedEmail, error } = await supabase.from('email_messages').insert({
           account_id: account.id,
           message_id: email.uid,
           from_email: fromEmail,
@@ -235,13 +285,97 @@ Deno.serve(async (req) => {
           status: 'received',
           provider: 'ionos-imap',
           is_read: false,
-        });
+        }).select().single();
+
         if (error) {
           console.error('Insert error for email:', email.subject, 'Error:', JSON.stringify(error));
           stats.errors++;
         } else {
           console.log('Successfully inserted email:', email.subject);
           stats.inserted++;
+
+          if (attachments.length > 0) {
+            console.log(`Processing ${attachments.length} attachments for email:`, email.subject);
+            for (const attachment of attachments) {
+              try {
+                const fileName = `${insertedEmail.id}/${Date.now()}_${attachment.filename}`;
+                const { error: uploadError } = await supabase.storage
+                  .from('attachments')
+                  .upload(fileName, attachment.data, {
+                    contentType: attachment.contentType,
+                    upsert: false
+                  });
+
+                if (uploadError) {
+                  console.error('Failed to upload attachment:', attachment.filename, uploadError);
+                  continue;
+                }
+
+                const { data: urlData } = supabase.storage
+                  .from('attachments')
+                  .getPublicUrl(fileName);
+
+                const lowerFilename = attachment.filename.toLowerCase();
+                let autoDetectedType: string | null = null;
+                let confidenceScore: number | null = null;
+
+                if (lowerFilename.includes('rib') || lowerFilename.includes('iban') || lowerFilename.includes('bank')) {
+                  autoDetectedType = 'rib';
+                  confidenceScore = 85;
+                } else if (lowerFilename.includes('permis') || lowerFilename.includes('conduire')) {
+                  autoDetectedType = 'permis_conduire';
+                  confidenceScore = 80;
+                } else if (lowerFilename.includes('carte') && lowerFilename.includes('grise')) {
+                  autoDetectedType = 'carte_grise';
+                  confidenceScore = 85;
+                } else if (lowerFilename.includes('kbis') || lowerFilename.includes('sirene')) {
+                  autoDetectedType = 'kbis';
+                  confidenceScore = 90;
+                } else if (lowerFilename.includes('releve') || lowerFilename.includes('information')) {
+                  autoDetectedType = 'releve_information';
+                  confidenceScore = 70;
+                } else if (lowerFilename.includes('identite') || lowerFilename.includes('cni')) {
+                  autoDetectedType = 'piece_identite';
+                  confidenceScore = 75;
+                } else if (lowerFilename.includes('justif')) {
+                  autoDetectedType = 'justificatif_domicile';
+                  confidenceScore = 70;
+                }
+
+                const { data: lead } = await supabase.from('leads').select('id').eq('email', fromEmail).maybeSingle();
+
+                const { error: attachError } = await supabase
+                  .from('email_attachments')
+                  .insert({
+                    email_message_id: insertedEmail.id,
+                    lead_id: lead?.id || null,
+                    file_name: attachment.filename,
+                    file_type: attachment.filename.split('.').pop() || 'bin',
+                    file_size: attachment.size,
+                    mime_type: attachment.contentType,
+                    storage_path: fileName,
+                    storage_bucket: 'attachments',
+                    download_url: urlData.publicUrl,
+                    classification_status: 'pending',
+                    auto_detected_type: autoDetectedType,
+                    confidence_score: confidenceScore,
+                    metadata: {
+                      email_subject: email.subject,
+                      email_from: fromEmail,
+                      extracted_at: new Date().toISOString()
+                    }
+                  });
+
+                if (attachError) {
+                  console.error('Failed to insert attachment record:', attachment.filename, attachError);
+                } else {
+                  console.log('Successfully saved attachment:', attachment.filename);
+                }
+              } catch (attachErr) {
+                console.error('Error processing attachment:', attachment.filename, attachErr);
+              }
+            }
+          }
         }
       }
     }

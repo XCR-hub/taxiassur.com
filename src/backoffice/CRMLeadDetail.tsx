@@ -888,22 +888,6 @@ const CRMLeadDetail: React.FC = () => {
               </div>
             )}
 
-            {activeTab === 'automations' && (
-              <LeadAutomationCenter
-                leadId={lead.id}
-                leadStatus={lead.status}
-                leadEmail={lead.email}
-                leadPhone={lead.phone}
-                leadFirstName={lead.first_name}
-                leadLastName={lead.last_name}
-                accessToken={(lead as any).access_token}
-                onActionTaken={() => {
-                  loadMessages(lead.id);
-                  loadLeadData(lead.id);
-                  loadStats(lead.id);
-                }}
-              />
-            )}
 
             {activeTab === 'communication' && (
               <div className="space-y-6">
@@ -1092,6 +1076,8 @@ const CRMLeadDetail: React.FC = () => {
               documentsComplete={documentsComplete}
               hasQuotes={quotesCount > 0}
               onSuggestedAction={handleSuggestedAction}
+              pendingAutomations={pendingAISuggestions}
+              scheduledFollowUps={scheduledFollowUps}
             />
 
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
