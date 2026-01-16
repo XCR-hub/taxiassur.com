@@ -253,7 +253,8 @@ Deno.serve(async (req) => {
     stats.mailbox_total = mailbox.exists;
 
     if (mailbox.exists > 0) {
-      const start = Math.max(1, mailbox.exists - 99);
+      const BATCH_SIZE = 20;
+      const start = Math.max(1, mailbox.exists - (BATCH_SIZE - 1));
       const emails = await imap.fetchHeaders(start, mailbox.exists);
 
       for (const email of emails) {
@@ -271,6 +272,14 @@ Deno.serve(async (req) => {
 
         const { text, html, attachments } = await imap.fetchFullEmail(email.seq);
 
+        const cleanText = text.replace(/--[0-9A-F]+_NextPart_[0-9A-F.]+/g, '')
+          .replace(/Content-Type:.*?charset="?UTF-8"?/gi, '')
+          .replace(/Content-Transfer-Encoding:.*?(quoted-printable|base64)/gi, '')
+          .replace(/={20,}/g, '')
+          .trim();
+
+        const cleanHtml = html.replace(/--[0-9A-F]+_NextPart_[0-9A-F.]+/g, '').trim();
+
         const { data: insertedEmail, error } = await supabase.from('email_messages').insert({
           account_id: account.id,
           message_id: email.uid,
@@ -278,8 +287,8 @@ Deno.serve(async (req) => {
           from_name: fromName,
           to_emails: [account.imap_username || 'team@taxiassur.com'],
           subject: email.subject,
-          body_text: text.substring(0, 100000),
-          body_html: html.substring(0, 500000),
+          body_text: cleanText.substring(0, 100000),
+          body_html: cleanHtml.substring(0, 500000),
           received_at: receivedAt,
           direction: 'inbound',
           status: 'received',

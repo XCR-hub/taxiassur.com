@@ -45,6 +45,20 @@ interface ExtractedLeadInfo {
   city?: string;
 }
 
+const cleanEmailPreview = (text: string): string => {
+  if (!text) return '';
+
+  return text
+    .replace(/--[0-9A-F]+_NextPart_[0-9A-F._]+/g, '')
+    .replace(/Content-Type:.*?(?:\r?\n|$)/gi, '')
+    .replace(/Content-Transfer-Encoding:.*?(?:\r?\n|$)/gi, '')
+    .replace(/charset="?[^"\r\n]+"?/gi, '')
+    .replace(/={20,}/g, '')
+    .replace(/\r?\n\s*\r?\n/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+};
+
 const extractLeadInfoFromEmail = (email: EmailMessage): ExtractedLeadInfo | null => {
   const text = email.body_text || '';
   const html = email.body_html || '';
@@ -737,7 +751,7 @@ const CRMInboxMulticanal: React.FC = () => {
                       </div>
 
                       <div className="text-sm text-gray-600 line-clamp-2">
-                        {email.body_text?.substring(0, 200)}...
+                        {cleanEmailPreview(email.body_text || '').substring(0, 200)}...
                       </div>
 
                       <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
@@ -869,11 +883,11 @@ const CRMInboxMulticanal: React.FC = () => {
               {selectedMessage.body_html ? (
                 <div
                   className="prose max-w-none"
-                  dangerouslySetInnerHTML={{ __html: selectedMessage.body_html }}
+                  dangerouslySetInnerHTML={{ __html: cleanEmailPreview(selectedMessage.body_html) }}
                 />
               ) : (
                 <pre className="whitespace-pre-wrap font-sans text-gray-700">
-                  {selectedMessage.body_text}
+                  {cleanEmailPreview(selectedMessage.body_text || '')}
                 </pre>
               )}
 
