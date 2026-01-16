@@ -68,6 +68,7 @@ const PopupManager = lazy(() => import('./backoffice/PopupManager'));
 const NewsManager = lazy(() => import('./backoffice/NewsManager'));
 const LeadMarketplace = lazy(() => import('./backoffice/LeadMarketplace'));
 const PartnerPortal = lazy(() => import('./backoffice/PartnerPortal'));
+const TestNotifications = lazy(() => import('./pages/TestNotifications'));
 const LeadManager = lazy(() => import('./backoffice/LeadManager'));
 const BacklinkProspector = lazy(() => import('./backoffice/BacklinkProspector'));
 const BacklinkAutomationDashboard = lazy(() => import('./backoffice/BacklinkAutomationDashboard'));
@@ -168,6 +169,11 @@ export const router = createBrowserRouter([
       {
         path: '/',
         element: <SuspenseWrapper><Home /></SuspenseWrapper>,
+        errorElement: <RouteErrorFallback />
+      },
+      {
+        path: '/test-notifications',
+        element: <SuspenseWrapper><TestNotifications /></SuspenseWrapper>,
         errorElement: <RouteErrorFallback />
       },
       {
