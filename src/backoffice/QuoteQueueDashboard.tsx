@@ -24,7 +24,7 @@ interface QueueItem {
     email: string;
     phone: string;
     city: string;
-    vehicle_type: string;
+    company_name: string;
     current_stage_key: string;
     ai_qualification_score: number;
   };
@@ -60,7 +60,7 @@ const QuoteQueueDashboard: React.FC = () => {
         *,
         lead:crm_leads(
           first_name, last_name, email, phone, city,
-          vehicle_type, current_stage_key, ai_qualification_score
+          company_name, current_stage_key, ai_qualification_score
         )
       `)
       .order('priority_score', { ascending: false })
