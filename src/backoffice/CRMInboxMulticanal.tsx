@@ -107,13 +107,17 @@ const CRMInboxMulticanal: React.FC = () => {
   const [stats, setStats] = useState({ total: 0, unread: 0, leads: 0, starred: 0 });
   const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'success' | 'error'>('idle');
   const [syncMessage, setSyncMessage] = useState('');
+  const [autoSyncActive, setAutoSyncActive] = useState(false);
+  const [lastAutoSync, setLastAutoSync] = useState<string | null>(null);
 
   useEffect(() => {
     loadMessages();
     loadStats();
+    checkAutoSyncStatus();
     const interval = setInterval(() => {
       loadMessages();
       loadStats();
+      checkAutoSyncStatus();
     }, 30000);
     return () => clearInterval(interval);
   }, [filter, directionFilter, searchQuery, sortBy]);
@@ -214,6 +218,19 @@ const CRMInboxMulticanal: React.FC = () => {
       });
     } catch (error) {
       console.error('Error loading stats:', error);
+    }
+  };
+
+  const checkAutoSyncStatus = async () => {
+    try {
+      const { data, error } = await supabase.rpc('get_email_sync_cron_status');
+      if (data && data.length > 0) {
+        const status = data[0];
+        setAutoSyncActive(status.active);
+        setLastAutoSync(status.last_run);
+      }
+    } catch (error) {
+      console.error('Failed to check auto-sync status:', error);
     }
   };
 
@@ -464,6 +481,17 @@ const CRMInboxMulticanal: React.FC = () => {
           <div>
             <h1 className="text-4xl font-bold">Inbox Multicanal</h1>
             <p className="text-blue-200 mt-1">Tous vos emails en un seul endroit</p>
+            {autoSyncActive && (
+              <div className="flex items-center gap-2 mt-2 text-sm text-green-200">
+                <CheckCircle size={16} />
+                <span>Synchronisation automatique active (toutes les minutes)</span>
+                {lastAutoSync && (
+                  <span className="text-blue-200">
+                    • Dernière sync: {new Date(lastAutoSync).toLocaleTimeString('fr-FR')}
+                  </span>
+                )}
+              </div>
+            )}
           </div>
           <button
             onClick={syncEmails}
@@ -471,7 +499,7 @@ const CRMInboxMulticanal: React.FC = () => {
             className="flex items-center gap-2 px-6 py-3 bg-white text-blue-900 rounded-lg font-medium hover:bg-blue-50 transition-colors disabled:opacity-50"
           >
             <RefreshCw size={20} className={syncing ? 'animate-spin' : ''} />
-            {syncing ? 'Synchronisation...' : 'Synchroniser'}
+            {syncing ? 'Synchronisation...' : 'Synchroniser maintenant'}
           </button>
         </div>
 
