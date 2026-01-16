@@ -109,6 +109,10 @@ const CRMInboxMulticanal: React.FC = () => {
   const [syncMessage, setSyncMessage] = useState('');
   const [autoSyncActive, setAutoSyncActive] = useState(false);
   const [lastAutoSync, setLastAutoSync] = useState<string | null>(null);
+  const [importingHistory, setImportingHistory] = useState(false);
+  const [historyProgress, setHistoryProgress] = useState(0);
+  const [historyOffset, setHistoryOffset] = useState(0);
+  const [totalImported, setTotalImported] = useState(0);
 
   useEffect(() => {
     loadMessages();
@@ -376,6 +380,67 @@ const CRMInboxMulticanal: React.FC = () => {
     }
   };
 
+  const importHistory = async () => {
+    if (importingHistory) return;
+
+    setImportingHistory(true);
+    setHistoryProgress(0);
+    setTotalImported(0);
+    setHistoryOffset(0);
+
+    const importBatch = async (offset: number): Promise<void> => {
+      try {
+        const response = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/sync-email-history-batch`,
+          {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ offset }),
+          }
+        );
+
+        const result = await response.json();
+
+        if (result.success) {
+          setHistoryProgress(result.progress || 0);
+          setTotalImported((prev) => prev + (result.stats?.inserted || 0));
+          setHistoryOffset(result.next_offset || 0);
+
+          await loadMessages();
+          await loadStats();
+
+          if (!result.completed && result.stats?.has_more) {
+            await new Promise((resolve) => setTimeout(resolve, 2000));
+            await importBatch(result.next_offset || 0);
+          } else {
+            setSyncMessage(`✅ Import terminé ! ${totalImported + (result.stats?.inserted || 0)} emails importés`);
+            setSyncStatus('success');
+            setTimeout(() => {
+              setSyncStatus('idle');
+              setSyncMessage('');
+            }, 5000);
+          }
+        } else {
+          setSyncStatus('error');
+          setSyncMessage(`❌ Erreur lors de l'import : ${result.error}`);
+        }
+      } catch (error) {
+        console.error('Error importing history:', error);
+        setSyncStatus('error');
+        setSyncMessage(`❌ Erreur lors de l'import : ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
+      }
+    };
+
+    try {
+      await importBatch(0);
+    } finally {
+      setImportingHistory(false);
+    }
+  };
+
   const markAsRead = async (emailId: string) => {
     try {
       await supabase.from('email_messages').update({ is_read: true }).eq('id', emailId);
@@ -493,14 +558,24 @@ const CRMInboxMulticanal: React.FC = () => {
               </div>
             )}
           </div>
-          <button
-            onClick={syncEmails}
-            disabled={syncing}
-            className="flex items-center gap-2 px-6 py-3 bg-white text-blue-900 rounded-lg font-medium hover:bg-blue-50 transition-colors disabled:opacity-50"
-          >
-            <RefreshCw size={20} className={syncing ? 'animate-spin' : ''} />
-            {syncing ? 'Synchronisation...' : 'Synchroniser maintenant'}
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={importHistory}
+              disabled={importingHistory || syncing}
+              className="flex items-center gap-2 px-5 py-2.5 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+            >
+              <Archive size={18} className={importingHistory ? 'animate-pulse' : ''} />
+              {importingHistory ? `Import ${historyProgress}%` : 'Importer historique'}
+            </button>
+            <button
+              onClick={syncEmails}
+              disabled={syncing || importingHistory}
+              className="flex items-center gap-2 px-6 py-3 bg-white text-blue-900 rounded-lg font-medium hover:bg-blue-50 transition-colors disabled:opacity-50"
+            >
+              <RefreshCw size={20} className={syncing ? 'animate-spin' : ''} />
+              {syncing ? 'Synchronisation...' : 'Synchroniser maintenant'}
+            </button>
+          </div>
         </div>
 
         <div className="grid grid-cols-4 gap-4">
@@ -521,6 +596,20 @@ const CRMInboxMulticanal: React.FC = () => {
             <div className="text-blue-200 text-sm">Favoris</div>
           </div>
         </div>
+
+        {importingHistory && (
+          <div className="mt-4 p-3 bg-white/10 backdrop-blur-sm rounded-lg">
+            <div className="flex items-center gap-3 text-sm">
+              <Archive size={16} className="animate-pulse" />
+              <div className="flex-1">
+                <div className="font-medium">Import de l'historique en cours...</div>
+                <div className="text-blue-200 text-xs mt-1">
+                  {totalImported} emails importés • Progression: {historyProgress}%
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {syncMessage && (
           <div className={`mt-4 p-4 rounded-lg ${
