@@ -227,8 +227,8 @@ Deno.serve(async (req: Request) => {
     const emailSubject = `📄 Nouveau document : ${documentTypeName} - ${leadName}`;
 
     await sendEmailSMTP(
-      'master@taxiassur.com',
-      'Admin TaxiAssur',
+      'team@taxiassur.com',
+      'Équipe TaxiAssur',
       emailSubject,
       emailBody,
       'team@taxiassur.com',
