@@ -1,9 +1,11 @@
 import { Bell, Check, X, ExternalLink, RefreshCw } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useNotifications } from '../lib/realtime-notifications';
 import { supabase } from '../lib/supabase';
 
 export function NotificationCenter() {
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [debugInfo, setDebugInfo] = useState('Chargement...');
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
@@ -36,6 +38,14 @@ export function NotificationCenter() {
   const handleManualRefresh = async () => {
     console.log('[NotificationCenter] Manual refresh triggered');
     window.location.reload();
+  };
+
+  const handleNotificationClick = (notification: any) => {
+    if (notification.actionUrl) {
+      markAsRead(notification.id);
+      setIsOpen(false);
+      navigate(notification.actionUrl);
+    }
   };
 
   return (
@@ -112,13 +122,13 @@ export function NotificationCenter() {
                           {new Date(notification.timestamp).toLocaleString('fr-FR')}
                         </p>
                         {notification.actionUrl && (
-                          <a
-                            href={notification.actionUrl}
-                            className="mt-2 inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400"
+                          <button
+                            onClick={() => handleNotificationClick(notification)}
+                            className="mt-2 inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 hover:underline"
                           >
                             {notification.actionLabel || 'Voir plus'}
                             <ExternalLink className="h-3 w-3" />
-                          </a>
+                          </button>
                         )}
                       </div>
                       <div className="flex gap-1">
