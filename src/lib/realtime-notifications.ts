@@ -176,6 +176,7 @@ export function useNotifications() {
       const { data, error } = await supabase
         .from('crm_event_notifications')
         .select('*, lead:crm_leads(first_name, last_name, email)')
+        .eq('dismissed', false)
         .order('created_at', { ascending: false })
         .limit(50);
 
@@ -266,6 +267,22 @@ export function useNotifications() {
         .from('crm_event_notifications')
         .update({ is_read: true })
         .eq('is_read', false);
+
+      await loadNotifications();
+    },
+    dismissNotification: async (id: string) => {
+      await supabase
+        .from('crm_event_notifications')
+        .update({ dismissed: true })
+        .eq('id', id);
+
+      await loadNotifications();
+    },
+    dismissAll: async () => {
+      await supabase
+        .from('crm_event_notifications')
+        .update({ dismissed: true })
+        .eq('dismissed', false);
 
       await loadNotifications();
     },

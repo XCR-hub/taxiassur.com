@@ -8,7 +8,7 @@ export function NotificationCenter() {
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [debugInfo, setDebugInfo] = useState('Chargement...');
-  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
+  const { notifications, unreadCount, markAsRead, markAllAsRead, dismissNotification, dismissAll } = useNotifications();
 
   // Test de connexion au chargement
   useEffect(() => {
@@ -92,6 +92,15 @@ export function NotificationCenter() {
                       Tout marquer comme lu
                     </button>
                   )}
+                  {notifications.length > 0 && (
+                    <button
+                      onClick={dismissAll}
+                      className="text-sm text-red-600 hover:text-red-700 dark:text-red-400"
+                      title="Fermer toutes les notifications"
+                    >
+                      Tout fermer
+                    </button>
+                  )}
                 </div>
               </div>
               <p className="mt-1 text-xs text-gray-500">{debugInfo}</p>
@@ -137,10 +146,19 @@ export function NotificationCenter() {
                             onClick={() => markAsRead(notification.id)}
                             className="rounded p-1 hover:bg-gray-200 dark:hover:bg-gray-700"
                             aria-label="Marquer comme lu"
+                            title="Marquer comme lu"
                           >
                             <Check className="h-4 w-4 text-green-600" />
                           </button>
                         )}
+                        <button
+                          onClick={() => dismissNotification(notification.id)}
+                          className="rounded p-1 hover:bg-gray-200 dark:hover:bg-gray-700"
+                          aria-label="Fermer la notification"
+                          title="Fermer et masquer cette notification"
+                        >
+                          <X className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+                        </button>
                       </div>
                     </div>
                   </div>
