@@ -33,7 +33,8 @@ import {
   Zap,
   ChevronDown,
   Loader2,
-  Activity
+  Activity,
+  Inbox
 } from 'lucide-react';
 import { pipelineService, CRMLead, PIPELINE_STATUSES, PipelineStatus } from '@/lib/crm-pipeline';
 import { QuickAction } from '@/lib/commercial-workflow';
@@ -789,6 +790,23 @@ const CRMLeadDetail: React.FC = () => {
 
             {activeTab === 'documents' && (
               <>
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+                  <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+                    <Inbox className="w-5 h-5 text-blue-600" />
+                    Panier de Documents
+                  </h2>
+                  <p className="text-sm text-gray-600 mb-4">
+                    Glissez et classez les documents reçus par email ou autre canal.
+                  </p>
+                  <DocumentBasket
+                    caseId={lead.id}
+                    onDocumentClassified={() => {
+                      loadLeadData(lead.id);
+                      loadStats(lead.id);
+                    }}
+                  />
+                </div>
+
                 <PendingAttachmentsPanel
                   leadId={lead.id}
                   onAttachmentClassified={() => loadLeadData(lead.id)}
@@ -821,18 +839,6 @@ const CRMLeadDetail: React.FC = () => {
                   />
                 </div>
               </>
-            )}
-
-            {activeTab === 'basket' && (
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                <DocumentBasket
-                  caseId={lead.id}
-                  onDocumentClassified={() => {
-                    loadLeadData(lead.id);
-                    loadStats(lead.id);
-                  }}
-                />
-              </div>
             )}
 
             {activeTab === 'quotes' && (
