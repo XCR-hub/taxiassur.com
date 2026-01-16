@@ -8,6 +8,7 @@ import {
   ClipboardList, LayoutDashboard, Target, Activity, Bell
 } from 'lucide-react';
 import { getCurrentUser, hasPermission } from '../lib/auth';
+import { usePendingDocumentsCount } from '../hooks/usePendingDocumentsCount';
 
 interface NavLink {
   to: string;
@@ -28,6 +29,7 @@ interface NavSection {
 export default function NavigationMenu() {
   const currentUser = getCurrentUser();
   const isMaster = currentUser?.role === 'master';
+  const { count: pendingDocsCount } = usePendingDocumentsCount();
 
   const canViewCRM = isMaster || hasPermission('crm_leads', 'view');
   const canViewMarketplace = isMaster || hasPermission('marketplace', 'view');
@@ -100,7 +102,8 @@ export default function NavigationMenu() {
         { to: '/backoffice/insurance-companies', icon: Building2, label: 'Compagnies', highlight: true },
         { to: '/backoffice/insurance-companies-stats', icon: BarChart3, label: 'Stats Compagnies' },
         { to: '/backoffice/quotes', icon: Receipt, label: 'Gestion Devis' },
-        { to: '/backoffice/documents', icon: FileCheck, label: 'Documents' },
+        { to: '/backoffice/pending-documents', icon: FileCheck, label: 'Documents à Valider', highlight: pendingDocsCount > 0, badge: pendingDocsCount > 0 ? pendingDocsCount.toString() : undefined },
+        { to: '/backoffice/documents', icon: FileText, label: 'Tous Documents' },
       ],
     },
     {

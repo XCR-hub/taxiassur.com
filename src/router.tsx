@@ -142,6 +142,7 @@ const LLMCouncilDashboard = lazy(() => import('./backoffice/LLMCouncilDashboard'
 const QuoteQueueDashboard = lazy(() => import('./backoffice/QuoteQueueDashboard'));
 const ManualLeadCreation = lazy(() => import('./backoffice/ManualLeadCreation'));
 const DuplicateLeadsManager = lazy(() => import('./backoffice/DuplicateLeadsManager'));
+const PendingDocumentsManager = lazy(() => import('./backoffice/PendingDocumentsManager'));
 
 const LoadingFallback = () => (
   <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-black flex items-center justify-center">
@@ -525,6 +526,10 @@ export const router = createBrowserRouter([
       {
         path: '/backoffice/documents',
         element: <AuthGuard><SuspenseWrapper><DocumentsViewer /></SuspenseWrapper></AuthGuard>
+      },
+      {
+        path: '/backoffice/pending-documents',
+        element: <AuthGuard><SuspenseWrapper><PendingDocumentsManager /></SuspenseWrapper></AuthGuard>
       },
       {
         path: '/backoffice/quick-documents-upload',
