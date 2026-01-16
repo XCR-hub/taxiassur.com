@@ -113,19 +113,34 @@ Deno.serve(async (req: Request) => {
 
   try {
     const payload = await req.json();
-    const document = payload.record;
+    console.log("[send-document-notification] Received payload:", JSON.stringify(payload));
+
+    // Support both formats: direct payload or nested in "record"
+    const notification = payload.record || payload;
+    const leadId = notification.lead_id || payload.lead_id;
+    const contextData = notification.context_data || {};
+
+    if (!leadId) {
+      throw new Error("lead_id is required");
+    }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const { data: lead } = await supabase
-      .from('leads')
-      .select('name, email, phone, city')
-      .eq('id', document.lead_id)
+    // Get lead info from crm_leads
+    const { data: lead, error: leadError } = await supabase
+      .from('crm_leads')
+      .select('first_name, last_name, email, phone, city')
+      .eq('id', leadId)
       .single();
 
-    if (!lead) throw new Error("Lead not found");
+    if (leadError || !lead) {
+      console.error("[send-document-notification] Lead not found:", leadError);
+      throw new Error("Lead not found: " + leadError?.message);
+    }
+
+    const leadName = `${lead.first_name || ''} ${lead.last_name || ''}`.trim() || lead.email;
 
     const documentTypes: Record<string, string> = {
       licence_taxi: "Licence de taxi professionnelle",
@@ -137,7 +152,9 @@ Deno.serve(async (req: Request) => {
       rib: "RIB - Relevé d'Identité Bancaire",
     };
 
-    const documentTypeName = documentTypes[document.document_type] || document.document_type;
+    const documentType = contextData.document_type || 'piece_identite';
+    const fileName = contextData.file_name || 'Document.pdf';
+    const documentTypeName = documentTypes[documentType] || documentType;
 
     let emailBody = `
       <!DOCTYPE html>
@@ -175,12 +192,11 @@ Deno.serve(async (req: Request) => {
             </div>
             
             <div class="info-box">
-              <p><strong>Prospect :</strong> ${lead.name}</p>
+              <p><strong>Prospect :</strong> ${leadName}</p>
               <p><strong>Email :</strong> ${lead.email}</p>
-              <p><strong>Téléphone :</strong> ${lead.phone}</p>
-              <p><strong>Ville :</strong> ${lead.city}</p>
-              <p><strong>Nom du fichier :</strong> ${document.file_name}</p>
-              <p><strong>Taille :</strong> ${(document.file_size / 1024).toFixed(2)} KB</p>
+              <p><strong>Téléphone :</strong> ${lead.phone || 'Non renseigné'}</p>
+              <p><strong>Ville :</strong> ${lead.city || 'Non renseignée'}</p>
+              <p><strong>Nom du fichier :</strong> ${fileName}</p>
             </div>
             
             <h3 style="color: #1f2937;">📊 Prochaines actions</h3>
@@ -207,37 +223,19 @@ Deno.serve(async (req: Request) => {
       </html>
     `;
 
-    // Créer le tracking
-    const { data: emailRecord } = await supabase
-      .from('email_sends')
-      .insert({
-        lead_id: document.lead_id,
-        email_to: 'team@taxiassur.com',
-        email_from: 'team@taxiassur.com',
-        subject: `📄 Nouveau document : ${documentTypeName} - ${lead.name}`,
-        body_html: emailBody,
-        status: 'sent'
-      })
-      .select('tracking_id')
-      .single();
-
-    const trackingId = emailRecord?.tracking_id;
-
-    if (trackingId) {
-      emailBody = addLinkTracking(emailBody, trackingId, supabaseUrl);
-      emailBody = addTrackingPixel(emailBody, trackingId, supabaseUrl);
-    }
+    // Send email via SMTP
+    const emailSubject = `📄 Nouveau document : ${documentTypeName} - ${leadName}`;
 
     await sendEmailSMTP(
-      'team@taxiassur.com',
-      'Équipe TaxiAssur',
-      `📄 Nouveau document : ${documentTypeName} - ${lead.name}`,
+      'master@taxiassur.com',
+      'Admin TaxiAssur',
+      emailSubject,
       emailBody,
       'team@taxiassur.com',
       'TaxiAssur Notifications'
     );
 
-    console.log(`✅ Email notification document envoyé pour ${lead.name}`);
+    console.log(`✅ Email notification document envoyé pour ${leadName}`);
 
     return new Response(
       JSON.stringify({
