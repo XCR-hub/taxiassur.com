@@ -433,7 +433,7 @@ export function DocumentChecklistPanelV2({
 
                   {doc && (
                     <a
-                      href={`${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/prospect-documents/${doc.file_path}`}
+                      href={supabase.storage.from('prospect-documents').getPublicUrl(doc.file_path).data.publicUrl}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="p-1.5 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 rounded-lg transition-colors"
