@@ -54,7 +54,8 @@ import {
   DownPaymentManager,
   DynamicCommercialWorkflow,
   LeadDeleteSecure,
-  DocumentBasket
+  DocumentBasket,
+  CommunicationTimeline
 } from '@/components/crm';
 import type { WorkflowTab } from '@/components/crm';
 
@@ -1078,6 +1079,12 @@ const CRMLeadDetail: React.FC = () => {
               onSuggestedAction={handleSuggestedAction}
               pendingAutomations={pendingAISuggestions}
               scheduledFollowUps={scheduledFollowUps}
+            />
+
+            <CommunicationTimeline
+              leadId={lead.id}
+              leadEmail={lead.email}
+              leadPhone={lead.phone}
             />
 
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">

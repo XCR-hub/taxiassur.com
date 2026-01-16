@@ -24,3 +24,4 @@ export { CommercialFollowupPanel } from './CommercialFollowupPanel';
 export { DynamicCommercialWorkflow } from './DynamicCommercialWorkflow';
 export { LeadDeleteSecure } from './LeadDeleteSecure';
 export { default as DocumentBasket } from './DocumentBasket';
+export { CommunicationTimeline } from './CommunicationTimeline';
