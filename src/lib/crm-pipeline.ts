@@ -161,6 +161,7 @@ export const pipelineService = {
     let query = supabase
       .from('crm_leads')
       .select('*')
+      .is('deleted_at', null)
       .order('updated_at', { ascending: false });
 
     if (filters?.status) {
@@ -193,6 +194,7 @@ export const pipelineService = {
       .from('crm_leads')
       .select('*')
       .eq('id', id)
+      .is('deleted_at', null)
       .single();
 
     if (error) throw error;
@@ -224,6 +226,7 @@ export const pipelineService = {
       .from('crm_leads')
       .update(updateData)
       .eq('id', leadId)
+      .is('deleted_at', null)
       .select()
       .single();
 
@@ -402,6 +405,7 @@ export const pipelineService = {
       .from('crm_leads')
       .update({ assigned_to: userId })
       .eq('id', leadId)
+      .is('deleted_at', null)
       .select()
       .single();
 
