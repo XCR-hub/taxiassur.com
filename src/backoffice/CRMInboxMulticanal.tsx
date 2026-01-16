@@ -16,6 +16,8 @@ import {
   Archive,
   AlertCircle,
   Settings,
+  UserPlus,
+  History,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
@@ -438,6 +440,119 @@ const CRMInboxMulticanal: React.FC = () => {
       await importBatch(0);
     } finally {
       setImportingHistory(false);
+    }
+  };
+
+  const linkEmailHistoryToLead = async (leadId: string, senderEmail: string) => {
+    const { data: allSenderEmails, error: emailsError } = await supabase
+      .from('email_messages')
+      .select('*')
+      .eq('from_email', senderEmail)
+      .order('received_at', { ascending: true });
+
+    if (emailsError) throw emailsError;
+
+    let linkedCount = 0;
+    let interactionsCreated = 0;
+
+    if (allSenderEmails && allSenderEmails.length > 0) {
+      const emailUpdates = allSenderEmails.map((e) =>
+        supabase.from('email_messages').update({ lead_id: leadId }).eq('id', e.id)
+      );
+      await Promise.all(emailUpdates);
+      linkedCount = allSenderEmails.length;
+
+      const interactions = allSenderEmails.map((e) => ({
+        lead_id: leadId,
+        type: 'email' as const,
+        direction: e.direction as 'inbound' | 'outbound',
+        subject: e.subject,
+        content: e.body_text?.substring(0, 5000) || '',
+        created_at: e.received_at,
+        metadata: {
+          email_id: e.id,
+          from: e.from_email,
+          to: e.to_emails,
+        },
+      }));
+
+      const { data: existingInteractions } = await supabase
+        .from('crm_interactions')
+        .select('metadata')
+        .eq('lead_id', leadId);
+
+      const existingEmailIds = new Set(
+        existingInteractions?.map((i: any) => i.metadata?.email_id).filter(Boolean) || []
+      );
+
+      const newInteractions = interactions.filter(
+        (i) => !existingEmailIds.has(i.metadata.email_id)
+      );
+
+      if (newInteractions.length > 0) {
+        const { error: interactionsError } = await supabase
+          .from('crm_interactions')
+          .insert(newInteractions);
+
+        if (!interactionsError) {
+          interactionsCreated = newInteractions.length;
+        }
+      }
+    }
+
+    return { linkedCount, interactionsCreated };
+  };
+
+  const createLeadFromEmail = async (email: EmailMessage) => {
+    if (!extractedInfo) return;
+
+    try {
+      const nameParts = (extractedInfo.name || email.from_name || '').split(' ');
+      const firstName = nameParts[0] || '';
+      const lastName = nameParts.slice(1).join(' ') || '';
+
+      const { data: newLead, error: leadError } = await supabase
+        .from('crm_leads')
+        .insert({
+          first_name: firstName,
+          last_name: lastName,
+          email: extractedInfo.email || email.from_email,
+          phone: extractedInfo.phone || null,
+          status: 'new',
+          source: 'email',
+          notes: `Lead créé depuis l'email: ${email.subject}\n\nContenu:\n${email.body_text?.substring(0, 500)}`,
+        })
+        .select()
+        .single();
+
+      if (leadError) throw leadError;
+
+      const { linkedCount, interactionsCreated } = await linkEmailHistoryToLead(
+        newLead.id,
+        email.from_email
+      );
+
+      setFoundLeadId(newLead.id);
+      await loadMessages();
+      await loadStats();
+
+      setSyncMessage(
+        `✅ Lead créé avec succès !\n\n` +
+        `👤 ${firstName} ${lastName}\n` +
+        `📧 ${linkedCount} email(s) lié(s) automatiquement\n` +
+        `💬 ${interactionsCreated} interaction(s) créée(s)\n\n` +
+        `Tout l'historique de cette conversation est maintenant dans le CRM !`
+      );
+      setSyncStatus('success');
+
+      setTimeout(() => {
+        setSyncStatus('idle');
+        setSyncMessage('');
+      }, 8000);
+    } catch (error) {
+      console.error('Error creating lead from email:', error);
+      setSyncMessage(`❌ Erreur lors de la création du lead : ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
+      setSyncStatus('error');
     }
   };
 
@@ -925,21 +1040,55 @@ const CRMInboxMulticanal: React.FC = () => {
 
                 <div className="flex items-center gap-2">
                   {foundLeadId && (
-                    <a
-                      href={`/backoffice/crm-killer/lead/${foundLeadId}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                    >
-                      <ExternalLink size={16} />
-                      Voir le lead
-                    </a>
+                    <>
+                      <a
+                        href={`/backoffice/crm-killer/lead/${foundLeadId}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                      >
+                        <ExternalLink size={16} />
+                        Voir le lead
+                      </a>
+                      <button
+                        onClick={async () => {
+                          try {
+                            const { linkedCount, interactionsCreated } =
+                              await linkEmailHistoryToLead(foundLeadId, selectedMessage.from_email);
+                            setSyncMessage(
+                              `✅ Historique synchronisé !\n\n` +
+                              `📧 ${linkedCount} email(s) lié(s)\n` +
+                              `💬 ${interactionsCreated} nouvelle(s) interaction(s)`
+                            );
+                            setSyncStatus('success');
+                            await loadMessages();
+                            await loadStats();
+                            setTimeout(() => {
+                              setSyncStatus('idle');
+                              setSyncMessage('');
+                            }, 5000);
+                          } catch (error) {
+                            console.error('Error linking history:', error);
+                            setSyncMessage('❌ Erreur lors de la synchronisation de l\'historique');
+                            setSyncStatus('error');
+                          }
+                        }}
+                        className="flex items-center gap-2 px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm"
+                        title="Re-lier tout l'historique des emails de cet expéditeur"
+                      >
+                        <History size={16} />
+                        Sync historique
+                      </button>
+                    </>
                   )}
                   {!foundLeadId && extractedInfo && (
-                    <div className="flex items-center gap-2 px-4 py-2 bg-yellow-100 text-yellow-800 rounded-lg text-sm">
-                      <AlertCircle size={16} />
-                      Lead non trouve ({extractedInfo.email || extractedInfo.phone || extractedInfo.name})
-                    </div>
+                    <button
+                      onClick={() => createLeadFromEmail(selectedMessage)}
+                      className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+                    >
+                      <UserPlus size={16} />
+                      Créer le lead + lier l'historique
+                    </button>
                   )}
                   <button
                     onClick={() =>
