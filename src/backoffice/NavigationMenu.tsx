@@ -64,7 +64,6 @@ export default function NavigationMenu() {
         { to: '/backoffice/quote-queue', icon: ClipboardList, label: 'File Devis', highlight: true },
         { to: '/backoffice/crm-killer/pipeline', icon: BarChart3, label: 'Pipeline Kanban' },
         { to: '/backoffice/crm-killer/inbox', icon: Inbox, label: 'Inbox' },
-        { to: '/backoffice/crm-killer/production', icon: FileCheck, label: 'Production' },
         { to: '/backoffice/crm-killer/retention', icon: Shield, label: 'Retention' },
         { to: '/backoffice/crm-killer/ia', icon: Brain, label: 'IA CRM' },
         { to: '/backoffice/crm-killer/templates', icon: FileText, label: 'Templates' },
