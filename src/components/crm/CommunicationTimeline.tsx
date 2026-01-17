@@ -46,12 +46,20 @@ interface CommunicationTimelineProps {
   leadId: string;
   leadEmail?: string;
   leadPhone?: string;
+  onReply?: (emailId: string, subject: string, originalContent: string) => void;
+  onNewEmail?: () => void;
+  onNewSMS?: () => void;
+  onNewWhatsApp?: () => void;
 }
 
 export const CommunicationTimeline: React.FC<CommunicationTimelineProps> = ({
   leadId,
   leadEmail,
-  leadPhone
+  leadPhone,
+  onReply,
+  onNewEmail,
+  onNewSMS,
+  onNewWhatsApp
 }) => {
   const [events, setEvents] = useState<TimelineEvent[]>([]);
   const [loading, setLoading] = useState(true);
@@ -248,13 +256,47 @@ export const CommunicationTimeline: React.FC<CommunicationTimelineProps> = ({
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200">
       <div className="p-4 border-b border-gray-200">
-        <h3 className="font-bold text-gray-900 flex items-center gap-2">
-          <Clock className="w-5 h-5 text-blue-600" />
-          Timeline des échanges
-        </h3>
-        <p className="text-xs text-gray-500 mt-1">{events.length} interactions</p>
+        <div className="flex items-start justify-between mb-3">
+          <div>
+            <h3 className="font-bold text-gray-900 flex items-center gap-2">
+              <Clock className="w-5 h-5 text-blue-600" />
+              Timeline des échanges
+            </h3>
+            <p className="text-xs text-gray-500 mt-1">{events.length} interactions</p>
+          </div>
 
-        <div className="flex gap-2 mt-3 overflow-x-auto">
+          <div className="flex gap-2">
+            {onNewEmail && (
+              <button
+                onClick={onNewEmail}
+                className="flex items-center gap-1 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-lg transition-colors"
+              >
+                <Mail className="w-3 h-3" />
+                <span>Nouvel email</span>
+              </button>
+            )}
+            {onNewSMS && leadPhone && (
+              <button
+                onClick={onNewSMS}
+                className="flex items-center gap-1 px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white text-xs font-medium rounded-lg transition-colors"
+              >
+                <MessageSquare className="w-3 h-3" />
+                <span>SMS</span>
+              </button>
+            )}
+            {onNewWhatsApp && leadPhone && (
+              <button
+                onClick={onNewWhatsApp}
+                className="flex items-center gap-1 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium rounded-lg transition-colors"
+              >
+                <MessageSquare className="w-3 h-3" />
+                <span>WhatsApp</span>
+              </button>
+            )}
+          </div>
+        </div>
+
+        <div className="flex gap-2 overflow-x-auto">
           {['all', 'email', 'sms', 'whatsapp', 'call'].map((type) => (
             <button
               key={type}
@@ -417,6 +459,18 @@ export const CommunicationTimeline: React.FC<CommunicationTimelineProps> = ({
                               }`}>
                                 {event.status}
                               </span>
+                            </div>
+                          )}
+
+                          {event.type === 'email' && event.direction === 'inbound' && onReply && (
+                            <div className="pt-3 border-t border-gray-200">
+                              <button
+                                onClick={() => onReply(event.id, `Re: ${event.subject}`, event.content)}
+                                className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
+                              >
+                                <Send className="w-4 h-4" />
+                                Répondre
+                              </button>
                             </div>
                           )}
                         </div>

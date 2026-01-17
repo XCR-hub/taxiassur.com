@@ -1085,6 +1085,18 @@ const CRMLeadDetail: React.FC = () => {
               leadId={lead.id}
               leadEmail={lead.email}
               leadPhone={lead.phone}
+              onReply={(emailId, subject, originalContent) => {
+                setEmailDefaultSubject(subject);
+                setEmailDefaultBody(`\n\n---\n${originalContent.substring(0, 500)}`);
+                setEmailModalOpen(true);
+              }}
+              onNewEmail={() => {
+                setEmailDefaultSubject('');
+                setEmailDefaultBody('');
+                setEmailModalOpen(true);
+              }}
+              onNewSMS={() => setShowSMSModal(true)}
+              onNewWhatsApp={() => setShowWhatsAppModal(true)}
             />
 
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
