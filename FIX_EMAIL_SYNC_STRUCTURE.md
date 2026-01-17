@@ -329,6 +329,109 @@ Si un email n'est pas lié automatiquement :
 
 ---
 
+---
+
+## 🚀 Version 2.1 - Synchronisation Automatique Complète
+
+### Nouvelles fonctionnalités
+
+#### 1. Synchronisation automatique toutes les 5 minutes
+
+Plus besoin de cliquer sur "Synchroniser" ! Un cron job s'exécute automatiquement :
+- **Fréquence** : Toutes les 5 minutes
+- **Actions** :
+  1. Récupération des nouveaux emails IMAP
+  2. Liaison automatique aux leads existants
+  3. Création automatique des interactions
+  4. Extraction automatique des documents
+
+#### 2. Interface améliorée avec distinction visuelle
+
+Les emails sont maintenant **facilement identifiables** :
+
+**Emails liés à un lead** :
+- ✅ Bordure normale (bleue si non lu, grise si lu)
+- Badge "Lead" affiché
+- Tout est en ordre
+
+**Emails NON liés** (sans lead) :
+- ⚠️ **Bordure orange en pointillés**
+- **Fond orange clair**
+- **Alerte visible** : "Email non lié à un lead"
+- **Bouton "Créer le lead"** directement accessible
+
+#### 3. Indicateur de synchronisation automatique
+
+En haut de l'Inbox Multicanal :
+- Badge vert avec animation : "Synchronisation automatique : toutes les 5 minutes"
+- Affiche l'heure de la dernière vérification
+
+#### 4. Actions rapides pour les commerciaux
+
+Pour chaque email non lié, un bouton **"Créer le lead"** permet de :
+- Ouvrir le panneau de détails de l'email
+- Créer le lead en un clic
+- Lier automatiquement tout l'historique
+
+---
+
+## 📊 Tableau récapitulatif des améliorations
+
+| Avant | Après |
+|-------|-------|
+| Synchronisation manuelle uniquement | ✅ Automatique toutes les 5 minutes |
+| Bouton "Importer historique" confus | ✅ Supprimé (automatique) |
+| Emails tous identiques visuellement | ✅ Distinction claire liés/non liés |
+| Difficile de repérer les emails non traités | ✅ Cadre orange + alerte |
+| Pas d'action rapide | ✅ Bouton "Créer le lead" direct |
+| Bouton "Lier emails → leads" manuel | ✅ Supprimé (automatique) |
+
+---
+
+## 🎯 Bénéfices pour les commerciaux
+
+1. **Gain de temps** : Plus besoin de cliquer sur synchroniser
+2. **Visibilité immédiate** : Les emails non traités sautent aux yeux (orange)
+3. **Action rapide** : Bouton "Créer le lead" directement dans la liste
+4. **Historique complet** : Tous les emails passés sont automatiquement liés
+5. **Documents automatiques** : Les pièces jointes sont extraites sans intervention
+
+---
+
+## 🔧 Détails techniques v2.1
+
+### Nouveau cron job
+
+**Nom** : `auto-sync-emails-complete`
+**Fonction** : `auto_sync_emails_complete()`
+**Fréquence** : `*/5 * * * *` (toutes les 5 minutes)
+
+**Actions** :
+```sql
+1. Appelle sync-all-emails-complete (récupère les emails IMAP)
+2. Appelle link_unassigned_emails_to_leads (lie les emails aux leads)
+3. Les triggers créent automatiquement les interactions et documents
+4. Log des résultats dans les logs Supabase
+```
+
+### Fonction de statut
+
+**Nom** : `get_auto_sync_status()`
+**Retour** :
+```json
+{
+  "active": true,
+  "schedule": "*/5 * * * *",
+  "interval_minutes": 5,
+  "description": "Synchronisation automatique...",
+  "unlinked_emails": 3,
+  "total_emails": 42,
+  "last_check": "2026-01-16T23:45:00Z"
+}
+```
+
+---
+
 **Date** : 16 janvier 2026
-**Version** : 2.0
-**Statut** : ✅ Opérationnel
+**Version** : 2.1
+**Statut** : ✅ Opérationnel et Autonome

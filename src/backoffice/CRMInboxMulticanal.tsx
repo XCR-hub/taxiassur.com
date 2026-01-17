@@ -15,9 +15,11 @@ import {
   Send,
   Archive,
   AlertCircle,
+  AlertTriangle,
   Settings,
   UserPlus,
   History,
+  Clock,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
@@ -111,7 +113,6 @@ const CRMInboxMulticanal: React.FC = () => {
   const [syncMessage, setSyncMessage] = useState('');
   const [autoSyncActive, setAutoSyncActive] = useState(false);
   const [lastAutoSync, setLastAutoSync] = useState<string | null>(null);
-  const [importingHistory, setImportingHistory] = useState(false);
 
   useEffect(() => {
     loadMessages();
@@ -226,11 +227,17 @@ const CRMInboxMulticanal: React.FC = () => {
 
   const checkAutoSyncStatus = async () => {
     try {
-      const { data, error } = await supabase.rpc('get_email_sync_cron_status');
-      if (data && data.length > 0) {
-        const status = data[0];
-        setAutoSyncActive(status.active);
-        setLastAutoSync(status.last_run);
+      const { data, error } = await supabase.rpc('get_auto_sync_status');
+      if (error) throw error;
+
+      if (data) {
+        setAutoSyncActive(data.active || false);
+        setLastAutoSync(data.last_check || null);
+
+        const unlinkedCount = data.unlinked_emails || 0;
+        if (unlinkedCount > 0) {
+          console.log(`⚠️ ${unlinkedCount} email(s) non lié(s) à un lead`);
+        }
       }
     } catch (error) {
       console.error('Failed to check auto-sync status:', error);
@@ -379,43 +386,6 @@ const CRMInboxMulticanal: React.FC = () => {
     }
   };
 
-  const linkEmailsToLeads = async () => {
-    if (importingHistory) return;
-
-    try {
-      setImportingHistory(true);
-      setSyncStatus('syncing');
-      setSyncMessage('🔗 Liaison des emails aux leads existants...');
-
-      const { data, error } = await supabase.rpc('link_unassigned_emails_to_leads');
-
-      if (error) throw error;
-
-      if (data.success) {
-        setSyncStatus('success');
-        setSyncMessage(data.message);
-        await loadMessages();
-        await loadStats();
-
-        setTimeout(() => {
-          setSyncStatus('idle');
-          setSyncMessage('');
-        }, 6000);
-      } else {
-        throw new Error(data.message || 'Erreur inconnue');
-      }
-    } catch (error) {
-      console.error('Error linking emails to leads:', error);
-      setSyncStatus('error');
-      setSyncMessage(`❌ Erreur : ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
-      setTimeout(() => {
-        setSyncStatus('idle');
-        setSyncMessage('');
-      }, 5000);
-    } finally {
-      setImportingHistory(false);
-    }
-  };
 
   const linkEmailHistoryToLead = async (leadId: string, senderEmail: string) => {
     const { data: allSenderEmails, error: emailsError } = await supabase
@@ -636,12 +606,13 @@ const CRMInboxMulticanal: React.FC = () => {
             <h1 className="text-4xl font-bold">Inbox Multicanal</h1>
             <p className="text-blue-200 mt-1">Tous vos emails en un seul endroit</p>
             {autoSyncActive && (
-              <div className="flex items-center gap-2 mt-2 text-sm text-green-200">
-                <CheckCircle size={16} />
-                <span>Synchronisation automatique active (toutes les minutes)</span>
+              <div className="flex items-center gap-2 mt-2 text-sm text-green-300 bg-green-900/30 px-3 py-1.5 rounded-lg inline-flex">
+                <CheckCircle size={16} className="animate-pulse" />
+                <span className="font-medium">Synchronisation automatique : toutes les 5 minutes</span>
                 {lastAutoSync && (
-                  <span className="text-blue-200">
-                    • Dernière sync: {new Date(lastAutoSync).toLocaleTimeString('fr-FR')}
+                  <span className="text-blue-200 ml-2 flex items-center gap-1">
+                    <Clock size={14} />
+                    {new Date(lastAutoSync).toLocaleTimeString('fr-FR')}
                   </span>
                 )}
               </div>
@@ -649,17 +620,8 @@ const CRMInboxMulticanal: React.FC = () => {
           </div>
           <div className="flex items-center gap-3">
             <button
-              onClick={linkEmailsToLeads}
-              disabled={importingHistory || syncing}
-              className="flex items-center gap-2 px-5 py-2.5 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
-              title="Lie automatiquement les emails aux leads existants et crée les interactions"
-            >
-              <Archive size={18} className={importingHistory ? 'animate-pulse' : ''} />
-              {importingHistory ? 'Liaison en cours...' : 'Lier emails → leads'}
-            </button>
-            <button
               onClick={syncEmails}
-              disabled={syncing || importingHistory}
+              disabled={syncing}
               className="flex items-center gap-2 px-6 py-3 bg-white text-blue-900 rounded-lg font-medium hover:bg-blue-50 transition-colors disabled:opacity-50"
             >
               <RefreshCw size={20} className={syncing ? 'animate-spin' : ''} />
@@ -875,17 +837,21 @@ const CRMInboxMulticanal: React.FC = () => {
             </div>
           ) : (
             <div className="space-y-2">
-              {messages.map((email) => (
+              {messages.map((email) => {
+                const isUnlinked = !email.lead_id && email.direction === 'inbound';
+                return (
                 <div
                   key={email.id}
                   onClick={() => {
                     setSelectedMessage(email);
                     if (!email.is_read) markAsRead(email.id);
                   }}
-                  className={`p-4 rounded-lg border-2 cursor-pointer transition-all hover:border-blue-300 ${
-                    !email.is_read
-                      ? 'bg-blue-50 border-blue-200'
-                      : 'bg-white border-gray-200 hover:bg-gray-50'
+                  className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                    isUnlinked
+                      ? 'bg-orange-50 border-orange-400 border-dashed hover:border-orange-500'
+                      : !email.is_read
+                      ? 'bg-blue-50 border-blue-200 hover:border-blue-300'
+                      : 'bg-white border-gray-200 hover:border-blue-300 hover:bg-gray-50'
                   }`}
                 >
                   <div className="flex items-start gap-4">
@@ -979,8 +945,30 @@ const CRMInboxMulticanal: React.FC = () => {
                       </button>
                     )}
                   </div>
+
+                  {/* Alerte pour les emails non liés */}
+                  {isUnlinked && (
+                    <div className="mt-3 pt-3 border-t border-orange-300">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2 text-orange-700 text-sm font-medium">
+                          <AlertTriangle size={16} />
+                          Email non lié à un lead
+                        </div>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedMessage(email);
+                          }}
+                          className="px-3 py-1.5 bg-orange-600 text-white text-sm rounded-lg hover:bg-orange-700 transition-colors font-medium"
+                        >
+                          Créer le lead
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
-              ))}
+              );
+              })}
             </div>
           )}
         </div>
