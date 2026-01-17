@@ -248,9 +248,10 @@ const CRMLeadDetail: React.FC = () => {
         emailsResult.data.forEach((email: any) => {
           // Nettoyer l'encodage UTF-8 corrompu
           let bodyText = email.body_text || email.body_html || '';
+          let cleanSubject = email.subject || '';
 
           // Premier niveau: corrections UTF-8 standards
-          bodyText = bodyText
+          const cleanUTF8 = (text: string) => text
             .replace(/Ã©/g, 'é')
             .replace(/Ã /g, 'à')
             .replace(/Ã¨/g, 'è')
@@ -263,12 +264,10 @@ const CRMLeadDetail: React.FC = () => {
             .replace(/Ã¹/g, 'ù')
             .replace(/Ã»/g, 'û')
             .replace(/Ã/g, 'À')
-            .replace(/Ã/g, 'É')
-            .replace(/Ã/g, 'È')
-            .replace(/Ã/g, 'Ê');
-
-          // Deuxième niveau: corrections de patterns spécifiques
-          bodyText = bodyText
+            .replace(/Ã‰/g, 'É')
+            .replace(/Ãˆ/g, 'È')
+            .replace(/ÃŠ/g, 'Ê')
+            // Corrections de patterns spécifiques
             .replace(/Jâai/gi, 'J\'ai')
             .replace(/jâai/gi, 'j\'ai')
             .replace(/câest/gi, 'c\'est')
@@ -279,13 +278,14 @@ const CRMLeadDetail: React.FC = () => {
             .replace(/dÃ©clinÃ©/g, 'décliné')
             .replace(/antÃ©cÃ©dents/g, 'antécédents')
             .replace(/demandÃ©s/g, 'demandés')
-            .replace(/dÃ©jÃ /g, 'déjà');
-
-          // Troisième niveau: corrections de caractères complexes
-          bodyText = bodyText
-            .replace(/[鲃饪翊]/g, '\'')  // Ces caractères chinois remplacent souvent les apostrophes
+            .replace(/dÃ©jÃ /g, 'déjà')
+            .replace(/[鲃饪翊]/g, '\'')
             .replace(/倁/g, 'ai')
-            .replace(/䰀/g, 'é');
+            .replace(/䰀/g, 'é')
+            .replace(/â/g, ' ');
+
+          bodyText = cleanUTF8(bodyText);
+          cleanSubject = cleanUTF8(cleanSubject);
 
           const preview = bodyText.length > 200 ? bodyText.substring(0, 200) + '...' : bodyText;
           allMessages.push({
@@ -293,7 +293,7 @@ const CRMLeadDetail: React.FC = () => {
             type: 'email',
             content: preview,
             fullContent: bodyText,
-            subject: email.subject,
+            subject: cleanSubject,
             sent_at: email.received_at || email.sent_at || email.created_at,
             status: email.status === 'sent' ? 'sent' : email.is_read ? 'read' : 'delivered',
             sent_by: email.direction === 'inbound' ? email.from_name || email.from_email : 'TaxiAssur',

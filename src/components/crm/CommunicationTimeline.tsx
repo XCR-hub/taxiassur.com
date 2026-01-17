@@ -88,7 +88,6 @@ export const CommunicationTimeline: React.FC<CommunicationTimelineProps> = ({
           from_name,
           to_emails,
           received_at,
-          sent_at,
           direction,
           status,
           created_at
@@ -161,7 +160,7 @@ export const CommunicationTimeline: React.FC<CommunicationTimelineProps> = ({
             id: email.id,
             type: 'email',
             direction: email.direction,
-            timestamp: email.received_at || email.sent_at || email.created_at,
+            timestamp: email.received_at || email.created_at,
             subject: email.subject,
             content: cleanContent,
             from: email.direction === 'inbound' ? `${email.from_name || ''} <${email.from_email}>` : 'TaxiAssur <team@taxiassur.com>',
