@@ -75,7 +75,9 @@ export const CommunicationTimeline: React.FC<CommunicationTimelineProps> = ({
     try {
       const allEvents: TimelineEvent[] = [];
 
-      const { data: emails } = await supabase
+      console.log('[CommunicationTimeline] Loading timeline for lead:', leadId);
+
+      const { data: emails, error: emailError } = await supabase
         .from('email_messages')
         .select(`
           id,
@@ -95,6 +97,8 @@ export const CommunicationTimeline: React.FC<CommunicationTimelineProps> = ({
         .order('created_at', { ascending: false })
         .limit(50);
 
+      console.log('[CommunicationTimeline] Emails query result:', { emails, emailError, count: emails?.length || 0 });
+
       if (emails) {
         for (const email of emails) {
           const { data: attachments } = await supabase
@@ -104,11 +108,14 @@ export const CommunicationTimeline: React.FC<CommunicationTimelineProps> = ({
 
           // Nettoyer le contenu des emails avec encodage UTF-8 corrompu
           let cleanContent = email.body_text || email.body_html || '';
+
+          // Premier niveau: corrections UTF-8 standards
           cleanContent = cleanContent
             .replace(/Ã©/g, 'é')
             .replace(/Ã /g, 'à')
             .replace(/Ã¨/g, 'è')
             .replace(/Ãª/g, 'ê')
+            .replace(/Ã®/g, 'î')
             .replace(/Ã¯/g, 'ï')
             .replace(/Ã´/g, 'ô')
             .replace(/Ã¢/g, 'â')
@@ -117,7 +124,28 @@ export const CommunicationTimeline: React.FC<CommunicationTimelineProps> = ({
             .replace(/Ã»/g, 'û')
             .replace(/Ã/g, 'À')
             .replace(/Ã/g, 'É')
-            .replace(/Ã/g, 'È');
+            .replace(/Ã/g, 'È')
+            .replace(/Ã/g, 'Ê');
+
+          // Deuxième niveau: corrections de patterns spécifiques
+          cleanContent = cleanContent
+            .replace(/Jâai/gi, 'J\'ai')
+            .replace(/jâai/gi, 'j\'ai')
+            .replace(/câest/gi, 'c\'est')
+            .replace(/lâ/gi, 'l\'')
+            .replace(/dâ/gi, 'd\'')
+            .replace(/jâattends/gi, 'j\'attends')
+            .replace(/auprÃ¨s/g, 'auprès')
+            .replace(/dÃ©clinÃ©/g, 'décliné')
+            .replace(/antÃ©cÃ©dents/g, 'antécédents')
+            .replace(/demandÃ©s/g, 'demandés')
+            .replace(/dÃ©jÃ /g, 'déjà');
+
+          // Troisième niveau: corrections de caractères complexes
+          cleanContent = cleanContent
+            .replace(/[鲃饪翊]/g, '\'')  // Ces caractères chinois remplacent souvent les apostrophes
+            .replace(/倁/g, 'ai')
+            .replace(/䰀/g, 'é');
 
           // Mapper les attachments au format attendu
           const mappedAttachments = (attachments || []).map(att => ({
@@ -168,9 +196,13 @@ export const CommunicationTimeline: React.FC<CommunicationTimelineProps> = ({
 
       allEvents.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 
+      console.log('[CommunicationTimeline] Total events loaded:', allEvents.length);
+
       const filtered = filter === 'all'
         ? allEvents
         : allEvents.filter(e => e.type === filter);
+
+      console.log('[CommunicationTimeline] Filtered events:', { filter, count: filtered.length });
 
       setEvents(filtered);
     } catch (error) {

@@ -247,12 +247,15 @@ const CRMLeadDetail: React.FC = () => {
       if (emailsResult.data) {
         emailsResult.data.forEach((email: any) => {
           // Nettoyer l'encodage UTF-8 corrompu
-          let bodyText = email.body_text || '';
+          let bodyText = email.body_text || email.body_html || '';
+
+          // Premier niveau: corrections UTF-8 standards
           bodyText = bodyText
             .replace(/Ã©/g, 'é')
             .replace(/Ã /g, 'à')
             .replace(/Ã¨/g, 'è')
             .replace(/Ãª/g, 'ê')
+            .replace(/Ã®/g, 'î')
             .replace(/Ã¯/g, 'ï')
             .replace(/Ã´/g, 'ô')
             .replace(/Ã¢/g, 'â')
@@ -262,11 +265,27 @@ const CRMLeadDetail: React.FC = () => {
             .replace(/Ã/g, 'À')
             .replace(/Ã/g, 'É')
             .replace(/Ã/g, 'È')
-            .replace(/Jâai/g, 'J\'ai')
-            .replace(/jâattends/g, 'j\'attends')
+            .replace(/Ã/g, 'Ê');
+
+          // Deuxième niveau: corrections de patterns spécifiques
+          bodyText = bodyText
+            .replace(/Jâai/gi, 'J\'ai')
+            .replace(/jâai/gi, 'j\'ai')
+            .replace(/câest/gi, 'c\'est')
+            .replace(/lâ/gi, 'l\'')
+            .replace(/dâ/gi, 'd\'')
+            .replace(/jâattends/gi, 'j\'attends')
             .replace(/auprÃ¨s/g, 'auprès')
             .replace(/dÃ©clinÃ©/g, 'décliné')
-            .replace(/antÃ©cÃ©dents/g, 'antécédents');
+            .replace(/antÃ©cÃ©dents/g, 'antécédents')
+            .replace(/demandÃ©s/g, 'demandés')
+            .replace(/dÃ©jÃ /g, 'déjà');
+
+          // Troisième niveau: corrections de caractères complexes
+          bodyText = bodyText
+            .replace(/[鲃饪翊]/g, '\'')  // Ces caractères chinois remplacent souvent les apostrophes
+            .replace(/倁/g, 'ai')
+            .replace(/䰀/g, 'é');
 
           const preview = bodyText.length > 200 ? bodyText.substring(0, 200) + '...' : bodyText;
           allMessages.push({
