@@ -63,6 +63,7 @@ interface Message {
   id: string;
   type: 'email' | 'sms' | 'whatsapp' | 'note' | 'system';
   content: string;
+  fullContent?: string;
   subject?: string;
   sent_at: string;
   status: 'sent' | 'delivered' | 'read' | 'failed';
@@ -90,6 +91,7 @@ const CRMLeadDetail: React.FC = () => {
 
   const [showSMSModal, setShowSMSModal] = useState(false);
   const [showWhatsAppModal, setShowWhatsAppModal] = useState(false);
+  const [expandedMessageId, setExpandedMessageId] = useState<string | null>(null);
 
   const [editForm, setEditForm] = useState({
     first_name: '',
@@ -244,12 +246,34 @@ const CRMLeadDetail: React.FC = () => {
 
       if (emailsResult.data) {
         emailsResult.data.forEach((email: any) => {
-          const bodyText = email.body_text || '';
-          const preview = bodyText.length > 300 ? bodyText.substring(0, 300) + '...' : bodyText;
+          // Nettoyer l'encodage UTF-8 corrompu
+          let bodyText = email.body_text || '';
+          bodyText = bodyText
+            .replace(/Ã©/g, 'é')
+            .replace(/Ã /g, 'à')
+            .replace(/Ã¨/g, 'è')
+            .replace(/Ãª/g, 'ê')
+            .replace(/Ã¯/g, 'ï')
+            .replace(/Ã´/g, 'ô')
+            .replace(/Ã¢/g, 'â')
+            .replace(/Ã§/g, 'ç')
+            .replace(/Ã¹/g, 'ù')
+            .replace(/Ã»/g, 'û')
+            .replace(/Ã/g, 'À')
+            .replace(/Ã/g, 'É')
+            .replace(/Ã/g, 'È')
+            .replace(/Jâai/g, 'J\'ai')
+            .replace(/jâattends/g, 'j\'attends')
+            .replace(/auprÃ¨s/g, 'auprès')
+            .replace(/dÃ©clinÃ©/g, 'décliné')
+            .replace(/antÃ©cÃ©dents/g, 'antécédents');
+
+          const preview = bodyText.length > 200 ? bodyText.substring(0, 200) + '...' : bodyText;
           allMessages.push({
             id: email.id,
             type: 'email',
             content: preview,
+            fullContent: bodyText,
             subject: email.subject,
             sent_at: email.received_at || email.sent_at || email.created_at,
             status: email.status === 'sent' ? 'sent' : email.is_read ? 'read' : 'delivered',
@@ -1007,50 +1031,75 @@ const CRMLeadDetail: React.FC = () => {
                 </div>
 
                 <div className="space-y-3 max-h-[700px] overflow-y-auto">
-                  {messages.map((msg) => (
-                    <div
-                      key={msg.id}
-                      className={`flex gap-3 p-4 rounded-lg border ${
-                        msg.direction === 'inbound'
-                          ? 'bg-blue-50 border-blue-200'
-                          : 'bg-gray-50 border-gray-200'
-                      }`}
-                    >
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
-                        msg.type === 'email' ? 'bg-blue-100 text-blue-600' :
-                        msg.type === 'sms' ? 'bg-green-100 text-green-600' :
-                        msg.type === 'whatsapp' ? 'bg-emerald-100 text-emerald-600' :
-                        'bg-gray-100 text-gray-600'
-                      }`}>
-                        {msg.type === 'email' && <Mail className="w-5 h-5" />}
-                        {msg.type === 'sms' && <MessageSquare className="w-5 h-5" />}
-                        {msg.type === 'whatsapp' && <Phone className="w-5 h-5" />}
-                        {msg.type === 'system' && <Bot className="w-5 h-5" />}
-                        {msg.type === 'note' && <FileText className="w-5 h-5" />}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between mb-1">
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium text-gray-900 text-sm">{msg.sent_by}</span>
-                            <span className={`px-2 py-0.5 rounded text-xs ${
-                              msg.status === 'read' ? 'bg-green-100 text-green-700' :
-                              msg.status === 'delivered' ? 'bg-blue-100 text-blue-700' :
-                              'bg-gray-100 text-gray-700'
-                            }`}>
-                              {msg.status}
+                  {messages.map((msg) => {
+                    const isExpanded = expandedMessageId === msg.id;
+                    const hasFullContent = msg.fullContent && msg.fullContent.length > msg.content.length;
+
+                    return (
+                      <div
+                        key={msg.id}
+                        className={`flex gap-3 p-4 rounded-lg border ${
+                          msg.direction === 'inbound'
+                            ? 'bg-blue-50 border-blue-200'
+                            : 'bg-gray-50 border-gray-200'
+                        }`}
+                      >
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
+                          msg.type === 'email' ? 'bg-blue-100 text-blue-600' :
+                          msg.type === 'sms' ? 'bg-green-100 text-green-600' :
+                          msg.type === 'whatsapp' ? 'bg-emerald-100 text-emerald-600' :
+                          'bg-gray-100 text-gray-600'
+                        }`}>
+                          {msg.type === 'email' && <Mail className="w-5 h-5" />}
+                          {msg.type === 'sms' && <MessageSquare className="w-5 h-5" />}
+                          {msg.type === 'whatsapp' && <Phone className="w-5 h-5" />}
+                          {msg.type === 'system' && <Bot className="w-5 h-5" />}
+                          {msg.type === 'note' && <FileText className="w-5 h-5" />}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between mb-1">
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium text-gray-900 text-sm">{msg.sent_by}</span>
+                              <span className={`px-2 py-0.5 rounded text-xs ${
+                                msg.status === 'read' ? 'bg-green-100 text-green-700' :
+                                msg.status === 'delivered' ? 'bg-blue-100 text-blue-700' :
+                                'bg-gray-100 text-gray-700'
+                              }`}>
+                                {msg.status}
+                              </span>
+                            </div>
+                            <span className="text-xs text-gray-500">
+                              {new Date(msg.sent_at).toLocaleString('fr-FR')}
                             </span>
                           </div>
-                          <span className="text-xs text-gray-500">
-                            {new Date(msg.sent_at).toLocaleString('fr-FR')}
-                          </span>
+                          {msg.subject && (
+                            <div className="text-sm font-medium text-gray-700 mb-1">{msg.subject}</div>
+                          )}
+                          <p className="text-sm text-gray-600 whitespace-pre-wrap">
+                            {isExpanded && msg.fullContent ? msg.fullContent : msg.content}
+                          </p>
+                          {hasFullContent && (
+                            <button
+                              onClick={() => setExpandedMessageId(isExpanded ? null : msg.id)}
+                              className="mt-2 text-xs text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1"
+                            >
+                              {isExpanded ? (
+                                <>
+                                  <ChevronDown className="w-3 h-3" />
+                                  Réduire
+                                </>
+                              ) : (
+                                <>
+                                  <Eye className="w-3 h-3" />
+                                  Lire le message complet
+                                </>
+                              )}
+                            </button>
+                          )}
                         </div>
-                        {msg.subject && (
-                          <div className="text-sm font-medium text-gray-700 mb-1">{msg.subject}</div>
-                        )}
-                        <p className="text-sm text-gray-600 whitespace-pre-wrap">{msg.content}</p>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
 
                   {messages.length === 0 && (
                     <div className="text-center py-12 text-gray-500">

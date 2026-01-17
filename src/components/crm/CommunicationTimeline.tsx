@@ -99,8 +99,35 @@ export const CommunicationTimeline: React.FC<CommunicationTimelineProps> = ({
         for (const email of emails) {
           const { data: attachments } = await supabase
             .from('email_attachments')
-            .select('id, file_name, file_type, file_size, download_url, auto_detected_type')
+            .select('id, filename, content_type, file_size, storage_path, proposed_doc_type')
             .eq('email_message_id', email.id);
+
+          // Nettoyer le contenu des emails avec encodage UTF-8 corrompu
+          let cleanContent = email.body_text || email.body_html || '';
+          cleanContent = cleanContent
+            .replace(/Ã©/g, 'é')
+            .replace(/Ã /g, 'à')
+            .replace(/Ã¨/g, 'è')
+            .replace(/Ãª/g, 'ê')
+            .replace(/Ã¯/g, 'ï')
+            .replace(/Ã´/g, 'ô')
+            .replace(/Ã¢/g, 'â')
+            .replace(/Ã§/g, 'ç')
+            .replace(/Ã¹/g, 'ù')
+            .replace(/Ã»/g, 'û')
+            .replace(/Ã/g, 'À')
+            .replace(/Ã/g, 'É')
+            .replace(/Ã/g, 'È');
+
+          // Mapper les attachments au format attendu
+          const mappedAttachments = (attachments || []).map(att => ({
+            id: att.id,
+            file_name: att.filename,
+            file_type: att.content_type,
+            file_size: att.file_size,
+            download_url: att.storage_path ? `/storage/${att.storage_path}` : '',
+            auto_detected_type: att.proposed_doc_type
+          }));
 
           allEvents.push({
             id: email.id,
@@ -108,11 +135,11 @@ export const CommunicationTimeline: React.FC<CommunicationTimelineProps> = ({
             direction: email.direction,
             timestamp: email.received_at || email.sent_at || email.created_at,
             subject: email.subject,
-            content: email.body_text || email.body_html || '',
-            from: email.direction === 'inbound' ? email.from_email : 'team@taxiassur.com',
-            to: email.direction === 'outbound' ? email.to_emails?.[0] : 'team@taxiassur.com',
+            content: cleanContent,
+            from: email.direction === 'inbound' ? `${email.from_name || ''} <${email.from_email}>` : 'TaxiAssur <team@taxiassur.com>',
+            to: email.direction === 'outbound' ? (email.to_emails?.[0] || leadEmail) : 'team@taxiassur.com',
             status: email.status,
-            attachments: attachments || []
+            attachments: mappedAttachments
           });
         }
       }
