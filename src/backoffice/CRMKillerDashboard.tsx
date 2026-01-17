@@ -192,7 +192,6 @@ const CRMKillerDashboard: React.FC = () => {
     { label: 'Pipeline', icon: BarChart3, path: '/backoffice/crm-killer/pipeline', color: 'blue' },
     { label: 'File Devis', icon: ClipboardList, path: '/backoffice/quote-queue', color: 'green', badge: stats.ready_for_quote },
     { label: 'Inbox', icon: Inbox, path: '/backoffice/crm-killer/inbox', color: 'purple', badge: stats.unread_messages },
-    { label: 'Production', icon: FileCheck, path: '/backoffice/crm-killer/production', color: 'orange' },
     { label: 'Retention', icon: Shield, path: '/backoffice/crm-killer/retention', color: 'red' },
     { label: 'IA', icon: Brain, path: '/backoffice/crm-killer/ia', color: 'cyan' },
     { label: 'Templates', icon: FileText, path: '/backoffice/crm-killer/templates', color: 'amber' },
@@ -424,7 +423,7 @@ const CRMKillerDashboard: React.FC = () => {
 
             {stats.pending_documents > 0 && (
               <button
-                onClick={() => navigate('/backoffice/crm-killer/production')}
+                onClick={() => navigate('/backoffice/pending-documents')}
                 className="bg-white hover:bg-amber-50 border border-amber-200 rounded-xl p-4 text-left transition-all"
               >
                 <div className="flex items-center justify-between mb-2">
@@ -437,7 +436,7 @@ const CRMKillerDashboard: React.FC = () => {
 
             {stats.pending_payments > 0 && (
               <button
-                onClick={() => navigate('/backoffice/crm-killer/production')}
+                onClick={() => navigate('/backoffice/crm-killer/retention')}
                 className="bg-white hover:bg-orange-50 border border-orange-200 rounded-xl p-4 text-left transition-all"
               >
                 <div className="flex items-center justify-between mb-2">

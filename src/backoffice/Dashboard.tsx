@@ -1471,14 +1471,6 @@ const Dashboard: React.FC = () => {
                 </a>
 
                 <a
-                  href="/backoffice/crm-killer/production"
-                  className="text-center p-6 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg hover:shadow-xl transition-all duration-300 hover:scale-105 group"
-                >
-                  <FileCheck className="mx-auto mb-2 text-white group-hover:scale-110 transition-transform" size={28} />
-                  <div className="text-sm font-bold text-white">Production</div>
-                </a>
-
-                <a
                   href="/backoffice/crm-killer/retention"
                   className="text-center p-6 bg-gradient-to-br from-green-500 to-green-600 rounded-lg hover:shadow-xl transition-all duration-300 hover:scale-105 group"
                 >

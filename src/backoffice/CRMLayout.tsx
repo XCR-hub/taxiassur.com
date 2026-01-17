@@ -80,13 +80,6 @@ const CRMLayout: React.FC = () => {
       badge: stats.unread_messages || null
     },
     {
-      id: 'production',
-      label: 'Production',
-      icon: FileCheck,
-      path: '/backoffice/crm-killer/production',
-      badge: stats.pending_items || null
-    },
-    {
       id: 'retention',
       label: 'Rétention',
       icon: Shield,
