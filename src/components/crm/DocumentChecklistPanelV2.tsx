@@ -80,6 +80,7 @@ export function DocumentChecklistPanelV2({
   const [showRejectModal, setShowRejectModal] = useState<string | null>(null);
 
   const loadData = useCallback(async () => {
+    console.log('🔄 DocumentChecklistPanelV2: loadData called for leadId:', leadId);
     setLoading(true);
     try {
       const [leadResult, docsResult, attachmentsResult] = await Promise.all([
@@ -112,17 +113,16 @@ export function DocumentChecklistPanelV2({
         setEmailAttachments(attachmentsResult.data);
       }
 
-      if (leadResult.data?.documents_complete && onDocumentsComplete) {
-        onDocumentsComplete();
-      }
+      console.log('✅ DocumentChecklistPanelV2: loadData completed');
     } catch (err) {
-      console.error('Error loading document data:', err);
+      console.error('❌ DocumentChecklistPanelV2: Error loading document data:', err);
     } finally {
       setLoading(false);
     }
   }, [leadId]);
 
   useEffect(() => {
+    console.log('🎯 DocumentChecklistPanelV2: useEffect triggered, leadId:', leadId);
     loadData();
   }, [leadId]);
 
