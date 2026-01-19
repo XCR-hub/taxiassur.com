@@ -467,7 +467,9 @@ export function DocumentChecklistPanelV2({
                     <a
                       href={
                         doc.metadata?.download_url ||
-                        supabase.storage.from('email-attachments').getPublicUrl(doc.file_path).data.publicUrl
+                        (doc.file_path.startsWith('00000000-0000-0000-0000-000000000001/')
+                          ? supabase.storage.from('email-attachments').getPublicUrl(doc.file_path).data.publicUrl
+                          : supabase.storage.from('prospect-documents').getPublicUrl(doc.file_path).data.publicUrl)
                       }
                       target="_blank"
                       rel="noopener noreferrer"

@@ -26,6 +26,14 @@ interface Document {
   validated_at?: string;
   rejection_reason?: string;
   rejection_details?: string;
+  metadata?: {
+    download_url?: string;
+    email_id?: string;
+    email_subject?: string;
+    auto_classified?: boolean;
+    confidence?: number;
+    processed_at?: string;
+  };
 }
 
 interface DocumentValidationPanelProps {
@@ -300,7 +308,12 @@ const DocumentValidationPanel: React.FC<DocumentValidationPanelProps> = ({ leadI
                   {/* Actions */}
                   <div className="flex items-center gap-2">
                     <a
-                      href={`${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/${doc.file_path}`}
+                      href={
+                        doc.metadata?.download_url ||
+                        (doc.file_path.startsWith('00000000-0000-0000-0000-000000000001/')
+                          ? supabase.storage.from('email-attachments').getPublicUrl(doc.file_path).data.publicUrl
+                          : supabase.storage.from('prospect-documents').getPublicUrl(doc.file_path).data.publicUrl)
+                      }
                       target="_blank"
                       rel="noopener noreferrer"
                       className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
