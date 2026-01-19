@@ -21,6 +21,63 @@ interface ParsedEmail {
   attachments: any[];
 }
 
+function cleanMIMEContent(content: string): string {
+  if (!content) return '';
+
+  // Supprimer les frontières MIME (commence par --)
+  let cleaned = content.replace(/^--[a-zA-Z0-9_-]+$/gm, '');
+
+  // Supprimer les headers MIME (Content-Type, Content-Transfer-Encoding, etc.)
+  cleaned = cleaned.replace(/^Content-[^:]+:.*$/gm, '');
+  cleaned = cleaned.replace(/^MIME-Version:.*$/gm, '');
+  cleaned = cleaned.replace(/^boundary=.*$/gm, '');
+
+  // Supprimer les encodages base64 ou quoted-printable vides
+  cleaned = cleaned.replace(/^(?:Content-Transfer-Encoding|Content-Disposition|Content-ID):.*$/gm, '');
+
+  // Nettoyer les lignes vides multiples
+  cleaned = cleaned.replace(/\n{3,}/g, '\n\n');
+
+  // Trim
+  cleaned = cleaned.trim();
+
+  return cleaned;
+}
+
+function extractTextFromParsed(parsed: any): string {
+  // Essayer d'abord le texte brut
+  if (parsed.text) {
+    const cleaned = cleanMIMEContent(parsed.text);
+    if (cleaned && cleaned.length > 50) {
+      return cleaned;
+    }
+  }
+
+  // Si le texte brut est vide ou trop court, essayer le HTML converti
+  if (parsed.html) {
+    // Convertir HTML basique en texte
+    let text = parsed.html
+      .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+      .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/&nbsp;/g, ' ')
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    const cleaned = cleanMIMEContent(text);
+    if (cleaned && cleaned.length > 50) {
+      return cleaned;
+    }
+  }
+
+  // En dernier recours, retourner le texte original nettoyé
+  return cleanMIMEContent(parsed.text || parsed.textAsHtml || '(Contenu non disponible)');
+}
+
 async function fetchIMAPEmails(
   host: string,
   port: number,
@@ -90,13 +147,16 @@ async function fetchIMAPEmails(
               }
 
               try {
+                // Nettoyer le contenu MIME
+                const cleanText = extractTextFromParsed(parsed);
+
                 const email: ParsedEmail = {
                   messageId: parsed.messageId || `${Date.now()}-${Math.random()}`,
                   from: parsed.from?.value || [],
                   to: parsed.to?.value || [],
                   cc: parsed.cc?.value || [],
                   subject: parsed.subject || '(No Subject)',
-                  text: parsed.text || '',
+                  text: cleanText,
                   html: parsed.html || '',
                   date: parsed.date || new Date(),
                   inReplyTo: parsed.inReplyTo,

@@ -58,7 +58,7 @@ Deno.serve(async (req) => {
     results.push(sendGridResult);
 
     console.log('3/3 - Syncing IONOS IMAP...');
-    const ionosResult = await callEdgeFunction('sync-ionos-imap', supabaseUrl, supabaseAnonKey);
+    const ionosResult = await callEdgeFunction('sync-ionos-imap-v2', supabaseUrl, supabaseAnonKey);
     results.push(ionosResult);
 
     const supabase = createClient(supabaseUrl, supabaseKey);
