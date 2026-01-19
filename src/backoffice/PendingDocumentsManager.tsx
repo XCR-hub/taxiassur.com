@@ -19,6 +19,11 @@ interface PendingDocument {
   lead_first_name?: string;
   lead_last_name?: string;
   lead_phone?: string;
+  metadata?: {
+    download_url?: string;
+    email_id?: string;
+    email_subject?: string;
+  };
 }
 
 const documentTypeLabels: Record<string, string> = {
@@ -50,6 +55,7 @@ export default function PendingDocumentsManager() {
           file_path,
           uploaded_at,
           status,
+          metadata,
           crm_leads (
             email,
             first_name,
@@ -134,10 +140,20 @@ export default function PendingDocumentsManager() {
     }
   };
 
-  const getPublicUrl = (filePath: string) => {
+  const getPublicUrl = (doc: PendingDocument) => {
+    // Utiliser l'URL depuis metadata si disponible
+    if (doc.metadata?.download_url) {
+      return doc.metadata.download_url;
+    }
+
+    // Sinon, détecter le bucket automatiquement
+    const bucket = doc.file_path.startsWith('00000000-0000-0000-0000-000000000001/')
+      ? 'email-attachments'
+      : 'prospect-documents';
+
     const { data } = supabase.storage
-      .from('prospect-documents')
-      .getPublicUrl(filePath);
+      .from(bucket)
+      .getPublicUrl(doc.file_path);
     return data.publicUrl;
   };
 
@@ -278,7 +294,7 @@ export default function PendingDocumentsManager() {
                   {/* Actions */}
                   <div className="flex flex-col gap-2">
                     <a
-                      href={getPublicUrl(doc.file_path)}
+                      href={getPublicUrl(doc)}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-medium transition-all flex items-center gap-2"
@@ -287,7 +303,7 @@ export default function PendingDocumentsManager() {
                       Voir
                     </a>
                     <a
-                      href={getPublicUrl(doc.file_path)}
+                      href={getPublicUrl(doc)}
                       download
                       className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-medium transition-all flex items-center gap-2"
                     >

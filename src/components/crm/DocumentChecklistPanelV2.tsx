@@ -99,7 +99,7 @@ export function DocumentChecklistPanelV2({
           .maybeSingle(),
         supabase
           .from('prospect_documents')
-          .select('*')
+          .select('id, document_type, file_name, file_path, file_size, status, uploaded_at, notes, metadata')
           .eq('lead_id', leadId)
           .order('uploaded_at', { ascending: false }),
         supabase

@@ -20,6 +20,11 @@ interface Document {
   verified_by?: string;
   notes?: string;
   lead_id?: string;
+  metadata?: {
+    download_url?: string;
+    email_id?: string;
+    email_subject?: string;
+  };
 }
 
 interface DocumentsViewerProps {
@@ -46,7 +51,7 @@ const DocumentsViewer: React.FC<DocumentsViewerProps> = ({ leadId, clientId, com
     try {
       let query = supabase
         .from('prospect_documents')
-        .select('*')
+        .select('id, file_name, document_type, file_path, file_size, mime_type, status, upload_date, verified_at, verified_by, notes, lead_id, metadata')
         .order('upload_date', { ascending: false });
 
       if (leadId) {
@@ -160,8 +165,19 @@ const DocumentsViewer: React.FC<DocumentsViewerProps> = ({ leadId, clientId, com
     }
 
     try {
+      // Utiliser l'URL depuis metadata si disponible
+      if (doc.metadata?.download_url) {
+        setPreviewUrl(doc.metadata.download_url);
+        return;
+      }
+
+      // Sinon, détecter le bucket automatiquement
+      const bucket = doc.file_path.startsWith('00000000-0000-0000-0000-000000000001/')
+        ? 'email-attachments'
+        : 'prospect-documents';
+
       const { data } = await supabase.storage
-        .from('prospect-documents')
+        .from(bucket)
         .getPublicUrl(doc.file_path);
 
       setPreviewUrl(data.publicUrl);

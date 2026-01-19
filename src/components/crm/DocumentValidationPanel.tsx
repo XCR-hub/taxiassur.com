@@ -89,7 +89,7 @@ const DocumentValidationPanel: React.FC<DocumentValidationPanelProps> = ({ leadI
     try {
       const { data, error } = await supabase
         .from('prospect_documents')
-        .select('*')
+        .select('id, document_type, file_name, file_path, file_size, status, uploaded_at, validated_by, validated_at, rejection_reason, rejection_details, metadata')
         .eq('lead_id', leadId)
         .order('uploaded_at', { ascending: false });
 
