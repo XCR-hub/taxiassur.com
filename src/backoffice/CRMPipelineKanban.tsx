@@ -193,46 +193,56 @@ const CRMPipelineKanban: React.FC = () => {
     return filtered;
   }, [kanbanData, debouncedSearch]);
 
+  // 🎯 COLONNES DU PIPELINE TAXIASSUR UNIFIÉ
   const visibleStatuses: PipelineStatus[] = [
+    // 🔵 Phase Prospection
     'NEW_LEAD',
-    'CONTACT_ATTEMPTED',
-    'CONTACT_CONFIRMED',
-    'DOCUMENTS_REQUIRED',
-    'DOCUMENTS_PARTIAL',
-    'READY_FOR_QUOTE',
-    'QUOTE_SENT',
-    'SIGNATURE_PENDING',
-    'SIGNED',
-    'DOWN_PAYMENT_REQUIRED',
-    'PAYMENT_PENDING',
-    'ACTIVE_CLIENT',
-    'LOST_RECONTACT_SCHEDULED'
+    'PREMIER_CONTACT',
+    'RELANCE',
+
+    // 🟡 Phase Qualification
+    'COLLECTE_DOCUMENTS',
+    'DOCUMENTS_COMPLEMENTAIRES',
+    'PRET_DEVIS',
+
+    // 🟠 Phase Commerciale
+    'DEVIS_EN_COURS',
+    'NEGOCIATION',
+
+    // 🟢 Phase Contractuelle
+    'SIGNATURE_EN_COURS',
+    'PAIEMENT_EN_ATTENTE',
+    'CLIENT_ACTIF',
+
+    // ⚫ Statuts spéciaux
+    'PERDU',
+    'RECONTACT_PROGRAMME'
   ];
 
   const statistics = useMemo(() => {
     const allLeads = Object.values(filteredKanbanData).flat();
 
-    const documentsStage = (filteredKanbanData['DOCUMENTS_REQUIRED'] || []).length +
-                           (filteredKanbanData['DOCUMENTS_PARTIAL'] || []).length;
-    const quoteStage = (filteredKanbanData['READY_FOR_QUOTE'] || []).length +
-                       (filteredKanbanData['QUOTE_SENT'] || []).length;
-    const signatureStage = (filteredKanbanData['SIGNATURE_PENDING'] || []).length +
-                           (filteredKanbanData['SIGNED'] || []).length;
-    const paymentStage = (filteredKanbanData['DOWN_PAYMENT_REQUIRED'] || []).length +
-                         (filteredKanbanData['PAYMENT_PENDING'] || []).length;
+    const contactStage = (filteredKanbanData['PREMIER_CONTACT'] || []).length +
+                         (filteredKanbanData['RELANCE'] || []).length;
+    const documentsStage = (filteredKanbanData['COLLECTE_DOCUMENTS'] || []).length +
+                           (filteredKanbanData['DOCUMENTS_COMPLEMENTAIRES'] || []).length +
+                           (filteredKanbanData['PRET_DEVIS'] || []).length;
+    const quoteStage = (filteredKanbanData['DEVIS_EN_COURS'] || []).length +
+                       (filteredKanbanData['NEGOCIATION'] || []).length;
+    const signatureStage = (filteredKanbanData['SIGNATURE_EN_COURS'] || []).length;
+    const paymentStage = (filteredKanbanData['PAIEMENT_EN_ATTENTE'] || []).length;
 
     return {
       total: allLeads.length,
-      active: (filteredKanbanData['ACTIVE_CLIENT'] || []).length,
+      active: (filteredKanbanData['CLIENT_ACTIF'] || []).length,
       newLeads: (filteredKanbanData['NEW_LEAD'] || []).length,
-      contactStage: (filteredKanbanData['CONTACT_ATTEMPTED'] || []).length +
-                    (filteredKanbanData['CONTACT_CONFIRMED'] || []).length,
+      contactStage,
       documentsStage,
       quoteStage,
       signatureStage,
       paymentStage,
       needsAction: (filteredKanbanData['NEW_LEAD'] || []).length +
-                   (filteredKanbanData['CONTACT_ATTEMPTED'] || []).length,
+                   (filteredKanbanData['RELANCE'] || []).length,
       avgQuality: allLeads.length > 0
         ? Math.round(allLeads.reduce((sum, l) => sum + (l.quality_score || 0), 0) / allLeads.length)
         : 0

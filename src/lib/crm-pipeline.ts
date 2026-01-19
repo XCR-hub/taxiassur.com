@@ -25,28 +25,37 @@ export interface AutomationStats {
   success_rate: number;
 }
 
+// 🎯 PIPELINE TAXIASSUR UNIFIÉ - Workflow complet du lead au client actif
 export type PipelineStatus =
-  | 'NEW_LEAD'
-  | 'CONTACT_ATTEMPTED'
-  | 'CONTACT_CONFIRMED'
-  | 'DOCUMENTS_REQUIRED'
-  | 'DOCUMENTS_PARTIAL'
-  | 'READY_FOR_QUOTE'
-  | 'QUOTE_SENT'
-  | 'NO_RESPONSE'
-  | 'RELANCE_ACTIVE'
-  | 'SIGNATURE_PENDING'
-  | 'SIGNED'
-  | 'DOWN_PAYMENT_REQUIRED'
-  | 'PAYMENT_PENDING'
-  | 'ACTIVE_CLIENT'
-  | 'CROSS_SELLING'
-  | 'RISK_CHURN'
-  | 'CLIENT_LOST'
-  | 'LOST_RECONTACT_SCHEDULED'
-  | 'SINISTER'
-  | 'ATTESTATION_REQUEST'
-  | 'SUPPORT_ASSISTANCE';
+  // 🔵 PHASE PROSPECTION (2 étapes)
+  | 'NEW_LEAD'                          // 1. Lead entrant (formulaire, email, appel)
+  | 'PREMIER_CONTACT'                   // 2. Premier contact établi
+
+  // 🟡 PHASE QUALIFICATION (3 étapes)
+  | 'COLLECTE_DOCUMENTS'                // 3. Documents standards en cours de collecte
+  | 'DOCUMENTS_COMPLEMENTAIRES'         // 4. Documents complémentaires demandés (assureur)
+  | 'PRET_DEVIS'                        // 5. Dossier complet, prêt pour devis
+
+  // 🟠 PHASE COMMERCIALE (2 étapes)
+  | 'DEVIS_EN_COURS'                    // 6. Devis en préparation/envoyé
+  | 'NEGOCIATION'                       // 7. Négociation commerciale active
+
+  // 🟢 PHASE CONTRACTUELLE (3 étapes)
+  | 'SIGNATURE_EN_COURS'                // 8. Signature en attente
+  | 'PAIEMENT_EN_ATTENTE'               // 9. Paiement comptant ou 1er mois
+  | 'CLIENT_ACTIF'                      // 10. Contrat actif et payé
+
+  // ⚫ STATUTS SPÉCIAUX
+  | 'RELANCE'                           // Nécessite relance (inactivité détectée)
+  | 'PERDU'                             // Perdu définitif
+  | 'RECONTACT_PROGRAMME'               // Perdu avec recontact futur planifié
+
+  // 🔄 GESTION CLIENT
+  | 'CROSS_SELLING'                     // Opportunité de vente additionnelle
+  | 'RISK_CHURN'                        // Risque de résiliation
+  | 'SINISTER'                          // Dossier sinistre en cours
+  | 'ATTESTATION_REQUEST'               // Demande d'attestation
+  | 'SUPPORT_ASSISTANCE';               // Demande d'assistance
 
 export interface PipelineTransition {
   from: PipelineStatus;
@@ -57,64 +66,87 @@ export interface PipelineTransition {
 }
 
 export const PIPELINE_STATUSES: Record<PipelineStatus, { label: string; color: string; icon: string }> = {
+  // 🔵 PHASE PROSPECTION
   NEW_LEAD: { label: 'Nouveau Lead', color: 'blue', icon: '🆕' },
-  CONTACT_ATTEMPTED: { label: 'Contact Tenté', color: 'indigo', icon: '📞' },
-  CONTACT_CONFIRMED: { label: 'Contact Confirmé', color: 'purple', icon: '✅' },
-  DOCUMENTS_REQUIRED: { label: 'Docs Requis', color: 'orange', icon: '📋' },
-  DOCUMENTS_PARTIAL: { label: 'Docs Partiels', color: 'yellow', icon: '📄' },
-  READY_FOR_QUOTE: { label: 'Prêt pour Devis', color: 'lime', icon: '🎯' },
-  QUOTE_SENT: { label: 'Devis Envoyé', color: 'cyan', icon: '📨' },
-  NO_RESPONSE: { label: 'Sans Réponse', color: 'gray', icon: '❓' },
-  RELANCE_ACTIVE: { label: 'Relance Active', color: 'amber', icon: '🔔' },
-  SIGNATURE_PENDING: { label: 'Signature en Attente', color: 'emerald', icon: '✍️' },
-  SIGNED: { label: 'Signé', color: 'green', icon: '✅' },
-  DOWN_PAYMENT_REQUIRED: { label: 'Comptant Requis', color: 'orange', icon: '💳' },
-  PAYMENT_PENDING: { label: 'Paiement en Attente', color: 'yellow', icon: '💰' },
-  ACTIVE_CLIENT: { label: 'Client Actif', color: 'green', icon: '🎉' },
+  PREMIER_CONTACT: { label: 'Premier Contact', color: 'indigo', icon: '📞' },
+
+  // 🟡 PHASE QUALIFICATION
+  COLLECTE_DOCUMENTS: { label: 'Collecte Documents', color: 'orange', icon: '📋' },
+  DOCUMENTS_COMPLEMENTAIRES: { label: 'Docs Complémentaires', color: 'amber', icon: '📎' },
+  PRET_DEVIS: { label: 'Prêt pour Devis', color: 'lime', icon: '🎯' },
+
+  // 🟠 PHASE COMMERCIALE
+  DEVIS_EN_COURS: { label: 'Devis en Cours', color: 'cyan', icon: '📨' },
+  NEGOCIATION: { label: 'Négociation', color: 'purple', icon: '💬' },
+
+  // 🟢 PHASE CONTRACTUELLE
+  SIGNATURE_EN_COURS: { label: 'Signature en Cours', color: 'emerald', icon: '✍️' },
+  PAIEMENT_EN_ATTENTE: { label: 'Paiement en Attente', color: 'yellow', icon: '💰' },
+  CLIENT_ACTIF: { label: 'Client Actif', color: 'green', icon: '🎉' },
+
+  // ⚫ STATUTS SPÉCIAUX
+  RELANCE: { label: 'Relance', color: 'amber', icon: '🔔' },
+  PERDU: { label: 'Perdu', color: 'gray', icon: '❌' },
+  RECONTACT_PROGRAMME: { label: 'Recontact Programmé', color: 'slate', icon: '📅' },
+
+  // 🔄 GESTION CLIENT
   CROSS_SELLING: { label: 'Cross-sell', color: 'purple', icon: '🎁' },
   RISK_CHURN: { label: 'Risque Churn', color: 'red', icon: '⚠️' },
-  CLIENT_LOST: { label: 'Perdu Définitif', color: 'gray', icon: '❌' },
-  LOST_RECONTACT_SCHEDULED: { label: 'Perdu - Recontact Programmé', color: 'slate', icon: '📅' },
   SINISTER: { label: 'Sinistre', color: 'red', icon: '🚨' },
   ATTESTATION_REQUEST: { label: 'Demande Attestation', color: 'blue', icon: '📜' },
   SUPPORT_ASSISTANCE: { label: 'Assistance', color: 'teal', icon: '💬' }
 };
 
 export const PIPELINE_TRANSITIONS: PipelineTransition[] = [
-  { from: 'NEW_LEAD', to: 'CONTACT_ATTEMPTED', label: 'Tenter Contact', autoActions: ['send_welcome_email'] },
-  { from: 'CONTACT_ATTEMPTED', to: 'CONTACT_CONFIRMED', label: 'Confirmer Contact' },
-  { from: 'CONTACT_CONFIRMED', to: 'DOCUMENTS_REQUIRED', label: 'Demander Docs', autoActions: ['send_documents_request'] },
-  { from: 'DOCUMENTS_REQUIRED', to: 'DOCUMENTS_PARTIAL', label: 'Docs Partiels' },
-  { from: 'DOCUMENTS_PARTIAL', to: 'READY_FOR_QUOTE', label: 'Compléter Docs' },
-  { from: 'DOCUMENTS_REQUIRED', to: 'READY_FOR_QUOTE', label: 'Docs Complets' },
-  { from: 'READY_FOR_QUOTE', to: 'QUOTE_SENT', label: 'Envoyer Devis', autoActions: ['generate_quote', 'send_quote_email'] },
-  { from: 'QUOTE_SENT', to: 'SIGNATURE_PENDING', label: 'Demander Signature', autoActions: ['send_signature_request'] },
-  { from: 'QUOTE_SENT', to: 'NO_RESPONSE', label: 'Sans Réponse' },
-  { from: 'NO_RESPONSE', to: 'RELANCE_ACTIVE', label: 'Relancer', autoActions: ['send_followup'] },
-  { from: 'RELANCE_ACTIVE', to: 'QUOTE_SENT', label: 'Relance OK' },
-  { from: 'SIGNATURE_PENDING', to: 'SIGNED', label: 'Signature Obtenue' },
-  { from: 'SIGNED', to: 'DOWN_PAYMENT_REQUIRED', label: 'Comptant Requis', autoActions: ['create_cic_payment_link'] },
-  { from: 'SIGNED', to: 'PAYMENT_PENDING', label: 'Paiement Mensuel', autoActions: ['send_payment_link'] },
-  { from: 'DOWN_PAYMENT_REQUIRED', to: 'ACTIVE_CLIENT', label: 'Comptant Recu', autoActions: ['send_contract_confirmation'] },
-  { from: 'DOWN_PAYMENT_REQUIRED', to: 'PAYMENT_PENDING', label: 'Attente Paiement' },
-  { from: 'PAYMENT_PENDING', to: 'ACTIVE_CLIENT', label: 'Activer Client', autoActions: ['send_contract_confirmation'] },
-  { from: 'ACTIVE_CLIENT', to: 'CROSS_SELLING', label: 'Cross-sell' },
-  { from: 'ACTIVE_CLIENT', to: 'RISK_CHURN', label: 'Risque Depart' },
-  { from: 'RISK_CHURN', to: 'ACTIVE_CLIENT', label: 'Retention OK' },
-  { from: 'RISK_CHURN', to: 'CLIENT_LOST', label: 'Perdu Definitif', requiresNote: true },
-  { from: 'RISK_CHURN', to: 'LOST_RECONTACT_SCHEDULED', label: 'Programmer Recontact', requiresNote: true },
-  { from: 'ACTIVE_CLIENT', to: 'SINISTER', label: 'Declarer Sinistre' },
-  { from: 'ACTIVE_CLIENT', to: 'ATTESTATION_REQUEST', label: 'Demande Attestation' },
-  { from: 'ACTIVE_CLIENT', to: 'SUPPORT_ASSISTANCE', label: 'Demande Assistance' },
-  { from: 'SINISTER', to: 'ACTIVE_CLIENT', label: 'Sinistre Clos' },
-  { from: 'ATTESTATION_REQUEST', to: 'ACTIVE_CLIENT', label: 'Attestation Envoyee' },
-  { from: 'SUPPORT_ASSISTANCE', to: 'ACTIVE_CLIENT', label: 'Assistance Terminee' },
-  { from: 'QUOTE_SENT', to: 'CLIENT_LOST', label: 'Perdu Definitif', requiresNote: true },
-  { from: 'QUOTE_SENT', to: 'LOST_RECONTACT_SCHEDULED', label: 'Programmer Recontact', requiresNote: true },
-  { from: 'NO_RESPONSE', to: 'LOST_RECONTACT_SCHEDULED', label: 'Programmer Recontact', requiresNote: true },
-  { from: 'RELANCE_ACTIVE', to: 'LOST_RECONTACT_SCHEDULED', label: 'Programmer Recontact', requiresNote: true },
-  { from: 'LOST_RECONTACT_SCHEDULED', to: 'NEW_LEAD', label: 'Reactiver (Auto)', autoActions: ['send_recontact_email'] },
-  { from: 'LOST_RECONTACT_SCHEDULED', to: 'CLIENT_LOST', label: 'Abandonner Definitivement' }
+  // 🔵 PHASE PROSPECTION
+  { from: 'NEW_LEAD', to: 'PREMIER_CONTACT', label: 'Établir Contact', autoActions: ['send_welcome_email'] },
+  { from: 'NEW_LEAD', to: 'RELANCE', label: 'Planifier Relance' },
+
+  // 🟡 PHASE QUALIFICATION
+  { from: 'PREMIER_CONTACT', to: 'COLLECTE_DOCUMENTS', label: 'Demander Documents', autoActions: ['send_documents_request'] },
+  { from: 'COLLECTE_DOCUMENTS', to: 'DOCUMENTS_COMPLEMENTAIRES', label: 'Docs Complémentaires Requis' },
+  { from: 'COLLECTE_DOCUMENTS', to: 'PRET_DEVIS', label: 'Documents Complets' },
+  { from: 'DOCUMENTS_COMPLEMENTAIRES', to: 'PRET_DEVIS', label: 'Tous Docs Validés' },
+  { from: 'DOCUMENTS_COMPLEMENTAIRES', to: 'COLLECTE_DOCUMENTS', label: 'Retour Collecte' },
+
+  // 🟠 PHASE COMMERCIALE
+  { from: 'PRET_DEVIS', to: 'DEVIS_EN_COURS', label: 'Générer Devis', autoActions: ['generate_quote', 'send_quote_email'] },
+  { from: 'DEVIS_EN_COURS', to: 'NEGOCIATION', label: 'Négocier' },
+  { from: 'DEVIS_EN_COURS', to: 'SIGNATURE_EN_COURS', label: 'Acceptation Directe', autoActions: ['send_signature_request'] },
+  { from: 'DEVIS_EN_COURS', to: 'RELANCE', label: 'Sans Réponse' },
+  { from: 'NEGOCIATION', to: 'DEVIS_EN_COURS', label: 'Nouveau Devis' },
+  { from: 'NEGOCIATION', to: 'SIGNATURE_EN_COURS', label: 'Accord Trouvé', autoActions: ['send_signature_request'] },
+
+  // 🟢 PHASE CONTRACTUELLE
+  { from: 'SIGNATURE_EN_COURS', to: 'PAIEMENT_EN_ATTENTE', label: 'Signé - Attente Paiement', autoActions: ['send_payment_link'] },
+  { from: 'PAIEMENT_EN_ATTENTE', to: 'CLIENT_ACTIF', label: 'Paiement Reçu', autoActions: ['send_contract_confirmation', 'send_client_access'] },
+
+  // ⚫ RELANCE
+  { from: 'RELANCE', to: 'PREMIER_CONTACT', label: 'Contact Reétabli' },
+  { from: 'RELANCE', to: 'DEVIS_EN_COURS', label: 'Devis Relancé' },
+  { from: 'RELANCE', to: 'NEGOCIATION', label: 'Retour Négociation' },
+  { from: 'RELANCE', to: 'PERDU', label: 'Abandonner', requiresNote: true },
+  { from: 'RELANCE', to: 'RECONTACT_PROGRAMME', label: 'Programmer Recontact', requiresNote: true },
+
+  // ⚫ PERDU & RECONTACT
+  { from: 'PERDU', to: 'RECONTACT_PROGRAMME', label: 'Planifier Recontact Futur', requiresNote: true },
+  { from: 'RECONTACT_PROGRAMME', to: 'NEW_LEAD', label: 'Réactiver Lead', autoActions: ['send_recontact_email'] },
+  { from: 'DEVIS_EN_COURS', to: 'PERDU', label: 'Perdu Définitif', requiresNote: true },
+  { from: 'NEGOCIATION', to: 'PERDU', label: 'Perdu Définitif', requiresNote: true },
+  { from: 'SIGNATURE_EN_COURS', to: 'PERDU', label: 'Perdu Définitif', requiresNote: true },
+
+  // 🔄 GESTION CLIENT ACTIF
+  { from: 'CLIENT_ACTIF', to: 'CROSS_SELLING', label: 'Opportunité Cross-sell' },
+  { from: 'CLIENT_ACTIF', to: 'RISK_CHURN', label: 'Risque Départ' },
+  { from: 'CLIENT_ACTIF', to: 'SINISTER', label: 'Déclarer Sinistre' },
+  { from: 'CLIENT_ACTIF', to: 'ATTESTATION_REQUEST', label: 'Demande Attestation' },
+  { from: 'CLIENT_ACTIF', to: 'SUPPORT_ASSISTANCE', label: 'Demande Assistance' },
+  { from: 'CROSS_SELLING', to: 'CLIENT_ACTIF', label: 'Cross-sell Terminé' },
+  { from: 'RISK_CHURN', to: 'CLIENT_ACTIF', label: 'Rétention OK' },
+  { from: 'RISK_CHURN', to: 'PERDU', label: 'Client Perdu', requiresNote: true },
+  { from: 'SINISTER', to: 'CLIENT_ACTIF', label: 'Sinistre Clos' },
+  { from: 'ATTESTATION_REQUEST', to: 'CLIENT_ACTIF', label: 'Attestation Envoyée' },
+  { from: 'SUPPORT_ASSISTANCE', to: 'CLIENT_ACTIF', label: 'Assistance Terminée' }
 ];
 
 export interface CRMLead {

@@ -38,51 +38,49 @@ interface LeadHeaderProps {
   availableTransitions: Array<{ to: string; label: string }>;
 }
 
+// 🎯 PIPELINE TAXIASSUR - Vue simplifiée 6 étapes
 const PIPELINE_STEPS = [
   { key: 'new', label: 'Nouveau', order: 1 },
-  { key: 'contacted', label: 'Contacte', order: 2 },
-  { key: 'qualified', label: 'Qualifie', order: 3 },
-  { key: 'quote_sent', label: 'Devis envoye', order: 4 },
-  { key: 'negotiation', label: 'Negociation', order: 5 },
-  { key: 'won', label: 'Gagne', order: 6 }
+  { key: 'contact', label: 'Contact', order: 2 },
+  { key: 'documents', label: 'Documents', order: 3 },
+  { key: 'devis', label: 'Devis', order: 4 },
+  { key: 'signature', label: 'Signature', order: 5 },
+  { key: 'client', label: 'Client', order: 6 }
 ];
 
-// Mapping des statuts détaillés vers les étapes du pipeline
+// Mapping des statuts détaillés vers les étapes simplifiées
 const STATUS_TO_PIPELINE_STEP: Record<string, string> = {
   // Étape 1: Nouveau
   'NEW_LEAD': 'new',
 
-  // Étape 2: Contacté
-  'CONTACT_ATTEMPTED': 'contacted',
-  'CONTACT_CONFIRMED': 'contacted',
+  // Étape 2: Contact
+  'PREMIER_CONTACT': 'contact',
+  'RELANCE': 'contact',
 
-  // Étape 3: Qualifié
-  'DOCUMENTS_REQUIRED': 'qualified',
-  'DOCUMENTS_PARTIAL': 'qualified',
-  'READY_FOR_QUOTE': 'qualified',
+  // Étape 3: Documents
+  'COLLECTE_DOCUMENTS': 'documents',
+  'DOCUMENTS_COMPLEMENTAIRES': 'documents',
+  'PRET_DEVIS': 'documents',
 
-  // Étape 4: Devis envoyé
-  'QUOTE_SENT': 'quote_sent',
-  'NO_RESPONSE': 'quote_sent',
+  // Étape 4: Devis
+  'DEVIS_EN_COURS': 'devis',
+  'NEGOCIATION': 'devis',
 
-  // Étape 5: Négociation
-  'RELANCE_ACTIVE': 'negotiation',
-  'SIGNATURE_PENDING': 'negotiation',
-  'SIGNED': 'negotiation',
-  'DOWN_PAYMENT_REQUIRED': 'negotiation',
-  'PAYMENT_PENDING': 'negotiation',
+  // Étape 5: Signature
+  'SIGNATURE_EN_COURS': 'signature',
+  'PAIEMENT_EN_ATTENTE': 'signature',
 
-  // Étape 6: Gagné
-  'ACTIVE_CLIENT': 'won',
-  'CROSS_SELLING': 'won',
+  // Étape 6: Client
+  'CLIENT_ACTIF': 'client',
+  'CROSS_SELLING': 'client',
 
-  // Cas spéciaux (gardent leur position)
-  'RISK_CHURN': 'negotiation',
-  'CLIENT_LOST': 'negotiation',
-  'LOST_RECONTACT_SCHEDULED': 'negotiation',
-  'SINISTER': 'won',
-  'ATTESTATION_REQUEST': 'won',
-  'SUPPORT_ASSISTANCE': 'won'
+  // Statuts spéciaux
+  'PERDU': 'contact',
+  'RECONTACT_PROGRAMME': 'contact',
+  'RISK_CHURN': 'client',
+  'SINISTER': 'client',
+  'ATTESTATION_REQUEST': 'client',
+  'SUPPORT_ASSISTANCE': 'client'
 };
 
 export const LeadHeader: React.FC<LeadHeaderProps> = ({
@@ -100,7 +98,7 @@ export const LeadHeader: React.FC<LeadHeaderProps> = ({
     ? `${window.location.origin}/espace-prospect?token=${lead.access_token}`
     : null;
 
-  const isActiveClient = lead.status === 'ACTIVE_CLIENT' || lead.status === 'CROSS_SELLING' || lead.status === 'SINISTER';
+  const isActiveClient = lead.status === 'CLIENT_ACTIF' || lead.status === 'CROSS_SELLING' || lead.status === 'SINISTER';
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
