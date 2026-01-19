@@ -310,15 +310,77 @@ Deno.serve(async (req) => {
             })),
           };
 
-          const { error: insertError } = await supabase
+          const { data: insertedEmail, error: insertError } = await supabase
             .from('email_messages')
-            .insert(emailData);
+            .insert(emailData)
+            .select('id')
+            .single();
 
           if (insertError) {
             console.error('Insert error:', insertError);
             errors++;
           } else {
             inserted++;
+
+            // Extraire et uploader les pièces jointes si présentes
+            if (email.attachments && email.attachments.length > 0 && insertedEmail) {
+              console.log(`Processing ${email.attachments.length} attachments for email ${insertedEmail.id}`);
+
+              for (const attachment of email.attachments) {
+                try {
+                  if (!attachment.content) continue;
+
+                  // Convertir le contenu en Buffer puis en base64
+                  const buffer = attachment.content;
+                  const base64Content = typeof buffer === 'string'
+                    ? buffer
+                    : btoa(String.fromCharCode(...new Uint8Array(buffer)));
+
+                  // Upload vers Storage
+                  const fileExt = attachment.filename?.split('.').pop() || 'bin';
+                  const fileName = `emails/${insertedEmail.id}/${Date.now()}_${attachment.filename}`;
+                  const binaryData = Uint8Array.from(atob(base64Content), c => c.charCodeAt(0));
+
+                  const { error: uploadError } = await supabase.storage
+                    .from('attachments')
+                    .upload(fileName, binaryData, {
+                      contentType: attachment.contentType || 'application/octet-stream',
+                      upsert: false
+                    });
+
+                  if (uploadError) {
+                    console.error('Attachment upload error:', uploadError);
+                    continue;
+                  }
+
+                  const { data: urlData } = supabase.storage
+                    .from('attachments')
+                    .getPublicUrl(fileName);
+
+                  // Créer l'entrée dans email_attachments
+                  await supabase.from('email_attachments').insert({
+                    email_message_id: insertedEmail.id,
+                    file_name: attachment.filename,
+                    file_type: fileExt,
+                    file_size: attachment.size,
+                    mime_type: attachment.contentType,
+                    storage_path: fileName,
+                    storage_bucket: 'attachments',
+                    download_url: urlData.publicUrl,
+                    classification_status: 'pending',
+                    metadata: {
+                      email_subject: email.subject,
+                      email_from: fromAddress,
+                      processed_at: new Date().toISOString()
+                    }
+                  });
+
+                  console.log(`Uploaded attachment: ${attachment.filename}`);
+                } catch (attError) {
+                  console.error(`Error processing attachment ${attachment.filename}:`, attError);
+                }
+              }
+            }
           }
         } catch (emailError) {
           console.error('Error processing email:', emailError);

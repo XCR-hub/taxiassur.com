@@ -30,6 +30,20 @@ interface ProspectDocument {
   notes?: string;
 }
 
+interface EmailAttachment {
+  id: string;
+  file_name: string;
+  file_type: string;
+  file_size: number;
+  download_url: string;
+  storage_path: string;
+  auto_detected_type?: string;
+  confidence_score?: number;
+  classification_status: string;
+  created_at: string;
+  email_message_id: string;
+}
+
 interface DocumentChecklistPanelV2Props {
   leadId: string;
   leadEmail: string;
@@ -59,6 +73,7 @@ export function DocumentChecklistPanelV2({
 }: DocumentChecklistPanelV2Props) {
   const [checklist, setChecklist] = useState<DocumentChecklist>({});
   const [prospectDocuments, setProspectDocuments] = useState<ProspectDocument[]>([]);
+  const [emailAttachments, setEmailAttachments] = useState<EmailAttachment[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState('');
@@ -67,7 +82,7 @@ export function DocumentChecklistPanelV2({
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const [leadResult, docsResult] = await Promise.all([
+      const [leadResult, docsResult, attachmentsResult] = await Promise.all([
         supabase
           .from('crm_leads')
           .select('document_checklist, documents_complete')
@@ -77,7 +92,12 @@ export function DocumentChecklistPanelV2({
           .from('prospect_documents')
           .select('*')
           .eq('lead_id', leadId)
-          .order('uploaded_at', { ascending: false })
+          .order('uploaded_at', { ascending: false }),
+        supabase
+          .from('email_attachments')
+          .select('*')
+          .eq('lead_id', leadId)
+          .order('created_at', { ascending: false })
       ]);
 
       if (leadResult.data?.document_checklist) {
@@ -86,6 +106,10 @@ export function DocumentChecklistPanelV2({
 
       if (docsResult.data) {
         setProspectDocuments(docsResult.data);
+      }
+
+      if (attachmentsResult.data) {
+        setEmailAttachments(attachmentsResult.data);
       }
 
       if (leadResult.data?.documents_complete && onDocumentsComplete) {
@@ -448,6 +472,86 @@ export function DocumentChecklistPanelV2({
           );
         })}
       </div>
+
+      {emailAttachments.length > 0 && (
+        <div className="border-t border-gray-700">
+          <div className="bg-gray-700/30 p-3 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium text-gray-300">📨 Panier de Documents</span>
+              <span className="px-2 py-0.5 bg-blue-500/20 text-blue-400 text-xs rounded-full">
+                {emailAttachments.filter(a => a.classification_status === 'pending').length} non classés
+              </span>
+            </div>
+            <span className="text-xs text-gray-500">
+              Glissez et classez les documents reçus par email ou autre canal.
+            </span>
+          </div>
+
+          <div className="p-4 space-y-2">
+            <div className="bg-gray-700/30 rounded-lg p-3 border-2 border-dashed border-gray-600">
+              <p className="text-xs text-gray-400 mb-3 text-center">Non classés</p>
+
+              {emailAttachments.filter(a => a.classification_status === 'pending').length === 0 ? (
+                <div className="text-center py-8">
+                  <FileText className="mx-auto text-gray-600 mb-2" size={32} />
+                  <p className="text-sm text-gray-500">Aucun document en attente</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {emailAttachments
+                    .filter(a => a.classification_status === 'pending')
+                    .map((attachment) => (
+                      <div
+                        key={attachment.id}
+                        className="bg-gray-800 rounded-lg p-3 border border-gray-700 hover:border-blue-500/50 transition-all cursor-move"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3 flex-1 min-w-0">
+                            <FileText className="text-blue-400 flex-shrink-0" size={20} />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-white truncate">
+                                {attachment.file_name}
+                              </p>
+                              <div className="flex items-center gap-2 mt-1">
+                                <span className="text-xs text-gray-500">
+                                  {(attachment.file_size / 1024).toFixed(1)} KB
+                                </span>
+                                {attachment.auto_detected_type && (
+                                  <span className="text-xs text-amber-400">
+                                    Suggéré: {DOCUMENT_TYPES.find(d => d.id === attachment.auto_detected_type)?.label || attachment.auto_detected_type}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 ml-2">
+                            <a
+                              href={attachment.download_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="p-1.5 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 rounded-lg transition-colors"
+                              title="Voir le document"
+                            >
+                              <Eye size={16} />
+                            </a>
+                            <a
+                              href={attachment.download_url}
+                              download={attachment.file_name}
+                              className="p-1.5 bg-gray-600/50 hover:bg-gray-600 text-gray-400 rounded-lg transition-colors"
+                              title="Télécharger"
+                            >
+                              <Download size={16} />
+                            </a>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {validated === 100 && (
         <div className="bg-green-500/10 border-t border-green-500/30 p-4">
