@@ -28,6 +28,14 @@ interface ProspectDocument {
   uploaded_at: string;
   status: string;
   notes?: string;
+  metadata?: {
+    download_url?: string;
+    email_id?: string;
+    email_subject?: string;
+    auto_classified?: boolean;
+    confidence?: number;
+    processed_at?: string;
+  };
 }
 
 interface EmailAttachment {
@@ -458,8 +466,7 @@ export function DocumentChecklistPanelV2({
                   {doc && (
                     <a
                       href={
-                        // Utiliser l'URL depuis metadata si disponible, sinon construire depuis file_path
-                        (doc as any).metadata?.download_url ||
+                        doc.metadata?.download_url ||
                         supabase.storage.from('email-attachments').getPublicUrl(doc.file_path).data.publicUrl
                       }
                       target="_blank"
