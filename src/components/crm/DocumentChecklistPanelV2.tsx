@@ -457,7 +457,11 @@ export function DocumentChecklistPanelV2({
 
                   {doc && (
                     <a
-                      href={supabase.storage.from('prospect-documents').getPublicUrl(doc.file_path).data.publicUrl}
+                      href={
+                        // Utiliser l'URL depuis metadata si disponible, sinon construire depuis file_path
+                        (doc as any).metadata?.download_url ||
+                        supabase.storage.from('email-attachments').getPublicUrl(doc.file_path).data.publicUrl
+                      }
                       target="_blank"
                       rel="noopener noreferrer"
                       className="p-1.5 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 rounded-lg transition-colors"
