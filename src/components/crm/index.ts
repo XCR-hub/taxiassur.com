@@ -25,3 +25,4 @@ export { DynamicCommercialWorkflow } from './DynamicCommercialWorkflow';
 export { LeadDeleteSecure } from './LeadDeleteSecure';
 export { default as DocumentBasket } from './DocumentBasket';
 export { CommunicationTimeline } from './CommunicationTimeline';
+export { default as DocumentValidationPanel } from './DocumentValidationPanel';

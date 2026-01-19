@@ -117,30 +117,39 @@ Deno.serve(async (req: Request) => {
 
     // Support both formats: direct payload or nested in "record"
     const notification = payload.record || payload;
+    const notificationType = payload.type || notification.type || 'upload';
     const leadId = notification.lead_id || payload.lead_id;
+    const leadEmail = payload.lead_email || notification.lead_email;
+    const leadName = payload.lead_name || notification.lead_name;
+    const accessToken = payload.access_token || notification.access_token;
     const contextData = notification.context_data || {};
 
-    if (!leadId) {
-      throw new Error("lead_id is required");
+    if (!leadId && !leadEmail) {
+      throw new Error("lead_id or lead_email is required");
     }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Get lead info from crm_leads
-    const { data: lead, error: leadError } = await supabase
-      .from('crm_leads')
-      .select('first_name, last_name, email, phone, city')
-      .eq('id', leadId)
-      .single();
+    // Get lead info from crm_leads (only if leadEmail not provided)
+    let lead = null;
+    if (leadId) {
+      const { data: leadData, error: leadError } = await supabase
+        .from('crm_leads')
+        .select('first_name, last_name, email, phone, city, access_token')
+        .eq('id', leadId)
+        .single();
 
-    if (leadError || !lead) {
-      console.error("[send-document-notification] Lead not found:", leadError);
-      throw new Error("Lead not found: " + leadError?.message);
+      if (leadError && notificationType === 'upload') {
+        console.error("[send-document-notification] Lead not found:", leadError);
+        throw new Error("Lead not found: " + leadError?.message);
+      }
+      lead = leadData;
     }
 
-    const leadName = `${lead.first_name || ''} ${lead.last_name || ''}`.trim() || lead.email;
+    const prospectName = leadName || (lead ? `${lead.first_name || ''} ${lead.last_name || ''}`.trim() : '') || leadEmail || 'Client';
+    const prospectEmail = leadEmail || lead?.email;
 
     const documentTypes: Record<string, string> = {
       licence_taxi: "Licence de taxi professionnelle",
@@ -152,11 +161,103 @@ Deno.serve(async (req: Request) => {
       rib: "RIB - Relevé d'Identité Bancaire",
     };
 
-    const documentType = contextData.document_type || 'piece_identite';
+    const documentType = payload.document_type || contextData.document_type || 'piece_identite';
     const fileName = contextData.file_name || 'Document.pdf';
     const documentTypeName = documentTypes[documentType] || documentType;
 
-    let emailBody = `
+    const rejectionReason = payload.rejection_reason || notification.rejection_reason;
+    const rejectionDetails = payload.rejection_details || notification.rejection_details;
+
+    let emailBody = '';
+    let emailSubject = '';
+    let recipientEmail = '';
+    let recipientName = '';
+
+    // Email de rejet envoyé au prospect
+    if (notificationType === 'rejection' && prospectEmail) {
+      recipientEmail = prospectEmail;
+      recipientName = prospectName;
+      emailSubject = `⚠️ Document à remplacer - ${documentTypeName}`;
+
+      const prospectSpaceUrl = `https://taxiassur.com/espace-prospect${accessToken ? '?token=' + accessToken : ''}`;
+
+      emailBody = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; background: #f3f4f6; padding: 20px; }
+          .container { max-width: 650px; margin: 0 auto; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+          .header { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; padding: 30px; text-align: center; }
+          .content { padding: 30px; }
+          .alert { background: #fef2f2; border-left: 4px solid #ef4444; padding: 15px; margin: 20px 0; }
+          .document-badge { background: #ef4444; color: white; padding: 10px 20px; border-radius: 20px; display: inline-block; margin: 15px 0; }
+          .info-box { background: #fef2f2; padding: 20px; border-radius: 8px; margin: 20px 0; border: 2px solid #fca5a5; }
+          .cta-button { background: #10b981; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; display: inline-block; font-weight: bold; margin-top: 20px; }
+          .footer { background: #1f2937; color: white; padding: 20px; text-align: center; font-size: 12px; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1 style="margin: 0; font-size: 28px;">⚠️ DOCUMENT À REMPLACER</h1>
+            <p style="margin: 10px 0 0 0;">TaxiAssur - Gestion de votre dossier</p>
+          </div>
+
+          <div class="content">
+            <p style="font-size: 16px; color: #1f2937;">Bonjour ${prospectName},</p>
+
+            <div class="alert">
+              <strong>⚠️ ACTION REQUISE :</strong> Votre document nécessite une correction
+            </div>
+
+            <h2 style="color: #1f2937; margin-top: 0;">Document concerné</h2>
+
+            <div class="document-badge">
+              📄 ${documentTypeName}
+            </div>
+
+            <div class="info-box">
+              <h3 style="color: #dc2626; margin-top: 0;">Motif du rejet :</h3>
+              <p style="font-size: 16px; font-weight: bold; color: #1f2937;">${rejectionReason}</p>
+              ${rejectionDetails ? `<p style="color: #4b5563; margin-top: 10px;">${rejectionDetails}</p>` : ''}
+            </div>
+
+            <h3 style="color: #1f2937;">📋 Que faire maintenant ?</h3>
+            <ol style="color: #4b5563; line-height: 1.8;">
+              <li>📸 Prenez une nouvelle photo ou scannez à nouveau le document</li>
+              <li>✅ Assurez-vous que le document est lisible et complet</li>
+              <li>📤 Retournez sur votre espace prospect pour uploader le nouveau document</li>
+              <li>⏱️ Nous traiterons votre nouveau document dans les plus brefs délais</li>
+            </ol>
+
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${prospectSpaceUrl}" class="cta-button">
+                📤 UPLOADER UN NOUVEAU DOCUMENT
+              </a>
+            </div>
+
+            <p style="color: #6b7280; font-size: 14px; margin-top: 30px;">
+              💡 <strong>Besoin d'aide ?</strong> Répondez simplement à cet email et notre équipe vous assistera.
+            </p>
+          </div>
+
+          <div class="footer">
+            <strong>TaxiAssur</strong><br>
+            Votre partenaire assurance taxi de confiance
+          </div>
+        </div>
+      </body>
+      </html>
+      `;
+    } else {
+      // Email de notification d'upload envoyé aux admins
+      recipientEmail = 'team@taxiassur.com';
+      recipientName = 'Équipe TaxiAssur';
+      emailSubject = `📄 Nouveau document : ${documentTypeName} - ${prospectName}`;
+
+      emailBody = `
       <!DOCTYPE html>
       <html>
       <head>
@@ -192,10 +293,10 @@ Deno.serve(async (req: Request) => {
             </div>
             
             <div class="info-box">
-              <p><strong>Prospect :</strong> ${leadName}</p>
-              <p><strong>Email :</strong> ${lead.email}</p>
-              <p><strong>Téléphone :</strong> ${lead.phone || 'Non renseigné'}</p>
-              <p><strong>Ville :</strong> ${lead.city || 'Non renseignée'}</p>
+              <p><strong>Prospect :</strong> ${prospectName}</p>
+              <p><strong>Email :</strong> ${prospectEmail}</p>
+              <p><strong>Téléphone :</strong> ${lead?.phone || 'Non renseigné'}</p>
+              <p><strong>Ville :</strong> ${lead?.city || 'Non renseignée'}</p>
               <p><strong>Nom du fichier :</strong> ${fileName}</p>
             </div>
             
@@ -221,27 +322,27 @@ Deno.serve(async (req: Request) => {
         </div>
       </body>
       </html>
-    `;
+      `;
+    }
 
     // Send email via SMTP
-    const emailSubject = `📄 Nouveau document : ${documentTypeName} - ${leadName}`;
-
     await sendEmailSMTP(
-      'team@taxiassur.com',
-      'Équipe TaxiAssur',
+      recipientEmail,
+      recipientName,
       emailSubject,
       emailBody,
       'team@taxiassur.com',
-      'TaxiAssur Notifications'
+      'TaxiAssur'
     );
 
-    console.log(`✅ Email notification document envoyé pour ${leadName}`);
+    console.log(`✅ Email notification ${notificationType} envoyé à ${recipientEmail}`);
 
     return new Response(
       JSON.stringify({
         success: true,
         message: "Notification envoyée",
-        tracking_id: trackingId
+        type: notificationType,
+        recipient: recipientEmail
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

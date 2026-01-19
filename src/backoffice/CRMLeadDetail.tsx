@@ -51,6 +51,7 @@ import {
   PendingAttachmentsPanel,
   LeadQuotesManager,
   DocumentValidationManager,
+  DocumentValidationPanel,
   DownPaymentManager,
   DynamicCommercialWorkflow,
   LeadDeleteSecure,
@@ -856,14 +857,13 @@ const CRMLeadDetail: React.FC = () => {
                   onAttachmentClassified={() => loadLeadData(lead.id)}
                 />
 
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-                  <h2 className="text-xl font-bold mb-4">Validation des Documents</h2>
-                  <p className="text-sm text-gray-600 mb-4">
-                    Validez ou refusez les documents uploadés par le prospect avec des motifs détaillés.
-                  </p>
-                  <DocumentValidationManager
+                <div className="mb-6">
+                  <DocumentValidationPanel
                     leadId={lead.id}
-                    onValidationChange={() => loadLeadData(lead.id)}
+                    onValidationChange={() => {
+                      loadLeadData(lead.id);
+                      loadStats(lead.id);
+                    }}
                   />
                 </div>
 
