@@ -50,40 +50,102 @@ function decodeMimeHeader(header: string): string {
   });
 }
 
-function extractEmailContent(raw: string): { text: string; html: string } {
+interface EmailAttachment {
+  filename: string;
+  contentType: string;
+  size: number;
+  data: Uint8Array;
+}
+
+function extractEmailContent(raw: string): { text: string; html: string; attachments: EmailAttachment[] } {
   let text = '', html = '';
-  
+  const attachments: EmailAttachment[] = [];
+
   const getCharset = (part: string): string => {
     const match = part.match(/charset="?([^"\s;]+)"?/i);
     return match ? match[1].toLowerCase() : 'utf-8';
   };
-  
+
+  const getFilename = (part: string): string | null => {
+    const dispositionMatch = part.match(/Content-Disposition:.*filename="?([^";\r\n]+)"?/i);
+    if (dispositionMatch) return decodeMimeHeader(dispositionMatch[1].trim());
+
+    const typeMatch = part.match(/Content-Type:.*name="?([^";\r\n]+)"?/i);
+    if (typeMatch) return decodeMimeHeader(typeMatch[1].trim());
+
+    return null;
+  };
+
+  const getContentType = (part: string): string => {
+    const match = part.match(/Content-Type:\s*([^;\r\n]+)/i);
+    return match ? match[1].trim().toLowerCase() : 'application/octet-stream';
+  };
+
+  const isAttachment = (part: string): boolean => {
+    return /Content-Disposition:.*attachment/i.test(part) ||
+           (/Content-Type:\s*(?!text\/(?:plain|html))/i.test(part) && getFilename(part) !== null);
+  };
+
   const boundaryMatch = raw.match(/boundary="?([^"\s;]+)"?/i);
-  
+
   if (boundaryMatch) {
     const boundary = boundaryMatch[1];
     const regex = new RegExp(`--${boundary.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'g');
     const parts = raw.split(regex);
-    
+
     for (const part of parts) {
       if (part.includes('--') && part.trim().length < 5) continue;
-      
+
+      const bodyStart = part.indexOf('\r\n\r\n');
+      if (bodyStart === -1) continue;
+
+      // Extraire les pièces jointes
+      if (isAttachment(part)) {
+        const filename = getFilename(part);
+        if (filename) {
+          const contentType = getContentType(part);
+          const isB64 = /Content-Transfer-Encoding:\s*base64/i.test(part);
+
+          let content = part.substring(bodyStart + 4).trim();
+          const endBoundary = content.lastIndexOf('\r\n--');
+          if (endBoundary > 0) content = content.substring(0, endBoundary);
+
+          if (isB64) {
+            try {
+              const binary = atob(content.replace(/\s/g, ''));
+              const bytes = new Uint8Array(binary.length);
+              for (let i = 0; i < binary.length; i++) {
+                bytes[i] = binary.charCodeAt(i);
+              }
+
+              attachments.push({
+                filename,
+                contentType,
+                size: bytes.length,
+                data: bytes
+              });
+            } catch (e) {
+              console.error('Error decoding attachment:', filename, e);
+            }
+          }
+        }
+        continue;
+      }
+
+      // Extraire le texte/HTML comme avant
       const charset = getCharset(part);
       const isQP = /Content-Transfer-Encoding:\s*quoted-printable/i.test(part);
       const isB64 = /Content-Transfer-Encoding:\s*base64/i.test(part);
       const isHtml = /Content-Type:\s*text\/html/i.test(part);
       const isText = /Content-Type:\s*text\/plain/i.test(part);
-      
-      const bodyStart = part.indexOf('\r\n\r\n');
-      if (bodyStart === -1) continue;
-      
+
       let content = part.substring(bodyStart + 4).trim();
       const endBoundary = content.lastIndexOf('\r\n--');
       if (endBoundary > 0) content = content.substring(0, endBoundary);
-      
+
       if (isQP) content = decodeQuotedPrintable(content, charset);
       else if (isB64) content = decodeBase64(content, charset);
-      
+
       if (isHtml && !html) html = content;
       else if (isText && !text) text = content;
     }
@@ -92,17 +154,17 @@ function extractEmailContent(raw: string): { text: string; html: string } {
     const isQP = /Content-Transfer-Encoding:\s*quoted-printable/i.test(raw);
     const isB64 = /Content-Transfer-Encoding:\s*base64/i.test(raw);
     const isHtml = /Content-Type:\s*text\/html/i.test(raw);
-    
+
     let content = raw;
     const bodyStart = raw.indexOf('\r\n\r\n');
     if (bodyStart !== -1) content = raw.substring(bodyStart + 4);
-    
+
     if (isQP) content = decodeQuotedPrintable(content, charset);
     else if (isB64) content = decodeBase64(content, charset);
-    
+
     if (isHtml) html = content; else text = content;
   }
-  
+
   if (html && !text) {
     text = html.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
                .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
@@ -116,8 +178,8 @@ function extractEmailContent(raw: string): { text: string; html: string } {
                .replace(/\s+/g, ' ')
                .trim();
   }
-  
-  return { text, html };
+
+  return { text, html, attachments };
 }
 
 class IMAPClient {
@@ -203,13 +265,13 @@ class IMAPClient {
     return emails;
   }
 
-  async fetchFullEmail(seq: number): Promise<{ text: string; html: string }> {
+  async fetchFullEmail(seq: number): Promise<{ text: string; html: string; attachments: EmailAttachment[] }> {
     try {
       const response = await this.sendCommand(`FETCH ${seq} BODY.PEEK[]`);
       const bodyMatch = response.match(/BODY\[\]\s*\{(\d+)\}\r\n([\s\S]*)/);
       if (bodyMatch) return extractEmailContent(bodyMatch[2]);
-      return { text: '', html: '' };
-    } catch { return { text: '', html: '' }; }
+      return { text: '', html: '', attachments: [] };
+    } catch { return { text: '', html: '', attachments: [] }; }
   }
 
   async logout(): Promise<void> { try { await this.sendCommand('LOGOUT'); } catch {} await this.close(); }
@@ -260,9 +322,39 @@ Deno.serve(async (req) => {
         try { const d = new Date(email.date); receivedAt = isNaN(d.getTime()) ? new Date().toISOString() : d.toISOString(); }
         catch { receivedAt = new Date().toISOString(); }
 
-        const { text, html } = await imap.fetchFullEmail(email.seq);
+        const { text, html, attachments } = await imap.fetchFullEmail(email.seq);
 
-        const { error } = await supabase.from('email_messages').insert({
+        // Uploader les pièces jointes et préparer les métadonnées
+        const attachmentsMetadata = [];
+        for (const attachment of attachments) {
+          try {
+            const fileName = `${account.id}/${Date.now()}_${attachment.filename}`;
+            const { error: uploadError } = await supabase.storage
+              .from('email-attachments')
+              .upload(fileName, attachment.data, {
+                contentType: attachment.contentType,
+                upsert: false
+              });
+
+            if (!uploadError) {
+              const { data: urlData } = supabase.storage
+                .from('email-attachments')
+                .getPublicUrl(fileName);
+
+              attachmentsMetadata.push({
+                filename: attachment.filename,
+                contentType: attachment.contentType,
+                size: attachment.size,
+                path: fileName,
+                url: urlData.publicUrl
+              });
+            }
+          } catch (attachError) {
+            console.error('Error uploading attachment:', attachment.filename, attachError);
+          }
+        }
+
+        const { data: insertedEmail, error } = await supabase.from('email_messages').insert({
           account_id: account.id,
           message_id: email.uid,
           from_email: fromMatch?.[2]?.trim() || email.from,
@@ -276,8 +368,28 @@ Deno.serve(async (req) => {
           status: 'received',
           provider: 'ionos-imap',
           is_read: false,
-        });
-        if (error) stats.errors++; else stats.inserted++;
+          attachments: attachmentsMetadata
+        }).select().single();
+
+        if (error) {
+          stats.errors++;
+        } else {
+          stats.inserted++;
+
+          // Créer les entrées email_attachments pour chaque pièce jointe
+          if (insertedEmail && attachmentsMetadata.length > 0) {
+            for (const att of attachmentsMetadata) {
+              await supabase.from('email_attachments').insert({
+                email_message_id: insertedEmail.id,
+                filename: att.filename,
+                content_type: att.contentType,
+                file_size: att.size,
+                storage_path: att.path,
+                status: 'pending_validation'
+              });
+            }
+          }
+        }
       }
     }
 
