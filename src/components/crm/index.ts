@@ -26,3 +26,6 @@ export { LeadDeleteSecure } from './LeadDeleteSecure';
 export { default as DocumentBasket } from './DocumentBasket';
 export { CommunicationTimeline } from './CommunicationTimeline';
 export { default as DocumentValidationPanel } from './DocumentValidationPanel';
+export { default as PaymentManager } from './PaymentManager';
+export { default as ContractSignatureManager } from './ContractSignatureManager';
+export { default as PipelineLocksStatus } from './PipelineLocksStatus';

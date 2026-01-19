@@ -56,7 +56,10 @@ import {
   DynamicCommercialWorkflow,
   LeadDeleteSecure,
   DocumentBasket,
-  CommunicationTimeline
+  CommunicationTimeline,
+  PaymentManager,
+  ContractSignatureManager,
+  PipelineLocksStatus
 } from '@/components/crm';
 import type { WorkflowTab } from '@/components/crm';
 
@@ -891,6 +894,8 @@ const CRMLeadDetail: React.FC = () => {
 
             {activeTab === 'contract' && (
               <div className="space-y-6">
+                <PipelineLocksStatus leadId={lead.id} />
+
                 <DownPaymentManager
                   contractId={contractData?.id || ''}
                   leadId={lead.id}
@@ -905,8 +910,19 @@ const CRMLeadDetail: React.FC = () => {
                   }}
                 />
 
+                <PaymentManager
+                  leadId={lead.id}
+                  onUpdate={() => loadLeadData(lead.id)}
+                />
+
+                <ContractSignatureManager
+                  leadId={lead.id}
+                  onUpdate={() => loadLeadData(lead.id)}
+                />
+
                 {(!contractData?.requires_down_payment || contractData?.down_payment_status === 'paid') && (
                   <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <h3 className="text-lg font-bold text-gray-900 mb-4">Signature électronique (ancien système)</h3>
                     <ElectronicSignature
                       leadId={lead.id}
                       leadName={`${lead.first_name} ${lead.last_name}`.trim()}
@@ -921,7 +937,7 @@ const CRMLeadDetail: React.FC = () => {
                     <div className="flex items-start gap-3">
                       <AlertCircle className="w-6 h-6 text-yellow-600 flex-shrink-0 mt-0.5" />
                       <div>
-                        <h3 className="font-semibold text-yellow-900 mb-1">Signature bloquee</h3>
+                        <h3 className="font-semibold text-yellow-900 mb-1">Signature bloquee (ancien système)</h3>
                         <p className="text-sm text-yellow-800">
                           Le client doit d'abord regler le comptant de {contractData?.down_payment_amount?.toFixed(2)} EUR avant de pouvoir signer le contrat.
                         </p>
