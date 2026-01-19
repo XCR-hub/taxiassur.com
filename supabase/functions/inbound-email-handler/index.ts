@@ -121,18 +121,122 @@ Deno.serve(async (req: Request) => {
 
     console.log('💾 Conversation enregistrée:', conversation.id);
 
-    // Enregistrer dans crm_interactions pour le CRM
-    await supabase.from('crm_interactions').insert({
-      lead_id: contact.id,
-      type: 'email',
-      direction: 'inbound',
-      subject: subject,
-      content: content,
-      from_email: senderEmail,
-      to_email: recipientEmail,
-      brevo_message_id: payload.messageId
-    });
-    console.log('✅ Interaction CRM enregistrée');
+    // PARSER AUTOMATIQUE DES EMAILS DU FORMULAIRE TAXIASSUR
+    if (senderEmail === 'noreply@taxiassur.com' && subject.includes('[TAXIASSUR]')) {
+      console.log('🎯 Email de formulaire détecté - Parsing automatique...');
+
+      try {
+        // Parser le contenu du formulaire
+        const nameMatch = content.match(/Nom complet\s*[:\-]\s*([^\n]+)/i);
+        const emailMatch = content.match(/Email\s*[:\-]\s*([^\s\n]+)/i);
+        const phoneMatch = content.match(/Téléphone\s*[:\-]\s*([^\s\n]+)/i);
+        const cityMatch = content.match(/Ville d'activité\s*[:\-]\s*([^\n]+)/i);
+        const statusMatch = content.match(/Statut professionnel\s*[:\-]\s*([^\n]+)/i);
+
+        if (nameMatch && emailMatch) {
+          const fullName = nameMatch[1].trim();
+          const nameParts = fullName.split(' ');
+          const firstName = nameParts[0];
+          const lastName = nameParts.slice(1).join(' ');
+          const leadEmail = emailMatch[1].trim();
+          const phone = phoneMatch ? phoneMatch[1].trim() : '';
+          const city = cityMatch ? cityMatch[1].trim() : '';
+          const status = statusMatch ? statusMatch[1].trim() : '';
+
+          console.log('📋 Informations extraites:', { firstName, lastName, leadEmail, phone, city });
+
+          // Vérifier si le lead existe déjà
+          const { data: existingLead } = await supabase
+            .from('crm_leads')
+            .select('id')
+            .eq('email', leadEmail)
+            .maybeSingle();
+
+          if (!existingLead) {
+            // Créer le lead automatiquement
+            const { data: newLead, error: leadError } = await supabase
+              .from('crm_leads')
+              .insert({
+                first_name: firstName,
+                last_name: lastName,
+                email: leadEmail,
+                phone: phone,
+                city: city,
+                status: 'NEW_LEAD',
+                source: 'formulaire_web',
+                internal_notes: `Statut: ${status}\n\nEmail de formulaire reçu le ${new Date().toLocaleString('fr-FR')}`,
+                lead_score: 50,
+                documents_complete: false
+              })
+              .select()
+              .single();
+
+            if (leadError) {
+              console.error('❌ Erreur création lead:', leadError);
+            } else {
+              console.log('✅ Lead créé automatiquement:', newLead.id);
+
+              // Lier la conversation au lead
+              await supabase
+                .from('email_conversations')
+                .update({ lead_id: newLead.id })
+                .eq('id', conversation.id);
+
+              // Créer interaction CRM
+              await supabase.from('crm_interactions').insert({
+                lead_id: newLead.id,
+                type: 'email',
+                direction: 'inbound',
+                subject: subject,
+                content: content,
+                from_email: leadEmail,
+                to_email: recipientEmail,
+                brevo_message_id: payload.messageId
+              });
+
+              console.log('✅ Lead créé et lié à la conversation');
+            }
+          } else {
+            console.log('ℹ️ Lead existe déjà:', existingLead.id);
+
+            // Lier la conversation au lead existant
+            await supabase
+              .from('email_conversations')
+              .update({ lead_id: existingLead.id })
+              .eq('id', conversation.id);
+
+            // Créer interaction CRM
+            await supabase.from('crm_interactions').insert({
+              lead_id: existingLead.id,
+              type: 'email',
+              direction: 'inbound',
+              subject: subject,
+              content: content,
+              from_email: leadEmail,
+              to_email: recipientEmail,
+              brevo_message_id: payload.messageId
+            });
+          }
+        } else {
+          console.log('⚠️ Impossible d\'extraire les informations du formulaire');
+        }
+      } catch (parseError) {
+        console.error('⚠️ Erreur parsing formulaire:', parseError);
+      }
+    } else {
+      // Pour les autres emails, enregistrer interaction avec le contact_id
+      await supabase.from('crm_interactions').insert({
+        lead_id: contact.id,
+        type: 'email',
+        direction: 'inbound',
+        subject: subject,
+        content: content,
+        from_email: senderEmail,
+        to_email: recipientEmail,
+        brevo_message_id: payload.messageId
+      });
+      console.log('✅ Interaction CRM enregistrée');
+    }
 
     // Étape 3: Appeler l'IA Classifier de manière asynchrone
     const classifierUrl = `${supabaseUrl}/functions/v1/ai-email-classifier`;
