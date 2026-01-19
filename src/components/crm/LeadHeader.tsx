@@ -48,37 +48,26 @@ const PIPELINE_STEPS = [
   { key: 'client', label: 'Client', order: 6 }
 ];
 
-// Mapping des statuts détaillés vers les étapes simplifiées
+// Mapping des statuts vers les étapes simplifiées (affichage visuel)
 const STATUS_TO_PIPELINE_STEP: Record<string, string> = {
-  // Étape 1: Nouveau
-  'NEW_LEAD': 'new',
+  // 📋 LES 7 ÉTAPES DU PIPELINE SIMPLIFIÉ
+  'NOUVEAU_LEAD': 'new',                 // 1️⃣ Nouveau
+  'COLLECTE_DOCUMENTS': 'documents',     // 2️⃣ Documents
+  'DEVIS': 'devis',                      // 3️⃣ Devis
+  'DECISION_CLIENT': 'devis',            // 4️⃣ Décision (après devis)
+  'PAIEMENT': 'signature',               // 5️⃣ Paiement (avant signature)
+  'CONTRAT_SIGNATURE': 'signature',      // 6️⃣ Signature
+  'CLIENT_ACTIF': 'client',              // 7️⃣ Client
 
-  // Étape 2: Contact
-  'PREMIER_CONTACT': 'contact',
-  'RELANCE': 'contact',
+  // ⚫ STATUTS SPÉCIAUX
+  'RELANCE': 'contact',                  // Relance = contact en cours
+  'PERDU': 'contact',                    // Perdu
+  'RECONTACT_PROGRAMME': 'contact',      // Recontact futur
 
-  // Étape 3: Documents
-  'COLLECTE_DOCUMENTS': 'documents',
-  'DOCUMENTS_COMPLEMENTAIRES': 'documents',
-  'PRET_DEVIS': 'documents',
-
-  // Étape 4: Devis
-  'DEVIS_EN_COURS': 'devis',
-  'NEGOCIATION': 'devis',
-
-  // Étape 5: Signature
-  'SIGNATURE_EN_COURS': 'signature',
-  'PAIEMENT_EN_ATTENTE': 'signature',
-
-  // Étape 6: Client
-  'CLIENT_ACTIF': 'client',
+  // 🔄 GESTION CLIENT
   'CROSS_SELLING': 'client',
-
-  // Statuts spéciaux
-  'PERDU': 'contact',
-  'RECONTACT_PROGRAMME': 'contact',
   'RISK_CHURN': 'client',
-  'SINISTER': 'client',
+  'SINISTRE': 'client',
   'ATTESTATION_REQUEST': 'client',
   'SUPPORT_ASSISTANCE': 'client'
 };

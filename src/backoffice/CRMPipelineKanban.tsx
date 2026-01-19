@@ -193,30 +193,21 @@ const CRMPipelineKanban: React.FC = () => {
     return filtered;
   }, [kanbanData, debouncedSearch]);
 
-  // 🎯 COLONNES DU PIPELINE TAXIASSUR UNIFIÉ
+  // 🎯 PIPELINE TAXIASSUR SIMPLIFIÉ - 7 ÉTAPES
   const visibleStatuses: PipelineStatus[] = [
-    // 🔵 Phase Prospection
-    'NEW_LEAD',
-    'PREMIER_CONTACT',
-    'RELANCE',
+    // 📋 LES 7 ÉTAPES PRINCIPALES
+    'NOUVEAU_LEAD',          // 1️⃣ Demande reçue
+    'COLLECTE_DOCUMENTS',     // 2️⃣ Documents obligatoires + complémentaires
+    'DEVIS',                  // 3️⃣ Devis envoyé
+    'DECISION_CLIENT',        // 4️⃣ Accepté / Refusé / Inactif
+    'PAIEMENT',               // 5️⃣ CB/Prélèvement (compagnie ou TaxiAssur)
+    'CONTRAT_SIGNATURE',      // 6️⃣ Signature électronique
+    'CLIENT_ACTIF',           // 7️⃣ Espace client actif
 
-    // 🟡 Phase Qualification
-    'COLLECTE_DOCUMENTS',
-    'DOCUMENTS_COMPLEMENTAIRES',
-    'PRET_DEVIS',
-
-    // 🟠 Phase Commerciale
-    'DEVIS_EN_COURS',
-    'NEGOCIATION',
-
-    // 🟢 Phase Contractuelle
-    'SIGNATURE_EN_COURS',
-    'PAIEMENT_EN_ATTENTE',
-    'CLIENT_ACTIF',
-
-    // ⚫ Statuts spéciaux
-    'PERDU',
-    'RECONTACT_PROGRAMME'
+    // ⚫ STATUTS SPÉCIAUX (dernières colonnes)
+    'RELANCE',                // Relances nécessaires
+    'PERDU',                  // Perdus définitifs
+    'RECONTACT_PROGRAMME'     // Recontacts futurs
   ];
 
   const statistics = useMemo(() => {
