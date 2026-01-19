@@ -119,7 +119,7 @@ Deno.serve(async (req: Request) => {
               .from('crm_lead_documents')
               .select('id')
               .eq('lead_id', leadId)
-              .eq('original_filename', filename)
+              .eq('file_name', filename)
               .maybeSingle();
 
             if (existingDoc) {
@@ -134,18 +134,17 @@ Deno.serve(async (req: Request) => {
                 lead_id: leadId,
                 document_type: classification.type,
                 file_name: filename,
-                file_url: attachment.url || attachment.download_url || null,
-                storage_path: attachment.path || null,
+                file_path: attachment.path || null,
                 file_size: attachment.size || 0,
                 mime_type: attachment.contentType || attachment.mime_type || 'application/octet-stream',
-                upload_source: 'email',
-                validation_status: 'pending',
+                status: 'pending',
                 metadata: {
                   email_id: email.id,
                   email_subject: email.subject,
                   auto_classified: true,
                   confidence: classification.confidence,
-                  processed_at: new Date().toISOString()
+                  processed_at: new Date().toISOString(),
+                  download_url: attachment.url
                 }
               })
               .select()
@@ -153,6 +152,7 @@ Deno.serve(async (req: Request) => {
 
             if (docError) {
               console.error(`❌ Erreur création document ${filename}:`, docError);
+              console.error('Détails:', JSON.stringify(docError, null, 2));
               errors++;
               continue;
             }
@@ -161,18 +161,18 @@ Deno.serve(async (req: Request) => {
             await supabase.from('crm_lead_documents').insert({
               lead_id: leadId,
               document_type: classification.type,
-              original_filename: filename,
-              storage_path: attachment.path || null,
+              file_name: filename,
+              file_path: attachment.path || null,
               file_size: attachment.size || 0,
               mime_type: attachment.contentType || attachment.mime_type || 'application/octet-stream',
-              upload_date: new Date().toISOString(),
-              upload_source: 'email_auto',
-              validation_status: 'pending',
-              auto_classified: true,
-              classification_confidence: classification.confidence,
+              uploaded_at: new Date().toISOString(),
+              status: 'pending',
               metadata: {
                 email_id: email.id,
-                prospect_document_id: doc.id
+                prospect_document_id: doc.id,
+                auto_classified: true,
+                classification_confidence: classification.confidence,
+                download_url: attachment.url
               }
             });
 
