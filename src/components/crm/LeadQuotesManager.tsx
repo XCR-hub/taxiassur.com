@@ -260,7 +260,7 @@ export default function LeadQuotesManager({ leadId }: Props) {
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-3">
-                      <span className="font-medium">{company.name}</span>
+                      <span className="font-medium text-gray-900">{company.name}</span>
                       {getStatusBadge(status)}
                     </div>
 
