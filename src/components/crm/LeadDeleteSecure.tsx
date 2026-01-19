@@ -142,7 +142,7 @@ export const LeadDeleteSecure: React.FC<Props> = ({ leadId, leadName, leadEmail 
                   value={confirmText}
                   onChange={(e) => setConfirmText(e.target.value)}
                   placeholder="SUPPRIMER"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 font-mono"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 font-mono text-gray-900 placeholder-gray-400 bg-white"
                 />
               </div>
             </div>
