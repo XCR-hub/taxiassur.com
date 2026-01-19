@@ -120,11 +120,11 @@ export function DocumentChecklistPanelV2({
     } finally {
       setLoading(false);
     }
-  }, [leadId, onDocumentsComplete]);
+  }, [leadId]);
 
   useEffect(() => {
     loadData();
-  }, [loadData]);
+  }, [leadId]);
 
   const getDocumentStatus = (docType: string): DocumentStatus => {
     const checklistStatus = checklist[docType];
