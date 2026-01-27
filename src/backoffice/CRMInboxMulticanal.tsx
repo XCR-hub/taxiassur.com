@@ -22,6 +22,11 @@ import {
   Clock,
   Link as LinkIcon,
   X,
+  Trash2,
+  ArchiveX,
+  FolderPlus,
+  Folder,
+  RotateCcw,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
@@ -42,6 +47,20 @@ interface EmailMessage {
   lead_id: string | null;
   attachments: any[];
   auto_matched: boolean;
+  email_status?: 'active' | 'archived' | 'deleted' | 'spam';
+  folder_id?: string | null;
+  deleted_at?: string | null;
+  archived_at?: string | null;
+}
+
+interface EmailFolder {
+  id: string;
+  name: string;
+  icon: string;
+  color: string;
+  is_system: boolean;
+  display_order: number;
+  parent_folder_id: string | null;
 }
 
 interface ExtractedLeadInfo {
@@ -698,6 +717,109 @@ const CRMInboxMulticanal: React.FC = () => {
     }
   };
 
+  // Archiver un email
+  const archiveEmail = async (emailId: string) => {
+    try {
+      const { data, error } = await supabase.rpc('archive_email', {
+        p_email_id: emailId
+      });
+
+      if (error) throw error;
+
+      await loadMessages();
+      await loadStats();
+      setSelectedMessage(null);
+
+      setSyncMessage('✅ Email archivé avec succès !');
+      setSyncStatus('success');
+      setTimeout(() => {
+        setSyncStatus('idle');
+        setSyncMessage('');
+      }, 3000);
+    } catch (error) {
+      console.error('Error archiving email:', error);
+      alert('❌ Erreur lors de l\'archivage de l\'email');
+    }
+  };
+
+  // Supprimer un email (corbeille)
+  const deleteEmail = async (emailId: string) => {
+    if (!confirm('Mettre cet email à la corbeille ?')) return;
+
+    try {
+      const { data, error } = await supabase.rpc('delete_email', {
+        p_email_id: emailId
+      });
+
+      if (error) throw error;
+
+      await loadMessages();
+      await loadStats();
+      setSelectedMessage(null);
+
+      setSyncMessage('✅ Email mis à la corbeille !');
+      setSyncStatus('success');
+      setTimeout(() => {
+        setSyncStatus('idle');
+        setSyncMessage('');
+      }, 3000);
+    } catch (error) {
+      console.error('Error deleting email:', error);
+      alert('❌ Erreur lors de la suppression de l\'email');
+    }
+  };
+
+  // Marquer comme spam
+  const markEmailAsSpam = async (emailId: string) => {
+    if (!confirm('Marquer cet email comme spam ?')) return;
+
+    try {
+      const { data, error } = await supabase.rpc('mark_as_spam', {
+        p_email_id: emailId
+      });
+
+      if (error) throw error;
+
+      await loadMessages();
+      await loadStats();
+      setSelectedMessage(null);
+
+      setSyncMessage('✅ Email marqué comme spam !');
+      setSyncStatus('success');
+      setTimeout(() => {
+        setSyncStatus('idle');
+        setSyncMessage('');
+      }, 3000);
+    } catch (error) {
+      console.error('Error marking as spam:', error);
+      alert('❌ Erreur lors du marquage comme spam');
+    }
+  };
+
+  // Restaurer un email
+  const restoreEmail = async (emailId: string) => {
+    try {
+      const { data, error } = await supabase.rpc('restore_email', {
+        p_email_id: emailId
+      });
+
+      if (error) throw error;
+
+      await loadMessages();
+      await loadStats();
+
+      setSyncMessage('✅ Email restauré !');
+      setSyncStatus('success');
+      setTimeout(() => {
+        setSyncStatus('idle');
+        setSyncMessage('');
+      }, 3000);
+    } catch (error) {
+      console.error('Error restoring email:', error);
+      alert('❌ Erreur lors de la restauration');
+    }
+  };
+
   // Ouvrir la modal d'assignation manuelle
   const openAssignModal = () => {
     if (!selectedMessage) return;
@@ -1134,7 +1256,14 @@ const CRMInboxMulticanal: React.FC = () => {
       </div>
 
       {selectedMessage && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-6">
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-6"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setSelectedMessage(null);
+            }
+          }}
+        >
           <div className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
             <div className="sticky top-0 bg-white border-b-2 border-gray-200 p-6">
               <div className="flex items-center justify-between mb-4">
@@ -1213,6 +1342,7 @@ const CRMInboxMulticanal: React.FC = () => {
                       toggleStar(selectedMessage.id, selectedMessage.is_starred)
                     }
                     className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                    title={selectedMessage.is_starred ? "Retirer des favoris" : "Ajouter aux favoris"}
                   >
                     <Star
                       size={20}
@@ -1222,6 +1352,60 @@ const CRMInboxMulticanal: React.FC = () => {
                           : 'text-gray-400'
                       }
                     />
+                  </button>
+
+                  {/* Actions email type Outlook */}
+                  <div className="flex items-center gap-1 border-l pl-2 ml-2">
+                    {selectedMessage.email_status === 'deleted' ? (
+                      <button
+                        onClick={() => restoreEmail(selectedMessage.id)}
+                        className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-green-600"
+                        title="Restaurer"
+                      >
+                        <RotateCcw size={20} />
+                      </button>
+                    ) : selectedMessage.email_status === 'archived' ? (
+                      <button
+                        onClick={() => restoreEmail(selectedMessage.id)}
+                        className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-blue-600"
+                        title="Désarchiver"
+                      >
+                        <ArchiveX size={20} />
+                      </button>
+                    ) : (
+                      <>
+                        <button
+                          onClick={() => archiveEmail(selectedMessage.id)}
+                          className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-600"
+                          title="Archiver"
+                        >
+                          <Archive size={20} />
+                        </button>
+                        <button
+                          onClick={() => deleteEmail(selectedMessage.id)}
+                          className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-red-600"
+                          title="Supprimer"
+                        >
+                          <Trash2 size={20} />
+                        </button>
+                        <button
+                          onClick={() => markEmailAsSpam(selectedMessage.id)}
+                          className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-orange-600"
+                          title="Marquer comme spam"
+                        >
+                          <AlertTriangle size={20} />
+                        </button>
+                      </>
+                    )}
+                  </div>
+
+                  {/* Bouton X pour fermer */}
+                  <button
+                    onClick={() => setSelectedMessage(null)}
+                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-500 hover:text-gray-700 ml-2"
+                    title="Fermer"
+                  >
+                    <X size={24} />
                   </button>
                 </div>
               </div>
@@ -1309,7 +1493,14 @@ const CRMInboxMulticanal: React.FC = () => {
 
       {/* Modal d'assignation manuelle */}
       {showAssignModal && selectedMessage && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-6">
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-6"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowAssignModal(false);
+            }
+          }}
+        >
           <div className="bg-white rounded-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
             {/* Header */}
             <div className="sticky top-0 bg-white border-b-2 border-gray-200 p-6">
