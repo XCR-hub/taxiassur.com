@@ -124,21 +124,21 @@ Deno.serve(async (req: Request) => {
 
   try {
     const startTime = Date.now();
+    const MAX_EXECUTION_TIME = 50000; // 50 secondes max
     console.log('🔄 Traitement automatique des pièces jointes...');
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Récupérer tous les emails avec des pièces jointes non traitées
-    // On vérifie si les documents ont déjà été créés en checkant email_attachments
+    // Limiter à 20 emails pour éviter les timeouts
     const { data: emails, error: fetchError } = await supabase
       .from('email_messages')
       .select('*')
       .not('attachments', 'is', null)
       .neq('attachments', '[]')
       .order('created_at', { ascending: false })
-      .limit(50);
+      .limit(20);
 
     if (fetchError) {
       throw fetchError;
@@ -148,9 +148,17 @@ Deno.serve(async (req: Request) => {
 
     let processed = 0;
     let errors = 0;
+    let timedOut = false;
     const results: any[] = [];
 
     for (const email of emails || []) {
+      // Vérifier le timeout
+      if (Date.now() - startTime > MAX_EXECUTION_TIME) {
+        console.log('⏱️ Timeout atteint, arrêt du traitement');
+        timedOut = true;
+        break;
+      }
+
       try {
         // Essayer de trouver le lead correspondant par email
         let leadId = email.lead_id;

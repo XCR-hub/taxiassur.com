@@ -229,11 +229,15 @@ class IMAPClient {
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { status: 200, headers: corsHeaders });
 
+  // Timeout global de 45 secondes pour éviter les dépassements
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 45000);
+
   try {
     const supabase = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
     console.log('Complete email sync with decoding...');
 
-    const stats = { mailbox_total: 0, retrieved: 0, inserted: 0, skipped: 0, linked: 0, errors: 0 };
+    const stats = { mailbox_total: 0, retrieved: 0, inserted: 0, skipped: 0, linked: 0, errors: 0, timeout: false };
 
     const { data: account } = await supabase.from('email_accounts').select('*').eq('email', 'team@taxiassur.com').single();
     if (!account?.imap_password_encrypted) {
@@ -253,12 +257,23 @@ Deno.serve(async (req) => {
     stats.mailbox_total = mailbox.exists;
 
     if (mailbox.exists > 0) {
-      // Augmenter la taille du batch pour récupérer plus d'emails
-      const BATCH_SIZE = 200;
+      // Limiter à 30 emails pour éviter les timeouts (optimisation ressources)
+      const BATCH_SIZE = 30;
       const start = Math.max(1, mailbox.exists - (BATCH_SIZE - 1));
       const emails = await imap.fetchHeaders(start, mailbox.exists);
 
+      // Timeout après 40 secondes pour laisser le temps de cleanup
+      const startTime = Date.now();
+      const MAX_PROCESSING_TIME = 40000;
+
       for (const email of emails) {
+        // Vérifier le timeout
+        if (Date.now() - startTime > MAX_PROCESSING_TIME) {
+          console.log('⏱️ Timeout atteint, arrêt du traitement');
+          stats.timeout = true;
+          break;
+        }
+
         stats.retrieved++;
         const { data: existing } = await supabase.from('email_messages').select('id').eq('message_id', email.uid).maybeSingle();
         if (existing) { stats.skipped++; continue; }
@@ -304,87 +319,18 @@ Deno.serve(async (req) => {
           console.log('Successfully inserted email:', email.subject);
           stats.inserted++;
 
+          // Désactiver le traitement des pièces jointes pour réduire la charge
+          // Les pièces jointes seront traitées par le cron auto-process-email-attachments
           if (attachments.length > 0) {
-            console.log(`Processing ${attachments.length} attachments for email:`, email.subject);
-            for (const attachment of attachments) {
-              try {
-                const fileName = `${insertedEmail.id}/${Date.now()}_${attachment.filename}`;
-                const { error: uploadError } = await supabase.storage
-                  .from('attachments')
-                  .upload(fileName, attachment.data, {
-                    contentType: attachment.contentType,
-                    upsert: false
-                  });
-
-                if (uploadError) {
-                  console.error('Failed to upload attachment:', attachment.filename, uploadError);
-                  continue;
-                }
-
-                const { data: urlData } = supabase.storage
-                  .from('attachments')
-                  .getPublicUrl(fileName);
-
-                const lowerFilename = attachment.filename.toLowerCase();
-                let autoDetectedType: string | null = null;
-                let confidenceScore: number | null = null;
-
-                if (lowerFilename.includes('rib') || lowerFilename.includes('iban') || lowerFilename.includes('bank')) {
-                  autoDetectedType = 'rib';
-                  confidenceScore = 85;
-                } else if (lowerFilename.includes('permis') || lowerFilename.includes('conduire')) {
-                  autoDetectedType = 'permis_conduire';
-                  confidenceScore = 80;
-                } else if (lowerFilename.includes('carte') && lowerFilename.includes('grise')) {
-                  autoDetectedType = 'carte_grise';
-                  confidenceScore = 85;
-                } else if (lowerFilename.includes('kbis') || lowerFilename.includes('sirene')) {
-                  autoDetectedType = 'kbis';
-                  confidenceScore = 90;
-                } else if (lowerFilename.includes('releve') || lowerFilename.includes('information')) {
-                  autoDetectedType = 'releve_information';
-                  confidenceScore = 70;
-                } else if (lowerFilename.includes('identite') || lowerFilename.includes('cni')) {
-                  autoDetectedType = 'piece_identite';
-                  confidenceScore = 75;
-                } else if (lowerFilename.includes('justif')) {
-                  autoDetectedType = 'justificatif_domicile';
-                  confidenceScore = 70;
-                }
-
-                const { data: lead } = await supabase.from('leads').select('id').eq('email', fromEmail).maybeSingle();
-
-                const { error: attachError } = await supabase
-                  .from('email_attachments')
-                  .insert({
-                    email_message_id: insertedEmail.id,
-                    lead_id: lead?.id || null,
-                    file_name: attachment.filename,
-                    file_type: attachment.filename.split('.').pop() || 'bin',
-                    file_size: attachment.size,
-                    mime_type: attachment.contentType,
-                    storage_path: fileName,
-                    storage_bucket: 'attachments',
-                    download_url: urlData.publicUrl,
-                    classification_status: 'pending',
-                    auto_detected_type: autoDetectedType,
-                    confidence_score: confidenceScore,
-                    metadata: {
-                      email_subject: email.subject,
-                      email_from: fromEmail,
-                      extracted_at: new Date().toISOString()
-                    }
-                  });
-
-                if (attachError) {
-                  console.error('Failed to insert attachment record:', attachment.filename, attachError);
-                } else {
-                  console.log('Successfully saved attachment:', attachment.filename);
-                }
-              } catch (attachErr) {
-                console.error('Error processing attachment:', attachment.filename, attachErr);
-              }
-            }
+            console.log(`${attachments.length} pièce(s) jointe(s) détectée(s), traitement différé`);
+            // Stocker juste les métadonnées dans l'email pour traitement ultérieur
+            await supabase.from('email_messages').update({
+              attachments: attachments.map(a => ({
+                filename: a.filename,
+                size: a.size,
+                contentType: a.contentType
+              }))
+            }).eq('id', insertedEmail.id);
           }
         }
       }
@@ -392,12 +338,13 @@ Deno.serve(async (req) => {
 
     await imap.logout();
 
-    const { data: unlinked } = await supabase.from('email_messages').select('id, from_email, to_emails, direction').is('lead_id', null).eq('auto_matched', false).limit(200);
-    if (unlinked) {
+    // Linking optimisé : limiter à 50 pour éviter les timeouts
+    const { data: unlinked } = await supabase.from('email_messages').select('id, from_email, to_emails, direction').is('lead_id', null).eq('auto_matched', false).limit(50);
+    if (unlinked && !stats.timeout) {
       for (const e of unlinked) {
         const emailToMatch = e.direction === 'inbound' ? e.from_email : (e.to_emails?.[0] || null);
         if (!emailToMatch) continue;
-        const { data: lead } = await supabase.from('leads').select('id').eq('email', emailToMatch).maybeSingle();
+        const { data: lead } = await supabase.from('crm_leads').select('id').eq('email', emailToMatch).maybeSingle();
         if (lead) {
           await supabase.from('email_messages').update({ lead_id: lead.id, auto_matched: true }).eq('id', e.id);
           stats.linked++;
@@ -407,8 +354,21 @@ Deno.serve(async (req) => {
 
     await supabase.from('email_accounts').update({ last_sync_at: new Date().toISOString() }).eq('id', account.id);
 
-    return new Response(JSON.stringify({ success: true, message: `Sync: ${stats.inserted} nouveaux emails`, stats, provider: 'ionos-imap-native' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    clearTimeout(timeout);
+
+    const message = stats.timeout
+      ? `⏱️ Sync partiel: ${stats.inserted} emails (timeout atteint, relancer pour continuer)`
+      : `✅ Sync complet: ${stats.inserted} nouveaux emails`;
+
+    return new Response(JSON.stringify({
+      success: true,
+      message,
+      stats,
+      provider: 'ionos-imap-optimized',
+      note: stats.timeout ? 'Relancer la synchronisation pour récupérer plus d\'emails' : undefined
+    }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   } catch (error: any) {
+    clearTimeout(timeout);
     console.error('Sync error:', error);
     return new Response(JSON.stringify({ success: false, error: error.message }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   }
