@@ -113,7 +113,20 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    if (permissions && Array.isArray(permissions)) {
+    // Si rôle commercial, créer permissions par défaut
+    if (role === 'commercial') {
+      const { error: permError } = await supabaseAdmin.rpc('create_commercial_default_permissions', {
+        p_user_id: userId
+      });
+
+      if (permError) {
+        console.error('Error creating commercial permissions:', permError);
+        // Continue quand même, ne pas bloquer la création
+      } else {
+        console.log('Commercial default permissions created for:', userId);
+      }
+    } else if (permissions && Array.isArray(permissions)) {
+      // Pour les autres rôles, utiliser les permissions personnalisées
       for (const perm of permissions) {
         if (perm.view || perm.edit || perm.delete) {
           await supabaseAdmin
@@ -123,7 +136,8 @@ Deno.serve(async (req: Request) => {
               permission_type: perm.type,
               can_view: perm.view || false,
               can_edit: perm.edit || false,
-              can_delete: perm.delete || false
+              can_delete: perm.delete || false,
+              can_create: perm.create || false
             }]);
         }
       }
