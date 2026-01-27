@@ -20,6 +20,8 @@ import {
   UserPlus,
   History,
   Clock,
+  Link as LinkIcon,
+  X,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
@@ -47,6 +49,16 @@ interface ExtractedLeadInfo {
   email?: string;
   phone?: string;
   city?: string;
+}
+
+interface LeadSearchResult {
+  id: string;
+  first_name: string | null;
+  last_name: string | null;
+  email: string;
+  phone: string | null;
+  city: string | null;
+  status: string;
 }
 
 const cleanEmailPreview = (text: string): string => {
@@ -97,6 +109,25 @@ const extractLeadInfoFromEmail = (email: EmailMessage): ExtractedLeadInfo | null
   return (info.email || info.phone || info.name) ? info : null;
 };
 
+// Extraire toutes les adresses emails du contenu de l'email
+const extractAllEmailsFromContent = (email: EmailMessage): string[] => {
+  const text = email.body_text || '';
+  const html = email.body_html || '';
+  const content = `${text} ${html} ${email.subject || ''}`;
+
+  // Regex pour extraire les emails
+  const emailRegex = /([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g;
+  const matches = content.match(emailRegex) || [];
+
+  // Filtrer les emails de taxiassur pour ne garder que les emails des prospects
+  const uniqueEmails = [...new Set(matches)]
+    .filter(e => !e.toLowerCase().includes('taxiassur'))
+    .filter(e => e !== email.from_email); // Exclure l'expéditeur déjà connu
+
+  // Ajouter l'expéditeur en premier
+  return [email.from_email, ...uniqueEmails];
+};
+
 const CRMInboxMulticanal: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
@@ -113,6 +144,13 @@ const CRMInboxMulticanal: React.FC = () => {
   const [syncMessage, setSyncMessage] = useState('');
   const [autoSyncActive, setAutoSyncActive] = useState(false);
   const [lastAutoSync, setLastAutoSync] = useState<string | null>(null);
+
+  // États pour l'assignation manuelle
+  const [showAssignModal, setShowAssignModal] = useState(false);
+  const [emailsFoundInContent, setEmailsFoundInContent] = useState<string[]>([]);
+  const [searchResults, setSearchResults] = useState<LeadSearchResult[]>([]);
+  const [leadSearchQuery, setLeadSearchQuery] = useState('');
+  const [searchingLeads, setSearchingLeads] = useState(false);
 
   useEffect(() => {
     loadMessages();
@@ -554,6 +592,72 @@ const CRMInboxMulticanal: React.FC = () => {
     } catch (error) {
       console.error('Error classifying email:', error);
     }
+  };
+
+  // Rechercher des leads par email ou nom
+  const searchLeads = async (query: string) => {
+    if (!query || query.length < 3) {
+      setSearchResults([]);
+      return;
+    }
+
+    setSearchingLeads(true);
+    try {
+      const { data, error } = await supabase
+        .from('crm_leads')
+        .select('id, first_name, last_name, email, phone, city, status')
+        .or(`email.ilike.%${query}%,first_name.ilike.%${query}%,last_name.ilike.%${query}%,phone.ilike.%${query}%`)
+        .limit(10);
+
+      if (error) throw error;
+
+      setSearchResults(data || []);
+    } catch (error) {
+      console.error('Error searching leads:', error);
+      setSearchResults([]);
+    } finally {
+      setSearchingLeads(false);
+    }
+  };
+
+  // Assigner manuellement un email à un lead
+  const assignEmailToLead = async (leadId: string, emailId: string) => {
+    try {
+      const { error } = await supabase
+        .from('email_messages')
+        .update({ lead_id: leadId, auto_matched: false })
+        .eq('id', emailId);
+
+      if (error) throw error;
+
+      // Recharger les messages et fermer la modal
+      await loadMessages();
+      await loadStats();
+      setShowAssignModal(false);
+      setSelectedMessage(null);
+
+      alert('✅ Email assigné au lead avec succès !');
+    } catch (error) {
+      console.error('Error assigning email to lead:', error);
+      alert('❌ Erreur lors de l\'assignation de l\'email');
+    }
+  };
+
+  // Ouvrir la modal d'assignation manuelle
+  const openAssignModal = () => {
+    if (!selectedMessage) return;
+
+    // Extraire les emails du contenu
+    const emails = extractAllEmailsFromContent(selectedMessage);
+    setEmailsFoundInContent(emails);
+
+    // Rechercher automatiquement avec le premier email trouvé
+    if (emails.length > 0) {
+      setLeadSearchQuery(emails[0]);
+      searchLeads(emails[0]);
+    }
+
+    setShowAssignModal(true);
   };
 
   const getCategoryBadge = (category: string | null) => {
@@ -1039,6 +1143,16 @@ const CRMInboxMulticanal: React.FC = () => {
                       Créer le lead + lier l'historique
                     </button>
                   )}
+                  {!foundLeadId && (
+                    <button
+                      onClick={openAssignModal}
+                      className="flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors text-sm font-medium"
+                      title="Assigner manuellement cet email à un lead existant"
+                    >
+                      <LinkIcon size={16} />
+                      Assigner manuellement
+                    </button>
+                  )}
                   <button
                     onClick={() =>
                       toggleStar(selectedMessage.id, selectedMessage.is_starred)
@@ -1123,6 +1237,147 @@ const CRMInboxMulticanal: React.FC = () => {
                           <div className="text-sm text-gray-600">
                             {(attachment.size / 1024).toFixed(2)} KB
                           </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal d'assignation manuelle */}
+      {showAssignModal && selectedMessage && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-6">
+          <div className="bg-white rounded-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+            {/* Header */}
+            <div className="sticky top-0 bg-white border-b-2 border-gray-200 p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                  <LinkIcon className="text-orange-600" size={28} />
+                  Assigner l'email à un lead
+                </h2>
+                <button
+                  onClick={() => setShowAssignModal(false)}
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  <X size={24} />
+                </button>
+              </div>
+              <p className="text-sm text-gray-600">
+                Email de: <span className="font-semibold">{selectedMessage.from_email}</span>
+              </p>
+            </div>
+
+            <div className="p-6 space-y-6">
+              {/* Emails trouvés dans le contenu */}
+              {emailsFoundInContent.length > 0 && (
+                <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-4">
+                  <p className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                    <Mail size={18} className="text-blue-600" />
+                    Emails trouvés dans le contenu:
+                  </p>
+                  <div className="space-y-2">
+                    {emailsFoundInContent.map((email, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => {
+                          setLeadSearchQuery(email);
+                          searchLeads(email);
+                        }}
+                        className="w-full text-left px-4 py-2 bg-white border border-blue-300 rounded-lg hover:bg-blue-100 hover:border-blue-400 transition-colors"
+                      >
+                        <code className="text-sm font-mono text-blue-900">{email}</code>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Recherche de leads */}
+              <div>
+                <label className="block font-semibold text-gray-900 mb-2">
+                  Rechercher un lead par email, nom ou téléphone:
+                </label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                  <input
+                    type="text"
+                    value={leadSearchQuery}
+                    onChange={(e) => {
+                      setLeadSearchQuery(e.target.value);
+                      searchLeads(e.target.value);
+                    }}
+                    placeholder="Tapez au moins 3 caractères..."
+                    className="w-full pl-10 pr-4 py-3 border-2 border-gray-300 rounded-lg focus:border-orange-500 focus:outline-none text-gray-900"
+                  />
+                </div>
+              </div>
+
+              {/* Résultats de recherche */}
+              {searchingLeads && (
+                <div className="text-center py-4">
+                  <div className="animate-spin w-8 h-8 border-4 border-orange-600 border-t-transparent rounded-full mx-auto"></div>
+                  <p className="text-sm text-gray-600 mt-2">Recherche en cours...</p>
+                </div>
+              )}
+
+              {!searchingLeads && searchResults.length === 0 && leadSearchQuery.length >= 3 && (
+                <div className="text-center py-8 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+                  <AlertCircle size={48} className="mx-auto text-gray-400 mb-3" />
+                  <p className="text-gray-600 font-medium">Aucun lead trouvé</p>
+                  <p className="text-sm text-gray-500 mt-1">Essayez avec un autre terme de recherche</p>
+                </div>
+              )}
+
+              {!searchingLeads && searchResults.length > 0 && (
+                <div>
+                  <p className="font-semibold text-gray-900 mb-3">
+                    {searchResults.length} lead(s) trouvé(s):
+                  </p>
+                  <div className="space-y-2 max-h-96 overflow-y-auto">
+                    {searchResults.map((lead) => (
+                      <div
+                        key={lead.id}
+                        className="bg-white border-2 border-gray-200 rounded-lg p-4 hover:border-orange-400 hover:shadow-md transition-all"
+                      >
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1">
+                            <div className="font-bold text-gray-900 text-lg mb-1">
+                              {lead.first_name || ''} {lead.last_name || '(Sans nom)'}
+                            </div>
+                            <div className="space-y-1 text-sm">
+                              <div className="flex items-center gap-2 text-gray-700">
+                                <Mail size={14} className="text-blue-600" />
+                                <span className="font-mono">{lead.email}</span>
+                              </div>
+                              {lead.phone && (
+                                <div className="flex items-center gap-2 text-gray-700">
+                                  <User size={14} className="text-green-600" />
+                                  {lead.phone}
+                                </div>
+                              )}
+                              {lead.city && (
+                                <div className="text-gray-600">
+                                  📍 {lead.city}
+                                </div>
+                              )}
+                              <div>
+                                <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">
+                                  {lead.status}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => assignEmailToLead(lead.id, selectedMessage.id)}
+                            className="flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors text-sm font-medium whitespace-nowrap"
+                          >
+                            <LinkIcon size={16} />
+                            Assigner
+                          </button>
                         </div>
                       </div>
                     ))}
