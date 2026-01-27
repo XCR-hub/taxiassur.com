@@ -41,26 +41,21 @@ import { QuickAction } from '@/lib/commercial-workflow';
 import { supabase } from '@/lib/supabase';
 import ElectronicSignature from '@/components/ElectronicSignature';
 import {
-  DocumentUnifiedManager,
   EmailComposerModal,
-  DocumentRequestsManager,
   LeadIntelligencePanel,
   LeadHeader,
   LeadWorkflowTabs,
   LeadAutomationCenter,
-  PendingAttachmentsPanel,
   LeadQuotesManager,
-  DocumentValidationManager,
-  DocumentValidationPanel,
   DownPaymentManager,
   DynamicCommercialWorkflow,
   LeadDeleteSecure,
-  DocumentBasket,
   CommunicationTimeline,
   PaymentManager,
   ContractSignatureManager,
   PipelineLocksStatus
 } from '@/components/crm';
+import DocumentValidationSimple from '@/components/crm/DocumentValidationSimple';
 import type { WorkflowTab } from '@/components/crm';
 
 interface Message {
@@ -859,55 +854,12 @@ const CRMLeadDetail: React.FC = () => {
             )}
 
             {activeTab === 'documents' && (
-              <>
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-                  <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-                    <Inbox className="w-5 h-5 text-blue-600" />
-                    Panier de Documents
-                  </h2>
-                  <p className="text-sm text-gray-600 mb-4">
-                    Glissez et classez les documents reçus par email ou autre canal.
-                  </p>
-                  <DocumentBasket
-                    caseId={lead.id}
-                    onDocumentClassified={() => {
-                      loadLeadData(lead.id);
-                      loadStats(lead.id);
-                    }}
-                  />
-                </div>
-
-                <PendingAttachmentsPanel
-                  leadId={lead.id}
-                  onAttachmentClassified={() => loadLeadData(lead.id)}
-                />
-
-                <div className="mb-6">
-                  <DocumentValidationPanel
-                    leadId={lead.id}
-                    onValidationChange={() => {
-                      loadLeadData(lead.id);
-                      loadStats(lead.id);
-                    }}
-                  />
-                </div>
-
-                <DocumentUnifiedManager
+              <div className="bg-gray-900/50 rounded-xl border border-gray-700 p-6">
+                <DocumentValidationSimple
                   leadId={lead.id}
                   leadEmail={lead.email}
-                  leadFirstName={lead.first_name}
-                  accessToken={(lead as any).access_token}
-                  onDocumentsComplete={() => loadLeadData(lead.id)}
-                  onRequestDocuments={handleRequestDocuments}
                 />
-
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                  <DocumentRequestsManager
-                    leadId={lead.id}
-                    onRefresh={() => loadLeadData(lead.id)}
-                  />
-                </div>
-              </>
+              </div>
             )}
 
             {activeTab === 'quotes' && (
