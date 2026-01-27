@@ -239,54 +239,79 @@ export const pipelineService = {
     note?: string,
     userId?: string,
     recontactDate?: string
-  ) {
-    const updateData: any = {
-      status: newStatus,
-      updated_at: new Date().toISOString()
-    };
+  ): Promise<PipelineActionResult> {
+    try {
+      const updateData: any = {
+        status: newStatus,
+        updated_at: new Date().toISOString()
+      };
 
-    if (newStatus === 'LOST_RECONTACT_SCHEDULED' && recontactDate) {
-      updateData.recontact_scheduled_date = recontactDate;
-      updateData.lost_reason = note || 'Non spécifié';
+      if (newStatus === 'LOST_RECONTACT_SCHEDULED' && recontactDate) {
+        updateData.recontact_scheduled_date = recontactDate;
+        updateData.lost_reason = note || 'Non spécifié';
+      }
+
+      const { data: lead, error: leadError } = await supabase
+        .from('crm_leads')
+        .update(updateData)
+        .eq('id', leadId)
+        .is('deleted_at', null)
+        .select()
+        .single();
+
+      if (leadError) {
+        console.error('Lead update error:', leadError);
+        return {
+          success: false,
+          message: `Erreur lors de la mise à jour : ${leadError.message}`,
+          actionsQueued: 0
+        };
+      }
+
+      const { error: timelineError } = await supabase
+        .from('crm_timeline')
+        .insert({
+          lead_id: leadId,
+          event_type: 'status_change',
+          title: `Statut changé vers ${PIPELINE_STATUSES[newStatus].label}`,
+          description: note,
+          metadata: {
+            from_status: lead.status,
+            to_status: newStatus,
+            recontact_date: recontactDate
+          },
+          created_by: userId,
+          created_at: new Date().toISOString()
+        });
+
+      if (timelineError) {
+        console.error('Timeline error:', timelineError);
+      }
+
+      const transition = PIPELINE_TRANSITIONS.find(
+        t => t.to === newStatus && t.autoActions
+      );
+
+      let actionsQueued = 0;
+      if (transition?.autoActions) {
+        const result = await this.triggerAutoActions(leadId, transition.autoActions);
+        actionsQueued = result.actionsQueued;
+      }
+
+      return {
+        success: true,
+        message: `Statut mis à jour vers ${PIPELINE_STATUSES[newStatus].label}`,
+        actionsQueued,
+        details: { lead }
+      };
+    } catch (error) {
+      console.error('updateLeadStatus error:', error);
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : 'Erreur inconnue',
+        actionsQueued: 0
+      };
     }
-
-    const { data: lead, error: leadError } = await supabase
-      .from('crm_leads')
-      .update(updateData)
-      .eq('id', leadId)
-      .is('deleted_at', null)
-      .select()
-      .single();
-
-    if (leadError) throw leadError;
-
-    const { error: timelineError } = await supabase
-      .from('crm_timeline')
-      .insert({
-        lead_id: leadId,
-        event_type: 'status_change',
-        title: `Statut changé vers ${PIPELINE_STATUSES[newStatus].label}`,
-        description: note,
-        metadata: {
-          from_status: lead.status,
-          to_status: newStatus,
-          recontact_date: recontactDate
-        },
-        created_by: userId,
-        created_at: new Date().toISOString()
-      });
-
-    if (timelineError) throw timelineError;
-
-    const transition = PIPELINE_TRANSITIONS.find(
-      t => t.to === newStatus && t.autoActions
-    );
-
-    if (transition?.autoActions) {
-      await this.triggerAutoActions(leadId, transition.autoActions);
-    }
-
-    return lead;
   },
 
   async getTimeline(leadId: string) {

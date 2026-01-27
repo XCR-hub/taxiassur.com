@@ -355,6 +355,16 @@ const CRMLeadDetail: React.FC = () => {
     try {
       const result = await pipelineService.updateLeadStatus(lead.id, newStatus as any);
 
+      if (!result.success) {
+        setAutomationFeedback({
+          show: true,
+          success: false,
+          message: result.message || 'Erreur lors de la mise a jour du statut.',
+          actionsQueued: 0
+        });
+        return;
+      }
+
       if (result.actionsQueued > 0) {
         setAutomationFeedback({
           show: true,
@@ -366,7 +376,7 @@ const CRMLeadDetail: React.FC = () => {
         setAutomationFeedback({
           show: true,
           success: true,
-          message: 'Statut mis a jour avec succes.',
+          message: result.message || 'Statut mis a jour avec succes.',
           actionsQueued: 0
         });
       }
@@ -394,7 +404,7 @@ const CRMLeadDetail: React.FC = () => {
 
     try {
       if (action.type === 'status_change' && action.nextStatus) {
-        await pipelineService.updateLeadStatus(
+        const result = await pipelineService.updateLeadStatus(
           lead.id,
           action.nextStatus,
           additionalData?.note,
@@ -402,12 +412,23 @@ const CRMLeadDetail: React.FC = () => {
           undefined
         );
 
+        if (!result.success) {
+          setAutomationFeedback({
+            show: true,
+            success: false,
+            message: result.message || 'Erreur lors du changement de statut',
+            actionsQueued: 0
+          });
+          setTimeout(() => setAutomationFeedback(null), 5000);
+          return;
+        }
+
         const statusLabel = PIPELINE_STATUSES[action.nextStatus]?.label || action.nextStatus;
         setAutomationFeedback({
           show: true,
           success: true,
           message: `Statut changé vers ${statusLabel}`,
-          actionsQueued: 0
+          actionsQueued: result.actionsQueued
         });
 
         setTimeout(() => setAutomationFeedback(null), 5000);

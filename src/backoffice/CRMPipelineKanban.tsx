@@ -163,16 +163,19 @@ const CRMPipelineKanban: React.FC = () => {
     setDraggedLead(null);
     setDragOverStatus(null);
 
-    try {
-      await pipelineService.updateLeadStatus(draggedLead.id, targetStatus);
-      // Refresh to get server state
-      setTimeout(() => loadKanbanData(false), 1000);
-    } catch (error) {
-      console.error('Failed to update lead:', error);
+    // Update on server
+    const result = await pipelineService.updateLeadStatus(draggedLead.id, targetStatus);
+
+    if (!result.success) {
+      console.error('Failed to update lead:', result.message);
       setError('Erreur lors de la mise à jour. Restauration...');
       // Rollback on error
       await loadKanbanData(false);
+      return;
     }
+
+    // Refresh to get server state
+    setTimeout(() => loadKanbanData(false), 1000);
   }, [draggedLead, loadKanbanData]);
 
   const filteredKanbanData = useMemo(() => {
