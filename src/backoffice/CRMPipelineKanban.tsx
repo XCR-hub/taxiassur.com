@@ -1,16 +1,90 @@
 import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Search, Filter, RefreshCw, AlertCircle, TrendingUp, Clock, FileText, Building2, Euro, PenTool, AlertTriangle } from 'lucide-react';
+import { Plus, Search, Filter, RefreshCw, AlertCircle, TrendingUp, Clock, FileText, Building2, Euro, PenTool, AlertTriangle, Mail, Phone, MessageSquare, FileCheck } from 'lucide-react';
 import { pipelineService, PIPELINE_STATUSES, PipelineStatus, CRMLead } from '@/lib/crm-pipeline';
 import { PipelineCard } from '@/components/crm/PipelineCard';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/lib/supabase';
+
+interface ColumnNotifications {
+  newEmails: number;
+  newDocuments: number;
+  missedCalls: number;
+  newSMS: number;
+  pendingSignatures: number;
+  paymentDue: number;
+}
+
+// Couleurs vives et distinctes pour chaque statut (plus de gris!)
+const STATUS_COLORS: Record<PipelineStatus, { bg: string; border: string; text: string; badge: string }> = {
+  NOUVEAU_LEAD: {
+    bg: 'bg-gradient-to-br from-blue-100 to-blue-50',
+    border: 'border-blue-300',
+    text: 'text-blue-900',
+    badge: 'bg-blue-600 text-white'
+  },
+  COLLECTE_DOCUMENTS: {
+    bg: 'bg-gradient-to-br from-emerald-100 to-emerald-50',
+    border: 'border-emerald-300',
+    text: 'text-emerald-900',
+    badge: 'bg-emerald-600 text-white'
+  },
+  DEVIS: {
+    bg: 'bg-gradient-to-br from-cyan-100 to-cyan-50',
+    border: 'border-cyan-300',
+    text: 'text-cyan-900',
+    badge: 'bg-cyan-600 text-white'
+  },
+  DECISION_CLIENT: {
+    bg: 'bg-gradient-to-br from-violet-100 to-violet-50',
+    border: 'border-violet-300',
+    text: 'text-violet-900',
+    badge: 'bg-violet-600 text-white'
+  },
+  PAIEMENT: {
+    bg: 'bg-gradient-to-br from-amber-100 to-amber-50',
+    border: 'border-amber-300',
+    text: 'text-amber-900',
+    badge: 'bg-amber-600 text-white'
+  },
+  CONTRAT_SIGNATURE: {
+    bg: 'bg-gradient-to-br from-indigo-100 to-indigo-50',
+    border: 'border-indigo-300',
+    text: 'text-indigo-900',
+    badge: 'bg-indigo-600 text-white'
+  },
+  CLIENT_ACTIF: {
+    bg: 'bg-gradient-to-br from-green-100 to-green-50',
+    border: 'border-green-300',
+    text: 'text-green-900',
+    badge: 'bg-green-600 text-white'
+  },
+  RELANCE: {
+    bg: 'bg-gradient-to-br from-orange-100 to-orange-50',
+    border: 'border-orange-300',
+    text: 'text-orange-900',
+    badge: 'bg-orange-600 text-white'
+  },
+  PERDU: {
+    bg: 'bg-gradient-to-br from-red-100 to-red-50',
+    border: 'border-red-300',
+    text: 'text-red-900',
+    badge: 'bg-red-600 text-white'
+  },
+  RECONTACT_PROGRAMME: {
+    bg: 'bg-gradient-to-br from-purple-100 to-purple-50',
+    border: 'border-purple-300',
+    text: 'text-purple-900',
+    badge: 'bg-purple-600 text-white'
+  }
+} as any;
 
 const CRMPipelineKanban: React.FC = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [kanbanData, setKanbanData] = useState<Record<PipelineStatus, CRMLead[]>>({} as any);
+  const [columnNotifications, setColumnNotifications] = useState<Record<PipelineStatus, ColumnNotifications>>({} as any);
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [draggedLead, setDraggedLead] = useState<CRMLead | null>(null);
@@ -28,6 +102,77 @@ const CRMPipelineKanban: React.FC = () => {
     }, 300);
     return () => clearTimeout(timer);
   }, [search]);
+
+  // Load column notifications (emails, documents, calls, SMS)
+  const loadColumnNotifications = useCallback(async () => {
+    try {
+      const notifications: Record<PipelineStatus, ColumnNotifications> = {} as any;
+
+      for (const status of Object.keys(kanbanData) as PipelineStatus[]) {
+        const leadIds = kanbanData[status]?.map(l => l.id) || [];
+
+        if (leadIds.length === 0) {
+          notifications[status] = {
+            newEmails: 0,
+            newDocuments: 0,
+            missedCalls: 0,
+            newSMS: 0,
+            pendingSignatures: 0,
+            paymentDue: 0
+          };
+          continue;
+        }
+
+        const [emailsResult, documentsResult, interactionsResult, contractsResult] = await Promise.all([
+          // Nouveaux emails non lus
+          supabase
+            .from('email_messages')
+            .select('id', { count: 'exact', head: true })
+            .in('lead_id', leadIds)
+            .eq('is_from_user', false)
+            .gte('received_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()),
+
+          // Nouveaux documents uploadés (dernières 24h)
+          supabase
+            .from('crm_lead_documents')
+            .select('id', { count: 'exact', head: true })
+            .in('lead_id', leadIds)
+            .eq('status', 'pending_validation')
+            .gte('uploaded_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()),
+
+          // Appels + SMS récents
+          supabase
+            .from('crm_interactions')
+            .select('channel', { count: 'exact' })
+            .in('lead_id', leadIds)
+            .in('channel', ['phone', 'sms'])
+            .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()),
+
+          // Signatures en attente + paiements dus
+          supabase
+            .from('lead_contracts')
+            .select('status, down_payment_status', { count: 'exact' })
+            .in('lead_id', leadIds)
+        ]);
+
+        const interactions = interactionsResult.data || [];
+        const contracts = contractsResult.data || [];
+
+        notifications[status] = {
+          newEmails: emailsResult.count || 0,
+          newDocuments: documentsResult.count || 0,
+          missedCalls: interactions.filter(i => i.channel === 'phone').length,
+          newSMS: interactions.filter(i => i.channel === 'sms').length,
+          pendingSignatures: contracts.filter(c => c.status === 'pending' || c.status === 'sent').length,
+          paymentDue: contracts.filter(c => c.down_payment_status === 'pending' || c.down_payment_status === 'required').length
+        };
+      }
+
+      setColumnNotifications(notifications);
+    } catch (error) {
+      console.error('Failed to load notifications:', error);
+    }
+  }, [kanbanData]);
 
   // Load kanban data
   const loadKanbanData = useCallback(async (showLoader = true) => {
@@ -47,6 +192,13 @@ const CRMPipelineKanban: React.FC = () => {
       setRefreshing(false);
     }
   }, []);
+
+  // Load notifications after kanban data
+  useEffect(() => {
+    if (Object.keys(kanbanData).length > 0) {
+      loadColumnNotifications();
+    }
+  }, [kanbanData, loadColumnNotifications]);
 
   // Initial load
   useEffect(() => {
@@ -423,29 +575,74 @@ const CRMPipelineKanban: React.FC = () => {
                   isDropTarget && 'scale-[1.02]'
                 )}
               >
-                {/* Column header */}
+                {/* Column header - Coloré! */}
                 <div className={cn(
-                  'rounded-lg p-3 mb-3 transition-all duration-300',
+                  'rounded-lg p-3 mb-3 transition-all duration-300 border-2',
                   isDropTarget
-                    ? 'bg-gradient-to-br from-blue-100 to-blue-50 border-2 border-blue-500 shadow-lg'
-                    : 'bg-gradient-to-br from-gray-100 to-gray-50 border-2 border-transparent'
+                    ? 'bg-gradient-to-br from-blue-100 to-blue-50 border-blue-500 shadow-lg scale-105'
+                    : `${STATUS_COLORS[status]?.bg || 'bg-gradient-to-br from-gray-100 to-gray-50'} ${STATUS_COLORS[status]?.border || 'border-gray-200'}`
                 )}>
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
                       <span className="text-lg">{statusInfo.icon}</span>
-                      <h3 className="font-bold text-gray-900">{statusInfo.label}</h3>
+                      <h3 className={cn('font-bold', STATUS_COLORS[status]?.text || 'text-gray-900')}>
+                        {statusInfo.label}
+                      </h3>
                     </div>
                     <span className={cn(
-                      'px-2 py-1 rounded-full text-sm font-bold transition-all duration-200',
+                      'px-2 py-1 rounded-full text-sm font-bold transition-all duration-200 shadow-sm',
                       isDropTarget
                         ? 'bg-blue-600 text-white scale-110 shadow-md'
-                        : 'bg-white text-gray-700 shadow-sm'
+                        : STATUS_COLORS[status]?.badge || 'bg-gray-700 text-white'
                     )}>
                       {leads.length}
                     </span>
                   </div>
+
+                  {/* Badges de notifications */}
+                  {columnNotifications[status] && (
+                    <div className="flex flex-wrap gap-1.5 mb-2">
+                      {columnNotifications[status].newEmails > 0 && (
+                        <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-blue-600 text-white text-xs font-medium animate-pulse">
+                          <Mail size={12} />
+                          {columnNotifications[status].newEmails}
+                        </div>
+                      )}
+                      {columnNotifications[status].newDocuments > 0 && (
+                        <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-600 text-white text-xs font-medium animate-pulse">
+                          <FileCheck size={12} />
+                          {columnNotifications[status].newDocuments}
+                        </div>
+                      )}
+                      {columnNotifications[status].missedCalls > 0 && (
+                        <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-red-600 text-white text-xs font-medium animate-pulse">
+                          <Phone size={12} />
+                          {columnNotifications[status].missedCalls}
+                        </div>
+                      )}
+                      {columnNotifications[status].newSMS > 0 && (
+                        <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-purple-600 text-white text-xs font-medium animate-pulse">
+                          <MessageSquare size={12} />
+                          {columnNotifications[status].newSMS}
+                        </div>
+                      )}
+                      {columnNotifications[status].pendingSignatures > 0 && (
+                        <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-indigo-600 text-white text-xs font-medium">
+                          <PenTool size={12} />
+                          {columnNotifications[status].pendingSignatures}
+                        </div>
+                      )}
+                      {columnNotifications[status].paymentDue > 0 && (
+                        <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-amber-600 text-white text-xs font-medium">
+                          <Euro size={12} />
+                          {columnNotifications[status].paymentDue}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   {leads.length > 0 && (
-                    <div className="text-xs text-gray-600">
+                    <div className={cn('text-xs font-medium', STATUS_COLORS[status]?.text || 'text-gray-600')}>
                       Qualité moyenne: {Math.round(leads.reduce((sum, l) => sum + (l.quality_score || 0), 0) / leads.length) || 0}%
                     </div>
                   )}
