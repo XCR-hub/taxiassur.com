@@ -62,6 +62,24 @@ const DOCUMENT_TYPES: DocumentType[] = [
     label: 'RIB - Relevé d\'Identité Bancaire',
     description: 'Coordonnées bancaires complètes',
     required: true
+  },
+  {
+    id: 'kbis',
+    label: 'KBIS / SIRENE',
+    description: 'Pour les sociétés (si applicable)',
+    required: false
+  },
+  {
+    id: 'carte_professionnelle',
+    label: 'Carte professionnelle',
+    description: 'Carte professionnelle de conducteur taxi',
+    required: false
+  },
+  {
+    id: 'justificatif_domicile',
+    label: 'Justificatif de domicile',
+    description: 'De moins de 3 mois',
+    required: false
   }
 ];
 

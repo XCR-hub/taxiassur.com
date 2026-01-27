@@ -68,7 +68,10 @@ const DOCUMENT_TYPES = [
   { id: 'carte_grise', label: 'Carte grise du vehicule', required: true, icon: '🚗' },
   { id: 'releve_information', label: "Releve d'information", required: false, icon: '📋' },
   { id: 'autorisation_stationnement', label: 'Autorisation de stationnement', required: true, icon: '🅿️' },
-  { id: 'rib', label: 'RIB', required: true, icon: '🏦' }
+  { id: 'rib', label: 'RIB', required: true, icon: '🏦' },
+  { id: 'kbis', label: 'KBIS / SIRENE', required: false, icon: '🏢' },
+  { id: 'carte_professionnelle', label: 'Carte professionnelle', required: false, icon: '🪪' },
+  { id: 'justificatif_domicile', label: 'Justificatif de domicile', required: false, icon: '🏠' }
 ];
 
 export function DocumentChecklistPanelV2({
@@ -136,7 +139,14 @@ export function DocumentChecklistPanelV2({
 
   const getDocumentStatus = (docType: string): DocumentStatus => {
     const checklistStatus = checklist[docType];
+
+    // Chercher dans les documents uploadés directement
     const uploaded = prospectDocuments.find(d => d.document_type === docType);
+
+    // Chercher aussi dans les pièces jointes d'emails classifiées
+    const emailAttachment = emailAttachments.find(
+      a => a.auto_detected_type === docType && a.classification_status === 'classified'
+    );
 
     if (checklistStatus?.validated) {
       return { ...checklistStatus, status: 'validated' };
@@ -144,12 +154,12 @@ export function DocumentChecklistPanelV2({
     if (checklistStatus?.status === 'rejected') {
       return checklistStatus;
     }
-    if (uploaded || checklistStatus?.status === 'uploaded') {
+    if (uploaded || emailAttachment || checklistStatus?.status === 'uploaded') {
       return {
         status: 'uploaded',
         validated: false,
-        uploaded_at: uploaded?.uploaded_at,
-        file_name: uploaded?.file_name
+        uploaded_at: uploaded?.uploaded_at || emailAttachment?.created_at,
+        file_name: uploaded?.file_name || emailAttachment?.file_name
       };
     }
     return { status: 'missing', validated: false };
@@ -234,11 +244,21 @@ export function DocumentChecklistPanelV2({
   };
 
   const handleRequestMissingDocuments = async () => {
+    console.log('🔔 handleRequestMissingDocuments called');
     const missingDocs = getMissingDocuments();
-    if (missingDocs.length === 0) return;
+    console.log('📋 Missing docs:', missingDocs);
+
+    if (missingDocs.length === 0) {
+      console.log('✅ No missing documents');
+      return;
+    }
 
     if (onRequestDocuments) {
+      console.log('📧 Calling onRequestDocuments with:', missingDocs.map(d => d.label));
       onRequestDocuments(missingDocs.map(d => d.label));
+    } else {
+      console.warn('⚠️ onRequestDocuments callback not provided');
+      alert('Fonction de relance non configurée. Veuillez contacter le support.');
     }
   };
 
@@ -248,11 +268,24 @@ export function DocumentChecklistPanelV2({
     return `${baseUrl}/espace-prospect/${accessToken}`;
   };
 
-  const copyPortalLink = () => {
+  const copyPortalLink = async () => {
+    console.log('📋 copyPortalLink called');
     const url = getProspectPortalUrl();
+    console.log('🔗 URL:', url);
+
     if (url) {
-      navigator.clipboard.writeText(url);
-      alert('Lien copie dans le presse-papier !');
+      try {
+        await navigator.clipboard.writeText(url);
+        console.log('✅ Link copied to clipboard');
+        alert('✅ Lien copié dans le presse-papier !');
+      } catch (err) {
+        console.error('❌ Error copying to clipboard:', err);
+        // Fallback: afficher l'URL dans une alert
+        prompt('Copiez ce lien:', url);
+      }
+    } else {
+      console.warn('⚠️ No access token, cannot generate URL');
+      alert('⚠️ Token d\'accès manquant. Impossible de générer le lien.');
     }
   };
 
@@ -463,13 +496,15 @@ export function DocumentChecklistPanelV2({
                     </button>
                   )}
 
-                  {doc && (
+                  {(doc || emailAttachments.find(a => a.auto_detected_type === docType.id && a.classification_status === 'classified')) && (
                     <a
                       href={
-                        doc.metadata?.download_url ||
-                        (doc.file_path.startsWith('00000000-0000-0000-0000-000000000001/')
-                          ? supabase.storage.from('email-attachments').getPublicUrl(doc.file_path).data.publicUrl
-                          : supabase.storage.from('prospect-documents').getPublicUrl(doc.file_path).data.publicUrl)
+                        doc
+                          ? (doc.metadata?.download_url ||
+                            (doc.file_path.startsWith('00000000-0000-0000-0000-000000000001/')
+                              ? supabase.storage.from('email-attachments').getPublicUrl(doc.file_path).data.publicUrl
+                              : supabase.storage.from('prospect-documents').getPublicUrl(doc.file_path).data.publicUrl))
+                          : emailAttachments.find(a => a.auto_detected_type === docType.id && a.classification_status === 'classified')?.download_url || '#'
                       }
                       target="_blank"
                       rel="noopener noreferrer"
