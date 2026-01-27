@@ -217,13 +217,13 @@ export const CommunicationTimeline: React.FC<CommunicationTimelineProps> = ({
 
     switch (type) {
       case 'email':
-        return isInbound ? <ArrowDownLeft className={iconClass} /> : <Send className={iconClass} />;
+        return isInbound ? <ArrowDownLeft className={`${iconClass} text-blue-600`} /> : <ArrowUpRight className={`${iconClass} text-green-600`} />;
       case 'sms':
-        return <MessageSquare className={iconClass} />;
+        return isInbound ? <ArrowDownLeft className={`${iconClass} text-purple-600`} /> : <ArrowUpRight className={`${iconClass} text-purple-400`} />;
       case 'whatsapp':
-        return <MessageSquare className={iconClass} />;
+        return isInbound ? <ArrowDownLeft className={`${iconClass} text-emerald-600`} /> : <ArrowUpRight className={`${iconClass} text-emerald-400`} />;
       case 'call':
-        return <Phone className={iconClass} />;
+        return isInbound ? <Phone className={`${iconClass} text-orange-600`} /> : <Phone className={`${iconClass} text-orange-400`} />;
       default:
         return <FileText className={iconClass} />;
     }
@@ -397,7 +397,12 @@ export const CommunicationTimeline: React.FC<CommunicationTimelineProps> = ({
                       <div className="flex items-start justify-between gap-2 mb-1">
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
-                            <span className="font-semibold text-sm text-gray-900">
+                            <span className="font-semibold text-sm text-gray-900 flex items-center gap-1.5">
+                              {event.direction === 'inbound' ? (
+                                <ArrowDownLeft className="w-3.5 h-3.5 text-blue-600" />
+                              ) : (
+                                <ArrowUpRight className="w-3.5 h-3.5 text-green-600" />
+                              )}
                               {getLabel(event.type, event.direction)}
                             </span>
                             {event.attachments && event.attachments.length > 0 && (

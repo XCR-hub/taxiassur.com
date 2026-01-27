@@ -37,6 +37,86 @@ function classifyDocument(filename: string): { type: string; confidence: number 
   return { type: 'autre', confidence: 0.3 };
 }
 
+// Filtrer les images inutiles (logos, signatures, images marketing)
+function shouldFilterAttachment(attachment: any): boolean {
+  const filename = (attachment.filename || attachment.name || '').toLowerCase();
+  const mimeType = (attachment.contentType || attachment.mime_type || '').toLowerCase();
+  const size = attachment.size || 0;
+
+  // Filtrer les images trop petites (probablement des logos/icônes)
+  if (mimeType.startsWith('image/') && size < 50000) { // < 50KB
+    console.log(`🚫 Image trop petite filtrée: ${filename} (${size} bytes)`);
+    return true;
+  }
+
+  // Filtrer les logos et images marketing par nom de fichier
+  const unwantedPatterns = [
+    /logo/i,
+    /icon/i,
+    /signature/i,
+    /banner/i,
+    /header/i,
+    /footer/i,
+    /background/i,
+    /spacer/i,
+    /pixel/i,
+    /tracking/i,
+    /badge/i,
+    /award/i,
+    /seal/i,
+    /stamp/i,
+    /watermark/i,
+    /thumbnail/i,
+    /avatar/i,
+    /social/i,
+    /facebook|twitter|linkedin|instagram/i,
+    /\.(gif)$/i, // Souvent utilisés pour tracking/décoration
+  ];
+
+  for (const pattern of unwantedPatterns) {
+    if (pattern.test(filename)) {
+      console.log(`🚫 Image marketing/logo filtrée: ${filename}`);
+      return true;
+    }
+  }
+
+  // Accepter les PDFs et documents Office sans restriction
+  if (mimeType.includes('pdf') ||
+      mimeType.includes('word') ||
+      mimeType.includes('document') ||
+      mimeType.includes('spreadsheet') ||
+      mimeType.includes('officedocument')) {
+    return false;
+  }
+
+  // Accepter les images qui ressemblent à des scans/photos de documents
+  const documentImagePatterns = [
+    /scan/i,
+    /photo/i,
+    /img_\d+/i, // IMG_1234.jpg (photos de téléphone)
+    /\d{8}_\d{6}/i, // 20240127_143000.jpg (format téléphone)
+    /whatsapp/i, // Photos WhatsApp
+    /screenshot|capture/i,
+    /permis|carte|rib|kbis|identite|justif/i, // Documents spécifiques
+  ];
+
+  for (const pattern of documentImagePatterns) {
+    if (pattern.test(filename)) {
+      return false; // Ne pas filtrer
+    }
+  }
+
+  // Filtrer les images sans indication claire qu'elles sont des documents
+  if (mimeType.startsWith('image/') &&
+      !filename.match(/\d{4,}/) && // Pas de numéro long (comme date/timestamp)
+      size < 500000) { // < 500KB
+    console.log(`🚫 Image générique filtrée: ${filename} (taille: ${size} bytes)`);
+    return true;
+  }
+
+  return false; // Par défaut, accepter
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 200, headers: corsHeaders });
@@ -111,6 +191,12 @@ Deno.serve(async (req: Request) => {
 
         for (const attachment of attachments) {
           try {
+            // Filtrer les images inutiles (logos, images marketing, etc.)
+            if (shouldFilterAttachment(attachment)) {
+              console.log(`⏭️ Pièce jointe filtrée (image inutile)`);
+              continue;
+            }
+
             const filename = attachment.filename || attachment.name || 'document';
             const classification = classifyDocument(filename);
 
