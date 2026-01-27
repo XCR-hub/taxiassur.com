@@ -710,6 +710,212 @@ L'équipe TaxiAssur`
     description: 'Demande d\'assistance du client',
     actions: [],
     tips: []
+  },
+
+  // 🎯 NOUVEAUX STATUTS DU PIPELINE 2026
+  NOUVEAU_LEAD: {
+    title: '🆕 Nouveau Lead',
+    description: 'Demande reçue via site web, email ou téléphone',
+    actions: [
+      {
+        id: 'first_contact',
+        label: 'Premier contact effectué',
+        description: 'Contacter le lead sous 15 minutes',
+        icon: <Phone className="w-5 h-5" />,
+        variant: 'success',
+        nextStatus: 'COLLECTE_DOCUMENTS',
+        requiresNote: true
+      }
+    ],
+    tips: [
+      'Contacter le prospect dans les 15 minutes',
+      'Qualifier le besoin et noter les informations',
+      'Expliquer les prochaines étapes'
+    ]
+  },
+
+  COLLECTE_DOCUMENTS: {
+    title: '📋 Collecte de Documents',
+    description: 'En attente des documents obligatoires et complémentaires',
+    actions: [
+      {
+        id: 'docs_complete',
+        label: 'Documents complets reçus',
+        description: 'Tous les documents sont validés',
+        icon: <CheckCircle className="w-5 h-5" />,
+        variant: 'success',
+        nextStatus: 'DEVIS',
+        requiresNote: false
+      },
+      {
+        id: 'remind_docs',
+        label: 'Relancer pour documents',
+        description: 'Envoyer un rappel au prospect',
+        icon: <Clock className="w-5 h-5" />,
+        variant: 'warning',
+        requiresNote: false
+      }
+    ],
+    tips: [
+      'Vérifier l\'espace prospect régulièrement',
+      'Relancer après 48h sans documents',
+      'Aider le prospect si besoin'
+    ]
+  },
+
+  DEVIS: {
+    title: '📨 Devis Envoyé',
+    description: 'Devis personnalisé envoyé avec documents fixes (DG, IPID)',
+    actions: [
+      {
+        id: 'quote_accepted',
+        label: 'Devis accepté',
+        description: 'Le client accepte l\'offre',
+        icon: <CheckCircle className="w-5 h-5" />,
+        variant: 'success',
+        nextStatus: 'DECISION_CLIENT',
+        requiresNote: false
+      },
+      {
+        id: 'follow_up',
+        label: 'Relancer le client',
+        description: 'Rappeler pour discuter du devis',
+        icon: <Phone className="w-5 h-5" />,
+        variant: 'primary',
+        requiresNote: false
+      }
+    ],
+    tips: [
+      'Appeler 2h après l\'envoi du devis',
+      'Être disponible pour les questions',
+      'Proposer des ajustements si besoin'
+    ]
+  },
+
+  DECISION_CLIENT: {
+    title: '🤔 Décision Client',
+    description: 'Accepté ✓ / Refusé ✗ / Inactif ⏳',
+    actions: [
+      {
+        id: 'proceed_payment',
+        label: 'Passer au paiement',
+        description: 'Le client est prêt à payer',
+        icon: <CheckCircle className="w-5 h-5" />,
+        variant: 'success',
+        nextStatus: 'PAIEMENT',
+        requiresNote: false
+      },
+      {
+        id: 'mark_inactive',
+        label: 'Marquer inactif',
+        description: 'Pas de réponse du client',
+        icon: <Clock className="w-5 h-5" />,
+        variant: 'warning',
+        nextStatus: 'RELANCE',
+        requiresNote: true
+      }
+    ],
+    tips: [
+      'Être réactif aux questions du client',
+      'Rassurer sur les garanties',
+      'Faciliter la signature et le paiement'
+    ]
+  },
+
+  PAIEMENT: {
+    title: '💰 Paiement',
+    description: 'CB ou Prélèvement (compagnie ou TaxiAssur)',
+    actions: [
+      {
+        id: 'payment_confirmed',
+        label: 'Paiement confirmé',
+        description: 'Passer à la signature',
+        icon: <CheckCircle className="w-5 h-5" />,
+        variant: 'success',
+        nextStatus: 'CONTRAT_SIGNATURE',
+        requiresNote: false
+      }
+    ],
+    tips: [
+      'Vérifier le paiement rapidement',
+      'Envoyer la confirmation',
+      'Préparer les documents de signature'
+    ]
+  },
+
+  CONTRAT_SIGNATURE: {
+    title: '✍️ Contrat & Signature',
+    description: 'Signature électronique + documents complémentaires',
+    actions: [
+      {
+        id: 'contract_signed',
+        label: 'Contrat signé',
+        description: 'Activer le client',
+        icon: <CheckCircle className="w-5 h-5" />,
+        variant: 'success',
+        nextStatus: 'CLIENT_ACTIF',
+        requiresNote: false
+      }
+    ],
+    tips: [
+      'S\'assurer que la signature est valide',
+      'Envoyer les documents finaux',
+      'Préparer l\'accès espace client'
+    ]
+  },
+
+  CLIENT_ACTIF: {
+    title: '🎉 Client Actif',
+    description: 'Contrat actif - Accès espace client',
+    actions: [
+      {
+        id: 'send_welcome',
+        label: 'Envoyer email de bienvenue',
+        description: 'Confirmer l\'activation',
+        icon: <Send className="w-5 h-5" />,
+        variant: 'success',
+        requiresNote: false
+      }
+    ],
+    tips: [
+      'Envoyer les accès espace client',
+      'Fournir les documents d\'assurance',
+      'Planifier un suivi à 3 mois'
+    ]
+  },
+
+  RELANCE: {
+    title: '🔔 Relance Nécessaire',
+    description: 'Relance suite à inactivité',
+    actions: [
+      {
+        id: 'recontact_success',
+        label: 'Client recontacté',
+        description: 'Retour au processus',
+        icon: <CheckCircle className="w-5 h-5" />,
+        variant: 'success',
+        requiresNote: true
+      }
+    ],
+    tips: [
+      'Essayer différents canaux',
+      'Proposer un avantage',
+      'Être persévérant mais respectueux'
+    ]
+  },
+
+  PERDU: {
+    title: '❌ Perdu Définitif',
+    description: 'Lead perdu, fin du processus',
+    actions: [],
+    tips: ['Analyser les raisons', 'Améliorer le processus']
+  },
+
+  RECONTACT_PROGRAMME: {
+    title: '📅 Recontact Programmé',
+    description: 'Recontact futur planifié',
+    actions: [],
+    tips: ['Respecter la date de recontact', 'Préparer l\'approche']
   }
 };
 
@@ -741,6 +947,11 @@ export const DynamicCommercialWorkflow: React.FC<Props> = ({
 
   const workflow = WORKFLOW_BY_STATUS[currentStatus];
   const statusInfo = PIPELINE_STATUSES[currentStatus];
+
+  // Protection: si le workflow n'existe pas pour ce statut, ne rien afficher
+  if (!workflow || !statusInfo) {
+    return null;
+  }
 
   const handleAction = async (action: WorkflowAction) => {
     if (action.requiresNote && !showNoteInput) {
