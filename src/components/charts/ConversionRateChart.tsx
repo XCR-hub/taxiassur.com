@@ -39,7 +39,7 @@ export function ConversionRateChart() {
 
         const statusCounts: Record<string, number> = {};
         leads?.forEach(lead => {
-          const status = lead.status || 'NEW_LEAD';
+          const status = lead.status || 'NOUVEAU_LEAD';
           statusCounts[status] = (statusCounts[status] || 0) + 1;
         });
 

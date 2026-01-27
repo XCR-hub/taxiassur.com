@@ -97,7 +97,7 @@ export const ManualLeadCreator: React.FC<ManualLeadCreatorProps> = ({
         city: formData.city.trim() || null,
         postal_code: formData.postal_code.trim() || null,
         source: formData.source,
-        status: 'NEW_LEAD',
+        status: 'NOUVEAU_LEAD',
         vehicle_type: formData.vehicle_type,
         fleet_size: parseInt(formData.fleet_size) || 1,
         lead_quality: 'medium',

@@ -56,7 +56,7 @@ export interface PipelineTransition {
   autoActions?: string[];
 }
 
-export const PIPELINE_STATUSES: Record<PipelineStatus, { label: string; color: string; icon: string }> = {
+export const PIPELINE_STATUSES: Record<string, { label: string; color: string; icon: string }> = {
   // 📋 LES 7 ÉTAPES DU PIPELINE
   NOUVEAU_LEAD: { label: 'Nouveau Lead', color: 'blue', icon: '🆕' },
   COLLECTE_DOCUMENTS: { label: 'Collecte Documents', color: 'orange', icon: '📋' },
@@ -76,7 +76,22 @@ export const PIPELINE_STATUSES: Record<PipelineStatus, { label: string; color: s
   RISK_CHURN: { label: 'Risque Churn', color: 'red', icon: '⚠️' },
   SINISTRE: { label: 'Sinistre', color: 'red', icon: '🚨' },
   ATTESTATION_REQUEST: { label: 'Demande Attestation', color: 'blue', icon: '📜' },
-  SUPPORT_ASSISTANCE: { label: 'Assistance', color: 'teal', icon: '💬' }
+  SUPPORT_ASSISTANCE: { label: 'Assistance', color: 'teal', icon: '💬' },
+
+  // 🔄 ANCIENS STATUTS (Rétrocompatibilité temporaire)
+  NEW_LEAD: { label: 'Nouveau Lead', color: 'blue', icon: '🆕' },
+  CONTACT_ATTEMPTED: { label: 'Contact Tenté', color: 'blue', icon: '📞' },
+  CONTACT_CONFIRMED: { label: 'Contact Confirmé', color: 'blue', icon: '✓' },
+  DOCUMENTS_REQUIRED: { label: 'Documents Requis', color: 'orange', icon: '📋' },
+  DOCUMENTS_RECEIVED: { label: 'Documents Reçus', color: 'orange', icon: '📥' },
+  READY_FOR_QUOTE: { label: 'Prêt Devis', color: 'cyan', icon: '📨' },
+  QUOTE_SENT: { label: 'Devis Envoyé', color: 'cyan', icon: '📨' },
+  QUOTE_ACCEPTED: { label: 'Devis Accepté', color: 'green', icon: '✓' },
+  PAYMENT_PENDING: { label: 'Paiement En Attente', color: 'yellow', icon: '💰' },
+  CONTRACT_PENDING: { label: 'Contrat En Attente', color: 'emerald', icon: '✍️' },
+  ACTIVE_CLIENT: { label: 'Client Actif', color: 'green', icon: '🎉' },
+  LOST: { label: 'Perdu', color: 'gray', icon: '❌' },
+  LOST_RECONTACT_SCHEDULED: { label: 'Recontact Programmé', color: 'slate', icon: '📅' }
 };
 
 export const PIPELINE_TRANSITIONS: PipelineTransition[] = [

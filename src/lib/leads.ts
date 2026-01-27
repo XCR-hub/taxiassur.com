@@ -358,7 +358,7 @@ export async function createLead(input: CreateLeadInput): Promise<{ success: boo
         phone: input.phone,
         city: input.city,
         source: input.source || 'website',
-        status: 'NEW_LEAD',
+        status: 'NOUVEAU_LEAD',
         metadata: {
           vehicle_type: vehicleType,
           immatriculation: input.immatriculation || '',

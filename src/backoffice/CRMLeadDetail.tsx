@@ -402,10 +402,11 @@ const CRMLeadDetail: React.FC = () => {
           undefined
         );
 
+        const statusLabel = PIPELINE_STATUSES[action.nextStatus]?.label || action.nextStatus;
         setAutomationFeedback({
           show: true,
           success: true,
-          message: `Statut changé vers ${PIPELINE_STATUSES[action.nextStatus].label}`,
+          message: `Statut changé vers ${statusLabel}`,
           actionsQueued: 0
         });
 
