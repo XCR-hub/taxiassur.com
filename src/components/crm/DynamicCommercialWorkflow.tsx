@@ -753,7 +753,36 @@ L'équipe TaxiAssur`
         description: 'Envoyer un rappel au prospect',
         icon: <Clock className="w-5 h-5" />,
         variant: 'warning',
-        requiresNote: false
+        requiresNote: false,
+        emailTemplate: {
+          subject: '📋 Documents en attente pour votre devis assurance taxi',
+          body: `Bonjour {first_name},
+
+Nous n'avons pas encore reçu tous les documents nécessaires pour établir votre devis assurance taxi.
+
+⚡ OBTENEZ VOTRE DEVIS SOUS 24H
+Uploadez vos documents maintenant via votre espace personnel sécurisé :
+{prospect_link}
+
+📋 Documents requis (7 pièces) :
+✓ Licence taxi professionnelle
+✓ Permis de conduire (recto-verso)
+✓ Pièce d'identité (CNI ou passeport)
+✓ Carte grise du véhicule
+✓ Relevé d'information assurance
+✓ Autorisation de stationnement
+✓ RIB (pour le prélèvement)
+
+💡 Vous pouvez aussi nous les envoyer par email en répondant directement à ce message.
+
+📞 Besoin d'aide ? Contactez-nous au 01 80 85 57 86
+
+Nous sommes là pour vous accompagner !
+
+Cordialement,
+L'équipe TaxiAssur
+01 80 85 57 86`
+        }
       }
     ],
     tips: [
