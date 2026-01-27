@@ -89,6 +89,8 @@ export function DocumentChecklistPanelV2({
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState('');
   const [showRejectModal, setShowRejectModal] = useState<string | null>(null);
+  const [draggedAttachment, setDraggedAttachment] = useState<EmailAttachment | null>(null);
+  const [dropTarget, setDropTarget] = useState<string | null>(null);
 
   const loadData = useCallback(async () => {
     console.log('🔄 DocumentChecklistPanelV2: loadData called for leadId:', leadId);
@@ -289,6 +291,61 @@ export function DocumentChecklistPanelV2({
     }
   };
 
+  const handleDragStart = (attachment: EmailAttachment) => {
+    console.log('🎯 Drag started:', attachment.file_name);
+    setDraggedAttachment(attachment);
+  };
+
+  const handleDragEnd = () => {
+    console.log('🎯 Drag ended');
+    setDraggedAttachment(null);
+    setDropTarget(null);
+  };
+
+  const handleDragOver = (e: React.DragEvent, docType: string) => {
+    e.preventDefault();
+    setDropTarget(docType);
+  };
+
+  const handleDragLeave = () => {
+    setDropTarget(null);
+  };
+
+  const handleDrop = async (e: React.DragEvent, docType: string) => {
+    e.preventDefault();
+    console.log('📥 Drop on:', docType, 'attachment:', draggedAttachment?.file_name);
+
+    if (!draggedAttachment) {
+      console.warn('⚠️ No dragged attachment');
+      return;
+    }
+
+    setActionLoading(docType);
+    try {
+      // Appeler la fonction RPC pour classifier le document
+      const { error } = await supabase.rpc('classify_attachment', {
+        p_attachment_id: draggedAttachment.id,
+        p_doc_type: docType,
+        p_create_document: true
+      });
+
+      if (error) {
+        console.error('❌ Error classifying attachment:', error);
+        throw error;
+      }
+
+      console.log('✅ Document classified successfully');
+      await loadData();
+    } catch (err) {
+      console.error('❌ Error in handleDrop:', err);
+      alert('Erreur lors de la classification du document');
+    } finally {
+      setActionLoading(null);
+      setDraggedAttachment(null);
+      setDropTarget(null);
+    }
+  };
+
   const completion = getCompletionPercentage();
   const validated = getValidatedPercentage();
   const missingDocs = getMissingDocuments();
@@ -426,8 +483,13 @@ export function DocumentChecklistPanelV2({
           return (
             <div
               key={docType.id}
+              onDragOver={(e) => handleDragOver(e, docType.id)}
+              onDragLeave={handleDragLeave}
+              onDrop={(e) => handleDrop(e, docType.id)}
               className={`p-3 rounded-lg border transition-all ${
-                status.validated
+                dropTarget === docType.id
+                  ? 'bg-blue-500/20 border-blue-500 scale-105 shadow-lg shadow-blue-500/50'
+                  : status.validated
                   ? 'bg-green-500/10 border-green-500/30'
                   : status.status === 'rejected'
                   ? 'bg-red-500/10 border-red-500/30'
@@ -551,7 +613,12 @@ export function DocumentChecklistPanelV2({
                     .map((attachment) => (
                       <div
                         key={attachment.id}
-                        className="bg-gray-800 rounded-lg p-3 border border-gray-700 hover:border-blue-500/50 transition-all cursor-move"
+                        draggable
+                        onDragStart={() => handleDragStart(attachment)}
+                        onDragEnd={handleDragEnd}
+                        className={`bg-gray-800 rounded-lg p-3 border border-gray-700 hover:border-blue-500/50 transition-all cursor-move ${
+                          draggedAttachment?.id === attachment.id ? 'opacity-50 scale-95' : ''
+                        }`}
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-3 flex-1 min-w-0">
