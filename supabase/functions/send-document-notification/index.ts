@@ -173,8 +173,88 @@ Deno.serve(async (req: Request) => {
     let recipientEmail = '';
     let recipientName = '';
 
+    // Email de confirmation envoyé au prospect après upload
+    if (notificationType === 'confirmation' && prospectEmail) {
+      recipientEmail = prospectEmail;
+      recipientName = prospectName;
+      emailSubject = `✅ Document bien reçu - ${documentTypeName}`;
+
+      const prospectSpaceUrl = `https://taxiassur.com/espace-prospect${accessToken ? '?token=' + accessToken : ''}`;
+
+      emailBody = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; background: #f3f4f6; padding: 20px; }
+          .container { max-width: 650px; margin: 0 auto; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+          .header { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 30px; text-align: center; }
+          .content { padding: 30px; }
+          .alert { background: #d1fae5; border-left: 4px solid #10b981; padding: 15px; margin: 20px 0; }
+          .document-badge { background: #10b981; color: white; padding: 10px 20px; border-radius: 20px; display: inline-block; margin: 15px 0; }
+          .info-box { background: #f0fdf4; padding: 20px; border-radius: 8px; margin: 20px 0; border: 2px solid #86efac; }
+          .cta-button { background: #3b82f6; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; display: inline-block; font-weight: bold; margin-top: 20px; }
+          .footer { background: #1f2937; color: white; padding: 20px; text-align: center; font-size: 12px; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1 style="margin: 0; font-size: 28px;">✅ DOCUMENT BIEN REÇU</h1>
+            <p style="margin: 10px 0 0 0;">TaxiAssur - Confirmation de réception</p>
+          </div>
+
+          <div class="content">
+            <p style="font-size: 16px; color: #1f2937;">Bonjour ${prospectName},</p>
+
+            <div class="alert">
+              <strong>✅ DOCUMENT REÇU :</strong> Votre document a bien été enregistré
+            </div>
+
+            <h2 style="color: #1f2937; margin-top: 0;">Document reçu</h2>
+
+            <div class="document-badge">
+              📄 ${documentTypeName}
+            </div>
+
+            <div class="info-box">
+              <h3 style="color: #059669; margin-top: 0;">📋 Prochaines étapes :</h3>
+              <ol style="color: #4b5563; line-height: 1.8;">
+                <li>🔍 Notre équipe va vérifier votre document</li>
+                <li>✅ Nous vous confirmerons sa validation sous 24-48h</li>
+                <li>📧 Vous recevrez un email si des corrections sont nécessaires</li>
+                <li>🎯 Une fois tous les documents validés, nous finaliserons votre dossier</li>
+              </ol>
+            </div>
+
+            <h3 style="color: #1f2937;">💡 Bon à savoir</h3>
+            <p style="color: #4b5563;">
+              Vous pouvez suivre l'avancement de votre dossier et uploader d'autres documents à tout moment depuis votre espace personnel.
+            </p>
+
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${prospectSpaceUrl}" class="cta-button">
+                📊 ACCÉDER À MON ESPACE
+              </a>
+            </div>
+
+            <p style="color: #6b7280; font-size: 14px; margin-top: 30px;">
+              💬 <strong>Une question ?</strong> Répondez simplement à cet email, notre équipe vous répondra rapidement.
+            </p>
+          </div>
+
+          <div class="footer">
+            <strong>TaxiAssur</strong><br>
+            L'assurance taxi en toute simplicité
+          </div>
+        </div>
+      </body>
+      </html>
+      `;
+    }
     // Email de rejet envoyé au prospect
-    if (notificationType === 'rejection' && prospectEmail) {
+    else if (notificationType === 'rejection' && prospectEmail) {
       recipientEmail = prospectEmail;
       recipientName = prospectName;
       emailSubject = `⚠️ Document à remplacer - ${documentTypeName}`;
