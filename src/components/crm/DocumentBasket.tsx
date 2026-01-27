@@ -96,12 +96,21 @@ export default function DocumentBasket({ caseId, onDocumentClassified }: Documen
     if (!confirm('Êtes-vous sûr de vouloir refuser ce document ?')) return;
 
     try {
-      const { error } = await supabase
+      // Try email_attachments first
+      let { error: emailError } = await supabase
         .from('email_attachments')
         .update({ status: 'rejected' })
         .eq('id', attachmentId);
 
-      if (error) throw error;
+      // If not found, try prospect_documents
+      if (emailError) {
+        const { error: prospectError } = await supabase
+          .from('prospect_documents')
+          .update({ status: 'rejected' })
+          .eq('id', attachmentId);
+
+        if (prospectError) throw prospectError;
+      }
 
       await loadBasket();
     } catch (error) {
@@ -218,7 +227,10 @@ export default function DocumentBasket({ caseId, onDocumentClassified }: Documen
                     <div className="flex items-center gap-2 mt-3">
                       <button
                         onClick={() => {
-                          const url = `${supabase.supabaseUrl}/storage/v1/object/public/email-attachments/${attachment.storage_path}`;
+                          // Detect source based on storage_path format
+                          const isProspectDoc = attachment.storage_path.includes('/') && !attachment.storage_path.startsWith('attachments/');
+                          const bucket = isProspectDoc ? 'prospect-documents' : 'email-attachments';
+                          const url = `${supabase.supabaseUrl}/storage/v1/object/public/${bucket}/${attachment.storage_path}`;
                           window.open(url, '_blank');
                         }}
                         className="flex-1 text-xs py-1.5 px-2 bg-blue-50 text-blue-600 rounded hover:bg-blue-100"
