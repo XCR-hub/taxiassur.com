@@ -30,6 +30,7 @@ interface DocumentCategory {
 }
 
 const DOCUMENT_CATEGORIES: DocumentCategory[] = [
+  { id: 'licence_taxi', label: 'Licence Taxi', icon: '🚕', required: true },
   { id: 'RIB', label: 'RIB', icon: '💳', required: true },
   { id: 'permis_conduire', label: 'Permis de conduire', icon: '🪪', required: true },
   { id: 'carte_grise', label: 'Carte grise', icon: '🚗', required: true },
@@ -38,6 +39,7 @@ const DOCUMENT_CATEGORIES: DocumentCategory[] = [
   { id: 'kbis', label: 'Kbis / SIRENE', icon: '🏢', required: false },
   { id: 'piece_identite', label: 'Pièce d\'identité', icon: '🆔', required: false },
   { id: 'justificatif_domicile', label: 'Justificatif de domicile', icon: '🏠', required: false },
+  { id: 'autorisation_stationnement', label: 'Autorisation de stationnement', icon: '🅿️', required: false },
 ];
 
 export default function DocumentBasket({ caseId, onDocumentClassified }: DocumentBasketProps) {
