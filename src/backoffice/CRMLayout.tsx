@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { NotificationCenter } from '@/components/NotificationCenter';
+import { CRMPushNotifications } from '@/components/CRMPushNotifications';
 import { notificationManager } from '@/lib/realtime-notifications';
 
 interface CRMStats {
@@ -290,6 +291,9 @@ const CRMLayout: React.FC = () => {
           <Outlet />
         </div>
       </main>
+
+      {/* Notifications Push en temps réel */}
+      <CRMPushNotifications />
     </div>
   );
 };
