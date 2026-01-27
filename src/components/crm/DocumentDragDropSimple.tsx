@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FileText, Check, X, Download, ExternalLink, AlertCircle, RefreshCw, ShoppingCart } from 'lucide-react';
+import { FileText, Check, Download, ExternalLink, AlertCircle, RefreshCw, ShoppingCart, Maximize2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
 
@@ -9,7 +9,7 @@ interface Document {
   file_name: string;
   file_path: string;
   document_type: string | null;
-  source: 'prospect_documents' | 'email_attachments';
+  source: 'prospect_documents' | 'email_attachments' | 'crm_lead_documents';
   uploaded_at: string;
   validated: boolean;
 }
@@ -20,15 +20,15 @@ interface DocumentDragDropSimpleProps {
 }
 
 const DOCUMENT_TYPES = [
-  { value: 'licence_professionnelle', label: 'Licence taxi', icon: '🚕', required: true },
-  { value: 'permis_conduire', label: 'Permis de conduire', icon: '🪪', required: true },
-  { value: 'piece_identite', label: "Pièce d'identité", icon: '🆔', required: true },
-  { value: 'carte_grise', label: 'Carte grise', icon: '🚗', required: true },
-  { value: 'releve_information', label: "Relevé d'information", icon: '📄', required: false },
-  { value: 'justificatif_domicile', label: 'Justificatif domicile', icon: '🏠', required: false },
-  { value: 'kbis', label: 'Kbis / SIRENE', icon: '🏢', required: false },
-  { value: 'autorisation_stationnement', label: 'Autorisation stationnement', icon: '🅿️', required: false },
-  { value: 'rib', label: 'RIB', icon: '🏦', required: false },
+  { value: 'licence_professionnelle', label: 'Licence taxi', icon: '🚕', required: true, color: 'from-orange-500 to-amber-500' },
+  { value: 'permis_conduire', label: 'Permis de conduire', icon: '🪪', required: true, color: 'from-blue-500 to-cyan-500' },
+  { value: 'piece_identite', label: "Pièce d'identité", icon: '🆔', required: true, color: 'from-purple-500 to-pink-500' },
+  { value: 'carte_grise', label: 'Carte grise', icon: '🚗', required: true, color: 'from-red-500 to-rose-500' },
+  { value: 'releve_information', label: "Relevé d'info", icon: '📄', required: false, color: 'from-gray-500 to-slate-500' },
+  { value: 'justificatif_domicile', label: 'Justif domicile', icon: '🏠', required: false, color: 'from-green-500 to-emerald-500' },
+  { value: 'kbis', label: 'Kbis / SIRENE', icon: '🏢', required: false, color: 'from-indigo-500 to-blue-500' },
+  { value: 'autorisation_stationnement', label: 'Autorisation', icon: '🅿️', required: false, color: 'from-teal-500 to-cyan-500' },
+  { value: 'rib', label: 'RIB', icon: '🏦', required: false, color: 'from-yellow-500 to-orange-500' },
 ];
 
 const DocumentDragDropSimple: React.FC<DocumentDragDropSimpleProps> = ({ leadId, leadEmail }) => {
@@ -40,25 +40,42 @@ const DocumentDragDropSimple: React.FC<DocumentDragDropSimpleProps> = ({ leadId,
   const loadAllDocuments = async () => {
     try {
       setLoading(true);
+      logger.info('Loading documents for lead:', leadId);
 
-      // Documents depuis prospect_documents
+      // 1. Documents depuis prospect_documents
       const { data: prospectDocs, error: prospectError } = await supabase
         .from('prospect_documents')
         .select('*')
         .eq('lead_id', leadId);
 
-      if (prospectError) throw prospectError;
+      if (prospectError) {
+        logger.error('Error loading prospect_documents:', prospectError);
+      }
+      logger.info('Prospect documents:', prospectDocs?.length || 0);
 
-      // Documents depuis email_attachments
+      // 2. Documents depuis email_attachments
       const { data: emailAttachments, error: attachError } = await supabase
         .from('email_attachments')
         .select('*')
-        .eq('lead_id', leadId)
-        .is('document_type', null); // Seulement non classifiés
+        .eq('lead_id', leadId);
 
-      if (attachError) throw attachError;
+      if (attachError) {
+        logger.error('Error loading email_attachments:', attachError);
+      }
+      logger.info('Email attachments:', emailAttachments?.length || 0);
 
-      // Combiner les deux sources
+      // 3. Documents depuis crm_lead_documents
+      const { data: crmDocs, error: crmError } = await supabase
+        .from('crm_lead_documents')
+        .select('*')
+        .eq('lead_id', leadId);
+
+      if (crmError) {
+        logger.error('Error loading crm_lead_documents:', crmError);
+      }
+      logger.info('CRM documents:', crmDocs?.length || 0);
+
+      // Combiner toutes les sources
       const allDocs: Document[] = [
         ...(prospectDocs || []).map(d => ({
           id: d.id,
@@ -79,9 +96,20 @@ const DocumentDragDropSimple: React.FC<DocumentDragDropSimpleProps> = ({ leadId,
           source: 'email_attachments' as const,
           uploaded_at: d.created_at,
           validated: false
+        })),
+        ...(crmDocs || []).map(d => ({
+          id: d.id,
+          lead_id: d.lead_id,
+          file_name: d.file_name,
+          file_path: d.file_path,
+          document_type: d.document_type,
+          source: 'crm_lead_documents' as const,
+          uploaded_at: d.uploaded_at,
+          validated: d.status === 'validated'
         }))
       ];
 
+      logger.info('Total documents loaded:', allDocs.length);
       setDocuments(allDocs);
     } catch (error) {
       logger.error('Error loading documents:', error);
@@ -91,7 +119,9 @@ const DocumentDragDropSimple: React.FC<DocumentDragDropSimpleProps> = ({ leadId,
   };
 
   useEffect(() => {
-    loadAllDocuments();
+    if (leadId) {
+      loadAllDocuments();
+    }
   }, [leadId]);
 
   const handleDragStart = (e: React.DragEvent, doc: Document) => {
@@ -119,7 +149,6 @@ const DocumentDragDropSimple: React.FC<DocumentDragDropSimpleProps> = ({ leadId,
     try {
       const { data: { user } } = await supabase.auth.getUser();
 
-      // Mettre à jour le document dans la bonne table
       if (draggedDoc.source === 'prospect_documents') {
         const { error } = await supabase
           .from('prospect_documents')
@@ -132,8 +161,20 @@ const DocumentDragDropSimple: React.FC<DocumentDragDropSimpleProps> = ({ leadId,
           .eq('id', draggedDoc.id);
 
         if (error) throw error;
+      } else if (draggedDoc.source === 'crm_lead_documents') {
+        const { error } = await supabase
+          .from('crm_lead_documents')
+          .update({
+            document_type: docType,
+            status: 'validated',
+            validated_at: new Date().toISOString(),
+            validated_by: user?.id || null
+          })
+          .eq('id', draggedDoc.id);
+
+        if (error) throw error;
       } else {
-        // Pour email_attachments, on crée une entrée dans prospect_documents
+        // Pour email_attachments, créer dans prospect_documents
         const { error } = await supabase
           .from('prospect_documents')
           .insert({
@@ -152,7 +193,6 @@ const DocumentDragDropSimple: React.FC<DocumentDragDropSimpleProps> = ({ leadId,
 
         if (error) throw error;
 
-        // Marquer l'attachment comme classifié
         await supabase
           .from('email_attachments')
           .update({ document_type: docType })
@@ -163,64 +203,13 @@ const DocumentDragDropSimple: React.FC<DocumentDragDropSimpleProps> = ({ leadId,
       setDraggedDoc(null);
     } catch (error) {
       logger.error('Error classifying document:', error);
-      alert('Erreur lors de la classification du document');
-    }
-  };
-
-  const handleValidate = async (docId: string, docType: string, source: string) => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-
-      if (source === 'prospect_documents') {
-        const { error } = await supabase
-          .from('prospect_documents')
-          .update({
-            document_type: docType,
-            validated: true,
-            validated_at: new Date().toISOString(),
-            validated_by: user?.id || null
-          })
-          .eq('id', docId);
-
-        if (error) throw error;
-      } else {
-        // Créer dans prospect_documents
-        const doc = documents.find(d => d.id === docId);
-        if (!doc) return;
-
-        const { error } = await supabase
-          .from('prospect_documents')
-          .insert({
-            lead_id: leadId,
-            file_name: doc.file_name,
-            file_path: doc.file_path,
-            file_type: 'application/pdf',
-            file_size: 0,
-            document_type: docType,
-            uploaded_by: user?.id || null,
-            uploaded_at: new Date().toISOString(),
-            validated: true,
-            validated_at: new Date().toISOString(),
-            validated_by: user?.id || null
-          });
-
-        if (error) throw error;
-
-        await supabase
-          .from('email_attachments')
-          .update({ document_type: docType })
-          .eq('id', docId);
-      }
-
-      await loadAllDocuments();
-    } catch (error) {
-      logger.error('Error validating document:', error);
-      alert('Erreur lors de la validation');
+      alert('Erreur lors de la classification');
     }
   };
 
   const getDocumentUrl = (filePath: string, source: string) => {
-    const bucket = source === 'prospect_documents' ? 'prospect-documents' : 'email-attachments';
+    const bucket = source === 'prospect_documents' ? 'prospect-documents' :
+                   source === 'crm_lead_documents' ? 'crm-documents' : 'email-attachments';
     const { data } = supabase.storage.from(bucket).getPublicUrl(filePath);
     return data.publicUrl;
   };
@@ -237,48 +226,56 @@ const DocumentDragDropSimple: React.FC<DocumentDragDropSimpleProps> = ({ leadId,
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500"></div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h3 className="text-xl font-bold text-white flex items-center gap-2">
-          <FileText className="text-amber-500" size={24} />
-          Gestion des Documents
-        </h3>
+        <div>
+          <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+            <FileText className="text-amber-600" size={20} />
+            Documents
+          </h3>
+          <p className="text-sm text-gray-600">
+            {documents.length} document(s) - {unclassifiedDocs.length} à classer
+          </p>
+        </div>
         <button
           onClick={loadAllDocuments}
-          className="flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-all"
+          className="flex items-center gap-2 px-3 py-2 bg-white hover:bg-gray-50 border border-gray-300 text-gray-700 rounded-lg transition-all text-sm"
         >
-          <RefreshCw size={16} />
+          <RefreshCw size={14} />
           Actualiser
         </button>
       </div>
 
-      <div className="grid grid-cols-12 gap-6">
+      <div className="grid grid-cols-12 gap-4">
         {/* PANIER À GAUCHE - 4 colonnes */}
         <div className="col-span-4">
-          <div className="bg-yellow-500/10 border-2 border-yellow-500/50 rounded-xl p-6 sticky top-4">
-            <div className="flex items-center gap-2 mb-4">
-              <ShoppingCart className="text-yellow-500" size={24} />
-              <h4 className="text-lg font-bold text-yellow-400">
-                Panier ({unclassifiedDocs.length})
-              </h4>
+          <div className="bg-gradient-to-br from-amber-50 to-orange-50 border-2 border-amber-300 rounded-xl p-4 sticky top-4">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="p-2 bg-amber-500 rounded-lg">
+                <ShoppingCart className="text-white" size={18} />
+              </div>
+              <div>
+                <h4 className="text-sm font-bold text-gray-900">Panier</h4>
+                <p className="text-xs text-gray-600">{unclassifiedDocs.length} à classer</p>
+              </div>
             </div>
 
-            <p className="text-sm text-gray-400 mb-4">
-              Glissez ces documents vers les cartes à droite
+            <p className="text-xs text-gray-600 mb-3 bg-white/50 p-2 rounded">
+              Glissez les docs vers les cartes →
             </p>
 
-            <div className="space-y-2 max-h-[600px] overflow-y-auto">
+            <div className="space-y-2 max-h-[500px] overflow-y-auto">
               {unclassifiedDocs.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  <ShoppingCart size={48} className="mx-auto mb-2 opacity-30" />
-                  <p>Aucun document en attente</p>
+                <div className="text-center py-8 text-gray-400">
+                  <ShoppingCart size={32} className="mx-auto mb-2 opacity-30" />
+                  <p className="text-xs">Aucun document</p>
                 </div>
               ) : (
                 unclassifiedDocs.map(doc => (
@@ -286,32 +283,34 @@ const DocumentDragDropSimple: React.FC<DocumentDragDropSimpleProps> = ({ leadId,
                     key={doc.id}
                     draggable
                     onDragStart={(e) => handleDragStart(e, doc)}
-                    className="bg-gray-900/50 rounded-lg p-3 border border-gray-700 cursor-move hover:border-yellow-500 transition-all"
+                    className="bg-white rounded-lg p-2 border-2 border-gray-200 cursor-move hover:border-amber-400 hover:shadow-md transition-all"
                   >
-                    <div className="flex items-center gap-2 mb-2">
-                      <FileText className="text-gray-400" size={16} />
-                      <span className="text-white text-sm font-medium flex-1 truncate">
+                    <div className="flex items-center gap-2 mb-1">
+                      <FileText className="text-gray-400 flex-shrink-0" size={14} />
+                      <span className="text-xs text-gray-900 font-medium flex-1 truncate" title={doc.file_name}>
                         {doc.file_name}
                       </span>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 text-xs">
                       <a
                         href={getDocumentUrl(doc.file_path, doc.source)}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1"
+                        className="text-blue-600 hover:text-blue-700 flex items-center gap-1"
                       >
-                        <ExternalLink size={12} />
+                        <ExternalLink size={10} />
                         Voir
                       </a>
                       <a
                         href={getDocumentUrl(doc.file_path, doc.source)}
                         download
-                        className="text-xs text-green-400 hover:text-green-300 flex items-center gap-1"
+                        className="text-green-600 hover:text-green-700 flex items-center gap-1"
                       >
-                        <Download size={12} />
+                        <Download size={10} />
                         DL
                       </a>
+                      <span className="text-gray-400">•</span>
+                      <span className="text-gray-500">{doc.source.split('_')[0]}</span>
                     </div>
                   </div>
                 ))
@@ -322,7 +321,7 @@ const DocumentDragDropSimple: React.FC<DocumentDragDropSimpleProps> = ({ leadId,
 
         {/* CARTES À DROITE - 8 colonnes */}
         <div className="col-span-8">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-3">
             {DOCUMENT_TYPES.map(type => {
               const docs = classifiedDocs[type.value] || [];
               const hasDoc = docs.length > 0;
@@ -334,77 +333,75 @@ const DocumentDragDropSimple: React.FC<DocumentDragDropSimpleProps> = ({ leadId,
                   onDragOver={(e) => handleDragOver(e, type.value)}
                   onDragLeave={handleDragLeave}
                   onDrop={(e) => handleDrop(e, type.value)}
-                  className={`rounded-xl p-4 border-2 transition-all min-h-[150px] ${
+                  className={`rounded-xl p-3 border-2 transition-all min-h-[120px] ${
                     dropTarget === type.value
-                      ? 'border-amber-500 bg-amber-500/20 scale-105'
+                      ? `border-amber-400 bg-gradient-to-br ${type.color} bg-opacity-20 scale-105 shadow-lg`
                       : isValidated
-                      ? 'border-green-500/50 bg-green-500/10'
+                      ? 'border-green-400 bg-gradient-to-br from-green-50 to-emerald-50'
                       : hasDoc
-                      ? 'border-blue-500/50 bg-blue-500/10'
-                      : 'border-gray-700 bg-gray-900/50'
+                      ? 'border-blue-300 bg-gradient-to-br from-blue-50 to-cyan-50'
+                      : 'border-gray-200 bg-white hover:border-gray-300'
                   }`}
                 >
-                  <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-start justify-between mb-2">
                     <div className="flex items-center gap-2">
-                      <span className="text-2xl">{type.icon}</span>
+                      <span className="text-xl">{type.icon}</span>
                       <div>
-                        <div className="text-white font-medium text-sm">
+                        <div className="text-xs font-bold text-gray-900">
                           {type.label}
                         </div>
                         {type.required && (
-                          <span className="text-xs px-1.5 py-0.5 bg-red-500/20 text-red-400 rounded">
+                          <span className="text-[10px] px-1.5 py-0.5 bg-red-100 text-red-600 rounded font-medium">
                             Obligatoire
                           </span>
                         )}
                       </div>
                     </div>
                     {isValidated ? (
-                      <Check className="text-green-400" size={20} />
+                      <Check className="text-green-500" size={18} />
                     ) : hasDoc ? (
-                      <AlertCircle className="text-blue-400" size={20} />
+                      <AlertCircle className="text-blue-500" size={18} />
                     ) : (
-                      <AlertCircle className="text-gray-600" size={20} />
+                      <AlertCircle className="text-gray-300" size={18} />
                     )}
                   </div>
 
                   {dropTarget === type.value && (
-                    <div className="text-amber-400 text-sm font-bold mb-2">
-                      Déposez le document ici
+                    <div className="text-amber-600 text-xs font-bold mb-2 animate-pulse">
+                      ⬇️ Déposez ici
                     </div>
                   )}
 
-                  {docs.length > 0 && (
-                    <div className="space-y-2">
+                  {docs.length > 0 ? (
+                    <div className="space-y-1">
                       {docs.map(doc => (
                         <div
                           key={doc.id}
-                          className="bg-gray-900/50 rounded p-2 border border-gray-700"
+                          className="bg-white/80 rounded p-2 border border-gray-200"
                         >
-                          <div className="flex items-center justify-between">
-                            <span className="text-xs text-white truncate flex-1">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-[10px] text-gray-700 truncate flex-1" title={doc.file_name}>
                               {doc.file_name}
                             </span>
-                            <div className="flex items-center gap-1">
+                            <div className="flex items-center gap-1 flex-shrink-0">
                               <a
                                 href={getDocumentUrl(doc.file_path, doc.source)}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="p-1 hover:bg-gray-800 rounded"
+                                className="p-1 hover:bg-gray-100 rounded"
                               >
-                                <ExternalLink size={12} className="text-blue-400" />
+                                <ExternalLink size={10} className="text-blue-500" />
                               </a>
                               {doc.validated && (
-                                <Check className="text-green-400" size={14} />
+                                <Check className="text-green-500" size={12} />
                               )}
                             </div>
                           </div>
                         </div>
                       ))}
                     </div>
-                  )}
-
-                  {!hasDoc && (
-                    <div className="text-center text-gray-500 text-sm mt-4">
+                  ) : (
+                    <div className="text-center text-gray-400 text-[10px] mt-2 py-3 border-2 border-dashed border-gray-200 rounded">
                       Glissez un document ici
                     </div>
                   )}

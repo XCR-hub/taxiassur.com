@@ -30,3 +30,5 @@ export { default as DocumentValidationPanel } from './DocumentValidationPanel';
 export { default as PaymentManager } from './PaymentManager';
 export { default as ContractSignatureManager } from './ContractSignatureManager';
 export { default as PipelineLocksStatus } from './PipelineLocksStatus';
+export { default as QuickActionsCard } from './QuickActionsCard';
+export { default as TimelineCard } from './TimelineCard';

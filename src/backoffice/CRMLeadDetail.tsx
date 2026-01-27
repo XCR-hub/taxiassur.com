@@ -50,10 +50,11 @@ import {
   DownPaymentManager,
   DynamicCommercialWorkflow,
   LeadDeleteSecure,
-  CommunicationTimeline,
   PaymentManager,
   ContractSignatureManager,
-  PipelineLocksStatus
+  PipelineLocksStatus,
+  QuickActionsCard,
+  TimelineCard
 } from '@/components/crm';
 import DocumentDragDropSimple from '@/components/crm/DocumentDragDropSimple';
 import type { WorkflowTab } from '@/components/crm';
@@ -1121,28 +1122,22 @@ const CRMLeadDetail: React.FC = () => {
             )}
           </div>
 
-          <div className="space-y-6">
-            <LeadIntelligencePanel
-              leadId={lead.id}
-              leadStatus={lead.status}
-              leadData={{
-                created_at: lead.created_at,
-                last_contact_at: lead.last_contact_at,
-                email: lead.email,
-                phone: lead.phone,
-                quality_score: lead.quality_score
+          <div className="space-y-4">
+            <QuickActionsCard
+              onSendEmail={openEmailComposer}
+              onCall={() => {
+                if (lead.phone) {
+                  window.open(`tel:${lead.phone}`, '_blank');
+                }
               }}
-              documentsComplete={documentsComplete}
-              hasQuotes={quotesCount > 0}
-              onSuggestedAction={handleSuggestedAction}
-              pendingAutomations={pendingAISuggestions}
-              scheduledFollowUps={scheduledFollowUps}
+              onRequestDocuments={() => setActiveTab('documents')}
             />
 
-            <CommunicationTimeline
+            <TimelineCard
               leadId={lead.id}
               leadEmail={lead.email}
               leadPhone={lead.phone}
+              messageCount={messages.length}
               onReply={(emailId, subject, originalContent) => {
                 setEmailDefaultSubject(subject);
                 setEmailDefaultBody(`\n\n---\n${originalContent.substring(0, 500)}`);
@@ -1157,110 +1152,36 @@ const CRMLeadDetail: React.FC = () => {
               onNewWhatsApp={() => setShowWhatsAppModal(true)}
             />
 
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
-                <Zap className="w-5 h-5 text-yellow-500" />
-                Actions rapides
-              </h3>
-              <div className="space-y-2">
-                <button
-                  onClick={openEmailComposer}
-                  className="w-full px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
-                >
-                  <Mail className="w-4 h-4" />
-                  Envoyer Email
-                </button>
-                <button
-                  onClick={() => {
-                    if (lead.phone) {
-                      window.open(`tel:${lead.phone}`, '_blank');
-                    }
-                  }}
-                  className="w-full px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
-                >
-                  <PhoneCall className="w-4 h-4" />
-                  Appeler
-                </button>
-                <button
-                  onClick={() => setActiveTab('documents')}
-                  className="w-full px-4 py-3 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors flex items-center justify-center gap-2"
-                >
-                  <FileText className="w-4 h-4" />
-                  Demander documents
-                </button>
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <Bot className="text-blue-500" size={18} />
+                <h3 className="text-sm font-bold text-gray-900">Intelligence Lead</h3>
               </div>
-            </div>
 
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
-                <TrendingUp className="w-5 h-5 text-blue-600" />
-                Statistiques
-              </h3>
-              <div className="space-y-4">
-                <div>
-                  <div className="flex items-center justify-between text-sm mb-1">
-                    <span className="text-gray-600">Score qualite</span>
-                    <span className="font-semibold text-gray-900">{lead.quality_score || 0}%</span>
-                  </div>
-                  <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <div
-                      className={`h-full transition-all duration-500 ${
-                        (lead.quality_score || 0) >= 70 ? 'bg-green-500' :
-                        (lead.quality_score || 0) >= 40 ? 'bg-yellow-500' : 'bg-red-500'
-                      }`}
-                      style={{ width: `${lead.quality_score || 0}%` }}
-                    />
-                  </div>
+              <div className="grid grid-cols-2 gap-2 mb-3">
+                <div className="bg-gradient-to-br from-blue-50 to-cyan-50 p-2 rounded-lg">
+                  <div className="text-xs text-gray-600 mb-1">Conversion</div>
+                  <div className="text-lg font-bold text-gray-900">{lead.quality_score || 0}%</div>
                 </div>
-
-                <div className="grid grid-cols-2 gap-4 pt-2">
-                  <div className="text-center p-3 bg-gray-50 rounded-lg">
-                    <div className="text-2xl font-bold text-gray-900">{quotesCount}</div>
-                    <div className="text-xs text-gray-500">Devis</div>
-                  </div>
-                  <div className="text-center p-3 bg-gray-50 rounded-lg">
-                    <div className="text-2xl font-bold text-gray-900">{messages.length}</div>
-                    <div className="text-xs text-gray-500">Echanges</div>
-                  </div>
+                <div className="bg-gradient-to-br from-green-50 to-emerald-50 p-2 rounded-lg">
+                  <div className="text-xs text-gray-600 mb-1">Engagement</div>
+                  <div className="text-lg font-bold text-gray-900">{messages.length > 5 ? 'Élevé' : 'Moyen'}</div>
                 </div>
+              </div>
 
-                <div className="pt-2 space-y-2 text-sm">
-                  <div className="flex items-center justify-between">
-                    <span className="text-gray-600">Cree le</span>
-                    <span className="text-gray-900">{new Date(lead.created_at).toLocaleDateString('fr-FR')}</span>
-                  </div>
-                  {lead.last_contact_at && (
-                    <div className="flex items-center justify-between">
-                      <span className="text-gray-600">Dernier contact</span>
-                      <span className="text-gray-900">{new Date(lead.last_contact_at).toLocaleDateString('fr-FR')}</span>
-                    </div>
-                  )}
-                  <div className="flex items-center justify-between">
-                    <span className="text-gray-600">Source</span>
-                    <span className="text-gray-900 capitalize">{lead.source || 'Inconnu'}</span>
-                  </div>
+              <div className="bg-gradient-to-br from-green-50 to-emerald-50 border border-green-200 rounded-lg p-2">
+                <div className="flex items-center gap-2 text-green-700 text-xs">
+                  <CheckCircle size={14} />
+                  <span className="font-medium">
+                    {documentsComplete
+                      ? 'Documents complets'
+                      : quotesCount > 0
+                      ? 'Devis envoyés'
+                      : 'Lead actif'}
+                  </span>
                 </div>
               </div>
             </div>
-
-            {lead.tags && lead.tags.length > 0 && (
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
-                  <Tag className="w-5 h-5 text-blue-600" />
-                  Tags
-                </h3>
-                <div className="flex flex-wrap gap-2">
-                  {lead.tags.map((tag, index) => (
-                    <span
-                      key={index}
-                      className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium"
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
         </div>
       </div>
