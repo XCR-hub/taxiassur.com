@@ -61,18 +61,73 @@ interface LeadSearchResult {
   status: string;
 }
 
+// Décoder le contenu encodé en quoted-printable ou base64
+const decodeEmailContent = (text: string): string => {
+  if (!text) return '';
+
+  let decoded = text;
+
+  // Décoder les caractères quoted-printable (=E9 pour é, =C3=A9 pour é en UTF-8, etc.)
+  decoded = decoded.replace(/=([0-9A-F]{2})/gi, (match, hex) => {
+    return String.fromCharCode(parseInt(hex, 16));
+  });
+
+  // Corriger les problèmes courants d'encodage UTF-8 double
+  const utf8Fixes: Record<string, string> = {
+    'Ã©': 'é',
+    'Ã¨': 'è',
+    'Ãª': 'ê',
+    'Ã§': 'ç',
+    'Ã ': 'à',
+    'Ã¢': 'â',
+    'Ã´': 'ô',
+    'Ã®': 'î',
+    'Ã¹': 'ù',
+    'Ã»': 'û',
+    'Ã«': 'ë',
+    'Ã¯': 'ï',
+    'Ã¼': 'ü',
+    'Ã‰': 'É',
+    'Ã€': 'À',
+    'â€™': "'",
+    'â€œ': '"',
+    'â€': '"',
+    'â€¢': '•',
+    'â€"': '—',
+    'â‚¬': '€',
+  };
+
+  for (const [wrong, correct] of Object.entries(utf8Fixes)) {
+    decoded = decoded.replace(new RegExp(wrong, 'g'), correct);
+  }
+
+  // Décoder les entités HTML
+  const textarea = document.createElement('textarea');
+  textarea.innerHTML = decoded;
+  decoded = textarea.value;
+
+  return decoded;
+};
+
 const cleanEmailPreview = (text: string): string => {
   if (!text) return '';
 
-  return text
+  // D'abord décoder l'UTF-8
+  let cleaned = decodeEmailContent(text);
+
+  // Nettoyer les balises MIME
+  cleaned = cleaned
     .replace(/--[0-9A-F]+_NextPart_[0-9A-F._]+/g, '')
     .replace(/Content-Type:.*?(?:\r?\n|$)/gi, '')
     .replace(/Content-Transfer-Encoding:.*?(?:\r?\n|$)/gi, '')
     .replace(/charset="?[^"\r\n]+"?/gi, '')
+    .replace(/boundary="?[^"\r\n]+"?/gi, '')
     .replace(/={20,}/g, '')
-    .replace(/\r?\n\s*\r?\n/g, ' ')
-    .replace(/\s+/g, ' ')
+    .replace(/\r?\n\s*\r?\n/g, '\n\n')
+    .replace(/\s{3,}/g, ' ')
     .trim();
+
+  return cleaned;
 };
 
 const extractLeadInfoFromEmail = (email: EmailMessage): ExtractedLeadInfo | null => {
@@ -1208,14 +1263,18 @@ const CRMInboxMulticanal: React.FC = () => {
               )}
             </div>
 
-            <div className="p-6">
+            <div className="p-6 bg-white">
               {selectedMessage.body_html ? (
                 <div
-                  className="prose max-w-none"
+                  className="prose max-w-none bg-white text-gray-900 [&_*]:text-gray-900 [&_*]:bg-transparent"
+                  style={{
+                    color: '#111827',
+                    backgroundColor: '#ffffff'
+                  }}
                   dangerouslySetInnerHTML={{ __html: cleanEmailPreview(selectedMessage.body_html) }}
                 />
               ) : (
-                <pre className="whitespace-pre-wrap font-sans text-gray-700">
+                <pre className="whitespace-pre-wrap font-sans text-gray-900 bg-white p-4 rounded-lg border border-gray-200">
                   {cleanEmailPreview(selectedMessage.body_text || '')}
                 </pre>
               )}
