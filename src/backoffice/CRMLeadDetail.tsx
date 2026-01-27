@@ -55,7 +55,7 @@ import {
   ContractSignatureManager,
   PipelineLocksStatus
 } from '@/components/crm';
-import DocumentValidationSimple from '@/components/crm/DocumentValidationSimple';
+import DocumentDragDropSimple from '@/components/crm/DocumentDragDropSimple';
 import type { WorkflowTab } from '@/components/crm';
 
 interface Message {
@@ -855,7 +855,7 @@ const CRMLeadDetail: React.FC = () => {
 
             {activeTab === 'documents' && (
               <div className="bg-gray-900/50 rounded-xl border border-gray-700 p-6">
-                <DocumentValidationSimple
+                <DocumentDragDropSimple
                   leadId={lead.id}
                   leadEmail={lead.email}
                 />
