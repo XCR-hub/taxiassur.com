@@ -253,7 +253,8 @@ Deno.serve(async (req) => {
     stats.mailbox_total = mailbox.exists;
 
     if (mailbox.exists > 0) {
-      const BATCH_SIZE = 20;
+      // Augmenter la taille du batch pour récupérer plus d'emails
+      const BATCH_SIZE = 200;
       const start = Math.max(1, mailbox.exists - (BATCH_SIZE - 1));
       const emails = await imap.fetchHeaders(start, mailbox.exists);
 
