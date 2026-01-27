@@ -1,5 +1,6 @@
 export { DocumentChecklistPanel } from './DocumentChecklistPanel';
 export { DocumentChecklistPanelV2 } from './DocumentChecklistPanelV2';
+export { DocumentUnifiedManager } from './DocumentUnifiedManager';
 export { LegalDocumentsSelector } from './LegalDocumentsSelector';
 export { EmailComposerModal } from './EmailComposerModal';
 export { AIDecisionCard } from './AIDecisionCard';

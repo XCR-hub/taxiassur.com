@@ -41,7 +41,7 @@ import { QuickAction } from '@/lib/commercial-workflow';
 import { supabase } from '@/lib/supabase';
 import ElectronicSignature from '@/components/ElectronicSignature';
 import {
-  DocumentChecklistPanelV2,
+  DocumentUnifiedManager,
   EmailComposerModal,
   DocumentRequestsManager,
   LeadIntelligencePanel,
@@ -892,7 +892,7 @@ const CRMLeadDetail: React.FC = () => {
                   />
                 </div>
 
-                <DocumentChecklistPanelV2
+                <DocumentUnifiedManager
                   leadId={lead.id}
                   leadEmail={lead.email}
                   leadFirstName={lead.first_name}
