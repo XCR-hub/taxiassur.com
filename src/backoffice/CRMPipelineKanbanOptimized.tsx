@@ -199,47 +199,30 @@ const CRMPipelineKanbanOptimized: React.FC = () => {
     return filtered;
   }, [kanbanData, debouncedSearch]);
 
-  // Organisation des statuts par étapes du workflow
+  // 🎯 Organisation des statuts par étapes du workflow TaxiAssur 2026
   const visibleStatuses: PipelineStatus[] = [
-    // Étape 1: Nouveau
-    'NEW_LEAD',
+    // 📋 LES 7 ÉTAPES PRINCIPALES DU PIPELINE
+    'NOUVEAU_LEAD',           // 1️⃣ Nouveau Lead - Demande reçue
+    'COLLECTE_DOCUMENTS',     // 2️⃣ Collecte Documents - Documents en attente
+    'DEVIS',                  // 3️⃣ Devis - Devis envoyé au client
+    'DECISION_CLIENT',        // 4️⃣ Décision Client - En attente validation
+    'PAIEMENT',               // 5️⃣ Paiement - Paiement en cours
+    'CONTRAT_SIGNATURE',      // 6️⃣ Contrat & Signature - Signature en attente
+    'CLIENT_ACTIF',           // 7️⃣ Client Actif - Contrat actif
 
-    // Étape 2: Contacté
-    'CONTACT_ATTEMPTED',
-    'CONTACT_CONFIRMED',
-
-    // Étape 3: Qualifié
-    'DOCUMENTS_REQUIRED',
-    'DOCUMENTS_PARTIAL',
-    'READY_FOR_QUOTE',
-
-    // Étape 4: Devis envoyé
-    'QUOTE_SENT',
-    'NO_RESPONSE',
-
-    // Étape 5: Négociation
-    'RELANCE_ACTIVE',
-    'SIGNATURE_PENDING',
-    'SIGNED',
-    'DOWN_PAYMENT_REQUIRED',
-    'PAYMENT_PENDING',
-
-    // Étape 6: Gagné
-    'ACTIVE_CLIENT',
-    'CROSS_SELLING',
-
-    // Perdu
-    'LOST_RECONTACT_SCHEDULED'
+    // ⚫ STATUTS SPÉCIAUX
+    'RELANCE',                // 🔔 Relance - Nécessite une relance
+    'PERDU',                  // ❌ Perdu - Lead/Client perdu
+    'RECONTACT_PROGRAMME'     // 📅 Recontact Programmé - À recontacter plus tard
   ];
 
   const statistics = useMemo(() => {
     const allLeads = Object.values(filteredKanbanData).flat();
     return {
       total: allLeads.length,
-      active: (filteredKanbanData['ACTIVE_CLIENT'] || []).length,
-      pending: (filteredKanbanData['DOCUMENTS_REQUIRED'] || []).length +
-               (filteredKanbanData['DOCUMENTS_PARTIAL'] || []).length,
-      newLeads: (filteredKanbanData['NEW_LEAD'] || []).length,
+      active: (filteredKanbanData['CLIENT_ACTIF'] || []).length,
+      pending: (filteredKanbanData['COLLECTE_DOCUMENTS'] || []).length,
+      newLeads: (filteredKanbanData['NOUVEAU_LEAD'] || []).length,
       avgQuality: allLeads.length > 0
         ? Math.round(allLeads.reduce((sum, l) => sum + (l.quality_score || 0), 0) / allLeads.length)
         : 0

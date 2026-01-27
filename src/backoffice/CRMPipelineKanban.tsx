@@ -213,26 +213,23 @@ const CRMPipelineKanban: React.FC = () => {
   const statistics = useMemo(() => {
     const allLeads = Object.values(filteredKanbanData).flat();
 
-    const contactStage = (filteredKanbanData['PREMIER_CONTACT'] || []).length +
-                         (filteredKanbanData['RELANCE'] || []).length;
-    const documentsStage = (filteredKanbanData['COLLECTE_DOCUMENTS'] || []).length +
-                           (filteredKanbanData['DOCUMENTS_COMPLEMENTAIRES'] || []).length +
-                           (filteredKanbanData['PRET_DEVIS'] || []).length;
-    const quoteStage = (filteredKanbanData['DEVIS_EN_COURS'] || []).length +
-                       (filteredKanbanData['NEGOCIATION'] || []).length;
-    const signatureStage = (filteredKanbanData['SIGNATURE_EN_COURS'] || []).length;
-    const paymentStage = (filteredKanbanData['PAIEMENT_EN_ATTENTE'] || []).length;
+    const contactStage = (filteredKanbanData['RELANCE'] || []).length;
+    const documentsStage = (filteredKanbanData['COLLECTE_DOCUMENTS'] || []).length;
+    const quoteStage = (filteredKanbanData['DEVIS'] || []).length +
+                       (filteredKanbanData['DECISION_CLIENT'] || []).length;
+    const signatureStage = (filteredKanbanData['CONTRAT_SIGNATURE'] || []).length;
+    const paymentStage = (filteredKanbanData['PAIEMENT'] || []).length;
 
     return {
       total: allLeads.length,
       active: (filteredKanbanData['CLIENT_ACTIF'] || []).length,
-      newLeads: (filteredKanbanData['NEW_LEAD'] || []).length,
+      newLeads: (filteredKanbanData['NOUVEAU_LEAD'] || []).length,
       contactStage,
       documentsStage,
       quoteStage,
       signatureStage,
       paymentStage,
-      needsAction: (filteredKanbanData['NEW_LEAD'] || []).length +
+      needsAction: (filteredKanbanData['NOUVEAU_LEAD'] || []).length +
                    (filteredKanbanData['RELANCE'] || []).length,
       avgQuality: allLeads.length > 0
         ? Math.round(allLeads.reduce((sum, l) => sum + (l.quality_score || 0), 0) / allLeads.length)
