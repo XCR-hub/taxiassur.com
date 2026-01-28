@@ -206,6 +206,16 @@ export const PipelineCard: React.FC<PipelineCardProps> = ({
           {lead.company_name && (
             <p className="text-xs text-gray-600 truncate">{lead.company_name}</p>
           )}
+          <div className="flex items-center gap-1 mt-1">
+            <Calendar size={11} className="text-gray-400" />
+            <span className="text-xs text-gray-500" title={`Créé le ${new Date(lead.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' })} à ${new Date(lead.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`}>
+              {indicators.daysInPipeline === 0
+                ? "Aujourd'hui"
+                : indicators.daysInPipeline === 1
+                  ? "Hier"
+                  : `Il y a ${indicators.daysInPipeline}j`}
+            </span>
+          </div>
         </div>
         {lead.quality_score && (
           <div className={cn('text-xs font-bold ml-2', getScoreColor(lead.quality_score))}>
