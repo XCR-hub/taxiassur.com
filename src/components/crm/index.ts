@@ -34,3 +34,4 @@ export { default as QuickActionsCard } from './QuickActionsCard';
 export { default as TimelineCard } from './TimelineCard';
 export { IntelligentContactPanel } from './IntelligentContactPanel';
 export { DocumentReminderPanel } from './DocumentReminderPanel';
+export { default as CallLoggerModal } from './CallLoggerModal';

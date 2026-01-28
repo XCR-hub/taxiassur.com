@@ -56,7 +56,8 @@ import {
   QuickActionsCard,
   TimelineCard,
   IntelligentContactPanel,
-  DocumentReminderPanel
+  DocumentReminderPanel,
+  CallLoggerModal
 } from '@/components/crm';
 import DocumentDragDropSimple from '@/components/crm/DocumentDragDropSimple';
 import type { WorkflowTab } from '@/components/crm';
@@ -93,6 +94,7 @@ const CRMLeadDetail: React.FC = () => {
 
   const [showSMSModal, setShowSMSModal] = useState(false);
   const [showWhatsAppModal, setShowWhatsAppModal] = useState(false);
+  const [showCallLogger, setShowCallLogger] = useState(false);
   const [expandedMessageId, setExpandedMessageId] = useState<string | null>(null);
 
   const [editForm, setEditForm] = useState({
@@ -1173,7 +1175,10 @@ const CRMLeadDetail: React.FC = () => {
               onSendEmail={openEmailComposer}
               onCall={() => {
                 if (lead.phone) {
-                  window.open(`tel:${lead.phone}`, '_blank');
+                  // Appeler d'abord le numéro
+                  window.open(`tel:${lead.phone}`, '_self');
+                  // Ouvrir immédiatement le formulaire de suivi
+                  setTimeout(() => setShowCallLogger(true), 500);
                 }
               }}
               onRequestDocuments={() => setActiveTab('documents')}
@@ -1364,6 +1369,20 @@ const CRMLeadDetail: React.FC = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Call Logger Modal */}
+      {showCallLogger && lead && (
+        <CallLoggerModal
+          leadId={lead.id}
+          leadName={`${lead.first_name || ''} ${lead.last_name || ''}`.trim() || 'Prospect'}
+          leadPhone={lead.phone || ''}
+          onClose={() => setShowCallLogger(false)}
+          onSuccess={() => {
+            loadLead();
+            loadMessages(lead.id);
+          }}
+        />
       )}
     </div>
   );
