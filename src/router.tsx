@@ -113,6 +113,7 @@ const CRMKillerDashboard = lazy(() => import('./backoffice/CRMKillerDashboard'))
 const CRMLayout = lazy(() => import('./backoffice/CRMLayout'));
 const CRMPipelineKanban = lazy(() => import('./backoffice/CRMPipelineKanban'));
 const CRMInboxMulticanal = lazy(() => import('./backoffice/CRMInboxMulticanal'));
+const EmailInboxOutlook = lazy(() => import('./backoffice/EmailInboxOutlook'));
 const EmailAccountSettings = lazy(() => import('./backoffice/EmailAccountSettings'));
 const CronJobsMonitor = lazy(() => import('./backoffice/CronJobsMonitor'));
 const CRMRetentionCenter = lazy(() => import('./backoffice/CRMRetentionCenter'));
@@ -612,7 +613,7 @@ export const router = createBrowserRouter([
           },
           {
             path: 'inbox',
-            element: <CRMInboxMulticanal />,
+            element: <EmailInboxOutlook />,
             errorElement: <RouteErrorFallback />
           },
           {
