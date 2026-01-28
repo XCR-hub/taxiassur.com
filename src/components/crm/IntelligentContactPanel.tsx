@@ -102,6 +102,12 @@ export const IntelligentContactPanel: React.FC<IntelligentContactPanelProps> = (
       });
 
       if (success) {
+        // Passer le lead à COLLECTE_DOCUMENTS
+        await supabase
+          .from('crm_leads')
+          .update({ status: 'COLLECTE_DOCUMENTS' })
+          .eq('id', leadId);
+
         onContactSuccess();
       }
 
@@ -270,10 +276,10 @@ export const IntelligentContactPanel: React.FC<IntelligentContactPanelProps> = (
               <div className="flex gap-3">
                 <button
                   onClick={() => setCallAnswered(true)}
-                  className={`flex-1 p-3 rounded-lg border-2 transition-all ${
+                  className={`flex-1 p-3 rounded-lg border-2 transition-all font-medium ${
                     callAnswered === true
                       ? 'border-green-500 bg-green-50 text-green-700'
-                      : 'border-gray-300 hover:border-green-300'
+                      : 'border-gray-300 hover:border-green-300 bg-white text-gray-900'
                   }`}
                 >
                   <CheckCircle className="w-5 h-5 mx-auto mb-1" />
@@ -281,10 +287,10 @@ export const IntelligentContactPanel: React.FC<IntelligentContactPanelProps> = (
                 </button>
                 <button
                   onClick={() => setCallAnswered(false)}
-                  className={`flex-1 p-3 rounded-lg border-2 transition-all ${
+                  className={`flex-1 p-3 rounded-lg border-2 transition-all font-medium ${
                     callAnswered === false
                       ? 'border-red-500 bg-red-50 text-red-700'
-                      : 'border-gray-300 hover:border-red-300'
+                      : 'border-gray-300 hover:border-red-300 bg-white text-gray-900'
                   }`}
                 >
                   <XCircle className="w-5 h-5 mx-auto mb-1" />

@@ -8,7 +8,8 @@ import {
   MessageSquare,
   CheckCircle,
   AlertTriangle,
-  Link as LinkIcon
+  Link as LinkIcon,
+  ArrowRight
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
@@ -19,6 +20,7 @@ interface DocumentReminderPanelProps {
   leadPhone?: string;
   missingDocuments: string[];
   lastReminderDate?: string;
+  onDocumentsComplete?: () => void;
 }
 
 export const DocumentReminderPanel: React.FC<DocumentReminderPanelProps> = ({
@@ -27,7 +29,8 @@ export const DocumentReminderPanel: React.FC<DocumentReminderPanelProps> = ({
   leadEmail,
   leadPhone,
   missingDocuments,
-  lastReminderDate
+  lastReminderDate,
+  onDocumentsComplete
 }) => {
   const [selectedChannel, setSelectedChannel] = useState<'email' | 'sms' | 'whatsapp' | null>(null);
   const [customMessage, setCustomMessage] = useState('');
@@ -141,6 +144,36 @@ export const DocumentReminderPanel: React.FC<DocumentReminderPanelProps> = ({
     alert('Lien copié dans le presse-papier !');
   };
 
+  const markDocumentsComplete = async () => {
+    setLoading(true);
+    try {
+      // Passer le lead à l'étape DEVIS
+      await supabase
+        .from('crm_leads')
+        .update({ status: 'DEVIS' })
+        .eq('id', leadId);
+
+      // Créer une interaction
+      await supabase.from('crm_interactions').insert({
+        lead_id: leadId,
+        type: 'system',
+        direction: 'outbound',
+        content: 'Documents collectés - Passage étape DEVIS',
+        status: 'completed'
+      });
+
+      alert('Documents validés ! Le lead passe à l\'étape DEVIS.');
+      if (onDocumentsComplete) {
+        onDocumentsComplete();
+      }
+    } catch (error) {
+      console.error('Erreur validation documents:', error);
+      alert('Erreur lors de la validation des documents');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="bg-white border border-gray-200 rounded-lg">
       <div className="p-4 border-b border-gray-200">
@@ -171,14 +204,22 @@ export const DocumentReminderPanel: React.FC<DocumentReminderPanelProps> = ({
         </ul>
       </div>
 
-      {/* Lien d'accès rapide */}
-      <div className="p-4 border-b border-gray-200">
+      {/* Actions rapides */}
+      <div className="p-4 border-b border-gray-200 space-y-2">
         <button
           onClick={copyAccessLink}
           className="w-full px-4 py-3 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors flex items-center justify-center gap-2 text-gray-700 font-medium"
         >
           <LinkIcon className="w-5 h-5" />
           Copier le lien espace prospect
+        </button>
+        <button
+          onClick={markDocumentsComplete}
+          disabled={loading}
+          className="w-full px-4 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors flex items-center justify-center gap-2 font-medium disabled:opacity-50"
+        >
+          <CheckCircle className="w-5 h-5" />
+          {loading ? 'Validation...' : 'Documents reçus - Passer au devis'}
         </button>
       </div>
 

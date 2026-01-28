@@ -873,23 +873,30 @@ const CRMLeadDetail: React.FC = () => {
                         'RIB'
                       ]}
                       lastReminderDate={(lead as any).last_contact_at}
+                      onDocumentsComplete={() => loadLeadData(lead.id)}
                     />
                   </div>
                 )}
 
-                <DynamicCommercialWorkflow
-                  leadId={lead.id}
-                  currentStatus={lead.status as PipelineStatus}
-                  leadData={{
-                    first_name: lead.first_name,
-                    last_name: lead.last_name,
-                    email: lead.email,
-                    phone: lead.phone,
-                    city: lead.city,
-                    access_token: (lead as any).access_token
-                  }}
-                  onStatusChange={() => loadLeadData(lead.id)}
-                />
+                {/* DynamicCommercialWorkflow seulement pour les autres statuts */}
+                {lead.status !== 'NOUVEAU_LEAD' &&
+                 lead.status !== 'NEW_LEAD' &&
+                 lead.status !== 'COLLECTE_DOCUMENTS' &&
+                 lead.status !== 'DOCUMENTS_REQUIRED' && (
+                  <DynamicCommercialWorkflow
+                    leadId={lead.id}
+                    currentStatus={lead.status as PipelineStatus}
+                    leadData={{
+                      first_name: lead.first_name,
+                      last_name: lead.last_name,
+                      email: lead.email,
+                      phone: lead.phone,
+                      city: lead.city,
+                      access_token: (lead as any).access_token
+                    }}
+                    onStatusChange={() => loadLeadData(lead.id)}
+                  />
+                )}
               </>
             )}
 
