@@ -7,6 +7,34 @@ import {
 import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
 
+// Fonction pour nettoyer et décoder le contenu des emails
+function cleanEmailContent(text: string): string {
+  if (!text) return '';
+
+  let cleaned = text;
+
+  // Supprimer les boundaries MIME
+  cleaned = cleaned.replace(/^-+[_=]+NextPart[^\n]*$/gm, '');
+  cleaned = cleaned.replace(/^-+[0-9a-f]+$/gm, '');
+
+  // Supprimer les headers MIME
+  cleaned = cleaned.replace(/^Content-Type:.*$/gm, '');
+  cleaned = cleaned.replace(/^Content-Transfer-Encoding:.*$/gm, '');
+  cleaned = cleaned.replace(/^Content-Disposition:.*$/gm, '');
+  cleaned = cleaned.replace(/^Content-ID:.*$/gm, '');
+  cleaned = cleaned.replace(/^MIME-Version:.*$/gm, '');
+  cleaned = cleaned.replace(/^boundary=.*$/gm, '');
+  cleaned = cleaned.replace(/^charset=.*$/gm, '');
+
+  // Supprimer les lignes vides multiples
+  cleaned = cleaned.replace(/\n{3,}/g, '\n\n');
+
+  // Nettoyer les espaces en début et fin
+  cleaned = cleaned.trim();
+
+  return cleaned;
+}
+
 interface EmailInbox {
   id: string;
   from_email: string;
@@ -675,7 +703,7 @@ const EmailInboxManager: React.FC = () => {
                         {mainEmail.subject}
                       </div>
                       <div className="text-xs text-gray-600 line-clamp-2 mb-2">
-                        {mainEmail.body.substring(0, 150)}...
+                        {cleanEmailContent(mainEmail.body).substring(0, 150)}...
                       </div>
 
                       <div className="flex items-center justify-between text-xs">
@@ -779,7 +807,7 @@ const EmailInboxManager: React.FC = () => {
                   <div className="border-t border-gray-200 pt-4 mb-6">
                     <h4 className="font-bold text-gray-900 mb-2">Message</h4>
                     <div className="text-sm text-gray-700 whitespace-pre-wrap bg-gray-50 p-4 rounded-lg max-h-96 overflow-y-auto">
-                      {selectedEmail.body}
+                      {cleanEmailContent(selectedEmail.body)}
                     </div>
                   </div>
 
