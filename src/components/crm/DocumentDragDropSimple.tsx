@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FileText, Check, Download, ExternalLink, AlertCircle, RefreshCw, ShoppingCart, Maximize2 } from 'lucide-react';
+import { FileText, Check, Download, ExternalLink, AlertCircle, RefreshCw, ShoppingCart, Maximize2, Bug } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
 
@@ -36,6 +36,7 @@ const DocumentDragDropSimple: React.FC<DocumentDragDropSimpleProps> = ({ leadId,
   const [loading, setLoading] = useState(true);
   const [draggedDoc, setDraggedDoc] = useState<Document | null>(null);
   const [dropTarget, setDropTarget] = useState<string | null>(null);
+  const [debugMode, setDebugMode] = useState(false);
 
   const loadAllDocuments = async () => {
     try {
@@ -243,15 +244,67 @@ const DocumentDragDropSimple: React.FC<DocumentDragDropSimpleProps> = ({ leadId,
           <p className="text-sm text-gray-600">
             {documents.length} document(s) - {unclassifiedDocs.length} à classer
           </p>
+          {documents.length > 0 && (
+            <div className="text-xs text-gray-500 mt-1 space-y-0.5">
+              <div>Sources : {documents.filter(d => d.source === 'prospect_documents').length} prospect | {documents.filter(d => d.source === 'email_attachments').length} email | {documents.filter(d => d.source === 'crm_lead_documents').length} crm</div>
+              <div>Lead ID: {leadId}</div>
+            </div>
+          )}
         </div>
-        <button
-          onClick={loadAllDocuments}
-          className="flex items-center gap-2 px-3 py-2 bg-white hover:bg-gray-50 border border-gray-300 text-gray-700 rounded-lg transition-all text-sm"
-        >
-          <RefreshCw size={14} />
-          Actualiser
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setDebugMode(!debugMode)}
+            className={`flex items-center gap-2 px-3 py-2 border rounded-lg transition-all text-sm ${
+              debugMode
+                ? 'bg-red-50 hover:bg-red-100 border-red-300 text-red-700'
+                : 'bg-white hover:bg-gray-50 border-gray-300 text-gray-700'
+            }`}
+          >
+            <Bug size={14} />
+            Debug
+          </button>
+          <button
+            onClick={loadAllDocuments}
+            className="flex items-center gap-2 px-3 py-2 bg-white hover:bg-gray-50 border border-gray-300 text-gray-700 rounded-lg transition-all text-sm"
+          >
+            <RefreshCw size={14} />
+            Actualiser
+          </button>
+        </div>
       </div>
+
+      {/* Mode Debug */}
+      {debugMode && (
+        <div className="bg-red-50 border-2 border-red-200 rounded-xl p-4">
+          <h4 className="text-sm font-bold text-red-900 mb-3 flex items-center gap-2">
+            <Bug size={16} />
+            Mode Debug - Tous les documents
+          </h4>
+          <div className="space-y-2 max-h-[400px] overflow-y-auto">
+            {documents.length === 0 ? (
+              <div className="text-center py-4 text-red-600">
+                ❌ Aucun document trouvé dans aucune table
+              </div>
+            ) : (
+              documents.map((doc, idx) => (
+                <div key={doc.id} className="bg-white rounded p-2 border border-red-200 text-[10px]">
+                  <div className="font-bold text-red-900 mb-1">Document #{idx + 1}</div>
+                  <div className="grid grid-cols-2 gap-1 text-gray-700">
+                    <div><span className="font-medium">ID:</span> {doc.id.substring(0, 8)}...</div>
+                    <div><span className="font-medium">Lead ID:</span> {doc.lead_id.substring(0, 8)}...</div>
+                    <div className="col-span-2"><span className="font-medium">Nom:</span> {doc.file_name}</div>
+                    <div className="col-span-2"><span className="font-medium">Path:</span> {doc.file_path}</div>
+                    <div><span className="font-medium">Type:</span> {doc.document_type || 'NON CLASSÉ'}</div>
+                    <div><span className="font-medium">Source:</span> {doc.source}</div>
+                    <div><span className="font-medium">Validé:</span> {doc.validated ? '✅ Oui' : '❌ Non'}</div>
+                    <div><span className="font-medium">Date:</span> {new Date(doc.uploaded_at).toLocaleDateString()}</div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-12 gap-4">
         {/* PANIER À GAUCHE - 4 colonnes */}
@@ -275,7 +328,12 @@ const DocumentDragDropSimple: React.FC<DocumentDragDropSimpleProps> = ({ leadId,
               {unclassifiedDocs.length === 0 ? (
                 <div className="text-center py-8 text-gray-400">
                   <ShoppingCart size={32} className="mx-auto mb-2 opacity-30" />
-                  <p className="text-xs">Aucun document</p>
+                  <p className="text-xs">Aucun document à classer</p>
+                  {documents.length > 0 && (
+                    <p className="text-[10px] text-gray-500 mt-2">
+                      Tous les documents sont déjà classés
+                    </p>
+                  )}
                 </div>
               ) : (
                 unclassifiedDocs.map(doc => (
@@ -291,7 +349,7 @@ const DocumentDragDropSimple: React.FC<DocumentDragDropSimpleProps> = ({ leadId,
                         {doc.file_name}
                       </span>
                     </div>
-                    <div className="flex gap-2 text-xs">
+                    <div className="flex gap-2 text-xs items-center">
                       <a
                         href={getDocumentUrl(doc.file_path, doc.source)}
                         target="_blank"
@@ -310,7 +368,14 @@ const DocumentDragDropSimple: React.FC<DocumentDragDropSimpleProps> = ({ leadId,
                         DL
                       </a>
                       <span className="text-gray-400">•</span>
-                      <span className="text-gray-500">{doc.source.split('_')[0]}</span>
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
+                        doc.source === 'prospect_documents' ? 'bg-blue-100 text-blue-700' :
+                        doc.source === 'email_attachments' ? 'bg-purple-100 text-purple-700' :
+                        'bg-green-100 text-green-700'
+                      }`}>
+                        {doc.source === 'prospect_documents' ? 'Prospect' :
+                         doc.source === 'email_attachments' ? 'Email' : 'CRM'}
+                      </span>
                     </div>
                   </div>
                 ))
@@ -379,7 +444,7 @@ const DocumentDragDropSimple: React.FC<DocumentDragDropSimpleProps> = ({ leadId,
                           key={doc.id}
                           className="bg-white/80 rounded p-2 border border-gray-200"
                         >
-                          <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center justify-between gap-2 mb-1">
                             <span className="text-[10px] text-gray-700 truncate flex-1" title={doc.file_name}>
                               {doc.file_name}
                             </span>
@@ -389,13 +454,29 @@ const DocumentDragDropSimple: React.FC<DocumentDragDropSimpleProps> = ({ leadId,
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="p-1 hover:bg-gray-100 rounded"
+                                title="Voir le document"
                               >
                                 <ExternalLink size={10} className="text-blue-500" />
                               </a>
                               {doc.validated && (
-                                <Check className="text-green-500" size={12} />
+                                <Check className="text-green-500" size={12} title="Validé" />
                               )}
                             </div>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className={`text-[9px] px-1 py-0.5 rounded font-medium ${
+                              doc.source === 'prospect_documents' ? 'bg-blue-50 text-blue-600' :
+                              doc.source === 'email_attachments' ? 'bg-purple-50 text-purple-600' :
+                              'bg-green-50 text-green-600'
+                            }`}>
+                              {doc.source === 'prospect_documents' ? 'Prospect' :
+                               doc.source === 'email_attachments' ? 'Email' : 'CRM'}
+                            </span>
+                            {doc.validated && (
+                              <span className="text-[9px] text-green-600 font-medium">
+                                ✓ Validé
+                              </span>
+                            )}
                           </div>
                         </div>
                       ))}
