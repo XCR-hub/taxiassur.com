@@ -342,8 +342,13 @@ export default function LeadQuotesManager({ leadId }: Props) {
                     type="file"
                     accept=".pdf"
                     onChange={(e) => setUploadForm({ ...uploadForm, file: e.target.files?.[0] || null })}
-                    className="w-full border rounded px-3 py-2"
+                    className="w-full border border-gray-300 rounded px-3 py-2 bg-white text-gray-900 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                   />
+                  {uploadForm.file && (
+                    <p className="text-sm text-green-600 mt-1">
+                      ✓ {uploadForm.file.name}
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -355,7 +360,7 @@ export default function LeadQuotesManager({ leadId }: Props) {
                     step="0.01"
                     value={uploadForm.amount}
                     onChange={(e) => setUploadForm({ ...uploadForm, amount: e.target.value })}
-                    className="w-full border rounded px-3 py-2"
+                    className="w-full border border-gray-300 rounded px-3 py-2 bg-white text-gray-900 placeholder-gray-400"
                     placeholder="ex: 1200.00"
                   />
                 </div>
@@ -368,7 +373,7 @@ export default function LeadQuotesManager({ leadId }: Props) {
                     type="text"
                     value={uploadForm.reference}
                     onChange={(e) => setUploadForm({ ...uploadForm, reference: e.target.value })}
-                    className="w-full border rounded px-3 py-2"
+                    className="w-full border border-gray-300 rounded px-3 py-2 bg-white text-gray-900 placeholder-gray-400"
                     placeholder="ex: DEV-2024-12345"
                   />
                 </div>
@@ -381,7 +386,7 @@ export default function LeadQuotesManager({ leadId }: Props) {
                     type="date"
                     value={uploadForm.validUntil}
                     onChange={(e) => setUploadForm({ ...uploadForm, validUntil: e.target.value })}
-                    className="w-full border rounded px-3 py-2"
+                    className="w-full border border-gray-300 rounded px-3 py-2 bg-white text-gray-900"
                   />
                 </div>
 
@@ -403,7 +408,7 @@ export default function LeadQuotesManager({ leadId }: Props) {
                     value={refuseForm.reason}
                     onChange={(e) => setRefuseForm({ reason: e.target.value })}
                     rows={4}
-                    className="w-full border rounded px-3 py-2"
+                    className="w-full border border-gray-300 rounded px-3 py-2 bg-white text-gray-900 placeholder-gray-400"
                     placeholder="Indiquez pourquoi cette compagnie refuse de faire un devis (ex: profil trop risqué, zone non couverte, etc.)"
                   />
                 </div>
