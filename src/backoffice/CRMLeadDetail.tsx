@@ -54,7 +54,9 @@ import {
   ContractSignatureManager,
   PipelineLocksStatus,
   QuickActionsCard,
-  TimelineCard
+  TimelineCard,
+  IntelligentContactPanel,
+  DocumentReminderPanel
 } from '@/components/crm';
 import DocumentDragDropSimple from '@/components/crm/DocumentDragDropSimple';
 import type { WorkflowTab } from '@/components/crm';
@@ -837,6 +839,43 @@ const CRMLeadDetail: React.FC = () => {
                     </div>
                   )}
                 </div>
+
+                {/* Prise de contact intelligente pour NOUVEAU_LEAD */}
+                {(lead.status === 'NOUVEAU_LEAD' || lead.status === 'NEW_LEAD') && (
+                  <div className="mb-6">
+                    <IntelligentContactPanel
+                      leadId={lead.id}
+                      leadName={`${lead.first_name} ${lead.last_name}`}
+                      leadPhone={lead.phone}
+                      leadEmail={lead.email}
+                      contactAttempts={(lead as any).contact_attempts || []}
+                      contactEstablished={(lead as any).contact_established || false}
+                      onContactSuccess={() => loadLeadData(lead.id)}
+                    />
+                  </div>
+                )}
+
+                {/* Relance documents pour COLLECTE_DOCUMENTS */}
+                {(lead.status === 'COLLECTE_DOCUMENTS' || lead.status === 'DOCUMENTS_REQUIRED') && (
+                  <div className="mb-6">
+                    <DocumentReminderPanel
+                      leadId={lead.id}
+                      leadName={`${lead.first_name} ${lead.last_name}`}
+                      leadEmail={lead.email}
+                      leadPhone={lead.phone}
+                      missingDocuments={[
+                        'Licence de taxi',
+                        'Permis de conduire',
+                        'Pièce d\'identité',
+                        'Carte grise',
+                        'Relevé d\'information',
+                        'Autorisation de stationnement',
+                        'RIB'
+                      ]}
+                      lastReminderDate={(lead as any).last_contact_at}
+                    />
+                  </div>
+                )}
 
                 <DynamicCommercialWorkflow
                   leadId={lead.id}

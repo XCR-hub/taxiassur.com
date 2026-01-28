@@ -32,3 +32,5 @@ export { default as ContractSignatureManager } from './ContractSignatureManager'
 export { default as PipelineLocksStatus } from './PipelineLocksStatus';
 export { default as QuickActionsCard } from './QuickActionsCard';
 export { default as TimelineCard } from './TimelineCard';
+export { IntelligentContactPanel } from './IntelligentContactPanel';
+export { DocumentReminderPanel } from './DocumentReminderPanel';
