@@ -38,6 +38,33 @@ const DocumentDragDropSimple: React.FC<DocumentDragDropSimpleProps> = ({ leadId,
   const [dropTarget, setDropTarget] = useState<string | null>(null);
   const [debugMode, setDebugMode] = useState(false);
 
+  // Auto-détection intelligente du type de document par nom de fichier
+  const detectDocumentType = (fileName: string): string | null => {
+    const lowerName = fileName.toLowerCase();
+
+    // Patterns de détection
+    const patterns: { [key: string]: RegExp[] } = {
+      'permis_conduire': [/permis/i, /driving.*license/i, /conduire/i],
+      'carte_grise': [/carte.*grise/i, /carte_grise/i, /cg\./i, /registration/i, /immatriculation/i],
+      'piece_identite': [/identite/i, /identity/i, /cni/i, /passeport/i, /passport/i, /id\./i],
+      'licence_professionnelle': [/licence/i, /taxi.*professionnel/i, /carte.*taxi/i],
+      'kbis': [/kbis/i, /sirene/i, /siret/i, /extrait.*registre/i],
+      'rib': [/rib/i, /releve.*identite.*bancaire/i, /bank.*account/i, /iban/i],
+      'releve_information': [/releve.*info/i, /sinistres/i, /antecedents/i, /claims.*history/i],
+      'justificatif_domicile': [/justif.*dom/i, /proof.*address/i, /facture/i, /quittance/i],
+      'autorisation_stationnement': [/autorisation/i, /stationnement/i, /parking/i, /aps/i]
+    };
+
+    for (const [docType, regexes] of Object.entries(patterns)) {
+      if (regexes.some(regex => regex.test(lowerName))) {
+        logger.info(`Auto-detected document type "${docType}" for file "${fileName}"`);
+        return docType;
+      }
+    }
+
+    return null;
+  };
+
   const loadAllDocuments = async () => {
     try {
       setLoading(true);
@@ -111,6 +138,42 @@ const DocumentDragDropSimple: React.FC<DocumentDragDropSimpleProps> = ({ leadId,
       ];
 
       logger.info('Total documents loaded:', allDocs.length);
+
+      // Auto-classification intelligente pour les documents sans type
+      const docsToAutoClassify = allDocs.filter(d => !d.document_type);
+      logger.info('Documents à auto-classifier:', docsToAutoClassify.length);
+
+      for (const doc of docsToAutoClassify) {
+        const detectedType = detectDocumentType(doc.file_name);
+        if (detectedType) {
+          logger.info(`Auto-classifying "${doc.file_name}" as "${detectedType}"`);
+
+          // Mise à jour silencieuse dans la DB
+          if (doc.source === 'prospect_documents') {
+            await supabase
+              .from('prospect_documents')
+              .update({ document_type: detectedType })
+              .eq('id', doc.id)
+              .then(() => logger.info('Auto-classification prospect_documents réussie'));
+          } else if (doc.source === 'crm_lead_documents') {
+            await supabase
+              .from('crm_lead_documents')
+              .update({ document_type: detectedType })
+              .eq('id', doc.id)
+              .then(() => logger.info('Auto-classification crm_lead_documents réussie'));
+          } else if (doc.source === 'email_attachments') {
+            await supabase
+              .from('email_attachments')
+              .update({ document_type: detectedType })
+              .eq('id', doc.id)
+              .then(() => logger.info('Auto-classification email_attachments réussie'));
+          }
+
+          // Mettre à jour localement
+          doc.document_type = detectedType;
+        }
+      }
+
       setDocuments(allDocs);
     } catch (error) {
       logger.error('Error loading documents:', error);
@@ -204,7 +267,18 @@ const DocumentDragDropSimple: React.FC<DocumentDragDropSimpleProps> = ({ leadId,
 
   const handleValidate = async (doc: Document) => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+      if (authError) {
+        throw new Error(`Erreur d'authentification : ${authError.message}`);
+      }
+
+      logger.info('Validating document:', {
+        id: doc.id,
+        source: doc.source,
+        type: doc.document_type,
+        name: doc.file_name
+      });
 
       if (doc.source === 'prospect_documents') {
         const { error } = await supabase
@@ -216,7 +290,11 @@ const DocumentDragDropSimple: React.FC<DocumentDragDropSimpleProps> = ({ leadId,
           })
           .eq('id', doc.id);
 
-        if (error) throw error;
+        if (error) {
+          logger.error('Error updating prospect_documents:', error);
+          throw new Error(`Erreur prospect_documents : ${error.message || 'Inconnue'}`);
+        }
+        logger.info('prospect_documents updated successfully');
       } else if (doc.source === 'crm_lead_documents') {
         const { error } = await supabase
           .from('crm_lead_documents')
@@ -227,7 +305,13 @@ const DocumentDragDropSimple: React.FC<DocumentDragDropSimpleProps> = ({ leadId,
           })
           .eq('id', doc.id);
 
-        if (error) throw error;
+        if (error) {
+          logger.error('Error updating crm_lead_documents:', error);
+          throw new Error(`Erreur crm_lead_documents : ${error.message || 'Inconnue'}`);
+        }
+        logger.info('crm_lead_documents updated successfully');
+      } else if (doc.source === 'email_attachments') {
+        throw new Error('Les pièces jointes email ne peuvent pas être validées directement. Classez-les d\'abord.');
       }
 
       // Envoyer email de notification au prospect
@@ -275,7 +359,8 @@ const DocumentDragDropSimple: React.FC<DocumentDragDropSimpleProps> = ({ leadId,
 </body>
 </html>`;
 
-        await supabase.functions.invoke('send-email-universal', {
+        logger.info('Sending validation email to:', leadEmail);
+        const { data: emailResult, error: emailError } = await supabase.functions.invoke('send-email-universal', {
           body: {
             to: leadEmail,
             toName: '',
@@ -285,16 +370,22 @@ const DocumentDragDropSimple: React.FC<DocumentDragDropSimpleProps> = ({ leadId,
             fromName: 'TaxiAssur',
             lead_id: leadId
           }
-        }).catch(err => {
-          logger.error('Error sending validation email:', err);
-          console.error('Email send error:', err);
         });
+
+        if (emailError) {
+          logger.error('Error sending validation email:', emailError);
+          console.warn('⚠️ Email non envoyé mais validation OK:', emailError);
+        } else {
+          logger.info('Validation email sent successfully');
+        }
       }
 
       await loadAllDocuments();
-    } catch (error) {
+      alert(`✅ Document "${doc.file_name}" validé avec succès !`);
+    } catch (error: any) {
       logger.error('Error validating document:', error);
-      alert('Erreur lors de la validation');
+      const errorMsg = error.message || 'Erreur inconnue';
+      alert(`❌ Erreur lors de la validation :\n\n${errorMsg}\n\nVeuillez réessayer ou contacter le support si le problème persiste.`);
     }
   };
 
@@ -443,9 +534,15 @@ const DocumentDragDropSimple: React.FC<DocumentDragDropSimpleProps> = ({ leadId,
               </div>
             </div>
 
-            <p className="text-xs text-gray-600 mb-3 bg-white/50 p-2 rounded">
-              Glissez les docs vers les cartes →
-            </p>
+            <div className="bg-gradient-to-r from-amber-100 to-orange-100 border border-amber-300 rounded-lg p-3 mb-3">
+              <p className="text-xs font-semibold text-amber-900 flex items-center gap-2">
+                <span className="text-base">👉</span>
+                Glissez les docs vers les cartes →
+              </p>
+              <p className="text-[10px] text-amber-700 mt-1">
+                Les documents se classeront automatiquement
+              </p>
+            </div>
 
             <div className="space-y-2 max-h-[500px] overflow-y-auto">
               {unclassifiedDocs.length === 0 ? (
@@ -464,11 +561,11 @@ const DocumentDragDropSimple: React.FC<DocumentDragDropSimpleProps> = ({ leadId,
                     key={doc.id}
                     draggable
                     onDragStart={(e) => handleDragStart(e, doc)}
-                    className="bg-white rounded-lg p-2 border-2 border-gray-200 cursor-move hover:border-amber-400 hover:shadow-md transition-all"
+                    className="bg-white rounded-lg p-3 border-2 border-amber-200 cursor-move hover:border-amber-500 hover:shadow-lg hover:scale-105 transition-all group"
                   >
                     <div className="flex items-center gap-2 mb-1">
-                      <FileText className="text-gray-400 flex-shrink-0" size={14} />
-                      <span className="text-xs text-gray-900 font-medium flex-1 truncate" title={doc.file_name}>
+                      <FileText className="text-amber-500 flex-shrink-0 group-hover:scale-110 transition-transform" size={16} />
+                      <span className="text-xs text-gray-900 font-semibold flex-1 truncate" title={doc.file_name}>
                         {doc.file_name}
                       </span>
                     </div>
@@ -554,9 +651,14 @@ const DocumentDragDropSimple: React.FC<DocumentDragDropSimpleProps> = ({ leadId,
                     )}
                   </div>
 
-                  {dropTarget === type.value && (
-                    <div className="text-amber-600 text-xs font-bold mb-2 animate-pulse">
-                      ⬇️ Déposez ici
+                  {dropTarget === type.value && draggedDoc && (
+                    <div className="bg-amber-100 border-2 border-amber-500 rounded-lg p-2 mb-2 animate-pulse">
+                      <div className="text-amber-900 text-xs font-bold text-center">
+                        ⬇️ Déposez "{draggedDoc.file_name.substring(0, 20)}..." ici
+                      </div>
+                      <div className="text-amber-700 text-[10px] text-center mt-1">
+                        Sera classé en : {type.label}
+                      </div>
                     </div>
                   )}
 
@@ -567,7 +669,14 @@ const DocumentDragDropSimple: React.FC<DocumentDragDropSimpleProps> = ({ leadId,
                         return (
                           <div
                             key={doc.id}
-                            className="bg-white/80 rounded p-2 border border-gray-200"
+                            draggable={!doc.validated}
+                            onDragStart={(e) => !doc.validated && handleDragStart(e, doc)}
+                            className={`bg-white/80 rounded p-2 border-2 transition-all ${
+                              doc.validated
+                                ? 'border-green-200 bg-green-50/50'
+                                : 'border-gray-200 cursor-move hover:border-blue-400 hover:shadow-md'
+                            }`}
+                            title={doc.validated ? 'Document validé (non modifiable)' : 'Glissez pour changer de catégorie'}
                           >
                             <div className="flex items-center justify-between gap-2 mb-1">
                               <span className="text-[10px] text-gray-700 truncate flex-1" title={doc.file_name}>
@@ -626,8 +735,15 @@ const DocumentDragDropSimple: React.FC<DocumentDragDropSimpleProps> = ({ leadId,
                       })}
                     </div>
                   ) : (
-                    <div className="text-center text-gray-400 text-[10px] mt-2 py-3 border-2 border-dashed border-gray-200 rounded">
-                      Glissez un document ici
+                    <div className={`text-center text-[11px] mt-2 py-4 border-2 border-dashed rounded-lg transition-all ${
+                      dropTarget === type.value
+                        ? 'border-amber-400 bg-amber-50 text-amber-900'
+                        : 'border-gray-300 bg-gray-50 text-gray-600'
+                    }`}>
+                      <div className="font-medium">📎 Glissez un document ici</div>
+                      {type.required && (
+                        <div className="text-[9px] text-red-600 mt-1">⚠️ Document obligatoire</div>
+                      )}
                     </div>
                   )}
                 </div>
