@@ -38,14 +38,13 @@ interface LeadHeaderProps {
   availableTransitions: Array<{ to: string; label: string }>;
 }
 
-// 🎯 PIPELINE TAXIASSUR - Vue simplifiée 6 étapes
+// 🎯 PIPELINE TAXIASSUR - Vue simplifiée 5 étapes (Contact automatique)
 const PIPELINE_STEPS = [
   { key: 'new', label: 'Nouveau', order: 1 },
-  { key: 'contact', label: 'Contact', order: 2 },
-  { key: 'documents', label: 'Documents', order: 3 },
-  { key: 'devis', label: 'Devis', order: 4 },
-  { key: 'signature', label: 'Signature', order: 5 },
-  { key: 'client', label: 'Client', order: 6 }
+  { key: 'documents', label: 'Documents', order: 2 },
+  { key: 'devis', label: 'Devis', order: 3 },
+  { key: 'signature', label: 'Signature', order: 4 },
+  { key: 'client', label: 'Client', order: 5 }
 ];
 
 // Mapping des statuts vers les étapes simplifiées (affichage visuel)

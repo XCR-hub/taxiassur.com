@@ -10,18 +10,36 @@ const corsHeaders = {
 function cleanMIMEContent(content: string): string {
   if (!content) return '';
 
-  // Supprimer les frontières MIME (commence par --)
-  let cleaned = content.replace(/^--[a-zA-Z0-9_-]+$/gm, '');
+  let cleaned = content;
 
-  // Supprimer les headers MIME (Content-Type, Content-Transfer-Encoding, etc.)
+  // Supprimer les séparateurs MIME
+  cleaned = cleaned.replace(/------=_NextPart_[0-9A-F_\.]+/g, '');
+  cleaned = cleaned.replace(/--====AAAA====[0-9A-F]+/g, '');
+  cleaned = cleaned.replace(/====+/g, '');
+  cleaned = cleaned.replace(/^--[a-zA-Z0-9_-]+$/gm, '');
+
+  // Supprimer les headers MIME
   cleaned = cleaned.replace(/^Content-[^:]+:.*$/gm, '');
   cleaned = cleaned.replace(/^MIME-Version:.*$/gm, '');
   cleaned = cleaned.replace(/^boundary=.*$/gm, '');
-
-  // Supprimer les encodages base64 ou quoted-printable vides
   cleaned = cleaned.replace(/^(?:Content-Transfer-Encoding|Content-Disposition|Content-ID):.*$/gm, '');
 
-  // Nettoyer les lignes vides multiples
+  // Corriger les caractères UTF-8 mal encodés (double encodage ISO-8859-1 → UTF-8)
+  cleaned = cleaned.replace(/Ã\s+/g, 'à ');
+  cleaned = cleaned.replace(/Ã©/g, 'é');
+  cleaned = cleaned.replace(/Ã¨/g, 'è');
+  cleaned = cleaned.replace(/Ãª/g, 'ê');
+  cleaned = cleaned.replace(/Ã /g, 'à');
+  cleaned = cleaned.replace(/Ã§/g, 'ç');
+  cleaned = cleaned.replace(/Ã´/g, 'ô');
+  cleaned = cleaned.replace(/Ã¹/g, 'ù');
+  cleaned = cleaned.replace(/Ã»/g, 'û');
+  cleaned = cleaned.replace(/Ã®/g, 'î');
+  cleaned = cleaned.replace(/Â /g, ' ');
+  cleaned = cleaned.replace(/Â/g, '');
+
+  // Nettoyer les espaces multiples
+  cleaned = cleaned.replace(/\s{2,}/g, ' ');
   cleaned = cleaned.replace(/\n{3,}/g, '\n\n');
 
   // Trim

@@ -32,7 +32,20 @@ export const ManualEmailSync: React.FC = () => {
 
       console.log('✅ Emails synchronisés:', syncData);
 
-      // Étape 2: Parser les emails formulaire et créer les leads manquants
+      // Étape 2: Nettoyer les encodages illisibles
+      const { data: cleanData, error: cleanError } = await supabase.functions.invoke(
+        'clean-email-content',
+        {
+          body: {},
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      console.log('✅ Emails nettoyés:', cleanData);
+
+      // Étape 3: Parser les emails formulaire et créer les leads manquants
       const { data: parseData, error: parseError } = await supabase.functions.invoke(
         'parse-form-emails-create-leads',
         {
@@ -49,23 +62,16 @@ export const ManualEmailSync: React.FC = () => {
 
       console.log('✅ Leads créés:', parseData);
 
-      // Étape 3: Lier les emails aux leads existants
-      const { data: linkData, error: linkError } = await supabase.functions.invoke(
-        'sync-emails-to-leads',
-        {
-          body: {},
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        }
-      );
+      // Étape 4: Lier les emails aux leads existants automatiquement via SQL
+      const { data: linkResult } = await supabase.rpc('link_existing_emails_to_leads');
 
-      console.log('✅ Emails liés aux leads:', linkData);
+      console.log('✅ Emails liés aux leads:', linkResult);
 
       setResult({
         syncData,
+        cleanData,
         parseData,
-        linkData
+        linkData: linkResult
       });
     } catch (err: any) {
       console.error('❌ Erreur:', err);
@@ -115,6 +121,12 @@ export const ManualEmailSync: React.FC = () => {
                       {result.syncData.synced || 0} nouveaux emails
                     </div>
                   )}
+                  {result.cleanData && (
+                    <div>
+                      <span className="font-medium">Emails nettoyés:</span>{' '}
+                      {result.cleanData.cleaned || 0} emails (encodage corrigé)
+                    </div>
+                  )}
                   {result.parseData && (
                     <div>
                       <span className="font-medium">Leads créés:</span>{' '}
@@ -142,9 +154,10 @@ export const ManualEmailSync: React.FC = () => {
           </h4>
           <ol className="text-sm text-blue-800 space-y-1 list-decimal list-inside">
             <li>Récupération de tous les emails depuis IONOS (IMAP)</li>
+            <li>Nettoyage des encodages illisibles (UTF-8, MIME)</li>
             <li>Analyse des emails de formulaire (team@taxiassur.com)</li>
             <li>Création automatique des leads manquants</li>
-            <li>Liaison des emails aux leads existants</li>
+            <li>Liaison automatique des emails aux leads (par adresse email)</li>
           </ol>
         </div>
 
