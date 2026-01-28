@@ -209,9 +209,42 @@ const DocumentDragDropSimple: React.FC<DocumentDragDropSimpleProps> = ({ leadId,
   };
 
   const getDocumentUrl = (filePath: string, source: string) => {
-    const bucket = source === 'prospect_documents' ? 'prospect-documents' :
-                   source === 'crm_lead_documents' ? 'crm-documents' : 'email-attachments';
-    const { data } = supabase.storage.from(bucket).getPublicUrl(filePath);
+    // Nettoyer le path (enlever les préfixes de bucket s'ils existent)
+    let cleanPath = filePath;
+    cleanPath = cleanPath.replace(/^\/?(email-attachments|prospect-documents|crm-documents)\//, '');
+
+    // Essayer de déterminer le bon bucket
+    // IMPORTANT: Les documents ne sont PAS physiquement déplacés entre buckets
+    // Même si la source est 'crm_lead_documents', le fichier peut être ailleurs
+
+    // Ordre de priorité pour chercher le fichier:
+    let buckets = [];
+
+    if (source === 'prospect_documents') {
+      buckets = ['prospect-documents', 'email-attachments', 'crm-documents'];
+    } else if (source === 'email_attachments') {
+      buckets = ['email-attachments', 'prospect-documents', 'crm-documents'];
+    } else if (source === 'crm_lead_documents') {
+      // Pour crm_lead_documents, essayer d'abord prospect-documents car c'est souvent là que le fichier réside
+      buckets = ['prospect-documents', 'crm-documents', 'email-attachments'];
+    } else {
+      buckets = ['prospect-documents', 'email-attachments', 'crm-documents'];
+    }
+
+    // Prendre le premier bucket et générer l'URL
+    // Note: On ne peut pas vérifier si le fichier existe de manière synchrone ici
+    const bucket = buckets[0];
+    const { data } = supabase.storage.from(bucket).getPublicUrl(cleanPath);
+
+    logger.info('Document URL:', {
+      filePath,
+      source,
+      bucket,
+      cleanPath,
+      url: data.publicUrl,
+      bucketPriority: buckets
+    });
+
     return data.publicUrl;
   };
 
@@ -439,47 +472,55 @@ const DocumentDragDropSimple: React.FC<DocumentDragDropSimpleProps> = ({ leadId,
 
                   {docs.length > 0 ? (
                     <div className="space-y-1">
-                      {docs.map(doc => (
-                        <div
-                          key={doc.id}
-                          className="bg-white/80 rounded p-2 border border-gray-200"
-                        >
-                          <div className="flex items-center justify-between gap-2 mb-1">
-                            <span className="text-[10px] text-gray-700 truncate flex-1" title={doc.file_name}>
-                              {doc.file_name}
-                            </span>
-                            <div className="flex items-center gap-1 flex-shrink-0">
-                              <a
-                                href={getDocumentUrl(doc.file_path, doc.source)}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="p-1 hover:bg-gray-100 rounded"
-                                title="Voir le document"
-                              >
-                                <ExternalLink size={10} className="text-blue-500" />
-                              </a>
+                      {docs.map(doc => {
+                        const cleanPath = doc.file_path.replace(/^\/?(email-attachments|prospect-documents|crm-documents)\//, '');
+                        return (
+                          <div
+                            key={doc.id}
+                            className="bg-white/80 rounded p-2 border border-gray-200"
+                          >
+                            <div className="flex items-center justify-between gap-2 mb-1">
+                              <span className="text-[10px] text-gray-700 truncate flex-1" title={doc.file_name}>
+                                {doc.file_name}
+                              </span>
+                              <div className="flex items-center gap-1 flex-shrink-0">
+                                <a
+                                  href={getDocumentUrl(doc.file_path, doc.source)}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="p-1 hover:bg-gray-100 rounded"
+                                  title={`Voir le document (Source: ${doc.source})\nPath: ${cleanPath}`}
+                                >
+                                  <ExternalLink size={10} className="text-blue-500" />
+                                </a>
+                                {doc.validated && (
+                                  <Check className="text-green-500" size={12} title="Validé" />
+                                )}
+                              </div>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <span className={`text-[9px] px-1 py-0.5 rounded font-medium ${
+                                doc.source === 'prospect_documents' ? 'bg-blue-50 text-blue-600' :
+                                doc.source === 'email_attachments' ? 'bg-purple-50 text-purple-600' :
+                                'bg-green-50 text-green-600'
+                              }`}>
+                                {doc.source === 'prospect_documents' ? 'Prospect' :
+                                doc.source === 'email_attachments' ? 'Email' : 'CRM'}
+                              </span>
+                              {debugMode && (
+                                <span className="text-[8px] text-gray-400 truncate max-w-[100px]" title={cleanPath}>
+                                  {cleanPath.split('/').pop()}
+                                </span>
+                              )}
                               {doc.validated && (
-                                <Check className="text-green-500" size={12} title="Validé" />
+                                <span className="text-[9px] text-green-600 font-medium">
+                                  ✓ Validé
+                                </span>
                               )}
                             </div>
                           </div>
-                          <div className="flex items-center justify-between">
-                            <span className={`text-[9px] px-1 py-0.5 rounded font-medium ${
-                              doc.source === 'prospect_documents' ? 'bg-blue-50 text-blue-600' :
-                              doc.source === 'email_attachments' ? 'bg-purple-50 text-purple-600' :
-                              'bg-green-50 text-green-600'
-                            }`}>
-                              {doc.source === 'prospect_documents' ? 'Prospect' :
-                               doc.source === 'email_attachments' ? 'Email' : 'CRM'}
-                            </span>
-                            {doc.validated && (
-                              <span className="text-[9px] text-green-600 font-medium">
-                                ✓ Validé
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   ) : (
                     <div className="text-center text-gray-400 text-[10px] mt-2 py-3 border-2 border-dashed border-gray-200 rounded">

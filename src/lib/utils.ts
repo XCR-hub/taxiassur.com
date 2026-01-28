@@ -99,7 +99,7 @@ export function throttle<T extends (...args: any[]) => any>(
   limit: number
 ): (...args: Parameters<T>) => void {
   let inThrottle: boolean;
-  
+
   return (...args: Parameters<T>) => {
     if (!inThrottle) {
       func(...args);
@@ -107,4 +107,43 @@ export function throttle<T extends (...args: any[]) => any>(
       setTimeout(() => inThrottle = false, limit);
     }
   };
+}
+
+/**
+ * Génère une URL publique pour un document stocké dans Supabase Storage
+ * Cette fonction gère intelligemment les différents buckets en fonction de la source
+ *
+ * @param filePath - Chemin du fichier dans le storage
+ * @param source - Source du document ('prospect_documents', 'email_attachments', 'crm_lead_documents')
+ * @param supabase - Instance Supabase client
+ * @returns URL publique du document
+ */
+export function getDocumentPublicUrl(
+  filePath: string,
+  source: 'prospect_documents' | 'email_attachments' | 'crm_lead_documents' | string,
+  supabase: any
+): string {
+  // Nettoyer le path (enlever les préfixes de bucket s'ils existent)
+  let cleanPath = filePath;
+  cleanPath = cleanPath.replace(/^\/?(email-attachments|prospect-documents|crm-documents)\//, '');
+
+  // Ordre de priorité pour chercher le fichier selon la source
+  // IMPORTANT: Les documents ne sont PAS physiquement déplacés entre buckets
+  // Même si la source est 'crm_lead_documents', le fichier peut être dans prospect-documents
+  let bucket = 'prospect-documents'; // défaut
+
+  if (source === 'email_attachments') {
+    bucket = 'email-attachments';
+  } else if (source === 'prospect_documents') {
+    bucket = 'prospect-documents';
+  } else if (source === 'crm_lead_documents') {
+    // Pour crm_lead_documents, essayer prospect-documents en premier
+    // car les fichiers sont souvent là même après classification
+    bucket = 'prospect-documents';
+  }
+
+  // Générer l'URL publique
+  const { data } = supabase.storage.from(bucket).getPublicUrl(cleanPath);
+
+  return data.publicUrl;
 }
