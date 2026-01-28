@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import {
   Mail, RefreshCw, Check, X, User, Calendar, MessageCircle, AlertCircle,
   Send, Trash2, Archive, Tag, Filter, Search, Reply, ExternalLink,
-  CheckSquare, Square, MoreVertical, Settings, Zap, UserPlus
+  CheckSquare, Square, MoreVertical, Settings, Zap, UserPlus, Download
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
+import { ManualEmailSync } from './ManualEmailSync';
 
 // Fonction pour nettoyer et décoder le contenu des emails
 function cleanEmailContent(text: string): string {
@@ -89,6 +90,7 @@ const EmailInboxManager: React.FC = () => {
   const [selectedEmails, setSelectedEmails] = useState<Set<string>>(new Set());
   const [showReplyModal, setShowReplyModal] = useState(false);
   const [showRulesModal, setShowRulesModal] = useState(false);
+  const [showSyncModal, setShowSyncModal] = useState(false);
   const [replyContent, setReplyContent] = useState('');
   const [rules, setRules] = useState<EmailRule[]>([]);
   const [groupByThread, setGroupByThread] = useState(false);
@@ -464,6 +466,13 @@ const EmailInboxManager: React.FC = () => {
               >
                 <Settings className="w-5 h-5" />
                 Règles
+              </button>
+              <button
+                onClick={() => setShowSyncModal(true)}
+                className="px-4 py-2 bg-orange-500 text-white rounded-lg font-medium hover:bg-orange-600 transition-colors flex items-center gap-2"
+              >
+                <Download className="w-5 h-5" />
+                Sync complète
               </button>
               <button
                 onClick={syncEmails}
@@ -1037,6 +1046,25 @@ const EmailInboxManager: React.FC = () => {
                   Fermer
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showSyncModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-6">
+          <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b flex items-center justify-between">
+              <h3 className="text-xl font-bold text-gray-900">Synchronisation complète</h3>
+              <button
+                onClick={() => setShowSyncModal(false)}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5 text-gray-600" />
+              </button>
+            </div>
+            <div className="p-6">
+              <ManualEmailSync />
             </div>
           </div>
         </div>
