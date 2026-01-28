@@ -16,10 +16,10 @@ interface LeadQuote {
   status: string;
   quote_file_url: string | null;
   quote_amount: number | null;
-  quote_reference: string | null;
-  quote_valid_until: string | null;
-  company_refusal_reason: string | null;
-  uploaded_at: string | null;
+  refusal_reason: string | null;
+  notes: string | null;
+  submitted_at: string | null;
+  submitted_by: string | null;
 }
 
 interface QuoteSummary {
@@ -73,7 +73,7 @@ export default function LeadQuotesManager({ leadId }: Props) {
           .order('priority_order'),
 
         supabase
-          .from('lead_quotes')
+          .from('lead_company_quotes')
           .select('*')
           .eq('lead_id', leadId),
 
@@ -126,19 +126,20 @@ export default function LeadQuotesManager({ leadId }: Props) {
       const { data: adminData } = await supabase.auth.getUser();
 
       const { error: updateError } = await supabase
-        .from('lead_quotes')
-        .update({
-          status: 'quote_uploaded',
+        .from('lead_company_quotes')
+        .upsert({
+          lead_id: leadId,
+          company_id: activeModal.companyId,
+          status: 'quote_submitted',
           quote_file_url: publicUrl,
           quote_amount: uploadForm.amount ? parseFloat(uploadForm.amount) : null,
-          quote_reference: uploadForm.reference || null,
-          quote_valid_until: uploadForm.validUntil || null,
-          uploaded_at: new Date().toISOString(),
-          uploaded_by: adminData?.user?.id,
+          submitted_at: new Date().toISOString(),
+          submitted_by: adminData?.user?.id,
           updated_at: new Date().toISOString(),
-        })
-        .eq('lead_id', leadId)
-        .eq('company_id', activeModal.companyId);
+          notes: uploadForm.reference ? `Référence: ${uploadForm.reference}${uploadForm.validUntil ? ` - Valide jusqu'au: ${uploadForm.validUntil}` : ''}` : null,
+        }, {
+          onConflict: 'lead_id,company_id'
+        });
 
       if (updateError) throw updateError;
 
@@ -163,15 +164,16 @@ export default function LeadQuotesManager({ leadId }: Props) {
       setUploading(activeModal.companyId);
 
       const { error } = await supabase
-        .from('lead_quotes')
-        .update({
-          status: 'refused_by_company',
-          company_refusal_reason: refuseForm.reason,
-          company_refused_at: new Date().toISOString(),
+        .from('lead_company_quotes')
+        .upsert({
+          lead_id: leadId,
+          company_id: activeModal.companyId,
+          status: 'refused',
+          refusal_reason: refuseForm.reason,
           updated_at: new Date().toISOString(),
-        })
-        .eq('lead_id', leadId)
-        .eq('company_id', activeModal.companyId);
+        }, {
+          onConflict: 'lead_id,company_id'
+        });
 
       if (error) throw error;
 
@@ -196,10 +198,13 @@ export default function LeadQuotesManager({ leadId }: Props) {
     switch (status) {
       case 'pending':
         return <span className="px-2 py-1 text-xs rounded bg-yellow-100 text-yellow-800 flex items-center gap-1"><AlertCircle className="w-3 h-3" /> En attente</span>;
+      case 'quote_submitted':
       case 'quote_uploaded':
         return <span className="px-2 py-1 text-xs rounded bg-green-100 text-green-800 flex items-center gap-1"><CheckCircle className="w-3 h-3" /> Devis uploadé</span>;
+      case 'refused':
       case 'refused_by_company':
         return <span className="px-2 py-1 text-xs rounded bg-red-100 text-red-800 flex items-center gap-1"><XCircle className="w-3 h-3" /> Refusé</span>;
+      case 'validated':
       case 'accepted_by_client':
         return <span className="px-2 py-1 text-xs rounded bg-blue-100 text-blue-800 flex items-center gap-1"><CheckCircle className="w-3 h-3" /> Accepté par client</span>;
       default:
@@ -267,13 +272,13 @@ export default function LeadQuotesManager({ leadId }: Props) {
                     {quote?.quote_amount && (
                       <div className="text-sm text-gray-600 mt-1">
                         Montant: {quote.quote_amount.toFixed(2)} €
-                        {quote.quote_reference && ` • Référence: ${quote.quote_reference}`}
+                        {quote.notes && ` • ${quote.notes}`}
                       </div>
                     )}
 
-                    {quote?.company_refusal_reason && (
+                    {quote?.refusal_reason && (
                       <div className="text-sm text-red-600 mt-1">
-                        Motif de refus: {quote.company_refusal_reason}
+                        Motif de refus: {quote.refusal_reason}
                       </div>
                     )}
                   </div>
@@ -298,7 +303,7 @@ export default function LeadQuotesManager({ leadId }: Props) {
                       </>
                     )}
 
-                    {status === 'quote_uploaded' && quote?.quote_file_url && (
+                    {(status === 'quote_submitted' || status === 'validated') && quote?.quote_file_url && (
                       <a
                         href={quote.quote_file_url}
                         target="_blank"
