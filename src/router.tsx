@@ -143,6 +143,7 @@ const QuoteQueueDashboard = lazy(() => import('./backoffice/QuoteQueueDashboard'
 const ManualLeadCreation = lazy(() => import('./backoffice/ManualLeadCreation'));
 const DuplicateLeadsManager = lazy(() => import('./backoffice/DuplicateLeadsManager'));
 const PendingDocumentsManager = lazy(() => import('./backoffice/PendingDocumentsManager'));
+const AIInsightsDashboard = lazy(() => import('./backoffice/AIInsightsDashboard'));
 
 const LoadingFallback = () => (
   <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-black flex items-center justify-center">
@@ -855,6 +856,10 @@ export const router = createBrowserRouter([
       {
         path: '/backoffice/ai-autonomous',
         element: <AuthGuard><SuspenseWrapper><AIAutonomousDashboard /></SuspenseWrapper></AuthGuard>
+      },
+      {
+        path: '/backoffice/ai-insights',
+        element: <AuthGuard><SuspenseWrapper><AIInsightsDashboard /></SuspenseWrapper></AuthGuard>
       },
       {
         path: '/backoffice/autonomous-system',
