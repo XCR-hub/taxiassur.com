@@ -11,7 +11,9 @@ import {
   Building2,
   AlertCircle,
   CheckCircle,
-  Loader2
+  Loader2,
+  Upload,
+  Trash2
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { LegalDocumentsSelector } from './LegalDocumentsSelector';
@@ -304,6 +306,17 @@ L'equipe TaxiAssur
   }
 ];
 
+interface CustomAttachment {
+  id: string;
+  file: File;
+  name: string;
+  size: number;
+  uploading: boolean;
+  uploaded: boolean;
+  url?: string;
+  error?: string;
+}
+
 export function EmailComposerModal({
   isOpen,
   onClose,
@@ -319,6 +332,7 @@ export function EmailComposerModal({
   const [selectedTemplate, setSelectedTemplate] = useState(defaultTemplate || '');
   const [showLegalDocs, setShowLegalDocs] = useState(false);
   const [selectedLegalDocs, setSelectedLegalDocs] = useState<LegalDocument[]>([]);
+  const [customAttachments, setCustomAttachments] = useState<CustomAttachment[]>([]);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
@@ -368,6 +382,86 @@ export function EmailComposerModal({
       .replace(/\{\{missing_documents\}\}/g, missingDocsText);
   };
 
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    const newAttachments: CustomAttachment[] = [];
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+
+      // Vérifier la taille (max 10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        setError(`Le fichier "${file.name}" est trop volumineux (max 10MB)`);
+        continue;
+      }
+
+      const attachment: CustomAttachment = {
+        id: `${Date.now()}-${i}`,
+        file,
+        name: file.name,
+        size: file.size,
+        uploading: false,
+        uploaded: false
+      };
+
+      newAttachments.push(attachment);
+    }
+
+    setCustomAttachments(prev => [...prev, ...newAttachments]);
+
+    // Reset input
+    e.target.value = '';
+  };
+
+  const uploadFile = async (attachment: CustomAttachment): Promise<string | null> => {
+    try {
+      // Mettre à jour l'état uploading
+      setCustomAttachments(prev =>
+        prev.map(a => a.id === attachment.id ? { ...a, uploading: true, error: undefined } : a)
+      );
+
+      const fileName = `${lead.id}/${Date.now()}-${attachment.file.name}`;
+
+      const { data, error: uploadError } = await supabase.storage
+        .from('email-attachments')
+        .upload(fileName, attachment.file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('email-attachments')
+        .getPublicUrl(fileName);
+
+      // Mettre à jour l'état uploaded
+      setCustomAttachments(prev =>
+        prev.map(a => a.id === attachment.id ? { ...a, uploading: false, uploaded: true, url: publicUrl } : a)
+      );
+
+      return publicUrl;
+    } catch (err) {
+      console.error('Upload error:', err);
+      setCustomAttachments(prev =>
+        prev.map(a => a.id === attachment.id ? { ...a, uploading: false, error: 'Erreur d\'upload' } : a)
+      );
+      return null;
+    }
+  };
+
+  const removeAttachment = (id: string) => {
+    setCustomAttachments(prev => prev.filter(a => a.id !== id));
+  };
+
+  const formatFileSize = (bytes: number): string => {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  };
+
   const handleSend = async () => {
     if (!subject.trim() || !body.trim()) {
       setError('Le sujet et le message sont obligatoires');
@@ -378,11 +472,31 @@ export function EmailComposerModal({
     setError('');
 
     try {
-      const attachments = selectedLegalDocs.map(doc => ({
+      // 1. Upload custom attachments first
+      const uploadPromises = customAttachments
+        .filter(a => !a.uploaded)
+        .map(a => uploadFile(a));
+
+      await Promise.all(uploadPromises);
+
+      // 2. Prepare all attachments
+      const legalAttachments = selectedLegalDocs.map(doc => ({
         filename: doc.name,
-        path: doc.file_path
+        path: doc.file_path,
+        type: 'legal'
       }));
 
+      const customAttachmentsData = customAttachments
+        .filter(a => a.uploaded && a.url)
+        .map(a => ({
+          filename: a.name,
+          url: a.url,
+          type: 'custom'
+        }));
+
+      const allAttachments = [...legalAttachments, ...customAttachmentsData];
+
+      // 3. Send email
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-crm-email`, {
         method: 'POST',
         headers: {
@@ -394,7 +508,7 @@ export function EmailComposerModal({
           subject,
           body,
           lead_id: lead.id,
-          attachments: attachments.length > 0 ? attachments : undefined
+          attachments: allAttachments.length > 0 ? allAttachments : undefined
         })
       });
 
@@ -402,6 +516,7 @@ export function EmailComposerModal({
         throw new Error('Erreur lors de l\'envoi');
       }
 
+      // 4. Save interaction
       await supabase.from('crm_interactions').insert({
         lead_id: lead.id,
         type: 'email',
@@ -410,7 +525,8 @@ export function EmailComposerModal({
         content: body.substring(0, 500),
         status: 'sent',
         metadata: {
-          attachments: selectedLegalDocs.map(d => d.name)
+          legal_attachments: selectedLegalDocs.map(d => d.name),
+          custom_attachments: customAttachments.map(a => a.name)
         }
       });
 
@@ -422,6 +538,7 @@ export function EmailComposerModal({
         setSubject('');
         setBody('');
         setSelectedLegalDocs([]);
+        setCustomAttachments([]);
       }, 1500);
     } catch (err) {
       console.error('Send error:', err);
@@ -585,6 +702,93 @@ export function EmailComposerModal({
                   ))}
                 </div>
               )}
+
+              {/* Custom File Upload Section */}
+              <div className="border border-gray-200 rounded-lg overflow-hidden bg-gradient-to-br from-blue-50 to-cyan-50">
+                <div className="px-4 py-3 bg-white border-b border-gray-200">
+                  <div className="flex items-center gap-2">
+                    <Upload className="w-5 h-5 text-blue-600" />
+                    <span className="font-medium text-gray-900">Pièces jointes personnalisées</span>
+                    {customAttachments.length > 0 && (
+                      <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs font-medium rounded-full">
+                        {customAttachments.length}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="p-4">
+                  <label
+                    htmlFor="custom-file-upload"
+                    className="flex flex-col items-center justify-center px-4 py-6 border-2 border-dashed border-blue-300 rounded-lg cursor-pointer hover:border-blue-400 hover:bg-blue-50/50 transition-all"
+                  >
+                    <Upload className="w-8 h-8 text-blue-500 mb-2" />
+                    <span className="text-sm font-medium text-gray-700 mb-1">
+                      Cliquez pour téléverser des fichiers
+                    </span>
+                    <span className="text-xs text-gray-500">
+                      PDF, Word, Excel, Images (max 10MB par fichier)
+                    </span>
+                    <input
+                      id="custom-file-upload"
+                      type="file"
+                      multiple
+                      accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.gif"
+                      onChange={handleFileSelect}
+                      className="hidden"
+                    />
+                  </label>
+
+                  {customAttachments.length > 0 && (
+                    <div className="mt-4 space-y-2">
+                      {customAttachments.map(attachment => (
+                        <div
+                          key={attachment.id}
+                          className="flex items-center gap-3 p-3 bg-white rounded-lg border border-gray-200"
+                        >
+                          <FileText className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <p className="text-sm font-medium text-gray-900 truncate">
+                                {attachment.name}
+                              </p>
+                              {attachment.uploading && (
+                                <Loader2 className="w-4 h-4 text-blue-500 animate-spin" />
+                              )}
+                              {attachment.uploaded && (
+                                <CheckCircle className="w-4 h-4 text-green-500" />
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2 mt-1">
+                              <p className="text-xs text-gray-500">
+                                {formatFileSize(attachment.size)}
+                              </p>
+                              {attachment.error && (
+                                <span className="text-xs text-red-600">
+                                  {attachment.error}
+                                </span>
+                              )}
+                              {attachment.uploaded && (
+                                <span className="text-xs text-green-600">
+                                  ✓ Prêt à envoyer
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => removeAttachment(attachment.id)}
+                            className="p-1.5 hover:bg-red-50 rounded transition-colors"
+                            disabled={attachment.uploading}
+                          >
+                            <Trash2 className="w-4 h-4 text-red-500" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           )}
         </div>
