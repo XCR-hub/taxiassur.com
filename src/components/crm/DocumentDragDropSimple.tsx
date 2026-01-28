@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FileText, Check, Download, ExternalLink, AlertCircle, RefreshCw, ShoppingCart, Maximize2, Bug } from 'lucide-react';
+import { FileText, Check, Download, ExternalLink, AlertCircle, RefreshCw, ShoppingCart, Maximize2, Bug, CheckCircle } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
 
@@ -155,9 +155,7 @@ const DocumentDragDropSimple: React.FC<DocumentDragDropSimpleProps> = ({ leadId,
           .from('prospect_documents')
           .update({
             document_type: docType,
-            validated: true,
-            validated_at: new Date().toISOString(),
-            validated_by: user?.id || null
+            validated: false
           })
           .eq('id', draggedDoc.id);
 
@@ -167,9 +165,7 @@ const DocumentDragDropSimple: React.FC<DocumentDragDropSimpleProps> = ({ leadId,
           .from('crm_lead_documents')
           .update({
             document_type: docType,
-            status: 'validated',
-            validated_at: new Date().toISOString(),
-            validated_by: user?.id || null
+            status: 'pending'
           })
           .eq('id', draggedDoc.id);
 
@@ -187,9 +183,7 @@ const DocumentDragDropSimple: React.FC<DocumentDragDropSimpleProps> = ({ leadId,
             document_type: docType,
             uploaded_by: user?.id || null,
             uploaded_at: new Date().toISOString(),
-            validated: true,
-            validated_at: new Date().toISOString(),
-            validated_by: user?.id || null
+            validated: false
           });
 
         if (error) throw error;
@@ -205,6 +199,102 @@ const DocumentDragDropSimple: React.FC<DocumentDragDropSimpleProps> = ({ leadId,
     } catch (error) {
       logger.error('Error classifying document:', error);
       alert('Erreur lors de la classification');
+    }
+  };
+
+  const handleValidate = async (doc: Document) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (doc.source === 'prospect_documents') {
+        const { error } = await supabase
+          .from('prospect_documents')
+          .update({
+            validated: true,
+            validated_at: new Date().toISOString(),
+            validated_by: user?.id || null
+          })
+          .eq('id', doc.id);
+
+        if (error) throw error;
+      } else if (doc.source === 'crm_lead_documents') {
+        const { error } = await supabase
+          .from('crm_lead_documents')
+          .update({
+            status: 'validated',
+            validated_at: new Date().toISOString(),
+            validated_by: user?.id || null
+          })
+          .eq('id', doc.id);
+
+        if (error) throw error;
+      }
+
+      // Envoyer email de notification au prospect
+      if (leadEmail && doc.document_type) {
+        const docTypeLabel = DOCUMENT_TYPES.find(t => t.value === doc.document_type)?.label || doc.document_type;
+
+        const emailHtml = `
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: linear-gradient(135deg, #f59e0b 0%, #ea580c 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+    .content { background: white; padding: 30px; border: 1px solid #e5e7eb; border-top: none; }
+    .document-info { background: #f0fdf4; border-left: 4px solid #10b981; padding: 15px; margin: 20px 0; border-radius: 5px; }
+    .footer { text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb; color: #6b7280; font-size: 14px; }
+    .button { display: inline-block; background: #f59e0b; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600; margin: 15px 0; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1 style="margin: 0; font-size: 28px;">✅ Document validé</h1>
+    </div>
+    <div class="content">
+      <p>Bonjour,</p>
+      <p>Nous avons bien reçu et validé votre document :</p>
+      <div class="document-info">
+        <p style="margin: 0;"><strong>📄 Type de document :</strong> ${docTypeLabel}</p>
+        <p style="margin: 10px 0 0 0;"><strong>📎 Nom du fichier :</strong> ${doc.file_name}</p>
+      </div>
+      <p>Votre dossier progresse ! Notre équipe commerciale traite votre demande de devis.</p>
+      <p style="text-align: center;">
+        <a href="https://taxiassur.com/espace-prospect" class="button">Suivre mon dossier</a>
+      </p>
+      <p>Vous recevrez une notification dès que nous aurons des offres à vous proposer.</p>
+      <p>Cordialement,<br><strong>L'équipe TaxiAssur</strong></p>
+    </div>
+    <div class="footer">
+      <p>📧 contact@taxiassur.com | 📱 09 74 97 46 48</p>
+      <p>TaxiAssur - Votre courtier spécialisé en assurance taxi</p>
+    </div>
+  </div>
+</body>
+</html>`;
+
+        await supabase.functions.invoke('send-email-universal', {
+          body: {
+            to: leadEmail,
+            toName: '',
+            subject: `✅ Document validé : ${docTypeLabel}`,
+            html: emailHtml,
+            from: 'team@taxiassur.com',
+            fromName: 'TaxiAssur',
+            lead_id: leadId
+          }
+        }).catch(err => {
+          logger.error('Error sending validation email:', err);
+          console.error('Email send error:', err);
+        });
+      }
+
+      await loadAllDocuments();
+    } catch (error) {
+      logger.error('Error validating document:', error);
+      alert('Erreur lors de la validation');
     }
   };
 
@@ -493,12 +583,21 @@ const DocumentDragDropSimple: React.FC<DocumentDragDropSimpleProps> = ({ leadId,
                                 >
                                   <ExternalLink size={10} className="text-blue-500" />
                                 </a>
+                                {!doc.validated && doc.source !== 'email_attachments' && (
+                                  <button
+                                    onClick={() => handleValidate(doc)}
+                                    className="p-1 hover:bg-green-50 rounded transition-colors"
+                                    title="Valider ce document"
+                                  >
+                                    <CheckCircle size={12} className="text-green-500" />
+                                  </button>
+                                )}
                                 {doc.validated && (
                                   <Check className="text-green-500" size={12} title="Validé" />
                                 )}
                               </div>
                             </div>
-                            <div className="flex items-center justify-between">
+                            <div className="flex items-center justify-between gap-1">
                               <span className={`text-[9px] px-1 py-0.5 rounded font-medium ${
                                 doc.source === 'prospect_documents' ? 'bg-blue-50 text-blue-600' :
                                 doc.source === 'email_attachments' ? 'bg-purple-50 text-purple-600' :
@@ -512,9 +611,13 @@ const DocumentDragDropSimple: React.FC<DocumentDragDropSimpleProps> = ({ leadId,
                                   {cleanPath.split('/').pop()}
                                 </span>
                               )}
-                              {doc.validated && (
+                              {doc.validated ? (
                                 <span className="text-[9px] text-green-600 font-medium">
                                   ✓ Validé
+                                </span>
+                              ) : (
+                                <span className="text-[9px] text-orange-600 font-medium">
+                                  À valider
                                 </span>
                               )}
                             </div>
