@@ -50,6 +50,8 @@ const EmailInboxOutlook: React.FC = () => {
   const [selectedFolder, setSelectedFolder] = useState<FolderType>('inbox');
   const [searchQuery, setSearchQuery] = useState('');
   const [stats, setStats] = useState({ inbox: 0, sent: 0, starred: 0, leads: 0, total: 0 });
+  const [showReplyModal, setShowReplyModal] = useState(false);
+  const [replyContent, setReplyContent] = useState('');
 
   useEffect(() => {
     loadMessages();
@@ -186,14 +188,162 @@ const EmailInboxOutlook: React.FC = () => {
     }
   };
 
-  const cleanEmailContent = (text: string): string => {
+  // Fonction avancée de décodage et nettoyage email
+  const decodeEmailContent = (text: string): string => {
     if (!text) return '';
-    return text
-      .replace(/------=_NextPart_[0-9A-F_\.]+/g, '')
-      .replace(/Content-Type:.*$/gm, '')
-      .replace(/Content-Transfer-Encoding:.*$/gm, '')
-      .replace(/\n{3,}/g, '\n\n')
-      .trim();
+
+    let decoded = text;
+
+    // 1. Décoder quoted-printable (=E9, =C3=A9, etc.)
+    decoded = decoded.replace(/=([0-9A-F]{2})/gi, (match, hex) => {
+      return String.fromCharCode(parseInt(hex, 16));
+    });
+
+    // 2. Corriger double encodage UTF-8
+    const utf8Fixes: Record<string, string> = {
+      'Ã©': 'é', 'Ã¨': 'è', 'Ãª': 'ê', 'Ã§': 'ç', 'Ã ': 'à',
+      'Ã¢': 'â', 'Ã´': 'ô', 'Ã®': 'î', 'Ã¹': 'ù', 'Ã»': 'û',
+      'Ã«': 'ë', 'Ã¯': 'ï', 'Ã¼': 'ü', 'Ã‰': 'É', 'Ã€': 'À',
+      'â€™': "'", 'â€œ': '"', 'â€': '"', 'â€¢': '•',
+      'â€"': '—', 'â‚¬': '€', 'Â«': '«', 'Â»': '»'
+    };
+
+    for (const [wrong, correct] of Object.entries(utf8Fixes)) {
+      decoded = decoded.replace(new RegExp(wrong, 'g'), correct);
+    }
+
+    // 3. Décoder entités HTML numériques
+    decoded = decoded.replace(/&#(\d+);/g, (match, dec) => {
+      return String.fromCharCode(parseInt(dec, 10));
+    });
+    decoded = decoded.replace(/&#x([0-9A-F]+);/gi, (match, hex) => {
+      return String.fromCharCode(parseInt(hex, 16));
+    });
+
+    // 4. Décoder entités HTML nommées
+    const textarea = document.createElement('textarea');
+    textarea.innerHTML = decoded;
+    decoded = textarea.value;
+
+    return decoded;
+  };
+
+  const cleanEmailContent = (text: string, html?: string): string => {
+    if (!text && !html) return '';
+
+    // Préférer le HTML si disponible
+    let content = html || text;
+
+    // Décoder d'abord
+    content = decodeEmailContent(content);
+
+    // Supprimer balises VML/CSS inline
+    content = content.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
+    content = content.replace(/[vow]\\:\*\s*\{[^}]*\}/gi, '');
+    content = content.replace(/\.shape\s*\{[^}]*\}/gi, '');
+
+    // Supprimer boundaries MIME
+    content = content.replace(/------=_NextPart_[^\n]*/g, '');
+    content = content.replace(/--[0-9A-F]+_NextPart_[^\n]*/g, '');
+
+    // Supprimer headers MIME
+    content = content.replace(/^Content-Type:.*$/gm, '');
+    content = content.replace(/^Content-Transfer-Encoding:.*$/gm, '');
+    content = content.replace(/^Content-Disposition:.*$/gm, '');
+    content = content.replace(/^charset=.*$/gm, '');
+    content = content.replace(/^boundary=.*$/gm, '');
+
+    // Nettoyer lignes vides multiples
+    content = content.replace(/\n{3,}/g, '\n\n');
+    content = content.replace(/^\s+|\s+$/gm, '');
+
+    return content.trim();
+  };
+
+  const renderEmailHTML = (html: string) => {
+    const cleanHtml = cleanEmailContent('', html);
+    return (
+      <div
+        className="prose prose-sm max-w-none"
+        dangerouslySetInnerHTML={{ __html: cleanHtml }}
+        style={{
+          lineHeight: '1.6',
+          wordWrap: 'break-word'
+        }}
+      />
+    );
+  };
+
+  const handleReply = () => {
+    if (!selectedMessage) return;
+    setReplyContent('');
+    setShowReplyModal(true);
+  };
+
+  const handleForward = () => {
+    if (!selectedMessage) return;
+    alert('Fonction de transfert en développement');
+  };
+
+  const handleArchive = async () => {
+    if (!selectedMessage) return;
+    try {
+      await supabase
+        .from('email_messages')
+        .update({ email_status: 'archived', archived_at: new Date().toISOString() })
+        .eq('id', selectedMessage.id);
+
+      alert('✅ Email archivé');
+      await loadMessages();
+      setSelectedMessage(null);
+    } catch (error) {
+      console.error('Error archiving:', error);
+      alert('❌ Erreur lors de l\'archivage');
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!selectedMessage) return;
+    if (!confirm('Êtes-vous sûr de vouloir supprimer cet email ?')) return;
+
+    try {
+      await supabase
+        .from('email_messages')
+        .update({ email_status: 'deleted', deleted_at: new Date().toISOString() })
+        .eq('id', selectedMessage.id);
+
+      alert('✅ Email supprimé');
+      await loadMessages();
+      setSelectedMessage(null);
+    } catch (error) {
+      console.error('Error deleting:', error);
+      alert('❌ Erreur lors de la suppression');
+    }
+  };
+
+  const sendReply = async () => {
+    if (!selectedMessage || !replyContent.trim()) return;
+
+    try {
+      const { error } = await supabase.functions.invoke('send-crm-email', {
+        body: {
+          to: selectedMessage.from_email,
+          subject: `Re: ${selectedMessage.subject}`,
+          body: replyContent,
+          lead_id: selectedMessage.lead_id
+        }
+      });
+
+      if (error) throw error;
+
+      alert('✅ Réponse envoyée !');
+      setShowReplyModal(false);
+      setReplyContent('');
+      await loadMessages();
+    } catch (error) {
+      console.error('Error sending reply:', error);
+      alert('❌ Erreur lors de l\'envoi');
+    }
   };
 
   const formatDate = (dateStr: string) => {
@@ -386,7 +536,7 @@ const EmailInboxOutlook: React.FC = () => {
                       </p>
 
                       <p className="text-xs text-gray-500 truncate mt-1">
-                        {cleanEmailContent(email.body_text).substring(0, 100)}
+                        {cleanEmailContent(email.body_text, email.body_html).substring(0, 100)}
                       </p>
 
                       <div className="flex items-center gap-2 mt-2">
@@ -422,16 +572,32 @@ const EmailInboxOutlook: React.FC = () => {
                     {selectedMessage.subject || '(Aucun objet)'}
                   </h2>
                   <div className="flex items-center gap-2">
-                    <button className="p-2 hover:bg-gray-100 rounded-lg transition">
+                    <button
+                      onClick={handleReply}
+                      className="p-2 hover:bg-gray-100 rounded-lg transition"
+                      title="Répondre"
+                    >
                       <Reply className="w-5 h-5 text-gray-600" />
                     </button>
-                    <button className="p-2 hover:bg-gray-100 rounded-lg transition">
+                    <button
+                      onClick={handleForward}
+                      className="p-2 hover:bg-gray-100 rounded-lg transition"
+                      title="Transférer"
+                    >
                       <Forward className="w-5 h-5 text-gray-600" />
                     </button>
-                    <button className="p-2 hover:bg-gray-100 rounded-lg transition">
+                    <button
+                      onClick={handleArchive}
+                      className="p-2 hover:bg-gray-100 rounded-lg transition"
+                      title="Archiver"
+                    >
                       <Archive className="w-5 h-5 text-gray-600" />
                     </button>
-                    <button className="p-2 hover:bg-gray-100 rounded-lg transition">
+                    <button
+                      onClick={handleDelete}
+                      className="p-2 hover:bg-gray-100 rounded-lg transition"
+                      title="Supprimer"
+                    >
                       <Trash2 className="w-5 h-5 text-gray-600" />
                     </button>
                     <button className="p-2 hover:bg-gray-100 rounded-lg transition">
@@ -489,11 +655,15 @@ const EmailInboxOutlook: React.FC = () => {
 
               {/* Email Body */}
               <div className="flex-1 overflow-y-auto px-6 py-6">
-                <div className="prose prose-sm max-w-none">
-                  <div className="whitespace-pre-wrap text-gray-900">
-                    {cleanEmailContent(selectedMessage.body_text)}
+                {selectedMessage.body_html ? (
+                  renderEmailHTML(selectedMessage.body_html)
+                ) : (
+                  <div className="prose prose-sm max-w-none">
+                    <div className="whitespace-pre-wrap text-gray-900" style={{ lineHeight: '1.6' }}>
+                      {cleanEmailContent(selectedMessage.body_text, '')}
+                    </div>
                   </div>
-                </div>
+                )}
 
                 {selectedMessage.attachments && selectedMessage.attachments.length > 0 && (
                   <div className="mt-6 pt-6 border-t border-gray-200">
@@ -531,6 +701,83 @@ const EmailInboxOutlook: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* Reply Modal */}
+      {showReplyModal && selectedMessage && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col">
+            {/* Modal Header */}
+            <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+              <h3 className="text-xl font-bold text-gray-900">Répondre à : {selectedMessage.from_name || selectedMessage.from_email}</h3>
+              <button
+                onClick={() => {
+                  setShowReplyModal(false);
+                  setReplyContent('');
+                }}
+                className="text-gray-400 hover:text-gray-600 transition"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="flex-1 overflow-y-auto px-6 py-4">
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Objet : Re: {selectedMessage.subject}
+                </label>
+              </div>
+
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Votre message
+                </label>
+                <textarea
+                  value={replyContent}
+                  onChange={(e) => setReplyContent(e.target.value)}
+                  placeholder="Tapez votre réponse..."
+                  className="w-full h-64 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 resize-none"
+                />
+              </div>
+
+              {/* Original Message */}
+              <div className="bg-gray-50 rounded-lg p-4 border-l-4 border-gray-300">
+                <p className="text-xs font-semibold text-gray-600 mb-2">Message original :</p>
+                <div className="text-sm text-gray-700">
+                  <p className="mb-1"><strong>De :</strong> {selectedMessage.from_email}</p>
+                  <p className="mb-1"><strong>Date :</strong> {new Date(selectedMessage.received_at).toLocaleString('fr-FR')}</p>
+                  <div className="mt-3 pt-3 border-t border-gray-200 max-h-32 overflow-y-auto text-xs">
+                    {cleanEmailContent(selectedMessage.body_text, '').substring(0, 500)}...
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="px-6 py-4 border-t border-gray-200 flex gap-3">
+              <button
+                onClick={sendReply}
+                disabled={!replyContent.trim()}
+                className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                <Send className="w-5 h-5" />
+                Envoyer la réponse
+              </button>
+              <button
+                onClick={() => {
+                  setShowReplyModal(false);
+                  setReplyContent('');
+                }}
+                className="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition"
+              >
+                Annuler
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
