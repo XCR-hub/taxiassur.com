@@ -221,7 +221,8 @@ const CRMLeadDetail: React.FC = () => {
         { type: 'carte_grise', label: 'Carte grise' },
         { type: 'releve_information', label: 'Relevé d\'information' },
         { type: 'autorisation_stationnement', label: 'Autorisation de stationnement' },
-        { type: 'rib', label: 'RIB' }
+        { type: 'rib', label: 'RIB' },
+        { type: 'kbis', label: 'KBIS / SIRENE' }
       ];
 
       // Calculer les documents manquants

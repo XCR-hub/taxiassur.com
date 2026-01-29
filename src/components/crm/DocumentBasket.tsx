@@ -38,7 +38,6 @@ const DOCUMENT_CATEGORIES: DocumentCategory[] = [
   { id: 'carte_professionnelle', label: 'Carte professionnelle', icon: '🎫', required: true },
   { id: 'kbis', label: 'Kbis / SIRENE', icon: '🏢', required: false },
   { id: 'piece_identite', label: 'Pièce d\'identité', icon: '🆔', required: false },
-  { id: 'justificatif_domicile', label: 'Justificatif de domicile', icon: '🏠', required: false },
   { id: 'autorisation_stationnement', label: 'Autorisation de stationnement', icon: '🅿️', required: false },
 ];
 

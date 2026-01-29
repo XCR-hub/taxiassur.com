@@ -29,7 +29,6 @@ const DOCUMENT_TYPES = [
   { value: 'piece_identite', label: "Pièce d'identité", icon: '🆔', required: true },
   { value: 'carte_grise', label: 'Carte grise du véhicule', icon: '🚗', required: true },
   { value: 'releve_information', label: "Relevé d'information", icon: '📄', required: false },
-  { value: 'justificatif_domicile', label: 'Justificatif de domicile', icon: '🏠', required: false },
   { value: 'kbis', label: 'Kbis / SIRENE', icon: '🏢', required: false },
   { value: 'autorisation_stationnement', label: 'Autorisation de stationnement', icon: '🅿️', required: false },
   { value: 'rib', label: 'RIB', icon: '🏦', required: false },

@@ -69,9 +69,7 @@ const DOCUMENT_TYPES = [
   { id: 'releve_information', label: "Releve d'information", required: false, icon: '📋' },
   { id: 'autorisation_stationnement', label: 'Autorisation de stationnement', required: true, icon: '🅿️' },
   { id: 'rib', label: 'RIB', required: true, icon: '🏦' },
-  { id: 'kbis', label: 'KBIS / SIRENE', required: false, icon: '🏢' },
-  { id: 'carte_professionnelle', label: 'Carte professionnelle', required: false, icon: '🪪' },
-  { id: 'justificatif_domicile', label: 'Justificatif de domicile', required: false, icon: '🏠' }
+  { id: 'kbis', label: 'KBIS / SIRENE', required: false, icon: '🏢' }
 ];
 
 export function DocumentChecklistPanelV2({

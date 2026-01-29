@@ -25,7 +25,6 @@ const DOCUMENT_TYPES = [
   { value: 'piece_identite', label: "Pièce d'identité", icon: '🆔', required: true, color: 'from-purple-500 to-pink-500' },
   { value: 'carte_grise', label: 'Carte grise', icon: '🚗', required: true, color: 'from-red-500 to-rose-500' },
   { value: 'releve_information', label: "Relevé d'info", icon: '📄', required: false, color: 'from-gray-500 to-slate-500' },
-  { value: 'justificatif_domicile', label: 'Justif domicile', icon: '🏠', required: false, color: 'from-green-500 to-emerald-500' },
   { value: 'kbis', label: 'Kbis / SIRENE', icon: '🏢', required: false, color: 'from-indigo-500 to-blue-500' },
   { value: 'autorisation_stationnement', label: 'Autorisation', icon: '🅿️', required: false, color: 'from-teal-500 to-cyan-500' },
   { value: 'rib', label: 'RIB', icon: '🏦', required: false, color: 'from-yellow-500 to-orange-500' },
@@ -51,7 +50,6 @@ const DocumentDragDropSimple: React.FC<DocumentDragDropSimpleProps> = ({ leadId,
       'kbis': [/kbis/i, /sirene/i, /siret/i, /extrait.*registre/i],
       'rib': [/rib/i, /releve.*identite.*bancaire/i, /bank.*account/i, /iban/i],
       'releve_information': [/releve.*info/i, /sinistres/i, /antecedents/i, /claims.*history/i],
-      'justificatif_domicile': [/justif.*dom/i, /proof.*address/i, /facture/i, /quittance/i],
       'autorisation_stationnement': [/autorisation/i, /stationnement/i, /parking/i, /aps/i]
     };
 
