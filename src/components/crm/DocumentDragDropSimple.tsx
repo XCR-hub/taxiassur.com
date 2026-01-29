@@ -189,9 +189,20 @@ const DocumentDragDropSimple: React.FC<DocumentDragDropSimpleProps> = ({ leadId,
   }, [leadId]);
 
   const handleDragStart = (e: React.DragEvent, doc: Document) => {
+    logger.info('Début du drag:', {
+      file: doc.file_name,
+      currentType: doc.document_type,
+      validated: doc.validated,
+      source: doc.source
+    });
     setDraggedDoc(doc);
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/plain', doc.id);
+
+    // Style visuel pendant le drag
+    if (e.currentTarget instanceof HTMLElement) {
+      e.currentTarget.style.opacity = '0.5';
+    }
   };
 
   const handleDragOver = (e: React.DragEvent, docType: string) => {
@@ -204,35 +215,65 @@ const DocumentDragDropSimple: React.FC<DocumentDragDropSimpleProps> = ({ leadId,
     setDropTarget(null);
   };
 
+  const handleDragEnd = (e: React.DragEvent) => {
+    // Réinitialiser le style visuel
+    if (e.currentTarget instanceof HTMLElement) {
+      e.currentTarget.style.opacity = '1';
+    }
+    setDropTarget(null);
+  };
+
   const handleDrop = async (e: React.DragEvent, docType: string) => {
     e.preventDefault();
     setDropTarget(null);
 
     if (!draggedDoc) return;
 
+    // Vérifier si le document est déjà dans cette catégorie
+    if (draggedDoc.document_type === docType) {
+      logger.info('Document déjà dans cette catégorie, pas de changement');
+      setDraggedDoc(null);
+      return;
+    }
+
     try {
       const { data: { user } } = await supabase.auth.getUser();
+      const wasValidated = draggedDoc.validated;
+
+      logger.info(`Reclassification: "${draggedDoc.file_name}" de "${draggedDoc.document_type}" vers "${docType}"`);
 
       if (draggedDoc.source === 'prospect_documents') {
         const { error } = await supabase
           .from('prospect_documents')
           .update({
             document_type: docType,
-            validated: false
+            validated: false,  // Réinitialiser la validation
+            validated_at: null,
+            validated_by: null
           })
           .eq('id', draggedDoc.id);
 
-        if (error) throw error;
+        if (error) {
+          logger.error('Error updating prospect_documents:', error);
+          throw error;
+        }
+        logger.info('prospect_documents reclassifié avec succès');
       } else if (draggedDoc.source === 'crm_lead_documents') {
         const { error } = await supabase
           .from('crm_lead_documents')
           .update({
             document_type: docType,
-            status: 'pending'
+            status: 'pending',  // Réinitialiser le statut
+            validated_at: null,
+            validated_by: null
           })
           .eq('id', draggedDoc.id);
 
-        if (error) throw error;
+        if (error) {
+          logger.error('Error updating crm_lead_documents:', error);
+          throw error;
+        }
+        logger.info('crm_lead_documents reclassifié avec succès');
       } else {
         // Pour email_attachments, créer dans prospect_documents
         const { error } = await supabase
@@ -249,19 +290,34 @@ const DocumentDragDropSimple: React.FC<DocumentDragDropSimpleProps> = ({ leadId,
             validated: false
           });
 
-        if (error) throw error;
+        if (error) {
+          logger.error('Error inserting prospect_documents:', error);
+          throw error;
+        }
 
         await supabase
           .from('email_attachments')
           .update({ document_type: docType })
           .eq('id', draggedDoc.id);
+
+        logger.info('email_attachments copié vers prospect_documents');
       }
 
       await loadAllDocuments();
+
+      // Message de confirmation
+      const docTypeLabel = DOCUMENT_TYPES.find(t => t.value === docType)?.label || docType;
+      if (wasValidated) {
+        alert(`✅ Document reclassé en "${docTypeLabel}"\n\n⚠️ Note: La validation a été réinitialisée, il faudra revalider le document.`);
+      } else {
+        alert(`✅ Document reclassé en "${docTypeLabel}"`);
+      }
+
       setDraggedDoc(null);
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Error classifying document:', error);
-      alert('Erreur lors de la classification');
+      const errorMsg = error.message || 'Erreur inconnue';
+      alert(`❌ Erreur lors de la reclassification :\n\n${errorMsg}`);
     }
   };
 
@@ -561,6 +617,7 @@ const DocumentDragDropSimple: React.FC<DocumentDragDropSimpleProps> = ({ leadId,
                     key={doc.id}
                     draggable
                     onDragStart={(e) => handleDragStart(e, doc)}
+                    onDragEnd={handleDragEnd}
                     className="bg-white rounded-lg p-3 border-2 border-amber-200 cursor-move hover:border-amber-500 hover:shadow-lg hover:scale-105 transition-all group"
                   >
                     <div className="flex items-center gap-2 mb-1">
@@ -652,13 +709,23 @@ const DocumentDragDropSimple: React.FC<DocumentDragDropSimpleProps> = ({ leadId,
                   </div>
 
                   {dropTarget === type.value && draggedDoc && (
-                    <div className="bg-amber-100 border-2 border-amber-500 rounded-lg p-2 mb-2 animate-pulse">
-                      <div className="text-amber-900 text-xs font-bold text-center">
-                        ⬇️ Déposez "{draggedDoc.file_name.substring(0, 20)}..." ici
+                    <div className="bg-gradient-to-r from-amber-100 to-orange-100 border-2 border-amber-500 rounded-lg p-3 mb-2 animate-pulse shadow-lg">
+                      <div className="text-amber-900 text-xs font-bold text-center mb-1">
+                        ⬇️ Déposez "{draggedDoc.file_name.substring(0, 25)}..." ici
                       </div>
-                      <div className="text-amber-700 text-[10px] text-center mt-1">
-                        Sera classé en : {type.label}
+                      {draggedDoc.document_type && draggedDoc.document_type !== type.value && (
+                        <div className="text-amber-800 text-[10px] text-center mb-1">
+                          {DOCUMENT_TYPES.find(t => t.value === draggedDoc.document_type)?.label} → {type.label}
+                        </div>
+                      )}
+                      <div className="text-amber-700 text-[10px] text-center font-semibold">
+                        📁 Nouvelle catégorie : {type.label}
                       </div>
+                      {draggedDoc.validated && (
+                        <div className="text-orange-600 text-[9px] text-center mt-1 font-medium">
+                          ⚠️ La validation sera réinitialisée
+                        </div>
+                      )}
                     </div>
                   )}
 
@@ -669,14 +736,15 @@ const DocumentDragDropSimple: React.FC<DocumentDragDropSimpleProps> = ({ leadId,
                         return (
                           <div
                             key={doc.id}
-                            draggable={!doc.validated}
-                            onDragStart={(e) => !doc.validated && handleDragStart(e, doc)}
-                            className={`bg-white/80 rounded p-2 border-2 transition-all ${
+                            draggable={true}
+                            onDragStart={(e) => handleDragStart(e, doc)}
+                            onDragEnd={handleDragEnd}
+                            className={`bg-white/80 rounded p-2 border-2 transition-all cursor-move hover:shadow-lg hover:scale-105 ${
                               doc.validated
-                                ? 'border-green-200 bg-green-50/50'
-                                : 'border-gray-200 cursor-move hover:border-blue-400 hover:shadow-md'
+                                ? 'border-green-300 bg-green-50/50 hover:border-green-500'
+                                : 'border-gray-200 hover:border-blue-400'
                             }`}
-                            title={doc.validated ? 'Document validé (non modifiable)' : 'Glissez pour changer de catégorie'}
+                            title="🖱️ Glissez pour changer de catégorie (même validé)"
                           >
                             <div className="flex items-center justify-between gap-2 mb-1">
                               <span className="text-[10px] text-gray-700 truncate flex-1" title={doc.file_name}>
