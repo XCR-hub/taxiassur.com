@@ -149,6 +149,41 @@ const cleanEmailPreview = (text: string): string => {
   return cleaned;
 };
 
+// Fonction ultra-agressive pour supprimer TOUS les styles inline
+const stripAllInlineStyles = (html: string): string => {
+  if (!html) return '';
+
+  try {
+    // Créer un document temporaire pour parser le HTML
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+
+    // Récupérer TOUS les éléments
+    const allElements = doc.querySelectorAll('*');
+
+    // Supprimer tous les attributs de style et de couleur
+    allElements.forEach(element => {
+      element.removeAttribute('style');
+      element.removeAttribute('bgcolor');
+      element.removeAttribute('background');
+      element.removeAttribute('color');
+      element.removeAttribute('class'); // Supprimer aussi les classes qui pourraient contenir des styles
+    });
+
+    // Retourner le HTML nettoyé
+    return doc.body.innerHTML;
+  } catch (error) {
+    console.error('Erreur lors du nettoyage du HTML:', error);
+    // Fallback: regex aggressive
+    return html
+      .replace(/style\s*=\s*["'][^"']*["']/gi, '')
+      .replace(/bgcolor\s*=\s*["']?[^"'\s>]*["']?/gi, '')
+      .replace(/background\s*=\s*["']?[^"'\s>]*["']?/gi, '')
+      .replace(/color\s*=\s*["']?[^"'\s>]*["']?/gi, '')
+      .replace(/class\s*=\s*["'][^"']*["']/gi, '');
+  }
+};
+
 const extractLeadInfoFromEmail = (email: EmailMessage): ExtractedLeadInfo | null => {
   const text = email.body_text || '';
   const html = email.body_html || '';
@@ -1536,19 +1571,37 @@ const CRMInboxMulticanal: React.FC = () => {
 
             <div className="p-6 bg-white">
               {selectedMessage.body_html ? (
-                <div
-                  className="prose max-w-none bg-white [&_*]:!text-gray-900 [&_*]:!bg-transparent [&_p]:!text-gray-900 [&_div]:!text-gray-900 [&_span]:!text-gray-900 [&_td]:!text-gray-900 [&_th]:!text-gray-900"
-                  style={{
-                    color: '#111827 !important',
-                    backgroundColor: '#ffffff !important'
-                  }}
-                  dangerouslySetInnerHTML={{
-                    __html: cleanEmailPreview(selectedMessage.body_html)
-                      .replace(/color:\s*#ffffff/gi, 'color: #111827')
-                      .replace(/color:\s*white/gi, 'color: #111827')
-                      .replace(/color:\s*rgb\(255,\s*255,\s*255\)/gi, 'color: #111827')
-                  }}
-                />
+                <>
+                  <style dangerouslySetInnerHTML={{
+                    __html: `
+                      .email-display-safe {
+                        color: #000000 !important;
+                        background-color: #ffffff !important;
+                        line-height: 1.6;
+                      }
+                      .email-display-safe * {
+                        color: #000000 !important;
+                        background-color: transparent !important;
+                        background: transparent !important;
+                      }
+                      .email-display-safe p { margin: 0.5em 0; }
+                      .email-display-safe a { color: #2563eb !important; text-decoration: underline; }
+                      .email-display-safe strong { font-weight: 600; }
+                      .email-display-safe table { border-collapse: collapse; width: 100%; }
+                      .email-display-safe td, .email-display-safe th {
+                        border: 1px solid #e5e7eb;
+                        padding: 8px;
+                        text-align: left;
+                      }
+                    `
+                  }} />
+                  <div
+                    className="email-display-safe prose prose-sm max-w-none"
+                    dangerouslySetInnerHTML={{
+                      __html: stripAllInlineStyles(selectedMessage.body_html)
+                    }}
+                  />
+                </>
               ) : (
                 <pre className="whitespace-pre-wrap font-sans text-gray-900 bg-white p-4 rounded-lg border border-gray-200">
                   {cleanEmailPreview(selectedMessage.body_text || '')}
