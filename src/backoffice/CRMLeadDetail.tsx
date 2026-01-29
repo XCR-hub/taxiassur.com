@@ -112,6 +112,7 @@ const CRMLeadDetail: React.FC = () => {
 
   const [documentsComplete, setDocumentsComplete] = useState(false);
   const [documentsMissing, setDocumentsMissing] = useState(0);
+  const [missingDocumentsList, setMissingDocumentsList] = useState<string[]>([]);
   const [quotesCount, setQuotesCount] = useState(0);
   const [hasContract, setHasContract] = useState(false);
   const [pendingAISuggestions, setPendingAISuggestions] = useState(0);
@@ -179,8 +180,9 @@ const CRMLeadDetail: React.FC = () => {
 
   const loadStats = async (id: string) => {
     try {
-      const [docsResult, quotesResult, contractResult, suggestionsResult, followUpsResult, contractDetailsResult] = await Promise.all([
-        supabase.from('crm_lead_documents').select('status').eq('lead_id', id),
+      const [docsResult, prospectDocsResult, quotesResult, contractResult, suggestionsResult, followUpsResult, contractDetailsResult] = await Promise.all([
+        supabase.from('crm_lead_documents').select('document_type, status').eq('lead_id', id),
+        supabase.from('prospect_documents').select('document_type, validated').eq('lead_id', id),
         supabase.from('crm_lead_quotes').select('id').eq('lead_id', id),
         supabase.from('crm_contracts').select('id').eq('lead_id', id).eq('status', 'signed'),
         supabase.from('crm_ai_suggestions').select('id').eq('lead_id', id).eq('status', 'pending'),
@@ -189,8 +191,44 @@ const CRMLeadDetail: React.FC = () => {
       ]);
 
       const docs = docsResult.data || [];
-      const validatedDocs = docs.filter(d => d.status === 'validated').length;
+      const prospectDocs = prospectDocsResult.data || [];
 
+      // Fusionner les deux sources de documents
+      const allValidatedTypes = new Set<string>();
+
+      // Documents depuis crm_lead_documents
+      docs.forEach(d => {
+        if (d.status === 'validated' && d.document_type) {
+          allValidatedTypes.add(d.document_type);
+        }
+      });
+
+      // Documents depuis prospect_documents
+      prospectDocs.forEach(d => {
+        if (d.validated && d.document_type) {
+          allValidatedTypes.add(d.document_type);
+        }
+      });
+
+      const validatedDocs = allValidatedTypes.size;
+
+      // Liste des documents requis avec leurs labels
+      const requiredDocuments = [
+        { type: 'licence_professionnelle', label: 'Licence de taxi' },
+        { type: 'permis_conduire', label: 'Permis de conduire' },
+        { type: 'piece_identite', label: 'Pièce d\'identité' },
+        { type: 'carte_grise', label: 'Carte grise' },
+        { type: 'releve_information', label: 'Relevé d\'information' },
+        { type: 'autorisation_stationnement', label: 'Autorisation de stationnement' },
+        { type: 'rib', label: 'RIB' }
+      ];
+
+      // Calculer les documents manquants
+      const missing = requiredDocuments
+        .filter(doc => !allValidatedTypes.has(doc.type))
+        .map(doc => doc.label);
+
+      setMissingDocumentsList(missing);
       setDocumentsComplete(validatedDocs >= 5);
       setDocumentsMissing(Math.max(0, 5 - validatedDocs));
       setQuotesCount(quotesResult.data?.length || 0);
@@ -858,22 +896,14 @@ const CRMLeadDetail: React.FC = () => {
                 )}
 
                 {/* Relance documents pour COLLECTE_DOCUMENTS */}
-                {(lead.status === 'COLLECTE_DOCUMENTS' || lead.status === 'DOCUMENTS_REQUIRED') && (
+                {(lead.status === 'COLLECTE_DOCUMENTS' || lead.status === 'DOCUMENTS_REQUIRED') && missingDocumentsList.length > 0 && (
                   <div className="mb-6">
                     <DocumentReminderPanel
                       leadId={lead.id}
                       leadName={`${lead.first_name} ${lead.last_name}`}
                       leadEmail={lead.email}
                       leadPhone={lead.phone}
-                      missingDocuments={[
-                        'Licence de taxi',
-                        'Permis de conduire',
-                        'Pièce d\'identité',
-                        'Carte grise',
-                        'Relevé d\'information',
-                        'Autorisation de stationnement',
-                        'RIB'
-                      ]}
+                      missingDocuments={missingDocumentsList}
                       lastReminderDate={(lead as any).last_contact_at}
                       onDocumentsComplete={() => loadLeadData(lead.id)}
                     />
