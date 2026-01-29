@@ -209,11 +209,11 @@ const CRMInboxMulticanal: React.FC = () => {
   const [selectedMessage, setSelectedMessage] = useState<EmailMessage | null>(null);
   const [foundLeadId, setFoundLeadId] = useState<string | null>(null);
   const [extractedInfo, setExtractedInfo] = useState<ExtractedLeadInfo | null>(null);
-  const [filter, setFilter] = useState<'all' | 'unread' | 'starred' | 'leads'>('all');
+  const [filter, setFilter] = useState<'all' | 'unread' | 'starred' | 'leads' | 'archived'>('all');
   const [directionFilter, setDirectionFilter] = useState<'all' | 'inbound' | 'outbound'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'date' | 'priority'>('date');
-  const [stats, setStats] = useState({ total: 0, unread: 0, leads: 0, starred: 0 });
+  const [stats, setStats] = useState({ total: 0, unread: 0, leads: 0, starred: 0, archived: 0 });
   const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'success' | 'error'>('idle');
   const [syncMessage, setSyncMessage] = useState('');
   const [autoSyncActive, setAutoSyncActive] = useState(false);
@@ -225,6 +225,11 @@ const CRMInboxMulticanal: React.FC = () => {
   const [searchResults, setSearchResults] = useState<LeadSearchResult[]>([]);
   const [leadSearchQuery, setLeadSearchQuery] = useState('');
   const [searchingLeads, setSearchingLeads] = useState(false);
+
+  // États pour la réponse
+  const [showReplyModal, setShowReplyModal] = useState(false);
+  const [replyContent, setReplyContent] = useState('');
+  const [replySending, setReplySending] = useState(false);
 
   useEffect(() => {
     loadMessages();
@@ -309,28 +314,38 @@ const CRMInboxMulticanal: React.FC = () => {
     try {
       const { count: total } = await supabase
         .from('email_messages')
-        .select('*', { count: 'exact', head: true });
+        .select('*', { count: 'exact', head: true })
+        .or('email_status.is.null,email_status.eq.active');
 
       const { count: unread } = await supabase
         .from('email_messages')
         .select('*', { count: 'exact', head: true })
-        .eq('is_read', false);
+        .eq('is_read', false)
+        .or('email_status.is.null,email_status.eq.active');
 
       const { count: leads } = await supabase
         .from('email_messages')
         .select('*', { count: 'exact', head: true })
-        .not('lead_id', 'is', null);
+        .not('lead_id', 'is', null)
+        .or('email_status.is.null,email_status.eq.active');
 
       const { count: starred } = await supabase
         .from('email_messages')
         .select('*', { count: 'exact', head: true })
-        .eq('is_starred', true);
+        .eq('is_starred', true)
+        .or('email_status.is.null,email_status.eq.active');
+
+      const { count: archived } = await supabase
+        .from('email_messages')
+        .select('*', { count: 'exact', head: true })
+        .eq('email_status', 'archived');
 
       setStats({
         total: total || 0,
         unread: unread || 0,
         leads: leads || 0,
         starred: starred || 0,
+        archived: archived || 0,
       });
     } catch (error) {
       console.error('Error loading stats:', error);
@@ -365,12 +380,20 @@ const CRMInboxMulticanal: React.FC = () => {
         .order('received_at', { ascending: false })
         .limit(500);
 
-      if (filter === 'unread') {
-        query = query.eq('is_read', false);
-      } else if (filter === 'starred') {
-        query = query.eq('is_starred', true);
-      } else if (filter === 'leads') {
-        query = query.not('lead_id', 'is', null);
+      if (filter === 'archived') {
+        // Afficher uniquement les emails archivés
+        query = query.eq('email_status', 'archived');
+      } else {
+        // Exclure les emails archivés et supprimés des autres vues
+        query = query.or('email_status.is.null,email_status.eq.active');
+
+        if (filter === 'unread') {
+          query = query.eq('is_read', false);
+        } else if (filter === 'starred') {
+          query = query.eq('is_starred', true);
+        } else if (filter === 'leads') {
+          query = query.not('lead_id', 'is', null);
+        }
       }
 
       if (directionFilter !== 'all') {
@@ -796,10 +819,50 @@ const CRMInboxMulticanal: React.FC = () => {
     }
   };
 
+  // Envoyer une réponse
+  const sendReply = async () => {
+    if (!selectedMessage || !replyContent.trim()) {
+      alert('Veuillez saisir un message');
+      return;
+    }
+
+    setReplySending(true);
+    try {
+      const { error } = await supabase.functions.invoke('send-crm-email', {
+        body: {
+          to: selectedMessage.from_email,
+          subject: `Re: ${selectedMessage.subject}`,
+          html: `<p>${replyContent.replace(/\n/g, '<br>')}</p>
+                 <hr>
+                 <p><em>Message original :</em></p>
+                 <blockquote>${selectedMessage.body_html || selectedMessage.body_text}</blockquote>`,
+        },
+      });
+
+      if (error) throw error;
+
+      await loadMessages();
+      setShowReplyModal(false);
+      setReplyContent('');
+
+      setSyncMessage('✅ Réponse envoyée avec succès !');
+      setSyncStatus('success');
+      setTimeout(() => {
+        setSyncStatus('idle');
+        setSyncMessage('');
+      }, 3000);
+    } catch (error) {
+      console.error('Error sending reply:', error);
+      alert('❌ Erreur lors de l\'envoi de la réponse');
+    } finally {
+      setReplySending(false);
+    }
+  };
+
   // Restaurer un email
   const restoreEmail = async (emailId: string) => {
     try {
-      const { data, error } = await supabase.rpc('restore_email', {
+      const { data, error} = await supabase.rpc('restore_email', {
         p_email_id: emailId
       });
 
@@ -1013,6 +1076,17 @@ const CRMInboxMulticanal: React.FC = () => {
               }`}
             >
               Leads ({stats.leads})
+            </button>
+            <button
+              onClick={() => setFilter('archived')}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 ${
+                filter === 'archived'
+                  ? 'bg-gray-700 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              <Archive size={16} />
+              Archives ({stats.archived})
             </button>
 
             <div className="ml-4 flex gap-2">
@@ -1356,6 +1430,19 @@ const CRMInboxMulticanal: React.FC = () => {
 
                   {/* Actions email type Outlook */}
                   <div className="flex items-center gap-1 border-l pl-2 ml-2">
+                    {selectedMessage.direction === 'inbound' && selectedMessage.email_status !== 'deleted' && (
+                      <button
+                        onClick={() => {
+                          setReplyContent('');
+                          setShowReplyModal(true);
+                        }}
+                        className="p-2 hover:bg-blue-50 rounded-lg transition-colors text-blue-600 font-medium"
+                        title="Répondre"
+                      >
+                        <Send size={20} />
+                      </button>
+                    )}
+
                     {selectedMessage.email_status === 'deleted' ? (
                       <button
                         onClick={() => restoreEmail(selectedMessage.id)}
@@ -1450,12 +1537,17 @@ const CRMInboxMulticanal: React.FC = () => {
             <div className="p-6 bg-white">
               {selectedMessage.body_html ? (
                 <div
-                  className="prose max-w-none bg-white text-gray-900 [&_*]:text-gray-900 [&_*]:bg-transparent"
+                  className="prose max-w-none bg-white [&_*]:!text-gray-900 [&_*]:!bg-transparent [&_p]:!text-gray-900 [&_div]:!text-gray-900 [&_span]:!text-gray-900 [&_td]:!text-gray-900 [&_th]:!text-gray-900"
                   style={{
-                    color: '#111827',
-                    backgroundColor: '#ffffff'
+                    color: '#111827 !important',
+                    backgroundColor: '#ffffff !important'
                   }}
-                  dangerouslySetInnerHTML={{ __html: cleanEmailPreview(selectedMessage.body_html) }}
+                  dangerouslySetInnerHTML={{
+                    __html: cleanEmailPreview(selectedMessage.body_html)
+                      .replace(/color:\s*#ffffff/gi, 'color: #111827')
+                      .replace(/color:\s*white/gi, 'color: #111827')
+                      .replace(/color:\s*rgb\(255,\s*255,\s*255\)/gi, 'color: #111827')
+                  }}
                 />
               ) : (
                 <pre className="whitespace-pre-wrap font-sans text-gray-900 bg-white p-4 rounded-lg border border-gray-200">
@@ -1634,6 +1726,91 @@ const CRMInboxMulticanal: React.FC = () => {
                   </div>
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de réponse */}
+      {showReplyModal && selectedMessage && (
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-6"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowReplyModal(false);
+          }}
+        >
+          <div
+            className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                  <Send className="w-5 h-5 text-blue-600" />
+                  Répondre à : {selectedMessage.from_email}
+                </h2>
+                <button
+                  onClick={() => setShowReplyModal(false)}
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  <X size={24} className="text-gray-400" />
+                </button>
+              </div>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Objet : Re: {selectedMessage.subject}
+                </label>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Votre message
+                </label>
+                <textarea
+                  value={replyContent}
+                  onChange={(e) => setReplyContent(e.target.value)}
+                  placeholder="Tapez votre réponse..."
+                  rows={10}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                />
+              </div>
+
+              <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                <h4 className="text-sm font-semibold text-gray-700 mb-2">Message original :</h4>
+                <div className="text-sm text-gray-600 max-h-40 overflow-y-auto">
+                  {cleanEmailPreview(selectedMessage.body_text || selectedMessage.body_html).substring(0, 500)}...
+                </div>
+              </div>
+            </div>
+
+            <div className="p-6 border-t border-gray-200 flex items-center justify-end gap-3">
+              <button
+                onClick={() => setShowReplyModal(false)}
+                className="px-6 py-2.5 border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                disabled={replySending}
+              >
+                Annuler
+              </button>
+              <button
+                onClick={sendReply}
+                disabled={replySending || !replyContent.trim()}
+                className="px-6 py-2.5 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                {replySending ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    Envoi...
+                  </>
+                ) : (
+                  <>
+                    <Send size={16} />
+                    Envoyer la réponse
+                  </>
+                )}
+              </button>
             </div>
           </div>
         </div>
