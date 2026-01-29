@@ -149,32 +149,67 @@ const cleanEmailPreview = (text: string): string => {
   return cleaned;
 };
 
-// Fonction ultra-agressive pour supprimer TOUS les styles inline
+// Fonction ULTRA-RADICALE : Convertir HTML en texte brut lisible
+const htmlToReadableText = (html: string): string => {
+  if (!html) return '';
+
+  try {
+    // Parser le HTML
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+
+    // Supprimer les scripts et styles
+    doc.querySelectorAll('script, style, head').forEach(el => el.remove());
+
+    // Remplacer les éléments de bloc par des sauts de ligne
+    doc.querySelectorAll('p, div, br, hr, h1, h2, h3, h4, h5, h6, li, tr').forEach(el => {
+      const textNode = document.createTextNode('\n');
+      el.after(textNode);
+    });
+
+    // Extraire uniquement le texte
+    let text = doc.body.textContent || '';
+
+    // Nettoyer le texte
+    text = text
+      .replace(/\n{3,}/g, '\n\n')  // Max 2 sauts de ligne consécutifs
+      .replace(/[ \t]{2,}/g, ' ')   // Max 1 espace consécutif
+      .replace(/^\s+|\s+$/gm, '')   // Trim chaque ligne
+      .trim();
+
+    return text;
+  } catch (error) {
+    console.error('Erreur lors de la conversion HTML vers texte:', error);
+    // Fallback: suppression brutale des balises HTML
+    return html
+      .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+      .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/\s{2,}/g, ' ')
+      .trim();
+  }
+};
+
+// Fonction ultra-agressive pour supprimer TOUS les styles inline (backup)
 const stripAllInlineStyles = (html: string): string => {
   if (!html) return '';
 
   try {
-    // Créer un document temporaire pour parser le HTML
     const parser = new DOMParser();
     const doc = parser.parseFromString(html, 'text/html');
-
-    // Récupérer TOUS les éléments
     const allElements = doc.querySelectorAll('*');
 
-    // Supprimer tous les attributs de style et de couleur
     allElements.forEach(element => {
       element.removeAttribute('style');
       element.removeAttribute('bgcolor');
       element.removeAttribute('background');
       element.removeAttribute('color');
-      element.removeAttribute('class'); // Supprimer aussi les classes qui pourraient contenir des styles
+      element.removeAttribute('class');
     });
 
-    // Retourner le HTML nettoyé
     return doc.body.innerHTML;
   } catch (error) {
     console.error('Erreur lors du nettoyage du HTML:', error);
-    // Fallback: regex aggressive
     return html
       .replace(/style\s*=\s*["'][^"']*["']/gi, '')
       .replace(/bgcolor\s*=\s*["']?[^"'\s>]*["']?/gi, '')
@@ -1570,42 +1605,38 @@ const CRMInboxMulticanal: React.FC = () => {
             </div>
 
             <div className="p-6 bg-white">
-              {selectedMessage.body_html ? (
-                <>
-                  <style dangerouslySetInnerHTML={{
-                    __html: `
-                      .email-display-safe {
-                        color: #000000 !important;
-                        background-color: #ffffff !important;
-                        line-height: 1.6;
-                      }
-                      .email-display-safe * {
-                        color: #000000 !important;
-                        background-color: transparent !important;
-                        background: transparent !important;
-                      }
-                      .email-display-safe p { margin: 0.5em 0; }
-                      .email-display-safe a { color: #2563eb !important; text-decoration: underline; }
-                      .email-display-safe strong { font-weight: 600; }
-                      .email-display-safe table { border-collapse: collapse; width: 100%; }
-                      .email-display-safe td, .email-display-safe th {
-                        border: 1px solid #e5e7eb;
-                        padding: 8px;
-                        text-align: left;
-                      }
-                    `
-                  }} />
-                  <div
-                    className="email-display-safe prose prose-sm max-w-none"
-                    dangerouslySetInnerHTML={{
-                      __html: stripAllInlineStyles(selectedMessage.body_html)
-                    }}
-                  />
-                </>
-              ) : (
-                <pre className="whitespace-pre-wrap font-sans text-gray-900 bg-white p-4 rounded-lg border border-gray-200">
-                  {cleanEmailPreview(selectedMessage.body_text || '')}
+              <div className="bg-gray-50 rounded-lg p-6 border border-gray-200">
+                {/* Affichage en TEXTE BRUT UNIQUEMENT - Garantit la lisibilité */}
+                <pre className="whitespace-pre-wrap font-sans text-gray-900 leading-relaxed">
+                  {selectedMessage.body_html
+                    ? htmlToReadableText(selectedMessage.body_html)
+                    : cleanEmailPreview(selectedMessage.body_text || '')
+                  }
                 </pre>
+              </div>
+
+              {/* Bouton pour afficher le HTML original (mode debug) */}
+              {selectedMessage.body_html && (
+                <details className="mt-4">
+                  <summary className="cursor-pointer text-sm text-blue-600 hover:text-blue-800 font-medium">
+                    🔍 Afficher le HTML original (mode avancé)
+                  </summary>
+                  <div className="mt-2 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <p className="text-xs text-yellow-800 mb-2">
+                      ⚠️ Le HTML ci-dessous peut contenir des styles qui rendent le texte invisible.
+                    </p>
+                    <div
+                      className="prose prose-sm max-w-none"
+                      dangerouslySetInnerHTML={{
+                        __html: stripAllInlineStyles(selectedMessage.body_html)
+                      }}
+                      style={{
+                        color: '#000 !important',
+                        backgroundColor: '#fff !important'
+                      }}
+                    />
+                  </div>
+                </details>
               )}
 
               {selectedMessage.attachments?.length > 0 && (
