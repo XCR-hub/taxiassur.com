@@ -9,9 +9,19 @@ import {
   CheckCircle,
   AlertTriangle,
   Link as LinkIcon,
-  ArrowRight
+  ArrowRight,
+  Check,
+  X,
+  FileCheck,
+  Clock3
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+
+export interface DocumentStatus {
+  label: string;
+  type: string;
+  status: 'validated' | 'received' | 'missing';
+}
 
 interface DocumentReminderPanelProps {
   leadId: string;
@@ -19,6 +29,7 @@ interface DocumentReminderPanelProps {
   leadEmail?: string;
   leadPhone?: string;
   missingDocuments: string[];
+  documentStatuses?: DocumentStatus[];
   lastReminderDate?: string;
   onDocumentsComplete?: () => void;
 }
@@ -29,12 +40,46 @@ export const DocumentReminderPanel: React.FC<DocumentReminderPanelProps> = ({
   leadEmail,
   leadPhone,
   missingDocuments,
+  documentStatuses = [],
   lastReminderDate,
   onDocumentsComplete
 }) => {
   const [selectedChannel, setSelectedChannel] = useState<'email' | 'sms' | 'whatsapp' | null>(null);
   const [customMessage, setCustomMessage] = useState('');
   const [loading, setLoading] = useState(false);
+
+  const getStatusIcon = (status: 'validated' | 'received' | 'missing') => {
+    switch (status) {
+      case 'validated':
+        return <CheckCircle className="w-4 h-4 text-green-600" />;
+      case 'received':
+        return <Clock3 className="w-4 h-4 text-orange-500" />;
+      case 'missing':
+        return <X className="w-4 h-4 text-red-500" />;
+    }
+  };
+
+  const getStatusColor = (status: 'validated' | 'received' | 'missing') => {
+    switch (status) {
+      case 'validated':
+        return 'bg-green-50 border-green-200 text-green-900';
+      case 'received':
+        return 'bg-orange-50 border-orange-200 text-orange-900';
+      case 'missing':
+        return 'bg-red-50 border-red-200 text-red-900';
+    }
+  };
+
+  const getStatusText = (status: 'validated' | 'received' | 'missing') => {
+    switch (status) {
+      case 'validated':
+        return 'Validé';
+      case 'received':
+        return 'Reçu';
+      case 'missing':
+        return 'Manquant';
+    }
+  };
 
   const daysSinceLastReminder = lastReminderDate
     ? Math.floor((Date.now() - new Date(lastReminderDate).getTime()) / (1000 * 60 * 60 * 24))
@@ -188,20 +233,48 @@ export const DocumentReminderPanel: React.FC<DocumentReminderPanelProps> = ({
         )}
       </div>
 
-      {/* Documents manquants */}
-      <div className="p-4 bg-orange-50 border-b border-orange-200">
-        <h4 className="text-sm font-semibold text-orange-900 mb-2 flex items-center gap-2">
-          <AlertTriangle className="w-4 h-4" />
-          Documents manquants ({missingDocuments.length})
+      {/* Checklist des documents */}
+      <div className="p-4 border-b border-gray-200">
+        <h4 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
+          <FileCheck className="w-4 h-4 text-gray-600" />
+          État des documents ({documentStatuses.length})
         </h4>
-        <ul className="space-y-1">
-          {missingDocuments.map((doc, idx) => (
-            <li key={idx} className="text-sm text-orange-800 flex items-center gap-2">
-              <span className="w-1.5 h-1.5 bg-orange-600 rounded-full"></span>
-              {doc}
-            </li>
+        <div className="space-y-2">
+          {documentStatuses.map((doc, idx) => (
+            <div
+              key={idx}
+              className={`flex items-center justify-between p-2.5 border rounded-lg transition-all ${getStatusColor(doc.status)}`}
+            >
+              <div className="flex items-center gap-2 flex-1">
+                {getStatusIcon(doc.status)}
+                <span className="text-sm font-medium">{doc.label}</span>
+              </div>
+              <span className={`text-xs font-semibold px-2 py-1 rounded ${
+                doc.status === 'validated' ? 'bg-green-100 text-green-700' :
+                doc.status === 'received' ? 'bg-orange-100 text-orange-700' :
+                'bg-red-100 text-red-700'
+              }`}>
+                {getStatusText(doc.status)}
+              </span>
+            </div>
           ))}
-        </ul>
+        </div>
+
+        {/* Résumé rapide */}
+        <div className="mt-3 pt-3 border-t border-gray-200 flex items-center justify-between text-xs">
+          <div className="flex items-center gap-1 text-green-700">
+            <Check className="w-3 h-3" />
+            <span>{documentStatuses.filter(d => d.status === 'validated').length} validés</span>
+          </div>
+          <div className="flex items-center gap-1 text-orange-600">
+            <Clock3 className="w-3 h-3" />
+            <span>{documentStatuses.filter(d => d.status === 'received').length} reçus</span>
+          </div>
+          <div className="flex items-center gap-1 text-red-600">
+            <X className="w-3 h-3" />
+            <span>{missingDocuments.length} manquants</span>
+          </div>
+        </div>
       </div>
 
       {/* Actions rapides */}

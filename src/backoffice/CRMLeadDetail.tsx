@@ -113,6 +113,7 @@ const CRMLeadDetail: React.FC = () => {
   const [documentsComplete, setDocumentsComplete] = useState(false);
   const [documentsMissing, setDocumentsMissing] = useState(0);
   const [missingDocumentsList, setMissingDocumentsList] = useState<string[]>([]);
+  const [documentStatuses, setDocumentStatuses] = useState<Array<{label: string; type: string; status: 'validated' | 'received' | 'missing'}>>([]);
   const [quotesCount, setQuotesCount] = useState(0);
   const [hasContract, setHasContract] = useState(false);
   const [pendingAISuggestions, setPendingAISuggestions] = useState(0);
@@ -228,6 +229,43 @@ const CRMLeadDetail: React.FC = () => {
         .filter(doc => !allValidatedTypes.has(doc.type))
         .map(doc => doc.label);
 
+      // Créer un Set pour les documents reçus mais pas validés
+      const receivedButNotValidated = new Set<string>();
+
+      // Documents reçus dans prospect_documents mais pas validés
+      prospectDocs.forEach(d => {
+        if (!d.validated && d.document_type) {
+          receivedButNotValidated.add(d.document_type);
+        }
+      });
+
+      // Documents reçus dans crm_lead_documents mais pas validés
+      docs.forEach(d => {
+        if (d.status !== 'validated' && d.document_type) {
+          receivedButNotValidated.add(d.document_type);
+        }
+      });
+
+      // Calculer les statuts de tous les documents
+      const statuses = requiredDocuments.map(doc => {
+        let status: 'validated' | 'received' | 'missing';
+
+        if (allValidatedTypes.has(doc.type)) {
+          status = 'validated';
+        } else if (receivedButNotValidated.has(doc.type)) {
+          status = 'received';
+        } else {
+          status = 'missing';
+        }
+
+        return {
+          label: doc.label,
+          type: doc.type,
+          status
+        };
+      });
+
+      setDocumentStatuses(statuses);
       setMissingDocumentsList(missing);
       setDocumentsComplete(validatedDocs >= 5);
       setDocumentsMissing(Math.max(0, 5 - validatedDocs));
@@ -896,7 +934,7 @@ const CRMLeadDetail: React.FC = () => {
                 )}
 
                 {/* Relance documents pour COLLECTE_DOCUMENTS */}
-                {(lead.status === 'COLLECTE_DOCUMENTS' || lead.status === 'DOCUMENTS_REQUIRED') && missingDocumentsList.length > 0 && (
+                {(lead.status === 'COLLECTE_DOCUMENTS' || lead.status === 'DOCUMENTS_REQUIRED') && (
                   <div className="mb-6">
                     <DocumentReminderPanel
                       leadId={lead.id}
@@ -904,6 +942,7 @@ const CRMLeadDetail: React.FC = () => {
                       leadEmail={lead.email}
                       leadPhone={lead.phone}
                       missingDocuments={missingDocumentsList}
+                      documentStatuses={documentStatuses}
                       lastReminderDate={(lead as any).last_contact_at}
                       onDocumentsComplete={() => loadLeadData(lead.id)}
                     />
