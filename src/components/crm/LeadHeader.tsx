@@ -280,10 +280,27 @@ export const LeadHeader: React.FC<LeadHeaderProps> = ({
               // Si disponible, prendre la première transition correspondante
               const targetStatus = matchingTransitions[0]?.to;
 
+              // 🔴 DEBUG: Log pour voir si targetStatus est undefined
+              if (isAvailable && !targetStatus) {
+                console.error('⚠️ BUG DÉTECTÉ: targetStatus est undefined pour l\'étape', step.key, {
+                  availableTransitions,
+                  matchingTransitions,
+                  currentStatus: lead.status
+                });
+              }
+
               return (
                 <React.Fragment key={step.key}>
                   <button
-                    onClick={() => isAvailable && targetStatus && onStatusChange(targetStatus)}
+                    onClick={() => {
+                      if (isAvailable && targetStatus) {
+                        console.log('✅ Changement de statut:', lead.status, '→', targetStatus);
+                        onStatusChange(targetStatus);
+                      } else if (isAvailable && !targetStatus) {
+                        console.error('❌ ERREUR: Tentative de changement sans targetStatus défini');
+                        alert('Erreur: Impossible de déterminer le statut cible. Vérifiez la configuration du pipeline.');
+                      }
+                    }}
                     disabled={!isAvailable && !isCurrent}
                     title={
                       isCurrent
