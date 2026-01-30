@@ -1637,28 +1637,47 @@ const CRMInboxMulticanal: React.FC = () => {
               )}
             </div>
 
-            <div className="p-6 bg-white">
+            <div style={{ padding: '24px', backgroundColor: '#ffffff' }}>
+              {/* BANNIÈRE DE VERSION - Pour confirmer que c'est la bonne version */}
+              <div
+                style={{
+                  backgroundColor: '#10b981',
+                  color: '#ffffff',
+                  padding: '12px 16px',
+                  borderRadius: '8px',
+                  marginBottom: '16px',
+                  fontWeight: 'bold',
+                  fontSize: '14px',
+                  textAlign: 'center',
+                  border: '3px solid #059669'
+                }}
+              >
+                ✅ VERSION CORRIGÉE DU 30 JANVIER 2026 - 16h23
+              </div>
+
               {/* AFFICHAGE ULTRA-SIMPLE AVEC STYLES INLINE FORCÉS */}
               <div
                 style={{
                   backgroundColor: '#f9fafb',
                   padding: '24px',
                   borderRadius: '8px',
-                  border: '1px solid #e5e7eb',
+                  border: '3px solid #3b82f6',
                   minHeight: '200px'
                 }}
               >
                 <pre
                   style={{
-                    color: '#111827',
-                    backgroundColor: 'transparent',
+                    color: '#000000',
+                    backgroundColor: '#ffffff',
                     fontFamily: 'system-ui, -apple-system, sans-serif',
                     fontSize: '14px',
                     lineHeight: '1.6',
                     whiteSpace: 'pre-wrap',
                     wordWrap: 'break-word',
                     margin: '0',
-                    padding: '0'
+                    padding: '16px',
+                    border: '2px solid #ef4444',
+                    borderRadius: '4px'
                   }}
                 >
                   {(() => {
