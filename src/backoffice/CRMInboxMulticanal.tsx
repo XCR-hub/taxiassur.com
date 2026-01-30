@@ -1655,29 +1655,45 @@ const CRMInboxMulticanal: React.FC = () => {
                 ✅ VERSION CORRIGÉE DU 30 JANVIER 2026 - 16h23
               </div>
 
-              {/* AFFICHAGE ULTRA-SIMPLE AVEC STYLES INLINE FORCÉS */}
+              {/* AFFICHAGE ULTRA-SIMPLE AVEC STYLES INLINE FORCÉS - DIVS AU LIEU DE PRE */}
               <div
                 style={{
-                  backgroundColor: '#f9fafb',
-                  padding: '24px',
-                  borderRadius: '8px',
+                  backgroundColor: '#f3f4f6',
+                  padding: '32px',
+                  borderRadius: '12px',
                   border: '3px solid #3b82f6',
                   minHeight: '200px'
                 }}
               >
-                <pre
+                <style>
+                  {`
+                    .email-content-safe ::selection {
+                      background-color: #bfdbfe !important;
+                      color: #000000 !important;
+                    }
+                    .email-content-safe ::-moz-selection {
+                      background-color: #bfdbfe !important;
+                      color: #000000 !important;
+                    }
+                  `}
+                </style>
+                <div
+                  className="email-content-safe"
                   style={{
                     color: '#000000',
                     backgroundColor: '#ffffff',
-                    fontFamily: 'system-ui, -apple-system, sans-serif',
-                    fontSize: '14px',
-                    lineHeight: '1.6',
-                    whiteSpace: 'pre-wrap',
-                    wordWrap: 'break-word',
-                    margin: '0',
-                    padding: '16px',
-                    border: '2px solid #ef4444',
-                    borderRadius: '4px'
+                    fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+                    fontSize: '15px',
+                    lineHeight: '1.7',
+                    padding: '24px',
+                    border: '3px solid #ef4444',
+                    borderRadius: '8px',
+                    userSelect: 'text',
+                    WebkitUserSelect: 'text',
+                    MozUserSelect: 'text',
+                    msUserSelect: 'text',
+                    WebkitTextFillColor: '#000000',
+                    textFillColor: '#000000'
                   }}
                 >
                   {(() => {
@@ -1701,13 +1717,33 @@ const CRMInboxMulticanal: React.FC = () => {
 
                     // Debug: afficher si le texte est vide
                     if (!text || text.trim() === '') {
-                      return '⚠️ Contenu vide ou illisible. HTML brut:\n\n' +
-                        (selectedMessage.body_html || selectedMessage.body_text || 'Aucun contenu');
+                      return (
+                        <div style={{ color: '#dc2626', fontWeight: 'bold' }}>
+                          ⚠️ Contenu vide ou illisible. HTML brut:
+                          <br /><br />
+                          {selectedMessage.body_html || selectedMessage.body_text || 'Aucun contenu'}
+                        </div>
+                      );
                     }
 
-                    return text;
+                    // Afficher le texte ligne par ligne pour garantir la visibilité
+                    return text.split('\n').map((line, idx) => (
+                      <div
+                        key={idx}
+                        style={{
+                          color: '#111827',
+                          marginBottom: line.trim() === '' ? '12px' : '0',
+                          wordBreak: 'break-word',
+                          whiteSpace: 'pre-wrap',
+                          WebkitTextFillColor: '#111827',
+                          textFillColor: '#111827'
+                        }}
+                      >
+                        {line || '\u00A0'}
+                      </div>
+                    ));
                   })()}
-                </pre>
+                </div>
               </div>
 
               {/* Bouton pour afficher le HTML original (mode debug) */}
