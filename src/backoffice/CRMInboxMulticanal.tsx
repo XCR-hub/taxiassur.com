@@ -151,10 +151,10 @@ const cleanEmailPreview = (text: string): string => {
 
 // Fonction ULTRA-RADICALE : Convertir HTML en texte brut lisible
 const htmlToReadableText = (html: string): string => {
-  if (!html) return '';
+  if (!html) return '[Contenu vide]';
 
   try {
-    // Parser le HTML
+    // Méthode 1: Parser le HTML
     const parser = new DOMParser();
     const doc = parser.parseFromString(html, 'text/html');
 
@@ -163,12 +163,34 @@ const htmlToReadableText = (html: string): string => {
 
     // Remplacer les éléments de bloc par des sauts de ligne
     doc.querySelectorAll('p, div, br, hr, h1, h2, h3, h4, h5, h6, li, tr').forEach(el => {
-      const textNode = document.createTextNode('\n');
-      el.after(textNode);
+      try {
+        const textNode = document.createTextNode('\n');
+        el.after(textNode);
+      } catch (e) {
+        // Ignorer les erreurs
+      }
     });
 
     // Extraire uniquement le texte
-    let text = doc.body.textContent || '';
+    let text = doc.body.textContent || doc.body.innerText || '';
+
+    // Si le texte est vide, essayer une méthode alternative
+    if (!text || text.trim() === '') {
+      console.warn('Texte extrait vide, utilisation du fallback');
+      text = html
+        .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+        .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+        .replace(/<br\s*\/?>/gi, '\n')
+        .replace(/<\/p>/gi, '\n\n')
+        .replace(/<\/div>/gi, '\n')
+        .replace(/<[^>]+>/g, '')
+        .replace(/&nbsp;/gi, ' ')
+        .replace(/&amp;/gi, '&')
+        .replace(/&lt;/gi, '<')
+        .replace(/&gt;/gi, '>')
+        .replace(/&quot;/gi, '"')
+        .trim();
+    }
 
     // Nettoyer le texte
     text = text
@@ -177,16 +199,27 @@ const htmlToReadableText = (html: string): string => {
       .replace(/^\s+|\s+$/gm, '')   // Trim chaque ligne
       .trim();
 
-    return text;
+    return text || '[Impossible d\'extraire le texte]';
   } catch (error) {
     console.error('Erreur lors de la conversion HTML vers texte:', error);
-    // Fallback: suppression brutale des balises HTML
-    return html
-      .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
-      .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
-      .replace(/<[^>]+>/g, ' ')
-      .replace(/\s{2,}/g, ' ')
-      .trim();
+
+    // Fallback ultime: suppression brutale des balises HTML
+    try {
+      const fallbackText = html
+        .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+        .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+        .replace(/<br\s*\/?>/gi, '\n')
+        .replace(/<\/p>/gi, '\n\n')
+        .replace(/<[^>]+>/g, ' ')
+        .replace(/&nbsp;/gi, ' ')
+        .replace(/&amp;/gi, '&')
+        .replace(/\s{2,}/g, ' ')
+        .trim();
+
+      return fallbackText || '[Erreur de conversion]';
+    } catch (e) {
+      return html.substring(0, 1000) + '...';
+    }
   }
 };
 
@@ -1605,34 +1638,99 @@ const CRMInboxMulticanal: React.FC = () => {
             </div>
 
             <div className="p-6 bg-white">
-              <div className="bg-gray-50 rounded-lg p-6 border border-gray-200">
-                {/* Affichage en TEXTE BRUT UNIQUEMENT - Garantit la lisibilité */}
-                <pre className="whitespace-pre-wrap font-sans text-gray-900 leading-relaxed">
-                  {selectedMessage.body_html
-                    ? htmlToReadableText(selectedMessage.body_html)
-                    : cleanEmailPreview(selectedMessage.body_text || '')
-                  }
+              {/* AFFICHAGE ULTRA-SIMPLE AVEC STYLES INLINE FORCÉS */}
+              <div
+                style={{
+                  backgroundColor: '#f9fafb',
+                  padding: '24px',
+                  borderRadius: '8px',
+                  border: '1px solid #e5e7eb',
+                  minHeight: '200px'
+                }}
+              >
+                <pre
+                  style={{
+                    color: '#111827',
+                    backgroundColor: 'transparent',
+                    fontFamily: 'system-ui, -apple-system, sans-serif',
+                    fontSize: '14px',
+                    lineHeight: '1.6',
+                    whiteSpace: 'pre-wrap',
+                    wordWrap: 'break-word',
+                    margin: '0',
+                    padding: '0'
+                  }}
+                >
+                  {(() => {
+                    // Debug console
+                    console.log('📧 Email sélectionné:', {
+                      hasHtml: !!selectedMessage.body_html,
+                      hasText: !!selectedMessage.body_text,
+                      htmlLength: selectedMessage.body_html?.length || 0,
+                      textLength: selectedMessage.body_text?.length || 0,
+                      subject: selectedMessage.subject
+                    });
+
+                    const text = selectedMessage.body_html
+                      ? htmlToReadableText(selectedMessage.body_html)
+                      : cleanEmailPreview(selectedMessage.body_text || '');
+
+                    console.log('📝 Texte extrait:', {
+                      textLength: text.length,
+                      preview: text.substring(0, 100)
+                    });
+
+                    // Debug: afficher si le texte est vide
+                    if (!text || text.trim() === '') {
+                      return '⚠️ Contenu vide ou illisible. HTML brut:\n\n' +
+                        (selectedMessage.body_html || selectedMessage.body_text || 'Aucun contenu');
+                    }
+
+                    return text;
+                  })()}
                 </pre>
               </div>
 
               {/* Bouton pour afficher le HTML original (mode debug) */}
               {selectedMessage.body_html && (
                 <details className="mt-4">
-                  <summary className="cursor-pointer text-sm text-blue-600 hover:text-blue-800 font-medium">
+                  <summary
+                    style={{
+                      cursor: 'pointer',
+                      color: '#2563eb',
+                      fontSize: '14px',
+                      fontWeight: '500'
+                    }}
+                  >
                     🔍 Afficher le HTML original (mode avancé)
                   </summary>
-                  <div className="mt-2 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                    <p className="text-xs text-yellow-800 mb-2">
+                  <div
+                    style={{
+                      marginTop: '16px',
+                      padding: '16px',
+                      backgroundColor: '#fef3c7',
+                      border: '1px solid #fbbf24',
+                      borderRadius: '8px'
+                    }}
+                  >
+                    <p
+                      style={{
+                        fontSize: '12px',
+                        color: '#92400e',
+                        marginBottom: '8px'
+                      }}
+                    >
                       ⚠️ Le HTML ci-dessous peut contenir des styles qui rendent le texte invisible.
                     </p>
                     <div
-                      className="prose prose-sm max-w-none"
                       dangerouslySetInnerHTML={{
                         __html: stripAllInlineStyles(selectedMessage.body_html)
                       }}
                       style={{
-                        color: '#000 !important',
-                        backgroundColor: '#fff !important'
+                        color: '#000000',
+                        backgroundColor: '#ffffff',
+                        padding: '16px',
+                        borderRadius: '4px'
                       }}
                     />
                   </div>
