@@ -28,6 +28,7 @@ import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { NotificationCenter } from '@/components/NotificationCenter';
 import { CRMPushNotifications } from '@/components/CRMPushNotifications';
 import { notificationManager } from '@/lib/realtime-notifications';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 interface CRMStats {
   unread_messages: number;
@@ -281,6 +282,8 @@ const CRMLayout: React.FC = () => {
             >
               <RefreshCw size={20} className={`text-gray-600 ${refreshing ? 'animate-spin' : ''}`} />
             </button>
+
+            <ThemeToggle />
 
             <NotificationCenter />
           </div>

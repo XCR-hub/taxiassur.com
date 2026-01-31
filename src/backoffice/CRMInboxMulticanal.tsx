@@ -1655,10 +1655,10 @@ const CRMInboxMulticanal: React.FC = () => {
                 ✅ VERSION CORRIGÉE DU 30 JANVIER 2026 - 16h23
               </div>
 
-              {/* AFFICHAGE ULTRA-SIMPLE AVEC STYLES INLINE FORCÉS - DIVS AU LIEU DE PRE */}
+              {/* AFFICHAGE ULTRA-SIMPLE AVEC STYLES INLINE FORCÉS - FOND SOMBRE POUR FORCER LA VISIBILITÉ */}
               <div
                 style={{
-                  backgroundColor: '#f3f4f6',
+                  backgroundColor: '#1f2937',
                   padding: '32px',
                   borderRadius: '12px',
                   border: '3px solid #3b82f6',
@@ -1667,33 +1667,39 @@ const CRMInboxMulticanal: React.FC = () => {
               >
                 <style>
                   {`
+                    .email-content-safe * {
+                      color: #ffffff !important;
+                      background-color: transparent !important;
+                      -webkit-text-fill-color: #ffffff !important;
+                      text-fill-color: #ffffff !important;
+                    }
                     .email-content-safe ::selection {
-                      background-color: #bfdbfe !important;
-                      color: #000000 !important;
+                      background-color: #3b82f6 !important;
+                      color: #ffffff !important;
                     }
                     .email-content-safe ::-moz-selection {
-                      background-color: #bfdbfe !important;
-                      color: #000000 !important;
+                      background-color: #3b82f6 !important;
+                      color: #ffffff !important;
                     }
                   `}
                 </style>
                 <div
                   className="email-content-safe"
                   style={{
-                    color: '#000000',
-                    backgroundColor: '#ffffff',
+                    color: '#ffffff',
+                    backgroundColor: '#111827',
                     fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
                     fontSize: '15px',
                     lineHeight: '1.7',
                     padding: '24px',
-                    border: '3px solid #ef4444',
+                    border: '2px solid #374151',
                     borderRadius: '8px',
                     userSelect: 'text',
                     WebkitUserSelect: 'text',
                     MozUserSelect: 'text',
                     msUserSelect: 'text',
-                    WebkitTextFillColor: '#000000',
-                    textFillColor: '#000000'
+                    WebkitTextFillColor: '#ffffff',
+                    textFillColor: '#ffffff'
                   }}
                 >
                   {(() => {
@@ -1718,7 +1724,7 @@ const CRMInboxMulticanal: React.FC = () => {
                     // Debug: afficher si le texte est vide
                     if (!text || text.trim() === '') {
                       return (
-                        <div style={{ color: '#dc2626', fontWeight: 'bold' }}>
+                        <div style={{ color: '#fbbf24', fontWeight: 'bold' }}>
                           ⚠️ Contenu vide ou illisible. HTML brut:
                           <br /><br />
                           {selectedMessage.body_html || selectedMessage.body_text || 'Aucun contenu'}
@@ -1731,12 +1737,12 @@ const CRMInboxMulticanal: React.FC = () => {
                       <div
                         key={idx}
                         style={{
-                          color: '#111827',
+                          color: '#ffffff',
                           marginBottom: line.trim() === '' ? '12px' : '0',
                           wordBreak: 'break-word',
                           whiteSpace: 'pre-wrap',
-                          WebkitTextFillColor: '#111827',
-                          textFillColor: '#111827'
+                          WebkitTextFillColor: '#ffffff',
+                          textFillColor: '#ffffff'
                         }}
                       >
                         {line || '\u00A0'}
@@ -1763,15 +1769,15 @@ const CRMInboxMulticanal: React.FC = () => {
                     style={{
                       marginTop: '16px',
                       padding: '16px',
-                      backgroundColor: '#fef3c7',
-                      border: '1px solid #fbbf24',
+                      backgroundColor: '#1f2937',
+                      border: '1px solid #374151',
                       borderRadius: '8px'
                     }}
                   >
                     <p
                       style={{
                         fontSize: '12px',
-                        color: '#92400e',
+                        color: '#fbbf24',
                         marginBottom: '8px'
                       }}
                     >
@@ -1782,8 +1788,8 @@ const CRMInboxMulticanal: React.FC = () => {
                         __html: stripAllInlineStyles(selectedMessage.body_html)
                       }}
                       style={{
-                        color: '#000000',
-                        backgroundColor: '#ffffff',
+                        color: '#ffffff',
+                        backgroundColor: '#111827',
                         padding: '16px',
                         borderRadius: '4px'
                       }}
