@@ -1,66 +1,91 @@
-# Correction Système Email & Synchronisation IONOS - 15 Janvier 2026
+# Correction Affichage Emails - Inbox Multicanal
 
-## 🐛 Problèmes Identifiés
+## Problème Identifié
 
-### 1. Erreur d'envoi d'email depuis le CRM
-**Symptôme** : Erreur lors de l'envoi d'email à abdammarie@gmail.com depuis l'interface CRM
-**Destinataire** : Tony Cerda (abdammarie@gmail.com)
-**Template** : Email de bienvenue
-**Localisation** : https://taxiassur.com/backoffice/crm-killer/inbox
+Lorsque vous ouvrez un email dans l'Inbox Multicanal, le contenu de l'email n'est pas visible. La zone reste vide/blanche.
 
-### 2. Problème de synchronisation IMAP
-**Symptôme** : Les emails IONOS ne se synchronisent pas correctement dans l'inbox CRM
+## Cause
 
-## ✅ Corrections Appliquées
+Votre navigateur utilise encore l'**ancien code JavaScript en cache**. Les corrections ont été appliquées, mais votre navigateur ne les voit pas car il charge les anciens fichiers mis en cache.
 
-### Edge Functions Corrigées et Déployées
+## Solution CRITIQUE - VIDER LE CACHE
 
-1. **send-crm-email** ✅
-   - Port SMTP : 587 → **465** (SSL/TLS direct)
-   - Méthode : STARTTLS → **connectTls** (connexion chiffrée immédiate)
+### Méthode 1 : Raccourci Clavier (RECOMMANDÉ)
 
-2. **send-email-ionos** ✅
-   - Même correction SMTP
+1. **Chrome/Edge/Firefox** :
+   - Windows : `Ctrl + Shift + Suppr`
+   - Mac : `Cmd + Shift + Suppr`
 
-3. **sync-ionos-imap-v2** ✅
-   - Configuration IMAP vérifiée (imap.ionos.fr:993)
+2. Une fenêtre s'ouvre, cochez :
+   - **Images et fichiers en cache** ✓
+   - **Fichiers JavaScript et CSS** ✓
 
-## 📊 Configuration IONOS Finale
+3. Sélectionnez la période : **"Dernières 24 heures"**
 
-| Paramètre | Valeur |
-|-----------|--------|
-| Email | team@taxiassur.com |
-| SMTP Host | smtp.ionos.fr |
-| SMTP Port | **465** (SSL/TLS direct) |
-| IMAP Host | imap.ionos.fr |
-| IMAP Port | 993 |
+4. Cliquez sur **"Effacer les données"**
 
-## 🧪 Test Recommandé
+5. **Fermez complètement le navigateur** (toutes les fenêtres)
 
-1. Aller sur : https://taxiassur.com/backoffice/crm-killer/inbox
-2. Cliquer sur "Composer un email"
-3. Envoyer un email de test à abdammarie@gmail.com
+6. Rouvrez et reconnectez-vous
 
-**Résultat attendu** : Email envoyé avec succès ✅
+### Méthode 2 : Actualisation Forcée
 
-## 📝 Monitoring
+1. Ouvrez les DevTools : `F12`
 
-### Vérifier l'envoi d'email
-```sql
-SELECT email_to, subject, status, created_at
-FROM email_sends
-WHERE email_to = 'abdammarie@gmail.com'
-ORDER BY created_at DESC LIMIT 5;
+2. **Clic droit** sur le bouton actualiser du navigateur (à côté de l'URL)
+
+3. Choisissez **"Vider le cache et actualiser de force"** ou **"Hard Reload"**
+
+4. Fermez les DevTools et actualisez encore une fois : `Ctrl + F5`
+
+### Méthode 3 : Mode Incognito (Test)
+
+Pour tester si c'est bien un problème de cache :
+
+1. Ouvrez une **fenêtre de navigation privée** :
+   - Chrome : `Ctrl + Shift + N`
+   - Firefox : `Ctrl + Shift + P`
+   - Edge : `Ctrl + Shift + N`
+
+2. Allez sur le backoffice et connectez-vous
+
+3. Testez l'affichage d'un email
+
+Si ça marche en mode incognito, c'est bien le cache qui pose problème.
+
+## Comment Vérifier Que Ça Marche
+
+Après avoir vidé le cache, quand vous ouvrez un email, vous **DEVEZ** voir en haut :
+
+```
+🔴 VERSION DU 31 JANVIER 2026 - 20h45 🔴
+Si vous ne voyez pas cette bannière rouge, videz votre cache (Ctrl+Shift+Suppr)
 ```
 
-### Vérifier la synchronisation IMAP
-```sql
-SELECT from_email, subject, received_at, provider
-FROM email_messages
-WHERE provider = 'ionos'
-ORDER BY received_at DESC LIMIT 10;
-```
+Cette bannière rouge vif avec bordure épaisse est **impossible à manquer**. Si vous ne la voyez pas, c'est que le cache n'a pas été vidé correctement.
 
----
-**Statut** : ✅ Corrections déployées
-**Action** : Tester l'envoi d'email depuis le CRM
+## Corrections Appliquées
+
+### 1. Affichage Direct du HTML
+
+Au lieu de convertir le HTML en texte, le système affiche maintenant **directement le HTML** de l'email, ce qui garantit que tout le contenu est visible.
+
+### 2. Suppression des Styles Problématiques
+
+Les styles inline qui rendaient le texte invisible (texte blanc sur fond blanc) sont automatiquement supprimés.
+
+### 3. Fond Sombre Forcé
+
+La zone de contenu a un fond sombre avec du texte blanc forcé, garantissant la lisibilité même si l'email contient des styles problématiques.
+
+### 4. Fallback pour Texte Brut
+
+Si l'email ne contient que du texte brut (pas de HTML), il est affiché ligne par ligne avec une mise en forme correcte.
+
+### 5. Message d'Erreur Visible
+
+Si un email ne contient vraiment aucun contenu, un message jaune clair s'affiche.
+
+## IMPORTANT : Déployez les Fichiers
+
+Uploadez le dossier `/dist` complet sur votre serveur IONOS pour que les corrections soient visibles en production.

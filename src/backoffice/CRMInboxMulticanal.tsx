@@ -1641,18 +1641,23 @@ const CRMInboxMulticanal: React.FC = () => {
               {/* BANNIÈRE DE VERSION - Pour confirmer que c'est la bonne version */}
               <div
                 style={{
-                  backgroundColor: '#10b981',
+                  backgroundColor: '#dc2626',
                   color: '#ffffff',
-                  padding: '12px 16px',
+                  padding: '16px 20px',
                   borderRadius: '8px',
-                  marginBottom: '16px',
+                  marginBottom: '20px',
                   fontWeight: 'bold',
-                  fontSize: '14px',
+                  fontSize: '16px',
                   textAlign: 'center',
-                  border: '3px solid #059669'
+                  border: '4px solid #991b1b',
+                  boxShadow: '0 4px 12px rgba(220, 38, 38, 0.3)'
                 }}
               >
-                ✅ VERSION CORRIGÉE DU 30 JANVIER 2026 - 16h23
+                🔴 VERSION DU 31 JANVIER 2026 - 20h45 🔴
+                <br />
+                <span style={{ fontSize: '13px', fontWeight: 'normal', opacity: 0.95 }}>
+                  Si vous ne voyez pas cette bannière rouge, videz votre cache (Ctrl+Shift+Suppr)
+                </span>
               </div>
 
               {/* AFFICHAGE ULTRA-SIMPLE AVEC STYLES INLINE FORCÉS - FOND SOMBRE POUR FORCER LA VISIBILITÉ */}
@@ -1703,51 +1708,55 @@ const CRMInboxMulticanal: React.FC = () => {
                   }}
                 >
                   {(() => {
-                    // Debug console
-                    console.log('📧 Email sélectionné:', {
-                      hasHtml: !!selectedMessage.body_html,
-                      hasText: !!selectedMessage.body_text,
-                      htmlLength: selectedMessage.body_html?.length || 0,
-                      textLength: selectedMessage.body_text?.length || 0,
-                      subject: selectedMessage.subject
-                    });
-
-                    const text = selectedMessage.body_html
-                      ? htmlToReadableText(selectedMessage.body_html)
-                      : cleanEmailPreview(selectedMessage.body_text || '');
-
-                    console.log('📝 Texte extrait:', {
-                      textLength: text.length,
-                      preview: text.substring(0, 100)
-                    });
-
-                    // Debug: afficher si le texte est vide
-                    if (!text || text.trim() === '') {
+                    // Si on a du HTML, l'afficher directement (méthode la plus fiable)
+                    if (selectedMessage.body_html && selectedMessage.body_html.trim()) {
                       return (
-                        <div style={{ color: '#fbbf24', fontWeight: 'bold' }}>
-                          ⚠️ Contenu vide ou illisible. HTML brut:
-                          <br /><br />
-                          {selectedMessage.body_html || selectedMessage.body_text || 'Aucun contenu'}
-                        </div>
+                        <div
+                          dangerouslySetInnerHTML={{
+                            __html: stripAllInlineStyles(selectedMessage.body_html)
+                          }}
+                          style={{
+                            color: '#ffffff',
+                            lineHeight: '1.8',
+                            fontSize: '15px',
+                            wordBreak: 'break-word'
+                          }}
+                        />
                       );
                     }
 
-                    // Afficher le texte ligne par ligne pour garantir la visibilité
-                    return text.split('\n').map((line, idx) => (
+                    // Si on a du texte brut, l'afficher
+                    if (selectedMessage.body_text && selectedMessage.body_text.trim()) {
+                      return selectedMessage.body_text.split('\n').map((line, idx) => (
+                        <div
+                          key={idx}
+                          style={{
+                            color: '#ffffff',
+                            marginBottom: line.trim() === '' ? '12px' : '0',
+                            wordBreak: 'break-word',
+                            whiteSpace: 'pre-wrap'
+                          }}
+                        >
+                          {line || '\u00A0'}
+                        </div>
+                      ));
+                    }
+
+                    // Fallback : Aucun contenu
+                    return (
                       <div
-                        key={idx}
                         style={{
-                          color: '#ffffff',
-                          marginBottom: line.trim() === '' ? '12px' : '0',
-                          wordBreak: 'break-word',
-                          whiteSpace: 'pre-wrap',
-                          WebkitTextFillColor: '#ffffff',
-                          textFillColor: '#ffffff'
+                          color: '#fbbf24',
+                          fontWeight: 'bold',
+                          padding: '20px',
+                          textAlign: 'center',
+                          border: '2px dashed #fbbf24',
+                          borderRadius: '8px'
                         }}
                       >
-                        {line || '\u00A0'}
+                        ⚠️ Cet email ne contient pas de contenu textuel
                       </div>
-                    ));
+                    );
                   })()}
                 </div>
               </div>
