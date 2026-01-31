@@ -141,7 +141,7 @@ Deno.serve(async (req: Request) => {
               first_name: firstName || 'Prospect',
               last_name: lastName || 'Email',
               phone: phone || '0000000000', // Numéro fictif si pas de téléphone
-              status: 'NEW_LEAD',
+              status: 'NOUVEAU_LEAD', // ✅ Utilise le nouveau système français
               source: 'email_inbound',
               metadata: {
                 first_email_id: email.id,

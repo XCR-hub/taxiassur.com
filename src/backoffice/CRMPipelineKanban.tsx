@@ -243,9 +243,74 @@ const CRMPipelineKanban: React.FC = () => {
     };
   }, [loadKanbanData]);
 
+  const [syncingEmails, setSyncingEmails] = useState(false);
+  const [syncMessage, setSyncMessage] = useState<string | null>(null);
+
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
     await loadKanbanData(false);
+  }, [loadKanbanData]);
+
+  const handleSyncEmails = useCallback(async () => {
+    setSyncingEmails(true);
+    setSyncMessage('🔄 Synchronisation des emails en cours...');
+
+    try {
+      // 1. Synchroniser les emails IONOS
+      const syncResponse = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/sync-ionos-imap`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({})
+        }
+      );
+
+      if (!syncResponse.ok) {
+        throw new Error('Erreur lors de la synchronisation des emails');
+      }
+
+      const syncData = await syncResponse.json();
+      console.log('✅ Emails synchronisés:', syncData);
+
+      // 2. Créer automatiquement les leads depuis les nouveaux emails
+      const createLeadsResponse = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/auto-create-leads-from-emails`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({})
+        }
+      );
+
+      if (!createLeadsResponse.ok) {
+        throw new Error('Erreur lors de la création des leads');
+      }
+
+      const createData = await createLeadsResponse.json();
+      console.log('✅ Leads créés:', createData);
+
+      // 3. Rafraîchir le pipeline
+      await loadKanbanData(false);
+
+      setSyncMessage(
+        `✅ Synchronisation terminée ! ${createData.summary?.leads_created || 0} leads créés, ${createData.summary?.emails_linked || 0} emails liés`
+      );
+
+      setTimeout(() => setSyncMessage(null), 5000);
+    } catch (error) {
+      console.error('❌ Erreur synchronisation:', error);
+      setSyncMessage('❌ Erreur lors de la synchronisation des emails');
+      setTimeout(() => setSyncMessage(null), 5000);
+    } finally {
+      setSyncingEmails(false);
+    }
   }, [loadKanbanData]);
 
   const handleDragStart = useCallback((lead: CRMLead) => {
@@ -440,6 +505,15 @@ const CRMPipelineKanban: React.FC = () => {
                 Actualiser
               </button>
               <button
+                onClick={handleSyncEmails}
+                disabled={syncingEmails}
+                className="px-4 py-2 border border-emerald-300 bg-emerald-50 text-emerald-700 rounded-lg font-medium hover:bg-emerald-100 transition-colors flex items-center gap-2 disabled:opacity-50"
+                title="Synchroniser les emails et créer les nouveaux leads automatiquement"
+              >
+                <Mail size={20} className={syncingEmails ? 'animate-bounce' : ''} />
+                {syncingEmails ? 'Synchronisation...' : 'Sync Emails'}
+              </button>
+              <button
                 onClick={() => navigate('/backoffice/crm-killer')}
                 className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center gap-2"
               >
@@ -457,6 +531,25 @@ const CRMPipelineKanban: React.FC = () => {
               <button
                 onClick={() => setError(null)}
                 className="ml-auto text-red-600 hover:text-red-800"
+              >
+                ✕
+              </button>
+            </div>
+          )}
+
+          {/* Sync message */}
+          {syncMessage && (
+            <div className={`mb-4 p-4 rounded-lg flex items-center gap-2 ${
+              syncMessage.includes('✅')
+                ? 'bg-emerald-50 border border-emerald-200 text-emerald-800'
+                : syncMessage.includes('❌')
+                ? 'bg-red-50 border border-red-200 text-red-800'
+                : 'bg-blue-50 border border-blue-200 text-blue-800'
+            }`}>
+              <span className="font-medium">{syncMessage}</span>
+              <button
+                onClick={() => setSyncMessage(null)}
+                className="ml-auto hover:opacity-75"
               >
                 ✕
               </button>
