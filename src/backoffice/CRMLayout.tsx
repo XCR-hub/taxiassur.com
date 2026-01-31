@@ -29,6 +29,7 @@ import { NotificationCenter } from '@/components/NotificationCenter';
 import { CRMPushNotifications } from '@/components/CRMPushNotifications';
 import { notificationManager } from '@/lib/realtime-notifications';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { AdminSessionKeepAlive } from '@/components/AdminSessionKeepAlive';
 
 interface CRMStats {
   unread_messages: number;
@@ -294,6 +295,9 @@ const CRMLayout: React.FC = () => {
           <Outlet />
         </div>
       </main>
+
+      {/* Maintien de la session active */}
+      <AdminSessionKeepAlive />
 
       {/* Notifications Push en temps réel */}
       <CRMPushNotifications />
