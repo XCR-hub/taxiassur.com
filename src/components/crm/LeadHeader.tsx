@@ -59,16 +59,31 @@ const STATUS_TO_PIPELINE_STEP: Record<string, string> = {
   'CLIENT_ACTIF': 'client',              // 7️⃣ Client
 
   // ⚫ STATUTS SPÉCIAUX
-  'RELANCE': 'contact',                  // Relance = contact en cours
-  'PERDU': 'contact',                    // Perdu
-  'RECONTACT_PROGRAMME': 'contact',      // Recontact futur
+  'RELANCE': 'new',                      // Relance = retour à nouveau
+  'PERDU': 'new',                        // Perdu
+  'RECONTACT_PROGRAMME': 'new',          // Recontact futur
 
   // 🔄 GESTION CLIENT
   'CROSS_SELLING': 'client',
   'RISK_CHURN': 'client',
   'SINISTRE': 'client',
   'ATTESTATION_REQUEST': 'client',
-  'SUPPORT_ASSISTANCE': 'client'
+  'SUPPORT_ASSISTANCE': 'client',
+
+  // 🔄 ANCIENS STATUTS (Rétrocompatibilité)
+  'NEW_LEAD': 'new',
+  'CONTACT_ATTEMPTED': 'new',
+  'CONTACT_CONFIRMED': 'new',
+  'DOCUMENTS_REQUIRED': 'documents',
+  'DOCUMENTS_RECEIVED': 'documents',
+  'READY_FOR_QUOTE': 'devis',
+  'QUOTE_SENT': 'devis',
+  'QUOTE_ACCEPTED': 'devis',
+  'PAYMENT_PENDING': 'signature',
+  'CONTRACT_PENDING': 'signature',
+  'ACTIVE_CLIENT': 'client',
+  'LOST': 'new',
+  'LOST_RECONTACT_SCHEDULED': 'new'
 };
 
 export const LeadHeader: React.FC<LeadHeaderProps> = ({

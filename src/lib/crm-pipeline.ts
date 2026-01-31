@@ -142,7 +142,31 @@ export const PIPELINE_TRANSITIONS: PipelineTransition[] = [
   { from: 'RISK_CHURN', to: 'PERDU', label: 'Client Perdu', requiresNote: true },
   { from: 'SINISTRE', to: 'CLIENT_ACTIF', label: 'Sinistre Clos' },
   { from: 'ATTESTATION_REQUEST', to: 'CLIENT_ACTIF', label: 'Attestation Envoyée' },
-  { from: 'SUPPORT_ASSISTANCE', to: 'CLIENT_ACTIF', label: 'Assistance Terminée' }
+  { from: 'SUPPORT_ASSISTANCE', to: 'CLIENT_ACTIF', label: 'Assistance Terminée' },
+
+  // 🔄 TRANSITIONS DE MIGRATION (Anciens statuts → Nouveaux statuts)
+  { from: 'NEW_LEAD', to: 'NOUVEAU_LEAD', label: 'Migrer vers nouveau système' },
+  { from: 'CONTACT_ATTEMPTED', to: 'NOUVEAU_LEAD', label: 'Migrer vers nouveau système' },
+  { from: 'CONTACT_CONFIRMED', to: 'COLLECTE_DOCUMENTS', label: 'Migrer - Demander Documents' },
+  { from: 'DOCUMENTS_REQUIRED', to: 'COLLECTE_DOCUMENTS', label: 'Migrer vers nouveau système' },
+  { from: 'DOCUMENTS_RECEIVED', to: 'DEVIS', label: 'Migrer - Générer Devis' },
+  { from: 'READY_FOR_QUOTE', to: 'DEVIS', label: 'Migrer vers nouveau système' },
+  { from: 'QUOTE_SENT', to: 'DECISION_CLIENT', label: 'Migrer vers nouveau système' },
+  { from: 'QUOTE_ACCEPTED', to: 'PAIEMENT', label: 'Migrer - Paiement' },
+  { from: 'PAYMENT_PENDING', to: 'PAIEMENT', label: 'Migrer vers nouveau système' },
+  { from: 'CONTRACT_PENDING', to: 'CONTRAT_SIGNATURE', label: 'Migrer vers nouveau système' },
+  { from: 'ACTIVE_CLIENT', to: 'CLIENT_ACTIF', label: 'Migrer vers nouveau système' },
+  { from: 'LOST', to: 'PERDU', label: 'Migrer vers nouveau système' },
+  { from: 'LOST_RECONTACT_SCHEDULED', to: 'RECONTACT_PROGRAMME', label: 'Migrer vers nouveau système' },
+
+  // Transitions normales depuis les anciens statuts
+  { from: 'DOCUMENTS_REQUIRED', to: 'DEVIS', label: 'Documents OK - Passer au Devis' },
+  { from: 'DOCUMENTS_RECEIVED', to: 'DECISION_CLIENT', label: 'En attente décision' },
+  { from: 'READY_FOR_QUOTE', to: 'DECISION_CLIENT', label: 'Devis envoyé' },
+  { from: 'QUOTE_SENT', to: 'PAIEMENT', label: 'Client accepte' },
+  { from: 'QUOTE_ACCEPTED', to: 'CONTRAT_SIGNATURE', label: 'Paiement OK' },
+  { from: 'PAYMENT_PENDING', to: 'CONTRAT_SIGNATURE', label: 'Paiement reçu' },
+  { from: 'CONTRACT_PENDING', to: 'CLIENT_ACTIF', label: 'Contrat signé' }
 ];
 
 export interface CRMLead {
