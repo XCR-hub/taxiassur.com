@@ -46,7 +46,7 @@ export async function submitSecureLead(leadData: SecureLead): Promise<{ success:
         phone: leadData.phone,
         city: leadData.city,
         immatriculation: leadData.immatriculation,
-        status: 'NEW_LEAD',
+        status: 'NOUVEAU_LEAD', // ✅ Utilise le nouveau système français
         source: 'website_form'
       })
       .select('*, access_token, full_name')

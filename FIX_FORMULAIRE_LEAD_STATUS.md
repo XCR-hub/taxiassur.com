@@ -1,293 +1,300 @@
-# Fix Formulaire Lead - Erreur Status "new"
+# CORRECTION CRITIQUE - Formulaire de Devis
 
-**Date** : 14 Janvier 2026
-**Status** : ✅ Résolu
-**Impact** : Critique - Le formulaire principal était cassé
+## Problème Identifié
 
----
+Quand un prospect remplit le formulaire sur le site web (demande de devis), **le lead n'apparaît PAS dans le pipeline Kanban**.
 
-## 🔴 Problème Identifié
+### Exemple Concret
 
-### Erreur Console
+Prospect : **YAHIAOUI FETHALLAH**
+- Email : sarladeivtc@gmail.com
+- Téléphone : 0755461073
+- Ville : Bordeaux
+- Immatriculation : AA-642-FA
+- Date : 30/01/2026 18:15:44
+
+➡️ **Résultat** : Lead créé dans la base ✓ mais invisible dans le pipeline ✗
+
+## Cause Racine
+
+Le fichier `/src/lib/email.ts` (ligne 49) utilisait le mauvais statut :
+
+```typescript
+// ❌ AVANT (Ancien système anglais)
+status: 'NEW_LEAD'
+
+// ✅ APRÈS (Nouveau système français)
+status: 'NOUVEAU_LEAD'
 ```
-invalid input value for enum lead_status: "new"
-```
 
-### Symptôme
-Le formulaire de création de lead sur le site public retournait une erreur 500 et les leads n'étaient pas créés.
-
-### Cause Racine
-L'enum `lead_status` dans la base de données PostgreSQL utilise des valeurs en MAJUSCULES :
-- `NEW_LEAD` ✅
-- `CONTACT_ATTEMPTED` ✅
-- `DOCUMENTS_REQUIRED` ✅
+Le pipeline Kanban affiche uniquement les statuts du nouveau système français :
+- `NOUVEAU_LEAD` ✓ (visible)
+- `COLLECTE_DOCUMENTS` ✓
+- `DEVIS` ✓
 - etc.
 
-Mais plusieurs fichiers envoyaient la valeur **`'new'`** en minuscules qui n'existe pas dans l'enum.
+Le statut `NEW_LEAD` (ancien système) n'est **pas affiché** dans le pipeline.
 
----
+## Impact
 
-## ✅ Corrections Appliquées
+**TOUS les leads** créés depuis le formulaire web depuis la migration vers le nouveau système étaient **invisibles** dans le pipeline.
 
-### 1. Composant `ManualLeadCreator.tsx`
+Ils existaient dans la base de données mais n'apparaissaient nulle part dans l'interface.
 
-**Fichier** : `src/components/crm/ManualLeadCreator.tsx`
+## Solution Appliquée
 
-**Avant** :
+### 1. Correction du Code (✅ FAIT)
+
+**Fichier** : `/src/lib/email.ts` ligne 49
+
+**Changement** :
 ```typescript
-const leadData = {
-  first_name: formData.first_name.trim(),
-  last_name: formData.last_name.trim(),
-  // ...
-  status: 'new',  // ❌ Erreur : 'new' n'existe pas
-  // ...
-};
+status: 'NOUVEAU_LEAD', // ✅ Utilise le nouveau système français
 ```
 
-**Après** :
-```typescript
-const leadData = {
-  first_name: formData.first_name.trim(),
-  last_name: formData.last_name.trim(),
-  // ...
-  status: 'NEW_LEAD',  // ✅ Valeur valide
-  // ...
-};
-```
+**Build** : ✅ Compilé dans `/dist`
 
-### 2. Trigger Database `on_new_lead_created_unified()`
+### 2. Bouton de Synchronisation (✅ AJOUTÉ)
 
-**Migration** : `fix_trigger_default_status.sql`
+Un bouton **"Sync Emails"** a été ajouté dans le Pipeline Kanban pour synchroniser manuellement :
+- Force la récupération des emails IONOS
+- Crée automatiquement les leads manquants
+- Rafraîchit le pipeline
 
-**Problème** :
-Le trigger utilisait `'new'` comme valeur par défaut dans le payload envoyé à l'edge function.
+## Tests de Validation
 
-**Avant** :
+### Test 1 : Nouveau Lead via Formulaire
+
+1. Videz le cache navigateur : `Ctrl + Shift + Suppr`
+2. Allez sur la page d'accueil du site
+3. Remplissez le formulaire de demande de devis avec des informations test
+4. Cliquez sur "Envoyer"
+5. Allez dans **Pipeline Kanban** (backoffice)
+6. **RÉSULTAT ATTENDU** : Le lead apparaît dans la colonne "Nouveau Lead" ✓
+
+### Test 2 : Lead YAHIAOUI FETHALLAH
+
+Le lead qui a été créé le 30/01/2026 à 18:15:44 doit maintenant être **re-créé** avec le bon statut.
+
+**Options** :
+
+#### Option A : Re-soumettre le Formulaire
+Le prospect remplit à nouveau le formulaire (s'il accepte).
+
+#### Option B : Création Manuelle
+1. Dans le backoffice, cliquez sur **"Nouveau Lead"**
+2. Entrez les informations :
+   - Nom : YAHIAOUI
+   - Prénom : FETHALLAH
+   - Email : sarladeivtc@gmail.com
+   - Téléphone : 0755461073
+   - Ville : Bordeaux
+   - Immatriculation : AA-642-FA
+3. Statut sera automatiquement `NOUVEAU_LEAD`
+4. Cliquez sur "Créer"
+
+#### Option C : Correction SQL (AVANCÉ)
+
+Si vous voulez corriger le lead existant dans la base :
+
 ```sql
-v_payload := jsonb_build_object(
-  'lead_id', NEW.id::text,
-  'name', v_full_name,
-  'status', COALESCE(NEW.status::text, 'new'),  -- ❌ Erreur
-  -- ...
-);
+-- Vérifier si le lead existe
+SELECT id, first_name, last_name, email, status, created_at
+FROM crm_leads
+WHERE email = 'sarladeivtc@gmail.com';
+
+-- Si trouvé avec status 'NEW_LEAD', corriger :
+UPDATE crm_leads
+SET status = 'NOUVEAU_LEAD'
+WHERE email = 'sarladeivtc@gmail.com'
+  AND status = 'NEW_LEAD';
 ```
 
-**Après** :
-```sql
-v_payload := jsonb_build_object(
-  'lead_id', NEW.id::text,
-  'name', v_full_name,
-  'status', COALESCE(NEW.status::text, 'NEW_LEAD'),  -- ✅ Fix
-  -- ...
-);
-```
+**⚠️ ATTENTION** : Utilisez cette méthode uniquement si vous êtes à l'aise avec SQL.
 
----
+## Vérification Post-Déploiement
 
-## 📋 Valeurs Valides pour `lead_status`
+### Checklist
 
-Voici les valeurs **valides** de l'enum `lead_status` (défini dans la migration `20260108104625_create_crm_master_schema_complete.sql`) :
+- [ ] Code corrigé dans `/src/lib/email.ts`
+- [ ] Projet compilé : `npm run build`
+- [ ] Dossier `/dist` uploadé sur IONOS
+- [ ] Cache navigateur vidé : `Ctrl + Shift + Suppr`
+- [ ] Test formulaire effectué
+- [ ] Nouveau lead visible dans Pipeline Kanban
+- [ ] Email de notification reçu à team@taxiassur.com
 
-```sql
-CREATE TYPE lead_status AS ENUM (
-  'NEW_LEAD',               -- Nouveau lead (défaut)
-  'CONTACT_ATTEMPTED',      -- Tentative de contact
-  'CONTACT_CONFIRMED',      -- Contact confirmé
-  'DOCUMENTS_REQUIRED',     -- Documents requis
-  'DOCUMENTS_PARTIAL',      -- Documents partiels
-  'READY_FOR_QUOTE',        -- Prêt pour devis
-  'QUOTE_SENT',             -- Devis envoyé
-  'NO_RESPONSE',            -- Pas de réponse
-  'RELANCE_ACTIVE',         -- Relance active
-  'SIGNATURE_PENDING',      -- Signature en attente
-  'SIGNED',                 -- Signé
-  'PAYMENT_PENDING',        -- Paiement en attente
-  'ACTIVE_CLIENT',          -- Client actif
-  'CROSS_SELLING',          -- Cross-selling
-  'RISK_CHURN',             -- Risque de perte
-  'CLIENT_LOST',            -- Client perdu
-  'SINISTER',               -- Sinistre
-  'ATTESTATION_REQUEST',    -- Demande d'attestation
-  'SUPPORT_ASSISTANCE'      -- Support/Assistance
-);
-```
+### Indicateurs de Succès
 
----
+Après déploiement et test, vous devez voir :
 
-## 🧪 Tests Effectués
+1. **Dans le Pipeline Kanban** :
+   - Colonne "Nouveau Lead" contient le lead test
+   - Statut affiché : "🆕 Nouveau Lead"
 
-### 1. Build Production
-```bash
-npm run build
-```
-**Résultat** : ✅ Succès (50.24s)
+2. **Email de notification** :
+   - Sujet : "Nouveau Lead : [NOM] - [VILLE]"
+   - Contenu avec toutes les infos du prospect
+   - Lien vers l'espace commercial
 
-### 2. Migration Database
-```bash
-supabase migration apply fix_trigger_default_status
-```
-**Résultat** : ✅ Appliquée avec succès
-
----
-
-## 🔍 Autres Fichiers Concernés (Non Bloquants)
-
-Ces fichiers utilisent aussi `'new'` mais dans des **contextes différents** (variables TypeScript locales, pas la DB) :
-
-### 1. `LeadAutomationCenter.tsx`
-```typescript
-if (leadStatus === 'new' || leadStatus === 'contacted') {
-  // Suggestions AI basées sur le statut
-}
-```
-**Note** : Ce code utilise des valeurs locales pour la logique métier, pas pour insérer en DB.
-
-### 2. `LeadIntelligencePanel.tsx`
-```typescript
-if (leadStatus === 'new' && daysSinceCreation > 1) {
-  // Insight AI
-}
-```
-**Note** : Même chose, logique locale.
-
-### 3. `CRMUniversal.tsx`
-```typescript
-status: (lead.lead_status === 'nouveau' ? 'new' : 'contacted')
-```
-**Note** : Mapping pour affichage UI uniquement.
-
-**Action** : Ces fichiers fonctionnent correctement car ils ne font **pas d'INSERT** direct en base. Toutefois, pour cohérence future, on pourrait les aligner sur `'NEW_LEAD'`.
-
----
-
-## 📊 Impact et Validation
-
-### Avant le Fix
-- ❌ Formulaire cassé
-- ❌ 0 lead créé via le site
-- ❌ Erreur 500 visible par les utilisateurs
-- ❌ Perte de conversions
-
-### Après le Fix
-- ✅ Formulaire fonctionnel
-- ✅ Leads créés correctement
-- ✅ Emails automatiques envoyés
-- ✅ Trigger database opérationnel
-- ✅ Aucune erreur console
-
----
-
-## 🚀 Workflow Complet Validé
-
-```
-[Formulaire Site Web]
-       ↓
-[Soumission avec statut 'taxi'/'vtc'/'autre']
-       ↓
-[createLead() dans src/lib/leads.ts]
-       ↓
-[INSERT dans crm_leads avec status='NEW_LEAD']
-       ↓
-[Trigger: on_new_lead_created_unified()]
-       ↓
-[Génération access_token automatique]
-       ↓
-[Appel Edge Function: send-lead-notification]
-       ↓
-[3 Emails envoyés via IONOS SMTP]
-       ├─→ ✉️ team@taxiassur.com
-       ├─→ ✉️ commercial@xcr.fr
-       └─→ ✉️ prospect@email.com (avec lien documents)
-       ↓
-[Tracking dans email_sends]
-       ↓
-[Log dans crm_interactions]
-       ↓
-✅ Lead créé avec succès !
-```
-
----
-
-## 📝 Bonnes Pratiques
-
-### Pour les Développeurs
-
-1. **Toujours utiliser les valeurs ENUM exactes** :
-   ```typescript
-   // ❌ Mauvais
-   status: 'new'
-
-   // ✅ Bon
-   status: 'NEW_LEAD'
-   ```
-
-2. **Vérifier les enums avant d'insérer** :
+3. **Dans la base de données** :
    ```sql
-   -- Lister les valeurs valides
-   SELECT enumlabel
-   FROM pg_enum
-   WHERE enumtypid = 'lead_status'::regtype
-   ORDER BY enumsortorder;
+   SELECT status FROM crm_leads ORDER BY created_at DESC LIMIT 1;
+   -- Résultat attendu : NOUVEAU_LEAD
    ```
 
-3. **Utiliser TypeScript pour la sécurité** :
-   ```typescript
-   type LeadStatus =
-     | 'NEW_LEAD'
-     | 'CONTACT_ATTEMPTED'
-     | 'CONTACT_CONFIRMED'
-     // etc.
+## Autres Formulaires Affectés
 
-   const leadData: { status: LeadStatus } = {
-     status: 'NEW_LEAD'  // TypeScript vérifiera que c'est valide
-   };
+Cette correction s'applique à **TOUS** les formulaires du site qui créent des leads :
+
+- ✅ Formulaire page d'accueil
+- ✅ Formulaire page "Demande de devis"
+- ✅ Formulaires pages villes (Paris, Lyon, Marseille, etc.)
+- ✅ Formulaire "Quelle assurance taxi"
+- ✅ Formulaire "Prix assurance taxi"
+- ✅ Formulaire "Assurance taxi VTC"
+
+Tous utilisent la même fonction `submitSecureLead()` donc ils sont tous corrigés.
+
+## Migration des Anciens Leads
+
+Si vous avez des leads créés avant cette correction avec le statut `NEW_LEAD` :
+
+### Script de Migration
+
+```sql
+-- Compter les leads à migrer
+SELECT COUNT(*) FROM crm_leads WHERE status = 'NEW_LEAD';
+
+-- Migrer tous les leads NEW_LEAD vers NOUVEAU_LEAD
+UPDATE crm_leads
+SET 
+  status = 'NOUVEAU_LEAD',
+  updated_at = NOW()
+WHERE status = 'NEW_LEAD';
+
+-- Vérifier la migration
+SELECT status, COUNT(*) 
+FROM crm_leads 
+GROUP BY status 
+ORDER BY status;
+```
+
+### Exécution du Script
+
+1. Allez dans le **Dashboard Supabase** : https://supabase.com/dashboard
+2. Sélectionnez votre projet TaxiAssur
+3. Menu de gauche : **SQL Editor**
+4. Copiez-collez le script ci-dessus
+5. Cliquez sur **"Run"**
+6. Rafraîchissez le Pipeline Kanban
+
+➡️ Tous les anciens leads apparaissent maintenant !
+
+## Prévention Future
+
+Pour éviter ce problème à l'avenir :
+
+### 1. Tests Automatisés
+
+Créer un test qui vérifie que le statut correspond au nouveau système :
+
+```typescript
+// test: form-submission.test.ts
+test('Form creates lead with correct status', async () => {
+  const result = await submitSecureLead(mockLeadData);
+  expect(result.success).toBe(true);
+  
+  const lead = await supabase
+    .from('crm_leads')
+    .select('status')
+    .eq('email', mockLeadData.email)
+    .single();
+    
+  expect(lead.data.status).toBe('NOUVEAU_LEAD');
+});
+```
+
+### 2. Constantes Centralisées
+
+Utiliser des constantes au lieu de chaînes en dur :
+
+```typescript
+// lib/crm-pipeline.ts
+export const LEAD_STATUS = {
+  NOUVEAU_LEAD: 'NOUVEAU_LEAD',
+  COLLECTE_DOCUMENTS: 'COLLECTE_DOCUMENTS',
+  // etc.
+} as const;
+
+// lib/email.ts
+import { LEAD_STATUS } from './crm-pipeline';
+
+status: LEAD_STATUS.NOUVEAU_LEAD, // ✓ Impossible de se tromper
+```
+
+### 3. Migration Schema
+
+Supprimer complètement les anciens statuts de l'enum SQL :
+
+```sql
+-- Retirer NEW_LEAD de l'enum lead_status
+ALTER TYPE lead_status RENAME TO lead_status_old;
+CREATE TYPE lead_status AS ENUM (
+  'NOUVEAU_LEAD',
+  'COLLECTE_DOCUMENTS',
+  'DEVIS',
+  'DECISION_CLIENT',
+  'PAIEMENT',
+  'CONTRAT_SIGNATURE',
+  'CLIENT_ACTIF',
+  'RELANCE',
+  'PERDU',
+  'RECONTACT_PROGRAMME',
+  'SINISTRE'
+);
+-- Puis migrer les données...
+```
+
+## Déploiement Production
+
+### Étapes
+
+1. **Build local** : `npm run build`
+2. **Vérifier** : Fichier `/dist/assets/lib-core-*.js` doit contenir `NOUVEAU_LEAD`
+3. **Upload** : Transférer `/dist` complet vers IONOS via FTP
+4. **Test** : Soumettre un lead test et vérifier qu'il apparaît
+5. **Migration** : Exécuter le script SQL de migration des anciens leads
+6. **Validation** : Vérifier que tous les leads sont visibles
+
+### Commandes Rapides
+
+```bash
+# Build
+npm run build
+
+# Vérifier la correction
+grep -r "NOUVEAU_LEAD" dist/assets/lib-core-*.js
+# Doit trouver au moins 1 occurrence
+
+# Si vous utilisez rsync pour déployer
+rsync -avz --delete dist/ user@server:/path/to/webroot/
+```
+
+## Support
+
+Si le problème persiste après déploiement :
+
+1. **Vérifier le cache** : Mode incognito pour tester
+2. **Console navigateur** : `F12` → Onglet "Console" → Chercher erreurs
+3. **Logs Supabase** : Dashboard → Logs → Filtrer par "crm_leads"
+4. **SQL direct** : Vérifier manuellement dans la base :
+   ```sql
+   SELECT * FROM crm_leads 
+   WHERE created_at > NOW() - INTERVAL '1 hour'
+   ORDER BY created_at DESC;
    ```
 
 ---
 
-## 🔗 Fichiers Modifiés
-
-| Fichier | Type | Changement |
-|---------|------|------------|
-| `src/components/crm/ManualLeadCreator.tsx` | Code | `'new'` → `'NEW_LEAD'` |
-| `supabase/migrations/fix_trigger_default_status.sql` | Migration | Trigger corrigé |
-
----
-
-## ✅ Checklist Validation
-
-- [x] Erreur identifiée et comprise
-- [x] Fichier `ManualLeadCreator.tsx` corrigé
-- [x] Trigger database corrigé via migration
-- [x] Migration appliquée avec succès
-- [x] Build production réussi
-- [x] Documentation créée
-- [ ] Test formulaire en production (à faire)
-- [ ] Validation réception emails (à faire)
-
----
-
-## 🎯 Prochaine Action
-
-**Test du formulaire en production** :
-
-1. Aller sur https://taxiassur.com
-2. Remplir le formulaire avec :
-   - Nom : Test Validation
-   - Email : test@example.com
-   - Téléphone : 0600000000
-   - Ville : Paris
-   - Statut : Taxi
-3. Soumettre
-4. Vérifier :
-   - ✅ Message de succès affiché
-   - ✅ Lead créé dans `crm_leads` avec `status='NEW_LEAD'`
-   - ✅ 3 emails reçus
-   - ✅ Aucune erreur console
-
----
-
-**Date de résolution** : 14 Janvier 2026
-**Temps de résolution** : ~15 minutes
-**Criticité** : Haute (formulaire principal cassé)
-**Status final** : ✅ Résolu et déployé
+**IMPORTANT** : Cette correction est **critique** pour le bon fonctionnement du système de gestion des leads. Déployez-la dès que possible !
