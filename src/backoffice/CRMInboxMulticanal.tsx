@@ -1672,11 +1672,16 @@ const CRMInboxMulticanal: React.FC = () => {
               >
                 <style>
                   {`
+                    .email-content-safe {
+                      color: #1f2937 !important;
+                      background-color: #ffffff !important;
+                    }
                     .email-content-safe * {
-                      color: #ffffff !important;
-                      background-color: transparent !important;
-                      -webkit-text-fill-color: #ffffff !important;
-                      text-fill-color: #ffffff !important;
+                      max-width: 100%;
+                    }
+                    .email-content-safe a {
+                      color: #2563eb !important;
+                      text-decoration: underline;
                     }
                     .email-content-safe ::selection {
                       background-color: #3b82f6 !important;
@@ -1691,20 +1696,18 @@ const CRMInboxMulticanal: React.FC = () => {
                 <div
                   className="email-content-safe"
                   style={{
-                    color: '#ffffff',
-                    backgroundColor: '#111827',
+                    color: '#1f2937',
+                    backgroundColor: '#ffffff',
                     fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
                     fontSize: '15px',
                     lineHeight: '1.7',
                     padding: '24px',
-                    border: '2px solid #374151',
+                    border: '2px solid #e5e7eb',
                     borderRadius: '8px',
                     userSelect: 'text',
                     WebkitUserSelect: 'text',
                     MozUserSelect: 'text',
-                    msUserSelect: 'text',
-                    WebkitTextFillColor: '#ffffff',
-                    textFillColor: '#ffffff'
+                    msUserSelect: 'text'
                   }}
                 >
                   {(() => {
@@ -1716,7 +1719,6 @@ const CRMInboxMulticanal: React.FC = () => {
                             __html: stripAllInlineStyles(selectedMessage.body_html)
                           }}
                           style={{
-                            color: '#ffffff',
                             lineHeight: '1.8',
                             fontSize: '15px',
                             wordBreak: 'break-word'
@@ -1731,7 +1733,6 @@ const CRMInboxMulticanal: React.FC = () => {
                         <div
                           key={idx}
                           style={{
-                            color: '#ffffff',
                             marginBottom: line.trim() === '' ? '12px' : '0',
                             wordBreak: 'break-word',
                             whiteSpace: 'pre-wrap'
@@ -1797,10 +1798,11 @@ const CRMInboxMulticanal: React.FC = () => {
                         __html: stripAllInlineStyles(selectedMessage.body_html)
                       }}
                       style={{
-                        color: '#ffffff',
-                        backgroundColor: '#111827',
+                        color: '#1f2937',
+                        backgroundColor: '#f9fafb',
                         padding: '16px',
-                        borderRadius: '4px'
+                        borderRadius: '4px',
+                        border: '1px solid #e5e7eb'
                       }}
                     />
                   </div>
