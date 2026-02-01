@@ -392,6 +392,7 @@ export default function LeadQuotesManager({ leadId }: Props) {
                     value={uploadForm.validUntil}
                     onChange={(e) => setUploadForm({ ...uploadForm, validUntil: e.target.value })}
                     className="w-full border border-gray-300 rounded px-3 py-2 bg-white text-gray-900"
+                    style={{ colorScheme: 'light' }}
                   />
                 </div>
 
