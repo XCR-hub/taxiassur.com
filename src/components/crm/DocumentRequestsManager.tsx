@@ -297,7 +297,12 @@ export const DocumentRequestsManager: React.FC<DocumentRequestsManagerProps> = (
       ) : (
         <div className="space-y-3">
           {requests.map((request) => {
-            const statusInfo = STATUT_LABELS[request.statut];
+            const statusInfo = STATUT_LABELS[request.statut] || {
+              label: request.statut || 'Inconnu',
+              color: 'text-gray-600',
+              bg: 'bg-gray-50',
+              icon: Clock
+            };
             const StatusIcon = statusInfo.icon;
 
             return (
