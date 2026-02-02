@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Upload, X, CheckCircle, XCircle, AlertCircle, FileText, Download, Eye } from 'lucide-react';
+import { Upload, X, CheckCircle, XCircle, AlertCircle, FileText, Download, Eye, Mail, Send } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 
 interface InsuranceCompany {
@@ -20,6 +20,7 @@ interface LeadQuote {
   notes: string | null;
   submitted_at: string | null;
   submitted_by: string | null;
+  last_sent_at: string | null;
 }
 
 interface QuoteSummary {
@@ -56,6 +57,15 @@ export default function LeadQuotesManager({ leadId }: Props) {
   const [refuseForm, setRefuseForm] = useState({
     reason: '',
   });
+
+  const [sendingEmail, setSendingEmail] = useState<string | null>(null);
+  const [emailModal, setEmailModal] = useState<{
+    companyId: string;
+    companyName: string;
+    quoteAmount: number | null;
+    quoteUrl: string;
+  } | null>(null);
+  const [emailMessage, setEmailMessage] = useState('');
 
   useEffect(() => {
     loadData();
@@ -188,6 +198,50 @@ export default function LeadQuotesManager({ leadId }: Props) {
     }
   };
 
+  const handleSendQuoteEmail = async () => {
+    if (!emailModal) return;
+
+    try {
+      setSendingEmail(emailModal.companyId);
+
+      const { data: { session } } = await supabase.auth.getSession();
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+      const response = await fetch(`${supabaseUrl}/functions/v1/send-quote-email`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token || anonKey}`,
+        },
+        body: JSON.stringify({
+          lead_id: leadId,
+          company_id: emailModal.companyId,
+          company_name: emailModal.companyName,
+          quote_file_url: emailModal.quoteUrl,
+          quote_amount: emailModal.quoteAmount,
+          personal_message: emailMessage || undefined,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Erreur lors de l\'envoi de l\'email');
+      }
+
+      alert(`✅ Devis envoyé avec succès à ${result.to}`);
+      setEmailModal(null);
+      setEmailMessage('');
+      loadData();
+    } catch (error: any) {
+      console.error('Erreur envoi email devis:', error);
+      alert(error.message || 'Erreur lors de l\'envoi de l\'email');
+    } finally {
+      setSendingEmail(null);
+    }
+  };
+
   const getQuoteStatus = (companyId: string) => {
     const quote = quotes.get(companyId);
     if (!quote) return 'pending';
@@ -281,6 +335,19 @@ export default function LeadQuotesManager({ leadId }: Props) {
                         Motif de refus: {quote.refusal_reason}
                       </div>
                     )}
+
+                    {quote?.last_sent_at && (
+                      <div className="text-xs text-green-600 mt-1 flex items-center gap-1">
+                        <CheckCircle className="w-3 h-3" />
+                        Envoyé par email le {new Date(quote.last_sent_at).toLocaleDateString('fr-FR', {
+                          day: '2-digit',
+                          month: '2-digit',
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </div>
+                    )}
                   </div>
 
                   <div className="flex items-center gap-2">
@@ -304,15 +371,30 @@ export default function LeadQuotesManager({ leadId }: Props) {
                     )}
 
                     {(status === 'quote_submitted' || status === 'validated') && quote?.quote_file_url && (
-                      <a
-                        href={quote.quote_file_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="px-3 py-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 flex items-center gap-2 text-sm"
-                      >
-                        <Eye className="w-4 h-4" />
-                        Voir devis
-                      </a>
+                      <>
+                        <button
+                          onClick={() => setEmailModal({
+                            companyId: company.id,
+                            companyName: company.name,
+                            quoteAmount: quote.quote_amount,
+                            quoteUrl: quote.quote_file_url!
+                          })}
+                          disabled={sendingEmail === company.id}
+                          className="px-3 py-2 bg-green-600 text-white rounded hover:bg-green-700 flex items-center gap-2 text-sm disabled:opacity-50"
+                        >
+                          <Mail className="w-4 h-4" />
+                          {sendingEmail === company.id ? 'Envoi...' : 'Envoyer par email'}
+                        </button>
+                        <a
+                          href={quote.quote_file_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-3 py-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 flex items-center gap-2 text-sm"
+                        >
+                          <Eye className="w-4 h-4" />
+                          Voir
+                        </a>
+                      </>
                     )}
                   </div>
                 </div>
@@ -321,6 +403,78 @@ export default function LeadQuotesManager({ leadId }: Props) {
           })}
         </div>
       </div>
+
+      {emailModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold flex items-center gap-2">
+                <Mail className="w-5 h-5 text-green-600" />
+                Envoyer le devis par email
+              </h3>
+              <button
+                onClick={() => {
+                  setEmailModal(null);
+                  setEmailMessage('');
+                }}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <p className="text-sm text-blue-800">
+                  <strong>Devis : </strong>{emailModal.companyName}
+                </p>
+                {emailModal.quoteAmount && (
+                  <p className="text-sm text-blue-800 mt-1">
+                    <strong>Montant : </strong>{emailModal.quoteAmount.toFixed(2)} €/an
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Message personnalisé (optionnel)
+                </label>
+                <textarea
+                  value={emailMessage}
+                  onChange={(e) => setEmailMessage(e.target.value)}
+                  rows={5}
+                  className="w-full border border-gray-300 rounded px-3 py-2 bg-white text-gray-900 placeholder-gray-400"
+                  placeholder="Ajoutez un message personnalisé pour votre prospect..."
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Ce message sera affiché dans l'email envoyé au prospect avec le devis en pièce jointe.
+                </p>
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={handleSendQuoteEmail}
+                  disabled={sendingEmail === emailModal.companyId}
+                  className="flex-1 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 font-semibold"
+                >
+                  <Send className="w-4 h-4" />
+                  {sendingEmail === emailModal.companyId ? 'Envoi en cours...' : 'Envoyer le devis'}
+                </button>
+                <button
+                  onClick={() => {
+                    setEmailModal(null);
+                    setEmailMessage('');
+                  }}
+                  className="px-4 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
+                  disabled={sendingEmail === emailModal.companyId}
+                >
+                  Annuler
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {activeModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
