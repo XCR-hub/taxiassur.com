@@ -79,29 +79,65 @@ const QuoteQueueDashboard: React.FC = () => {
     setIsLoading(false);
   };
 
-  const claimLead = async (queueId: string) => {
+  const claimLead = async (queueId: string, leadId: string) => {
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    if (!user) {
+      alert('Vous devez être connecté pour prendre un lead');
+      return;
+    }
 
-    await supabase.from('ready_for_quote_queue').update({
-      claimed_by: user.id,
-      claimed_at: new Date().toISOString(),
-      status: 'claimed'
-    }).eq('id', queueId);
+    try {
+      const { error } = await supabase.from('ready_for_quote_queue').update({
+        claimed_by: user.id,
+        claimed_at: new Date().toISOString(),
+        status: 'claimed'
+      }).eq('id', queueId);
 
-    loadData();
+      if (error) throw error;
+
+      // Notification de succès
+      console.log('Lead récupéré avec succès:', leadId);
+
+      await loadData();
+    } catch (error) {
+      console.error('Erreur lors de la prise en charge:', error);
+      alert('Erreur lors de la prise en charge du lead');
+    }
   };
 
   const startQuote = async (item: QueueItem) => {
-    await supabase.from('ready_for_quote_queue').update({
-      status: 'in_progress'
-    }).eq('id', item.id);
+    if (!item.lead_id) {
+      alert('Erreur: Lead ID manquant');
+      return;
+    }
 
-    await supabase.from('crm_leads').update({
-      current_stage_key: 'quote_pending'
-    }).eq('id', item.lead_id);
+    try {
+      // Mettre à jour le statut de la queue
+      const { error: queueError } = await supabase
+        .from('ready_for_quote_queue')
+        .update({
+          status: 'in_progress'
+        })
+        .eq('id', item.id);
 
-    navigate(`/backoffice/crm/lead/${item.lead_id}`);
+      if (queueError) throw queueError;
+
+      // Mettre à jour le statut du lead
+      const { error: leadError } = await supabase
+        .from('crm_leads')
+        .update({
+          current_stage_key: 'quote_pending'
+        })
+        .eq('id', item.lead_id);
+
+      if (leadError) throw leadError;
+
+      // Naviguer vers la page du lead
+      navigate(`/backoffice/crm/lead/${item.lead_id}`);
+    } catch (error) {
+      console.error('Erreur lors du démarrage du devis:', error);
+      alert('Erreur lors du démarrage du processus de devis');
+    }
   };
 
   const getWaitTime = (addedAt: string) => {
@@ -282,8 +318,9 @@ const QuoteQueueDashboard: React.FC = () => {
                   {item.status === 'waiting' ? (
                     <>
                       <button
-                        onClick={() => claimLead(item.id)}
+                        onClick={() => claimLead(item.id, item.lead_id)}
                         className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                        title="Prendre en charge ce lead"
                       >
                         <Play className="w-4 h-4" />
                         Prendre
@@ -299,8 +336,16 @@ const QuoteQueueDashboard: React.FC = () => {
                     </button>
                   )}
                   <button
-                    onClick={() => navigate(`/backoffice/crm/lead/${item.lead_id}`)}
+                    onClick={() => {
+                      console.log('Navigation vers lead:', item.lead_id);
+                      if (!item.lead_id) {
+                        alert('Erreur: Lead ID manquant');
+                        return;
+                      }
+                      navigate(`/backoffice/crm/lead/${item.lead_id}`);
+                    }}
                     className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition"
+                    title="Voir le détail du lead"
                   >
                     <Eye className="w-5 h-5" />
                   </button>
