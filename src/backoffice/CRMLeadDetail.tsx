@@ -57,7 +57,8 @@ import {
   TimelineCard,
   IntelligentContactPanel,
   DocumentReminderPanel,
-  CallLoggerModal
+  CallLoggerModal,
+  ContractWorkflowManager
 } from '@/components/crm';
 import DocumentDragDropSimple from '@/components/crm/DocumentDragDropSimple';
 import type { WorkflowTab } from '@/components/crm';
@@ -1059,31 +1060,7 @@ Je reste à votre disposition pour toute information complémentaire.`;
 
             {activeTab === 'contract' && (
               <div className="space-y-6">
-                <PipelineLocksStatus leadId={lead.id} />
-
-                <DownPaymentManager
-                  contractId={contractData?.id || ''}
-                  leadId={lead.id}
-                  currentStatus={contractData?.down_payment_status as any}
-                  currentAmount={contractData?.down_payment_amount || 0}
-                  requiresPayment={contractData?.requires_down_payment || false}
-                  paymentLink={contractData?.down_payment_link}
-                  paidAt={contractData?.down_payment_paid_at}
-                  transactionId={contractData?.down_payment_transaction_id}
-                  onPaymentUpdated={() => {
-                    loadStats(lead.id);
-                  }}
-                />
-
-                <PaymentManager
-                  leadId={lead.id}
-                  onUpdate={() => loadLeadData(lead.id)}
-                />
-
-                <ContractSignatureManager
-                  leadId={lead.id}
-                  onUpdate={() => loadLeadData(lead.id)}
-                />
+                <ContractWorkflowManager leadId={lead.id} />
 
                 {(!contractData?.requires_down_payment || contractData?.down_payment_status === 'paid') && (
                   <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
