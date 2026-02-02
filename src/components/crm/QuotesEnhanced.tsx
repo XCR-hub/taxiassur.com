@@ -151,6 +151,17 @@ export default function QuotesEnhanced({
       return;
     }
 
+    if (!quote.quote_file_url) {
+      alert('Aucun fichier de devis disponible');
+      return;
+    }
+
+    const company = quote.insurance_company;
+    if (!company) {
+      alert('Compagnie d\'assurance introuvable');
+      return;
+    }
+
     setSendingEmail(quote.id);
     try {
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-quote-email`, {
@@ -161,12 +172,18 @@ export default function QuotesEnhanced({
         },
         body: JSON.stringify({
           lead_id: leadId,
-          quote_id: quote.id,
-          to: leadEmail
+          company_id: company.id,
+          company_name: company.name,
+          quote_file_url: quote.quote_file_url,
+          quote_amount: quote.annual_premium,
+          personal_message: ''
         })
       });
 
-      if (!response.ok) throw new Error('Erreur envoi email');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Erreur envoi email');
+      }
 
       const { error: updateError } = await supabase
         .from('lead_company_quotes')
@@ -368,7 +385,7 @@ export default function QuotesEnhanced({
 
         {safeQuotes.map((quote) => {
           const company = quote.insurance_company;
-          if (!company) return null;
+          if (!company || !company.name) return null;
 
           const statusColors = {
             pending: 'bg-amber-50 border-amber-200 text-amber-700',
@@ -452,7 +469,7 @@ export default function QuotesEnhanced({
                       }}
                       accept=".pdf,.jpg,.jpeg,.png"
                       disabled={uploading === quote.id}
-                      autocomplete="off"
+                      autoComplete="off"
                       aria-label={`Uploader le devis pour ${company.name}`}
                     />
                     <ContextualTooltip content="Uploader le devis reçu de la compagnie" type="tip">
