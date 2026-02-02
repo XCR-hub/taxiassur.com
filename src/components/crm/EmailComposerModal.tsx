@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { LegalDocumentsSelector } from './LegalDocumentsSelector';
+import { LeadDocumentsSelector } from './LeadDocumentsSelector';
 
 interface EmailTemplate {
   id: string;
@@ -332,6 +333,8 @@ export function EmailComposerModal({
   const [selectedTemplate, setSelectedTemplate] = useState(defaultTemplate || '');
   const [showLegalDocs, setShowLegalDocs] = useState(false);
   const [selectedLegalDocs, setSelectedLegalDocs] = useState<LegalDocument[]>([]);
+  const [showLeadDocs, setShowLeadDocs] = useState(false);
+  const [selectedLeadDocs, setSelectedLeadDocs] = useState<any[]>([]);
   const [customAttachments, setCustomAttachments] = useState<CustomAttachment[]>([]);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState('');
@@ -486,6 +489,12 @@ export function EmailComposerModal({
         type: 'legal'
       }));
 
+      const leadAttachments = selectedLeadDocs.map(doc => ({
+        filename: doc.name,
+        url: doc.file_url,
+        type: 'lead_document'
+      }));
+
       const customAttachmentsData = customAttachments
         .filter(a => a.uploaded && a.url)
         .map(a => ({
@@ -494,7 +503,7 @@ export function EmailComposerModal({
           type: 'custom'
         }));
 
-      const allAttachments = [...legalAttachments, ...customAttachmentsData];
+      const allAttachments = [...legalAttachments, ...leadAttachments, ...customAttachmentsData];
 
       // 3. Send email
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-crm-email`, {
@@ -526,6 +535,7 @@ export function EmailComposerModal({
         status: 'sent',
         metadata: {
           legal_attachments: selectedLegalDocs.map(d => d.name),
+          lead_attachments: selectedLeadDocs.map(d => d.name),
           custom_attachments: customAttachments.map(a => a.name)
         }
       });
@@ -538,6 +548,7 @@ export function EmailComposerModal({
         setSubject('');
         setBody('');
         setSelectedLegalDocs([]);
+        setSelectedLeadDocs([]);
         setCustomAttachments([]);
       }, 1500);
     } catch (err) {
@@ -695,6 +706,56 @@ export function EmailComposerModal({
                     <span
                       key={doc.id}
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-teal-50 text-teal-700 text-sm rounded-full border border-teal-200"
+                    >
+                      <FileText className="w-4 h-4" />
+                      {doc.name}
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              {/* Section Documents du Lead */}
+              <div className="border border-gray-200 rounded-lg overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => setShowLeadDocs(!showLeadDocs)}
+                  className="w-full px-4 py-3 bg-gradient-to-r from-blue-50 to-cyan-50 hover:from-blue-100 hover:to-cyan-100 transition-colors flex items-center justify-between text-left"
+                >
+                  <div className="flex items-center gap-2">
+                    <FileText className="w-5 h-5 text-blue-600" />
+                    <span className="font-medium text-gray-900">
+                      Documents, Devis & Contrats du Lead
+                    </span>
+                    {selectedLeadDocs.length > 0 && (
+                      <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs font-medium rounded-full">
+                        {selectedLeadDocs.length} sélectionné{selectedLeadDocs.length > 1 ? 's' : ''}
+                      </span>
+                    )}
+                  </div>
+                  {showLeadDocs ? (
+                    <ChevronUp className="w-5 h-5 text-gray-400" />
+                  ) : (
+                    <ChevronDown className="w-5 h-5 text-gray-400" />
+                  )}
+                </button>
+
+                {showLeadDocs && (
+                  <div className="p-4 border-t border-gray-200">
+                    <LeadDocumentsSelector
+                      leadId={lead.id}
+                      onDocumentsSelected={setSelectedLeadDocs}
+                      selectedDocuments={selectedLeadDocs}
+                    />
+                  </div>
+                )}
+              </div>
+
+              {selectedLeadDocs.length > 0 && !showLeadDocs && (
+                <div className="flex flex-wrap gap-2">
+                  {selectedLeadDocs.map(doc => (
+                    <span
+                      key={doc.id}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 text-sm rounded-full border border-blue-200"
                     >
                       <FileText className="w-4 h-4" />
                       {doc.name}
