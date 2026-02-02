@@ -152,37 +152,47 @@ export const LeadHeader: React.FC<LeadHeaderProps> = ({
   );
 
   return (
-    <div className="bg-white border-b border-gray-200 shadow-sm">
-      <div className="max-w-7xl mx-auto px-6 py-6">
-        <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
-          <div className="flex items-start gap-4">
-            <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white text-2xl font-bold shadow-lg">
+    <div className="bg-white border-b border-gray-200">
+      <div className="max-w-7xl mx-auto px-4 py-3">
+        {/* Ligne 1: Infos principales compactes */}
+        <div className="flex items-center justify-between gap-4 mb-3">
+          <div className="flex items-center gap-3 flex-1 min-w-0">
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white text-sm font-bold shadow flex-shrink-0">
               {lead.first_name?.[0]?.toUpperCase() || 'L'}
               {lead.last_name?.[0]?.toUpperCase() || ''}
             </div>
 
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900 mb-1">{lead.full_name}</h1>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-1">
+                <h1 className="text-lg font-bold text-gray-900 truncate">{lead.full_name}</h1>
+                {lead.source && (
+                  <span className="px-2 py-0.5 bg-gray-100 rounded text-xs text-gray-600 flex-shrink-0">
+                    {lead.source}
+                  </span>
+                )}
+              </div>
 
-              <div className="flex flex-wrap items-center gap-3 text-sm">
-                <div className="flex items-center gap-1.5 text-gray-600">
-                  <Mail className="w-4 h-4" />
-                  <span>{lead.email}</span>
+              <div className="flex flex-wrap items-center gap-2 text-xs text-gray-600">
+                <div className="flex items-center gap-1">
+                  <Mail className="w-3 h-3" />
+                  <span className="truncate max-w-[200px]">{lead.email}</span>
                   <button
                     onClick={() => copyToClipboard(lead.email)}
-                    className="p-1 hover:bg-gray-100 rounded"
+                    className="p-0.5 hover:bg-gray-100 rounded"
                     title="Copier"
                   >
                     <Copy className="w-3 h-3 text-gray-400" />
                   </button>
                 </div>
 
-                <div className="flex items-center gap-1.5 text-gray-600">
-                  <Phone className="w-4 h-4" />
+                <span className="text-gray-300">•</span>
+
+                <div className="flex items-center gap-1">
+                  <Phone className="w-3 h-3" />
                   <span>{lead.phone}</span>
                   <button
                     onClick={() => copyToClipboard(lead.phone)}
-                    className="p-1 hover:bg-gray-100 rounded"
+                    className="p-0.5 hover:bg-gray-100 rounded"
                     title="Copier"
                   >
                     <Copy className="w-3 h-3 text-gray-400" />
@@ -190,97 +200,75 @@ export const LeadHeader: React.FC<LeadHeaderProps> = ({
                 </div>
 
                 {lead.city && (
-                  <div className="flex items-center gap-1.5 text-gray-600">
-                    <MapPin className="w-4 h-4" />
-                    <span>{lead.city}</span>
-                  </div>
+                  <>
+                    <span className="text-gray-300">•</span>
+                    <div className="flex items-center gap-1">
+                      <MapPin className="w-3 h-3" />
+                      <span>{lead.city}</span>
+                    </div>
+                  </>
                 )}
 
-                {lead.company_name && (
-                  <div className="flex items-center gap-1.5 text-gray-600">
-                    <Building2 className="w-4 h-4" />
-                    <span>{lead.company_name}</span>
-                  </div>
-                )}
-              </div>
-
-              <div className="flex items-center gap-4 mt-3 text-xs text-gray-500">
+                <span className="text-gray-300">•</span>
                 <div className="flex items-center gap-1">
-                  <Calendar className="w-3.5 h-3.5" />
-                  <span>Cree le {formatDate(lead.created_at)}</span>
-                  <span className="text-gray-400">({daysSinceCreation}j)</span>
+                  <Calendar className="w-3 h-3" />
+                  <span>{formatDate(lead.created_at)} ({daysSinceCreation}j)</span>
                 </div>
-                {lead.source && (
-                  <span className="px-2 py-0.5 bg-gray-100 rounded text-gray-600">
-                    Source: {lead.source}
-                  </span>
-                )}
               </div>
             </div>
           </div>
 
-          <div className="flex flex-col items-end gap-3">
-            <div className="flex items-center gap-3">
-              {lead.quality_score !== undefined && (
-                <div className="text-right">
-                  <div className="text-xs text-gray-500 mb-1">Score qualite</div>
-                  <div className={`text-2xl font-bold ${
-                    lead.quality_score >= 70 ? 'text-green-600' :
-                    lead.quality_score >= 40 ? 'text-yellow-600' : 'text-red-600'
-                  }`}>
-                    {lead.quality_score}%
-                  </div>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {lead.quality_score !== undefined && (
+              <div className="text-center px-2">
+                <div className="text-xs text-gray-500">Score</div>
+                <div className={`text-lg font-bold ${
+                  lead.quality_score >= 70 ? 'text-green-600' :
+                  lead.quality_score >= 40 ? 'text-yellow-600' : 'text-red-600'
+                }`}>
+                  {lead.quality_score}%
                 </div>
-              )}
-
-              <div className={`px-4 py-2 rounded-lg font-semibold text-sm ${
-                lead.status === 'won' ? 'bg-green-100 text-green-700' :
-                lead.status === 'lost' ? 'bg-red-100 text-red-700' :
-                'bg-blue-100 text-blue-700'
-              }`}>
-                {statusInfo.icon} {statusInfo.label}
               </div>
+            )}
+
+            <div className={`px-3 py-1.5 rounded-lg font-semibold text-xs ${
+              lead.status === 'won' ? 'bg-green-100 text-green-700' :
+              lead.status === 'lost' ? 'bg-red-100 text-red-700' :
+              'bg-blue-100 text-blue-700'
+            }`}>
+              {statusInfo.icon} {statusInfo.label}
             </div>
 
-            <div className="flex flex-col items-end gap-2">
-              {prospectUrl && !isActiveClient && (
-                <a
-                  href={prospectUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs text-blue-600 hover:text-blue-700 flex items-center gap-1"
-                >
-                  <ExternalLink className="w-3 h-3" />
-                  Voir espace prospect
-                </a>
-              )}
-              {isActiveClient && (
-                <button
-                  onClick={handleSendClientAccess}
-                  disabled={sendingAccess}
-                  className="text-xs bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  {sendingAccess ? (
-                    <>
-                      <Loader2 className="w-3 h-3 animate-spin" />
-                      Envoi en cours...
-                    </>
-                  ) : (
-                    <>
-                      <Send className="w-3 h-3" />
-                      Envoyer accès espace client
-                    </>
-                  )}
-                </button>
-              )}
-            </div>
+            {prospectUrl && !isActiveClient && (
+              <a
+                href={prospectUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-blue-600 hover:text-blue-700 flex items-center gap-1 px-2 py-1 hover:bg-blue-50 rounded transition-colors"
+                title="Voir espace prospect"
+              >
+                <ExternalLink className="w-3 h-3" />
+              </a>
+            )}
+            {isActiveClient && (
+              <button
+                onClick={handleSendClientAccess}
+                disabled={sendingAccess}
+                className="text-xs bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                title="Envoyer accès espace client"
+              >
+                {sendingAccess ? (
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                ) : (
+                  <Send className="w-3 h-3" />
+                )}
+              </button>
+            )}
           </div>
         </div>
 
-        <div className="mt-6">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-medium text-gray-500">Progression pipeline</span>
-          </div>
+        {/* Ligne 2: Progression pipeline compacte */}
+        <div>
           <div className="flex items-center gap-1">
             {PIPELINE_STEPS.map((step, index) => {
               const isCompleted = step.order < currentStepOrder;
@@ -326,14 +314,14 @@ export const LeadHeader: React.FC<LeadHeaderProps> = ({
                         ? 'Étape complétée'
                         : 'Non disponible'
                     }
-                    className={`flex-1 py-2 px-3 rounded-lg text-xs font-medium transition-all ${
+                    className={`flex-1 py-1.5 px-2 rounded text-xs font-medium transition-all ${
                       isCompleted
-                        ? 'bg-green-100 text-green-700 border border-green-200'
+                        ? 'bg-green-100 text-green-700'
                         : isCurrent
-                        ? 'bg-blue-600 text-white shadow-md'
+                        ? 'bg-blue-600 text-white'
                         : isAvailable
-                        ? 'bg-gray-100 text-gray-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer border border-gray-200 hover:border-blue-200'
-                        : 'bg-gray-50 text-gray-400 cursor-not-allowed border border-gray-100'
+                        ? 'bg-gray-100 text-gray-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer'
+                        : 'bg-gray-50 text-gray-400 cursor-not-allowed'
                     }`}
                   >
                     <div className="flex items-center justify-center gap-1">
@@ -342,7 +330,7 @@ export const LeadHeader: React.FC<LeadHeaderProps> = ({
                     </div>
                   </button>
                   {index < PIPELINE_STEPS.length - 1 && (
-                    <ChevronRight className="w-4 h-4 text-gray-300 flex-shrink-0" />
+                    <ChevronRight className="w-3 h-3 text-gray-300 flex-shrink-0" />
                   )}
                 </React.Fragment>
               );
