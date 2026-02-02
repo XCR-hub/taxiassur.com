@@ -7,16 +7,121 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
 };
 
-interface EmailRequest {
-  to_email: string;
-  to_name: string;
-  subject: string;
-  content: string;
-  lead_id?: string;
+interface Attachment {
+  filename: string;
+  path?: string;     // Pour documents légaux (chemin local)
+  url?: string;      // Pour documents lead/custom (URL publique)
+  type: 'legal' | 'lead_document' | 'custom';
 }
 
-function base64Encode(str: string): string {
-  return btoa(str);
+interface EmailRequest {
+  to: string;
+  subject: string;
+  body: string;
+  lead_id?: string;
+  attachments?: Attachment[];
+}
+
+// Fonction pour télécharger un fichier depuis une URL
+async function downloadFile(url: string): Promise<Uint8Array> {
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`Failed to download file from ${url}`);
+  }
+  const arrayBuffer = await response.arrayBuffer();
+  return new Uint8Array(arrayBuffer);
+}
+
+// Fonction pour lire un fichier local (pour documents légaux)
+async function readLocalFile(path: string): Promise<Uint8Array> {
+  try {
+    // Les fichiers sont dans /public, on les lit depuis le Supabase Storage
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const fileUrl = `${supabaseUrl}/storage/v1/object/public${path}`;
+    return await downloadFile(fileUrl);
+  } catch (error) {
+    console.error(`Error reading local file ${path}:`, error);
+    throw error;
+  }
+}
+
+async function sendEmailBrevo(
+  to: string,
+  subject: string,
+  htmlBody: string,
+  attachments: Attachment[] = []
+): Promise<void> {
+  const BREVO_API_KEY = Deno.env.get("BREVO_API_KEY");
+
+  if (!BREVO_API_KEY) {
+    throw new Error("BREVO_API_KEY not configured");
+  }
+
+  // Préparer les pièces jointes
+  const brevoAttachments = [];
+
+  for (const attachment of attachments) {
+    try {
+      let fileContent: Uint8Array;
+
+      // Télécharger le fichier selon son type
+      if (attachment.path) {
+        // Document légal (fichier local)
+        fileContent = await readLocalFile(attachment.path);
+      } else if (attachment.url) {
+        // Document lead ou custom (URL)
+        fileContent = await downloadFile(attachment.url);
+      } else {
+        console.warn(`Attachment ${attachment.filename} has no path or url, skipping`);
+        continue;
+      }
+
+      // Encoder en base64
+      const base64Content = btoa(String.fromCharCode(...fileContent));
+
+      brevoAttachments.push({
+        name: attachment.filename,
+        content: base64Content
+      });
+
+      console.log(`✅ Attachment prepared: ${attachment.filename} (${fileContent.length} bytes)`);
+    } catch (error) {
+      console.error(`❌ Error preparing attachment ${attachment.filename}:`, error);
+      // Continue with other attachments
+    }
+  }
+
+  // Construire le payload Brevo
+  const payload = {
+    sender: {
+      name: "TaxiAssur",
+      email: "team@taxiassur.com"
+    },
+    to: [{ email: to }],
+    subject: subject,
+    htmlContent: htmlBody,
+    ...(brevoAttachments.length > 0 && { attachment: brevoAttachments })
+  };
+
+  console.log(`📤 Sending email via Brevo with ${brevoAttachments.length} attachments`);
+
+  const response = await fetch("https://api.brevo.com/v3/smtp/email", {
+    method: "POST",
+    headers: {
+      "Accept": "application/json",
+      "Content-Type": "application/json",
+      "api-key": BREVO_API_KEY
+    },
+    body: JSON.stringify(payload)
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Brevo API error: ${response.status} - ${errorText}`);
+  }
+
+  const result = await response.json();
+  console.log("✅ Email sent via Brevo:", result.messageId);
 }
 
 function addLinkTracking(html: string, trackingId: string, supabaseUrl: string): string {
@@ -39,82 +144,6 @@ function addTrackingPixel(html: string, trackingId: string, supabaseUrl: string)
   return html + pixel;
 }
 
-async function sendEmailSMTP(
-  to: string,
-  toName: string,
-  subject: string,
-  htmlBody: string,
-  fromEmail: string = "team@taxiassur.com",
-  fromName: string = "TaxiAssur"
-): Promise<void> {
-  const SMTP_HOST = Deno.env.get("IONOS_SMTP_HOST") || "smtp.ionos.fr";
-  const SMTP_PORT = parseInt(Deno.env.get("IONOS_SMTP_PORT") || "465");
-  const SMTP_USER = Deno.env.get("IONOS_EMAIL_USER") || "team@taxiassur.com";
-  const SMTP_PASS = Deno.env.get("IONOS_EMAIL_PASSWORD");
-
-  if (!SMTP_PASS) {
-    throw new Error("IONOS_EMAIL_PASSWORD not configured");
-  }
-
-  // Port 465 utilise SSL/TLS direct, pas STARTTLS
-  const conn = await Deno.connectTls({
-    hostname: SMTP_HOST,
-    port: SMTP_PORT,
-  });
-
-  const encoder = new TextEncoder();
-  const decoder = new TextDecoder();
-
-  async function readResponse(): Promise<string> {
-    const buffer = new Uint8Array(1024);
-    const n = await conn.read(buffer);
-    if (n === null) return "";
-    return decoder.decode(buffer.subarray(0, n));
-  }
-
-  async function sendCommand(command: string): Promise<string> {
-    await conn.write(encoder.encode(command + "\r\n"));
-    return await readResponse();
-  }
-
-  try {
-    // Lire le banner du serveur
-    await readResponse();
-
-    // Envoi de EHLO
-    await sendCommand(`EHLO taxiassur.com`);
-
-    // Authentification
-    await sendCommand("AUTH LOGIN");
-    await sendCommand(base64Encode(SMTP_USER));
-    await sendCommand(base64Encode(SMTP_PASS));
-
-    // Envoi de l'email
-    await sendCommand(`MAIL FROM:<${fromEmail}>`);
-    await sendCommand(`RCPT TO:<${to}>`);
-    await sendCommand("DATA");
-
-    const emailContent = [
-      `From: ${fromName} <${fromEmail}>`,
-      `To: ${toName} <${to}>`,
-      `Subject: ${subject}`,
-      `MIME-Version: 1.0`,
-      `Content-Type: text/html; charset=UTF-8`,
-      `Content-Transfer-Encoding: 8bit`,
-      ``,
-      htmlBody,
-      `.`,
-    ].join("\r\n");
-
-    await sendCommand(emailContent);
-    await sendCommand("QUIT");
-    conn.close();
-  } catch (error) {
-    conn.close();
-    throw error;
-  }
-}
-
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 200, headers: corsHeaders });
@@ -127,10 +156,13 @@ Deno.serve(async (req: Request) => {
     const subject = body.subject;
     const content = body.content || body.body;
     const lead_id = body.lead_id;
+    const attachments: Attachment[] = body.attachments || [];
 
     if (!to_email || !subject || !content) {
       throw new Error("Champs obligatoires manquants: to/to_email, subject, content/body");
     }
+
+    console.log(`📧 Preparing email to ${to_email} with ${attachments.length} attachments`);
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -194,6 +226,33 @@ Deno.serve(async (req: Request) => {
           }
           .message-content p, .message-content span, .message-content div {
             color: #111827 !important;
+          }
+          .attachments-info {
+            background: #eff6ff;
+            border: 1px solid #3b82f6;
+            border-radius: 8px;
+            padding: 15px 20px;
+            margin: 20px 0;
+          }
+          .attachments-info h3 {
+            color: #1e40af !important;
+            font-size: 16px;
+            margin-bottom: 10px;
+            font-weight: 700;
+          }
+          .attachments-info ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+          }
+          .attachments-info li {
+            color: #1e40af !important;
+            padding: 5px 0;
+            font-size: 14px;
+          }
+          .attachments-info li:before {
+            content: "📎 ";
+            margin-right: 8px;
           }
           .cta-section {
             text-align: center;
@@ -283,6 +342,15 @@ Deno.serve(async (req: Request) => {
               ${content.replace(/\n/g, '<br>')}
             </div>
 
+            ${attachments.length > 0 ? `
+              <div class="attachments-info">
+                <h3>📎 Documents joints (${attachments.length})</h3>
+                <ul>
+                  ${attachments.map(a => `<li>${a.filename}</li>`).join('')}
+                </ul>
+              </div>
+            ` : ''}
+
             <div class="cta-section">
               <p>Vous avez une question ? Nous sommes là pour vous !</p>
               <a href="mailto:team@taxiassur.com" class="cta-button">
@@ -331,18 +399,17 @@ Deno.serve(async (req: Request) => {
       emailBody = addTrackingPixel(emailBody, trackingId, supabaseUrl);
     }
 
-    console.log("📤 Envoi email CRM IONOS avec tracking:", trackingId);
+    console.log("📤 Envoi email CRM avec tracking:", trackingId);
 
-    await sendEmailSMTP(
+    // Envoyer via Brevo avec support des pièces jointes
+    await sendEmailBrevo(
       to_email,
-      to_name || "",
       subject,
       emailBody,
-      "team@taxiassur.com",
-      "TaxiAssur"
+      attachments
     );
 
-    console.log("✅ Email CRM envoyé avec succès à", to_email);
+    console.log("✅ Email CRM envoyé avec succès à", to_email, "avec", attachments.length, "pièces jointes");
 
     if (lead_id) {
       await supabase.from('crm_interactions').insert({
@@ -352,16 +419,21 @@ Deno.serve(async (req: Request) => {
         subject: subject,
         content: content,
         to_email: to_email,
-        from_email: 'team@taxiassur.com'
+        from_email: 'team@taxiassur.com',
+        metadata: {
+          attachments_count: attachments.length,
+          attachments_names: attachments.map(a => a.filename)
+        }
       });
     }
 
     return new Response(
       JSON.stringify({
         success: true,
-        message: "Email envoyé avec succès via IONOS avec tracking",
+        message: `Email envoyé avec succès avec ${attachments.length} pièces jointes`,
         to: to_email,
-        tracking_id: trackingId
+        tracking_id: trackingId,
+        attachments_sent: attachments.length
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
