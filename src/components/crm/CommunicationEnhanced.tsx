@@ -476,37 +476,46 @@ export default function CommunicationEnhanced({
         {activeChannel === 'email' && (
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="email-recipient" className="block text-sm font-medium text-gray-700 mb-2">
                 Destinataire
               </label>
               <input
-                type="text"
+                id="email-recipient"
+                name="email-recipient"
+                type="email"
                 value={leadEmail}
                 disabled
+                autoComplete="email"
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-600"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="email-subject" className="block text-sm font-medium text-gray-700 mb-2">
                 Sujet *
               </label>
               <input
+                id="email-subject"
+                name="email-subject"
                 type="text"
                 value={emailSubject}
                 onChange={(e) => setEmailSubject(e.target.value)}
                 placeholder="Objet de l'email..."
+                autoComplete="off"
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="email-body" className="block text-sm font-medium text-gray-700 mb-2">
                 Message *
               </label>
               <textarea
+                id="email-body"
+                name="email-body"
                 value={emailBody}
                 onChange={(e) => setEmailBody(e.target.value)}
                 rows={8}
                 placeholder="Votre message..."
+                autoComplete="off"
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
               />
             </div>
@@ -534,26 +543,32 @@ export default function CommunicationEnhanced({
         {activeChannel === 'sms' && (
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="sms-phone" className="block text-sm font-medium text-gray-700 mb-2">
                 Numéro
               </label>
               <input
-                type="text"
+                id="sms-phone"
+                name="sms-phone"
+                type="tel"
                 value={leadPhone}
                 disabled
+                autoComplete="tel"
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-600"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="sms-body" className="block text-sm font-medium text-gray-700 mb-2">
                 Message * <span className="text-xs text-gray-500">({smsBody.length}/160 caractères)</span>
               </label>
               <textarea
+                id="sms-body"
+                name="sms-body"
                 value={smsBody}
                 onChange={(e) => setSmsBody(e.target.value)}
                 rows={4}
                 maxLength={160}
                 placeholder="Votre message SMS..."
+                autoComplete="off"
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
               />
             </div>
@@ -581,25 +596,31 @@ export default function CommunicationEnhanced({
         {activeChannel === 'whatsapp' && (
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="whatsapp-phone" className="block text-sm font-medium text-gray-700 mb-2">
                 Numéro WhatsApp
               </label>
               <input
-                type="text"
+                id="whatsapp-phone"
+                name="whatsapp-phone"
+                type="tel"
                 value={leadPhone}
                 disabled
+                autoComplete="tel"
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-600"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="whatsapp-body" className="block text-sm font-medium text-gray-700 mb-2">
                 Message *
               </label>
               <textarea
+                id="whatsapp-body"
+                name="whatsapp-body"
                 value={whatsappBody}
                 onChange={(e) => setWhatsappBody(e.target.value)}
                 rows={6}
                 placeholder="Votre message WhatsApp..."
+                autoComplete="off"
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
               />
             </div>

@@ -67,7 +67,7 @@ export default function QuotesEnhanced({
   const loadData = async () => {
     setLoading(true);
     try {
-      // Load quotes
+      // Load quotes with error handling
       const { data: quotesData, error: quotesError } = await supabase
         .from('lead_company_quotes')
         .select(`
@@ -77,9 +77,13 @@ export default function QuotesEnhanced({
         .eq('lead_id', leadId)
         .order('created_at', { ascending: false });
 
-      if (quotesError) throw quotesError;
-
-      setQuotes(quotesData || []);
+      if (quotesError) {
+        console.error('Error loading quotes:', quotesError);
+        // Don't throw, just set empty array
+        setQuotes([]);
+      } else {
+        setQuotes(quotesData || []);
+      }
 
       // Load all insurance companies
       const { data: companiesData, error: companiesError } = await supabase
@@ -88,11 +92,17 @@ export default function QuotesEnhanced({
         .eq('active', true)
         .order('name');
 
-      if (companiesError) throw companiesError;
-
-      setInsuranceCompanies(companiesData || []);
+      if (companiesError) {
+        console.error('Error loading companies:', companiesError);
+        setInsuranceCompanies([]);
+      } else {
+        setInsuranceCompanies(companiesData || []);
+      }
     } catch (error) {
-      console.error('Error loading:', error);
+      console.error('Error loading data:', error);
+      // Ensure state is set even on error
+      setQuotes([]);
+      setInsuranceCompanies([]);
     } finally {
       setLoading(false);
     }
@@ -217,16 +227,19 @@ export default function QuotesEnhanced({
     }
   };
 
+  // Safely handle quotes array
+  const safeQuotes = Array.isArray(quotes) ? quotes : [];
+
   const stats = {
-    total: quotes.length,
-    pending: quotes.filter(q => q.status === 'pending').length,
-    received: quotes.filter(q => q.status === 'received').length,
-    refused: quotes.filter(q => q.status === 'refused').length,
-    sent: quotes.filter(q => q.status === 'sent').length,
-    accepted: quotes.filter(q => q.status === 'accepted').length
+    total: safeQuotes.length,
+    pending: safeQuotes.filter(q => q.status === 'pending').length,
+    received: safeQuotes.filter(q => q.status === 'received').length,
+    refused: safeQuotes.filter(q => q.status === 'refused').length,
+    sent: safeQuotes.filter(q => q.status === 'sent').length,
+    accepted: safeQuotes.filter(q => q.status === 'accepted').length
   };
 
-  const receivedQuotes = quotes.filter(q => q.status === 'received' && q.annual_premium);
+  const receivedQuotes = safeQuotes.filter(q => q.status === 'received' && q.annual_premium);
   const bestQuote = receivedQuotes.length > 0
     ? receivedQuotes.reduce((min, q) => q.annual_premium! < min.annual_premium! ? q : min)
     : null;
@@ -353,7 +366,7 @@ export default function QuotesEnhanced({
           />
         </div>
 
-        {quotes.map((quote) => {
+        {safeQuotes.map((quote) => {
           const company = quote.insurance_company;
           if (!company) return null;
 
@@ -427,8 +440,10 @@ export default function QuotesEnhanced({
 
               {quote.status === 'pending' && (
                 <div className="flex gap-2">
-                  <label className="flex-1">
+                  <label htmlFor={`quote-upload-${quote.id}`} className="flex-1">
                     <input
+                      id={`quote-upload-${quote.id}`}
+                      name={`quote-file-${quote.id}`}
                       type="file"
                       className="hidden"
                       onChange={(e) => {
@@ -437,6 +452,8 @@ export default function QuotesEnhanced({
                       }}
                       accept=".pdf,.jpg,.jpeg,.png"
                       disabled={uploading === quote.id}
+                      autocomplete="off"
+                      aria-label={`Uploader le devis pour ${company.name}`}
                     />
                     <ContextualTooltip content="Uploader le devis reçu de la compagnie" type="tip">
                       <span className={cn(
@@ -548,7 +565,7 @@ export default function QuotesEnhanced({
           );
         })}
 
-        {quotes.length === 0 && (
+        {safeQuotes.length === 0 && (
           <div className="text-center py-12 bg-gray-50 rounded-xl border-2 border-dashed border-gray-300">
             <Building2 className="w-16 h-16 text-gray-400 mx-auto mb-4" />
             <p className="text-gray-600 mb-2">Aucun devis demandé</p>
