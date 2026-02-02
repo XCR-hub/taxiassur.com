@@ -613,17 +613,47 @@ const CRMLeadDetail: React.FC = () => {
     }
   };
 
-  const handleRequestDocuments = (missingDocs: string[]) => {
-    setEmailMissingDocs(missingDocs);
-    setEmailDefaultSubject('');
-    setEmailDefaultBody('');
-    setEmailModalOpen(true);
-  };
-
   const openEmailComposer = () => {
     setEmailDefaultSubject('');
     setEmailDefaultBody('');
     setEmailMissingDocs([]);
+    setEmailModalOpen(true);
+  };
+
+  const handleRequestDocuments = () => {
+    // Préparer le message de demande de documents
+    const leadName = [lead?.first_name, lead?.last_name].filter(Boolean).join(' ') || lead?.company_name || 'Client';
+
+    // Lister les documents manquants
+    const docsManquants = missingDocumentsList.length > 0
+      ? missingDocumentsList
+      : [
+          'Carte grise du véhicule',
+          'Permis de conduire',
+          'Carte professionnelle de taxi',
+          'Justificatif de domicile',
+          'RIB'
+        ];
+
+    const subject = `Documents nécessaires pour votre assurance taxi - TaxiAssur`;
+
+    const body = `Bonjour ${leadName},
+
+Pour finaliser votre dossier d'assurance taxi et vous transmettre vos devis personnalisés, nous avons besoin des documents suivants :
+
+${docsManquants.map((doc, idx) => `${idx + 1}. ${doc}`).join('\n')}
+
+Vous pouvez nous transmettre ces documents :
+• Par email en réponse à ce message
+• Directement via votre espace personnel : ${window.location.origin}/prospect/documents/${lead?.access_token}
+
+N'hésitez pas à nous contacter si vous avez des questions ou besoin d'assistance.
+
+Je reste à votre disposition pour toute information complémentaire.`;
+
+    setEmailDefaultSubject(subject);
+    setEmailDefaultBody(body);
+    setEmailMissingDocs(docsManquants);
     setEmailModalOpen(true);
   };
 
@@ -635,7 +665,7 @@ const CRMLeadDetail: React.FC = () => {
         openEmailComposer();
         break;
       case 'request_docs':
-        setActiveTab('documents');
+        handleRequestDocuments();
         break;
       case 'create_quote':
         setActiveTab('quotes');
@@ -1251,7 +1281,7 @@ const CRMLeadDetail: React.FC = () => {
                   setTimeout(() => setShowCallLogger(true), 500);
                 }
               }}
-              onRequestDocuments={() => setActiveTab('documents')}
+              onRequestDocuments={handleRequestDocuments}
             />
 
             <TimelineCard
