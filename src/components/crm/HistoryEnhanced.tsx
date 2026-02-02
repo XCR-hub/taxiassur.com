@@ -66,11 +66,15 @@ export default function HistoryEnhanced({ leadId, onRefresh }: HistoryEnhancedPr
     setLoading(true);
     try {
       // Load emails
-      const { data: emails } = await supabase
+      const { data: emails, error: emailError } = await supabase
         .from('email_messages')
         .select('*')
         .eq('lead_id', leadId)
-        .order('sent_at', { ascending: false });
+        .order('received_at', { ascending: false });
+
+      if (emailError) {
+        console.error('Error loading emails:', emailError);
+      }
 
       // Load timeline
       const { data: timeline } = await supabase
@@ -80,11 +84,15 @@ export default function HistoryEnhanced({ leadId, onRefresh }: HistoryEnhancedPr
         .order('created_at', { ascending: false });
 
       // Load interactions
-      const { data: interactions } = await supabase
+      const { data: interactions, error: interactionsError } = await supabase
         .from('crm_interactions')
         .select('*')
         .eq('lead_id', leadId)
-        .order('interaction_date', { ascending: false });
+        .order('created_at', { ascending: false });
+
+      if (interactionsError) {
+        console.error('Error loading interactions:', interactionsError);
+      }
 
       // Merge all events
       const allEvents: HistoryEvent[] = [];
@@ -99,7 +107,7 @@ export default function HistoryEnhanced({ leadId, onRefresh }: HistoryEnhancedPr
             content: email.preview || email.subject || '',
             fullContent: email.body_text || email.body_html || '',
             subject: email.subject,
-            created_at: email.sent_at || email.created_at,
+            created_at: email.received_at || email.created_at,
             created_by: email.from_email,
             direction: email.direction,
             status: email.status
@@ -125,12 +133,20 @@ export default function HistoryEnhanced({ leadId, onRefresh }: HistoryEnhancedPr
       // Add interactions
       if (interactions) {
         interactions.forEach(interaction => {
+          const channelLabels: Record<string, string> = {
+            email: 'Email',
+            sms: 'SMS',
+            whatsapp: 'WhatsApp',
+            call: 'Appel',
+            note: 'Note'
+          };
+
           allEvents.push({
             id: `interaction-${interaction.id}`,
-            type: interaction.interaction_type as any,
-            title: `${interaction.interaction_type} - ${interaction.subject || 'Sans objet'}`,
-            content: interaction.notes || '',
-            created_at: interaction.interaction_date,
+            type: interaction.channel as any,
+            title: channelLabels[interaction.channel] || interaction.channel,
+            content: interaction.content || '',
+            created_at: interaction.created_at,
             created_by: 'TaxiAssur',
             direction: interaction.direction
           });
@@ -139,6 +155,13 @@ export default function HistoryEnhanced({ leadId, onRefresh }: HistoryEnhancedPr
 
       // Sort by date desc
       allEvents.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+      console.log('[HistoryEnhanced] Loaded events:', {
+        emails: emails?.length || 0,
+        timeline: timeline?.length || 0,
+        interactions: interactions?.length || 0,
+        total: allEvents.length
+      });
 
       setEvents(allEvents);
     } catch (error) {
