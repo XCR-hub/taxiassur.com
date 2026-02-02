@@ -585,7 +585,7 @@ const EspaceProspect: React.FC = () => {
                     Comparez les offres des meilleures compagnies et choisissez celle qui vous convient.
                   </p>
                 </div>
-                {leadInfo && <ClientQuotesViewer leadId={leadInfo.id} />}
+                {token && <ClientQuotesViewer token={token} />}
               </div>
             )}
           </div>
