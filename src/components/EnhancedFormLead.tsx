@@ -81,25 +81,31 @@ const EnhancedFormLead: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
+    logger.log('📋 Form submit started');
+
     if (rateLimitState.blocked) {
       alert('Trop de tentatives. Veuillez patienter avant de soumettre à nouveau.');
       return;
     }
 
     // Security validation
+    logger.log('🔒 Checking security...');
     const securityCheck = await validateSecurity(formData);
     if (!securityCheck.valid) {
       logger.warn('Security validation failed:', securityCheck.errors);
       return; // Silent fail for bots
     }
-    
+
+    logger.log('✅ Security check passed');
     setIsSubmitting(true);
     recordAttempt();
 
     try {
+      logger.log('📊 Tracking form submit...');
       trackFormSubmit(formData);
 
+      logger.log('🚀 Calling createLead API...');
       const result = await createLead({
         name: formData.name,
         email: formData.email,
@@ -110,15 +116,20 @@ const EnhancedFormLead: React.FC = () => {
         source: 'website'
       });
 
+      logger.log('📥 API response:', result);
+
       if (result.success) {
+        logger.log('✅ Lead created successfully, redirecting...');
         trackFormComplete();
         const tokenParam = result.accessToken ? `?token=${result.accessToken}` : '';
         navigate(`/merci${tokenParam}`);
       } else {
+        logger.error('❌ Lead creation failed:', result.error);
         alert(result.error || 'Erreur lors de l\'envoi. Veuillez réessayer.');
       }
     } catch (error) {
-      logger.error('Form submission error:', error);
+      logger.error('💥 Form submission error:', error);
+      console.error('Full error details:', error);
       alert('Erreur de connexion. Veuillez réessayer.');
     } finally {
       setIsSubmitting(false);

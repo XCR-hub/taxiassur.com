@@ -53,15 +53,24 @@ const LeadForm: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!validateForm()) return;
-    
+
+    logger.log('📋 LeadForm submit started');
+
+    if (!validateForm()) {
+      logger.warn('❌ Form validation failed');
+      return;
+    }
+
     // Anti-spam check
-    if (formData.honeypot) return;
-    
+    if (formData.honeypot) {
+      logger.warn('🚫 Honeypot triggered');
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
+      logger.log('🚀 Creating lead...');
       const result = await createLead({
         name: formData.name,
         email: formData.email,
@@ -72,15 +81,20 @@ const LeadForm: React.FC = () => {
         source: 'website'
       });
 
+      logger.log('📥 Result:', result);
+
       if (result.success) {
+        logger.log('✅ Success, redirecting...');
         trackLeadSubmission(formData);
         const tokenParam = result.accessToken ? `?token=${result.accessToken}` : '';
         window.location.href = `/merci${tokenParam}`;
       } else {
+        logger.error('❌ Lead creation failed:', result.error);
         alert(result.error || 'Erreur lors de l\'envoi. Veuillez réessayer.');
       }
     } catch (error) {
-      logger.error('Form submission error:', error);
+      logger.error('💥 Form submission error:', error);
+      console.error('Full error:', error);
       alert('Erreur de connexion. Veuillez réessayer.');
     } finally {
       setIsSubmitting(false);

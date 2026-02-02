@@ -341,13 +341,22 @@ export interface CreateLeadInput {
 
 export async function createLead(input: CreateLeadInput): Promise<{ success: boolean; error?: string; leadId?: string; accessToken?: string }> {
   try {
-    logger.log('Creating lead in Supabase:', { name: input.name, email: input.email });
+    logger.log('🚀 Starting lead creation:', { name: input.name, email: input.email, phone: input.phone });
 
     const nameParts = input.name.trim().split(/\s+/);
     const firstName = nameParts[0] || 'Client';
     const lastName = nameParts.slice(1).join(' ') || '';
 
     const vehicleType = input.status === 'vtc' ? 'VTC' : input.status === 'autre' ? 'Autre' : 'Taxi';
+
+    logger.log('📝 Preparing insert data...', {
+      first_name: firstName,
+      last_name: lastName,
+      email: input.email,
+      phone: input.phone,
+      city: input.city,
+      status: 'NOUVEAU_LEAD'
+    });
 
     const { data, error } = await supabase
       .from('crm_leads')
@@ -371,26 +380,26 @@ export async function createLead(input: CreateLeadInput): Promise<{ success: boo
       .single();
 
     if (error) {
-      logger.error('Supabase error creating lead:', error);
+      logger.error('❌ Supabase error creating lead:', error);
+      logger.error('Error details:', JSON.stringify(error, null, 2));
       return { success: false, error: error.message };
     }
 
-    logger.log('Lead created successfully in crm_leads:', data?.id);
+    logger.log('✅ Lead created successfully in crm_leads:', data?.id);
 
-    // Envoyer les emails IMMÉDIATEMENT et de manière synchrone
-    try {
-      await sendLeadNotificationEmails({
-        ...data,
-        name: input.name,
-        status: input.status,
-        immatriculation: input.immatriculation
-      });
+    // Envoyer les emails de manière NON-BLOQUANTE
+    sendLeadNotificationEmails({
+      ...data,
+      name: input.name,
+      status: input.status,
+      immatriculation: input.immatriculation
+    }).then(() => {
       logger.log('✅ Emails envoyés avec succès');
-    } catch (emailError) {
-      logger.error('❌ ERREUR EMAILS:', emailError);
-      // Ne pas bloquer la création du lead, mais logger l'erreur clairement
-    }
+    }).catch((emailError) => {
+      logger.error('❌ ERREUR EMAILS (non bloquante):', emailError);
+    });
 
+    // Retourner immédiatement le succès sans attendre les emails
     return { success: true, leadId: data?.id, accessToken: data?.access_token };
   } catch (error: any) {
     logger.error('Failed to create lead:', error);
