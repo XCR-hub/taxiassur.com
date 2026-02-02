@@ -58,7 +58,8 @@ import {
   IntelligentContactPanel,
   DocumentReminderPanel,
   CallLoggerModal,
-  ContractWorkflowManager
+  ContractWorkflowManager,
+  LeadOverviewEnhanced
 } from '@/components/crm';
 import DocumentDragDropSimple from '@/components/crm/DocumentDragDropSimple';
 import LeadDocumentsComplete from '@/components/crm/LeadDocumentsComplete';
@@ -843,7 +844,71 @@ Je reste à votre disposition pour toute information complémentaire.`;
           <div className="lg:col-span-2 space-y-6">
             {activeTab === 'overview' && (
               <>
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <LeadOverviewEnhanced
+                  lead={{
+                    id: lead.id,
+                    first_name: lead.first_name,
+                    last_name: lead.last_name,
+                    email: lead.email,
+                    phone: lead.phone,
+                    city: lead.city,
+                    status: lead.status,
+                    quality_score: lead.quality_score || 0,
+                    created_at: lead.created_at,
+                    last_contact_at: (lead as any).last_contact_at,
+                    immatriculation: (lead as any).immatriculation,
+                    internal_notes: (lead as any).internal_notes
+                  }}
+                  stats={{
+                    documentsComplete,
+                    documentsMissing,
+                    quotesCount,
+                    interactionsCount: messages.length,
+                    daysInPipeline: Math.floor((Date.now() - new Date(lead.created_at).getTime()) / (1000 * 60 * 60 * 24)),
+                    conversionProbability: lead.quality_score || 0,
+                    engagementLevel: messages.length > 10 ? 'high' : messages.length > 5 ? 'medium' : 'low'
+                  }}
+                  onEdit={() => setEditing(true)}
+                  onSave={async (updatedData) => {
+                    setSaving(true);
+                    try {
+                      const { error } = await supabase
+                        .from('crm_leads')
+                        .update(updatedData)
+                        .eq('id', lead.id);
+
+                      if (error) throw error;
+
+                      await loadLeadData(lead.id);
+                    } catch (error) {
+                      console.error('Error saving:', error);
+                      throw error;
+                    } finally {
+                      setSaving(false);
+                    }
+                  }}
+                  onActionTrigger={(action) => {
+                    switch (action) {
+                      case 'send_email':
+                        openEmailComposer();
+                        break;
+                      case 'call':
+                        if (lead.phone) {
+                          window.open(`tel:${lead.phone}`, '_self');
+                          setTimeout(() => setShowCallLogger(true), 500);
+                        }
+                        break;
+                      case 'request_documents':
+                        handleRequestDocuments();
+                        break;
+                      default:
+                        handleSuggestedAction(action);
+                        break;
+                    }
+                  }}
+                />
+
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6" style={{display: 'none'}}>
                   <div className="flex items-center justify-between mb-6">
                     <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
                       <User className="w-5 h-5 text-blue-600" />
