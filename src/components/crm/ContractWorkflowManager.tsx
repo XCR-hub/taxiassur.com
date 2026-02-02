@@ -44,12 +44,12 @@ interface Payment {
 }
 
 const DOCUMENT_TYPES = {
-  devis: { label: 'Devis', icon: FileText, color: 'blue' },
-  contrat: { label: 'Contrat', icon: FileSignature, color: 'green' },
-  attestation: { label: 'Attestation', icon: CheckCircle, color: 'purple' },
-  conditions_generales: { label: 'Conditions Générales', icon: FileText, color: 'gray' },
-  ipid: { label: 'IPID', icon: FileText, color: 'gray' },
-  mandat_sepa: { label: 'Mandat SEPA', icon: CreditCard, color: 'orange' }
+  devis: { label: 'Devis', icon: FileText, iconColor: 'text-blue-600' },
+  contrat: { label: 'Contrat', icon: FileSignature, iconColor: 'text-green-600' },
+  attestation: { label: 'Attestation', icon: CheckCircle, iconColor: 'text-purple-600' },
+  conditions_generales: { label: 'Conditions Générales', icon: FileText, iconColor: 'text-gray-600' },
+  ipid: { label: 'IPID', icon: FileText, iconColor: 'text-gray-600' },
+  mandat_sepa: { label: 'Mandat SEPA', icon: CreditCard, iconColor: 'text-orange-600' }
 };
 
 export default function ContractWorkflowManager({ leadId, companyId: initialCompanyId }: Props) {
@@ -237,14 +237,14 @@ export default function ContractWorkflowManager({ leadId, companyId: initialComp
     <div className="space-y-6">
       {/* Sélecteur de compagnie */}
       {availableCompanies.length > 1 && (
-        <div className="bg-white rounded-lg border p-4">
-          <label className="block text-sm font-semibold text-gray-700 mb-2">
+        <div className="bg-white rounded-lg border border-gray-300 p-4">
+          <label className="block text-sm font-bold text-gray-900 mb-2">
             Compagnie d'assurance
           </label>
           <select
             value={selectedCompanyId || ''}
             onChange={(e) => setSelectedCompanyId(e.target.value)}
-            className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="w-full border border-gray-300 rounded-lg px-4 py-3 text-gray-900 font-semibold bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           >
             {availableCompanies.map(c => (
               <option key={c.id} value={c.id}>
@@ -260,8 +260,8 @@ export default function ContractWorkflowManager({ leadId, companyId: initialComp
         <div className="flex items-center gap-3">
           <Building2 className={`w-6 h-6 ${isGrossiste ? 'text-blue-600' : 'text-green-600'}`} />
           <div>
-            <h3 className="font-bold text-lg">{company.name}</h3>
-            <p className={`text-sm ${isGrossiste ? 'text-blue-700' : 'text-green-700'}`}>
+            <h3 className="font-bold text-lg text-gray-900">{company.name}</h3>
+            <p className={`text-sm font-semibold ${isGrossiste ? 'text-blue-800' : 'text-green-800'}`}>
               {isGrossiste ? '🏢 Courtier Grossiste - Suivi documentaire uniquement' : '⚡ Délégation Totale - Workflow complet TaxiAssur'}
             </p>
           </div>
@@ -269,8 +269,8 @@ export default function ContractWorkflowManager({ leadId, companyId: initialComp
       </div>
 
       {/* Upload de documents */}
-      <div className="bg-white rounded-lg border p-6">
-        <h4 className="font-bold text-lg mb-4">📄 Documents du contrat</h4>
+      <div className="bg-white rounded-lg border border-gray-300 p-6">
+        <h4 className="font-bold text-lg text-gray-900 mb-4">📄 Documents du contrat</h4>
 
         <div className="grid md:grid-cols-2 gap-4">
           {Object.entries(DOCUMENT_TYPES).map(([type, config]) => {
@@ -278,11 +278,11 @@ export default function ContractWorkflowManager({ leadId, companyId: initialComp
             const Icon = config.icon;
 
             return (
-              <div key={type} className="border rounded-lg p-4">
+              <div key={type} className="border border-gray-300 rounded-lg p-4 bg-white">
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-2">
-                    <Icon className={`w-5 h-5 text-${config.color}-600`} />
-                    <span className="font-semibold">{config.label}</span>
+                    <Icon className={`w-5 h-5 ${config.iconColor}`} />
+                    <span className="font-semibold text-gray-900">{config.label}</span>
                   </div>
                   {doc && (
                     <div className="flex items-center gap-2 text-sm">
@@ -296,13 +296,13 @@ export default function ContractWorkflowManager({ leadId, companyId: initialComp
 
                 {doc ? (
                   <div className="space-y-2">
-                    <p className="text-sm text-gray-600 truncate">{doc.document_name}</p>
+                    <p className="text-sm text-gray-700 truncate font-medium">{doc.document_name}</p>
                     <div className="flex gap-2">
                       <a
                         href={doc.file_url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
+                        className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm font-semibold"
                       >
                         <Eye className="w-4 h-4" />
                         Voir
@@ -310,7 +310,7 @@ export default function ContractWorkflowManager({ leadId, companyId: initialComp
                       {isDelegation && doc.requires_signature && !doc.is_signed && (
                         <button
                           onClick={() => handleRequestSignature(doc)}
-                          className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-green-600 text-white rounded hover:bg-green-700 text-sm"
+                          className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-green-600 text-white rounded hover:bg-green-700 text-sm font-semibold"
                         >
                           <FileSignature className="w-4 h-4" />
                           Signer
@@ -329,18 +329,18 @@ export default function ContractWorkflowManager({ leadId, companyId: initialComp
                     />
                     <div className={`flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${
                       uploading && uploadType === type
-                        ? 'border-blue-300 bg-blue-50'
-                        : 'border-gray-300 hover:border-blue-500 hover:bg-blue-50'
+                        ? 'border-blue-400 bg-blue-50 text-blue-700'
+                        : 'border-gray-400 hover:border-blue-500 hover:bg-blue-50 text-gray-700 hover:text-blue-700'
                     }`}>
                       {uploading && uploadType === type ? (
                         <>
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                          <span className="text-sm">Upload...</span>
+                          <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
+                          <span className="text-sm font-semibold">Upload...</span>
                         </>
                       ) : (
                         <>
                           <Upload className="w-4 h-4" />
-                          <span className="text-sm">Uploader</span>
+                          <span className="text-sm font-semibold">Uploader</span>
                         </>
                       )}
                     </div>
@@ -354,8 +354,8 @@ export default function ContractWorkflowManager({ leadId, companyId: initialComp
 
       {/* Section Paiement (uniquement pour délégation totale) */}
       {isDelegation && (
-        <div className="bg-white rounded-lg border p-6">
-          <h4 className="font-bold text-lg mb-4">💳 Paiement</h4>
+        <div className="bg-white rounded-lg border border-gray-300 p-6">
+          <h4 className="font-bold text-lg text-gray-900 mb-4">💳 Paiement</h4>
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
             <p className="text-sm text-yellow-800">
               <strong>Workflow Generali :</strong> Une fois le devis signé, vous devrez enregistrer le paiement comptant ou le prélèvement.
@@ -365,12 +365,12 @@ export default function ContractWorkflowManager({ leadId, companyId: initialComp
           {payments.length > 0 && (
             <div className="mt-4 space-y-2">
               {payments.map(payment => (
-                <div key={payment.id} className="flex items-center justify-between p-3 bg-gray-50 rounded">
+                <div key={payment.id} className="flex items-center justify-between p-3 bg-gray-50 rounded border border-gray-200">
                   <div>
-                    <span className="font-semibold">{payment.payment_type}</span>
-                    <span className="text-gray-600 ml-2">{payment.amount} €</span>
+                    <span className="font-semibold text-gray-900">{payment.payment_type}</span>
+                    <span className="text-gray-700 ml-2 font-medium">{payment.amount} €</span>
                   </div>
-                  <span className={`px-2 py-1 rounded text-xs font-semibold ${
+                  <span className={`px-3 py-1 rounded text-xs font-bold ${
                     payment.status === 'completed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
                   }`}>
                     {payment.status}
@@ -385,21 +385,21 @@ export default function ContractWorkflowManager({ leadId, companyId: initialComp
       {/* Modal signature */}
       {showSignatureModal && documentToSign && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-2xl w-full p-6">
+          <div className="bg-white rounded-lg max-w-2xl w-full p-6 shadow-2xl">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold">Signature électronique</h3>
+              <h3 className="text-lg font-bold text-gray-900">Signature électronique</h3>
               <button
                 onClick={() => {
                   setShowSignatureModal(false);
                   setDocumentToSign(null);
                 }}
-                className="text-gray-500 hover:text-gray-700"
+                className="text-gray-500 hover:text-gray-700 text-2xl font-bold"
               >
                 ✕
               </button>
             </div>
-            <p className="text-sm text-gray-600 mb-4">
-              Document : <strong>{documentToSign.document_name}</strong>
+            <p className="text-sm text-gray-700 mb-4">
+              Document : <strong className="text-gray-900">{documentToSign.document_name}</strong>
             </p>
             <ElectronicSignature
               onSignatureComplete={handleSignatureComplete}
