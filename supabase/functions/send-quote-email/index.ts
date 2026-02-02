@@ -21,12 +21,29 @@ function base64Encode(str: string): string {
 }
 
 async function downloadFile(url: string): Promise<Uint8Array> {
-  const response = await fetch(url);
-  if (!response.ok) {
-    throw new Error(`Erreur téléchargement fichier: ${response.statusText}`);
+  // Timeout de 30 secondes pour le téléchargement
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+  try {
+    console.log("📥 Téléchargement du fichier...");
+    const response = await fetch(url, { signal: controller.signal });
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      throw new Error(`Erreur téléchargement fichier: ${response.statusText}`);
+    }
+
+    const arrayBuffer = await response.arrayBuffer();
+    console.log(`✅ Fichier téléchargé: ${arrayBuffer.byteLength} bytes`);
+    return new Uint8Array(arrayBuffer);
+  } catch (error: any) {
+    clearTimeout(timeoutId);
+    if (error.name === 'AbortError') {
+      throw new Error('Timeout lors du téléchargement du fichier (> 30s)');
+    }
+    throw error;
   }
-  const arrayBuffer = await response.arrayBuffer();
-  return new Uint8Array(arrayBuffer);
 }
 
 function generateBoundary(): string {

@@ -208,32 +208,49 @@ export default function LeadQuotesManager({ leadId }: Props) {
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
       const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-      const response = await fetch(`${supabaseUrl}/functions/v1/send-quote-email`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session?.access_token || anonKey}`,
-        },
-        body: JSON.stringify({
-          lead_id: leadId,
-          company_id: emailModal.companyId,
-          company_name: emailModal.companyName,
-          quote_file_url: emailModal.quoteUrl,
-          quote_amount: emailModal.quoteAmount,
-          personal_message: emailMessage || undefined,
-        }),
-      });
+      // Créer un timeout de 60 secondes
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 60000);
 
-      const result = await response.json();
+      try {
+        const response = await fetch(`${supabaseUrl}/functions/v1/send-quote-email`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session?.access_token || anonKey}`,
+          },
+          body: JSON.stringify({
+            lead_id: leadId,
+            company_id: emailModal.companyId,
+            company_name: emailModal.companyName,
+            quote_file_url: emailModal.quoteUrl,
+            quote_amount: emailModal.quoteAmount,
+            personal_message: emailMessage || undefined,
+          }),
+          signal: controller.signal
+        });
 
-      if (!response.ok) {
-        throw new Error(result.error || 'Erreur lors de l\'envoi de l\'email');
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+          const result = await response.json().catch(() => ({ error: 'Erreur réseau' }));
+          throw new Error(result.error || `Erreur ${response.status}: ${response.statusText}`);
+        }
+
+        const result = await response.json();
+
+        alert(`✅ Devis envoyé avec succès à ${result.to}`);
+        setEmailModal(null);
+        setEmailMessage('');
+        loadData();
+      } catch (fetchError: any) {
+        clearTimeout(timeoutId);
+
+        if (fetchError.name === 'AbortError') {
+          throw new Error('⏱️ L\'envoi a pris trop de temps. Le devis est peut-être en cours d\'envoi. Veuillez vérifier dans quelques instants.');
+        }
+        throw fetchError;
       }
-
-      alert(`✅ Devis envoyé avec succès à ${result.to}`);
-      setEmailModal(null);
-      setEmailMessage('');
-      loadData();
     } catch (error: any) {
       console.error('Erreur envoi email devis:', error);
       alert(error.message || 'Erreur lors de l\'envoi de l\'email');
