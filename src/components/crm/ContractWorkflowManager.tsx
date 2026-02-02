@@ -389,13 +389,16 @@ export default function ContractWorkflowManager({ leadId, companyId: initialComp
                 ) : (
                   <>
                     {isDelegation ? (
-                      <label className="block">
+                      <label htmlFor={`upload-${type}-${leadId}`} className="block">
                         <input
+                          id={`upload-${type}-${leadId}`}
+                          name={`upload-${type}`}
                           type="file"
                           onChange={(e) => handleFileUpload(e, type)}
                           accept=".pdf,.jpg,.jpeg,.png"
                           className="hidden"
                           disabled={uploading}
+                          aria-label={`Uploader ${config.label}`}
                         />
                         <div className={`flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${
                           uploading && uploadType === type
