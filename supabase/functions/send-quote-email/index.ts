@@ -84,8 +84,14 @@ async function sendEmailWithAttachment(
 
     const boundary = generateBoundary();
 
-    // Encode attachment to base64
-    const attachmentBase64 = btoa(String.fromCharCode(...attachmentData));
+    // Encode attachment to base64 (handle large files by chunking)
+    let binaryString = '';
+    const chunkSize = 8192; // Process 8KB at a time to avoid stack overflow
+    for (let i = 0; i < attachmentData.length; i += chunkSize) {
+      const chunk = attachmentData.subarray(i, Math.min(i + chunkSize, attachmentData.length));
+      binaryString += String.fromCharCode(...chunk);
+    }
+    const attachmentBase64 = btoa(binaryString);
 
     // Split base64 into 76 character lines
     const attachmentLines = attachmentBase64.match(/.{1,76}/g)?.join('\r\n') || attachmentBase64;
