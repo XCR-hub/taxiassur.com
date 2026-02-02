@@ -143,17 +143,21 @@ Deno.serve(async (req: Request) => {
     // Get lead info
     const { data: lead, error: leadError } = await supabase
       .from('crm_leads')
-      .select('name, email, phone')
+      .select('first_name, last_name, email, phone, company_name')
       .eq('id', lead_id)
       .single();
 
     if (leadError || !lead) {
+      console.error("Lead not found error:", leadError);
       throw new Error("Lead introuvable");
     }
 
     if (!lead.email) {
       throw new Error("Le prospect n'a pas d'email");
     }
+
+    // Construire le nom complet
+    const fullName = [lead.first_name, lead.last_name].filter(Boolean).join(' ') || lead.company_name || 'Client';
 
     // Download PDF file
     console.log("📥 Téléchargement du devis depuis:", quote_file_url);
@@ -318,7 +322,7 @@ Deno.serve(async (req: Request) => {
     </div>
 
     <div class="content">
-      <h2>Bonjour ${lead.name || ""},</h2>
+      <h2>Bonjour ${fullName},</h2>
 
       <p style="color: #4b5563 !important; font-size: 16px; margin-bottom: 20px;">
         Nous avons le plaisir de vous faire parvenir votre devis d'assurance taxi personnalisé.
@@ -380,7 +384,7 @@ Deno.serve(async (req: Request) => {
 
     await sendEmailWithAttachment(
       lead.email,
-      lead.name || "",
+      fullName,
       subject,
       htmlBody,
       pdfData,
