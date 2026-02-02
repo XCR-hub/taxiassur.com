@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import AnimatedStatCard from '@/components/AnimatedStatCard';
 import ContextualTooltip from '@/components/ContextualTooltip';
+import DocumentBasket from './DocumentBasket';
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
 
@@ -317,6 +318,15 @@ export default function DocumentsEnhanced({
           </div>
         )}
       </div>
+
+      {/* Réceptacle de Documents avec Drag & Drop */}
+      <DocumentBasket
+        caseId={leadId}
+        onDocumentClassified={() => {
+          loadDocuments();
+          onDocumentUpload?.();
+        }}
+      />
 
       {/* Catégories de documents */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
