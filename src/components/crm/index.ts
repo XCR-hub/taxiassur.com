@@ -41,3 +41,5 @@ export { default as LeadOverviewEnhanced } from './LeadOverviewEnhanced';
 export { default as DocumentsEnhanced } from './DocumentsEnhanced';
 export { default as QuotesEnhanced } from './QuotesEnhanced';
 export { default as HistoryEnhanced } from './HistoryEnhanced';
+export { default as CommunicationEnhanced } from './CommunicationEnhanced';
+export { default as NotificationCenterEnhanced } from './NotificationCenterEnhanced';

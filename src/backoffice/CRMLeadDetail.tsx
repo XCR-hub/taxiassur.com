@@ -62,7 +62,9 @@ import {
   LeadOverviewEnhanced,
   DocumentsEnhanced,
   QuotesEnhanced,
-  HistoryEnhanced
+  HistoryEnhanced,
+  CommunicationEnhanced,
+  NotificationCenterEnhanced
 } from '@/components/crm';
 import DocumentDragDropSimple from '@/components/crm/DocumentDragDropSimple';
 import LeadDocumentsComplete from '@/components/crm/LeadDocumentsComplete';
@@ -1166,102 +1168,13 @@ Je reste à votre disposition pour toute information complémentaire.`;
 
 
             {activeTab === 'communication' && (
-              <div className="space-y-6">
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                  <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                    <Send className="w-5 h-5 text-blue-600" />
-                    Envoyer un message
-                  </h2>
-
-                  <div className="grid grid-cols-3 gap-4">
-                    <button
-                      onClick={openEmailComposer}
-                      className="p-4 bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all shadow-md"
-                    >
-                      <Mail className="w-8 h-8 mx-auto mb-2" />
-                      <span className="font-medium">Email</span>
-                    </button>
-
-                    <button
-                      onClick={() => setShowSMSModal(true)}
-                      className="p-4 bg-gradient-to-br from-green-500 to-green-600 text-white rounded-xl hover:from-green-600 hover:to-green-700 transition-all shadow-md"
-                    >
-                      <MessageSquare className="w-8 h-8 mx-auto mb-2" />
-                      <span className="font-medium">SMS</span>
-                    </button>
-
-                    <button
-                      onClick={() => setShowWhatsAppModal(true)}
-                      className="p-4 bg-gradient-to-br from-emerald-500 to-emerald-600 text-white rounded-xl hover:from-emerald-600 hover:to-emerald-700 transition-all shadow-md"
-                    >
-                      <Phone className="w-8 h-8 mx-auto mb-2" />
-                      <span className="font-medium">WhatsApp</span>
-                    </button>
-                  </div>
-                </div>
-
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                  <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                      <History className="w-5 h-5 text-blue-600" />
-                      Conversation recente
-                    </h2>
-                    <button
-                      onClick={() => loadMessages(lead.id)}
-                      disabled={loadingMessages}
-                      className="flex items-center gap-2 px-3 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors text-sm"
-                    >
-                      <RefreshCw className={`w-4 h-4 ${loadingMessages ? 'animate-spin' : ''}`} />
-                      Actualiser
-                    </button>
-                  </div>
-
-                  <div className="space-y-3 max-h-[500px] overflow-y-auto">
-                    {messages.slice(0, 10).map((msg) => (
-                      <div
-                        key={msg.id}
-                        className={`flex gap-3 p-4 rounded-lg border ${
-                          msg.direction === 'inbound'
-                            ? 'bg-blue-50 border-blue-200'
-                            : 'bg-gray-50 border-gray-200'
-                        }`}
-                      >
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
-                          msg.type === 'email' ? 'bg-blue-100 text-blue-600' :
-                          msg.type === 'sms' ? 'bg-green-100 text-green-600' :
-                          msg.type === 'whatsapp' ? 'bg-emerald-100 text-emerald-600' :
-                          'bg-gray-100 text-gray-600'
-                        }`}>
-                          {msg.type === 'email' && <Mail className="w-5 h-5" />}
-                          {msg.type === 'sms' && <MessageSquare className="w-5 h-5" />}
-                          {msg.type === 'whatsapp' && <Phone className="w-5 h-5" />}
-                          {msg.type === 'system' && <Bot className="w-5 h-5" />}
-                          {msg.type === 'note' && <FileText className="w-5 h-5" />}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="font-medium text-gray-900 text-sm">{msg.sent_by}</span>
-                            <span className="text-xs text-gray-500">
-                              {new Date(msg.sent_at).toLocaleString('fr-FR')}
-                            </span>
-                          </div>
-                          {msg.subject && (
-                            <div className="text-sm font-medium text-gray-700 mb-1">{msg.subject}</div>
-                          )}
-                          <p className="text-sm text-gray-600 line-clamp-3">{msg.content}</p>
-                        </div>
-                      </div>
-                    ))}
-
-                    {messages.length === 0 && (
-                      <div className="text-center py-12 text-gray-500">
-                        <MessageSquare className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                        <p>Aucun message</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
+              <CommunicationEnhanced
+                leadId={lead.id}
+                leadName={lead.name}
+                leadEmail={lead.email}
+                leadPhone={lead.phone}
+                onMessageSent={() => loadMessages(lead.id)}
+              />
             )}
 
             {activeTab === 'history' && (
