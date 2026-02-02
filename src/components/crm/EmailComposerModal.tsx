@@ -150,11 +150,18 @@ VOTRE OFFRE EN RESUME :
 Ce devis est valable 30 jours.
 
 PROCHAINE ETAPE :
-Pour valider ce devis et souscrire, vous pouvez :
+Pour consulter et valider votre devis, acces direct a votre espace personnel :
+>> {{prospect_link}}
+
+Sur votre espace, vous pourrez :
+- Consulter votre devis detaille
+- Comparer les offres
+- Valider et souscrire en ligne
+- Completer vos documents si necessaire
+
+Vous pouvez aussi :
 1. Nous rappeler au 01 76 39 00 60
 2. Repondre a cet email
-3. Telecharger les documents complementaires sur votre espace :
-   {{upload_link}}
 
 Je reste a votre disposition pour toute question.
 
@@ -180,7 +187,7 @@ Pour rappel, votre offre comprend :
 
 Si vous souhaitez modifier votre offre ou obtenir plus d'informations, je suis a votre disposition.
 
->> Consulter votre espace : {{upload_link}}
+>> Consulter votre devis et votre espace : {{prospect_link}}
 
 Cordialement,
 L'equipe TaxiAssur
@@ -362,8 +369,16 @@ export function EmailComposerModal({
     return 'https://taxiassur.com/espace-client';
   };
 
+  const getProspectLink = () => {
+    if (lead.access_token) {
+      return `https://taxiassur.com/prospect/${lead.access_token}`;
+    }
+    return 'https://taxiassur.com/espace-client';
+  };
+
   const replaceVariables = (text: string, missingDocs?: string[]) => {
     const uploadLink = getUploadLink();
+    const prospectLink = getProspectLink();
 
     let missingDocsText = '';
     if (missingDocs && missingDocs.length > 0) {
@@ -381,6 +396,7 @@ export function EmailComposerModal({
       .replace(/\{\{last_name\}\}/g, lead.last_name || '')
       .replace(/\{\{company_name\}\}/g, lead.company_name || '')
       .replace(/\{\{city\}\}/g, lead.city || '')
+      .replace(/\{\{prospect_link\}\}/g, prospectLink)
       .replace(/\{\{upload_link\}\}/g, uploadLink)
       .replace(/\{\{missing_documents\}\}/g, missingDocsText);
   };
@@ -662,7 +678,7 @@ export function EmailComposerModal({
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900 placeholder-gray-400 text-base leading-relaxed resize-none"
                 />
                 <p className="text-xs text-gray-500 mt-1.5">
-                  Variables disponibles : {'{{first_name}}'}, {'{{last_name}}'}, {'{{upload_link}}'}, {'{{missing_documents}}'}
+                  Variables : {'{{first_name}}'}, {'{{last_name}}'}, {'{{prospect_link}}'} (espace complet), {'{{upload_link}}'} (documents), {'{{missing_documents}}'}
                 </p>
               </div>
 
