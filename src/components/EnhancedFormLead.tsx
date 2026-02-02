@@ -208,6 +208,10 @@ const EnhancedFormLead: React.FC = () => {
                 onChange={handleChange}
                 required
                 className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:border-amber-500 focus:ring-2 focus:ring-amber-500 text-gray-900 placeholder-gray-500 text-sm transition-all duration-300"
+                style={{
+                  backgroundColor: '#ffffff',
+                  color: '#111827'
+                }}
                 placeholder="Jean Dupont"
               />
             </div>
@@ -225,6 +229,10 @@ const EnhancedFormLead: React.FC = () => {
                 onChange={handleChange}
                 required
                 className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:border-amber-500 focus:ring-2 focus:ring-amber-500 text-gray-900 placeholder-gray-500 text-sm transition-all duration-300"
+                style={{
+                  backgroundColor: '#ffffff',
+                  color: '#111827'
+                }}
                 placeholder="06 12 34 56 78"
               />
             </div>
@@ -241,11 +249,15 @@ const EnhancedFormLead: React.FC = () => {
                 onChange={handleChange}
                 required
                 className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:border-amber-500 focus:ring-2 focus:ring-amber-500 text-gray-900 text-sm transition-all duration-300"
-                style={{ colorScheme: 'light' }}
+                style={{
+                  colorScheme: 'light',
+                  backgroundColor: '#ffffff',
+                  color: '#111827'
+                }}
               >
-                <option value="taxi">Taxi</option>
-                <option value="vtc">VTC</option>
-                <option value="autre">Autre</option>
+                <option value="taxi" style={{ backgroundColor: '#ffffff', color: '#111827' }}>Taxi</option>
+                <option value="vtc" style={{ backgroundColor: '#ffffff', color: '#111827' }}>VTC</option>
+                <option value="autre" style={{ backgroundColor: '#ffffff', color: '#111827' }}>Autre</option>
               </select>
             </div>
           </div>
@@ -267,6 +279,10 @@ const EnhancedFormLead: React.FC = () => {
                 onChange={handleChange}
                 required
                 className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:border-amber-500 focus:ring-2 focus:ring-amber-500 text-gray-900 placeholder-gray-500 text-sm transition-all duration-300"
+                style={{
+                  backgroundColor: '#ffffff',
+                  color: '#111827'
+                }}
                 placeholder="jean@email.com"
               />
             </div>
@@ -284,6 +300,10 @@ const EnhancedFormLead: React.FC = () => {
                 onChange={handleChange}
                 required
                 className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:border-amber-500 focus:ring-2 focus:ring-amber-500 text-gray-900 placeholder-gray-500 text-sm transition-all duration-300"
+                style={{
+                  backgroundColor: '#ffffff',
+                  color: '#111827'
+                }}
                 placeholder="Paris"
               />
             </div>
@@ -299,6 +319,10 @@ const EnhancedFormLead: React.FC = () => {
                 value={formData.immatriculation}
                 onChange={handleChange}
                 className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:border-amber-500 focus:ring-2 focus:ring-amber-500 text-gray-900 placeholder-gray-500 text-sm transition-all duration-300"
+                style={{
+                  backgroundColor: '#ffffff',
+                  color: '#111827'
+                }}
                 placeholder="AB-123-CD"
               />
             </div>
