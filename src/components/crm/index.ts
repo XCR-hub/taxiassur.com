@@ -38,3 +38,6 @@ export { DocumentReminderPanel } from './DocumentReminderPanel';
 export { default as CallLoggerModal } from './CallLoggerModal';
 export { default as ContractWorkflowManager } from './ContractWorkflowManager';
 export { default as LeadOverviewEnhanced } from './LeadOverviewEnhanced';
+export { default as DocumentsEnhanced } from './DocumentsEnhanced';
+export { default as QuotesEnhanced } from './QuotesEnhanced';
+export { default as HistoryEnhanced } from './HistoryEnhanced';

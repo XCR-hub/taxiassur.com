@@ -59,7 +59,10 @@ import {
   DocumentReminderPanel,
   CallLoggerModal,
   ContractWorkflowManager,
-  LeadOverviewEnhanced
+  LeadOverviewEnhanced,
+  DocumentsEnhanced,
+  QuotesEnhanced,
+  HistoryEnhanced
 } from '@/components/crm';
 import DocumentDragDropSimple from '@/components/crm/DocumentDragDropSimple';
 import LeadDocumentsComplete from '@/components/crm/LeadDocumentsComplete';
@@ -1112,26 +1115,21 @@ Je reste à votre disposition pour toute information complémentaire.`;
             )}
 
             {activeTab === 'documents' && (
-              <div className="space-y-6">
-                {/* Affichage complet de tous les documents */}
-                <LeadDocumentsComplete leadId={lead.id} />
-
-                {/* Upload de nouveaux documents */}
-                <div className="bg-gray-900/50 rounded-xl border border-gray-700 p-6">
-                  <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                    <Upload className="w-5 h-5 text-blue-400" />
-                    Uploader des documents
-                  </h3>
-                  <DocumentDragDropSimple
-                    leadId={lead.id}
-                    leadEmail={lead.email}
-                  />
-                </div>
-              </div>
+              <DocumentsEnhanced
+                leadId={lead.id}
+                onDocumentUpload={() => loadLeadData(lead.id)}
+                onDocumentValidate={() => loadLeadData(lead.id)}
+                onRequestDocuments={handleRequestDocuments}
+              />
             )}
 
             {activeTab === 'quotes' && (
-              <LeadQuotesManager leadId={lead.id} />
+              <QuotesEnhanced
+                leadId={lead.id}
+                leadEmail={lead.email}
+                leadPhone={lead.phone}
+                onQuoteStatusChange={() => loadLeadData(lead.id)}
+              />
             )}
 
             {activeTab === 'contract' && (
@@ -1267,101 +1265,10 @@ Je reste à votre disposition pour toute information complémentaire.`;
             )}
 
             {activeTab === 'history' && (
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                    <History className="w-5 h-5 text-blue-600" />
-                    Historique complet ({messages.length})
-                  </h2>
-                  <button
-                    onClick={() => loadMessages(lead.id)}
-                    disabled={loadingMessages}
-                    className="flex items-center gap-2 px-3 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors text-sm"
-                  >
-                    <RefreshCw className={`w-4 h-4 ${loadingMessages ? 'animate-spin' : ''}`} />
-                    Actualiser
-                  </button>
-                </div>
-
-                <div className="space-y-3 max-h-[700px] overflow-y-auto">
-                  {messages.map((msg) => {
-                    const isExpanded = expandedMessageId === msg.id;
-                    const hasFullContent = msg.fullContent && msg.fullContent.length > msg.content.length;
-
-                    return (
-                      <div
-                        key={msg.id}
-                        className={`flex gap-3 p-4 rounded-lg border ${
-                          msg.direction === 'inbound'
-                            ? 'bg-blue-50 border-blue-200'
-                            : 'bg-gray-50 border-gray-200'
-                        }`}
-                      >
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
-                          msg.type === 'email' ? 'bg-blue-100 text-blue-600' :
-                          msg.type === 'sms' ? 'bg-green-100 text-green-600' :
-                          msg.type === 'whatsapp' ? 'bg-emerald-100 text-emerald-600' :
-                          'bg-gray-100 text-gray-600'
-                        }`}>
-                          {msg.type === 'email' && <Mail className="w-5 h-5" />}
-                          {msg.type === 'sms' && <MessageSquare className="w-5 h-5" />}
-                          {msg.type === 'whatsapp' && <Phone className="w-5 h-5" />}
-                          {msg.type === 'system' && <Bot className="w-5 h-5" />}
-                          {msg.type === 'note' && <FileText className="w-5 h-5" />}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between mb-1">
-                            <div className="flex items-center gap-2">
-                              <span className="font-medium text-gray-900 text-sm">{msg.sent_by}</span>
-                              <span className={`px-2 py-0.5 rounded text-xs ${
-                                msg.status === 'read' ? 'bg-green-100 text-green-700' :
-                                msg.status === 'delivered' ? 'bg-blue-100 text-blue-700' :
-                                'bg-gray-100 text-gray-700'
-                              }`}>
-                                {msg.status}
-                              </span>
-                            </div>
-                            <span className="text-xs text-gray-500">
-                              {new Date(msg.sent_at).toLocaleString('fr-FR')}
-                            </span>
-                          </div>
-                          {msg.subject && (
-                            <div className="text-sm font-medium text-gray-700 mb-1">{msg.subject}</div>
-                          )}
-                          <p className="text-sm text-gray-600 whitespace-pre-wrap">
-                            {isExpanded && msg.fullContent ? msg.fullContent : msg.content}
-                          </p>
-                          {hasFullContent && (
-                            <button
-                              onClick={() => setExpandedMessageId(isExpanded ? null : msg.id)}
-                              className="mt-2 text-xs text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1"
-                            >
-                              {isExpanded ? (
-                                <>
-                                  <ChevronDown className="w-3 h-3" />
-                                  Réduire
-                                </>
-                              ) : (
-                                <>
-                                  <Eye className="w-3 h-3" />
-                                  Lire le message complet
-                                </>
-                              )}
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-
-                  {messages.length === 0 && (
-                    <div className="text-center py-12 text-gray-500">
-                      <History className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                      <p>Aucun historique</p>
-                    </div>
-                  )}
-                </div>
-              </div>
+              <HistoryEnhanced
+                leadId={lead.id}
+                onRefresh={() => loadMessages(lead.id)}
+              />
             )}
           </div>
 
