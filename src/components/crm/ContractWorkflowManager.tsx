@@ -102,17 +102,50 @@ export default function ContractWorkflowManager({ leadId, companyId: initialComp
     try {
       setLoading(true);
 
-      const [companyRes, docsRes, signaturesRes, paymentsRes] = await Promise.all([
+      const [companyRes, docsRes, signaturesRes, paymentsRes, existingQuoteRes] = await Promise.all([
         supabase.from('insurance_companies').select('*').eq('id', selectedCompanyId).single(),
         supabase.from('contract_documents').select('*').eq('lead_id', leadId).eq('company_id', selectedCompanyId),
         supabase.from('lead_contract_signatures').select('*').eq('lead_id', leadId).eq('company_id', selectedCompanyId),
-        supabase.from('lead_contract_payments').select('*').eq('lead_id', leadId).eq('company_id', selectedCompanyId)
+        supabase.from('lead_contract_payments').select('*').eq('lead_id', leadId).eq('company_id', selectedCompanyId),
+        // Récupérer le devis déjà uploadé dans l'onglet "Devis & Tarifs"
+        supabase.from('lead_company_quotes').select('quote_file_url, quote_amount').eq('lead_id', leadId).eq('company_id', selectedCompanyId).maybeSingle()
       ]);
 
       if (companyRes.data) setCompany(companyRes.data);
       if (docsRes.data) setDocuments(docsRes.data);
       if (signaturesRes.data) setSignatures(signaturesRes.data);
       if (paymentsRes.data) setPayments(paymentsRes.data);
+
+      // Si un devis existe déjà dans "Devis & Tarifs" mais pas dans "contract_documents", l'ajouter automatiquement
+      if (existingQuoteRes.data?.quote_file_url) {
+        const hasDevisInContract = docsRes.data?.some(d => d.document_type === 'devis');
+
+        if (!hasDevisInContract) {
+          console.log('📋 Devis trouvé dans l\'onglet Quotes, ajout automatique au contrat');
+
+          const { error: insertError } = await supabase.from('contract_documents').insert({
+            lead_id: leadId,
+            company_id: selectedCompanyId,
+            document_type: 'devis',
+            document_name: `Devis ${companyRes.data?.name}.pdf`,
+            file_url: existingQuoteRes.data.quote_file_url,
+            status: 'uploaded',
+            requires_signature: false,
+            is_signed: false
+          });
+
+          if (!insertError) {
+            // Recharger les documents
+            const { data: updatedDocs } = await supabase
+              .from('contract_documents')
+              .select('*')
+              .eq('lead_id', leadId)
+              .eq('company_id', selectedCompanyId);
+
+            if (updatedDocs) setDocuments(updatedDocs);
+          }
+        }
+      }
     } catch (error) {
       console.error('Erreur chargement contrat:', error);
     } finally {
@@ -256,24 +289,54 @@ export default function ContractWorkflowManager({ leadId, companyId: initialComp
       )}
 
       {/* En-tête workflow */}
-      <div className={`rounded-lg p-4 ${isGrossiste ? 'bg-blue-50 border border-blue-200' : 'bg-green-50 border border-green-200'}`}>
+      <div className={`rounded-lg p-4 ${isDelegation ? 'bg-green-50 border border-green-200' : 'bg-blue-50 border border-blue-200'}`}>
         <div className="flex items-center gap-3">
-          <Building2 className={`w-6 h-6 ${isGrossiste ? 'text-blue-600' : 'text-green-600'}`} />
+          <Building2 className={`w-6 h-6 ${isDelegation ? 'text-green-600' : 'text-blue-600'}`} />
           <div>
             <h3 className="font-bold text-lg text-gray-900">{company.name}</h3>
-            <p className={`text-sm font-semibold ${isGrossiste ? 'text-blue-800' : 'text-green-800'}`}>
-              {isGrossiste ? '🏢 Courtier Grossiste - Suivi documentaire uniquement' : '⚡ Délégation Totale - Workflow complet TaxiAssur'}
+            <p className={`text-sm font-semibold ${isDelegation ? 'text-green-800' : 'text-blue-800'}`}>
+              {isDelegation ? '⚡ Délégation Totale - Workflow complet TaxiAssur' : '🏢 Courtier Grossiste - Suivi documentaire uniquement'}
             </p>
           </div>
         </div>
+        {isDelegation && (
+          <div className="mt-3 p-3 bg-green-100 rounded-lg">
+            <p className="text-sm text-green-900 font-medium">
+              ✅ TaxiAssur gère l'intégralité du processus (devis, contrat, signature, paiement, attestation)
+            </p>
+          </div>
+        )}
+        {isGrossiste && (
+          <div className="mt-3 p-3 bg-blue-100 rounded-lg">
+            <p className="text-sm text-blue-900 font-medium">
+              📋 La compagnie gère le processus. TaxiAssur assure uniquement le suivi des documents.
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Upload de documents */}
       <div className="bg-white rounded-lg border border-gray-300 p-6">
-        <h4 className="font-bold text-lg text-gray-900 mb-4">📄 Documents du contrat</h4>
+        <h4 className="font-bold text-lg text-gray-900 mb-4">
+          📄 Documents du contrat
+        </h4>
+
+        {isGrossiste && (
+          <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <p className="text-sm text-blue-900 font-medium">
+              ℹ️ Pour les courtiers grossistes, seul le <strong>devis</strong> est géré par TaxiAssur.
+              Les autres documents (contrat, attestation, etc.) sont envoyés directement par la compagnie au client.
+            </p>
+          </div>
+        )}
 
         <div className="grid md:grid-cols-2 gap-4">
           {Object.entries(DOCUMENT_TYPES).map(([type, config]) => {
+            // Pour les grossistes, afficher uniquement le devis
+            if (isGrossiste && type !== 'devis') {
+              return null;
+            }
+
             const doc = documents.find(d => d.document_type === type);
             const Icon = config.icon;
 
@@ -317,34 +380,47 @@ export default function ContractWorkflowManager({ leadId, companyId: initialComp
                         </button>
                       )}
                     </div>
+                    {isGrossiste && type === 'devis' && (
+                      <p className="text-xs text-blue-700 mt-2">
+                        ℹ️ Devis récupéré depuis l'onglet "Devis & Tarifs"
+                      </p>
+                    )}
                   </div>
                 ) : (
-                  <label className="block">
-                    <input
-                      type="file"
-                      onChange={(e) => handleFileUpload(e, type)}
-                      accept=".pdf,.jpg,.jpeg,.png"
-                      className="hidden"
-                      disabled={uploading}
-                    />
-                    <div className={`flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${
-                      uploading && uploadType === type
-                        ? 'border-blue-400 bg-blue-50 text-blue-700'
-                        : 'border-gray-400 hover:border-blue-500 hover:bg-blue-50 text-gray-700 hover:text-blue-700'
-                    }`}>
-                      {uploading && uploadType === type ? (
-                        <>
-                          <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
-                          <span className="text-sm font-semibold">Upload...</span>
-                        </>
-                      ) : (
-                        <>
-                          <Upload className="w-4 h-4" />
-                          <span className="text-sm font-semibold">Uploader</span>
-                        </>
-                      )}
-                    </div>
-                  </label>
+                  <>
+                    {isDelegation ? (
+                      <label className="block">
+                        <input
+                          type="file"
+                          onChange={(e) => handleFileUpload(e, type)}
+                          accept=".pdf,.jpg,.jpeg,.png"
+                          className="hidden"
+                          disabled={uploading}
+                        />
+                        <div className={`flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${
+                          uploading && uploadType === type
+                            ? 'border-blue-400 bg-blue-50 text-blue-700'
+                            : 'border-gray-400 hover:border-blue-500 hover:bg-blue-50 text-gray-700 hover:text-blue-700'
+                        }`}>
+                          {uploading && uploadType === type ? (
+                            <>
+                              <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
+                              <span className="text-sm font-semibold">Upload...</span>
+                            </>
+                          ) : (
+                            <>
+                              <Upload className="w-4 h-4" />
+                              <span className="text-sm font-semibold">Uploader</span>
+                            </>
+                          )}
+                        </div>
+                      </label>
+                    ) : (
+                      <div className="flex items-center justify-center px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50">
+                        <span className="text-sm text-gray-500">En attente du devis</span>
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             );
