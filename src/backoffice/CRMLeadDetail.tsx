@@ -620,24 +620,30 @@ const CRMLeadDetail: React.FC = () => {
     setEmailModalOpen(true);
   };
 
-  const handleRequestDocuments = () => {
-    // Préparer le message de demande de documents
-    const leadName = [lead?.first_name, lead?.last_name].filter(Boolean).join(' ') || lead?.company_name || 'Client';
+  const handleRequestDocuments = async () => {
+    if (!lead?.email) {
+      alert('⚠️ Le prospect n\'a pas d\'email renseigné.');
+      return;
+    }
 
-    // Lister les documents manquants
-    const docsManquants = missingDocumentsList.length > 0
-      ? missingDocumentsList
-      : [
-          'Carte grise du véhicule',
-          'Permis de conduire',
-          'Carte professionnelle de taxi',
-          'Justificatif de domicile',
-          'RIB'
-        ];
+    try {
+      // Préparer le message de demande de documents
+      const leadName = [lead?.first_name, lead?.last_name].filter(Boolean).join(' ') || lead?.company_name || 'Client';
 
-    const subject = `Documents nécessaires pour votre assurance taxi - TaxiAssur`;
+      // Lister les documents manquants
+      const docsManquants = missingDocumentsList.length > 0
+        ? missingDocumentsList
+        : [
+            'Carte grise du véhicule',
+            'Permis de conduire',
+            'Carte professionnelle de taxi',
+            'Justificatif de domicile',
+            'RIB'
+          ];
 
-    const body = `Bonjour ${leadName},
+      const subject = `Documents nécessaires pour votre assurance taxi - TaxiAssur`;
+
+      const body = `Bonjour ${leadName},
 
 Pour finaliser votre dossier d'assurance taxi et vous transmettre vos devis personnalisés, nous avons besoin des documents suivants :
 
@@ -656,10 +662,39 @@ N'hésitez pas à nous contacter si vous avez des questions ou besoin d'assistan
 
 Je reste à votre disposition pour toute information complémentaire.`;
 
-    setEmailDefaultSubject(subject);
-    setEmailDefaultBody(body);
-    setEmailMissingDocs(docsManquants);
-    setEmailModalOpen(true);
+      // Envoyer l'email automatiquement
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-crm-email`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
+        },
+        body: JSON.stringify({
+          to: lead.email,
+          subject,
+          body,
+          lead_id: lead.id,
+          missing_documents: docsManquants
+        })
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Erreur lors de l\'envoi de l\'email');
+      }
+
+      alert(`✅ Email de demande de documents envoyé à ${lead.email}`);
+
+      // Rediriger vers l'onglet documents
+      setActiveTab('documents');
+
+      // Rafraîchir les données
+      loadData();
+    } catch (error: any) {
+      console.error('Erreur envoi demande documents:', error);
+      alert(`❌ ${error.message || 'Erreur lors de l\'envoi de l\'email'}`);
+    }
   };
 
   const handleSuggestedAction = (action: string) => {
