@@ -195,11 +195,11 @@
   background-color: rgba(31, 41, 55, 0.9);
 }
 
-/* Dark input styling */
+/* Light input styling for better visibility */
 .dark-input {
-  background-color: rgba(31, 41, 55, 0.7);
-  border: 1px solid #4b5563;
-  color: white;
+  background-color: #ffffff;
+  border: 1px solid #d1d5db;
+  color: #111827;
   transition: colors 0.2s;
 }
 
@@ -210,7 +210,8 @@
 .dark-input:focus {
   border-color: #f97316;
   outline: none;
-  box-shadow: 0 0 0 1px #f97316;
+  box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.2);
+  background-color: #ffffff;
 }
 
 /* AI card styling */

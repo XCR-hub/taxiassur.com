@@ -207,7 +207,7 @@ const EnhancedFormLead: React.FC = () => {
                 value={formData.name}
                 onChange={handleChange}
                 required
-                className="w-full px-3 py-2 bg-gray-800/70 border border-gray-600 rounded-lg focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-white placeholder-gray-400 text-sm transition-all duration-300"
+                className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:border-amber-500 focus:ring-2 focus:ring-amber-500 text-gray-900 placeholder-gray-500 text-sm transition-all duration-300"
                 placeholder="Jean Dupont"
               />
             </div>
@@ -224,7 +224,7 @@ const EnhancedFormLead: React.FC = () => {
                 value={formData.phone}
                 onChange={handleChange}
                 required
-                className="w-full px-3 py-2 bg-gray-800/70 border border-gray-600 rounded-lg focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-white placeholder-gray-400 text-sm transition-all duration-300"
+                className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:border-amber-500 focus:ring-2 focus:ring-amber-500 text-gray-900 placeholder-gray-500 text-sm transition-all duration-300"
                 placeholder="06 12 34 56 78"
               />
             </div>
@@ -240,7 +240,8 @@ const EnhancedFormLead: React.FC = () => {
                 value={formData.status}
                 onChange={handleChange}
                 required
-                className="w-full px-3 py-2 bg-gray-800/70 border border-gray-600 rounded-lg focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-white text-sm transition-all duration-300"
+                className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:border-amber-500 focus:ring-2 focus:ring-amber-500 text-gray-900 text-sm transition-all duration-300"
+                style={{ colorScheme: 'light' }}
               >
                 <option value="taxi">Taxi</option>
                 <option value="vtc">VTC</option>
@@ -265,7 +266,7 @@ const EnhancedFormLead: React.FC = () => {
                 value={formData.email}
                 onChange={handleChange}
                 required
-                className="w-full px-3 py-2 bg-gray-800/70 border border-gray-600 rounded-lg focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-white placeholder-gray-400 text-sm transition-all duration-300"
+                className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:border-amber-500 focus:ring-2 focus:ring-amber-500 text-gray-900 placeholder-gray-500 text-sm transition-all duration-300"
                 placeholder="jean@email.com"
               />
             </div>
@@ -282,7 +283,7 @@ const EnhancedFormLead: React.FC = () => {
                 value={formData.city}
                 onChange={handleChange}
                 required
-                className="w-full px-3 py-2 bg-gray-800/70 border border-gray-600 rounded-lg focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-white placeholder-gray-400 text-sm transition-all duration-300"
+                className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:border-amber-500 focus:ring-2 focus:ring-amber-500 text-gray-900 placeholder-gray-500 text-sm transition-all duration-300"
                 placeholder="Paris"
               />
             </div>
@@ -297,7 +298,7 @@ const EnhancedFormLead: React.FC = () => {
                 name="immatriculation"
                 value={formData.immatriculation}
                 onChange={handleChange}
-                className="w-full px-3 py-2 bg-gray-800/70 border border-gray-600 rounded-lg focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-white placeholder-gray-400 text-sm transition-all duration-300"
+                className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:border-amber-500 focus:ring-2 focus:ring-amber-500 text-gray-900 placeholder-gray-500 text-sm transition-all duration-300"
                 placeholder="AB-123-CD"
               />
             </div>
