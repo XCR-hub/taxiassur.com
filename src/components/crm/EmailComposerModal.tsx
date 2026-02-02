@@ -70,9 +70,15 @@ Merci d'avoir choisi TaxiAssur pour votre assurance taxi !
 
 Nous avons bien recu votre demande de devis. Un conseiller dedie vous contactera dans les prochaines 24 heures pour etudier votre dossier.
 
-Pour accelerer le traitement de votre demande, vous pouvez des maintenant telecharger vos documents via votre espace securise :
+Pour accelerer le traitement de votre demande, vous pouvez des maintenant acceder a votre espace personnel securise :
 
->> Acceder a mon espace documents : {{upload_link}}
+>> Acceder a mon espace : {{prospect_link}}
+
+Sur votre espace, vous pourrez :
+- Telecharger vos documents
+- Suivre l'avancement de votre dossier
+- Consulter vos devis
+- Valider et souscrire en ligne
 
 Documents necessaires :
 - Carte grise du vehicule
@@ -99,10 +105,15 @@ Pour finaliser votre dossier d'assurance taxi et vous transmettre votre devis pe
 
 {{missing_documents}}
 
->> TELEVERSEZ VOS DOCUMENTS EN TOUTE SECURITE :
-{{upload_link}}
+>> ACCEDEZ A VOTRE ESPACE PERSONNEL SECURISE :
+{{prospect_link}}
 
-Ce lien est personnel et securise. Vos documents sont proteges et traites en toute confidentialite.
+Sur votre espace, vous pourrez :
+- Telecharger vos documents en toute securite
+- Suivre l'avancement de votre dossier en temps reel
+- Consulter vos devis des qu'ils sont disponibles
+
+Vos documents sont proteges et traites en toute confidentialite.
 
 Si vous avez des questions ou besoin d'aide, n'hesitez pas a nous contacter au 01 76 39 00 60.
 
@@ -123,8 +134,8 @@ Pour obtenir votre devis personnalise, il nous manque encore :
 
 {{missing_documents}}
 
-Telechargez vos documents en quelques clics via votre espace securise :
-{{upload_link}}
+Telechargez vos documents en quelques clics via votre espace personnel :
+>> {{prospect_link}}
 
 Nous traitons votre dossier des reception de vos documents !
 
@@ -206,8 +217,8 @@ Nous avons bien recu vos documents, mais certains necessitent une nouvelle trans
 
 Motif : Document illisible / incomplete / non valide
 
-Merci de telecharger a nouveau ces documents via votre espace securise :
-{{upload_link}}
+Merci de telecharger a nouveau ces documents via votre espace personnel :
+>> {{prospect_link}}
 
 Conseil : Assurez-vous que les documents sont bien lisibles et que toutes les informations sont visibles.
 
@@ -228,8 +239,8 @@ Nous vous confirmons la bonne reception de vos documents.
 
 Notre equipe va proceder a leur verification et vous transmettra votre devis personnalise dans les plus brefs delais (sous 24-48h ouvrees).
 
-Vous pouvez suivre l'avancement de votre dossier sur votre espace :
-{{upload_link}}
+Vous pouvez suivre l'avancement de votre dossier en temps reel sur votre espace :
+>> {{prospect_link}}
 
 A tres bientot !
 
@@ -253,12 +264,15 @@ Veuillez trouver ci-joint les documents contractuels :
 - Mandat de prelevement SEPA
 
 POUR FINALISER VOTRE SOUSCRIPTION :
-1. Verifiez les informations sur les Conditions Particulieres
-2. Signez le mandat de prelevement SEPA
-3. Telechargez les documents signes sur votre espace securise :
-   {{upload_link}}
+Accedez a votre espace personnel pour :
+1. Consulter et verifier vos Conditions Particulieres
+2. Signer electroniquement votre contrat
+3. Effectuer le paiement securise
+4. Telecharger tous vos documents
 
-Des reception des documents signes, votre couverture sera active sous 24h et vous recevrez votre attestation d'assurance par email.
+>> Acceder a mon espace : {{prospect_link}}
+
+Des validation de votre contrat, votre couverture sera active sous 24h et vous recevrez votre attestation d'assurance par email.
 
 Je reste a votre disposition pour toute question.
 
@@ -277,8 +291,8 @@ Felicitations ! Votre contrat d'assurance taxi est maintenant actif.
 
 Veuillez trouver ci-joint votre attestation d'assurance.
 
-Vous pouvez telecharger tous vos documents contractuels depuis votre espace :
-{{upload_link}}
+Vous pouvez telecharger tous vos documents contractuels depuis votre espace personnel :
+>> {{prospect_link}}
 
 RAPPEL IMPORTANT :
 - Conservez une copie de l'attestation dans votre vehicule
@@ -303,8 +317,8 @@ Votre contrat d'assurance taxi arrive bientot a echeance.
 Pour assurer la continuite de votre couverture, nous vous invitons a :
 1. Verifier vos informations (vehicule, adresse, etc.)
 2. Nous transmettre tout changement de situation
-3. Mettre a jour vos documents si necessaire :
-   {{upload_link}}
+3. Consulter et mettre a jour vos informations sur votre espace personnel :
+   >> {{prospect_link}}
 
 Si vous souhaitez modifier votre contrat ou obtenir un nouveau devis, contactez-nous.
 
@@ -362,13 +376,6 @@ export function EmailComposerModal({
     }
   };
 
-  const getUploadLink = () => {
-    if (lead.access_token) {
-      return `https://taxiassur.com/prospect/documents/${lead.access_token}`;
-    }
-    return 'https://taxiassur.com/espace-client';
-  };
-
   const getProspectLink = () => {
     if (lead.access_token) {
       return `https://taxiassur.com/prospect/${lead.access_token}`;
@@ -377,7 +384,6 @@ export function EmailComposerModal({
   };
 
   const replaceVariables = (text: string, missingDocs?: string[]) => {
-    const uploadLink = getUploadLink();
     const prospectLink = getProspectLink();
 
     let missingDocsText = '';
@@ -397,7 +403,7 @@ export function EmailComposerModal({
       .replace(/\{\{company_name\}\}/g, lead.company_name || '')
       .replace(/\{\{city\}\}/g, lead.city || '')
       .replace(/\{\{prospect_link\}\}/g, prospectLink)
-      .replace(/\{\{upload_link\}\}/g, uploadLink)
+      .replace(/\{\{upload_link\}\}/g, prospectLink)
       .replace(/\{\{missing_documents\}\}/g, missingDocsText);
   };
 
@@ -678,7 +684,7 @@ export function EmailComposerModal({
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900 placeholder-gray-400 text-base leading-relaxed resize-none"
                 />
                 <p className="text-xs text-gray-500 mt-1.5">
-                  Variables : {'{{first_name}}'}, {'{{last_name}}'}, {'{{prospect_link}}'} (espace complet), {'{{upload_link}}'} (documents), {'{{missing_documents}}'}
+                  Variables : {'{{first_name}}'}, {'{{last_name}}'}, {'{{prospect_link}}'} (espace personnel complet), {'{{missing_documents}}'}
                 </p>
               </div>
 

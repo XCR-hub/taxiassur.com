@@ -645,7 +645,12 @@ ${docsManquants.map((doc, idx) => `${idx + 1}. ${doc}`).join('\n')}
 
 Vous pouvez nous transmettre ces documents :
 • Par email en réponse à ce message
-• Directement via votre espace personnel : ${window.location.origin}/prospect/documents/${lead?.access_token}
+• Directement via votre espace personnel sécurisé : ${window.location.origin}/prospect/${lead?.access_token}
+
+Sur votre espace, vous pourrez également :
+- Suivre l'avancement de votre dossier en temps réel
+- Consulter vos devis dès qu'ils sont disponibles
+- Valider et souscrire en ligne
 
 N'hésitez pas à nous contacter si vous avez des questions ou besoin d'assistance.
 
