@@ -61,6 +61,7 @@ import {
   ContractWorkflowManager
 } from '@/components/crm';
 import DocumentDragDropSimple from '@/components/crm/DocumentDragDropSimple';
+import LeadDocumentsComplete from '@/components/crm/LeadDocumentsComplete';
 import type { WorkflowTab } from '@/components/crm';
 
 interface Message {
@@ -1046,11 +1047,21 @@ Je reste à votre disposition pour toute information complémentaire.`;
             )}
 
             {activeTab === 'documents' && (
-              <div className="bg-gray-900/50 rounded-xl border border-gray-700 p-6">
-                <DocumentDragDropSimple
-                  leadId={lead.id}
-                  leadEmail={lead.email}
-                />
+              <div className="space-y-6">
+                {/* Affichage complet de tous les documents */}
+                <LeadDocumentsComplete leadId={lead.id} />
+
+                {/* Upload de nouveaux documents */}
+                <div className="bg-gray-900/50 rounded-xl border border-gray-700 p-6">
+                  <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                    <Upload className="w-5 h-5 text-blue-400" />
+                    Uploader des documents
+                  </h3>
+                  <DocumentDragDropSimple
+                    leadId={lead.id}
+                    leadEmail={lead.email}
+                  />
+                </div>
               </div>
             )}
 

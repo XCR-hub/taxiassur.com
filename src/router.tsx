@@ -146,6 +146,7 @@ const PendingDocumentsManager = lazy(() => import('./backoffice/PendingDocuments
 const AIInsightsDashboard = lazy(() => import('./backoffice/AIInsightsDashboard'));
 const CompanyDocumentLibrary = lazy(() => import('./backoffice/CompanyDocumentLibrary'));
 const CRMGestionPortfolio = lazy(() => import('./backoffice/CRMGestionPortfolio'));
+const CRMGestionContractDetail = lazy(() => import('./backoffice/CRMGestionContractDetail'));
 
 const LoadingFallback = () => (
   <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-black flex items-center justify-center">
@@ -871,6 +872,11 @@ export const router = createBrowserRouter([
       {
         path: '/backoffice/crm-gestion',
         element: <AuthGuard><SuspenseWrapper><CRMGestionPortfolio /></SuspenseWrapper></AuthGuard>,
+        errorElement: <RouteErrorFallback />
+      },
+      {
+        path: '/backoffice/crm-gestion/contrat/:contractId',
+        element: <AuthGuard><SuspenseWrapper><CRMGestionContractDetail /></SuspenseWrapper></AuthGuard>,
         errorElement: <RouteErrorFallback />
       },
       {
