@@ -690,7 +690,9 @@ Je reste à votre disposition pour toute information complémentaire.`;
       setActiveTab('documents');
 
       // Rafraîchir les données
-      loadData();
+      if (leadId) {
+        await loadLeadData(leadId);
+      }
     } catch (error: any) {
       console.error('Erreur envoi demande documents:', error);
       alert(`❌ ${error.message || 'Erreur lors de l\'envoi de l\'email'}`);
