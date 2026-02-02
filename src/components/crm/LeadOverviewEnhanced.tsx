@@ -15,9 +15,11 @@ import {
   Zap,
   Sparkles,
   ArrowRight,
-  Calendar,
   MessageSquare,
-  Bell
+  Bell,
+  MapPin,
+  Car,
+  Calendar
 } from 'lucide-react';
 import AnimatedStatCard from '@/components/AnimatedStatCard';
 import ContextualTooltip from '@/components/ContextualTooltip';
@@ -50,6 +52,16 @@ interface LeadStats {
   engagementLevel: 'low' | 'medium' | 'high';
 }
 
+interface RecentInteraction {
+  id: string;
+  type: 'email' | 'sms' | 'whatsapp' | 'call' | 'note';
+  direction: 'inbound' | 'outbound';
+  content: string;
+  subject?: string;
+  created_at: string;
+  author?: string;
+}
+
 interface LeadOverviewEnhancedProps {
   lead: LeadData;
   stats: LeadStats;
@@ -69,6 +81,8 @@ export default function LeadOverviewEnhanced({
   const [saving, setSaving] = useState(false);
   const [aiSuggestions, setAiSuggestions] = useState<any[]>([]);
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
+  const [recentInteractions, setRecentInteractions] = useState<RecentInteraction[]>([]);
+  const [loadingInteractions, setLoadingInteractions] = useState(false);
 
   const [editForm, setEditForm] = useState({
     first_name: lead.first_name || '',
@@ -82,6 +96,7 @@ export default function LeadOverviewEnhanced({
 
   useEffect(() => {
     loadAISuggestions();
+    loadRecentInteractions();
   }, [lead.id, lead.status]);
 
   const loadAISuggestions = async () => {
@@ -102,6 +117,88 @@ export default function LeadOverviewEnhanced({
       console.error('Error loading AI suggestions:', error);
     } finally {
       setLoadingSuggestions(false);
+    }
+  };
+
+  const loadRecentInteractions = async () => {
+    setLoadingInteractions(true);
+    try {
+      // Charger les emails
+      const { data: emails } = await supabase
+        .from('email_messages')
+        .select('*')
+        .eq('lead_id', lead.id)
+        .order('sent_at', { ascending: false })
+        .limit(3);
+
+      // Charger les interactions CRM
+      const { data: interactions } = await supabase
+        .from('crm_interactions')
+        .select('*')
+        .eq('lead_id', lead.id)
+        .order('created_at', { ascending: false })
+        .limit(3);
+
+      // Charger la timeline
+      const { data: timeline } = await supabase
+        .from('crm_lead_timeline')
+        .select('*')
+        .eq('lead_id', lead.id)
+        .order('created_at', { ascending: false })
+        .limit(3);
+
+      const allInteractions: RecentInteraction[] = [];
+
+      // Ajouter les emails
+      if (emails) {
+        emails.forEach(email => {
+          allInteractions.push({
+            id: email.id,
+            type: 'email',
+            direction: email.direction || 'outbound',
+            content: email.content || email.body || '',
+            subject: email.subject,
+            created_at: email.sent_at,
+            author: email.sent_by
+          });
+        });
+      }
+
+      // Ajouter les interactions
+      if (interactions) {
+        interactions.forEach(int => {
+          allInteractions.push({
+            id: int.id,
+            type: int.type === 'phone_call' ? 'call' : int.type === 'sms' ? 'sms' : 'note',
+            direction: 'outbound',
+            content: int.notes || int.content || '',
+            created_at: int.created_at,
+            author: int.created_by
+          });
+        });
+      }
+
+      // Ajouter la timeline
+      if (timeline) {
+        timeline.forEach(item => {
+          allInteractions.push({
+            id: item.id,
+            type: 'note',
+            direction: 'outbound',
+            content: item.description || item.content || '',
+            created_at: item.created_at
+          });
+        });
+      }
+
+      // Trier par date et garder les 5 plus récents
+      allInteractions.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      setRecentInteractions(allInteractions.slice(0, 5));
+
+    } catch (error) {
+      console.error('Error loading interactions:', error);
+    } finally {
+      setLoadingInteractions(false);
     }
   };
 
@@ -142,25 +239,45 @@ export default function LeadOverviewEnhanced({
 
   const getEngagementColor = () => {
     switch (stats.engagementLevel) {
-      case 'high': return 'text-green-600';
-      case 'medium': return 'text-amber-600';
-      case 'low': return 'text-red-600';
-      default: return 'text-gray-600';
+      case 'high': return 'text-green-600 bg-green-100';
+      case 'medium': return 'text-amber-600 bg-amber-100';
+      case 'low': return 'text-red-600 bg-red-100';
+      default: return 'text-gray-600 bg-gray-100';
     }
   };
 
   const getEngagementLabel = () => {
     switch (stats.engagementLevel) {
-      case 'high': return 'Très engagé';
+      case 'high': return 'Élevé';
       case 'medium': return 'Modéré';
       case 'low': return 'Faible';
       default: return 'Non mesuré';
     }
   };
 
+  const getInteractionIcon = (type: string) => {
+    switch (type) {
+      case 'email': return Mail;
+      case 'sms': return MessageSquare;
+      case 'whatsapp': return MessageSquare;
+      case 'call': return Phone;
+      default: return Bell;
+    }
+  };
+
+  const getInteractionColor = (type: string) => {
+    switch (type) {
+      case 'email': return 'bg-blue-100 text-blue-600';
+      case 'sms': return 'bg-green-100 text-green-600';
+      case 'whatsapp': return 'bg-emerald-100 text-emerald-600';
+      case 'call': return 'bg-orange-100 text-orange-600';
+      default: return 'bg-gray-100 text-gray-600';
+    }
+  };
+
   return (
-    <div className="space-y-6">
-      {/* KPIs Animés */}
+    <div className="space-y-4">
+      {/* KPIs Animés - Ligne 1 */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <AnimatedStatCard
           title="Score de Conversion"
@@ -178,7 +295,7 @@ export default function LeadOverviewEnhanced({
 
         <AnimatedStatCard
           title="Documents"
-          value={stats.documentsMissing === 0 ? 100 : ((10 - stats.documentsMissing) / 10) * 100}
+          value={stats.documentsMissing === 0 ? 100 : ((8 - stats.documentsMissing) / 8) * 100}
           icon={FileCheck}
           color={stats.documentsComplete ? "green" : "amber"}
           suffix="%"
@@ -208,277 +325,255 @@ export default function LeadOverviewEnhanced({
         />
       </div>
 
-      {/* Progression dans le Pipeline */}
-      <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl shadow-sm border border-blue-200 p-6">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <div className="p-3 bg-blue-100 rounded-xl">
-              <TrendingUp className="w-6 h-6 text-blue-600" />
-            </div>
-            <div>
-              <h3 className="text-lg font-bold text-gray-900">Progression dans le Pipeline</h3>
-              <p className="text-sm text-gray-600">
-                {PIPELINE_STATUSES[lead.status as PipelineStatus]?.label || lead.status}
-              </p>
-            </div>
-          </div>
-          <ContextualTooltip
-            content="Visualisation de la progression du lead dans le tunnel de vente"
-            type="info"
-            position="left"
-          />
-        </div>
-
-        {/* Barre de progression */}
-        <div className="relative">
-          <div className="h-3 bg-gray-200 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full transition-all duration-1000 ease-out"
-              style={{ width: `${getPipelineProgress()}%` }}
-            />
-          </div>
-          <div className="flex justify-between mt-2 text-xs text-gray-600">
-            <span>Début</span>
-            <span className="font-medium text-blue-600">{Math.round(getPipelineProgress())}%</span>
-            <span>Client Actif</span>
-          </div>
-        </div>
-
-        {/* Prochaine étape */}
-        <div className="mt-4 flex items-center gap-2 p-3 bg-white rounded-lg border border-blue-200">
-          <Sparkles className="w-5 h-5 text-blue-600 flex-shrink-0" />
-          <div className="flex-1">
-            <p className="text-sm font-medium text-gray-900">Prochaine étape suggérée</p>
-            <p className="text-sm text-gray-600">{getNextStep()}</p>
-          </div>
-          <ArrowRight className="w-5 h-5 text-blue-600" />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Colonne gauche : Informations du Lead */}
-        <div className="lg:col-span-2">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                <User className="w-5 h-5 text-blue-600" />
-                Informations du Lead
-              </h2>
+      {/* Grille principale - 3 colonnes */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* Colonne 1 : Infos Lead + Progression (40%) */}
+        <div className="lg:col-span-1 space-y-4">
+          {/* Informations du Lead - Compact */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
+                <User className="w-4 h-4 text-blue-600" />
+                Informations
+              </h3>
               {!editing ? (
-                <ContextualTooltip content="Modifier les informations" type="help">
-                  <button
-                    onClick={() => setEditing(true)}
-                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
-                  >
-                    <Edit className="w-4 h-4" />
-                    Modifier
-                  </button>
-                </ContextualTooltip>
+                <button
+                  onClick={() => setEditing(true)}
+                  className="p-1.5 hover:bg-blue-50 rounded-lg transition-colors"
+                >
+                  <Edit className="w-4 h-4 text-blue-600" />
+                </button>
               ) : (
-                <div className="flex gap-2">
+                <div className="flex gap-1">
                   <button
                     onClick={handleSaveClick}
                     disabled={saving}
-                    className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm disabled:opacity-50"
+                    className="p-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
                   >
                     <Save className="w-4 h-4" />
-                    {saving ? 'Enregistrement...' : 'Enregistrer'}
                   </button>
                   <button
                     onClick={() => setEditing(false)}
-                    className="flex items-center gap-2 px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors text-sm"
+                    className="p-1.5 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
                   >
                     <X className="w-4 h-4" />
-                    Annuler
                   </button>
                 </div>
               )}
             </div>
 
             {editing ? (
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Prénom</label>
-                  <input
-                    type="text"
-                    value={editForm.first_name}
-                    onChange={(e) => setEditForm({ ...editForm, first_name: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Nom</label>
-                  <input
-                    type="text"
-                    value={editForm.last_name}
-                    onChange={(e) => setEditForm({ ...editForm, last_name: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
-                  <input
-                    type="email"
-                    value={editForm.email}
-                    onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Téléphone</label>
-                  <input
-                    type="tel"
-                    value={editForm.phone}
-                    onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Ville</label>
+              <div className="space-y-2">
+                <input
+                  type="text"
+                  value={editForm.first_name}
+                  onChange={(e) => setEditForm({ ...editForm, first_name: e.target.value })}
+                  placeholder="Prénom"
+                  className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                />
+                <input
+                  type="text"
+                  value={editForm.last_name}
+                  onChange={(e) => setEditForm({ ...editForm, last_name: e.target.value })}
+                  placeholder="Nom"
+                  className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                />
+                <input
+                  type="email"
+                  value={editForm.email}
+                  onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                  placeholder="Email"
+                  className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                />
+                <input
+                  type="tel"
+                  value={editForm.phone}
+                  onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                  placeholder="Téléphone"
+                  className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                />
+                <div className="flex gap-2">
                   <input
                     type="text"
                     value={editForm.city}
                     onChange={(e) => setEditForm({ ...editForm, city: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    placeholder="Ville"
+                    className="flex-1 px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                   />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Immatriculation</label>
                   <input
                     type="text"
                     value={editForm.immatriculation}
                     onChange={(e) => setEditForm({ ...editForm, immatriculation: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                    placeholder="AA-123-BB"
-                  />
-                </div>
-                <div className="col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Notes internes</label>
-                  <textarea
-                    value={editForm.internal_notes}
-                    onChange={(e) => setEditForm({ ...editForm, internal_notes: e.target.value })}
-                    rows={4}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                    placeholder="Notes pour l'équipe..."
+                    placeholder="Immat."
+                    className="flex-1 px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
               </div>
             ) : (
-              <div className="grid grid-cols-2 gap-6">
-                <div>
-                  <div className="text-sm text-gray-500 mb-1">Prénom</div>
-                  <div className="font-medium text-gray-900">{lead.first_name || '-'}</div>
+              <div className="space-y-2 text-sm">
+                <div className="flex items-center justify-between py-1">
+                  <span className="text-gray-500">Nom</span>
+                  <span className="font-medium text-gray-900">
+                    {lead.first_name} {lead.last_name}
+                  </span>
                 </div>
-                <div>
-                  <div className="text-sm text-gray-500 mb-1">Nom</div>
-                  <div className="font-medium text-gray-900">{lead.last_name || '-'}</div>
-                </div>
-                <div>
-                  <div className="text-sm text-gray-500 mb-1">Email</div>
-                  <div className="font-medium text-gray-900 flex items-center gap-2">
+                <div className="flex items-center justify-between py-1">
+                  <span className="text-gray-500">Email</span>
+                  <button
+                    onClick={() => onActionTrigger('send_email')}
+                    className="font-medium text-blue-600 hover:text-blue-700 flex items-center gap-1"
+                  >
                     {lead.email}
-                    <ContextualTooltip content="Cliquez pour envoyer un email" type="tip">
-                      <button
-                        onClick={() => onActionTrigger('send_email')}
-                        className="p-1 hover:bg-blue-50 rounded transition-colors"
-                      >
-                        <Mail className="w-4 h-4 text-blue-600" />
-                      </button>
-                    </ContextualTooltip>
-                  </div>
+                    <Mail className="w-3 h-3" />
+                  </button>
                 </div>
-                <div>
-                  <div className="text-sm text-gray-500 mb-1">Téléphone</div>
-                  <div className="font-medium text-gray-900 flex items-center gap-2">
+                <div className="flex items-center justify-between py-1">
+                  <span className="text-gray-500">Tel</span>
+                  <button
+                    onClick={() => onActionTrigger('call')}
+                    className="font-medium text-green-600 hover:text-green-700 flex items-center gap-1"
+                  >
                     {lead.phone}
-                    <ContextualTooltip content="Cliquez pour appeler" type="tip">
-                      <button
-                        onClick={() => onActionTrigger('call')}
-                        className="p-1 hover:bg-green-50 rounded transition-colors"
-                      >
-                        <Phone className="w-4 h-4 text-green-600" />
-                      </button>
-                    </ContextualTooltip>
+                    <Phone className="w-3 h-3" />
+                  </button>
+                </div>
+                <div className="flex items-center justify-between py-1">
+                  <span className="text-gray-500 flex items-center gap-1">
+                    <MapPin className="w-3 h-3" /> Ville
+                  </span>
+                  <span className="font-medium text-gray-900">{lead.city || '-'}</span>
+                </div>
+                {lead.immatriculation && (
+                  <div className="flex items-center justify-between py-1">
+                    <span className="text-gray-500 flex items-center gap-1">
+                      <Car className="w-3 h-3" /> Immat.
+                    </span>
+                    <span className="font-medium text-gray-900">{lead.immatriculation}</span>
                   </div>
-                </div>
-                <div>
-                  <div className="text-sm text-gray-500 mb-1">Ville</div>
-                  <div className="font-medium text-gray-900">{lead.city || '-'}</div>
-                </div>
-                <div>
-                  <div className="text-sm text-gray-500 mb-1">Immatriculation</div>
-                  <div className="font-medium text-gray-900">{lead.immatriculation || '-'}</div>
-                </div>
-                <div className="col-span-2">
-                  <div className="text-sm text-gray-500 mb-1">Notes internes</div>
-                  <div className="font-medium text-gray-900 whitespace-pre-wrap bg-gray-50 rounded-lg p-3">
-                    {lead.internal_notes || 'Aucune note'}
-                  </div>
-                </div>
+                )}
               </div>
+            )}
+          </div>
+
+          {/* Progression Pipeline - Compact */}
+          <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl shadow-sm border border-blue-200 p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <TrendingUp className="w-4 h-4 text-blue-600" />
+              <h3 className="text-base font-bold text-gray-900">Progression</h3>
+              <span className="ml-auto text-xs font-medium text-blue-600">
+                {Math.round(getPipelineProgress())}%
+              </span>
+            </div>
+
+            <div className="relative mb-3">
+              <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full transition-all duration-1000"
+                  style={{ width: `${getPipelineProgress()}%` }}
+                />
+              </div>
+            </div>
+
+            <div className="bg-white rounded-lg p-2 border border-blue-200">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-3 h-3 text-blue-600 flex-shrink-0" />
+                <p className="text-xs text-gray-700 leading-relaxed">
+                  {getNextStep()}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Documents Status - Compact */}
+          <div className={cn(
+            "rounded-xl shadow-sm border p-4",
+            stats.documentsComplete
+              ? "bg-gradient-to-br from-green-50 to-emerald-50 border-green-200"
+              : "bg-gradient-to-br from-red-50 to-pink-50 border-red-200"
+          )}>
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                {stats.documentsComplete ? (
+                  <CheckCircle className="w-4 h-4 text-green-600" />
+                ) : (
+                  <AlertCircle className="w-4 h-4 text-red-600" />
+                )}
+                <h3 className="text-base font-bold text-gray-900">Documents</h3>
+              </div>
+              <span className={cn(
+                "text-xs font-medium px-2 py-1 rounded-full",
+                stats.documentsComplete ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+              )}>
+                {stats.documentsComplete ? 'Complet' : `${stats.documentsMissing} manquant(s)`}
+              </span>
+            </div>
+
+            {!stats.documentsComplete && (
+              <button
+                onClick={() => onActionTrigger('request_documents')}
+                className="w-full mt-2 px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-xs font-medium"
+              >
+                Demander les documents
+              </button>
             )}
           </div>
         </div>
 
-        {/* Colonne droite : Intelligence & Actions */}
+        {/* Colonne 2 : Intelligence + Actions IA (30%) */}
         <div className="space-y-4">
-          {/* Intelligence Lead */}
-          <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl shadow-sm border border-purple-200 p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <Sparkles className="w-5 h-5 text-purple-600" />
-              <h3 className="text-lg font-bold text-gray-900">Intelligence Lead</h3>
+          {/* Intelligence Lead - Compact */}
+          <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl shadow-sm border border-purple-200 p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <Sparkles className="w-4 h-4 text-purple-600" />
+              <h3 className="text-base font-bold text-gray-900">Intelligence Lead</h3>
             </div>
 
-            <div className="space-y-3">
-              <div className="bg-white rounded-lg p-3 border border-purple-100">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-sm text-gray-600">Niveau d'engagement</span>
-                  <ContextualTooltip
-                    content="Basé sur le nombre d'interactions et la réactivité"
-                    type="info"
-                    position="left"
-                  />
-                </div>
-                <div className={cn("text-lg font-bold", getEngagementColor())}>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-gray-600">Conversion</span>
+                <span className="text-base font-bold text-purple-600">
+                  {stats.conversionProbability}%
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-gray-600">Engagement</span>
+                <span className={cn("text-xs font-medium px-2 py-1 rounded-full", getEngagementColor())}>
                   {getEngagementLabel()}
-                </div>
+                </span>
               </div>
 
-              <div className="bg-white rounded-lg p-3 border border-purple-100">
-                <div className="text-sm text-gray-600 mb-1">Dernier contact</div>
-                <div className="text-sm font-medium text-gray-900">
-                  {lead.last_contact_at
-                    ? new Date(lead.last_contact_at).toLocaleDateString('fr-FR')
-                    : 'Jamais'}
+              {lead.last_contact_at && (
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-gray-600 flex items-center gap-1">
+                    <Calendar className="w-3 h-3" /> Dernier contact
+                  </span>
+                  <span className="text-xs font-medium text-gray-900">
+                    {new Date(lead.last_contact_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
+                  </span>
                 </div>
-              </div>
+              )}
 
-              <div className="bg-white rounded-lg p-3 border border-purple-100">
-                <div className="text-sm text-gray-600 mb-1">Interactions totales</div>
-                <div className="text-2xl font-bold text-purple-600">
-                  {stats.interactionsCount}
+              {stats.daysInPipeline > 7 && (
+                <div className="mt-2 p-2 bg-amber-100 border border-amber-200 rounded-lg">
+                  <p className="text-xs text-amber-700 font-medium">
+                    ⚠️ Lead actif depuis {stats.daysInPipeline} jours
+                  </p>
                 </div>
-              </div>
+              )}
             </div>
           </div>
 
-          {/* Actions Recommandées par IA */}
-          <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl shadow-sm border border-amber-200 p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <Zap className="w-5 h-5 text-amber-600" />
-                <h3 className="text-lg font-bold text-gray-900">Actions IA</h3>
-              </div>
-              <ContextualTooltip
-                content="Suggestions automatiques basées sur l'analyse du lead"
-                type="tip"
-                position="left"
-              />
+          {/* Actions IA - Compact */}
+          <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl shadow-sm border border-amber-200 p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <Zap className="w-4 h-4 text-amber-600" />
+              <h3 className="text-base font-bold text-gray-900">Actions IA</h3>
             </div>
 
             {loadingSuggestions ? (
-              <div className="text-center py-4">
-                <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-amber-600" />
+              <div className="text-center py-3">
+                <div className="inline-block animate-spin rounded-full h-5 w-5 border-b-2 border-amber-600" />
               </div>
             ) : aiSuggestions.length > 0 ? (
               <div className="space-y-2">
@@ -486,65 +581,106 @@ export default function LeadOverviewEnhanced({
                   <button
                     key={idx}
                     onClick={() => onActionTrigger(suggestion.decision_type)}
-                    className="w-full text-left p-3 bg-white rounded-lg border border-amber-200 hover:bg-amber-50 transition-colors group"
+                    className="w-full text-left p-2 bg-white rounded-lg border border-amber-200 hover:bg-amber-50 transition-colors group"
                   >
                     <div className="flex items-center gap-2">
-                      <Bell className="w-4 h-4 text-amber-600" />
-                      <span className="text-sm font-medium text-gray-900 flex-1">
+                      <Bell className="w-3 h-3 text-amber-600" />
+                      <span className="text-xs font-medium text-gray-900 flex-1 line-clamp-1">
                         {suggestion.title || suggestion.decision_type}
                       </span>
-                      <ArrowRight className="w-4 h-4 text-amber-600 opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <ArrowRight className="w-3 h-3 text-amber-600 opacity-0 group-hover:opacity-100 transition-opacity" />
                     </div>
                   </button>
                 ))}
               </div>
             ) : (
-              <div className="text-center py-4 text-gray-500">
-                <p className="text-sm">Aucune action suggérée pour le moment</p>
+              <div className="text-center py-3">
+                <p className="text-xs text-gray-500">Aucune action suggérée</p>
               </div>
             )}
           </div>
+        </div>
 
-          {/* Statut Documents */}
-          <div className={cn(
-            "rounded-xl shadow-sm border p-6",
-            stats.documentsComplete
-              ? "bg-gradient-to-br from-green-50 to-emerald-50 border-green-200"
-              : "bg-gradient-to-br from-red-50 to-pink-50 border-red-200"
-          )}>
+        {/* Colonne 3 : Timeline Interactions (30%) */}
+        <div className="space-y-4">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
             <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                {stats.documentsComplete ? (
-                  <CheckCircle className="w-5 h-5 text-green-600" />
-                ) : (
-                  <AlertCircle className="w-5 h-5 text-red-600" />
-                )}
-                <h3 className="text-lg font-bold text-gray-900">Documents</h3>
-              </div>
+              <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
+                <MessageSquare className="w-4 h-4 text-blue-600" />
+                Timeline Échanges
+              </h3>
+              <span className="text-xs font-medium text-gray-500">
+                {stats.interactionsCount} interaction(s)
+              </span>
             </div>
 
-            {stats.documentsComplete ? (
-              <div className="bg-white rounded-lg p-3 border border-green-200">
-                <p className="text-sm font-medium text-green-700">
-                  ✓ Tous les documents sont complets
-                </p>
+            {loadingInteractions ? (
+              <div className="text-center py-6">
+                <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600" />
+              </div>
+            ) : recentInteractions.length > 0 ? (
+              <div className="space-y-2 max-h-96 overflow-y-auto">
+                {recentInteractions.map((interaction) => {
+                  const Icon = getInteractionIcon(interaction.type);
+                  return (
+                    <div
+                      key={interaction.id}
+                      className="p-2 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors"
+                    >
+                      <div className="flex items-start gap-2">
+                        <div className={cn("p-1.5 rounded-lg flex-shrink-0", getInteractionColor(interaction.type))}>
+                          <Icon className="w-3 h-3" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between mb-0.5">
+                            <span className="text-xs font-medium text-gray-900 capitalize">
+                              {interaction.type}
+                            </span>
+                            <span className="text-xs text-gray-500">
+                              {new Date(interaction.created_at).toLocaleDateString('fr-FR', {
+                                day: 'numeric',
+                                month: 'short',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })}
+                            </span>
+                          </div>
+                          {interaction.subject && (
+                            <p className="text-xs font-medium text-gray-700 mb-0.5 truncate">
+                              {interaction.subject}
+                            </p>
+                          )}
+                          <p className="text-xs text-gray-600 line-clamp-2">
+                            {interaction.content || 'Aucun contenu'}
+                          </p>
+                          {interaction.author && (
+                            <p className="text-xs text-gray-500 mt-0.5">
+                              Par {interaction.author}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             ) : (
-              <div className="space-y-2">
-                <div className="bg-white rounded-lg p-3 border border-red-200">
-                  <p className="text-sm font-medium text-red-700">
-                    {stats.documentsMissing} document(s) manquant(s)
-                  </p>
-                </div>
-                <ContextualTooltip content="Envoyer une demande de documents automatique" type="tip">
-                  <button
-                    onClick={() => onActionTrigger('request_documents')}
-                    className="w-full px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium"
-                  >
-                    Demander les documents
-                  </button>
-                </ContextualTooltip>
+              <div className="text-center py-6">
+                <MessageSquare className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+                <p className="text-xs text-gray-500">Aucune interaction encore</p>
+                <p className="text-xs text-gray-400 mt-1">
+                  Commencez par envoyer un email ou appeler
+                </p>
               </div>
+            )}
+
+            {recentInteractions.length > 0 && (
+              <button
+                onClick={() => onActionTrigger('view_all_history')}
+                className="w-full mt-3 px-3 py-2 text-xs font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-colors border border-blue-200"
+              >
+                Voir tout l'historique ({stats.interactionsCount})
+              </button>
             )}
           </div>
         </div>
