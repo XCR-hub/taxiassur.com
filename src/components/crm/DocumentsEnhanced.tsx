@@ -198,7 +198,7 @@ export default function DocumentsEnhanced({
   const stats = {
     total: DOCUMENT_TYPES.filter(t => t.required).length,
     validated: categories.filter(c => c.required && c.documents.some(d => d.status === 'validated')).length,
-    received: categories.filter(c => c.required && c.documents.some(d => d.status === 'received')).length,
+    received: categories.filter(c => c.required && c.documents.some(d => d.status === 'received' || d.status === 'pending_validation')).length,
     missing: categories.filter(c => c.required && c.documents.length === 0).length
   };
 
@@ -319,21 +319,57 @@ export default function DocumentsEnhanced({
         )}
       </div>
 
-      {/* Réceptacle de Documents avec Drag & Drop */}
-      <DocumentBasket
-        caseId={leadId}
-        onDocumentClassified={() => {
-          loadDocuments();
-          onDocumentUpload?.();
-        }}
-      />
+      {/* Système Unifié : Panier + Catégories avec Drag & Drop */}
+      <div className="space-y-6">
+        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl shadow-sm border-2 border-blue-300 p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-3 bg-blue-600 rounded-xl">
+              <Archive className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-gray-900">
+                📥 Documents à Classer
+              </h3>
+              <p className="text-sm text-gray-600">
+                Glissez-déposez les documents dans les catégories ci-dessous
+              </p>
+            </div>
+          </div>
 
-      {/* Catégories de documents */}
+          <DocumentBasket
+            caseId={leadId}
+            onDocumentClassified={() => {
+              loadDocuments();
+              onDocumentUpload?.();
+            }}
+          />
+        </div>
+
+        {/* Instructions Drag & Drop */}
+        <div className="bg-amber-50 rounded-xl border border-amber-200 p-4">
+          <div className="flex items-start gap-3">
+            <div className="text-2xl">💡</div>
+            <div className="flex-1">
+              <h4 className="font-bold text-amber-900 mb-2">
+                Comment utiliser le système :
+              </h4>
+              <ol className="text-sm text-amber-800 space-y-1 list-decimal list-inside">
+                <li>Les documents apparaissent automatiquement dans le panier ci-dessus</li>
+                <li>Glissez-déposez chaque document dans la bonne catégorie</li>
+                <li>Une fois classés, validez ou refusez-les directement</li>
+                <li>Les documents validés sont marqués avec ✓</li>
+              </ol>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Catégories de documents avec zones de drop */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {categories.map((category) => {
           const hasDocuments = category.documents.length > 0;
           const isValidated = category.documents.some(d => d.status === 'validated');
-          const isReceived = category.documents.some(d => d.status === 'received');
+          const isPending = category.documents.some(d => d.status === 'received' || d.status === 'pending_validation');
 
           return (
             <div
@@ -341,8 +377,8 @@ export default function DocumentsEnhanced({
               className={cn(
                 "rounded-xl shadow-sm border p-4 transition-all hover:shadow-md",
                 isValidated ? "bg-gradient-to-br from-green-50 to-emerald-50 border-green-200" :
-                isReceived ? "bg-gradient-to-br from-amber-50 to-orange-50 border-amber-200" :
-                "bg-white border-gray-200"
+                isPending ? "bg-gradient-to-br from-amber-50 to-orange-50 border-amber-200" :
+                "bg-white border-gray-300 border-dashed"
               )}
             >
               <div className="flex items-center justify-between mb-3">
@@ -356,107 +392,98 @@ export default function DocumentsEnhanced({
                   </div>
                 </div>
                 {isValidated && <CheckCircle className="w-5 h-5 text-green-600" />}
-                {isReceived && !isValidated && <Clock className="w-5 h-5 text-amber-600" />}
+                {isPending && !isValidated && <Clock className="w-5 h-5 text-amber-600" />}
                 {!hasDocuments && category.required && <AlertCircle className="w-5 h-5 text-red-600" />}
+                {!hasDocuments && !category.required && <FolderOpen className="w-5 h-5 text-gray-400" />}
               </div>
 
               {hasDocuments ? (
                 <div className="space-y-2">
-                  {category.documents.slice(0, 1).map((doc) => (
+                  {category.documents.map((doc) => (
                     <div key={doc.id} className="bg-white rounded-lg border border-gray-200 p-3">
                       <div className="flex items-center justify-between mb-2">
-                        <span className="text-xs text-gray-600 truncate flex-1">
-                          {doc.file_name}
-                        </span>
-                        <div className="flex gap-1">
+                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                          <FileText className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                          <span className="text-xs text-gray-700 truncate">
+                            {doc.file_name}
+                          </span>
+                        </div>
+                        <div className="flex gap-1 flex-shrink-0">
                           {doc.download_url && (
-                            <ContextualTooltip content="Télécharger" type="tip">
-                              <a
-                                href={doc.download_url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="p-1 hover:bg-blue-50 rounded transition-colors"
-                              >
-                                <Download className="w-4 h-4 text-blue-600" />
-                              </a>
-                            </ContextualTooltip>
-                          )}
-                          {doc.download_url && (
-                            <ContextualTooltip content="Visualiser" type="tip">
-                              <a
-                                href={doc.download_url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="p-1 hover:bg-blue-50 rounded transition-colors"
-                              >
-                                <Eye className="w-4 h-4 text-blue-600" />
-                              </a>
-                            </ContextualTooltip>
+                            <>
+                              <ContextualTooltip content="Télécharger" type="tip">
+                                <a
+                                  href={doc.download_url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="p-1 hover:bg-blue-50 rounded transition-colors"
+                                >
+                                  <Download className="w-4 h-4 text-blue-600" />
+                                </a>
+                              </ContextualTooltip>
+                              <ContextualTooltip content="Visualiser" type="tip">
+                                <a
+                                  href={doc.download_url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="p-1 hover:bg-blue-50 rounded transition-colors"
+                                >
+                                  <Eye className="w-4 h-4 text-blue-600" />
+                                </a>
+                              </ContextualTooltip>
+                            </>
                           )}
                         </div>
                       </div>
 
-                      {doc.status === 'received' && (
-                        <div className="flex gap-2">
-                          <ContextualTooltip content="Valider ce document" type="tip">
+                      {(doc.status === 'received' || doc.status === 'pending_validation') && (
+                        <div className="flex gap-2 mt-2">
+                          <ContextualTooltip content="✓ Valider ce document" type="tip">
                             <button
                               onClick={() => handleValidateDocument(doc.id)}
-                              className="flex-1 flex items-center justify-center gap-1 px-2 py-1 bg-green-600 text-white rounded text-xs hover:bg-green-700 transition-colors"
+                              className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-green-600 text-white rounded-lg text-xs font-medium hover:bg-green-700 transition-colors"
                             >
-                              <Check className="w-3 h-3" />
+                              <Check className="w-4 h-4" />
                               Valider
                             </button>
                           </ContextualTooltip>
-                          <ContextualTooltip content="Rejeter ce document" type="warning">
+                          <ContextualTooltip content="✗ Rejeter ce document" type="warning">
                             <button
                               onClick={() => handleRejectDocument(doc.id)}
-                              className="flex items-center justify-center gap-1 px-2 py-1 bg-red-600 text-white rounded text-xs hover:bg-red-700 transition-colors"
+                              className="flex items-center justify-center gap-1 px-3 py-2 bg-red-600 text-white rounded-lg text-xs font-medium hover:bg-red-700 transition-colors"
                             >
-                              <X className="w-3 h-3" />
+                              <X className="w-4 h-4" />
+                              Refuser
                             </button>
                           </ContextualTooltip>
                         </div>
                       )}
 
                       {doc.status === 'validated' && (
-                        <div className="flex items-center gap-1 text-xs text-green-700">
-                          <CheckCircle className="w-3 h-3" />
-                          Validé
-                          {doc.validated_at && (
-                            <span className="ml-1">
-                              le {new Date(doc.validated_at).toLocaleDateString('fr-FR')}
-                            </span>
-                          )}
+                        <div className="flex items-center gap-2 mt-2 p-2 bg-green-50 rounded text-xs text-green-700">
+                          <CheckCircle className="w-4 h-4" />
+                          <span className="font-medium">
+                            ✓ Validé
+                            {doc.validated_at && (
+                              <span className="ml-1 font-normal">
+                                le {new Date(doc.validated_at).toLocaleDateString('fr-FR')}
+                              </span>
+                            )}
+                          </span>
                         </div>
                       )}
                     </div>
                   ))}
-
-                  {category.documents.length > 1 && (
-                    <button className="w-full text-xs text-blue-600 hover:text-blue-800 font-medium">
-                      Voir {category.documents.length - 1} autre(s)
-                    </button>
-                  )}
                 </div>
               ) : (
-                <div className="text-center py-6">
-                  <FolderOpen className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                  <p className="text-xs text-gray-500 mb-3">Aucun document</p>
-                  <label className="cursor-pointer">
-                    <input
-                      type="file"
-                      className="hidden"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) handleFileUpload(file, category.id);
-                      }}
-                      accept=".pdf,.jpg,.jpeg,.png"
-                    />
-                    <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-xs">
-                      <Upload className="w-3 h-3" />
-                      Upload
-                    </span>
-                  </label>
+                <div className="text-center py-8 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50">
+                  <FolderOpen className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                  <p className="text-sm text-gray-600 font-medium mb-1">
+                    Zone de dépôt
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    Déposez un document ici
+                  </p>
                 </div>
               )}
             </div>
