@@ -17,9 +17,13 @@ import {
   Car,
   Phone,
   Mail,
-  Building2
+  Building2,
+  Eye,
+  MessageSquare,
+  PhoneCall
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import OnboardingGuide from '../components/OnboardingGuide';
 
 interface ContractPortfolio {
   id: string;
@@ -213,6 +217,37 @@ export default function CRMGestionPortfolio() {
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
+      <OnboardingGuide
+        storageKey="crm_gestion_portfolio"
+        title="Bienvenue dans votre Portefeuille"
+        steps={[
+          {
+            icon: Eye,
+            title: 'Visualiser vos contrats',
+            description: 'Tous vos contrats actifs sont listés ici avec leurs informations principales : client, compagnie, prime, véhicules, statut paiement et échéances.'
+          },
+          {
+            icon: Search,
+            title: 'Rechercher et filtrer',
+            description: 'Utilisez la barre de recherche et les filtres pour trouver rapidement un contrat par nom, email, numéro de contrat, statut ou situation de paiement.'
+          },
+          {
+            icon: AlertCircle,
+            title: 'Gérer les alertes',
+            description: 'Les contrats avec renouvellement proche (< 60 jours) ou actions pendantes sont signalés visuellement. Cliquez sur "Ouvrir" pour voir les détails.'
+          },
+          {
+            icon: FileText,
+            title: 'Consulter le détail',
+            description: 'Cliquez sur "Ouvrir" pour accéder à la fiche complète : infos client, véhicules, documents, sinistres, modifications et historique des communications.'
+          },
+          {
+            icon: MessageSquare,
+            title: 'Contacter vos clients',
+            description: 'Utilisez les boutons Email ou Téléphone pour contacter rapidement vos clients. Toutes les communications sont enregistrées dans l\'historique.'
+          }
+        ]}
+      />
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
@@ -473,10 +508,11 @@ export default function CRMGestionPortfolio() {
                     </div>
 
                     <Link
-                      to={`/admin/crm-gestion/contrat/${contract.id}`}
-                      className="ml-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+                      to={`/backoffice/crm-gestion/contrat/${contract.id}`}
+                      className="ml-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 font-medium shadow-sm"
                     >
-                      Ouvrir
+                      <Eye className="w-4 h-4" />
+                      Voir détails
                       <ArrowRight className="w-4 h-4" />
                     </Link>
                   </div>
