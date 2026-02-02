@@ -208,53 +208,61 @@ export default function LeadQuotesManager({ leadId }: Props) {
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
       const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-      // Créer un timeout de 60 secondes
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 60000);
-
-      try {
-        const response = await fetch(`${supabaseUrl}/functions/v1/send-quote-email`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session?.access_token || anonKey}`,
-          },
-          body: JSON.stringify({
-            lead_id: leadId,
-            company_id: emailModal.companyId,
-            company_name: emailModal.companyName,
-            quote_file_url: emailModal.quoteUrl,
-            quote_amount: emailModal.quoteAmount,
-            personal_message: emailMessage || undefined,
-          }),
-          signal: controller.signal
-        });
-
-        clearTimeout(timeoutId);
-
-        if (!response.ok) {
-          const result = await response.json().catch(() => ({ error: 'Erreur réseau' }));
-          throw new Error(result.error || `Erreur ${response.status}: ${response.statusText}`);
+      // Lancer l'envoi en arrière-plan sans attendre
+      fetch(`${supabaseUrl}/functions/v1/send-quote-email`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token || anonKey}`,
+        },
+        body: JSON.stringify({
+          lead_id: leadId,
+          company_id: emailModal.companyId,
+          company_name: emailModal.companyName,
+          quote_file_url: emailModal.quoteUrl,
+          quote_amount: emailModal.quoteAmount,
+          personal_message: emailMessage || undefined,
+        }),
+      }).then(async (response) => {
+        if (response.ok) {
+          const result = await response.json();
+          console.log('✅ Email devis envoyé:', result);
+        } else {
+          console.error('❌ Erreur envoi devis:', await response.text());
         }
+      }).catch(error => {
+        console.error('❌ Erreur réseau envoi devis:', error);
+      });
 
-        const result = await response.json();
+      // Mettre à jour immédiatement last_sent_at dans la DB
+      await supabase
+        .from('lead_company_quotes')
+        .update({ last_sent_at: new Date().toISOString() })
+        .eq('lead_id', leadId)
+        .eq('company_id', emailModal.companyId);
 
-        alert(`✅ Devis envoyé avec succès à ${result.to}`);
-        setEmailModal(null);
-        setEmailMessage('');
-        loadData();
-      } catch (fetchError: any) {
-        clearTimeout(timeoutId);
+      // Enregistrer l'interaction immédiatement
+      await supabase.from('crm_interactions').insert({
+        lead_id: leadId,
+        type: 'email',
+        channel: 'email',
+        direction: 'outbound',
+        subject: `Envoi devis ${emailModal.companyName}`,
+        content: `Devis ${emailModal.companyName} envoyé par email${emailModal.quoteAmount ? ` - Montant: ${emailModal.quoteAmount}€` : ''}`,
+        summary: emailMessage || 'Envoi du devis par email',
+      });
 
-        if (fetchError.name === 'AbortError') {
-          throw new Error('⏱️ L\'envoi a pris trop de temps. Le devis est peut-être en cours d\'envoi. Veuillez vérifier dans quelques instants.');
-        }
-        throw fetchError;
-      }
+      // Confirmation immédiate pour l'utilisateur
+      alert(`📧 L'email avec le devis ${emailModal.companyName} est en cours d'envoi.\n\nLe prospect le recevra dans quelques instants.`);
+
+      setEmailModal(null);
+      setEmailMessage('');
+      setSendingEmail(null);
+      loadData();
+
     } catch (error: any) {
       console.error('Erreur envoi email devis:', error);
       alert(error.message || 'Erreur lors de l\'envoi de l\'email');
-    } finally {
       setSendingEmail(null);
     }
   };

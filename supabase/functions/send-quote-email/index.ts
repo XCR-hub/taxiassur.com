@@ -21,26 +21,36 @@ function base64Encode(str: string): string {
 }
 
 async function downloadFile(url: string): Promise<Uint8Array> {
-  // Timeout de 30 secondes pour le téléchargement
+  // Timeout de 45 secondes pour le téléchargement (augmenté pour les gros fichiers)
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 30000);
+  const timeoutId = setTimeout(() => controller.abort(), 45000);
 
   try {
-    console.log("📥 Téléchargement du fichier...");
-    const response = await fetch(url, { signal: controller.signal });
+    console.log("📥 Téléchargement du fichier:", url);
+    const startTime = Date.now();
+
+    const response = await fetch(url, {
+      signal: controller.signal,
+      headers: {
+        'Cache-Control': 'no-cache',
+      }
+    });
     clearTimeout(timeoutId);
 
     if (!response.ok) {
-      throw new Error(`Erreur téléchargement fichier: ${response.statusText}`);
+      throw new Error(`Erreur téléchargement fichier: ${response.status} ${response.statusText}`);
     }
 
     const arrayBuffer = await response.arrayBuffer();
-    console.log(`✅ Fichier téléchargé: ${arrayBuffer.byteLength} bytes`);
+    const downloadTime = Date.now() - startTime;
+    const sizeMB = (arrayBuffer.byteLength / 1024 / 1024).toFixed(2);
+    console.log(`✅ Fichier téléchargé: ${sizeMB} MB en ${downloadTime}ms`);
+
     return new Uint8Array(arrayBuffer);
   } catch (error: any) {
     clearTimeout(timeoutId);
     if (error.name === 'AbortError') {
-      throw new Error('Timeout lors du téléchargement du fichier (> 30s)');
+      throw new Error('Timeout lors du téléchargement du fichier (> 45s)');
     }
     throw error;
   }
