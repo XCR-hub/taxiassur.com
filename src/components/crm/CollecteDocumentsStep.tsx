@@ -46,12 +46,9 @@ export default function CollecteDocumentsStep({
     pending: 0,
     required: 6
   });
-  const [communications, setCommunications] = useState<any[]>([]);
-
   useEffect(() => {
     loadTemplates();
     loadDocumentStats();
-    loadCommunications();
   }, [leadId]);
 
   useEffect(() => {
@@ -101,22 +98,6 @@ export default function CollecteDocumentsStep({
     }
   }
 
-  async function loadCommunications() {
-    try {
-      const { data, error } = await supabase
-        .from('crm_interactions')
-        .select('*')
-        .eq('lead_id', leadId)
-        .eq('channel', 'email')
-        .order('created_at', { ascending: false })
-        .limit(5);
-
-      if (error) throw error;
-      setCommunications(data || []);
-    } catch (error) {
-      console.error('Error loading communications:', error);
-    }
-  }
 
   async function sendCommunication(template: CommunicationTemplate) {
     if (!leadEmail && template.channel === 'email') {
@@ -219,7 +200,6 @@ export default function CollecteDocumentsStep({
 
       alert(`${template.channel.toUpperCase()} envoyé avec succès !`);
       setSelectedTemplate(null);
-      loadCommunications();
 
     } catch (error) {
       console.error('Error sending communication:', error);
@@ -365,38 +345,6 @@ export default function CollecteDocumentsStep({
           }}
         />
       </div>
-
-      {/* Recent Communications */}
-      {communications.length > 0 && (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
-            Historique des Communications
-          </h3>
-          <div className="space-y-3">
-            {communications.map((comm) => (
-              <div key={comm.id} className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
-                {comm.channel === 'email' && <Mail className="h-5 w-5 text-blue-600 flex-shrink-0" />}
-                {comm.channel === 'sms' && <MessageSquare className="h-5 w-5 text-green-600 flex-shrink-0" />}
-                {comm.channel === 'whatsapp' && <Phone className="h-5 w-5 text-green-600 flex-shrink-0" />}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm font-medium text-gray-900">
-                      {comm.channel.toUpperCase()}
-                    </span>
-                    <span className="text-xs text-gray-500">
-                      {new Date(comm.created_at).toLocaleString('fr-FR')}
-                    </span>
-                  </div>
-                  {comm.subject && (
-                    <p className="text-sm font-medium text-gray-700 mb-1">{comm.subject}</p>
-                  )}
-                  <p className="text-xs text-gray-600 line-clamp-2">{comm.body}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* Lien Espace Prospect */}
       {leadAccessToken && (
