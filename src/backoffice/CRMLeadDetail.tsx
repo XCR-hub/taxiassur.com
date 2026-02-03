@@ -4,7 +4,7 @@ import { ArrowLeft, Mail, Phone, AlertCircle } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
 import { LeadWorkflowTabs, WorkflowTab } from '@/components/crm/LeadWorkflowTabs';
-import { PipelineStepWorkflow } from '@/components/crm/PipelineStepWorkflow';
+import PipelineWorkflow7Etapes from '@/components/crm/PipelineWorkflow7Etapes';
 import DocumentChecklistPanelV2 from '@/components/crm/DocumentChecklistPanelV2';
 import LeadCompanyQuotes from '@/backoffice/LeadCompanyQuotes';
 import ContractSignatureManager from '@/components/crm/ContractSignatureManager';
@@ -23,6 +23,8 @@ interface Lead {
   updated_at?: string;
   lead_score?: number;
   current_stage_key?: string;
+  pipeline_stage?: string;
+  access_token?: string;
   notes?: string;
   company_name?: string;
   vehicle_type?: string;
@@ -224,12 +226,9 @@ const CRMLeadDetail: React.FC = () => {
       <div className="max-w-7xl mx-auto px-6 py-6">
         {activeTab === 'overview' && (
           <div className="space-y-6">
-            <PipelineStepWorkflow
+            <PipelineWorkflow7Etapes
               leadId={leadId!}
-              onStageChanged={() => {
-                loadLeadData();
-                loadStats();
-              }}
+              leadData={lead}
             />
           </div>
         )}

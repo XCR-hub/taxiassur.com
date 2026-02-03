@@ -6,7 +6,7 @@ import SaisieDevisStep from './SaisieDevisStep';
 import SignatureDevisStep from './SignatureDevisStep';
 import PaiementRIBStep from './PaiementRIBStep';
 import ContratSignatureStep from './ContratSignatureStep';
-import CallDialog from './CallDialog';
+import { CallDialog } from './CallDialog';
 
 interface PipelineWorkflow7EtapesProps {
   leadId: string;
