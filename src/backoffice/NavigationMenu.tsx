@@ -67,6 +67,7 @@ export default function NavigationMenu() {
         { to: '/backoffice/crm-killer/retention', icon: Shield, label: 'Retention' },
         { to: '/backoffice/crm-killer/ia', icon: Brain, label: 'IA CRM' },
         { to: '/backoffice/crm-killer/templates', icon: FileText, label: 'Templates' },
+        { to: '/backoffice/doublons', icon: Users, label: 'Doublons' },
       ],
     },
     {

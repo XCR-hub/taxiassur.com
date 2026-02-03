@@ -99,6 +99,12 @@ const CRMCommercial = lazy(() => import('./backoffice/CRMCommercial'));
 const LeadManager = lazy(() => import('./backoffice/LeadManager'));
 const PartnerPortal = lazy(() => import('./backoffice/PartnerPortal'));
 const SocialMediaManager = lazy(() => import('./backoffice/SocialMediaManager'));
+const AutomationDashboard = lazy(() => import('./backoffice/AutomationDashboard'));
+const AnalyticsDashboard = lazy(() => import('./backoffice/AnalyticsDashboard'));
+const WhatsAppManager = lazy(() => import('./backoffice/WhatsAppManager'));
+const EmailMarketingHub = lazy(() => import('./backoffice/EmailMarketingHub'));
+const DuplicateLeadsManager = lazy(() => import('./backoffice/DuplicateLeadsManager'));
+const TestAutomations = lazy(() => import('./backoffice/TestAutomations'));
 
 export const router = createBrowserRouter([
   {
@@ -500,5 +506,29 @@ export const router = createBrowserRouter([
   {
     path: '/backoffice/social-connections',
     element: <SocialMediaManager />,
+  },
+  {
+    path: '/backoffice/automations',
+    element: <AutomationDashboard />,
+  },
+  {
+    path: '/backoffice/test-automations',
+    element: <TestAutomations />,
+  },
+  {
+    path: '/backoffice/analytics',
+    element: <AnalyticsDashboard />,
+  },
+  {
+    path: '/backoffice/whatsapp',
+    element: <WhatsAppManager />,
+  },
+  {
+    path: '/backoffice/email-marketing',
+    element: <EmailMarketingHub />,
+  },
+  {
+    path: '/backoffice/doublons',
+    element: <DuplicateLeadsManager />,
   },
 ]);
