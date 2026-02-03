@@ -1,91 +1,43 @@
-# Correction Affichage Emails - Inbox Multicanal
+# Correction Problème Email et Lead Manquant
 
-## Problème Identifié
+Date: 3 février 2026
 
-Lorsque vous ouvrez un email dans l'Inbox Multicanal, le contenu de l'email n'est pas visible. La zone reste vide/blanche.
+## Problèmes Identifiés et Corrigés
 
-## Cause
+### 1. Lead Soufiane Karim manquant ✅
 
-Votre navigateur utilise encore l'**ancien code JavaScript en cache**. Les corrections ont été appliquées, mais votre navigateur ne les voit pas car il charge les anciens fichiers mis en cache.
+**Cause**: Le lead n'a jamais été créé dans la base de données
 
-## Solution CRITIQUE - VIDER LE CACHE
+**Solution**: Lead créé manuellement
+- ID: `509a8b49-6fc8-4ce7-a2a0-6d26de60889d`
+- Email: transport.kcn@gmail.com
+- Téléphone: 0759168566
+- Ville: Mantes-la-Jolie
+- Immatriculation: DN-690-NC
 
-### Méthode 1 : Raccourci Clavier (RECOMMANDÉ)
+### 2. Système de notifications défectueux ✅
 
-1. **Chrome/Edge/Firefox** :
-   - Windows : `Ctrl + Shift + Suppr`
-   - Mac : `Cmd + Shift + Suppr`
+**Cause**: Triggers utilisant les mauvais noms de colonnes
 
-2. Une fenêtre s'ouvre, cochez :
-   - **Images et fichiers en cache** ✓
-   - **Fichiers JavaScript et CSS** ✓
+**Solution**: 
+- Migration `fix_notification_trigger_column_name` appliquée
+- Composant `RealtimeNotifications.tsx` corrigé
+- Utilisation de `event_type`, `is_read`, `priority` (numérique)
 
-3. Sélectionnez la période : **"Dernières 24 heures"**
+### 3. Système d'emails ne fonctionne pas ⚠️
 
-4. Cliquez sur **"Effacer les données"**
+**Cause**: Settings database manquants (app.settings.*)
 
-5. **Fermez complètement le navigateur** (toutes les fenêtres)
-
-6. Rouvrez et reconnectez-vous
-
-### Méthode 2 : Actualisation Forcée
-
-1. Ouvrez les DevTools : `F12`
-
-2. **Clic droit** sur le bouton actualiser du navigateur (à côté de l'URL)
-
-3. Choisissez **"Vider le cache et actualiser de force"** ou **"Hard Reload"**
-
-4. Fermez les DevTools et actualisez encore une fois : `Ctrl + F5`
-
-### Méthode 3 : Mode Incognito (Test)
-
-Pour tester si c'est bien un problème de cache :
-
-1. Ouvrez une **fenêtre de navigation privée** :
-   - Chrome : `Ctrl + Shift + N`
-   - Firefox : `Ctrl + Shift + P`
-   - Edge : `Ctrl + Shift + N`
-
-2. Allez sur le backoffice et connectez-vous
-
-3. Testez l'affichage d'un email
-
-Si ça marche en mode incognito, c'est bien le cache qui pose problème.
-
-## Comment Vérifier Que Ça Marche
-
-Après avoir vidé le cache, quand vous ouvrez un email, vous **DEVEZ** voir en haut :
-
-```
-🔴 VERSION DU 31 JANVIER 2026 - 20h45 🔴
-Si vous ne voyez pas cette bannière rouge, videz votre cache (Ctrl+Shift+Suppr)
+**À corriger**:
+```sql
+ALTER DATABASE postgres SET app.settings.supabase_url = 'https://drohhxrkoequjphvabvq.supabase.co';
+ALTER DATABASE postgres SET app.settings.service_role_key = 'YOUR_KEY';
 ```
 
-Cette bannière rouge vif avec bordure épaisse est **impossible à manquer**. Si vous ne la voyez pas, c'est que le cache n'a pas été vidé correctement.
+## État Actuel
 
-## Corrections Appliquées
+✅ Lead Soufiane Karim créé
+✅ Notification créée et visible
+✅ Composant notifications corrigé
+⚠️ Emails non synchronisés (table vide)
 
-### 1. Affichage Direct du HTML
-
-Au lieu de convertir le HTML en texte, le système affiche maintenant **directement le HTML** de l'email, ce qui garantit que tout le contenu est visible.
-
-### 2. Suppression des Styles Problématiques
-
-Les styles inline qui rendaient le texte invisible (texte blanc sur fond blanc) sont automatiquement supprimés.
-
-### 3. Fond Sombre Forcé
-
-La zone de contenu a un fond sombre avec du texte blanc forcé, garantissant la lisibilité même si l'email contient des styles problématiques.
-
-### 4. Fallback pour Texte Brut
-
-Si l'email ne contient que du texte brut (pas de HTML), il est affiché ligne par ligne avec une mise en forme correcte.
-
-### 5. Message d'Erreur Visible
-
-Si un email ne contient vraiment aucun contenu, un message jaune clair s'affiche.
-
-## IMPORTANT : Déployez les Fichiers
-
-Uploadez le dossier `/dist` complet sur votre serveur IONOS pour que les corrections soient visibles en production.

@@ -4,13 +4,17 @@ import { Bell, X, Check, AlertCircle } from 'lucide-react';
 
 interface Notification {
   id: string;
-  title: string;
   message: string;
-  priority: 'low' | 'medium' | 'high';
-  read: boolean;
-  action_url?: string;
+  priority: number;
+  is_read: boolean;
   created_at: string;
-  notification_type: string;
+  event_type: string;
+  context_data?: {
+    action_url?: string;
+    lead_id?: string;
+    email?: string;
+    phone?: string;
+  };
 }
 
 export default function RealtimeNotifications() {
@@ -29,7 +33,7 @@ export default function RealtimeNotifications() {
 
     if (data) {
       setNotifications(data);
-      setUnreadCount(data.filter(n => !n.read).length);
+      setUnreadCount(data.filter(n => !n.is_read).length);
     }
   }, []);
 
@@ -52,7 +56,7 @@ export default function RealtimeNotifications() {
           setUnreadCount(prev => prev + 1);
 
           // Afficher l'alerte importante pour les nouveaux leads
-          if (newNotif.notification_type === 'new_lead' && newNotif.priority === 'high') {
+          if (newNotif.event_type === 'new_lead' && newNotif.priority >= 10) {
             setNewNotificationAlert(true);
 
             // Son de notification
@@ -83,7 +87,7 @@ export default function RealtimeNotifications() {
             prev.map(n => n.id === updated.id ? updated : n)
           );
 
-          if (updated.read) {
+          if (updated.is_read) {
             setUnreadCount(prev => Math.max(0, prev - 1));
           }
         }
@@ -103,26 +107,25 @@ export default function RealtimeNotifications() {
 
   const markAllAsRead = async () => {
     await supabase.rpc('mark_all_notifications_as_read');
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
     setUnreadCount(0);
   };
 
   const handleNotificationClick = (notification: Notification) => {
-    if (!notification.read) {
+    if (!notification.is_read) {
       markAsRead(notification.id);
     }
 
-    if (notification.action_url) {
-      window.location.href = notification.action_url;
+    const actionUrl = notification.context_data?.action_url;
+    if (actionUrl) {
+      window.location.href = actionUrl;
     }
   };
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'high': return 'text-red-600 bg-red-50 border-red-200';
-      case 'medium': return 'text-yellow-600 bg-yellow-50 border-yellow-200';
-      default: return 'text-blue-600 bg-blue-50 border-blue-200';
-    }
+  const getPriorityColor = (priority: number) => {
+    if (priority >= 10) return 'text-red-600 bg-red-50 border-red-200';
+    if (priority >= 5) return 'text-yellow-600 bg-yellow-50 border-yellow-200';
+    return 'text-blue-600 bg-blue-50 border-blue-200';
   };
 
   return (
@@ -144,8 +147,9 @@ export default function RealtimeNotifications() {
                   <button
                     onClick={() => {
                       setNewNotificationAlert(false);
-                      if (notifications[0]?.action_url) {
-                        window.location.href = notifications[0].action_url;
+                      const actionUrl = notifications[0]?.context_data?.action_url;
+                      if (actionUrl) {
+                        window.location.href = actionUrl;
                       }
                     }}
                     className="mt-2 bg-white text-red-600 px-4 py-1 rounded font-semibold text-sm hover:bg-red-50"
@@ -216,12 +220,12 @@ export default function RealtimeNotifications() {
                     key={notification.id}
                     onClick={() => handleNotificationClick(notification)}
                     className={`p-4 border-b border-gray-100 cursor-pointer transition-colors hover:bg-gray-50 ${
-                      !notification.read ? 'bg-blue-50/50' : ''
+                      !notification.is_read ? 'bg-blue-50/50' : ''
                     }`}
                   >
                     <div className="flex items-start gap-3">
                       <div className={`rounded-full p-2 ${getPriorityColor(notification.priority)}`}>
-                        {notification.notification_type === 'new_lead' ? (
+                        {notification.event_type === 'new_lead' ? (
                           <AlertCircle className="w-4 h-4" />
                         ) : (
                           <Bell className="w-4 h-4" />
@@ -230,11 +234,13 @@ export default function RealtimeNotifications() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-2">
                           <h4 className={`font-semibold text-sm ${
-                            !notification.read ? 'text-gray-900' : 'text-gray-600'
+                            !notification.is_read ? 'text-gray-900' : 'text-gray-600'
                           }`}>
-                            {notification.title}
+                            {notification.event_type === 'new_lead' ? 'Nouveau Lead!' :
+                             notification.event_type === 'status_change' ? 'Changement de statut' :
+                             notification.event_type === 'document_uploaded' ? 'Document reçu' : 'Notification'}
                           </h4>
-                          {!notification.read && (
+                          {!notification.is_read && (
                             <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 mt-1"></div>
                           )}
                         </div>
