@@ -4,7 +4,7 @@ import Header from '../components/Header';
 import Footer from '../components/Footer';
 import EnhancedLeadForm from '../components/EnhancedLeadForm';
 
-const AssuranceTaxiSaint-Etienne: React.FC = () => {
+const AssuranceTaxiSaintEtienne: React.FC = () => {
   return (
     <>
       <Helmet>
@@ -39,4 +39,4 @@ const AssuranceTaxiSaint-Etienne: React.FC = () => {
   );
 };
 
-export default AssuranceTaxiSaint-Etienne;
+export default AssuranceTaxiSaintEtienne;
