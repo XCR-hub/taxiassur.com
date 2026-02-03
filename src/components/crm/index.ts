@@ -23,6 +23,7 @@ export { CommercialFollowupPanel } from './CommercialFollowupPanel';
 export { DynamicCommercialWorkflow } from './DynamicCommercialWorkflow';
 export { LeadDeleteSecure } from './LeadDeleteSecure';
 export { default as DocumentBasket } from './DocumentBasket';
+export { default as DocumentValidationComplete } from './DocumentValidationComplete';
 export { CommunicationTimeline } from './CommunicationTimeline';
 export { default as DocumentValidationPanel } from './DocumentValidationPanel';
 export { default as PaymentManager } from './PaymentManager';

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Mail, MessageSquare, Phone, Send, CheckCircle2, AlertCircle, Loader2, FileText, Download } from 'lucide-react';
-import DocumentBasket from './DocumentBasket';
+import DocumentValidationComplete from './DocumentValidationComplete';
 
 interface CollecteDocumentsStepProps {
   leadId: string;
@@ -354,10 +354,12 @@ export default function CollecteDocumentsStep({
         )}
       </div>
 
-      {/* Document Basket avec Drag & Drop */}
+      {/* Document Validation Complete avec Drag & Drop */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <DocumentBasket
+        <DocumentValidationComplete
           caseId={leadId}
+          leadEmail={leadEmail}
+          leadFirstName={leadFirstName}
           onDocumentClassified={() => {
             loadDocumentStats();
           }}
