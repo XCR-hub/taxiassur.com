@@ -456,13 +456,337 @@ export function StepByStepWorkflow({ leadId, leadEmail, leadPhone, onStepComplet
             </div>
           )}
 
-          {/* Other Steps */}
-          {!['need_qualified', 'documents_collected'].includes(currentStep.step_key) && (
-            <div className="bg-gray-800 rounded-lg p-6 text-center">
-              <FileText className="w-12 h-12 text-gray-600 mx-auto mb-3" />
-              <p className="text-gray-400">
-                Actions pour cette étape en cours de développement
+          {/* Step 3: Quote Sent */}
+          {currentStep.step_key === 'quote_sent' && (
+            <div className="space-y-3">
+              <p className="text-sm text-gray-400 mb-4">
+                Envoyez un devis personnalisé au prospect :
               </p>
+
+              <button
+                onClick={async () => {
+                  try {
+                    const { data: { user } } = await supabase.auth.getUser();
+
+                    // Mark step as completed
+                    await supabase.from('crm_workflow_step_actions').insert({
+                      lead_id: leadId,
+                      step_key: currentStep?.step_key,
+                      action_type: 'email',
+                      action_data: { type: 'quote', recipient: leadEmail },
+                      completed_by: user?.id
+                    });
+
+                    // Send quote email via edge function
+                    await supabase.functions.invoke('send-quote-email', {
+                      body: { leadId: leadId, recipientEmail: leadEmail }
+                    });
+
+                    // Add to timeline
+                    await supabase.from('crm_interactions').insert({
+                      lead_id: leadId,
+                      type: 'email',
+                      direction: 'outbound',
+                      subject: 'Devis envoyé',
+                      content: `Devis personnalisé envoyé à ${leadEmail}`,
+                      created_by: user?.id
+                    });
+
+                    await loadWorkflowSteps();
+                    onStepCompleted?.();
+                  } catch (err) {
+                    logger.error('Error sending quote:', err);
+                    alert('Erreur lors de l\'envoi du devis');
+                  }
+                }}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white px-6 py-4 rounded-lg flex items-center gap-3 transition-colors"
+              >
+                <Mail className="w-5 h-5" />
+                <div className="flex-1 text-left">
+                  <div className="font-medium">Envoyer le devis par email</div>
+                  <div className="text-xs text-blue-200">
+                    Devis personnalisé basé sur les informations du lead
+                  </div>
+                </div>
+              </button>
+
+              <button
+                onClick={async () => {
+                  try {
+                    const { data: { user } } = await supabase.auth.getUser();
+
+                    await supabase.from('crm_workflow_step_actions').insert({
+                      lead_id: leadId,
+                      step_key: currentStep?.step_key,
+                      action_type: 'manual',
+                      notes: 'Devis envoyé manuellement',
+                      completed_by: user?.id
+                    });
+
+                    await supabase.from('crm_interactions').insert({
+                      lead_id: leadId,
+                      type: 'note',
+                      subject: 'Devis envoyé manuellement',
+                      content: 'Le commercial a envoyé le devis via un autre canal',
+                      created_by: user?.id
+                    });
+
+                    await loadWorkflowSteps();
+                    onStepCompleted?.();
+                  } catch (err) {
+                    logger.error('Error marking quote sent:', err);
+                  }
+                }}
+                className="w-full bg-gray-700 hover:bg-gray-600 text-white px-6 py-4 rounded-lg flex items-center gap-3 transition-colors"
+              >
+                <CheckCircle2 className="w-5 h-5" />
+                <div className="flex-1 text-left">
+                  <div className="font-medium">Marquer comme envoyé</div>
+                  <div className="text-xs text-gray-300">
+                    Si le devis a déjà été envoyé autrement
+                  </div>
+                </div>
+              </button>
+            </div>
+          )}
+
+          {/* Step 4: Objections Handled */}
+          {currentStep.step_key === 'objections_handled' && (
+            <div className="space-y-3">
+              <p className="text-sm text-gray-400 mb-4">
+                Répondez aux questions et levez les objections du prospect :
+              </p>
+
+              <button
+                onClick={() => setShowCallModal(true)}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white px-6 py-4 rounded-lg flex items-center gap-3 transition-colors"
+              >
+                <Phone className="w-5 h-5" />
+                <div className="flex-1 text-left">
+                  <div className="font-medium">Appeler pour traiter les objections</div>
+                  <div className="text-xs text-blue-200">
+                    Discussion pour lever les freins et répondre aux questions
+                  </div>
+                </div>
+              </button>
+
+              <button
+                onClick={async () => {
+                  try {
+                    const { data: { user } } = await supabase.auth.getUser();
+
+                    await supabase.from('crm_workflow_step_actions').insert({
+                      lead_id: leadId,
+                      step_key: currentStep?.step_key,
+                      action_type: 'email',
+                      action_data: { type: 'objections_response', recipient: leadEmail },
+                      completed_by: user?.id
+                    });
+
+                    await supabase.functions.invoke('send-crm-email', {
+                      body: {
+                        to: leadEmail,
+                        template: 'objections_response',
+                        leadId: leadId
+                      }
+                    });
+
+                    await supabase.from('crm_interactions').insert({
+                      lead_id: leadId,
+                      type: 'email',
+                      direction: 'outbound',
+                      subject: 'Réponse aux objections',
+                      content: `Email de réponse aux objections envoyé à ${leadEmail}`,
+                      created_by: user?.id
+                    });
+
+                    await loadWorkflowSteps();
+                    onStepCompleted?.();
+                  } catch (err) {
+                    logger.error('Error sending objections response:', err);
+                    alert('Erreur lors de l\'envoi de l\'email');
+                  }
+                }}
+                className="w-full bg-purple-600 hover:bg-purple-700 text-white px-6 py-4 rounded-lg flex items-center gap-3 transition-colors"
+              >
+                <Mail className="w-5 h-5" />
+                <div className="flex-1 text-left">
+                  <div className="font-medium">Envoyer email de réponse</div>
+                  <div className="text-xs text-purple-200">
+                    Email automatique avec réponses aux objections courantes
+                  </div>
+                </div>
+              </button>
+
+              <button
+                onClick={async () => {
+                  try {
+                    const { data: { user } } = await supabase.auth.getUser();
+
+                    await supabase.from('crm_workflow_step_actions').insert({
+                      lead_id: leadId,
+                      step_key: currentStep?.step_key,
+                      action_type: 'manual',
+                      notes: 'Objections traitées manuellement',
+                      completed_by: user?.id
+                    });
+
+                    await supabase.from('crm_interactions').insert({
+                      lead_id: leadId,
+                      type: 'note',
+                      subject: 'Objections traitées',
+                      content: 'Le commercial a traité les objections avec succès',
+                      created_by: user?.id
+                    });
+
+                    await loadWorkflowSteps();
+                    onStepCompleted?.();
+                  } catch (err) {
+                    logger.error('Error marking objections handled:', err);
+                  }
+                }}
+                className="w-full bg-gray-700 hover:bg-gray-600 text-white px-6 py-4 rounded-lg flex items-center gap-3 transition-colors"
+              >
+                <CheckCircle2 className="w-5 h-5" />
+                <div className="flex-1 text-left">
+                  <div className="font-medium">Marquer comme traité</div>
+                  <div className="text-xs text-gray-300">
+                    Si les objections ont déjà été levées
+                  </div>
+                </div>
+              </button>
+
+              {callHistory.length > 0 && (
+                <button
+                  onClick={() => setShowCallHistory(!showCallHistory)}
+                  className="w-full bg-gray-800 hover:bg-gray-750 text-gray-300 px-4 py-3 rounded-lg flex items-center gap-2 text-sm transition-colors mt-4"
+                >
+                  <MessageSquare className="w-4 h-4" />
+                  Voir l'historique des appels ({callHistory.length})
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Step 5: Closing */}
+          {currentStep.step_key === 'closing' && (
+            <div className="space-y-3">
+              <p className="text-sm text-gray-400 mb-4">
+                Finalisez la vente avec la signature et le paiement :
+              </p>
+
+              <button
+                onClick={async () => {
+                  try {
+                    const { data: { user } } = await supabase.auth.getUser();
+
+                    // Create contract
+                    const { data: contract } = await supabase
+                      .from('crm_contracts')
+                      .insert({
+                        lead_id: leadId,
+                        status: 'pending_signature',
+                        contract_data: { created_from_workflow: true }
+                      })
+                      .select()
+                      .single();
+
+                    // Send signature request
+                    await supabase.functions.invoke('send-crm-email', {
+                      body: {
+                        to: leadEmail,
+                        template: 'signature_request',
+                        data: {
+                          leadId: leadId,
+                          contractId: contract?.id
+                        }
+                      }
+                    });
+
+                    await supabase.from('crm_interactions').insert({
+                      lead_id: leadId,
+                      type: 'email',
+                      direction: 'outbound',
+                      subject: 'Demande de signature envoyée',
+                      content: `Email avec lien de signature envoyé à ${leadEmail}`,
+                      created_by: user?.id
+                    });
+
+                    alert('Demande de signature envoyée avec succès !');
+                  } catch (err) {
+                    logger.error('Error sending signature request:', err);
+                    alert('Erreur lors de l\'envoi de la demande de signature');
+                  }
+                }}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white px-6 py-4 rounded-lg flex items-center gap-3 transition-colors"
+              >
+                <Send className="w-5 h-5" />
+                <div className="flex-1 text-left">
+                  <div className="font-medium">Envoyer demande de signature électronique</div>
+                  <div className="text-xs text-blue-200">
+                    Email avec lien vers l'espace de signature sécurisé
+                  </div>
+                </div>
+              </button>
+
+              <button
+                onClick={async () => {
+                  try {
+                    const { data: { user } } = await supabase.auth.getUser();
+
+                    // Update lead status to signed
+                    await supabase
+                      .from('crm_leads')
+                      .update({ status: 'contrat_signe' })
+                      .eq('id', leadId);
+
+                    // Mark step as completed
+                    await supabase.from('crm_workflow_step_actions').insert({
+                      lead_id: leadId,
+                      step_key: currentStep?.step_key,
+                      action_type: 'manual',
+                      notes: 'Contrat signé et paiement reçu',
+                      completed_by: user?.id
+                    });
+
+                    await supabase.from('crm_interactions').insert({
+                      lead_id: leadId,
+                      type: 'note',
+                      subject: 'Vente finalisée',
+                      content: 'Contrat signé et paiement reçu - Client converti',
+                      created_by: user?.id
+                    });
+
+                    await loadWorkflowSteps();
+                    onStepCompleted?.();
+                    alert('Félicitations ! La vente est finalisée.');
+                  } catch (err) {
+                    logger.error('Error finalizing sale:', err);
+                  }
+                }}
+                className="w-full bg-green-600 hover:bg-green-700 text-white px-6 py-4 rounded-lg flex items-center gap-3 transition-colors"
+              >
+                <CheckCircle2 className="w-5 h-5" />
+                <div className="flex-1 text-left">
+                  <div className="font-medium">Marquer comme signé et payé</div>
+                  <div className="text-xs text-green-200">
+                    Le contrat est signé et le paiement est reçu
+                  </div>
+                </div>
+              </button>
+
+              <div className="bg-green-900/20 border border-green-500/30 rounded-lg p-4 mt-4">
+                <div className="flex items-start gap-3">
+                  <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+                  <div className="text-sm text-green-300">
+                    <p className="font-medium text-green-400 mb-1">Dernière étape !</p>
+                    <p>
+                      Une fois cette étape validée, le lead sera automatiquement converti en client
+                      et son statut passera à "Contrat signé".
+                    </p>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
         </div>
