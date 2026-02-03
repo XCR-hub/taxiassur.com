@@ -495,12 +495,15 @@ const DocumentDragDropSimple: React.FC<DocumentDragDropSimpleProps> = ({ leadId,
 
     const { data } = supabase.storage.from(bucket).getPublicUrl(cleanPath);
 
-    logger.info('Document URL generated:', {
+    // Log détaillé pour debugging
+    console.log('📄 Document URL:', {
+      fileName: filePath.split('/').pop(),
       originalPath: filePath,
       source,
       detectedBucket: bucket,
       cleanPath,
-      finalUrl: data.publicUrl
+      finalUrl: data.publicUrl,
+      testUrl: `Testez dans un nouvel onglet: ${data.publicUrl}`
     });
 
     return data.publicUrl;
@@ -776,8 +779,17 @@ const DocumentDragDropSimple: React.FC<DocumentDragDropSimpleProps> = ({ leadId,
                                   href={getDocumentUrl(doc.file_path, doc.source)}
                                   target="_blank"
                                   rel="noopener noreferrer"
+                                  onClick={(e) => {
+                                    const url = getDocumentUrl(doc.file_path, doc.source);
+                                    console.log('🔍 Opening document:', {
+                                      fileName: doc.file_name,
+                                      filePath: doc.file_path,
+                                      source: doc.source,
+                                      generatedUrl: url
+                                    });
+                                  }}
                                   className="p-1 hover:bg-gray-100 rounded"
-                                  title={`Voir le document (Source: ${doc.source})\nPath: ${cleanPath}`}
+                                  title={`Voir le document (Source: ${doc.source})\nPath: ${doc.file_path}`}
                                 >
                                   <ExternalLink size={10} className="text-blue-500" />
                                 </a>
