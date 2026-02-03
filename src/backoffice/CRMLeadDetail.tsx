@@ -1,8 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, User, Mail, Phone, MapPin, Calendar, Briefcase, FileText, MessageSquare, CreditCard, TrendingUp, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Mail, Phone, AlertCircle } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
+import { LeadWorkflowTabs, WorkflowTab } from '@/components/crm/LeadWorkflowTabs';
+import { CommercialChecklist } from '@/components/crm/CommercialChecklist';
+import DocumentChecklistPanelV2 from '@/components/crm/DocumentChecklistPanelV2';
+import LeadCompanyQuotes from '@/backoffice/LeadCompanyQuotes';
+import ContractSignatureManager from '@/components/crm/ContractSignatureManager';
+import CommunicationTimeline from '@/components/crm/CommunicationTimeline';
+import TimelineCard from '@/components/crm/TimelineCard';
 
 interface Lead {
   id: string;
@@ -28,10 +35,21 @@ const CRMLeadDetail: React.FC = () => {
   const [lead, setLead] = useState<Lead | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<WorkflowTab>('overview');
+  const [stats, setStats] = useState({
+    documentsComplete: false,
+    documentsMissing: 0,
+    basketCount: 0,
+    quotesCount: 0,
+    hasContract: false,
+    unreadMessages: 0,
+    totalInteractions: 0,
+  });
 
   useEffect(() => {
     if (leadId) {
       loadLeadData();
+      loadStats();
     }
   }, [leadId]);
 
@@ -56,6 +74,53 @@ const CRMLeadDetail: React.FC = () => {
       setError('Une erreur est survenue');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadStats = async () => {
+    if (!leadId) return;
+
+    try {
+      // Documents
+      const { data: documents } = await supabase
+        .from('crm_lead_documents')
+        .select('*')
+        .eq('lead_id', leadId);
+
+      const totalDocs = documents?.length || 0;
+      const validatedDocs = documents?.filter(d => d.validation_status === 'validated').length || 0;
+      const pendingDocs = documents?.filter(d => d.validation_status === 'pending').length || 0;
+
+      // Devis
+      const { data: quotes } = await supabase
+        .from('lead_company_quotes')
+        .select('id')
+        .eq('lead_id', leadId);
+
+      // Contrat
+      const { data: contracts } = await supabase
+        .from('crm_production_contracts')
+        .select('id')
+        .eq('lead_id', leadId)
+        .limit(1);
+
+      // Messages
+      const { data: messages } = await supabase
+        .from('crm_interactions')
+        .select('id')
+        .eq('lead_id', leadId);
+
+      setStats({
+        documentsComplete: totalDocs > 0 && validatedDocs === totalDocs,
+        documentsMissing: totalDocs > 0 ? (totalDocs - validatedDocs) : 5,
+        basketCount: pendingDocs,
+        quotesCount: quotes?.length || 0,
+        hasContract: (contracts?.length || 0) > 0,
+        unreadMessages: 0,
+        totalInteractions: messages?.length || 0,
+      });
+    } catch (err) {
+      logger.error('Error loading stats:', err);
     }
   };
 
@@ -92,136 +157,106 @@ const CRMLeadDetail: React.FC = () => {
     'nouveau_lead': 'bg-blue-100 text-blue-800',
     'en_cours_de_traitement': 'bg-yellow-100 text-yellow-800',
     'documents_en_attente': 'bg-orange-100 text-orange-800',
-    'devis_envoye': 'bg-purple-100 text-purple-800',
+    'pret_pour_devis': 'bg-purple-100 text-purple-800',
+    'devis_envoye': 'bg-indigo-100 text-indigo-800',
+    'acompte_requis': 'bg-pink-100 text-pink-800',
+    'contrat_en_cours': 'bg-cyan-100 text-cyan-800',
     'won': 'bg-green-100 text-green-800',
     'lost': 'bg-red-100 text-red-800',
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <button
-          onClick={() => navigate('/backoffice/crm-killer/pipeline')}
-          className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6"
-        >
-          <ArrowLeft className="h-5 w-5" />
-          Retour au pipeline
-        </button>
+      {/* Header */}
+      <div className="bg-white border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <button
+            onClick={() => navigate('/backoffice/crm-killer/pipeline')}
+            className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4"
+          >
+            <ArrowLeft className="h-5 w-5" />
+            Retour au pipeline
+          </button>
 
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
-          <div className="p-6 border-b border-gray-200">
-            <div className="flex items-start justify-between">
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900 mb-2">
-                  {lead.first_name || lead.last_name
-                    ? `${lead.first_name || ''} ${lead.last_name || ''}`.trim()
-                    : 'Lead sans nom'}
-                </h1>
-                <div className="flex items-center gap-4 text-sm text-gray-600">
-                  {lead.email && (
-                    <div className="flex items-center gap-1">
-                      <Mail className="h-4 w-4" />
-                      {lead.email}
-                    </div>
-                  )}
-                  {lead.phone && (
-                    <div className="flex items-center gap-1">
-                      <Phone className="h-4 w-4" />
-                      {lead.phone}
-                    </div>
-                  )}
-                </div>
+          <div className="flex items-start justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900 mb-2">
+                {lead.first_name || lead.last_name
+                  ? `${lead.first_name || ''} ${lead.last_name || ''}`.trim()
+                  : 'Lead sans nom'}
+              </h1>
+              <div className="flex items-center gap-4 text-sm text-gray-600">
+                {lead.email && (
+                  <div className="flex items-center gap-1">
+                    <Mail className="h-4 w-4" />
+                    {lead.email}
+                  </div>
+                )}
+                {lead.phone && (
+                  <div className="flex items-center gap-1">
+                    <Phone className="h-4 w-4" />
+                    {lead.phone}
+                  </div>
+                )}
               </div>
-              <div>
-                <span
-                  className={`px-3 py-1 rounded-full text-sm font-medium ${
-                    statusColors[lead.status] || 'bg-gray-100 text-gray-800'
-                  }`}
-                >
-                  {lead.status}
-                </span>
-              </div>
+            </div>
+            <div>
+              <span
+                className={`px-3 py-1 rounded-full text-sm font-medium ${
+                  statusColors[lead.status] || 'bg-gray-100 text-gray-800'
+                }`}
+              >
+                {lead.status?.replace(/_/g, ' ').toUpperCase()}
+              </span>
             </div>
           </div>
+        </div>
+      </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
-            {lead.city && (
-              <div className="flex items-start gap-3">
-                <MapPin className="h-5 w-5 text-gray-400 mt-0.5" />
-                <div>
-                  <div className="text-sm font-medium text-gray-500">Ville</div>
-                  <div className="text-gray-900">{lead.city}</div>
-                </div>
-              </div>
-            )}
+      {/* Tabs */}
+      <LeadWorkflowTabs
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        stats={stats}
+      />
 
-            {lead.company_name && (
-              <div className="flex items-start gap-3">
-                <Briefcase className="h-5 w-5 text-gray-400 mt-0.5" />
-                <div>
-                  <div className="text-sm font-medium text-gray-500">Société</div>
-                  <div className="text-gray-900">{lead.company_name}</div>
-                </div>
-              </div>
-            )}
-
-            {lead.vehicle_type && (
-              <div className="flex items-start gap-3">
-                <FileText className="h-5 w-5 text-gray-400 mt-0.5" />
-                <div>
-                  <div className="text-sm font-medium text-gray-500">Type de véhicule</div>
-                  <div className="text-gray-900">{lead.vehicle_type}</div>
-                </div>
-              </div>
-            )}
-
-            {lead.immatriculation && (
-              <div className="flex items-start gap-3">
-                <CreditCard className="h-5 w-5 text-gray-400 mt-0.5" />
-                <div>
-                  <div className="text-sm font-medium text-gray-500">Immatriculation</div>
-                  <div className="text-gray-900">{lead.immatriculation}</div>
-                </div>
-              </div>
-            )}
-
-            <div className="flex items-start gap-3">
-              <Calendar className="h-5 w-5 text-gray-400 mt-0.5" />
-              <div>
-                <div className="text-sm font-medium text-gray-500">Créé le</div>
-                <div className="text-gray-900">
-                  {new Date(lead.created_at).toLocaleDateString('fr-FR')}
-                </div>
-              </div>
-            </div>
-
-            {lead.lead_score && (
-              <div className="flex items-start gap-3">
-                <TrendingUp className="h-5 w-5 text-gray-400 mt-0.5" />
-                <div>
-                  <div className="text-sm font-medium text-gray-500">Score</div>
-                  <div className="text-gray-900">{lead.lead_score}/100</div>
-                </div>
-              </div>
-            )}
+      {/* Content */}
+      <div className="max-w-7xl mx-auto px-6 py-6">
+        {activeTab === 'overview' && (
+          <div className="space-y-6">
+            <CommercialChecklist leadId={leadId!} />
           </div>
+        )}
 
-          {lead.notes && (
-            <div className="p-6 border-t border-gray-200">
-              <div className="flex items-start gap-3">
-                <MessageSquare className="h-5 w-5 text-gray-400 mt-0.5" />
-                <div className="flex-1">
-                  <div className="text-sm font-medium text-gray-500 mb-2">Notes</div>
-                  <div className="text-gray-900 whitespace-pre-wrap">{lead.notes}</div>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
+        {activeTab === 'documents' && (
+          <div className="space-y-6">
+            <DocumentChecklistPanelV2 leadId={leadId!} />
+          </div>
+        )}
 
-        <div className="text-center text-gray-500 text-sm">
-          Interface détaillée en cours de développement
-        </div>
+        {activeTab === 'quotes' && (
+          <div className="space-y-6">
+            <LeadCompanyQuotes leadId={leadId!} />
+          </div>
+        )}
+
+        {activeTab === 'contract' && (
+          <div className="space-y-6">
+            <ContractSignatureManager leadId={leadId!} />
+          </div>
+        )}
+
+        {activeTab === 'communication' && (
+          <div className="space-y-6">
+            <CommunicationTimeline leadId={leadId!} />
+          </div>
+        )}
+
+        {activeTab === 'history' && (
+          <div className="space-y-6">
+            <TimelineCard leadId={leadId!} />
+          </div>
+        )}
       </div>
     </div>
   );
