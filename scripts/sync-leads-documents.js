@@ -301,6 +301,7 @@ async function verifyDocumentPaths() {
 async function main() {
   const args = process.argv.slice(2);
   const dryRun = !args.includes('--real');
+  const force = args.includes('--force');
 
   console.log('==============================================');
   console.log('SCRIPT DE SYNCHRONISATION - LEADS & DOCUMENTS');
@@ -314,11 +315,13 @@ async function main() {
     console.log('🔴 MODE RÉEL ACTIVÉ');
     console.log('   Ce script va MODIFIER la base de données');
 
-    const confirm = await question('   Êtes-vous sûr de vouloir continuer? (oui/non): ');
-    if (confirm.toLowerCase() !== 'oui') {
-      console.log('   Annulé par l\'utilisateur');
-      rl.close();
-      process.exit(0);
+    if (!force) {
+      const confirm = await question('   Êtes-vous sûr de vouloir continuer? (oui/non): ');
+      if (confirm.toLowerCase() !== 'oui') {
+        console.log('   Annulé par l\'utilisateur');
+        rl.close();
+        process.exit(0);
+      }
     }
     console.log();
   }
