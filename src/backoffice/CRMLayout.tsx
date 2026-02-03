@@ -93,7 +93,7 @@ const CRMLayout: React.FC = () => {
       id: 'duplicates',
       label: 'Doublons',
       icon: Copy,
-      path: '/backoffice/crm/duplicates',
+      path: '/backoffice/doublons',
       badge: null
     },
     {
