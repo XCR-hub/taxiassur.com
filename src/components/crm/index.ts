@@ -43,3 +43,4 @@ export { default as QuotesEnhanced } from './QuotesEnhanced';
 export { default as HistoryEnhanced } from './HistoryEnhanced';
 export { default as CommunicationEnhanced } from './CommunicationEnhanced';
 export { default as NotificationCenterEnhanced } from './NotificationCenterEnhanced';
+export { default as DocumentsUnifiedManager } from './DocumentsUnifiedManager';

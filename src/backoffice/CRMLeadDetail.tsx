@@ -60,7 +60,7 @@ import {
   CallLoggerModal,
   ContractWorkflowManager,
   LeadOverviewEnhanced,
-  DocumentsEnhanced,
+  DocumentsUnifiedManager,
   QuotesEnhanced,
   HistoryEnhanced,
   CommunicationEnhanced,
@@ -1117,7 +1117,7 @@ Je reste à votre disposition pour toute information complémentaire.`;
             )}
 
             {activeTab === 'documents' && (
-              <DocumentsEnhanced
+              <DocumentsUnifiedManager
                 leadId={lead.id}
                 onDocumentUpload={() => loadLeadData(lead.id)}
                 onDocumentValidate={() => loadLeadData(lead.id)}
