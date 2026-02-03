@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { CheckCircle2, Circle, Loader2, ChevronRight } from 'lucide-react';
+import { CheckCircle2, Circle, Loader2, ChevronRight, ChevronLeft } from 'lucide-react';
 import CollecteDocumentsStep from './CollecteDocumentsStep';
 import SaisieDevisStep from './SaisieDevisStep';
 import SignatureDevisStep from './SignatureDevisStep';
@@ -94,22 +94,22 @@ export default function PipelineWorkflow7Etapes({ leadId, leadData }: PipelineWo
     };
   }, [leadId]);
 
-  async function moveToNextStage(nextStage: string) {
+  async function moveToStage(targetStage: string) {
     setLoading(true);
     try {
       const { error } = await supabase
         .from('crm_leads')
         .update({
-          pipeline_stage: nextStage,
+          pipeline_stage: targetStage,
           updated_at: new Date().toISOString()
         })
         .eq('id', leadId);
 
       if (error) throw error;
 
-      setCurrentStage(nextStage);
+      setCurrentStage(targetStage);
     } catch (error) {
-      console.error('Error moving to next stage:', error);
+      console.error('Error moving to stage:', error);
       alert('Erreur lors du changement d\'étape');
     } finally {
       setLoading(false);
@@ -121,7 +121,25 @@ export default function PipelineWorkflow7Etapes({ leadId, leadData }: PipelineWo
     return step?.number || 1;
   };
 
+  const getPreviousStage = () => {
+    const currentIndex = PIPELINE_STEPS.findIndex(s => s.key === currentStage);
+    if (currentIndex > 0) {
+      return PIPELINE_STEPS[currentIndex - 1].key;
+    }
+    return null;
+  };
+
+  const getNextStage = () => {
+    const currentIndex = PIPELINE_STEPS.findIndex(s => s.key === currentStage);
+    if (currentIndex < PIPELINE_STEPS.length - 1) {
+      return PIPELINE_STEPS[currentIndex + 1].key;
+    }
+    return null;
+  };
+
   const currentStepNumber = getCurrentStepNumber();
+  const previousStage = getPreviousStage();
+  const nextStage = getNextStage();
 
   return (
     <div className="space-y-6">
@@ -148,14 +166,20 @@ export default function PipelineWorkflow7Etapes({ leadId, leadData }: PipelineWo
               const isFuture = step.number > currentStepNumber;
 
               return (
-                <div key={step.key} className="flex flex-col items-center">
+                <button
+                  key={step.key}
+                  onClick={() => moveToStage(step.key)}
+                  disabled={loading}
+                  className="flex flex-col items-center group disabled:cursor-not-allowed hover:scale-105 transition-transform"
+                  title={`Aller à l'étape ${step.number}: ${step.title}`}
+                >
                   <div
                     className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg mb-2 transition-all ${
                       isCompleted
-                        ? 'bg-green-600 text-white'
+                        ? 'bg-green-600 text-white group-hover:bg-green-700'
                         : isActive
                         ? 'bg-blue-600 text-white ring-4 ring-blue-100'
-                        : 'bg-gray-200 text-gray-500'
+                        : 'bg-gray-200 text-gray-500 group-hover:bg-gray-300'
                     }`}
                   >
                     {isCompleted ? (
@@ -174,7 +198,7 @@ export default function PipelineWorkflow7Etapes({ leadId, leadData }: PipelineWo
                     </p>
                     <p className="text-xs text-gray-500 hidden xl:block">{step.description}</p>
                   </div>
-                </div>
+                </button>
               );
             })}
           </div>
@@ -205,42 +229,98 @@ export default function PipelineWorkflow7Etapes({ leadId, leadData }: PipelineWo
               </button>
             </div>
 
-            <button
-              onClick={() => moveToNextStage('collecte_documents')}
-              disabled={loading}
-              className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-semibold disabled:opacity-50"
-            >
-              Besoin Qualifié - Passer à la Collecte de Documents
-              <ChevronRight className="h-5 w-5" />
-            </button>
+            <div className="flex items-center justify-end gap-4 pt-4 border-t border-gray-200">
+              {nextStage && (
+                <button
+                  onClick={() => moveToStage(nextStage)}
+                  disabled={loading}
+                  className="flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-semibold disabled:opacity-50 transition-colors"
+                >
+                  Étape Suivante
+                  <ChevronRight className="h-5 w-5" />
+                </button>
+              )}
+            </div>
           </div>
         )}
 
         {/* Étape 2 : Collecte Documents */}
         {currentStage === 'collecte_documents' && (
-          <CollecteDocumentsStep
-            leadId={leadId}
-            leadEmail={leadData.email}
-            leadPhone={leadData.phone}
-            leadFirstName={leadData.first_name}
-            leadAccessToken={leadData.access_token}
-            onComplete={() => {
-              // Auto-advance handled by trigger
-            }}
-          />
+          <div className="space-y-4">
+            <CollecteDocumentsStep
+              leadId={leadId}
+              leadEmail={leadData.email}
+              leadPhone={leadData.phone}
+              leadFirstName={leadData.first_name}
+              leadAccessToken={leadData.access_token}
+              onComplete={() => {
+                // Auto-advance handled by trigger
+              }}
+            />
+
+            <div className="flex items-center justify-between gap-4 pt-4 border-t border-gray-200">
+              {previousStage && (
+                <button
+                  onClick={() => moveToStage(previousStage)}
+                  disabled={loading}
+                  className="flex items-center gap-2 px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 font-semibold disabled:opacity-50 transition-colors"
+                >
+                  <ChevronLeft className="h-5 w-5" />
+                  Étape Précédente
+                </button>
+              )}
+
+              {nextStage && (
+                <button
+                  onClick={() => moveToStage(nextStage)}
+                  disabled={loading}
+                  className="flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-semibold disabled:opacity-50 transition-colors ml-auto"
+                >
+                  Étape Suivante
+                  <ChevronRight className="h-5 w-5" />
+                </button>
+              )}
+            </div>
+          </div>
         )}
 
         {/* Étape 3 : Saisie Devis */}
         {currentStage === 'saisie_devis' && (
-          <SaisieDevisStep
-            leadId={leadId}
-            leadEmail={leadData.email}
-            leadFirstName={leadData.first_name}
-            leadAccessToken={leadData.access_token}
-            onComplete={() => {
-              // Auto-advance handled by trigger
-            }}
-          />
+          <div className="space-y-4">
+            <SaisieDevisStep
+              leadId={leadId}
+              leadEmail={leadData.email}
+              leadFirstName={leadData.first_name}
+              leadAccessToken={leadData.access_token}
+              onComplete={() => {
+                // Auto-advance handled by trigger
+              }}
+            />
+
+            <div className="flex items-center justify-between gap-4 pt-4 border-t border-gray-200">
+              {previousStage && (
+                <button
+                  onClick={() => moveToStage(previousStage)}
+                  disabled={loading}
+                  className="flex items-center gap-2 px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 font-semibold disabled:opacity-50 transition-colors"
+                >
+                  <ChevronLeft className="h-5 w-5" />
+                  Étape Précédente
+                </button>
+              )}
+
+              {nextStage && (
+                <button
+                  onClick={() => moveToStage(nextStage)}
+                  disabled={loading}
+                  className="flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-semibold disabled:opacity-50 transition-colors ml-auto"
+                >
+                  Étape Suivante
+                  <ChevronRight className="h-5 w-5" />
+                </button>
+              )}
+            </div>
+          </div>
         )}
 
         {/* Étape 4 : Validation Devis Prospect */}
@@ -278,40 +358,142 @@ export default function PipelineWorkflow7Etapes({ leadId, leadData }: PipelineWo
                 </div>
               </div>
             )}
+
+            <div className="flex items-center justify-between gap-4 pt-4 border-t border-gray-200">
+              {previousStage && (
+                <button
+                  onClick={() => moveToStage(previousStage)}
+                  disabled={loading}
+                  className="flex items-center gap-2 px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 font-semibold disabled:opacity-50 transition-colors"
+                >
+                  <ChevronLeft className="h-5 w-5" />
+                  Étape Précédente
+                </button>
+              )}
+
+              {nextStage && (
+                <button
+                  onClick={() => moveToStage(nextStage)}
+                  disabled={loading}
+                  className="flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-semibold disabled:opacity-50 transition-colors ml-auto"
+                >
+                  Étape Suivante
+                  <ChevronRight className="h-5 w-5" />
+                </button>
+              )}
+            </div>
           </div>
         )}
 
         {/* Étape 5 : Signature Devis */}
         {currentStage === 'signature_devis' && (
-          <SignatureDevisStep
-            leadId={leadId}
-            onComplete={() => {
-              // Auto-advance handled by trigger
-            }}
-          />
+          <div className="space-y-4">
+            <SignatureDevisStep
+              leadId={leadId}
+              onComplete={() => {
+                // Auto-advance handled by trigger
+              }}
+            />
+
+            <div className="flex items-center justify-between gap-4 pt-4 border-t border-gray-200">
+              {previousStage && (
+                <button
+                  onClick={() => moveToStage(previousStage)}
+                  disabled={loading}
+                  className="flex items-center gap-2 px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 font-semibold disabled:opacity-50 transition-colors"
+                >
+                  <ChevronLeft className="h-5 w-5" />
+                  Étape Précédente
+                </button>
+              )}
+
+              {nextStage && (
+                <button
+                  onClick={() => moveToStage(nextStage)}
+                  disabled={loading}
+                  className="flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-semibold disabled:opacity-50 transition-colors ml-auto"
+                >
+                  Étape Suivante
+                  <ChevronRight className="h-5 w-5" />
+                </button>
+              )}
+            </div>
+          </div>
         )}
 
         {/* Étape 6 : Paiement RIB */}
         {currentStage === 'paiement_rib' && (
-          <PaiementRIBStep
-            leadId={leadId}
-            leadEmail={leadData.email}
-            leadFirstName={leadData.first_name}
-            leadAccessToken={leadData.access_token}
-            onComplete={() => {
-              // Auto-advance handled by trigger
-            }}
-          />
+          <div className="space-y-4">
+            <PaiementRIBStep
+              leadId={leadId}
+              leadEmail={leadData.email}
+              leadFirstName={leadData.first_name}
+              leadAccessToken={leadData.access_token}
+              onComplete={() => {
+                // Auto-advance handled by trigger
+              }}
+            />
+
+            <div className="flex items-center justify-between gap-4 pt-4 border-t border-gray-200">
+              {previousStage && (
+                <button
+                  onClick={() => moveToStage(previousStage)}
+                  disabled={loading}
+                  className="flex items-center gap-2 px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 font-semibold disabled:opacity-50 transition-colors"
+                >
+                  <ChevronLeft className="h-5 w-5" />
+                  Étape Précédente
+                </button>
+              )}
+
+              {nextStage && (
+                <button
+                  onClick={() => moveToStage(nextStage)}
+                  disabled={loading}
+                  className="flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-semibold disabled:opacity-50 transition-colors ml-auto"
+                >
+                  Étape Suivante
+                  <ChevronRight className="h-5 w-5" />
+                </button>
+              )}
+            </div>
+          </div>
         )}
 
         {/* Étape 7 : Contrat Signature */}
         {currentStage === 'contrat_signature' && (
-          <ContratSignatureStep
-            leadId={leadId}
-            onComplete={() => {
-              // Auto-advance handled by trigger
-            }}
-          />
+          <div className="space-y-4">
+            <ContratSignatureStep
+              leadId={leadId}
+              onComplete={() => {
+                // Auto-advance handled by trigger
+              }}
+            />
+
+            <div className="flex items-center justify-between gap-4 pt-4 border-t border-gray-200">
+              {previousStage && (
+                <button
+                  onClick={() => moveToStage(previousStage)}
+                  disabled={loading}
+                  className="flex items-center gap-2 px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 font-semibold disabled:opacity-50 transition-colors"
+                >
+                  <ChevronLeft className="h-5 w-5" />
+                  Étape Précédente
+                </button>
+              )}
+
+              {nextStage && (
+                <button
+                  onClick={() => moveToStage(nextStage)}
+                  disabled={loading}
+                  className="flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-semibold disabled:opacity-50 transition-colors ml-auto"
+                >
+                  Étape Suivante
+                  <ChevronRight className="h-5 w-5" />
+                </button>
+              )}
+            </div>
+          </div>
         )}
 
         {/* Client Actif */}
