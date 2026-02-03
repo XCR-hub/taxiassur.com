@@ -463,17 +463,27 @@ const DocumentDragDropSimple: React.FC<DocumentDragDropSimpleProps> = ({ leadId,
   };
 
   const getDocumentUrl = (filePath: string, source: string) => {
-    // Détecter le bucket depuis le file_path
-    let bucket = 'prospect-documents'; // Par défaut
-    let cleanPath = filePath;
+    if (!filePath) {
+      logger.error('getDocumentUrl: filePath is empty');
+      return '';
+    }
 
-    // Si le path contient déjà le bucket, l'extraire
-    const bucketMatch = filePath.match(/^\/?(email-attachments|prospect-documents|crm-documents)\//);
-    if (bucketMatch) {
-      bucket = bucketMatch[1];
-      cleanPath = filePath.replace(/^\/?(email-attachments|prospect-documents|crm-documents)\//, '');
+    // Nettoyer le path : enlever TOUS les préfixes de bucket (au cas où il y en aurait plusieurs)
+    let cleanPath = filePath
+      .replace(/^\/+/, '') // Enlever les slashes au début
+      .replace(/^(email-attachments|prospect-documents|crm-documents)\//, ''); // Enlever le préfixe de bucket
+
+    // Détecter le bucket depuis le file_path original ou depuis la source
+    let bucket = 'prospect-documents'; // Par défaut
+
+    if (filePath.includes('email-attachments/')) {
+      bucket = 'email-attachments';
+    } else if (filePath.includes('prospect-documents/')) {
+      bucket = 'prospect-documents';
+    } else if (filePath.includes('crm-documents/')) {
+      bucket = 'crm-documents';
     } else {
-      // Si pas de bucket dans le path, déduire depuis la source
+      // Si pas de bucket détecté dans le path, déduire depuis la source
       if (source === 'email_attachments') {
         bucket = 'email-attachments';
       } else if (source === 'prospect_documents') {
@@ -485,12 +495,12 @@ const DocumentDragDropSimple: React.FC<DocumentDragDropSimpleProps> = ({ leadId,
 
     const { data } = supabase.storage.from(bucket).getPublicUrl(cleanPath);
 
-    logger.info('Document URL:', {
-      filePath,
+    logger.info('Document URL generated:', {
+      originalPath: filePath,
       source,
-      bucket,
+      detectedBucket: bucket,
       cleanPath,
-      url: data.publicUrl
+      finalUrl: data.publicUrl
     });
 
     return data.publicUrl;
