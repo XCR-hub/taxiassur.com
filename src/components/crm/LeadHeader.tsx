@@ -1,276 +1,345 @@
-import { useState } from 'react';
-import { Mail, Phone, User, Calendar, TrendingUp, MapPin, Car, FileText, Edit2, Save, X } from 'lucide-react';
-
-interface Lead {
-  id: string;
-  first_name: string;
-  last_name: string;
-  email: string;
-  phone: string;
-  status: string;
-  pipeline_stage: string;
-  score: number;
-  created_at: string;
-  updated_at: string;
-  last_interaction_at: string | null;
-  immatriculation: string | null;
-  vehicle_type: string | null;
-  city: string | null;
-  notes: string | null;
-}
+import React, { useState } from 'react';
+import {
+  User,
+  Mail,
+  Phone,
+  MapPin,
+  Building2,
+  Calendar,
+  Clock,
+  ChevronRight,
+  Copy,
+  ExternalLink,
+  CheckCircle,
+  Send,
+  Loader2
+} from 'lucide-react';
+import { PIPELINE_STATUSES } from '@/lib/crm-pipeline';
+import { supabase } from '@/lib/supabase';
 
 interface LeadHeaderProps {
-  lead: Lead;
-  onUpdate: (updates: Partial<Lead>) => Promise<void>;
+  lead: {
+    id: string;
+    full_name: string;
+    first_name?: string;
+    last_name?: string;
+    email: string;
+    phone: string;
+    city?: string;
+    company_name?: string;
+    status: string;
+    quality_score?: number;
+    created_at: string;
+    last_contact_at?: string;
+    source?: string;
+    access_token?: string;
+  };
+  onStatusChange: (status: string) => void;
+  availableTransitions: Array<{ to: string; label: string }>;
 }
 
-const statusColors: Record<string, string> = {
-  'nouveau_lead': 'bg-blue-100 text-blue-800',
-  'contacte': 'bg-yellow-100 text-yellow-800',
-  'en_cours': 'bg-purple-100 text-purple-800',
-  'documents_en_attente': 'bg-orange-100 text-orange-800',
-  'pret_pour_devis': 'bg-indigo-100 text-indigo-800',
-  'devis_envoye': 'bg-cyan-100 text-cyan-800',
-  'en_negociation': 'bg-pink-100 text-pink-800',
-  'contrat_signe': 'bg-green-100 text-green-800',
-  'perdu': 'bg-red-100 text-red-800',
-  'archive': 'bg-gray-100 text-gray-800',
+// 🎯 PIPELINE TAXIASSUR - Vue simplifiée 5 étapes (Contact automatique)
+const PIPELINE_STEPS = [
+  { key: 'new', label: 'Nouveau', order: 1 },
+  { key: 'documents', label: 'Documents', order: 2 },
+  { key: 'devis', label: 'Devis', order: 3 },
+  { key: 'signature', label: 'Signature', order: 4 },
+  { key: 'client', label: 'Client', order: 5 }
+];
+
+// Mapping des statuts vers les étapes simplifiées (affichage visuel)
+const STATUS_TO_PIPELINE_STEP: Record<string, string> = {
+  // 📋 LES 7 ÉTAPES DU PIPELINE SIMPLIFIÉ
+  'NOUVEAU_LEAD': 'new',                 // 1️⃣ Nouveau
+  'COLLECTE_DOCUMENTS': 'documents',     // 2️⃣ Documents
+  'DEVIS': 'devis',                      // 3️⃣ Devis
+  'DECISION_CLIENT': 'devis',            // 4️⃣ Décision (après devis)
+  'PAIEMENT': 'signature',               // 5️⃣ Paiement (avant signature)
+  'CONTRAT_SIGNATURE': 'signature',      // 6️⃣ Signature
+  'CLIENT_ACTIF': 'client',              // 7️⃣ Client
+
+  // ⚫ STATUTS SPÉCIAUX
+  'RELANCE': 'new',                      // Relance = retour à nouveau
+  'PERDU': 'new',                        // Perdu
+  'RECONTACT_PROGRAMME': 'new',          // Recontact futur
+
+  // 🔄 GESTION CLIENT
+  'CROSS_SELLING': 'client',
+  'RISK_CHURN': 'client',
+  'SINISTRE': 'client',
+  'ATTESTATION_REQUEST': 'client',
+  'SUPPORT_ASSISTANCE': 'client',
+
+  // 🔄 ANCIENS STATUTS (Rétrocompatibilité)
+  'NEW_LEAD': 'new',
+  'CONTACT_ATTEMPTED': 'new',
+  'CONTACT_CONFIRMED': 'new',
+  'DOCUMENTS_REQUIRED': 'documents',
+  'DOCUMENTS_RECEIVED': 'documents',
+  'READY_FOR_QUOTE': 'devis',
+  'QUOTE_SENT': 'devis',
+  'QUOTE_ACCEPTED': 'devis',
+  'PAYMENT_PENDING': 'signature',
+  'CONTRACT_PENDING': 'signature',
+  'ACTIVE_CLIENT': 'client',
+  'LOST': 'new',
+  'LOST_RECONTACT_SCHEDULED': 'new'
 };
 
-const statusLabels: Record<string, string> = {
-  'nouveau_lead': 'Nouveau Lead',
-  'contacte': 'Contacté',
-  'en_cours': 'En cours',
-  'documents_en_attente': 'Documents en attente',
-  'pret_pour_devis': 'Prêt pour devis',
-  'devis_envoye': 'Devis envoyé',
-  'en_negociation': 'En négociation',
-  'contrat_signe': 'Contrat signé',
-  'perdu': 'Perdu',
-  'archive': 'Archivé',
-};
+export const LeadHeader: React.FC<LeadHeaderProps> = ({
+  lead,
+  onStatusChange,
+  availableTransitions
+}) => {
+  const [sendingAccess, setSendingAccess] = useState(false);
+  const statusInfo = PIPELINE_STATUSES[lead.status] || { label: lead.status, icon: '?' };
 
-export default function LeadHeader({ lead, onUpdate }: LeadHeaderProps) {
-  const [isEditing, setIsEditing] = useState(false);
-  const [editedLead, setEditedLead] = useState<Partial<Lead>>({
-    first_name: lead.first_name,
-    last_name: lead.last_name,
-    email: lead.email,
-    phone: lead.phone,
-    city: lead.city,
-    immatriculation: lead.immatriculation,
-    vehicle_type: lead.vehicle_type,
-    notes: lead.notes,
-  });
-  const [saving, setSaving] = useState(false);
+  // Trouver l'étape du pipeline correspondant au statut actuel
+  const pipelineStep = STATUS_TO_PIPELINE_STEP[lead.status] || 'new';
+  const currentStepOrder = PIPELINE_STEPS.find(s => s.key === pipelineStep)?.order || 0;
+  const prospectUrl = lead.access_token
+    ? `${window.location.origin}/espace-prospect?token=${lead.access_token}`
+    : null;
 
-  const handleSave = async () => {
+  const isActiveClient = lead.status === 'CLIENT_ACTIF' || lead.status === 'CROSS_SELLING' || lead.status === 'SINISTER';
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+  };
+
+  const handleSendClientAccess = async () => {
+    if (!confirm('Voulez-vous envoyer les accès à l\'espace client par email ?')) {
+      return;
+    }
+
+    setSendingAccess(true);
     try {
-      setSaving(true);
-      await onUpdate(editedLead);
-      setIsEditing(false);
+      const { data: { session } } = await supabase.auth.getSession();
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-client-access`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token || import.meta.env.VITE_SUPABASE_ANON_KEY}`
+        },
+        body: JSON.stringify({ lead_id: lead.id })
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        alert(`✅ Email d'accès envoyé avec succès !\n\nMot de passe temporaire : ${result.temporary_password}\n\n⚠️ Conservez ce mot de passe en lieu sûr.`);
+      } else {
+        throw new Error(result.error || 'Erreur lors de l\'envoi');
+      }
     } catch (error) {
-      console.error('Error saving lead:', error);
-      alert('Erreur lors de la sauvegarde');
+      console.error('Erreur:', error);
+      alert('❌ Erreur lors de l\'envoi des accès : ' + (error instanceof Error ? error.message : 'Erreur inconnue'));
     } finally {
-      setSaving(false);
+      setSendingAccess(false);
     }
   };
 
-  const handleCancel = () => {
-    setEditedLead({
-      first_name: lead.first_name,
-      last_name: lead.last_name,
-      email: lead.email,
-      phone: lead.phone,
-      city: lead.city,
-      immatriculation: lead.immatriculation,
-      vehicle_type: lead.vehicle_type,
-      notes: lead.notes,
+  const formatDate = (dateStr: string) => {
+    return new Date(dateStr).toLocaleDateString('fr-FR', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric'
     });
-    setIsEditing(false);
   };
 
-  const scoreColor = lead.score >= 80 ? 'text-green-600' : lead.score >= 50 ? 'text-yellow-600' : 'text-red-600';
+  const daysSinceCreation = Math.floor(
+    (Date.now() - new Date(lead.created_at).getTime()) / (1000 * 60 * 60 * 24)
+  );
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-      <div className="flex items-start justify-between mb-6">
-        <div className="flex items-center gap-4">
-          <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white text-2xl font-bold">
-            {lead.first_name[0]}{lead.last_name[0]}
-          </div>
-          <div>
-            {isEditing ? (
-              <div className="flex gap-2 mb-2">
-                <input
-                  type="text"
-                  value={editedLead.first_name}
-                  onChange={(e) => setEditedLead({ ...editedLead, first_name: e.target.value })}
-                  className="px-3 py-1 border border-gray-300 rounded text-lg font-semibold"
-                  placeholder="Prénom"
-                />
-                <input
-                  type="text"
-                  value={editedLead.last_name}
-                  onChange={(e) => setEditedLead({ ...editedLead, last_name: e.target.value })}
-                  className="px-3 py-1 border border-gray-300 rounded text-lg font-semibold"
-                  placeholder="Nom"
-                />
+    <div className="bg-white border-b border-gray-200">
+      <div className="max-w-7xl mx-auto px-4 py-3">
+        {/* Ligne 1: Infos principales compactes */}
+        <div className="flex items-center justify-between gap-4 mb-3">
+          <div className="flex items-center gap-3 flex-1 min-w-0">
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white text-sm font-bold shadow flex-shrink-0">
+              {lead.first_name?.[0]?.toUpperCase() || 'L'}
+              {lead.last_name?.[0]?.toUpperCase() || ''}
+            </div>
+
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-1">
+                <h1 className="text-lg font-bold text-gray-900 truncate">{lead.full_name}</h1>
+                {lead.source && (
+                  <span className="px-2 py-0.5 bg-gray-100 rounded text-xs text-gray-600 flex-shrink-0">
+                    {lead.source}
+                  </span>
+                )}
               </div>
-            ) : (
-              <h1 className="text-2xl font-bold text-gray-900">
-                {lead.first_name} {lead.last_name}
-              </h1>
+
+              <div className="flex flex-wrap items-center gap-2 text-xs text-gray-600">
+                <div className="flex items-center gap-1">
+                  <Mail className="w-3 h-3" />
+                  <span className="truncate max-w-[200px]">{lead.email}</span>
+                  <button
+                    onClick={() => copyToClipboard(lead.email)}
+                    className="p-0.5 hover:bg-gray-100 rounded"
+                    title="Copier"
+                  >
+                    <Copy className="w-3 h-3 text-gray-400" />
+                  </button>
+                </div>
+
+                <span className="text-gray-300">•</span>
+
+                <div className="flex items-center gap-1">
+                  <Phone className="w-3 h-3" />
+                  <span>{lead.phone}</span>
+                  <button
+                    onClick={() => copyToClipboard(lead.phone)}
+                    className="p-0.5 hover:bg-gray-100 rounded"
+                    title="Copier"
+                  >
+                    <Copy className="w-3 h-3 text-gray-400" />
+                  </button>
+                </div>
+
+                {lead.city && (
+                  <>
+                    <span className="text-gray-300">•</span>
+                    <div className="flex items-center gap-1">
+                      <MapPin className="w-3 h-3" />
+                      <span>{lead.city}</span>
+                    </div>
+                  </>
+                )}
+
+                <span className="text-gray-300">•</span>
+                <div className="flex items-center gap-1">
+                  <Calendar className="w-3 h-3" />
+                  <span>{formatDate(lead.created_at)} ({daysSinceCreation}j)</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {lead.quality_score !== undefined && (
+              <div className="text-center px-2">
+                <div className="text-xs text-gray-500">Score</div>
+                <div className={`text-lg font-bold ${
+                  lead.quality_score >= 70 ? 'text-green-600' :
+                  lead.quality_score >= 40 ? 'text-yellow-600' : 'text-red-600'
+                }`}>
+                  {lead.quality_score}%
+                </div>
+              </div>
             )}
-            <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${statusColors[lead.status] || 'bg-gray-100 text-gray-800'}`}>
-              {statusLabels[lead.status] || lead.status}
-            </span>
+
+            <div className={`px-3 py-1.5 rounded-lg font-semibold text-xs ${
+              lead.status === 'won' ? 'bg-green-100 text-green-700' :
+              lead.status === 'lost' ? 'bg-red-100 text-red-700' :
+              'bg-blue-100 text-blue-700'
+            }`}>
+              {statusInfo.icon} {statusInfo.label}
+            </div>
+
+            {prospectUrl && !isActiveClient && (
+              <a
+                href={prospectUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-blue-600 hover:text-blue-700 flex items-center gap-1 px-2 py-1 hover:bg-blue-50 rounded transition-colors"
+                title="Voir espace prospect"
+              >
+                <ExternalLink className="w-3 h-3" />
+              </a>
+            )}
+            {isActiveClient && (
+              <button
+                onClick={handleSendClientAccess}
+                disabled={sendingAccess}
+                className="text-xs bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                title="Envoyer accès espace client"
+              >
+                {sendingAccess ? (
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                ) : (
+                  <Send className="w-3 h-3" />
+                )}
+              </button>
+            )}
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          {isEditing ? (
-            <>
-              <button
-                onClick={handleSave}
-                disabled={saving}
-                className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50"
-              >
-                <Save className="w-4 h-4" />
-                {saving ? 'Enregistrement...' : 'Enregistrer'}
-              </button>
-              <button
-                onClick={handleCancel}
-                className="flex items-center gap-2 px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
-              >
-                <X className="w-4 h-4" />
-                Annuler
-              </button>
-            </>
-          ) : (
-            <button
-              onClick={() => setIsEditing(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-            >
-              <Edit2 className="w-4 h-4" />
-              Modifier
-            </button>
-          )}
+        {/* Ligne 2: Progression pipeline compacte */}
+        <div>
+          <div className="flex items-center gap-1">
+            {PIPELINE_STEPS.map((step, index) => {
+              const isCompleted = step.order < currentStepOrder;
+              const isCurrent = step.key === pipelineStep;
+
+              // Trouver les statuts disponibles qui correspondent à cette étape du pipeline
+              const matchingTransitions = availableTransitions.filter(t =>
+                STATUS_TO_PIPELINE_STEP[t.to] === step.key
+              );
+              const isAvailable = matchingTransitions.length > 0;
+
+              // Si disponible, prendre la première transition correspondante
+              const targetStatus = matchingTransitions[0]?.to;
+
+              // 🔴 DEBUG: Log pour voir si targetStatus est undefined
+              if (isAvailable && !targetStatus) {
+                console.error('⚠️ BUG DÉTECTÉ: targetStatus est undefined pour l\'étape', step.key, {
+                  availableTransitions,
+                  matchingTransitions,
+                  currentStatus: lead.status
+                });
+              }
+
+              return (
+                <React.Fragment key={step.key}>
+                  <button
+                    onClick={() => {
+                      if (isAvailable && targetStatus) {
+                        console.log('✅ Changement de statut:', lead.status, '→', targetStatus);
+                        onStatusChange(targetStatus);
+                      } else if (isAvailable && !targetStatus) {
+                        console.error('❌ ERREUR: Tentative de changement sans targetStatus défini');
+                        alert('Erreur: Impossible de déterminer le statut cible. Vérifiez la configuration du pipeline.');
+                      }
+                    }}
+                    disabled={!isAvailable && !isCurrent}
+                    title={
+                      isCurrent
+                        ? `Étape actuelle: ${statusInfo.label}`
+                        : isAvailable && matchingTransitions[0]
+                        ? `Passer à: ${matchingTransitions[0].label}`
+                        : isCompleted
+                        ? 'Étape complétée'
+                        : 'Non disponible'
+                    }
+                    className={`flex-1 py-1.5 px-2 rounded text-xs font-medium transition-all ${
+                      isCompleted
+                        ? 'bg-green-100 text-green-700'
+                        : isCurrent
+                        ? 'bg-blue-600 text-white'
+                        : isAvailable
+                        ? 'bg-gray-100 text-gray-600 hover:bg-blue-50 hover:text-blue-600 cursor-pointer'
+                        : 'bg-gray-50 text-gray-400 cursor-not-allowed'
+                    }`}
+                  >
+                    <div className="flex items-center justify-center gap-1">
+                      {isCompleted && <CheckCircle className="w-3 h-3" />}
+                      <span className="truncate">{step.label}</span>
+                    </div>
+                  </button>
+                  {index < PIPELINE_STEPS.length - 1 && (
+                    <ChevronRight className="w-3 h-3 text-gray-300 flex-shrink-0" />
+                  )}
+                </React.Fragment>
+              );
+            })}
+          </div>
         </div>
       </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="flex items-center gap-3">
-          <Mail className="w-5 h-5 text-gray-400" />
-          {isEditing ? (
-            <input
-              type="email"
-              value={editedLead.email}
-              onChange={(e) => setEditedLead({ ...editedLead, email: e.target.value })}
-              className="flex-1 px-2 py-1 border border-gray-300 rounded text-sm"
-              placeholder="Email"
-            />
-          ) : (
-            <a href={`mailto:${lead.email}`} className="text-blue-600 hover:underline">
-              {lead.email}
-            </a>
-          )}
-        </div>
-
-        <div className="flex items-center gap-3">
-          <Phone className="w-5 h-5 text-gray-400" />
-          {isEditing ? (
-            <input
-              type="tel"
-              value={editedLead.phone}
-              onChange={(e) => setEditedLead({ ...editedLead, phone: e.target.value })}
-              className="flex-1 px-2 py-1 border border-gray-300 rounded text-sm"
-              placeholder="Téléphone"
-            />
-          ) : (
-            <a href={`tel:${lead.phone}`} className="text-gray-700 hover:underline">
-              {lead.phone}
-            </a>
-          )}
-        </div>
-
-        {lead.city && (
-          <div className="flex items-center gap-3">
-            <MapPin className="w-5 h-5 text-gray-400" />
-            {isEditing ? (
-              <input
-                type="text"
-                value={editedLead.city || ''}
-                onChange={(e) => setEditedLead({ ...editedLead, city: e.target.value })}
-                className="flex-1 px-2 py-1 border border-gray-300 rounded text-sm"
-                placeholder="Ville"
-              />
-            ) : (
-              <span className="text-gray-700">{lead.city}</span>
-            )}
-          </div>
-        )}
-
-        {lead.immatriculation && (
-          <div className="flex items-center gap-3">
-            <Car className="w-5 h-5 text-gray-400" />
-            {isEditing ? (
-              <input
-                type="text"
-                value={editedLead.immatriculation || ''}
-                onChange={(e) => setEditedLead({ ...editedLead, immatriculation: e.target.value })}
-                className="flex-1 px-2 py-1 border border-gray-300 rounded text-sm"
-                placeholder="Immatriculation"
-              />
-            ) : (
-              <span className="text-gray-700 font-mono">{lead.immatriculation}</span>
-            )}
-          </div>
-        )}
-
-        <div className="flex items-center gap-3">
-          <TrendingUp className="w-5 h-5 text-gray-400" />
-          <span className={`font-semibold ${scoreColor}`}>
-            Score: {lead.score}/100
-          </span>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <Calendar className="w-5 h-5 text-gray-400" />
-          <span className="text-gray-700 text-sm">
-            Créé le {new Date(lead.created_at).toLocaleDateString('fr-FR')}
-          </span>
-        </div>
-
-        {lead.last_interaction_at && (
-          <div className="flex items-center gap-3">
-            <User className="w-5 h-5 text-gray-400" />
-            <span className="text-gray-700 text-sm">
-              Dernier contact: {new Date(lead.last_interaction_at).toLocaleDateString('fr-FR')}
-            </span>
-          </div>
-        )}
-      </div>
-
-      {(isEditing || lead.notes) && (
-        <div className="mt-4 pt-4 border-t border-gray-200">
-          <div className="flex items-start gap-3">
-            <FileText className="w-5 h-5 text-gray-400 mt-1" />
-            {isEditing ? (
-              <textarea
-                value={editedLead.notes || ''}
-                onChange={(e) => setEditedLead({ ...editedLead, notes: e.target.value })}
-                className="flex-1 px-3 py-2 border border-gray-300 rounded text-sm"
-                placeholder="Notes..."
-                rows={3}
-              />
-            ) : (
-              <p className="text-gray-700 text-sm">{lead.notes}</p>
-            )}
-          </div>
-        </div>
-      )}
     </div>
   );
-}
+};
+
+export default LeadHeader;
