@@ -55,7 +55,7 @@ export default function NavigationMenu() {
       ],
     },
     {
-      title: 'CRM Vente',
+      title: 'CRM & Pipeline',
       icon: Target,
       color: 'blue',
       permission: canViewCRM,
@@ -63,20 +63,10 @@ export default function NavigationMenu() {
         { to: '/backoffice/crm', icon: Sparkles, label: 'CRM Dashboard', highlight: true },
         { to: '/backoffice/quote-queue', icon: ClipboardList, label: 'File Devis', highlight: true },
         { to: '/backoffice/crm-killer/pipeline', icon: BarChart3, label: 'Pipeline Kanban' },
-        { to: '/backoffice/manual-lead', icon: Plus, label: 'Créer Lead' },
         { to: '/backoffice/crm-killer/inbox', icon: Inbox, label: 'Inbox' },
+        { to: '/backoffice/crm-killer/retention', icon: Shield, label: 'Retention' },
+        { to: '/backoffice/crm-killer/ia', icon: Brain, label: 'IA CRM' },
         { to: '/backoffice/crm-killer/templates', icon: FileText, label: 'Templates' },
-      ],
-    },
-    {
-      title: 'CRM Gestion',
-      icon: Building2,
-      color: 'purple',
-      permission: canViewCRM,
-      links: [
-        { to: '/backoffice/crm-gestion', icon: Receipt, label: 'Portefeuille Contrats', highlight: true },
-        { to: '/backoffice/crm-killer/retention', icon: Shield, label: 'Rétention Client' },
-        { to: '/backoffice/company-documents', icon: FileCheck, label: 'Bibliothèque Documents' },
       ],
     },
     {
@@ -186,7 +176,6 @@ export default function NavigationMenu() {
     const colors: Record<string, { bg: string; hover: string; border: string }> = {
       slate: { bg: 'from-slate-600 to-slate-700', hover: 'hover:from-slate-700 hover:to-slate-800', border: 'border-slate-400' },
       blue: { bg: 'from-blue-600 to-blue-700', hover: 'hover:from-blue-700 hover:to-blue-800', border: 'border-blue-400' },
-      purple: { bg: 'from-purple-600 to-purple-700', hover: 'hover:from-purple-700 hover:to-purple-800', border: 'border-purple-400' },
       green: { bg: 'from-green-600 to-green-700', hover: 'hover:from-green-700 hover:to-green-800', border: 'border-green-400' },
       amber: { bg: 'from-amber-500 to-amber-600', hover: 'hover:from-amber-600 hover:to-amber-700', border: 'border-amber-400' },
       sky: { bg: 'from-sky-600 to-sky-700', hover: 'hover:from-sky-700 hover:to-sky-800', border: 'border-sky-400' },
@@ -206,7 +195,6 @@ export default function NavigationMenu() {
     const bgs: Record<string, string> = {
       slate: 'from-slate-800/50 to-slate-900/50 border-slate-600/50',
       blue: 'from-blue-900/40 to-blue-950/40 border-blue-600/50',
-      purple: 'from-purple-900/40 to-purple-950/40 border-purple-600/50',
       green: 'from-green-900/40 to-green-950/40 border-green-600/50',
       amber: 'from-amber-900/40 to-amber-950/40 border-amber-600/50',
       sky: 'from-sky-900/40 to-sky-950/40 border-sky-600/50',

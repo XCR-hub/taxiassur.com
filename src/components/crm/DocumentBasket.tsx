@@ -18,7 +18,7 @@ interface Attachment {
   confidence: number | null;
   status: string;
   received_at: string;
-  subject: string;
+  email_subject: string;
   from_email: string;
 }
 
