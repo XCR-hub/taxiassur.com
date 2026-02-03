@@ -79,15 +79,29 @@ const DocumentDragDropSimple: React.FC<DocumentDragDropSimpleProps> = ({ leadId,
       }
       logger.info('Prospect documents:', prospectDocs?.length || 0);
 
-      // 2. Documents depuis email_attachments
-      const { data: emailAttachments, error: attachError } = await supabase
-        .from('email_attachments')
-        .select('*')
+      // 2. Documents depuis email_attachments via email_messages
+      // Récupérer les IDs des messages liés à ce lead
+      const { data: emailMessages } = await supabase
+        .from('email_messages')
+        .select('id')
         .eq('lead_id', leadId);
 
-      if (attachError) {
-        logger.error('Error loading email_attachments:', attachError);
+      const messageIds = emailMessages?.map(m => m.id) || [];
+
+      let emailAttachments: any[] = [];
+      if (messageIds.length > 0) {
+        const { data, error: attachError } = await supabase
+          .from('email_attachments')
+          .select('*')
+          .in('email_message_id', messageIds);
+
+        if (attachError) {
+          logger.error('Error loading email_attachments:', attachError);
+        } else {
+          emailAttachments = data || [];
+        }
       }
+
       logger.info('Email attachments:', emailAttachments?.length || 0);
 
       // 3. Documents depuis crm_lead_documents
@@ -115,10 +129,10 @@ const DocumentDragDropSimple: React.FC<DocumentDragDropSimpleProps> = ({ leadId,
         })),
         ...(emailAttachments || []).map(d => ({
           id: d.id,
-          lead_id: d.lead_id || leadId,
-          file_name: d.file_name,
-          file_path: d.file_path,
-          document_type: d.document_type,
+          lead_id: leadId, // Les attachments n'ont pas lead_id directement, on utilise celui du contexte
+          file_name: d.filename || d.file_name || 'Document sans nom',
+          file_path: d.storage_path || d.file_path || '',
+          document_type: d.proposed_doc_type || d.document_type,
           source: 'email_attachments' as const,
           uploaded_at: d.created_at,
           validated: false
@@ -162,7 +176,7 @@ const DocumentDragDropSimple: React.FC<DocumentDragDropSimpleProps> = ({ leadId,
           } else if (doc.source === 'email_attachments') {
             await supabase
               .from('email_attachments')
-              .update({ document_type: detectedType })
+              .update({ proposed_doc_type: detectedType })
               .eq('id', doc.id)
               .then(() => logger.info('Auto-classification email_attachments réussie'));
           }
@@ -295,7 +309,7 @@ const DocumentDragDropSimple: React.FC<DocumentDragDropSimpleProps> = ({ leadId,
 
         await supabase
           .from('email_attachments')
-          .update({ document_type: docType })
+          .update({ proposed_doc_type: docType })
           .eq('id', draggedDoc.id);
 
         logger.info('email_attachments copié vers prospect_documents');
@@ -449,31 +463,26 @@ const DocumentDragDropSimple: React.FC<DocumentDragDropSimpleProps> = ({ leadId,
   };
 
   const getDocumentUrl = (filePath: string, source: string) => {
-    // Nettoyer le path (enlever les préfixes de bucket s'ils existent)
+    // Détecter le bucket depuis le file_path
+    let bucket = 'prospect-documents'; // Par défaut
     let cleanPath = filePath;
-    cleanPath = cleanPath.replace(/^\/?(email-attachments|prospect-documents|crm-documents)\//, '');
 
-    // Essayer de déterminer le bon bucket
-    // IMPORTANT: Les documents ne sont PAS physiquement déplacés entre buckets
-    // Même si la source est 'crm_lead_documents', le fichier peut être ailleurs
-
-    // Ordre de priorité pour chercher le fichier:
-    let buckets = [];
-
-    if (source === 'prospect_documents') {
-      buckets = ['prospect-documents', 'email-attachments', 'crm-documents'];
-    } else if (source === 'email_attachments') {
-      buckets = ['email-attachments', 'prospect-documents', 'crm-documents'];
-    } else if (source === 'crm_lead_documents') {
-      // Pour crm_lead_documents, essayer d'abord prospect-documents car c'est souvent là que le fichier réside
-      buckets = ['prospect-documents', 'crm-documents', 'email-attachments'];
+    // Si le path contient déjà le bucket, l'extraire
+    const bucketMatch = filePath.match(/^\/?(email-attachments|prospect-documents|crm-documents)\//);
+    if (bucketMatch) {
+      bucket = bucketMatch[1];
+      cleanPath = filePath.replace(/^\/?(email-attachments|prospect-documents|crm-documents)\//, '');
     } else {
-      buckets = ['prospect-documents', 'email-attachments', 'crm-documents'];
+      // Si pas de bucket dans le path, déduire depuis la source
+      if (source === 'email_attachments') {
+        bucket = 'email-attachments';
+      } else if (source === 'prospect_documents') {
+        bucket = 'prospect-documents';
+      } else if (source === 'crm_lead_documents') {
+        bucket = 'crm-documents';
+      }
     }
 
-    // Prendre le premier bucket et générer l'URL
-    // Note: On ne peut pas vérifier si le fichier existe de manière synchrone ici
-    const bucket = buckets[0];
     const { data } = supabase.storage.from(bucket).getPublicUrl(cleanPath);
 
     logger.info('Document URL:', {
@@ -481,8 +490,7 @@ const DocumentDragDropSimple: React.FC<DocumentDragDropSimpleProps> = ({ leadId,
       source,
       bucket,
       cleanPath,
-      url: data.publicUrl,
-      bucketPriority: buckets
+      url: data.publicUrl
     });
 
     return data.publicUrl;
