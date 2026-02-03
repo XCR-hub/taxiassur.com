@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Preview - TaxiAssur</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            max-width: 600px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            text-align: center;
+        }
+        h1 {
+            color: #111;
+            font-size: 2rem;
+            margin-bottom: 20px;
+        }
+        .status {
+            display: inline-block;
+            background: #10b981;
+            color: white;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-weight: 600;
+            margin-bottom: 30px;
+        }
+        .info {
+            background: #f3f4f6;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: left;
+        }
+        .info p {
+            margin: 8px 0;
+            color: #374151;
+        }
+        .btn {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 12px 30px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            margin: 10px;
+            transition: transform 0.2s;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>Preview Test - TaxiAssur</h1>
+        <div class="status">Serveur Actif</div>
+
+        <div class="info">
+            <p><strong>Environnement:</strong> Développement</p>
+            <p><strong>Port:</strong> 5173</p>
+            <p><strong>Supabase:</strong> Connecté</p>
+            <p><strong>Date:</strong> <span id="date"></span></p>
+        </div>
+
+        <a href="/" class="btn">Accueil TaxiAssur</a>
+        <a href="/backoffice/crm" class="btn">CRM</a>
+        <a href="/status.html" class="btn">Statut Système</a>
+    </div>
+
+    <script>
+        document.getElementById('date').textContent = new Date().toLocaleString('fr-FR');
+        console.log('Test page chargée avec succès');
+        console.log('Supabase URL:', 'https://drohhxrkoequjphvabvq.supabase.co');
+    </script>
+</body>
+</html>
