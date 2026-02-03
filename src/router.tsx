@@ -89,6 +89,7 @@ const ClientSinistres = lazy(() => import('./pages/client/ClientSinistres'));
 const BackofficeDashboard = lazy(() => import('./backoffice/Dashboard'));
 const CRMLayout = lazy(() => import('./backoffice/CRMLayout'));
 const CRMKillerDashboard = lazy(() => import('./backoffice/CRMKillerDashboard'));
+const CRMLeadDetail = lazy(() => import('./backoffice/CRMLeadDetail'));
 const CRMPipelineKanban = lazy(() => import('./backoffice/CRMPipelineKanban'));
 const CRMInboxMulticanal = lazy(() => import('./backoffice/CRMInboxMulticanal'));
 const CRMRetentionCenter = lazy(() => import('./backoffice/CRMRetentionCenter'));
@@ -473,6 +474,10 @@ export const router = createBrowserRouter([
       {
         path: 'settings',
         element: <CRMKillerDashboard />,
+      },
+      {
+        path: 'lead/:leadId',
+        element: <CRMLeadDetail />,
       },
     ],
   },
