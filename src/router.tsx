@@ -87,7 +87,13 @@ const ClientProfil = lazy(() => import('./pages/client/ClientProfil'));
 const ClientSinistres = lazy(() => import('./pages/client/ClientSinistres'));
 
 const BackofficeDashboard = lazy(() => import('./backoffice/Dashboard'));
-const CRMKiller = lazy(() => import('./backoffice/CRMKiller'));
+const CRMLayout = lazy(() => import('./backoffice/CRMLayout'));
+const CRMKillerDashboard = lazy(() => import('./backoffice/CRMKillerDashboard'));
+const CRMPipelineKanban = lazy(() => import('./backoffice/CRMPipelineKanban'));
+const CRMInboxMulticanal = lazy(() => import('./backoffice/CRMInboxMulticanal'));
+const CRMRetentionCenter = lazy(() => import('./backoffice/CRMRetentionCenter'));
+const CRMAIGovernance = lazy(() => import('./backoffice/CRMAIGovernance'));
+const CRMTemplatesManager = lazy(() => import('./backoffice/CRMTemplatesManager'));
 const CRMCommercial = lazy(() => import('./backoffice/CRMCommercial'));
 const LeadManager = lazy(() => import('./backoffice/LeadManager'));
 const PartnerPortal = lazy(() => import('./backoffice/PartnerPortal'));
@@ -427,12 +433,48 @@ export const router = createBrowserRouter([
     element: <BackofficeDashboard />,
   },
   {
-    path: '/backoffice/crm-killer',
-    element: <CRMKiller />,
+    path: '/backoffice/crm',
+    element: <CRMLayout />,
+    children: [
+      {
+        index: true,
+        element: <CRMKillerDashboard />,
+      },
+    ],
   },
   {
-    path: '/backoffice/crm-killer/*',
-    element: <CRMKiller />,
+    path: '/backoffice/crm-killer',
+    element: <CRMLayout />,
+    children: [
+      {
+        index: true,
+        element: <CRMKillerDashboard />,
+      },
+      {
+        path: 'pipeline',
+        element: <CRMPipelineKanban />,
+      },
+      {
+        path: 'inbox',
+        element: <CRMInboxMulticanal />,
+      },
+      {
+        path: 'retention',
+        element: <CRMRetentionCenter />,
+      },
+      {
+        path: 'ia',
+        element: <CRMAIGovernance />,
+      },
+      {
+        path: 'templates',
+        element: <CRMTemplatesManager />,
+      },
+      {
+        path: 'settings',
+        element: <CRMKillerDashboard />,
+      },
+    ],
   },
   {
     path: '/backoffice/crm-commercial',

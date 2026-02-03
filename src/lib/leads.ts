@@ -61,7 +61,7 @@ export async function getLeads(): Promise<Lead[]> {
     logger.log('🔍 Fetching leads from Supabase...');
 
     const { data: leadsData, error } = await supabase
-      .from('leads')
+      .from('crm_leads')
       .select('*')
       .order('created_at', { ascending: false });
 

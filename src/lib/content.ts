@@ -389,8 +389,8 @@ export async function getReviews(): Promise<Review[]> {
         .from('reviews')
         .select('*')
         .eq('status', 'published')
-        .order('createdAt', { ascending: false });
-      
+        .order('created_at', { ascending: false });
+
       if (!error && data) {
         return data.map(item => ReviewSchema.parse(item));
       }
@@ -398,7 +398,7 @@ export async function getReviews(): Promise<Review[]> {
       logger.warn('Supabase reviews fetch failed, falling back to local:', error);
     }
   }
-  
+
   const reviews = await fetchLocalContent<Review>('reviews', ReviewSchema);
   return reviews.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 }
@@ -411,8 +411,8 @@ export async function getOffers(): Promise<Offer[]> {
         .from('offers')
         .select('*')
         .eq('status', 'published')
-        .order('updatedAt', { ascending: false });
-      
+        .order('updated_at', { ascending: false });
+
       if (!error && data) {
         return data.map(item => OfferSchema.parse(item));
       }
@@ -420,7 +420,7 @@ export async function getOffers(): Promise<Offer[]> {
       logger.warn('Supabase offers fetch failed, falling back to local:', error);
     }
   }
-  
+
   return await fetchLocalContent<Offer>('offers', OfferSchema);
 }
 
