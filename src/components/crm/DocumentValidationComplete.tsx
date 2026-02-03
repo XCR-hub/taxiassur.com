@@ -185,8 +185,10 @@ export default function DocumentValidationComplete({
       if (updateError) throw updateError;
 
       // Send validation email
+      let emailSent = false;
+      let emailErrorMsg = '';
       if (leadEmail) {
-        const { error: emailError } = await supabase.functions.invoke('send-crm-email', {
+        const { data: emailResult, error: emailError } = await supabase.functions.invoke('send-crm-email', {
           body: {
             to: leadEmail,
             subject: `Document validé - ${DOCUMENT_CATEGORIES.find(c => c.id === doc.document_type)?.label || doc.document_type}`,
@@ -210,12 +212,25 @@ export default function DocumentValidationComplete({
           }
         });
 
-        if (emailError) console.error('Error sending validation email:', emailError);
+        // Vérifier l'erreur ET le résultat
+        if (emailError || !emailResult?.success) {
+          emailErrorMsg = emailError?.message || emailResult?.error || 'Erreur inconnue';
+          console.error('Error sending validation email:', emailErrorMsg);
+        } else {
+          emailSent = true;
+        }
       }
 
       await loadClassifiedDocuments();
       onDocumentClassified?.();
-      alert('Document validé et email envoyé au prospect !');
+
+      if (emailSent) {
+        alert('✅ Document validé avec succès !\n\n📧 Email de confirmation envoyé au prospect.');
+      } else if (leadEmail) {
+        alert(`✅ Document validé avec succès !\n\n⚠️ Attention : L'email de notification n'a pas pu être envoyé.\nErreur: ${emailErrorMsg}\n\nVeuillez contacter le prospect manuellement.`);
+      } else {
+        alert('✅ Document validé avec succès !\n\n⚠️ Aucun email disponible pour ce prospect.');
+      }
 
     } catch (error) {
       console.error('Error validating document:', error);

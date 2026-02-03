@@ -426,16 +426,21 @@ const DocumentDragDropSimple: React.FC<DocumentDragDropSimpleProps> = ({ leadId,
           }
         });
 
-        if (emailError) {
-          logger.error('Error sending validation email:', emailError);
-          console.warn('⚠️ Email non envoyé mais validation OK:', emailError);
+        // Vérifier l'erreur ET le résultat
+        if (emailError || !emailResult?.success) {
+          const errorDetail = emailError?.message || emailResult?.error || 'Erreur inconnue';
+          logger.error('Error sending validation email:', errorDetail);
+          console.warn('⚠️ Email non envoyé mais validation OK:', errorDetail);
+          await loadAllDocuments();
+          alert(`✅ Document "${doc.file_name}" validé avec succès !\n\n⚠️ Attention : L'email de notification n'a pas pu être envoyé au prospect.\nErreur: ${errorDetail}\n\nVeuillez le contacter manuellement.`);
+          return;
         } else {
-          logger.info('Validation email sent successfully');
+          logger.info('Validation email sent successfully to:', emailResult.sent);
         }
       }
 
       await loadAllDocuments();
-      alert(`✅ Document "${doc.file_name}" validé avec succès !`);
+      alert(`✅ Document "${doc.file_name}" validé avec succès !\n\n📧 Email de confirmation envoyé au prospect.`);
     } catch (error: any) {
       logger.error('Error validating document:', error);
       const errorMsg = error.message || 'Erreur inconnue';

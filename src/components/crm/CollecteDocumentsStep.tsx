@@ -164,7 +164,7 @@ export default function CollecteDocumentsStep({
 
       if (template.channel === 'email') {
         // Send email via edge function
-        const { error } = await supabase.functions.invoke('send-crm-email', {
+        const { data: emailResult, error } = await supabase.functions.invoke('send-crm-email', {
           body: {
             to: leadEmail,
             subject: subject || 'Documents nécessaires - TaxiAssur',
@@ -173,7 +173,11 @@ export default function CollecteDocumentsStep({
           }
         });
 
-        if (error) throw error;
+        // Vérifier l'erreur ET le résultat
+        if (error || !emailResult?.success) {
+          const errorMsg = error?.message || emailResult?.error || 'Erreur inconnue';
+          throw new Error(`Email non envoyé: ${errorMsg}`);
+        }
 
         // Log interaction
         await supabase
@@ -190,7 +194,7 @@ export default function CollecteDocumentsStep({
 
       } else if (template.channel === 'sms') {
         // Send SMS
-        const { error } = await supabase.functions.invoke('send-sms', {
+        const { data: smsResult, error } = await supabase.functions.invoke('send-sms', {
           body: {
             to: leadPhone,
             message: body,
@@ -198,7 +202,11 @@ export default function CollecteDocumentsStep({
           }
         });
 
-        if (error) throw error;
+        // Vérifier l'erreur ET le résultat
+        if (error || !smsResult?.success) {
+          const errorMsg = error?.message || smsResult?.error || 'Erreur inconnue';
+          throw new Error(`SMS non envoyé: ${errorMsg}`);
+        }
 
         await supabase
           .from('crm_interactions')
@@ -213,7 +221,7 @@ export default function CollecteDocumentsStep({
 
       } else if (template.channel === 'whatsapp') {
         // Send WhatsApp
-        const { error } = await supabase.functions.invoke('send-whatsapp', {
+        const { data: waResult, error } = await supabase.functions.invoke('send-whatsapp', {
           body: {
             to: leadPhone,
             message: body,
@@ -221,7 +229,11 @@ export default function CollecteDocumentsStep({
           }
         });
 
-        if (error) throw error;
+        // Vérifier l'erreur ET le résultat
+        if (error || !waResult?.success) {
+          const errorMsg = error?.message || waResult?.error || 'Erreur inconnue';
+          throw new Error(`WhatsApp non envoyé: ${errorMsg}`);
+        }
 
         await supabase
           .from('crm_interactions')
@@ -235,12 +247,12 @@ export default function CollecteDocumentsStep({
           });
       }
 
-      alert(`${template.channel.toUpperCase()} envoyé avec succès !`);
+      alert(`✅ ${template.channel.toUpperCase()} envoyé avec succès !`);
       setSelectedTemplate(null);
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error sending communication:', error);
-      alert('Erreur lors de l\'envoi');
+      alert(`❌ Erreur lors de l'envoi\n\n${error.message || 'Erreur inconnue'}`);
     } finally {
       setSending(false);
     }

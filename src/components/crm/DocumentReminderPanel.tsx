@@ -133,28 +133,44 @@ export const DocumentReminderPanel: React.FC<DocumentReminderPanelProps> = ({
       }
 
       // Envoyer via l'edge function appropriée
+      let sendResult;
       if (channel === 'email' && leadEmail) {
-        await supabase.functions.invoke('send-crm-email', {
+        const { data, error } = await supabase.functions.invoke('send-crm-email', {
           body: {
             to: leadEmail,
             subject: `Documents manquants - ${leadName}`,
             html: message.replace(/\n/g, '<br>')
           }
         });
+        if (error || !data?.success) {
+          const errorMsg = error?.message || data?.error || 'Erreur inconnue';
+          throw new Error(`Email non envoyé: ${errorMsg}`);
+        }
+        sendResult = data;
       } else if (channel === 'sms' && leadPhone) {
-        await supabase.functions.invoke('send-sms', {
+        const { data, error } = await supabase.functions.invoke('send-sms', {
           body: {
             to: leadPhone,
             message: message
           }
         });
+        if (error || !data?.success) {
+          const errorMsg = error?.message || data?.error || 'Erreur inconnue';
+          throw new Error(`SMS non envoyé: ${errorMsg}`);
+        }
+        sendResult = data;
       } else if (channel === 'whatsapp' && leadPhone) {
-        await supabase.functions.invoke('send-whatsapp', {
+        const { data, error } = await supabase.functions.invoke('send-whatsapp', {
           body: {
             to: leadPhone,
             message: message
           }
         });
+        if (error || !data?.success) {
+          const errorMsg = error?.message || data?.error || 'Erreur inconnue';
+          throw new Error(`WhatsApp non envoyé: ${errorMsg}`);
+        }
+        sendResult = data;
       }
 
       // Enregistrer la relance
@@ -172,12 +188,12 @@ export const DocumentReminderPanel: React.FC<DocumentReminderPanelProps> = ({
         .update({ last_contact_at: new Date().toISOString() })
         .eq('id', leadId);
 
-      alert(`Relance envoyée via ${channel} !`);
+      alert(`✅ Relance envoyée avec succès via ${channel} !`);
       setSelectedChannel(null);
       setCustomMessage('');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erreur envoi relance:', error);
-      alert('Erreur lors de l\'envoi de la relance');
+      alert(`❌ Erreur lors de l'envoi de la relance\n\n${error.message || 'Erreur inconnue'}`);
     } finally {
       setLoading(false);
     }
