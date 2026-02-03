@@ -431,9 +431,12 @@ Deno.serve(async (req: Request) => {
     // Log interaction
     await supabase.from('crm_interactions').insert({
       lead_id: lead_id,
-      channel: 'email',
+      type: 'email',
       direction: 'outbound',
-      content: `Devis ${company_name} envoyé par email${quote_amount ? ` - Montant: ${quote_amount}€` : ''}`
+      subject: subject,
+      content: `Devis ${company_name} envoyé par email${quote_amount ? ` - Montant: ${quote_amount}€` : ''}`,
+      to_email: lead.email,
+      from_email: 'team@taxiassur.com'
     });
 
     // Update quote record

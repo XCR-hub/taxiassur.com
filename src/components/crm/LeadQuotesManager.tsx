@@ -519,17 +519,14 @@ export default function LeadQuotesManager({ leadId }: Props) {
             {activeModal.type === 'upload' ? (
               <div className="space-y-4">
                 <div>
-                  <label htmlFor="quote-file-upload" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
                     Fichier PDF du devis *
                   </label>
                   <input
-                    id="quote-file-upload"
-                    name="quote-file"
                     type="file"
                     accept=".pdf"
                     onChange={(e) => setUploadForm({ ...uploadForm, file: e.target.files?.[0] || null })}
                     className="w-full border border-gray-300 rounded px-3 py-2 bg-white text-gray-900 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                    aria-label="Fichier PDF du devis"
                   />
                   {uploadForm.file && (
                     <p className="text-sm text-green-600 mt-1">
