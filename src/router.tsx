@@ -44,7 +44,7 @@ const EspaceClient = lazy(() => import('./pages/EspaceClient'));
 const EspaceProspect = lazy(() => import('./pages/EspaceProspect'));
 const ProspectDocuments = lazy(() => import('./pages/ProspectDocuments'));
 const DownPaymentPage = lazy(() => import('./pages/DownPaymentPage'));
-const AdminLogin = lazy(() => import('./components/AdminLogin'));
+const AdminLogin = lazy(() => import('./pages/AdminLogin'));
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
 const TestNotifications = lazy(() => import('./pages/TestNotifications'));
 
@@ -96,6 +96,7 @@ const ClientProfil = lazy(() => import('./pages/client/ClientProfil'));
 const ClientSinistres = lazy(() => import('./pages/client/ClientSinistres'));
 const ClientPaiements = lazy(() => import('./pages/client/ClientPaiements'));
 const ClientNotifications = lazy(() => import('./pages/client/ClientNotifications'));
+const NotFound = lazy(() => import('./pages/NotFound'));
 
 export const router = createBrowserRouter([
   {
@@ -143,6 +144,10 @@ export const router = createBrowserRouter([
       { path: 'prospect/documents/:token', element: <OptimizedSuspense><ProspectDocuments /></OptimizedSuspense> },
       { path: 'down-payment/:leadId', element: <OptimizedSuspense><DownPaymentPage /></OptimizedSuspense> },
       { path: 'test-notifications', element: <OptimizedSuspense><TestNotifications /></OptimizedSuspense> },
+
+      { path: 'backoffice', element: <Navigate to="/admin/login" replace /> },
+      { path: 'backoffice/*', element: <Navigate to="/admin/login" replace /> },
+      { path: 'login', element: <Navigate to="/admin/login" replace /> },
 
       { path: 'auth/callback/linkedin', element: <OptimizedSuspense><AuthCallbackLinkedin /></OptimizedSuspense> },
       { path: 'auth/callback/twitter', element: <OptimizedSuspense><AuthCallbackTwitter /></OptimizedSuspense> },
@@ -205,6 +210,8 @@ export const router = createBrowserRouter([
           { path: 'ai', element: <OptimizedSuspense><MasterAI /></OptimizedSuspense> },
         ],
       },
+
+      { path: '*', element: <OptimizedSuspense><NotFound /></OptimizedSuspense> },
     ],
   },
 ]);
