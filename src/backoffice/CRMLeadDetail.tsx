@@ -8,8 +8,7 @@ import PipelineWorkflow7Etapes from '@/components/crm/PipelineWorkflow7Etapes';
 import DocumentChecklistPanelV2 from '@/components/crm/DocumentChecklistPanelV2';
 import LeadCompanyQuotes from '@/backoffice/LeadCompanyQuotes';
 import ContractSignatureManager from '@/components/crm/ContractSignatureManager';
-import CommunicationTimeline from '@/components/crm/CommunicationTimeline';
-import TimelineCard from '@/components/crm/TimelineCard';
+import CompleteTimeline from '@/components/crm/CompleteTimeline';
 
 interface Lead {
   id: string;
@@ -106,11 +105,33 @@ const CRMLeadDetail: React.FC = () => {
         .eq('lead_id', leadId)
         .limit(1);
 
-      // Messages
-      const { data: messages } = await supabase
+      // Interactions (emails + messages + tous les événements)
+      const { data: emails } = await supabase
+        .from('email_messages')
+        .select('id')
+        .eq('lead_id', leadId);
+
+      const { data: interactions } = await supabase
         .from('crm_interactions')
         .select('id')
         .eq('lead_id', leadId);
+
+      const { data: aiDecisions } = await supabase
+        .from('crm_ai_decisions')
+        .select('id')
+        .eq('lead_id', leadId);
+
+      const { data: notifications } = await supabase
+        .from('crm_event_notifications')
+        .select('id')
+        .eq('lead_id', leadId);
+
+      const totalEvents =
+        (emails?.length || 0) +
+        (interactions?.length || 0) +
+        (documents?.length || 0) +
+        (aiDecisions?.length || 0) +
+        (notifications?.length || 0);
 
       setStats({
         documentsComplete: totalDocs > 0 && validatedDocs === totalDocs,
@@ -119,7 +140,7 @@ const CRMLeadDetail: React.FC = () => {
         quotesCount: quotes?.length || 0,
         hasContract: (contracts?.length || 0) > 0,
         unreadMessages: 0,
-        totalInteractions: messages?.length || 0,
+        totalInteractions: totalEvents,
       });
     } catch (err) {
       logger.error('Error loading stats:', err);
@@ -251,15 +272,13 @@ const CRMLeadDetail: React.FC = () => {
           </div>
         )}
 
-        {activeTab === 'communication' && (
-          <div className="space-y-6">
-            <CommunicationTimeline leadId={leadId!} />
-          </div>
-        )}
-
         {activeTab === 'history' && (
           <div className="space-y-6">
-            <TimelineCard leadId={leadId!} />
+            <CompleteTimeline
+              leadId={leadId!}
+              leadEmail={lead.email}
+              leadPhone={lead.phone}
+            />
           </div>
         )}
       </div>

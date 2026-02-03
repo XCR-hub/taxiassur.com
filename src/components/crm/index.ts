@@ -37,3 +37,4 @@ export { default as CallLoggerModal } from './CallLoggerModal';
 export { StepByStepWorkflow } from './StepByStepWorkflow';
 export { DocumentValidationWithReasons } from './DocumentValidationWithReasons';
 export { default as DocumentViewer } from './DocumentViewer';
+export { default as CompleteTimeline } from './CompleteTimeline';

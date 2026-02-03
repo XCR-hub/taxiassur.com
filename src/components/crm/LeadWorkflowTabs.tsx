@@ -12,7 +12,7 @@ import {
   Inbox
 } from 'lucide-react';
 
-export type WorkflowTab = 'overview' | 'documents' | 'quotes' | 'contract' | 'communication' | 'history';
+export type WorkflowTab = 'overview' | 'documents' | 'quotes' | 'contract' | 'history';
 
 interface TabConfig {
   id: WorkflowTab;
@@ -70,14 +70,8 @@ export const LeadWorkflowTabs: React.FC<LeadWorkflowTabsProps> = ({
       status: stats.hasContract ? 'complete' : 'pending'
     },
     {
-      id: 'communication',
-      label: 'Communication',
-      icon: <MessageSquare className="w-4 h-4" />,
-      badge: stats.unreadMessages > 0 ? stats.unreadMessages : undefined
-    },
-    {
       id: 'history',
-      label: 'Historique',
+      label: 'Historique & Communication',
       icon: <History className="w-4 h-4" />,
       badge: stats.totalInteractions > 0 ? stats.totalInteractions : undefined
     }
