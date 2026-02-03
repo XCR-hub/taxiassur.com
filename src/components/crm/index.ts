@@ -33,3 +33,5 @@ export { default as TimelineCard } from './TimelineCard';
 export { IntelligentContactPanel } from './IntelligentContactPanel';
 export { DocumentReminderPanel } from './DocumentReminderPanel';
 export { default as CallLoggerModal } from './CallLoggerModal';
+export { StepByStepWorkflow } from './StepByStepWorkflow';
+export { DocumentValidationWithReasons } from './DocumentValidationWithReasons';
