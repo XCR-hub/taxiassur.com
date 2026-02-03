@@ -375,7 +375,7 @@ export default function CommunicationEnhanced({
           title="WhatsApp"
           value={stats.whatsapp}
           icon={Phone}
-          color="emerald"
+          color="green"
           animationDuration={1000}
         />
       </div>
