@@ -524,14 +524,14 @@ export default function PipelineWorkflow7Etapes({ leadId, leadData }: PipelineWo
       </div>
 
       {/* Call Dialog */}
-      {showCallDialog && (
-        <CallDialog
-          leadId={leadId}
-          leadName={`${leadData.first_name || ''} ${leadData.last_name || ''}`.trim()}
-          leadPhone={leadData.phone}
-          onClose={() => setShowCallDialog(false)}
-        />
-      )}
+      <CallDialog
+        isOpen={showCallDialog}
+        leadId={leadId}
+        leadName={`${leadData.first_name || ''} ${leadData.last_name || ''}`.trim()}
+        leadPhone={leadData.phone}
+        leadEmail={leadData.email}
+        onClose={() => setShowCallDialog(false)}
+      />
     </div>
   );
 }
