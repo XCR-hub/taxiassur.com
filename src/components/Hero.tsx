@@ -239,6 +239,7 @@ const Hero: React.FC = () => {
                         value={formData.name}
                         onChange={handleChange}
                         required
+                        autoComplete="name"
                         className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base bg-gray-800/70 border border-gray-600 rounded-lg focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-white placeholder-gray-400 transition-all duration-300"
                         placeholder="Jean Dupont"
                       />
@@ -255,6 +256,7 @@ const Hero: React.FC = () => {
                         value={formData.phone}
                         onChange={handleChange}
                         required
+                        autoComplete="tel"
                         className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base bg-gray-800/70 border border-gray-600 rounded-lg focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-white placeholder-gray-400 transition-all duration-300"
                         placeholder="06 12 34 56 78"
                       />
