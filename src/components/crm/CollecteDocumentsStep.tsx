@@ -29,6 +29,12 @@ interface DocumentStats {
   required: number;
 }
 
+interface DocumentInfo {
+  type: string;
+  label: string;
+  status: string;
+}
+
 export default function CollecteDocumentsStep({
   leadId,
   leadEmail,
@@ -46,6 +52,8 @@ export default function CollecteDocumentsStep({
     pending: 0,
     required: 6
   });
+  const [documents, setDocuments] = useState<DocumentInfo[]>([]);
+
   useEffect(() => {
     loadTemplates();
     loadDocumentStats();
@@ -78,10 +86,28 @@ export default function CollecteDocumentsStep({
     try {
       const { data, error } = await supabase
         .from('crm_lead_documents')
-        .select('status')
+        .select('document_type, status')
         .eq('lead_id', leadId);
 
       if (error) throw error;
+
+      // Mapping des types de documents vers leurs labels français
+      const documentLabels: Record<string, string> = {
+        'licence_taxi': 'Licence de taxi',
+        'permis_conduire': 'Permis de conduire',
+        'carte_grise': 'Carte grise du véhicule',
+        'releve_information': 'Relevé d\'information',
+        'rib': 'RIB',
+        'carte_professionnelle': 'Carte professionnelle'
+      };
+
+      const documentsList: DocumentInfo[] = data?.map(d => ({
+        type: d.document_type,
+        label: documentLabels[d.document_type] || d.document_type,
+        status: d.status
+      })) || [];
+
+      setDocuments(documentsList);
 
       const total = data?.length || 0;
       const validated = data?.filter(d => d.status === 'validated').length || 0;
@@ -118,12 +144,23 @@ export default function CollecteDocumentsStep({
         ? `${window.location.origin}/espace-prospect?token=${leadAccessToken}`
         : `${window.location.origin}/espace-prospect`;
 
+      // Générer la liste des documents non validés
+      const missingDocs = documents.filter(d => d.status !== 'validated');
+      const documentsList = missingDocs.length > 0
+        ? missingDocs.map(d => `- ${d.label}`).join('\n')
+        : '- Licence de taxi\n- Permis de conduire\n- Carte grise du véhicule\n- Relevé d\'information\n- RIB\n- Carte professionnelle';
+
+      // Utiliser le vrai prénom ou un message plus professionnel
+      const firstName = leadFirstName || 'Madame, Monsieur';
+
       let body = template.body_text
-        .replace(/\{\{first_name\}\}/g, leadFirstName || 'Cher client')
-        .replace(/\{\{prospect_space_url\}\}/g, prospectSpaceUrl);
+        .replace(/\{\{first_name\}\}/g, firstName)
+        .replace(/\{\{prospect_space_url\}\}/g, prospectSpaceUrl)
+        // Remplacer la liste fixe par la liste dynamique
+        .replace(/- Licence de taxi\n- Permis de conduire\n- Carte grise du véhicule\n- Relevé d'information\n- RIB\n- Carte professionnelle/g, documentsList);
 
       let subject = template.subject
-        ?.replace(/\{\{first_name\}\}/g, leadFirstName || 'Cher client');
+        ?.replace(/\{\{first_name\}\}/g, firstName);
 
       if (template.channel === 'email') {
         // Send email via edge function
@@ -213,6 +250,10 @@ export default function CollecteDocumentsStep({
     ? Math.round((stats.validated / stats.required) * 100)
     : 0;
 
+  const prospectSpaceUrl = leadAccessToken
+    ? `${window.location.origin}/espace-prospect?token=${leadAccessToken}`
+    : `${window.location.origin}/espace-prospect`;
+
   return (
     <div className="space-y-6">
       {/* Progress Bar */}
@@ -292,15 +333,25 @@ export default function CollecteDocumentsStep({
               {selectedTemplate.subject && (
                 <div className="mb-2">
                   <span className="text-xs font-semibold text-gray-600 uppercase">Sujet:</span>
-                  <p className="text-sm text-gray-900 mt-1">{selectedTemplate.subject}</p>
+                  <p className="text-sm text-gray-900 mt-1">
+                    {selectedTemplate.subject.replace(/\{\{first_name\}\}/g, leadFirstName || 'Madame, Monsieur')}
+                  </p>
                 </div>
               )}
               <div>
                 <span className="text-xs font-semibold text-gray-600 uppercase">Message:</span>
                 <p className="text-sm text-gray-900 whitespace-pre-line mt-1">
-                  {selectedTemplate.body_text
-                    .replace(/\{\{first_name\}\}/g, leadFirstName || 'Cher client')
-                    .replace(/\{\{prospect_space_url\}\}/g, 'https://taxiassur.fr/espace-prospect')}
+                  {(() => {
+                    const missingDocs = documents.filter(d => d.status !== 'validated');
+                    const documentsList = missingDocs.length > 0
+                      ? missingDocs.map(d => `- ${d.label}`).join('\n')
+                      : '- Licence de taxi\n- Permis de conduire\n- Carte grise du véhicule\n- Relevé d\'information\n- RIB\n- Carte professionnelle';
+
+                    return selectedTemplate.body_text
+                      .replace(/\{\{first_name\}\}/g, leadFirstName || 'Madame, Monsieur')
+                      .replace(/\{\{prospect_space_url\}\}/g, prospectSpaceUrl || 'https://taxiassur.fr/espace-prospect')
+                      .replace(/- Licence de taxi\n- Permis de conduire\n- Carte grise du véhicule\n- Relevé d'information\n- RIB\n- Carte professionnelle/g, documentsList);
+                  })()}
                 </p>
               </div>
             </div>
