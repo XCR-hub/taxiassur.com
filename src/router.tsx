@@ -86,6 +86,13 @@ const ClientPaiements = lazy(() => import('./pages/client/ClientPaiements'));
 const ClientProfil = lazy(() => import('./pages/client/ClientProfil'));
 const ClientSinistres = lazy(() => import('./pages/client/ClientSinistres'));
 
+const BackofficeDashboard = lazy(() => import('./backoffice/Dashboard'));
+const CRMKiller = lazy(() => import('./backoffice/CRMKiller'));
+const CRMCommercial = lazy(() => import('./backoffice/CRMCommercial'));
+const LeadManager = lazy(() => import('./backoffice/LeadManager'));
+const PartnerPortal = lazy(() => import('./backoffice/PartnerPortal'));
+const SocialMediaManager = lazy(() => import('./backoffice/SocialMediaManager'));
+
 export const router = createBrowserRouter([
   {
     path: '/',
@@ -410,5 +417,41 @@ export const router = createBrowserRouter([
   {
     path: '/client/sinistres',
     element: <ClientSinistres />,
+  },
+  {
+    path: '/backoffice',
+    element: <BackofficeDashboard />,
+  },
+  {
+    path: '/backoffice/dashboard',
+    element: <BackofficeDashboard />,
+  },
+  {
+    path: '/backoffice/crm-killer',
+    element: <CRMKiller />,
+  },
+  {
+    path: '/backoffice/crm-killer/*',
+    element: <CRMKiller />,
+  },
+  {
+    path: '/backoffice/crm-commercial',
+    element: <CRMCommercial />,
+  },
+  {
+    path: '/backoffice/lead-manager',
+    element: <LeadManager />,
+  },
+  {
+    path: '/backoffice/partner-portal',
+    element: <PartnerPortal />,
+  },
+  {
+    path: '/backoffice/social-media',
+    element: <SocialMediaManager />,
+  },
+  {
+    path: '/backoffice/social-connections',
+    element: <SocialMediaManager />,
   },
 ]);
