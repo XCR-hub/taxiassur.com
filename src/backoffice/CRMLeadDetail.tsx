@@ -4,7 +4,7 @@ import { ArrowLeft, Mail, Phone, AlertCircle } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
 import { LeadWorkflowTabs, WorkflowTab } from '@/components/crm/LeadWorkflowTabs';
-import { StepByStepWorkflow } from '@/components/crm/StepByStepWorkflow';
+import { PipelineStepWorkflow } from '@/components/crm/PipelineStepWorkflow';
 import DocumentChecklistPanelV2 from '@/components/crm/DocumentChecklistPanelV2';
 import LeadCompanyQuotes from '@/backoffice/LeadCompanyQuotes';
 import ContractSignatureManager from '@/components/crm/ContractSignatureManager';
@@ -224,11 +224,12 @@ const CRMLeadDetail: React.FC = () => {
       <div className="max-w-7xl mx-auto px-6 py-6">
         {activeTab === 'overview' && (
           <div className="space-y-6">
-            <StepByStepWorkflow
+            <PipelineStepWorkflow
               leadId={leadId!}
-              leadEmail={lead.email}
-              leadPhone={lead.phone}
-              onStepCompleted={loadStats}
+              onStageChanged={() => {
+                loadLeadData();
+                loadStats();
+              }}
             />
           </div>
         )}
