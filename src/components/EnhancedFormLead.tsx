@@ -207,6 +207,7 @@ const EnhancedFormLead: React.FC = () => {
                 value={formData.name}
                 onChange={handleChange}
                 required
+                autoComplete="name"
                 className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:border-amber-500 focus:ring-2 focus:ring-amber-500 text-gray-900 placeholder-gray-500 text-sm transition-all duration-300"
                 style={{
                   backgroundColor: '#ffffff',
@@ -225,6 +226,7 @@ const EnhancedFormLead: React.FC = () => {
                 type="tel"
                 id="phone"
                 name="phone"
+                autoComplete="tel"
                 value={formData.phone}
                 onChange={handleChange}
                 required
@@ -278,6 +280,7 @@ const EnhancedFormLead: React.FC = () => {
                 value={formData.email}
                 onChange={handleChange}
                 required
+                autoComplete="email"
                 className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:border-amber-500 focus:ring-2 focus:ring-amber-500 text-gray-900 placeholder-gray-500 text-sm transition-all duration-300"
                 style={{
                   backgroundColor: '#ffffff',
@@ -299,6 +302,7 @@ const EnhancedFormLead: React.FC = () => {
                 value={formData.city}
                 onChange={handleChange}
                 required
+                autoComplete="address-level2"
                 className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:border-amber-500 focus:ring-2 focus:ring-amber-500 text-gray-900 placeholder-gray-500 text-sm transition-all duration-300"
                 style={{
                   backgroundColor: '#ffffff',

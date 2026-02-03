@@ -122,6 +122,7 @@ const FormLead: React.FC = () => {
                     value={formData.name}
                     onChange={handleChange}
                     required
+                    autoComplete="name"
                     className="dark-input w-full px-4 py-3 rounded-lg transition-all duration-300"
                     placeholder="Ex: Jean Dupont"
                   />
@@ -138,6 +139,7 @@ const FormLead: React.FC = () => {
                     value={formData.phone}
                     onChange={handleChange}
                     required
+                    autoComplete="tel"
                     className="dark-input w-full px-4 py-3 rounded-lg transition-all duration-300"
                     placeholder="Ex: 06 12 34 56 78"
                   />
@@ -156,6 +158,7 @@ const FormLead: React.FC = () => {
                     value={formData.email}
                     onChange={handleChange}
                     required
+                    autoComplete="email"
                     className="dark-input w-full px-4 py-3 rounded-lg transition-all duration-300"
                     placeholder="Ex: jean@email.com"
                   />
@@ -172,6 +175,7 @@ const FormLead: React.FC = () => {
                     value={formData.city}
                     onChange={handleChange}
                     required
+                    autoComplete="address-level2"
                     className="dark-input w-full px-4 py-3 rounded-lg transition-all duration-300"
                     placeholder="Ex: Paris"
                   />

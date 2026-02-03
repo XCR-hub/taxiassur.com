@@ -156,6 +156,7 @@ const LeadForm: React.FC = () => {
                     name="name"
                     value={formData.name}
                     onChange={handleChange}
+                    autoComplete="name"
                     className={`dark-input w-full px-4 py-3 rounded-lg transition-all duration-300 ${
                       errors.name ? 'border-red-500 focus:border-red-500' : ''
                     }`}
@@ -174,6 +175,7 @@ const LeadForm: React.FC = () => {
                     name="phone"
                     value={formData.phone}
                     onChange={handleChange}
+                    autoComplete="tel"
                     className={`dark-input w-full px-4 py-3 rounded-lg transition-all duration-300 ${
                       errors.phone ? 'border-red-500 focus:border-red-500' : ''
                     }`}
@@ -194,6 +196,7 @@ const LeadForm: React.FC = () => {
                     name="email"
                     value={formData.email}
                     onChange={handleChange}
+                    autoComplete="email"
                     className={`dark-input w-full px-4 py-3 rounded-lg transition-all duration-300 ${
                       errors.email ? 'border-red-500 focus:border-red-500' : ''
                     }`}
@@ -212,6 +215,7 @@ const LeadForm: React.FC = () => {
                     name="city"
                     value={formData.city}
                     onChange={handleChange}
+                    autoComplete="address-level2"
                     className={`dark-input w-full px-4 py-3 rounded-lg transition-all duration-300 ${
                       errors.city ? 'border-red-500 focus:border-red-500' : ''
                     }`}

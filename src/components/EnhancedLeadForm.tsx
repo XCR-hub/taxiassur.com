@@ -279,6 +279,7 @@ const EnhancedLeadForm: React.FC<EnhancedLeadFormProps> = ({
             name="name"
             value={formData.name}
             onChange={handleChange}
+            autoComplete="name"
             className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200 ${
               errors.name ? 'border-red-500' : validationState.name ? 'border-green-500' : 'border-orange-200'
             }`}
@@ -301,6 +302,7 @@ const EnhancedLeadForm: React.FC<EnhancedLeadFormProps> = ({
             name="phone"
             value={formData.phone}
             onChange={handleChange}
+            autoComplete="tel"
             className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200 ${
               errors.phone ? 'border-red-500' : validationState.phone ? 'border-green-500' : 'border-orange-200'
             }`}
@@ -324,6 +326,7 @@ const EnhancedLeadForm: React.FC<EnhancedLeadFormProps> = ({
           name="email"
           value={formData.email}
           onChange={handleChange}
+          autoComplete="email"
           className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200 ${
             errors.email ? 'border-red-500' : validationState.email ? 'border-green-500' : 'border-orange-200'
           }`}
@@ -356,6 +359,7 @@ const EnhancedLeadForm: React.FC<EnhancedLeadFormProps> = ({
             name="city"
             value={formData.city}
             onChange={handleChange}
+            autoComplete="address-level2"
             className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200 ${
               errors.city ? 'border-red-500' : validationState.city ? 'border-green-500' : 'border-orange-200'
             }`}

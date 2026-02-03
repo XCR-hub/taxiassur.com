@@ -275,6 +275,7 @@ const Hero: React.FC = () => {
                         value={formData.email}
                         onChange={handleChange}
                         required
+                        autoComplete="email"
                         className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base bg-gray-800/70 border border-gray-600 rounded-lg focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-white placeholder-gray-400 transition-all duration-300"
                         placeholder="jean@email.com"
                       />
@@ -291,6 +292,7 @@ const Hero: React.FC = () => {
                         value={formData.city}
                         onChange={handleChange}
                         required
+                        autoComplete="address-level2"
                         className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base bg-gray-800/70 border border-gray-600 rounded-lg focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-white placeholder-gray-400 transition-all duration-300"
                         placeholder="Paris"
                       />

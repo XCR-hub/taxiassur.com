@@ -485,6 +485,7 @@ const PartnershipPage: React.FC = () => {
                             value={partnerForm.name}
                             onChange={handleFormChange}
                             required
+                            autoComplete="name"
                             className="w-full px-4 py-3 bg-gray-800/70 border border-gray-600 rounded-lg focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-white placeholder-gray-500 transition-all duration-300"
                             placeholder="Jean Dupont"
                           />
@@ -504,6 +505,7 @@ const PartnershipPage: React.FC = () => {
                             value={partnerForm.email}
                             onChange={handleFormChange}
                             required
+                            autoComplete="email"
                             className="w-full px-4 py-3 bg-gray-800/70 border border-gray-600 rounded-lg focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-white placeholder-gray-500 transition-all duration-300"
                             placeholder="contact@votre-societe.com"
                           />
@@ -521,6 +523,7 @@ const PartnershipPage: React.FC = () => {
                             value={partnerForm.phone}
                             onChange={handleFormChange}
                             required
+                            autoComplete="tel"
                             className="w-full px-4 py-3 bg-gray-800/70 border border-gray-600 rounded-lg focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-white placeholder-gray-500 transition-all duration-300"
                             placeholder="01 23 45 67 89"
                           />
