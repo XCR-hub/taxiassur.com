@@ -60,17 +60,26 @@ export function StepByStepWorkflow({ leadId, leadEmail, leadPhone, onStepComplet
   const loadWorkflowSteps = async () => {
     try {
       setLoading(true);
+      console.log('🔄 Loading workflow steps for lead:', leadId);
+
       const { data, error } = await supabase
         .rpc('get_lead_current_workflow_step', { p_lead_id: leadId });
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ RPC error:', error);
+        throw error;
+      }
 
+      console.log('✅ Workflow steps loaded:', data);
       setSteps(data || []);
 
       // Find first uncompleted step
       const firstUncompleted = data?.find((s: WorkflowStep) => !s.is_completed);
-      setCurrentStep(firstUncompleted || data?.[data.length - 1] || null);
+      const currentStepToSet = firstUncompleted || data?.[data.length - 1] || null;
+      console.log('📍 Current step:', currentStepToSet);
+      setCurrentStep(currentStepToSet);
     } catch (err) {
+      console.error('❌ Error loading workflow steps:', err);
       logger.error('Error loading workflow steps:', err);
     } finally {
       setLoading(false);
