@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { FileText, Check, Download, ExternalLink, AlertCircle, RefreshCw, ShoppingCart, Maximize2, Bug, CheckCircle } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
+import { SecureDocumentLink } from './SecureDocumentLink';
 
 interface Document {
   id: string;
@@ -651,23 +652,25 @@ const DocumentDragDropSimple: React.FC<DocumentDragDropSimpleProps> = ({ leadId,
                       </span>
                     </div>
                     <div className="flex gap-2 text-xs items-center">
-                      <a
-                        href={getDocumentUrl(doc.file_path, doc.source)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-600 hover:text-blue-700 flex items-center gap-1"
-                      >
-                        <ExternalLink size={10} />
-                        Voir
-                      </a>
-                      <a
-                        href={getDocumentUrl(doc.file_path, doc.source)}
-                        download
-                        className="text-green-600 hover:text-green-700 flex items-center gap-1"
-                      >
-                        <Download size={10} />
-                        DL
-                      </a>
+                      <SecureDocumentLink
+                        filePath={doc.file_path}
+                        source={doc.source}
+                        fileName={doc.file_name}
+                        mode="view"
+                        iconSize={10}
+                        showText={true}
+                        className="text-blue-600 hover:text-blue-700 flex items-center gap-1 cursor-pointer"
+                      />
+                      <SecureDocumentLink
+                        filePath={doc.file_path}
+                        source={doc.source}
+                        fileName={doc.file_name}
+                        mode="download"
+                        iconSize={10}
+                        showText={true}
+                        customText="DL"
+                        className="text-green-600 hover:text-green-700 flex items-center gap-1 cursor-pointer"
+                      />
                       <span className="text-gray-400">•</span>
                       <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
                         doc.source === 'prospect_documents' ? 'bg-blue-100 text-blue-700' :
@@ -775,24 +778,13 @@ const DocumentDragDropSimple: React.FC<DocumentDragDropSimpleProps> = ({ leadId,
                                 {doc.file_name}
                               </span>
                               <div className="flex items-center gap-1 flex-shrink-0">
-                                <a
-                                  href={getDocumentUrl(doc.file_path, doc.source)}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  onClick={(e) => {
-                                    const url = getDocumentUrl(doc.file_path, doc.source);
-                                    console.log('🔍 Opening document:', {
-                                      fileName: doc.file_name,
-                                      filePath: doc.file_path,
-                                      source: doc.source,
-                                      generatedUrl: url
-                                    });
-                                  }}
-                                  className="p-1 hover:bg-gray-100 rounded"
-                                  title={`Voir le document (Source: ${doc.source})\nPath: ${doc.file_path}`}
-                                >
-                                  <ExternalLink size={10} className="text-blue-500" />
-                                </a>
+                                <SecureDocumentLink
+                                  filePath={doc.file_path}
+                                  source={doc.source}
+                                  fileName={doc.file_name}
+                                  mode="view"
+                                  iconSize={10}
+                                />
                                 {!doc.validated && doc.source !== 'email_attachments' && (
                                   <button
                                     onClick={() => handleValidate(doc)}
