@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
-import { FileText, Download, X, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
+import { FileText, Download, X, CheckCircle2, AlertCircle, Loader2, Eye } from 'lucide-react';
+import DocumentViewer from './DocumentViewer';
 
 interface DocumentBasketProps {
   caseId: string;
@@ -46,6 +47,7 @@ export default function DocumentBasket({ caseId, onDocumentClassified }: Documen
   const [loading, setLoading] = useState(true);
   const [draggedItem, setDraggedItem] = useState<string | null>(null);
   const [classifying, setClassifying] = useState<string | null>(null);
+  const [viewingDoc, setViewingDoc] = useState<{url: string; fileName: string; mimeType: string} | null>(null);
 
   useEffect(() => {
     loadBasket();
@@ -228,15 +230,18 @@ export default function DocumentBasket({ caseId, onDocumentClassified }: Documen
                     <div className="flex items-center gap-2 mt-3">
                       <button
                         onClick={() => {
-                          // Detect source based on storage_path format
                           const isProspectDoc = attachment.storage_path.includes('/') && !attachment.storage_path.startsWith('attachments/');
                           const bucket = isProspectDoc ? 'prospect-documents' : 'email-attachments';
-                          const url = `${supabase.supabaseUrl}/storage/v1/object/public/${bucket}/${attachment.storage_path}`;
-                          window.open(url, '_blank');
+                          const url = supabase.storage.from(bucket).getPublicUrl(attachment.storage_path).data.publicUrl;
+                          setViewingDoc({
+                            url,
+                            fileName: attachment.filename,
+                            mimeType: attachment.content_type
+                          });
                         }}
                         className="flex-1 text-xs py-1.5 px-2 bg-blue-50 text-blue-600 rounded hover:bg-blue-100"
                       >
-                        <Download className="h-3 w-3 inline mr-1" />
+                        <Eye className="h-3 w-3 inline mr-1" />
                         Voir
                       </button>
                       <button
@@ -314,6 +319,15 @@ export default function DocumentBasket({ caseId, onDocumentClassified }: Documen
           </div>
         </div>
       </div>
+
+      {viewingDoc && (
+        <DocumentViewer
+          url={viewingDoc.url}
+          fileName={viewingDoc.fileName}
+          mimeType={viewingDoc.mimeType}
+          onClose={() => setViewingDoc(null)}
+        />
+      )}
     </div>
   );
 }

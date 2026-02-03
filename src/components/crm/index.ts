@@ -36,3 +36,4 @@ export { DocumentReminderPanel } from './DocumentReminderPanel';
 export { default as CallLoggerModal } from './CallLoggerModal';
 export { StepByStepWorkflow } from './StepByStepWorkflow';
 export { DocumentValidationWithReasons } from './DocumentValidationWithReasons';
+export { default as DocumentViewer } from './DocumentViewer';

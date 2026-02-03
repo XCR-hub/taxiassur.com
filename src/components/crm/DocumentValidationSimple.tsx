@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { FileText, Check, X, Download, ExternalLink, AlertCircle, RefreshCw } from 'lucide-react';
+import { FileText, Check, X, Download, ExternalLink, AlertCircle, RefreshCw, Eye } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
+import DocumentViewer from './DocumentViewer';
 
 interface Document {
   id: string;
@@ -38,6 +39,7 @@ const DocumentValidationSimple: React.FC<DocumentValidationSimpleProps> = ({ lea
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
   const [validating, setValidating] = useState<string | null>(null);
+  const [viewingDoc, setViewingDoc] = useState<{url: string; fileName: string; mimeType: string} | null>(null);
 
   const loadDocuments = async () => {
     try {
@@ -185,15 +187,17 @@ const DocumentValidationSimple: React.FC<DocumentValidationSimpleProps> = ({ lea
                       <span className="text-white font-medium">{doc.file_name}</span>
                     </div>
                     <div className="flex gap-2 mb-3">
-                      <a
-                        href={getDocumentUrl(doc.file_path)}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                      <button
+                        onClick={() => setViewingDoc({
+                          url: getDocumentUrl(doc.file_path),
+                          fileName: doc.file_name,
+                          mimeType: doc.file_type
+                        })}
                         className="flex items-center gap-1 text-sm text-blue-400 hover:text-blue-300"
                       >
-                        <ExternalLink size={14} />
-                        Ouvrir
-                      </a>
+                        <Eye size={14} />
+                        Voir
+                      </button>
                       <a
                         href={getDocumentUrl(doc.file_path)}
                         download
@@ -282,15 +286,17 @@ const DocumentValidationSimple: React.FC<DocumentValidationSimpleProps> = ({ lea
                               )}
                             </div>
                             <div className="flex items-center gap-2">
-                              <a
-                                href={getDocumentUrl(doc.file_path)}
-                                target="_blank"
-                                rel="noopener noreferrer"
+                              <button
+                                onClick={() => setViewingDoc({
+                                  url: getDocumentUrl(doc.file_path),
+                                  fileName: doc.file_name,
+                                  mimeType: doc.file_type
+                                })}
                                 className="p-2 hover:bg-gray-800 rounded transition-all"
-                                title="Ouvrir"
+                                title="Voir"
                               >
-                                <ExternalLink size={16} className="text-blue-400" />
-                              </a>
+                                <Eye size={16} className="text-blue-400" />
+                              </button>
                               {!doc.validated ? (
                                 <button
                                   onClick={() => handleValidate(doc.id, type.value)}
@@ -361,6 +367,15 @@ const DocumentValidationSimple: React.FC<DocumentValidationSimpleProps> = ({ lea
             </button>
           </div>
         </div>
+      )}
+
+      {viewingDoc && (
+        <DocumentViewer
+          url={viewingDoc.url}
+          fileName={viewingDoc.fileName}
+          mimeType={viewingDoc.mimeType}
+          onClose={() => setViewingDoc(null)}
+        />
       )}
     </div>
   );
