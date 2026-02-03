@@ -372,16 +372,9 @@ export default function QuotesEnhanced({
 
       {/* Liste des compagnies */}
       <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h3 className="text-lg font-bold text-gray-900">
-            Compagnies d'Assurance ({stats.total})
-          </h3>
-          <ContextualTooltip
-            content="Liste des compagnies sollicitées pour ce lead"
-            type="info"
-            position="left"
-          />
-        </div>
+        <h3 className="text-lg font-bold text-gray-900">
+          Compagnies d'Assurance ({stats.total})
+        </h3>
 
         {safeQuotes.map((quote) => {
           const company = quote.insurance_company;
