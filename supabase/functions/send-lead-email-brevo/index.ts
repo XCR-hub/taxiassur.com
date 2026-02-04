@@ -143,7 +143,7 @@ Deno.serve(async (req: Request) => {
             </ol>
 
             <div style="text-align: center; margin: 30px 0;">
-              <a href="https://taxiassur.com/backoffice/crm-killer/lead/${lead.id}" class="cta-button">
+              <a href="https://taxiassur.com/backoffice/crm-killer/lead/${lead.id}" class="cta-button" style="color: white !important; text-decoration: none;">
                 VOIR CE LEAD
               </a>
               <br>
