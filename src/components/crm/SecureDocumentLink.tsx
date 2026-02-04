@@ -7,6 +7,7 @@ interface SecureDocumentLinkProps {
   filePath: string;
   source: 'prospect_documents' | 'email_attachments' | 'crm_lead_documents';
   fileName?: string;
+  bucket?: string;
   mode?: 'view' | 'download';
   className?: string;
   iconSize?: number;
@@ -18,6 +19,7 @@ export const SecureDocumentLink: React.FC<SecureDocumentLinkProps> = ({
   filePath,
   source,
   fileName,
+  bucket: explicitBucket,
   mode = 'view',
   className = '',
   iconSize = 12,
@@ -38,28 +40,36 @@ export const SecureDocumentLink: React.FC<SecureDocumentLinkProps> = ({
       // Nettoyer le path initial (enlever les slashes au début)
       let normalizedPath = filePath.replace(/^\/+/, '');
 
-      // Détecter le bucket depuis le path ou depuis la source
-      let bucket = 'prospect-documents';
+      // Si un bucket explicite est fourni (depuis la DB), l'utiliser en priorité absolue
+      let bucket = explicitBucket || 'prospect-documents';
       let cleanPath = normalizedPath;
 
-      if (normalizedPath.startsWith('email-attachments/')) {
-        bucket = 'email-attachments';
-        cleanPath = normalizedPath.replace(/^email-attachments\//, '');
-      } else if (normalizedPath.startsWith('prospect-documents/')) {
-        bucket = 'prospect-documents';
-        cleanPath = normalizedPath.replace(/^prospect-documents\//, '');
-      } else if (normalizedPath.startsWith('crm-documents/')) {
-        bucket = 'crm-documents';
-        cleanPath = normalizedPath.replace(/^crm-documents\//, '');
+      if (explicitBucket) {
+        // Bucket explicite: enlever tous les préfixes de bucket du path
+        cleanPath = normalizedPath.replace(/^(email-attachments|prospect-documents|crm-documents)\//, '');
+        logger.info('✅ Using explicit bucket from DB:', { bucket: explicitBucket, cleanPath });
       } else {
-        // Pas de préfixe de bucket dans le path, utiliser la source
-        if (source === 'email_attachments') bucket = 'email-attachments';
-        else if (source === 'prospect_documents') bucket = 'prospect-documents';
-        else if (source === 'crm_lead_documents') bucket = 'crm-documents';
-        cleanPath = normalizedPath;
+        // Pas de bucket explicite: détecter depuis le path ou la source
+        if (normalizedPath.startsWith('email-attachments/')) {
+          bucket = 'email-attachments';
+          cleanPath = normalizedPath.replace(/^email-attachments\//, '');
+        } else if (normalizedPath.startsWith('prospect-documents/')) {
+          bucket = 'prospect-documents';
+          cleanPath = normalizedPath.replace(/^prospect-documents\//, '');
+        } else if (normalizedPath.startsWith('crm-documents/')) {
+          bucket = 'crm-documents';
+          cleanPath = normalizedPath.replace(/^crm-documents\//, '');
+        } else {
+          // Pas de préfixe de bucket dans le path, utiliser la source
+          if (source === 'email_attachments') bucket = 'email-attachments';
+          else if (source === 'prospect_documents') bucket = 'prospect-documents';
+          else if (source === 'crm_lead_documents') bucket = 'crm-documents';
+          cleanPath = normalizedPath;
+        }
+        logger.info('⚠️ Detecting bucket from path/source:', { bucket, cleanPath });
       }
 
-      logger.info('Opening document:', { originalPath: filePath, bucket, cleanPath, fileName });
+      logger.info('📂 Opening document:', { originalPath: filePath, explicitBucket, finalBucket: bucket, cleanPath, fileName });
 
       // Créer une URL signée pour éviter les problèmes CORS
       const { data, error } = await supabase.storage
