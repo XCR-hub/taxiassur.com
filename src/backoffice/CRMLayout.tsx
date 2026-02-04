@@ -50,14 +50,6 @@ const CRMLayout: React.FC = () => {
     ai_decisions_pending: 0
   });
 
-  // Initialiser le système de notifications au chargement
-  useEffect(() => {
-    notificationManager.initialize();
-    return () => {
-      notificationManager.destroy();
-    };
-  }, []);
-
   const menuItems = [
     {
       id: 'overview',
