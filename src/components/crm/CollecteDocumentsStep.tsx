@@ -168,8 +168,8 @@ export default function CollecteDocumentsStep({
           body: {
             to: leadEmail,
             subject: subject || 'Documents nécessaires - TaxiAssur',
-            html: body.replace(/\n/g, '<br>'),
-            leadId: leadId
+            content: body.replace(/\n/g, '<br>'),
+            lead_id: leadId
           }
         });
 
