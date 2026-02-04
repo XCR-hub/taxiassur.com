@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
+import { openDocument } from '../../lib/document-utils';
 import { FileText, Download, X, CheckCircle2, AlertCircle, Loader2, XCircle, Check, MoveHorizontal } from 'lucide-react';
 
 interface DocumentValidationCompleteProps {
@@ -29,6 +30,7 @@ interface ClassifiedDocument {
   document_type: string;
   file_name: string;
   file_path: string;
+  bucket?: string;
   file_size: number;
   mime_type: string;
   status: 'pending' | 'validated' | 'rejected';
@@ -539,10 +541,7 @@ export default function DocumentValidationComplete({
 
                           <div className="flex items-center gap-2">
                             <button
-                              onClick={() => {
-                                const url = `${supabase.supabaseUrl}/storage/v1/object/public/crm-documents/${doc.file_path}`;
-                                window.open(url, '_blank');
-                              }}
+                              onClick={() => openDocument(doc.file_path, doc.bucket)}
                               className="flex-1 text-xs py-1 px-2 bg-blue-50 text-blue-600 rounded hover:bg-blue-100"
                             >
                               <Download className="h-3 w-3 inline mr-1" />
