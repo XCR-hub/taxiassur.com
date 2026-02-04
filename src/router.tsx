@@ -125,6 +125,10 @@ export const router = createBrowserRouter([
     element: <EspaceProspect />,
   },
   {
+    path: '/espace-prospect/:token',
+    element: <EspaceProspect />,
+  },
+  {
     path: '/prospect/documents',
     element: <ProspectDocuments />,
   },
