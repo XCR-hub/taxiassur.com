@@ -220,11 +220,15 @@ export function StepByStepWorkflow({ leadId, leadEmail, leadPhone, onStepComplet
       });
 
       // Send document request email
+      console.log('[WORKFLOW] Sending document request email...');
       const { data: emailResult, error: emailError } = await supabase.functions.invoke('send-intelligent-document-request', {
         body: {
           lead_id: leadId
         }
       });
+
+      console.log('[WORKFLOW] Email result:', emailResult);
+      console.log('[WORKFLOW] Email error:', emailError);
 
       // In development (bolt.new), email sending may fail due to missing API keys
       // This is expected and normal - emails will work in production
@@ -233,11 +237,18 @@ export function StepByStepWorkflow({ leadId, leadEmail, leadPhone, onStepComplet
                            window.location.hostname.includes('webcontainer');
 
       if (emailError || !emailResult?.success) {
+        const errorMsg = emailError?.message || emailResult?.error || 'Email non envoyé';
+        const errorDetails = emailResult?.details || emailError?.details || '';
+        const fullError = errorDetails ? `${errorMsg} - ${errorDetails}` : errorMsg;
+
+        console.error('[WORKFLOW] Email error details:', fullError);
+
         if (isDevelopment) {
-          console.warn('[DEV MODE] Email envoi simulé (clés API non configurées dans bolt.new):', emailError?.message || emailResult?.error);
+          console.warn('[DEV MODE] Email envoi simulé (clés API non configurées dans bolt.new):', fullError);
+          alert(`[DEV] Email simulé - En production cela fonctionnera.\nErreur: ${fullError}`);
           // Continue anyway in development
         } else {
-          throw new Error(emailError?.message || emailResult?.error || 'Email non envoyé');
+          throw new Error(fullError);
         }
       }
 

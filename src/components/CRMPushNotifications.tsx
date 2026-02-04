@@ -25,6 +25,7 @@ export function CRMPushNotifications() {
   const navigate = useNavigate();
   const [toasts, setToasts] = useState<ToastNotification[]>([]);
   const [soundEnabled, setSoundEnabled] = useState(true);
+  const [audioContext, setAudioContext] = useState<AudioContext | null>(null);
 
   // Charger la préférence de son depuis localStorage
   useEffect(() => {
@@ -38,6 +39,22 @@ export function CRMPushNotifications() {
     }
   }, []);
 
+  // Initialiser l'AudioContext (appelé lors de la première interaction)
+  const initAudioContext = useCallback(() => {
+    if (!audioContext) {
+      try {
+        const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+        setAudioContext(ctx);
+        console.log('🔊 AudioContext initialisé');
+        return ctx;
+      } catch (error) {
+        console.error('❌ Erreur AudioContext:', error);
+        return null;
+      }
+    }
+    return audioContext;
+  }, [audioContext]);
+
   // Jouer un son de notification (double bip plus audible)
   const playNotificationSound = useCallback(() => {
     if (!soundEnabled) {
@@ -48,37 +65,42 @@ export function CRMPushNotifications() {
     console.log('🔊 Lecture du son de notification...');
 
     try {
-      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      // Utiliser l'AudioContext existant ou en créer un nouveau
+      const ctx = audioContext || initAudioContext();
+      if (!ctx) {
+        console.warn('⚠️ AudioContext non disponible');
+        return;
+      }
 
       // Premier bip
-      const osc1 = audioContext.createOscillator();
-      const gain1 = audioContext.createGain();
+      const osc1 = ctx.createOscillator();
+      const gain1 = ctx.createGain();
       osc1.connect(gain1);
-      gain1.connect(audioContext.destination);
+      gain1.connect(ctx.destination);
       osc1.frequency.value = 800;
       osc1.type = 'sine';
-      gain1.gain.setValueAtTime(0.4, audioContext.currentTime);
-      gain1.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.15);
-      osc1.start(audioContext.currentTime);
-      osc1.stop(audioContext.currentTime + 0.15);
+      gain1.gain.setValueAtTime(0.4, ctx.currentTime);
+      gain1.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
+      osc1.start(ctx.currentTime);
+      osc1.stop(ctx.currentTime + 0.15);
 
       // Deuxième bip (plus aigu)
-      const osc2 = audioContext.createOscillator();
-      const gain2 = audioContext.createGain();
+      const osc2 = ctx.createOscillator();
+      const gain2 = ctx.createGain();
       osc2.connect(gain2);
-      gain2.connect(audioContext.destination);
+      gain2.connect(ctx.destination);
       osc2.frequency.value = 1000;
       osc2.type = 'sine';
-      gain2.gain.setValueAtTime(0.4, audioContext.currentTime + 0.2);
-      gain2.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.35);
-      osc2.start(audioContext.currentTime + 0.2);
-      osc2.stop(audioContext.currentTime + 0.35);
+      gain2.gain.setValueAtTime(0.4, ctx.currentTime + 0.2);
+      gain2.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.35);
+      osc2.start(ctx.currentTime + 0.2);
+      osc2.stop(ctx.currentTime + 0.35);
 
       console.log('✅ Son joué avec succès');
     } catch (error) {
       console.error('❌ Erreur lors de la lecture du son:', error);
     }
-  }, [soundEnabled]);
+  }, [soundEnabled, audioContext, initAudioContext]);
 
   // Afficher une notification toast
   const showToast = useCallback((notification: PushNotification) => {
@@ -105,6 +127,12 @@ export function CRMPushNotifications() {
   // Tester le son
   const testSound = () => {
     console.log('🎵 Test du son manuellement...');
+
+    // Initialiser l'AudioContext en premier (interaction utilisateur garantie)
+    if (!audioContext) {
+      initAudioContext();
+    }
+
     playNotificationSound();
 
     // Afficher une notification de test aussi
