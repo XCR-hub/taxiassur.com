@@ -194,7 +194,7 @@ export default function DocumentValidationComplete({
           body: {
             to: leadEmail,
             subject: `Document validé - ${DOCUMENT_CATEGORIES.find(c => c.id === doc.document_type)?.label || doc.document_type}`,
-            html: `
+            content: `
               <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
                 <h2 style="color: #16a34a;">✅ Document validé</h2>
                 <p>Bonjour ${leadFirstName || ''},</p>
@@ -269,7 +269,7 @@ export default function DocumentValidationComplete({
           body: {
             to: leadEmail,
             subject: `Document à renouveler - ${DOCUMENT_CATEGORIES.find(c => c.id === doc.document_type)?.label || doc.document_type}`,
-            html: `
+            content: `
               <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
                 <h2 style="color: #dc2626;">⚠️ Document à renouveler</h2>
                 <p>Bonjour ${leadFirstName || ''},</p>

@@ -76,7 +76,7 @@ export const channelEngineService = {
       body: {
         lead_id: message.lead_id,
         subject: message.subject,
-        message: message.body,
+        content: message.body,
         template_id: message.template_id,
         scheduled_for: message.scheduled_for,
         tracking_enabled: message.tracking_enabled !== false

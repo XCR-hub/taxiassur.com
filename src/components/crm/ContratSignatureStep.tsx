@@ -216,7 +216,7 @@ export default function ContratSignatureStep({ leadId, onComplete }: ContratSign
           body: {
             to: leadData.email,
             subject: 'Félicitations ! Votre contrat est prêt',
-            html: `
+            content: `
               <p>Bonjour ${leadData.first_name || 'Cher client'},</p>
 
               <p>🎉 <strong>Félicitations !</strong> Votre contrat d'assurance taxi est maintenant finalisé.</p>

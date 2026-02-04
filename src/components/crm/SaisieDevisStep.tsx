@@ -181,8 +181,8 @@ export default function SaisieDevisStep({
         body: {
           to: leadEmail,
           subject: subject,
-          html: html,
-          leadId: leadId
+          content: html,
+          lead_id: leadId
         }
       });
 

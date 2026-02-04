@@ -935,7 +935,7 @@ const CRMInboxMulticanal: React.FC = () => {
         body: {
           to: selectedMessage.from_email,
           subject: `Re: ${selectedMessage.subject}`,
-          html: `<p>${replyContent.replace(/\n/g, '<br>')}</p>
+          content: `<p>${replyContent.replace(/\n/g, '<br>')}</p>
                  <hr>
                  <p><em>Message original :</em></p>
                  <blockquote>${selectedMessage.body_html || selectedMessage.body_text}</blockquote>`,

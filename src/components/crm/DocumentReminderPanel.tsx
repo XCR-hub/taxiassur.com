@@ -139,7 +139,7 @@ export const DocumentReminderPanel: React.FC<DocumentReminderPanelProps> = ({
           body: {
             to: leadEmail,
             subject: `Documents manquants - ${leadName}`,
-            html: message.replace(/\n/g, '<br>')
+            content: message.replace(/\n/g, '<br>')
           }
         });
         if (error || !data?.success) {
