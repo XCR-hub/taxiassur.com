@@ -158,8 +158,14 @@ Deno.serve(async (req: Request) => {
     const lead_id = body.lead_id;
     const attachments: Attachment[] = body.attachments || [];
 
+    console.log('📥 Received request body:', { to_email, subject, has_content: !!content, lead_id, attachments_count: attachments.length });
+
     if (!to_email || !subject || !content) {
-      throw new Error("Champs obligatoires manquants: to/to_email, subject, content/body");
+      const missingFields = [];
+      if (!to_email) missingFields.push('to_email/to');
+      if (!subject) missingFields.push('subject');
+      if (!content) missingFields.push('content/body');
+      throw new Error(`Champs obligatoires manquants: ${missingFields.join(', ')}`);
     }
 
     console.log(`📧 Preparing email to ${to_email} with ${attachments.length} attachments`);
