@@ -131,21 +131,18 @@ export function CRMPushNotifications() {
   };
 
   const getIcon = (eventType: string, priority: string) => {
-    if (priority === 'high' || priority === 'urgent') {
-      return <AlertCircle className="w-5 h-5 text-red-500" />;
-    }
-
+    // Toutes les icônes en blanc pour un design cohérent gris
     switch (eventType) {
       case 'new_lead':
-        return <CheckCircle className="w-5 h-5 text-green-500" />;
+        return <CheckCircle className="w-5 h-5 text-white" />;
       case 'document_uploaded':
-        return <Info className="w-5 h-5 text-blue-500" />;
+        return <Info className="w-5 h-5 text-white" />;
       case 'status_change':
-        return <AlertTriangle className="w-5 h-5 text-amber-500" />;
+        return <AlertTriangle className="w-5 h-5 text-white" />;
       case 'email_received':
-        return <Bell className="w-5 h-5 text-cyan-500" />;
+        return <Bell className="w-5 h-5 text-white" />;
       default:
-        return <Info className="w-5 h-5 text-gray-500" />;
+        return <Info className="w-5 h-5 text-white" />;
     }
   };
 
@@ -163,16 +160,8 @@ export function CRMPushNotifications() {
   };
 
   const getBgColor = (priority: string) => {
-    switch (priority) {
-      case 'urgent':
-        return 'bg-gradient-to-r from-red-500 to-red-600 border-red-700';
-      case 'high':
-        return 'bg-gradient-to-r from-orange-500 to-orange-600 border-orange-700';
-      case 'medium':
-        return 'bg-gradient-to-r from-blue-500 to-blue-600 border-blue-700';
-      default:
-        return 'bg-gradient-to-r from-gray-700 to-gray-800 border-gray-600';
-    }
+    // Toujours gris, quelle que soit la priorité
+    return 'bg-gradient-to-r from-gray-700 to-gray-800 border-gray-600';
   };
 
   if (toasts.length === 0) return null;

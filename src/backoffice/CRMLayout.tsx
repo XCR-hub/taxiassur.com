@@ -28,6 +28,7 @@ import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { AdminSessionKeepAlive } from '@/components/AdminSessionKeepAlive';
 import RealtimeNotifications from '@/components/crm/RealtimeNotifications';
+import { CRMPushNotifications } from '@/components/CRMPushNotifications';
 
 interface CRMStats {
   unread_messages: number;
@@ -279,6 +280,9 @@ const CRMLayout: React.FC = () => {
             <RealtimeNotifications />
           </div>
         </header>
+
+        {/* Notifications push qui glissent de droite à gauche */}
+        <CRMPushNotifications />
 
         {/* Contenu Scrollable - ICI ON AFFICHE LES PAGES ENFANTS */}
         <div className="flex-1 overflow-y-auto">
