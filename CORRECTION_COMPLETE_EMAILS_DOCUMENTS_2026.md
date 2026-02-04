@@ -1,195 +1,163 @@
-# 🔧 Correction Complète du Système d'Emails et Documents
+# Correction complète : Emails et Documents - 2026-02-04
 
-**Date:** 19 janvier 2026  
-**Status:** ✅ Entièrement corrigé et testé
+## DIAGNOSTIC FINAL
 
----
+### Ce qui fonctionne ✅
+1. Trigger `trg_send_lead_email_brevo` actif et fonctionnel
+2. Edge function `send-lead-email-brevo` déployée et active
+3. Emails Brevo ENVOYÉS avec succès (status HTTP 200)
+4. Notifications créées dans `crm_event_notifications`
+5. Upload de documents fonctionne
 
-## 🎯 Problèmes Identifiés
+### Ce qui ne fonctionne PAS ❌
+1. Interactions emails NON enregistrées dans `crm_interactions`
+2. Email_messages NON créés
+3. Prospect ne reçoit PAS l'email de confirmation avec lien espace personnel
 
-L'utilisateur a signalé 3 problèmes majeurs:
+## CAUSE DU PROBLÈME
 
-1. ❌ **Pièces jointes des emails non extraites**
-   - Les pièces jointes reçues par email n'étaient pas uploadées dans le Storage
-   - Elles n'apparaissaient pas dans le CRM
+L'edge function envoie les emails via Brevo MAIS échoue à enregistrer les interactions dans Supabase car :
+- Le `SUPABASE_SERVICE_ROLE_KEY` n'est pas correctement configuré dans les secrets
+- L'edge function continue même si l'insertion échoue
+- Elle retourne "success" même si les données ne sont pas enregistrées
 
-2. ❌ **Emails non liés aux leads**
-   - Certains emails entrants n'étaient pas automatiquement associés aux leads correspondants
+## SOLUTION IMMÉDIATE
 
-3. ❌ **Documents non visibles dans l'espace prospect**
-   - Les documents uploadés n'étaient pas récupérables depuis l'espace prospect
+### Option 1 : Configurer les secrets Supabase (RECOMMANDÉ)
 
----
-
-## ✅ Solutions Implémentées
-
-### 1. Extraction Automatique des Pièces Jointes ✅
-
-**Fichier modifié:** `supabase/functions/sync-ionos-imap-v2/index.ts`
-
-**Amélioration:** Ajout de l'extraction et upload automatique des pièces jointes lors de la synchronisation IMAP.
-
-Les pièces jointes sont maintenant:
-- ✅ Extraites du contenu MIME
-- ✅ Uploadées vers Supabase Storage (`attachments` bucket)
-- ✅ Enregistrées dans `email_attachments` avec métadonnées
-- ✅ Détection automatique du type (RIB, Permis, CNI, Carte grise, etc.)
-- ✅ Score de confiance pour la classification
-
-### 2. Liaison Automatique Emails-Leads ✅
-
-**Status:** Système déjà en place et fonctionnel
-
-Le trigger `trigger_auto_match_email_to_lead_simple` lie automatiquement les emails aux leads par correspondance d'adresse email.
-
-**Vérification effectuée:**
-- 6 emails liés sur 23 emails entrants
-- Les 17 non liés sont normaux (team@taxiassur.com, Pinterest, etc.)
-
-### 3. Affichage des Pièces Jointes dans le CRM ✅
-
-**Fichier modifié:** `src/components/crm/DocumentChecklistPanelV2.tsx`
-
-**Ajouts:**
-
-1. Chargement des pièces jointes depuis `email_attachments`
-2. Nouvelle section "📨 Panier de Documents"
-3. Badge indiquant le nombre de documents non classés
-4. Affichage des suggestions de classification automatique
-5. Boutons Voir/Télécharger pour chaque pièce jointe
-
----
-
-## 📊 Architecture Complète
+1. Allez sur https://supabase.com/dashboard
+2. Sélectionnez votre projet `drohhxrkoequjphvabvq`
+3. **Settings** → **Edge Functions** → **Secrets**
+4. Ajoutez ces 3 secrets :
 
 ```
-IONOS IMAP (team@taxiassur.com)
-         ↓
-sync-ionos-imap-v2 (Cron 15 min)
-  • Parse les emails
-  • Nettoie le contenu MIME
-  • Extrait les pièces jointes
-         ↓
-    ┌────┴────┐
-    ↓         ↓
-email_messages  Storage (attachments)
-    ↓         ↓
-    └────┬────┘
-         ↓
-email_attachments
-  • lead_id (auto-lié)
-  • file_name
-  • download_url
-  • auto_detected_type
-  • classification_status
-         ↓
-CRM - DocumentChecklistPanelV2
-  • Checklist Documents
-  • Panier de Documents (nouveau !)
+BREVO_API_KEY=xkeysib-votre-cle-brevo
+SUPABASE_URL=https://drohhxrkoequjphvabvq.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=votre-service-role-key
 ```
 
----
+Pour obtenir la SERVICE_ROLE_KEY :
+- Dashboard → **Settings** → **API**
+- Section "Project API keys"
+- Copiez la clé "service_role" (commence par `eyJ...`)
 
-## 🚀 Fonctionnalités
+### Option 2 : Modifier l'edge function pour utiliser les clés hardcodées
 
-### Extraction Automatique
-- ✅ Parsing MIME des emails
-- ✅ Upload automatique vers Storage
-- ✅ Détection intelligente du type
-- ✅ Scoring de confiance
+Cette option fonctionne mais est moins sécurisée. À n'utiliser que temporairement.
 
-### Affichage CRM
-- ✅ Section "Panier de Documents"
-- ✅ Badge de compteur
-- ✅ Suggestions de type
-- ✅ Boutons Voir/Télécharger
-- ✅ Prêt pour drag & drop
+## TEST DE VÉRIFICATION
 
----
+Après avoir configuré les secrets, testez :
 
-## 📝 Utilisation
+```sql
+-- Créer un lead de test
+INSERT INTO crm_leads (
+  first_name, last_name, email, phone, city, status, access_token
+) VALUES (
+  'Test', 'Final', 'team@taxiassur.com', 
+  '0612345678', 'Paris', 'NOUVEAU_LEAD', 
+  encode(gen_random_bytes(32), 'hex')
+) RETURNING id;
 
-### Exemple: Email avec Pièces Jointes
-
-Un prospect envoie:
-```
-De: prospect@example.com
-Objet: Mes documents
-Pièces jointes: permis.pdf, rib.pdf
-```
-
-**Résultat automatique:**
-1. Email synchronisé (15 min max)
-2. Pièces jointes extraites et uploadées
-3. Détection: "permis_conduire" et "rib"
-4. Liaison automatique au lead si existant
-
-### Dans le CRM
-
-Le commercial voit:
-```
-📨 Panier de Documents [2 non classés]
-Glissez et classez les documents reçus par email
-
-📄 permis.pdf (245 KB)
-   Suggéré: Permis de conduire
-   [👁️ Voir] [⬇️ Télécharger]
-
-📄 rib.pdf (189 KB)
-   Suggéré: RIB
-   [👁️ Voir] [⬇️ Télécharger]
+-- Après 5 secondes, vérifier les interactions
+SELECT type, subject, to_email 
+FROM crm_interactions 
+WHERE lead_id = 'ID_DU_LEAD_CRÉÉ'
+ORDER BY created_at DESC;
 ```
 
+Vous devriez voir 2 lignes :
+1. Email à team@taxiassur.com (notification équipe)
+2. Email au prospect (confirmation)
+
+## EMAILS ENVOYÉS AUTOMATIQUEMENT
+
+### 1. Email de confirmation au PROSPECT
+**Déclencheur** : Nouveau lead créé
+**Contenu** :
+- Message de bienvenue personnalisé
+- **LIEN VERS ESPACE PERSONNEL** : https://taxiassur.com/espace-prospect/[TOKEN]
+- Liste des 7 documents requis
+- Instructions pour upload
+- Coordonnées de contact
+
+### 2. Email de notification à L'ÉQUIPE
+**Déclencheur** : Nouveau lead créé
+**Destinataire** : team@taxiassur.com
+**Contenu** :
+- Informations complètes du lead
+- Téléphone et email du prospect
+- Ville et statut professionnel
+- **Rappel : Appeler sous 15 minutes**
+- Lien direct CRM : https://taxiassur.com/backoffice/crm-killer/lead/[ID]
+
+### 3. Email de notification d'upload de document
+**Déclencheur** : Document uploadé par le prospect
+**Destinataire** : team@taxiassur.com
+**Contenu** :
+- Nom du prospect
+- Type de document uploadé
+- Lien pour valider le document
+- Progression (X documents sur 7)
+
+## VÉRIFICATION QUE ÇA FONCTIONNE
+
+1. **Créer un lead** depuis le site https://taxiassur.com
+2. **Vérifier inbox** team@taxiassur.com (ou vos spams)
+3. **Vérifier inbox du prospect** (email de test)
+4. **Cliquer sur le lien** dans l'email prospect pour accéder à l'espace
+5. **Uploader un document** depuis l'espace prospect
+6. **Vérifier l'email admin** de notification d'upload
+
+## LOGS ET DÉBOGAGE
+
+### Voir les logs de l'edge function
+Dashboard Supabase → **Logs** → **Edge Functions** → `send-lead-email-brevo`
+
+### Voir les emails envoyés via Brevo
+Dashboard Brevo → **Transactional** → **Logs**
+
+### Voir les appels HTTP de la base
+```sql
+SELECT status_code, error_msg, created 
+FROM net._http_response 
+ORDER BY created DESC 
+LIMIT 10;
+```
+
+### Voir les notifications créées
+```sql
+SELECT 
+  l.first_name || ' ' || l.last_name as lead,
+  n.event_type,
+  n.message,
+  n.created_at
+FROM crm_event_notifications n
+JOIN crm_leads l ON l.id = n.lead_id
+ORDER BY n.created_at DESC
+LIMIT 10;
+```
+
+## PROCHAINES ÉTAPES
+
+Une fois les secrets configurés :
+
+1. ✅ Les emails partiront automatiquement pour chaque nouveau lead
+2. ✅ Le prospect recevra son lien espace personnel
+3. ✅ L'équipe sera notifiée immédiatement
+4. ✅ Les uploads de documents déclencheront des notifications
+5. ✅ Tout sera tracé dans `crm_interactions`
+
+## CONTACT SUPPORT
+
+Si le problème persiste après configuration des secrets :
+1. Vérifiez les logs de l'edge function
+2. Testez manuellement avec curl
+3. Vérifiez le quota Brevo (300 emails/jour gratuit)
+4. Vérifiez que team@taxiassur.com est vérifié dans Brevo
+
 ---
 
-## 🧪 Tests Effectués
-
-| Test | Résultat |
-|------|----------|
-| Nettoyage MIME | ✅ 64 emails nettoyés |
-| Extraction PJ | ✅ Automatique |
-| Liaison emails | ✅ 6/23 liés (normal) |
-| Build | ✅ Succès (1m 2s) |
-
----
-
-## 📋 Fichiers Modifiés
-
-1. `supabase/functions/sync-ionos-imap-v2/index.ts`
-   - Extraction et upload pièces jointes
-   - Intégration email_attachments
-
-2. `supabase/functions/clean-email-content/index.ts` (créé)
-   - Nettoyage batch emails MIME
-
-3. `src/components/crm/DocumentChecklistPanelV2.tsx`
-   - Section "Panier de Documents"
-   - Chargement email_attachments
-
----
-
-## 🎯 Prochaines Étapes (Suggestions)
-
-### 1. Classification par Drag & Drop
-Permettre au commercial de glisser-déposer les pièces jointes vers les emplacements de la checklist.
-
-### 2. Badge de Notification
-Afficher un badge sur l'onglet "Documents & Pièces" avec le nombre de pièces non classées.
-
-### 3. Auto-Classification IA
-Utiliser GPT-4 Vision pour classifier automatiquement les documents.
-
----
-
-## ✅ Résumé
-
-| Problème | Status |
-|----------|--------|
-| Pièces jointes non extraites | ✅ Corrigé |
-| Emails non liés | ✅ Vérifié fonctionnel |
-| Documents non visibles | ✅ Section ajoutée |
-| Contenu MIME brut | ✅ Nettoyé |
-
-**🎉 Système entièrement opérationnel !**
-
-Prochaine synchronisation: dans 15 minutes maximum.
+**Date** : 2026-02-04 14:18
+**Status** : 🔧 Configuration des secrets requise
+**Priorité** : CRITIQUE - Bloque l'envoi des confirmations prospects
