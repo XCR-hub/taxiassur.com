@@ -153,7 +153,7 @@ export default function CollecteDocumentsStep({
       // Utiliser le vrai prénom ou un message plus professionnel
       const firstName = leadFirstName || 'Madame, Monsieur';
 
-      let body = template.body_text
+      let messageContent = template.body_text
         .replace(/\{\{first_name\}\}/g, firstName)
         .replace(/\{\{prospect_space_url\}\}/g, prospectSpaceUrl)
         // Remplacer la liste fixe par la liste dynamique
@@ -168,7 +168,7 @@ export default function CollecteDocumentsStep({
           body: {
             to: leadEmail,
             subject: subject || 'Documents nécessaires - TaxiAssur',
-            content: body.replace(/\n/g, '<br>'),
+            content: messageContent.replace(/\n/g, '<br>'),
             lead_id: leadId
           }
         });
@@ -187,7 +187,7 @@ export default function CollecteDocumentsStep({
             type: 'email',
             channel: 'email',
             subject: subject,
-            body: body,
+            body: messageContent,
             status: 'sent',
             metadata: { template_key: template.template_key }
           });
@@ -197,7 +197,7 @@ export default function CollecteDocumentsStep({
         const { data: smsResult, error } = await supabase.functions.invoke('send-sms', {
           body: {
             to: leadPhone,
-            message: body,
+            message: messageContent,
             leadId: leadId
           }
         });
@@ -214,7 +214,7 @@ export default function CollecteDocumentsStep({
             lead_id: leadId,
             type: 'sms',
             channel: 'sms',
-            body: body,
+            body: messageContent,
             status: 'sent',
             metadata: { template_key: template.template_key }
           });
@@ -224,7 +224,7 @@ export default function CollecteDocumentsStep({
         const { data: waResult, error } = await supabase.functions.invoke('send-whatsapp', {
           body: {
             to: leadPhone,
-            message: body,
+            message: messageContent,
             leadId: leadId
           }
         });
@@ -241,7 +241,7 @@ export default function CollecteDocumentsStep({
             lead_id: leadId,
             type: 'whatsapp',
             channel: 'whatsapp',
-            body: body,
+            body: messageContent,
             status: 'sent',
             metadata: { template_key: template.template_key }
           });
