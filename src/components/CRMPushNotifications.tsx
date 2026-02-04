@@ -29,34 +29,54 @@ export function CRMPushNotifications() {
   // Charger la préférence de son depuis localStorage
   useEffect(() => {
     const soundPref = localStorage.getItem('crm_notification_sound');
-    if (soundPref !== null) {
+    // Si pas de préférence ou si c'était désactivé, on réactive par défaut
+    if (soundPref === null || soundPref === 'false') {
+      setSoundEnabled(true);
+      localStorage.setItem('crm_notification_sound', 'true');
+    } else {
       setSoundEnabled(soundPref === 'true');
     }
   }, []);
 
-  // Jouer un son de notification
+  // Jouer un son de notification (double bip plus audible)
   const playNotificationSound = useCallback(() => {
-    if (!soundEnabled) return;
+    if (!soundEnabled) {
+      console.log('🔇 Son désactivé');
+      return;
+    }
+
+    console.log('🔊 Lecture du son de notification...');
 
     try {
-      // Créer un son simple avec Web Audio API
       const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-      const oscillator = audioContext.createOscillator();
-      const gainNode = audioContext.createGain();
 
-      oscillator.connect(gainNode);
-      gainNode.connect(audioContext.destination);
+      // Premier bip
+      const osc1 = audioContext.createOscillator();
+      const gain1 = audioContext.createGain();
+      osc1.connect(gain1);
+      gain1.connect(audioContext.destination);
+      osc1.frequency.value = 800;
+      osc1.type = 'sine';
+      gain1.gain.setValueAtTime(0.4, audioContext.currentTime);
+      gain1.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.15);
+      osc1.start(audioContext.currentTime);
+      osc1.stop(audioContext.currentTime + 0.15);
 
-      oscillator.frequency.value = 800;
-      oscillator.type = 'sine';
+      // Deuxième bip (plus aigu)
+      const osc2 = audioContext.createOscillator();
+      const gain2 = audioContext.createGain();
+      osc2.connect(gain2);
+      gain2.connect(audioContext.destination);
+      osc2.frequency.value = 1000;
+      osc2.type = 'sine';
+      gain2.gain.setValueAtTime(0.4, audioContext.currentTime + 0.2);
+      gain2.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.35);
+      osc2.start(audioContext.currentTime + 0.2);
+      osc2.stop(audioContext.currentTime + 0.35);
 
-      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
-
-      oscillator.start(audioContext.currentTime);
-      oscillator.stop(audioContext.currentTime + 0.3);
+      console.log('✅ Son joué avec succès');
     } catch (error) {
-      console.error('Error playing notification sound:', error);
+      console.error('❌ Erreur lors de la lecture du son:', error);
     }
   }, [soundEnabled]);
 
@@ -128,6 +148,14 @@ export function CRMPushNotifications() {
     const newValue = !soundEnabled;
     setSoundEnabled(newValue);
     localStorage.setItem('crm_notification_sound', String(newValue));
+
+    // Feedback visuel
+    console.log(newValue ? '🔊 Son activé' : '🔇 Son désactivé');
+
+    // Test de son si on active
+    if (newValue) {
+      setTimeout(() => playNotificationSound(), 100);
+    }
   };
 
   const getIcon = (eventType: string, priority: string) => {
@@ -171,13 +199,19 @@ export function CRMPushNotifications() {
       {/* Bouton toggle son (fixe en haut à droite) */}
       <button
         onClick={toggleSound}
-        className="fixed top-4 right-20 z-[100] p-2 bg-white dark:bg-gray-800 rounded-full shadow-lg hover:shadow-xl transition-all"
-        title={soundEnabled ? 'Désactiver le son' : 'Activer le son'}
+        className={`
+          fixed top-4 right-20 z-[100] p-3 rounded-full shadow-lg hover:shadow-xl transition-all
+          ${soundEnabled
+            ? 'bg-blue-600 hover:bg-blue-700'
+            : 'bg-gray-300 hover:bg-gray-400'
+          }
+        `}
+        title={soundEnabled ? 'Son activé - Cliquer pour désactiver' : 'Son désactivé - Cliquer pour activer'}
       >
         {soundEnabled ? (
-          <Bell className="w-5 h-5 text-blue-600" />
+          <Bell className="w-5 h-5 text-white" />
         ) : (
-          <Bell className="w-5 h-5 text-gray-400" />
+          <Bell className="w-5 h-5 text-gray-600 line-through" />
         )}
       </button>
 
