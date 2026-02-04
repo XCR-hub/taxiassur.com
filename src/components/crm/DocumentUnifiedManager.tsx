@@ -4,6 +4,7 @@ import {
   Eye, Download, RefreshCw, Send, RotateCcw, ExternalLink, GripVertical
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { getDocumentUrl } from '@/lib/document-utils';
 
 interface DocumentStatus {
   status: 'missing' | 'uploaded' | 'validated' | 'rejected';
@@ -78,7 +79,7 @@ export function DocumentUnifiedManager({
     console.log('🔄 DocumentUnifiedManager: loadData called for leadId:', leadId);
     setLoading(true);
     try {
-      const [leadResult, prospectDocsResult, emailAttachmentsResult] = await Promise.all([
+      const [leadResult, prospectDocsResult, crmDocsResult, emailAttachmentsResult] = await Promise.all([
         supabase
           .from('crm_leads')
           .select('document_checklist, documents_complete')
@@ -89,6 +90,11 @@ export function DocumentUnifiedManager({
           .select('*')
           .eq('lead_id', leadId)
           .order('uploaded_at', { ascending: false }),
+        supabase
+          .from('crm_lead_documents')
+          .select('*')
+          .eq('lead_id', leadId)
+          .order('created_at', { ascending: false }),
         supabase
           .from('email_attachments')
           .select('*')
@@ -121,6 +127,25 @@ export function DocumentUnifiedManager({
                 ? supabase.storage.from('email-attachments').getPublicUrl(doc.file_path).data.publicUrl
                 : supabase.storage.from('prospect-documents').getPublicUrl(doc.file_path).data.publicUrl
             ),
+            metadata: doc.metadata
+          });
+        });
+      }
+
+      // Documents classifiés dans crm_lead_documents
+      if (crmDocsResult.data) {
+        crmDocsResult.data.forEach((doc) => {
+          unified.push({
+            id: doc.id,
+            document_type: doc.document_type,
+            file_name: doc.file_name,
+            file_path: doc.file_path,
+            file_size: doc.file_size,
+            uploaded_at: doc.uploaded_at || doc.created_at,
+            status: doc.status,
+            notes: doc.notes,
+            source: 'manual_upload',
+            download_url: getDocumentUrl(doc.file_path, doc.bucket),
             metadata: doc.metadata
           });
         });
