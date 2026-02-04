@@ -117,6 +117,12 @@ export function DocumentValidationWithReasons({
     try {
       const { data: { user } } = await supabase.auth.getUser();
 
+      const doc = documents.find(d => d.id === docId);
+      if (!doc) {
+        alert('Document introuvable');
+        return;
+      }
+
       // Update document status
       await supabase
         .from('prospect_documents')
@@ -141,12 +147,37 @@ export function DocumentValidationWithReasons({
         lead_id: leadId,
         type: 'document',
         subject: 'Document validé',
-        content: `Document validé par le commercial`,
+        content: `Document "${doc.file_name}" validé par le commercial`,
         created_by: user?.id
       });
 
+      // Send email notification to prospect
+      if (leadEmail) {
+        console.log('[VALIDATION] Sending validation email to:', leadEmail);
+
+        const { data: emailResult, error: emailError } = await supabase.functions.invoke('send-document-notification', {
+          body: {
+            lead_id: leadId,
+            document_type: doc.document_type,
+            document_name: doc.file_name,
+            action: 'validated',
+            recipient_email: leadEmail
+          }
+        });
+
+        if (emailError || !emailResult?.success) {
+          console.error('[VALIDATION] Email error:', emailError || emailResult);
+          // Don't block the validation if email fails
+          logger.warn('Email notification failed but document validated:', emailError?.message || emailResult?.error);
+        } else {
+          console.log('[VALIDATION] Email sent successfully:', emailResult);
+        }
+      }
+
       await loadDocuments();
       onValidationComplete?.();
+
+      alert(`Document "${doc.file_name}" validé avec succès !${leadEmail ? '\nEmail de confirmation envoyé au prospect.' : ''}`);
     } catch (err) {
       logger.error('Error validating document:', err);
       alert('Erreur lors de la validation');

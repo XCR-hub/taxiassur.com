@@ -117,9 +117,9 @@ Deno.serve(async (req: Request) => {
 
     // Support both formats: direct payload or nested in "record"
     const notification = payload.record || payload;
-    const notificationType = payload.type || notification.type || 'upload';
+    const notificationType = payload.action || payload.type || notification.type || 'upload';
     const leadId = notification.lead_id || payload.lead_id;
-    const leadEmail = payload.lead_email || notification.lead_email;
+    const leadEmail = payload.lead_email || notification.lead_email || payload.recipient_email;
     const leadName = payload.lead_name || notification.lead_name;
     const accessToken = payload.access_token || notification.access_token;
     const contextData = notification.context_data || {};
@@ -162,7 +162,7 @@ Deno.serve(async (req: Request) => {
     };
 
     const documentType = payload.document_type || contextData.document_type || 'piece_identite';
-    const fileName = contextData.file_name || 'Document.pdf';
+    const fileName = payload.document_name || contextData.file_name || 'Document.pdf';
     const documentTypeName = documentTypes[documentType] || documentType;
 
     const rejectionReason = payload.rejection_reason || notification.rejection_reason;
@@ -173,8 +173,94 @@ Deno.serve(async (req: Request) => {
     let recipientEmail = '';
     let recipientName = '';
 
+    // Email de validation envoyé au prospect après validation par commercial
+    if (notificationType === 'validated' && prospectEmail) {
+      recipientEmail = prospectEmail;
+      recipientName = prospectName;
+      emailSubject = `✅ Document validé - ${documentTypeName}`;
+
+      const prospectSpaceUrl = `https://taxiassur.com/espace-prospect${accessToken || (lead?.access_token) ? '?token=' + (accessToken || lead?.access_token) : ''}`;
+
+      emailBody = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; background: #f3f4f6; padding: 20px; }
+          .container { max-width: 650px; margin: 0 auto; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+          .header { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 30px; text-align: center; }
+          .content { padding: 30px; }
+          .success-box { background: #d1fae5; border-left: 4px solid #10b981; padding: 20px; margin: 20px 0; border-radius: 8px; }
+          .document-badge { background: #10b981; color: white; padding: 12px 24px; border-radius: 25px; display: inline-block; margin: 15px 0; font-size: 16px; font-weight: bold; }
+          .info-box { background: #f0fdf4; padding: 20px; border-radius: 8px; margin: 20px 0; border: 2px solid #86efac; }
+          .cta-button { background: #3b82f6; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; display: inline-block; font-weight: bold; margin-top: 20px; }
+          .footer { background: #1f2937; color: white; padding: 20px; text-align: center; font-size: 12px; }
+          .checkmark { font-size: 48px; color: #10b981; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <div class="checkmark">✅</div>
+            <h1 style="margin: 10px 0 0 0; font-size: 28px;">DOCUMENT VALIDÉ</h1>
+            <p style="margin: 10px 0 0 0; opacity: 0.9;">TaxiAssur - Confirmation de validation</p>
+          </div>
+
+          <div class="content">
+            <p style="font-size: 16px; color: #1f2937;">Bonjour ${prospectName},</p>
+
+            <div class="success-box">
+              <p style="margin: 0; color: #065f46; font-size: 16px;">
+                <strong>🎉 Excellente nouvelle !</strong><br>
+                Votre document a été vérifié et validé par notre équipe.
+              </p>
+            </div>
+
+            <h2 style="color: #1f2937; margin-top: 25px;">Document validé</h2>
+
+            <div class="document-badge">
+              ✓ ${documentTypeName}
+            </div>
+
+            <div class="info-box">
+              <h3 style="color: #059669; margin-top: 0;">📋 Prochaines étapes :</h3>
+              <ol style="color: #4b5563; line-height: 1.8; margin: 10px 0;">
+                <li>✅ Ce document est maintenant validé dans votre dossier</li>
+                <li>📄 Vérifiez les autres documents éventuellement requis</li>
+                <li>🎯 Une fois tous les documents validés, nous pourrons finaliser votre contrat</li>
+                <li>📧 Vous serez informé par email de chaque avancement</li>
+              </ol>
+            </div>
+
+            <h3 style="color: #1f2937;">💡 Suivez votre dossier</h3>
+            <p style="color: #4b5563;">
+              Consultez l'état de votre dossier en temps réel et voyez quels documents restent à fournir.
+            </p>
+
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${prospectSpaceUrl}" class="cta-button">
+                📊 VOIR MON DOSSIER
+              </a>
+            </div>
+
+            <p style="color: #6b7280; font-size: 14px; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+              💬 <strong>Une question ?</strong> Répondez simplement à cet email ou appelez-nous au <strong>01 80 85 57 86</strong>
+            </p>
+          </div>
+
+          <div class="footer">
+            <strong>TaxiAssur</strong><br>
+            L'assurance taxi en toute simplicité<br>
+            <a href="https://taxiassur.com" style="color: #10b981; text-decoration: none;">taxiassur.com</a>
+          </div>
+        </div>
+      </body>
+      </html>
+      `;
+    }
     // Email de confirmation envoyé au prospect après upload
-    if (notificationType === 'confirmation' && prospectEmail) {
+    else if (notificationType === 'confirmation' && prospectEmail) {
       recipientEmail = prospectEmail;
       recipientName = prospectName;
       emailSubject = `✅ Document bien reçu - ${documentTypeName}`;
