@@ -82,6 +82,8 @@ export function CRMPushNotifications() {
 
   // Afficher une notification toast
   const showToast = useCallback((notification: PushNotification) => {
+    console.log('📢 showToast called with:', notification.title);
+
     const toastNotif: ToastNotification = {
       ...notification,
       showTime: Date.now()
@@ -90,13 +92,31 @@ export function CRMPushNotifications() {
     setToasts(prev => [toastNotif, ...prev].slice(0, 5)); // Max 5 toasts
 
     // Jouer le son
+    console.log('🔊 Calling playNotificationSound...');
+    console.log('🔊 soundEnabled:', soundEnabled);
     playNotificationSound();
 
     // Auto-dismiss après 8 secondes
     setTimeout(() => {
       setToasts(prev => prev.filter(t => t.id !== notification.id));
     }, 8000);
-  }, [playNotificationSound]);
+  }, [playNotificationSound, soundEnabled]);
+
+  // Tester le son
+  const testSound = () => {
+    console.log('🎵 Test du son manuellement...');
+    playNotificationSound();
+
+    // Afficher une notification de test aussi
+    const testNotif: PushNotification = {
+      id: 'test-' + Date.now(),
+      title: 'Test de notification',
+      message: 'Si vous voyez ceci et entendez un son, tout fonctionne !',
+      type: 'info',
+      created_at: new Date().toISOString()
+    };
+    showToast(testNotif);
+  };
 
   // Écouter les nouvelles notifications en temps réel
   useEffect(() => {
@@ -113,6 +133,7 @@ export function CRMPushNotifications() {
         },
         (payload) => {
           console.log('🆕 [CRMPushNotifications] New notification received:', payload.new);
+          console.log('🔊 About to play sound for notification...');
           showToast(payload.new as PushNotification);
         }
       )
@@ -192,31 +213,42 @@ export function CRMPushNotifications() {
     return 'bg-gradient-to-r from-gray-700 to-gray-800 border-gray-600';
   };
 
-  if (toasts.length === 0) return null;
-
   return (
     <>
-      {/* Bouton toggle son (fixe en haut à droite) */}
-      <button
-        onClick={toggleSound}
-        className={`
-          fixed top-4 right-20 z-[100] p-3 rounded-full shadow-lg hover:shadow-xl transition-all
-          ${soundEnabled
-            ? 'bg-blue-600 hover:bg-blue-700'
-            : 'bg-gray-300 hover:bg-gray-400'
-          }
-        `}
-        title={soundEnabled ? 'Son activé - Cliquer pour désactiver' : 'Son désactivé - Cliquer pour activer'}
-      >
-        {soundEnabled ? (
-          <Bell className="w-5 h-5 text-white" />
-        ) : (
-          <Bell className="w-5 h-5 text-gray-600 line-through" />
-        )}
-      </button>
+      {/* Boutons de contrôle (toujours visibles) */}
+      <div className="fixed top-4 right-4 z-[100] flex gap-2">
+        {/* Bouton test du son */}
+        <button
+          onClick={testSound}
+          className="p-3 bg-green-600 hover:bg-green-700 rounded-full shadow-lg hover:shadow-xl transition-all"
+          title="Tester le son et la notification"
+        >
+          <Bell className="w-5 h-5 text-white animate-pulse" />
+        </button>
+
+        {/* Bouton toggle son */}
+        <button
+          onClick={toggleSound}
+          className={`
+            p-3 rounded-full shadow-lg hover:shadow-xl transition-all
+            ${soundEnabled
+              ? 'bg-blue-600 hover:bg-blue-700'
+              : 'bg-gray-300 hover:bg-gray-400'
+            }
+          `}
+          title={soundEnabled ? 'Son activé - Cliquer pour désactiver' : 'Son désactivé - Cliquer pour activer'}
+        >
+          {soundEnabled ? (
+            <Bell className="w-5 h-5 text-white" />
+          ) : (
+            <Bell className="w-5 h-5 text-gray-600 line-through" />
+          )}
+        </button>
+      </div>
 
       {/* Container des toasts */}
-      <div className="fixed top-20 right-4 z-[999] space-y-3 pointer-events-none">
+      {toasts.length > 0 && (
+        <div className="fixed top-20 right-4 z-[999] space-y-3 pointer-events-none">
         {toasts.map((toast, index) => (
           <div
             key={toast.id}
@@ -292,7 +324,8 @@ export function CRMPushNotifications() {
             </div>
           </div>
         ))}
-      </div>
+        </div>
+      )}
 
       {/* Animations CSS */}
       <style>{`
