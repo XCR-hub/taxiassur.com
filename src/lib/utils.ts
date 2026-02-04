@@ -123,23 +123,34 @@ export function getDocumentPublicUrl(
   source: 'prospect_documents' | 'email_attachments' | 'crm_lead_documents' | string,
   supabase: any
 ): string {
-  // Nettoyer le path (enlever les préfixes de bucket s'ils existent)
-  let cleanPath = filePath;
-  cleanPath = cleanPath.replace(/^\/?(email-attachments|prospect-documents|crm-documents)\//, '');
+  // Nettoyer le path initial (enlever les slashes au début)
+  let normalizedPath = filePath.replace(/^\/+/, '');
 
-  // Ordre de priorité pour chercher le fichier selon la source
-  // IMPORTANT: Les documents ne sont PAS physiquement déplacés entre buckets
-  // Même si la source est 'crm_lead_documents', le fichier peut être dans prospect-documents
-  let bucket = 'prospect-documents'; // défaut
+  // Détecter le bucket depuis le path ou depuis la source
+  let bucket = 'prospect-documents';
+  let cleanPath = normalizedPath;
 
-  if (source === 'email_attachments') {
+  // D'abord, vérifier si le path contient déjà le préfixe du bucket
+  if (normalizedPath.startsWith('email-attachments/')) {
     bucket = 'email-attachments';
-  } else if (source === 'prospect_documents') {
+    cleanPath = normalizedPath.replace(/^email-attachments\//, '');
+  } else if (normalizedPath.startsWith('prospect-documents/')) {
     bucket = 'prospect-documents';
-  } else if (source === 'crm_lead_documents') {
-    // Pour crm_lead_documents, essayer prospect-documents en premier
-    // car les fichiers sont souvent là même après classification
-    bucket = 'prospect-documents';
+    cleanPath = normalizedPath.replace(/^prospect-documents\//, '');
+  } else if (normalizedPath.startsWith('crm-documents/')) {
+    bucket = 'crm-documents';
+    cleanPath = normalizedPath.replace(/^crm-documents\//, '');
+  } else {
+    // Pas de préfixe de bucket dans le path, déduire depuis la source
+    if (source === 'email_attachments') {
+      bucket = 'email-attachments';
+    } else if (source === 'prospect_documents') {
+      bucket = 'prospect-documents';
+    } else if (source === 'crm_lead_documents') {
+      // Pour crm_lead_documents, utiliser crm-documents
+      bucket = 'crm-documents';
+    }
+    cleanPath = normalizedPath;
   }
 
   // Générer l'URL publique

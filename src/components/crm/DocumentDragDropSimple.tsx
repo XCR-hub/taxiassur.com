@@ -11,6 +11,7 @@ interface Document {
   file_path: string;
   document_type: string | null;
   source: 'prospect_documents' | 'email_attachments' | 'crm_lead_documents';
+  bucket?: string;
   uploaded_at: string;
   validated: boolean;
 }
@@ -145,6 +146,7 @@ const DocumentDragDropSimple: React.FC<DocumentDragDropSimpleProps> = ({ leadId,
           file_path: d.file_path,
           document_type: d.document_type,
           source: 'crm_lead_documents' as const,
+          bucket: d.bucket || 'crm-documents',
           uploaded_at: d.uploaded_at,
           validated: d.status === 'validated'
         }))
@@ -463,35 +465,45 @@ const DocumentDragDropSimple: React.FC<DocumentDragDropSimpleProps> = ({ leadId,
     }
   };
 
-  const getDocumentUrl = (filePath: string, source: string) => {
+  const getDocumentUrl = (filePath: string, source: string, explicitBucket?: string) => {
     if (!filePath) {
       logger.error('getDocumentUrl: filePath is empty');
       return '';
     }
 
-    // Nettoyer le path : enlever TOUS les préfixes de bucket (au cas où il y en aurait plusieurs)
-    let cleanPath = filePath
-      .replace(/^\/+/, '') // Enlever les slashes au début
-      .replace(/^(email-attachments|prospect-documents|crm-documents)\//, ''); // Enlever le préfixe de bucket
+    // Normaliser le path (enlever les slashes au début)
+    let normalizedPath = filePath.replace(/^\/+/, '');
 
-    // Détecter le bucket depuis le file_path original ou depuis la source
-    let bucket = 'prospect-documents'; // Par défaut
+    // Si un bucket explicite est fourni, l'utiliser en priorité
+    let bucket = explicitBucket || 'prospect-documents';
+    let cleanPath = normalizedPath;
 
-    if (filePath.includes('email-attachments/')) {
-      bucket = 'email-attachments';
-    } else if (filePath.includes('prospect-documents/')) {
-      bucket = 'prospect-documents';
-    } else if (filePath.includes('crm-documents/')) {
-      bucket = 'crm-documents';
-    } else {
-      // Si pas de bucket détecté dans le path, déduire depuis la source
-      if (source === 'email_attachments') {
+    if (!explicitBucket) {
+      // Détecter le bucket depuis le path ou depuis la source
+      // D'abord, vérifier si le path contient déjà le préfixe du bucket
+      if (normalizedPath.startsWith('email-attachments/')) {
         bucket = 'email-attachments';
-      } else if (source === 'prospect_documents') {
+        cleanPath = normalizedPath.replace(/^email-attachments\//, '');
+      } else if (normalizedPath.startsWith('prospect-documents/')) {
         bucket = 'prospect-documents';
-      } else if (source === 'crm_lead_documents') {
+        cleanPath = normalizedPath.replace(/^prospect-documents\//, '');
+      } else if (normalizedPath.startsWith('crm-documents/')) {
         bucket = 'crm-documents';
+        cleanPath = normalizedPath.replace(/^crm-documents\//, '');
+      } else {
+        // Pas de préfixe de bucket dans le path, déduire depuis la source
+        if (source === 'email_attachments') {
+          bucket = 'email-attachments';
+        } else if (source === 'prospect_documents') {
+          bucket = 'prospect-documents';
+        } else if (source === 'crm_lead_documents') {
+          bucket = 'crm-documents';
+        }
+        cleanPath = normalizedPath;
       }
+    } else {
+      // Bucket explicite: enlever les préfixes éventuels
+      cleanPath = normalizedPath.replace(/^(email-attachments|prospect-documents|crm-documents)\//, '');
     }
 
     const { data } = supabase.storage.from(bucket).getPublicUrl(cleanPath);

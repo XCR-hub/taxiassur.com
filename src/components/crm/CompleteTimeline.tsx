@@ -30,6 +30,7 @@ import {
   Zap
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { getDocumentPublicUrl } from '@/lib/utils';
 import { DocumentViewer } from './index';
 
 interface Attachment {
@@ -196,7 +197,7 @@ export const CompleteTimeline: React.FC<CompleteTimelineProps> = ({
               file_name: doc.file_name,
               file_type: doc.mime_type || 'application/octet-stream',
               file_size: doc.file_size || 0,
-              download_url: supabase.storage.from('crm-documents').getPublicUrl(doc.file_path).data.publicUrl,
+              download_url: getDocumentPublicUrl(doc.file_path, 'crm_lead_documents', supabase),
               storage_path: doc.file_path
             }],
             metadata: {
@@ -651,7 +652,7 @@ export const CompleteTimeline: React.FC<CompleteTimelineProps> = ({
                                               e.stopPropagation();
                                               let url = attachment.download_url;
                                               if (attachment.storage_path && !url) {
-                                                url = supabase.storage.from('crm-documents').getPublicUrl(attachment.storage_path).data.publicUrl;
+                                                url = getDocumentPublicUrl(attachment.storage_path, 'crm_lead_documents', supabase);
                                               }
                                               setViewingDoc({
                                                 url,

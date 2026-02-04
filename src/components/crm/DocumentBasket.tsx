@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
+import { getDocumentPublicUrl } from '../../lib/utils';
 import { FileText, Download, X, CheckCircle2, AlertCircle, Loader2, Eye } from 'lucide-react';
 import DocumentViewer from './DocumentViewer';
 
@@ -230,9 +231,7 @@ export default function DocumentBasket({ caseId, onDocumentClassified }: Documen
                     <div className="flex items-center gap-2 mt-3">
                       <button
                         onClick={() => {
-                          const isProspectDoc = attachment.storage_path.includes('/') && !attachment.storage_path.startsWith('attachments/');
-                          const bucket = isProspectDoc ? 'prospect-documents' : 'email-attachments';
-                          const url = supabase.storage.from(bucket).getPublicUrl(attachment.storage_path).data.publicUrl;
+                          const url = getDocumentPublicUrl(attachment.storage_path, 'email_attachments', supabase);
                           setViewingDoc({
                             url,
                             fileName: attachment.filename,

@@ -35,27 +35,31 @@ export const SecureDocumentLink: React.FC<SecureDocumentLinkProps> = ({
     }
 
     try {
-      // Nettoyer le path
-      let cleanPath = filePath
-        .replace(/^\/+/, '')
-        .replace(/^(email-attachments|prospect-documents|crm-documents)\//, '');
+      // Nettoyer le path initial (enlever les slashes au début)
+      let normalizedPath = filePath.replace(/^\/+/, '');
 
-      // Détecter le bucket
+      // Détecter le bucket depuis le path ou depuis la source
       let bucket = 'prospect-documents';
+      let cleanPath = normalizedPath;
 
-      if (filePath.includes('email-attachments/')) {
+      if (normalizedPath.startsWith('email-attachments/')) {
         bucket = 'email-attachments';
-      } else if (filePath.includes('prospect-documents/')) {
+        cleanPath = normalizedPath.replace(/^email-attachments\//, '');
+      } else if (normalizedPath.startsWith('prospect-documents/')) {
         bucket = 'prospect-documents';
-      } else if (filePath.includes('crm-documents/')) {
+        cleanPath = normalizedPath.replace(/^prospect-documents\//, '');
+      } else if (normalizedPath.startsWith('crm-documents/')) {
         bucket = 'crm-documents';
+        cleanPath = normalizedPath.replace(/^crm-documents\//, '');
       } else {
+        // Pas de préfixe de bucket dans le path, utiliser la source
         if (source === 'email_attachments') bucket = 'email-attachments';
         else if (source === 'prospect_documents') bucket = 'prospect-documents';
         else if (source === 'crm_lead_documents') bucket = 'crm-documents';
+        cleanPath = normalizedPath;
       }
 
-      logger.info('Opening document:', { bucket, cleanPath, fileName });
+      logger.info('Opening document:', { originalPath: filePath, bucket, cleanPath, fileName });
 
       // Créer une URL signée pour éviter les problèmes CORS
       const { data, error } = await supabase.storage
