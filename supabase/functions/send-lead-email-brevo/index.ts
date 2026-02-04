@@ -41,11 +41,17 @@ Deno.serve(async (req: Request) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const { data: account } = await supabase
+    const { data: account, error: accountError } = await supabase
       .from('email_accounts')
       .select('id')
       .eq('email', 'team@taxiassur.com')
       .maybeSingle();
+
+    if (accountError) {
+      console.error('❌ Error fetching email account:', accountError);
+    }
+
+    console.log('📧 Email account found:', account ? 'YES' : 'NO', account?.id);
 
     const teamEmailBody = `
       <!DOCTYPE html>
@@ -523,11 +529,14 @@ Deno.serve(async (req: Request) => {
 
     if (!clientResponse.ok) {
       const error = await clientResponse.text();
-      console.error("Brevo client email error:", error);
+      console.error("❌ BREVO CLIENT EMAIL ERROR:", error);
+      console.error("Lead email:", lead.email);
+      console.error("Lead name:", lead.name);
       throw new Error(`Failed to send client email: ${error}`);
     }
 
-    console.log(`Emails sent successfully for lead ${lead.id}`);
+    const clientResult = await clientResponse.json();
+    console.log(`✅ CLIENT EMAIL SENT - Lead: ${lead.id}, Email: ${lead.email}, MessageId: ${clientResult.messageId}`);
 
     await supabase.from('crm_interactions').insert([
       {
@@ -551,7 +560,7 @@ Deno.serve(async (req: Request) => {
     ]);
 
     if (account) {
-      await supabase.from('email_messages').insert([
+      const { error: emailLogError } = await supabase.from('email_messages').insert([
         {
           account_id: account.id,
           lead_id: lead.id,
@@ -564,13 +573,14 @@ Deno.serve(async (req: Request) => {
           body_html: teamEmailBody,
           direction: 'outbound',
           status: 'sent',
+          email_status: 'sent',
           provider: 'brevo',
-          sent_at: new Date().toISOString()
+          received_at: new Date().toISOString()
         },
         {
           account_id: account.id,
           lead_id: lead.id,
-          message_id: `lead-client-${lead.id}-${Date.now()}`,
+          message_id: `lead-client-${lead.id}-${Date.now() + 1}`,
           from_email: 'team@taxiassur.com',
           from_name: 'TaxiAssur',
           to_emails: [lead.email],
@@ -579,10 +589,15 @@ Deno.serve(async (req: Request) => {
           body_html: clientEmailBody,
           direction: 'outbound',
           status: 'sent',
+          email_status: 'sent',
           provider: 'brevo',
-          sent_at: new Date().toISOString()
+          received_at: new Date().toISOString()
         }
       ]);
+
+      if (emailLogError) {
+        console.error('Failed to log emails in database:', emailLogError);
+      }
     }
 
     return new Response(
