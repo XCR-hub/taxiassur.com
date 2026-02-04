@@ -220,12 +220,19 @@ export function StepByStepWorkflow({ leadId, leadEmail, leadPhone, onStepComplet
       });
 
       // Send document request email
-      await supabase.functions.invoke('send-intelligent-document-request', {
+      const { data: emailResult, error: emailError } = await supabase.functions.invoke('send-intelligent-document-request', {
         body: {
-          leadId: leadId,
-          recipientEmail: leadEmail
+          lead_id: leadId
         }
       });
+
+      if (emailError) {
+        throw new Error(`Email error: ${emailError.message}`);
+      }
+
+      if (!emailResult?.success) {
+        throw new Error(emailResult?.error || 'Email non envoyé');
+      }
 
       // Add to timeline
       await supabase.from('crm_interactions').insert({
@@ -242,7 +249,8 @@ export function StepByStepWorkflow({ leadId, leadEmail, leadPhone, onStepComplet
       onStepCompleted?.();
     } catch (err) {
       logger.error('Error sending document request:', err);
-      alert('Erreur lors de l\'envoi de la demande de documents');
+      const errorMessage = err instanceof Error ? err.message : 'Erreur inconnue';
+      alert(`Erreur lors de l'envoi de la demande de documents: ${errorMessage}`);
     }
   };
 

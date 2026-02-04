@@ -30,11 +30,15 @@ async function sendEmailSMTP(
   fromName: string = "TaxiAssur"
 ): Promise<void> {
   const SMTP_HOST = "smtp.ionos.fr";
-  const SMTP_PORT = parseInt(Deno.env.get("IONOS_SMTP_PORT") || "465");
+  const SMTP_PORT = parseInt(Deno.env.get("IONOS_SMTP_PORT") || "587"); // Port 587 pour STARTTLS
   const SMTP_USER = Deno.env.get("IONOS_EMAIL_USER") || "team@taxiassur.com";
   const SMTP_PASS = Deno.env.get("IONOS_EMAIL_PASSWORD");
 
-  if (!SMTP_PASS) throw new Error("IONOS_EMAIL_PASSWORD not configured");
+  if (!SMTP_PASS) {
+    throw new Error("IONOS_EMAIL_PASSWORD not configured");
+  }
+
+  console.log(`Connecting to ${SMTP_HOST}:${SMTP_PORT} as ${SMTP_USER}`);
 
   const conn = await Deno.connect({ hostname: SMTP_HOST, port: SMTP_PORT });
   const encoder = new TextEncoder();
@@ -52,9 +56,15 @@ async function sendEmailSMTP(
   }
 
   try {
-    await readResponse();
-    await sendCommand(`EHLO taxiassur.com`);
-    await sendCommand("STARTTLS");
+    const greeting = await readResponse();
+    console.log('SMTP Greeting:', greeting);
+
+    const ehloResp = await sendCommand(`EHLO taxiassur.com`);
+    console.log('EHLO Response:', ehloResp);
+
+    const tlsResp = await sendCommand("STARTTLS");
+    console.log('STARTTLS Response:', tlsResp);
+
     const tlsConn = await Deno.startTls(conn, { hostname: SMTP_HOST });
 
     async function readResponseTLS(): Promise<string> {
