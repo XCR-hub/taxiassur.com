@@ -25,10 +25,9 @@ import {
   Copy
 } from 'lucide-react';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
-import { NotificationCenter } from '@/components/NotificationCenter';
-import { notificationManager } from '@/lib/realtime-notifications';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { AdminSessionKeepAlive } from '@/components/AdminSessionKeepAlive';
+import RealtimeNotifications from '@/components/crm/RealtimeNotifications';
 
 interface CRMStats {
   unread_messages: number;
@@ -285,7 +284,7 @@ const CRMLayout: React.FC = () => {
 
             <ThemeToggle />
 
-            <NotificationCenter />
+            <RealtimeNotifications />
           </div>
         </header>
 

@@ -21,7 +21,6 @@ export default function RealtimeNotifications() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [showPanel, setShowPanel] = useState(false);
-  const [newNotificationAlert, setNewNotificationAlert] = useState(false);
 
   // Charger les notifications initiales
   const loadNotifications = useCallback(async () => {
@@ -55,22 +54,25 @@ export default function RealtimeNotifications() {
           setNotifications(prev => [newNotif, ...prev]);
           setUnreadCount(prev => prev + 1);
 
-          // Afficher l'alerte importante pour les nouveaux leads
-          if (newNotif.event_type === 'new_lead' && newNotif.priority >= 10) {
-            setNewNotificationAlert(true);
+          // Son de notification pour tous les types
+          try {
+            const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
 
-            // Son de notification
-            try {
-              const audio = new Audio('/notification.mp3');
-              audio.play().catch(() => {});
-            } catch (error) {
-              // Ignorer les erreurs de son
-            }
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
 
-            // Auto-fermer après 10 secondes
-            setTimeout(() => {
-              setNewNotificationAlert(false);
-            }, 10000);
+            oscillator.frequency.value = 800;
+            oscillator.type = 'sine';
+
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.3);
+          } catch (error) {
+            console.error('Error playing notification sound:', error);
           }
         }
       )
@@ -124,51 +126,12 @@ export default function RealtimeNotifications() {
 
   const getPriorityColor = (priority: number) => {
     if (priority >= 10) return 'text-red-600 bg-red-50 border-red-200';
-    if (priority >= 5) return 'text-yellow-600 bg-yellow-50 border-yellow-200';
-    return 'text-blue-600 bg-blue-50 border-blue-200';
+    if (priority >= 5) return 'text-gray-700 bg-gray-100 border-gray-200';
+    return 'text-gray-600 bg-gray-50 border-gray-200';
   };
 
   return (
     <>
-      {/* Alerte importante pour nouveaux leads */}
-      {newNotificationAlert && (
-        <div className="fixed top-4 right-4 z-50 animate-bounce">
-          <div className="bg-gradient-to-r from-red-500 to-orange-500 text-white rounded-lg shadow-2xl p-4 max-w-md border-4 border-white">
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex items-start gap-3">
-                <div className="bg-white rounded-full p-2">
-                  <AlertCircle className="w-6 h-6 text-red-500" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-lg">NOUVEAU LEAD!</h3>
-                  <p className="text-sm opacity-90">
-                    {notifications[0]?.message}
-                  </p>
-                  <button
-                    onClick={() => {
-                      setNewNotificationAlert(false);
-                      const actionUrl = notifications[0]?.context_data?.action_url;
-                      if (actionUrl) {
-                        window.location.href = actionUrl;
-                      }
-                    }}
-                    className="mt-2 bg-white text-red-600 px-4 py-1 rounded font-semibold text-sm hover:bg-red-50"
-                  >
-                    Voir maintenant →
-                  </button>
-                </div>
-              </div>
-              <button
-                onClick={() => setNewNotificationAlert(false)}
-                className="text-white hover:bg-white/20 rounded p-1"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Bouton cloche avec badge */}
       <div className="relative">
         <button
@@ -193,7 +156,7 @@ export default function RealtimeNotifications() {
                 {unreadCount > 0 && (
                   <button
                     onClick={markAllAsRead}
-                    className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+                    className="text-xs text-gray-600 hover:text-gray-800 font-medium"
                   >
                     Tout marquer comme lu
                   </button>
@@ -220,7 +183,7 @@ export default function RealtimeNotifications() {
                     key={notification.id}
                     onClick={() => handleNotificationClick(notification)}
                     className={`p-4 border-b border-gray-100 cursor-pointer transition-colors hover:bg-gray-50 ${
-                      !notification.is_read ? 'bg-blue-50/50' : ''
+                      !notification.is_read ? 'bg-gray-100' : ''
                     }`}
                   >
                     <div className="flex items-start gap-3">
@@ -241,7 +204,7 @@ export default function RealtimeNotifications() {
                              notification.event_type === 'document_uploaded' ? 'Document reçu' : 'Notification'}
                           </h4>
                           {!notification.is_read && (
-                            <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 mt-1"></div>
+                            <div className="w-2 h-2 bg-gray-500 rounded-full flex-shrink-0 mt-1"></div>
                           )}
                         </div>
                         <p className="text-sm text-gray-600 mt-1 line-clamp-2">
