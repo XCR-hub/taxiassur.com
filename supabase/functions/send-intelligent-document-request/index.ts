@@ -31,7 +31,15 @@ Deno.serve(async (req: Request) => {
 
     const BREVO_API_KEY = Deno.env.get("BREVO_API_KEY");
     if (!BREVO_API_KEY) {
-      throw new Error("BREVO_API_KEY not configured");
+      console.error('[DOCUMENT REQUEST] ❌ BREVO_API_KEY not found in environment');
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "Configuration manquante: BREVO_API_KEY non configurée dans Supabase",
+          fix: "Allez dans Supabase > Project Settings > Edge Functions > Manage secrets > Ajoutez BREVO_API_KEY"
+        }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
