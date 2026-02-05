@@ -275,6 +275,10 @@ export const router = createBrowserRouter([
     element: <CityPage />,
   },
   {
+    path: '/ville/:slug',
+    element: <CityPage />,
+  },
+  {
     path: '/m/:path',
     element: <MirrorPage />,
   },
