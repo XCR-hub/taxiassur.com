@@ -328,45 +328,78 @@ L'équipe TaxiAssur`;
         </div>
       </div>
 
-      {/* Liste des devis */}
+      {/* Liste des devis groupés par compagnie */}
       <div className="space-y-3">
-        {quotes.map((quote) => (
-          <div
-            key={quote.id}
-            className={`bg-white rounded-lg border p-4 ${
-              quote.status === 'validated' ? 'border-green-500/30 bg-green-50/30' :
-              quote.status === 'refused' ? 'border-red-500/30 bg-red-50/30' :
-              'border-gray-200'
-            }`}
-          >
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex items-start gap-3 flex-1">
-                {quote.company.logo_url ? (
+        {Object.entries(
+          quotes.reduce((acc, quote) => {
+            const companyId = quote.company_id;
+            if (!acc[companyId]) {
+              acc[companyId] = {
+                company: quote.company,
+                quotes: []
+              };
+            }
+            acc[companyId].quotes.push(quote);
+            return acc;
+          }, {} as Record<string, { company: InsuranceCompany, quotes: CompanyQuote[] }>)
+        ).map(([companyId, { company, quotes: companyQuotes }]) => {
+          const hasValidated = companyQuotes.some(q => q.status === 'validated');
+          const hasRefused = companyQuotes.some(q => q.status === 'refused');
+
+          return (
+            <div
+              key={companyId}
+              className={`bg-white rounded-lg border p-4 ${
+                hasValidated ? 'border-green-500/30 bg-green-50/30' :
+                hasRefused ? 'border-red-500/30 bg-red-50/30' :
+                'border-gray-200'
+              }`}
+            >
+              {/* En-tête de la compagnie */}
+              <div className="flex items-start gap-3 mb-3 pb-3 border-b border-gray-200">
+                {company.logo_url ? (
                   <img
-                    src={quote.company.logo_url}
-                    alt={`Logo ${quote.company.name}`}
-                    className="w-10 h-10 object-contain flex-shrink-0 mt-1"
+                    src={company.logo_url}
+                    alt={`Logo ${company.name}`}
+                    className="w-12 h-12 object-contain flex-shrink-0"
                   />
                 ) : (
-                  <Building2 className="w-5 h-5 text-gray-400 mt-1 flex-shrink-0" />
+                  <Building2 className="w-6 h-6 text-gray-400 flex-shrink-0" />
                 )}
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <h4 className="font-semibold text-gray-900 truncate">
-                      {quote.company.name}
-                    </h4>
-                    {getStatusBadge(quote.status)}
-                  </div>
+                  <h4 className="font-bold text-lg text-gray-900">
+                    {company.name}
+                  </h4>
+                  <p className="text-sm text-gray-600">
+                    {companyQuotes.length} devis disponible{companyQuotes.length > 1 ? 's' : ''}
+                  </p>
+                </div>
+              </div>
 
-                  {quote.quote_amount && (
-                    <p className="text-sm text-gray-600">
-                      Montant : <span className="font-semibold text-blue-600">
-                        {quote.quote_amount} € / an
-                      </span>
-                    </p>
-                  )}
+              {/* Liste des devis de cette compagnie */}
+              <div className="space-y-3">
+                {companyQuotes.map((quote, idx) => (
+                  <div key={quote.id} className={`${idx > 0 ? 'pt-3 border-t border-gray-100' : ''}`}>
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex items-start gap-3 flex-1">
+                        <FileText className="w-5 h-5 text-blue-500 mt-1 flex-shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <p className="text-sm font-medium text-gray-700">
+                              Devis #{idx + 1}
+                            </p>
+                            {getStatusBadge(quote.status)}
+                          </div>
 
-                  {quote.status === 'validated' && quote.quote_accepted_at && (
+                          {quote.quote_amount && (
+                            <p className="text-sm text-gray-600">
+                              Montant : <span className="font-semibold text-blue-600">
+                                {quote.quote_amount} € / an
+                              </span>
+                            </p>
+                          )}
+
+                          {quote.status === 'validated' && quote.quote_accepted_at && (
                     <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
                       <CheckCircle className="w-3 h-3" />
                       Validé le {new Date(quote.quote_accepted_at).toLocaleDateString('fr-FR', {
@@ -397,24 +430,28 @@ L'équipe TaxiAssur`;
                         </p>
                       )}
                     </div>
-                  )}
-                </div>
-              </div>
+                          )}
+                        </div>
+                      </div>
 
-              {quote.quote_file_url && (
-                <a
-                  href={quote.quote_file_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1 px-3 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors flex-shrink-0"
-                >
-                  <Eye className="w-4 h-4" />
-                  Voir
-                </a>
-              )}
+                      {quote.quote_file_url && (
+                        <a
+                          href={quote.quote_file_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-1 px-3 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors flex-shrink-0"
+                        >
+                          <Eye className="w-4 h-4" />
+                          Voir
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Lien Espace Prospect */}
