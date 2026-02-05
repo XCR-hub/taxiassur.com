@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Upload, CheckCircle2, X, FileText, Loader2, CreditCard, AlertCircle } from 'lucide-react';
+import { Upload, CheckCircle2, X, FileText, Loader2, CreditCard, AlertCircle, Euro, ExternalLink } from 'lucide-react';
 
 interface PaiementRIBStepProps {
   leadId: string;
@@ -23,6 +23,16 @@ interface RIBUpload {
   uploaded_at: string;
 }
 
+interface DownPayment {
+  id: string;
+  amount: number;
+  status: 'pending' | 'paid' | 'failed' | 'cancelled';
+  payment_url?: string;
+  transaction_id?: string;
+  paid_at?: string;
+  created_at: string;
+}
+
 export default function PaiementRIBStep({
   leadId,
   leadEmail,
@@ -42,8 +52,15 @@ export default function PaiementRIBStep({
   const [accountHolder, setAccountHolder] = useState('');
   const [bankName, setBankName] = useState('');
 
+  // Down payment (comptant) states
+  const [downPayments, setDownPayments] = useState<DownPayment[]>([]);
+  const [downPaymentAmount, setDownPaymentAmount] = useState('');
+  const [creatingPayment, setCreatingPayment] = useState(false);
+  const [showDownPaymentForm, setShowDownPaymentForm] = useState(false);
+
   useEffect(() => {
     loadRibs();
+    loadDownPayments();
   }, [leadId]);
 
   async function loadRibs() {
@@ -67,6 +84,90 @@ export default function PaiementRIBStep({
       console.error('Error loading RIBs:', error);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function loadDownPayments() {
+    try {
+      const { data, error } = await supabase
+        .from('lead_down_payments')
+        .select('*')
+        .eq('lead_id', leadId)
+        .order('created_at', { ascending: false });
+
+      if (error && error.code !== 'PGRST116') throw error;
+
+      setDownPayments(data || []);
+    } catch (error) {
+      console.error('Error loading down payments:', error);
+    }
+  }
+
+  async function createDownPaymentRequest() {
+    const amount = parseFloat(downPaymentAmount);
+
+    if (!amount || amount <= 0) {
+      alert('Veuillez saisir un montant valide');
+      return;
+    }
+
+    if (!leadEmail) {
+      alert('Email du prospect manquant');
+      return;
+    }
+
+    setCreatingPayment(true);
+
+    try {
+      // Créer l'enregistrement du paiement comptant
+      const { data: paymentData, error: paymentError } = await supabase
+        .from('lead_down_payments')
+        .insert({
+          lead_id: leadId,
+          amount: amount,
+          status: 'pending',
+          payment_method: 'monetico'
+        })
+        .select()
+        .single();
+
+      if (paymentError) throw paymentError;
+
+      // TODO: Appeler l'API Monético pour générer le lien de paiement
+      // Pour l'instant, on enregistre juste la demande
+      alert(`Demande de paiement comptant de ${amount}€ créée. L'intégration Monético sera ajoutée prochainement.`);
+
+      setDownPaymentAmount('');
+      setShowDownPaymentForm(false);
+      loadDownPayments();
+
+      // TODO: Envoyer un email au prospect avec le lien de paiement
+      // via l'edge function send-payment-link
+
+    } catch (error) {
+      console.error('Error creating down payment:', error);
+      alert('Erreur lors de la création de la demande de paiement');
+    } finally {
+      setCreatingPayment(false);
+    }
+  }
+
+  async function cancelDownPayment(paymentId: string) {
+    if (!confirm('Voulez-vous annuler cette demande de paiement ?')) return;
+
+    try {
+      const { error } = await supabase
+        .from('lead_down_payments')
+        .update({ status: 'cancelled' })
+        .eq('id', paymentId);
+
+      if (error) throw error;
+
+      alert('Demande de paiement annulée');
+      loadDownPayments();
+    } catch (error) {
+      console.error('Error cancelling payment:', error);
+      alert('Erreur lors de l\'annulation');
     }
   }
 
@@ -205,6 +306,164 @@ export default function PaiementRIBStep({
           {validatedRib && (
             <CheckCircle2 className="h-12 w-12 text-green-600" />
           )}
+        </div>
+      </div>
+
+      {/* Down Payment (Comptant) Section */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <Euro className="h-5 w-5 text-purple-600" />
+            <h3 className="text-lg font-semibold text-gray-900">
+              Paiement Comptant (Optionnel)
+            </h3>
+          </div>
+          {downPayments.find(p => p.status === 'paid') && (
+            <CheckCircle2 className="h-6 w-6 text-green-600" />
+          )}
+        </div>
+
+        {/* Liste des paiements existants */}
+        {downPayments.length > 0 && (
+          <div className="space-y-3 mb-4">
+            {downPayments.map((payment) => (
+              <div
+                key={payment.id}
+                className={`border rounded-lg p-4 ${
+                  payment.status === 'paid'
+                    ? 'border-green-200 bg-green-50'
+                    : payment.status === 'pending'
+                    ? 'border-orange-200 bg-orange-50'
+                    : payment.status === 'failed'
+                    ? 'border-red-200 bg-red-50'
+                    : 'border-gray-200 bg-gray-50'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <CreditCard className={`h-5 w-5 ${
+                      payment.status === 'paid' ? 'text-green-600' :
+                      payment.status === 'pending' ? 'text-orange-600' :
+                      payment.status === 'failed' ? 'text-red-600' :
+                      'text-gray-600'
+                    }`} />
+                    <div>
+                      <p className="font-semibold text-gray-900">
+                        {payment.amount.toFixed(2)} €
+                      </p>
+                      <p className="text-xs text-gray-600">
+                        {payment.status === 'paid' && 'Payé le ' + new Date(payment.paid_at!).toLocaleString('fr-FR')}
+                        {payment.status === 'pending' && 'En attente de paiement'}
+                        {payment.status === 'failed' && 'Paiement échoué'}
+                        {payment.status === 'cancelled' && 'Annulé'}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {payment.status === 'pending' && payment.payment_url && (
+                      <button
+                        onClick={() => window.open(payment.payment_url, '_blank')}
+                        className="flex items-center gap-1 px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
+                      >
+                        <ExternalLink className="h-3 w-3" />
+                        Voir
+                      </button>
+                    )}
+                    {payment.status === 'pending' && (
+                      <button
+                        onClick={() => cancelDownPayment(payment.id)}
+                        className="px-3 py-1 text-sm bg-red-50 text-red-600 rounded hover:bg-red-100"
+                      >
+                        Annuler
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Formulaire de création */}
+        {!showDownPaymentForm && !downPayments.find(p => p.status === 'paid') && (
+          <button
+            onClick={() => setShowDownPaymentForm(true)}
+            className="w-full py-3 border-2 border-dashed border-purple-300 rounded-lg text-purple-600 hover:bg-purple-50 hover:border-purple-400 transition-colors font-medium"
+          >
+            + Demander un paiement comptant
+          </button>
+        )}
+
+        {showDownPaymentForm && (
+          <div className="border-2 border-purple-200 rounded-lg p-4 bg-purple-50/50">
+            <h4 className="font-medium text-gray-900 mb-3">
+              Nouveau paiement comptant
+            </h4>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Montant à payer (en euros)
+                </label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={downPaymentAmount}
+                    onChange={(e) => setDownPaymentAmount(e.target.value)}
+                    placeholder="500.00"
+                    className="w-full px-3 py-2 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                  />
+                  <span className="absolute right-3 top-2 text-gray-500 font-medium">
+                    €
+                  </span>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  Ce montant sera demandé au prospect via Monético pour lancer le contrat
+                </p>
+              </div>
+
+              <div className="flex gap-2">
+                <button
+                  onClick={createDownPaymentRequest}
+                  disabled={creatingPayment || !downPaymentAmount}
+                  className="flex-1 flex items-center justify-center gap-2 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {creatingPayment ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Création...
+                    </>
+                  ) : (
+                    <>
+                      <CreditCard className="h-4 w-4" />
+                      Créer la demande
+                    </>
+                  )}
+                </button>
+                <button
+                  onClick={() => {
+                    setShowDownPaymentForm(false);
+                    setDownPaymentAmount('');
+                  }}
+                  className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                >
+                  Annuler
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Info */}
+        <div className="mt-4 bg-purple-50 border border-purple-200 rounded-lg p-3">
+          <div className="flex items-start gap-2">
+            <AlertCircle className="h-4 w-4 text-purple-600 flex-shrink-0 mt-0.5" />
+            <p className="text-xs text-purple-900">
+              <strong>Option facultative :</strong> Demandez un paiement comptant pour lancer le contrat.
+              Le prospect recevra un email avec un lien de paiement sécurisé Monético.
+            </p>
+          </div>
         </div>
       </div>
 
