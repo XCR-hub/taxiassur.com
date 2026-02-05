@@ -53,11 +53,38 @@ export default function CollecteDocumentsStep({
     required: 6
   });
   const [documents, setDocuments] = useState<DocumentInfo[]>([]);
+  const [actualFirstName, setActualFirstName] = useState<string>(leadFirstName || '');
 
   useEffect(() => {
     loadTemplates();
     loadDocumentStats();
+    if (!leadFirstName) {
+      loadLeadName();
+    }
   }, [leadId]);
+
+  async function loadLeadName() {
+    try {
+      const { data, error } = await supabase
+        .from('crm_leads')
+        .select('first_name, last_name, full_name, email')
+        .eq('id', leadId)
+        .single();
+
+      if (error) throw error;
+
+      // Try multiple sources for the name
+      const firstName = data?.first_name
+        || data?.full_name?.split(' ')[0]
+        || data?.email?.split('@')[0]
+        || 'Madame, Monsieur';
+
+      setActualFirstName(firstName);
+    } catch (error) {
+      console.error('Error loading lead name:', error);
+      setActualFirstName('Madame, Monsieur');
+    }
+  }
 
   useEffect(() => {
     // Check if complete
@@ -150,8 +177,8 @@ export default function CollecteDocumentsStep({
         ? missingDocs.map(d => `- ${d.label}`).join('\n')
         : '- Licence de taxi\n- Permis de conduire\n- Carte grise du véhicule\n- Relevé d\'information\n- RIB\n- Carte professionnelle';
 
-      // Utiliser le vrai prénom ou un message plus professionnel
-      const firstName = leadFirstName || 'Madame, Monsieur';
+      // Utiliser le prénom chargé depuis la base ou fourni en prop
+      const firstName = actualFirstName || 'Madame, Monsieur';
 
       let messageContent = template.body_text
         .replace(/\{\{first_name\}\}/g, firstName)

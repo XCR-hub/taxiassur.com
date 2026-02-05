@@ -70,6 +70,19 @@ export default function PipelineWorkflow7Etapes({ leadId, leadData }: PipelineWo
   const [loading, setLoading] = useState(false);
   const [showCallDialog, setShowCallDialog] = useState(false);
 
+  // Extract first name intelligently from various sources
+  const getFirstName = () => {
+    if (leadData.first_name) return leadData.first_name;
+    if (leadData.full_name) return leadData.full_name.split(' ')[0];
+    if (leadData.email) {
+      const username = leadData.email.split('@')[0];
+      return username.charAt(0).toUpperCase() + username.slice(1);
+    }
+    return '';
+  };
+
+  const firstName = getFirstName();
+
   useEffect(() => {
     const channel = supabase
       .channel(`lead-${leadId}`)
@@ -251,7 +264,7 @@ export default function PipelineWorkflow7Etapes({ leadId, leadData }: PipelineWo
               leadId={leadId}
               leadEmail={leadData.email}
               leadPhone={leadData.phone}
-              leadFirstName={leadData.first_name}
+              leadFirstName={firstName}
               leadAccessToken={leadData.access_token}
               onComplete={() => {
                 // Auto-advance handled by trigger
@@ -290,7 +303,7 @@ export default function PipelineWorkflow7Etapes({ leadId, leadData }: PipelineWo
             <SaisieDevisStep
               leadId={leadId}
               leadEmail={leadData.email}
-              leadFirstName={leadData.first_name}
+              leadFirstName={firstName}
               leadAccessToken={leadData.access_token}
               onComplete={() => {
                 // Auto-advance handled by trigger
@@ -427,7 +440,7 @@ export default function PipelineWorkflow7Etapes({ leadId, leadData }: PipelineWo
             <PaiementRIBStep
               leadId={leadId}
               leadEmail={leadData.email}
-              leadFirstName={leadData.first_name}
+              leadFirstName={firstName}
               leadAccessToken={leadData.access_token}
               onComplete={() => {
                 // Auto-advance handled by trigger
