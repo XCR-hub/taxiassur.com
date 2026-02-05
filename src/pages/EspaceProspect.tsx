@@ -577,32 +577,30 @@ const EspaceProspect: React.FC = () => {
 
         {activeTab === 'devis' && (
           <div className="space-y-6">
-            {!leadInfo.documents_complete ? (
-              <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-8 text-center">
-                <FileText className="text-amber-400 mx-auto mb-4" size={48} />
-                <h3 className="text-xl font-bold text-white mb-2">Documents en attente</h3>
-                <p className="text-gray-400 mb-4">
-                  Veuillez d'abord completer tous les documents obligatoires pour recevoir vos devis.
+            {/* Afficher les devis s'ils sont disponibles, même si documents pas complets */}
+            <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-700 rounded-xl p-6">
+              <div className="mb-4">
+                <h3 className="text-2xl font-bold text-white mb-2">Vos devis d'assurance</h3>
+                <p className="text-gray-400">
+                  Comparez les offres des meilleures compagnies et choisissez celle qui vous convient.
                 </p>
-                <button
-                  onClick={() => setActiveTab('documents')}
-                  className="inline-flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-black font-bold py-3 px-6 rounded-xl transition-colors"
-                >
-                  Completer mes documents
-                  <ChevronRight size={18} />
-                </button>
               </div>
-            ) : (
-              <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-700 rounded-xl p-6">
-                <div className="mb-4">
-                  <h3 className="text-2xl font-bold text-white mb-2">Vos devis d'assurance</h3>
-                  <p className="text-gray-400">
-                    Comparez les offres des meilleures compagnies et choisissez celle qui vous convient.
-                  </p>
+
+              {/* Avertissement si documents pas complets */}
+              {!leadInfo.documents_complete && (
+                <div className="mb-4 bg-amber-500/10 border border-amber-500/30 rounded-lg p-4 flex items-start gap-3">
+                  <AlertTriangle className="text-amber-400 flex-shrink-0 mt-0.5" size={20} />
+                  <div className="text-sm">
+                    <p className="text-amber-400 font-semibold mb-1">Documents incomplets</p>
+                    <p className="text-gray-400">
+                      Pensez à completer tous vos documents dans l'onglet "Documents" pour finaliser votre dossier.
+                    </p>
+                  </div>
                 </div>
-                {token && <ClientQuotesViewer token={token} />}
-              </div>
-            )}
+              )}
+
+              {token && <ClientQuotesViewer token={token} />}
+            </div>
           </div>
         )}
 
