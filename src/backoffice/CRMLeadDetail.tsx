@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
 import { LeadWorkflowTabs, WorkflowTab } from '@/components/crm/LeadWorkflowTabs';
 import PipelineWorkflow7Etapes from '@/components/crm/PipelineWorkflow7Etapes';
-import DocumentChecklistPanelV2 from '@/components/crm/DocumentChecklistPanelV2';
+import DocumentValidationComplete from '@/components/crm/DocumentValidationComplete';
 import LeadCompanyQuotes from '@/backoffice/LeadCompanyQuotes';
 import ContractSignatureManager from '@/components/crm/ContractSignatureManager';
 import CompleteTimeline from '@/components/crm/CompleteTimeline';
@@ -256,7 +256,12 @@ const CRMLeadDetail: React.FC = () => {
 
         {activeTab === 'documents' && (
           <div className="space-y-6">
-            <DocumentChecklistPanelV2 leadId={leadId!} />
+            <DocumentValidationComplete
+              caseId={leadId!}
+              leadEmail={lead.email}
+              leadFirstName={lead.first_name}
+              onDocumentClassified={() => loadStats()}
+            />
           </div>
         )}
 
