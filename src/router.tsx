@@ -100,6 +100,7 @@ const CRMCommercial = lazy(() => import('./backoffice/CRMCommercial'));
 const InboxIntelligent = lazy(() => import('./backoffice/InboxIntelligent'));
 const LeadManager = lazy(() => import('./backoffice/LeadManager'));
 const PartnerPortal = lazy(() => import('./backoffice/PartnerPortal'));
+const PartnerAuth = lazy(() => import('./backoffice/PartnerAuth'));
 const SocialMediaManager = lazy(() => import('./backoffice/SocialMediaManager'));
 const AutomationDashboard = lazy(() => import('./backoffice/AutomationDashboard'));
 const AnalyticsDashboard = lazy(() => import('./backoffice/AnalyticsDashboard'));
@@ -231,6 +232,10 @@ export const router = createBrowserRouter([
   },
   {
     path: '/partnership',
+    element: <PartnershipPage />,
+  },
+  {
+    path: '/programme-partenaires',
     element: <PartnershipPage />,
   },
   {
@@ -512,6 +517,10 @@ export const router = createBrowserRouter([
   {
     path: '/backoffice/partner-portal',
     element: <PartnerPortal />,
+  },
+  {
+    path: '/backoffice/partner-auth',
+    element: <PartnerAuth />,
   },
   {
     path: '/backoffice/social-media',

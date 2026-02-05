@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, Euro, TrendingUp, Download, Calendar, Eye, CheckCircle, Clock, Home } from 'lucide-react';
+import { Users, Euro, TrendingUp, Download, Calendar, Eye, CheckCircle, Clock, Home, LogOut } from 'lucide-react';
 import Card from '../components/Card';
+import { supabase } from '../lib/supabase';
 import { logger } from '@/lib/logger';
 
 interface PartnerStats {
@@ -31,6 +32,9 @@ interface PurchasedLead {
 }
 
 const PartnerPortal: React.FC = () => {
+  const navigate = useNavigate();
+  const [authenticated, setAuthenticated] = useState(false);
+  const [checkingAuth, setCheckingAuth] = useState(true);
   const [stats, setStats] = useState<PartnerStats>({
     totalLeadsBought: 0,
     monthlySpent: 0,
@@ -45,13 +49,57 @@ const PartnerPortal: React.FC = () => {
   const [selectedPeriod, setSelectedPeriod] = useState('30d');
 
   useEffect(() => {
-    loadPartnerData();
-  }, [selectedPeriod]);
+    checkAuthentication();
+  }, []);
+
+  useEffect(() => {
+    if (authenticated) {
+      loadPartnerData();
+    }
+  }, [selectedPeriod, authenticated]);
+
+  const checkAuthentication = async () => {
+    try {
+      if (!supabase) {
+        navigate('/backoffice/partner-auth');
+        return;
+      }
+
+      const { data: { session } } = await supabase.auth.getSession();
+
+      if (!session) {
+        navigate('/backoffice/partner-auth');
+        return;
+      }
+
+      const { data: partnerData, error } = await supabase
+        .from('partners')
+        .select('id, status')
+        .eq('user_id', session.user.id)
+        .maybeSingle();
+
+      if (error || !partnerData) {
+        navigate('/backoffice/partner-auth');
+        return;
+      }
+
+      if (partnerData.status !== 'active') {
+        navigate('/backoffice/partner-auth');
+        return;
+      }
+
+      setAuthenticated(true);
+    } catch (err) {
+      logger.error('Auth check failed:', err);
+      navigate('/backoffice/partner-auth');
+    } finally {
+      setCheckingAuth(false);
+    }
+  };
 
   const loadPartnerData = async () => {
     setLoading(true);
     try {
-      // Simulate partner data
       const mockStats: PartnerStats = {
         totalLeadsBought: 45,
         monthlySpent: 2100,
@@ -105,12 +153,12 @@ const PartnerPortal: React.FC = () => {
 
   const markAsConverted = async (leadId: string, notes: string) => {
     try {
-      setPurchasedLeads(prev => prev.map(lead => 
-        lead.id === leadId 
+      setPurchasedLeads(prev => prev.map(lead =>
+        lead.id === leadId
           ? { ...lead, converted: true, notes }
           : lead
       ));
-      
+
       alert('✅ Lead marqué comme converti');
     } catch (error) {
       alert('❌ Erreur lors de la mise à jour');
@@ -118,8 +166,7 @@ const PartnerPortal: React.FC = () => {
   };
 
   const exportLeads = () => {
-  const navigate = useNavigate();
-const csvContent = [
+    const csvContent = [
       ['Date', 'Nom', 'Email', 'Téléphone', 'Ville', 'Statut', 'Prix', 'Type', 'Converti'].join(','),
       ...purchasedLeads.map(lead => [
         new Date(lead.purchasedAt).toLocaleDateString('fr-FR'),
@@ -143,6 +190,32 @@ const csvContent = [
     URL.revokeObjectURL(url);
   };
 
+  const handleLogout = async () => {
+    try {
+      if (supabase) {
+        await supabase.auth.signOut();
+      }
+      navigate('/backoffice/partner-auth');
+    } catch (err) {
+      logger.error('Logout failed:', err);
+    }
+  };
+
+  if (checkingAuth) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto mb-4"></div>
+          <p className="text-gray-600">Vérification de l'authentification...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!authenticated) {
+    return null;
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 p-8">
@@ -161,185 +234,190 @@ const csvContent = [
   }
 
   return (
-    
-      <div className="min-h-screen bg-gray-50 p-8">
-        {/* Header with Home Button */}
-        <header className="bg-white border-b-2 border-gray-200 shadow-sm mb-8">
-          <div className="max-w-7xl mx-auto px-6 py-4">
-            <div className="flex justify-between items-center">
-              <div className="flex items-center space-x-4">
-                <div className="w-10 h-10 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-xl flex items-center justify-center shadow-lg">
-                  <Users className="text-white" size={20} />
-                </div>
-                <div>
-                  <h1 className="text-2xl font-bold text-gray-900">
-                    Portail Partenaire Courtier
-                  </h1>
-                  <p className="text-sm text-gray-600">
-                    Gestion de vos achats de leads et statistiques
-                  </p>
-                </div>
-              </div>
-              
-              <button onClick={() => navigate("/backoffice/crm-commercial")} className="bg-orange-600 hover:bg-orange-700 text-white font-medium px-4 py-2 rounded-lg transition-colors flex items-center space-x-2">
-                <Home size={16} />
-                <span>Accueil CRM</span>
-              </button>
-            </div>
-          </div>
-        </header>
-
-        <div className="max-w-7xl mx-auto">
-          <div className="flex justify-between items-center mb-8">
-            
+    <div className="min-h-screen bg-gray-50 p-8">
+      <header className="bg-white border-b-2 border-gray-200 shadow-sm mb-8">
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="flex justify-between items-center">
             <div className="flex items-center space-x-4">
-              <select
-                value={selectedPeriod}
-                onChange={(e) => setSelectedPeriod(e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="7d">7 derniers jours</option>
-                <option value="30d">30 derniers jours</option>
-                <option value="90d">90 derniers jours</option>
-              </select>
-              
+              <div className="w-10 h-10 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-xl flex items-center justify-center shadow-lg">
+                <Users className="text-white" size={20} />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">
+                  Portail Partenaire Courtier
+                </h1>
+                <p className="text-sm text-gray-600">
+                  Gestion de vos achats de leads et statistiques
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-3">
               <button
-                onClick={exportLeads}
-                className="flex items-center space-x-2 bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+                onClick={() => navigate('/')}
+                className="bg-gray-600 hover:bg-gray-700 text-white font-medium px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
               >
-                <Download size={16} />
-                <span>Export CSV</span>
+                <Home size={16} />
+                <span>Accueil</span>
+              </button>
+              <button
+                onClick={handleLogout}
+                className="bg-red-600 hover:bg-red-700 text-white font-medium px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
+              >
+                <LogOut size={16} />
+                <span>Déconnexion</span>
               </button>
             </div>
           </div>
+        </div>
+      </header>
 
-          {/* Partner Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <Card className="text-center bg-gradient-to-br from-orange-50 to-yellow-50">
-              <Users className="mx-auto mb-2 text-orange-600" size={24} />
-              <div className="text-2xl font-bold text-gray-900">{stats.totalLeadsBought}</div>
-              <div className="text-sm text-gray-600">Leads achetés</div>
-            </Card>
+      <div className="max-w-7xl mx-auto">
+        <div className="flex justify-between items-center mb-8">
+          <div className="flex items-center space-x-4">
+            <select
+              value={selectedPeriod}
+              onChange={(e) => setSelectedPeriod(e.target.value)}
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500"
+            >
+              <option value="7d">7 derniers jours</option>
+              <option value="30d">30 derniers jours</option>
+              <option value="90d">90 derniers jours</option>
+            </select>
 
-            <Card className="text-center bg-gradient-to-br from-green-50 to-emerald-50">
-              <Euro className="mx-auto mb-2 text-green-600" size={24} />
-              <div className="text-2xl font-bold text-gray-900">{stats.monthlySpent}€</div>
-              <div className="text-sm text-gray-600">Dépenses mensuelles</div>
-            </Card>
-
-            <Card className="text-center bg-gradient-to-br from-orange-50 to-pink-50">
-              <TrendingUp className="mx-auto mb-2 text-orange-600" size={24} />
-              <div className="text-2xl font-bold text-gray-900">{stats.conversionRate}%</div>
-              <div className="text-sm text-gray-600">Taux conversion</div>
-            </Card>
-
-            <Card className="text-center bg-gradient-to-br from-amber-50 to-yellow-50">
-              <Calendar className="mx-auto mb-2 text-amber-600" size={24} />
-              <div className="text-2xl font-bold text-gray-900">{stats.revenue}€</div>
-              <div className="text-sm text-gray-600">CA généré</div>
-            </Card>
+            <button
+              onClick={exportLeads}
+              className="flex items-center space-x-2 bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+            >
+              <Download size={16} />
+              <span>Export CSV</span>
+            </button>
           </div>
+        </div>
 
-          {/* Quick Actions */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <Card className="p-6 text-center">
-              <h3 className="font-bold text-gray-900 mb-4">Acheter des Leads</h3>
-              <a 
-                href="/backoffice/lead-marketplace"
-                className="block w-full bg-orange-600 hover:bg-orange-700 text-white font-medium py-3 px-4 rounded-lg transition-colors"
-              >
-                Accéder au Marketplace
-              </a>
-            </Card>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <Card className="text-center bg-gradient-to-br from-orange-50 to-yellow-50">
+            <Users className="mx-auto mb-2 text-orange-600" size={24} />
+            <div className="text-2xl font-bold text-gray-900">{stats.totalLeadsBought}</div>
+            <div className="text-sm text-gray-600">Leads achetés</div>
+          </Card>
 
-            <Card className="p-6 text-center">
-              <h3 className="font-bold text-gray-900 mb-4">Mes Statistiques</h3>
-              <button className="w-full bg-orange-600 hover:bg-orange-700 text-white font-medium py-3 px-4 rounded-lg transition-colors">
-                Voir Détails
-              </button>
-            </Card>
+          <Card className="text-center bg-gradient-to-br from-green-50 to-emerald-50">
+            <Euro className="mx-auto mb-2 text-green-600" size={24} />
+            <div className="text-2xl font-bold text-gray-900">{stats.monthlySpent}€</div>
+            <div className="text-sm text-gray-600">Dépenses mensuelles</div>
+          </Card>
 
-            <Card className="p-6 text-center">
-              <h3 className="font-bold text-gray-900 mb-4">Support Partenaire</h3>
-              <a 
-                href="mailto:partenaires@taxiassur.com"
-                className="block w-full bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-4 rounded-lg transition-colors"
-              >
-                Contacter Support
-              </a>
-            </Card>
-          </div>
+          <Card className="text-center bg-gradient-to-br from-orange-50 to-pink-50">
+            <TrendingUp className="mx-auto mb-2 text-orange-600" size={24} />
+            <div className="text-2xl font-bold text-gray-900">{stats.conversionRate}%</div>
+            <div className="text-sm text-gray-600">Taux conversion</div>
+          </Card>
 
-          {/* Recent Purchases */}
-          <Card>
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-lg font-semibold text-gray-900">
-                Leads Achetés Récemment
-              </h3>
-              <span className="text-sm text-gray-600">
-                {purchasedLeads.length} leads
-              </span>
-            </div>
-            
-            <div className="space-y-4">
-              {purchasedLeads.map(lead => (
-                <div key={lead.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-3 mb-2">
-                      <h4 className="font-medium text-gray-900">
-                        {lead.leadData.name} - {lead.leadData.city}
-                      </h4>
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        lead.type === 'exclusive' 
-                          ? 'bg-orange-100 text-orange-800' 
-                          : 'bg-orange-100 text-orange-800'
-                      }`}>
-                        {lead.type === 'exclusive' ? 'Exclusif' : 'Partagé'}
-                      </span>
-                      {lead.converted && (
-                        <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">
-                          Converti
-                        </span>
-                      )}
-                    </div>
-                    
-                    <div className="text-sm text-gray-600">
-                      Acheté le {new Date(lead.purchasedAt).toLocaleDateString('fr-FR')} • {lead.price}€
-                    </div>
-                    
-                    {lead.notes && (
-                      <div className="text-sm text-gray-700 mt-2 italic">
-                        {lead.notes}
-                      </div>
-                    )}
-                  </div>
-                  
-                  <div className="flex items-center space-x-2">
-                    {!lead.converted && (
-                      <button
-                        onClick={() => {
-                          const notes = prompt('Notes sur la conversion (optionnel) :');
-                          if (notes !== null) {
-                            markAsConverted(lead.id, notes);
-                          }
-                        }}
-                        className="text-green-600 hover:text-green-800 text-sm"
-                      >
-                        Marquer converti
-                      </button>
-                    )}
-                    
-                    <button className="text-orange-600 hover:text-orange-800">
-                      <Eye size={16} />
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
+          <Card className="text-center bg-gradient-to-br from-amber-50 to-yellow-50">
+            <Calendar className="mx-auto mb-2 text-amber-600" size={24} />
+            <div className="text-2xl font-bold text-gray-900">{stats.revenue}€</div>
+            <div className="text-sm text-gray-600">CA généré</div>
           </Card>
         </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <Card className="p-6 text-center">
+            <h3 className="font-bold text-gray-900 mb-4">Acheter des Leads</h3>
+            <a
+              href="/backoffice/lead-marketplace"
+              className="block w-full bg-orange-600 hover:bg-orange-700 text-white font-medium py-3 px-4 rounded-lg transition-colors"
+            >
+              Accéder au Marketplace
+            </a>
+          </Card>
+
+          <Card className="p-6 text-center">
+            <h3 className="font-bold text-gray-900 mb-4">Mes Statistiques</h3>
+            <button className="w-full bg-orange-600 hover:bg-orange-700 text-white font-medium py-3 px-4 rounded-lg transition-colors">
+              Voir Détails
+            </button>
+          </Card>
+
+          <Card className="p-6 text-center">
+            <h3 className="font-bold text-gray-900 mb-4">Support Partenaire</h3>
+            <a
+              href="mailto:partenaires@taxiassur.com"
+              className="block w-full bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-4 rounded-lg transition-colors"
+            >
+              Contacter Support
+            </a>
+          </Card>
+        </div>
+
+        <Card>
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="text-lg font-semibold text-gray-900">
+              Leads Achetés Récemment
+            </h3>
+            <span className="text-sm text-gray-600">
+              {purchasedLeads.length} leads
+            </span>
+          </div>
+
+          <div className="space-y-4">
+            {purchasedLeads.map(lead => (
+              <div key={lead.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                <div className="flex-1">
+                  <div className="flex items-center space-x-3 mb-2">
+                    <h4 className="font-medium text-gray-900">
+                      {lead.leadData.name} - {lead.leadData.city}
+                    </h4>
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      lead.type === 'exclusive'
+                        ? 'bg-orange-100 text-orange-800'
+                        : 'bg-orange-100 text-orange-800'
+                    }`}>
+                      {lead.type === 'exclusive' ? 'Exclusif' : 'Partagé'}
+                    </span>
+                    {lead.converted && (
+                      <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">
+                        Converti
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="text-sm text-gray-600">
+                    Acheté le {new Date(lead.purchasedAt).toLocaleDateString('fr-FR')} • {lead.price}€
+                  </div>
+
+                  {lead.notes && (
+                    <div className="text-sm text-gray-700 mt-2 italic">
+                      {lead.notes}
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  {!lead.converted && (
+                    <button
+                      onClick={() => {
+                        const notes = prompt('Notes sur la conversion (optionnel) :');
+                        if (notes !== null) {
+                          markAsConverted(lead.id, notes);
+                        }
+                      }}
+                      className="text-green-600 hover:text-green-800 text-sm"
+                    >
+                      Marquer converti
+                    </button>
+                  )}
+
+                  <button className="text-orange-600 hover:text-orange-800">
+                    <Eye size={16} />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
       </div>
-    
+    </div>
   );
 };
 
