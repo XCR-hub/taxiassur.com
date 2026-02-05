@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Download, FileText, AlertCircle, CheckCircle2, Printer, Eye, Building2, Check, Loader2 } from 'lucide-react';
+import { Download, FileText, AlertCircle, CheckCircle2, Printer, Eye, Building2, Check, Loader2, X } from 'lucide-react';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 interface InsuranceCompany {
@@ -33,7 +33,10 @@ export default function ClientQuotesViewer({ leadId, token, supabaseClient }: Pr
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [loading, setLoading] = useState(true);
   const [validating, setValidating] = useState<string | null>(null);
+  const [refusing, setRefusing] = useState<string | null>(null);
   const [showConfirmModal, setShowConfirmModal] = useState<string | null>(null);
+  const [showRefuseModal, setShowRefuseModal] = useState<string | null>(null);
+  const [refusalReason, setRefusalReason] = useState('');
 
   useEffect(() => {
     loadData();
@@ -76,6 +79,48 @@ export default function ClientQuotesViewer({ leadId, token, supabaseClient }: Pr
       alert(`❌ Erreur lors de la validation du devis: ${errorMessage}\n\nVeuillez réessayer ou nous contacter.`);
     } finally {
       setValidating(null);
+    }
+  };
+
+  const handleRefuseQuote = async (quoteId: string, companyName: string) => {
+    if (!supabaseClient || !token) {
+      alert('❌ Erreur de configuration. Veuillez recharger la page.');
+      return;
+    }
+
+    setRefusing(quoteId);
+    try {
+      // Utiliser la fonction RPC sécurisée pour refuser le devis
+      const { data, error } = await supabaseClient.rpc('refuse_quote_by_token', {
+        p_quote_id: quoteId,
+        p_token: token,
+        p_reason: refusalReason || null
+      });
+
+      if (error) {
+        console.error('Error calling refuse_quote_by_token:', error);
+        throw error;
+      }
+
+      // Vérifier le résultat de la fonction
+      if (!data?.success) {
+        throw new Error(data?.error || 'Erreur lors du refus');
+      }
+
+      // Recharger les données
+      await loadData();
+
+      alert(`Devis ${data.company_name || companyName} refusé.\n\nVous pouvez toujours consulter les autres devis disponibles.`);
+
+      // Fermer le modal et réinitialiser
+      setShowRefuseModal(null);
+      setRefusalReason('');
+    } catch (error) {
+      console.error('Error refusing quote:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue';
+      alert(`❌ Erreur lors du refus du devis: ${errorMessage}\n\nVeuillez réessayer ou nous contacter.`);
+    } finally {
+      setRefusing(null);
     }
   };
 
@@ -289,22 +334,39 @@ export default function ClientQuotesViewer({ leadId, token, supabaseClient }: Pr
                           Imprimer
                         </button>
 
-                        {/* Bouton Valider */}
-                        {quote.status !== 'validated' && (
-                          <button
-                            onClick={() => setShowConfirmModal(quote.id)}
-                            disabled={validating !== null}
-                            className="flex items-center gap-2 px-5 py-2.5 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed ml-auto"
-                          >
-                            <Check className="w-4 h-4" />
-                            Valider ce devis
-                          </button>
+                        {/* Boutons Valider et Refuser */}
+                        {quote.status !== 'validated' && quote.status !== 'refused' && (
+                          <>
+                            <button
+                              onClick={() => setShowRefuseModal(quote.id)}
+                              disabled={refusing !== null || validating !== null}
+                              className="flex items-center gap-2 px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed ml-auto"
+                            >
+                              <X className="w-4 h-4" />
+                              Refuser
+                            </button>
+                            <button
+                              onClick={() => setShowConfirmModal(quote.id)}
+                              disabled={validating !== null || refusing !== null}
+                              className="flex items-center gap-2 px-5 py-2.5 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              <Check className="w-4 h-4" />
+                              Valider ce devis
+                            </button>
+                          </>
                         )}
 
                         {quote.status === 'validated' && (
                           <div className="flex items-center gap-2 px-5 py-2.5 bg-green-600/20 border border-green-500 text-green-400 font-bold rounded-lg text-sm ml-auto">
                             <CheckCircle2 className="w-4 h-4" />
                             Devis validé
+                          </div>
+                        )}
+
+                        {quote.status === 'refused' && (
+                          <div className="flex items-center gap-2 px-5 py-2.5 bg-red-600/20 border border-red-500 text-red-400 font-semibold rounded-lg text-sm ml-auto">
+                            <X className="w-4 h-4" />
+                            Devis refusé
                           </div>
                         )}
                       </div>
@@ -404,6 +466,70 @@ export default function ClientQuotesViewer({ leadId, token, supabaseClient }: Pr
               <button
                 onClick={() => setShowConfirmModal(null)}
                 disabled={validating !== null}
+                className="w-full px-6 py-4 bg-gray-700 hover:bg-gray-600 text-white font-semibold rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Annuler
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de refus */}
+      {showRefuseModal && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
+          <div className="bg-gray-900 border border-gray-700 rounded-2xl p-8 max-w-md w-full">
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 bg-red-600/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <X className="w-8 h-8 text-red-400" />
+              </div>
+              <h3 className="text-2xl font-bold text-white mb-3">Refuser ce devis ?</h3>
+              <p className="text-gray-300">
+                Vous pouvez indiquer la raison du refus (optionnel) pour nous aider à mieux vous servir.
+              </p>
+            </div>
+
+            <div className="space-y-4 mb-6">
+              <textarea
+                value={refusalReason}
+                onChange={(e) => setRefusalReason(e.target.value)}
+                placeholder="Raison du refus (optionnel)"
+                rows={3}
+                className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:border-blue-500 focus:outline-none resize-none"
+              />
+            </div>
+
+            <div className="space-y-3">
+              <button
+                onClick={() => {
+                  const quote = quotes.find(q => q.id === showRefuseModal);
+                  const company = companies.find(c => c.id === quote?.company_id);
+                  if (quote && company) {
+                    handleRefuseQuote(quote.id, company.name);
+                  }
+                }}
+                disabled={refusing !== null}
+                className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {refusing ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    Refus en cours...
+                  </>
+                ) : (
+                  <>
+                    <X className="w-5 h-5" />
+                    Confirmer le refus
+                  </>
+                )}
+              </button>
+
+              <button
+                onClick={() => {
+                  setShowRefuseModal(null);
+                  setRefusalReason('');
+                }}
+                disabled={refusing !== null}
                 className="w-full px-6 py-4 bg-gray-700 hover:bg-gray-600 text-white font-semibold rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Annuler

@@ -35,6 +35,8 @@ interface CompanyQuote {
   submitted_by: string | null;
   submitted_at: string | null;
   validated_at: string | null;
+  quote_accepted_at: string | null;
+  quote_refused_at: string | null;
   notes: string | null;
   company: InsuranceCompany;
 }
@@ -385,8 +387,26 @@ export default function LeadCompanyQuotes({ leadId }: Props) {
                 <div className="flex items-start gap-3">
                   <AlertTriangle className="w-5 h-5 text-red-500 flex-shrink-0 mt-1" />
                   <div className="flex-1">
-                    <div className="text-white font-semibold mb-1">Motif du refus</div>
-                    <div className="text-gray-300">{quote.refusal_reason}</div>
+                    <div className="text-white font-semibold mb-1">
+                      {quote.quote_refused_at ? 'Refusé par le prospect' : 'Motif du refus'}
+                    </div>
+                    {quote.quote_refused_at && (
+                      <div className="text-gray-400 text-sm mb-2">
+                        Le {new Date(quote.quote_refused_at).toLocaleDateString('fr-FR', {
+                          day: 'numeric',
+                          month: 'long',
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </div>
+                    )}
+                    {quote.refusal_reason && (
+                      <div className="text-gray-300 mb-2">
+                        <span className="text-gray-400 text-sm">Raison : </span>
+                        {quote.refusal_reason}
+                      </div>
+                    )}
                     {quote.refusal_screenshot_url && (
                       <a
                         href={quote.refusal_screenshot_url}
@@ -405,9 +425,40 @@ export default function LeadCompanyQuotes({ leadId }: Props) {
 
             {quote.status === 'validated' && (
               <div className="bg-green-950/20 rounded-lg p-4 border border-green-800/30">
-                <div className="flex items-center gap-2 text-green-500">
-                  <CheckCircle className="w-5 h-5" />
-                  <span className="font-semibold">Devis validé et envoyé au client</span>
+                <div className="flex items-start gap-3">
+                  <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-1" />
+                  <div className="flex-1">
+                    <div className="text-white font-semibold mb-1">
+                      {quote.quote_accepted_at ? 'Validé par le prospect' : 'Devis validé'}
+                    </div>
+                    {quote.quote_accepted_at && (
+                      <div className="text-gray-400 text-sm">
+                        Le {new Date(quote.quote_accepted_at).toLocaleDateString('fr-FR', {
+                          day: 'numeric',
+                          month: 'long',
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </div>
+                    )}
+                    {quote.quote_amount && (
+                      <div className="text-green-400 font-bold text-lg mt-2">
+                        Montant : {quote.quote_amount} € / an
+                      </div>
+                    )}
+                    {quote.quote_file_url && (
+                      <a
+                        href={quote.quote_file_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 text-blue-500 hover:text-blue-400 mt-2"
+                      >
+                        <Eye className="w-4 h-4" />
+                        Voir le devis validé
+                      </a>
+                    )}
+                  </div>
                 </div>
               </div>
             )}
