@@ -138,7 +138,7 @@ export default function SaisieDevisStep({
           .from('lead_company_quotes')
           .update({
             quote_file_url: publicUrl,
-            status: 'submitted',
+            status: 'quote_submitted',
             submitted_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           })
@@ -160,7 +160,7 @@ export default function SaisieDevisStep({
             lead_id: leadId,
             company_id: companyId,
             quote_file_url: publicUrl,
-            status: 'submitted',
+            status: 'quote_submitted',
             submitted_at: new Date().toISOString()
           })
           .select()
