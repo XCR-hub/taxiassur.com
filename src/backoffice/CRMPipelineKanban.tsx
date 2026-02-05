@@ -473,9 +473,9 @@ const CRMPipelineKanban: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="h-screen bg-gray-50 flex flex-col overflow-hidden">
       {/* Header */}
-      <div className="bg-white border-b sticky top-0 z-10 shadow-sm">
+      <div className="bg-white border-b z-10 shadow-sm flex-shrink-0">
         <div className="max-w-full px-6 py-4">
           <div className="flex items-center justify-between mb-4">
             <div>
@@ -650,8 +650,8 @@ const CRMPipelineKanban: React.FC = () => {
       )}
 
       {/* Kanban board */}
-      <div className="p-6 overflow-x-auto">
-        <div className="flex gap-4 pb-4" style={{ minWidth: 'max-content' }}>
+      <div className="flex-1 p-6 overflow-x-auto overflow-y-hidden">
+        <div className="flex gap-4 h-full" style={{ minWidth: 'max-content' }}>
           {visibleStatuses.map((status) => {
             const statusInfo = PIPELINE_STATUSES[status];
             const leads = filteredKanbanData[status] || [];
@@ -664,13 +664,13 @@ const CRMPipelineKanban: React.FC = () => {
                 onDragLeave={handleDragLeave}
                 onDrop={(e) => handleDrop(e, status)}
                 className={cn(
-                  'w-80 flex-shrink-0 transition-all duration-300',
+                  'w-80 flex-shrink-0 transition-all duration-300 flex flex-col h-full',
                   isDropTarget && 'scale-[1.02]'
                 )}
               >
                 {/* Column header - Coloré! */}
                 <div className={cn(
-                  'rounded-lg p-3 mb-3 transition-all duration-300 border-2',
+                  'rounded-lg p-3 mb-3 transition-all duration-300 border-2 flex-shrink-0',
                   isDropTarget
                     ? 'bg-gradient-to-br from-blue-100 to-blue-50 border-blue-500 shadow-lg scale-105'
                     : `${STATUS_COLORS[status]?.bg || 'bg-gradient-to-br from-gray-100 to-gray-50'} ${STATUS_COLORS[status]?.border || 'border-gray-200'}`
@@ -743,7 +743,7 @@ const CRMPipelineKanban: React.FC = () => {
 
                 {/* Column content */}
                 <div className={cn(
-                  'space-y-3 min-h-[200px] max-h-[calc(100vh-320px)] overflow-y-auto pr-2 rounded-lg transition-all duration-300',
+                  'space-y-3 flex-1 overflow-y-auto pr-2 rounded-lg transition-all duration-300',
                   isDropTarget && 'bg-gradient-to-b from-blue-50/80 to-blue-100/30 p-3 ring-2 ring-blue-400/50'
                 )}>
                   {leads.length === 0 ? (
