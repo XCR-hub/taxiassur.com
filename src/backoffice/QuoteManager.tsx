@@ -92,7 +92,7 @@ const QuoteManager: React.FC<QuoteManagerProps> = ({ lead, onQuoteSent, onStatus
     try {
       const { data, error } = await supabase
         .from('insurance_companies')
-        .select('id, name, code, contact_email, contact_phone, description')
+        .select('id, name, code, contact_email, contact_phone, description, logo_url')
         .eq('is_active', true)
         .order('priority_order');
 
@@ -178,7 +178,7 @@ const QuoteManager: React.FC<QuoteManagerProps> = ({ lead, onQuoteSent, onStatus
         .from('crm_quote_history')
         .select(`
           *,
-          insurance_company:insurance_companies(id, name, code)
+          insurance_company:insurance_companies(id, name, code, logo_url)
         `)
         .eq('lead_id', lead.id)
         .order('sent_at', { ascending: false });
@@ -622,16 +622,27 @@ const QuoteManager: React.FC<QuoteManagerProps> = ({ lead, onQuoteSent, onStatus
                       <button
                         key={company.id}
                         onClick={() => setSelectedCompany(company)}
-                        className={`p-3 rounded-lg border-2 text-left transition-all ${
+                        className={`p-3 rounded-lg border-2 text-left transition-all flex items-center gap-3 ${
                           selectedCompany?.id === company.id
                             ? 'border-orange-600 bg-orange-50'
                             : 'border-gray-200 hover:border-orange-300'
                         }`}
                       >
-                        <p className={`font-semibold text-sm ${selectedCompany?.id === company.id ? 'text-orange-700' : 'text-gray-700'}`}>
-                          {company.name}
-                        </p>
-                        <p className="text-xs text-gray-500">{company.code}</p>
+                        {(company as any).logo_url ? (
+                          <img
+                            src={(company as any).logo_url}
+                            alt={`Logo ${company.name}`}
+                            className="w-10 h-10 object-contain flex-shrink-0"
+                          />
+                        ) : (
+                          <Building2 className="w-8 h-8 text-gray-400 flex-shrink-0" />
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className={`font-semibold text-sm ${selectedCompany?.id === company.id ? 'text-orange-700' : 'text-gray-700'}`}>
+                            {company.name}
+                          </p>
+                          <p className="text-xs text-gray-500">{company.code}</p>
+                        </div>
                       </button>
                     ))}
                   </div>
@@ -754,9 +765,18 @@ const QuoteManager: React.FC<QuoteManagerProps> = ({ lead, onQuoteSent, onStatus
                               {item.sent_via.toUpperCase()}
                             </span>
                             {item.insurance_company && (
-                              <span className="text-xs px-2 py-1 bg-orange-100 text-orange-700 rounded-full font-semibold">
-                                {item.insurance_company.name}
-                              </span>
+                              <>
+                                {(item.insurance_company as any).logo_url && (
+                                  <img
+                                    src={(item.insurance_company as any).logo_url}
+                                    alt={`Logo ${item.insurance_company.name}`}
+                                    className="w-6 h-6 object-contain"
+                                  />
+                                )}
+                                <span className="text-xs px-2 py-1 bg-orange-100 text-orange-700 rounded-full font-semibold">
+                                  {item.insurance_company.name}
+                                </span>
+                              </>
                             )}
                             <span className="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded-full">
                               {item.lead_status_at_send}

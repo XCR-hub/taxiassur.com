@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import {
   CheckCircle, XCircle, Clock, Upload, FileText, Send, AlertTriangle,
-  Download, Eye, MessageSquare
+  Download, Eye, MessageSquare, Building2
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { Modal, ModalFooter } from '../components/Modal';
@@ -21,6 +21,7 @@ interface InsuranceCompany {
   name: string;
   code: string;
   description: string | null;
+  logo_url?: string | null;
 }
 
 interface CompanyQuote {
@@ -320,6 +321,15 @@ export default function LeadCompanyQuotes({ leadId }: Props) {
             <div className="flex items-start justify-between mb-4">
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-2">
+                  {quote.company.logo_url ? (
+                    <img
+                      src={quote.company.logo_url}
+                      alt={`Logo ${quote.company.name}`}
+                      className="w-10 h-10 object-contain"
+                    />
+                  ) : (
+                    <Building2 className="w-8 h-8 text-gray-600" />
+                  )}
                   <h3 className="text-xl font-bold text-white">{quote.company.name}</h3>
                   {getStatusBadge(quote.status)}
                 </div>
