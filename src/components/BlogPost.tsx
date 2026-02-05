@@ -10,21 +10,21 @@ import FaqList from './FaqList';
 import { logger } from '@/lib/logger';
 
 const BlogPost: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+  const { slug } = useParams<{ slug: string }>();
   const [post, setPost] = useState<BlogPostType | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const loadPost = async () => {
-      if (!id) {
+      if (!slug) {
         setError('ID de l\'article manquant');
         setLoading(false);
         return;
       }
 
       try {
-        const blogPost = await getBlogPost(id);
+        const blogPost = await getBlogPost(slug);
         if (blogPost) {
           setPost(blogPost);
         } else {
@@ -39,7 +39,7 @@ const BlogPost: React.FC = () => {
     };
 
     loadPost();
-  }, [id]);
+  }, [slug]);
 
   if (loading) {
     return (

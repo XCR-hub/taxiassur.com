@@ -218,6 +218,10 @@ export const router = createBrowserRouter([
     element: <Reviews />,
   },
   {
+    path: '/avis',
+    element: <Reviews />,
+  },
+  {
     path: '/offers',
     element: <Offers />,
   },
