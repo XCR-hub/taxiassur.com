@@ -371,7 +371,15 @@ export default function SaisieDevisStep({
             >
               <div className="flex items-start gap-4 mb-4">
                 <div className="flex-shrink-0">
-                  <Building2 className="h-8 w-8 text-blue-600" />
+                  {company.logo_url ? (
+                    <img
+                      src={company.logo_url}
+                      alt={`Logo ${company.name}`}
+                      className="h-12 w-12 object-contain"
+                    />
+                  ) : (
+                    <Building2 className="h-8 w-8 text-blue-600" />
+                  )}
                 </div>
                 <div className="flex-1 min-w-0">
                   <h4 className="text-lg font-semibold text-gray-900 mb-1">

@@ -247,7 +247,17 @@ export default function ClientQuotesViewer({ leadId, token, supabaseClient }: Pr
             <div key={company.id} className="bg-gray-800/50 border border-gray-700 rounded-xl p-6 hover:border-amber-500/50 transition-all">
               <div className="flex items-start justify-between mb-6">
                 <div className="flex items-center gap-4">
-                  <Building2 className="w-12 h-12 text-amber-500" />
+                  {company.logo_url ? (
+                    <div className="w-16 h-16 bg-white rounded-lg p-2 flex items-center justify-center flex-shrink-0">
+                      <img
+                        src={company.logo_url}
+                        alt={`Logo ${company.name}`}
+                        className="max-w-full max-h-full object-contain"
+                      />
+                    </div>
+                  ) : (
+                    <Building2 className="w-12 h-12 text-amber-500" />
+                  )}
                   <div>
                     <h4 className="font-bold text-2xl text-white">{company.name}</h4>
                     <p className="text-sm text-gray-400 mt-1">
