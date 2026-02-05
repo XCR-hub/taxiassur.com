@@ -117,62 +117,30 @@ export default function SaisieDevisStep({
       // Get company details
       const company = companies.find(c => c.id === companyId);
 
-      console.log('Upserting quote record with:', {
+      console.log('Creating new quote record with:', {
         lead_id: leadId,
         company_id: companyId,
         quote_file_url: publicUrl
       });
 
-      // Check if quote already exists
-      const { data: existingQuote } = await supabase
+      // Always create a new quote (never replace existing ones)
+      const { data: quoteData, error: insertError } = await supabase
         .from('lead_company_quotes')
-        .select('id')
-        .eq('lead_id', leadId)
-        .eq('company_id', companyId)
-        .maybeSingle();
+        .insert({
+          lead_id: leadId,
+          company_id: companyId,
+          quote_file_url: publicUrl,
+          status: 'quote_submitted',
+          submitted_at: new Date().toISOString()
+        })
+        .select()
+        .single();
 
-      let quoteData;
-      if (existingQuote) {
-        // Update existing quote
-        const { data, error: updateError } = await supabase
-          .from('lead_company_quotes')
-          .update({
-            quote_file_url: publicUrl,
-            status: 'quote_submitted',
-            submitted_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', existingQuote.id)
-          .select()
-          .single();
-
-        if (updateError) {
-          console.error('Database update error:', updateError);
-          throw new Error(`Erreur mise à jour base de données: ${updateError.message}`);
-        }
-        quoteData = data;
-        console.log('Quote updated successfully:', quoteData);
-      } else {
-        // Create new quote record
-        const { data, error: insertError } = await supabase
-          .from('lead_company_quotes')
-          .insert({
-            lead_id: leadId,
-            company_id: companyId,
-            quote_file_url: publicUrl,
-            status: 'quote_submitted',
-            submitted_at: new Date().toISOString()
-          })
-          .select()
-          .single();
-
-        if (insertError) {
-          console.error('Database insert error:', insertError);
-          throw new Error(`Erreur base de données: ${insertError.message}`);
-        }
-        quoteData = data;
-        console.log('Quote created successfully:', quoteData);
+      if (insertError) {
+        console.error('Database insert error:', insertError);
+        throw new Error(`Erreur base de données: ${insertError.message}`);
       }
+      console.log('Quote created successfully:', quoteData);
 
       // Send automatic email to prospect
       await sendQuoteEmail(companyId, company?.name || 'Compagnie', file.name);
