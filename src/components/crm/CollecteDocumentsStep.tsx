@@ -164,11 +164,17 @@ export default function CollecteDocumentsStep({
 
       if (template.channel === 'email') {
         // Send email via edge function
+        const htmlContent = messageContent.replace(/\n/g, '<br>');
+
+        console.log('📧 Envoi email:', { to: leadEmail, subject, contentLength: htmlContent.length });
+
         const { data: emailResult, error } = await supabase.functions.invoke('send-crm-email', {
           body: {
             to: leadEmail,
+            to_email: leadEmail,
             subject: subject || 'Documents nécessaires - TaxiAssur',
-            content: messageContent.replace(/\n/g, '<br>'),
+            content: htmlContent,
+            body: htmlContent,
             lead_id: leadId
           }
         });

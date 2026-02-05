@@ -151,6 +151,9 @@ Deno.serve(async (req: Request) => {
 
   try {
     const body = await req.json();
+
+    console.log('📥 RAW body received:', JSON.stringify(body, null, 2));
+
     const to_email = body.to_email || body.to;
     const to_name = body.to_name || body.name || "";
     const subject = body.subject;
@@ -158,7 +161,14 @@ Deno.serve(async (req: Request) => {
     const lead_id = body.lead_id;
     const attachments: Attachment[] = body.attachments || [];
 
-    console.log('📥 Received request body:', { to_email, subject, has_content: !!content, lead_id, attachments_count: attachments.length });
+    console.log('📥 Parsed values:', {
+      to_email,
+      subject,
+      content_length: content?.length || 0,
+      has_content: !!content,
+      lead_id,
+      attachments_count: attachments.length
+    });
 
     if (!to_email || !subject || !content) {
       const missingFields = [];
