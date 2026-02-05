@@ -1046,8 +1046,8 @@ const CRMInboxMulticanal: React.FC = () => {
   };
 
   return (
-    <div className="h-screen bg-gray-50 flex flex-col">
-      <div className="bg-gradient-to-r from-blue-900 to-blue-800 text-white px-6 py-6">
+    <div className="h-screen bg-gray-50 flex flex-col overflow-hidden">
+      <div className="bg-gradient-to-r from-blue-900 to-blue-800 text-white px-6 py-6 flex-shrink-0">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-4xl font-bold">Inbox Multicanal</h1>
@@ -1113,7 +1113,7 @@ const CRMInboxMulticanal: React.FC = () => {
       </div>
 
       <div className="flex-1 overflow-hidden flex flex-col">
-        <div className="bg-white border-b px-6 py-4">
+        <div className="bg-white border-b px-6 py-4 flex-shrink-0">
           <div className="flex items-center gap-4 mb-4">
             <div className="flex-1 relative">
               <Search
