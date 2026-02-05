@@ -20,11 +20,12 @@ interface InsuranceCompany {
 
 interface Quote {
   id: string;
-  insurance_company_id: string;
-  file_name: string;
-  file_path: string;
-  amount?: number;
-  sent_at?: string;
+  company_id: string;
+  quote_file_url: string;
+  quote_amount?: number;
+  last_sent_at?: string;
+  submitted_at?: string;
+  status: string;
   company?: InsuranceCompany;
 }
 
@@ -48,7 +49,7 @@ export default function SaisieDevisStep({
 
   useEffect(() => {
     // Check if all 5 companies have at least 1 quote
-    const companiesWithQuotes = new Set(quotes.map(q => q.insurance_company_id));
+    const companiesWithQuotes = new Set(quotes.map(q => q.company_id));
     if (companiesWithQuotes.size >= 5) {
       onComplete?.();
     }
@@ -101,37 +102,55 @@ export default function SaisieDevisStep({
         .from('contract-documents')
         .upload(fileName, file);
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error('Storage upload error:', uploadError);
+        throw new Error(`Erreur upload storage: ${uploadError.message}`);
+      }
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase
+        .storage
+        .from('contract-documents')
+        .getPublicUrl(uploadData.path);
 
       // Get company details
       const company = companies.find(c => c.id === companyId);
 
-      // Create quote record
+      console.log('Creating quote record with:', {
+        lead_id: leadId,
+        company_id: companyId,
+        quote_file_url: publicUrl
+      });
+
+      // Create quote record - using correct column names
       const { data: quoteData, error: quoteError } = await supabase
         .from('lead_company_quotes')
         .insert({
           lead_id: leadId,
-          insurance_company_id: companyId,
-          file_name: file.name,
-          file_path: uploadData.path,
-          file_size: file.size,
-          mime_type: file.type,
-          status: 'pending'
+          company_id: companyId,
+          quote_file_url: publicUrl,
+          status: 'pending',
+          submitted_at: new Date().toISOString()
         })
         .select()
         .single();
 
-      if (quoteError) throw quoteError;
+      if (quoteError) {
+        console.error('Database insert error:', quoteError);
+        throw new Error(`Erreur base de données: ${quoteError.message}`);
+      }
+
+      console.log('Quote created successfully:', quoteData);
 
       // Send automatic email to prospect
       await sendQuoteEmail(companyId, company?.name || 'Compagnie', file.name);
 
-      alert(`Devis ${company?.name} uploadé avec succès !`);
+      alert(`✅ Devis ${company?.name} uploadé avec succès !`);
       loadQuotes();
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error uploading quote:', error);
-      alert('Erreur lors de l\'upload du devis');
+      alert(`❌ Erreur lors de l'upload du devis\n\n${error.message || error}`);
     } finally {
       setUploading(null);
     }
@@ -209,14 +228,16 @@ export default function SaisieDevisStep({
   }
 
   async function resendQuoteEmail(quote: Quote) {
-    const company = companies.find(c => c.id === quote.insurance_company_id);
+    const company = companies.find(c => c.id === quote.company_id);
     if (company) {
-      await sendQuoteEmail(company.id, company.name, quote.file_name);
+      // Extract filename from URL
+      const fileName = quote.quote_file_url.split('/').pop() || 'devis.pdf';
+      await sendQuoteEmail(company.id, company.name, fileName);
 
-      // Update sent_at
+      // Update last_sent_at
       await supabase
         .from('lead_company_quotes')
-        .update({ sent_at: new Date().toISOString() })
+        .update({ last_sent_at: new Date().toISOString() })
         .eq('id', quote.id);
 
       loadQuotes();
@@ -224,12 +245,19 @@ export default function SaisieDevisStep({
     }
   }
 
-  async function deleteQuote(quoteId: string, filePath: string) {
+  async function deleteQuote(quoteId: string, fileUrl: string) {
     if (!confirm('Êtes-vous sûr de vouloir supprimer ce devis ?')) return;
 
     try {
-      // Delete from storage
-      await supabase.storage.from('contract-documents').remove([filePath]);
+      // Extract file path from public URL
+      // URL format: https://xxx.supabase.co/storage/v1/object/public/contract-documents/path/to/file.pdf
+      const urlParts = fileUrl.split('/contract-documents/');
+      const filePath = urlParts.length > 1 ? urlParts[1] : '';
+
+      if (filePath) {
+        // Delete from storage
+        await supabase.storage.from('contract-documents').remove([filePath]);
+      }
 
       // Delete record
       const { error } = await supabase
@@ -239,19 +267,19 @@ export default function SaisieDevisStep({
 
       if (error) throw error;
 
-      alert('Devis supprimé avec succès !');
+      alert('✅ Devis supprimé avec succès !');
       loadQuotes();
     } catch (error) {
       console.error('Error deleting quote:', error);
-      alert('Erreur lors de la suppression');
+      alert('❌ Erreur lors de la suppression');
     }
   }
 
   const getQuotesForCompany = (companyId: string) => {
-    return quotes.filter(q => q.insurance_company_id === companyId);
+    return quotes.filter(q => q.company_id === companyId);
   };
 
-  const companiesWithQuotes = new Set(quotes.map(q => q.insurance_company_id));
+  const companiesWithQuotes = new Set(quotes.map(q => q.company_id));
   const progressPercent = companies.length > 0
     ? Math.round((companiesWithQuotes.size / companies.length) * 100)
     : 0;
@@ -337,56 +365,61 @@ export default function SaisieDevisStep({
               {/* Liste des devis existants */}
               {companyQuotes.length > 0 && (
                 <div className="space-y-3 mb-4">
-                  {companyQuotes.map((quote) => (
-                    <div key={quote.id} className="bg-white rounded-lg p-4 border border-green-200">
-                      <div className="flex items-start gap-3">
-                        <FileText className="h-5 w-5 text-gray-600 flex-shrink-0 mt-0.5" />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-900 truncate mb-1">
-                            {quote.file_name}
-                          </p>
-                          {quote.sent_at && (
-                            <p className="text-xs text-gray-600">
-                              Email envoyé le {new Date(quote.sent_at).toLocaleDateString('fr-FR')} à {new Date(quote.sent_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                  {companyQuotes.map((quote) => {
+                    // Extract filename from URL
+                    const fileName = quote.quote_file_url.split('/').pop() || 'devis.pdf';
+
+                    return (
+                      <div key={quote.id} className="bg-white rounded-lg p-4 border border-green-200">
+                        <div className="flex items-start gap-3">
+                          <FileText className="h-5 w-5 text-gray-600 flex-shrink-0 mt-0.5" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-900 truncate mb-1">
+                              {decodeURIComponent(fileName)}
                             </p>
-                          )}
+                            {quote.submitted_at && (
+                              <p className="text-xs text-gray-600">
+                                Uploadé le {new Date(quote.submitted_at).toLocaleDateString('fr-FR')} à {new Date(quote.submitted_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                              </p>
+                            )}
+                            {quote.last_sent_at && (
+                              <p className="text-xs text-green-600">
+                                Email envoyé le {new Date(quote.last_sent_at).toLocaleDateString('fr-FR')} à {new Date(quote.last_sent_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="flex gap-2 mt-3">
+                          <button
+                            onClick={() => window.open(quote.quote_file_url, '_blank')}
+                            className="flex-1 text-sm py-2 px-3 bg-blue-50 text-blue-600 rounded hover:bg-blue-100 flex items-center justify-center gap-2 font-medium"
+                          >
+                            <FileText className="h-4 w-4" />
+                            Voir
+                          </button>
+                          <button
+                            onClick={() => resendQuoteEmail(quote)}
+                            disabled={isSending}
+                            className="flex-1 text-sm py-2 px-3 bg-green-50 text-green-600 rounded hover:bg-green-100 flex items-center justify-center gap-2 disabled:opacity-50 font-medium"
+                          >
+                            {isSending ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Send className="h-4 w-4" />
+                            )}
+                            {isSending ? 'Envoi...' : 'Renvoyer'}
+                          </button>
+                          <button
+                            onClick={() => deleteQuote(quote.id, quote.quote_file_url)}
+                            className="text-sm py-2 px-3 bg-red-50 text-red-600 rounded hover:bg-red-100 flex items-center justify-center gap-2"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
                         </div>
                       </div>
-
-                      <div className="flex gap-2 mt-3">
-                        <button
-                          onClick={() => {
-                            const url = supabase.storage
-                              .from('contract-documents')
-                              .getPublicUrl(quote.file_path).data.publicUrl;
-                            window.open(url, '_blank');
-                          }}
-                          className="flex-1 text-sm py-2 px-3 bg-blue-50 text-blue-600 rounded hover:bg-blue-100 flex items-center justify-center gap-2 font-medium"
-                        >
-                          <FileText className="h-4 w-4" />
-                          Voir
-                        </button>
-                        <button
-                          onClick={() => resendQuoteEmail(quote)}
-                          disabled={isSending}
-                          className="flex-1 text-sm py-2 px-3 bg-green-50 text-green-600 rounded hover:bg-green-100 flex items-center justify-center gap-2 disabled:opacity-50 font-medium"
-                        >
-                          {isSending ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <Send className="h-4 w-4" />
-                          )}
-                          {isSending ? 'Envoi...' : 'Renvoyer'}
-                        </button>
-                        <button
-                          onClick={() => deleteQuote(quote.id, quote.file_path)}
-                          className="text-sm py-2 px-3 bg-red-50 text-red-600 rounded hover:bg-red-100 flex items-center justify-center gap-2"
-                        >
-                          <X className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
 
