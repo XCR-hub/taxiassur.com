@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { CheckCircle2, Circle, Loader2, ChevronRight, ChevronLeft, Mail, MessageCircle, Phone } from 'lucide-react';
+import { CheckCircle2, Circle, Loader2, ChevronRight, ChevronLeft } from 'lucide-react';
 import CollecteDocumentsStep from './CollecteDocumentsStep';
 import SaisieDevisStep from './SaisieDevisStep';
+import ValidationDevisStep from './ValidationDevisStep';
 import SignatureDevisStep from './SignatureDevisStep';
 import PaiementRIBStep from './PaiementRIBStep';
 import ContratSignatureStep from './ContratSignatureStep';
@@ -69,7 +70,6 @@ export default function PipelineWorkflow7Etapes({ leadId, leadData }: PipelineWo
   const [currentStage, setCurrentStage] = useState<string>(leadData.pipeline_stage || 'nouveau_lead');
   const [loading, setLoading] = useState(false);
   const [showCallDialog, setShowCallDialog] = useState(false);
-  const [sendingReminder, setSendingReminder] = useState<string | null>(null);
 
   // Extract first name intelligently from various sources
   const getFirstName = () => {
@@ -156,194 +156,6 @@ export default function PipelineWorkflow7Etapes({ leadId, leadData }: PipelineWo
   const nextStage = getNextStage();
 
   // Fonction pour envoyer une relance par email
-  async function sendEmailReminder() {
-    if (!leadData.email) {
-      alert('Le prospect n\'a pas d\'email renseigné');
-      return;
-    }
-
-    setSendingReminder('email');
-    try {
-      const prospectUrl = `${window.location.origin}/espace-prospect?token=${leadData.access_token}`;
-
-      const subject = `Vos devis d'assurance taxi sont prêts - TaxiAssur`;
-      const html = `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #f9fafb; padding: 20px; border-radius: 10px;">
-          <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-            <h2 style="color: #16a34a; margin-bottom: 20px;">📋 Vos devis d'assurance taxi vous attendent !</h2>
-            <p style="color: #374151; font-size: 16px; line-height: 1.6;">Bonjour ${firstName || 'Cher client'},</p>
-            <p style="color: #374151; font-size: 16px; line-height: 1.6;">
-              Vos 5 devis d'assurance taxi sont disponibles dans votre espace personnel.
-              Il ne vous reste plus qu'à les consulter et choisir celui qui vous convient le mieux.
-            </p>
-
-            <div style="background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); border-radius: 12px; padding: 20px; margin: 25px 0; text-align: center;">
-              <p style="color: white; font-size: 18px; font-weight: bold; margin: 0;">
-                5 devis personnalisés vous attendent !
-              </p>
-            </div>
-
-            <div style="text-align: center; margin: 30px 0;">
-              <a href="${prospectUrl}" style="display: inline-block; background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); color: white; padding: 16px 40px; text-decoration: none; border-radius: 10px; font-weight: bold; font-size: 16px; box-shadow: 0 4px 6px rgba(37, 99, 235, 0.3);">
-                📋 Consulter mes devis
-              </a>
-            </div>
-
-            <div style="background-color: #eff6ff; border-left: 4px solid #2563eb; padding: 15px; margin: 25px 0; border-radius: 6px;">
-              <p style="color: #1e40af; font-weight: bold; margin: 0 0 10px 0;">Dans votre espace :</p>
-              <ul style="color: #1e3a8a; margin: 0; padding-left: 20px;">
-                <li style="margin: 5px 0;">✓ Comparez les 5 offres côte à côte</li>
-                <li style="margin: 5px 0;">✓ Consultez les garanties détaillées</li>
-                <li style="margin: 5px 0;">✓ Choisissez votre devis en 1 clic</li>
-                <li style="margin: 5px 0;">✓ Accès sécurisé 24h/24</li>
-              </ul>
-            </div>
-
-            <p style="color: #6b7280; font-size: 14px; line-height: 1.6; margin-top: 25px;">
-              Une question ? Notre équipe est à votre disposition :<br>
-              <strong style="color: #16a34a;">📞 01 80 85 57 88</strong> ou
-              <strong style="color: #2563eb;">✉️ team@taxiassur.com</strong>
-            </p>
-
-            <div style="border-top: 1px solid #e5e7eb; margin-top: 30px; padding-top: 20px;">
-              <p style="color: #9ca3af; font-size: 13px; line-height: 1.5; margin: 0;">
-                Cordialement,<br>
-                <strong style="color: #374151;">L'équipe TaxiAssur</strong><br>
-                <span style="font-size: 12px;">Votre expert en assurance taxi et VTC</span>
-              </p>
-            </div>
-          </div>
-        </div>
-      `;
-
-      const { error } = await supabase.functions.invoke('send-crm-email', {
-        body: {
-          to: leadData.email,
-          subject: subject,
-          content: html,
-          lead_id: leadId
-        }
-      });
-
-      if (error) throw error;
-
-      // Log interaction
-      await supabase.from('crm_interactions').insert({
-        lead_id: leadId,
-        type: 'email',
-        channel: 'email',
-        subject: subject,
-        body: html,
-        status: 'sent',
-        metadata: { reminder_type: 'validation_devis' }
-      });
-
-      alert('✅ Email de relance envoyé avec succès !');
-    } catch (error) {
-      console.error('Error sending email reminder:', error);
-      alert('❌ Erreur lors de l\'envoi de l\'email');
-    } finally {
-      setSendingReminder(null);
-    }
-  }
-
-  // Fonction pour envoyer une relance par WhatsApp
-  async function sendWhatsAppReminder() {
-    if (!leadData.phone) {
-      alert('Le prospect n\'a pas de numéro de téléphone renseigné');
-      return;
-    }
-
-    setSendingReminder('whatsapp');
-    try {
-      const prospectUrl = `${window.location.origin}/espace-prospect?token=${leadData.access_token}`;
-
-      const message = `Bonjour ${firstName || 'Cher client'} 👋
-
-Vos 5 devis d'assurance taxi sont prêts ! 📋
-
-Consultez-les dès maintenant dans votre espace sécurisé :
-${prospectUrl}
-
-✅ Comparez les offres
-✅ Choisissez le meilleur tarif
-✅ Validez en 1 clic
-
-Des questions ? Contactez-nous au 01 80 85 57 88
-
-L'équipe TaxiAssur`;
-
-      const { error } = await supabase.functions.invoke('send-whatsapp', {
-        body: {
-          to: leadData.phone,
-          message: message,
-          lead_id: leadId
-        }
-      });
-
-      if (error) throw error;
-
-      // Log interaction
-      await supabase.from('crm_interactions').insert({
-        lead_id: leadId,
-        type: 'whatsapp',
-        channel: 'whatsapp',
-        body: message,
-        status: 'sent',
-        metadata: { reminder_type: 'validation_devis' }
-      });
-
-      alert('✅ Message WhatsApp envoyé avec succès !');
-    } catch (error) {
-      console.error('Error sending WhatsApp reminder:', error);
-      alert('❌ Erreur lors de l\'envoi du message WhatsApp');
-    } finally {
-      setSendingReminder(null);
-    }
-  }
-
-  // Fonction pour envoyer une relance par SMS
-  async function sendSMSReminder() {
-    if (!leadData.phone) {
-      alert('Le prospect n\'a pas de numéro de téléphone renseigné');
-      return;
-    }
-
-    setSendingReminder('sms');
-    try {
-      const prospectUrl = `${window.location.origin}/espace-prospect?token=${leadData.access_token}`;
-
-      const message = `Bonjour ${firstName || 'Cher client'}, vos 5 devis d'assurance taxi sont prêts ! Consultez-les : ${prospectUrl} - TaxiAssur`;
-
-      const { error } = await supabase.functions.invoke('send-sms', {
-        body: {
-          to: leadData.phone,
-          message: message,
-          lead_id: leadId
-        }
-      });
-
-      if (error) throw error;
-
-      // Log interaction
-      await supabase.from('crm_interactions').insert({
-        lead_id: leadId,
-        type: 'sms',
-        channel: 'sms',
-        body: message,
-        status: 'sent',
-        metadata: { reminder_type: 'validation_devis' }
-      });
-
-      alert('✅ SMS de relance envoyé avec succès !');
-    } catch (error) {
-      console.error('Error sending SMS reminder:', error);
-      alert('❌ Erreur lors de l\'envoi du SMS');
-    } finally {
-      setSendingReminder(null);
-    }
-  }
-
   return (
     <div className="space-y-6">
       {/* Progress Steps */}
@@ -528,126 +340,13 @@ L'équipe TaxiAssur`;
 
         {/* Étape 4 : Validation Devis Prospect */}
         {currentStage === 'validation_devis_prospect' && (
-          <div className="space-y-4">
-            <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-              <p className="text-sm text-purple-900 mb-3">
-                <strong>En attente de validation par le prospect</strong>
-              </p>
-              <p className="text-sm text-purple-800">
-                Le prospect doit se connecter à son espace pour consulter les 5 devis et en valider un.
-                Une fois validé, le lead passera automatiquement à l'étape suivante.
-              </p>
-            </div>
-
-            {leadData.access_token && (
-              <div className="bg-gray-50 rounded-lg p-4">
-                <p className="text-sm font-medium text-gray-900 mb-2">Lien Espace Prospect :</p>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="text"
-                    readOnly
-                    value={`${window.location.origin}/espace-prospect?token=${leadData.access_token}`}
-                    className="flex-1 px-3 py-2 text-sm bg-white border border-gray-300 rounded"
-                  />
-                  <button
-                    onClick={() => {
-                      navigator.clipboard.writeText(`${window.location.origin}/espace-prospect?token=${leadData.access_token}`);
-                      alert('Lien copié !');
-                    }}
-                    className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-                  >
-                    Copier
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Boutons de relance */}
-            <div className="bg-white border-2 border-orange-200 rounded-lg p-6">
-              <h4 className="text-base font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                <span className="text-orange-600">📣</span>
-                Relancer le prospect
-              </h4>
-              <p className="text-sm text-gray-600 mb-4">
-                Envoyez un rappel au prospect pour l'inviter à consulter ses devis
-              </p>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                {/* Bouton Email */}
-                <button
-                  onClick={sendEmailReminder}
-                  disabled={!leadData.email || sendingReminder !== null}
-                  className="flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  {sendingReminder === 'email' ? (
-                    <Loader2 className="h-5 w-5 animate-spin" />
-                  ) : (
-                    <Mail className="h-5 w-5" />
-                  )}
-                  <span>{sendingReminder === 'email' ? 'Envoi...' : 'Email'}</span>
-                </button>
-
-                {/* Bouton WhatsApp */}
-                <button
-                  onClick={sendWhatsAppReminder}
-                  disabled={!leadData.phone || sendingReminder !== null}
-                  className="flex items-center justify-center gap-2 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  {sendingReminder === 'whatsapp' ? (
-                    <Loader2 className="h-5 w-5 animate-spin" />
-                  ) : (
-                    <MessageCircle className="h-5 w-5" />
-                  )}
-                  <span>{sendingReminder === 'whatsapp' ? 'Envoi...' : 'WhatsApp'}</span>
-                </button>
-
-                {/* Bouton SMS */}
-                <button
-                  onClick={sendSMSReminder}
-                  disabled={!leadData.phone || sendingReminder !== null}
-                  className="flex items-center justify-center gap-2 px-4 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  {sendingReminder === 'sms' ? (
-                    <Loader2 className="h-5 w-5 animate-spin" />
-                  ) : (
-                    <Phone className="h-5 w-5" />
-                  )}
-                  <span>{sendingReminder === 'sms' ? 'Envoi...' : 'SMS'}</span>
-                </button>
-              </div>
-
-              {!leadData.email && !leadData.phone && (
-                <div className="mt-4 bg-red-50 border border-red-200 rounded-lg p-3">
-                  <p className="text-sm text-red-800">
-                    ⚠️ Le prospect n'a ni email ni téléphone renseigné. Impossible d'envoyer des relances.
-                  </p>
-                </div>
-              )}
-            </div>
-
-            <div className="flex items-center justify-between gap-4 pt-4 border-t border-gray-200">
-              {previousStage && (
-                <button
-                  onClick={() => moveToStage(previousStage)}
-                  disabled={loading}
-                  className="flex items-center gap-2 px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 font-semibold disabled:opacity-50 transition-colors"
-                >
-                  <ChevronLeft className="h-5 w-5" />
-                  Étape Précédente
-                </button>
-              )}
-
-              {nextStage && (
-                <button
-                  onClick={() => moveToStage(nextStage)}
-                  disabled={loading}
-                  className="flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-semibold disabled:opacity-50 transition-colors ml-auto"
-                >
-                  Étape Suivante
-                  <ChevronRight className="h-5 w-5" />
-                </button>
-              )}
-            </div>
-          </div>
+          <ValidationDevisStep
+            leadId={leadId}
+            leadEmail={leadData.email}
+            leadPhone={leadData.phone}
+            leadFirstName={firstName}
+            leadAccessToken={leadData.access_token}
+          />
         )}
 
         {/* Étape 5 : Signature Devis */}
