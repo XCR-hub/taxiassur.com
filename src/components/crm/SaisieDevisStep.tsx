@@ -162,36 +162,56 @@ export default function SaisieDevisStep({
     setSending(companyId);
 
     try {
+      // Lien direct vers l'onglet Devis de l'espace prospect
       const prospectSpaceUrl = leadAccessToken
-        ? `${window.location.origin}/espace-prospect?token=${leadAccessToken}`
-        : `${window.location.origin}/espace-prospect`;
+        ? `${window.location.origin}/espace-prospect?token=${leadAccessToken}&tab=devis`
+        : `${window.location.origin}/espace-prospect?tab=devis`;
 
-      const subject = `Nouveau devis ${companyName} disponible`;
+      const subject = `✅ Nouveau devis ${companyName} disponible - TaxiAssur`;
       const html = `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #16a34a;">📄 Nouveau devis disponible</h2>
-          <p>Bonjour ${leadFirstName || 'Cher client'},</p>
-          <p>Excellente nouvelle ! Nous avons le plaisir de vous informer qu'un nouveau devis d'assurance taxi est maintenant disponible :</p>
-          <div style="background-color: #f0fdf4; border-left: 4px solid #16a34a; padding: 15px; margin: 20px 0;">
-            <strong style="font-size: 18px;">${companyName}</strong><br>
-            <span style="color: #666; font-size: 14px;">${fileName}</span>
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #f9fafb; padding: 20px; border-radius: 10px;">
+          <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+            <h2 style="color: #16a34a; margin-bottom: 20px;">📄 Votre devis est prêt !</h2>
+            <p style="color: #374151; font-size: 16px; line-height: 1.6;">Bonjour ${leadFirstName || 'Cher client'},</p>
+            <p style="color: #374151; font-size: 16px; line-height: 1.6;">
+              Excellente nouvelle ! Votre devis d'assurance taxi est maintenant disponible dans votre espace personnel :
+            </p>
+
+            <div style="background: linear-gradient(135deg, #16a34a 0%, #059669 100%); border-radius: 12px; padding: 20px; margin: 25px 0; text-align: center;">
+              <div style="color: white; font-size: 20px; font-weight: bold; margin-bottom: 8px;">${companyName}</div>
+              <div style="color: rgba(255,255,255,0.9); font-size: 14px;">${fileName}</div>
+            </div>
+
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${prospectSpaceUrl}" style="display: inline-block; background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); color: white; padding: 16px 40px; text-decoration: none; border-radius: 10px; font-weight: bold; font-size: 16px; box-shadow: 0 4px 6px rgba(37, 99, 235, 0.3);">
+                📋 Voir mon devis maintenant
+              </a>
+            </div>
+
+            <div style="background-color: #eff6ff; border-left: 4px solid #2563eb; padding: 15px; margin: 25px 0; border-radius: 6px;">
+              <p style="color: #1e40af; font-weight: bold; margin: 0 0 10px 0;">Dans votre espace sécurisé :</p>
+              <ul style="color: #1e3a8a; margin: 0; padding-left: 20px;">
+                <li style="margin: 5px 0;">✓ Consultez votre devis en ligne</li>
+                <li style="margin: 5px 0;">✓ Téléchargez le PDF</li>
+                <li style="margin: 5px 0;">✓ Imprimez-le directement</li>
+                <li style="margin: 5px 0;">✓ Comparez avec d'autres offres</li>
+              </ul>
+            </div>
+
+            <p style="color: #6b7280; font-size: 14px; line-height: 1.6; margin-top: 25px;">
+              Une question ? Notre équipe est à votre disposition :<br>
+              <strong style="color: #16a34a;">📞 01 80 85 57 88</strong> ou
+              <strong style="color: #2563eb;">✉️ team@taxiassur.com</strong>
+            </p>
+
+            <div style="border-top: 1px solid #e5e7eb; margin-top: 30px; padding-top: 20px;">
+              <p style="color: #9ca3af; font-size: 13px; line-height: 1.5; margin: 0;">
+                Cordialement,<br>
+                <strong style="color: #374151;">L'équipe TaxiAssur</strong><br>
+                <span style="font-size: 12px;">Votre expert en assurance taxi et VTC</span>
+              </p>
+            </div>
           </div>
-          <p>
-            <a href="${prospectSpaceUrl}" style="display: inline-block; background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold;">
-              📋 Consulter mes devis
-            </a>
-          </p>
-          <p>Dans votre espace, vous trouverez :</p>
-          <ul>
-            <li>Le devis détaillé</li>
-            <li>Les conditions générales</li>
-            <li>Tous vos autres devis disponibles</li>
-          </ul>
-          <p>Prenez le temps de comparer et n'hésitez pas à nous contacter pour toute question.</p>
-          <p style="color: #666; font-size: 14px; margin-top: 30px;">
-            Cordialement,<br>
-            L'équipe TaxiAssur
-          </p>
         </div>
       `;
 

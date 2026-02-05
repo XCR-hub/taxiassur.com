@@ -84,8 +84,23 @@ const EspaceProspect: React.FC = () => {
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [anonClient, setAnonClient] = useState<any>(null);
-  const [activeTab, setActiveTab] = useState<TabType>('documents');
+  const [activeTab, setActiveTab] = useState<TabType>(() => {
+    // Lire le paramètre tab de l'URL au chargement
+    const tabParam = searchParams.get('tab');
+    if (tabParam && ['documents', 'devis', 'paiement', 'contrat'].includes(tabParam)) {
+      return tabParam as TabType;
+    }
+    return 'documents';
+  });
   const [refreshing, setRefreshing] = useState(false);
+
+  // Mettre à jour l'onglet actif si le paramètre URL change
+  useEffect(() => {
+    const tabParam = searchParams.get('tab');
+    if (tabParam && ['documents', 'devis', 'paiement', 'contrat'].includes(tabParam)) {
+      setActiveTab(tabParam as TabType);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     const initClient = () => {

@@ -13,14 +13,12 @@ interface InsuranceCompany {
 
 interface Quote {
   id: string;
-  insurance_company_id: string;
-  file_name: string;
-  file_path: string;
-  file_size: number;
-  mime_type: string;
+  company_id: string;
+  quote_file_url: string;
+  quote_amount?: number;
   status: string;
-  amount?: number;
-  sent_at?: string;
+  submitted_at?: string;
+  last_sent_at?: string;
   created_at: string;
 }
 
@@ -90,10 +88,10 @@ export default function ClientQuotesViewer({ leadId, token }: Props) {
 
   // Grouper les devis par compagnie
   const quotesByCompany = quotes.reduce((acc, quote) => {
-    if (!acc[quote.insurance_company_id]) {
-      acc[quote.insurance_company_id] = [];
+    if (!acc[quote.company_id]) {
+      acc[quote.company_id] = [];
     }
-    acc[quote.insurance_company_id].push(quote);
+    acc[quote.company_id].push(quote);
     return acc;
   }, {} as Record<string, Quote[]>);
 
@@ -151,9 +149,10 @@ export default function ClientQuotesViewer({ leadId, token }: Props) {
 
               <div className="space-y-4">
                 {companyQuotes.map((quote) => {
-                  const fileUrl = supabase.storage
-                    .from('contract-documents')
-                    .getPublicUrl(quote.file_path).data.publicUrl;
+                  // Le quote_file_url est déjà une URL publique complète
+                  const fileUrl = quote.quote_file_url;
+                  // Extraire le nom du fichier de l'URL
+                  const fileName = fileUrl.split('/').pop() || 'Devis.pdf';
 
                   return (
                     <div key={quote.id} className="bg-gray-900/50 border border-gray-700 rounded-lg p-5">
@@ -162,27 +161,35 @@ export default function ClientQuotesViewer({ leadId, token }: Props) {
                           <FileText className="w-6 h-6 text-blue-400 flex-shrink-0 mt-1" />
                           <div className="flex-1 min-w-0">
                             <p className="font-semibold text-white text-lg mb-1 truncate">
-                              {quote.file_name}
+                              {decodeURIComponent(fileName)}
                             </p>
                             <p className="text-sm text-gray-400">
-                              Reçu le {new Date(quote.created_at).toLocaleDateString('fr-FR', {
-                                day: 'numeric',
-                                month: 'long',
-                                year: 'numeric'
-                              })}
+                              {quote.submitted_at ? (
+                                <>Uploadé le {new Date(quote.submitted_at).toLocaleDateString('fr-FR', {
+                                  day: 'numeric',
+                                  month: 'long',
+                                  year: 'numeric'
+                                })}</>
+                              ) : (
+                                <>Créé le {new Date(quote.created_at).toLocaleDateString('fr-FR', {
+                                  day: 'numeric',
+                                  month: 'long',
+                                  year: 'numeric'
+                                })}</>
+                              )}
                             </p>
-                            {quote.sent_at && (
+                            {quote.last_sent_at && (
                               <p className="text-xs text-green-400 mt-1 flex items-center gap-1">
                                 <CheckCircle2 className="w-3 h-3" />
-                                Email envoyé le {new Date(quote.sent_at).toLocaleDateString('fr-FR')}
+                                Email envoyé le {new Date(quote.last_sent_at).toLocaleDateString('fr-FR')}
                               </p>
                             )}
                           </div>
                         </div>
-                        {quote.amount && (
+                        {quote.quote_amount && (
                           <div className="text-right ml-4">
                             <div className="text-2xl font-bold text-amber-500">
-                              {quote.amount.toFixed(2)} €
+                              {quote.quote_amount.toFixed(2)} €
                             </div>
                             <div className="text-xs text-gray-400">par an</div>
                           </div>
@@ -202,7 +209,7 @@ export default function ClientQuotesViewer({ leadId, token }: Props) {
 
                         <a
                           href={fileUrl}
-                          download={quote.file_name}
+                          download={fileName}
                           className="flex items-center gap-2 px-5 py-2.5 bg-gray-700 hover:bg-gray-600 text-white font-semibold rounded-lg transition-colors text-sm"
                         >
                           <Download className="w-4 h-4" />
