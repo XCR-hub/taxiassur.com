@@ -48,8 +48,9 @@ export default function SaisieDevisStep({
   }, [leadId]);
 
   useEffect(() => {
-    // Check if all 5 companies have at least 1 quote
-    const companiesWithQuotes = new Set(quotes.map(q => q.company_id));
+    // Check if all 5 companies have at least 1 quote with a file
+    const quotesWithFiles = quotes.filter(q => q.quote_file_url && q.quote_file_url.trim() !== '');
+    const companiesWithQuotes = new Set(quotesWithFiles.map(q => q.company_id));
     if (companiesWithQuotes.size >= 5) {
       onComplete?.();
     }
@@ -116,31 +117,62 @@ export default function SaisieDevisStep({
       // Get company details
       const company = companies.find(c => c.id === companyId);
 
-      console.log('Creating quote record with:', {
+      console.log('Upserting quote record with:', {
         lead_id: leadId,
         company_id: companyId,
         quote_file_url: publicUrl
       });
 
-      // Create quote record - using correct column names
-      const { data: quoteData, error: quoteError } = await supabase
+      // Check if quote already exists
+      const { data: existingQuote } = await supabase
         .from('lead_company_quotes')
-        .insert({
-          lead_id: leadId,
-          company_id: companyId,
-          quote_file_url: publicUrl,
-          status: 'pending',
-          submitted_at: new Date().toISOString()
-        })
-        .select()
-        .single();
+        .select('id')
+        .eq('lead_id', leadId)
+        .eq('company_id', companyId)
+        .maybeSingle();
 
-      if (quoteError) {
-        console.error('Database insert error:', quoteError);
-        throw new Error(`Erreur base de données: ${quoteError.message}`);
+      let quoteData;
+      if (existingQuote) {
+        // Update existing quote
+        const { data, error: updateError } = await supabase
+          .from('lead_company_quotes')
+          .update({
+            quote_file_url: publicUrl,
+            status: 'submitted',
+            submitted_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', existingQuote.id)
+          .select()
+          .single();
+
+        if (updateError) {
+          console.error('Database update error:', updateError);
+          throw new Error(`Erreur mise à jour base de données: ${updateError.message}`);
+        }
+        quoteData = data;
+        console.log('Quote updated successfully:', quoteData);
+      } else {
+        // Create new quote record
+        const { data, error: insertError } = await supabase
+          .from('lead_company_quotes')
+          .insert({
+            lead_id: leadId,
+            company_id: companyId,
+            quote_file_url: publicUrl,
+            status: 'submitted',
+            submitted_at: new Date().toISOString()
+          })
+          .select()
+          .single();
+
+        if (insertError) {
+          console.error('Database insert error:', insertError);
+          throw new Error(`Erreur base de données: ${insertError.message}`);
+        }
+        quoteData = data;
+        console.log('Quote created successfully:', quoteData);
       }
-
-      console.log('Quote created successfully:', quoteData);
 
       // Send automatic email to prospect
       await sendQuoteEmail(companyId, company?.name || 'Compagnie', file.name);
@@ -299,7 +331,9 @@ export default function SaisieDevisStep({
     return quotes.filter(q => q.company_id === companyId);
   };
 
-  const companiesWithQuotes = new Set(quotes.map(q => q.company_id));
+  // Only count companies with uploaded files
+  const quotesWithFiles = quotes.filter(q => q.quote_file_url && q.quote_file_url.trim() !== '');
+  const companiesWithQuotes = new Set(quotesWithFiles.map(q => q.company_id));
   const progressPercent = companies.length > 0
     ? Math.round((companiesWithQuotes.size / companies.length) * 100)
     : 0;
@@ -342,7 +376,12 @@ export default function SaisieDevisStep({
         </div>
 
         <div className="text-sm text-gray-600 text-center">
-          {quotes.length} devis uploadé{quotes.length > 1 ? 's' : ''} au total
+          {quotesWithFiles.length} devis uploadé{quotesWithFiles.length > 1 ? 's' : ''} au total
+          {quotes.length > quotesWithFiles.length && (
+            <span className="text-orange-600 ml-2">
+              ({quotes.length - quotesWithFiles.length} en attente)
+            </span>
+          )}
         </div>
       </div>
 
@@ -386,57 +425,76 @@ export default function SaisieDevisStep({
               {companyQuotes.length > 0 && (
                 <div className="space-y-3 mb-4">
                   {companyQuotes.map((quote) => {
-                    // Extract filename from URL
-                    const fileName = quote.quote_file_url.split('/').pop() || 'devis.pdf';
+                    // Check if quote has a file
+                    const hasFile = quote.quote_file_url && quote.quote_file_url.trim() !== '';
+                    const fileName = hasFile ? (quote.quote_file_url.split('/').pop() || 'devis.pdf') : 'Devis en attente';
 
                     return (
-                      <div key={quote.id} className="bg-white rounded-lg p-4 border border-green-200">
+                      <div key={quote.id} className={`rounded-lg p-4 border ${hasFile ? 'bg-white border-green-200' : 'bg-orange-50 border-orange-200'}`}>
                         <div className="flex items-start gap-3">
-                          <FileText className="h-5 w-5 text-gray-600 flex-shrink-0 mt-0.5" />
+                          <FileText className={`h-5 w-5 flex-shrink-0 mt-0.5 ${hasFile ? 'text-gray-600' : 'text-orange-600'}`} />
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium text-gray-900 truncate mb-1">
-                              {decodeURIComponent(fileName)}
+                              {hasFile ? decodeURIComponent(fileName) : '⚠️ Fichier non uploadé'}
                             </p>
-                            {quote.submitted_at && (
+                            {hasFile && quote.submitted_at && (
                               <p className="text-xs text-gray-600">
                                 Uploadé le {new Date(quote.submitted_at).toLocaleDateString('fr-FR')} à {new Date(quote.submitted_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
                               </p>
                             )}
-                            {quote.last_sent_at && (
+                            {hasFile && quote.last_sent_at && (
                               <p className="text-xs text-green-600">
                                 Email envoyé le {new Date(quote.last_sent_at).toLocaleDateString('fr-FR')} à {new Date(quote.last_sent_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                              </p>
+                            )}
+                            {!hasFile && (
+                              <p className="text-xs text-orange-600 font-medium">
+                                Veuillez uploader le fichier PDF du devis
                               </p>
                             )}
                           </div>
                         </div>
 
-                        <div className="flex gap-2 mt-3">
-                          <button
-                            onClick={() => window.open(quote.quote_file_url, '_blank')}
-                            className="flex-1 text-sm py-2 px-3 bg-blue-50 text-blue-600 rounded hover:bg-blue-100 flex items-center justify-center gap-2 font-medium"
-                          >
-                            <FileText className="h-4 w-4" />
-                            Voir
-                          </button>
-                          <button
-                            onClick={() => resendQuoteEmail(quote)}
-                            disabled={isSending}
-                            className="flex-1 text-sm py-2 px-3 bg-green-50 text-green-600 rounded hover:bg-green-100 flex items-center justify-center gap-2 disabled:opacity-50 font-medium"
-                          >
-                            {isSending ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                              <Send className="h-4 w-4" />
-                            )}
-                            {isSending ? 'Envoi...' : 'Renvoyer'}
-                          </button>
-                          <button
-                            onClick={() => deleteQuote(quote.id, quote.quote_file_url)}
-                            className="text-sm py-2 px-3 bg-red-50 text-red-600 rounded hover:bg-red-100 flex items-center justify-center gap-2"
-                          >
-                            <X className="h-4 w-4" />
-                          </button>
-                        </div>
+                        {hasFile && (
+                          <div className="flex gap-2 mt-3">
+                            <button
+                              onClick={() => window.open(quote.quote_file_url, '_blank')}
+                              className="flex-1 text-sm py-2 px-3 bg-blue-50 text-blue-600 rounded hover:bg-blue-100 flex items-center justify-center gap-2 font-medium"
+                            >
+                              <FileText className="h-4 w-4" />
+                              Voir
+                            </button>
+                            <button
+                              onClick={() => resendQuoteEmail(quote)}
+                              disabled={isSending}
+                              className="flex-1 text-sm py-2 px-3 bg-green-50 text-green-600 rounded hover:bg-green-100 flex items-center justify-center gap-2 disabled:opacity-50 font-medium"
+                            >
+                              {isSending ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <Send className="h-4 w-4" />
+                              )}
+                              {isSending ? 'Envoi...' : 'Renvoyer'}
+                            </button>
+                            <button
+                              onClick={() => deleteQuote(quote.id, quote.quote_file_url)}
+                              className="text-sm py-2 px-3 bg-red-50 text-red-600 rounded hover:bg-red-100 flex items-center justify-center gap-2"
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
+                          </div>
+                        )}
+                        {!hasFile && (
+                          <div className="mt-3">
+                            <button
+                              onClick={() => deleteQuote(quote.id, '')}
+                              className="w-full text-sm py-2 px-3 bg-red-50 text-red-600 rounded hover:bg-red-100 flex items-center justify-center gap-2 font-medium"
+                            >
+                              <X className="h-4 w-4" />
+                              Supprimer cette entrée
+                            </button>
+                          </div>
+                        )}
                       </div>
                     );
                   })}

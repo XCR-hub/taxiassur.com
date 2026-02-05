@@ -43,41 +43,61 @@ export default function ClientQuotesViewer({ leadId, token }: Props) {
       let quotesData: Quote[] = [];
       let currentLeadId = leadId;
 
-      // Si on a un token, récupérer le lead_id associé
-      if (token && !leadId) {
-        const { data: leadData, error: leadError } = await supabase.rpc('get_lead_by_token', {
+      // Si on a un token, utiliser la fonction RPC pour récupérer les devis
+      if (token) {
+        const { data, error } = await supabase.rpc('get_lead_quotes_by_token', {
           p_token: token
         });
 
-        if (leadError) throw leadError;
-        if (leadData && leadData.length > 0) {
-          currentLeadId = leadData[0].id;
+        if (error) {
+          console.error('Erreur RPC get_lead_quotes_by_token:', error);
+          throw error;
+        }
+
+        quotesData = data || [];
+
+        // Extraire les compagnies des devis retournés
+        const companyIds = [...new Set(quotesData.map(q => q.company_id))];
+        if (companyIds.length > 0) {
+          const { data: companiesData, error: companiesError } = await supabase
+            .from('insurance_companies')
+            .select('*')
+            .in('id', companyIds)
+            .eq('is_active', true)
+            .order('priority_order');
+
+          if (!companiesError) {
+            setCompanies(companiesData || []);
+          }
         }
       }
+      // Sinon, utiliser le lead_id directement (mode authentifié)
+      else if (leadId) {
+        currentLeadId = leadId;
 
-      // Charger les devis
-      if (currentLeadId) {
         const { data, error } = await supabase
           .from('lead_company_quotes')
           .select('*')
           .eq('lead_id', currentLeadId)
+          .not('quote_file_url', 'is', null)  // Seulement les devis avec fichiers
           .order('created_at', { ascending: false });
 
         if (error) throw error;
         quotesData = data || [];
+
+        // Charger les compagnies d'assurance
+        const { data: companiesData, error: companiesError } = await supabase
+          .from('insurance_companies')
+          .select('*')
+          .eq('is_mandatory', true)
+          .eq('is_active', true)
+          .order('priority_order');
+
+        if (companiesError) throw companiesError;
+
+        setCompanies(companiesData || []);
       }
 
-      // Charger les compagnies d'assurance
-      const { data: companiesData, error: companiesError } = await supabase
-        .from('insurance_companies')
-        .select('*')
-        .eq('is_mandatory', true)
-        .eq('is_active', true)
-        .order('priority_order');
-
-      if (companiesError) throw companiesError;
-
-      setCompanies(companiesData || []);
       setQuotes(quotesData);
     } catch (error) {
       console.error('Erreur chargement devis:', error);
