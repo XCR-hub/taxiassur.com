@@ -73,6 +73,7 @@ export default function DocumentValidationComplete({
   const [rejectingDoc, setRejectingDoc] = useState<string | null>(null);
   const [rejectionReason, setRejectionReason] = useState('');
   const [processing, setProcessing] = useState<string | null>(null);
+  const [categories, setCategories] = useState<DocumentCategory[]>(DOCUMENT_CATEGORIES);
 
   useEffect(() => {
     loadAll();
@@ -83,12 +84,42 @@ export default function DocumentValidationComplete({
       setLoading(true);
       await Promise.all([
         loadBasket(),
-        loadClassifiedDocuments()
+        loadClassifiedDocuments(),
+        loadCustomCategories()
       ]);
     } catch (error) {
       console.error('Error loading documents:', error);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function loadCustomCategories() {
+    try {
+      // Charger les documents personnalisés pour ce lead
+      const { data, error } = await supabase
+        .from('crm_lead_documents')
+        .select('custom_label')
+        .eq('lead_id', caseId)
+        .eq('document_type', 'custom')
+        .not('custom_label', 'is', null);
+
+      if (error) throw error;
+
+      // Créer des catégories dynamiques pour les documents personnalisés
+      const customCategories: DocumentCategory[] = (data || [])
+        .filter(d => d.custom_label)
+        .map(d => ({
+          id: `custom_${d.custom_label}`,
+          label: d.custom_label!,
+          icon: '📎',
+          required: false
+        }));
+
+      // Fusionner avec les catégories par défaut
+      setCategories([...DOCUMENT_CATEGORIES, ...customCategories]);
+    } catch (error) {
+      console.error('Error loading custom categories:', error);
     }
   }
 
@@ -113,7 +144,16 @@ export default function DocumentValidationComplete({
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setClassifiedDocs(data || []);
+
+      // Mapper les documents personnalisés pour utiliser l'ID composite
+      const mappedDocs = (data || []).map(doc => ({
+        ...doc,
+        document_type: doc.document_type === 'custom' && doc.custom_label
+          ? `custom_${doc.custom_label}`
+          : doc.document_type
+      }));
+
+      setClassifiedDocs(mappedDocs);
     } catch (error) {
       console.error('Error loading classified documents:', error);
     }
@@ -123,11 +163,21 @@ export default function DocumentValidationComplete({
     try {
       setClassifying(attachmentId);
 
+      // Si c'est un document personnalisé, extraire le label
+      let finalDocType = docType;
+      let customLabel: string | undefined;
+
+      if (docType.startsWith('custom_')) {
+        finalDocType = 'custom';
+        customLabel = docType.replace('custom_', '');
+      }
+
       const { data, error } = await supabase
         .rpc('classify_attachment', {
           p_attachment_id: attachmentId,
-          p_doc_type: docType,
+          p_doc_type: finalDocType,
           p_create_document: true,
+          p_custom_label: customLabel
         });
 
       if (error) throw error;
@@ -193,14 +243,14 @@ export default function DocumentValidationComplete({
         const { data: emailResult, error: emailError } = await supabase.functions.invoke('send-crm-email', {
           body: {
             to: leadEmail,
-            subject: `Document validé - ${DOCUMENT_CATEGORIES.find(c => c.id === doc.document_type)?.label || doc.document_type}`,
+            subject: `Document validé - ${categories.find(c => c.id === doc.document_type)?.label || doc.document_type}`,
             content: `
               <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
                 <h2 style="color: #16a34a;">✅ Document validé</h2>
                 <p>Bonjour ${leadFirstName || ''},</p>
                 <p>Nous avons validé votre document :</p>
                 <div style="background-color: #f0fdf4; border-left: 4px solid #16a34a; padding: 15px; margin: 20px 0;">
-                  <strong>${DOCUMENT_CATEGORIES.find(c => c.id === doc.document_type)?.label || doc.document_type}</strong><br>
+                  <strong>${categories.find(c => c.id === doc.document_type)?.label || doc.document_type}</strong><br>
                   <span style="color: #666; font-size: 14px;">${doc.file_name}</span>
                 </div>
                 <p>Votre dossier avance bien ! Nous vous tiendrons informé de la suite.</p>
@@ -268,14 +318,14 @@ export default function DocumentValidationComplete({
         const { error: emailError } = await supabase.functions.invoke('send-crm-email', {
           body: {
             to: leadEmail,
-            subject: `Document à renouveler - ${DOCUMENT_CATEGORIES.find(c => c.id === doc.document_type)?.label || doc.document_type}`,
+            subject: `Document à renouveler - ${categories.find(c => c.id === doc.document_type)?.label || doc.document_type}`,
             content: `
               <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
                 <h2 style="color: #dc2626;">⚠️ Document à renouveler</h2>
                 <p>Bonjour ${leadFirstName || ''},</p>
                 <p>Nous avons examiné votre document mais nous avons besoin que vous le renouveliez :</p>
                 <div style="background-color: #fef2f2; border-left: 4px solid #dc2626; padding: 15px; margin: 20px 0;">
-                  <strong>${DOCUMENT_CATEGORIES.find(c => c.id === doc.document_type)?.label || doc.document_type}</strong><br>
+                  <strong>${categories.find(c => c.id === doc.document_type)?.label || doc.document_type}</strong><br>
                   <span style="color: #666; font-size: 14px;">${doc.file_name}</span>
                 </div>
                 <div style="background-color: #fffbeb; border: 1px solid #fbbf24; padding: 15px; margin: 20px 0; border-radius: 8px;">
@@ -475,7 +525,7 @@ export default function DocumentValidationComplete({
         {/* Colonnes droites : Catégories de documents */}
         <div className="lg:col-span-2">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {DOCUMENT_CATEGORIES.map((category) => {
+            {categories.map((category) => {
               const docsInCategory = classifiedDocs.filter(d => d.document_type === category.id);
 
               return (

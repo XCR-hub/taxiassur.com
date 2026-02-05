@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Mail, MessageSquare, Phone, Send, CheckCircle2, AlertCircle, Loader2, FileText, Download } from 'lucide-react';
+import { Mail, MessageSquare, Phone, Send, CheckCircle2, AlertCircle, Loader2, FileText, Download, Plus, X } from 'lucide-react';
 import DocumentValidationComplete from './DocumentValidationComplete';
 
 interface CollecteDocumentsStepProps {
@@ -54,10 +54,14 @@ export default function CollecteDocumentsStep({
   });
   const [documents, setDocuments] = useState<DocumentInfo[]>([]);
   const [actualFirstName, setActualFirstName] = useState<string>(leadFirstName || '');
+  const [customDocuments, setCustomDocuments] = useState<string[]>([]);
+  const [newCustomDoc, setNewCustomDoc] = useState<string>('');
+  const [showCustomDocInput, setShowCustomDocInput] = useState(false);
 
   useEffect(() => {
     loadTemplates();
     loadDocumentStats();
+    loadCustomDocuments();
     if (!leadFirstName) {
       loadLeadName();
     }
@@ -113,7 +117,7 @@ export default function CollecteDocumentsStep({
     try {
       const { data, error } = await supabase
         .from('crm_lead_documents')
-        .select('document_type, status')
+        .select('document_type, status, custom_label')
         .eq('lead_id', leadId);
 
       if (error) throw error;
@@ -130,7 +134,7 @@ export default function CollecteDocumentsStep({
 
       const documentsList: DocumentInfo[] = data?.map(d => ({
         type: d.document_type,
-        label: documentLabels[d.document_type] || d.document_type,
+        label: d.custom_label || documentLabels[d.document_type] || d.document_type,
         status: d.status
       })) || [];
 
@@ -148,6 +152,81 @@ export default function CollecteDocumentsStep({
       });
     } catch (error) {
       console.error('Error loading document stats:', error);
+    }
+  }
+
+  async function loadCustomDocuments() {
+    try {
+      const { data, error } = await supabase
+        .from('crm_lead_documents')
+        .select('custom_label')
+        .eq('lead_id', leadId)
+        .eq('document_type', 'custom')
+        .not('custom_label', 'is', null);
+
+      if (error) throw error;
+
+      const customDocs = data?.map(d => d.custom_label).filter(Boolean) || [];
+      setCustomDocuments(customDocs as string[]);
+    } catch (error) {
+      console.error('Error loading custom documents:', error);
+    }
+  }
+
+  async function addCustomDocument() {
+    if (!newCustomDoc.trim()) {
+      alert('Veuillez saisir un nom de document');
+      return;
+    }
+
+    try {
+      // Ajouter le document personnalisé à la base
+      const { error } = await supabase
+        .from('crm_lead_documents')
+        .insert({
+          lead_id: leadId,
+          document_type: 'custom',
+          custom_label: newCustomDoc.trim(),
+          status: 'missing'
+        });
+
+      if (error) throw error;
+
+      // Recharger les données
+      await loadDocumentStats();
+      await loadCustomDocuments();
+
+      // Reset
+      setNewCustomDoc('');
+      setShowCustomDocInput(false);
+      alert(`✅ Document "${newCustomDoc}" ajouté à la liste`);
+    } catch (error: any) {
+      console.error('Error adding custom document:', error);
+      alert(`❌ Erreur: ${error.message}`);
+    }
+  }
+
+  async function removeCustomDocument(docLabel: string) {
+    if (!confirm(`Supprimer le document "${docLabel}" de la liste ?`)) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('crm_lead_documents')
+        .delete()
+        .eq('lead_id', leadId)
+        .eq('document_type', 'custom')
+        .eq('custom_label', docLabel);
+
+      if (error) throw error;
+
+      await loadDocumentStats();
+      await loadCustomDocuments();
+      alert(`✅ Document "${docLabel}" supprimé`);
+    } catch (error: any) {
+      console.error('Error removing custom document:', error);
+      alert(`❌ Erreur: ${error.message}`);
     }
   }
 
@@ -342,6 +421,86 @@ export default function CollecteDocumentsStep({
             <div className="text-sm text-gray-600">Manquants</div>
           </div>
         </div>
+      </div>
+
+      {/* Documents Personnalisés */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-gray-900">
+            Documents Complémentaires
+          </h3>
+          <button
+            onClick={() => setShowCustomDocInput(!showCustomDocInput)}
+            className="flex items-center gap-2 px-3 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          >
+            <Plus className="h-4 w-4" />
+            Ajouter un document
+          </button>
+        </div>
+
+        {showCustomDocInput && (
+          <div className="mb-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Nom du document complémentaire
+            </label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={newCustomDoc}
+                onChange={(e) => setNewCustomDoc(e.target.value)}
+                placeholder="Ex: Attestation d'assurance précédente"
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter') {
+                    addCustomDocument();
+                  }
+                }}
+              />
+              <button
+                onClick={addCustomDocument}
+                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+              >
+                Ajouter
+              </button>
+              <button
+                onClick={() => {
+                  setShowCustomDocInput(false);
+                  setNewCustomDoc('');
+                }}
+                className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400"
+              >
+                Annuler
+              </button>
+            </div>
+            <p className="text-xs text-gray-600 mt-2">
+              Ces documents seront automatiquement inclus dans la demande par email/SMS/WhatsApp
+            </p>
+          </div>
+        )}
+
+        {customDocuments.length > 0 && (
+          <div className="space-y-2">
+            <p className="text-sm text-gray-600 mb-2">Documents complémentaires ajoutés :</p>
+            {customDocuments.map((doc, index) => (
+              <div
+                key={index}
+                className="flex items-center justify-between p-3 bg-amber-50 border border-amber-200 rounded-lg"
+              >
+                <div className="flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-amber-600" />
+                  <span className="text-sm font-medium text-gray-900">{doc}</span>
+                </div>
+                <button
+                  onClick={() => removeCustomDocument(doc)}
+                  className="p-1 text-red-600 hover:bg-red-100 rounded"
+                  title="Supprimer"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Communication Templates */}
