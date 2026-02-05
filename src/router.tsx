@@ -97,6 +97,7 @@ const CRMAIGovernance = lazy(() => import('./backoffice/CRMAIGovernance'));
 const CRMAdminSettings = lazy(() => import('./backoffice/CRMAdminSettings'));
 const CRMTemplatesManager = lazy(() => import('./backoffice/CRMTemplatesManager'));
 const CRMCommercial = lazy(() => import('./backoffice/CRMCommercial'));
+const InboxIntelligent = lazy(() => import('./backoffice/InboxIntelligent'));
 const LeadManager = lazy(() => import('./backoffice/LeadManager'));
 const PartnerPortal = lazy(() => import('./backoffice/PartnerPortal'));
 const SocialMediaManager = lazy(() => import('./backoffice/SocialMediaManager'));
@@ -469,6 +470,10 @@ export const router = createBrowserRouter([
       {
         path: 'inbox',
         element: <CRMInboxMulticanal />,
+      },
+      {
+        path: 'inbox-intelligent',
+        element: <InboxIntelligent />,
       },
       {
         path: 'retention',
