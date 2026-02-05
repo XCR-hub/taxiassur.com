@@ -40,37 +40,40 @@ export default function ClientQuotesViewer({ leadId, token, supabaseClient }: Pr
   }, [leadId, token]);
 
   const handleValidateQuote = async (quoteId: string, companyName: string) => {
-    if (!supabaseClient) {
+    if (!supabaseClient || !token) {
       alert('❌ Erreur de configuration. Veuillez recharger la page.');
       return;
     }
 
     setValidating(quoteId);
     try {
-      // Mettre à jour le statut du devis
-      const { error: updateError } = await supabaseClient
-        .from('lead_company_quotes')
-        .update({
-          status: 'accepted',
-          quote_accepted_at: new Date().toISOString()
-        })
-        .eq('id', quoteId);
+      // Utiliser la fonction RPC sécurisée pour valider le devis
+      const { data, error } = await supabaseClient.rpc('validate_quote_by_token', {
+        p_quote_id: quoteId,
+        p_token: token
+      });
 
-      if (updateError) {
-        console.error('Error updating quote:', updateError);
-        throw updateError;
+      if (error) {
+        console.error('Error calling validate_quote_by_token:', error);
+        throw error;
+      }
+
+      // Vérifier le résultat de la fonction
+      if (!data?.success) {
+        throw new Error(data?.error || 'Erreur lors de la validation');
       }
 
       // Recharger les données
       await loadData();
 
-      alert(`✅ Devis ${companyName} validé avec succès !\n\nNotre équipe a été notifiée et va vous recontacter très prochainement pour finaliser votre souscription.`);
+      alert(`✅ Devis ${data.company_name || companyName} validé avec succès !\n\nNotre équipe a été notifiée et va vous recontacter très prochainement pour finaliser votre souscription.`);
 
       // Fermer le modal de confirmation
       setShowConfirmModal(null);
     } catch (error) {
       console.error('Error validating quote:', error);
-      alert('❌ Erreur lors de la validation du devis. Veuillez réessayer ou nous contacter.');
+      const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue';
+      alert(`❌ Erreur lors de la validation du devis: ${errorMessage}\n\nVeuillez réessayer ou nous contacter.`);
     } finally {
       setValidating(null);
     }
@@ -287,7 +290,7 @@ export default function ClientQuotesViewer({ leadId, token, supabaseClient }: Pr
                         </button>
 
                         {/* Bouton Valider */}
-                        {quote.status !== 'accepted' && (
+                        {quote.status !== 'validated' && (
                           <button
                             onClick={() => setShowConfirmModal(quote.id)}
                             disabled={validating !== null}
@@ -298,7 +301,7 @@ export default function ClientQuotesViewer({ leadId, token, supabaseClient }: Pr
                           </button>
                         )}
 
-                        {quote.status === 'accepted' && (
+                        {quote.status === 'validated' && (
                           <div className="flex items-center gap-2 px-5 py-2.5 bg-green-600/20 border border-green-500 text-green-400 font-bold rounded-lg text-sm ml-auto">
                             <CheckCircle2 className="w-4 h-4" />
                             Devis validé
