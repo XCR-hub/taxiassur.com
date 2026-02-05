@@ -1,6 +1,20 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Trash2, AlertTriangle, Users, Mail, Calendar, Shield } from 'lucide-react';
+import {
+  Trash2,
+  AlertTriangle,
+  Users,
+  Mail,
+  Calendar,
+  Shield,
+  GitMerge,
+  CheckCircle2,
+  Star,
+  FileText,
+  MessageSquare,
+  PhoneCall,
+  X
+} from 'lucide-react';
 
 interface DuplicateLead {
   email: string;
@@ -20,6 +34,12 @@ interface Lead {
   source: string;
   created_at: string;
   metadata: any;
+  _counts?: {
+    interactions: number;
+    documents: number;
+    emails: number;
+    quotes: number;
+  };
 }
 
 export default function DuplicateLeadsManager() {
@@ -29,6 +49,12 @@ export default function DuplicateLeadsManager() {
   const [loading, setLoading] = useState(true);
   const [isMasterAdmin, setIsMasterAdmin] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  // États pour la fusion
+  const [mergeMode, setMergeMode] = useState<string | null>(null); // email en cours de fusion
+  const [selectedPrimary, setSelectedPrimary] = useState<string | null>(null);
+  const [selectedToMerge, setSelectedToMerge] = useState<Set<string>>(new Set());
+  const [merging, setMerging] = useState(false);
 
   useEffect(() => {
     checkMasterAdmin();
@@ -88,8 +114,44 @@ export default function DuplicateLeadsManager() {
 
       if (error) throw error;
 
-      setLeadsDetails(prev => ({ ...prev, [email]: data || [] }));
+      // Charger les compteurs pour chaque lead
+      const leadsWithCounts = await Promise.all((data || []).map(async (lead) => {
+        const [interactionsCount, documentsCount, emailsCount, quotesCount] = await Promise.all([
+          supabase.from('crm_interactions').select('*', { count: 'exact', head: true }).eq('lead_id', lead.id),
+          supabase.from('crm_lead_documents').select('*', { count: 'exact', head: true }).eq('lead_id', lead.id),
+          supabase.from('email_messages').select('*', { count: 'exact', head: true }).eq('lead_id', lead.id),
+          supabase.from('lead_company_quotes').select('*', { count: 'exact', head: true }).eq('lead_id', lead.id)
+        ]);
+
+        return {
+          ...lead,
+          _counts: {
+            interactions: interactionsCount.count || 0,
+            documents: documentsCount.count || 0,
+            emails: emailsCount.count || 0,
+            quotes: quotesCount.count || 0
+          }
+        };
+      }));
+
+      setLeadsDetails(prev => ({ ...prev, [email]: leadsWithCounts }));
       setExpandedEmail(email);
+
+      // Auto-sélectionner le lead le plus "riche" comme principal
+      if (leadsWithCounts.length > 0) {
+        const richest = leadsWithCounts.reduce((prev, current) => {
+          const prevScore = (prev._counts?.interactions || 0) +
+                           (prev._counts?.documents || 0) +
+                           (prev._counts?.emails || 0) +
+                           (prev._counts?.quotes || 0);
+          const currentScore = (current._counts?.interactions || 0) +
+                              (current._counts?.documents || 0) +
+                              (current._counts?.emails || 0) +
+                              (current._counts?.quotes || 0);
+          return currentScore > prevScore ? current : prev;
+        });
+        setSelectedPrimary(richest.id);
+      }
     } catch (error) {
       console.error('Error loading lead details:', error);
     }
@@ -136,6 +198,88 @@ export default function DuplicateLeadsManager() {
       alert('❌ Erreur : ' + (error.message || 'Impossible de supprimer le lead'));
     } finally {
       setDeletingId(null);
+    }
+  }
+
+  function startMergeMode(email: string) {
+    setMergeMode(email);
+    setSelectedToMerge(new Set());
+  }
+
+  function cancelMerge() {
+    setMergeMode(null);
+    setSelectedPrimary(null);
+    setSelectedToMerge(new Set());
+  }
+
+  function toggleLeadSelection(leadId: string) {
+    setSelectedToMerge(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(leadId)) {
+        newSet.delete(leadId);
+      } else {
+        newSet.add(leadId);
+      }
+      return newSet;
+    });
+  }
+
+  async function executeMerge(email: string) {
+    if (!selectedPrimary || selectedToMerge.size === 0) {
+      alert('Veuillez sélectionner un lead principal et au moins un lead à fusionner');
+      return;
+    }
+
+    const leads = leadsDetails[email] || [];
+    const primaryLead = leads.find(l => l.id === selectedPrimary);
+    const leadsToMerge = leads.filter(l => selectedToMerge.has(l.id));
+
+    const confirmed = window.confirm(
+      `🔀 FUSION DE LEADS\n\n` +
+      `Lead principal : ${primaryLead?.full_name || primaryLead?.email}\n` +
+      `Leads à fusionner : ${leadsToMerge.map(l => l.full_name || l.email).join(', ')}\n\n` +
+      `Cette action va :\n` +
+      `✓ Transférer tous les emails, documents, interactions et devis vers le lead principal\n` +
+      `✓ Marquer les autres leads comme supprimés\n` +
+      `✓ Créer un historique de fusion complet\n\n` +
+      `Confirmer la fusion ?`
+    );
+
+    if (!confirmed) return;
+
+    try {
+      setMerging(true);
+
+      const { data, error } = await supabase.rpc('merge_duplicate_leads', {
+        p_primary_lead_id: selectedPrimary,
+        p_leads_to_merge: Array.from(selectedToMerge)
+      });
+
+      if (error) throw error;
+
+      if (data?.success) {
+        alert(
+          `✅ Fusion réussie !\n\n` +
+          `${data.merged_count} lead(s) fusionné(s)\n` +
+          `${data.interactions_moved} interaction(s) transférée(s)\n` +
+          `${data.documents_moved} document(s) transféré(s)\n` +
+          `${data.emails_moved} email(s) transféré(s)\n` +
+          `${data.quotes_moved} devis transféré(s)`
+        );
+
+        // Rafraîchir la liste
+        await loadDuplicates();
+        cancelMerge();
+        setExpandedEmail(null);
+        delete leadsDetails[email];
+      } else {
+        throw new Error(data?.error || 'Erreur lors de la fusion');
+      }
+    } catch (error: any) {
+      console.error('Error merging leads:', error);
+      alert('❌ Erreur : ' + (error.message || 'Impossible de fusionner les leads'));
+    } finally {
+      setMerging(false);
     }
   }
 
@@ -262,15 +406,124 @@ export default function DuplicateLeadsManager() {
 
               {expandedEmail === duplicate.email && leadsDetails[duplicate.email] && (
                 <div className="border-t border-gray-200 bg-gray-50 p-6">
+                  {/* Barre d'actions fusion */}
+                  {mergeMode === duplicate.email ? (
+                    <div className="mb-6 bg-blue-50 border-2 border-blue-300 rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                          <GitMerge className="w-6 h-6 text-blue-600" />
+                          <div>
+                            <h3 className="font-bold text-blue-900">Mode Fusion Activé</h3>
+                            <p className="text-sm text-blue-700">
+                              1. Sélectionnez le lead principal (étoile)
+                              2. Cochez les leads à fusionner
+                              3. Cliquez sur "Fusionner"
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          onClick={cancelMerge}
+                          className="p-2 hover:bg-blue-100 rounded-lg transition-colors"
+                        >
+                          <X className="w-5 h-5 text-blue-600" />
+                        </button>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <button
+                          onClick={() => executeMerge(duplicate.email)}
+                          disabled={!selectedPrimary || selectedToMerge.size === 0 || merging}
+                          className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+                        >
+                          {merging ? (
+                            <>
+                              <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+                              Fusion en cours...
+                            </>
+                          ) : (
+                            <>
+                              <GitMerge className="w-5 h-5" />
+                              Fusionner {selectedToMerge.size} lead(s) dans le principal
+                            </>
+                          )}
+                        </button>
+                        <button
+                          onClick={cancelMerge}
+                          className="px-4 py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition-colors"
+                        >
+                          Annuler
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="mb-6 flex items-center justify-between bg-white border border-gray-200 rounded-lg p-4">
+                      <div className="flex items-center gap-3">
+                        <GitMerge className="w-6 h-6 text-gray-400" />
+                        <div>
+                          <h4 className="font-semibold text-gray-900">Fusionner les doublons</h4>
+                          <p className="text-sm text-gray-600">
+                            Conservez toutes les données en un seul lead
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => startMergeMode(duplicate.email)}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center gap-2"
+                      >
+                        <GitMerge className="w-4 h-4" />
+                        Activer le mode fusion
+                      </button>
+                    </div>
+                  )}
+
                   <div className="space-y-4">
-                    {leadsDetails[duplicate.email].map((lead, index) => (
+                    {leadsDetails[duplicate.email].map((lead, index) => {
+                      const isPrimary = selectedPrimary === lead.id;
+                      const isSelected = selectedToMerge.has(lead.id);
+                      const inMergeMode = mergeMode === duplicate.email;
+
+                      return (
                       <div
                         key={lead.id}
-                        className="bg-white rounded-lg border border-gray-200 p-4"
+                        className={`bg-white rounded-lg border-2 p-4 transition-all ${
+                          isPrimary && inMergeMode
+                            ? 'border-yellow-400 bg-yellow-50'
+                            : isSelected && inMergeMode
+                            ? 'border-blue-400 bg-blue-50'
+                            : 'border-gray-200'
+                        }`}
                       >
-                        <div className="flex items-start justify-between">
+                        <div className="flex items-start gap-4">
+                          {inMergeMode && (
+                            <div className="flex flex-col gap-2 pt-1">
+                              <button
+                                onClick={() => setSelectedPrimary(lead.id)}
+                                className={`p-2 rounded-lg transition-colors ${
+                                  isPrimary
+                                    ? 'bg-yellow-400 text-yellow-900'
+                                    : 'bg-gray-100 text-gray-400 hover:bg-yellow-100 hover:text-yellow-600'
+                                }`}
+                                title="Définir comme lead principal"
+                              >
+                                <Star className={`w-5 h-5 ${isPrimary ? 'fill-current' : ''}`} />
+                              </button>
+                              {!isPrimary && (
+                                <button
+                                  onClick={() => toggleLeadSelection(lead.id)}
+                                  className={`p-2 rounded-lg transition-colors ${
+                                    isSelected
+                                      ? 'bg-blue-500 text-white'
+                                      : 'bg-gray-100 text-gray-400 hover:bg-blue-100 hover:text-blue-600'
+                                  }`}
+                                  title="Sélectionner pour fusion"
+                                >
+                                  <CheckCircle2 className={`w-5 h-5 ${isSelected ? 'fill-current' : ''}`} />
+                                </button>
+                              )}
+                            </div>
+                          )}
+
                           <div className="flex-1">
-                            <div className="flex items-center gap-3 mb-3">
+                            <div className="flex items-center gap-3 mb-3 flex-wrap">
                               <span className="bg-blue-100 text-blue-700 text-xs font-semibold px-2 py-1 rounded">
                                 Lead #{index + 1}
                               </span>
@@ -281,7 +534,53 @@ export default function DuplicateLeadsManager() {
                               }`}>
                                 {lead.status}
                               </span>
+                              {isPrimary && inMergeMode && (
+                                <span className="bg-yellow-400 text-yellow-900 text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1">
+                                  <Star className="w-3 h-3 fill-current" />
+                                  LEAD PRINCIPAL
+                                </span>
+                              )}
+                              {isSelected && inMergeMode && !isPrimary && (
+                                <span className="bg-blue-500 text-white text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1">
+                                  <CheckCircle2 className="w-3 h-3" />
+                                  À FUSIONNER
+                                </span>
+                              )}
                             </div>
+
+                            {/* Compteurs d'activité */}
+                            {lead._counts && (
+                              <div className="grid grid-cols-4 gap-3 mb-4">
+                                <div className="bg-purple-50 border border-purple-200 rounded-lg p-2 text-center">
+                                  <div className="flex items-center justify-center gap-1 mb-1">
+                                    <MessageSquare className="w-3 h-3 text-purple-600" />
+                                    <span className="text-xs text-purple-600 font-medium">Interactions</span>
+                                  </div>
+                                  <p className="text-lg font-bold text-purple-700">{lead._counts.interactions}</p>
+                                </div>
+                                <div className="bg-green-50 border border-green-200 rounded-lg p-2 text-center">
+                                  <div className="flex items-center justify-center gap-1 mb-1">
+                                    <FileText className="w-3 h-3 text-green-600" />
+                                    <span className="text-xs text-green-600 font-medium">Documents</span>
+                                  </div>
+                                  <p className="text-lg font-bold text-green-700">{lead._counts.documents}</p>
+                                </div>
+                                <div className="bg-blue-50 border border-blue-200 rounded-lg p-2 text-center">
+                                  <div className="flex items-center justify-center gap-1 mb-1">
+                                    <Mail className="w-3 h-3 text-blue-600" />
+                                    <span className="text-xs text-blue-600 font-medium">Emails</span>
+                                  </div>
+                                  <p className="text-lg font-bold text-blue-700">{lead._counts.emails}</p>
+                                </div>
+                                <div className="bg-orange-50 border border-orange-200 rounded-lg p-2 text-center">
+                                  <div className="flex items-center justify-center gap-1 mb-1">
+                                    <PhoneCall className="w-3 h-3 text-orange-600" />
+                                    <span className="text-xs text-orange-600 font-medium">Devis</span>
+                                  </div>
+                                  <p className="text-lg font-bold text-orange-700">{lead._counts.quotes}</p>
+                                </div>
+                              </div>
+                            )}
 
                             <div className="grid grid-cols-2 gap-4 text-sm">
                               <div>
@@ -321,26 +620,29 @@ export default function DuplicateLeadsManager() {
                             )}
                           </div>
 
-                          <button
-                            onClick={() => handleDeleteLead(lead.id, duplicate.email)}
-                            disabled={deletingId === lead.id}
-                            className="ml-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
-                          >
-                            {deletingId === lead.id ? (
-                              <>
-                                <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                                Suppression...
-                              </>
-                            ) : (
-                              <>
-                                <Trash2 className="w-4 h-4" />
-                                Supprimer
-                              </>
-                            )}
-                          </button>
+                          {!inMergeMode && (
+                            <button
+                              onClick={() => handleDeleteLead(lead.id, duplicate.email)}
+                              disabled={deletingId === lead.id}
+                              className="ml-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+                            >
+                              {deletingId === lead.id ? (
+                                <>
+                                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                                  Suppression...
+                                </>
+                              ) : (
+                                <>
+                                  <Trash2 className="w-4 h-4" />
+                                  Supprimer
+                                </>
+                              )}
+                            </button>
+                          )}
                         </div>
                       </div>
-                    ))}
+                    );
+                    })}
                   </div>
                 </div>
               )}
