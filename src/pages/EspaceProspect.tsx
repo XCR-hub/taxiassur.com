@@ -599,7 +599,7 @@ const EspaceProspect: React.FC = () => {
                 </div>
               )}
 
-              {token && <ClientQuotesViewer token={token} />}
+              {token && anonClient && <ClientQuotesViewer token={token} supabaseClient={anonClient} />}
             </div>
           </div>
         )}

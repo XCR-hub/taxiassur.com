@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Download, FileText, AlertCircle, CheckCircle2, Printer, Eye, Building2, Check, Loader2 } from 'lucide-react';
-import { supabase } from '../../lib/supabase';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
 interface InsuranceCompany {
   id: string;
@@ -25,9 +25,10 @@ interface Quote {
 interface Props {
   leadId?: string;
   token?: string;
+  supabaseClient?: SupabaseClient;
 }
 
-export default function ClientQuotesViewer({ leadId, token }: Props) {
+export default function ClientQuotesViewer({ leadId, token, supabaseClient }: Props) {
   const [companies, setCompanies] = useState<InsuranceCompany[]>([]);
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [loading, setLoading] = useState(true);
@@ -39,10 +40,15 @@ export default function ClientQuotesViewer({ leadId, token }: Props) {
   }, [leadId, token]);
 
   const handleValidateQuote = async (quoteId: string, companyName: string) => {
+    if (!supabaseClient) {
+      alert('❌ Erreur de configuration. Veuillez recharger la page.');
+      return;
+    }
+
     setValidating(quoteId);
     try {
       // Mettre à jour le statut du devis
-      const { error: updateError } = await supabase
+      const { error: updateError } = await supabaseClient
         .from('lead_company_quotes')
         .update({
           status: 'accepted',
@@ -50,7 +56,10 @@ export default function ClientQuotesViewer({ leadId, token }: Props) {
         })
         .eq('id', quoteId);
 
-      if (updateError) throw updateError;
+      if (updateError) {
+        console.error('Error updating quote:', updateError);
+        throw updateError;
+      }
 
       // Recharger les données
       await loadData();
@@ -68,6 +77,8 @@ export default function ClientQuotesViewer({ leadId, token }: Props) {
   };
 
   const loadData = async () => {
+    if (!supabaseClient) return;
+
     try {
       setLoading(true);
 
@@ -76,7 +87,7 @@ export default function ClientQuotesViewer({ leadId, token }: Props) {
 
       // Si on a un token, utiliser la fonction RPC pour récupérer les devis
       if (token) {
-        const { data, error } = await supabase.rpc('get_lead_quotes_by_token', {
+        const { data, error } = await supabaseClient.rpc('get_lead_quotes_by_token', {
           p_token: token
         });
 
@@ -90,7 +101,7 @@ export default function ClientQuotesViewer({ leadId, token }: Props) {
         // Extraire les compagnies des devis retournés
         const companyIds = [...new Set(quotesData.map(q => q.company_id))];
         if (companyIds.length > 0) {
-          const { data: companiesData, error: companiesError } = await supabase
+          const { data: companiesData, error: companiesError } = await supabaseClient
             .from('insurance_companies')
             .select('*')
             .in('id', companyIds)
@@ -106,7 +117,7 @@ export default function ClientQuotesViewer({ leadId, token }: Props) {
       else if (leadId) {
         currentLeadId = leadId;
 
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
           .from('lead_company_quotes')
           .select('*')
           .eq('lead_id', currentLeadId)
@@ -117,7 +128,7 @@ export default function ClientQuotesViewer({ leadId, token }: Props) {
         quotesData = data || [];
 
         // Charger les compagnies d'assurance
-        const { data: companiesData, error: companiesError } = await supabase
+        const { data: companiesData, error: companiesError } = await supabaseClient
           .from('insurance_companies')
           .select('*')
           .eq('is_mandatory', true)
