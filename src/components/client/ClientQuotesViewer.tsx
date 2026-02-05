@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Download, FileText, AlertCircle, CheckCircle2, Printer, Eye, Building2 } from 'lucide-react';
+import { Download, FileText, AlertCircle, CheckCircle2, Printer, Eye, Building2, Check, Loader2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 
 interface InsuranceCompany {
@@ -31,10 +31,41 @@ export default function ClientQuotesViewer({ leadId, token }: Props) {
   const [companies, setCompanies] = useState<InsuranceCompany[]>([]);
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [loading, setLoading] = useState(true);
+  const [validating, setValidating] = useState<string | null>(null);
+  const [showConfirmModal, setShowConfirmModal] = useState<string | null>(null);
 
   useEffect(() => {
     loadData();
   }, [leadId, token]);
+
+  const handleValidateQuote = async (quoteId: string, companyName: string) => {
+    setValidating(quoteId);
+    try {
+      // Mettre à jour le statut du devis
+      const { error: updateError } = await supabase
+        .from('lead_company_quotes')
+        .update({
+          status: 'accepted',
+          quote_accepted_at: new Date().toISOString()
+        })
+        .eq('id', quoteId);
+
+      if (updateError) throw updateError;
+
+      // Recharger les données
+      await loadData();
+
+      alert(`✅ Devis ${companyName} validé avec succès !\n\nNotre équipe a été notifiée et va vous recontacter très prochainement pour finaliser votre souscription.`);
+
+      // Fermer le modal de confirmation
+      setShowConfirmModal(null);
+    } catch (error) {
+      console.error('Error validating quote:', error);
+      alert('❌ Erreur lors de la validation du devis. Veuillez réessayer ou nous contacter.');
+    } finally {
+      setValidating(null);
+    }
+  };
 
   const loadData = async () => {
     try {
@@ -243,38 +274,52 @@ export default function ClientQuotesViewer({ leadId, token }: Props) {
                           <Printer className="w-4 h-4" />
                           Imprimer
                         </button>
+
+                        {/* Bouton Valider */}
+                        {quote.status !== 'accepted' && (
+                          <button
+                            onClick={() => setShowConfirmModal(quote.id)}
+                            disabled={validating !== null}
+                            className="flex items-center gap-2 px-5 py-2.5 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed ml-auto"
+                          >
+                            <Check className="w-4 h-4" />
+                            Valider ce devis
+                          </button>
+                        )}
+
+                        {quote.status === 'accepted' && (
+                          <div className="flex items-center gap-2 px-5 py-2.5 bg-green-600/20 border border-green-500 text-green-400 font-bold rounded-lg text-sm ml-auto">
+                            <CheckCircle2 className="w-4 h-4" />
+                            Devis validé
+                          </div>
+                        )}
                       </div>
                     </div>
                   );
                 })}
               </div>
 
-              {company.contact_phone && (
-                <div className="mt-6 pt-6 border-t border-gray-700">
-                  <p className="text-sm text-gray-400 mb-3">Pour souscrire à cette offre, contactez-nous :</p>
-                  <div className="flex flex-wrap items-center gap-3">
-                    <a
-                      href={`tel:${company.contact_phone}`}
-                      className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm font-semibold"
-                    >
-                      <span className="text-lg">📞</span>
-                      {company.contact_phone}
-                    </a>
-                    {company.contact_email && (
-                      <>
-                        <span className="text-gray-500">ou</span>
-                        <a
-                          href={`mailto:${company.contact_email}`}
-                          className="flex items-center gap-2 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg transition-colors text-sm font-semibold"
-                        >
-                          <span className="text-lg">✉️</span>
-                          {company.contact_email}
-                        </a>
-                      </>
-                    )}
-                  </div>
+              {/* Coordonnées TaxiAssur pour tous les devis */}
+              <div className="mt-6 pt-6 border-t border-gray-700">
+                <p className="text-sm text-gray-400 mb-3">Pour souscrire à cette offre, contactez-nous :</p>
+                <div className="flex flex-wrap items-center gap-3">
+                  <a
+                    href="tel:0180855786"
+                    className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm font-semibold"
+                  >
+                    <span className="text-lg">📞</span>
+                    01 80 85 57 86
+                  </a>
+                  <span className="text-gray-500">ou</span>
+                  <a
+                    href="mailto:team@taxiassur.com"
+                    className="flex items-center gap-2 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg transition-colors text-sm font-semibold"
+                  >
+                    <span className="text-lg">✉️</span>
+                    team@taxiassur.com
+                  </a>
                 </div>
-              )}
+              </div>
             </div>
           );
         })}
@@ -287,11 +332,11 @@ export default function ClientQuotesViewer({ leadId, token }: Props) {
         </p>
         <div className="flex flex-wrap items-center gap-3">
           <a
-            href="tel:0180857786"
+            href="tel:0180855786"
             className="inline-flex items-center gap-2 px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg transition-colors"
           >
             <span className="text-xl">📞</span>
-            01 80 85 77 86
+            01 80 85 57 86
           </a>
           <a
             href="mailto:team@taxiassur.com"
@@ -302,6 +347,57 @@ export default function ClientQuotesViewer({ leadId, token }: Props) {
           </a>
         </div>
       </div>
+
+      {/* Modal de confirmation */}
+      {showConfirmModal && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
+          <div className="bg-gray-900 border border-gray-700 rounded-2xl p-8 max-w-md w-full">
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 bg-green-600/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Check className="w-8 h-8 text-green-400" />
+              </div>
+              <h3 className="text-2xl font-bold text-white mb-2">Valider ce devis ?</h3>
+              <p className="text-gray-400">
+                Vous êtes sur le point de valider ce devis. Notre équipe sera notifiée et vous recontactera pour finaliser votre souscription.
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              <button
+                onClick={() => {
+                  const quote = quotes.find(q => q.id === showConfirmModal);
+                  const company = companies.find(c => c.id === quote?.company_id);
+                  if (quote && company) {
+                    handleValidateQuote(quote.id, company.name);
+                  }
+                }}
+                disabled={validating !== null}
+                className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {validating ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    Validation en cours...
+                  </>
+                ) : (
+                  <>
+                    <Check className="w-5 h-5" />
+                    Oui, valider ce devis
+                  </>
+                )}
+              </button>
+
+              <button
+                onClick={() => setShowConfirmModal(null)}
+                disabled={validating !== null}
+                className="w-full px-6 py-4 bg-gray-700 hover:bg-gray-600 text-white font-semibold rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Annuler
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
