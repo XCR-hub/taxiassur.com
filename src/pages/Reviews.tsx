@@ -6,8 +6,11 @@ import Seo from '../components/Seo';
 import JsonLd from '../components/JsonLd';
 import AITaxiBackground from '../components/AITaxiBackground';
 import StickyCTA from '../components/StickyCTA';
+import { useRealStats } from '../hooks/useRealStats';
 
 const Reviews: React.FC = () => {
+  const { totalLeads, totalReviews, loading } = useRealStats();
+
   const breadcrumbs = [
     { name: 'Accueil', url: '/' },
     { name: 'Avis Clients', url: '/avis' }
@@ -37,18 +40,20 @@ const Reviews: React.FC = () => {
                   Avis <span className="text-gradient">Clients</span>
                 </h1>
                 <p className="text-2xl text-gray-200 mb-8 leading-relaxed drop-shadow-md">
-                  ⭐ <strong className="text-yellow-500">Découvrez pourquoi +100 professionnels du taxi</strong> 
-                  nous font confiance pour leur assurance. <strong className="text-green-400">Clients satisfaits</strong>, 
+                  ⭐ <strong className="text-yellow-500">Découvrez pourquoi {loading ? '100+' : `${totalLeads}+`} professionnels du taxi</strong>
+                  nous ont fait confiance pour leur assurance. <strong className="text-green-400">Clients satisfaits</strong>,
                   <strong className="text-yellow-400">témoignages authentiques</strong> et économies réelles.
                 </p>
-                
+
                 <div className="grid grid-cols-3 gap-6 max-w-md mx-auto mb-8">
                   <div className="ai-card p-4 hover:shadow-amber-500/40 transition-all duration-300">
-                    <div className="text-2xl font-bold text-yellow-500 drop-shadow-lg">100+</div>
-                    <div className="text-xs text-gray-300 drop-shadow-md">Clients actifs</div>
+                    <div className="text-2xl font-bold text-yellow-500 drop-shadow-lg">
+                      {loading ? '100+' : `${totalLeads}+`}
+                    </div>
+                    <div className="text-xs text-gray-300 drop-shadow-md">Demandes de devis</div>
                   </div>
                   <div className="ai-card p-4 hover:shadow-green-500/40 transition-all duration-300">
-                    <div className="text-2xl font-bold text-green-400 drop-shadow-lg">50+</div>
+                    <div className="text-2xl font-bold text-green-400 drop-shadow-lg">{totalReviews}</div>
                     <div className="text-xs text-gray-300 drop-shadow-md">Avis réels</div>
                   </div>
                   <div className="ai-card p-4 hover:shadow-yellow-500/40 transition-all duration-300">

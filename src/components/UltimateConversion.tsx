@@ -1,24 +1,36 @@
 import React, { useState, useEffect } from 'react';
 import { Zap, Target, TrendingUp, Users, Award, CheckCircle, Phone, Mail, Clock, Shield, Star, Gift, Crown, Sparkles } from 'lucide-react';
 import AITaxiBackground from './AITaxiBackground';
+import { useRealStats } from '../hooks/useRealStats';
 
 const UltimateConversion: React.FC = () => {
+  const { totalLeads, loading: statsLoading } = useRealStats();
+
   const [liveStats, setLiveStats] = useState({
     devisToday: 3,
-    economiesTotal: 847000,
-    clientsSatisfaits: 1500,
+    economiesTotal: 0,
+    clientsSatisfaits: totalLeads || 100,
     taxisActifs: 50
   });
 
   const [urgencyTimer, setUrgencyTimer] = useState(3600); // 1 hour
 
   useEffect(() => {
+    if (!statsLoading && totalLeads > 0) {
+      setLiveStats(prev => ({
+        ...prev,
+        clientsSatisfaits: totalLeads,
+        economiesTotal: totalLeads * 580
+      }));
+    }
+  }, [totalLeads, statsLoading]);
+
+  useEffect(() => {
     // Simulate live stats updates
     const statsInterval = setInterval(() => {
       setLiveStats(prev => ({
         ...prev,
-        devisToday: prev.devisToday + (Math.random() > 0.7 ? 1 : 0),
-        economiesTotal: prev.economiesTotal + Math.floor(Math.random() * 1000)
+        devisToday: prev.devisToday + (Math.random() > 0.7 ? 1 : 0)
       }));
     }, 30000);
 
@@ -67,8 +79,8 @@ const UltimateConversion: React.FC = () => {
   const socialProofElements = [
     { label: 'Devis demandés aujourd\'hui', value: liveStats.devisToday, icon: '📊', color: 'text-yellow-600' },
     { label: 'Économies générées (total)', value: `${Math.round(liveStats.economiesTotal / 1000)}k€`, icon: '💰', color: 'text-green-600' },
-    { label: 'Prospects qualifiés', value: `${Math.floor(liveStats.clientsSatisfaits / 30)}+`, icon: '😊', color: 'text-yellow-600' },
-    { label: 'Taxis clients (Sept 2025)', value: `${liveStats.taxisActifs}+`, icon: '🚖', color: 'text-amber-600' }
+    { label: 'Demandes de devis (total)', value: `${liveStats.clientsSatisfaits}+`, icon: '😊', color: 'text-yellow-600' },
+    { label: 'Depuis Sept 2025', value: `${liveStats.taxisActifs}+ clients`, icon: '🚖', color: 'text-amber-600' }
   ];
 
   return (

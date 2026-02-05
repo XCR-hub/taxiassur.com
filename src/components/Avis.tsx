@@ -1,8 +1,11 @@
 import React from 'react';
 import { Star, Quote, Users } from 'lucide-react';
 import AITaxiBackground from './AITaxiBackground';
+import { useRealStats } from '../hooks/useRealStats';
 
 const Avis: React.FC = () => {
+  const { totalLeads, totalReviews, loading } = useRealStats();
+
   const testimonials = [
     {
       name: 'Mohammed B.',
@@ -45,25 +48,27 @@ const Avis: React.FC = () => {
           {/* Avis plus visibles avec encadré */}
           <div className="bg-gradient-to-r from-amber-500/20 to-yellow-500/20 border-2 border-amber-500/60 rounded-2xl p-6 max-w-3xl mx-auto mb-8">
             <p className="text-xl text-gray-200 font-medium">
-              +100 chauffeurs ont choisi TaxiAssur et ne le regrettent pas ! 
+              {loading ? '+100' : `${totalLeads}+`} chauffeurs ont choisi TaxiAssur et ne le regrettent pas !
               Découvrez leurs témoignages authentiques.
             </p>
           </div>
-          
+
           {/* Trust indicators */}
           <div className="flex justify-center items-center space-x-8">
             <div className="bg-gray-900/90 border border-amber-500/50 rounded-xl p-4 text-center">
-              <div className="text-3xl font-bold text-yellow-500">100+</div>
+              <div className="text-3xl font-bold text-yellow-500">
+                {loading ? '100+' : `${totalLeads}+`}
+              </div>
               <div className="flex justify-center mb-1">
                 {[...Array(5)].map((_, i) => (
                   <Star key={i} size={16} className="text-yellow-400 fill-current" />
                 ))}
               </div>
-              <p className="text-sm text-gray-300">Clients actifs</p>
+              <p className="text-sm text-gray-300">Demandes de devis</p>
             </div>
             <div className="bg-gray-900/90 border border-green-500/50 rounded-xl p-4 text-center">
-              <div className="text-3xl font-bold text-green-400">100+</div>
-              <p className="text-sm text-gray-300">Taxis clients</p>
+              <div className="text-3xl font-bold text-green-400">{totalReviews}</div>
+              <p className="text-sm text-gray-300">Avis vérifiés</p>
               <p className="text-xs text-gray-600">Depuis Sept 2025</p>
             </div>
             <div className="bg-gray-900/90 border border-yellow-500/50 rounded-xl p-4 text-center">

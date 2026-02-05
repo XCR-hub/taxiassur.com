@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Star, ThumbsUp, MapPin } from 'lucide-react';
+import { useRealStats } from '../hooks/useRealStats';
 
 interface Review {
   id: string;
@@ -96,6 +97,7 @@ const reviews: Review[] = [
 ];
 
 const DynamicReviews: React.FC = () => {
+  const { totalLeads, totalReviews, loading } = useRealStats();
   const [currentReviews, setCurrentReviews] = useState<Review[]>([]);
   const [hoveredReview, setHoveredReview] = useState<string | null>(null);
 
@@ -113,8 +115,7 @@ const DynamicReviews: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const totalReviews = 847;
-  const averageRating = 4.8;
+  const averageRating = 5.0;
 
   return (
     <section className="py-16 bg-gradient-to-br from-gray-950 via-gray-900 to-black">
@@ -206,7 +207,7 @@ const DynamicReviews: React.FC = () => {
           </div>
 
           <div className="mt-12 bg-gradient-to-r from-yellow-500 to-orange-500 text-gray-900 rounded-2xl p-8 text-center shadow-2xl">
-            <h3 className="text-2xl font-bold mb-4 text-gray-900">Rejoignez {totalReviews}+ Chauffeurs Satisfaits</h3>
+            <h3 className="text-2xl font-bold mb-4 text-gray-900">Rejoignez {loading ? '100+' : `${totalLeads}+`} Demandes de Devis</h3>
             <p className="text-xl mb-6 font-semibold">Économisez en moyenne 1,050€/an en 5 minutes</p>
             <a
               href="#devis"

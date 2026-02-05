@@ -6,6 +6,8 @@ interface RealStats {
   totalArticles: number;
   totalFaqs: number;
   totalCities: number;
+  totalLeads: number;
+  totalReviews: number;
   loading: boolean;
   error: string | null;
 }
@@ -15,6 +17,8 @@ export function useRealStats(): RealStats {
     totalArticles: 0,
     totalFaqs: 0,
     totalCities: 0,
+    totalLeads: 0,
+    totalReviews: 6,
     loading: true,
     error: null,
   });
@@ -33,6 +37,8 @@ export function useRealStats(): RealStats {
         let articlesCount = 0;
         let faqsCount = 0;
         let citiesCount = 0;
+        let leadsCount = 0;
+        const reviewsCount = 6;
 
         try {
           const { count, error } = await supabase
@@ -76,11 +82,27 @@ export function useRealStats(): RealStats {
           logger.warn('Cities count skipped:', err);
         }
 
+        if (!mounted) return;
+
+        try {
+          const { count, error } = await supabase
+            .from('crm_leads')
+            .select('*', { count: 'exact', head: true });
+
+          if (!error && count !== null) {
+            leadsCount = count;
+          }
+        } catch (err) {
+          logger.warn('Leads count skipped:', err);
+        }
+
         if (mounted) {
           setStats({
             totalArticles: articlesCount,
             totalFaqs: faqsCount,
             totalCities: citiesCount,
+            totalLeads: leadsCount,
+            totalReviews: reviewsCount,
             loading: false,
             error: null,
           });
