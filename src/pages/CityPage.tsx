@@ -58,7 +58,8 @@ interface NewsArticle {
 }
 
 const CityPage: React.FC = () => {
-  const { city } = useParams<{ city: string }>();
+  const { slug } = useParams<{ slug: string }>();
+  const city = slug;
   const [cityPageData, setCityPageData] = useState<CityPageData | null>(null);
   const [faqs, setFaqs] = useState<FAQ[]>([]);
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
@@ -68,7 +69,7 @@ const CityPage: React.FC = () => {
 
   useEffect(() => {
     const loadCityPage = async () => {
-      if (!city) {
+      if (!slug) {
         setLoading(false);
         return;
       }
@@ -78,7 +79,7 @@ const CityPage: React.FC = () => {
         const { data, error } = await supabase
           .from('city_pages')
           .select('*')
-          .eq('slug', city)
+          .eq('slug', slug)
           .or('status.eq.published,published.eq.true')
           .maybeSingle();
 
@@ -125,7 +126,7 @@ const CityPage: React.FC = () => {
     };
 
     loadCityPage();
-  }, [city]);
+  }, [slug]);
 
   const cities = generateCityPages();
   const cityData = cities.find(c => c.slug === city);
