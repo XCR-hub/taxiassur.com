@@ -111,7 +111,24 @@ export default function PipelineWorkflow7Etapes({ leadId, leadData }: PipelineWo
   async function moveToStage(targetStage: string) {
     setLoading(true);
     try {
-      const { error } = await supabase
+      // First, verify the lead exists
+      const { data: existingLead, error: fetchError } = await supabase
+        .from('crm_leads')
+        .select('id, pipeline_stage, status')
+        .eq('id', leadId)
+        .single();
+
+      if (fetchError) {
+        console.error('Error fetching lead:', fetchError);
+        throw new Error(`Impossible de charger le lead: ${fetchError.message}`);
+      }
+
+      if (!existingLead) {
+        throw new Error('Lead introuvable');
+      }
+
+      // Update the stage
+      const { error: updateError } = await supabase
         .from('crm_leads')
         .update({
           pipeline_stage: targetStage,
@@ -119,12 +136,15 @@ export default function PipelineWorkflow7Etapes({ leadId, leadData }: PipelineWo
         })
         .eq('id', leadId);
 
-      if (error) throw error;
+      if (updateError) {
+        console.error('Error updating stage:', updateError);
+        throw new Error(`Erreur de mise à jour: ${updateError.message}`);
+      }
 
       setCurrentStage(targetStage);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error moving to stage:', error);
-      alert('Erreur lors du changement d\'étape');
+      alert(error.message || 'Erreur lors du changement d\'étape');
     } finally {
       setLoading(false);
     }
