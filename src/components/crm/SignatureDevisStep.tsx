@@ -70,7 +70,7 @@ export default function SignatureDevisStep({ leadId, onComplete }: SignatureDevi
         .select('id, file_name, file_url, uploaded_at')
         .eq('lead_id', leadId)
         .eq('document_type', 'devis_signe')
-        .eq('is_validated', true)
+        .eq('status', 'validated')
         .order('uploaded_at', { ascending: false })
         .limit(1)
         .maybeSingle();
@@ -126,7 +126,7 @@ export default function SignatureDevisStep({ leadId, onComplete }: SignatureDevi
           file_name: file.name,
           file_url: publicUrl,
           file_path: fileName,
-          is_validated: true,
+          status: 'validated',
           validated_at: new Date().toISOString(),
           validated_by: (await supabase.auth.getUser()).data.user?.id
         })
