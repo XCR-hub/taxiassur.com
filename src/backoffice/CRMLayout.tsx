@@ -74,6 +74,13 @@ const CRMLayout: React.FC = () => {
       badge: stats.unread_messages || null
     },
     {
+      id: 'clients',
+      label: 'Clients',
+      icon: Users,
+      path: '/backoffice/clients',
+      badge: null
+    },
+    {
       id: 'retention',
       label: 'Rétention',
       icon: Shield,
