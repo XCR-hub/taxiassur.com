@@ -92,8 +92,11 @@ const CRMPipelineKanban: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
   const [updateCount, setUpdateCount] = useState(0);
+  const [newLeadNotification, setNewLeadNotification] = useState<string | null>(null);
+  const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(true);
   const autoRefreshInterval = useRef<NodeJS.Timeout | null>(null);
   const realtimeChannel = useRef<any>(null);
+  const previousLeadCount = useRef<number>(0);
 
   // Debounce search
   useEffect(() => {
@@ -181,6 +184,15 @@ const CRMPipelineKanban: React.FC = () => {
 
     try {
       const data = await pipelineService.getKanbanData();
+
+      // Détecter les nouveaux leads
+      const currentLeadCount = Object.values(data).reduce((sum, leads) => sum + leads.length, 0);
+      if (previousLeadCount.current > 0 && currentLeadCount > previousLeadCount.current) {
+        const newLeadsCount = currentLeadCount - previousLeadCount.current;
+        console.log(`🆕 ${newLeadsCount} nouveau(x) lead(s) détecté(s)`);
+      }
+      previousLeadCount.current = currentLeadCount;
+
       setKanbanData(data);
       setLastUpdate(new Date());
       setUpdateCount(prev => prev + 1);
@@ -205,36 +217,74 @@ const CRMPipelineKanban: React.FC = () => {
     loadKanbanData();
   }, [loadKanbanData]);
 
-  // Auto-refresh every 30 seconds
+  // Auto-refresh every 10 seconds (plus réactif pour les nouveaux leads)
   useEffect(() => {
+    if (!autoRefreshEnabled) return;
+
     autoRefreshInterval.current = setInterval(() => {
       loadKanbanData(false);
-    }, 30000);
+    }, 10000); // 10 secondes au lieu de 30
 
     return () => {
       if (autoRefreshInterval.current) {
         clearInterval(autoRefreshInterval.current);
       }
     };
-  }, [loadKanbanData]);
+  }, [loadKanbanData, autoRefreshEnabled]);
 
-  // Realtime subscription
+  // Realtime subscription avec notification des nouveaux leads
   useEffect(() => {
     realtimeChannel.current = supabase
       .channel('crm_leads_changes')
       .on(
         'postgres_changes',
         {
-          event: '*',
+          event: 'INSERT',
           schema: 'public',
           table: 'crm_leads'
         },
         (payload) => {
-          console.log('Realtime update:', payload);
+          console.log('🆕 Nouveau lead détecté:', payload.new);
+          const newLead = payload.new as any;
+
+          // Afficher notification
+          const leadName = `${newLead.first_name || ''} ${newLead.last_name || ''}`.trim() || newLead.email;
+          setNewLeadNotification(`🆕 Nouveau lead : ${leadName}`);
+
+          // Masquer après 5 secondes
+          setTimeout(() => setNewLeadNotification(null), 5000);
+
+          // Rafraîchir immédiatement
           loadKanbanData(false);
         }
       )
-      .subscribe();
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'crm_leads'
+        },
+        (payload) => {
+          console.log('📝 Lead mis à jour:', payload.new);
+          loadKanbanData(false);
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'DELETE',
+          schema: 'public',
+          table: 'crm_leads'
+        },
+        (payload) => {
+          console.log('🗑️ Lead supprimé:', payload.old);
+          loadKanbanData(false);
+        }
+      )
+      .subscribe((status) => {
+        console.log('📡 Realtime status:', status);
+      });
 
     return () => {
       if (realtimeChannel.current) {
@@ -496,6 +546,19 @@ const CRMPipelineKanban: React.FC = () => {
             </div>
 
             <div className="flex items-center gap-2">
+              {/* Indicateur auto-refresh */}
+              <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-lg border border-gray-200">
+                <div className={`w-2 h-2 rounded-full ${autoRefreshEnabled ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`}></div>
+                <span className="text-xs text-gray-600">Auto-refresh {autoRefreshEnabled ? 'ON' : 'OFF'}</span>
+                <button
+                  onClick={() => setAutoRefreshEnabled(!autoRefreshEnabled)}
+                  className="ml-1 text-xs text-blue-600 hover:text-blue-800 font-medium"
+                  title={autoRefreshEnabled ? 'Désactiver le rafraîchissement automatique' : 'Activer le rafraîchissement automatique'}
+                >
+                  {autoRefreshEnabled ? 'OFF' : 'ON'}
+                </button>
+              </div>
+
               <button
                 onClick={handleRefresh}
                 disabled={refreshing}
@@ -550,6 +613,22 @@ const CRMPipelineKanban: React.FC = () => {
               <button
                 onClick={() => setSyncMessage(null)}
                 className="ml-auto hover:opacity-75"
+              >
+                ✕
+              </button>
+            </div>
+          )}
+
+          {/* Notification nouveau lead */}
+          {newLeadNotification && (
+            <div className="mb-4 p-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg flex items-center gap-3 shadow-lg animate-bounce">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 bg-white rounded-full animate-pulse"></div>
+                <span className="font-bold text-lg">{newLeadNotification}</span>
+              </div>
+              <button
+                onClick={() => setNewLeadNotification(null)}
+                className="ml-auto text-white hover:text-gray-200 font-bold"
               >
                 ✕
               </button>
