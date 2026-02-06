@@ -374,11 +374,13 @@ export default function ContratSignatureStep({ leadId, onComplete }: ContratSign
       }
 
       alert('🎉 Contrat finalisé ! Le prospect est maintenant client.');
-      onComplete?.();
+
+      // Recharger la page pour afficher le nouveau statut
+      window.location.reload();
 
     } catch (error) {
       console.error('Error transforming to client:', error);
-      alert('Erreur lors de la finalisation');
+      alert('Erreur lors de la finalisation : ' + (error as Error).message);
     } finally {
       setTransforming(false);
     }
