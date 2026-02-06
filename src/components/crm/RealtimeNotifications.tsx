@@ -4,6 +4,7 @@ import { Bell, X, Check, AlertCircle } from 'lucide-react';
 
 interface Notification {
   id: string;
+  title?: string;
   message: string;
   priority: number;
   is_read: boolean;
@@ -190,6 +191,10 @@ export default function RealtimeNotifications() {
                       <div className={`rounded-full p-2 ${getPriorityColor(notification.priority)}`}>
                         {notification.event_type === 'new_lead' ? (
                           <AlertCircle className="w-4 h-4" />
+                        ) : notification.event_type === 'quote_validated' ? (
+                          <Check className="w-4 h-4" />
+                        ) : notification.event_type === 'quote_refused' ? (
+                          <X className="w-4 h-4" />
                         ) : (
                           <Bell className="w-4 h-4" />
                         )}
@@ -199,12 +204,17 @@ export default function RealtimeNotifications() {
                           <h4 className={`font-semibold text-sm ${
                             !notification.is_read ? 'text-gray-900' : 'text-gray-600'
                           }`}>
-                            {notification.event_type === 'new_lead' ? 'Nouveau Lead!' :
-                             notification.event_type === 'status_change' ? 'Changement de statut' :
-                             notification.event_type === 'document_uploaded' ? 'Document reçu' : 'Notification'}
+                            {notification.title || (
+                              notification.event_type === 'new_lead' ? 'Nouveau Lead!' :
+                              notification.event_type === 'status_change' ? 'Changement de statut' :
+                              notification.event_type === 'document_uploaded' ? 'Document reçu' :
+                              notification.event_type === 'quote_validated' ? '✅ Devis accepté' :
+                              notification.event_type === 'quote_refused' ? '❌ Devis refusé' :
+                              'Notification'
+                            )}
                           </h4>
                           {!notification.is_read && (
-                            <div className="w-2 h-2 bg-gray-500 rounded-full flex-shrink-0 mt-1"></div>
+                            <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 mt-1"></div>
                           )}
                         </div>
                         <p className="text-sm text-gray-600 mt-1 line-clamp-2">
