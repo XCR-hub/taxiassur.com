@@ -412,44 +412,83 @@ export default function ContratSignatureStep({ leadId, onComplete }: ContratSign
         </div>
       </div>
 
-      {/* Finalize Button */}
-      {allDocsUploaded && (
-        <div className="bg-gradient-to-r from-green-50 to-blue-50 border-2 border-green-300 rounded-lg p-6">
-          <div className="flex items-start gap-4">
+      {/* Finalize Button - Always visible */}
+      <div className={`rounded-lg p-6 border-2 ${
+        allDocsUploaded
+          ? 'bg-gradient-to-r from-green-50 to-blue-50 border-green-300'
+          : 'bg-orange-50 border-orange-300'
+      }`}>
+        <div className="flex items-start gap-4">
+          {allDocsUploaded ? (
             <PartyPopper className="h-8 w-8 text-yellow-600 flex-shrink-0" />
-            <div className="flex-1">
-              <h4 className="font-semibold text-gray-900 mb-2">
-                Prêt à Finaliser le Contrat !
-              </h4>
-              <p className="text-sm text-gray-700 mb-4">
-                Tous les documents sont uploadés. Cliquez sur le bouton ci-dessous pour :
+          ) : (
+            <AlertCircle className="h-8 w-8 text-orange-600 flex-shrink-0" />
+          )}
+          <div className="flex-1">
+            <h4 className="font-semibold text-gray-900 mb-2">
+              {allDocsUploaded
+                ? 'Prêt à Finaliser le Contrat !'
+                : 'Finalisation du Contrat'
+              }
+            </h4>
+
+            {allDocsUploaded ? (
+              <>
+                <p className="text-sm text-gray-700 mb-4">
+                  Tous les documents sont uploadés. Cliquez sur le bouton ci-dessous pour :
+                </p>
+                <ul className="text-sm text-gray-700 space-y-1 mb-4 list-disc list-inside">
+                  <li>Confirmer la signature du contrat</li>
+                  <li>Transformer le prospect en client actif</li>
+                  <li>Envoyer un email de félicitations avec accès à l'espace client</li>
+                </ul>
+              </>
+            ) : (
+              <>
+                <p className="text-sm text-orange-800 mb-4">
+                  <strong>Attention :</strong> Vous devez uploader les 3 documents obligatoires avant de pouvoir finaliser le contrat.
+                </p>
+                <div className="text-sm text-orange-700 mb-4 space-y-1">
+                  <p className="font-medium">Documents manquants :</p>
+                  <ul className="list-disc list-inside">
+                    {!getDocumentForType('contrat_signe') && <li>Contrat Signé</li>}
+                    {!getDocumentForType('attestation_assurance') && <li>Attestation d'Assurance</li>}
+                    {!getDocumentForType('memo_vehicule') && <li>Mémo du Véhicule</li>}
+                  </ul>
+                </div>
+              </>
+            )}
+
+            <button
+              onClick={transformToClient}
+              disabled={!allDocsUploaded || transforming}
+              className={`w-full flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-semibold transition-all ${
+                allDocsUploaded
+                  ? 'bg-green-600 text-white hover:bg-green-700'
+                  : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+              } disabled:opacity-50 disabled:cursor-not-allowed`}
+            >
+              {transforming ? (
+                <>
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                  Finalisation en cours...
+                </>
+              ) : (
+                <>
+                  <CheckCircle2 className="h-5 w-5" />
+                  Finaliser le Contrat et Activer le Client
+                </>
+              )}
+            </button>
+
+            {!allDocsUploaded && (
+              <p className="text-xs text-orange-600 mt-2 text-center">
+                Ce bouton sera activé une fois les 3 documents uploadés
               </p>
-              <ul className="text-sm text-gray-700 space-y-1 mb-4 list-disc list-inside">
-                <li>Confirmer la signature du contrat</li>
-                <li>Transformer le prospect en client actif</li>
-                <li>Envoyer un email de félicitations avec accès à l'espace client</li>
-              </ul>
-              <button
-                onClick={transformToClient}
-                disabled={transforming}
-                className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {transforming ? (
-                  <>
-                    <Loader2 className="h-5 w-5 animate-spin" />
-                    Finalisation en cours...
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle2 className="h-5 w-5" />
-                    Finaliser le Contrat et Activer le Client
-                  </>
-                )}
-              </button>
-            </div>
+            )}
           </div>
         </div>
-      )}
+      </div>
 
       {/* Info */}
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
