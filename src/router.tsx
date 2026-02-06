@@ -108,6 +108,7 @@ const WhatsAppManager = lazy(() => import('./backoffice/WhatsAppManager'));
 const EmailMarketingHub = lazy(() => import('./backoffice/EmailMarketingHub'));
 const DuplicateLeadsManager = lazy(() => import('./backoffice/DuplicateLeadsManager'));
 const TestAutomations = lazy(() => import('./backoffice/TestAutomations'));
+const ClientsManager = lazy(() => import('./backoffice/ClientsManager'));
 
 export const router = createBrowserRouter([
   {
@@ -457,6 +458,10 @@ export const router = createBrowserRouter([
   {
     path: '/backoffice/dashboard',
     element: <BackofficeDashboard />,
+  },
+  {
+    path: '/backoffice/clients',
+    element: <ClientsManager />,
   },
   {
     path: '/backoffice/crm',

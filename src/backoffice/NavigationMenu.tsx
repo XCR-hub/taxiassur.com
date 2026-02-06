@@ -55,6 +55,15 @@ export default function NavigationMenu() {
       ],
     },
     {
+      title: 'Clients',
+      icon: Users,
+      color: 'violet',
+      permission: canViewCRM,
+      links: [
+        { to: '/backoffice/clients', icon: Users, label: 'Gestion Clients', highlight: true },
+      ],
+    },
+    {
       title: 'CRM & Pipeline',
       icon: Target,
       color: 'blue',
@@ -186,6 +195,7 @@ export default function NavigationMenu() {
       emerald: { bg: 'from-emerald-600 to-emerald-700', hover: 'hover:from-emerald-700 hover:to-emerald-800', border: 'border-emerald-400' },
       rose: { bg: 'from-rose-500 to-rose-600', hover: 'hover:from-rose-600 hover:to-rose-700', border: 'border-rose-400' },
       pink: { bg: 'from-pink-500 to-pink-600', hover: 'hover:from-pink-600 hover:to-pink-700', border: 'border-pink-400' },
+      violet: { bg: 'from-violet-600 to-violet-700', hover: 'hover:from-violet-700 hover:to-violet-800', border: 'border-violet-400' },
     };
     const c = colors[color] || colors.slate;
     return highlight
@@ -205,6 +215,7 @@ export default function NavigationMenu() {
       emerald: 'from-emerald-900/40 to-emerald-950/40 border-emerald-600/50',
       rose: 'from-rose-900/40 to-rose-950/40 border-rose-600/50',
       pink: 'from-pink-900/40 to-pink-950/40 border-pink-600/50',
+      violet: 'from-violet-900/40 to-violet-950/40 border-violet-600/50',
     };
     return bgs[color] || bgs.slate;
   };
@@ -221,6 +232,7 @@ export default function NavigationMenu() {
       emerald: 'text-emerald-300',
       rose: 'text-rose-300',
       pink: 'text-pink-300',
+      violet: 'text-violet-300',
     };
     return colors[color] || 'text-gray-300';
   };
