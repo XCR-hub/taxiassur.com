@@ -131,8 +131,36 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    const payload: LeadPayload = await req.json();
+    const payload: any = await req.json();
+
+    // Format 1: Appel direct pour notification de document (depuis le trigger)
+    if (payload.to && payload.subject && payload.htmlBody) {
+      console.log(`📧 Envoi email direct à ${payload.to}`);
+
+      await sendEmailSMTP(
+        payload.to,
+        payload.toName || payload.to,
+        payload.subject,
+        payload.htmlBody,
+        payload.fromEmail || "team@taxiassur.com",
+        payload.fromName || "TaxiAssur"
+      );
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          message: "Email envoyé",
+          recipient: payload.to
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Format 2: Webhook de nouveau lead (format existant)
     const lead = payload.record;
+    if (!lead) {
+      throw new Error("Format invalide: ni format direct ni webhook lead");
+    }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
