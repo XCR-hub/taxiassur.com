@@ -115,6 +115,64 @@ Deno.serve(async (req: Request) => {
     const payload = await req.json();
     console.log("[send-document-notification] Received payload:", JSON.stringify(payload));
 
+    // Si action = 'process_pending', traiter les notifications en attente
+    if (payload.action === 'process_pending') {
+      const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+      const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+      const supabase = createClient(supabaseUrl, supabaseKey);
+
+      // Récupérer les notifications en attente
+      const { data: notifications, error: notifError } = await supabase
+        .from('crm_document_notifications')
+        .select(`
+          *,
+          crm_leads!inner(first_name, last_name, email, access_token)
+        `)
+        .eq('status', 'pending')
+        .not('sent_to', 'is', null)
+        .order('created_at', { ascending: true })
+        .limit(10);
+
+      if (notifError) throw notifError;
+
+      let processed = 0;
+      let errors = 0;
+
+      for (const notif of notifications || []) {
+        try {
+          const lead = notif.crm_leads;
+          await sendEmailSMTP(
+            notif.sent_to,
+            `${lead.first_name || ''} ${lead.last_name || ''}`.trim() || notif.sent_to,
+            notif.subject,
+            notif.body,
+            'team@taxiassur.com',
+            'TaxiAssur'
+          );
+
+          // Marquer comme envoyé
+          await supabase
+            .from('crm_document_notifications')
+            .update({ status: 'sent', sent_at: new Date().toISOString() })
+            .eq('id', notif.id);
+
+          processed++;
+        } catch (err) {
+          console.error(`Error sending notification ${notif.id}:`, err);
+          await supabase
+            .from('crm_document_notifications')
+            .update({ status: 'error', error_message: err.message })
+            .eq('id', notif.id);
+          errors++;
+        }
+      }
+
+      return new Response(
+        JSON.stringify({ success: true, processed, errors }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // Support both formats: direct payload or nested in "record"
     const notification = payload.record || payload;
     const notificationType = payload.action || payload.type || notification.type || 'upload';
@@ -173,8 +231,93 @@ Deno.serve(async (req: Request) => {
     let recipientEmail = '';
     let recipientName = '';
 
+    // Email au prospect quand le commercial upload un document
+    if (notificationType === 'commercial_uploaded_document' && prospectEmail) {
+      recipientEmail = prospectEmail;
+      recipientName = prospectName;
+      emailSubject = `📄 Nouveau document disponible - TaxiAssur`;
+
+      const prospectSpaceUrl = `https://taxiassur.com/espace-prospect${accessToken || (lead?.access_token) ? '?token=' + (accessToken || lead?.access_token) : ''}`;
+
+      emailBody = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; background: #f3f4f6; padding: 20px; }
+          .container { max-width: 650px; margin: 0 auto; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+          .header { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; padding: 30px; text-align: center; }
+          .content { padding: 30px; }
+          .success-box { background: #dbeafe; border-left: 4px solid #3b82f6; padding: 20px; margin: 20px 0; border-radius: 8px; }
+          .document-badge { background: #3b82f6; color: white; padding: 12px 24px; border-radius: 25px; display: inline-block; margin: 15px 0; font-size: 16px; font-weight: bold; }
+          .info-box { background: #eff6ff; padding: 20px; border-radius: 8px; margin: 20px 0; border: 2px solid #93c5fd; }
+          .cta-button { background: #10b981; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; display: inline-block; font-weight: bold; margin-top: 20px; }
+          .footer { background: #1f2937; color: white; padding: 20px; text-align: center; font-size: 12px; }
+          .icon { font-size: 48px; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <div class="icon">📄</div>
+            <h1 style="margin: 10px 0 0 0; font-size: 28px;">NOUVEAU DOCUMENT</h1>
+            <p style="margin: 10px 0 0 0; opacity: 0.9;">TaxiAssur - Mise à disposition de document</p>
+          </div>
+
+          <div class="content">
+            <p style="font-size: 16px; color: #1f2937;">Bonjour ${prospectName},</p>
+
+            <div class="success-box">
+              <p style="margin: 0; color: #1e40af; font-size: 16px;">
+                <strong>📥 Nouveau document disponible !</strong><br>
+                Votre conseiller TaxiAssur vient de mettre à votre disposition un nouveau document.
+              </p>
+            </div>
+
+            <h2 style="color: #1f2937; margin-top: 25px;">Document disponible</h2>
+
+            <div class="document-badge">
+              📄 ${documentTypeName}
+            </div>
+
+            <div class="info-box">
+              <h3 style="color: #2563eb; margin-top: 0;">📋 Ce document contient :</h3>
+              <ul style="color: #4b5563; line-height: 1.8; margin: 10px 0;">
+                <li>📝 Toutes les informations importantes pour votre dossier</li>
+                <li>🔍 Les détails de votre contrat ou devis</li>
+                <li>✍️ Les éventuelles actions à effectuer de votre côté</li>
+              </ul>
+            </div>
+
+            <h3 style="color: #1f2937;">💡 Accédez à votre document</h3>
+            <p style="color: #4b5563;">
+              Consultez et téléchargez votre document dès maintenant depuis votre espace personnel sécurisé.
+            </p>
+
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${prospectSpaceUrl}" class="cta-button">
+                📊 VOIR LE DOCUMENT
+              </a>
+            </div>
+
+            <p style="color: #6b7280; font-size: 14px; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+              💬 <strong>Une question ?</strong> Répondez simplement à cet email ou appelez-nous au <strong>01 80 85 57 86</strong>
+            </p>
+          </div>
+
+          <div class="footer">
+            <strong>TaxiAssur</strong><br>
+            L'assurance taxi en toute simplicité<br>
+            <a href="https://taxiassur.com" style="color: #10b981; text-decoration: none;">taxiassur.com</a>
+          </div>
+        </div>
+      </body>
+      </html>
+      `;
+    }
     // Email de validation envoyé au prospect après validation par commercial
-    if (notificationType === 'validated' && prospectEmail) {
+    else if (notificationType === 'validated' && prospectEmail) {
       recipientEmail = prospectEmail;
       recipientName = prospectName;
       emailSubject = `✅ Document validé - ${documentTypeName}`;

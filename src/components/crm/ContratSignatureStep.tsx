@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Upload, CheckCircle2, X, FileText, Loader2, FileSignature, AlertCircle, PartyPopper } from 'lucide-react';
+import { Upload, CheckCircle2, X, FileText, Loader2, FileSignature, AlertCircle, PartyPopper, Mail, Send } from 'lucide-react';
 
 interface ContratSignatureStepProps {
   leadId: string;
@@ -35,6 +35,7 @@ export default function ContratSignatureStep({ leadId, onComplete }: ContratSign
   const [loading, setLoading] = useState(true);
   const [externalUrl, setExternalUrl] = useState('');
   const [transforming, setTransforming] = useState(false);
+  const [sendingEmail, setSendingEmail] = useState(false);
 
   useEffect(() => {
     loadDocuments();
@@ -164,6 +165,141 @@ export default function ContratSignatureStep({ leadId, onComplete }: ContratSign
     } catch (error) {
       console.error('Error confirming signature:', error);
       throw error;
+    }
+  }
+
+  async function sendDocumentsEmail() {
+    if (documents.length === 0) {
+      alert('Aucun document à envoyer');
+      return;
+    }
+
+    if (!confirm('Envoyer un email récapitulatif avec tous les documents au prospect ?')) {
+      return;
+    }
+
+    setSendingEmail(true);
+
+    try {
+      // Récupérer les infos du lead
+      const { data: leadData, error: leadError } = await supabase
+        .from('crm_leads')
+        .select('email, first_name, last_name, access_token')
+        .eq('id', leadId)
+        .single();
+
+      if (leadError) throw leadError;
+
+      if (!leadData.email) {
+        throw new Error('Le prospect n\'a pas d\'email');
+      }
+
+      const prospectName = `${leadData.first_name || ''} ${leadData.last_name || ''}`.trim() || leadData.email;
+      const prospectSpaceUrl = leadData.access_token
+        ? `${window.location.origin}/espace-prospect?token=${leadData.access_token}`
+        : `${window.location.origin}/espace-prospect`;
+
+      // Construire la liste des documents
+      const documentsList = documents.map(doc => {
+        const label = REQUIRED_DOCS.find(r => r.type === doc.document_type)?.label || doc.document_type;
+        const publicUrl = supabase.storage
+          .from('contract-documents')
+          .getPublicUrl(doc.file_path).data.publicUrl;
+
+        return { label, url: publicUrl, name: doc.file_name };
+      });
+
+      // Construire l'HTML de l'email
+      const emailBody = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; background: #f3f4f6; padding: 20px; }
+            .container { max-width: 650px; margin: 0 auto; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+            .header { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; padding: 30px; text-align: center; }
+            .content { padding: 30px; }
+            .document-card { background: #f0f9ff; border-left: 4px solid #3b82f6; padding: 15px; margin: 15px 0; border-radius: 8px; }
+            .download-btn { background: #10b981; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; display: inline-block; margin-top: 10px; }
+            .cta-button { background: #3b82f6; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; display: inline-block; font-weight: bold; margin-top: 20px; }
+            .footer { background: #1f2937; color: white; padding: 20px; text-align: center; font-size: 12px; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <div style="font-size: 48px;">📄</div>
+              <h1 style="margin: 10px 0 0 0; font-size: 28px;">VOS DOCUMENTS SONT PRÊTS</h1>
+              <p style="margin: 10px 0 0 0; opacity: 0.9;">TaxiAssur - Documents contractuels</p>
+            </div>
+
+            <div class="content">
+              <p style="font-size: 16px; color: #1f2937;">Bonjour ${prospectName},</p>
+
+              <p style="color: #4b5563;">
+                Votre conseiller TaxiAssur a mis à disposition tous vos documents contractuels.
+                Vous pouvez les consulter et les télécharger dès maintenant.
+              </p>
+
+              <h2 style="color: #1f2937; margin-top: 25px;">📋 Documents disponibles</h2>
+
+              ${documentsList.map(doc => `
+                <div class="document-card">
+                  <h3 style="margin: 0 0 10px 0; color: #1e40af; font-size: 16px;">📄 ${doc.label}</h3>
+                  <p style="margin: 0 0 10px 0; color: #6b7280; font-size: 14px;">${doc.name}</p>
+                  <a href="${doc.url}" class="download-btn" target="_blank">
+                    ⬇️ Télécharger
+                  </a>
+                </div>
+              `).join('')}
+
+              <div style="background: #eff6ff; border: 2px solid #93c5fd; border-radius: 8px; padding: 20px; margin: 30px 0;">
+                <h3 style="color: #2563eb; margin-top: 0;">💡 Accès à votre espace</h3>
+                <p style="color: #4b5563; margin-bottom: 15px;">
+                  Tous vos documents sont également disponibles dans votre espace personnel sécurisé,
+                  accessible à tout moment.
+                </p>
+                <div style="text-align: center;">
+                  <a href="${prospectSpaceUrl}" class="cta-button">
+                    🔐 ACCÉDER À MON ESPACE
+                  </a>
+                </div>
+              </div>
+
+              <p style="color: #6b7280; font-size: 14px; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+                💬 <strong>Une question ?</strong> Répondez simplement à cet email ou appelez-nous au <strong>01 80 85 57 86</strong>
+              </p>
+            </div>
+
+            <div class="footer">
+              <strong>TaxiAssur</strong><br>
+              L'assurance taxi en toute simplicité<br>
+              <a href="https://taxiassur.com" style="color: #10b981; text-decoration: none;">taxiassur.com</a>
+            </div>
+          </div>
+        </body>
+        </html>
+      `;
+
+      // Envoyer via l'Edge Function send-crm-email
+      const { error: emailError } = await supabase.functions.invoke('send-crm-email', {
+        body: {
+          to: leadData.email,
+          subject: `📄 Vos ${documents.length} document${documents.length > 1 ? 's' : ''} TaxiAssur`,
+          content: emailBody,
+          leadId: leadId
+        }
+      });
+
+      if (emailError) throw emailError;
+
+      alert(`✅ Email envoyé avec succès à ${leadData.email} avec ${documents.length} document(s) !`);
+    } catch (error) {
+      console.error('Error sending documents email:', error);
+      alert('Erreur lors de l\'envoi de l\'email : ' + (error as Error).message);
+    } finally {
+      setSendingEmail(false);
     }
   }
 
@@ -324,9 +460,30 @@ export default function ContratSignatureStep({ leadId, onComplete }: ContratSign
 
       {/* Documents Upload */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h4 className="font-semibold text-gray-900 mb-4">
-          Documents Finaux à Uploader
-        </h4>
+        <div className="flex items-center justify-between mb-4">
+          <h4 className="font-semibold text-gray-900">
+            Documents Finaux à Uploader
+          </h4>
+          {documents.length > 0 && (
+            <button
+              onClick={sendDocumentsEmail}
+              disabled={sendingEmail}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium transition-colors"
+            >
+              {sendingEmail ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Envoi en cours...
+                </>
+              ) : (
+                <>
+                  <Send className="h-4 w-4" />
+                  Envoyer au prospect
+                </>
+              )}
+            </button>
+          )}
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {REQUIRED_DOCS.map((req) => {
