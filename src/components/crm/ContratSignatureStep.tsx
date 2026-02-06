@@ -188,17 +188,15 @@ export default function ContratSignatureStep({ leadId, onComplete }: ContratSign
       // Confirm contract signature
       await confirmContractSignature();
 
-      // Transform lead to client
-      const { error: updateError } = await supabase
-        .from('crm_leads')
-        .update({
-          pipeline_stage: 'client_actif',
-          status: 'won',
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', leadId);
+      // Activate lead as client using the RPC function
+      const { data: activationResult, error: activationError } = await supabase
+        .rpc('activate_lead_as_client', { p_lead_id: leadId });
 
-      if (updateError) throw updateError;
+      if (activationError) throw activationError;
+
+      if (!activationResult?.success) {
+        throw new Error(activationResult?.error || 'Erreur lors de l\'activation du client');
+      }
 
       // Send congratulations email
       const { data: leadData } = await supabase
