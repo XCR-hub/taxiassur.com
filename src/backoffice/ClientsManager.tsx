@@ -362,9 +362,17 @@ export default function ClientsManager() {
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
                       <Link
+                        to={`/backoffice/clients/${client.id}`}
+                        className="flex items-center gap-1 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm font-medium"
+                        title="Gérer ce client"
+                      >
+                        <Shield className="h-4 w-4" />
+                        Gérer
+                      </Link>
+                      <Link
                         to={`/backoffice/crm-killer/lead/${client.id}`}
-                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                        title="Voir la fiche"
+                        className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                        title="Voir la fiche CRM"
                       >
                         <Eye className="h-4 w-4" />
                       </Link>

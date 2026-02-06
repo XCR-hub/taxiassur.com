@@ -85,6 +85,7 @@ const ClientNotifications = lazy(() => import('./pages/client/ClientNotification
 const ClientPaiements = lazy(() => import('./pages/client/ClientPaiements'));
 const ClientProfil = lazy(() => import('./pages/client/ClientProfil'));
 const ClientSinistres = lazy(() => import('./pages/client/ClientSinistres'));
+const ClientInsuranceSpace = lazy(() => import('./pages/client/ClientInsuranceSpace'));
 
 const BackofficeDashboard = lazy(() => import('./backoffice/Dashboard'));
 const CRMLayout = lazy(() => import('./backoffice/CRMLayout'));
@@ -109,6 +110,7 @@ const EmailMarketingHub = lazy(() => import('./backoffice/EmailMarketingHub'));
 const DuplicateLeadsManager = lazy(() => import('./backoffice/DuplicateLeadsManager'));
 const TestAutomations = lazy(() => import('./backoffice/TestAutomations'));
 const ClientsManager = lazy(() => import('./backoffice/ClientsManager'));
+const ClientInsuranceManager = lazy(() => import('./backoffice/ClientInsuranceManager'));
 
 export const router = createBrowserRouter([
   {
@@ -122,6 +124,10 @@ export const router = createBrowserRouter([
   {
     path: '/espace-client',
     element: <EspaceClient />,
+  },
+  {
+    path: '/espace-client/assurances',
+    element: <ClientInsuranceSpace />,
   },
   {
     path: '/espace-prospect',
@@ -462,6 +468,10 @@ export const router = createBrowserRouter([
   {
     path: '/backoffice/clients',
     element: <ClientsManager />,
+  },
+  {
+    path: '/backoffice/clients/:leadId',
+    element: <ClientInsuranceManager />,
   },
   {
     path: '/backoffice/crm',
