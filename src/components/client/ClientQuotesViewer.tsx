@@ -255,6 +255,14 @@ export default function ClientQuotesViewer({ leadId, token, supabaseClient }: Pr
                         className="max-w-full max-h-full object-contain"
                       />
                     </div>
+                  ) : company.name.toLowerCase().includes('simple') || company.code === 'PLUS_SIMPLE' ? (
+                    <div className="w-16 h-16 bg-white rounded-lg p-2 flex items-center justify-center flex-shrink-0">
+                      <img
+                        src="/logo_plu_simple.png"
+                        alt="Logo +Simple"
+                        className="max-w-full max-h-full object-contain"
+                      />
+                    </div>
                   ) : (
                     <Building2 className="w-12 h-12 text-amber-500" />
                   )}
