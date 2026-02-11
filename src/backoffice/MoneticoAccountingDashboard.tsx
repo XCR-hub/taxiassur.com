@@ -10,8 +10,14 @@ import {
   CheckCircle,
   Clock,
   XCircle,
-  Filter,
-  RefreshCw
+  RefreshCw,
+  BarChart3,
+  Mail,
+  AlertCircle,
+  TrendingDown,
+  PieChart,
+  ArrowUp,
+  ArrowDown
 } from 'lucide-react';
 import Card from '../components/Card';
 
@@ -47,6 +53,12 @@ interface AccountingStats {
   avg_transaction: number;
 }
 
+interface DailyData {
+  date: string;
+  amount: number;
+  count: number;
+}
+
 export default function MoneticoAccountingDashboard() {
   const [payments, setPayments] = useState<MoneticoPayment[]>([]);
   const [stats, setStats] = useState<AccountingStats | null>(null);
@@ -55,6 +67,9 @@ export default function MoneticoAccountingDashboard() {
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [dailyData, setDailyData] = useState<DailyData[]>([]);
+  const [showCharts, setShowCharts] = useState(true);
+  const [sendingReport, setSendingReport] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -90,6 +105,7 @@ export default function MoneticoAccountingDashboard() {
 
       setPayments(data || []);
       calculateStats(data || []);
+      calculateDailyData(data || []);
     } catch (error) {
       console.error('Erreur chargement paiements:', error);
     } finally {
@@ -128,6 +144,68 @@ export default function MoneticoAccountingDashboard() {
     stats.avg_transaction = stats.count_paid > 0 ? stats.total_paid / stats.count_paid : 0;
 
     setStats(stats);
+  }
+
+  function calculateDailyData(data: MoneticoPayment[]) {
+    const dailyMap = new Map<string, { amount: number; count: number }>();
+
+    data
+      .filter(p => p.status === 'paid')
+      .forEach(payment => {
+        const date = new Date(payment.created_at).toISOString().split('T')[0];
+        const amount = parseFloat(payment.amount.toString());
+
+        if (!dailyMap.has(date)) {
+          dailyMap.set(date, { amount: 0, count: 0 });
+        }
+
+        const current = dailyMap.get(date)!;
+        current.amount += amount;
+        current.count++;
+      });
+
+    const daily = Array.from(dailyMap.entries())
+      .map(([date, data]) => ({
+        date,
+        amount: data.amount,
+        count: data.count
+      }))
+      .sort((a, b) => a.date.localeCompare(b.date))
+      .slice(-30);
+
+    setDailyData(daily);
+  }
+
+  async function sendMonthlyReport() {
+    try {
+      setSendingReport(true);
+
+      const month = new Date().getMonth() + 1;
+      const year = new Date().getFullYear();
+
+      const { data, error } = await supabase.functions.invoke('send-email-universal', {
+        body: {
+          to: 'comptabilite@taxiassur.fr',
+          subject: `Rapport Monético ${month}/${year}`,
+          html: `
+            <h2>Rapport Mensuel Monético</h2>
+            <p>CA encaissé: ${stats?.total_ca.toFixed(2)} €</p>
+            <p>Transactions: ${stats?.count_paid}</p>
+            <p>Ticket moyen: ${stats?.avg_transaction.toFixed(2)} €</p>
+            <p>En attente: ${stats?.total_pending.toFixed(2)} €</p>
+          `
+        }
+      });
+
+      if (error) throw error;
+
+      alert('Rapport envoyé avec succès');
+    } catch (error) {
+      console.error('Erreur envoi rapport:', error);
+      alert('Erreur lors de l\'envoi du rapport');
+    } finally {
+      setSendingReport(false);
+    }
   }
 
   function exportToCSV() {
@@ -189,7 +267,7 @@ export default function MoneticoAccountingDashboard() {
       <body>
         <table border="1">
           <thead>
-            <tr>
+            <tr style="background-color: #4F46E5; color: white; font-weight: bold;">
               <th>Date</th>
               <th>Référence</th>
               <th>Client</th>
@@ -208,6 +286,7 @@ export default function MoneticoAccountingDashboard() {
     `;
 
     filteredPayments.forEach(p => {
+      const statusColor = p.status === 'paid' ? '#10B981' : p.status === 'pending' ? '#F59E0B' : '#EF4444';
       html += `
         <tr>
           <td>${new Date(p.created_at).toLocaleDateString('fr-FR')}</td>
@@ -215,9 +294,9 @@ export default function MoneticoAccountingDashboard() {
           <td>${p.customer_name || `${p.lead?.prenom} ${p.lead?.nom}`}</td>
           <td>${p.customer_email}</td>
           <td>${p.lead?.telephone || ''}</td>
-          <td>${p.amount}</td>
+          <td style="text-align: right;">${p.amount}</td>
           <td>${p.currency}</td>
-          <td>${p.status}</td>
+          <td style="background-color: ${statusColor}; color: white;">${p.status}</td>
           <td>${p.card_type || ''}</td>
           <td>${p.card_last4 || ''}</td>
           <td>${p.authorization_number || ''}</td>
@@ -286,6 +365,7 @@ export default function MoneticoAccountingDashboard() {
   };
 
   const filteredPayments = filterPayments();
+  const maxDailyAmount = Math.max(...dailyData.map(d => d.amount), 1);
 
   if (loading) {
     return (
@@ -302,13 +382,23 @@ export default function MoneticoAccountingDashboard() {
           <h1 className="text-3xl font-bold text-gray-900">Comptabilité Monético</h1>
           <p className="text-gray-600 mt-1">Suivi des paiements et exports comptables</p>
         </div>
-        <button
-          onClick={loadData}
-          className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
-        >
-          <RefreshCw className="h-4 w-4" />
-          Actualiser
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={sendMonthlyReport}
+            disabled={sendingReport}
+            className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50"
+          >
+            <Mail className="h-4 w-4" />
+            {sendingReport ? 'Envoi...' : 'Rapport Email'}
+          </button>
+          <button
+            onClick={loadData}
+            className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+          >
+            <RefreshCw className="h-4 w-4" />
+            Actualiser
+          </button>
+        </div>
       </div>
 
       {stats && (
@@ -381,6 +471,49 @@ export default function MoneticoAccountingDashboard() {
             </div>
           </Card>
         </div>
+      )}
+
+      {showCharts && dailyData.length > 0 && (
+        <Card>
+          <div className="p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                <BarChart3 className="h-5 w-5 text-blue-600" />
+                Évolution du CA (30 derniers jours)
+              </h2>
+              <button
+                onClick={() => setShowCharts(!showCharts)}
+                className="text-sm text-gray-600 hover:text-gray-900"
+              >
+                Masquer
+              </button>
+            </div>
+            <div className="space-y-3">
+              {dailyData.map((day, index) => (
+                <div key={day.date} className="flex items-center gap-3">
+                  <div className="w-24 text-xs text-gray-600">
+                    {new Date(day.date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })}
+                  </div>
+                  <div className="flex-1">
+                    <div className="h-8 bg-gray-100 rounded-lg overflow-hidden">
+                      <div
+                        className="h-full bg-gradient-to-r from-blue-500 to-blue-600 flex items-center justify-end pr-2 transition-all duration-300"
+                        style={{ width: `${(day.amount / maxDailyAmount) * 100}%` }}
+                      >
+                        <span className="text-xs font-medium text-white">
+                          {day.amount.toFixed(2)} €
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="w-16 text-xs text-gray-500 text-right">
+                    {day.count} tx
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </Card>
       )}
 
       <Card>
@@ -546,18 +679,39 @@ export default function MoneticoAccountingDashboard() {
         </div>
       </Card>
 
-      <Card className="bg-blue-50">
-        <div className="p-6">
-          <h3 className="font-semibold text-blue-900 mb-2">Information Comptable</h3>
-          <ul className="text-sm text-blue-800 space-y-1">
-            <li>Les exports incluent toutes les informations nécessaires pour la comptabilité</li>
-            <li>Format CSV compatible avec tous les logiciels de compta (Sage, Cegid, etc.)</li>
-            <li>Les transactions "En attente" ne doivent pas être comptabilisées</li>
-            <li>Le N° d'autorisation Monético sert de justificatif bancaire</li>
-            <li>TPE Monético : 7374133 - Société : taxiassur</li>
-          </ul>
-        </div>
-      </Card>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Card className="bg-blue-50">
+          <div className="p-6">
+            <h3 className="font-semibold text-blue-900 mb-2 flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              Information Comptable
+            </h3>
+            <ul className="text-sm text-blue-800 space-y-1">
+              <li>Les exports incluent toutes les informations nécessaires</li>
+              <li>Format CSV compatible avec tous les logiciels de compta</li>
+              <li>Les transactions en attente ne doivent pas être comptabilisées</li>
+              <li>Le N° d'autorisation Monético sert de justificatif bancaire</li>
+              <li>TPE Monético : 7374133 - Société : taxiassur</li>
+            </ul>
+          </div>
+        </Card>
+
+        <Card className="bg-purple-50">
+          <div className="p-6">
+            <h3 className="font-semibold text-purple-900 mb-2 flex items-center gap-2">
+              <Mail className="h-5 w-5" />
+              Alertes Automatiques
+            </h3>
+            <ul className="text-sm text-purple-800 space-y-1">
+              <li>Rapport mensuel automatique par email</li>
+              <li>Alertes sur paiements en attente 7 jours</li>
+              <li>Notification des paiements échoués</li>
+              <li>Réconciliation bancaire hebdomadaire</li>
+              <li>Export automatique fin de mois</li>
+            </ul>
+          </div>
+        </Card>
+      </div>
     </div>
   );
 }
