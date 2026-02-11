@@ -7,96 +7,169 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Client-Info, Apikey',
 };
 
-interface PaymentRequest {
-  leadId: string;
-  amount: number;
-  leadEmail: string;
-  leadName: string;
-  paymentId: string;
+const MONETICO_CONFIG = {
+  tpe: '7374133',
+  societe: 'taxiassur',
+  macKey: '106FA85BF342FD4EE95C883D82865B5CC1F63890',
+  version: '3.0',
+  langue: 'FR',
+  urlServeur: 'https://p.monetico-services.com/paiement.cgi',
+  urlOK: 'https://taxiassur.com/espace-prospect/paiement-success',
+  urlKO: 'https://taxiassur.com/espace-prospect/paiement-error',
+};
+
+async function calculateMAC(data: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const keyData = encoder.encode(MONETICO_CONFIG.macKey);
+
+  const key = await crypto.subtle.importKey(
+    'raw',
+    keyData,
+    { name: 'HMAC', hash: 'SHA-1' },
+    false,
+    ['sign']
+  );
+
+  const signature = await crypto.subtle.sign('HMAC', key, encoder.encode(data));
+
+  return Array.from(new Uint8Array(signature))
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('');
+}
+
+function generateReference(): string {
+  const timestamp = Date.now();
+  const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+  return `TAX${timestamp}${random}`;
+}
+
+function formatMoneticoDate(date: Date): string {
+  const pad = (n: number) => n.toString().padStart(2, '0');
+  return `${pad(date.getDate())}/${pad(date.getMonth() + 1)}/${date.getFullYear()}:${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
 }
 
 serve(async (req: Request) => {
-  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, { status: 200, headers: corsHeaders });
   }
 
   try {
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    );
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const { leadId, amount, leadEmail, leadName, paymentId }: PaymentRequest = await req.json();
+    const { leadId, amount, description } = await req.json();
 
-    console.log('Creating Monético payment:', { leadId, amount, leadEmail, paymentId });
-
-    // TODO: Intégration API Monético à compléter avec les informations fournies
-    //
-    // ÉTAPES À IMPLÉMENTER :
-    // 1. Générer les paramètres de paiement Monético
-    // 2. Calculer le MAC (Message Authentication Code)
-    // 3. Créer l'URL de paiement avec les paramètres
-    // 4. Enregistrer la référence de transaction
-    // 5. Envoyer un email au prospect avec le lien de paiement
-    //
-    // PARAMÈTRES MONÉTICO ATTENDUS (à confirmer) :
-    // - TPE (Numéro de terminal)
-    // - date (au format jj/MM/aaaa:HH:mm:ss)
-    // - montant (montant en centimes)
-    // - reference (référence unique de commande)
-    // - MAC (signature HMAC-SHA1)
-    // - url_retour_ok
-    // - url_retour_err
-    // - lgue (langue)
-    // - societe (nom de la société)
-    // - etc.
-
-    // Pour l'instant, on génère juste un placeholder
-    const mockPaymentUrl = `https://p.monetico-services.com/paiement.cgi?version=3.0&TPE=PLACEHOLDER&date=${new Date().toISOString()}&montant=${amount}EUR&reference=${paymentId}`;
-
-    // Mettre à jour le paiement avec l'URL
-    const { error: updateError } = await supabase
-      .from('lead_down_payments')
-      .update({
-        payment_url: mockPaymentUrl,
-        monetico_order_id: paymentId,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', paymentId);
-
-    if (updateError) {
-      throw updateError;
+    if (!leadId || !amount) {
+      return new Response(
+        JSON.stringify({ error: 'leadId et amount sont requis' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
-    // TODO: Envoyer un email au prospect avec le lien de paiement
-    // Via la fonction send-email-universal ou send-crm-email
+    const { data: lead, error: leadError } = await supabase
+      .from('crm_leads')
+      .select('email, first_name, last_name')
+      .eq('id', leadId)
+      .single();
+
+    if (leadError || !lead) {
+      return new Response(
+        JSON.stringify({ error: 'Lead non trouvé' }),
+        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const reference = generateReference();
+    const dateTransaction = formatMoneticoDate(new Date());
+    const montant = `${parseFloat(amount).toFixed(2)}EUR`;
+
+    const params: Record<string, string> = {
+      version: MONETICO_CONFIG.version,
+      TPE: MONETICO_CONFIG.tpe,
+      date: dateTransaction,
+      montant: montant,
+      reference: reference,
+      MAC: '',
+      url_retour: `${supabaseUrl}/functions/v1/monetico-webhook`,
+      url_retour_ok: MONETICO_CONFIG.urlOK,
+      url_retour_err: MONETICO_CONFIG.urlKO,
+      lgue: MONETICO_CONFIG.langue,
+      societe: MONETICO_CONFIG.societe,
+      mail: lead.email || '',
+      'texte-libre': description || `Paiement comptant assurance taxi - ${reference}`,
+    };
+
+    const macString = `${MONETICO_CONFIG.version}*${MONETICO_CONFIG.tpe}*${dateTransaction}*${montant}*${reference}*${params['texte-libre']}*${MONETICO_CONFIG.version}*${MONETICO_CONFIG.langue}*${MONETICO_CONFIG.societe}*${params.mail}*${params.url_retour}*${params.url_retour_ok}*${params.url_retour_err}`;
+
+    const mac = await calculateMAC(macString);
+    params.MAC = mac;
+
+    const { data: payment, error: paymentError } = await supabase
+      .from('monetico_payments')
+      .insert({
+        lead_id: leadId,
+        reference: reference,
+        amount: parseFloat(amount),
+        currency: 'EUR',
+        status: 'pending',
+        payment_url: MONETICO_CONFIG.urlServeur,
+        return_url: params.url_retour,
+        mac_sent: mac,
+        customer_email: lead.email,
+        customer_name: `${lead.first_name} ${lead.last_name}`,
+        description: params['texte-libre'],
+        monetico_data: params,
+      })
+      .select()
+      .single();
+
+    if (paymentError) {
+      console.error('Erreur création paiement:', paymentError);
+      return new Response(
+        JSON.stringify({ error: 'Erreur lors de la création du paiement' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const formFields = Object.entries(params)
+      .map(([key, value]) => `<input type="hidden" name="${key}" value="${value}">`)
+      .join('\n');
+
+    const htmlForm = `<!DOCTYPE html>
+<html>
+<head>
+  <title>Redirection vers le paiement sécurisé</title>
+  <meta charset="UTF-8">
+</head>
+<body>
+  <div style="text-align: center; padding: 50px; font-family: Arial, sans-serif;">
+    <h2>Redirection vers le paiement sécurisé Monetico...</h2>
+    <p>Veuillez patienter quelques instants.</p>
+  </div>
+  <form id="monetico-form" method="POST" action="${MONETICO_CONFIG.urlServeur}">
+    ${formFields}
+  </form>
+  <script>document.getElementById('monetico-form').submit();</script>
+</body>
+</html>`;
 
     return new Response(
       JSON.stringify({
         success: true,
-        paymentUrl: mockPaymentUrl,
-        message: 'Lien de paiement créé (API Monético à configurer)',
-        note: 'Cette fonction sera complétée avec les paramètres API Monético réels'
+        paymentId: payment.id,
+        reference: reference,
+        paymentUrl: MONETICO_CONFIG.urlServeur,
+        formData: params,
+        htmlForm: htmlForm,
       }),
-      {
-        status: 200,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      }
+      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
-
   } catch (error: any) {
-    console.error('Error creating Monético payment:', error);
-
+    console.error('Erreur:', error);
     return new Response(
-      JSON.stringify({
-        success: false,
-        error: error.message || 'Erreur lors de la création du paiement'
-      }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      }
+      JSON.stringify({ error: error.message }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });

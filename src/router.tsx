@@ -42,6 +42,8 @@ const CityPage = lazy(() => import('./pages/CityPage'));
 const MirrorPage = lazy(() => import('./pages/MirrorPage'));
 const DownPaymentPage = lazy(() => import('./pages/DownPaymentPage'));
 const TestNotifications = lazy(() => import('./pages/TestNotifications'));
+const PaiementSuccess = lazy(() => import('./pages/PaiementSuccess'));
+const PaiementError = lazy(() => import('./pages/PaiementError'));
 
 const AssuranceTaxiParis = lazy(() => import('./pages/AssuranceTaxiParis'));
 const AssuranceTaxiMarseille = lazy(() => import('./pages/AssuranceTaxiMarseille'));
@@ -140,6 +142,14 @@ export const router = createBrowserRouter([
   {
     path: '/prospect/documents',
     element: <ProspectDocuments />,
+  },
+  {
+    path: '/espace-prospect/paiement-success',
+    element: <PaiementSuccess />,
+  },
+  {
+    path: '/espace-prospect/paiement-error',
+    element: <PaiementError />,
   },
   {
     path: '/contact',

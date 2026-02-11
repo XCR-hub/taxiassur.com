@@ -7,8 +7,30 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Client-Info, Apikey',
 };
 
+const MONETICO_MAC_KEY = '106FA85BF342FD4EE95C883D82865B5CC1F63890';
+
+async function verifyMAC(data: string, receivedMAC: string): Promise<boolean> {
+  const encoder = new TextEncoder();
+  const keyData = encoder.encode(MONETICO_MAC_KEY);
+
+  const key = await crypto.subtle.importKey(
+    'raw',
+    keyData,
+    { name: 'HMAC', hash: 'SHA-1' },
+    false,
+    ['sign']
+  );
+
+  const signature = await crypto.subtle.sign('HMAC', key, encoder.encode(data));
+
+  const calculatedMAC = Array.from(new Uint8Array(signature))
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('');
+
+  return calculatedMAC.toLowerCase() === receivedMAC.toLowerCase();
+}
+
 serve(async (req: Request) => {
-  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, { status: 200, headers: corsHeaders });
   }
@@ -19,8 +41,6 @@ serve(async (req: Request) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     );
 
-    // TODO: Parser les données du webhook Monético
-    // Le format exact dépend de la documentation Monético
     const formData = await req.formData();
     const webhookData: any = {};
 
@@ -28,114 +48,104 @@ serve(async (req: Request) => {
       webhookData[key] = value;
     }
 
-    console.log('Monético webhook received:', webhookData);
+    console.log('Monetico webhook received:', webhookData);
 
-    // TODO: Vérifier le MAC (signature) du webhook
-    // Pour sécuriser que le webhook vient bien de Monético
-    // const isValid = verifyMoneticoMAC(webhookData);
-    // if (!isValid) {
-    //   return new Response('Invalid MAC', { status: 403 });
-    // }
-
-    // Extraire les informations du webhook
     const {
-      reference, // Notre paymentId
+      reference,
       montant,
-      code_retour, // Code de retour Monético
-      motif_refus,
-      numauto, // Numéro d'autorisation
+      code_retour,
+      cvx,
+      motifrefus,
+      numauto,
       date,
-      // ... autres champs selon la documentation Monético
+      heure,
+      TPE,
+      MAC: receivedMAC,
+      authentification,
+      brand,
+      modepaiement,
     } = webhookData;
 
-    // Déterminer le statut du paiement
-    let status = 'failed';
-    let failureReason = motif_refus;
+    const macString = `${TPE}*${date}*${montant}*${reference}*${code_retour}*${cvx}*${motifrefus}*${authentification}*${numauto}`;
 
-    // TODO: Adapter selon les codes de retour réels de Monético
-    if (code_retour === 'payetest' || code_retour === 'paiement') {
-      status = 'paid';
-      failureReason = null;
+    const isValidMAC = await verifyMAC(macString, receivedMAC);
+
+    if (!isValidMAC) {
+      console.error('Invalid MAC signature');
+      return new Response('version=2\ncdr=1', {
+        status: 200,
+        headers: { 'Content-Type': 'text/plain' }
+      });
     }
 
-    // Mettre à jour le paiement
     const { data: payment, error: fetchError } = await supabase
-      .from('lead_down_payments')
+      .from('monetico_payments')
       .select('id, lead_id, status')
-      .eq('monetico_order_id', reference)
+      .eq('reference', reference)
       .single();
 
     if (fetchError || !payment) {
       console.error('Payment not found:', reference);
-      return new Response('Payment not found', { status: 404 });
+      return new Response('version=2\ncdr=1', {
+        status: 200,
+        headers: { 'Content-Type': 'text/plain' }
+      });
     }
 
-    // Ne mettre à jour que si le statut est pending
-    if (payment.status === 'pending') {
+    let status = 'failed';
+    if (code_retour === 'payetest' || code_retour === 'paiement') {
+      status = 'success';
+    } else if (code_retour === 'Annulation') {
+      status = 'cancelled';
+    }
+
+    if (payment.status === 'pending' || payment.status === 'processing') {
       const updateData: any = {
         status,
         transaction_id: numauto,
-        updated_at: new Date().toISOString(),
+        payment_date: status === 'success' ? new Date().toISOString() : null,
+        card_type: brand,
+        authorization_number: numauto,
+        mac_received: receivedMAC,
+        monetico_data: {
+          ...webhookData,
+          received_at: new Date().toISOString()
+        }
       };
 
-      if (status === 'paid') {
-        updateData.paid_at = new Date().toISOString();
-      } else {
-        updateData.failed_at = new Date().toISOString();
-        updateData.failure_reason = failureReason;
+      if (modepaiement && modepaiement.includes('CB')) {
+        const lastDigits = modepaiement.match(/\d{4}$/);
+        if (lastDigits) {
+          updateData.card_last4 = lastDigits[0];
+        }
       }
 
       const { error: updateError } = await supabase
-        .from('lead_down_payments')
+        .from('monetico_payments')
         .update(updateData)
         .eq('id', payment.id);
 
       if (updateError) {
         console.error('Error updating payment:', updateError);
-        return new Response('Error updating payment', { status: 500 });
-      }
-
-      // Logger l'événement
-      await supabase
-        .from('crm_event_notifications')
-        .insert({
-          lead_id: payment.lead_id,
-          event_type: status === 'paid' ? 'payment_received' : 'payment_failed',
-          title: status === 'paid' ? 'Paiement comptant reçu' : 'Paiement comptant échoué',
-          message: status === 'paid'
-            ? `Le paiement comptant a été confirmé (${montant})`
-            : `Le paiement comptant a échoué : ${failureReason}`,
-          priority: status === 'paid' ? 'high' : 'medium',
-          metadata: {
-            payment_id: payment.id,
-            transaction_id: numauto,
-            amount: montant,
-            webhook_data: webhookData
-          }
+        return new Response('version=2\ncdr=1', {
+          status: 200,
+          headers: { 'Content-Type': 'text/plain' }
         });
+      }
 
       console.log('Payment updated successfully:', { paymentId: payment.id, status });
     }
 
-    // Répondre à Monético selon leur format attendu
-    // TODO: Adapter selon la documentation Monético
     return new Response('version=2\ncdr=0', {
       status: 200,
       headers: { 'Content-Type': 'text/plain' }
     });
 
   } catch (error: any) {
-    console.error('Error processing Monético webhook:', error);
-
-    return new Response(
-      JSON.stringify({
-        success: false,
-        error: error.message
-      }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      }
-    );
+    console.error('Error processing Monetico webhook:', error);
+    return new Response('version=2\ncdr=1', {
+      status: 200,
+      headers: { 'Content-Type': 'text/plain' }
+    });
   }
 });
