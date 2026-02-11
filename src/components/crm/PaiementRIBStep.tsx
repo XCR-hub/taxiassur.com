@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Upload, CheckCircle2, X, FileText, Loader2, AlertCircle } from 'lucide-react';
+import { Upload, CheckCircle2, X, FileText, Loader2, AlertCircle, CreditCard } from 'lucide-react';
 import { MoneticoPaymentManager } from './MoneticoPaymentManager';
 
 interface PaiementRIBStepProps {
