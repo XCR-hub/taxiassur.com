@@ -312,11 +312,11 @@ const CRMInboxMulticanal: React.FC = () => {
   const [selectedMessage, setSelectedMessage] = useState<EmailMessage | null>(null);
   const [foundLeadId, setFoundLeadId] = useState<string | null>(null);
   const [extractedInfo, setExtractedInfo] = useState<ExtractedLeadInfo | null>(null);
-  const [filter, setFilter] = useState<'all' | 'unread' | 'starred' | 'leads' | 'archived'>('all');
+  const [filter, setFilter] = useState<'all' | 'unread' | 'starred' | 'leads' | 'mails' | 'archived'>('all');
   const [directionFilter, setDirectionFilter] = useState<'all' | 'inbound' | 'outbound'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'date' | 'priority'>('date');
-  const [stats, setStats] = useState({ total: 0, unread: 0, leads: 0, starred: 0, archived: 0 });
+  const [stats, setStats] = useState({ total: 0, unread: 0, leads: 0, starred: 0, archived: 0, mails: 0 });
   const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'success' | 'error'>('idle');
   const [syncMessage, setSyncMessage] = useState('');
   const [autoSyncActive, setAutoSyncActive] = useState(false);
@@ -443,12 +443,19 @@ const CRMInboxMulticanal: React.FC = () => {
         .select('*', { count: 'exact', head: true })
         .eq('email_status', 'archived');
 
+      const { count: mails } = await supabase
+        .from('email_messages')
+        .select('*', { count: 'exact', head: true })
+        .eq('classification', 'non_lead')
+        .or('email_status.is.null,email_status.eq.active');
+
       setStats({
         total: total || 0,
         unread: unread || 0,
         leads: leads || 0,
         starred: starred || 0,
         archived: archived || 0,
+        mails: mails || 0,
       });
     } catch (error) {
       console.error('Error loading stats:', error);
@@ -496,6 +503,8 @@ const CRMInboxMulticanal: React.FC = () => {
           query = query.eq('is_starred', true);
         } else if (filter === 'leads') {
           query = query.not('lead_id', 'is', null);
+        } else if (filter === 'mails') {
+          query = query.eq('classification', 'non_lead');
         }
       }
 
@@ -746,6 +755,45 @@ const CRMInboxMulticanal: React.FC = () => {
       await loadStats();
     } catch (error) {
       console.error('Error:', error);
+    }
+  };
+
+  const classifyAsNonLead = async (emailId: string) => {
+    try {
+      setSyncMessage('Classification en cours...');
+      setSyncStatus('syncing');
+
+      await supabase
+        .from('email_messages')
+        .update({
+          classification: 'non_lead',
+          confidence_score: 1.0,
+          is_read: true,
+        })
+        .eq('id', emailId);
+
+      setMessages(
+        messages.map((e) =>
+          e.id === emailId
+            ? { ...e, classification: 'non_lead', confidence_score: 1.0, is_read: true }
+            : e
+        )
+      );
+
+      setSyncMessage('✅ Email classé dans "Mails" (ne sera pas converti en lead)');
+      setSyncStatus('success');
+
+      await loadStats();
+
+      setTimeout(() => {
+        setSyncStatus('idle');
+        setSyncMessage('');
+        setSelectedMessage(null);
+      }, 2000);
+    } catch (error) {
+      console.error('Error classifying email:', error);
+      setSyncMessage(`❌ Erreur: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
+      setSyncStatus('error');
     }
   };
 
@@ -1013,13 +1061,24 @@ const CRMInboxMulticanal: React.FC = () => {
       spam: 'bg-red-100 text-red-800',
       documents: 'bg-purple-100 text-purple-800',
       general: 'bg-yellow-100 text-yellow-800',
+      non_lead: 'bg-gray-200 text-gray-700',
+    };
+
+    const labels: Record<string, string> = {
+      lead_inquiry: 'Demande de devis',
+      customer_support: 'Support client',
+      reply: 'Réponse',
+      spam: 'Spam',
+      documents: 'Documents',
+      general: 'Général',
+      non_lead: 'Mails',
     };
 
     return (
       <span
         className={`px-2 py-1 text-xs font-medium rounded-full ${colors[category] || 'bg-gray-100 text-gray-800'}`}
       >
-        {category.replace('_', ' ')}
+        {labels[category] || category.replace('_', ' ')}
       </span>
     );
   };
@@ -1179,6 +1238,17 @@ const CRMInboxMulticanal: React.FC = () => {
               }`}
             >
               Leads ({stats.leads})
+            </button>
+            <button
+              onClick={() => setFilter('mails')}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 ${
+                filter === 'mails'
+                  ? 'bg-gray-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              <Folder size={16} />
+              Mails ({stats.mails})
             </button>
             <button
               onClick={() => setFilter('archived')}
@@ -1505,14 +1575,24 @@ const CRMInboxMulticanal: React.FC = () => {
                     </button>
                   )}
                   {!foundLeadId && (
-                    <button
-                      onClick={openAssignModal}
-                      className="flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors text-sm font-medium"
-                      title="Assigner manuellement cet email à un lead existant"
-                    >
-                      <LinkIcon size={16} />
-                      Assigner manuellement
-                    </button>
+                    <>
+                      <button
+                        onClick={openAssignModal}
+                        className="flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors text-sm font-medium"
+                        title="Assigner manuellement cet email à un lead existant"
+                      >
+                        <LinkIcon size={16} />
+                        Rattacher à un lead
+                      </button>
+                      <button
+                        onClick={() => classifyAsNonLead(selectedMessage.id)}
+                        className="flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm font-medium"
+                        title="Cet email n'est pas une demande de devis"
+                      >
+                        <Folder size={16} />
+                        Classer dans "Mails"
+                      </button>
+                    </>
                   )}
                   <button
                     onClick={() =>
