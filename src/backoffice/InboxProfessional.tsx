@@ -86,10 +86,59 @@ export default function InboxProfessional() {
   const [showNewFolderDialog, setShowNewFolderDialog] = useState(false);
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
   const [filterType, setFilterType] = useState<'all' | 'unread' | 'starred'>('all');
+  const [showLinkLeadDialog, setShowLinkLeadDialog] = useState(false);
+  const [searchLeadQuery, setSearchLeadQuery] = useState('');
+  const [availableLeads, setAvailableLeads] = useState<any[]>([]);
+  const [unlinkedCount, setUnlinkedCount] = useState(0);
+  const [lastUnlinkedCount, setLastUnlinkedCount] = useState(0);
 
   useEffect(() => {
     loadInbox();
+
+    // Demander la permission pour les notifications
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+
+    // Rafraîchir toutes les 30 secondes pour détecter les nouveaux emails
+    const interval = setInterval(() => {
+      loadInbox();
+    }, 30000);
+
+    return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    // Notifier si de nouveaux emails non liés arrivent
+    if (unlinkedCount > lastUnlinkedCount && lastUnlinkedCount > 0) {
+      const newEmailsCount = unlinkedCount - lastUnlinkedCount;
+      showDesktopNotification(
+        'Nouveaux emails à traiter',
+        `${newEmailsCount} nouvel${newEmailsCount > 1 ? 'aux' : ''} email${newEmailsCount > 1 ? 's' : ''} potentiel${newEmailsCount > 1 ? 's' : ''} de lead détecté${newEmailsCount > 1 ? 's' : ''}`
+      );
+    }
+    setLastUnlinkedCount(unlinkedCount);
+  }, [unlinkedCount]);
+
+  function showDesktopNotification(title: string, body: string) {
+    if ('Notification' in window && Notification.permission === 'granted') {
+      const notification = new Notification(title, {
+        body,
+        icon: '/logo.svg',
+        badge: '/logo.svg',
+        tag: 'inbox-notification',
+        requireInteraction: false
+      });
+
+      notification.onclick = () => {
+        window.focus();
+        notification.close();
+      };
+
+      // Auto-fermer après 10 secondes
+      setTimeout(() => notification.close(), 10000);
+    }
+  }
 
   async function loadInbox() {
     try {
@@ -154,6 +203,16 @@ export default function InboxProfessional() {
       if (!suggestionsError) {
         setSuggestions(suggestionsData || []);
       }
+
+      // Compter les emails non liés à un lead
+      const { count: unlinkedEmailCount } = await supabase
+        .from('email_messages')
+        .select('*', { count: 'exact', head: true })
+        .is('lead_id', null)
+        .is('folder_id', null)
+        .is('is_deleted', false);
+
+      setUnlinkedCount(unlinkedEmailCount || 0);
     } catch (error) {
       console.error('Erreur chargement inbox:', error);
     } finally {
@@ -189,6 +248,116 @@ export default function InboxProfessional() {
     } catch (error) {
       console.error('Erreur action email:', error);
     }
+  }
+
+  async function createLeadFromEmail(email: EmailMessage) {
+    try {
+      setLoading(true);
+
+      // Créer le lead
+      const { data: newLead, error: leadError } = await supabase
+        .from('crm_leads')
+        .insert({
+          email: email.from_email,
+          full_name: email.from_name || email.from_email.split('@')[0],
+          status: 'nouveau_lead',
+          source: 'Email',
+          pipeline_stage: 1
+        })
+        .select()
+        .single();
+
+      if (leadError) throw leadError;
+
+      // Lier tous les emails de cet expéditeur au nouveau lead
+      await supabase
+        .from('email_messages')
+        .update({ lead_id: newLead.id })
+        .eq('from_email', email.from_email);
+
+      alert(`✅ Lead créé avec succès : ${newLead.full_name}\n\nTous les emails de cet expéditeur ont été liés au lead.`);
+      loadInbox();
+    } catch (error) {
+      console.error('Erreur création lead:', error);
+      alert('Erreur lors de la création du lead');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function linkEmailToLead(emailId: string, leadId: string) {
+    try {
+      setLoading(true);
+
+      // Lier l'email au lead
+      await supabase
+        .from('email_messages')
+        .update({ lead_id: leadId })
+        .eq('id', emailId);
+
+      alert('✅ Email lié au lead avec succès');
+      setShowLinkLeadDialog(false);
+      loadInbox();
+    } catch (error) {
+      console.error('Erreur liaison email:', error);
+      alert('Erreur lors de la liaison');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function classifyEmailAsSpam(emailId: string) {
+    try {
+      // Trouver ou créer le dossier "Mails"
+      let { data: mailsFolder } = await supabase
+        .from('email_folders')
+        .select('id')
+        .eq('name', 'Mails')
+        .single();
+
+      if (!mailsFolder) {
+        const { data: newFolder } = await supabase
+          .from('email_folders')
+          .insert({
+            name: 'Mails',
+            folder_type: 'category',
+            icon: 'mail',
+            color: '#6B7280',
+            display_order: 999,
+            is_system: false
+          })
+          .select()
+          .single();
+        mailsFolder = newFolder;
+      }
+
+      // Déplacer l'email
+      await supabase
+        .from('email_messages')
+        .update({ folder_id: mailsFolder.id })
+        .eq('id', emailId);
+
+      alert('✅ Email classé dans "Mails"');
+      loadInbox();
+    } catch (error) {
+      console.error('Erreur classification:', error);
+      alert('Erreur lors de la classification');
+    }
+  }
+
+  async function searchLeads(query: string) {
+    if (query.length < 2) {
+      setAvailableLeads([]);
+      return;
+    }
+
+    const { data } = await supabase
+      .from('crm_leads')
+      .select('id, full_name, email, phone')
+      .or(`full_name.ilike.%${query}%,email.ilike.%${query}%,phone.ilike.%${query}%`)
+      .limit(10);
+
+    setAvailableLeads(data || []);
   }
 
   async function classifyAllEmails() {
@@ -375,6 +544,17 @@ export default function InboxProfessional() {
             <Inbox className="w-5 h-5" />
             Inbox Multicanal
           </h2>
+          {unlinkedCount > 0 && (
+            <div className="mt-3 p-3 bg-orange-900/30 border border-orange-600 rounded-lg">
+              <div className="flex items-center gap-2">
+                <AlertCircle className="w-5 h-5 text-orange-400 flex-shrink-0" />
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-orange-300">À traiter</p>
+                  <p className="text-xs text-orange-400">{unlinkedCount} email{unlinkedCount > 1 ? 's' : ''} non classé{unlinkedCount > 1 ? 's' : ''}</p>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="flex-1 overflow-y-auto p-3 space-y-1">
@@ -475,7 +655,7 @@ export default function InboxProfessional() {
                       <p className="text-xs text-gray-500 truncate">
                         {email.body_text?.substring(0, 80)}...
                       </p>
-                      <div className="flex items-center gap-2 mt-2">
+                      <div className="flex items-center gap-2 mt-2 flex-wrap">
                         <Clock className="w-3 h-3 text-gray-500" />
                         <span className="text-xs text-gray-500">
                           {new Date(email.received_at).toLocaleString('fr-FR', {
@@ -485,11 +665,27 @@ export default function InboxProfessional() {
                             minute: '2-digit'
                           })}
                         </span>
+
+                        {/* Badge selon le statut */}
+                        {!email.lead_id && !email.folder_id && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-orange-900/50 border border-orange-600 text-orange-300 text-xs font-semibold rounded">
+                            <AlertCircle className="w-3 h-3" />
+                            À traiter
+                          </span>
+                        )}
+
                         {email.lead && (
-                          <>
-                            <User className="w-3 h-3 text-green-500 ml-2" />
-                            <span className="text-xs text-green-400">{email.lead.full_name}</span>
-                          </>
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-green-900/50 border border-green-600 text-green-300 text-xs font-semibold rounded">
+                            <User className="w-3 h-3" />
+                            {email.lead.full_name}
+                          </span>
+                        )}
+
+                        {!email.lead_id && email.folder_id && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-gray-700 border border-gray-600 text-gray-300 text-xs font-medium rounded">
+                            <Folder className="w-3 h-3" />
+                            Classé
+                          </span>
                         )}
                       </div>
                     </div>
@@ -505,6 +701,97 @@ export default function InboxProfessional() {
       <div className="flex-1 bg-gray-900 flex flex-col">
         {selectedEmail ? (
           <>
+            {/* Bannière contextuelle de statut */}
+            {!selectedEmail.lead_id && !selectedEmail.folder_id && (
+              <div className="bg-orange-900/30 border-b-2 border-orange-600 p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <AlertCircle className="w-6 h-6 text-orange-400 flex-shrink-0" />
+                    <div>
+                      <p className="text-sm font-bold text-orange-300">Nouveau lead potentiel détecté</p>
+                      <p className="text-xs text-orange-400">Cet email semble provenir d'un nouveau prospect. Validez la création du lead.</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => createLeadFromEmail(selectedEmail)}
+                      className="flex items-center gap-2 px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-semibold transition-colors"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Créer le lead
+                    </button>
+                    <button
+                      onClick={() => setShowLinkLeadDialog(true)}
+                      className="flex items-center gap-2 px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-medium transition-colors"
+                    >
+                      <User className="w-4 h-4" />
+                      Lier à un lead existant
+                    </button>
+                    <button
+                      onClick={() => classifyEmailAsSpam(selectedEmail.id)}
+                      className="flex items-center gap-2 px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-medium transition-colors"
+                    >
+                      <Mail className="w-4 h-4" />
+                      Classer dans "Mails"
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {selectedEmail.lead_id && (
+              <div className="bg-green-900/30 border-b-2 border-green-600 p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <CheckCircle className="w-6 h-6 text-green-400 flex-shrink-0" />
+                    <div>
+                      <p className="text-sm font-bold text-green-300">Email lié au lead : {selectedEmail.lead?.full_name}</p>
+                      <p className="text-xs text-green-400">Cet échange est rattaché à un dossier client existant.</p>
+                    </div>
+                  </div>
+                  <a
+                    href={`/backoffice/crm/lead/${selectedEmail.lead_id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition-colors"
+                  >
+                    Voir le lead
+                    <ExternalLink className="w-4 h-4" />
+                  </a>
+                </div>
+              </div>
+            )}
+
+            {!selectedEmail.lead_id && selectedEmail.folder_id && (
+              <div className="bg-gray-700/50 border-b-2 border-gray-600 p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Folder className="w-6 h-6 text-gray-400 flex-shrink-0" />
+                    <div>
+                      <p className="text-sm font-bold text-gray-300">Email classé</p>
+                      <p className="text-xs text-gray-400">Cet email a été classé et n'est pas lié à un lead commercial.</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => createLeadFromEmail(selectedEmail)}
+                      className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Créer un lead
+                    </button>
+                    <button
+                      onClick={() => setShowLinkLeadDialog(true)}
+                      className="flex items-center gap-2 px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-medium transition-colors"
+                    >
+                      <User className="w-4 h-4" />
+                      Lier à un lead
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="p-6 border-b border-gray-700">
               <div className="flex items-start justify-between mb-4">
                 <div className="flex-1">
@@ -612,6 +899,80 @@ export default function InboxProfessional() {
           </div>
         )}
       </div>
+
+      {/* Dialog - Lier à un lead existant */}
+      {showLinkLeadDialog && selectedEmail && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-gray-800 rounded-xl shadow-2xl max-w-2xl w-full max-h-[80vh] overflow-hidden">
+            <div className="p-6 border-b border-gray-700">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xl font-bold text-white">Lier à un lead existant</h3>
+                <button
+                  onClick={() => {
+                    setShowLinkLeadDialog(false);
+                    setSearchLeadQuery('');
+                    setAvailableLeads([]);
+                  }}
+                  className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
+                >
+                  <X className="w-5 h-5 text-gray-400" />
+                </button>
+              </div>
+            </div>
+
+            <div className="p-6">
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Rechercher un lead
+                </label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Nom, email ou téléphone..."
+                    value={searchLeadQuery}
+                    onChange={(e) => {
+                      setSearchLeadQuery(e.target.value);
+                      searchLeads(e.target.value);
+                    }}
+                    className="w-full pl-10 pr-4 py-3 bg-gray-700 text-white rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none"
+                    autoFocus
+                  />
+                </div>
+              </div>
+
+              <div className="max-h-[400px] overflow-y-auto space-y-2">
+                {availableLeads.length === 0 ? (
+                  <div className="text-center py-8 text-gray-400">
+                    <User className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                    <p>Recherchez un lead par nom, email ou téléphone</p>
+                  </div>
+                ) : (
+                  availableLeads.map((lead) => (
+                    <button
+                      key={lead.id}
+                      onClick={() => linkEmailToLead(selectedEmail.id, lead.id)}
+                      className="w-full p-4 bg-gray-700 hover:bg-gray-600 rounded-lg text-left transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <User className="w-10 h-10 p-2 bg-blue-600 text-white rounded-full flex-shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-white truncate">{lead.full_name}</p>
+                          <p className="text-sm text-gray-400 truncate">{lead.email}</p>
+                          {lead.phone && (
+                            <p className="text-sm text-gray-400">{lead.phone}</p>
+                          )}
+                        </div>
+                        <ExternalLink className="w-5 h-5 text-blue-400 flex-shrink-0" />
+                      </div>
+                    </button>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
