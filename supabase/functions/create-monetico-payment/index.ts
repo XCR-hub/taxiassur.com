@@ -84,26 +84,46 @@ serve(async (req: Request) => {
     const dateTransaction = formatMoneticoDate(new Date());
     const montant = `${parseFloat(amount).toFixed(2)}EUR`;
 
+    const texteLibre = description || `Paiement comptant assurance taxi - ${reference}`;
+    const urlRetour = `${supabaseUrl}/functions/v1/monetico-webhook`;
+
+    // Calcul du MAC selon la spec Monético v3.0
+    // Format: version*TPE*date*montant*reference*texte-libre*version*lgue*societe*mail*
+    const macString = [
+      MONETICO_CONFIG.version,
+      MONETICO_CONFIG.tpe,
+      dateTransaction,
+      montant,
+      reference,
+      texteLibre,
+      MONETICO_CONFIG.version,
+      MONETICO_CONFIG.langue,
+      MONETICO_CONFIG.societe,
+      lead.email || '',
+      urlRetour,
+      MONETICO_CONFIG.urlOK,
+      MONETICO_CONFIG.urlKO,
+    ].join('*');
+
+    console.log('MAC String:', macString);
+    const mac = await calculateMAC(macString);
+    console.log('MAC calculé:', mac);
+
     const params: Record<string, string> = {
       version: MONETICO_CONFIG.version,
       TPE: MONETICO_CONFIG.tpe,
       date: dateTransaction,
       montant: montant,
       reference: reference,
-      MAC: '',
-      url_retour: `${supabaseUrl}/functions/v1/monetico-webhook`,
+      MAC: mac,
+      url_retour: urlRetour,
       url_retour_ok: MONETICO_CONFIG.urlOK,
       url_retour_err: MONETICO_CONFIG.urlKO,
       lgue: MONETICO_CONFIG.langue,
       societe: MONETICO_CONFIG.societe,
       mail: lead.email || '',
-      'texte-libre': description || `Paiement comptant assurance taxi - ${reference}`,
+      'texte-libre': texteLibre,
     };
-
-    const macString = `${MONETICO_CONFIG.version}*${MONETICO_CONFIG.tpe}*${dateTransaction}*${montant}*${reference}*${params['texte-libre']}*${MONETICO_CONFIG.version}*${MONETICO_CONFIG.langue}*${MONETICO_CONFIG.societe}*${params.mail}*${params.url_retour}*${params.url_retour_ok}*${params.url_retour_err}`;
-
-    const mac = await calculateMAC(macString);
-    params.MAC = mac;
 
     const { data: payment, error: paymentError } = await supabase
       .from('monetico_payments')
