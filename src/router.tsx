@@ -114,6 +114,7 @@ const DuplicateLeadsManager = lazy(() => import('./backoffice/DuplicateLeadsMana
 const TestAutomations = lazy(() => import('./backoffice/TestAutomations'));
 const ClientsManager = lazy(() => import('./backoffice/ClientsManager'));
 const ClientInsuranceManager = lazy(() => import('./backoffice/ClientInsuranceManager'));
+const MoneticoAccountingDashboard = lazy(() => import('./backoffice/MoneticoAccountingDashboard'));
 
 export const router = createBrowserRouter([
   {
@@ -484,6 +485,10 @@ export const router = createBrowserRouter([
   {
     path: '/backoffice/clients/:leadId',
     element: <ClientInsuranceManager />,
+  },
+  {
+    path: '/backoffice/monetico-accounting',
+    element: <MoneticoAccountingDashboard />,
   },
   {
     path: '/backoffice/crm',

@@ -112,6 +112,7 @@ export default function NavigationMenu() {
         { to: '/backoffice/insurance-companies', icon: Building2, label: 'Compagnies', highlight: true },
         { to: '/backoffice/insurance-companies-stats', icon: BarChart3, label: 'Stats Compagnies' },
         { to: '/backoffice/quotes', icon: Receipt, label: 'Gestion Devis' },
+        { to: '/backoffice/monetico-accounting', icon: DollarSign, label: 'Comptabilité Monético', highlight: true },
         { to: '/backoffice/pending-documents', icon: FileCheck, label: 'Documents à Valider', highlight: pendingDocsCount > 0, badge: pendingDocsCount > 0 ? pendingDocsCount.toString() : undefined },
         { to: '/backoffice/documents', icon: FileText, label: 'Tous Documents' },
       ],
