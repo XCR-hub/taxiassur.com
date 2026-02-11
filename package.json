@@ -33,7 +33,10 @@
     "recovery:verify": "node scripts/disaster-recovery.js verify",
     "recovery:restore": "node scripts/disaster-recovery.js restore",
     "update:ionos-secrets": "bash scripts/update-ionos-secrets.sh",
-    "test:ionos": "node scripts/test-ionos-connection.js"
+    "test:ionos": "node scripts/test-ionos-connection.js",
+    "seo:sitemap": "node scripts/generate-clean-sitemap.js",
+    "seo:indexnow": "node scripts/submit-indexnow.js",
+    "seo:full": "npm run seo:sitemap && npm run seo:indexnow"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4",
