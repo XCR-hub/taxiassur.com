@@ -115,6 +115,13 @@
     AddOutputFilterByType DEFLATE text/html text/css application/javascript application/json application/xml text/xml
 </IfModule>
 
+# Pages d'erreurs personnalisées
+ErrorDocument 404 /index.html
+ErrorDocument 500 /index.html
+ErrorDocument 502 /index.html
+ErrorDocument 503 /index.html
+ErrorDocument 504 /index.html
+
 # Protection des fichiers sensibles
 <Files ".env*">
     Require all denied
@@ -123,3 +130,14 @@
 <Files "*.log">
     Require all denied
 </Files>
+
+# Limiter la taille des requêtes pour éviter les 500
+LimitRequestBody 52428800
+
+# PHP settings (si PHP est utilisé pour API)
+<IfModule mod_php.c>
+    php_value memory_limit 256M
+    php_value max_execution_time 300
+    php_value post_max_size 50M
+    php_value upload_max_filesize 50M
+</IfModule>

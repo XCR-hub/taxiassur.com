@@ -1,5 +1,6 @@
 import { createBrowserRouter } from 'react-router-dom';
 import { lazy } from 'react';
+import RouteErrorFallback from './components/RouteErrorFallback';
 
 const Home = lazy(() => import('./pages/Home'));
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
@@ -118,6 +119,7 @@ export const router = createBrowserRouter([
   {
     path: '/',
     element: <Home />,
+    errorElement: <RouteErrorFallback />,
   },
   {
     path: '/admin',
