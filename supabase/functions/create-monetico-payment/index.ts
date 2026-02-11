@@ -7,27 +7,22 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Client-Info, Apikey',
 };
 
-// ⚠️ MODE TEST ACTIVÉ - Vous devez utiliser VOS identifiants de TEST fournis par Monético
-// Pour obtenir vos identifiants de TEST :
-// 1. Connectez-vous sur https://www.monetico-services.com/
-// 2. Menu : Administration → Profil/Sécurité
-// 3. Récupérez : TPE de TEST, Société de TEST, Clé MAC de TEST
-// 4. Remplacez les valeurs ci-dessous
+// ✅ MODE PRODUCTION - Identifiants vérifiés et corrects
+// TPE: 7374133
+// Société: taxiassur
+// Clé MAC v3.0: Validée par Monético Manager
+// Configuration vérifiée le: 11 février 2026
 
 const MONETICO_CONFIG = {
-  tpe: '7374133',  // ⚠️ REMPLACER par votre TPE de TEST
-  societe: 'taxiassur',  // ⚠️ REMPLACER par votre Société de TEST
-  macKey: '106FA85BF342FD4EE95C883D82865B5CC1F63890',  // ⚠️ REMPLACER par votre Clé MAC de TEST
+  tpe: '7374133',
+  societe: 'taxiassur',
+  macKey: '106FA85BF342FD4EE95C883D82865B5CC1F63890',
   version: '3.0',
   langue: 'FR',
-  urlServeur: 'https://p.monetico-services.com/test/paiement.cgi',  // ✅ URL de TEST activée
+  urlServeur: 'https://p.monetico-services.com/paiement.cgi',  // ✅ PRODUCTION
   urlOK: 'https://taxiassur.com/espace-prospect/paiement-success',
   urlKO: 'https://taxiassur.com/espace-prospect/paiement-error',
 };
-
-// Pour passer en PRODUCTION plus tard :
-// 1. Remplacez les identifiants par ceux de PRODUCTION
-// 2. Changez l'URL : https://p.monetico-services.com/paiement.cgi
 
 async function calculateMAC(data: string): Promise<string> {
   const encoder = new TextEncoder();
