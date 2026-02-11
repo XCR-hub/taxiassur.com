@@ -51,10 +51,8 @@ export const DownPaymentManager: React.FC<DownPaymentManagerProps> = ({
     setError(null);
 
     try {
-      const { data: userData } = await supabase.auth.getUser();
-
       const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-cic-payment-link`,
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-monetico-payment`,
         {
           method: 'POST',
           headers: {
@@ -62,28 +60,45 @@ export const DownPaymentManager: React.FC<DownPaymentManagerProps> = ({
             'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
           },
           body: JSON.stringify({
-            contract_id: contractId,
+            leadId: leadId,
             amount: parseFloat(amount),
-            admin_user_id: userData?.user?.id
+            description: `Paiement comptant assurance taxi - Contrat ${contractId.slice(0, 8)}`
           })
         }
       );
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Erreur lors de la génération du lien');
+        throw new Error(errorData.error || 'Erreur lors de la création du paiement Monético');
       }
 
       const data = await response.json();
 
-      if (data.success) {
+      if (data.success && data.htmlForm) {
+        const newWindow = window.open('', '_blank', 'width=800,height=600');
+        if (newWindow) {
+          newWindow.document.write(data.htmlForm);
+          newWindow.document.close();
+        }
+
         setIsEditMode(false);
+
+        await supabase
+          .from('lead_contracts')
+          .update({
+            down_payment_required: true,
+            down_payment_amount: parseFloat(amount),
+            down_payment_status: 'pending',
+            down_payment_link: data.reference
+          })
+          .eq('id', contractId);
+
         onPaymentUpdated?.();
       } else {
-        throw new Error(data.error || 'Échec de la génération');
+        throw new Error(data.error || 'Échec de la création du paiement');
       }
     } catch (err: any) {
-      console.error('Error generating payment link:', err);
+      console.error('Error creating Monético payment:', err);
       setError(err.message);
     } finally {
       setGenerating(false);

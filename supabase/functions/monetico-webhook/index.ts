@@ -133,6 +133,39 @@ serve(async (req: Request) => {
         });
       }
 
+      if (status === 'success') {
+        await supabase
+          .from('lead_contracts')
+          .update({
+            down_payment_status: 'paid',
+            down_payment_paid_at: new Date().toISOString(),
+            down_payment_transaction_id: numauto
+          })
+          .eq('lead_id', payment.lead_id)
+          .eq('down_payment_status', 'pending');
+
+        await supabase
+          .from('crm_leads')
+          .update({ status: 'down_payment_required' })
+          .eq('id', payment.lead_id);
+
+        await supabase
+          .from('crm_interactions')
+          .insert({
+            lead_id: payment.lead_id,
+            type: 'system',
+            direction: 'inbound',
+            channel: 'payment',
+            content: `Paiement comptant reçu via Monético: ${montant}`,
+            metadata: {
+              payment_id: payment.id,
+              reference,
+              transaction_id: numauto,
+              amount: montant
+            }
+          });
+      }
+
       console.log('Payment updated successfully:', { paymentId: payment.id, status });
     }
 
