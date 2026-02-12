@@ -117,6 +117,7 @@ const ClientInsuranceManager = lazy(() => import('./backoffice/ClientInsuranceMa
 const MoneticoAccountingDashboard = lazy(() => import('./backoffice/MoneticoAccountingDashboard'));
 const FreeInvoicing = lazy(() => import('./backoffice/FreeInvoicing'));
 const LeadInvoicing = lazy(() => import('./backoffice/LeadInvoicing'));
+const CRMProductionManager = lazy(() => import('./backoffice/CRMProductionManager'));
 
 export const router = createBrowserRouter([
   {
@@ -495,12 +496,20 @@ export const router = createBrowserRouter([
     element: <MoneticoAccountingDashboard />,
   },
   {
+    path: '/backoffice/invoicing',
+    element: <FreeInvoicing />,
+  },
+  {
     path: '/backoffice/free-invoicing',
     element: <FreeInvoicing />,
   },
   {
     path: '/backoffice/lead-invoicing',
     element: <LeadInvoicing />,
+  },
+  {
+    path: '/backoffice/production',
+    element: <CRMProductionManager />,
   },
   {
     path: '/backoffice/crm',

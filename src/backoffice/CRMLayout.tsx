@@ -22,7 +22,9 @@ import {
   X,
   Search,
   RefreshCw,
-  Copy
+  Copy,
+  Receipt,
+  Building2
 } from 'lucide-react';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { ThemeToggle } from '@/components/ThemeToggle';
@@ -78,6 +80,20 @@ const CRMLayout: React.FC = () => {
       label: 'Clients',
       icon: Users,
       path: '/backoffice/clients',
+      badge: null
+    },
+    {
+      id: 'invoicing',
+      label: 'Facturation Libre',
+      icon: Receipt,
+      path: '/backoffice/invoicing',
+      badge: null
+    },
+    {
+      id: 'production',
+      label: 'Production & Compagnies',
+      icon: Building2,
+      path: '/backoffice/production',
       badge: null
     },
     {
