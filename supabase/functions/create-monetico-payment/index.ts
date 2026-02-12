@@ -139,22 +139,21 @@ serve(async (req: Request) => {
       mode: TEST_MODE ? 'TEST' : 'PRODUCTION'
     });
 
-    // Format MAC selon l'erreur Monético (ordre observé) :
-    // TPE*date*lgue*mail*montant*reference*societe*texte-libre*url_retour*url_retour_err*url_retour_ok*version
-    const macData = [
-      MONETICO_CONFIG.tpe,
-      dateTime,
-      MONETICO_CONFIG.langue,
-      email,
-      montant,
-      reference,
-      MONETICO_CONFIG.societe,
-      texteLibre,
-      MONETICO_CONFIG.urlOK,
-      MONETICO_CONFIG.urlKO,
-      MONETICO_CONFIG.urlOK,
-      MONETICO_CONFIG.version,
-    ].join('*');
+    // Contexte commande obligatoire (minimal avec billing)
+    const contexteCommande = btoa(JSON.stringify({
+      billing: {
+        firstName: lead.first_name || 'Client',
+        lastName: lead.last_name || 'TaxiAssur',
+        addressLine1: '1 rue de l\'assurance',
+        city: 'Paris',
+        postalCode: '75000',
+        country: 'FR'
+      }
+    }));
+
+    // Format MAC Version 3.0 selon documentation officielle Monético p.82
+    // TOUS les paramètres reconnus doivent être inclus dans l'ordre alphabétique, même vides
+    const macData = `TPE=${MONETICO_CONFIG.tpe}*contexte_commande=${contexteCommande}*date=${dateTime}*dateech1=*dateech2=*dateech3=*dateech4=*lgue=${MONETICO_CONFIG.langue}*mail=${email}*montant=${montant}*montantech1=*montantech2=*montantech3=*montantech4=*nbrech=*reference=${reference}*societe=${MONETICO_CONFIG.societe}*texte-libre=${texteLibre}*url_retour_err=${MONETICO_CONFIG.urlKO}*url_retour_ok=${MONETICO_CONFIG.urlOK}*version=${MONETICO_CONFIG.version}`;
 
     console.log('🔐 MAC Data:', macData);
     const mac = await calculateMAC(macData);
@@ -191,14 +190,13 @@ serve(async (req: Request) => {
       montant: montant,
       reference: reference,
       MAC: mac,
-      url_retour: MONETICO_CONFIG.urlOK,
       url_retour_ok: MONETICO_CONFIG.urlOK,
       url_retour_err: MONETICO_CONFIG.urlKO,
       lgue: MONETICO_CONFIG.langue,
       societe: MONETICO_CONFIG.societe,
-      texte_libre: texteLibre,
-      mail: email,
-      mode: TEST_MODE ? 'TEST' : 'PRODUCTION'
+      contexte_commande: contexteCommande,
+      'texte-libre': texteLibre,
+      mail: email
     };
 
     console.log('Mode:', TEST_MODE ? '🧪 TEST' : '🚀 PRODUCTION');
@@ -297,12 +295,12 @@ serve(async (req: Request) => {
             <input type="hidden" name="montant" value="${formData.montant}" />
             <input type="hidden" name="reference" value="${formData.reference}" />
             <input type="hidden" name="MAC" value="${formData.MAC}" />
-            <input type="hidden" name="url_retour" value="${formData.url_retour}" />
             <input type="hidden" name="url_retour_ok" value="${formData.url_retour_ok}" />
             <input type="hidden" name="url_retour_err" value="${formData.url_retour_err}" />
             <input type="hidden" name="lgue" value="${formData.lgue}" />
             <input type="hidden" name="societe" value="${formData.societe}" />
-            <input type="hidden" name="texte-libre" value="${formData.texte_libre}" />
+            <input type="hidden" name="contexte_commande" value="${formData.contexte_commande}" />
+            <input type="hidden" name="texte-libre" value="${formData['texte-libre']}" />
             <input type="hidden" name="mail" value="${formData.mail}" />
           </form>
           <script>
