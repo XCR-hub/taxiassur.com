@@ -126,11 +126,14 @@ serve(async (req: Request) => {
         status: 'pending',
         customer_email: email,
         customer_name: customerName,
-        payment_data: {
+        description: description || 'Acompte assurance taxi',
+        monetico_data: {
           texte_libre: texteLibre,
           date: dateTime,
-          mode: TEST_MODE ? 'TEST' : 'PRODUCTION'
-        }
+          mode: TEST_MODE ? 'TEST' : 'PRODUCTION',
+          mac: mac
+        },
+        mac_sent: mac
       });
 
     if (insertError) {
@@ -158,10 +161,121 @@ serve(async (req: Request) => {
     console.log('URL:', MONETICO_CONFIG.urlServeur);
     console.log('TPE:', MONETICO_CONFIG.tpe);
 
+    // Générer le formulaire HTML pour Monetico
+    const htmlForm = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Paiement sécurisé - TaxiAssur</title>
+        <style>
+          body {
+            font-family: system-ui, -apple-system, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 20px;
+          }
+          .container {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            text-align: center;
+            max-width: 500px;
+          }
+          .logo {
+            font-size: 32px;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 20px;
+          }
+          h1 {
+            color: #1a202c;
+            margin: 0 0 10px 0;
+            font-size: 24px;
+          }
+          .amount {
+            font-size: 48px;
+            font-weight: bold;
+            color: #667eea;
+            margin: 20px 0;
+          }
+          .info {
+            color: #4a5568;
+            margin: 10px 0;
+            font-size: 14px;
+          }
+          .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #f3f4f6;
+            border-top-color: #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 30px auto;
+          }
+          @keyframes spin {
+            to { transform: rotate(360deg); }
+          }
+          .secure-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #f0fdf4;
+            color: #166534;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            margin-top: 20px;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="logo">🚕 TaxiAssur</div>
+          <h1>Paiement sécurisé</h1>
+          <div class="amount">${parseFloat(amount).toFixed(2)} €</div>
+          <p class="info">Paiement comptant pour votre assurance taxi</p>
+          <p class="info" style="font-size: 12px; color: #718096;">Référence: ${reference}</p>
+          <div class="spinner"></div>
+          <p class="info">Redirection vers la plateforme de paiement sécurisée...</p>
+          <div class="secure-badge">
+            🔒 Paiement sécurisé par Monético
+          </div>
+          <form id="monetico-form" method="POST" action="${MONETICO_CONFIG.urlServeur}">
+            <input type="hidden" name="version" value="${formData.version}" />
+            <input type="hidden" name="TPE" value="${formData.TPE}" />
+            <input type="hidden" name="date" value="${formData.date}" />
+            <input type="hidden" name="montant" value="${formData.montant}" />
+            <input type="hidden" name="reference" value="${formData.reference}" />
+            <input type="hidden" name="MAC" value="${formData.MAC}" />
+            <input type="hidden" name="url_retour" value="${formData.url_retour}" />
+            <input type="hidden" name="url_retour_ok" value="${formData.url_retour_ok}" />
+            <input type="hidden" name="url_retour_err" value="${formData.url_retour_err}" />
+            <input type="hidden" name="lgue" value="${formData.lgue}" />
+            <input type="hidden" name="societe" value="${formData.societe}" />
+            <input type="hidden" name="texte-libre" value="${formData.texte_libre}" />
+            <input type="hidden" name="mail" value="${formData.mail}" />
+          </form>
+          <script>
+            setTimeout(() => {
+              document.getElementById('monetico-form').submit();
+            }, 2000);
+          </script>
+        </div>
+      </body>
+      </html>
+    `;
+
     return new Response(
       JSON.stringify({
         success: true,
         reference,
+        htmlForm,
         formData,
         actionUrl: MONETICO_CONFIG.urlServeur,
         mode: TEST_MODE ? 'TEST' : 'PRODUCTION'

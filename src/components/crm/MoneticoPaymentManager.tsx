@@ -99,11 +99,11 @@ export function MoneticoPaymentManager({ leadId, onPaymentSuccess }: MoneticoPay
         }
       );
 
-      if (!response.ok) {
-        throw new Error('Erreur lors de la création du paiement');
-      }
-
       const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || result.details || 'Erreur lors de la création du paiement');
+      }
 
       if (result.success && result.htmlForm) {
         const newWindow = window.open('', '_blank');
@@ -115,9 +115,12 @@ export function MoneticoPaymentManager({ leadId, onPaymentSuccess }: MoneticoPay
         setAmount('');
         setDescription('');
         await loadPayments();
+      } else if (result.error) {
+        throw new Error(result.error);
       }
     } catch (err: any) {
-      setError(err.message);
+      console.error('Erreur détaillée:', err);
+      setError(err.message || 'Erreur inconnue lors de la création du paiement');
     } finally {
       setCreating(false);
     }
