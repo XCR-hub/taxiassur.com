@@ -90,71 +90,115 @@ serve(async (req: Request) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const { leadId, amount, description } = await req.json();
+    const {
+      leadId,
+      amount,
+      description,
+      customerEmail,
+      customerFirstName,
+      customerLastName,
+      customerPhone,
+      customReference
+    } = await req.json();
 
-    console.log('📦 Données reçues:', { leadId, amount, description });
+    console.log('📦 Données reçues:', { leadId, amount, description, customerEmail });
 
-    if (!leadId || !amount) {
+    if (!amount) {
       return new Response(
-        JSON.stringify({ error: 'leadId et amount sont requis' }),
+        JSON.stringify({ error: 'amount est requis' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log('🔍 Recherche du lead:', leadId);
+    // Variables pour stocker les infos client
+    let lead: any = null;
+    let email: string;
+    let firstName: string;
+    let lastName: string;
+    let phone: string | null;
 
-    const { data: lead, error: leadError } = await supabase
-      .from('crm_leads')
-      .select('email, first_name, last_name, phone')
-      .eq('id', leadId)
-      .single();
+    if (leadId) {
+      // Mode avec lead existant
+      console.log('🔍 Recherche du lead:', leadId);
 
-    console.log('📊 Résultat:', { lead, leadError });
+      const { data: leadData, error: leadError } = await supabase
+        .from('crm_leads')
+        .select('email, first_name, last_name, phone')
+        .eq('id', leadId)
+        .single();
 
-    if (leadError) {
-      console.error('❌ Erreur DB:', leadError);
-      return new Response(
-        JSON.stringify({
-          error: 'Lead non trouvé',
-          details: leadError.message,
-          leadId: leadId
-        }),
-        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      console.log('📊 Résultat:', { lead: leadData, leadError });
+
+      if (leadError) {
+        console.error('❌ Erreur DB:', leadError);
+        return new Response(
+          JSON.stringify({
+            error: 'Lead non trouvé',
+            details: leadError.message,
+            leadId: leadId
+          }),
+          { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      if (!leadData) {
+        console.error('❌ Lead null');
+        return new Response(
+          JSON.stringify({
+            error: 'Lead non trouvé (null)',
+            leadId: leadId
+          }),
+          { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      lead = leadData;
+      email = lead.email || 'test@taxiassur.fr';
+      firstName = lead.first_name || 'Client';
+      lastName = lead.last_name || 'TaxiAssur';
+      phone = lead.phone || null;
+    } else {
+      // Mode facturation libre (sans lead)
+      console.log('💳 Mode facturation libre');
+
+      if (!customerEmail || !customerFirstName || !customerLastName) {
+        return new Response(
+          JSON.stringify({
+            error: 'Pour une facturation libre, email, firstName et lastName sont requis'
+          }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      email = customerEmail;
+      firstName = customerFirstName;
+      lastName = customerLastName;
+      phone = customerPhone || null;
     }
 
-    if (!lead) {
-      console.error('❌ Lead null');
-      return new Response(
-        JSON.stringify({
-          error: 'Lead non trouvé (null)',
-          leadId: leadId
-        }),
-        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    const reference = generateReference();
+    const reference = customReference || generateReference();
     const dateTime = formatMoneticoDate(new Date());
     const montant = `${parseFloat(amount).toFixed(2)}EUR`;
-    const email = lead.email || 'test@taxiassur.fr';
-    const customerName = `${lead.first_name || ''} ${lead.last_name || ''}`.trim() || 'Client';
+    const customerName = `${firstName} ${lastName}`.trim();
 
     // Texte libre avec valeur simple (sans caractères spéciaux pour éviter les problèmes de MAC)
-    const texteLibreSimple = `lead_${leadId}_${TEST_MODE ? 'TEST' : 'PROD'}`;
+    const texteLibreSimple = leadId
+      ? `lead_${leadId}_${TEST_MODE ? 'TEST' : 'PROD'}`
+      : `free_invoice_${TEST_MODE ? 'TEST' : 'PROD'}`;
 
     // Stocker les vraies données JSON séparément pour notre DB
     const texteLibreData = {
-      leadId: leadId,
-      description: description || 'Acompte assurance taxi',
-      mode: TEST_MODE ? 'TEST' : 'PRODUCTION'
+      leadId: leadId || null,
+      description: description || 'Paiement assurance taxi',
+      mode: TEST_MODE ? 'TEST' : 'PRODUCTION',
+      isFreeInvoice: !leadId
     };
 
     // Contexte commande obligatoire (minimal avec billing)
     const contexteCommande = btoa(JSON.stringify({
       billing: {
-        firstName: lead.first_name || 'Client',
-        lastName: lead.last_name || 'TaxiAssur',
+        firstName: firstName,
+        lastName: lastName,
         addressLine1: '1 rue de l\'assurance',
         city: 'Paris',
         postalCode: '75000',
@@ -174,18 +218,20 @@ serve(async (req: Request) => {
       .from('monetico_payments')
       .insert({
         reference,
-        lead_id: leadId,
+        lead_id: leadId || null,
         amount: parseFloat(amount),
         currency: 'EUR',
         status: 'pending',
         customer_email: email,
         customer_name: customerName,
-        description: description || 'Acompte assurance taxi',
+        customer_phone: phone,
+        description: description || 'Paiement assurance taxi',
         monetico_data: {
           texte_libre: texteLibreData,
           date: dateTime,
           mode: TEST_MODE ? 'TEST' : 'PRODUCTION',
-          mac: mac
+          mac: mac,
+          is_free_invoice: !leadId
         },
         mac_sent: mac
       });
