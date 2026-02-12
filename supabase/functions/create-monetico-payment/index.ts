@@ -139,27 +139,21 @@ serve(async (req: Request) => {
       mode: TEST_MODE ? 'TEST' : 'PRODUCTION'
     });
 
-    // Format MAC Version 3.0 Monético :
-    // TPE*date*montant*reference*texte-libre*version*lgue*societe*mail*nbrech*dateech1*montantech1*dateech2*montantech2*dateech3*montantech3*dateech4*montantech4
+    // Format MAC selon l'erreur Monético (ordre observé) :
+    // TPE*date*lgue*mail*montant*reference*societe*texte-libre*url_retour*url_retour_err*url_retour_ok*version
     const macData = [
       MONETICO_CONFIG.tpe,
       dateTime,
+      MONETICO_CONFIG.langue,
+      email,
       montant,
       reference,
-      texteLibre,
-      MONETICO_CONFIG.version,
-      MONETICO_CONFIG.langue,
       MONETICO_CONFIG.societe,
-      email,
-      '', // nbrech (nombre d'échéances, vide si paiement comptant)
-      '', // dateech1
-      '', // montantech1
-      '', // dateech2
-      '', // montantech2
-      '', // dateech3
-      '', // montantech3
-      '', // dateech4
-      '', // montantech4
+      texteLibre,
+      MONETICO_CONFIG.urlOK,
+      MONETICO_CONFIG.urlKO,
+      MONETICO_CONFIG.urlOK,
+      MONETICO_CONFIG.version,
     ].join('*');
 
     console.log('🔐 MAC Data:', macData);
