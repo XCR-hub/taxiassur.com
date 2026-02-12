@@ -1,8 +1,7 @@
-import React from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { XCircle, ArrowLeft, Phone, Mail } from 'lucide-react';
 
-function PaiementError() {
+export function PaiementError() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
