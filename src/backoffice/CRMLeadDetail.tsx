@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Mail, Phone, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Mail, Phone, AlertCircle, Link2, Copy, CheckCircle } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
 import { LeadWorkflowTabs, WorkflowTab } from '@/components/crm/LeadWorkflowTabs';
@@ -37,6 +37,7 @@ const CRMLeadDetail: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<WorkflowTab>('overview');
+  const [linkCopied, setLinkCopied] = useState(false);
   const [stats, setStats] = useState({
     documentsComplete: false,
     documentsMissing: 0,
@@ -147,6 +148,41 @@ const CRMLeadDetail: React.FC = () => {
     }
   };
 
+  const copyClientSpaceLink = async () => {
+    if (!leadId) return;
+    const link = `${window.location.origin}/espace-client/${leadId}`;
+
+    try {
+      await navigator.clipboard.writeText(link);
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 3000);
+    } catch (err) {
+      logger.error('Error copying link:', err);
+      alert('Erreur lors de la copie du lien');
+    }
+  };
+
+  const sendClientSpaceEmail = async () => {
+    if (!lead || !leadId) return;
+
+    try {
+      const { error } = await supabase.functions.invoke('send-client-access', {
+        body: {
+          lead_id: leadId,
+          email: lead.email,
+          first_name: lead.first_name || 'Client',
+          last_name: lead.last_name || ''
+        }
+      });
+
+      if (error) throw error;
+      alert('Email envoyé avec succès !');
+    } catch (err) {
+      logger.error('Error sending email:', err);
+      alert('Erreur lors de l\'envoi de l\'email');
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -202,13 +238,13 @@ const CRMLeadDetail: React.FC = () => {
           </button>
 
           <div className="flex items-start justify-between">
-            <div>
+            <div className="flex-1">
               <h1 className="text-2xl font-bold text-gray-900 mb-2">
                 {lead.first_name || lead.last_name
                   ? `${lead.first_name || ''} ${lead.last_name || ''}`.trim()
                   : 'Lead sans nom'}
               </h1>
-              <div className="flex items-center gap-4 text-sm text-gray-600">
+              <div className="flex items-center gap-4 text-sm text-gray-600 mb-3">
                 {lead.email && (
                   <div className="flex items-center gap-1">
                     <Mail className="h-4 w-4" />
@@ -221,6 +257,40 @@ const CRMLeadDetail: React.FC = () => {
                     {lead.phone}
                   </div>
                 )}
+              </div>
+
+              {/* Boutons d'accès client */}
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={copyClientSpaceLink}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                    linkCopied
+                      ? 'bg-green-100 text-green-700 border-2 border-green-300'
+                      : 'bg-blue-50 text-blue-700 border-2 border-blue-200 hover:bg-blue-100'
+                  }`}
+                  title="Copier le lien d'accès à l'espace client"
+                >
+                  {linkCopied ? (
+                    <>
+                      <CheckCircle className="h-4 w-4" />
+                      Lien copié !
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="h-4 w-4" />
+                      Copier lien espace client
+                    </>
+                  )}
+                </button>
+
+                <button
+                  onClick={sendClientSpaceEmail}
+                  className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-yellow-500 to-yellow-600 text-black rounded-lg text-sm font-medium hover:from-yellow-600 hover:to-yellow-700 transition-all"
+                  title="Envoyer l'accès par email"
+                >
+                  <Mail className="h-4 w-4" />
+                  Envoyer accès par email
+                </button>
               </div>
             </div>
             <div>

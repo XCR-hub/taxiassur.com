@@ -83,7 +83,7 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    const { lead_id, temporary_password } = await req.json();
+    const { lead_id, email, first_name, last_name } = await req.json();
 
     if (!lead_id) {
       throw new Error("lead_id est requis");
@@ -107,7 +107,8 @@ Deno.serve(async (req: Request) => {
       throw new Error("Le lead n'a pas d'email");
     }
 
-    const tempPassword = temporary_password || `TaxiAssur${Math.random().toString(36).substring(2, 10)}!`;
+    // Lien d'accès direct à l'espace client (pas de mot de passe requis)
+    const clientSpaceLink = `https://taxiassur.com/espace-client/${lead.id}`;
 
     const emailHtml = `
 <!DOCTYPE html>
@@ -122,14 +123,14 @@ Deno.serve(async (req: Request) => {
     .header h1 { margin: 0 0 10px 0; font-size: 28px; }
     .content { padding: 40px 30px; }
     .welcome-box { background: #dbeafe; border-left: 4px solid #3b82f6; padding: 20px; margin: 25px 0; border-radius: 8px; }
-    .credentials-box { background: #fef3c7; border: 2px solid #f59e0b; padding: 25px; border-radius: 12px; margin: 25px 0; }
+    .link-box { background: #fef3c7; border: 2px solid #f59e0b; padding: 25px; border-radius: 12px; margin: 25px 0; text-align: center; }
     .credential-item { background: white; padding: 15px; margin: 10px 0; border-radius: 8px; border-left: 4px solid #10b981; }
     .credential-label { color: #6b7280; font-size: 12px; text-transform: uppercase; margin-bottom: 5px; }
     .credential-value { color: #1f2937; font-weight: bold; font-size: 18px; font-family: 'Courier New', monospace; }
     .cta-button { background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); color: white; padding: 18px 35px; text-decoration: none; border-radius: 50px; display: inline-block; font-weight: bold; font-size: 16px; margin: 20px 0; }
     .features-grid { display: grid; gap: 15px; margin: 25px 0; }
     .feature-item { background: #f9fafb; padding: 15px; border-radius: 8px; border-left: 4px solid #10b981; }
-    .warning-box { background: #fee2e2; border-left: 4px solid #ef4444; padding: 15px; margin: 20px 0; border-radius: 8px; }
+    .info-box { background: #dbeafe; border-left: 4px solid #3b82f6; padding: 15px; margin: 20px 0; border-radius: 8px; }
     .footer { background: #1f2937; color: white; padding: 30px; text-align: center; }
   </style>
 </head>
@@ -145,30 +146,24 @@ Deno.serve(async (req: Request) => {
         Votre assurance taxi est maintenant active. Nous sommes ravis de vous compter parmi nos clients.
       </div>
 
-      <h2 style="color: #1f2937; margin-top: 30px;">🔐 Vos identifiants de connexion</h2>
+      <h2 style="color: #1f2937; margin-top: 30px;">🔐 Accès sécurisé à votre espace</h2>
 
-      <div class="credentials-box">
-        <p style="margin-top: 0; color: #92400e; font-weight: bold;">Conservez ces informations en lieu sûr :</p>
+      <div class="link-box">
+        <p style="margin-top: 0; color: #92400e; font-weight: bold;">Cliquez sur le bouton ci-dessous pour accéder instantanément :</p>
 
-        <div class="credential-item">
-          <div class="credential-label">Adresse email</div>
-          <div class="credential-value">${lead.email}</div>
+        <div style="margin: 25px 0;">
+          <a href="${clientSpaceLink}" class="cta-button" style="text-decoration: none;">
+            🚀 ACCÉDER À MON ESPACE CLIENT
+          </a>
         </div>
 
-        <div class="credential-item">
-          <div class="credential-label">Mot de passe temporaire</div>
-          <div class="credential-value">${tempPassword}</div>
-        </div>
+        <p style="margin: 0; font-size: 14px; color: #92400e;">
+          Ce lien est personnel et sécurisé. Vous serez automatiquement connecté.
+        </p>
       </div>
 
-      <div class="warning-box">
-        <strong>⚠️ Important :</strong> Pour des raisons de sécurité, vous devrez changer ce mot de passe lors de votre première connexion.
-      </div>
-
-      <div style="text-align: center; margin: 35px 0;">
-        <a href="https://taxiassur.com/espace-client" class="cta-button">
-          ACCÉDER À MON ESPACE CLIENT
-        </a>
+      <div class="info-box">
+        <strong>✅ Connexion automatique :</strong> Aucun mot de passe nécessaire ! Cliquez simplement sur le bouton et accédez à votre espace en toute sécurité.
       </div>
 
       <h3 style="color: #1f2937;">✨ Que pouvez-vous faire dans votre espace client ?</h3>
@@ -226,18 +221,40 @@ Deno.serve(async (req: Request) => {
     await sendEmailSMTP(
       lead.email,
       `${lead.first_name || ""} ${lead.last_name || ""}`.trim() || "Client",
-      "🎉 Bienvenue ! Vos accès à l'espace client TaxiAssur",
+      "🎉 Bienvenue ! Accédez à votre espace client TaxiAssur",
       emailHtml,
       "team@taxiassur.com",
       "TaxiAssur"
     );
+
+    // Créer ou mettre à jour le portail client
+    const { error: portalError } = await supabase
+      .from('client_portal_users')
+      .upsert({
+        email: lead.email.toLowerCase().trim(),
+        lead_id: lead.id,
+        first_name: lead.first_name,
+        last_name: lead.last_name,
+        phone: lead.phone,
+        is_active: true,
+        metadata: {
+          client_space_link_sent: true,
+          sent_at: new Date().toISOString()
+        }
+      }, {
+        onConflict: 'email'
+      });
+
+    if (portalError) {
+      console.error('Erreur création portail:', portalError);
+    }
 
     await supabase.from("crm_interactions").insert({
       lead_id: lead.id,
       type: "email",
       direction: "outbound",
       subject: "Envoi des accès espace client",
-      content: `Email d'accès espace client envoyé avec mot de passe temporaire`,
+      content: `Email d'accès espace client envoyé avec lien sécurisé : ${clientSpaceLink}`,
       to_email: lead.email,
       from_email: "team@taxiassur.com",
     });
@@ -248,7 +265,7 @@ Deno.serve(async (req: Request) => {
       JSON.stringify({
         success: true,
         message: "Email d'accès envoyé avec succès",
-        temporary_password: tempPassword,
+        client_space_link: clientSpaceLink,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

@@ -276,7 +276,38 @@ export default function DocumentValidationComplete({
       await loadClassifiedDocuments();
       onDocumentClassified?.();
 
-      if (emailSent) {
+      // Vérifier si tous les documents requis sont maintenant validés
+      const { data: allDocs } = await supabase
+        .from('crm_lead_documents')
+        .select('id, status')
+        .eq('lead_id', caseId);
+
+      const totalDocs = allDocs?.length || 0;
+      const validatedDocs = allDocs?.filter(d => d.status === 'validated').length || 0;
+      const allDocsValidated = totalDocs > 0 && validatedDocs === totalDocs;
+
+      // Si tous les documents sont validés, envoyer l'accès à l'espace client
+      if (allDocsValidated && leadEmail && caseId) {
+        try {
+          const { error: clientAccessError } = await supabase.functions.invoke('send-client-access', {
+            body: {
+              lead_id: caseId,
+              email: leadEmail,
+              first_name: leadFirstName || 'Client',
+              last_name: ''
+            }
+          });
+
+          if (!clientAccessError) {
+            alert('✅ Document validé avec succès !\n\n🎉 Tous les documents sont validés !\n\n📧 Un email avec l\'accès à l\'espace client a été envoyé au prospect.');
+          } else {
+            alert('✅ Document validé avec succès !\n\n🎉 Tous les documents sont validés !\n\n⚠️ L\'email d\'accès à l\'espace client n\'a pas pu être envoyé. Envoyez-le manuellement depuis le détail du lead.');
+          }
+        } catch (err) {
+          console.error('Error sending client access:', err);
+          alert('✅ Document validé avec succès !\n\n🎉 Tous les documents sont validés !\n\n⚠️ L\'email d\'accès à l\'espace client n\'a pas pu être envoyé. Envoyez-le manuellement depuis le détail du lead.');
+        }
+      } else if (emailSent) {
         alert('✅ Document validé avec succès !\n\n📧 Email de confirmation envoyé au prospect.');
       } else if (leadEmail) {
         alert(`✅ Document validé avec succès !\n\n⚠️ Attention : L'email de notification n'a pas pu être envoyé.\nErreur: ${emailErrorMsg}\n\nVeuillez contacter le prospect manuellement.`);

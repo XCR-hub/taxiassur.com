@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import {
   CheckCircle, XCircle, Clock, Upload, FileText, Send, AlertTriangle,
-  Download, Eye, MessageSquare, Building2
+  Download, Eye, MessageSquare, Building2, Copy, Mail, ExternalLink
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { Modal, ModalFooter } from '../components/Modal';
@@ -63,6 +63,8 @@ export default function LeadCompanyQuotes({ leadId }: Props) {
   const [isRefusalModalOpen, setIsRefusalModalOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [allMandatoryProcessed, setAllMandatoryProcessed] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
+  const [sendingEmail, setSendingEmail] = useState(false);
 
   const [quoteFormData, setQuoteFormData] = useState({
     quote_amount: '',
@@ -266,6 +268,42 @@ export default function LeadCompanyQuotes({ leadId }: Props) {
     return total > 0 ? (processed / total) * 100 : 0;
   };
 
+  const copyClientSpaceLink = async () => {
+    const link = `${window.location.origin}/espace-client/${leadId}`;
+    try {
+      await navigator.clipboard.writeText(link);
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 3000);
+    } catch (err) {
+      console.error('Error copying link:', err);
+      alert('Erreur lors de la copie du lien');
+    }
+  };
+
+  const sendClientAccessEmail = async () => {
+    if (!lead || !leadId) return;
+
+    setSendingEmail(true);
+    try {
+      const { error } = await supabase.functions.invoke('send-client-access', {
+        body: {
+          lead_id: leadId,
+          email: lead.email,
+          first_name: lead.name.split(' ')[0] || 'Client',
+          last_name: lead.name.split(' ').slice(1).join(' ') || ''
+        }
+      });
+
+      if (error) throw error;
+      alert('✅ Email d\'accès envoyé avec succès !');
+    } catch (err) {
+      console.error('Error sending email:', err);
+      alert('❌ Erreur lors de l\'envoi de l\'email');
+    } finally {
+      setSendingEmail(false);
+    }
+  };
+
   if (loading) {
     return <div className="text-white">Chargement...</div>;
   }
@@ -280,18 +318,76 @@ export default function LeadCompanyQuotes({ leadId }: Props) {
   return (
     <div className="space-y-6">
       <div className="bg-gray-900 rounded-xl border border-gray-800 p-6">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h2 className="text-2xl font-bold text-white">Validation Compagnies</h2>
-            <p className="text-gray-400">
+        <div className="flex items-start justify-between mb-4">
+          <div className="flex-1">
+            <h2 className="text-2xl font-bold text-white mb-2">Validation Compagnies</h2>
+            <p className="text-gray-400 mb-3">
               {lead.name} - {lead.email}
             </p>
+
+            {/* Boutons d'accès client */}
+            <div className="flex items-center gap-2 mt-3">
+              <button
+                onClick={copyClientSpaceLink}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                  linkCopied
+                    ? 'bg-green-500 text-white'
+                    : 'bg-blue-600 text-white hover:bg-blue-700'
+                }`}
+                title="Copier le lien d'accès à l'espace client"
+              >
+                {linkCopied ? (
+                  <>
+                    <CheckCircle className="h-4 w-4" />
+                    Lien copié !
+                  </>
+                ) : (
+                  <>
+                    <Copy className="h-4 w-4" />
+                    Copier lien espace client
+                  </>
+                )}
+              </button>
+
+              <button
+                onClick={sendClientAccessEmail}
+                disabled={sendingEmail}
+                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-yellow-500 to-yellow-600 text-black rounded-lg text-sm font-medium hover:from-yellow-600 hover:to-yellow-700 transition-all disabled:opacity-50"
+                title="Envoyer l'accès par email"
+              >
+                {sendingEmail ? (
+                  <>
+                    <Clock className="h-4 w-4 animate-spin" />
+                    Envoi...
+                  </>
+                ) : (
+                  <>
+                    <Mail className="h-4 w-4" />
+                    Envoyer accès par email
+                  </>
+                )}
+              </button>
+
+              <a
+                href={`/espace-client/${leadId}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 px-4 py-2 bg-gray-700 text-white rounded-lg text-sm font-medium hover:bg-gray-600 transition-all"
+                title="Prévisualiser l'espace client"
+              >
+                <ExternalLink className="h-4 w-4" />
+                Prévisualiser
+              </a>
+            </div>
           </div>
-          {allProcessed && (
-            <Badge variant="success" icon={<CheckCircle className="w-4 h-4" />} size="lg">
-              Toutes les compagnies traitées
-            </Badge>
-          )}
+
+          <div className="flex flex-col gap-2 items-end">
+            {allProcessed && (
+              <Badge variant="success" icon={<CheckCircle className="w-4 h-4" />} size="lg">
+                Toutes les compagnies traitées
+              </Badge>
+            )}
+          </div>
         </div>
 
         <div className="mb-2">
