@@ -7,31 +7,34 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Client-Info, Apikey',
 };
 
-// 🧪 MODE TEST - Identifiants de test Monético officiels
-// ⚠️ À REMPLACER par vos vrais identifiants de test fournis par Monético
-// Documentation: https://www.monetico-paiement.fr/fr/info/documentations/Monetico_Paiement_documentation_technique_v2.0.pdf
+// 🔐 Configuration Monético depuis les secrets Supabase
+// Les identifiants sensibles sont stockés dans les secrets de l'Edge Function
+// Dashboard Supabase → Edge Functions → Secrets
 
-const TEST_MODE = false; // ✅ MODE PRODUCTION ACTIVÉ
+const TEST_MODE = (Deno.env.get('MONETICO_MODE') || 'production') === 'test';
 
-const MONETICO_CONFIG = TEST_MODE ? {
-  // 🧪 PARAMÈTRES DE TEST
-  // IMPORTANT: Remplacez ces valeurs par celles fournies dans votre espace test Monético
-  tpe: '1234567',              // ⚠️ TPE de test fourni par Monético
-  societe: 'CompanyTest',      // ⚠️ Société de test fournie par Monético
-  macKey: 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX',  // ⚠️ Clé MAC de test
+// Récupération des identifiants depuis les secrets Supabase
+const MONETICO_TPE = TEST_MODE
+  ? Deno.env.get('MONETICO_TEST_TPE') || '1234567'
+  : Deno.env.get('MONETICO_TPE') || '7374133';
+
+const MONETICO_SOCIETE = TEST_MODE
+  ? Deno.env.get('MONETICO_TEST_SOCIETE') || 'CompanyTest'
+  : Deno.env.get('MONETICO_SOCIETE') || 'taxiassur';
+
+const MONETICO_MAC_KEY = TEST_MODE
+  ? Deno.env.get('MONETICO_TEST_MAC_KEY') || 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
+  : Deno.env.get('MONETICO_MAC_KEY') || '106FA85BF342FD4EE95C883D82865B5CC1F63890';
+
+const MONETICO_CONFIG = {
+  tpe: MONETICO_TPE,
+  societe: MONETICO_SOCIETE,
+  macKey: MONETICO_MAC_KEY,
   version: '3.0',
   langue: 'FR',
-  urlServeur: 'https://p.monetico-services.com/test/paiement.cgi',  // ✅ URL TEST avec /test/
-  urlOK: 'https://taxiassur.com/espace-prospect/paiement-success',
-  urlKO: 'https://taxiassur.com/espace-prospect/paiement-error',
-} : {
-  // 🚀 PARAMÈTRES DE PRODUCTION (inchangés)
-  tpe: '7374133',
-  societe: 'taxiassur',
-  macKey: '106FA85BF342FD4EE95C883D82865B5CC1F63890',
-  version: '3.0',
-  langue: 'FR',
-  urlServeur: 'https://p.monetico-services.com/paiement.cgi',
+  urlServeur: TEST_MODE
+    ? 'https://p.monetico-services.com/test/paiement.cgi'
+    : 'https://p.monetico-services.com/paiement.cgi',
   urlOK: 'https://taxiassur.com/espace-prospect/paiement-success',
   urlKO: 'https://taxiassur.com/espace-prospect/paiement-error',
 };
