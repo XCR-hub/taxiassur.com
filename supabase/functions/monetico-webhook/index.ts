@@ -7,7 +7,12 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Client-Info, Apikey',
 };
 
-const MONETICO_MAC_KEY = '106FA85BF342FD4EE95C883D82865B5CC1F63890';
+// 🧪 MODE TEST ACTIVÉ - TPE encore en test chez Ingineco
+// Récupération de la clé MAC depuis les secrets Supabase
+const TEST_MODE = (Deno.env.get('MONETICO_MODE') || 'test') === 'test';
+const MONETICO_MAC_KEY = TEST_MODE
+  ? Deno.env.get('MONETICO_TEST_MAC_KEY') || '106FA85BF342FD4EE95C883D82865B5CC1F63890'
+  : Deno.env.get('MONETICO_MAC_KEY') || '106FA85BF342FD4EE95C883D82865B5CC1F63890';
 
 async function verifyMAC(data: string, receivedMAC: string): Promise<boolean> {
   const encoder = new TextEncoder();

@@ -1,27 +1,74 @@
 # 🔧 Configuration Monético - Mode TEST Activé
 
-**Date :** 11 février 2026
-**Statut :** Mode TEST activé (URL de test configurée)
+**Date :** 12 février 2026
+**Statut :** ✅ Mode TEST activé et déployé (TPE en test chez Ingineco)
 
 ---
 
 ## ✅ Ce qui a été fait
 
 1. **URL de test Monético activée** : `https://p.monetico-services.com/test/paiement.cgi`
-2. **Edge function déployée** : `create-monetico-payment`
-3. **Webhook configuré** : `monetico-webhook`
+2. **Mode par défaut changé** : `TEST` au lieu de `PRODUCTION`
+3. **Edge functions déployées** :
+   - ✅ `create-monetico-payment` (génération paiements)
+   - ✅ `monetico-webhook` (réception retours)
+4. **Identifiants actuels utilisés** : TPE 7374133 avec URL de test
 
 ---
 
-## ⚠️ ACTION REQUISE
+## 🎯 Configuration Actuelle
 
-**Le mode TEST utilise l'URL de test, MAIS vous devez quand même fournir VOS identifiants de TEST.**
+Le système utilise vos **identifiants de production existants** (TPE 7374133, société taxiassur, clé MAC) mais les envoie vers l'**URL de test Monético**.
 
-Monético ne fournit pas d'identifiants "génériques". Chaque commerçant a ses propres identifiants de TEST.
+Cela permet de tester le système en attendant qu'Ingineco active le TPE en production.
 
 ---
 
-## 📋 Comment Obtenir Vos Identifiants de TEST
+## 💳 Cartes de Test Monético
+
+Pour tester le système, utilisez ces **cartes de test officielles** :
+
+### ✅ Paiement RÉUSSI
+```
+Numéro : 4970 1000 0000 0003
+Date : 12/25
+CVV : 123
+```
+
+### ❌ Paiement REFUSÉ
+```
+Numéro : 4970 1000 0000 0001
+Date : 12/25
+CVV : 123
+```
+
+### 🔐 Paiement 3D Secure
+```
+Numéro : 4970 1000 0000 0011
+Date : 12/25
+CVV : 123
+```
+
+---
+
+## 🧪 Comment Tester
+
+1. Allez dans **CRM Killer** → Ouvrez un lead
+2. Onglet **"Paiement RIB"**
+3. Remplissez le formulaire (montant: 50€)
+4. Cliquez sur **"Créer le lien de paiement"**
+5. Utilisez une carte de test ci-dessus
+6. Vérifiez que le paiement est traité
+
+Dans la console (F12), vous devriez voir :
+```
+Mode: 🧪 TEST
+URL: https://p.monetico-services.com/test/paiement.cgi
+```
+
+---
+
+## 📋 Comment Obtenir Vos Identifiants de TEST (Optionnel)
 
 ### Étape 1 : Connexion Monético Manager
 
@@ -79,10 +126,11 @@ Ils vous fourniront des identifiants de TEST dans les 24-48h.
 
 | Composant | Statut |
 |-----------|--------|
-| URL Monético | ✅ Mode TEST activé |
-| Edge Function | ✅ Déployée |
-| Webhook | ✅ Configuré |
-| Identifiants | ⚠️ À mettre à jour avec vos identifiants de TEST |
+| URL Monético | ✅ Mode TEST activé (`/test/paiement.cgi`) |
+| Edge Function create-monetico-payment | ✅ Déployée en mode TEST |
+| Edge Function monetico-webhook | ✅ Déployée en mode TEST |
+| Identifiants | ✅ TPE 7374133 utilisé avec URL de test |
+| Base de données | ✅ Table `monetico_payments` prête |
 
 ---
 
@@ -99,12 +147,35 @@ Si vous préférez ne pas utiliser le mode TEST et passer directement en product
 
 ---
 
-## 📝 Prochaine Étape
+## 🔄 Passer en Mode PRODUCTION
 
-**Répondez avec :**
+Quand Ingineco activera le TPE en production, deux options :
 
-**Option 1 :** "Voici mes identifiants de TEST : TPE = ..., Société = ..., Clé MAC = ..."
+### Option 1 : Via Secrets Supabase (Recommandé)
 
-**Option 2 :** "Je vais appeler Monético pour obtenir les identifiants de TEST"
+1. Allez dans **Supabase Dashboard** → **Edge Functions** → **Secrets**
+2. Ajoutez ou modifiez :
+   ```
+   MONETICO_MODE=production
+   ```
+3. Le système basculera automatiquement en production
 
-**Option 3 :** "Je préfère passer directement en PRODUCTION"
+### Option 2 : Je Modifie le Code
+
+Dites-moi simplement : "Passe en mode production" et je modifierai le code pour utiliser l'URL de production par défaut.
+
+---
+
+## 📝 État Final
+
+**✅ Système prêt pour les tests**
+
+Le mode TEST est activé et vous pouvez commencer à tester les paiements avec les cartes de test Monético.
+
+**Prochaines étapes suggérées :**
+
+1. Tester un paiement avec une carte de test RÉUSSI
+2. Tester un paiement avec une carte de test REFUSÉ
+3. Vérifier que les données sont bien enregistrées dans `monetico_payments`
+4. Vérifier que le webhook fonctionne correctement
+5. Attendre l'activation du TPE en production par Ingineco

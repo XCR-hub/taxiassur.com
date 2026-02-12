@@ -11,19 +11,22 @@ const corsHeaders = {
 // Les identifiants sensibles sont stockés dans les secrets de l'Edge Function
 // Dashboard Supabase → Edge Functions → Secrets
 
-const TEST_MODE = (Deno.env.get('MONETICO_MODE') || 'production') === 'test';
+// 🧪 MODE TEST ACTIVÉ - TPE encore en test chez Ingineco
+const TEST_MODE = (Deno.env.get('MONETICO_MODE') || 'test') === 'test';
 
 // Récupération des identifiants depuis les secrets Supabase
+// ⚠️ IMPORTANT: Demandez vos vrais identifiants de TEST à Ingineco
+// Ces valeurs par défaut sont des exemples et ne fonctionneront pas
 const MONETICO_TPE = TEST_MODE
-  ? Deno.env.get('MONETICO_TEST_TPE') || '1234567'
+  ? Deno.env.get('MONETICO_TEST_TPE') || '7374133'  // Votre TPE de test Ingineco
   : Deno.env.get('MONETICO_TPE') || '7374133';
 
 const MONETICO_SOCIETE = TEST_MODE
-  ? Deno.env.get('MONETICO_TEST_SOCIETE') || 'CompanyTest'
+  ? Deno.env.get('MONETICO_TEST_SOCIETE') || 'taxiassur'  // Votre code société test
   : Deno.env.get('MONETICO_SOCIETE') || 'taxiassur';
 
 const MONETICO_MAC_KEY = TEST_MODE
-  ? Deno.env.get('MONETICO_TEST_MAC_KEY') || 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
+  ? Deno.env.get('MONETICO_TEST_MAC_KEY') || '106FA85BF342FD4EE95C883D82865B5CC1F63890'  // Votre clé MAC de test
   : Deno.env.get('MONETICO_MAC_KEY') || '106FA85BF342FD4EE95C883D82865B5CC1F63890';
 
 const MONETICO_CONFIG = {
