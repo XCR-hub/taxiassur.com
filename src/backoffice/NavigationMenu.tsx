@@ -5,7 +5,7 @@ import {
   Search, Link2, Mail, Eye, Plus, Send, Building2, FileCheck, Inbox,
   UserCircle, Clock, Megaphone, Shield, Globe, Settings, BookOpen,
   QrCode, MessageSquare, Brain, MapPin, UserCog, Sparkles, Receipt,
-  ClipboardList, LayoutDashboard, Target, Activity, Bell
+  ClipboardList, LayoutDashboard, Target, Activity, Bell, CreditCard
 } from 'lucide-react';
 import { getCurrentUser, hasPermission } from '../lib/auth';
 import { usePendingDocumentsCount } from '../hooks/usePendingDocumentsCount';
@@ -109,10 +109,11 @@ export default function NavigationMenu() {
       color: 'sky',
       permission: canViewCRM,
       links: [
+        { to: '/backoffice/lead-invoicing', icon: CreditCard, label: 'Facturation Leads', highlight: true },
+        { to: '/backoffice/free-invoicing', icon: DollarSign, label: 'Facturation Libre', highlight: true },
         { to: '/backoffice/insurance-companies', icon: Building2, label: 'Compagnies', highlight: true },
         { to: '/backoffice/insurance-companies-stats', icon: BarChart3, label: 'Stats Compagnies' },
         { to: '/backoffice/quotes', icon: Receipt, label: 'Gestion Devis' },
-        { to: '/backoffice/free-invoicing', icon: DollarSign, label: 'Facturation Libre', highlight: true },
         { to: '/backoffice/monetico-accounting', icon: DollarSign, label: 'Comptabilité Monético', highlight: true },
         { to: '/backoffice/pending-documents', icon: FileCheck, label: 'Documents à Valider', highlight: pendingDocsCount > 0, badge: pendingDocsCount > 0 ? pendingDocsCount.toString() : undefined },
         { to: '/backoffice/documents', icon: FileText, label: 'Tous Documents' },
