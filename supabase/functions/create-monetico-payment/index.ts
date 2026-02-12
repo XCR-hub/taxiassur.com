@@ -133,11 +133,15 @@ serve(async (req: Request) => {
     const email = lead.email || 'test@taxiassur.fr';
     const customerName = `${lead.first_name || ''} ${lead.last_name || ''}`.trim() || 'Client';
 
-    const texteLibre = JSON.stringify({
+    // Texte libre avec valeur simple (sans caractères spéciaux pour éviter les problèmes de MAC)
+    const texteLibreSimple = `lead_${leadId}_${TEST_MODE ? 'TEST' : 'PROD'}`;
+
+    // Stocker les vraies données JSON séparément pour notre DB
+    const texteLibreData = {
       leadId: leadId,
       description: description || 'Acompte assurance taxi',
       mode: TEST_MODE ? 'TEST' : 'PRODUCTION'
-    });
+    };
 
     // Contexte commande obligatoire (minimal avec billing)
     const contexteCommande = btoa(JSON.stringify({
@@ -153,7 +157,7 @@ serve(async (req: Request) => {
 
     // Format MAC Version 3.0 selon documentation officielle Monético p.82
     // UNIQUEMENT les paramètres avec valeurs dans l'ordre alphabétique (pas de paramètres vides)
-    const macData = `TPE=${MONETICO_CONFIG.tpe}*contexte_commande=${contexteCommande}*date=${dateTime}*lgue=${MONETICO_CONFIG.langue}*mail=${email}*montant=${montant}*reference=${reference}*societe=${MONETICO_CONFIG.societe}*texte-libre=${texteLibre}*url_retour_err=${MONETICO_CONFIG.urlKO}*url_retour_ok=${MONETICO_CONFIG.urlOK}*version=${MONETICO_CONFIG.version}`;
+    const macData = `TPE=${MONETICO_CONFIG.tpe}*contexte_commande=${contexteCommande}*date=${dateTime}*lgue=${MONETICO_CONFIG.langue}*mail=${email}*montant=${montant}*reference=${reference}*societe=${MONETICO_CONFIG.societe}*texte-libre=${texteLibreSimple}*url_retour_err=${MONETICO_CONFIG.urlKO}*url_retour_ok=${MONETICO_CONFIG.urlOK}*version=${MONETICO_CONFIG.version}`;
 
     console.log('🔐 MAC Data:', macData);
     const mac = await calculateMAC(macData);
@@ -171,7 +175,7 @@ serve(async (req: Request) => {
         customer_name: customerName,
         description: description || 'Acompte assurance taxi',
         monetico_data: {
-          texte_libre: texteLibre,
+          texte_libre: texteLibreData,
           date: dateTime,
           mode: TEST_MODE ? 'TEST' : 'PRODUCTION',
           mac: mac
@@ -195,7 +199,7 @@ serve(async (req: Request) => {
       lgue: MONETICO_CONFIG.langue,
       societe: MONETICO_CONFIG.societe,
       contexte_commande: contexteCommande,
-      'texte-libre': texteLibre,
+      'texte-libre': texteLibreSimple,
       mail: email
     };
 
