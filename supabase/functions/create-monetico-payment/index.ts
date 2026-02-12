@@ -11,7 +11,7 @@ const corsHeaders = {
 // ⚠️ À REMPLACER par vos vrais identifiants de test fournis par Monético
 // Documentation: https://www.monetico-paiement.fr/fr/info/documentations/Monetico_Paiement_documentation_technique_v2.0.pdf
 
-const TEST_MODE = true; // ✅ Mettre à false en production
+const TEST_MODE = false; // ✅ MODE PRODUCTION ACTIVÉ
 
 const MONETICO_CONFIG = TEST_MODE ? {
   // 🧪 PARAMÈTRES DE TEST
