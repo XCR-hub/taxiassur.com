@@ -7,19 +7,31 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Client-Info, Apikey',
 };
 
-// ✅ MODE PRODUCTION - Identifiants vérifiés et corrects
-// TPE: 7374133
-// Société: taxiassur
-// Clé MAC v3.0: Validée par Monético Manager
-// Configuration vérifiée le: 11 février 2026
+// 🧪 MODE TEST - Identifiants de test Monético officiels
+// ⚠️ À REMPLACER par vos vrais identifiants de test fournis par Monético
+// Documentation: https://www.monetico-paiement.fr/fr/info/documentations/Monetico_Paiement_documentation_technique_v2.0.pdf
 
-const MONETICO_CONFIG = {
+const TEST_MODE = true; // ✅ Mettre à false en production
+
+const MONETICO_CONFIG = TEST_MODE ? {
+  // 🧪 PARAMÈTRES DE TEST
+  // IMPORTANT: Remplacez ces valeurs par celles fournies dans votre espace test Monético
+  tpe: '1234567',              // ⚠️ TPE de test fourni par Monético
+  societe: 'CompanyTest',      // ⚠️ Société de test fournie par Monético
+  macKey: 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX',  // ⚠️ Clé MAC de test
+  version: '3.0',
+  langue: 'FR',
+  urlServeur: 'https://p.monetico-services.com/test/paiement.cgi',  // ✅ URL TEST avec /test/
+  urlOK: 'https://taxiassur.com/espace-prospect/paiement-success',
+  urlKO: 'https://taxiassur.com/espace-prospect/paiement-error',
+} : {
+  // 🚀 PARAMÈTRES DE PRODUCTION (inchangés)
   tpe: '7374133',
   societe: 'taxiassur',
   macKey: '106FA85BF342FD4EE95C883D82865B5CC1F63890',
   version: '3.0',
   langue: 'FR',
-  urlServeur: 'https://p.monetico-services.com/paiement.cgi',  // ✅ PRODUCTION
+  urlServeur: 'https://p.monetico-services.com/paiement.cgi',
   urlOK: 'https://taxiassur.com/espace-prospect/paiement-success',
   urlKO: 'https://taxiassur.com/espace-prospect/paiement-error',
 };
@@ -46,7 +58,8 @@ async function calculateMAC(data: string): Promise<string> {
 function generateReference(): string {
   const timestamp = Date.now();
   const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
-  return `TAX${timestamp}${random}`;
+  const prefix = TEST_MODE ? 'TEST' : 'TAX';
+  return `${prefix}${timestamp}${random}`;
 }
 
 function formatMoneticoDate(date: Date): string {
@@ -75,7 +88,7 @@ serve(async (req: Request) => {
 
     const { data: lead, error: leadError } = await supabase
       .from('crm_leads')
-      .select('email, first_name, last_name')
+      .select('email, nom, prenom, telephone')
       .eq('id', leadId)
       .single();
 
@@ -87,115 +100,89 @@ serve(async (req: Request) => {
     }
 
     const reference = generateReference();
-    const dateTransaction = formatMoneticoDate(new Date());
+    const dateTime = formatMoneticoDate(new Date());
     const montant = `${parseFloat(amount).toFixed(2)}EUR`;
+    const email = lead.email || 'test@taxiassur.fr';
+    const customerName = `${lead.prenom || ''} ${lead.nom || ''}`.trim() || 'Client';
 
-    const texteLibre = description || `Paiement comptant assurance taxi - ${reference}`;
-    const urlRetour = `${supabaseUrl}/functions/v1/monetico-webhook`;
+    const texteLibre = JSON.stringify({
+      leadId: leadId,
+      description: description || 'Acompte assurance taxi',
+      mode: TEST_MODE ? 'TEST' : 'PRODUCTION'
+    });
 
-    // Calcul du MAC selon la spec Monético v3.0
-    // Format: version*TPE*date*montant*reference*texte-libre*version*lgue*societe*mail*
-    const macString = [
-      MONETICO_CONFIG.version,
-      MONETICO_CONFIG.tpe,
-      dateTransaction,
-      montant,
-      reference,
-      texteLibre,
-      MONETICO_CONFIG.version,
-      MONETICO_CONFIG.langue,
-      MONETICO_CONFIG.societe,
-      lead.email || '',
-      urlRetour,
-      MONETICO_CONFIG.urlOK,
-      MONETICO_CONFIG.urlKO,
-    ].join('*');
+    const macData = `${MONETICO_CONFIG.version}*${MONETICO_CONFIG.tpe}*${dateTime}*${montant}*${reference}*${texteLibre}*${MONETICO_CONFIG.version}*${MONETICO_CONFIG.langue}*${MONETICO_CONFIG.societe}*${email}**********`;
 
-    console.log('MAC String:', macString);
-    const mac = await calculateMAC(macString);
-    console.log('MAC calculé:', mac);
+    console.log('MAC Data:', macData);
+    const mac = await calculateMAC(macData);
 
-    const params: Record<string, string> = {
+    const { error: insertError } = await supabase
+      .from('monetico_payments')
+      .insert({
+        reference,
+        lead_id: leadId,
+        amount: parseFloat(amount),
+        currency: 'EUR',
+        status: 'pending',
+        customer_email: email,
+        customer_name: customerName,
+        payment_data: {
+          texte_libre: texteLibre,
+          date: dateTime,
+          mode: TEST_MODE ? 'TEST' : 'PRODUCTION'
+        }
+      });
+
+    if (insertError) {
+      console.error('Erreur insertion:', insertError);
+    }
+
+    const formData = {
       version: MONETICO_CONFIG.version,
       TPE: MONETICO_CONFIG.tpe,
-      date: dateTransaction,
+      date: dateTime,
       montant: montant,
       reference: reference,
       MAC: mac,
-      url_retour: urlRetour,
+      url_retour: MONETICO_CONFIG.urlOK,
       url_retour_ok: MONETICO_CONFIG.urlOK,
       url_retour_err: MONETICO_CONFIG.urlKO,
       lgue: MONETICO_CONFIG.langue,
       societe: MONETICO_CONFIG.societe,
-      mail: lead.email || '',
-      'texte-libre': texteLibre,
+      texte_libre: texteLibre,
+      mail: email,
+      mode: TEST_MODE ? 'TEST' : 'PRODUCTION'
     };
 
-    const { data: payment, error: paymentError } = await supabase
-      .from('monetico_payments')
-      .insert({
-        lead_id: leadId,
-        reference: reference,
-        amount: parseFloat(amount),
-        currency: 'EUR',
-        status: 'pending',
-        payment_url: MONETICO_CONFIG.urlServeur,
-        return_url: params.url_retour,
-        mac_sent: mac,
-        customer_email: lead.email,
-        customer_name: `${lead.first_name} ${lead.last_name}`,
-        description: params['texte-libre'],
-        monetico_data: params,
-      })
-      .select()
-      .single();
-
-    if (paymentError) {
-      console.error('Erreur création paiement:', paymentError);
-      return new Response(
-        JSON.stringify({ error: 'Erreur lors de la création du paiement' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    const formFields = Object.entries(params)
-      .map(([key, value]) => `<input type="hidden" name="${key}" value="${value}">`)
-      .join('\n');
-
-    const htmlForm = `<!DOCTYPE html>
-<html>
-<head>
-  <title>Redirection vers le paiement sécurisé</title>
-  <meta charset="UTF-8">
-</head>
-<body>
-  <div style="text-align: center; padding: 50px; font-family: Arial, sans-serif;">
-    <h2>Redirection vers le paiement sécurisé Monetico...</h2>
-    <p>Veuillez patienter quelques instants.</p>
-  </div>
-  <form id="monetico-form" method="POST" action="${MONETICO_CONFIG.urlServeur}">
-    ${formFields}
-  </form>
-  <script>document.getElementById('monetico-form').submit();</script>
-</body>
-</html>`;
+    console.log('Mode:', TEST_MODE ? '🧪 TEST' : '🚀 PRODUCTION');
+    console.log('URL:', MONETICO_CONFIG.urlServeur);
+    console.log('TPE:', MONETICO_CONFIG.tpe);
 
     return new Response(
       JSON.stringify({
         success: true,
-        paymentId: payment.id,
-        reference: reference,
-        paymentUrl: MONETICO_CONFIG.urlServeur,
-        formData: params,
-        htmlForm: htmlForm,
+        reference,
+        formData,
+        actionUrl: MONETICO_CONFIG.urlServeur,
+        mode: TEST_MODE ? 'TEST' : 'PRODUCTION'
       }),
-      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      {
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      }
     );
-  } catch (error: any) {
+
+  } catch (error) {
     console.error('Erreur:', error);
     return new Response(
-      JSON.stringify({ error: error.message }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      JSON.stringify({
+        error: error.message,
+        details: TEST_MODE ? 'Mode TEST - Vérifiez vos identifiants de test Monético' : 'Erreur serveur'
+      }),
+      {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      }
     );
   }
 });
