@@ -44,11 +44,17 @@ const MONETICO_CONFIG = {
 
 async function calculateMAC(data: string): Promise<string> {
   const encoder = new TextEncoder();
-  const keyData = encoder.encode(MONETICO_CONFIG.macKey);
+
+  // Convertir la clé hexadécimale en bytes (CRUCIAL pour Monético!)
+  const hexKey = MONETICO_CONFIG.macKey;
+  const keyBytes = new Uint8Array(hexKey.length / 2);
+  for (let i = 0; i < hexKey.length; i += 2) {
+    keyBytes[i / 2] = parseInt(hexKey.substr(i, 2), 16);
+  }
 
   const key = await crypto.subtle.importKey(
     'raw',
-    keyData,
+    keyBytes,
     { name: 'HMAC', hash: 'SHA-1' },
     false,
     ['sign']
@@ -58,7 +64,8 @@ async function calculateMAC(data: string): Promise<string> {
 
   return Array.from(new Uint8Array(signature))
     .map(b => b.toString(16).padStart(2, '0'))
-    .join('');
+    .join('')
+    .toUpperCase(); // Monético utilise uppercase
 }
 
 function generateReference(): string {
