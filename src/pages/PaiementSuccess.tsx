@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { CheckCircle, Loader, ArrowRight } from 'lucide-react';
 
-export function PaiementSuccess() {
+function PaiementSuccess() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
@@ -129,3 +129,5 @@ export function PaiementSuccess() {
     </div>
   );
 }
+
+export default PaiementSuccess;

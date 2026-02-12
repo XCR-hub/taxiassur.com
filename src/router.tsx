@@ -149,10 +149,12 @@ export const router = createBrowserRouter([
   {
     path: '/espace-prospect/paiement-success',
     element: <PaiementSuccess />,
+    errorElement: <RouteErrorFallback />,
   },
   {
     path: '/espace-prospect/paiement-error',
     element: <PaiementError />,
+    errorElement: <RouteErrorFallback />,
   },
   {
     path: '/contact',
