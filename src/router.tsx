@@ -5,6 +5,7 @@ import RouteErrorFallback from './components/RouteErrorFallback';
 const Home = lazy(() => import('./pages/Home'));
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
 const EspaceClient = lazy(() => import('./pages/EspaceClient'));
+const ClientAccessByToken = lazy(() => import('./pages/ClientAccessByToken'));
 const EspaceProspect = lazy(() => import('./pages/EspaceProspect'));
 const ProspectDocuments = lazy(() => import('./pages/ProspectDocuments'));
 const Contact = lazy(() => import('./pages/Contact'));
@@ -132,6 +133,10 @@ export const router = createBrowserRouter([
   {
     path: '/espace-client',
     element: <EspaceClient />,
+  },
+  {
+    path: '/espace-client/:token',
+    element: <ClientAccessByToken />,
   },
   {
     path: '/espace-client/assurances',
