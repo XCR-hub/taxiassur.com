@@ -137,289 +137,320 @@ export default function ClientsManager() {
   }
 
   return (
-    <div className="p-6 max-w-[1800px] mx-auto">
-      {/* Header */}
-      <div className="mb-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-              <Users className="h-8 w-8 text-blue-600" />
-              Gestion des Clients Actifs
-            </h1>
-            <p className="text-gray-600 mt-1">
-              Suivi et gestion de votre portefeuille clients
-            </p>
-          </div>
-          <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-            <Download className="h-4 w-4" />
-            Exporter
-          </button>
-        </div>
-      </div>
-
-      {/* Stats Cards */}
-      {stats && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-6 text-white shadow-lg">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-blue-100 text-sm font-medium">Clients Actifs</p>
-                <p className="text-3xl font-bold mt-2">{stats.total_clients}</p>
-              </div>
-              <Users className="h-12 w-12 text-blue-200" />
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/20 to-gray-50">
+      <div className="p-6 max-w-[1800px] mx-auto">
+        {/* Header */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+                <div className="p-2 bg-blue-600 rounded-xl shadow-lg">
+                  <Users className="h-8 w-8 text-white" />
+                </div>
+                Gestion des Clients Actifs
+              </h1>
+              <p className="text-gray-600 mt-2 text-lg">
+                Suivi et gestion de votre portefeuille clients
+              </p>
             </div>
-          </div>
-
-          <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-6 text-white shadow-lg">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-green-100 text-sm font-medium">Contrats Actifs</p>
-                <p className="text-3xl font-bold mt-2">{stats.active_contracts}</p>
-              </div>
-              <CheckCircle2 className="h-12 w-12 text-green-200" />
-            </div>
-          </div>
-
-          <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-6 text-white shadow-lg">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-purple-100 text-sm font-medium">Primes Annuelles</p>
-                <p className="text-3xl font-bold mt-2">
-                  {new Intl.NumberFormat('fr-FR', {
-                    style: 'currency',
-                    currency: 'EUR',
-                    maximumFractionDigits: 0
-                  }).format(stats.total_premium)}
-                </p>
-              </div>
-              <DollarSign className="h-12 w-12 text-purple-200" />
-            </div>
-          </div>
-
-          <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl p-6 text-white shadow-lg">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-orange-100 text-sm font-medium">Renouvellements 30j</p>
-                <p className="text-3xl font-bold mt-2">{stats.renewal_due_30days}</p>
-              </div>
-              <Clock className="h-12 w-12 text-orange-200" />
-            </div>
+            <button className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 shadow-lg hover:shadow-xl transition-all font-medium">
+              <Download className="h-5 w-5" />
+              Exporter
+            </button>
           </div>
         </div>
-      )}
 
-      {/* Filters */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6">
-        <div className="flex flex-col md:flex-row gap-4">
-          {/* Search */}
-          <div className="flex-1">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Rechercher un client (nom, email, téléphone)..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
+        {/* Stats Cards */}
+        {stats && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all border border-gray-100 group">
+              <div className="flex items-center justify-between mb-4">
+                <div className="p-3 bg-blue-50 rounded-xl group-hover:bg-blue-100 transition-colors">
+                  <Users className="h-7 w-7 text-blue-600" />
+                </div>
+                <div className="text-right">
+                  <p className="text-3xl font-bold text-gray-900">{stats.total_clients}</p>
+                </div>
+              </div>
+              <p className="text-sm font-semibold text-gray-700">Clients Actifs</p>
+              <p className="text-xs text-gray-500 mt-1">Portefeuille total</p>
             </div>
-          </div>
 
-          {/* Company Filter */}
-          <div className="w-full md:w-64">
-            <div className="relative">
-              <Building2 className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-              <select
-                value={filterCompany}
-                onChange={(e) => setFilterCompany(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none"
-              >
-                <option value="all">Toutes les compagnies</option>
-                {companies.map(company => (
-                  <option key={company} value={company}>{company}</option>
-                ))}
-              </select>
+            <div className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all border border-gray-100 group">
+              <div className="flex items-center justify-between mb-4">
+                <div className="p-3 bg-green-50 rounded-xl group-hover:bg-green-100 transition-colors">
+                  <CheckCircle2 className="h-7 w-7 text-green-600" />
+                </div>
+                <div className="text-right">
+                  <p className="text-3xl font-bold text-gray-900">{stats.active_contracts}</p>
+                </div>
+              </div>
+              <p className="text-sm font-semibold text-gray-700">Contrats Actifs</p>
+              <p className="text-xs text-gray-500 mt-1">En cours</p>
             </div>
-          </div>
 
-          {/* Sort */}
-          <div className="w-full md:w-48">
-            <div className="relative">
-              <ArrowUpDown className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as any)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none"
-              >
-                <option value="date">Date mise à jour</option>
-                <option value="name">Nom (A-Z)</option>
-                <option value="premium">Prime (plus élevée)</option>
-              </select>
+            <div className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all border border-gray-100 group">
+              <div className="flex items-center justify-between mb-4">
+                <div className="p-3 bg-cyan-50 rounded-xl group-hover:bg-cyan-100 transition-colors">
+                  <DollarSign className="h-7 w-7 text-cyan-600" />
+                </div>
+                <div className="text-right">
+                  <p className="text-2xl font-bold text-gray-900">
+                    {new Intl.NumberFormat('fr-FR', {
+                      style: 'currency',
+                      currency: 'EUR',
+                      maximumFractionDigits: 0
+                    }).format(stats.total_premium)}
+                  </p>
+                </div>
+              </div>
+              <p className="text-sm font-semibold text-gray-700">Primes Annuelles</p>
+              <p className="text-xs text-gray-500 mt-1">Volume total</p>
             </div>
-          </div>
-        </div>
-      </div>
 
-      {/* Results Count */}
-      <div className="mb-4 text-sm text-gray-600">
-        {filteredClients.length} client{filteredClients.length > 1 ? 's' : ''} trouvé{filteredClients.length > 1 ? 's' : ''}
-      </div>
-
-      {/* Clients Table */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  Client
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  Contact
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  Compagnie
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  Prime Annuelle
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  Date Contrat
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {filteredClients.map((client) => (
-                <tr key={client.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-                        <span className="text-blue-600 font-semibold">
-                          {client.first_name?.[0]}{client.last_name?.[0]}
-                        </span>
-                      </div>
-                      <div>
-                        <div className="font-medium text-gray-900">
-                          {client.first_name} {client.last_name}
-                        </div>
-                        <div className="flex items-center gap-1 text-sm text-gray-500">
-                          <MapPin className="h-3 w-3" />
-                          {client.city}
-                        </div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <Mail className="h-4 w-4 text-gray-400" />
-                        <a href={`mailto:${client.email}`} className="hover:text-blue-600">
-                          {client.email}
-                        </a>
-                      </div>
-                      <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <Phone className="h-4 w-4 text-gray-400" />
-                        <a href={`tel:${client.phone}`} className="hover:text-blue-600">
-                          {client.phone}
-                        </a>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-2">
-                      <Building2 className="h-4 w-4 text-gray-400" />
-                      <span className="text-sm font-medium text-gray-900">
-                        {client.insurance_company || 'Non renseigné'}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-2">
-                      <DollarSign className="h-4 w-4 text-green-600" />
-                      <span className="text-sm font-semibold text-gray-900">
-                        {client.contract_annual_premium
-                          ? new Intl.NumberFormat('fr-FR', {
-                              style: 'currency',
-                              currency: 'EUR'
-                            }).format(client.contract_annual_premium)
-                          : '-'
-                        }
-                      </span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <Calendar className="h-4 w-4 text-gray-400" />
-                      {client.contract_start_date
-                        ? new Date(client.contract_start_date).toLocaleDateString('fr-FR')
-                        : '-'
-                      }
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-2">
-                      <Link
-                        to={`/backoffice/clients/${client.id}`}
-                        className="flex items-center gap-1 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm font-medium"
-                        title="Gérer ce client"
-                      >
-                        <Shield className="h-4 w-4" />
-                        Gérer
-                      </Link>
-                      <Link
-                        to={`/backoffice/crm-killer/lead/${client.id}`}
-                        className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                        title="Voir la fiche CRM"
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Link>
-                      <button
-                        className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                        title="Contacter"
-                      >
-                        <MessageSquare className="h-4 w-4" />
-                      </button>
-                      <button
-                        className="p-2 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
-                        title="Plus d'actions"
-                      >
-                        <MoreVertical className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {filteredClients.length === 0 && (
-          <div className="text-center py-12">
-            <Users className="h-12 w-12 text-gray-400 mx-auto mb-3" />
-            <p className="text-gray-600 font-medium">Aucun client trouvé</p>
-            <p className="text-gray-500 text-sm mt-1">
-              {searchTerm || filterCompany !== 'all'
-                ? 'Essayez de modifier vos filtres de recherche'
-                : 'Les prospects finalisés apparaîtront ici automatiquement'
-              }
-            </p>
+            <div className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all border border-gray-100 group">
+              <div className="flex items-center justify-between mb-4">
+                <div className="p-3 bg-orange-50 rounded-xl group-hover:bg-orange-100 transition-colors">
+                  <Clock className="h-7 w-7 text-orange-600" />
+                </div>
+                <div className="text-right">
+                  <p className="text-3xl font-bold text-gray-900">{stats.renewal_due_30days}</p>
+                </div>
+              </div>
+              <p className="text-sm font-semibold text-gray-700">Renouvellements 30j</p>
+              <p className="text-xs text-gray-500 mt-1">À traiter</p>
+            </div>
           </div>
         )}
-      </div>
 
-      {/* Quick Info */}
-      <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <div className="flex items-start gap-3">
-          <Activity className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
-          <div className="text-sm text-blue-900">
-            <p className="font-medium mb-1">Gestion des Clients Actifs</p>
-            <p className="text-blue-800">
-              Cette page affiche tous les prospects transformés en clients actifs (statut CLIENT_ACTIF).
-              Utilisez les filtres pour affiner votre recherche et cliquez sur un client pour accéder à sa fiche complète.
-            </p>
+        {/* Filters */}
+        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 mb-6">
+          <div className="flex flex-col md:flex-row gap-4">
+            {/* Search */}
+            <div className="flex-1">
+              <div className="relative">
+                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Rechercher un client (nom, email, téléphone)..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white transition-all"
+                />
+              </div>
+            </div>
+
+            {/* Company Filter */}
+            <div className="w-full md:w-64">
+              <div className="relative">
+                <Building2 className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 z-10" />
+                <select
+                  value={filterCompany}
+                  onChange={(e) => setFilterCompany(e.target.value)}
+                  className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white appearance-none transition-all cursor-pointer"
+                >
+                  <option value="all">Toutes les compagnies</option>
+                  {companies.map(company => (
+                    <option key={company} value={company}>{company}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Sort */}
+            <div className="w-full md:w-56">
+              <div className="relative">
+                <ArrowUpDown className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 z-10" />
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as any)}
+                  className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white appearance-none transition-all cursor-pointer"
+                >
+                  <option value="date">Date mise à jour</option>
+                  <option value="name">Nom (A-Z)</option>
+                  <option value="premium">Prime (plus élevée)</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Results Count */}
+        <div className="mb-4 text-sm font-medium text-gray-700 flex items-center gap-2">
+          <div className="h-2 w-2 bg-blue-500 rounded-full"></div>
+          {filteredClients.length} client{filteredClients.length > 1 ? 's' : ''} trouvé{filteredClients.length > 1 ? 's' : ''}
+        </div>
+
+        {/* Clients Table */}
+        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="bg-gradient-to-r from-gray-50 to-blue-50/30 border-b-2 border-gray-200">
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                    Client
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                    Contact
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                    Compagnie
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                    Prime Annuelle
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                    Date Contrat
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {filteredClients.map((client) => (
+                  <tr key={client.id} className="hover:bg-blue-50/30 transition-colors group">
+                    <td className="px-6 py-5">
+                      <div className="flex items-center gap-3">
+                        <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-md">
+                          <span className="text-white font-bold text-sm">
+                            {client.first_name?.[0]}{client.last_name?.[0]}
+                          </span>
+                        </div>
+                        <div>
+                          <div className="font-semibold text-gray-900 text-base">
+                            {client.first_name} {client.last_name}
+                          </div>
+                          <div className="flex items-center gap-1 text-sm text-gray-500 mt-0.5">
+                            <MapPin className="h-3.5 w-3.5" />
+                            {client.city}
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-5">
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 text-sm text-gray-700">
+                          <Mail className="h-4 w-4 text-blue-500" />
+                          <a href={`mailto:${client.email}`} className="hover:text-blue-600 hover:underline font-medium">
+                            {client.email}
+                          </a>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm text-gray-700">
+                          <Phone className="h-4 w-4 text-green-500" />
+                          <a href={`tel:${client.phone}`} className="hover:text-green-600 hover:underline font-medium">
+                            {client.phone}
+                          </a>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-5">
+                      <div className="flex items-center gap-2">
+                        <div className="p-1.5 bg-gray-100 rounded-lg">
+                          <Building2 className="h-4 w-4 text-gray-600" />
+                        </div>
+                        <span className="text-sm font-semibold text-gray-900">
+                          {client.insurance_company || 'Non renseigné'}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-5">
+                      <div className="flex items-center gap-2">
+                        <div className="p-1.5 bg-green-50 rounded-lg">
+                          <DollarSign className="h-4 w-4 text-green-600" />
+                        </div>
+                        <span className="text-sm font-bold text-gray-900">
+                          {client.contract_annual_premium
+                            ? new Intl.NumberFormat('fr-FR', {
+                                style: 'currency',
+                                currency: 'EUR'
+                              }).format(client.contract_annual_premium)
+                            : '-'
+                          }
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-5">
+                      <div className="flex items-center gap-2">
+                        <div className="p-1.5 bg-blue-50 rounded-lg">
+                          <Calendar className="h-4 w-4 text-blue-600" />
+                        </div>
+                        <span className="text-sm font-medium text-gray-700">
+                          {client.contract_start_date
+                            ? new Date(client.contract_start_date).toLocaleDateString('fr-FR')
+                            : '-'
+                          }
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-5">
+                      <div className="flex items-center gap-2">
+                        <Link
+                          to={`/backoffice/clients/${client.id}`}
+                          className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-all text-sm font-semibold shadow-md hover:shadow-lg"
+                          title="Gérer ce client"
+                        >
+                          <Shield className="h-4 w-4" />
+                          Gérer
+                        </Link>
+                        <Link
+                          to={`/backoffice/crm-killer/lead/${client.id}`}
+                          className="p-2.5 text-gray-600 hover:bg-gray-100 rounded-xl transition-colors"
+                          title="Voir la fiche CRM"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Link>
+                        <button
+                          className="p-2.5 text-green-600 hover:bg-green-50 rounded-xl transition-colors"
+                          title="Contacter"
+                        >
+                          <MessageSquare className="h-4 w-4" />
+                        </button>
+                        <button
+                          className="p-2.5 text-gray-600 hover:bg-gray-100 rounded-xl transition-colors"
+                          title="Plus d'actions"
+                        >
+                          <MoreVertical className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {filteredClients.length === 0 && (
+            <div className="text-center py-16 bg-gray-50">
+              <div className="flex justify-center mb-4">
+                <div className="p-4 bg-gray-100 rounded-2xl">
+                  <Users className="h-12 w-12 text-gray-400" />
+                </div>
+              </div>
+              <p className="text-gray-900 font-semibold text-lg">Aucun client trouvé</p>
+              <p className="text-gray-500 text-sm mt-2 max-w-md mx-auto">
+                {searchTerm || filterCompany !== 'all'
+                  ? 'Essayez de modifier vos filtres de recherche'
+                  : 'Les prospects finalisés apparaîtront ici automatiquement'
+                }
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Quick Info */}
+        <div className="mt-8 bg-gradient-to-br from-blue-50 to-cyan-50 border-2 border-blue-200 rounded-2xl p-6 shadow-lg">
+          <div className="flex items-start gap-4">
+            <div className="p-3 bg-blue-600 rounded-xl shadow-md flex-shrink-0">
+              <Activity className="h-6 w-6 text-white" />
+            </div>
+            <div>
+              <p className="font-bold text-blue-900 text-lg mb-2">Gestion des Clients Actifs</p>
+              <p className="text-blue-800 leading-relaxed">
+                Cette page affiche tous les prospects transformés en clients actifs (statut <span className="font-semibold bg-blue-100 px-2 py-0.5 rounded">CLIENT_ACTIF</span>).
+                Utilisez les filtres pour affiner votre recherche et cliquez sur un client pour accéder à sa fiche complète.
+              </p>
+            </div>
           </div>
         </div>
       </div>
