@@ -92,7 +92,7 @@ serve(async (req: Request) => {
 
     const { data: lead, error: leadError } = await supabase
       .from('crm_leads')
-      .select('email, nom, prenom, telephone, first_name, last_name')
+      .select('email, first_name, last_name, phone')
       .eq('id', leadId)
       .single();
 
@@ -125,7 +125,7 @@ serve(async (req: Request) => {
     const dateTime = formatMoneticoDate(new Date());
     const montant = `${parseFloat(amount).toFixed(2)}EUR`;
     const email = lead.email || 'test@taxiassur.fr';
-    const customerName = `${lead.prenom || ''} ${lead.nom || ''}`.trim() || 'Client';
+    const customerName = `${lead.first_name || ''} ${lead.last_name || ''}`.trim() || 'Client';
 
     const texteLibre = JSON.stringify({
       leadId: leadId,
