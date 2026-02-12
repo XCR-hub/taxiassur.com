@@ -10,6 +10,7 @@ import { createClient } from '@supabase/supabase-js';
 import ClientQuotesViewer from '../components/client/ClientQuotesViewer';
 import ClientSubscriptionForm from '../components/client/ClientSubscriptionForm';
 import CompanyDocumentsLibrary from '../components/client/CompanyDocumentsLibrary';
+import ClientPaymentButton from '../components/client/ClientPaymentButton';
 
 interface DocumentStatus {
   status: 'missing' | 'uploaded' | 'validated' | 'rejected';
@@ -622,15 +623,19 @@ const EspaceProspect: React.FC = () => {
                 </button>
               </div>
             ) : (
-              <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-700 rounded-xl p-6">
-                <ClientSubscriptionForm
-                  leadId={leadInfo.id}
-                  acceptedQuoteId={leadInfo.selected_company_id || ''}
-                  onSubmit={() => {
-                    loadLeadInfo();
-                    setActiveTab('contrat');
-                  }}
-                />
+              <div className="space-y-6">
+                <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-700 rounded-xl p-6">
+                  <ClientSubscriptionForm
+                    leadId={leadInfo.id}
+                    acceptedQuoteId={leadInfo.selected_company_id || ''}
+                    onSubmit={() => {
+                      loadLeadInfo();
+                    }}
+                  />
+                </div>
+
+                {/* Bouton de paiement si comptant requis */}
+                <ClientPaymentButton leadId={leadInfo.id} />
               </div>
             )}
           </div>

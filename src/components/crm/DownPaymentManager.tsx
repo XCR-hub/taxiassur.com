@@ -83,6 +83,9 @@ export const DownPaymentManager: React.FC<DownPaymentManagerProps> = ({
 
         setIsEditMode(false);
 
+        // Construire l'URL complète du paiement
+        const paymentUrl = `${window.location.origin}/paiement/${data.reference}`;
+
         await supabase
           .from('lead_contracts')
           .update({
@@ -92,6 +95,33 @@ export const DownPaymentManager: React.FC<DownPaymentManagerProps> = ({
             down_payment_link: data.reference
           })
           .eq('id', contractId);
+
+        // Récupérer les données du lead pour l'email
+        const { data: lead } = await supabase
+          .from('crm_leads')
+          .select('email, first_name, last_name')
+          .eq('id', leadId)
+          .single();
+
+        // Envoyer l'email de paiement automatiquement
+        if (lead && lead.email) {
+          try {
+            await supabase.functions.invoke('send-payment-link-email', {
+              body: {
+                lead_id: leadId,
+                payment_url: paymentUrl,
+                amount: parseFloat(amount),
+                email: lead.email,
+                first_name: lead.first_name,
+                last_name: lead.last_name
+              }
+            });
+            console.log('✅ Email de paiement envoyé automatiquement');
+          } catch (emailError) {
+            console.error('⚠️ Erreur envoi email:', emailError);
+            // Ne pas bloquer le processus si l'email échoue
+          }
+        }
 
         onPaymentUpdated?.();
       } else {

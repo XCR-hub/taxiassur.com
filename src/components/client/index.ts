@@ -7,3 +7,4 @@ export { ClientUnifiedDashboard } from './ClientUnifiedDashboard';
 export { default as ClientQuotesViewer } from './ClientQuotesViewer';
 export { default as ClientSubscriptionForm } from './ClientSubscriptionForm';
 export { default as CompanyDocumentsLibrary } from './CompanyDocumentsLibrary';
+export { default as ClientPaymentButton } from './ClientPaymentButton';
