@@ -28,6 +28,9 @@ import {
   Inbox,
   MailOpen,
   Users,
+  Download,
+  FileDown,
+  Zap
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
@@ -317,6 +320,37 @@ const CRMInboxMulticanal: React.FC = () => {
       }
     } catch (error) {
       console.error('Error syncing emails:', error);
+      showToast('❌ Erreur réseau');
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  // Créer automatiquement les leads depuis les emails
+  const autoCreateLeads = async () => {
+    try {
+      setSyncing(true);
+      showToast('🤖 Création automatique des leads...');
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/auto-create-leads-from-emails`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      const result = await response.json();
+      if (result.success) {
+        showToast(`✅ ${result.summary?.leads_created || 0} leads créés, ${result.summary?.emails_linked || 0} emails liés !`);
+        await loadMessages();
+        await loadStats();
+      } else {
+        showToast('❌ Erreur création automatique');
+      }
+    } catch (error) {
+      console.error('Error auto-creating leads:', error);
       showToast('❌ Erreur réseau');
     } finally {
       setSyncing(false);
@@ -779,7 +813,7 @@ const CRMInboxMulticanal: React.FC = () => {
 
       {/* COLONNE 1: Dossiers */}
       <div className="w-64 bg-white border-r border-gray-200 flex flex-col">
-        <div className="p-4 border-b border-gray-200">
+        <div className="p-4 border-b border-gray-200 space-y-3">
           <button
             onClick={syncEmails}
             disabled={syncing}
@@ -788,8 +822,19 @@ const CRMInboxMulticanal: React.FC = () => {
             <RefreshCw size={18} className={syncing ? 'animate-spin' : ''} />
             {syncing ? 'Sync...' : 'Synchroniser'}
           </button>
+
+          <button
+            onClick={autoCreateLeads}
+            disabled={syncing}
+            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 font-medium"
+            title="Créer automatiquement les leads depuis les emails sans lead"
+          >
+            <Zap size={18} />
+            Créer leads auto
+          </button>
+
           {autoSyncActive && lastAutoSync && (
-            <div className="mt-2 text-xs text-gray-500 flex items-center gap-1">
+            <div className="text-xs text-gray-500 flex items-center gap-1">
               <CheckCircle size={12} className="text-green-500" />
               Auto: {new Date(lastAutoSync).toLocaleTimeString('fr-FR')}
             </div>
@@ -1118,19 +1163,68 @@ const CRMInboxMulticanal: React.FC = () => {
                     {selectedMessage.attachments.map((attachment: any, idx: number) => (
                       <div
                         key={idx}
-                        className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200"
+                        className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors group"
                       >
-                        <Paperclip size={18} className="text-gray-400" />
-                        <div className="flex-1">
-                          <div className="font-medium text-gray-900 text-sm">
-                            {attachment.filename}
+                        <div className="p-2 bg-blue-100 rounded-lg">
+                          <FileDown size={18} className="text-blue-600" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium text-gray-900 text-sm truncate">
+                            {attachment.filename || `Fichier ${idx + 1}`}
                           </div>
-                          <div className="text-xs text-gray-500">
-                            {(attachment.size / 1024).toFixed(2)} KB
+                          <div className="text-xs text-gray-500 flex items-center gap-2">
+                            <span>{attachment.size ? `${(attachment.size / 1024).toFixed(2)} KB` : 'Taille inconnue'}</span>
+                            {attachment.content_type && (
+                              <span className="px-2 py-0.5 bg-gray-200 rounded text-xs">
+                                {attachment.content_type.split('/')[1]?.toUpperCase() || 'FILE'}
+                              </span>
+                            )}
                           </div>
                         </div>
+                        {attachment.storage_path ? (
+                          <a
+                            href={`${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/email-attachments/${attachment.storage_path}`}
+                            download
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium opacity-0 group-hover:opacity-100"
+                          >
+                            <Download size={16} />
+                            Télécharger
+                          </a>
+                        ) : attachment.url ? (
+                          <a
+                            href={attachment.url}
+                            download
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium opacity-0 group-hover:opacity-100"
+                          >
+                            <Download size={16} />
+                            Télécharger
+                          </a>
+                        ) : (
+                          <button
+                            disabled
+                            className="flex items-center gap-2 px-3 py-2 bg-gray-300 text-gray-500 rounded-lg text-sm font-medium cursor-not-allowed opacity-0 group-hover:opacity-100"
+                          >
+                            <Download size={16} />
+                            Non disponible
+                          </button>
+                        )}
                       </div>
                     ))}
+                  </div>
+                  <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <p className="text-sm text-yellow-800 flex items-center gap-2">
+                      <AlertCircle size={16} />
+                      <span>
+                        Les pièces jointes sont automatiquement extraites et peuvent être transférées au lead.
+                        {selectedMessage.lead_id && (
+                          <span className="font-semibold"> Ce email est lié au lead #{selectedMessage.lead_id.slice(0, 8)}.</span>
+                        )}
+                      </span>
+                    </p>
                   </div>
                 </div>
               )}
