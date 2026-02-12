@@ -79,6 +79,8 @@ serve(async (req: Request) => {
 
     const { leadId, amount, description } = await req.json();
 
+    console.log('📦 Données reçues:', { leadId, amount, description });
+
     if (!leadId || !amount) {
       return new Response(
         JSON.stringify({ error: 'leadId et amount sont requis' }),
@@ -86,15 +88,35 @@ serve(async (req: Request) => {
       );
     }
 
+    console.log('🔍 Recherche du lead:', leadId);
+
     const { data: lead, error: leadError } = await supabase
       .from('crm_leads')
-      .select('email, nom, prenom, telephone')
+      .select('email, nom, prenom, telephone, first_name, last_name')
       .eq('id', leadId)
       .single();
 
-    if (leadError || !lead) {
+    console.log('📊 Résultat:', { lead, leadError });
+
+    if (leadError) {
+      console.error('❌ Erreur DB:', leadError);
       return new Response(
-        JSON.stringify({ error: 'Lead non trouvé' }),
+        JSON.stringify({
+          error: 'Lead non trouvé',
+          details: leadError.message,
+          leadId: leadId
+        }),
+        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (!lead) {
+      console.error('❌ Lead null');
+      return new Response(
+        JSON.stringify({
+          error: 'Lead non trouvé (null)',
+          leadId: leadId
+        }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }

@@ -83,6 +83,8 @@ export function MoneticoPaymentManager({ leadId, onPaymentSuccess }: MoneticoPay
     setError(null);
 
     try {
+      console.log('🚀 Création paiement pour lead:', leadId);
+
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-monetico-payment`,
         {
@@ -100,9 +102,13 @@ export function MoneticoPaymentManager({ leadId, onPaymentSuccess }: MoneticoPay
       );
 
       const result = await response.json();
+      console.log('📦 Réponse serveur:', result);
 
       if (!response.ok) {
-        throw new Error(result.error || result.details || 'Erreur lors de la création du paiement');
+        const errorMsg = result.details
+          ? `${result.error}: ${result.details}`
+          : result.error || 'Erreur lors de la création du paiement';
+        throw new Error(errorMsg);
       }
 
       if (result.success && result.htmlForm) {
@@ -119,7 +125,7 @@ export function MoneticoPaymentManager({ leadId, onPaymentSuccess }: MoneticoPay
         throw new Error(result.error);
       }
     } catch (err: any) {
-      console.error('Erreur détaillée:', err);
+      console.error('❌ Erreur détaillée:', err);
       setError(err.message || 'Erreur inconnue lors de la création du paiement');
     } finally {
       setCreating(false);
