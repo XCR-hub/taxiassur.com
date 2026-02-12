@@ -139,10 +139,32 @@ serve(async (req: Request) => {
       mode: TEST_MODE ? 'TEST' : 'PRODUCTION'
     });
 
-    const macData = `${MONETICO_CONFIG.version}*${MONETICO_CONFIG.tpe}*${dateTime}*${montant}*${reference}*${texteLibre}*${MONETICO_CONFIG.version}*${MONETICO_CONFIG.langue}*${MONETICO_CONFIG.societe}*${email}**********`;
+    // Format MAC Version 3.0 Monético :
+    // TPE*date*montant*reference*texte-libre*version*lgue*societe*mail*nbrech*dateech1*montantech1*dateech2*montantech2*dateech3*montantech3*dateech4*montantech4
+    const macData = [
+      MONETICO_CONFIG.tpe,
+      dateTime,
+      montant,
+      reference,
+      texteLibre,
+      MONETICO_CONFIG.version,
+      MONETICO_CONFIG.langue,
+      MONETICO_CONFIG.societe,
+      email,
+      '', // nbrech (nombre d'échéances, vide si paiement comptant)
+      '', // dateech1
+      '', // montantech1
+      '', // dateech2
+      '', // montantech2
+      '', // dateech3
+      '', // montantech3
+      '', // dateech4
+      '', // montantech4
+    ].join('*');
 
-    console.log('MAC Data:', macData);
+    console.log('🔐 MAC Data:', macData);
     const mac = await calculateMAC(macData);
+    console.log('🔐 MAC calculé:', mac.substring(0, 10) + '...');
 
     const { error: insertError } = await supabase
       .from('monetico_payments')
