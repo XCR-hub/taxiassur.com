@@ -113,12 +113,18 @@ const WebImportManager: React.FC = () => {
 
   const loadClients = async () => {
     const { data, error } = await supabase
-      .from('crm_clients')
-      .select('id, prenom, nom, email, contract_number')
+      .from('crm_leads')
+      .select('id, prenom, nom, email, contract_number, first_name, last_name')
       .order('nom');
 
     if (!error && data) {
-      setClients(data);
+      // Normaliser les données (gérer à la fois prenom/nom et first_name/last_name)
+      const normalizedData = data.map(client => ({
+        ...client,
+        prenom: client.prenom || client.first_name || '',
+        nom: client.nom || client.last_name || ''
+      }));
+      setClients(normalizedData);
     }
   };
 
