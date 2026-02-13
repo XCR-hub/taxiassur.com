@@ -120,6 +120,41 @@ const FreeInvoicing = lazy(() => import('./backoffice/FreeInvoicing'));
 const LeadInvoicing = lazy(() => import('./backoffice/LeadInvoicing'));
 const CRMProductionManager = lazy(() => import('./backoffice/CRMProductionManager'));
 const WebImportManager = lazy(() => import('./backoffice/WebImportManager'));
+const InsuranceCompaniesManager = lazy(() => import('./backoffice/InsuranceCompaniesManager'));
+const InsuranceCompaniesStats = lazy(() => import('./backoffice/InsuranceCompaniesStats'));
+const QuotesManager = lazy(() => import('./backoffice/QuotesManager'));
+const PendingDocumentsManager = lazy(() => import('./backoffice/PendingDocumentsManager'));
+const AllDocumentsViewer = lazy(() => import('./backoffice/AllDocumentsViewer'));
+const QuoteQueueDashboard = lazy(() => import('./backoffice/QuoteQueueDashboard'));
+const NewsletterDashboard = lazy(() => import('./backoffice/NewsletterDashboard'));
+const NotificationsManager = lazy(() => import('./backoffice/NotificationsManager'));
+const PartnerManager = lazy(() => import('./backoffice/PartnerManager'));
+const LLMDashboard = lazy(() => import('./backoffice/LLMDashboard'));
+const LLMCouncilDashboard = lazy(() => import('./backoffice/LLMCouncilDashboard'));
+const AIAutonomousDashboard = lazy(() => import('./backoffice/AIAutonomousDashboard'));
+const MasterAI = lazy(() => import('./backoffice/MasterAI'));
+const AutomationScheduler = lazy(() => import('./backoffice/AutomationScheduler'));
+const AutoOptimizer = lazy(() => import('./backoffice/AutoOptimizer'));
+const AIContentGeneratorUnified = lazy(() => import('./backoffice/AIContentGeneratorUnified'));
+const ContentManager = lazy(() => import('./backoffice/ContentManager'));
+const NewsManager = lazy(() => import('./backoffice/NewsManager'));
+const PopupManager = lazy(() => import('./backoffice/PopupManager'));
+const CityPageGenerator = lazy(() => import('./backoffice/CityPageGenerator'));
+const TrendAnalyzer = lazy(() => import('./backoffice/TrendAnalyzer'));
+const SeoTools = lazy(() => import('./backoffice/SeoTools'));
+const SEOStrategyDashboard = lazy(() => import('./backoffice/SEOStrategyDashboard'));
+const BacklinkManager = lazy(() => import('./backoffice/BacklinkManager'));
+const BacklinkProspector = lazy(() => import('./backoffice/BacklinkProspector'));
+const BacklinkAutomationDashboard = lazy(() => import('./backoffice/BacklinkAutomationDashboard'));
+const OutreachComposer = lazy(() => import('./backoffice/OutreachComposer'));
+const MarketingTemplates = lazy(() => import('./backoffice/MarketingTemplates'));
+const QRCodeGenerator = lazy(() => import('./backoffice/QRCodeGenerator'));
+const Dashboard = lazy(() => import('./backoffice/Dashboard'));
+const ConversionAnalytics = lazy(() => import('./backoffice/ConversionAnalytics'));
+const LeadMarketplace = lazy(() => import('./backoffice/LeadMarketplace'));
+const UserManagement = lazy(() => import('./backoffice/UserManagement'));
+const SecurityDashboard = lazy(() => import('./backoffice/SecurityDashboard'));
+const ComplianceCenter = lazy(() => import('./backoffice/ComplianceCenter'));
 
 export const router = createBrowserRouter([
   {
@@ -620,5 +655,145 @@ export const router = createBrowserRouter([
   {
     path: '/backoffice/doublons',
     element: <DuplicateLeadsManager />,
+  },
+  {
+    path: '/backoffice/insurance-companies',
+    element: <InsuranceCompaniesManager />,
+  },
+  {
+    path: '/backoffice/insurance-companies-stats',
+    element: <InsuranceCompaniesStats />,
+  },
+  {
+    path: '/backoffice/quotes',
+    element: <QuotesManager />,
+  },
+  {
+    path: '/backoffice/pending-documents',
+    element: <PendingDocumentsManager />,
+  },
+  {
+    path: '/backoffice/documents',
+    element: <AllDocumentsViewer />,
+  },
+  {
+    path: '/backoffice/quote-queue',
+    element: <QuoteQueueDashboard />,
+  },
+  {
+    path: '/backoffice/newsletter',
+    element: <NewsletterDashboard />,
+  },
+  {
+    path: '/backoffice/notifications',
+    element: <NotificationsManager />,
+  },
+  {
+    path: '/backoffice/partners',
+    element: <PartnerManager />,
+  },
+  {
+    path: '/backoffice/llm-dashboard',
+    element: <LLMDashboard />,
+  },
+  {
+    path: '/backoffice/llm-council',
+    element: <LLMCouncilDashboard />,
+  },
+  {
+    path: '/backoffice/ai-autonomous',
+    element: <AIAutonomousDashboard />,
+  },
+  {
+    path: '/backoffice/master-ai',
+    element: <MasterAI />,
+  },
+  {
+    path: '/backoffice/automation-scheduler',
+    element: <AutomationScheduler />,
+  },
+  {
+    path: '/backoffice/auto-optimizer',
+    element: <AutoOptimizer />,
+  },
+  {
+    path: '/backoffice/ai-generator',
+    element: <AIContentGeneratorUnified />,
+  },
+  {
+    path: '/backoffice/content',
+    element: <ContentManager />,
+  },
+  {
+    path: '/backoffice/news',
+    element: <NewsManager />,
+  },
+  {
+    path: '/backoffice/popups',
+    element: <PopupManager />,
+  },
+  {
+    path: '/backoffice/generate-cities',
+    element: <CityPageGenerator />,
+  },
+  {
+    path: '/backoffice/trend-analyzer',
+    element: <TrendAnalyzer />,
+  },
+  {
+    path: '/backoffice/seo',
+    element: <SeoTools />,
+  },
+  {
+    path: '/backoffice/seo-strategy',
+    element: <SEOStrategyDashboard />,
+  },
+  {
+    path: '/backoffice/backlinks',
+    element: <BacklinkManager />,
+  },
+  {
+    path: '/backoffice/backlink-prospector',
+    element: <BacklinkProspector />,
+  },
+  {
+    path: '/backoffice/backlink-automation',
+    element: <BacklinkAutomationDashboard />,
+  },
+  {
+    path: '/backoffice/outreach',
+    element: <OutreachComposer />,
+  },
+  {
+    path: '/backoffice/marketing-templates',
+    element: <MarketingTemplates />,
+  },
+  {
+    path: '/backoffice/qr-codes',
+    element: <QRCodeGenerator />,
+  },
+  {
+    path: '/backoffice/old-dashboard',
+    element: <Dashboard />,
+  },
+  {
+    path: '/backoffice/conversion',
+    element: <ConversionAnalytics />,
+  },
+  {
+    path: '/backoffice/lead-marketplace',
+    element: <LeadMarketplace />,
+  },
+  {
+    path: '/backoffice/users',
+    element: <UserManagement />,
+  },
+  {
+    path: '/backoffice/security',
+    element: <SecurityDashboard />,
+  },
+  {
+    path: '/backoffice/compliance',
+    element: <ComplianceCenter />,
   },
 ]);

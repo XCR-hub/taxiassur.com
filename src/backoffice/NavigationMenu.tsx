@@ -251,30 +251,30 @@ export default function NavigationMenu() {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {sections.map((section) => {
         if (section.permission === false) return null;
 
         return (
           <div
             key={section.title}
-            className={`bg-gradient-to-r ${getSectionBg(section.color)} border rounded-xl p-5`}
+            className={`bg-gradient-to-r ${getSectionBg(section.color)} border rounded-lg p-3`}
           >
-            <h3 className={`${getTitleColor(section.color)} font-bold text-lg mb-4 flex items-center gap-2`}>
-              <section.icon className="w-5 h-5" />
+            <h3 className={`${getTitleColor(section.color)} font-semibold text-sm mb-2 flex items-center gap-2`}>
+              <section.icon className="w-4 h-4" />
               {section.title}
             </h3>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-2">
+            <div className="flex flex-col gap-1">
               {section.links.map((link) => (
                 <Link
                   key={link.to}
                   to={link.to}
-                  className={`flex items-center gap-2 px-3 py-2.5 text-white rounded-lg font-medium transition-all text-sm ${getColorClasses(section.color, link.highlight)}`}
+                  className={`flex items-center gap-2 px-3 py-2 text-white rounded-md font-medium transition-all text-xs hover:scale-105 ${getColorClasses(section.color, link.highlight)}`}
                 >
-                  <link.icon className="w-4 h-4 flex-shrink-0" />
-                  <span className="truncate">{link.label}</span>
+                  <link.icon className="w-3.5 h-3.5 flex-shrink-0" />
+                  <span className="flex-1 truncate">{link.label}</span>
                   {link.badge && (
-                    <span className="ml-auto bg-white/20 text-xs px-1.5 py-0.5 rounded-full">
+                    <span className="bg-white/30 text-xs px-1.5 py-0.5 rounded-full font-bold">
                       {link.badge}
                     </span>
                   )}
