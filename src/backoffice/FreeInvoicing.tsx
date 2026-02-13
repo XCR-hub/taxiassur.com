@@ -36,6 +36,9 @@ const FreeInvoicing: React.FC = () => {
   const [paymentLink, setPaymentLink] = useState<string | null>(null);
   const [paymentWindow, setPaymentWindow] = useState<Window | null>(null);
   const [recentPayments, setRecentPayments] = useState<any[]>([]);
+  const [sendEmail, setSendEmail] = useState(true);
+  const [emailSent, setEmailSent] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
 
   React.useEffect(() => {
     loadRecentPayments();
@@ -62,6 +65,7 @@ const FreeInvoicing: React.FC = () => {
     e.preventDefault();
     setLoading(true);
     setPaymentLink(null);
+    setEmailSent(false);
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -99,13 +103,36 @@ const FreeInvoicing: React.FC = () => {
 
       const response = data as PaymentResponse;
 
-      if (response.success && response.htmlForm) {
-        const newWindow = window.open('', '_blank', 'width=800,height=600');
-        if (newWindow) {
-          newWindow.document.write(response.htmlForm);
-          newWindow.document.close();
-          setPaymentWindow(newWindow);
-          setPaymentLink(response.paymentUrl || null);
+      if (response.success && response.reference) {
+        const fullPaymentUrl = `${window.location.origin}/paiement/${response.reference}`;
+        setPaymentLink(fullPaymentUrl);
+
+        // Si l'option d'envoi d'email est cochée
+        if (sendEmail && form.email) {
+          try {
+            await supabase.functions.invoke('send-payment-link-email', {
+              body: {
+                lead_id: null, // Pas de lead pour facturation libre
+                payment_url: fullPaymentUrl,
+                amount: amount,
+                email: form.email,
+                first_name: form.firstName,
+                last_name: form.lastName
+              }
+            });
+            setEmailSent(true);
+          } catch (emailError) {
+            console.error('Erreur envoi email:', emailError);
+            alert('Lien créé mais erreur lors de l\'envoi de l\'email. Vous pouvez copier le lien ci-dessous.');
+          }
+        } else if (!sendEmail && response.htmlForm) {
+          // Si pas d'email, ouvrir directement la fenêtre de paiement
+          const newWindow = window.open('', '_blank', 'width=800,height=600');
+          if (newWindow) {
+            newWindow.document.write(response.htmlForm);
+            newWindow.document.close();
+            setPaymentWindow(newWindow);
+          }
         }
 
         setForm({
@@ -126,6 +153,13 @@ const FreeInvoicing: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleCopyLink = () => {
+    if (!paymentLink) return;
+    navigator.clipboard.writeText(paymentLink);
+    setCopiedLink(true);
+    setTimeout(() => setCopiedLink(false), 2000);
   };
 
   const formatDate = (date: string) => {
@@ -282,6 +316,22 @@ const FreeInvoicing: React.FC = () => {
                 </div>
               </div>
 
+              {/* Option d'envoi par email */}
+              <div className="border-t pt-4 mt-4">
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={sendEmail}
+                    onChange={(e) => setSendEmail(e.target.checked)}
+                    className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+                  />
+                  <div className="flex-1">
+                    <span className="font-medium text-gray-900">Envoyer le lien par email</span>
+                    <p className="text-sm text-gray-600">Le client recevra un email professionnel avec le lien de paiement</p>
+                  </div>
+                </label>
+              </div>
+
               <button
                 type="submit"
                 disabled={loading}
@@ -295,21 +345,70 @@ const FreeInvoicing: React.FC = () => {
                 ) : (
                   <>
                     <Send className="w-5 h-5" />
-                    Créer le Lien de Paiement
+                    {sendEmail ? 'Créer et Envoyer par Email' : 'Créer le Lien de Paiement'}
                   </>
                 )}
               </button>
             </form>
 
             {paymentLink && (
-              <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
-                <div className="flex items-center gap-2 text-green-800 mb-2">
-                  <Check className="w-5 h-5" />
-                  <span className="font-semibold">Lien de paiement créé !</span>
+              <div className="mt-4 space-y-3">
+                {/* Message de succès selon le mode */}
+                {emailSent ? (
+                  <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                    <div className="flex items-center gap-2 text-green-800 mb-2">
+                      <Check className="w-5 h-5" />
+                      <span className="font-semibold">Email envoyé avec succès !</span>
+                    </div>
+                    <p className="text-sm text-green-700">
+                      Le client ({form.email}) a reçu un email professionnel avec le lien de paiement sécurisé.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div className="flex items-center gap-2 text-blue-800 mb-2">
+                      <Check className="w-5 h-5" />
+                      <span className="font-semibold">Lien de paiement créé !</span>
+                    </div>
+                    <p className="text-sm text-blue-700">
+                      Une nouvelle fenêtre s'est ouverte avec le formulaire de paiement Monético.
+                    </p>
+                  </div>
+                )}
+
+                {/* Lien à copier */}
+                <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Lien de paiement à partager :
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      readOnly
+                      value={paymentLink}
+                      className="flex-1 px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm"
+                    />
+                    <button
+                      onClick={handleCopyLink}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+                    >
+                      {copiedLink ? (
+                        <>
+                          <Check className="w-4 h-4" />
+                          Copié !
+                        </>
+                      ) : (
+                        <>
+                          <ExternalLink className="w-4 h-4" />
+                          Copier
+                        </>
+                      )}
+                    </button>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-2">
+                    Vous pouvez également copier ce lien et l'envoyer manuellement au client
+                  </p>
                 </div>
-                <p className="text-sm text-green-700">
-                  Une nouvelle fenêtre s'est ouverte avec le formulaire de paiement Monético.
-                </p>
               </div>
             )}
           </div>

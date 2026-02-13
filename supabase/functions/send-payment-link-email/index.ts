@@ -85,8 +85,8 @@ Deno.serve(async (req: Request) => {
   try {
     const { lead_id, payment_url, amount, email, first_name, last_name } = await req.json();
 
-    if (!lead_id || !payment_url || !amount) {
-      throw new Error("lead_id, payment_url et amount sont requis");
+    if (!payment_url || !amount) {
+      throw new Error("payment_url et amount sont requis");
     }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -260,17 +260,20 @@ Deno.serve(async (req: Request) => {
       "TaxiAssur"
     );
 
-    await supabase.from("crm_interactions").insert({
-      lead_id: lead_id,
-      type: "email",
-      direction: "outbound",
-      subject: `Envoi lien de paiement comptant ${formattedAmount}`,
-      content: `Email de paiement envoyé avec lien sécurisé Monetico pour ${formattedAmount}`,
-      to_email: leadEmail,
-      from_email: "team@taxiassur.com",
-    });
+    // Enregistrer l'interaction seulement si c'est lié à un lead
+    if (lead_id) {
+      await supabase.from("crm_interactions").insert({
+        lead_id: lead_id,
+        type: "email",
+        direction: "outbound",
+        subject: `Envoi lien de paiement comptant ${formattedAmount}`,
+        content: `Email de paiement envoyé avec lien sécurisé Monetico pour ${formattedAmount}`,
+        to_email: leadEmail,
+        from_email: "team@taxiassur.com",
+      });
+    }
 
-    console.log(`✅ Email de paiement envoyé à ${leadEmail} pour ${formattedAmount}`);
+    console.log(`✅ Email de paiement envoyé à ${leadEmail} pour ${formattedAmount}${lead_id ? ` (Lead: ${lead_id})` : ' (Facturation libre)'}`);
 
     return new Response(
       JSON.stringify({
