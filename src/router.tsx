@@ -8,6 +8,7 @@ const EspaceClient = lazy(() => import('./pages/EspaceClient'));
 const ClientAccessByToken = lazy(() => import('./pages/ClientAccessByToken'));
 const ClientLogin = lazy(() => import('./pages/client/ClientLogin'));
 const ClientDashboardAuth = lazy(() => import('./pages/client/ClientDashboardAuth'));
+const ClientCreatePassword = lazy(() => import('./pages/client/ClientCreatePassword'));
 const EspaceProspect = lazy(() => import('./pages/EspaceProspect'));
 const ProspectDocuments = lazy(() => import('./pages/ProspectDocuments'));
 const Contact = lazy(() => import('./pages/Contact'));
@@ -190,6 +191,10 @@ export const router = createBrowserRouter([
   {
     path: '/espace-client/dashboard',
     element: <ClientDashboardAuth />,
+  },
+  {
+    path: '/espace-client/create-password',
+    element: <ClientCreatePassword />,
   },
   {
     path: '/espace-prospect',
