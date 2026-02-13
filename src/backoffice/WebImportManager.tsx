@@ -129,26 +129,47 @@ const WebImportManager: React.FC = () => {
     }
 
     try {
+      // Vérifier l'authentification
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (!user) {
+        alert('Vous devez être connecté pour ajouter des identifiants');
+        return;
+      }
+
       const { error } = await supabase
         .from('insurance_web_credentials')
         .insert({
           company_name: selectedCompany,
           portal_url: getPortalUrl(selectedCompany),
           username: portalUsername,
-          password_encrypted: portalPassword, // TODO: Chiffrer côté serveur
-          status: 'active'
+          password_encrypted: portalPassword,
+          status: 'active',
+          created_by: user.id
         });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error:', error);
+
+        // Messages d'erreur personnalisés
+        if (error.code === '42501') {
+          alert('Permission refusée. Vous devez être administrateur pour ajouter des identifiants.');
+        } else if (error.message.includes('violates')) {
+          alert('Erreur de contrainte: ' + error.message);
+        } else {
+          alert('Erreur lors de l\'ajout: ' + error.message);
+        }
+        return;
+      }
 
       alert('Identifiants ajoutés avec succès!');
       setSelectedCompany('');
       setPortalUsername('');
       setPortalPassword('');
       loadCredentials();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error adding credential:', error);
-      alert('Erreur lors de l\'ajout des identifiants');
+      alert('Erreur inattendue: ' + (error?.message || 'Erreur inconnue'));
     }
   };
 
