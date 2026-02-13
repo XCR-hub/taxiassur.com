@@ -1,79 +1,109 @@
-# Instructions de déploiement - Correction Espace Prospect
+# 🚀 INSTRUCTIONS DE DÉPLOIEMENT URGENT
 
-## Problème identifié et résolu
-L'erreur 404 était causée par une **route manquante** dans le routeur React. L'URL `/espace-prospect/[TOKEN]` n'était pas définie.
+## 🔴 Problème
 
-### Corrections appliquées
-1. Ajout de la route `/espace-prospect/:token` dans le routeur
-2. Mise à jour du .htaccess pour éviter le cache de index.html
-3. Nouveau build complet effectué
+Le site cherche un ancien fichier JavaScript qui n'existe plus. Il faut déployer le nouveau build.
 
-## ÉTAPES DE DÉPLOIEMENT (OBLIGATOIRES)
+## ✅ SOLUTION RAPIDE (5 minutes)
 
-### 1. Télécharger l'archive
-L'archive est prête : `/tmp/cc-agent/61788020/project/dist-deploy-latest.tar.gz` (12 MB)
+### Option 1 : FileZilla (Recommandé pour les non-techniciens)
 
-### 2. Se connecter à IONOS
-- Allez sur https://www.ionos.fr
-- Connectez-vous à votre espace client
-- Accédez à "Hébergement Web"
+1. **Ouvrir FileZilla**
 
-### 3. Supprimer l'ancien contenu
-**IMPORTANT** : Vous devez supprimer TOUT le contenu actuel du site :
-- Connectez-vous via FTP (FileZilla ou autre client FTP)
-- Sélectionnez TOUS les fichiers et dossiers
-- Supprimez tout (sauf le dossier `/logs` si présent)
+2. **Se connecter**
+   ```
+   Hôte     : sftp://home749874859.1and1-data.host
+   Port     : 22
+   User     : acc1591324770
+   Password : TAXIassur2025!,&
+   ```
 
-### 4. Uploader le nouveau contenu
-- Extraire l'archive `dist-deploy-latest.tar.gz` sur votre ordinateur
-- Uploader **TOUT** le contenu extrait vers la racine de votre site
-- Vérifier que ces fichiers sont présents :
-  - `/index.html` ✅
-  - `/.htaccess` ✅
-  - `/assets/` (dossier complet) ✅
-  - `/api/` ✅
-  - `/sw.js` ✅
+3. **Uploader les fichiers**
+   - Côté gauche : Naviguer vers le dossier `dist/` de votre projet
+   - Côté droit : Aller à la racine du site web
+   - Sélectionner TOUT le contenu de `dist/`
+   - Glisser-déposer vers la droite
+   - Confirmer le remplacement des fichiers existants
+   - Attendre la fin de l'upload (environ 5 minutes)
 
-### 5. Vider le cache
-Après le déploiement :
-1. **Sur votre ordinateur** :
-   - Chrome : Ctrl+Shift+Delete → Cocher "Images et fichiers en cache"
-   - Firefox : Ctrl+Shift+Delete → Cocher "Cache"
+4. **Vider le cache**
+   - Dans le navigateur : CTRL + SHIFT + R
+   - Ou ouvrir en navigation privée
 
-2. **Test en mode navigation privée** :
-   - Ouvrir une fenêtre de navigation privée
-   - Tester l'URL de l'espace prospect
+5. **Tester**
+   - Aller sur l'espace prospect
+   - Ça doit fonctionner !
 
-### 6. Tester l'accès
-URL à tester :
+### Option 2 : Ligne de Commande (Pour les techniciens)
+
+```bash
+# 1. Aller dans le dossier du projet
+cd /chemin/vers/le/projet
+
+# 2. Vérifier que le dossier dist existe
+ls -la dist/
+
+# 3. Uploader via SFTP
+sftp -P 22 acc1591324770@home749874859.1and1-data.host
+
+# 4. Dans SFTP, taper ces commandes :
+cd /
+put -r dist/*
+bye
+
+# 5. Vider le cache navigateur
+# Chrome : CTRL + SHIFT + DELETE
+# Ou navigation privée
 ```
-https://taxiassur.com/espace-prospect/8b2400138bbaf4b784429f7fabf3406cde268fcdabbb7dc54c3e816ebaff4f2
+
+### Option 3 : Utiliser l'archive
+
+```bash
+# 1. L'archive est déjà prête : dist-deploy-latest.tar.gz (17MB)
+
+# 2. Extraire l'archive
+tar -xzf dist-deploy-latest.tar.gz
+
+# 3. Uploader le contenu du dossier dist/ via FileZilla
+# (voir Option 1 ci-dessus)
 ```
 
-## Vérification que tout fonctionne
+## 📝 Checklist de Vérification
 
-1. ✅ La page se charge sans erreur 404
-2. ✅ Les informations du prospect s'affichent
-3. ✅ Le formulaire d'upload de documents est visible
-4. ✅ Aucune erreur dans la console du navigateur (F12)
+- [ ] Tous les fichiers du dossier `dist/` sont uploadés
+- [ ] Le fichier `index.html` est bien à jour sur le serveur
+- [ ] Les fichiers dans `assets/` sont présents
+- [ ] Le cache navigateur est vidé (CTRL + SHIFT + R)
+- [ ] Test en navigation privée fonctionne
+- [ ] L'espace prospect charge sans erreur
 
-## En cas de problème
+## ⚠️ IMPORTANT
 
-### Erreur 404 persiste
-- Vérifiez que le fichier `.htaccess` est bien uploadé
-- Vérifiez les permissions du fichier .htaccess (644)
-- Contactez le support IONOS pour vérifier la configuration Apache
+**Ne PAS oublier** :
+- ✅ Uploader TOUT le contenu de `dist/` (pas seulement quelques fichiers)
+- ✅ Remplacer les fichiers existants
+- ✅ Uploader le fichier `index.html` (critique !)
+- ✅ Vider le cache après déploiement
 
-### Erreur "Failed to fetch"
-- Vérifiez que l'URL Supabase est correcte dans .env
-- Testez l'accès à Supabase depuis le backoffice admin
+## 🆘 Support
 
-### Page blanche
-- Ouvrez la console du navigateur (F12)
-- Regardez les erreurs de chargement
-- Vérifiez que tous les fichiers JS sont bien uploadés dans `/assets/`
+Si le problème persiste après le déploiement :
+
+1. **Vérifier dans la console navigateur** (F12)
+   - Onglet "Network"
+   - Chercher les erreurs 404
+   - Noter le nom exact du fichier recherché
+
+2. **Vérifier sur le serveur SFTP**
+   - Se connecter avec FileZilla
+   - Aller dans le dossier `assets/`
+   - Vérifier que `page-espaceprospect-COtDDKvi.js` existe
+
+3. **Forcer le rechargement complet**
+   - Ouvrir en navigation privée
+   - Ajouter `?v=123` à la fin de l'URL
 
 ---
 
-**Date de build** : 2026-02-04 14:03
-**Archive** : dist-deploy-latest.tar.gz (12 MB)
+**Build date** : 13/02/2026 09:19
+**Fichier correct** : `page-espaceprospect-COtDDKvi.js`

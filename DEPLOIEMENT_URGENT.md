@@ -1,56 +1,135 @@
-# DEPLOIEMENT URGENT - Correction Espace Prospect
+# 🚨 DÉPLOIEMENT URGENT - CORRECTION ESPACE PROSPECT
 
-## Problème identifié
-Le serveur cherche un ancien fichier JS (`page-espaceprospect-BC3mofnw.js`) qui n'existe plus. Le nouveau build a généré `page-espaceprospect-ElvxzADo.js`.
+## Problème Identifié
 
-## Solution : Déploiement complet du dossier /dist
+L'espace prospect cherche le fichier `page-espaceprospect-DYd5dnNt.js` mais le nouveau build a généré `page-espaceprospect-COtDDKvi.js`.
 
-### Étape 1 : Upload sur IONOS
-1. Connectez-vous à votre hébergement IONOS
-2. Supprimez **COMPLÈTEMENT** le contenu actuel du répertoire web (public_html ou www)
-3. Uploadez **TOUT** le contenu du dossier `/dist` vers le serveur
+**Cause**: Build obsolète sur le serveur IONOS.
 
-### Étape 2 : Vérification
-Après upload, vérifiez que ces fichiers existent sur le serveur :
-- `/assets/page-espaceprospect-ElvxzADo.js` ✅
-- `/index.html` (doit contenir la référence à ElvxzADo.js)
-- `/sw.js` (Service Worker mis à jour)
+## ✅ Solution Immédiate (3 méthodes)
 
-### Étape 3 : Clear cache
-Après le déploiement :
-1. Videz le cache du navigateur (Ctrl+Shift+Delete)
-2. Rechargez la page avec Ctrl+F5 (force refresh)
-3. Si le problème persiste, ouvrez le site en mode navigation privée
+### Méthode 1 : SFTP Automatique (Recommandé) ⚡
 
-## Fichiers critiques à vérifier
+```bash
+# Installer lftp si nécessaire
+# sudo apt-get install lftp (Linux)
+# brew install lftp (Mac)
+
+# Déployer automatiquement
+npm run auto-deploy
+```
+
+### Méthode 2 : Upload Manuel via FileZilla 📁
+
+1. **Télécharger l'archive**
+   ```bash
+   # L'archive est prête dans le dossier projet :
+   # dist-deploy-20260213-0919.tar.gz (17MB)
+   ```
+
+2. **Se connecter à IONOS via SFTP**
+   - Hôte : `home749874859.1and1-data.host`
+   - Port : `22`
+   - Protocole : `SFTP`
+   - Utilisateur : `acc1591324770`
+   - Mot de passe : `TAXIassur2025!,&`
+
+3. **Uploader**
+   - Extraire l'archive localement
+   - Uploader TOUT le contenu du dossier `dist/` vers le dossier racine web sur IONOS
+   - Remplacer tous les fichiers existants
+
+4. **Vider les caches**
+   - Navigateur : CTRL + SHIFT + R (forcer le rechargement)
+   - Vider le cache IONOS si disponible dans le panel
+
+### Méthode 3 : Ligne de Commande SFTP 📤
+
+```bash
+# Créer un script de déploiement temporaire
+cat > deploy.sh << 'SCRIPT'
+#!/bin/bash
+cd dist
+sftp -P 22 acc1591324770@home749874859.1and1-data.host << 'SFTP'
+cd /
+put -r *
+bye
+SFTP
+SCRIPT
+
+chmod +x deploy.sh
+./deploy.sh
+```
+
+## 🔍 Vérification Post-Déploiement
+
+1. **Vider le cache navigateur**
+   ```
+   Chrome/Edge : CTRL + SHIFT + DELETE
+   Firefox : CTRL + SHIFT + DELETE
+   Safari : CMD + OPTION + E
+   ```
+
+2. **Tester l'espace prospect**
+   - Aller sur : https://taxiassur.com/espace-prospect/[TOKEN]
+   - Le fichier chargé doit être : `page-espaceprospect-COtDDKvi.js`
+
+3. **Vérifier dans la console navigateur (F12)**
+   - Onglet Network
+   - Chercher `page-espaceprospect`
+   - Doit charger : `page-espaceprospect-COtDDKvi.js` (Status 200)
+
+## 📊 Fichiers du Dernier Build
 
 ```
 dist/
-├── index.html (fichier principal avec nouvelles références)
-├── sw.js (Service Worker)
-├── workbox-4b126c97.js
-└── assets/
-    ├── page-espaceprospect-ElvxzADo.js ← NOUVEAU
-    ├── index-q12AIFlN.js
-    ├── vendor-react-DS37DYWq.js
-    ├── vendor-supabase-CkV9a3tp.js
-    └── ... (tous les autres assets)
+├── index.html (4.03 kB) ⭐ CRITIQUE
+├── assets/
+│   ├── page-espaceprospect-COtDDKvi.js (18.67 kB) ⭐ NOUVEAU
+│   ├── vendor-react-DigZqvBx.js (271.21 kB)
+│   ├── backoffice-crm-BP_PHHQs.js (414.15 kB)
+│   └── ... (tous les autres assets)
+├── api/ (dossier complet)
+├── content/ (dossier complet)
+└── feeds/ (dossier complet)
 ```
 
-## Commande rapide pour créer l'archive
-```bash
-cd /tmp/cc-agent/61788020/project
-tar -czf taxiassur-deploy-$(date +%Y%m%d-%H%M).tar.gz -C dist .
-```
+## ⚠️ Points Critiques
 
-## Note importante
-Le problème vient du fait que :
-1. Les hashes de fichiers changent à chaque build pour le cache-busting
-2. L'ancien `index.html` référence les anciens hashes
-3. Il faut TOUJOURS uploader l'index.html ET le dossier assets ensemble
+1. **NE PAS oublier index.html**
+   - C'est le fichier qui référence tous les bundles JavaScript
+   - Sans lui, les nouveaux hashes ne seront pas reconnus
 
-## Test après déploiement
-URL à tester : `https://taxiassur.com/espace-prospect/[TOKEN]`
+2. **Vider TOUS les caches**
+   - Cache navigateur : CTRL + SHIFT + R
+   - Cache CDN IONOS (si activé)
+   - Service Worker : Navigation privée pour tester
 
-Le token est visible dans l'URL de la capture d'écran :
-`9ea9aa10237ca1f0db56449a566b82253d1fc406ab16304e8e1c79a737228732`
+3. **Déployer TOUT le dossier dist/**
+   - Pas seulement les fichiers modifiés
+   - Tous les assets doivent être synchronisés
+
+## 🆘 Si le Problème Persiste
+
+1. **Vérifier les fichiers sur le serveur**
+   ```bash
+   # Se connecter en SFTP et vérifier
+   ls -la assets/page-espaceprospect-*.js
+   ls -la index.html
+   ```
+
+2. **Forcer le rechargement**
+   ```
+   # Ouvrir en navigation privée
+   # Ou ajouter ?v=timestamp à l'URL
+   ```
+
+3. **Contacter le support IONOS**
+   - Demander de vider le cache CDN
+   - Vérifier les logs d'erreur 404
+
+---
+
+**Date du build** : 13/02/2026 09:19  
+**Fichier correct** : `page-espaceprospect-COtDDKvi.js`  
+**Archive prête** : `dist-deploy-20260213-0919.tar.gz` (17MB)
