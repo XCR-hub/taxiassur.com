@@ -41,6 +41,9 @@ const FreeInvoicing: React.FC = () => {
   const [sendEmail, setSendEmail] = useState(true);
   const [emailSent, setEmailSent] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
+  const [lastCustomer, setLastCustomer] = useState({ email: '', name: '' });
+  const [testingBrevo, setTestingBrevo] = useState(false);
+  const [brevoStatus, setBrevoStatus] = useState<string | null>(null);
 
   React.useEffect(() => {
     loadRecentPayments();
@@ -109,10 +112,18 @@ const FreeInvoicing: React.FC = () => {
         const fullPaymentUrl = `${window.location.origin}/paiement/${response.reference}`;
         setPaymentLink(fullPaymentUrl);
 
+        // Sauvegarder les infos du client avant de réinitialiser le formulaire
+        setLastCustomer({
+          email: form.email,
+          name: `${form.firstName} ${form.lastName}`.trim()
+        });
+
         // Si l'option d'envoi d'email est cochée
         if (sendEmail && form.email) {
           try {
-            await supabase.functions.invoke('send-payment-link-email', {
+            console.log('Envoi email à:', form.email, 'Montant:', amount, 'URL:', fullPaymentUrl);
+
+            const { data: emailData, error: emailError } = await supabase.functions.invoke('send-payment-link-email', {
               body: {
                 lead_id: null, // Pas de lead pour facturation libre
                 payment_url: fullPaymentUrl,
@@ -122,10 +133,23 @@ const FreeInvoicing: React.FC = () => {
                 last_name: form.lastName
               }
             });
+
+            console.log('Réponse email:', emailData, 'Erreur:', emailError);
+
+            if (emailError) {
+              throw emailError;
+            }
+
+            if (emailData && !emailData.success) {
+              throw new Error(emailData.error || 'Erreur inconnue lors de l\'envoi');
+            }
+
             setEmailSent(true);
-          } catch (emailError) {
-            console.error('Erreur envoi email:', emailError);
-            alert('Lien créé mais erreur lors de l\'envoi de l\'email. Vous pouvez copier le lien ci-dessous.');
+            console.log('✅ Email envoyé avec succès');
+          } catch (emailError: any) {
+            console.error('❌ Erreur envoi email:', emailError);
+            const errorMessage = emailError.message || emailError.toString();
+            alert(`⚠️ Lien créé mais erreur lors de l'envoi de l'email:\n\n${errorMessage}\n\nVous pouvez copier le lien ci-dessous.`);
           }
         } else if (!sendEmail && response.htmlForm) {
           // Si pas d'email, ouvrir directement la fenêtre de paiement
@@ -162,6 +186,29 @@ const FreeInvoicing: React.FC = () => {
     navigator.clipboard.writeText(paymentLink);
     setCopiedLink(true);
     setTimeout(() => setCopiedLink(false), 2000);
+  };
+
+  const testBrevoConfiguration = async () => {
+    setTestingBrevo(true);
+    setBrevoStatus(null);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('test-brevo-config');
+
+      if (error) {
+        throw error;
+      }
+
+      if (data.success) {
+        setBrevoStatus(`✅ ${data.message}\n\nCompte: ${data.account?.email || 'N/A'}\nPlan: ${data.account?.plan || 'N/A'}\nCrédits: ${data.account?.credits || 0}`);
+      } else {
+        setBrevoStatus(`❌ ${data.error}\n\n${data.help || ''}`);
+      }
+    } catch (err: any) {
+      setBrevoStatus(`❌ Erreur: ${err.message || err.toString()}`);
+    } finally {
+      setTestingBrevo(false);
+    }
   };
 
   const formatDate = (date: string) => {
@@ -377,6 +424,38 @@ const FreeInvoicing: React.FC = () => {
                   </>
                 )}
               </button>
+
+              {/* Bouton de test Brevo */}
+              <div className="mt-4">
+                <button
+                  type="button"
+                  onClick={testBrevoConfiguration}
+                  disabled={testingBrevo}
+                  className="w-full bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded-lg transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                >
+                  {testingBrevo ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Test en cours...
+                    </>
+                  ) : (
+                    <>
+                      <Mail className="w-4 h-4" />
+                      Tester la configuration email (Brevo)
+                    </>
+                  )}
+                </button>
+
+                {brevoStatus && (
+                  <div className={`mt-3 p-3 rounded-lg border text-sm whitespace-pre-line ${
+                    brevoStatus.startsWith('✅')
+                      ? 'bg-green-50 border-green-200 text-green-800'
+                      : 'bg-red-50 border-red-200 text-red-800'
+                  }`}>
+                    {brevoStatus}
+                  </div>
+                )}
+              </div>
             </form>
 
             {paymentLink && (
@@ -389,7 +468,7 @@ const FreeInvoicing: React.FC = () => {
                       <span className="font-semibold">Email envoyé avec succès !</span>
                     </div>
                     <p className="text-sm text-green-700">
-                      Le client ({form.email}) a reçu un email professionnel avec le lien de paiement sécurisé.
+                      Le client {lastCustomer.name && `${lastCustomer.name} `}({lastCustomer.email}) a reçu un email professionnel avec le lien de paiement sécurisé.
                     </p>
                   </div>
                 ) : (
