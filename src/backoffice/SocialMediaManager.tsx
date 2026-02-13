@@ -189,10 +189,18 @@ export default function SocialMediaManager() {
     hashtags: '',
     scheduled_at: ''
   });
+  const [automationSettings, setAutomationSettings] = useState({
+    auto_publish_blog: false,
+    auto_cross_post: false,
+    optimize_per_network: false,
+    smart_scheduling: false
+  });
+  const [savingSettings, setSavingSettings] = useState(false);
 
   useEffect(() => {
     loadNetworks();
     loadRealStats();
+    loadAutomationSettings();
   }, []);
 
   const loadNetworks = async () => {
@@ -233,6 +241,67 @@ export default function SocialMediaManager() {
       }
     } catch (error) {
       logger.error('Error loading stats:', error);
+    }
+  };
+
+  const loadAutomationSettings = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('social_automation_settings')
+        .select('*')
+        .limit(1)
+        .maybeSingle();
+
+      if (!error && data) {
+        setAutomationSettings({
+          auto_publish_blog: data.auto_publish_blog || false,
+          auto_cross_post: data.auto_cross_post || false,
+          optimize_per_network: data.optimize_per_network || false,
+          smart_scheduling: data.smart_scheduling || false
+        });
+      }
+    } catch (error) {
+      logger.error('Error loading automation settings:', error);
+    }
+  };
+
+  const saveAutomationSettings = async (newSettings: typeof automationSettings) => {
+    setSavingSettings(true);
+    try {
+      // Vérifier s'il existe déjà une entrée
+      const { data: existing } = await supabase
+        .from('social_automation_settings')
+        .select('id')
+        .limit(1)
+        .maybeSingle();
+
+      if (existing) {
+        // Mettre à jour
+        const { error } = await supabase
+          .from('social_automation_settings')
+          .update({
+            ...newSettings,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', existing.id);
+
+        if (error) throw error;
+      } else {
+        // Insérer
+        const { error } = await supabase
+          .from('social_automation_settings')
+          .insert(newSettings);
+
+        if (error) throw error;
+      }
+
+      setAutomationSettings(newSettings);
+      alert('✅ Paramètres sauvegardés avec succès !');
+    } catch (error) {
+      logger.error('Error saving automation settings:', error);
+      alert('❌ Erreur lors de la sauvegarde');
+    } finally {
+      setSavingSettings(false);
     }
   };
 
@@ -331,6 +400,26 @@ export default function SocialMediaManager() {
 
   const handlePublishToPinterest = async (post: any) => {
     try {
+      // Vérifier qu'on a un network_id Pinterest
+      const pinterestNetwork = networks.find(n => n.platform === 'pinterest' && n.is_active);
+
+      if (!pinterestNetwork) {
+        alert('❌ Pinterest n\'est pas configuré ou activé');
+        return;
+      }
+
+      // Si le post n'a pas encore de network_id, l'ajouter
+      if (!post.network_id) {
+        const { error: updateError } = await supabase
+          .from('social_posts')
+          .update({ network_id: pinterestNetwork.id })
+          .eq('id', post.id);
+
+        if (updateError) {
+          throw new Error('Erreur mise à jour du post');
+        }
+      }
+
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
       const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
@@ -341,34 +430,23 @@ export default function SocialMediaManager() {
           'Authorization': `Bearer ${supabaseKey}`,
         },
         body: JSON.stringify({
-          board_id: '945333846723355976',
-          title: post.content.substring(0, 100),
-          description: post.content,
-          link: 'https://taxiassur.com',
-          image_url: post.media_urls?.[0] || 'https://images.pexels.com/photos/887846/pexels-photo-887846.jpeg',
-          alt_text: 'Assurance Taxi Professionnelle'
+          post_id: post.id,
+          content: post.content,
+          network_id: post.network_id || pinterestNetwork.id
         })
       });
 
       const result = await response.json();
 
-      if (response.ok) {
-        await supabase.from('social_posts')
-          .update({
-            status: 'published',
-            published_at: new Date().toISOString(),
-            post_url: result.pin_url
-          })
-          .eq('id', post.id);
-
+      if (response.ok && result.success) {
         await loadRealStats();
-        alert('✅ Publié sur Pinterest avec succès !');
+        alert(`✅ Publié sur Pinterest avec succès !\n\nURL: ${result.pin_url || 'Non disponible'}`);
       } else {
         throw new Error(result.error || 'Erreur de publication');
       }
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Error publishing to Pinterest:', error);
-      alert('❌ Erreur lors de la publication sur Pinterest');
+      alert(`❌ Erreur lors de la publication sur Pinterest\n\n${error.message || error}`);
     }
   };
 
@@ -941,40 +1019,87 @@ export default function SocialMediaManager() {
         </div>
 
         <div className="bg-orange-900/30 border border-orange-700 rounded-lg p-4 mb-6">
-          <h3 className="font-bold text-orange-300 mb-3">🔧 Configuration Publication Auto</h3>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-bold text-orange-300">🔧 Configuration Publication Auto</h3>
+            {savingSettings && (
+              <div className="flex items-center gap-2 text-green-400 text-sm">
+                <div className="animate-spin rounded-full h-4 w-4 border-2 border-green-400 border-t-transparent" />
+                Sauvegarde...
+              </div>
+            )}
+          </div>
 
           <div className="space-y-4">
-            <label className="flex items-center justify-between p-3 bg-slate-700 rounded-lg cursor-pointer">
+            <label className="flex items-center justify-between p-3 bg-slate-700 rounded-lg cursor-pointer hover:bg-slate-600 transition-colors">
               <div>
                 <div className="font-medium text-white">Publication automatique blog → réseaux</div>
                 <div className="text-sm text-slate-400">Publie automatiquement les nouveaux articles</div>
               </div>
-              <input type="checkbox" className="w-5 h-5" />
+              <input
+                type="checkbox"
+                checked={automationSettings.auto_publish_blog}
+                onChange={(e) => {
+                  const newSettings = { ...automationSettings, auto_publish_blog: e.target.checked };
+                  saveAutomationSettings(newSettings);
+                }}
+                className="w-5 h-5 text-green-600 border-gray-300 rounded focus:ring-2 focus:ring-green-500"
+              />
             </label>
 
-            <label className="flex items-center justify-between p-3 bg-slate-700 rounded-lg cursor-pointer">
+            <label className="flex items-center justify-between p-3 bg-slate-700 rounded-lg cursor-pointer hover:bg-slate-600 transition-colors">
               <div>
                 <div className="font-medium text-white">Cross-posting automatique</div>
                 <div className="text-sm text-slate-400">Publie simultanément sur tous les réseaux actifs</div>
               </div>
-              <input type="checkbox" className="w-5 h-5" />
+              <input
+                type="checkbox"
+                checked={automationSettings.auto_cross_post}
+                onChange={(e) => {
+                  const newSettings = { ...automationSettings, auto_cross_post: e.target.checked };
+                  saveAutomationSettings(newSettings);
+                }}
+                className="w-5 h-5 text-green-600 border-gray-300 rounded focus:ring-2 focus:ring-green-500"
+              />
             </label>
 
-            <label className="flex items-center justify-between p-3 bg-slate-700 rounded-lg cursor-pointer">
+            <label className="flex items-center justify-between p-3 bg-slate-700 rounded-lg cursor-pointer hover:bg-slate-600 transition-colors">
               <div>
                 <div className="font-medium text-white">Optimisation par réseau</div>
                 <div className="text-sm text-slate-400">Adapte le contenu selon chaque plateforme</div>
               </div>
-              <input type="checkbox" className="w-5 h-5" />
+              <input
+                type="checkbox"
+                checked={automationSettings.optimize_per_network}
+                onChange={(e) => {
+                  const newSettings = { ...automationSettings, optimize_per_network: e.target.checked };
+                  saveAutomationSettings(newSettings);
+                }}
+                className="w-5 h-5 text-green-600 border-gray-300 rounded focus:ring-2 focus:ring-green-500"
+              />
             </label>
 
-            <label className="flex items-center justify-between p-3 bg-slate-700 rounded-lg cursor-pointer">
+            <label className="flex items-center justify-between p-3 bg-slate-700 rounded-lg cursor-pointer hover:bg-slate-600 transition-colors">
               <div>
                 <div className="font-medium text-white">Planification intelligente</div>
                 <div className="text-sm text-slate-400">Publie aux heures optimales d'engagement</div>
               </div>
-              <input type="checkbox" className="w-5 h-5" />
+              <input
+                type="checkbox"
+                checked={automationSettings.smart_scheduling}
+                onChange={(e) => {
+                  const newSettings = { ...automationSettings, smart_scheduling: e.target.checked };
+                  saveAutomationSettings(newSettings);
+                }}
+                className="w-5 h-5 text-green-600 border-gray-300 rounded focus:ring-2 focus:ring-green-500"
+              />
             </label>
+          </div>
+
+          <div className="mt-4 p-3 bg-green-900/30 border border-green-700 rounded-lg">
+            <p className="text-sm text-green-200 flex items-center gap-2">
+              <Check className="w-4 h-4" />
+              Vos paramètres sont sauvegardés automatiquement
+            </p>
           </div>
         </div>
 
