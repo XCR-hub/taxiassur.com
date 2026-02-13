@@ -268,8 +268,12 @@ export default function LeadCompanyQuotes({ leadId }: Props) {
     return total > 0 ? (processed / total) * 100 : 0;
   };
 
-  const copyClientSpaceLink = async () => {
-    const link = `${window.location.origin}/espace-client/${leadId}`;
+  const copyProspectSpaceLink = async () => {
+    if (!lead?.access_token) {
+      alert('Token d\'accès non disponible pour ce prospect');
+      return;
+    }
+    const link = `${window.location.origin}/espace-prospect/${lead.access_token}`;
     try {
       await navigator.clipboard.writeText(link);
       setLinkCopied(true);
@@ -280,22 +284,31 @@ export default function LeadCompanyQuotes({ leadId }: Props) {
     }
   };
 
-  const sendClientAccessEmail = async () => {
+  const sendProspectAccessEmail = async () => {
     if (!lead || !leadId) return;
+
+    if (!lead.access_token) {
+      alert('Token d\'accès non disponible pour ce prospect');
+      return;
+    }
 
     setSendingEmail(true);
     try {
-      const { error } = await supabase.functions.invoke('send-client-access', {
+      const { error } = await supabase.functions.invoke('send-email-universal', {
         body: {
-          lead_id: leadId,
-          email: lead.email,
-          first_name: lead.name.split(' ')[0] || 'Client',
-          last_name: lead.name.split(' ').slice(1).join(' ') || ''
+          to: lead.email,
+          subject: 'Accès à votre espace prospect TaxiAssur',
+          template: 'prospect_access',
+          variables: {
+            first_name: lead.name.split(' ')[0] || 'Prospect',
+            last_name: lead.name.split(' ').slice(1).join(' ') || '',
+            access_link: `${window.location.origin}/espace-prospect/${lead.access_token}`
+          }
         }
       });
 
       if (error) throw error;
-      alert('✅ Email d\'accès envoyé avec succès !');
+      alert('✅ Email d\'accès espace prospect envoyé avec succès !');
     } catch (err) {
       console.error('Error sending email:', err);
       alert('❌ Erreur lors de l\'envoi de l\'email');
@@ -325,16 +338,16 @@ export default function LeadCompanyQuotes({ leadId }: Props) {
               {lead.name} - {lead.email}
             </p>
 
-            {/* Boutons d'accès client */}
+            {/* Boutons d'accès espace prospect */}
             <div className="flex items-center gap-2 mt-3">
               <button
-                onClick={copyClientSpaceLink}
+                onClick={copyProspectSpaceLink}
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                   linkCopied
                     ? 'bg-green-500 text-white'
                     : 'bg-blue-600 text-white hover:bg-blue-700'
                 }`}
-                title="Copier le lien d'accès à l'espace client"
+                title="Copier le lien d'accès à l'espace prospect"
               >
                 {linkCopied ? (
                   <>
@@ -344,16 +357,16 @@ export default function LeadCompanyQuotes({ leadId }: Props) {
                 ) : (
                   <>
                     <Copy className="h-4 w-4" />
-                    Copier lien espace client
+                    Copier lien espace prospect
                   </>
                 )}
               </button>
 
               <button
-                onClick={sendClientAccessEmail}
+                onClick={sendProspectAccessEmail}
                 disabled={sendingEmail}
                 className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-yellow-500 to-yellow-600 text-black rounded-lg text-sm font-medium hover:from-yellow-600 hover:to-yellow-700 transition-all disabled:opacity-50"
-                title="Envoyer l'accès par email"
+                title="Envoyer l'accès espace prospect par email"
               >
                 {sendingEmail ? (
                   <>
@@ -363,7 +376,7 @@ export default function LeadCompanyQuotes({ leadId }: Props) {
                 ) : (
                   <>
                     <Mail className="h-4 w-4" />
-                    Envoyer accès par email
+                    Envoyer accès espace prospect
                   </>
                 )}
               </button>

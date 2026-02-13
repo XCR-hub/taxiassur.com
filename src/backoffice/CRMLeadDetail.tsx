@@ -148,9 +148,12 @@ const CRMLeadDetail: React.FC = () => {
     }
   };
 
-  const copyClientSpaceLink = async () => {
-    if (!leadId) return;
-    const link = `${window.location.origin}/espace-client/${leadId}`;
+  const copyProspectSpaceLink = async () => {
+    if (!lead?.access_token) {
+      alert('Token d\'accès non disponible pour ce lead');
+      return;
+    }
+    const link = `${window.location.origin}/espace-prospect/${lead.access_token}`;
 
     try {
       await navigator.clipboard.writeText(link);
@@ -162,21 +165,30 @@ const CRMLeadDetail: React.FC = () => {
     }
   };
 
-  const sendClientSpaceEmail = async () => {
+  const sendProspectSpaceEmail = async () => {
     if (!lead || !leadId) return;
 
+    if (!lead.access_token) {
+      alert('Token d\'accès non disponible pour ce lead');
+      return;
+    }
+
     try {
-      const { error } = await supabase.functions.invoke('send-client-access', {
+      const { error } = await supabase.functions.invoke('send-email-universal', {
         body: {
-          lead_id: leadId,
-          email: lead.email,
-          first_name: lead.first_name || 'Client',
-          last_name: lead.last_name || ''
+          to: lead.email,
+          subject: 'Accès à votre espace prospect TaxiAssur',
+          template: 'prospect_access',
+          variables: {
+            first_name: lead.first_name || 'Prospect',
+            last_name: lead.last_name || '',
+            access_link: `${window.location.origin}/espace-prospect/${lead.access_token}`
+          }
         }
       });
 
       if (error) throw error;
-      alert('Email envoyé avec succès !');
+      alert('Email d\'accès envoyé avec succès !');
     } catch (err) {
       logger.error('Error sending email:', err);
       alert('Erreur lors de l\'envoi de l\'email');
@@ -259,16 +271,16 @@ const CRMLeadDetail: React.FC = () => {
                 )}
               </div>
 
-              {/* Boutons d'accès client */}
+              {/* Boutons d'accès espace prospect */}
               <div className="flex items-center gap-2">
                 <button
-                  onClick={copyClientSpaceLink}
+                  onClick={copyProspectSpaceLink}
                   className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                     linkCopied
                       ? 'bg-green-100 text-green-700 border-2 border-green-300'
                       : 'bg-blue-50 text-blue-700 border-2 border-blue-200 hover:bg-blue-100'
                   }`}
-                  title="Copier le lien d'accès à l'espace client"
+                  title="Copier le lien d'accès à l'espace prospect"
                 >
                   {linkCopied ? (
                     <>
@@ -278,18 +290,18 @@ const CRMLeadDetail: React.FC = () => {
                   ) : (
                     <>
                       <Copy className="h-4 w-4" />
-                      Copier lien espace client
+                      Copier lien espace prospect
                     </>
                   )}
                 </button>
 
                 <button
-                  onClick={sendClientSpaceEmail}
+                  onClick={sendProspectSpaceEmail}
                   className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-yellow-500 to-yellow-600 text-black rounded-lg text-sm font-medium hover:from-yellow-600 hover:to-yellow-700 transition-all"
-                  title="Envoyer l'accès par email"
+                  title="Envoyer l'accès espace prospect par email"
                 >
                   <Mail className="h-4 w-4" />
-                  Envoyer accès par email
+                  Envoyer accès espace prospect
                 </button>
               </div>
             </div>
