@@ -36,7 +36,9 @@
     "test:ionos": "node scripts/test-ionos-connection.js",
     "seo:sitemap": "node scripts/generate-clean-sitemap.js",
     "seo:indexnow": "node scripts/submit-indexnow.js",
-    "seo:full": "npm run seo:sitemap && npm run seo:indexnow"
+    "seo:full": "npm run seo:sitemap && npm run seo:indexnow",
+    "secrets:configure": "bash scripts/configure-supabase-secrets.sh",
+    "secrets:list": "supabase secrets list"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4",
