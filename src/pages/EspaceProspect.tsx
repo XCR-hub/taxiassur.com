@@ -11,6 +11,7 @@ import ClientQuotesViewer from '../components/client/ClientQuotesViewer';
 import ClientSubscriptionForm from '../components/client/ClientSubscriptionForm';
 import CompanyDocumentsLibrary from '../components/client/CompanyDocumentsLibrary';
 import ClientPaymentButton from '../components/client/ClientPaymentButton';
+import { ProspectPaymentSection } from '../components/client/ProspectPaymentSection';
 
 interface DocumentStatus {
   status: 'missing' | 'uploaded' | 'validated' | 'rejected';
@@ -636,6 +637,14 @@ const EspaceProspect: React.FC = () => {
 
                 {/* Bouton de paiement si comptant requis */}
                 <ClientPaymentButton leadId={leadInfo.id} />
+
+                {/* Section paiement comptant Monetico */}
+                {token && (
+                  <ProspectPaymentSection
+                    leadId={leadInfo.id}
+                    accessToken={token}
+                  />
+                )}
               </div>
             )}
           </div>

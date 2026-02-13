@@ -215,7 +215,7 @@ serve(async (req: Request) => {
     const mac = await calculateMAC(macData);
     console.log('🔐 MAC calculé:', mac.substring(0, 10) + '...');
 
-    const { error: insertError } = await supabase
+    const { data: paymentData, error: insertError } = await supabase
       .from('monetico_payments')
       .insert({
         reference,
@@ -235,11 +235,15 @@ serve(async (req: Request) => {
           is_free_invoice: !leadId
         },
         mac_sent: mac
-      });
+      })
+      .select('id')
+      .single();
 
     if (insertError) {
       console.error('Erreur insertion:', insertError);
     }
+
+    const paymentId = paymentData?.id || null;
 
     const formData = {
       version: MONETICO_CONFIG.version,
@@ -375,6 +379,7 @@ serve(async (req: Request) => {
       JSON.stringify({
         success: true,
         reference,
+        paymentId,
         htmlForm,
         formData,
         actionUrl: MONETICO_CONFIG.urlServeur,

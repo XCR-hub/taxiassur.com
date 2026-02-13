@@ -132,6 +132,11 @@ export function MoneticoPaymentManager({ leadId, onPaymentSuccess }: MoneticoPay
         setAmount('');
         setDescription('');
         await loadPayments();
+
+        // Envoyer automatiquement l'email au prospect
+        if (result.paymentId) {
+          await sendPaymentEmail(result.paymentId);
+        }
       } else if (result.error) {
         throw new Error(result.error);
       }
@@ -147,20 +152,26 @@ export function MoneticoPaymentManager({ leadId, onPaymentSuccess }: MoneticoPay
     try {
       const { data: lead } = await supabase
         .from('crm_leads')
-        .select('email, first_name, access_token')
+        .select('email, first_name, last_name, access_token')
         .eq('id', leadId)
-        .single();
+        .maybeSingle();
 
       const { data: payment } = await supabase
         .from('monetico_payments')
         .select('*')
         .eq('id', paymentId)
-        .single();
+        .maybeSingle();
 
-      if (!lead || !payment) return;
+      if (!lead || !payment) {
+        console.error('Lead ou paiement introuvable');
+        return;
+      }
 
-      await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-email-universal`,
+      const paymentUrl = `https://taxiassur.com/espace-prospect?token=${lead.access_token}#paiement`;
+
+      // Envoyer l'email via edge function
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-payment-link-email`,
         {
           method: 'POST',
           headers: {
@@ -168,27 +179,27 @@ export function MoneticoPaymentManager({ leadId, onPaymentSuccess }: MoneticoPay
             'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
           },
           body: JSON.stringify({
-            to: lead.email,
-            subject: 'Lien de paiement comptant - TaxiAssur',
-            htmlContent: `
-              <h2>Bonjour ${lead.first_name},</h2>
-              <p>Votre lien de paiement sécurisé est prêt.</p>
-              <p><strong>Montant :</strong> ${payment.amount} €</p>
-              <p><strong>Référence :</strong> ${payment.reference}</p>
-              <div style="margin: 30px 0;">
-                <a href="https://taxiassur.com/espace-prospect/paiement/${payment.id}?token=${lead.access_token}"
-                   style="background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
-                  Effectuer le paiement
-                </a>
-              </div>
-              <p>Ce lien est sécurisé et personnel.</p>
-              <p>Cordialement,<br>L'équipe TaxiAssur</p>
-            `,
+            lead_id: lead.id,
+            payment_url: paymentUrl,
+            amount: payment.amount,
+            email: lead.email,
+            first_name: lead.first_name,
+            last_name: lead.last_name,
           }),
         }
       );
+
+      if (response.ok) {
+        console.log('✅ Email envoyé avec succès');
+        alert('Email de paiement envoyé au prospect !');
+      } else {
+        const error = await response.json();
+        console.error('Erreur envoi email:', error);
+        alert(`Erreur: ${error.error || 'Impossible d\'envoyer l\'email'}`);
+      }
     } catch (err) {
       console.error('Erreur envoi email:', err);
+      alert('Erreur lors de l\'envoi de l\'email');
     }
   };
 
