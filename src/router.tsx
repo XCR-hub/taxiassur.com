@@ -155,6 +155,9 @@ const LeadMarketplace = lazy(() => import('./backoffice/LeadMarketplace'));
 const UserManagement = lazy(() => import('./backoffice/UserManagement'));
 const SecurityDashboard = lazy(() => import('./backoffice/SecurityDashboard'));
 const ComplianceCenter = lazy(() => import('./backoffice/ComplianceCenter'));
+const EmailAdvancedAnalytics = lazy(() => import('./backoffice/EmailAdvancedAnalytics'));
+const ABTestingManager = lazy(() => import('./backoffice/ABTestingManager'));
+const SmartTemplatesManager = lazy(() => import('./backoffice/SmartTemplatesManager'));
 
 export const router = createBrowserRouter([
   {
@@ -795,5 +798,17 @@ export const router = createBrowserRouter([
   {
     path: '/backoffice/compliance',
     element: <ComplianceCenter />,
+  },
+  {
+    path: '/backoffice/email-analytics',
+    element: <EmailAdvancedAnalytics />,
+  },
+  {
+    path: '/backoffice/ab-testing',
+    element: <ABTestingManager />,
+  },
+  {
+    path: '/backoffice/smart-templates',
+    element: <SmartTemplatesManager />,
   },
 ]);
