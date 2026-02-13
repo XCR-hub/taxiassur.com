@@ -125,7 +125,7 @@ serve(async (req: Request) => {
         .from('crm_leads')
         .select('email, first_name, last_name, phone')
         .eq('id', leadId)
-        .single();
+        .maybeSingle();
 
       console.log('📊 Résultat:', { lead: leadData, leadError });
 
@@ -133,19 +133,20 @@ serve(async (req: Request) => {
         console.error('❌ Erreur DB:', leadError);
         return new Response(
           JSON.stringify({
-            error: 'Lead non trouvé',
+            error: 'Erreur lors de la recherche du lead',
             details: leadError.message,
             leadId: leadId
           }),
-          { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
       if (!leadData) {
-        console.error('❌ Lead null');
+        console.error('❌ Lead introuvable avec ID:', leadId);
         return new Response(
           JSON.stringify({
-            error: 'Lead non trouvé (null)',
+            error: 'Lead introuvable',
+            message: `Aucun lead trouvé avec l'ID: ${leadId}. Vérifiez que le lead existe dans la base de données.`,
             leadId: leadId
           }),
           { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

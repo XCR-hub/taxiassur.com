@@ -105,9 +105,20 @@ export function MoneticoPaymentManager({ leadId, onPaymentSuccess }: MoneticoPay
       console.log('📦 Réponse serveur:', result);
 
       if (!response.ok) {
-        const errorMsg = result.details
-          ? `${result.error}: ${result.details}`
-          : result.error || 'Erreur lors de la création du paiement';
+        let errorMsg = result.error || 'Erreur lors de la création du paiement';
+
+        if (result.details) {
+          errorMsg += `: ${result.details}`;
+        }
+
+        if (result.message) {
+          errorMsg = result.message;
+        }
+
+        if (result.leadId) {
+          errorMsg += ` (Lead ID: ${result.leadId})`;
+        }
+
         throw new Error(errorMsg);
       }
 
