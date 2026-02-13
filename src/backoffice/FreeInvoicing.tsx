@@ -426,12 +426,12 @@ const FreeInvoicing: React.FC = () => {
               </button>
 
               {/* Bouton de test Brevo */}
-              <div className="mt-4">
+              <div className="mt-4 space-y-3">
                 <button
                   type="button"
                   onClick={testBrevoConfiguration}
                   disabled={testingBrevo}
-                  className="w-full bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded-lg transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg transition-colors flex items-center justify-center gap-2 disabled:opacity-50 font-medium"
                 >
                   {testingBrevo ? (
                     <>
@@ -447,14 +447,31 @@ const FreeInvoicing: React.FC = () => {
                 </button>
 
                 {brevoStatus && (
-                  <div className={`mt-3 p-3 rounded-lg border text-sm whitespace-pre-line ${
+                  <div className={`p-4 rounded-lg border text-sm whitespace-pre-line ${
                     brevoStatus.startsWith('✅')
                       ? 'bg-green-50 border-green-200 text-green-800'
                       : 'bg-red-50 border-red-200 text-red-800'
                   }`}>
                     {brevoStatus}
+
+                    {!brevoStatus.startsWith('✅') && (
+                      <div className="mt-3 pt-3 border-t border-red-300">
+                        <p className="font-semibold mb-2">Instructions :</p>
+                        <ol className="list-decimal ml-5 space-y-1 text-xs">
+                          <li>Allez sur app.supabase.com</li>
+                          <li>Projet Settings Edge Functions Secrets</li>
+                          <li>Ajoutez : BREVO_API_KEY</li>
+                          <li>Voir le fichier BREVO_CONFIG_SUPABASE.md</li>
+                        </ol>
+                      </div>
+                    )}
                   </div>
                 )}
+
+                <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-800">
+                  <p className="font-semibold mb-1">Info :</p>
+                  <p>Si le test échoue, consultez le fichier BREVO_CONFIG_SUPABASE.md pour configurer la clé API.</p>
+                </div>
               </div>
             </form>
 
