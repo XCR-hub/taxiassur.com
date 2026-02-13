@@ -97,6 +97,7 @@ export function MoneticoPaymentManager({ leadId, onPaymentSuccess }: MoneticoPay
             leadId,
             amount: parseFloat(amount),
             description: description || `Paiement comptant assurance taxi`,
+            send_email: true, // ✅ Envoyer automatiquement l'email
           }),
         }
       );

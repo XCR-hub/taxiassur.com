@@ -98,7 +98,8 @@ serve(async (req: Request) => {
       customerFirstName,
       customerLastName,
       customerPhone,
-      customReference
+      customReference,
+      send_email // ✅ Paramètre pour envoyer automatiquement l'email
     } = await req.json();
 
     console.log('📦 Données reçues:', { leadId, amount, description, customerEmail });
@@ -375,6 +376,48 @@ serve(async (req: Request) => {
       </html>
     `;
 
+    // ✅ Envoi automatique de l'email au prospect si demandé
+    if (send_email && leadId && lead) {
+      try {
+        console.log('📧 Envoi email automatique au prospect...');
+
+        // Récupérer le token d'accès du lead
+        const { data: leadWithToken } = await supabase
+          .from('crm_leads')
+          .select('access_token')
+          .eq('id', leadId)
+          .maybeSingle();
+
+        const accessToken = leadWithToken?.access_token;
+
+        if (accessToken) {
+          const paymentUrl = `https://taxiassur.com/espace-prospect?token=${accessToken}#paiement`;
+
+          // Appeler l'edge function d'envoi d'email
+          await fetch(`${supabaseUrl}/functions/v1/send-payment-link-email`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${supabaseKey}`
+            },
+            body: JSON.stringify({
+              lead_id: leadId,
+              payment_url: paymentUrl,
+              amount: parseFloat(amount),
+              email: email,
+              first_name: firstName,
+              last_name: lastName
+            })
+          });
+
+          console.log('✅ Email envoyé automatiquement à:', email);
+        }
+      } catch (emailError) {
+        console.error('⚠️ Erreur envoi email (non bloquant):', emailError);
+        // Ne pas bloquer le paiement si l'email échoue
+      }
+    }
+
     return new Response(
       JSON.stringify({
         success: true,
@@ -383,7 +426,8 @@ serve(async (req: Request) => {
         htmlForm,
         formData,
         actionUrl: MONETICO_CONFIG.urlServeur,
-        mode: TEST_MODE ? 'TEST' : 'PRODUCTION'
+        mode: TEST_MODE ? 'TEST' : 'PRODUCTION',
+        email_sent: send_email && leadId ? true : false
       }),
       {
         status: 200,
