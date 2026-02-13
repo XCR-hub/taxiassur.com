@@ -15,9 +15,9 @@ import {
 import { supabase } from '@/lib/supabase';
 import { ClientCompleteDocuments } from './ClientCompleteDocuments';
 import { ClientClaimsManager } from './ClientClaimsManager';
-import { ModificationRequests } from '@/components/crm/ModificationRequests';
-import { AttestationManager } from '@/components/crm/AttestationManager';
-import { SmartChatBot } from '@/components/SmartChatBot';
+// import { ModificationRequests } from '@/components/crm/ModificationRequests';
+// import { AttestationManager } from '@/components/crm/AttestationManager';
+import SmartChatBot from '@/components/SmartChatBot';
 
 interface Lead {
   id: string;
@@ -274,11 +274,11 @@ export const ClientUnifiedDashboard: React.FC<ClientUnifiedDashboardProps> = ({
             <>
               {isActive && contract && (
                 <>
-                  <AttestationManager
+                  {/* <AttestationManager
                     leadId={leadId}
                     contractId={contract.id}
                     viewMode="client"
-                  />
+                  /> */}
                   <div className="bg-white rounded-xl border border-gray-200 p-6">
                     <h3 className="text-lg font-semibold text-gray-900 mb-4">Accès rapide</h3>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -343,13 +343,13 @@ export const ClientUnifiedDashboard: React.FC<ClientUnifiedDashboardProps> = ({
             <ClientClaimsManager leadId={leadId} contractId={contract.id} />
           )}
 
-          {activeTab === 'modifications' && contract && isActive && (
+          {/* {activeTab === 'modifications' && contract && isActive && (
             <ModificationRequests
               leadId={leadId}
               contractId={contract.id}
               viewMode="client"
             />
-          )}
+          )} */}
         </div>
       </div>
 
