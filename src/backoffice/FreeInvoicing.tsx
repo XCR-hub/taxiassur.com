@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
-import { CreditCard, Send, User, Mail, Phone, Euro, FileText, Check, X, Loader2, ExternalLink } from 'lucide-react';
+import { CreditCard, Send, User, Mail, Phone, Euro, FileText, Check, X, Loader2, ExternalLink, ArrowLeft, Home } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { Link } from 'react-router-dom';
+import NavigationMenu from './NavigationMenu';
 
 interface InvoiceForm {
   firstName: string;
@@ -185,20 +187,46 @@ const FreeInvoicing: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-6">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-3 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl shadow-lg">
-              <CreditCard className="w-8 h-8 text-white" />
-            </div>
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Facturation Libre</h1>
-              <p className="text-gray-600">Créez un lien de paiement pour n'importe quel client</p>
-            </div>
-          </div>
+    <div className="flex h-screen bg-gradient-to-br from-gray-900 via-slate-900 to-gray-800 overflow-hidden">
+      {/* Sidebar */}
+      <div className="w-80 bg-gradient-to-b from-slate-800 to-gray-900 border-r border-gray-700 overflow-y-auto p-6">
+        <div className="mb-6">
+          <Link
+            to="/backoffice"
+            className="flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg font-medium transition-all shadow-lg mb-4"
+          >
+            <Home className="w-5 h-5" />
+            Retour au Dashboard
+          </Link>
         </div>
+        <NavigationMenu />
+      </div>
+
+      {/* Main Content */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="min-h-full bg-gradient-to-br from-slate-50 to-blue-50 p-6">
+          <div className="max-w-7xl mx-auto">
+            {/* Header with Back Button */}
+            <div className="mb-8">
+              <div className="flex items-center gap-4 mb-6">
+                <Link
+                  to="/backoffice"
+                  className="flex items-center gap-2 px-4 py-2 bg-white border-2 border-gray-300 hover:border-blue-500 text-gray-700 hover:text-blue-600 rounded-lg font-medium transition-all shadow-sm"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  Retour
+                </Link>
+                <div className="flex-1 flex items-center gap-3">
+                  <div className="p-3 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl shadow-lg">
+                    <CreditCard className="w-8 h-8 text-white" />
+                  </div>
+                  <div>
+                    <h1 className="text-3xl font-bold text-gray-900">Facturation Libre</h1>
+                    <p className="text-gray-600">Créez un lien de paiement pour n'importe quel client</p>
+                  </div>
+                </div>
+              </div>
+            </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Formulaire */}
@@ -478,6 +506,8 @@ const FreeInvoicing: React.FC = () => {
                   </div>
                 ))
               )}
+            </div>
+          </div>
             </div>
           </div>
         </div>
