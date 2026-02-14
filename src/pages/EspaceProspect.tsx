@@ -40,6 +40,9 @@ interface LeadInfo {
   status: string;
   document_checklist?: DocumentChecklist;
   documents_complete?: boolean;
+  progression_percentage?: number;
+  total_documents?: number;
+  uploaded_documents?: number;
   quote_amount?: number;
   quote_accepted_at?: string;
   contract_signed_at?: string;
@@ -177,9 +180,9 @@ const EspaceProspect: React.FC = () => {
     if (!token || !anonClient) return;
 
     try {
-      // Utiliser la fonction RPC sécurisée
+      // Utiliser la fonction RPC sécurisée (nouvelle version)
       const { data, error } = await anonClient
-        .rpc('get_prospect_documents_by_token', { p_token: token });
+        .rpc('get_lead_documents_by_token', { p_token: token });
 
       if (error) throw error;
       setUploadedDocuments(data || []);
@@ -287,6 +290,11 @@ const EspaceProspect: React.FC = () => {
   };
 
   const getProgressPercentage = () => {
+    // Utiliser la progression calculée par le backend
+    if (leadInfo?.progression_percentage !== undefined) {
+      return leadInfo.progression_percentage;
+    }
+    // Fallback si l'ancien système est encore utilisé
     if (!leadInfo?.document_checklist) return 0;
     const requiredDocs = DOCUMENT_TYPES.filter(d => d.required);
     const validatedCount = requiredDocs.filter(d => {
