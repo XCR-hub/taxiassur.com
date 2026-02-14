@@ -160,7 +160,7 @@ export const LeadAutomationCenter: React.FC<LeadAutomationCenterProps> = ({
   const generateProspectSpaceUrl = () => {
     if (accessToken) {
       const baseUrl = window.location.origin;
-      setProspectSpaceUrl(`${baseUrl}/espace-prospect?token=${accessToken}`);
+      setProspectSpaceUrl(`${baseUrl}/espace-prospect/${accessToken}`);
     }
   };
 

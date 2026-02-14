@@ -28,7 +28,7 @@ export function PaiementSuccess() {
   const goToProspectSpace = () => {
     const token = searchParams.get('token');
     if (token) {
-      navigate(`/espace-prospect?token=${token}`);
+      navigate(`/espace-prospect/${token}`);
     } else {
       navigate('/');
     }

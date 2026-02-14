@@ -11,7 +11,7 @@ export function PaiementError() {
   const goBack = () => {
     const token = searchParams.get('token');
     if (token) {
-      navigate(`/espace-prospect?token=${token}`);
+      navigate(`/espace-prospect/${token}`);
     } else {
       navigate('/');
     }
@@ -20,7 +20,7 @@ export function PaiementError() {
   const retry = () => {
     const token = searchParams.get('token');
     if (token) {
-      navigate(`/espace-prospect?token=${token}`);
+      navigate(`/espace-prospect/${token}`);
     } else {
       goBack();
     }

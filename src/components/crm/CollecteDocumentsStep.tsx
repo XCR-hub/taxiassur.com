@@ -247,7 +247,7 @@ export default function CollecteDocumentsStep({
     try {
       // Replace variables in template
       const prospectSpaceUrl = leadAccessToken
-        ? `${window.location.origin}/espace-prospect?token=${leadAccessToken}`
+        ? `${window.location.origin}/espace-prospect/${leadAccessToken}`
         : `${window.location.origin}/espace-prospect`;
 
       // Générer la liste des documents non validés
@@ -375,7 +375,7 @@ export default function CollecteDocumentsStep({
     : 0;
 
   const prospectSpaceUrl = leadAccessToken
-    ? `${window.location.origin}/espace-prospect?token=${leadAccessToken}`
+    ? `${window.location.origin}/espace-prospect/${leadAccessToken}`
     : `${window.location.origin}/espace-prospect`;
 
   return (
@@ -612,12 +612,12 @@ export default function CollecteDocumentsStep({
                 <input
                   type="text"
                   readOnly
-                  value={`${window.location.origin}/espace-prospect?token=${leadAccessToken}`}
+                  value={`${window.location.origin}/espace-prospect/${leadAccessToken}`}
                   className="flex-1 px-3 py-2 text-sm bg-white border border-blue-300 rounded text-gray-700"
                 />
                 <button
                   onClick={() => {
-                    navigator.clipboard.writeText(`${window.location.origin}/espace-prospect?token=${leadAccessToken}`);
+                    navigator.clipboard.writeText(`${window.location.origin}/espace-prospect/${leadAccessToken}`);
                     alert('Lien copié !');
                   }}
                   className="px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center gap-2"

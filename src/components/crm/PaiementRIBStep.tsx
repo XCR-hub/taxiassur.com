@@ -447,12 +447,12 @@ export default function PaiementRIBStep({
                 <input
                   type="text"
                   readOnly
-                  value={`${window.location.origin}/espace-prospect?token=${leadAccessToken}`}
+                  value={`${window.location.origin}/espace-prospect/${leadAccessToken}`}
                   className="flex-1 px-3 py-2 text-sm bg-white border border-gray-300 rounded text-gray-700"
                 />
                 <button
                   onClick={() => {
-                    navigator.clipboard.writeText(`${window.location.origin}/espace-prospect?token=${leadAccessToken}`);
+                    navigator.clipboard.writeText(`${window.location.origin}/espace-prospect/${leadAccessToken}`);
                     alert('Lien copié !');
                   }}
                   className="px-3 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
