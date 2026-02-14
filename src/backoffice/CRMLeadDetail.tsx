@@ -175,16 +175,103 @@ const CRMLeadDetail: React.FC = () => {
     }
 
     try {
+      const firstName = lead.first_name || 'Prospect';
+      const lastName = lead.last_name || '';
+      const accessLink = `${window.location.origin}/espace-prospect/${lead.access_token}`;
+
+      const emailHtml = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f5f5f5;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f5f5f5; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #FFA500 0%, #FF8C00 100%); padding: 40px 30px; text-align: center;">
+              <h1 style="margin: 0; color: #000000; font-size: 28px; font-weight: 700;">
+                Accès à votre Espace Prospect
+              </h1>
+              <p style="margin: 10px 0 0 0; color: #000000; font-size: 16px; opacity: 0.9;">
+                TaxiAssur - Assurance Taxi Professionnelle
+              </p>
+            </td>
+          </tr>
+
+          <!-- Content -->
+          <tr>
+            <td style="padding: 40px 30px;">
+              <p style="margin: 0 0 20px 0; font-size: 16px; color: #333333; line-height: 1.6;">
+                Bonjour <strong>${firstName} ${lastName}</strong>,
+              </p>
+
+              <p style="margin: 0 0 20px 0; font-size: 16px; color: #333333; line-height: 1.6;">
+                Votre espace prospect est maintenant accessible. Vous pouvez consulter vos devis, télécharger vos documents et suivre l'avancement de votre dossier.
+              </p>
+
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin: 30px 0;">
+                <tr>
+                  <td align="center">
+                    <a href="${accessLink}" style="display: inline-block; background: linear-gradient(135deg, #FFA500 0%, #FF8C00 100%); color: #000000; text-decoration: none; padding: 16px 40px; border-radius: 8px; font-size: 16px; font-weight: 600; box-shadow: 0 4px 6px rgba(255, 165, 0, 0.3);">
+                      Accéder à mon espace
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin: 30px 0 10px 0; font-size: 14px; color: #666666; line-height: 1.6;">
+                Vous pouvez également copier ce lien dans votre navigateur :
+              </p>
+              <p style="margin: 0; padding: 15px; background-color: #f8f8f8; border-radius: 6px; font-size: 13px; color: #0066cc; word-break: break-all;">
+                ${accessLink}
+              </p>
+
+              <div style="margin: 30px 0; padding: 20px; background-color: #fff8e6; border-left: 4px solid #FFA500; border-radius: 6px;">
+                <p style="margin: 0; font-size: 14px; color: #666666; line-height: 1.6;">
+                  <strong style="color: #FFA500;">💡 Astuce :</strong> Ajoutez cette page à vos favoris pour y accéder rapidement !
+                </p>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background-color: #f8f8f8; padding: 30px; text-align: center; border-top: 1px solid #e5e5e5;">
+              <p style="margin: 0 0 10px 0; font-size: 14px; color: #666666;">
+                <strong>TaxiAssur</strong> - Assurance Taxi & VTC Professionnelle
+              </p>
+              <p style="margin: 0 0 15px 0; font-size: 13px; color: #999999;">
+                team@taxiassur.com | www.taxiassur.com
+              </p>
+              <p style="margin: 0; font-size: 12px; color: #999999;">
+                Vous recevez cet email car vous avez demandé un devis sur TaxiAssur.com
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
       const { error } = await supabase.functions.invoke('send-email-universal', {
         body: {
           to: lead.email,
+          toName: `${firstName} ${lastName}`.trim(),
           subject: 'Accès à votre espace prospect TaxiAssur',
-          template: 'prospect_access',
-          variables: {
-            first_name: lead.first_name || 'Prospect',
-            last_name: lead.last_name || '',
-            access_link: `${window.location.origin}/espace-prospect/${lead.access_token}`
-          }
+          html: emailHtml,
+          from: 'team@taxiassur.com',
+          fromName: 'TaxiAssur',
+          lead_id: leadId,
+          trackOpens: true,
+          trackClicks: true
         }
       });
 
