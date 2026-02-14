@@ -346,7 +346,7 @@ export async function createLead(input: CreateLeadInput): Promise<{ success: boo
     const lastName = nameParts.slice(1).join(' ') || '';
     const vehicleType = input.status === 'vtc' ? 'VTC' : input.status === 'autre' ? 'Autre' : 'Taxi';
 
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://qiavtxpaznxpttkdaevy.supabase.co';
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://drohhxrkoequjphvabvq.supabase.co';
     const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || ((window as any).ENV_CONFIG?.VITE_SUPABASE_ANON_KEY) || '';
 
     const leadParams = {
