@@ -13,11 +13,11 @@ interface InsuranceCompany {
 
 interface Quote {
   id: string;
-  company_id: string;
-  quote_file_url: string;
+  insurance_insurance_company_id: string;
+  quote_pdf_url: string;
   quote_amount?: number;
-  status: string;
-  submitted_at?: string;
+  quote_status: string;
+  sent_at?: string;
   last_sent_at?: string;
   created_at: string;
 }
@@ -147,14 +147,13 @@ export default function ClientQuotesViewer({ leadId, token, supabaseClient }: Pr
         quotesData = data || [];
 
         // Extraire les compagnies des devis retournés
-        const companyIds = [...new Set(quotesData.map(q => q.company_id))];
+        const companyIds = [...new Set(quotesData.map(q => q.insurance_insurance_company_id))];
         if (companyIds.length > 0) {
           const { data: companiesData, error: companiesError } = await supabaseClient
             .from('insurance_companies')
             .select('*')
             .in('id', companyIds)
-            .eq('is_active', true)
-            .order('priority_order');
+            .eq('is_active', true);
 
           if (!companiesError) {
             setCompanies(companiesData || []);
@@ -169,7 +168,7 @@ export default function ClientQuotesViewer({ leadId, token, supabaseClient }: Pr
           .from('lead_company_quotes')
           .select('*')
           .eq('lead_id', currentLeadId)
-          .not('quote_file_url', 'is', null)  // Seulement les devis avec fichiers
+          .not('quote_pdf_url', 'is', null)  // Seulement les devis avec fichiers
           .order('created_at', { ascending: false });
 
         if (error) throw error;
@@ -179,9 +178,7 @@ export default function ClientQuotesViewer({ leadId, token, supabaseClient }: Pr
         const { data: companiesData, error: companiesError } = await supabaseClient
           .from('insurance_companies')
           .select('*')
-          .eq('is_mandatory', true)
-          .eq('is_active', true)
-          .order('priority_order');
+          .eq('is_active', true);
 
         if (companiesError) throw companiesError;
 
@@ -198,10 +195,10 @@ export default function ClientQuotesViewer({ leadId, token, supabaseClient }: Pr
 
   // Grouper les devis par compagnie
   const quotesByCompany = quotes.reduce((acc, quote) => {
-    if (!acc[quote.company_id]) {
-      acc[quote.company_id] = [];
+    if (!acc[quote.insurance_company_id]) {
+      acc[quote.insurance_company_id] = [];
     }
-    acc[quote.company_id].push(quote);
+    acc[quote.insurance_company_id].push(quote);
     return acc;
   }, {} as Record<string, Quote[]>);
 
@@ -277,8 +274,8 @@ export default function ClientQuotesViewer({ leadId, token, supabaseClient }: Pr
 
               <div className="space-y-4">
                 {companyQuotes.map((quote) => {
-                  // Le quote_file_url est déjà une URL publique complète
-                  const fileUrl = quote.quote_file_url;
+                  // Le quote_pdf_url est déjà une URL publique complète
+                  const fileUrl = quote.quote_pdf_url;
                   // Extraire le nom du fichier de l'URL
                   const fileName = fileUrl.split('/').pop() || 'Devis.pdf';
 
@@ -292,8 +289,8 @@ export default function ClientQuotesViewer({ leadId, token, supabaseClient }: Pr
                               {decodeURIComponent(fileName)}
                             </p>
                             <p className="text-sm text-gray-400">
-                              {quote.submitted_at ? (
-                                <>Uploadé le {new Date(quote.submitted_at).toLocaleDateString('fr-FR', {
+                              {quote.sent_at ? (
+                                <>Uploadé le {new Date(quote.sent_at).toLocaleDateString('fr-FR', {
                                   day: 'numeric',
                                   month: 'long',
                                   year: 'numeric'
@@ -353,7 +350,7 @@ export default function ClientQuotesViewer({ leadId, token, supabaseClient }: Pr
                         </button>
 
                         {/* Boutons Valider et Refuser */}
-                        {quote.status !== 'validated' && quote.status !== 'refused' && (
+                        {quote.quote_status !== 'validated' && quote.quote_status !== 'refused' && (
                           <>
                             <button
                               onClick={() => setShowRefuseModal(quote.id)}
@@ -374,14 +371,14 @@ export default function ClientQuotesViewer({ leadId, token, supabaseClient }: Pr
                           </>
                         )}
 
-                        {quote.status === 'validated' && (
+                        {quote.quote_status === 'validated' && (
                           <div className="flex items-center gap-2 px-5 py-2.5 bg-green-600/20 border border-green-500 text-green-400 font-bold rounded-lg text-sm ml-auto">
                             <CheckCircle2 className="w-4 h-4" />
                             Devis validé
                           </div>
                         )}
 
-                        {quote.status === 'refused' && (
+                        {quote.quote_status === 'refused' && (
                           <div className="flex items-center gap-2 px-5 py-2.5 bg-red-600/20 border border-red-500 text-red-400 font-semibold rounded-lg text-sm ml-auto">
                             <X className="w-4 h-4" />
                             Devis refusé
@@ -460,7 +457,7 @@ export default function ClientQuotesViewer({ leadId, token, supabaseClient }: Pr
               <button
                 onClick={() => {
                   const quote = quotes.find(q => q.id === showConfirmModal);
-                  const company = companies.find(c => c.id === quote?.company_id);
+                  const company = companies.find(c => c.id === quote?.insurance_company_id);
                   if (quote && company) {
                     handleValidateQuote(quote.id, company.name);
                   }
@@ -521,7 +518,7 @@ export default function ClientQuotesViewer({ leadId, token, supabaseClient }: Pr
               <button
                 onClick={() => {
                   const quote = quotes.find(q => q.id === showRefuseModal);
-                  const company = companies.find(c => c.id === quote?.company_id);
+                  const company = companies.find(c => c.id === quote?.insurance_company_id);
                   if (quote && company) {
                     handleRefuseQuote(quote.id, company.name);
                   }
