@@ -111,7 +111,7 @@ async function sendDocumentReminder(supabase: any, lead: any) {
 
   const firstName = lead.metadata?.prenom || lead.name.split(' ')[0];
   const subject = '⏰ Rappel: Documents manquants pour votre devis TaxiAssur';
-  const body = `Bonjour ${firstName},\n\nNous attendons toujours les documents suivants pour finaliser votre devis :\n\n${docsStatus.missing_documents.map((d: string) => `   • ${d}`).join('\n')}\n\n👉 Déposez-les ici : https://taxiassur.com/espace-prospect/${lead.access_token || lead.id}\n\nNotre équipe est à votre disposition pour toute question.\n\nCordialement,\nL'équipe TaxiAssur`;
+  const body = `Bonjour ${firstName},\n\nNous attendons toujours les documents suivants pour finaliser votre devis :\n\n${docsStatus.missing_documents.map((d: string) => `   • ${d}`).join('\n')}\n\n👉 Déposez-les ici : https://taxiassur.com/espace-prospect?token=${lead.access_token || lead.id}\n\nNotre équipe est à votre disposition pour toute question.\n\nCordialement,\nL'équipe TaxiAssur`;
 
   await sendNotification(supabase, lead, subject, body, 'document_reminder');
 }
@@ -119,7 +119,7 @@ async function sendDocumentReminder(supabase: any, lead: any) {
 async function sendQuoteReminder(supabase: any, lead: any) {
   const firstName = lead.metadata?.prenom || lead.name.split(' ')[0];
   const subject = '📝 Votre devis TaxiAssur vous attend';
-  const body = `Bonjour ${firstName},\n\nNous avons remarqué que vous n'avez pas encore consulté votre devis.\n\nNotre offre exclusive est valable encore quelques jours !\n\n👉 Consultez votre devis : https://taxiassur.com/espace-prospect/${lead.access_token || lead.id}\n\nBesoin d'aide pour votre décision ? Appelez-nous au 01 80 85 57 86\n\nCordialement,\nL'équipe TaxiAssur`;
+  const body = `Bonjour ${firstName},\n\nNous avons remarqué que vous n'avez pas encore consulté votre devis.\n\nNotre offre exclusive est valable encore quelques jours !\n\n👉 Consultez votre devis : https://taxiassur.com/espace-prospect?token=${lead.access_token || lead.id}\n\nBesoin d'aide pour votre décision ? Appelez-nous au 01 80 85 57 86\n\nCordialement,\nL'équipe TaxiAssur`;
 
   await sendNotification(supabase, lead, subject, body, 'quote_reminder');
 }
@@ -135,7 +135,7 @@ async function sendPaymentReminder(supabase: any, lead: any) {
 async function sendSignatureReminder(supabase: any, lead: any) {
   const firstName = lead.metadata?.prenom || lead.name.split(' ')[0];
   const subject = '✍️ Signature de votre contrat TaxiAssur';
-  const body = `Bonjour ${firstName},\n\nVotre contrat est prêt à être signé !\n\n👉 Signer en ligne : https://taxiassur.com/espace-prospect/${lead.access_token || lead.id}\n\nLa signature électronique est sécurisée et prend moins de 2 minutes.\n\nCordialement,\nL'équipe TaxiAssur`;
+  const body = `Bonjour ${firstName},\n\nVotre contrat est prêt à être signé !\n\n👉 Signer en ligne : https://taxiassur.com/espace-prospect?token=${lead.access_token || lead.id}\n\nLa signature électronique est sécurisée et prend moins de 2 minutes.\n\nCordialement,\nL'équipe TaxiAssur`;
 
   await sendNotification(supabase, lead, subject, body, 'signature_reminder');
 }

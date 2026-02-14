@@ -100,7 +100,7 @@ async function executeAction(task: Task, lead: Lead): Promise<{ success: boolean
           <li>Carte professionnelle taxi</li>
           <li>Releve d'information assurance</li>
         </ul>
-        <p><a href="https://taxiassur.com/espace-prospect/${lead.access_token || lead.id}">Deposer mes documents</a></p>
+        <p><a href="https://taxiassur.com/espace-prospect?token=${lead.access_token || lead.id}">Deposer mes documents</a></p>
       `;
       return await sendEmail(email, "Bienvenue chez TaxiAssur - Votre devis en cours", content, first_name);
     }
@@ -143,7 +143,7 @@ async function executeAction(task: Task, lead: Lead): Promise<{ success: boolean
           <li><strong>Releve d'information</strong> de votre ancien assureur</li>
           <li><strong>KBIS</strong> (si entreprise)</li>
         </ul>
-        <p><a href="https://taxiassur.com/espace-prospect/${lead.access_token || lead.id}" style="background:#2563eb;color:white;padding:12px 24px;text-decoration:none;border-radius:6px;display:inline-block;margin:20px 0;">DEPOSER MES DOCUMENTS</a></p>
+        <p><a href="https://taxiassur.com/espace-prospect?token=${lead.access_token || lead.id}" style="background:#2563eb;color:white;padding:12px 24px;text-decoration:none;border-radius:6px;display:inline-block;margin:20px 0;">DEPOSER MES DOCUMENTS</a></p>
         <p>Des que nous aurons tous vos documents, nous vous enverrons votre devis personnalise sous 24h.</p>
       `;
       
@@ -176,7 +176,7 @@ async function executeAction(task: Task, lead: Lead): Promise<{ success: boolean
         <p>Bonjour ${first_name},</p>
         <p>Il nous manque encore quelques documents pour finaliser votre devis :</p>
         <ul>${(docStatus.missing_documents || []).map((d: string) => `<li>${d.replace(/_/g, " ")}</li>`).join("")}</ul>
-        <p><a href="https://taxiassur.com/espace-prospect/${lead.access_token || lead.id}">Deposer mes documents maintenant</a></p>
+        <p><a href="https://taxiassur.com/espace-prospect?token=${lead.access_token || lead.id}">Deposer mes documents maintenant</a></p>
       `;
       
       await supabase.from("document_collection_status").update({

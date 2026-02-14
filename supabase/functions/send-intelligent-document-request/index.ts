@@ -110,7 +110,7 @@ Deno.serve(async (req: Request) => {
     }
 
     // Build portal URL
-    const portalUrl = `https://taxiassur.com/espace-prospect/${accessToken}`;
+    const portalUrl = `https://taxiassur.com/espace-prospect?token=${accessToken}`;
 
     // Build document list HTML
     const documentListHtml = documentsToRequest.map(docType => {
