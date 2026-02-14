@@ -406,7 +406,7 @@ Deno.serve(async (req: Request) => {
             <div class="cta-section">
               <p style="color: #92400e; font-size: 18px; font-weight: 700; margin-bottom: 15px;">VOTRE ESPACE PERSONNEL SECURISE</p>
               <p style="color: #92400e; margin-bottom: 20px;">Uploadez vos documents et suivez votre dossier en temps reel</p>
-              <a href="https://taxiassur.com/espace-prospect/${lead.access_token}" class="cta-button" style="text-decoration: none; color: #ffffff !important;">
+              <a href="https://taxiassur.com/espace-prospect?token=${lead.access_token}" class="cta-button" style="text-decoration: none; color: #ffffff !important;">
                 ACCEDER A MON ESPACE
               </a>
               <p style="color: #92400e; font-size: 13px; margin-top: 15px;">

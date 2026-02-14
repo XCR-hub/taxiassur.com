@@ -165,7 +165,7 @@ Deno.serve(async (req: Request) => {
       .eq('id', payment_id);
 
     // Préparer l'email
-    const espaceProspectUrl = `https://taxiassur.com/espace-prospect/${lead.access_token}?tab=paiement`;
+    const espaceProspectUrl = `https://taxiassur.com/espace-prospect?token=${lead.access_token}&tab=paiement`;
 
     const emailHtml = `
       <!DOCTYPE html>

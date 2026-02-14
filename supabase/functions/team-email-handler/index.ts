@@ -268,7 +268,7 @@ async function generateResponse(supabase: any, lead: any, docsStatus: any, infoS
         body += `   • ${DOCUMENT_LABELS[doc] || doc}\n`;
       }
       body += `\n`;
-      body += `👉 Déposez vos documents en toute sécurité : https://taxiassur.com/espace-prospect/${lead?.access_token || lead?.id || 'documents'}\n\n`;
+      body += `👉 Déposez vos documents en toute sécurité : https://taxiassur.com/espace-prospect?token=${lead?.access_token || lead?.id || 'documents'}\n\n`;
     }
 
     body += `Notre équipe vous contactera dans les plus brefs délais.\n\n`;
@@ -276,7 +276,7 @@ async function generateResponse(supabase: any, lead: any, docsStatus: any, infoS
     body += `Cordialement,\nL'équipe TaxiAssur\n`;
 
     smsContent = `Bienvenue chez TaxiAssur ! Votre demande est bien reçue. Complétez votre dossier : taxiassur.com/espace-prospect`;
-    whatsappContent = `Bonjour ${firstName} 👋\n\nVotre demande est bien reçue ! Pour accélérer votre devis, déposez vos documents ici : https://taxiassur.com/espace-prospect/${lead?.access_token || lead?.id || 'documents'}\n\nÀ très vite !\n✨ TaxiAssur`;
+    whatsappContent = `Bonjour ${firstName} 👋\n\nVotre demande est bien reçue ! Pour accélérer votre devis, déposez vos documents ici : https://taxiassur.com/espace-prospect?token=${lead?.access_token || lead?.id || 'documents'}\n\nÀ très vite !\n✨ TaxiAssur`;
   } else {
     // Lead existant
     if (docsStatus.all_documents_present && infoStatus.all_info_present) {
@@ -292,9 +292,9 @@ async function generateResponse(supabase: any, lead: any, docsStatus: any, infoS
         body += `   • ${DOCUMENT_LABELS[doc] || doc}\n`;
       }
       
-      body += `\n👉 Déposez-les ici : https://taxiassur.com/espace-prospect/${lead?.access_token || lead?.id || 'documents'}\n\nNotre équipe attend vos documents pour vous faire la meilleure offre !\n\nCordialement,\nL'équipe TaxiAssur`;
+      body += `\n👉 Déposez-les ici : https://taxiassur.com/espace-prospect?token=${lead?.access_token || lead?.id || 'documents'}\n\nNotre équipe attend vos documents pour vous faire la meilleure offre !\n\nCordialement,\nL'équipe TaxiAssur`;
       smsContent = `Documents manquants pour votre devis TaxiAssur. Déposez-les : taxiassur.com/espace-prospect`;
-      whatsappContent = `Bonjour ${firstName},\n\nIl nous manque quelques documents pour votre devis. Déposez-les ici : https://taxiassur.com/espace-prospect/${lead?.access_token || lead?.id || 'documents'}\n\n✨ TaxiAssur`;
+      whatsappContent = `Bonjour ${firstName},\n\nIl nous manque quelques documents pour votre devis. Déposez-les ici : https://taxiassur.com/espace-prospect?token=${lead?.access_token || lead?.id || 'documents'}\n\n✨ TaxiAssur`;
     }
   }
 

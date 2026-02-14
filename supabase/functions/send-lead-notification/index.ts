@@ -94,7 +94,7 @@ Deno.serve(async (req: Request) => {
     console.log("Sending notification for lead via IONOS SMTP:", lead.lead_id);
 
     const prospectSpaceUrl = lead.access_token
-      ? `https://taxiassur.com/espace-prospect/${lead.access_token}`
+      ? `https://taxiassur.com/espace-prospect?token=${lead.access_token}`
       : "https://taxiassur.com/espace-documents";
 
     const teamEmailHtml = `
