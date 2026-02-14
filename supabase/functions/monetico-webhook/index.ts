@@ -1,14 +1,16 @@
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.57.4';
+import { createClient } from 'npm:@supabase/supabase-js@2.57.4';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Client-Info, Apikey',
+  'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
 };
 
-// 🧪 MODE TEST ACTIVÉ - TPE encore en test chez Ingineco
-// Récupération de la clé MAC depuis les secrets Supabase
+/**
+ * Edge Function : Webhook Monetico
+ * Reçoit les notifications de paiement et met à jour le statut
+ */
+
 const TEST_MODE = (Deno.env.get('MONETICO_MODE') || 'test') === 'test';
 const MONETICO_MAC_KEY = TEST_MODE
   ? Deno.env.get('MONETICO_TEST_MAC_KEY') || '106FA85BF342FD4EE95C883D82865B5CC1F63890'
@@ -35,16 +37,15 @@ async function verifyMAC(data: string, receivedMAC: string): Promise<boolean> {
   return calculatedMAC.toLowerCase() === receivedMAC.toLowerCase();
 }
 
-serve(async (req: Request) => {
+Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { status: 200, headers: corsHeaders });
   }
 
   try {
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    );
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     const formData = await req.formData();
     const webhookData: any = {};
@@ -71,8 +72,16 @@ serve(async (req: Request) => {
       modepaiement,
     } = webhookData;
 
-    const macString = `${TPE}*${date}*${montant}*${reference}*${code_retour}*${cvx}*${motifrefus}*${authentification}*${numauto}`;
+    if (!reference) {
+      console.error('Missing reference');
+      return new Response('version=2\ncdr=1', {
+        status: 200,
+        headers: { 'Content-Type': 'text/plain' }
+      });
+    }
 
+    // Vérifier la signature MAC
+    const macString = `${TPE}*${date}*${montant}*${reference}*${code_retour}*${cvx}*${motifrefus}*${authentification}*${numauto}`;
     const isValidMAC = await verifyMAC(macString, receivedMAC);
 
     if (!isValidMAC) {
@@ -83,10 +92,11 @@ serve(async (req: Request) => {
       });
     }
 
+    // Récupérer le paiement
     const { data: payment, error: fetchError } = await supabase
       .from('monetico_payments')
-      .select('id, lead_id, status')
-      .eq('reference', reference)
+      .select('*, crm_leads(id, first_name, last_name, email)')
+      .eq('payment_reference', reference)
       .single();
 
     if (fetchError || !payment) {
@@ -97,82 +107,57 @@ serve(async (req: Request) => {
       });
     }
 
-    let status = 'failed';
-    if (code_retour === 'payetest' || code_retour === 'paiement') {
-      status = 'success';
+    // Déterminer le statut
+    let paymentStatus = 'failed';
+    if (code_retour === 'payetest' || code_retour === 'paye') {
+      paymentStatus = 'paid';
     } else if (code_retour === 'Annulation') {
-      status = 'cancelled';
+      paymentStatus = 'cancelled';
     }
 
-    if (payment.status === 'pending' || payment.status === 'processing') {
-      const updateData: any = {
-        status,
-        transaction_id: numauto,
-        payment_date: status === 'success' ? new Date().toISOString() : null,
-        card_type: brand,
-        authorization_number: numauto,
-        mac_received: receivedMAC,
-        monetico_data: {
-          ...webhookData,
-          received_at: new Date().toISOString()
-        }
-      };
+    console.log('Processing payment:', { reference, paymentStatus });
 
-      if (modepaiement && modepaiement.includes('CB')) {
-        const lastDigits = modepaiement.match(/\d{4}$/);
-        if (lastDigits) {
-          updateData.card_last4 = lastDigits[0];
-        }
-      }
+    // Traiter via la fonction RPC
+    const { error: processError } = await supabase.rpc('process_monetico_payment', {
+      p_reference: reference,
+      p_status: paymentStatus,
+      p_transaction_id: numauto || null,
+      p_response_data: webhookData
+    });
 
-      const { error: updateError } = await supabase
-        .from('monetico_payments')
-        .update(updateData)
-        .eq('id', payment.id);
+    if (processError) {
+      console.error('Error processing payment:', processError);
+      return new Response('version=2\ncdr=1', {
+        status: 200,
+        headers: { 'Content-Type': 'text/plain' }
+      });
+    }
 
-      if (updateError) {
-        console.error('Error updating payment:', updateError);
-        return new Response('version=2\ncdr=1', {
-          status: 200,
-          headers: { 'Content-Type': 'text/plain' }
+    // Créer notification CRM si paiement réussi
+    if (paymentStatus === 'paid' && payment.created_by) {
+      try {
+        await supabase.from('crm_event_notifications').insert({
+          lead_id: payment.lead_id,
+          event_type: 'payment_received',
+          title: 'Paiement reçu 💰',
+          message: `Paiement de ${payment.amount}€ reçu pour ${payment.crm_leads?.first_name} ${payment.crm_leads?.last_name}`,
+          priority: 1,
+          action_url: `/backoffice/crm-killer/${payment.lead_id}`,
+          context_data: {
+            payment_id: payment.id,
+            reference: reference,
+            amount: payment.amount,
+            transaction_id: numauto
+          }
         });
+
+        console.log('Notification created for commercial');
+      } catch (notifError) {
+        console.error('Error creating notification:', notifError);
       }
-
-      if (status === 'success') {
-        await supabase
-          .from('lead_contracts')
-          .update({
-            down_payment_status: 'paid',
-            down_payment_paid_at: new Date().toISOString(),
-            down_payment_transaction_id: numauto
-          })
-          .eq('lead_id', payment.lead_id)
-          .eq('down_payment_status', 'pending');
-
-        await supabase
-          .from('crm_leads')
-          .update({ status: 'down_payment_required' })
-          .eq('id', payment.lead_id);
-
-        await supabase
-          .from('crm_interactions')
-          .insert({
-            lead_id: payment.lead_id,
-            type: 'system',
-            direction: 'inbound',
-            channel: 'payment',
-            content: `Paiement comptant reçu via Monético: ${montant}`,
-            metadata: {
-              payment_id: payment.id,
-              reference,
-              transaction_id: numauto,
-              amount: montant
-            }
-          });
-      }
-
-      console.log('Payment updated successfully:', { paymentId: payment.id, status });
     }
+
+    console.log('Payment processed successfully');
 
     return new Response('version=2\ncdr=0', {
       status: 200,
@@ -180,7 +165,7 @@ serve(async (req: Request) => {
     });
 
   } catch (error: any) {
-    console.error('Error processing Monetico webhook:', error);
+    console.error('Error in monetico-webhook:', error);
     return new Response('version=2\ncdr=1', {
       status: 200,
       headers: { 'Content-Type': 'text/plain' }
