@@ -7,47 +7,76 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
 };
 
-async function sendEmailBrevo(
+function base64Encode(str: string): string {
+  return btoa(str);
+}
+
+async function sendEmailSMTP(
   to: string,
   toName: string,
   subject: string,
-  htmlBody: string
+  htmlBody: string,
+  fromEmail: string = "team@taxiassur.com",
+  fromName: string = "TaxiAssur"
 ): Promise<void> {
-  const BREVO_API_KEY = Deno.env.get("BREVO_API_KEY");
+  const SMTP_HOST = Deno.env.get("IONOS_SMTP_HOST") || "smtp.ionos.fr";
+  const SMTP_PORT = parseInt(Deno.env.get("IONOS_SMTP_PORT") || "465");
+  const SMTP_USER = Deno.env.get("IONOS_EMAIL_USER") || "team@taxiassur.com";
+  const SMTP_PASS = Deno.env.get("IONOS_EMAIL_PASSWORD");
 
-  if (!BREVO_API_KEY) {
-    throw new Error("BREVO_API_KEY not configured");
+  if (!SMTP_PASS) {
+    throw new Error("IONOS_EMAIL_PASSWORD not configured");
   }
 
-  const response = await fetch("https://api.brevo.com/v3/smtp/email", {
-    method: "POST",
-    headers: {
-      "accept": "application/json",
-      "api-key": BREVO_API_KEY,
-      "content-type": "application/json",
-    },
-    body: JSON.stringify({
-      sender: {
-        name: "TaxiAssur",
-        email: "team@taxiassur.com"
-      },
-      to: [
-        {
-          email: to,
-          name: toName
-        }
-      ],
-      subject: subject,
-      htmlContent: htmlBody
-    })
+  const conn = await Deno.connect({
+    hostname: SMTP_HOST,
+    port: SMTP_PORT,
   });
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Erreur envoi email Brevo: ${response.status} - ${errorText}`);
+  const encoder = new TextEncoder();
+  const decoder = new TextDecoder();
+
+  async function readResponse(): Promise<string> {
+    const buffer = new Uint8Array(1024);
+    const n = await conn.read(buffer);
+    if (n === null) return "";
+    return decoder.decode(buffer.subarray(0, n));
   }
 
-  console.log(`✅ Email envoyé via Brevo à ${to}`);
+  async function sendCommand(cmd: string): Promise<string> {
+    await conn.write(encoder.encode(cmd + "\r\n"));
+    return await readResponse();
+  }
+
+  try {
+    await readResponse();
+    await sendCommand(`EHLO ${SMTP_HOST}`);
+    await sendCommand(`AUTH LOGIN`);
+    await sendCommand(base64Encode(SMTP_USER));
+    await sendCommand(base64Encode(SMTP_PASS));
+    await sendCommand(`MAIL FROM:<${fromEmail}>`);
+    await sendCommand(`RCPT TO:<${to}>`);
+    await sendCommand("DATA");
+
+    const emailContent = [
+      `From: "${fromName}" <${fromEmail}>`,
+      `To: "${toName}" <${to}>`,
+      `Subject: ${subject}`,
+      "MIME-Version: 1.0",
+      "Content-Type: text/html; charset=UTF-8",
+      "",
+      htmlBody,
+      ".",
+    ].join("\r\n");
+
+    await conn.write(encoder.encode(emailContent + "\r\n"));
+    await readResponse();
+    await sendCommand("QUIT");
+  } finally {
+    conn.close();
+  }
+
+  console.log(`✅ Email envoyé via IONOS SMTP à ${to}`);
 }
 
 Deno.serve(async (req: Request) => {
@@ -224,7 +253,7 @@ Deno.serve(async (req: Request) => {
 </body>
 </html>`;
 
-    await sendEmailBrevo(
+    await sendEmailSMTP(
       leadEmail,
       `${leadFirstName || ""} ${leadLastName || ""}`.trim() || "Client",
       `💳 Paiement de votre comptant - ${formattedAmount}`,
