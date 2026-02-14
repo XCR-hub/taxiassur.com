@@ -94,6 +94,23 @@ const EspaceProspect: React.FC = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [dragOver, setDragOver] = useState<string | null>(null);
 
+  // Empêcher le comportement par défaut du navigateur pour le drag & drop
+  useEffect(() => {
+    const preventDefaults = (e: DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+    };
+
+    // Empêcher l'ouverture du fichier dans le navigateur
+    window.addEventListener('dragover', preventDefaults);
+    window.addEventListener('drop', preventDefaults);
+
+    return () => {
+      window.removeEventListener('dragover', preventDefaults);
+      window.removeEventListener('drop', preventDefaults);
+    };
+  }, []);
+
   // Mettre à jour l'onglet actif si le paramètre URL change
   useEffect(() => {
     const tabParam = searchParams.get('tab');
@@ -582,7 +599,24 @@ const EspaceProspect: React.FC = () => {
                       </div>
                     </div>
                   ) : (
-                    <label className="block cursor-pointer">
+                    <div
+                      onClick={() => {
+                        if (!isUploading) {
+                          document.getElementById(`file-input-${docType.id}`)?.click();
+                        }
+                      }}
+                      onDragOver={(e) => handleDragOver(e, docType.id)}
+                      onDragEnter={(e) => handleDragEnter(e, docType.id)}
+                      onDragLeave={handleDragLeave}
+                      onDrop={(e) => handleDrop(e, docType.id)}
+                      className={`border-2 border-dashed rounded-xl p-5 text-center transition-colors cursor-pointer ${
+                        dragOver === docType.id
+                          ? 'border-amber-500 bg-amber-500/10'
+                          : needsReupload
+                          ? 'border-red-500/50 hover:border-red-500 bg-red-500/5'
+                          : 'border-gray-600 hover:border-amber-500'
+                      }`}
+                    >
                       <input
                         type="file"
                         accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
@@ -592,20 +626,9 @@ const EspaceProspect: React.FC = () => {
                         }}
                         disabled={isUploading}
                         className="hidden"
+                        id={`file-input-${docType.id}`}
                       />
-                      <div
-                        className={`border-2 border-dashed rounded-xl p-5 text-center transition-colors ${
-                          dragOver === docType.id
-                            ? 'border-amber-500 bg-amber-500/10'
-                            : needsReupload
-                            ? 'border-red-500/50 hover:border-red-500 bg-red-500/5'
-                            : 'border-gray-600 hover:border-amber-500'
-                        }`}
-                        onDragOver={(e) => handleDragOver(e, docType.id)}
-                        onDragEnter={(e) => handleDragEnter(e, docType.id)}
-                        onDragLeave={handleDragLeave}
-                        onDrop={(e) => handleDrop(e, docType.id)}
-                      >
+                      <div className="pointer-events-none">
                         {isUploading ? (
                           <div className="flex items-center justify-center gap-3 text-amber-400">
                             <Loader2 className="animate-spin" size={24} />
@@ -621,7 +644,7 @@ const EspaceProspect: React.FC = () => {
                           </>
                         )}
                       </div>
-                    </label>
+                    </div>
                   )}
                 </div>
               );
