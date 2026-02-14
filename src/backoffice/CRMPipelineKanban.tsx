@@ -304,23 +304,26 @@ const CRMPipelineKanban: React.FC = () => {
   const handleSyncEmails = useCallback(async () => {
     setSyncingEmails(true);
     setSyncMessage('🔄 Synchronisation des emails en cours...');
+    setError(null);
 
     try {
-      // 1. Synchroniser les emails IONOS
+      // 1. Synchroniser tous les emails avec la fonction complète
       const syncResponse = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/sync-ionos-imap`,
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/sync-all-emails-complete`,
         {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({})
+          body: JSON.stringify({ limit: 50 })
         }
       );
 
       if (!syncResponse.ok) {
-        throw new Error('Erreur lors de la synchronisation des emails');
+        const errorText = await syncResponse.text();
+        console.error('Erreur sync response:', errorText);
+        throw new Error(`Erreur HTTP ${syncResponse.status}: ${errorText.substring(0, 100)}`);
       }
 
       const syncData = await syncResponse.json();
@@ -340,7 +343,9 @@ const CRMPipelineKanban: React.FC = () => {
       );
 
       if (!createLeadsResponse.ok) {
-        throw new Error('Erreur lors de la création des leads');
+        const errorText = await createLeadsResponse.text();
+        console.error('Erreur create leads response:', errorText);
+        throw new Error(`Erreur création leads: ${errorText.substring(0, 100)}`);
       }
 
       const createData = await createLeadsResponse.json();
@@ -349,15 +354,24 @@ const CRMPipelineKanban: React.FC = () => {
       // 3. Rafraîchir le pipeline
       await loadKanbanData(false);
 
+      const emailsSynced = syncData.emails_synced || syncData.total_synced || 0;
+      const leadsCreated = createData.summary?.leads_created || createData.leads_created || 0;
+      const emailsLinked = createData.summary?.emails_linked || createData.emails_linked || 0;
+
       setSyncMessage(
-        `✅ Synchronisation terminée ! ${createData.summary?.leads_created || 0} leads créés, ${createData.summary?.emails_linked || 0} emails liés`
+        `✅ Synchronisation terminée ! ${emailsSynced} emails sync, ${leadsCreated} leads créés, ${emailsLinked} emails liés`
       );
 
-      setTimeout(() => setSyncMessage(null), 5000);
-    } catch (error) {
+      setTimeout(() => setSyncMessage(null), 7000);
+    } catch (error: any) {
       console.error('❌ Erreur synchronisation:', error);
-      setSyncMessage('❌ Erreur lors de la synchronisation des emails');
-      setTimeout(() => setSyncMessage(null), 5000);
+      const errorMsg = error.message || 'Erreur inconnue';
+      setSyncMessage(`❌ ${errorMsg}`);
+      setError(errorMsg);
+      setTimeout(() => {
+        setSyncMessage(null);
+        setError(null);
+      }, 10000);
     } finally {
       setSyncingEmails(false);
     }
