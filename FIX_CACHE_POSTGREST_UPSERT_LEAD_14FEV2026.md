@@ -43,6 +43,45 @@ SELECT * FROM upsert_lead(
 
 ## Solutions Appliquées
 
+### SOLUTION FINALE : Surcharge avec Ordre Alphabétique
+
+**Migration** : `fix_upsert_lead_exact_alphabetic_signature_2026.sql`
+
+**Cause Réelle** : PostgREST trie TOUJOURS les paramètres par ordre alphabétique quand on utilise un objet JSON dans l'appel RPC.
+
+Quand le frontend appelle :
+```javascript
+supabase.rpc('upsert_lead', {
+  p_email: 'test@example.com',
+  p_first_name: 'Jean',
+  p_city: 'Paris',
+  // ...
+})
+```
+
+PostgREST réordonne automatiquement les paramètres alphabétiquement :
+`(p_city, p_email, p_first_name, p_last_name, p_metadata, p_phone, p_source)`
+
+**Solution** : Créer une surcharge de la fonction avec EXACTEMENT cet ordre.
+
+```sql
+CREATE OR REPLACE FUNCTION public.upsert_lead(
+  p_city text,              -- 1. Alphabétiquement
+  p_email text,             -- 2.
+  p_first_name text,        -- 3.
+  p_last_name text,         -- 4.
+  p_metadata jsonb,         -- 5.
+  p_phone text,             -- 6.
+  p_source text             -- 7.
+)
+RETURNS TABLE (lead_id uuid, access_token text, is_new boolean)
+...
+```
+
+Maintenant PostgreSQL a **2 surcharges** :
+1. Ordre logique avec valeurs par défaut (pour compatibilité)
+2. **Ordre alphabétique exact** (utilisé par PostgREST) ✅
+
 ### Migration 1 : `fix_upsert_lead_force_refresh_cache_2026.sql`
 
 **Actions** :
