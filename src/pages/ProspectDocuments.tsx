@@ -14,7 +14,8 @@ interface DocumentType {
 interface UploadedDocument {
   id: string;
   document_type: string;
-  file_name: string;
+  document_name: string;
+  file_name?: string;
   file_size: number;
   uploaded_at: string;
   status: string;
@@ -87,8 +88,8 @@ const ProspectDocuments: React.FC = () => {
   useEffect(() => {
     const initClient = () => {
       try {
-        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://drohhxrkoequjphvabvq.supabase.co';
-        const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRyb2hoeHJrb2VxdWpwaHZhYnZxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk3ODM3NjAsImV4cCI6MjA3NTM1OTc2MH0.LP9fh10fY0nRDjpG4VW2yGZ5sT4BkiDalox8ToMbMlg';
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://qiavtxpaznxpttkdaevy.supabase.co';
+        const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFpYXZ0eHBhem54cHR0a2RhZXZ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA5Njg1ODUsImV4cCI6MjA4NjU0NDU4NX0.FvEbDxwQy8tsTgeGr4skoJh2KXWJldlSm1RIhoDPY5g';
 
         console.log('🔧 Initializing anon client for prospect documents');
         console.log('URL:', supabaseUrl);
@@ -203,7 +204,7 @@ const ProspectDocuments: React.FC = () => {
         .insert({
           lead_id: leadInfo.id,
           document_type: documentType,
-          file_name: file.name,
+          document_name: file.name,
           file_path: fileName,
           file_size: file.size,
           mime_type: file.type,
@@ -334,7 +335,7 @@ const ProspectDocuments: React.FC = () => {
                       <div className="flex items-center gap-3">
                         <FileText className="text-green-400" size={20} />
                         <div>
-                          <p className="text-sm font-semibold text-white">{uploaded.file_name}</p>
+                          <p className="text-sm font-semibold text-white">{uploaded.document_name || uploaded.file_name}</p>
                           <p className="text-xs text-gray-400">
                             Uploadé le {new Date(uploaded.uploaded_at).toLocaleDateString('fr-FR')}
                           </p>
