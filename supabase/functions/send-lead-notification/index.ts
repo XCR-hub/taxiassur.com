@@ -65,12 +65,23 @@ async function sendEmailSMTP(
     await sendCommand(`RCPT TO:<${to}>`);
     await sendCommand("DATA");
 
+    const messageId = `<${Date.now()}.${Math.random().toString(36).substring(7)}@taxiassur.com>`;
+    const date = new Date().toUTCString();
+
     const emailContent = [
       `From: "${fromName}" <${fromEmail}>`,
       `To: "${toName}" <${to}>`,
       `Subject: ${subject}`,
+      `Date: ${date}`,
+      `Message-ID: ${messageId}`,
       "MIME-Version: 1.0",
       "Content-Type: text/html; charset=UTF-8",
+      "Content-Transfer-Encoding: 8bit",
+      "X-Mailer: TaxiAssur Mail System",
+      "X-Priority: 3",
+      "Importance: Normal",
+      "List-Unsubscribe: <mailto:team@taxiassur.com?subject=unsubscribe>",
+      "Reply-To: team@taxiassur.com",
       "",
       htmlBody,
       ".",
@@ -185,97 +196,117 @@ Deno.serve(async (req: Request) => {
 </body>
 </html>`;
 
-    // Email Prospect - Amélioré avec meilleure lisibilité
+    // Email Prospect - Version optimisée anti-spam avec meilleure lisibilité
     const clientEmailHtml = `<!DOCTYPE html>
-<html>
+<html lang="fr">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="x-apple-disable-message-reformatting">
+  <title>Demande confirmée - TaxiAssur</title>
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; line-height: 1.7; background: #f9fafb; margin: 0; padding: 20px; }
-    .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.1); }
-    .header { background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 45px 30px; text-align: center; color: white; }
-    .header h1 { margin: 0 0 12px 0; font-size: 32px; font-weight: 700; }
-    .header p { margin: 0; font-size: 18px; opacity: 0.95; }
-    .content { padding: 40px 35px; }
-    .success-box { background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-left: 5px solid #f59e0b; padding: 22px; margin: 0 0 30px 0; border-radius: 10px; box-shadow: 0 2px 10px rgba(245, 158, 11, 0.15); }
-    .success-box strong { color: #92400e; font-size: 17px; }
-    h2 { color: #111827; font-size: 22px; margin: 0 0 20px 0; font-weight: 700; }
-    .content > p { color: #374151; font-size: 16px; line-height: 1.8; margin: 0 0 18px 0; }
-    .content > ul { color: #374151; font-size: 16px; line-height: 1.8; margin: 0 0 25px 0; padding-left: 25px; }
-    .content > ul li { margin-bottom: 10px; }
-    .content > ul li strong { color: #111827; }
-    .docs-section { background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); border: 3px solid #3b82f6; padding: 30px 25px; border-radius: 16px; margin: 30px 0; box-shadow: 0 4px 15px rgba(59, 130, 246, 0.15); }
-    .docs-section h3 { color: #1e40af; margin: 0 0 20px 0; text-align: center; font-size: 20px; font-weight: 700; }
-    .doc-item { background: white; padding: 14px 18px; margin: 10px 0; border-radius: 10px; border-left: 4px solid #10b981; font-size: 15px; color: #111827; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-    .doc-item strong { font-weight: 700; margin-right: 8px; }
-    .cta-section { text-align: center; background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); padding: 30px 25px; border-radius: 16px; margin: 30px 0; }
-    .cta-section p { color: #92400e; font-weight: 700; margin: 0 0 18px 0; font-size: 17px; }
-    .cta-button { background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); color: white; padding: 18px 40px; text-decoration: none; border-radius: 50px; display: inline-block; font-weight: 700; font-size: 17px; box-shadow: 0 4px 15px rgba(249, 115, 22, 0.4); }
-    .contact-box { background: #dbeafe; padding: 28px 25px; border-radius: 16px; margin: 30px 0; text-align: center; }
-    .contact-box h3 { color: #1e40af; margin: 0 0 15px 0; font-size: 20px; font-weight: 700; }
-    .contact-box p { margin: 12px 0; font-size: 16px; color: #1f2937; }
-    .contact-box strong { font-size: 20px; color: #111827; }
-    .contact-box a { color: #1e40af; text-decoration: none; font-weight: 600; }
-    .footer { background: #111827; color: #d1d5db; padding: 35px 30px; text-align: center; }
-    .footer .logo { font-size: 24px; font-weight: 700; color: #10b981; margin-bottom: 12px; }
-    .footer p { margin: 8px 0; font-size: 14px; line-height: 1.6; }
-    .footer .legal { font-size: 12px; margin-top: 15px; color: #9ca3af; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: Arial, Helvetica, sans-serif; line-height: 1.6; background-color: #f5f5f5; color: #333333; }
+    table { border-collapse: collapse; width: 100%; }
+    img { max-width: 100%; height: auto; border: 0; }
+    .wrapper { width: 100%; table-layout: fixed; background-color: #f5f5f5; padding: 20px 0; }
+    .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; border: 1px solid #dddddd; }
+    .header { background-color: #10b981; color: #ffffff; padding: 40px 30px; text-align: center; }
+    .header h1 { font-size: 28px; font-weight: bold; margin-bottom: 10px; }
+    .header p { font-size: 16px; }
+    .content { padding: 30px; }
+    .success-message { background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; margin-bottom: 25px; }
+    .success-message strong { color: #92400e; display: block; margin-bottom: 5px; font-size: 16px; }
+    h2 { color: #111827; font-size: 20px; margin: 25px 0 15px 0; font-weight: bold; }
+    .content p { color: #4b5563; font-size: 15px; line-height: 1.7; margin-bottom: 15px; }
+    ul { margin: 0 0 20px 20px; padding: 0; }
+    ul li { color: #4b5563; font-size: 15px; line-height: 1.8; margin-bottom: 8px; }
+    ul li strong { color: #111827; font-weight: bold; }
+    .docs-box { background-color: #eff6ff; border: 2px solid #3b82f6; padding: 20px; margin: 25px 0; }
+    .docs-box h3 { color: #1e40af; font-size: 18px; text-align: center; margin-bottom: 15px; font-weight: bold; }
+    .doc-list { background-color: #ffffff; padding: 15px; margin: 0; }
+    .doc-list div { padding: 10px; margin: 5px 0; border-left: 3px solid #10b981; background-color: #f9fafb; font-size: 14px; color: #111827; }
+    .cta-box { text-align: center; background-color: #fef3c7; padding: 25px; margin: 25px 0; }
+    .cta-box p { color: #92400e; font-weight: bold; margin-bottom: 15px; font-size: 16px; }
+    .cta-button { display: inline-block; background-color: #f97316; color: #ffffff; padding: 15px 35px; text-decoration: none; border-radius: 25px; font-weight: bold; font-size: 16px; }
+    .contact-box { background-color: #eff6ff; padding: 20px; text-align: center; margin: 25px 0; }
+    .contact-box h3 { color: #1e40af; font-size: 18px; margin-bottom: 10px; font-weight: bold; }
+    .contact-box p { font-size: 15px; color: #111827; margin: 8px 0; }
+    .contact-box strong { font-size: 18px; color: #111827; }
+    .contact-box a { color: #1e40af; text-decoration: none; font-weight: bold; }
+    .footer { background-color: #1f2937; color: #d1d5db; padding: 25px; text-align: center; }
+    .footer-logo { font-size: 20px; font-weight: bold; color: #10b981; margin-bottom: 10px; }
+    .footer p { font-size: 13px; margin: 5px 0; line-height: 1.5; }
+    .footer-legal { font-size: 11px; color: #9ca3af; margin-top: 10px; }
     @media only screen and (max-width: 600px) {
-      body { padding: 10px; }
-      .header { padding: 35px 20px; }
-      .header h1 { font-size: 26px; }
-      .content { padding: 25px 20px; }
-      .docs-section, .cta-section, .contact-box { padding: 20px 15px; }
-      .cta-button { padding: 16px 30px; font-size: 16px; }
+      .wrapper { padding: 10px 0; }
+      .header { padding: 30px 20px; }
+      .header h1 { font-size: 24px; }
+      .content { padding: 20px; }
+      .docs-box, .cta-box, .contact-box { padding: 15px; }
+      .cta-button { padding: 12px 25px; font-size: 15px; }
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <h1>✅ DEMANDE REÇUE !</h1>
-      <p>Bonjour ${lead.name}</p>
-    </div>
-    <div class="content">
-      <div class="success-box">
-        <strong>Excellente nouvelle !</strong><br>
-        Votre demande de devis d'assurance taxi a été confirmée avec succès.
-      </div>
-      <h2>🎯 Prochaines étapes</h2>
-      <ul>
-        <li>Votre expert TaxiAssur vous recontacte <strong>sous 15 minutes</strong></li>
-        <li>Analyse personnalisée de vos besoins</li>
-        <li>Proposition des meilleures offres du marché</li>
-        <li>Économies moyennes constatées : <strong>580 €/an</strong></li>
-      </ul>
-      <div class="docs-section">
-        <h3>📄 7 Documents obligatoires</h3>
-        <div class="doc-item"><strong>1.</strong> Licence de taxi professionnelle</div>
-        <div class="doc-item"><strong>2.</strong> Permis de conduire (recto-verso)</div>
-        <div class="doc-item"><strong>3.</strong> Pièce d'identité (CNI/passeport)</div>
-        <div class="doc-item"><strong>4.</strong> Carte grise du véhicule</div>
-        <div class="doc-item"><strong>5.</strong> Relevé d'information assureur</div>
-        <div class="doc-item"><strong>6.</strong> Autorisation de stationnement</div>
-        <div class="doc-item"><strong>7.</strong> RIB - Relevé d'Identité Bancaire</div>
-      </div>
-      <div class="cta-section">
-        <p>📤 Uploadez vos documents maintenant !</p>
-        <a href="${prospectSpaceUrl}" class="cta-button">ACCÉDER À MON ESPACE</a>
-      </div>
-      <div class="contact-box">
-        <h3>💬 Besoin d'aide ?</h3>
-        <p>
-          <strong>📞 01 80 85 57 86</strong><br>
-          <a href="mailto:team@taxiassur.com">📧 team@taxiassur.com</a>
-        </p>
-      </div>
-    </div>
-    <div class="footer">
-      <div class="logo">TaxiAssur</div>
-      <p>Courtier spécialisé en assurance taxi et VTC</p>
-      <p class="legal">ORIAS 11 061 425 - Excellence Coverage Risks</p>
-    </div>
+  <div class="wrapper">
+    <table class="container" role="presentation">
+      <tr>
+        <td class="header">
+          <h1>Demande confirmée</h1>
+          <p>Bonjour ${lead.name}</p>
+        </td>
+      </tr>
+      <tr>
+        <td class="content">
+          <div class="success-message">
+            <strong>Votre demande a été enregistrée avec succès</strong>
+            Nous avons bien reçu votre demande de devis d'assurance taxi.
+          </div>
+
+          <h2>Ce qui va se passer maintenant</h2>
+          <ul>
+            <li>Un expert TaxiAssur vous contacte <strong>dans les 15 minutes</strong></li>
+            <li>Nous analysons vos besoins spécifiques</li>
+            <li>Vous recevez les meilleures offres du marché</li>
+            <li>Économies moyennes : <strong>580 euros par an</strong></li>
+          </ul>
+
+          <div class="docs-box">
+            <h3>Documents nécessaires (7 au total)</h3>
+            <div class="doc-list">
+              <div><strong>1.</strong> Licence de taxi professionnelle</div>
+              <div><strong>2.</strong> Permis de conduire (recto et verso)</div>
+              <div><strong>3.</strong> Pièce d'identité (carte d'identité ou passeport)</div>
+              <div><strong>4.</strong> Carte grise du véhicule</div>
+              <div><strong>5.</strong> Relevé d'information de votre assureur actuel</div>
+              <div><strong>6.</strong> Autorisation de stationnement (si applicable)</div>
+              <div><strong>7.</strong> RIB - Relevé d'Identité Bancaire</div>
+            </div>
+          </div>
+
+          <div class="cta-box">
+            <p>Déposez vos documents en ligne dès maintenant</p>
+            <a href="${prospectSpaceUrl}" class="cta-button">Accéder à mon espace</a>
+          </div>
+
+          <div class="contact-box">
+            <h3>Une question ?</h3>
+            <p>
+              <strong>Téléphone : 01 80 85 57 86</strong><br>
+              <a href="mailto:team@taxiassur.com">Email : team@taxiassur.com</a>
+            </p>
+          </div>
+        </td>
+      </tr>
+      <tr>
+        <td class="footer">
+          <div class="footer-logo">TaxiAssur</div>
+          <p>Courtier spécialisé en assurance taxi et VTC</p>
+          <p class="footer-legal">ORIAS 11 061 425 - Excellence Coverage Risks</p>
+        </td>
+      </tr>
+    </table>
   </div>
 </body>
 </html>`;
