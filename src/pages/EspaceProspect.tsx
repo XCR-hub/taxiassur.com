@@ -160,11 +160,11 @@ const EspaceProspect: React.FC = () => {
         }
       } else {
         console.warn('No lead found for token');
-        setError('Lien invalide ou expire. Verifiez que le lien est correct.');
+        setError('Ce lien d\'acces n\'est plus valide. Il a peut-etre expire ou ete regenere. Contactez-nous au 01 80 85 57 86 ou par email a team@taxiassur.com pour obtenir un nouveau lien d\'acces a votre espace.');
       }
     } catch (err: any) {
       console.error('Error loading lead:', err);
-      setError(`Erreur: ${err.message || 'Lien invalide ou expire'}`);
+      setError(`Ce lien d'acces n'est plus valide. Contactez-nous au 01 80 85 57 86 ou par email a team@taxiassur.com pour obtenir un nouveau lien.`);
     } finally {
       setLoading(false);
     }
