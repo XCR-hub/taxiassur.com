@@ -120,65 +120,60 @@ Deno.serve(async (req: Request) => {
           continue;
         }
 
-        let leadId: string;
+        // Utiliser upsert_lead pour éviter les doublons
+        const { firstName, lastName } = extractNameFromEmail(email.from_email, email.from_name);
+        const phone = extractPhoneFromContent(email.body_text || '');
 
-        if (existingLead) {
-          // Lead existe, on lie juste l'email
-          leadId = existingLead.id;
-          linked++;
-          console.log(`✅ Lead existant trouvé pour ${email.from_email}: ${leadId}`);
-        } else {
-          // Créer un nouveau lead
-          const { firstName, lastName } = extractNameFromEmail(email.from_email, email.from_name);
-          const phone = extractPhoneFromContent(email.body_text || '');
+        console.log(`🔄 Upsert lead: ${firstName} ${lastName} (${email.from_email})`);
 
-          console.log(`🆕 Création lead: ${firstName} ${lastName} (${email.from_email})`);
+        const { data: upsertResult, error: upsertError } = await supabase
+          .rpc('upsert_lead', {
+            p_email: email.from_email,
+            p_first_name: firstName || 'Prospect',
+            p_last_name: lastName || 'Email',
+            p_phone: phone || '0000000000',
+            p_city: null,
+            p_source: 'email_inbound',
+            p_metadata: {
+              first_email_id: email.id,
+              first_email_subject: email.subject,
+              first_email_date: email.received_at,
+              auto_created: true,
+              created_from: 'auto-create-leads-from-emails',
+              initial_message: email.subject,
+              phone_missing: !phone
+            }
+          });
 
-          const { data: newLead, error: createError } = await supabase
-            .from('crm_leads')
-            .insert({
-              email: email.from_email,
-              first_name: firstName || 'Prospect',
-              last_name: lastName || 'Email',
-              phone: phone || '0000000000', // Numéro fictif si pas de téléphone
-              status: 'NOUVEAU_LEAD', // ✅ Utilise le nouveau système français
-              source: 'email_inbound',
-              metadata: {
-                first_email_id: email.id,
-                first_email_subject: email.subject,
-                first_email_date: email.received_at,
-                auto_created: true,
-                created_from: 'auto-create-leads-from-emails',
-                initial_message: email.subject,
-                phone_missing: !phone
-              }
-            })
-            .select()
-            .single();
+        if (upsertError) {
+          console.error(`❌ Erreur upsert lead pour ${email.from_email}:`, upsertError);
+          console.error('Détails erreur:', JSON.stringify(upsertError, null, 2));
+          continue;
+        }
 
-          if (createError) {
-            console.error(`❌ Erreur création lead pour ${email.from_email}:`, createError);
-            console.error('Détails erreur:', JSON.stringify(createError, null, 2));
-            continue;
-          }
+        const leadId = upsertResult[0].lead_id;
+        const isNew = upsertResult[0].is_new;
 
-          leadId = newLead.id;
+        if (isNew) {
           created++;
           console.log(`✨ Nouveau lead créé: ${firstName} ${lastName} (${email.from_email}) - ID: ${leadId}`);
 
-          // Créer une notification
+          // Créer une notification pour nouveau lead seulement
           try {
             await supabase.from('crm_event_notifications').insert({
               lead_id: leadId,
               event_type: 'new_lead',
               title: 'Nouveau contact par email',
               message: `${firstName} ${lastName} a envoyé un email: "${email.subject}"`,
-              priority: 'high',
+              priority: 1,
               read: false
             });
           } catch (notifError) {
             console.error('Erreur notification:', notifError);
           }
+        } else {
+          linked++;
+          console.log(`✅ Lead existant mis à jour pour ${email.from_email}: ${leadId}`);
         }
 
         // Lier l'email au lead

@@ -159,55 +159,47 @@ Deno.serve(async (req: Request) => {
           continue;
         }
 
-        // Vérifier si le lead existe déjà
-        const { data: existingLead } = await supabase
-          .from('crm_leads')
-          .select('id')
-          .eq('email', parsedLead.email)
-          .maybeSingle();
+        // Utiliser upsert_lead pour éviter les doublons
+        const notesContent = parsedLead.message ? `Message initial: ${parsedLead.message}` : null;
 
-        if (existingLead) {
-          console.log(`[parse-form-emails] Lead already exists for ${parsedLead.email}, linking email`);
+        const { data: upsertResult, error: upsertError } = await supabase
+          .rpc('upsert_lead', {
+            p_email: parsedLead.email,
+            p_first_name: parsedLead.first_name,
+            p_last_name: parsedLead.last_name,
+            p_phone: parsedLead.phone || '0000000000',
+            p_city: parsedLead.city,
+            p_source: 'website',
+            p_metadata: {
+              vehicle_registration: parsedLead.vehicle_registration,
+              professional_status: parsedLead.professional_status,
+              initial_message: parsedLead.message,
+              parsed_from: 'form_email',
+              form_email_id: email.id
+            }
+          });
 
-          // Lier l'email au lead existant
-          await supabase
-            .from('email_messages')
-            .update({ lead_id: existingLead.id })
-            .eq('id', email.id);
-
-          skipped++;
-          continue;
-        }
-
-        // Créer le nouveau lead
-        const { data: newLead, error: createError } = await supabase
-          .from('crm_leads')
-          .insert({
-            first_name: parsedLead.first_name,
-            last_name: parsedLead.last_name,
-            email: parsedLead.email,
-            phone: parsedLead.phone,
-            city: parsedLead.city,
-            status: 'NOUVEAU_LEAD',
-            source: 'website',
-            immatriculation: parsedLead.vehicle_registration,
-            notes: parsedLead.message ? `Message initial: ${parsedLead.message}` : undefined
-          })
-          .select('id')
-          .single();
-
-        if (createError) {
-          console.error(`[parse-form-emails] Error creating lead:`, createError);
+        if (upsertError) {
+          console.error(`[parse-form-emails] Error upserting lead:`, upsertError);
           errors++;
           continue;
         }
 
-        console.log(`[parse-form-emails] Created lead ${newLead.id} for ${parsedLead.email}`);
+        const leadId = upsertResult[0].lead_id;
+        const isNew = upsertResult[0].is_new;
 
-        // Lier l'email au nouveau lead
+        if (isNew) {
+          created++;
+          console.log(`[parse-form-emails] Created lead ${leadId} for ${parsedLead.email}`);
+        } else {
+          skipped++;
+          console.log(`[parse-form-emails] Updated existing lead ${leadId} for ${parsedLead.email}`);
+        }
+
+        // Lier l'email au lead (nouveau ou existant)
         await supabase
           .from('email_messages')
-          .update({ lead_id: newLead.id })
+          .update({ lead_id: leadId })
           .eq('id', email.id);
 
         // Créer une interaction
