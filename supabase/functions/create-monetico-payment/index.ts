@@ -98,8 +98,7 @@ serve(async (req: Request) => {
       customerFirstName,
       customerLastName,
       customerPhone,
-      customReference,
-      send_email // ✅ Paramètre pour envoyer automatiquement l'email
+      customReference
     } = await req.json();
 
     console.log('📦 Données reçues:', { leadId, amount, description, customerEmail });
@@ -126,7 +125,7 @@ serve(async (req: Request) => {
         .from('crm_leads')
         .select('email, first_name, last_name, phone')
         .eq('id', leadId)
-        .maybeSingle();
+        .single();
 
       console.log('📊 Résultat:', { lead: leadData, leadError });
 
@@ -134,20 +133,19 @@ serve(async (req: Request) => {
         console.error('❌ Erreur DB:', leadError);
         return new Response(
           JSON.stringify({
-            error: 'Erreur lors de la recherche du lead',
+            error: 'Lead non trouvé',
             details: leadError.message,
             leadId: leadId
           }),
-          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
       if (!leadData) {
-        console.error('❌ Lead introuvable avec ID:', leadId);
+        console.error('❌ Lead null');
         return new Response(
           JSON.stringify({
-            error: 'Lead introuvable',
-            message: `Aucun lead trouvé avec l'ID: ${leadId}. Vérifiez que le lead existe dans la base de données.`,
+            error: 'Lead non trouvé (null)',
             leadId: leadId
           }),
           { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -216,7 +214,7 @@ serve(async (req: Request) => {
     const mac = await calculateMAC(macData);
     console.log('🔐 MAC calculé:', mac.substring(0, 10) + '...');
 
-    const { data: paymentData, error: insertError } = await supabase
+    const { error: insertError } = await supabase
       .from('monetico_payments')
       .insert({
         reference,
@@ -236,15 +234,11 @@ serve(async (req: Request) => {
           is_free_invoice: !leadId
         },
         mac_sent: mac
-      })
-      .select('id')
-      .single();
+      });
 
     if (insertError) {
       console.error('Erreur insertion:', insertError);
     }
-
-    const paymentId = paymentData?.id || null;
 
     const formData = {
       version: MONETICO_CONFIG.version,
@@ -376,59 +370,14 @@ serve(async (req: Request) => {
       </html>
     `;
 
-    // ✅ Envoi automatique de l'email au prospect si demandé
-    if (send_email && leadId && lead) {
-      try {
-        console.log('📧 Envoi email automatique au prospect...');
-
-        // Récupérer le token d'accès du lead
-        const { data: leadWithToken } = await supabase
-          .from('crm_leads')
-          .select('access_token')
-          .eq('id', leadId)
-          .maybeSingle();
-
-        const accessToken = leadWithToken?.access_token;
-
-        if (accessToken && paymentId) {
-          // ✅ Lien DIRECT vers le formulaire de paiement Monetico (pas l'espace prospect)
-          const paymentUrl = `${supabaseUrl}/functions/v1/get-monetico-payment-form?payment_id=${paymentId}&token=${accessToken}`;
-
-          // Appeler l'edge function d'envoi d'email
-          await fetch(`${supabaseUrl}/functions/v1/send-payment-link-email`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${supabaseKey}`
-            },
-            body: JSON.stringify({
-              lead_id: leadId,
-              payment_url: paymentUrl,
-              amount: parseFloat(amount),
-              email: email,
-              first_name: firstName,
-              last_name: lastName
-            })
-          });
-
-          console.log('✅ Email envoyé automatiquement à:', email);
-        }
-      } catch (emailError) {
-        console.error('⚠️ Erreur envoi email (non bloquant):', emailError);
-        // Ne pas bloquer le paiement si l'email échoue
-      }
-    }
-
     return new Response(
       JSON.stringify({
         success: true,
         reference,
-        paymentId,
         htmlForm,
         formData,
         actionUrl: MONETICO_CONFIG.urlServeur,
-        mode: TEST_MODE ? 'TEST' : 'PRODUCTION',
-        email_sent: send_email && leadId ? true : false
+        mode: TEST_MODE ? 'TEST' : 'PRODUCTION'
       }),
       {
         status: 200,

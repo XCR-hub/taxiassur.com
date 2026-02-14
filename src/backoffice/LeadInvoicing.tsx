@@ -35,9 +35,6 @@ const LeadInvoicing: React.FC = () => {
   const [description, setDescription] = useState('');
   const [creating, setCreating] = useState(false);
   const [paymentSuccess, setPaymentSuccess] = useState(false);
-  const [sendEmail, setSendEmail] = useState(false);
-  const [emailSent, setEmailSent] = useState(false);
-  const [paymentUrl, setPaymentUrl] = useState<string | null>(null);
 
   useEffect(() => {
     loadData();
@@ -105,7 +102,6 @@ const LeadInvoicing: React.FC = () => {
 
     setCreating(true);
     setPaymentSuccess(false);
-    setEmailSent(false);
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -130,48 +126,17 @@ const LeadInvoicing: React.FC = () => {
         return;
       }
 
-      if (data?.success) {
-        const fullPaymentUrl = data.paymentUrl || `${window.location.origin}/paiement/${data.reference}`;
-        setPaymentUrl(fullPaymentUrl);
-
-        // Mode 1 : Envoyer par email
-        if (sendEmail && selectedLead.email) {
-          try {
-            const { error: emailError } = await supabase.functions.invoke('send-payment-link-email', {
-              body: {
-                lead_id: selectedLead.id,
-                payment_url: fullPaymentUrl,
-                amount: parseFloat(amount),
-                email: selectedLead.email,
-                first_name: selectedLead.first_name,
-                last_name: selectedLead.last_name
-              }
-            });
-
-            if (emailError) {
-              throw emailError;
-            }
-
-            setEmailSent(true);
-            setPaymentSuccess(true);
-          } catch (emailErr) {
-            console.error('Erreur envoi email:', emailErr);
-            alert('Lien créé mais erreur lors de l\'envoi de l\'email. Le lien est disponible ci-dessous.');
-            setPaymentSuccess(true);
-          }
-        }
-        // Mode 2 : Ouvrir directement le formulaire
-        else if (!sendEmail && data.htmlForm) {
-          const newWindow = window.open('', '_blank', 'width=800,height=600');
-          if (newWindow) {
-            newWindow.document.write(data.htmlForm);
-            newWindow.document.close();
-          }
-          setPaymentSuccess(true);
+      if (data?.success && data?.htmlForm) {
+        const newWindow = window.open('', '_blank', 'width=800,height=600');
+        if (newWindow) {
+          newWindow.document.write(data.htmlForm);
+          newWindow.document.close();
         }
 
+        setPaymentSuccess(true);
         setAmount('');
         setDescription('');
+        setSelectedLead(null);
         loadData();
       }
     } catch (err: any) {
@@ -345,29 +310,6 @@ const LeadInvoicing: React.FC = () => {
                     />
                   </div>
 
-                  <div className="flex items-start gap-3 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                    <input
-                      type="checkbox"
-                      id="sendEmail"
-                      checked={sendEmail}
-                      onChange={(e) => setSendEmail(e.target.checked)}
-                      className="mt-1 w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
-                    />
-                    <label htmlFor="sendEmail" className="flex-1 cursor-pointer">
-                      <div className="font-semibold text-blue-900 flex items-center gap-2">
-                        <Mail className="w-4 h-4" />
-                        Envoyer le lien par email
-                      </div>
-                      <div className="text-sm text-blue-700 mt-1">
-                        {sendEmail ? (
-                          <>Le client recevra un email professionnel avec le lien de paiement sécurisé</>
-                        ) : (
-                          <>Le formulaire de paiement s'ouvrira directement pour saisir les informations CB du client</>
-                        )}
-                      </div>
-                    </label>
-                  </div>
-
                   <button
                     onClick={handleCreatePayment}
                     disabled={creating || !amount}
@@ -387,51 +329,14 @@ const LeadInvoicing: React.FC = () => {
                   </button>
 
                   {paymentSuccess && (
-                    <div className="space-y-3">
-                      {emailSent ? (
-                        <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-                          <div className="flex items-center gap-2 text-green-800 mb-2">
-                            <Check className="w-5 h-5" />
-                            <span className="font-semibold">Email envoyé avec succès !</span>
-                          </div>
-                          <p className="text-sm text-green-700">
-                            Le client a reçu un email professionnel avec le lien de paiement sécurisé.
-                          </p>
-                        </div>
-                      ) : (
-                        <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-                          <div className="flex items-center gap-2 text-green-800 mb-2">
-                            <Check className="w-5 h-5" />
-                            <span className="font-semibold">Lien de paiement créé !</span>
-                          </div>
-                          <p className="text-sm text-green-700">
-                            {sendEmail ? 'Le client devrait recevoir l\'email dans quelques instants.' : 'Une nouvelle fenêtre s\'est ouverte avec le formulaire Monético.'}
-                          </p>
-                        </div>
-                      )}
-
-                      {paymentUrl && (
-                        <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                          <p className="text-sm font-semibold text-blue-900 mb-2">Lien de paiement :</p>
-                          <div className="flex items-center gap-2">
-                            <input
-                              type="text"
-                              value={paymentUrl}
-                              readOnly
-                              className="flex-1 px-3 py-2 bg-white border border-blue-300 rounded-lg text-sm"
-                            />
-                            <button
-                              onClick={() => {
-                                navigator.clipboard.writeText(paymentUrl);
-                                alert('Lien copié !');
-                              }}
-                              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
-                            >
-                              Copier
-                            </button>
-                          </div>
-                        </div>
-                      )}
+                    <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                      <div className="flex items-center gap-2 text-green-800">
+                        <Check className="w-5 h-5" />
+                        <span className="font-semibold">Lien de paiement créé !</span>
+                      </div>
+                      <p className="text-sm text-green-700 mt-1">
+                        Une nouvelle fenêtre s'est ouverte avec le formulaire Monético.
+                      </p>
                     </div>
                   )}
                 </div>

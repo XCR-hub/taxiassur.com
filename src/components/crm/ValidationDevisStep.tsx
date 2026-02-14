@@ -128,7 +128,7 @@ export default function ValidationDevisStep({
 
     setSendingReminder('email');
     try {
-      const prospectUrl = `${window.location.origin}/espace-prospect/${leadAccessToken}`;
+      const prospectUrl = `${window.location.origin}/espace-prospect?token=${leadAccessToken}`;
       const subject = `${leadFirstName || 'Cher client'}, vos devis d'assurance taxi sont prêts ! 📋`;
 
       const html = `
@@ -205,7 +205,7 @@ export default function ValidationDevisStep({
 
     setSendingReminder('whatsapp');
     try {
-      const prospectUrl = `${window.location.origin}/espace-prospect/${leadAccessToken}`;
+      const prospectUrl = `${window.location.origin}/espace-prospect?token=${leadAccessToken}`;
 
       const message = `Bonjour ${leadFirstName || 'Cher client'} 👋
 
@@ -249,7 +249,7 @@ L'équipe TaxiAssur`;
 
     setSendingReminder('sms');
     try {
-      const prospectUrl = `${window.location.origin}/espace-prospect/${leadAccessToken}`;
+      const prospectUrl = `${window.location.origin}/espace-prospect?token=${leadAccessToken}`;
 
       const message = `${leadFirstName || 'Bonjour'}, vos 5 devis d'assurance taxi sont prêts ! Consultez-les : ${prospectUrl} - TaxiAssur`;
 
@@ -462,12 +462,12 @@ L'équipe TaxiAssur`;
             <input
               type="text"
               readOnly
-              value={`${window.location.origin}/espace-prospect/${leadAccessToken}`}
+              value={`${window.location.origin}/espace-prospect?token=${leadAccessToken}`}
               className="flex-1 px-3 py-2 text-sm bg-white border border-gray-300 rounded"
             />
             <button
               onClick={() => {
-                navigator.clipboard.writeText(`${window.location.origin}/espace-prospect/${leadAccessToken}`);
+                navigator.clipboard.writeText(`${window.location.origin}/espace-prospect?token=${leadAccessToken}`);
                 alert('Lien copié !');
               }}
               className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"

@@ -154,7 +154,7 @@ const Header: React.FC = () => {
 
           <div className="hidden lg:flex items-center space-x-3">
             <Link
-              to="/espace-client/login"
+              to="/espace-client"
               className="flex items-center space-x-2 bg-gray-800 hover:bg-gray-700 text-white font-semibold py-2 px-5 rounded-lg transition-all duration-300 text-sm whitespace-nowrap border border-gray-600 hover:border-yellow-400"
             >
               <User size={16} />
@@ -211,7 +211,7 @@ const Header: React.FC = () => {
                 </Link>
               ))}
               <Link
-                to="/espace-client/login"
+                to="/espace-client"
                 className="flex items-center justify-center space-x-2 bg-gray-800 hover:bg-gray-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-300 text-center mx-4 mt-4 w-[calc(100%-2rem)] border border-gray-600"
                 onClick={() => setIsMenuOpen(false)}
               >

@@ -196,7 +196,7 @@ export default function ContratSignatureStep({ leadId, onComplete }: ContratSign
 
       const prospectName = `${leadData.first_name || ''} ${leadData.last_name || ''}`.trim() || leadData.email;
       const prospectSpaceUrl = leadData.access_token
-        ? `${window.location.origin}/espace-prospect/${leadData.access_token}`
+        ? `${window.location.origin}/espace-prospect?token=${leadData.access_token}`
         : `${window.location.origin}/espace-prospect`;
 
       // Construire la liste des documents

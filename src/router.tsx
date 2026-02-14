@@ -6,9 +6,6 @@ const Home = lazy(() => import('./pages/Home'));
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
 const EspaceClient = lazy(() => import('./pages/EspaceClient'));
 const ClientAccessByToken = lazy(() => import('./pages/ClientAccessByToken'));
-const ClientLogin = lazy(() => import('./pages/client/ClientLogin'));
-const ClientDashboardAuth = lazy(() => import('./pages/client/ClientDashboardAuth'));
-const ClientCreatePassword = lazy(() => import('./pages/client/ClientCreatePassword'));
 const EspaceProspect = lazy(() => import('./pages/EspaceProspect'));
 const ProspectDocuments = lazy(() => import('./pages/ProspectDocuments'));
 const Contact = lazy(() => import('./pages/Contact'));
@@ -158,9 +155,6 @@ const LeadMarketplace = lazy(() => import('./backoffice/LeadMarketplace'));
 const UserManagement = lazy(() => import('./backoffice/UserManagement'));
 const SecurityDashboard = lazy(() => import('./backoffice/SecurityDashboard'));
 const ComplianceCenter = lazy(() => import('./backoffice/ComplianceCenter'));
-const EmailAdvancedAnalytics = lazy(() => import('./backoffice/EmailAdvancedAnalytics'));
-const ABTestingManager = lazy(() => import('./backoffice/ABTestingManager'));
-const SmartTemplatesManager = lazy(() => import('./backoffice/SmartTemplatesManager'));
 
 export const router = createBrowserRouter([
   {
@@ -183,18 +177,6 @@ export const router = createBrowserRouter([
   {
     path: '/espace-client/assurances',
     element: <ClientInsuranceSpace />,
-  },
-  {
-    path: '/espace-client/login',
-    element: <ClientLogin />,
-  },
-  {
-    path: '/espace-client/dashboard',
-    element: <ClientDashboardAuth />,
-  },
-  {
-    path: '/espace-client/create-password',
-    element: <ClientCreatePassword />,
   },
   {
     path: '/espace-prospect',
@@ -813,17 +795,5 @@ export const router = createBrowserRouter([
   {
     path: '/backoffice/compliance',
     element: <ComplianceCenter />,
-  },
-  {
-    path: '/backoffice/email-analytics',
-    element: <EmailAdvancedAnalytics />,
-  },
-  {
-    path: '/backoffice/ab-testing',
-    element: <ABTestingManager />,
-  },
-  {
-    path: '/backoffice/smart-templates',
-    element: <SmartTemplatesManager />,
   },
 ]);

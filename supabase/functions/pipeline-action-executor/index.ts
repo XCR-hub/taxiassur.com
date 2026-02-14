@@ -476,7 +476,7 @@ async function sendSignatureRequest(
     .update({ access_token: accessToken })
     .eq("id", action.lead_id);
 
-  const signatureUrl = `https://taxiassur.fr/espace-prospect/${accessToken}?action=sign`;
+  const signatureUrl = `https://taxiassur.fr/espace-prospect?token=${accessToken}&action=sign`;
 
   await sendEmail(supabase, action, {
     template: "signature_request",

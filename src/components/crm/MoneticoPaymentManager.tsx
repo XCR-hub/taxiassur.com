@@ -97,7 +97,6 @@ export function MoneticoPaymentManager({ leadId, onPaymentSuccess }: MoneticoPay
             leadId,
             amount: parseFloat(amount),
             description: description || `Paiement comptant assurance taxi`,
-            send_email: true, // ✅ Envoyer automatiquement l'email
           }),
         }
       );
@@ -106,20 +105,9 @@ export function MoneticoPaymentManager({ leadId, onPaymentSuccess }: MoneticoPay
       console.log('📦 Réponse serveur:', result);
 
       if (!response.ok) {
-        let errorMsg = result.error || 'Erreur lors de la création du paiement';
-
-        if (result.details) {
-          errorMsg += `: ${result.details}`;
-        }
-
-        if (result.message) {
-          errorMsg = result.message;
-        }
-
-        if (result.leadId) {
-          errorMsg += ` (Lead ID: ${result.leadId})`;
-        }
-
+        const errorMsg = result.details
+          ? `${result.error}: ${result.details}`
+          : result.error || 'Erreur lors de la création du paiement';
         throw new Error(errorMsg);
       }
 
@@ -133,11 +121,6 @@ export function MoneticoPaymentManager({ leadId, onPaymentSuccess }: MoneticoPay
         setAmount('');
         setDescription('');
         await loadPayments();
-
-        // Envoyer automatiquement l'email au prospect
-        if (result.paymentId) {
-          await sendPaymentEmail(result.paymentId);
-        }
       } else if (result.error) {
         throw new Error(result.error);
       }
@@ -153,27 +136,20 @@ export function MoneticoPaymentManager({ leadId, onPaymentSuccess }: MoneticoPay
     try {
       const { data: lead } = await supabase
         .from('crm_leads')
-        .select('email, first_name, last_name, access_token')
+        .select('email, first_name, access_token')
         .eq('id', leadId)
-        .maybeSingle();
+        .single();
 
       const { data: payment } = await supabase
         .from('monetico_payments')
         .select('*')
         .eq('id', paymentId)
-        .maybeSingle();
+        .single();
 
-      if (!lead || !payment) {
-        console.error('Lead ou paiement introuvable');
-        return;
-      }
+      if (!lead || !payment) return;
 
-      // ✅ Lien DIRECT vers le formulaire de paiement Monetico
-      const paymentUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-monetico-payment-form?payment_id=${paymentId}&token=${lead.access_token}`;
-
-      // Envoyer l'email via edge function
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-payment-link-email`,
+      await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-email-universal`,
         {
           method: 'POST',
           headers: {
@@ -181,27 +157,27 @@ export function MoneticoPaymentManager({ leadId, onPaymentSuccess }: MoneticoPay
             'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
           },
           body: JSON.stringify({
-            lead_id: lead.id,
-            payment_url: paymentUrl,
-            amount: payment.amount,
-            email: lead.email,
-            first_name: lead.first_name,
-            last_name: lead.last_name,
+            to: lead.email,
+            subject: 'Lien de paiement comptant - TaxiAssur',
+            htmlContent: `
+              <h2>Bonjour ${lead.first_name},</h2>
+              <p>Votre lien de paiement sécurisé est prêt.</p>
+              <p><strong>Montant :</strong> ${payment.amount} €</p>
+              <p><strong>Référence :</strong> ${payment.reference}</p>
+              <div style="margin: 30px 0;">
+                <a href="https://taxiassur.com/espace-prospect/paiement/${payment.id}?token=${lead.access_token}"
+                   style="background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
+                  Effectuer le paiement
+                </a>
+              </div>
+              <p>Ce lien est sécurisé et personnel.</p>
+              <p>Cordialement,<br>L'équipe TaxiAssur</p>
+            `,
           }),
         }
       );
-
-      if (response.ok) {
-        console.log('✅ Email envoyé avec succès');
-        alert('Email de paiement envoyé au prospect !');
-      } else {
-        const error = await response.json();
-        console.error('Erreur envoi email:', error);
-        alert(`Erreur: ${error.error || 'Impossible d\'envoyer l\'email'}`);
-      }
     } catch (err) {
       console.error('Erreur envoi email:', err);
-      alert('Erreur lors de l\'envoi de l\'email');
     }
   };
 

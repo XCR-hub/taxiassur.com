@@ -174,18 +174,21 @@ const CRMLeadDetail: React.FC = () => {
     }
 
     try {
-      const { error } = await supabase.functions.invoke('send-prospect-access', {
+      const { error } = await supabase.functions.invoke('send-email-universal', {
         body: {
-          lead_id: leadId,
-          email: lead.email,
-          first_name: lead.first_name,
-          last_name: lead.last_name,
-          access_token: lead.access_token
+          to: lead.email,
+          subject: 'Accès à votre espace prospect TaxiAssur',
+          template: 'prospect_access',
+          variables: {
+            first_name: lead.first_name || 'Prospect',
+            last_name: lead.last_name || '',
+            access_link: `${window.location.origin}/espace-prospect/${lead.access_token}`
+          }
         }
       });
 
       if (error) throw error;
-      alert('Email d\'accès prospect envoyé avec succès !');
+      alert('Email d\'accès envoyé avec succès !');
     } catch (err) {
       logger.error('Error sending email:', err);
       alert('Erreur lors de l\'envoi de l\'email');
