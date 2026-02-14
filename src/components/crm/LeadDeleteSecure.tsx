@@ -25,45 +25,26 @@ export const LeadDeleteSecure: React.FC<Props> = ({ leadId, leadName, leadEmail 
     setLoading(true);
 
     try {
-      // 1. Archiver les données dans une table de suppression
-      await supabase.from('crm_deleted_leads').insert({
-        original_lead_id: leadId,
-        lead_data: {
-          name: leadName,
-          email: leadEmail
-        },
-        deleted_reason: deleteReason,
-        deleted_at: new Date().toISOString()
+      // Appeler la fonction RPC sécurisée qui supprime le lead et log l'action
+      const { data, error } = await supabase.rpc('delete_spam_lead', {
+        p_lead_id: leadId,
+        p_reason: deleteReason
       });
 
-      // 2. Logger l'action
-      await supabase.from('crm_timeline').insert({
-        lead_id: leadId,
-        event_type: 'system',
-        title: 'Lead supprimé',
-        description: `Raison: ${deleteReason}`,
-        metadata: {
-          action: 'delete',
-          reason: deleteReason
-        }
-      });
+      if (error) {
+        console.error('Error calling delete_spam_lead:', error);
+        throw error;
+      }
 
-      // 3. Soft delete du lead (on ne supprime pas vraiment, on archive)
-      await supabase
-        .from('crm_leads')
-        .update({
-          status: 'CLIENT_LOST',
-          internal_notes: `LEAD SUPPRIMÉ LE ${new Date().toLocaleString('fr-FR')}\nRaison: ${deleteReason}`,
-          is_archived: true,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', leadId);
+      if (!data.success) {
+        throw new Error(data.error || 'Erreur lors de la suppression');
+      }
 
-      alert('Lead archivé avec succès');
+      alert('Lead supprimé définitivement avec succès ✓\nL\'action a été enregistrée dans les logs d\'audit.');
       navigate('/backoffice/crm-killer');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error deleting lead:', error);
-      alert('Erreur lors de la suppression du lead');
+      alert(`Erreur : ${error.message || 'Erreur lors de la suppression du lead'}`);
     } finally {
       setLoading(false);
     }
@@ -119,17 +100,20 @@ export const LeadDeleteSecure: React.FC<Props> = ({ leadId, leadName, leadEmail 
                 <select
                   value={deleteReason}
                   onChange={(e) => setDeleteReason(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 text-gray-900 font-medium bg-white"
                 >
                   <option value="">Sélectionnez une raison</option>
-                  <option value="doublon">Doublon détecté</option>
-                  <option value="fausse_demande">Fausse demande / Spam</option>
-                  <option value="hors_cible">Hors cible (pas de taxi)</option>
-                  <option value="demande_client">Demande du client</option>
-                  <option value="erreur_saisie">Erreur de saisie</option>
-                  <option value="injoignable_definitivement">Injoignable définitivement</option>
-                  <option value="a_deja_assurance">A déjà une assurance ailleurs</option>
-                  <option value="autre">Autre raison</option>
+                  <option value="email_service">📧 Email de service (IONOS, Instagram, notification...)</option>
+                  <option value="spam_auto">🤖 Spam ou email automatique</option>
+                  <option value="reponse_existant">↩️ Réponse d'un lead existant</option>
+                  <option value="doublon">👥 Doublon détecté</option>
+                  <option value="fausse_demande">⛔ Fausse demande</option>
+                  <option value="hors_cible">❌ Hors cible (pas de taxi/VTC)</option>
+                  <option value="erreur_saisie">✏️ Erreur de saisie</option>
+                  <option value="injoignable_definitivement">📞 Injoignable définitivement</option>
+                  <option value="a_deja_assurance">✓ A déjà une assurance ailleurs</option>
+                  <option value="demande_client">👤 Demande du prospect</option>
+                  <option value="autre">🔧 Autre raison</option>
                 </select>
               </div>
 
@@ -149,7 +133,7 @@ export const LeadDeleteSecure: React.FC<Props> = ({ leadId, leadName, leadEmail 
 
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
               <p className="text-xs text-blue-800">
-                ℹ️ <strong>Info :</strong> Le lead sera archivé (pas supprimé définitivement) et l'action sera tracée dans l'historique pour audit.
+                ℹ️ <strong>Info :</strong> Le lead sera supprimé définitivement de la base de données. Un log d'audit sera conservé avec les données du lead, la raison de suppression et votre identité pour traçabilité.
               </p>
             </div>
 

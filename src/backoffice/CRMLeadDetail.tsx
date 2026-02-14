@@ -9,6 +9,7 @@ import DocumentValidationComplete from '@/components/crm/DocumentValidationCompl
 import LeadCompanyQuotes from '@/backoffice/LeadCompanyQuotes';
 import ContractSignatureManager from '@/components/crm/ContractSignatureManager';
 import CompleteTimeline from '@/components/crm/CompleteTimeline';
+import LeadDeleteSecure from '@/components/crm/LeadDeleteSecure';
 
 interface Lead {
   id: string;
@@ -303,6 +304,12 @@ const CRMLeadDetail: React.FC = () => {
                   <Mail className="h-4 w-4" />
                   Envoyer accès espace prospect
                 </button>
+
+                <LeadDeleteSecure
+                  leadId={lead.id}
+                  leadName={`${lead.first_name || ''} ${lead.last_name || ''}`.trim() || 'Sans nom'}
+                  leadEmail={lead.email}
+                />
               </div>
             </div>
             <div>

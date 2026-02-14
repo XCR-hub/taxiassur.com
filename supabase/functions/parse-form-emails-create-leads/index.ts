@@ -140,6 +140,25 @@ Deno.serve(async (req: Request) => {
           continue;
         }
 
+        // Vérifier si l'email doit créer un lead (filtrage spam)
+        const { data: shouldCreate, error: filterError } = await supabase
+          .rpc('should_create_lead_from_email', {
+            p_email: parsedLead.email,
+            p_subject: email.subject,
+            p_body: email.body_text,
+            p_has_attachments: false
+          });
+
+        if (filterError) {
+          console.error(`[parse-form-emails] Filter error:`, filterError);
+        }
+
+        if (!shouldCreate) {
+          console.log(`[parse-form-emails] Email filtered as spam/service: ${parsedLead.email}`);
+          skipped++;
+          continue;
+        }
+
         // Vérifier si le lead existe déjà
         const { data: existingLead } = await supabase
           .from('crm_leads')
