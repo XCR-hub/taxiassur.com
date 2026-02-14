@@ -51,12 +51,11 @@ Deno.serve(async (req: Request) => {
     const normalizedEmail = input.p_email.toLowerCase().trim();
 
     // 1. Vérifier si un lead existe déjà avec cet email
-    const { data: existingLead, error: checkError } = await supabase
+    const { data: existingLead } = await supabase
       .from("crm_leads")
-      .select("id, access_token")
+      .select("id, access_token, first_name, last_name, phone, city, source, metadata")
       .eq("email", normalizedEmail)
-      .limit(1)
-      .single();
+      .maybeSingle(); // maybeSingle() ne lance pas d'erreur si aucun lead trouvé
 
     let result;
 
