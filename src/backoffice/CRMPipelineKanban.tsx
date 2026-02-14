@@ -509,12 +509,12 @@ const CRMPipelineKanban: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 p-8">
-        <div className="animate-pulse">
-          <div className="h-20 bg-gray-200 rounded-xl mb-6"></div>
+      <div className="h-full bg-gray-50 dark:bg-gray-900 p-8 flex items-center justify-center">
+        <div className="animate-pulse w-full max-w-6xl">
+          <div className="h-20 bg-gray-200 dark:bg-gray-700 rounded-xl mb-6"></div>
           <div className="flex gap-4 overflow-x-auto">
             {[...Array(6)].map((_, i) => (
-              <div key={i} className="w-80 h-96 bg-gray-200 rounded-xl flex-shrink-0"></div>
+              <div key={i} className="w-80 h-96 bg-gray-200 dark:bg-gray-700 rounded-xl flex-shrink-0"></div>
             ))}
           </div>
         </div>
@@ -523,9 +523,9 @@ const CRMPipelineKanban: React.FC = () => {
   }
 
   return (
-    <div className="h-full bg-gray-50 flex flex-col">
+    <div className="h-full bg-gray-50 dark:bg-gray-900 flex flex-col overflow-hidden">
       {/* Header */}
-      <div className="bg-white border-b z-10 shadow-sm flex-shrink-0">
+      <div className="bg-white dark:bg-gray-800 border-b dark:border-gray-700 z-10 shadow-sm flex-shrink-0">
         <div className="max-w-full px-6 py-4">
           <div className="flex items-center justify-between mb-4">
             <div>
@@ -729,8 +729,8 @@ const CRMPipelineKanban: React.FC = () => {
       )}
 
       {/* Kanban board */}
-      <div className="flex-1 p-6 overflow-x-auto">
-        <div className="flex gap-4 min-h-full" style={{ minWidth: 'max-content' }}>
+      <div className="flex-1 p-6 overflow-x-auto overflow-y-hidden">
+        <div className="flex gap-4 h-full" style={{ minWidth: 'max-content' }}>
           {visibleStatuses.map((status) => {
             const statusInfo = PIPELINE_STATUSES[status];
             const leads = filteredKanbanData[status] || [];
