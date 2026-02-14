@@ -92,6 +92,7 @@ const EspaceProspect: React.FC = () => {
     return 'documents';
   });
   const [refreshing, setRefreshing] = useState(false);
+  const [dragOver, setDragOver] = useState<string | null>(null);
 
   // Mettre à jour l'onglet actif si le paramètre URL change
   useEffect(() => {
@@ -238,6 +239,36 @@ const EspaceProspect: React.FC = () => {
       setError(err.message || "Erreur lors de l'upload");
     } finally {
       setUploading(null);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent, documentType: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOver(documentType);
+  };
+
+  const handleDragEnter = (e: React.DragEvent, documentType: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOver(documentType);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOver(null);
+  };
+
+  const handleDrop = async (e: React.DragEvent, documentType: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOver(null);
+
+    const files = e.dataTransfer.files;
+    if (files && files.length > 0) {
+      const file = files[0];
+      await handleFileUpload(documentType, file);
     }
   };
 
@@ -562,11 +593,19 @@ const EspaceProspect: React.FC = () => {
                         disabled={isUploading}
                         className="hidden"
                       />
-                      <div className={`border-2 border-dashed rounded-xl p-5 text-center transition-colors ${
-                        needsReupload
-                          ? 'border-red-500/50 hover:border-red-500 bg-red-500/5'
-                          : 'border-gray-600 hover:border-amber-500'
-                      }`}>
+                      <div
+                        className={`border-2 border-dashed rounded-xl p-5 text-center transition-colors ${
+                          dragOver === docType.id
+                            ? 'border-amber-500 bg-amber-500/10'
+                            : needsReupload
+                            ? 'border-red-500/50 hover:border-red-500 bg-red-500/5'
+                            : 'border-gray-600 hover:border-amber-500'
+                        }`}
+                        onDragOver={(e) => handleDragOver(e, docType.id)}
+                        onDragEnter={(e) => handleDragEnter(e, docType.id)}
+                        onDragLeave={handleDragLeave}
+                        onDrop={(e) => handleDrop(e, docType.id)}
+                      >
                         {isUploading ? (
                           <div className="flex items-center justify-center gap-3 text-amber-400">
                             <Loader2 className="animate-spin" size={24} />
@@ -575,8 +614,8 @@ const EspaceProspect: React.FC = () => {
                         ) : (
                           <>
                             <Upload className={needsReupload ? 'text-red-400 mx-auto mb-2' : 'text-gray-400 mx-auto mb-2'} size={28} />
-                            <p className={`text-sm ${needsReupload ? 'text-red-400' : 'text-gray-400'}`}>
-                              {needsReupload ? 'Cliquez pour renvoyer ce document' : 'Cliquez pour selectionner un fichier'}
+                            <p className={`text-sm font-medium ${needsReupload ? 'text-red-400' : 'text-gray-300'}`}>
+                              {needsReupload ? 'Cliquez ou glissez pour renvoyer' : 'Cliquez ou glissez-deposez un fichier'}
                             </p>
                             <p className="text-xs text-gray-500 mt-1">PDF, JPG, PNG ou Word (max 10MB)</p>
                           </>
