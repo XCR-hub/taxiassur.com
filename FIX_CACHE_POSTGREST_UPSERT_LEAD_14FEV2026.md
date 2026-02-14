@@ -131,6 +131,24 @@ Peu importe l'état du cache PostgREST :
 
 ---
 
-**Dernière mise à jour** : 14 février 2026 - 15:45
-**Edge Function** : v2 (maybeSingle fix)
+**Dernière mise à jour** : 14 février 2026 - 16:00
+**Edge Function** : v3 (amélioration gestion erreurs)
+**Frontend** : v2 (fallback systématique pour TOUT type d'erreur)
 **Build** : ✅ Déployé
+
+## Corrections Appliquées (14/02 16:00)
+
+### 1. Edge Function `create-lead-direct` v3
+- ✅ Remplacement `.single()` par traitement du tableau
+- ✅ Meilleur logging des erreurs
+- ✅ Gestion du cas "aucune donnée retournée"
+
+### 2. Frontend `leads.ts` - Gestion d'erreurs améliorée
+- ✅ Fallback automatique **pour TOUT type d'erreur PostgREST** (pas seulement le cache)
+- ✅ Messages d'erreur plus spécifiques (doublons, permissions, etc.)
+- ✅ Logging détaillé pour debugging
+
+### 3. Statut des Doublons
+- ✅ Si email existe → mise à jour du lead
+- ✅ Renvoi du même `access_token` pour cohérence
+- ✅ Message approprié : "Cet email est déjà enregistré"

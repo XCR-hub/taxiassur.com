@@ -377,35 +377,54 @@ export async function createLead(input: CreateLeadInput): Promise<{ success: boo
     // Essayer d'abord via RPC (PostgREST)
     ({ data, error } = await supabase.rpc('upsert_lead', leadParams));
 
-    // Si erreur de cache PostgREST, utiliser Edge Function de secours
-    if (error && (error.message?.includes('schema cache') || error.code === 'PGRST202')) {
-      logger.warn('⚠️ PostgREST cache issue, using Edge Function fallback...');
+    // Si erreur → utiliser Edge Function (fallback pour TOUT type d'erreur)
+    if (error) {
+      logger.warn('⚠️ PostgREST error (or cache issue), using Edge Function fallback...');
+      logger.warn('PostgREST error details:', {
+        message: error.message,
+        code: error.code,
+        status: (error as any).status
+      });
 
       try {
         const { data: edgeData, error: edgeError } = await supabase.functions.invoke('create-lead-direct', {
           body: leadParams
         });
 
-        if (edgeError) throw edgeError;
-        if (edgeData?.success) {
-          result = {
-            lead_id: edgeData.lead_id,
-            access_token: edgeData.access_token,
-            is_new: edgeData.is_new
-          };
-          error = null;
-          logger.log('✅ Lead created via Edge Function fallback');
-        } else {
-          throw new Error(edgeData?.error || 'Edge Function returned no result');
+        if (edgeError) {
+          logger.error('❌ Edge Function error:', edgeError);
+          throw edgeError;
         }
-      } catch (edgeErr) {
-        logger.error('❌ Edge Function fallback failed:', edgeErr);
-        return { success: false, error: 'Erreur lors de la création du lead (PostgREST et Edge Function)' };
+
+        if (!edgeData?.success) {
+          logger.error('❌ Edge Function returned error:', edgeData?.error);
+          throw new Error(edgeData?.error || 'Edge Function failed');
+        }
+
+        result = {
+          lead_id: edgeData.lead_id,
+          access_token: edgeData.access_token,
+          is_new: edgeData.is_new
+        };
+
+        logger.log('✅ Lead created via Edge Function fallback');
+      } catch (edgeErr: any) {
+        logger.error('❌ Edge Function fallback failed:', {
+          message: edgeErr?.message,
+          error: edgeErr
+        });
+
+        // Message d'erreur plus spécifique basé sur le contexte
+        const errorMsg = edgeErr?.message || 'Erreur lors de la création du lead';
+        return {
+          success: false,
+          error: errorMsg.includes('duplicate')
+            ? 'Cet email est déjà enregistré'
+            : errorMsg.includes('permission')
+            ? 'Erreur de permission'
+            : 'Erreur lors de la création du lead. Veuillez réessayer.'
+        };
       }
-    } else if (error) {
-      logger.error('❌ Supabase error creating/updating lead:', error);
-      logger.error('Error details:', JSON.stringify(error, null, 2));
-      return { success: false, error: error.message };
     } else {
       // upsert_lead retourne une table, donc on prend le premier élément
       result = data?.[0];
@@ -413,6 +432,7 @@ export async function createLead(input: CreateLeadInput): Promise<{ success: boo
         logger.error('❌ No result from upsert_lead');
         return { success: false, error: 'Erreur lors de la création du lead' };
       }
+      logger.log('✅ Lead created/updated via PostgREST');
     }
 
     logger.log(result.is_new ? '✅ New lead created in crm_leads:' : '✅ Existing lead updated:', result.lead_id);

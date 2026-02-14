@@ -93,7 +93,7 @@ Deno.serve(async (req: Request) => {
       // Générer un token d'accès
       const accessToken = crypto.randomUUID().replace(/-/g, "");
 
-      const { data: newLead, error: insertError } = await supabase
+      const { data: insertResult, error: insertError } = await supabase
         .from("crm_leads")
         .insert({
           email: normalizedEmail,
@@ -106,14 +106,21 @@ Deno.serve(async (req: Request) => {
           access_token: accessToken,
           status: "nouveau_lead",
         })
-        .select("id, access_token")
-        .single();
+        .select("id, access_token");
 
       if (insertError) {
         console.error("[create-lead-direct] Insert error:", insertError);
+        console.error("[create-lead-direct] Error code:", insertError.code);
+        console.error("[create-lead-direct] Error message:", insertError.message);
         throw insertError;
       }
 
+      if (!insertResult || insertResult.length === 0) {
+        console.error("[create-lead-direct] No data returned after insert");
+        throw new Error("Insertion réussie mais aucune donnée retournée");
+      }
+
+      const newLead = insertResult[0];
       result = {
         lead_id: newLead.id,
         access_token: newLead.access_token,
