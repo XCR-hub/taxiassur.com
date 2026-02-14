@@ -1,8 +1,16 @@
-# Fix Email Accès Espace Prospect - 14 Février 2026
+# Fix Envoi Email Accès Espace Prospect - 14 Février 2026
 
-## Problème Résolu
+## Problème Signalé
 
-Quand un commercial cliquait sur le bouton "Envoyer accès espace prospect" dans le CRM (page détail d'un lead), une erreur se produisait et l'email n'était pas envoyé.
+Le bouton "Envoyer accès espace prospect" dans le CRM (page détail d'un lead) provoquait une erreur lors de l'envoi de l'email.
+
+**Localisation** : Backoffice CRM → Détail Lead → Bouton "Envoyer accès espace prospect"
+
+---
+
+## Cause Identifiée
+
+**Port SMTP Incorrect** : Toutes les edge functions d'envoi d'emails utilisaient le port **465** (SSL/TLS direct) mais tentaient d'utiliser **STARTTLS**, ce qui est incompatible.
 
 **Localisation** : CRM → Détail Lead → Bouton "Envoyer accès espace prospect"
 
