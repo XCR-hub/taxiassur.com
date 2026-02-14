@@ -47,28 +47,82 @@ Deno.serve(async (req: Request) => {
       name: `${input.p_first_name} ${input.p_last_name}`,
     });
 
-    // Call upsert_lead function directly via SQL
-    const { data, error } = await supabase.rpc("upsert_lead", {
-      p_city: input.p_city,
-      p_email: input.p_email,
-      p_first_name: input.p_first_name,
-      p_last_name: input.p_last_name,
-      p_metadata: input.p_metadata,
-      p_phone: input.p_phone,
-      p_source: input.p_source || "website",
-    });
+    // Normaliser l'email
+    const normalizedEmail = input.p_email.toLowerCase().trim();
 
-    if (error) {
-      console.error("[create-lead-direct] Error:", error);
-      throw error;
+    // 1. Vérifier si un lead existe déjà avec cet email
+    const { data: existingLead, error: checkError } = await supabase
+      .from("crm_leads")
+      .select("id, access_token")
+      .eq("email", normalizedEmail)
+      .limit(1)
+      .single();
+
+    let result;
+
+    if (existingLead) {
+      // Lead existant : mise à jour
+      console.log("[create-lead-direct] Updating existing lead:", existingLead.id);
+
+      const { error: updateError } = await supabase
+        .from("crm_leads")
+        .update({
+          first_name: input.p_first_name || existingLead.first_name,
+          last_name: input.p_last_name || existingLead.last_name,
+          phone: input.p_phone || existingLead.phone,
+          city: input.p_city || existingLead.city,
+          source: input.p_source || existingLead.source,
+          metadata: input.p_metadata || existingLead.metadata,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", existingLead.id);
+
+      if (updateError) {
+        console.error("[create-lead-direct] Update error:", updateError);
+        throw updateError;
+      }
+
+      result = {
+        lead_id: existingLead.id,
+        access_token: existingLead.access_token,
+        is_new: false,
+      };
+    } else {
+      // Nouveau lead : insertion
+      console.log("[create-lead-direct] Creating new lead");
+
+      // Générer un token d'accès
+      const accessToken = crypto.randomUUID().replace(/-/g, "");
+
+      const { data: newLead, error: insertError } = await supabase
+        .from("crm_leads")
+        .insert({
+          email: normalizedEmail,
+          first_name: input.p_first_name,
+          last_name: input.p_last_name,
+          phone: input.p_phone,
+          city: input.p_city,
+          source: input.p_source || "website",
+          metadata: input.p_metadata || {},
+          access_token: accessToken,
+          status: "nouveau_lead",
+        })
+        .select("id, access_token")
+        .single();
+
+      if (insertError) {
+        console.error("[create-lead-direct] Insert error:", insertError);
+        throw insertError;
+      }
+
+      result = {
+        lead_id: newLead.id,
+        access_token: newLead.access_token,
+        is_new: true,
+      };
     }
 
-    const result = data?.[0];
-    if (!result) {
-      throw new Error("No result from upsert_lead");
-    }
-
-    console.log("[create-lead-direct] Lead created:", {
+    console.log("[create-lead-direct] Lead saved:", {
       lead_id: result.lead_id,
       is_new: result.is_new,
     });
