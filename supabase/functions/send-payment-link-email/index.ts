@@ -112,7 +112,7 @@ Deno.serve(async (req: Request) => {
     .payment-box { background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border: 3px solid #f59e0b; padding: 30px; border-radius: 16px; margin: 30px 0; text-align: center; box-shadow: 0 4px 15px rgba(245,158,11,0.3); }
     .amount-display { background: white; padding: 20px; border-radius: 12px; margin: 20px 0; border: 2px solid #f59e0b; }
     .amount-value { color: #ea580c; font-weight: bold; font-size: 36px; font-family: 'Courier New', monospace; }
-    .cta-button { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 20px 45px; text-decoration: none; border-radius: 50px; display: inline-block; font-weight: bold; font-size: 18px; margin: 20px 0; box-shadow: 0 4px 15px rgba(16,185,129,0.4); transition: all 0.3s; }
+    .cta-button { background: #10b981 !important; color: #ffffff !important; padding: 20px 45px; text-decoration: none; border-radius: 50px; display: inline-block; font-weight: bold; font-size: 18px; margin: 20px 0; box-shadow: 0 4px 15px rgba(16,185,129,0.4); }
     .cta-button:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(16,185,129,0.5); }
     .warning-box { background: #fef2f2; border-left: 4px solid #ef4444; padding: 15px; margin: 20px 0; border-radius: 8px; }
     .steps-box { background: #f9fafb; padding: 25px; border-radius: 12px; margin: 25px 0; }

@@ -168,7 +168,8 @@ export function MoneticoPaymentManager({ leadId, onPaymentSuccess }: MoneticoPay
         return;
       }
 
-      const paymentUrl = `https://taxiassur.com/espace-prospect?token=${lead.access_token}#paiement`;
+      // ✅ Lien DIRECT vers le formulaire de paiement Monetico
+      const paymentUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-monetico-payment-form?payment_id=${paymentId}&token=${lead.access_token}`;
 
       // Envoyer l'email via edge function
       const response = await fetch(

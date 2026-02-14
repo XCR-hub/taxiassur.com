@@ -390,8 +390,9 @@ serve(async (req: Request) => {
 
         const accessToken = leadWithToken?.access_token;
 
-        if (accessToken) {
-          const paymentUrl = `https://taxiassur.com/espace-prospect?token=${accessToken}#paiement`;
+        if (accessToken && paymentId) {
+          // ✅ Lien DIRECT vers le formulaire de paiement Monetico (pas l'espace prospect)
+          const paymentUrl = `${supabaseUrl}/functions/v1/get-monetico-payment-form?payment_id=${paymentId}&token=${accessToken}`;
 
           // Appeler l'edge function d'envoi d'email
           await fetch(`${supabaseUrl}/functions/v1/send-payment-link-email`, {
