@@ -38,19 +38,16 @@ interface LeadInfo {
   city?: string;
   company_name?: string;
   siret?: string;
+  immatriculation?: string;
   status: string;
-  document_checklist?: DocumentChecklist;
-  documents_complete?: boolean;
-  quote_amount?: number;
-  quote_accepted_at?: string;
-  contract_signed_at?: string;
-  payment_completed_at?: string;
-  contract_pdf_url?: string;
-  attestation_pdf_url?: string;
+  pipeline_stage?: string;
+  lead_score?: number;
   converted_to_client?: boolean;
-  client_since?: string;
-  current_stage_key?: string;
-  selected_company_id?: string;
+  access_token?: string;
+  contract_number?: string;
+  metadata?: any;
+  created_at?: string;
+  updated_at?: string;
 }
 
 interface UploadedDocument {
@@ -249,12 +246,13 @@ const EspaceProspect: React.FC = () => {
 
     try {
       const { error } = await anonClient
-        .from('crm_leads')
+        .from('lead_company_quotes')
         .update({
-          quote_accepted_at: new Date().toISOString(),
-          current_stage_key: 'contract'
+          status: 'accepted',
+          quote_accepted_at: new Date().toISOString()
         })
-        .eq('access_token', token);
+        .eq('lead_id', leadInfo.id)
+        .eq('status', 'sent');
 
       if (error) throw error;
 
@@ -266,8 +264,18 @@ const EspaceProspect: React.FC = () => {
   };
 
   const getDocumentStatus = (docType: string): DocumentStatus => {
-    const defaultStatus: DocumentStatus = { status: 'missing', validated: false };
-    return leadInfo?.document_checklist?.[docType] || defaultStatus;
+    const doc = uploadedDocuments.find(d => d.document_type === docType);
+    if (!doc) {
+      return { status: 'missing', validated: false };
+    }
+    const isValidated = doc.status === 'validated';
+    return {
+      status: doc.status as any,
+      validated: isValidated,
+      validated_at: doc.uploaded_at,
+      uploaded_at: doc.uploaded_at,
+      file_name: doc.file_name
+    };
   };
 
   const getUploadedDoc = (docType: string) => {
@@ -288,32 +296,37 @@ const EspaceProspect: React.FC = () => {
   };
 
   const getProgressPercentage = () => {
-    if (!leadInfo?.document_checklist) return 0;
     const requiredDocs = DOCUMENT_TYPES.filter(d => d.required);
-    const validatedCount = requiredDocs.filter(d => {
-      const status = leadInfo.document_checklist?.[d.id];
-      return status?.validated || status?.status === 'uploaded';
+    if (requiredDocs.length === 0) return 0;
+
+    const uploadedCount = requiredDocs.filter(d => {
+      const doc = uploadedDocuments.find(ud => ud.document_type === d.id);
+      return doc !== undefined;
     }).length;
-    return Math.round((validatedCount / requiredDocs.length) * 100);
+
+    return Math.round((uploadedCount / requiredDocs.length) * 100);
   };
 
   const getStepStatus = (step: 'documents' | 'devis' | 'paiement' | 'contrat') => {
     if (!leadInfo) return 'pending';
 
+    const progress = getProgressPercentage();
+    const hasDocuments = progress >= 80; // Au moins 80% des docs
+
     switch (step) {
       case 'documents':
-        return leadInfo.documents_complete ? 'completed' : 'current';
+        return hasDocuments ? 'completed' : 'current';
       case 'devis':
-        if (leadInfo.quote_accepted_at) return 'completed';
-        if (leadInfo.documents_complete) return 'current';
+        if (leadInfo.status === 'devis_valide' || leadInfo.pipeline_stage?.includes('paiement')) return 'completed';
+        if (hasDocuments) return 'current';
         return 'pending';
       case 'paiement':
-        if (leadInfo.payment_completed_at) return 'completed';
-        if (leadInfo.quote_accepted_at) return 'current';
+        if (leadInfo.status === 'contrat' || leadInfo.pipeline_stage?.includes('contrat')) return 'completed';
+        if (leadInfo.pipeline_stage?.includes('paiement')) return 'current';
         return 'pending';
       case 'contrat':
-        if (leadInfo.contract_signed_at) return 'completed';
-        if (leadInfo.payment_completed_at) return 'current';
+        if (leadInfo.converted_to_client) return 'completed';
+        if (leadInfo.pipeline_stage?.includes('contrat')) return 'current';
         return 'pending';
       default:
         return 'pending';
@@ -589,7 +602,7 @@ const EspaceProspect: React.FC = () => {
               </div>
 
               {/* Avertissement si documents pas complets */}
-              {!leadInfo.documents_complete && (
+              {progress < 100 && (
                 <div className="mb-4 bg-amber-500/10 border border-amber-500/30 rounded-lg p-4 flex items-start gap-3">
                   <AlertTriangle className="text-amber-400 flex-shrink-0 mt-0.5" size={20} />
                   <div className="text-sm">
@@ -608,7 +621,7 @@ const EspaceProspect: React.FC = () => {
 
         {activeTab === 'paiement' && (
           <div className="space-y-6">
-            {!leadInfo.quote_accepted_at ? (
+            {leadInfo.pipeline_stage !== 'etape_6_paiement' && !leadInfo.pipeline_stage?.includes('contrat') ? (
               <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-8 text-center">
                 <Euro className="text-amber-400 mx-auto mb-4" size={48} />
                 <h3 className="text-xl font-bold text-white mb-2">Devis non accepte</h3>
@@ -652,7 +665,7 @@ const EspaceProspect: React.FC = () => {
 
         {activeTab === 'contrat' && (
           <div className="space-y-6">
-            {!leadInfo.payment_completed_at ? (
+            {!leadInfo.converted_to_client && leadInfo.pipeline_stage !== 'etape_7_contrat' ? (
               <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-8 text-center">
                 <FileSignature className="text-amber-400 mx-auto mb-4" size={48} />
                 <h3 className="text-xl font-bold text-white mb-2">Paiement en attente</h3>
@@ -669,14 +682,14 @@ const EspaceProspect: React.FC = () => {
               </div>
             ) : (
               <div className="space-y-6">
-                {leadInfo.contract_pdf_url && (
+                {leadInfo.metadata?.contract_pdf_url && (
                   <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-6">
                     <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
                       <FileSignature className="text-blue-400" size={24} />
                       Votre Contrat
                     </h3>
                     <a
-                      href={leadInfo.contract_pdf_url}
+                      href={leadInfo.metadata?.contract_pdf_url}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-4 px-6 rounded-xl transition-colors flex items-center justify-center gap-2"
@@ -687,14 +700,14 @@ const EspaceProspect: React.FC = () => {
                   </div>
                 )}
 
-                {leadInfo.attestation_pdf_url && (
+                {leadInfo.metadata?.attestation_pdf_url && (
                   <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-6">
                     <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
                       <Shield className="text-green-400" size={24} />
                       Attestation d'Assurance
                     </h3>
                     <a
-                      href={leadInfo.attestation_pdf_url}
+                      href={leadInfo.metadata?.attestation_pdf_url}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-4 px-6 rounded-xl transition-colors flex items-center justify-center gap-2"
@@ -705,7 +718,7 @@ const EspaceProspect: React.FC = () => {
                   </div>
                 )}
 
-                {!leadInfo.contract_pdf_url && !leadInfo.attestation_pdf_url && (
+                {!leadInfo.metadata?.contract_pdf_url && !leadInfo.metadata?.attestation_pdf_url && (
                   <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-8 text-center">
                     <Clock className="text-blue-400 mx-auto mb-4" size={48} />
                     <h3 className="text-xl font-bold text-white mb-2">Documents en preparation</h3>
@@ -725,8 +738,10 @@ const EspaceProspect: React.FC = () => {
                       <div>
                         <h3 className="text-xl font-bold text-white">Bienvenue chez TaxiAssur !</h3>
                         <p className="text-gray-400">
-                          Vous etes client depuis le {leadInfo.client_since
-                            ? new Date(leadInfo.client_since).toLocaleDateString('fr-FR')
+                          Vous etes client depuis le {leadInfo.metadata?.client_since
+                            ? new Date(leadInfo.metadata.client_since).toLocaleDateString('fr-FR')
+                            : leadInfo.created_at
+                            ? new Date(leadInfo.created_at).toLocaleDateString('fr-FR')
                             : new Date().toLocaleDateString('fr-FR')
                           }
                         </p>
