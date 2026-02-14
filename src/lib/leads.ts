@@ -349,50 +349,50 @@ export async function createLead(input: CreateLeadInput): Promise<{ success: boo
 
     const vehicleType = input.status === 'vtc' ? 'VTC' : input.status === 'autre' ? 'Autre' : 'Taxi';
 
-    logger.log('📝 Preparing insert data...', {
+    logger.log('📝 Calling upsert_lead function...', {
       first_name: firstName,
       last_name: lastName,
       email: input.email,
       phone: input.phone,
-      city: input.city,
-      status: 'NOUVEAU_LEAD'
+      city: input.city
     });
 
+    // Utiliser la fonction upsert_lead pour éviter les doublons d'email
     const { data, error } = await supabase
-      .from('crm_leads')
-      .insert({
-        first_name: firstName,
-        last_name: lastName,
-        email: input.email,
-        phone: input.phone,
-        city: input.city,
-        source: input.source || 'website',
-        status: 'NOUVEAU_LEAD',
-        metadata: {
+      .rpc('upsert_lead', {
+        p_email: input.email,
+        p_first_name: firstName,
+        p_last_name: lastName,
+        p_phone: input.phone,
+        p_city: input.city,
+        p_source: input.source || 'website',
+        p_metadata: {
           vehicle_type: vehicleType,
           immatriculation: input.immatriculation || '',
           notes: input.notes || ''
-        },
-        consent_phone: true,
-        consent_marketing: true
+        }
       })
-      .select('*, access_token')
       .single();
 
     if (error) {
-      logger.error('❌ Supabase error creating lead:', error);
+      logger.error('❌ Supabase error creating/updating lead:', error);
       logger.error('Error details:', JSON.stringify(error, null, 2));
       return { success: false, error: error.message };
     }
 
-    logger.log('✅ Lead created successfully in crm_leads:', data?.id);
+    logger.log(data?.is_new ? '✅ New lead created in crm_leads:' : '✅ Existing lead updated:', data?.lead_id);
 
     // Envoyer les emails de manière NON-BLOQUANTE
     sendLeadNotificationEmails({
-      ...data,
+      id: data?.lead_id,
       name: input.name,
+      email: input.email,
+      phone: input.phone,
+      city: input.city,
       status: input.status,
-      immatriculation: input.immatriculation
+      immatriculation: input.immatriculation,
+      access_token: data?.access_token,
+      created_at: new Date().toISOString()
     }).then(() => {
       logger.log('✅ Emails envoyés avec succès');
     }).catch((emailError) => {
@@ -400,7 +400,7 @@ export async function createLead(input: CreateLeadInput): Promise<{ success: boo
     });
 
     // Retourner immédiatement le succès sans attendre les emails
-    return { success: true, leadId: data?.id, accessToken: data?.access_token };
+    return { success: true, leadId: data?.lead_id, accessToken: data?.access_token };
   } catch (error: any) {
     logger.error('Failed to create lead:', error);
     return { success: false, error: error.message || 'Une erreur est survenue' };
