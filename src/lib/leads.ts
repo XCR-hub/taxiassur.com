@@ -341,24 +341,13 @@ export interface CreateLeadInput {
 
 export async function createLead(input: CreateLeadInput): Promise<{ success: boolean; error?: string; leadId?: string; accessToken?: string }> {
   try {
-    logger.log('🚀 Starting lead creation:', { name: input.name, email: input.email, phone: input.phone });
-
     const nameParts = input.name.trim().split(/\s+/);
     const firstName = nameParts[0] || 'Client';
     const lastName = nameParts.slice(1).join(' ') || '';
-
     const vehicleType = input.status === 'vtc' ? 'VTC' : input.status === 'autre' ? 'Autre' : 'Taxi';
 
-    logger.log('📝 Calling upsert_lead function...', {
-      first_name: firstName,
-      last_name: lastName,
-      email: input.email,
-      phone: input.phone,
-      city: input.city
-    });
-
-    // Utiliser la fonction upsert_lead pour éviter les doublons d'email
-    let data, error, result;
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://qiavtxpaznxpttkdaevy.supabase.co';
+    const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || ((window as any).ENV_CONFIG?.VITE_SUPABASE_ANON_KEY) || '';
 
     const leadParams = {
       p_email: input.email,
@@ -374,70 +363,88 @@ export async function createLead(input: CreateLeadInput): Promise<{ success: boo
       }
     };
 
-    // Essayer d'abord via RPC (PostgREST)
-    ({ data, error } = await supabase.rpc('upsert_lead', leadParams));
+    let result: { lead_id: string; access_token: string; is_new: boolean } | null = null;
 
-    // Si erreur → utiliser Edge Function (fallback pour TOUT type d'erreur)
-    if (error) {
-      logger.warn('⚠️ PostgREST error (or cache issue), using Edge Function fallback...');
-      logger.warn('PostgREST error details:', {
-        message: error.message,
-        code: error.code,
-        status: (error as any).status
-      });
-
-      try {
-        const { data: edgeData, error: edgeError } = await supabase.functions.invoke('create-lead-direct', {
-          body: leadParams
-        });
-
-        if (edgeError) {
-          logger.error('❌ Edge Function error:', edgeError);
-          throw edgeError;
-        }
-
-        if (!edgeData?.success) {
-          logger.error('❌ Edge Function returned error:', edgeData?.error);
-          throw new Error(edgeData?.error || 'Edge Function failed');
-        }
-
-        result = {
-          lead_id: edgeData.lead_id,
-          access_token: edgeData.access_token,
-          is_new: edgeData.is_new
-        };
-
-        logger.log('✅ Lead created via Edge Function fallback');
-      } catch (edgeErr: any) {
-        logger.error('❌ Edge Function fallback failed:', {
-          message: edgeErr?.message,
-          error: edgeErr
-        });
-
-        // Message d'erreur plus spécifique basé sur le contexte
-        const errorMsg = edgeErr?.message || 'Erreur lors de la création du lead';
-        return {
-          success: false,
-          error: errorMsg.includes('duplicate')
-            ? 'Cet email est déjà enregistré'
-            : errorMsg.includes('permission')
-            ? 'Erreur de permission'
-            : 'Erreur lors de la création du lead. Veuillez réessayer.'
-        };
+    // === METHODE 1 : RPC via Supabase client ===
+    try {
+      const { data, error } = await supabase.rpc('upsert_lead', leadParams);
+      if (!error && data?.[0]) {
+        result = data[0];
+        logger.log('Lead created via RPC');
+      } else if (error) {
+        logger.warn('RPC failed:', error.message, error.code);
       }
-    } else {
-      // upsert_lead retourne une table, donc on prend le premier élément
-      result = data?.[0];
-      if (!result) {
-        logger.error('❌ No result from upsert_lead');
-        return { success: false, error: 'Erreur lors de la création du lead' };
-      }
-      logger.log('✅ Lead created/updated via PostgREST');
+    } catch (rpcErr) {
+      logger.warn('RPC exception:', rpcErr);
     }
 
-    logger.log(result.is_new ? '✅ New lead created in crm_leads:' : '✅ Existing lead updated:', result.lead_id);
+    // === METHODE 2 : Edge Function via fetch direct (bypass supabase client) ===
+    if (!result) {
+      try {
+        const edgeUrl = `${supabaseUrl}/functions/v1/create-lead-direct`;
+        const resp = await fetch(edgeUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${supabaseKey}`,
+            'apikey': supabaseKey
+          },
+          body: JSON.stringify(leadParams)
+        });
 
-    // Envoyer les emails de manière NON-BLOQUANTE
+        if (resp.ok) {
+          const edgeData = await resp.json();
+          if (edgeData?.success) {
+            result = {
+              lead_id: edgeData.lead_id,
+              access_token: edgeData.access_token,
+              is_new: edgeData.is_new
+            };
+            logger.log('Lead created via Edge Function');
+          } else {
+            logger.warn('Edge Function returned error:', edgeData?.error);
+          }
+        } else {
+          logger.warn('Edge Function HTTP error:', resp.status, resp.statusText);
+        }
+      } catch (edgeErr) {
+        logger.warn('Edge Function exception:', edgeErr);
+      }
+    }
+
+    // === METHODE 3 : RPC via fetch direct (bypass supabase client entirely) ===
+    if (!result) {
+      try {
+        const rpcUrl = `${supabaseUrl}/rest/v1/rpc/upsert_lead`;
+        const resp = await fetch(rpcUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${supabaseKey}`,
+            'apikey': supabaseKey
+          },
+          body: JSON.stringify(leadParams)
+        });
+
+        if (resp.ok) {
+          const rpcData = await resp.json();
+          if (Array.isArray(rpcData) && rpcData[0]) {
+            result = rpcData[0];
+            logger.log('Lead created via direct RPC fetch');
+          }
+        } else {
+          const errText = await resp.text();
+          logger.error('Direct RPC fetch failed:', resp.status, errText);
+        }
+      } catch (fetchErr) {
+        logger.error('Direct RPC fetch exception:', fetchErr);
+      }
+    }
+
+    if (!result) {
+      return { success: false, error: 'Impossible de créer le lead. Veuillez réessayer ou nous appeler au 01 80 85 57 86.' };
+    }
+
     sendLeadNotificationEmails({
       id: result.lead_id,
       name: input.name,
@@ -448,17 +455,14 @@ export async function createLead(input: CreateLeadInput): Promise<{ success: boo
       immatriculation: input.immatriculation,
       access_token: result.access_token,
       created_at: new Date().toISOString()
-    }).then(() => {
-      logger.log('✅ Emails envoyés avec succès');
     }).catch((emailError) => {
-      logger.error('❌ ERREUR EMAILS (non bloquante):', emailError);
+      logger.error('Email notification error (non-blocking):', emailError);
     });
 
-    // Retourner immédiatement le succès sans attendre les emails
     return { success: true, leadId: result.lead_id, accessToken: result.access_token };
   } catch (error: any) {
     logger.error('Failed to create lead:', error);
-    return { success: false, error: error.message || 'Une erreur est survenue' };
+    return { success: false, error: 'Une erreur est survenue. Veuillez réessayer.' };
   }
 }
 
