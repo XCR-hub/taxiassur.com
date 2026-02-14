@@ -523,7 +523,7 @@ const CRMPipelineKanban: React.FC = () => {
   }
 
   return (
-    <div className="h-screen bg-gray-50 flex flex-col overflow-hidden">
+    <div className="h-full bg-gray-50 flex flex-col">
       {/* Header */}
       <div className="bg-white border-b z-10 shadow-sm flex-shrink-0">
         <div className="max-w-full px-6 py-4">
@@ -729,8 +729,8 @@ const CRMPipelineKanban: React.FC = () => {
       )}
 
       {/* Kanban board */}
-      <div className="flex-1 p-6 overflow-x-auto overflow-y-hidden">
-        <div className="flex gap-4 h-full" style={{ minWidth: 'max-content' }}>
+      <div className="flex-1 p-6 overflow-x-auto">
+        <div className="flex gap-4 min-h-full" style={{ minWidth: 'max-content' }}>
           {visibleStatuses.map((status) => {
             const statusInfo = PIPELINE_STATUSES[status];
             const leads = filteredKanbanData[status] || [];
@@ -743,9 +743,10 @@ const CRMPipelineKanban: React.FC = () => {
                 onDragLeave={handleDragLeave}
                 onDrop={(e) => handleDrop(e, status)}
                 className={cn(
-                  'w-80 flex-shrink-0 transition-all duration-300 flex flex-col h-full',
+                  'w-80 flex-shrink-0 transition-all duration-300 flex flex-col',
                   isDropTarget && 'scale-[1.02]'
                 )}
+                style={{ maxHeight: 'calc(100vh - 300px)' }}
               >
                 {/* Column header - Coloré! */}
                 <div className={cn(

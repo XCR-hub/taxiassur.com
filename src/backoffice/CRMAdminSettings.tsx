@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Settings, Users, Bell, Shield, Database, Zap, Mail, MessageSquare, Bot, Save, CheckCircle, X, UserPlus, Trash2 } from 'lucide-react';
+import { Settings, Users, Bell, Shield, Database, Zap, Mail, MessageSquare, Bot, Save, CheckCircle, X, UserPlus, Trash2, Lock, Eye, Edit, AlertTriangle } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
 interface CRMSettings {
@@ -37,8 +37,37 @@ interface AdminUser {
   created_at: string;
 }
 
+interface SystemModule {
+  slug: string;
+  name: string;
+  icon: string;
+  description: string;
+}
+
+interface RolePermission {
+  role: string;
+  module_slug: string;
+  can_read: boolean;
+  can_write: boolean;
+  can_delete: boolean;
+  can_export: boolean;
+  can_validate: boolean;
+  can_assign: boolean;
+}
+
+interface UserPermission {
+  user_id: string;
+  module_slug: string;
+  can_read: boolean;
+  can_write: boolean;
+  can_delete: boolean;
+  can_export: boolean;
+  can_validate: boolean;
+  can_assign: boolean;
+}
+
 const CRMAdminSettings: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'general' | 'users' | 'notifications' | 'integrations' | 'ai'>('general');
+  const [activeTab, setActiveTab] = useState<'general' | 'users' | 'permissions' | 'notifications' | 'integrations' | 'ai'>('general');
   const [settings, setSettings] = useState<CRMSettings>({
     company_name: 'TaxiAssur',
     primary_email: 'team@taxiassur.com',
@@ -83,10 +112,20 @@ const CRMAdminSettings: React.FC = () => {
     stripe: { secret_key: '', publishable_key: '', webhook_secret: '' }
   });
 
+  // États pour l'onglet Permissions
+  const [modules, setModules] = useState<SystemModule[]>([]);
+  const [rolePermissions, setRolePermissions] = useState<RolePermission[]>([]);
+  const [selectedRole, setSelectedRole] = useState<string>('commercial');
+  const [selectedUserForPermissions, setSelectedUserForPermissions] = useState<string>('');
+  const [userPermissions, setUserPermissions] = useState<UserPermission[]>([]);
+  const [loadingPermissions, setLoadingPermissions] = useState(false);
+
   useEffect(() => {
     loadSettings();
     loadUsers();
     loadIntegrationSettings();
+    loadModules();
+    loadRolePermissions();
   }, []);
 
   const loadSettings = async () => {
@@ -272,9 +311,95 @@ const CRMAdminSettings: React.FC = () => {
     }
   };
 
+  const loadModules = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('system_modules')
+        .select('slug, name, icon, description')
+        .eq('is_active', true)
+        .order('display_order');
+
+      if (error) throw error;
+      setModules(data || []);
+    } catch (error) {
+      console.error('Erreur chargement modules:', error);
+    }
+  };
+
+  const loadRolePermissions = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('role_permissions')
+        .select('*')
+        .order('role, module_slug');
+
+      if (error) throw error;
+      setRolePermissions(data || []);
+    } catch (error) {
+      console.error('Erreur chargement permissions rôles:', error);
+    }
+  };
+
+  const loadUserPermissions = async (userId: string) => {
+    if (!userId) return;
+
+    setLoadingPermissions(true);
+    try {
+      const { data, error } = await supabase
+        .from('user_custom_permissions')
+        .select('*')
+        .eq('user_id', userId);
+
+      if (error) throw error;
+      setUserPermissions(data || []);
+    } catch (error) {
+      console.error('Erreur chargement permissions utilisateur:', error);
+    } finally {
+      setLoadingPermissions(false);
+    }
+  };
+
+  const saveUserPermission = async (userId: string, moduleSlug: string, permissionType: string, value: boolean) => {
+    try {
+      const existingPerm = userPermissions.find(p => p.user_id === userId && p.module_slug === moduleSlug);
+
+      if (existingPerm) {
+        const { error } = await supabase
+          .from('user_custom_permissions')
+          .update({ [permissionType]: value })
+          .eq('user_id', userId)
+          .eq('module_slug', moduleSlug);
+
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('user_custom_permissions')
+          .insert({
+            user_id: userId,
+            module_slug: moduleSlug,
+            [permissionType]: value,
+            can_read: permissionType === 'can_read' ? value : false,
+            can_write: permissionType === 'can_write' ? value : false,
+            can_delete: permissionType === 'can_delete' ? value : false,
+            can_export: permissionType === 'can_export' ? value : false,
+            can_validate: permissionType === 'can_validate' ? value : false,
+            can_assign: permissionType === 'can_assign' ? value : false
+          });
+
+        if (error) throw error;
+      }
+
+      loadUserPermissions(userId);
+    } catch (error) {
+      console.error('Erreur sauvegarde permission:', error);
+      alert('Erreur lors de la sauvegarde de la permission');
+    }
+  };
+
   const tabs = [
     { id: 'general', label: 'Général', icon: Settings },
     { id: 'users', label: 'Utilisateurs', icon: Users },
+    { id: 'permissions', label: 'Permissions', icon: Lock },
     { id: 'notifications', label: 'Notifications', icon: Bell },
     { id: 'integrations', label: 'Intégrations', icon: Zap },
     { id: 'ai', label: 'IA Config', icon: Bot }
@@ -465,6 +590,198 @@ const CRMAdminSettings: React.FC = () => {
                     )}
                   </div>
                 )}
+              </div>
+            )}
+
+            {activeTab === 'permissions' && (
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900 mb-6">Gestion des Permissions</h2>
+
+                <div className="grid grid-cols-2 gap-8">
+                  {/* Section gauche : Permissions par rôle */}
+                  <div>
+                    <h3 className="text-lg font-bold text-gray-900 mb-4">Permissions par rôle</h3>
+
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Sélectionner un rôle
+                      </label>
+                      <select
+                        value={selectedRole}
+                        onChange={(e) => setSelectedRole(e.target.value)}
+                        className="w-full px-4 py-2 bg-white text-gray-900 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="commercial">Commercial</option>
+                        <option value="collaborator">Collaborateur</option>
+                        <option value="manager">Manager</option>
+                        <option value="master">Master Admin</option>
+                      </select>
+                    </div>
+
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4 text-sm text-blue-800">
+                      <p className="font-medium mb-1">📋 Permissions par défaut</p>
+                      <p>Ces permissions s'appliquent automatiquement à tous les utilisateurs ayant ce rôle.</p>
+                    </div>
+
+                    <div className="space-y-2 max-h-[500px] overflow-y-auto">
+                      {modules.map((module) => {
+                        const perm = rolePermissions.find(p => p.role === selectedRole && p.module_slug === module.slug);
+                        if (!perm) return null;
+
+                        return (
+                          <div key={module.slug} className="border-2 border-gray-200 rounded-lg p-4">
+                            <div className="flex items-center gap-2 mb-2">
+                              <span className="text-xl">{module.icon}</span>
+                              <div className="flex-1">
+                                <div className="font-semibold text-gray-900">{module.name}</div>
+                                <div className="text-xs text-gray-500">{module.description}</div>
+                              </div>
+                            </div>
+                            <div className="grid grid-cols-3 gap-2 text-xs">
+                              <div className={`flex items-center gap-1 ${perm.can_read ? 'text-green-700' : 'text-gray-400'}`}>
+                                {perm.can_read ? <Eye size={14} /> : <X size={14} />}
+                                <span>Voir</span>
+                              </div>
+                              <div className={`flex items-center gap-1 ${perm.can_write ? 'text-green-700' : 'text-gray-400'}`}>
+                                {perm.can_write ? <Edit size={14} /> : <X size={14} />}
+                                <span>Modifier</span>
+                              </div>
+                              <div className={`flex items-center gap-1 ${perm.can_delete ? 'text-green-700' : 'text-gray-400'}`}>
+                                {perm.can_delete ? <Trash2 size={14} /> : <X size={14} />}
+                                <span>Supprimer</span>
+                              </div>
+                              <div className={`flex items-center gap-1 ${perm.can_export ? 'text-green-700' : 'text-gray-400'}`}>
+                                {perm.can_export ? <CheckCircle size={14} /> : <X size={14} />}
+                                <span>Exporter</span>
+                              </div>
+                              <div className={`flex items-center gap-1 ${perm.can_validate ? 'text-green-700' : 'text-gray-400'}`}>
+                                {perm.can_validate ? <CheckCircle size={14} /> : <X size={14} />}
+                                <span>Valider</span>
+                              </div>
+                              <div className={`flex items-center gap-1 ${perm.can_assign ? 'text-green-700' : 'text-gray-400'}`}>
+                                {perm.can_assign ? <CheckCircle size={14} /> : <X size={14} />}
+                                <span>Assigner</span>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Section droite : Permissions personnalisées par utilisateur */}
+                  <div>
+                    <h3 className="text-lg font-bold text-gray-900 mb-4">Permissions personnalisées</h3>
+
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Sélectionner un utilisateur
+                      </label>
+                      <select
+                        value={selectedUserForPermissions}
+                        onChange={(e) => {
+                          setSelectedUserForPermissions(e.target.value);
+                          loadUserPermissions(e.target.value);
+                        }}
+                        className="w-full px-4 py-2 bg-white text-gray-900 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="">-- Choisir un utilisateur --</option>
+                        {users.filter(u => u.is_active).map((user) => (
+                          <option key={user.id} value={user.id}>
+                            {user.email} ({user.role})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {selectedUserForPermissions ? (
+                      <>
+                        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4 text-sm text-yellow-800">
+                          <p className="font-medium mb-1 flex items-center gap-2">
+                            <AlertTriangle size={16} />
+                            Permissions personnalisées
+                          </p>
+                          <p>Ces permissions remplacent les permissions par défaut du rôle pour cet utilisateur.</p>
+                        </div>
+
+                        {loadingPermissions ? (
+                          <div className="text-center py-8">
+                            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+                            <p className="text-gray-600 mt-4">Chargement...</p>
+                          </div>
+                        ) : (
+                          <div className="space-y-2 max-h-[500px] overflow-y-auto">
+                            {modules.map((module) => {
+                              const user = users.find(u => u.id === selectedUserForPermissions);
+                              const defaultPerm = rolePermissions.find(p => p.role === user?.role && p.module_slug === module.slug);
+                              const customPerm = userPermissions.find(p => p.module_slug === module.slug);
+
+                              const hasCustom = customPerm && (
+                                customPerm.can_read !== defaultPerm?.can_read ||
+                                customPerm.can_write !== defaultPerm?.can_write ||
+                                customPerm.can_delete !== defaultPerm?.can_delete ||
+                                customPerm.can_export !== defaultPerm?.can_export ||
+                                customPerm.can_validate !== defaultPerm?.can_validate ||
+                                customPerm.can_assign !== defaultPerm?.can_assign
+                              );
+
+                              return (
+                                <div key={module.slug} className={`border-2 rounded-lg p-4 ${hasCustom ? 'border-orange-400 bg-orange-50' : 'border-gray-200'}`}>
+                                  <div className="flex items-center gap-2 mb-3">
+                                    <span className="text-xl">{module.icon}</span>
+                                    <div className="flex-1">
+                                      <div className="font-semibold text-gray-900">{module.name}</div>
+                                      <div className="text-xs text-gray-500">{module.description}</div>
+                                    </div>
+                                    {hasCustom && (
+                                      <span className="text-xs bg-orange-200 text-orange-800 px-2 py-1 rounded font-medium">
+                                        Personnalisé
+                                      </span>
+                                    )}
+                                  </div>
+
+                                  <div className="grid grid-cols-2 gap-2 text-xs">
+                                    {['can_read', 'can_write', 'can_delete', 'can_export', 'can_validate', 'can_assign'].map((permType) => {
+                                      const label = {
+                                        can_read: 'Voir',
+                                        can_write: 'Modifier',
+                                        can_delete: 'Supprimer',
+                                        can_export: 'Exporter',
+                                        can_validate: 'Valider',
+                                        can_assign: 'Assigner'
+                                      }[permType];
+
+                                      const isChecked = customPerm?.[permType as keyof UserPermission] ?? defaultPerm?.[permType as keyof RolePermission] ?? false;
+                                      const isDefault = !customPerm && defaultPerm?.[permType as keyof RolePermission];
+
+                                      return (
+                                        <label key={permType} className={`flex items-center gap-2 p-2 rounded cursor-pointer hover:bg-gray-100 ${isDefault ? 'opacity-60' : ''}`}>
+                                          <input
+                                            type="checkbox"
+                                            checked={Boolean(isChecked)}
+                                            onChange={(e) => saveUserPermission(selectedUserForPermissions, module.slug, permType, e.target.checked)}
+                                            className="w-4 h-4 text-blue-600"
+                                          />
+                                          <span>{label}</span>
+                                          {isDefault && <span className="text-gray-400 text-xs">(défaut)</span>}
+                                        </label>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <div className="text-center py-12 text-gray-500 border-2 border-dashed border-gray-300 rounded-lg">
+                        <Shield size={48} className="mx-auto mb-3 text-gray-400" />
+                        <p>Sélectionnez un utilisateur pour voir et modifier ses permissions</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
             )}
 

@@ -307,8 +307,8 @@ const CRMLayout: React.FC = () => {
         {/* Notifications push qui glissent de droite à gauche */}
         <CRMPushNotifications />
 
-        {/* Contenu Scrollable - ICI ON AFFICHE LES PAGES ENFANTS */}
-        <div className="flex-1 overflow-y-auto">
+        {/* Contenu - ICI ON AFFICHE LES PAGES ENFANTS */}
+        <div className="flex-1 overflow-hidden">
           <Outlet />
         </div>
       </main>

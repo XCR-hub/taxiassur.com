@@ -243,38 +243,7 @@ export function CRMPushNotifications() {
 
   return (
     <>
-      {/* Boutons de contrôle (toujours visibles) */}
-      <div className="fixed top-4 right-4 z-[100] flex gap-2">
-        {/* Bouton test du son */}
-        <button
-          onClick={testSound}
-          className="p-3 bg-green-600 hover:bg-green-700 rounded-full shadow-lg hover:shadow-xl transition-all"
-          title="Tester le son et la notification"
-        >
-          <Bell className="w-5 h-5 text-white animate-pulse" />
-        </button>
-
-        {/* Bouton toggle son */}
-        <button
-          onClick={toggleSound}
-          className={`
-            p-3 rounded-full shadow-lg hover:shadow-xl transition-all
-            ${soundEnabled
-              ? 'bg-blue-600 hover:bg-blue-700'
-              : 'bg-gray-300 hover:bg-gray-400'
-            }
-          `}
-          title={soundEnabled ? 'Son activé - Cliquer pour désactiver' : 'Son désactivé - Cliquer pour activer'}
-        >
-          {soundEnabled ? (
-            <Bell className="w-5 h-5 text-white" />
-          ) : (
-            <Bell className="w-5 h-5 text-gray-600 line-through" />
-          )}
-        </button>
-      </div>
-
-      {/* Container des toasts */}
+      {/* Container des toasts - pas de boutons de contrôle pour éviter les doublons */}
       {toasts.length > 0 && (
         <div className="fixed top-20 right-4 z-[999] space-y-3 pointer-events-none">
         {toasts.map((toast, index) => (
