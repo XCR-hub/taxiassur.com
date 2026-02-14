@@ -14,6 +14,7 @@ interface Lead {
   email: string;
   phone: string;
   city: string;
+  access_token?: string;
 }
 
 interface InsuranceCompany {
@@ -27,18 +28,15 @@ interface InsuranceCompany {
 interface CompanyQuote {
   id: string;
   lead_id: string;
-  company_id: string;
-  status: 'pending' | 'quote_submitted' | 'refused' | 'validated';
+  insurance_company_id: string;
+  quote_status: 'pending' | 'quote_submitted' | 'refused' | 'validated' | 'accepted';
   quote_amount: number | null;
-  quote_file_url: string | null;
+  quote_pdf_url: string | null;
   refusal_reason: string | null;
-  refusal_screenshot_url: string | null;
-  submitted_by: string | null;
-  submitted_at: string | null;
+  sent_at: string | null;
   validated_at: string | null;
   quote_accepted_at: string | null;
-  quote_refused_at: string | null;
-  notes: string | null;
+  metadata: any;
   company: InsuranceCompany;
 }
 
@@ -86,17 +84,16 @@ export default function LeadCompanyQuotes({ leadId }: Props) {
 
   const loadData = async () => {
     try {
-      const [leadRes, quotesRes, mandatoryCheckRes] = await Promise.all([
-        supabase.from('crm_leads').select('*').eq('id', leadId).maybeSingle(),
+      const [leadRes, quotesRes] = await Promise.all([
+        supabase.from('crm_leads').select('id, first_name, last_name, email, phone, city, access_token').eq('id', leadId).maybeSingle(),
         supabase
           .from('lead_company_quotes')
           .select(`
             *,
-            company:insurance_companies(*)
+            company:insurance_companies!insurance_company_id(*)
           `)
           .eq('lead_id', leadId)
-          .order('created_at', { ascending: true }),
-        supabase.rpc('check_all_mandatory_companies_processed', { p_lead_id: leadId })
+          .order('created_at', { ascending: true })
       ]);
 
       if (leadRes.error && leadRes.error.code !== 'PGRST116') throw leadRes.error;
@@ -108,11 +105,12 @@ export default function LeadCompanyQuotes({ leadId }: Props) {
           name: `${leadRes.data.first_name || ''} ${leadRes.data.last_name || ''}`.trim() || leadRes.data.email,
           email: leadRes.data.email,
           phone: leadRes.data.phone,
-          city: leadRes.data.city || ''
+          city: leadRes.data.city || '',
+          access_token: leadRes.data.access_token
         });
       }
       setQuotes(quotesRes.data || []);
-      setAllMandatoryProcessed(mandatoryCheckRes.data || false);
+      setAllMandatoryProcessed(quotes.length > 0 && quotes.every(q => q.quote_status !== 'pending'));
     } catch (error) {
       console.error('Erreur chargement:', error);
     } finally {
@@ -152,11 +150,11 @@ export default function LeadCompanyQuotes({ leadId }: Props) {
 
   const handleSubmitQuote = (quote: CompanyQuote) => {
     setSelectedQuote(quote);
-    loadCompanyDocuments(quote.company_id);
+    loadCompanyDocuments(quote.insurance_company_id);
     setQuoteFormData({
       quote_amount: quote.quote_amount?.toString() || '',
-      quote_file_url: quote.quote_file_url || '',
-      notes: quote.notes || ''
+      quote_file_url: quote.quote_pdf_url || '',
+      notes: ''
     });
     setIsQuoteModalOpen(true);
   };
@@ -166,8 +164,8 @@ export default function LeadCompanyQuotes({ leadId }: Props) {
     setRefusalFormData({
       refusal_reason_code: '',
       refusal_reason: quote.refusal_reason || '',
-      refusal_screenshot_url: quote.refusal_screenshot_url || '',
-      notes: quote.notes || ''
+      refusal_screenshot_url: '',
+      notes: ''
     });
     setIsRefusalModalOpen(true);
   };
@@ -180,17 +178,14 @@ export default function LeadCompanyQuotes({ leadId }: Props) {
 
     setSaving(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-
       const { error } = await supabase
         .from('lead_company_quotes')
         .update({
-          status: 'quote_submitted',
+          quote_status: 'quote_submitted',
           quote_amount: parseFloat(quoteFormData.quote_amount) || null,
-          quote_file_url: quoteFormData.quote_file_url,
-          notes: quoteFormData.notes,
-          submitted_by: user?.id,
-          submitted_at: new Date().toISOString()
+          quote_pdf_url: quoteFormData.quote_file_url,
+          sent_at: new Date().toISOString(),
+          metadata: { notes: quoteFormData.notes }
         })
         .eq('id', selectedQuote.id);
 
@@ -215,8 +210,6 @@ export default function LeadCompanyQuotes({ leadId }: Props) {
 
     setSaving(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-
       const selectedReason = refusalReasons.find(r => r.code === refusalFormData.refusal_reason_code);
       const fullRefusalReason = selectedReason
         ? `${selectedReason.label}${refusalFormData.notes ? ` - ${refusalFormData.notes}` : ''}`
@@ -225,12 +218,13 @@ export default function LeadCompanyQuotes({ leadId }: Props) {
       const { error } = await supabase
         .from('lead_company_quotes')
         .update({
-          status: 'refused',
+          quote_status: 'refused',
           refusal_reason: fullRefusalReason,
-          refusal_screenshot_url: refusalFormData.refusal_screenshot_url,
-          notes: refusalFormData.notes,
-          submitted_by: user?.id,
-          submitted_at: new Date().toISOString()
+          sent_at: new Date().toISOString(),
+          metadata: {
+            refusal_screenshot_url: refusalFormData.refusal_screenshot_url,
+            notes: refusalFormData.notes
+          }
         })
         .eq('id', selectedQuote.id);
 
@@ -256,6 +250,7 @@ export default function LeadCompanyQuotes({ leadId }: Props) {
       case 'refused':
         return <Badge variant="danger" icon={<XCircle className="w-3 h-3" />}>Refusé</Badge>;
       case 'validated':
+      case 'accepted':
         return <Badge variant="success" icon={<CheckCircle className="w-3 h-3" />}>Validé</Badge>;
       default:
         return null;
@@ -264,7 +259,7 @@ export default function LeadCompanyQuotes({ leadId }: Props) {
 
   const calculateProgress = () => {
     const total = quotes.length;
-    const processed = quotes.filter(q => q.status !== 'pending').length;
+    const processed = quotes.filter(q => q.quote_status !== 'pending').length;
     return total > 0 ? (processed / total) * 100 : 0;
   };
 
@@ -326,7 +321,7 @@ export default function LeadCompanyQuotes({ leadId }: Props) {
   }
 
   const progress = calculateProgress();
-  const allProcessed = quotes.every(q => q.status !== 'pending');
+  const allProcessed = quotes.every(q => q.quote_status !== 'pending');
 
   return (
     <div className="space-y-6">
@@ -406,7 +401,7 @@ export default function LeadCompanyQuotes({ leadId }: Props) {
         <div className="mb-2">
           <div className="flex items-center justify-between text-sm text-gray-400 mb-2">
             <span>Progression</span>
-            <span>{quotes.filter(q => q.status !== 'pending').length} / {quotes.length}</span>
+            <span>{quotes.filter(q => q.quote_status !== 'pending').length} / {quotes.length}</span>
           </div>
           <Progress
             value={progress}
@@ -422,9 +417,9 @@ export default function LeadCompanyQuotes({ leadId }: Props) {
             key={quote.id}
             className={`
               bg-gray-900 rounded-xl border p-6
-              ${quote.status === 'pending' ? 'border-yellow-500/30' : 'border-gray-800'}
-              ${quote.status === 'validated' ? 'border-green-500/30' : ''}
-              ${quote.status === 'refused' ? 'border-red-500/30' : ''}
+              ${quote.quote_status === 'pending' ? 'border-yellow-500/30' : 'border-gray-800'}
+              ${quote.quote_status === 'validated' || quote.quote_status === 'accepted' ? 'border-green-500/30' : ''}
+              ${quote.quote_status === 'refused' ? 'border-red-500/30' : ''}
             `}
           >
             <div className="flex items-start justify-between mb-4">
@@ -440,7 +435,7 @@ export default function LeadCompanyQuotes({ leadId }: Props) {
                     <Building2 className="w-8 h-8 text-gray-600" />
                   )}
                   <h3 className="text-xl font-bold text-white">{quote.company.name}</h3>
-                  {getStatusBadge(quote.status)}
+                  {getStatusBadge(quote.quote_status)}
                 </div>
                 {quote.company.description && (
                   <p className="text-gray-400 text-sm">{quote.company.description}</p>
@@ -448,7 +443,7 @@ export default function LeadCompanyQuotes({ leadId }: Props) {
               </div>
             </div>
 
-            {quote.status === 'pending' && (
+            {quote.quote_status === 'pending' && (
               <div className="flex gap-3">
                 <button
                   onClick={() => handleSubmitQuote(quote)}
@@ -467,7 +462,7 @@ export default function LeadCompanyQuotes({ leadId }: Props) {
               </div>
             )}
 
-            {quote.status === 'quote_submitted' && (
+            {quote.quote_status === 'quote_submitted' && (
               <div className="bg-gray-950 rounded-lg p-4 border border-gray-800">
                 <div className="grid grid-cols-2 gap-4 mb-3">
                   {quote.quote_amount && (
@@ -478,12 +473,12 @@ export default function LeadCompanyQuotes({ leadId }: Props) {
                   )}
                   <div>
                     <div className="text-gray-400 text-sm">Soumis le</div>
-                    <div className="text-white">{new Date(quote.submitted_at!).toLocaleDateString('fr-FR')}</div>
+                    <div className="text-white">{new Date(quote.sent_at!).toLocaleDateString('fr-FR')}</div>
                   </div>
                 </div>
-                {quote.quote_file_url && (
+                {quote.quote_pdf_url && (
                   <a
-                    href={quote.quote_file_url}
+                    href={quote.quote_pdf_url}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-2 text-blue-500 hover:text-blue-400"
@@ -492,16 +487,16 @@ export default function LeadCompanyQuotes({ leadId }: Props) {
                     Voir le devis
                   </a>
                 )}
-                {quote.notes && (
+                {quote.metadata?.notes && (
                   <div className="mt-3 text-gray-400 text-sm">
                     <MessageSquare className="w-4 h-4 inline mr-1" />
-                    {quote.notes}
+                    {quote.metadata.notes}
                   </div>
                 )}
               </div>
             )}
 
-            {quote.status === 'refused' && (
+            {quote.quote_status === 'refused' && (
               <div className="bg-red-950/20 rounded-lg p-4 border border-red-800/30">
                 <div className="flex items-start gap-3">
                   <AlertTriangle className="w-5 h-5 text-red-500 flex-shrink-0 mt-1" />
@@ -526,9 +521,9 @@ export default function LeadCompanyQuotes({ leadId }: Props) {
                         {quote.refusal_reason}
                       </div>
                     )}
-                    {quote.refusal_screenshot_url && (
+                    {quote.metadata?.refusal_screenshot_url && (
                       <a
-                        href={quote.refusal_screenshot_url}
+                        href={quote.metadata.refusal_screenshot_url}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex items-center gap-2 text-blue-500 hover:text-blue-400 mt-2"
@@ -542,7 +537,7 @@ export default function LeadCompanyQuotes({ leadId }: Props) {
               </div>
             )}
 
-            {quote.status === 'validated' && (
+            {(quote.quote_status === 'validated' || quote.quote_status === 'accepted') && (
               <div className="bg-green-950/20 rounded-lg p-4 border border-green-800/30">
                 <div className="flex items-start gap-3">
                   <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-1" />
@@ -566,9 +561,9 @@ export default function LeadCompanyQuotes({ leadId }: Props) {
                         Montant : {quote.quote_amount} € / an
                       </div>
                     )}
-                    {quote.quote_file_url && (
+                    {quote.quote_pdf_url && (
                       <a
-                        href={quote.quote_file_url}
+                        href={quote.quote_pdf_url}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex items-center gap-2 text-blue-500 hover:text-blue-400 mt-2"
