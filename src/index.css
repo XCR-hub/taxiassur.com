@@ -737,3 +737,19 @@
 .city-page-raw-content span {
   color: inherit !important;
 }
+
+/* Animation pour les notifications toast */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slideDown {
+  animation: slideDown 0.3s ease-out;
+}

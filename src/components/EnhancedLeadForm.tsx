@@ -380,13 +380,13 @@ const EnhancedLeadForm: React.FC<EnhancedLeadFormProps> = ({
             name="status"
             value={formData.status}
             onChange={handleChange}
-            className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200 ${
+            className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200 text-gray-900 font-medium bg-white ${
               errors.status ? 'border-red-500' : 'border-orange-200'
             }`}
           >
-            <option value="taxi">Taxi (licence préfecture)</option>
-            <option value="vtc">VTC (carte professionnelle)</option>
-            <option value="autre">Autre transport de personnes</option>
+            <option value="taxi" className="text-gray-900 font-medium">Taxi (licence préfecture)</option>
+            <option value="vtc" className="text-gray-900 font-medium">VTC (carte professionnelle)</option>
+            <option value="autre" className="text-gray-900 font-medium">Autre transport de personnes</option>
           </select>
           {errors.status && <p className="text-red-500 text-sm mt-1">{errors.status}</p>}
         </div>
@@ -402,7 +402,7 @@ const EnhancedLeadForm: React.FC<EnhancedLeadFormProps> = ({
           name="immatriculation"
           value={formData.immatriculation}
           onChange={handleChange}
-          className="w-full px-4 py-3 border border-orange-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200"
+          className="w-full px-4 py-3 border border-orange-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200 text-gray-900 font-medium bg-white"
           placeholder={FormOptimizer.generateDynamicPlaceholders('immatriculation')}
         />
       </div>

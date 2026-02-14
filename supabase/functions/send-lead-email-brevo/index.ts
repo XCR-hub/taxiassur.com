@@ -406,7 +406,7 @@ Deno.serve(async (req: Request) => {
             <div class="cta-section">
               <p style="color: #92400e; font-size: 18px; font-weight: 700; margin-bottom: 15px;">VOTRE ESPACE PERSONNEL SECURISE</p>
               <p style="color: #92400e; margin-bottom: 20px;">Uploadez vos documents et suivez votre dossier en temps reel</p>
-              <a href="https://taxiassur.com/espace-prospect?token=${lead.access_token}" class="cta-button" style="text-decoration: none; color: #ffffff !important;">
+              <a href="https://taxiassur.com/espace-prospect/${lead.access_token}" class="cta-button" style="text-decoration: none; color: #ffffff !important;">
                 ACCEDER A MON ESPACE
               </a>
               <p style="color: #92400e; font-size: 13px; margin-top: 15px;">
@@ -516,14 +516,26 @@ Deno.serve(async (req: Request) => {
       },
       body: JSON.stringify({
         sender: {
-          name: "TaxiAssur",
+          name: "TaxiAssur - Courtier Assurance",
           email: "team@taxiassur.com",
         },
         to: [
           { email: lead.email, name: lead.name },
         ],
-        subject: "Votre demande de devis assurance taxi",
+        replyTo: {
+          email: "team@taxiassur.com",
+          name: "Equipe TaxiAssur"
+        },
+        subject: "✅ Votre demande de devis assurance taxi bien recue",
         htmlContent: clientEmailBody,
+        headers: {
+          "X-Mailer": "TaxiAssur CRM v2.0",
+          "X-Priority": "3",
+          "Importance": "Normal",
+          "X-Entity-Ref-ID": lead.id,
+          "List-Unsubscribe": `<mailto:team@taxiassur.com?subject=Desinscription>`,
+        },
+        tags: ["lead-confirmation", "new-lead", "prospect-email"]
       }),
     });
 

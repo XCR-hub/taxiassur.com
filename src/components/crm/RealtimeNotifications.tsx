@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Bell, X, Check, AlertCircle } from 'lucide-react';
+import { Bell, X, Check, AlertCircle, UserPlus } from 'lucide-react';
 
 interface Notification {
   id: string;
@@ -22,6 +22,7 @@ export default function RealtimeNotifications() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [showPanel, setShowPanel] = useState(false);
+  const [activeToasts, setActiveToasts] = useState<Notification[]>([]);
 
   // Charger les notifications initiales
   const loadNotifications = useCallback(async () => {
@@ -54,6 +55,11 @@ export default function RealtimeNotifications() {
           const newNotif = payload.new as Notification;
           setNotifications(prev => [newNotif, ...prev]);
           setUnreadCount(prev => prev + 1);
+
+          // Afficher un toast persistant pour les nouveaux leads
+          if (newNotif.event_type === 'new_lead') {
+            setActiveToasts(prev => [...prev, newNotif]);
+          }
 
           // Son de notification pour tous les types
           try {
@@ -125,6 +131,27 @@ export default function RealtimeNotifications() {
     }
   };
 
+  const handleToastClick = (notification: Notification) => {
+    // Marquer comme lu
+    if (!notification.is_read) {
+      markAsRead(notification.id);
+    }
+
+    // Supprimer du tableau des toasts
+    setActiveToasts(prev => prev.filter(t => t.id !== notification.id));
+
+    // Naviguer vers l'action
+    const actionUrl = notification.context_data?.action_url;
+    if (actionUrl) {
+      window.location.href = actionUrl;
+    }
+  };
+
+  const dismissToast = (notificationId: string) => {
+    setActiveToasts(prev => prev.filter(t => t.id !== notificationId));
+    markAsRead(notificationId);
+  };
+
   const getPriorityColor = (priority: number) => {
     if (priority >= 10) return 'text-red-600 bg-red-50 border-red-200';
     if (priority >= 5) return 'text-gray-700 bg-gray-100 border-gray-200';
@@ -133,6 +160,55 @@ export default function RealtimeNotifications() {
 
   return (
     <>
+      {/* Toasts persistants en haut de l'écran */}
+      <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-[9999] flex flex-col gap-3 pointer-events-none w-full max-w-md px-4">
+        {activeToasts.map((toast) => (
+          <div
+            key={toast.id}
+            className="pointer-events-auto bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-xl shadow-2xl border-2 border-blue-400 animate-slideDown"
+            style={{
+              animation: 'slideDown 0.3s ease-out'
+            }}
+          >
+            <div className="p-4">
+              <div className="flex items-start gap-4">
+                <div className="flex-shrink-0 bg-white bg-opacity-20 rounded-full p-2">
+                  <UserPlus className="w-6 h-6" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h4 className="font-bold text-lg mb-1">
+                    {toast.title || 'Nouveau Lead !'}
+                  </h4>
+                  <p className="text-sm text-blue-50 mb-3">
+                    {toast.message}
+                  </p>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleToastClick(toast)}
+                      className="bg-white text-blue-600 font-bold px-4 py-2 rounded-lg hover:bg-blue-50 transition-colors text-sm"
+                    >
+                      Voir le lead
+                    </button>
+                    <button
+                      onClick={() => dismissToast(toast.id)}
+                      className="bg-blue-700 bg-opacity-50 text-white px-4 py-2 rounded-lg hover:bg-opacity-70 transition-colors text-sm"
+                    >
+                      Fermer
+                    </button>
+                  </div>
+                </div>
+                <button
+                  onClick={() => dismissToast(toast.id)}
+                  className="flex-shrink-0 text-white hover:text-blue-100 transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
       {/* Bouton cloche avec badge */}
       <div className="relative">
         <button
