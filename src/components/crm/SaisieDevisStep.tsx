@@ -21,7 +21,7 @@ interface InsuranceCompany {
 interface Quote {
   id: string;
   company_id: string;
-  quote_file_url: string;
+  quote_pdf_url: string;
   quote_amount?: number;
   last_sent_at?: string;
   submitted_at?: string;
@@ -49,7 +49,7 @@ export default function SaisieDevisStep({
 
   useEffect(() => {
     // Check if all 5 companies have at least 1 quote with a file
-    const quotesWithFiles = quotes.filter(q => q.quote_file_url && q.quote_file_url.trim() !== '');
+    const quotesWithFiles = quotes.filter(q => q.quote_pdf_url && q.quote_pdf_url.trim() !== '');
     const companiesWithQuotes = new Set(quotesWithFiles.map(q => q.company_id));
     if (companiesWithQuotes.size >= 5) {
       onComplete?.();
@@ -120,7 +120,7 @@ export default function SaisieDevisStep({
       console.log('Creating new quote record with:', {
         lead_id: leadId,
         company_id: companyId,
-        quote_file_url: publicUrl
+        quote_pdf_url: publicUrl
       });
 
       // Always create a new quote (never replace existing ones)
@@ -128,10 +128,10 @@ export default function SaisieDevisStep({
         .from('lead_company_quotes')
         .insert({
           lead_id: leadId,
-          company_id: companyId,
-          quote_file_url: publicUrl,
-          status: 'quote_submitted',
-          submitted_at: new Date().toISOString()
+          insurance_company_id: companyId,
+          quote_pdf_url: publicUrl,
+          quote_status: 'pending',
+          sent_at: new Date().toISOString()
         })
         .select()
         .single();
@@ -251,7 +251,7 @@ export default function SaisieDevisStep({
     const company = companies.find(c => c.id === quote.company_id);
     if (company) {
       // Extract filename from URL
-      const fileName = quote.quote_file_url.split('/').pop() || 'devis.pdf';
+      const fileName = quote.quote_pdf_url.split('/').pop() || 'devis.pdf';
       await sendQuoteEmail(company.id, company.name, fileName);
 
       // Update last_sent_at
@@ -300,7 +300,7 @@ export default function SaisieDevisStep({
   };
 
   // Only count companies with uploaded files
-  const quotesWithFiles = quotes.filter(q => q.quote_file_url && q.quote_file_url.trim() !== '');
+  const quotesWithFiles = quotes.filter(q => q.quote_pdf_url && q.quote_pdf_url.trim() !== '');
   const companiesWithQuotes = new Set(quotesWithFiles.map(q => q.company_id));
   const progressPercent = companies.length > 0
     ? Math.round((companiesWithQuotes.size / companies.length) * 100)
@@ -402,8 +402,8 @@ export default function SaisieDevisStep({
                 <div className="space-y-3 mb-4">
                   {companyQuotes.map((quote) => {
                     // Check if quote has a file
-                    const hasFile = quote.quote_file_url && quote.quote_file_url.trim() !== '';
-                    const fileName = hasFile ? (quote.quote_file_url.split('/').pop() || 'devis.pdf') : 'Devis en attente';
+                    const hasFile = quote.quote_pdf_url && quote.quote_pdf_url.trim() !== '';
+                    const fileName = hasFile ? (quote.quote_pdf_url.split('/').pop() || 'devis.pdf') : 'Devis en attente';
 
                     return (
                       <div key={quote.id} className={`rounded-lg p-4 border ${hasFile ? 'bg-white border-green-200' : 'bg-orange-50 border-orange-200'}`}>
@@ -434,7 +434,7 @@ export default function SaisieDevisStep({
                         {hasFile && (
                           <div className="flex gap-2 mt-3">
                             <button
-                              onClick={() => window.open(quote.quote_file_url, '_blank')}
+                              onClick={() => window.open(quote.quote_pdf_url, '_blank')}
                               className="flex-1 text-sm py-2 px-3 bg-blue-50 text-blue-600 rounded hover:bg-blue-100 flex items-center justify-center gap-2 font-medium"
                             >
                               <FileText className="h-4 w-4" />
@@ -453,7 +453,7 @@ export default function SaisieDevisStep({
                               {isSending ? 'Envoi...' : 'Renvoyer'}
                             </button>
                             <button
-                              onClick={() => deleteQuote(quote.id, quote.quote_file_url)}
+                              onClick={() => deleteQuote(quote.id, quote.quote_pdf_url)}
                               className="text-sm py-2 px-3 bg-red-50 text-red-600 rounded hover:bg-red-100 flex items-center justify-center gap-2"
                             >
                               <X className="h-4 w-4" />
