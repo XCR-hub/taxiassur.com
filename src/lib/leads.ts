@@ -371,8 +371,7 @@ export async function createLead(input: CreateLeadInput): Promise<{ success: boo
           immatriculation: input.immatriculation || '',
           notes: input.notes || ''
         }
-      })
-      .single();
+      });
 
     if (error) {
       logger.error('❌ Supabase error creating/updating lead:', error);
@@ -380,18 +379,25 @@ export async function createLead(input: CreateLeadInput): Promise<{ success: boo
       return { success: false, error: error.message };
     }
 
-    logger.log(data?.is_new ? '✅ New lead created in crm_leads:' : '✅ Existing lead updated:', data?.lead_id);
+    // upsert_lead retourne une table, donc on prend le premier élément
+    const result = data?.[0];
+    if (!result) {
+      logger.error('❌ No result from upsert_lead');
+      return { success: false, error: 'Erreur lors de la création du lead' };
+    }
+
+    logger.log(result.is_new ? '✅ New lead created in crm_leads:' : '✅ Existing lead updated:', result.lead_id);
 
     // Envoyer les emails de manière NON-BLOQUANTE
     sendLeadNotificationEmails({
-      id: data?.lead_id,
+      id: result.lead_id,
       name: input.name,
       email: input.email,
       phone: input.phone,
       city: input.city,
       status: input.status,
       immatriculation: input.immatriculation,
-      access_token: data?.access_token,
+      access_token: result.access_token,
       created_at: new Date().toISOString()
     }).then(() => {
       logger.log('✅ Emails envoyés avec succès');
@@ -400,7 +406,7 @@ export async function createLead(input: CreateLeadInput): Promise<{ success: boo
     });
 
     // Retourner immédiatement le succès sans attendre les emails
-    return { success: true, leadId: data?.lead_id, accessToken: data?.access_token };
+    return { success: true, leadId: result.lead_id, accessToken: result.access_token };
   } catch (error: any) {
     logger.error('Failed to create lead:', error);
     return { success: false, error: error.message || 'Une erreur est survenue' };
