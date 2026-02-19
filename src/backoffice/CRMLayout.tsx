@@ -31,6 +31,7 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 import { AdminSessionKeepAlive } from '@/components/AdminSessionKeepAlive';
 import RealtimeNotifications from '@/components/crm/RealtimeNotifications';
 import { CRMPushNotifications } from '@/components/CRMPushNotifications';
+import AdminLogin from '@/components/AdminLogin';
 
 interface CRMStats {
   unread_messages: number;
@@ -42,9 +43,26 @@ interface CRMStats {
 const CRMLayout: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, signOut } = useAdminAuth();
+  const { user, signOut, isAuthenticated, loading } = useAdminAuth();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+
+  // Afficher le loader pendant le chargement
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <RefreshCw className="animate-spin mx-auto mb-4 text-orange-600" size={48} />
+          <p className="text-gray-700 font-medium">Vérification de la session...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Afficher le login si pas authentifié
+  if (!isAuthenticated) {
+    return <AdminLogin onSuccess={() => window.location.reload()} />;
+  }
 
   const [stats] = useState<CRMStats>({
     unread_messages: 0,

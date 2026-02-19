@@ -519,11 +519,23 @@ export const router = createBrowserRouter([
   },
   {
     path: '/backoffice',
-    element: <BackofficeDashboard />,
+    element: <CRMLayout />,
+    children: [
+      {
+        index: true,
+        element: <CRMKillerDashboard />,
+      },
+    ],
   },
   {
     path: '/backoffice/dashboard',
-    element: <BackofficeDashboard />,
+    element: <CRMLayout />,
+    children: [
+      {
+        index: true,
+        element: <CRMKillerDashboard />,
+      },
+    ],
   },
   {
     path: '/backoffice/clients',
