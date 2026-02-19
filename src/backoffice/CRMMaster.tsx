@@ -170,7 +170,7 @@ const CRMMaster: React.FC = () => {
 
       const offset = append ? currentPage * pageSize : 0;
       const { data: leadsData, error: leadsError, count: leadsCount } = await supabase
-        .from('leads')
+        .from('crm_leads')
         .select('*', { count: 'exact' })
         .order('created_at', { ascending: false })
         .range(offset, offset + pageSize - 1);

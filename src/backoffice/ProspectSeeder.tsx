@@ -204,7 +204,7 @@ const [isSeeding, setIsSeeding] = useState(false);
     for (const prospect of PROSPECTS) {
       try {
         const { data, error } = await supabase
-          .from('leads')
+          .from('crm_leads')
           .insert({
             ...prospect,
             outreach_status: 'not_contacted',

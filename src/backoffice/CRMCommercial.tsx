@@ -147,7 +147,7 @@ const CRMCommercial: React.FC = () => {
 
   const loadStats = async () => {
     const { data: leadsData } = await supabase
-      .from('leads')
+      .from('crm_leads')
       .select('behavior_score, lead_status, prime_realisee, created_at, client_at');
 
     if (leadsData) {
@@ -187,7 +187,7 @@ const CRMCommercial: React.FC = () => {
       console.log('🔍 Loading lead with ID:', leadId);
 
       const { data: leadData, error } = await supabase
-        .from('leads')
+        .from('crm_leads')
         .select('id, name, email, phone, city, status, lead_status, behavior_score, prime_realisee, created_at, contacted_at, devis_envoye_at, client_at, assigned_to, notes')
         .eq('id', leadId)
         .maybeSingle();
@@ -244,7 +244,7 @@ const CRMCommercial: React.FC = () => {
 
   const loadMyLeads = async () => {
     let query = supabase
-      .from('leads')
+      .from('crm_leads')
       .select('id, name, email, phone, city, status, lead_status, behavior_score, prime_realisee, created_at, contacted_at, devis_envoye_at, client_at, assigned_to, notes')
       .limit(200);
 
@@ -365,7 +365,7 @@ setNotifications(prev => [payload.new, ...prev]);
 
   const updateLeadStage = async (leadId: string, newStage: string) => {
     const { error } = await supabase
-      .from('leads')
+      .from('crm_leads')
       .update({
         stage: newStage,
         last_contact_at: new Date().toISOString()

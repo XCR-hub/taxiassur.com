@@ -47,7 +47,7 @@ const MasterDashboard: React.FC = () => {
     try {
       // Récupérer TOUS les leads depuis la base
       const { data: allLeads, error: leadsError } = await supabase
-        .from('leads')
+        .from('crm_leads')
         .select('status, created_at, lead_status, city')
         .order('created_at', { ascending: false });
 

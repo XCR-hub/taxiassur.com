@@ -31,7 +31,7 @@ export default function LeadCRM() {
   const loadLeadStats = async () => {
     try {
       const { data: leads, error } = await supabase
-        .from('leads')
+        .from('crm_leads')
         .select('created_at')
         .order('created_at', { ascending: false });
 

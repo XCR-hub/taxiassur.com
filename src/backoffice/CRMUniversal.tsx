@@ -81,7 +81,7 @@ const CRMUniversal: React.FC = () => {
     try {
       // Charger d'abord les leads de la table principale
       let leadsQuery = supabase
-        .from('leads')
+        .from('crm_leads')
         .select('*')
         .order('created_at', { ascending: false })
         .limit(100);
@@ -156,13 +156,13 @@ const CRMUniversal: React.FC = () => {
 
       if (!totalCount) {
         const { count: leadsCount } = await supabase
-          .from('leads')
+          .from('crm_leads')
           .select('*', { count: 'exact', head: true });
         totalCount = leadsCount || 0;
       }
 
       const { count: newCount } = await supabase
-        .from('leads')
+        .from('crm_leads')
         .select('*', { count: 'exact', head: true })
         .eq('lead_status', 'nouveau');
 
@@ -172,12 +172,12 @@ const CRMUniversal: React.FC = () => {
         .gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString());
 
       const { count: prospectsTaxiCount } = await supabase
-        .from('leads')
+        .from('crm_leads')
         .select('*', { count: 'exact', head: true })
         .eq('status', 'taxi');
 
       const { count: clientsCount } = await supabase
-        .from('leads')
+        .from('crm_leads')
         .select('*', { count: 'exact', head: true })
         .eq('lead_status', 'client');
 
@@ -199,7 +199,7 @@ const CRMUniversal: React.FC = () => {
         .gte('created_at', new Date(new Date().setHours(0, 0, 0, 0)).toISOString());
 
       const { count: convertedCount } = await supabase
-        .from('leads')
+        .from('crm_leads')
         .select('*', { count: 'exact', head: true })
         .eq('lead_status', 'client');
 

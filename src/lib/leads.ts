@@ -149,7 +149,7 @@ export async function updateLeadStatus(
     logger.log('📤 Sending to Supabase:', updateData);
 
     const { data, error } = await supabase
-      .from('leads')
+      .from('crm_leads')
       .update(updateData)
       .eq('id', leadId)
       .select()

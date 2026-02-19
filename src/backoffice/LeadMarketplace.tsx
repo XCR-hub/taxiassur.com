@@ -47,7 +47,7 @@ const LeadMarketplace: React.FC = () => {
     try {
       // Fetch real leads from Supabase
       const { data, error } = await supabase
-        .from('leads')
+        .from('crm_leads')
         .select('*')
         .order('created_at', { ascending: false });
 

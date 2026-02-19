@@ -72,7 +72,7 @@ const CRMSaaSDashboard: React.FC = () => {
       logger.info('🔄 Chargement données CRM SaaS...');
 
       const { data: leadsData, error: leadsError } = await supabase
-        .from('leads')
+        .from('crm_leads')
         .select('*')
         .order('created_at', { ascending: false })
         .limit(500);

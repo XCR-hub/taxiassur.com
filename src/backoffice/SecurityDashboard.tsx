@@ -106,7 +106,7 @@ const now = new Date();
 
       // Charger les leads pour valider
       const { data: leads } = await supabase
-        .from('leads')
+        .from('crm_leads')
         .select('id, created_at, status')
         .gte('created_at', timeAgo);
 

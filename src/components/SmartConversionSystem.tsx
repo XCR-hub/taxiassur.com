@@ -20,7 +20,7 @@ const SmartConversionSystem: React.FC<SmartConversionSystemProps> = ({ onClose }
 
   const loadRecentLeadsCount = async () => {
     const { data } = await supabase
-      .from('leads')
+      .from('crm_leads')
       .select('id')
       .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString());
 
@@ -129,14 +129,14 @@ const SmartConversionSystem: React.FC<SmartConversionSystemProps> = ({ onClose }
 
     try {
       await Promise.all([
-        supabase.from('leads').insert({
+        supabase.from('crm_leads').insert({
           email,
           phone,
           source_page: window.location.href,
           trigger_type: activeNotification || 'notification',
           session_id: sessionId
         }),
-        supabase.from('leads').insert({
+        supabase.from('crm_leads').insert({
           name: email.split('@')[0] || 'Prospect',
           email,
           phone,
