@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Upload, CheckCircle2, X, FileText, Loader2, AlertCircle, CreditCard } from 'lucide-react';
+import { Upload, CheckCircle2, X, FileText, Loader2, AlertCircle, CreditCard, Mail } from 'lucide-react';
 import { MoneticoPaymentManager } from './MoneticoPaymentManager';
 
 interface PaiementRIBStepProps {
@@ -35,6 +35,7 @@ export default function PaiementRIBStep({
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [validating, setValidating] = useState<string | null>(null);
+  const [sendingEmail, setSendingEmail] = useState(false);
 
   // Form fields for validation
   const [selectedRib, setSelectedRib] = useState<string | null>(null);
@@ -173,6 +174,52 @@ export default function PaiementRIBStep({
     } catch (error) {
       console.error('Error deleting RIB:', error);
       alert('Erreur lors de la suppression');
+    }
+  }
+
+  async function sendRIBRequestEmail() {
+    if (!leadEmail) {
+      alert('Aucune adresse email pour ce lead');
+      return;
+    }
+
+    if (!confirm(`Envoyer un email de demande de RIB à ${leadEmail} ?`)) {
+      return;
+    }
+
+    setSendingEmail(true);
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token || import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-intelligent-document-request`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            lead_id: leadId,
+            specific_documents: ['rib']
+          }),
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || 'Erreur lors de l\'envoi');
+      }
+
+      alert(`✅ Email envoyé avec succès à ${leadEmail} !\n\nLe prospect recevra un lien pour uploader son RIB.`);
+    } catch (error) {
+      console.error('Error sending RIB request email:', error);
+      alert(`❌ Erreur lors de l'envoi de l'email : ${error.message || 'Erreur inconnue'}`);
+    } finally {
+      setSendingEmail(false);
     }
   }
 
@@ -433,32 +480,63 @@ export default function PaiementRIBStep({
         </div>
       </div>
 
-      {/* Prospect Space Link */}
+      {/* Prospect Space Link & Email */}
       {leadAccessToken && !validatedRib && (
-        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-          <div className="flex items-start gap-3">
-            <FileText className="h-5 w-5 text-gray-600 flex-shrink-0 mt-0.5" />
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-5">
+          <div className="flex items-start gap-4">
+            <FileText className="h-6 w-6 text-blue-600 flex-shrink-0 mt-0.5" />
             <div className="flex-1">
-              <h4 className="font-medium text-gray-900 mb-2">Lien Espace Prospect</h4>
-              <p className="text-sm text-gray-600 mb-2">
-                Le prospect peut également uploader son RIB depuis son espace
+              <h4 className="font-semibold text-gray-900 mb-2">Demander le RIB au prospect</h4>
+              <p className="text-sm text-gray-600 mb-4">
+                Le prospect peut uploader son RIB depuis son espace personnel sécurisé
               </p>
-              <div className="flex items-center gap-2">
-                <input
-                  type="text"
-                  readOnly
-                  value={`${window.location.origin}/espace-prospect?token=${leadAccessToken}`}
-                  className="flex-1 px-3 py-2 text-sm bg-white border border-gray-300 rounded text-gray-700"
-                />
+
+              {/* Email Button */}
+              <div className="mb-4">
                 <button
-                  onClick={() => {
-                    navigator.clipboard.writeText(`${window.location.origin}/espace-prospect?token=${leadAccessToken}`);
-                    alert('Lien copié !');
-                  }}
-                  className="px-3 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
+                  onClick={sendRIBRequestEmail}
+                  disabled={sendingEmail || !leadEmail}
+                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-medium rounded-lg hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md hover:shadow-lg"
                 >
-                  Copier
+                  {sendingEmail ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Envoi en cours...
+                    </>
+                  ) : (
+                    <>
+                      <Mail className="h-4 w-4" />
+                      Envoyer email de demande
+                    </>
+                  )}
                 </button>
+                {leadEmail && (
+                  <p className="text-xs text-gray-500 mt-2">
+                    📧 Email sera envoyé à : <span className="font-medium text-gray-700">{leadEmail}</span>
+                  </p>
+                )}
+              </div>
+
+              {/* Direct Link */}
+              <div className="border-t border-blue-200 pt-4">
+                <p className="text-xs text-gray-600 mb-2 font-medium">OU partager directement le lien :</p>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    readOnly
+                    value={`${window.location.origin}/espace-prospect?token=${leadAccessToken}`}
+                    className="flex-1 px-3 py-2 text-xs bg-white border border-blue-300 rounded text-gray-700 font-mono"
+                  />
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(`${window.location.origin}/espace-prospect?token=${leadAccessToken}`);
+                      alert('✅ Lien copié dans le presse-papier !');
+                    }}
+                    className="px-3 py-2 bg-gray-700 text-white rounded hover:bg-gray-800 text-sm whitespace-nowrap"
+                  >
+                    📋 Copier
+                  </button>
+                </div>
               </div>
             </div>
           </div>
