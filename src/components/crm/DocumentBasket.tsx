@@ -22,6 +22,7 @@ interface Attachment {
   received_at: string;
   email_subject: string;
   from_email: string;
+  source: string; // 'email_attachments' ou 'prospect_documents'
 }
 
 interface DocumentCategory {
@@ -231,7 +232,8 @@ export default function DocumentBasket({ caseId, onDocumentClassified }: Documen
                     <div className="flex items-center gap-2 mt-3">
                       <button
                         onClick={() => {
-                          const url = getDocumentPublicUrl(attachment.storage_path, 'email_attachments', supabase);
+                          // Utiliser la source correcte pour détecter le bon bucket
+                          const url = getDocumentPublicUrl(attachment.storage_path, attachment.source, supabase);
                           setViewingDoc({
                             url,
                             fileName: attachment.filename,
