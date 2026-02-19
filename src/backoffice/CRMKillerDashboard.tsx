@@ -112,7 +112,15 @@ const CRMKillerDashboard: React.FC = () => {
       const leads = leadsRes.data || [];
       const aiDecisions = aiDecisionsRes.data || [];
 
-      const activeContracts = leads.filter(l => l.status === 'won' || l.status === 'ACTIVE_CLIENT').length;
+      // Clients actifs = contrats signés + clients avec assurance active
+      const activeContracts = leads.filter(l =>
+        l.status === 'won' ||
+        l.status === 'ACTIVE_CLIENT' ||
+        l.status === 'active_client' ||
+        l.current_stage_key === 'active_client' ||
+        (l.metadata && l.metadata.is_active_client === true)
+      ).length;
+
       const pendingDocs = leads.filter(l => l.current_stage_key === 'document_collection').length;
       const pendingPayments = leads.filter(l => l.current_stage_key === 'payment_pending').length;
       const renewalOps = leads.filter(l => l.status === 'CROSS_SELLING').length;
@@ -122,7 +130,7 @@ const CRMKillerDashboard: React.FC = () => {
       const newThisWeek = leads.filter(l => new Date(l.created_at) >= weekAgo).length;
 
       const wonThisMonth = leads.filter(l =>
-        (l.status === 'won' || l.status === 'ACTIVE_CLIENT') &&
+        (l.status === 'won' || l.status === 'ACTIVE_CLIENT' || l.status === 'active_client' || l.current_stage_key === 'active_client') &&
         new Date(l.updated_at) >= monthStart
       ).length;
       const lostThisMonth = leads.filter(l =>
@@ -130,7 +138,7 @@ const CRMKillerDashboard: React.FC = () => {
         new Date(l.updated_at) >= monthStart
       ).length;
 
-      const closedWon = leads.filter(l => l.status === 'won' || l.status === 'ACTIVE_CLIENT').length;
+      const closedWon = activeContracts;
       const totalClosed = closedWon + leads.filter(l => l.status === 'lost').length;
       const conversionRate = totalClosed > 0 ? (closedWon / totalClosed) * 100 : 0;
 
@@ -318,7 +326,10 @@ const CRMKillerDashboard: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-6">
-        <div className="bg-white rounded-xl p-5 border border-gray-200 hover:shadow-lg transition-shadow">
+        <button
+          onClick={() => navigate('/backoffice/crm-killer/pipeline')}
+          className="bg-white rounded-xl p-5 border border-gray-200 hover:shadow-lg transition-all cursor-pointer hover:border-blue-300 text-left"
+        >
           <div className="flex items-center justify-between mb-3">
             <div className="p-2.5 bg-blue-100 rounded-lg">
               <Users className="text-blue-600 w-5 h-5" />
@@ -330,9 +341,12 @@ const CRMKillerDashboard: React.FC = () => {
           </div>
           <div className="text-2xl font-bold text-gray-900">{stats.total_leads}</div>
           <div className="text-sm text-gray-500">Total Leads</div>
-        </div>
+        </button>
 
-        <div className="bg-white rounded-xl p-5 border border-gray-200 hover:shadow-lg transition-shadow">
+        <button
+          onClick={() => navigate('/backoffice/crm-killer/pipeline?filter=active_clients')}
+          className="bg-white rounded-xl p-5 border border-gray-200 hover:shadow-lg transition-all cursor-pointer hover:border-green-300 text-left"
+        >
           <div className="flex items-center justify-between mb-3">
             <div className="p-2.5 bg-green-100 rounded-lg">
               <CheckCircle className="text-green-600 w-5 h-5" />
@@ -343,9 +357,12 @@ const CRMKillerDashboard: React.FC = () => {
           </div>
           <div className="text-2xl font-bold text-gray-900">{stats.active_contracts}</div>
           <div className="text-sm text-gray-500">Clients Actifs</div>
-        </div>
+        </button>
 
-        <div className="bg-white rounded-xl p-5 border border-gray-200 hover:shadow-lg transition-shadow">
+        <button
+          onClick={() => navigate('/backoffice/crm-killer/pipeline?filter=won')}
+          className="bg-white rounded-xl p-5 border border-gray-200 hover:shadow-lg transition-all cursor-pointer hover:border-emerald-300 text-left"
+        >
           <div className="flex items-center justify-between mb-3">
             <div className="p-2.5 bg-emerald-100 rounded-lg">
               <Euro className="text-emerald-600 w-5 h-5" />
@@ -354,9 +371,12 @@ const CRMKillerDashboard: React.FC = () => {
           </div>
           <div className="text-2xl font-bold text-gray-900">{(stats.total_revenue / 1000).toFixed(0)}k</div>
           <div className="text-sm text-gray-500">Revenu Total</div>
-        </div>
+        </button>
 
-        <div className="bg-white rounded-xl p-5 border border-gray-200 hover:shadow-lg transition-shadow">
+        <button
+          onClick={() => navigate('/backoffice/quote-queue')}
+          className="bg-white rounded-xl p-5 border border-gray-200 hover:shadow-lg transition-all cursor-pointer hover:border-amber-300 text-left"
+        >
           <div className="flex items-center justify-between mb-3">
             <div className="p-2.5 bg-amber-100 rounded-lg">
               <ClipboardList className="text-amber-600 w-5 h-5" />
@@ -369,9 +389,12 @@ const CRMKillerDashboard: React.FC = () => {
           </div>
           <div className="text-2xl font-bold text-gray-900">{stats.ready_for_quote}</div>
           <div className="text-sm text-gray-500">Pret pour Devis</div>
-        </div>
+        </button>
 
-        <div className="bg-white rounded-xl p-5 border border-gray-200 hover:shadow-lg transition-shadow">
+        <button
+          onClick={() => navigate('/backoffice/crm-killer/inbox')}
+          className="bg-white rounded-xl p-5 border border-gray-200 hover:shadow-lg transition-all cursor-pointer hover:border-purple-300 text-left"
+        >
           <div className="flex items-center justify-between mb-3">
             <div className="p-2.5 bg-purple-100 rounded-lg">
               <Inbox className="text-purple-600 w-5 h-5" />
@@ -384,9 +407,12 @@ const CRMKillerDashboard: React.FC = () => {
           </div>
           <div className="text-2xl font-bold text-gray-900">{stats.unread_messages}</div>
           <div className="text-sm text-gray-500">Messages</div>
-        </div>
+        </button>
 
-        <div className="bg-white rounded-xl p-5 border border-gray-200 hover:shadow-lg transition-shadow">
+        <button
+          onClick={() => navigate('/backoffice/crm-killer/ia')}
+          className="bg-white rounded-xl p-5 border border-gray-200 hover:shadow-lg transition-all cursor-pointer hover:border-cyan-300 text-left"
+        >
           <div className="flex items-center justify-between mb-3">
             <div className="p-2.5 bg-cyan-100 rounded-lg">
               <Brain className="text-cyan-600 w-5 h-5" />
@@ -395,7 +421,7 @@ const CRMKillerDashboard: React.FC = () => {
           </div>
           <div className="text-2xl font-bold text-gray-900">{stats.ai_decisions_pending}</div>
           <div className="text-sm text-gray-500">Decisions IA</div>
-        </div>
+        </button>
       </div>
 
       {(stats.pending_documents > 0 || stats.pending_payments > 0 || stats.at_risk_clients > 0 || stats.ready_for_quote > 0) && (
