@@ -45,7 +45,8 @@ export const DocumentChecklist: React.FC<DocumentChecklistProps> = ({
     <div className="space-y-3">
       {Object.entries(DOCUMENT_TYPES).map(([type, info]) => {
         const document = getDocumentStatus(type as DocumentType);
-        const config = STATUS_CONFIG[document?.status || 'missing'];
+        const statusKey = document?.status || 'missing';
+        const config = STATUS_CONFIG[statusKey as keyof typeof STATUS_CONFIG] || STATUS_CONFIG.missing;
         const Icon = config.icon;
 
         return (
