@@ -117,6 +117,7 @@ const CRMKillerDashboard: React.FC = () => {
         l.status === 'won' ||
         l.status === 'ACTIVE_CLIENT' ||
         l.status === 'active_client' ||
+        l.status === 'CLIENT_ACTIF' ||  // Statut en français
         l.current_stage_key === 'active_client' ||
         (l.metadata && l.metadata.is_active_client === true)
       ).length;
@@ -130,7 +131,7 @@ const CRMKillerDashboard: React.FC = () => {
       const newThisWeek = leads.filter(l => new Date(l.created_at) >= weekAgo).length;
 
       const wonThisMonth = leads.filter(l =>
-        (l.status === 'won' || l.status === 'ACTIVE_CLIENT' || l.status === 'active_client' || l.current_stage_key === 'active_client') &&
+        (l.status === 'won' || l.status === 'ACTIVE_CLIENT' || l.status === 'active_client' || l.status === 'CLIENT_ACTIF' || l.current_stage_key === 'active_client') &&
         new Date(l.updated_at) >= monthStart
       ).length;
       const lostThisMonth = leads.filter(l =>
