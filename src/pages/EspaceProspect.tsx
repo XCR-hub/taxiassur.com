@@ -420,6 +420,80 @@ const EspaceProspect: React.FC = () => {
           </div>
         )}
 
+        {/* Bannière d'action urgente si documents incomplets */}
+        {!leadInfo.documents_complete && activeTab === 'documents' && (
+          <div className="bg-gradient-to-r from-amber-500 to-orange-500 rounded-2xl p-1 mb-8 animate-pulse">
+            <div className="bg-gray-900 rounded-xl p-6">
+              <div className="flex flex-col md:flex-row md:items-center gap-4">
+                <div className="flex-shrink-0">
+                  <div className="w-16 h-16 bg-amber-500 rounded-full flex items-center justify-center">
+                    <Upload className="text-black" size={32} />
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-2xl font-bold text-white mb-2 flex items-center gap-2">
+                    <AlertTriangle className="text-amber-400" size={24} />
+                    Action Immediate Requise !
+                  </h3>
+                  <p className="text-gray-300 text-lg mb-3">
+                    <strong className="text-amber-400">Accelerez votre dossier :</strong> Uploadez vos documents maintenant pour recevoir votre devis <strong className="text-white">sous 24h</strong>.
+                  </p>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <div className="flex items-center gap-2 bg-green-500/20 text-green-300 px-4 py-2 rounded-lg font-semibold">
+                      <CheckCircle size={18} />
+                      Espace 100% securise
+                    </div>
+                    <div className="flex items-center gap-2 bg-blue-500/20 text-blue-300 px-4 py-2 rounded-lg font-semibold">
+                      <Lock size={18} />
+                      Drag & Drop facile
+                    </div>
+                    <div className="flex items-center gap-2 bg-purple-500/20 text-purple-300 px-4 py-2 rounded-lg font-semibold">
+                      <Clock size={18} />
+                      Traitement rapide
+                    </div>
+                  </div>
+                </div>
+                <div className="text-center md:text-right">
+                  <div className="bg-red-500 text-white font-black text-xl px-5 py-3 rounded-xl mb-2 animate-bounce">
+                    {leadInfo.uploaded_documents || 0} / {leadInfo.total_documents || 7}
+                  </div>
+                  <p className="text-sm text-gray-400 font-semibold">Documents manquants</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Bannière de félicitations si documents complets */}
+        {leadInfo.documents_complete && activeTab === 'documents' && !leadInfo.quote_accepted_at && (
+          <div className="bg-gradient-to-r from-green-500 to-emerald-500 rounded-2xl p-1 mb-8">
+            <div className="bg-gray-900 rounded-xl p-6">
+              <div className="flex items-center gap-4">
+                <div className="flex-shrink-0">
+                  <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center">
+                    <CheckCircle className="text-black" size={32} />
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-2xl font-bold text-white mb-2">
+                    Bravo ! Dossier complet
+                  </h3>
+                  <p className="text-gray-300 text-lg">
+                    Tous vos documents ont ete uploades. Notre equipe traite votre demande et vous enverra vos devis <strong className="text-white">sous 24h</strong>.
+                  </p>
+                </div>
+                <button
+                  onClick={() => setActiveTab('devis')}
+                  className="bg-green-500 hover:bg-green-600 text-black font-bold py-3 px-6 rounded-xl transition-colors flex items-center gap-2 whitespace-nowrap"
+                >
+                  Voir mes devis
+                  <ChevronRight size={20} />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-4 mb-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
             {[
