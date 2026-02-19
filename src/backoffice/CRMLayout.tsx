@@ -1,3 +1,4 @@
+// CRM Moderne avec Auth Supabase - v2026.02.19
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Outlet } from 'react-router-dom';
 import {
@@ -46,6 +47,11 @@ const CRMLayout: React.FC = () => {
   const { user, signOut, isAuthenticated, loading } = useAdminAuth();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+
+  // Log pour vérifier la version déployée
+  useEffect(() => {
+    console.log('🚀 CRM Layout v2026.02.19 - Auth Supabase Moderne');
+  }, []);
 
   // Afficher le loader pendant le chargement
   if (loading) {
