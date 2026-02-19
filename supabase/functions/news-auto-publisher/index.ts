@@ -7,23 +7,19 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
 };
 
-interface BlogPost {
+interface NewsArticle {
   title: string;
   content: string;
   excerpt: string;
   category: string;
   tags: string[];
-  keywords: string[];
-  featured_image: string;
-  image_alt: string;
+  image_url: string;
   slug: string;
-  published: boolean;
-  meta_title: string;
-  meta_description: string;
-  author_name: string;
-  reading_time: number;
-  naturalness_score: number;
-  writing_style: string;
+  status: string;
+  source: string;
+  source_url: string;
+  score: number;
+  published_at: string;
 }
 
 Deno.serve(async (req: Request) => {
@@ -47,9 +43,9 @@ Deno.serve(async (req: Request) => {
     twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
 
     const { data: recentArticles, error: checkError } = await supabase
-      .from('blog_posts')
+      .from('news_articles')
       .select('id, created_at')
-      .eq('published', true)
+      .eq('status', 'published')
       .gte('created_at', twoDaysAgo.toISOString())
       .order('created_at', { ascending: false })
       .limit(1);
@@ -121,12 +117,12 @@ Deno.serve(async (req: Request) => {
       try {
         // Récupérer les images déjà utilisées pour éviter les doublons
         const { data: usedImages } = await supabase
-          .from('blog_posts')
-          .select('featured_image')
-          .not('featured_image', 'is', null)
+          .from('news_articles')
+          .select('image_url')
+          .not('image_url', 'is', null)
           .limit(100);
 
-        const usedUrls = usedImages?.map(a => a.featured_image) || [];
+        const usedUrls = usedImages?.map(a => a.image_url) || [];
 
         // Rechercher sur Pexels avec variation de page pour garantir l'unicité
         const randomPage = Math.floor(Math.random() * 20) + 1; // Page entre 1 et 20
@@ -231,28 +227,24 @@ Deno.serve(async (req: Request) => {
     const readingTime = Math.ceil(wordCount / 200);
 
     // Créer l'article
-    const newArticle: BlogPost = {
+    const newArticle: NewsArticle = {
       title: selectedTopic.title,
       content,
       excerpt,
       category: selectedTopic.category,
       tags: selectedTopic.tags,
-      keywords: selectedTopic.tags,
-      featured_image: imageUrl,
-      image_alt: `Photo illustrant ${selectedTopic.title.toLowerCase()}`,
+      image_url: imageUrl,
       slug,
-      published: true,
-      meta_title: selectedTopic.title + ' | TaxiAssur',
-      meta_description: excerpt,
-      author_name: 'Équipe TaxiAssur',
-      reading_time: readingTime,
-      naturalness_score: Math.floor(Math.random() * 10) + 90, // Score entre 90 et 100
-      writing_style: 'professionnel'
+      status: 'published',
+      source: 'TaxiAssur Auto-Publisher',
+      source_url: `https://taxiassur.com/actualites/${slug}`,
+      score: Math.floor(Math.random() * 20) + 80, // Score entre 80 et 100
+      published_at: new Date().toISOString()
     };
 
     // Insérer dans la base de données
     const { data: insertedArticle, error: insertError } = await supabase
-      .from('blog_posts')
+      .from('news_articles')
       .insert(newArticle)
       .select()
       .single();
@@ -271,8 +263,8 @@ Deno.serve(async (req: Request) => {
           id: insertedArticle.id,
           title: insertedArticle.title,
           slug: insertedArticle.slug,
-          featured_image: insertedArticle.featured_image,
-          created_at: insertedArticle.created_at
+          image_url: insertedArticle.image_url,
+          published_at: insertedArticle.published_at
         }
       }),
       {

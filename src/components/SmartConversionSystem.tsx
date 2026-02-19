@@ -128,29 +128,33 @@ const SmartConversionSystem: React.FC<SmartConversionSystemProps> = ({ onClose }
     const sessionId = sessionStorage.getItem('session_id') || '';
 
     try {
-      await Promise.all([
-        supabase.from('crm_leads').insert({
+      // Créer le lead avec tous les champs requis
+      const { data: newLead, error: leadError } = await supabase
+        .from('crm_leads')
+        .insert({
+          name: email.split('@')[0] || 'Prospect Popup',
           email,
           phone,
-          source_page: window.location.href,
-          trigger_type: activeNotification || 'notification',
-          session_id: sessionId
-        }),
-        supabase.from('crm_leads').insert({
-          name: email.split('@')[0] || 'Prospect',
-          email,
-          phone,
-          city: 'Non spécifié',
-          source: `notification_${activeNotification}`,
-          notes: 'Lead capturé via notification intelligente'
-        }),
-        supabase.from('conversion_popups_tracking').insert({
-          popup_type: activeNotification || 'unknown',
-          action: 'converted',
-          session_id: sessionId,
-          page_url: window.location.href
+          city: 'Paris',
+          status: 'nouveau_lead',
+          source: `popup_${activeNotification}`,
+          notes: `Lead capturé via popup intelligent: ${activeNotification}`
         })
-      ]);
+        .select()
+        .single();
+
+      if (leadError) {
+        console.error('Error creating lead:', leadError);
+        throw leadError;
+      }
+
+      // Tracker la conversion
+      await supabase.from('conversion_popups_tracking').insert({
+        popup_type: activeNotification || 'unknown',
+        action: 'converted',
+        session_id: sessionId,
+        page_url: window.location.href
+      });
 
       setIsSubmitted(true);
 
@@ -159,7 +163,7 @@ const SmartConversionSystem: React.FC<SmartConversionSystemProps> = ({ onClose }
       }, 3000);
     } catch (error) {
       logger.error('Error saving lead:', error);
-      alert('Une erreur est survenue. Veuillez réessayer.');
+      alert('Erreur lors de l\'envoi. Veuillez réessayer ou nous appeler au 01 80 85 57 86.');
     }
   };
 
@@ -195,50 +199,50 @@ const SmartConversionSystem: React.FC<SmartConversionSystemProps> = ({ onClose }
 
   if (activeNotification === 'valueReminder' && !isSubmitted) {
     return (
-      <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/20 backdrop-blur-sm animate-fade-in">
+      <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fade-in">
         <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden">
-          <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-6 text-white">
+          <div className="bg-gradient-to-r from-orange-500 to-red-500 p-6 text-white">
             <button
               onClick={handleClose}
-              className="float-right text-white/80 hover:text-white transition-colors"
+              className="float-right text-white/90 hover:text-white transition-colors bg-white/20 hover:bg-white/30 rounded-full p-1"
             >
               <X size={20} />
             </button>
             <div className="flex items-center space-x-3 mb-2">
-              <Shield className="text-white" size={32} />
-              <h3 className="text-2xl font-black">TaxiAssur.com</h3>
+              <Shield className="text-white drop-shadow-lg" size={32} />
+              <h3 className="text-2xl font-black text-white drop-shadow-md">Attendez !</h3>
             </div>
-            <p className="text-blue-100">L'assurance taxi de confiance</p>
+            <p className="text-white drop-shadow-md">Ne partez pas sans votre tarif personnalisé</p>
           </div>
 
-          <div className="p-6">
+          <div className="p-6 bg-gradient-to-br from-amber-50 to-orange-50">
             <h4 className="text-xl font-bold text-gray-900 mb-4">
               Protégez votre activité dès aujourd'hui
             </h4>
 
-            <div className="space-y-3 mb-6">
+            <div className="space-y-3 mb-6 bg-white rounded-lg p-4 shadow-sm">
               <div className="flex items-start space-x-3">
-                <div className="bg-blue-100 rounded-full p-1 mt-0.5">
-                  <Award className="text-blue-600" size={16} />
+                <div className="bg-green-100 rounded-full p-1 mt-0.5 flex-shrink-0">
+                  <Award className="text-green-600" size={16} />
                 </div>
-                <p className="text-sm text-gray-700">
-                  <strong>Devis instantané</strong> en moins de 2 minutes
+                <p className="text-sm text-gray-900">
+                  <strong className="text-green-700">Devis instantané</strong> en moins de 2 minutes
                 </p>
               </div>
               <div className="flex items-start space-x-3">
-                <div className="bg-green-100 rounded-full p-1 mt-0.5">
-                  <TrendingUp className="text-green-600" size={16} />
+                <div className="bg-amber-100 rounded-full p-1 mt-0.5 flex-shrink-0">
+                  <TrendingUp className="text-amber-600" size={16} />
                 </div>
-                <p className="text-sm text-gray-700">
-                  <strong>Économisez jusqu'à 30%</strong> sur votre assurance
+                <p className="text-sm text-gray-900">
+                  <strong className="text-amber-700">Économisez -35%</strong> sur votre prime d'assurance
                 </p>
               </div>
               <div className="flex items-start space-x-3">
-                <div className="bg-purple-100 rounded-full p-1 mt-0.5">
-                  <Clock className="text-purple-600" size={16} />
+                <div className="bg-orange-100 rounded-full p-1 mt-0.5 flex-shrink-0">
+                  <Clock className="text-orange-600" size={16} />
                 </div>
-                <p className="text-sm text-gray-700">
-                  <strong>Souscription en ligne</strong> rapide et sécurisée
+                <p className="text-sm text-gray-900">
+                  <strong className="text-orange-700">Réponse sous 15min</strong> par nos experts
                 </p>
               </div>
             </div>
@@ -249,7 +253,7 @@ const SmartConversionSystem: React.FC<SmartConversionSystemProps> = ({ onClose }
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Votre email professionnel"
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all text-gray-900"
+                className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 transition-all text-gray-900 bg-white placeholder-gray-500"
                 required
               />
               <input
@@ -257,19 +261,19 @@ const SmartConversionSystem: React.FC<SmartConversionSystemProps> = ({ onClose }
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 placeholder="Votre téléphone"
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all text-gray-900"
+                className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 transition-all text-gray-900 bg-white placeholder-gray-500"
                 required
               />
               <button
                 type="submit"
-                className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold py-3 px-6 rounded-lg transition-all transform hover:scale-105 shadow-lg"
+                className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-bold py-4 px-6 rounded-lg transition-all transform hover:scale-105 shadow-xl"
               >
-                Recevoir mon devis gratuit
+                Recevoir Mon Tarif Préférentiel →
               </button>
             </form>
 
-            <p className="text-xs text-gray-500 text-center mt-4">
-              Sans engagement • Réponse rapide • 100% sécurisé
+            <p className="text-xs text-gray-700 text-center mt-4 font-medium">
+              ✓ Sans engagement • ✓ Réponse 15min • ✓ Courtier ORIAS
             </p>
           </div>
         </div>
@@ -279,40 +283,40 @@ const SmartConversionSystem: React.FC<SmartConversionSystemProps> = ({ onClose }
 
   if (activeNotification === 'exitIntent' && !isSubmitted) {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-sm animate-fade-in">
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
         <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden">
-          <div className="bg-gradient-to-r from-orange-500 to-red-500 p-6 text-white relative">
+          <div className="bg-gradient-to-r from-red-500 to-orange-500 p-6 text-white relative">
             <button
               onClick={handleClose}
-              className="absolute top-4 right-4 text-white/80 hover:text-white transition-colors"
+              className="absolute top-4 right-4 text-white/90 hover:text-white transition-colors bg-white/20 hover:bg-white/30 rounded-full p-1.5"
             >
               <X size={24} />
             </button>
             <div className="flex items-center space-x-3 mb-2">
-              <Phone className="text-white" size={36} />
+              <Phone className="text-white drop-shadow-lg" size={36} />
               <div>
-                <h3 className="text-2xl font-black">Attendez !</h3>
-                <p className="text-orange-100">Ne partez pas sans votre devis</p>
+                <h3 className="text-3xl font-black text-white drop-shadow-md">Attendez !</h3>
+                <p className="text-white drop-shadow-md">Ne partez pas sans votre tarif personnalisé</p>
               </div>
             </div>
           </div>
 
-          <div className="p-6">
+          <div className="p-6 bg-gradient-to-br from-orange-50 to-red-50">
             <h4 className="text-xl font-bold text-gray-900 mb-3">
-              Obtenez une réponse d'expert en 24h
+              Réponse Expert sous 15 Minutes ⚡
             </h4>
 
-            <p className="text-gray-700 mb-4">
-              Nos conseillers spécialisés en assurance taxi analysent votre situation
-              et vous proposent <strong>la meilleure offre du marché</strong>.
+            <p className="text-gray-900 mb-4">
+              Nos conseillers spécialisés analysent votre dossier et vous proposent
+              <strong className="text-orange-600"> les meilleurs tarifs du marché</strong>.
             </p>
 
-            <div className="bg-orange-50 border-l-4 border-orange-500 p-4 mb-6">
+            <div className="bg-white border-2 border-orange-400 rounded-lg p-4 mb-6 shadow-md">
               <p className="text-sm text-orange-900 font-bold">
-                🎁 Offre exclusive : -15% sur votre première année
+                🎁 Offre Spéciale : Économisez -35% sur votre assurance taxi
               </p>
-              <p className="text-xs text-orange-700 mt-1">
-                Valable uniquement pour les demandes d'aujourd'hui
+              <p className="text-xs text-orange-700 mt-1 font-medium">
+                Tarifs négociés exclusifs • Réponse immédiate
               </p>
             </div>
 
@@ -321,8 +325,8 @@ const SmartConversionSystem: React.FC<SmartConversionSystemProps> = ({ onClose }
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="Votre email"
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 transition-all text-gray-900"
+                placeholder="Votre email professionnel"
+                className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 focus:border-red-500 focus:ring-2 focus:ring-red-200 transition-all text-gray-900 bg-white placeholder-gray-500"
                 required
               />
               <input
@@ -330,22 +334,22 @@ const SmartConversionSystem: React.FC<SmartConversionSystemProps> = ({ onClose }
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 placeholder="Votre téléphone"
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 transition-all text-gray-900"
+                className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 focus:border-red-500 focus:ring-2 focus:ring-red-200 transition-all text-gray-900 bg-white placeholder-gray-500"
                 required
               />
               <button
                 type="submit"
-                className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-bold py-4 px-6 rounded-lg transition-all transform hover:scale-105 shadow-lg"
+                className="w-full bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 text-white font-black text-lg py-4 px-6 rounded-lg transition-all transform hover:scale-105 shadow-xl"
               >
-                Profiter de l'offre exclusive
+                🚀 Recevoir Mon Tarif en 15min
               </button>
             </form>
 
             <button
               onClick={handleClose}
-              className="w-full mt-3 text-gray-500 text-sm hover:text-gray-700 transition-colors"
+              className="w-full mt-3 text-gray-600 text-sm hover:text-gray-800 font-medium transition-colors"
             >
-              Non merci, je préfère payer plus cher
+              Non merci, retourner au site
             </button>
           </div>
         </div>
