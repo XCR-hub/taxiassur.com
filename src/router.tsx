@@ -165,6 +165,16 @@ export const router = createBrowserRouter([
   },
   {
     path: '/admin',
+    element: <CRMLayout />,
+    children: [
+      {
+        index: true,
+        element: <BackofficeDashboard />,
+      },
+    ],
+  },
+  {
+    path: '/old-admin',
     element: <AdminDashboard />,
   },
   {

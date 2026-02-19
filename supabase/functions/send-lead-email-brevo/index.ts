@@ -32,6 +32,68 @@ Deno.serve(async (req: Request) => {
     const payload: LeadPayload = await req.json();
     const lead = payload.record;
 
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    console.log(`📧 Redirection vers IONOS SMTP pour lead ${lead.id}`);
+
+    // Rediriger directement vers la fonction IONOS SMTP
+    const ionosResponse = await fetch(`${supabaseUrl}/functions/v1/send-email-ionos`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${supabaseKey}`,
+      },
+      body: JSON.stringify({
+        type: "INSERT",
+        table: "crm_leads",
+        record: lead
+      })
+    });
+
+    if (!ionosResponse.ok) {
+      const errorText = await ionosResponse.text();
+      throw new Error(`IONOS email failed: ${errorText}`);
+    }
+
+    const ionosResult = await ionosResponse.json();
+    console.log(`✅ Emails envoyés via IONOS SMTP pour lead ${lead.id}`);
+
+    return new Response(
+      JSON.stringify({
+        success: true,
+        message: "Emails sent via IONOS SMTP (redirected from Brevo)",
+        ...ionosResult
+      }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  } catch (error) {
+    console.error("Error:", error);
+    return new Response(
+      JSON.stringify({ error: error.message }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
+});
+
+/*
+ * ANCIEN CODE BREVO - CONSERVÉ POUR RÉFÉRENCE
+ * Cette fonction redirige maintenant vers send-email-ionos
+ *
+ * Pour restaurer Brevo, décommenter ci-dessous et supprimer la redirection
+ */
+
+/*
+Deno.serve(async (req: Request) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { status: 200, headers: corsHeaders });
+  }
+
+  try {
+    const payload: LeadPayload = await req.json();
+    const lead = payload.record;
+
     const BREVO_API_KEY = Deno.env.get("BREVO_API_KEY");
     if (!BREVO_API_KEY) {
       throw new Error("BREVO_API_KEY not configured");
