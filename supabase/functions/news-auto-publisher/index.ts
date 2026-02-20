@@ -38,16 +38,18 @@ Deno.serve(async (req: Request) => {
 
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Vérifier si un article a été publié récemment (moins de 2 jours)
-    const twoDaysAgo = new Date();
-    twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
+    // Vérifier si un article a été publié récemment (moins de 1 jour)
+    // CORRIGÉ: Utiliser published_at au lieu de created_at pour vérifier la vraie date de publication
+    const oneDayAgo = new Date();
+    oneDayAgo.setDate(oneDayAgo.getDate() - 1);
 
     const { data: recentArticles, error: checkError } = await supabase
       .from('news_articles')
-      .select('id, created_at')
+      .select('id, published_at')
       .eq('status', 'published')
-      .gte('created_at', twoDaysAgo.toISOString())
-      .order('created_at', { ascending: false })
+      .not('published_at', 'is', null)
+      .gte('published_at', oneDayAgo.toISOString())
+      .order('published_at', { ascending: false })
       .limit(1);
 
     if (checkError) {
@@ -55,11 +57,11 @@ Deno.serve(async (req: Request) => {
     }
 
     if (recentArticles && recentArticles.length > 0) {
-      console.log('Un article a déjà été publié dans les 2 derniers jours, skip');
+      console.log('Un article a déjà été publié dans les dernières 24h, skip');
       return new Response(
         JSON.stringify({
-          message: 'Article déjà publié récemment',
-          lastPublished: recentArticles[0].created_at
+          message: 'Article déjà publié dans les dernières 24h',
+          lastPublished: recentArticles[0].published_at
         }),
         {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -120,14 +122,29 @@ Deno.serve(async (req: Request) => {
           .from('news_articles')
           .select('image_url')
           .not('image_url', 'is', null)
-          .limit(100);
+          .limit(200);
 
-        const usedUrls = usedImages?.map(a => a.image_url) || [];
+        // Extraire juste l'ID de la photo depuis les URLs (plus fiable que l'URL complète)
+        const usedPhotoIds = (usedImages || []).map(img => {
+          const match = img.image_url?.match(/photos\/(\d+)\//);
+          return match ? match[1] : null;
+        }).filter(Boolean);
 
-        // Rechercher sur Pexels avec variation de page pour garantir l'unicité
-        const randomPage = Math.floor(Math.random() * 20) + 1; // Page entre 1 et 20
+        // DIVERSITÉ AMÉLIORÉE: Varier les requêtes de recherche
+        const searchVariations = [
+          `${selectedTopic.keywords} france`,
+          `${selectedTopic.keywords} professional`,
+          `${selectedTopic.keywords} business`,
+          `${selectedTopic.keywords} modern`,
+          `${selectedTopic.keywords} urban`,
+          selectedTopic.keywords,
+        ];
+
+        const randomSearch = searchVariations[Math.floor(Math.random() * searchVariations.length)];
+        const randomPage = Math.floor(Math.random() * 30) + 1; // Page entre 1 et 30 (plus de diversité)
+
         const pexelsResponse = await fetch(
-          `https://api.pexels.com/v1/search?query=${encodeURIComponent(selectedTopic.keywords)}&per_page=15&page=${randomPage}&orientation=landscape`,
+          `https://api.pexels.com/v1/search?query=${encodeURIComponent(randomSearch)}&per_page=20&page=${randomPage}&orientation=landscape`,
           {
             headers: {
               'Authorization': pexelsKey
@@ -139,20 +156,35 @@ Deno.serve(async (req: Request) => {
           const pexelsData = await pexelsResponse.json();
 
           if (pexelsData.photos && pexelsData.photos.length > 0) {
+            // Mélanger les photos pour plus de randomisation
+            const shuffledPhotos = pexelsData.photos.sort(() => Math.random() - 0.5);
+
             // Trouver la première image NON utilisée
-            for (const photo of pexelsData.photos) {
-              if (!usedUrls.includes(photo.src.large)) {
+            for (const photo of shuffledPhotos) {
+              const photoId = photo.id.toString();
+              if (!usedPhotoIds.includes(photoId)) {
                 imageUrl = photo.src.large;
-                console.log('✅ Image unique trouvée:', imageUrl);
+                console.log('✅ Image unique trouvée (ID:', photoId, '):', imageUrl);
                 break;
               }
             }
 
-            // Si toutes sont utilisées, prendre une au hasard avec timestamp pour unicité
+            // Si toutes sont utilisées, forcer une nouvelle image depuis une page éloignée
             if (imageUrl === '/logo-600x300.png') {
-              const randomPhoto = pexelsData.photos[Math.floor(Math.random() * pexelsData.photos.length)];
-              imageUrl = randomPhoto.src.large + `?t=${Date.now()}`;
-              console.log('⚠️ Image avec timestamp pour unicité:', imageUrl);
+              const farPage = Math.floor(Math.random() * 50) + 30; // Pages 30-80
+              const fallbackResponse = await fetch(
+                `https://api.pexels.com/v1/search?query=${encodeURIComponent('taxi city')}&per_page=15&page=${farPage}&orientation=landscape`,
+                { headers: { 'Authorization': pexelsKey } }
+              );
+
+              if (fallbackResponse.ok) {
+                const fallbackData = await fallbackResponse.json();
+                if (fallbackData.photos && fallbackData.photos.length > 0) {
+                  const randomPhoto = fallbackData.photos[Math.floor(Math.random() * fallbackData.photos.length)];
+                  imageUrl = randomPhoto.src.large;
+                  console.log('✅ Image de secours trouvée:', imageUrl);
+                }
+              }
             }
           }
         }
