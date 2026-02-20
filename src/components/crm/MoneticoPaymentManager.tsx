@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { CreditCard, CheckCircle, XCircle, Loader, Euro, AlertCircle, ExternalLink } from 'lucide-react';
+import { CreditCard, CheckCircle, XCircle, Loader, Euro, AlertCircle, ExternalLink, Mail, Send } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
 interface MoneticoPaymentManagerProps {
@@ -22,9 +22,11 @@ export function MoneticoPaymentManager({ leadId, onPaymentSuccess }: MoneticoPay
   const [payments, setPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
+  const [sendingEmail, setSendingEmail] = useState<string | null>(null);
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   useEffect(() => {
     loadPayments();
@@ -133,51 +135,38 @@ export function MoneticoPaymentManager({ leadId, onPaymentSuccess }: MoneticoPay
   };
 
   const sendPaymentEmail = async (paymentId: string) => {
+    setSendingEmail(paymentId);
+    setError(null);
+    setSuccessMessage(null);
+
     try {
-      const { data: lead } = await supabase
-        .from('crm_leads')
-        .select('email, first_name, access_token')
-        .eq('id', leadId)
-        .single();
-
-      const { data: payment } = await supabase
-        .from('monetico_payments')
-        .select('*')
-        .eq('id', paymentId)
-        .single();
-
-      if (!lead || !payment) return;
-
-      await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-email-universal`,
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-payment-link-monetico`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
           },
-          body: JSON.stringify({
-            to: lead.email,
-            subject: 'Lien de paiement comptant - TaxiAssur',
-            htmlContent: `
-              <h2>Bonjour ${lead.first_name},</h2>
-              <p>Votre lien de paiement sécurisé est prêt.</p>
-              <p><strong>Montant :</strong> ${payment.amount} €</p>
-              <p><strong>Référence :</strong> ${payment.reference}</p>
-              <div style="margin: 30px 0;">
-                <a href="https://taxiassur.com/espace-prospect/paiement/${payment.id}?token=${lead.access_token}"
-                   style="background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
-                  Effectuer le paiement
-                </a>
-              </div>
-              <p>Ce lien est sécurisé et personnel.</p>
-              <p>Cordialement,<br>L'équipe TaxiAssur</p>
-            `,
-          }),
+          body: JSON.stringify({ paymentId }),
         }
       );
-    } catch (err) {
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Erreur lors de l\'envoi de l\'email');
+      }
+
+      setSuccessMessage(`Email envoyé avec succès à ${result.email}`);
+
+      // Effacer le message après 5 secondes
+      setTimeout(() => setSuccessMessage(null), 5000);
+    } catch (err: any) {
       console.error('Erreur envoi email:', err);
+      setError(err.message || 'Erreur lors de l\'envoi de l\'email');
+    } finally {
+      setSendingEmail(null);
     }
   };
 
@@ -217,6 +206,16 @@ export function MoneticoPaymentManager({ leadId, onPaymentSuccess }: MoneticoPay
 
   return (
     <div className="space-y-6">
+      {/* Message de succès global */}
+      {successMessage && (
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+          <div className="flex items-start gap-3">
+            <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+            <p className="text-sm text-green-700 font-medium">{successMessage}</p>
+          </div>
+        </div>
+      )}
+
       {hasSuccessfulPayment && (
         <div className="bg-green-50 border border-green-200 rounded-lg p-4">
           <div className="flex items-start gap-3">
@@ -277,23 +276,94 @@ export function MoneticoPaymentManager({ leadId, onPaymentSuccess }: MoneticoPay
               </div>
             )}
 
-            <button
-              onClick={createPayment}
-              disabled={creating}
-              className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-colors"
-            >
-              {creating ? (
-                <>
-                  <Loader className="w-4 h-4 animate-spin" />
-                  Création en cours...
-                </>
-              ) : (
-                <>
-                  <CreditCard className="w-4 h-4" />
-                  Créer le lien de paiement
-                </>
-              )}
-            </button>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                onClick={createPayment}
+                disabled={creating}
+                className="bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-colors"
+              >
+                {creating ? (
+                  <>
+                    <Loader className="w-4 h-4 animate-spin" />
+                    Création...
+                  </>
+                ) : (
+                  <>
+                    <CreditCard className="w-4 h-4" />
+                    Encaisser
+                  </>
+                )}
+              </button>
+
+              <button
+                onClick={async () => {
+                  if (!amount || parseFloat(amount) <= 0) {
+                    setError('Veuillez entrer un montant valide');
+                    return;
+                  }
+
+                  setCreating(true);
+                  setError(null);
+
+                  try {
+                    const response = await fetch(
+                      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-monetico-payment`,
+                      {
+                        method: 'POST',
+                        headers: {
+                          'Content-Type': 'application/json',
+                          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+                        },
+                        body: JSON.stringify({
+                          leadId,
+                          amount: parseFloat(amount),
+                          description: description || `Paiement comptant assurance taxi`,
+                        }),
+                      }
+                    );
+
+                    const result = await response.json();
+
+                    if (!response.ok) {
+                      throw new Error(result.error || 'Erreur lors de la création du paiement');
+                    }
+
+                    // Envoyer l'email directement
+                    if (result.paymentId) {
+                      await sendPaymentEmail(result.paymentId);
+                      setAmount('');
+                      setDescription('');
+                      await loadPayments();
+                    }
+                  } catch (err: any) {
+                    console.error('❌ Erreur:', err);
+                    setError(err.message || 'Erreur inconnue');
+                  } finally {
+                    setCreating(false);
+                  }
+                }}
+                disabled={creating}
+                className="bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-colors"
+              >
+                {creating ? (
+                  <>
+                    <Loader className="w-4 h-4 animate-spin" />
+                    Envoi...
+                  </>
+                ) : (
+                  <>
+                    <Send className="w-4 h-4" />
+                    Envoyer par email
+                  </>
+                )}
+              </button>
+            </div>
+
+            <p className="text-xs text-gray-500 text-center">
+              <strong>Encaisser :</strong> Ouvre le paiement (vous payez pour le client)
+              <br />
+              <strong>Envoyer par email :</strong> Envoie le lien au client
+            </p>
           </div>
         </div>
       )}
@@ -336,10 +406,20 @@ export function MoneticoPaymentManager({ leadId, onPaymentSuccess }: MoneticoPay
                 {payment.status === 'pending' && (
                   <button
                     onClick={() => sendPaymentEmail(payment.id)}
-                    className="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center gap-1"
+                    disabled={sendingEmail === payment.id}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
                   >
-                    <ExternalLink className="w-4 h-4" />
-                    Renvoyer
+                    {sendingEmail === payment.id ? (
+                      <>
+                        <Loader className="w-4 h-4 animate-spin" />
+                        Envoi...
+                      </>
+                    ) : (
+                      <>
+                        <Mail className="w-4 h-4" />
+                        Envoyer par email
+                      </>
+                    )}
                   </button>
                 )}
               </div>
@@ -352,8 +432,12 @@ export function MoneticoPaymentManager({ leadId, onPaymentSuccess }: MoneticoPay
         <div className="flex items-start gap-3">
           <AlertCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
           <div className="text-sm text-blue-800">
-            <p className="font-medium mb-1">Paiement sécurisé Monetico</p>
-            <p>Le lien de paiement sera envoyé automatiquement au prospect par email. Il pourra effectuer son paiement de manière sécurisée via la plateforme Monetico.</p>
+            <p className="font-medium mb-2">Deux options de paiement :</p>
+            <ul className="space-y-1 ml-4">
+              <li><strong>Encaisser :</strong> Ouvre une nouvelle fenêtre pour payer directement (utile si le client est avec vous)</li>
+              <li><strong>Envoyer par email :</strong> Envoie un email avec le lien de paiement sécurisé au prospect</li>
+            </ul>
+            <p className="mt-2">Tous les paiements sont sécurisés via Monetico CIC (3D Secure, PCI-DSS niveau 1)</p>
           </div>
         </div>
       </div>
