@@ -371,7 +371,7 @@ export function MoneticoPaymentManager({ leadId, onPaymentSuccess }: MoneticoPay
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Carte VISA Succès - Standard Monético */}
+          {/* Carte VISA Succès - VALIDÉE */}
           <div className="bg-white border-2 border-green-300 rounded-lg p-4">
             <div className="flex items-center gap-2 mb-3">
               <CheckCircle className="w-4 h-4 text-green-600" />
@@ -382,12 +382,12 @@ export function MoneticoPaymentManager({ leadId, onPaymentSuccess }: MoneticoPay
                 <span className="text-gray-600">Numéro:</span>
                 <button
                   onClick={() => {
-                    navigator.clipboard.writeText('4970100000000003');
+                    navigator.clipboard.writeText('5017670000001800');
                     alert('✅ Numéro copié !');
                   }}
                   className="font-bold text-green-700 hover:text-green-800 cursor-pointer"
                 >
-                  4970 1000 0000 0003 📋
+                  5017 6700 0000 1800 📋
                 </button>
               </div>
               <div className="flex justify-between">
@@ -401,12 +401,12 @@ export function MoneticoPaymentManager({ leadId, onPaymentSuccess }: MoneticoPay
             </div>
             <div className="mt-3 pt-3 border-t border-green-200">
               <p className="text-xs text-green-800">
-                ✅ Carte TEST standard Monético
+                ✅ Paiement sera <strong>ACCEPTÉ</strong>
               </p>
             </div>
           </div>
 
-          {/* Carte VISA Refus - Standard Monético */}
+          {/* Carte VISA Refus - VALIDÉE */}
           <div className="bg-white border-2 border-red-300 rounded-lg p-4">
             <div className="flex items-center gap-2 mb-3">
               <XCircle className="w-4 h-4 text-red-600" />
@@ -417,12 +417,12 @@ export function MoneticoPaymentManager({ leadId, onPaymentSuccess }: MoneticoPay
                 <span className="text-gray-600">Numéro:</span>
                 <button
                   onClick={() => {
-                    navigator.clipboard.writeText('4970100000000004');
+                    navigator.clipboard.writeText('5017670000000800');
                     alert('✅ Numéro copié !');
                   }}
                   className="font-bold text-red-700 hover:text-red-800 cursor-pointer"
                 >
-                  4970 1000 0000 0004 📋
+                  5017 6700 0000 0800 📋
                 </button>
               </div>
               <div className="flex justify-between">
@@ -436,93 +436,21 @@ export function MoneticoPaymentManager({ leadId, onPaymentSuccess }: MoneticoPay
             </div>
             <div className="mt-3 pt-3 border-t border-red-200">
               <p className="text-xs text-red-800">
-                ❌ Carte TEST refus standard
-              </p>
-            </div>
-          </div>
-
-          {/* Carte CB France */}
-          <div className="bg-white border-2 border-blue-300 rounded-lg p-4">
-            <div className="flex items-center gap-2 mb-3">
-              <CheckCircle className="w-4 h-4 text-blue-600" />
-              <span className="font-semibold text-blue-900">CB France</span>
-            </div>
-            <div className="space-y-2 font-mono text-sm">
-              <div className="flex justify-between">
-                <span className="text-gray-600">Numéro:</span>
-                <button
-                  onClick={() => {
-                    navigator.clipboard.writeText('4970100000000001');
-                    alert('✅ Numéro copié !');
-                  }}
-                  className="font-bold text-blue-700 hover:text-blue-800 cursor-pointer"
-                >
-                  4970 1000 0000 0001 📋
-                </button>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Expiration:</span>
-                <span className="font-semibold text-gray-900">12/26</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">CVV:</span>
-                <span className="font-semibold text-gray-900">123</span>
-              </div>
-            </div>
-            <div className="mt-3 pt-3 border-t border-blue-200">
-              <p className="text-xs text-blue-800">
-                ✅ Carte Bleue française
-              </p>
-            </div>
-          </div>
-
-          {/* Carte MasterCard */}
-          <div className="bg-white border-2 border-purple-300 rounded-lg p-4">
-            <div className="flex items-center gap-2 mb-3">
-              <CheckCircle className="w-4 h-4 text-purple-600" />
-              <span className="font-semibold text-purple-900">MasterCard</span>
-            </div>
-            <div className="space-y-2 font-mono text-sm">
-              <div className="flex justify-between">
-                <span className="text-gray-600">Numéro:</span>
-                <button
-                  onClick={() => {
-                    navigator.clipboard.writeText('5555555555554444');
-                    alert('✅ Numéro copié !');
-                  }}
-                  className="font-bold text-purple-700 hover:text-purple-800 cursor-pointer"
-                >
-                  5555 5555 5555 4444 📋
-                </button>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Expiration:</span>
-                <span className="font-semibold text-gray-900">12/26</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">CVV:</span>
-                <span className="font-semibold text-gray-900">123</span>
-              </div>
-            </div>
-            <div className="mt-3 pt-3 border-t border-purple-200">
-              <p className="text-xs text-purple-800">
-                ✅ MasterCard TEST standard
+                ❌ Paiement sera <strong>REFUSÉ</strong> (fonds insuffisants)
               </p>
             </div>
           </div>
         </div>
 
-        {/* Avertissement : Cartes de test standards */}
-        <div className="mt-4 pt-4 border-t border-orange-200">
+        {/* Avertissement : Cartes VALIDÉES */}
+        <div className="mt-4 pt-4 border-t border-green-200">
           <div className="flex items-start gap-2">
-            <AlertCircle className="w-4 h-4 text-orange-600 flex-shrink-0 mt-0.5" />
-            <div className="text-xs text-orange-900 space-y-1">
-              <p><strong>ℹ️ IMPORTANT :</strong> Cartes TEST standards Monético (source : doc officielle)</p>
-              <p><strong>⚠️ Les cartes exactes dépendent de vos identifiants TEST</strong></p>
-              <p>Sur le formulaire Monético, cliquez sur l'icône <strong>TEST</strong> pour voir vos cartes</p>
+            <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
+            <div className="text-xs text-green-900 space-y-1">
+              <p><strong>✅ CARTES VALIDÉES :</strong> Ces 2 cartes fonctionnent avec votre configuration</p>
               <p>Cliquez sur un numéro de carte pour le copier dans le presse-papier</p>
               <p>Ces cartes ne fonctionnent qu'en <strong>MODE TEST</strong> (aucun prélèvement réel)</p>
-              <p>📄 Voir : <strong>SOLUTION_MONETICO_IDENTIFIANTS_2026.md</strong></p>
+              <p><strong>Utilisez 5017670000001800</strong> pour tester un paiement accepté</p>
             </div>
           </div>
         </div>
