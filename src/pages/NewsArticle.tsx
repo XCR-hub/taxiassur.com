@@ -5,6 +5,7 @@ import { Calendar, Clock, Tag, ArrowLeft, TrendingUp, ExternalLink } from 'lucid
 import { supabase } from '@/lib/supabase';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import ArticleContent from '../components/ArticleContent';
 import { logger } from '@/lib/logger';
 
 interface NewsArticle {
@@ -144,6 +145,8 @@ export default function NewsArticle() {
         <title>{article.title} | TaxiAssur Actualités</title>
         <meta name="description" content={article.meta_description || article.excerpt} />
         <link rel="canonical" href={`https://taxiassur.com/actualites/${article.slug}`} />
+
+        {/* Open Graph */}
         <meta property="og:title" content={article.title} />
         <meta property="og:description" content={article.excerpt} />
         <meta property="og:type" content="article" />
@@ -154,6 +157,72 @@ export default function NewsArticle() {
         {article.tags?.map(tag => (
           <meta key={tag} property="article:tag" content={tag} />
         ))}
+
+        {/* Twitter Card */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={article.title} />
+        <meta name="twitter:description" content={article.excerpt} />
+        {article.image_url && <meta name="twitter:image" content={article.image_url} />}
+
+        {/* JSON-LD Structured Data */}
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Article",
+            "headline": article.title,
+            "description": article.excerpt,
+            "image": article.image_url || "https://taxiassur.com/logo-600x300.png",
+            "datePublished": article.published_at,
+            "dateModified": article.published_at,
+            "author": {
+              "@type": "Organization",
+              "name": "TaxiAssur",
+              "url": "https://taxiassur.com"
+            },
+            "publisher": {
+              "@type": "Organization",
+              "name": "TaxiAssur",
+              "logo": {
+                "@type": "ImageObject",
+                "url": "https://taxiassur.com/logo-600x300.png"
+              }
+            },
+            "mainEntityOfPage": {
+              "@type": "WebPage",
+              "@id": `https://taxiassur.com/actualites/${article.slug}`
+            },
+            "articleSection": article.category,
+            "keywords": article.tags?.join(', ') || ''
+          })}
+        </script>
+
+        {/* Breadcrumb Structured Data */}
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+              {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "Accueil",
+                "item": "https://taxiassur.com"
+              },
+              {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "Actualités",
+                "item": "https://taxiassur.com/actualites"
+              },
+              {
+                "@type": "ListItem",
+                "position": 3,
+                "name": article.title,
+                "item": `https://taxiassur.com/actualites/${article.slug}`
+              }
+            ]
+          })}
+        </script>
       </Helmet>
 
       <Header />
@@ -230,11 +299,10 @@ export default function NewsArticle() {
             </div>
           )}
 
-          {/* Content */}
-          <div
-            className="prose prose-lg max-w-none mb-8 text-gray-900 [&>*]:text-gray-900 [&_p]:text-gray-800 [&_h2]:text-gray-900 [&_h3]:text-gray-900 [&_li]:text-gray-800"
-            dangerouslySetInnerHTML={{ __html: article.content }}
-          />
+          {/* Content with Table of Contents */}
+          <div className="mb-8">
+            <ArticleContent content={article.content} showTableOfContents={true} />
+          </div>
 
           {/* Tags */}
           {article.tags && article.tags.length > 0 && (
