@@ -106,44 +106,6 @@ const BlogList: React.FC<BlogListProps> = ({
         </div>
       </div>
 
-      {/* Filters */}
-      {showFilters && allTags.length > 0 && (
-        <div className="space-y-3">
-          <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-            <Tag size={20} className="text-yellow-500" />
-            Filtrer par catégorie
-          </h3>
-          <div className="flex flex-wrap gap-3">
-            <button
-              onClick={() => setSelectedTag('')}
-              className={`px-5 py-2.5 rounded-lg text-sm font-semibold transition-all duration-300 ${
-                selectedTag === ''
-                  ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-black shadow-lg shadow-amber-500/30 scale-105'
-                  : 'bg-gray-800 text-gray-300 hover:bg-gray-700 hover:text-white border border-gray-700'
-              }`}
-            >
-              Toutes ({posts.length})
-            </button>
-            {allTags.map(tag => {
-              const count = posts.filter(p => p.tags.includes(tag)).length;
-              return (
-                <button
-                  key={tag}
-                  onClick={() => setSelectedTag(tag)}
-                  className={`px-5 py-2.5 rounded-lg text-sm font-semibold transition-all duration-300 ${
-                    selectedTag === tag
-                      ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-black shadow-lg shadow-amber-500/30 scale-105'
-                      : 'bg-gray-800 text-gray-300 hover:bg-gray-700 hover:text-white border border-gray-700'
-                  }`}
-                >
-                  {tag} ({count})
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
       {/* Posts Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {paginatedPosts.map(post => (
@@ -214,6 +176,44 @@ const BlogList: React.FC<BlogListProps> = ({
           </Card>
         ))}
       </div>
+
+      {/* Filters */}
+      {showFilters && allTags.length > 0 && (
+        <div className="space-y-3">
+          <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+            <Tag size={20} className="text-yellow-500" />
+            Filtrer par catégorie
+          </h3>
+          <div className="flex flex-wrap gap-3">
+            <button
+              onClick={() => setSelectedTag('')}
+              className={`px-5 py-2.5 rounded-lg text-sm font-semibold transition-all duration-300 ${
+                selectedTag === ''
+                  ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-black shadow-lg shadow-amber-500/30 scale-105'
+                  : 'bg-gray-800 text-gray-300 hover:bg-gray-700 hover:text-white border border-gray-700'
+              }`}
+            >
+              Toutes ({posts.length})
+            </button>
+            {allTags.map(tag => {
+              const count = posts.filter(p => p.tags.includes(tag)).length;
+              return (
+                <button
+                  key={tag}
+                  onClick={() => setSelectedTag(tag)}
+                  className={`px-5 py-2.5 rounded-lg text-sm font-semibold transition-all duration-300 ${
+                    selectedTag === tag
+                      ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-black shadow-lg shadow-amber-500/30 scale-105'
+                      : 'bg-gray-800 text-gray-300 hover:bg-gray-700 hover:text-white border border-gray-700'
+                  }`}
+                >
+                  {tag} ({count})
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Results count */}
       {filteredPosts.length > 0 && (
