@@ -44,6 +44,7 @@ interface LeadInfo {
   progression_percentage?: number;
   total_documents?: number;
   uploaded_documents?: number;
+  validated_documents?: number;
   quote_amount?: number;
   quote_accepted_at?: string;
   contract_signed_at?: string;
@@ -489,10 +490,20 @@ const EspaceProspect: React.FC = () => {
                   </div>
                 </div>
                 <div className="text-center md:text-right">
-                  <div className="bg-red-500 text-white font-black text-xl px-5 py-3 rounded-xl mb-2 animate-bounce">
-                    {leadInfo.uploaded_documents || 0} / {leadInfo.total_documents || 7}
+                  <div className={`text-white font-black text-xl px-5 py-3 rounded-xl mb-2 ${
+                    (leadInfo.validated_documents || 0) === 0
+                      ? 'bg-red-500 animate-bounce'
+                      : (leadInfo.validated_documents || 0) < (leadInfo.total_documents || 6)
+                      ? 'bg-amber-500'
+                      : 'bg-green-500'
+                  }`}>
+                    {leadInfo.validated_documents || 0} / {leadInfo.total_documents || 6}
                   </div>
-                  <p className="text-sm text-gray-400 font-semibold">Documents manquants</p>
+                  <p className="text-sm text-gray-400 font-semibold">
+                    {(leadInfo.validated_documents || 0) === (leadInfo.total_documents || 6)
+                      ? 'Documents complets'
+                      : 'Documents validés'}
+                  </p>
                 </div>
               </div>
             </div>
