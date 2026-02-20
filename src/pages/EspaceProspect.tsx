@@ -11,6 +11,7 @@ import ClientQuotesViewer from '../components/client/ClientQuotesViewer';
 import ClientSubscriptionForm from '../components/client/ClientSubscriptionForm';
 import CompanyDocumentsLibrary from '../components/client/CompanyDocumentsLibrary';
 import ClientPaymentButton from '../components/client/ClientPaymentButton';
+import ClientMoneticoPayment from '../components/client/ClientMoneticoPayment';
 
 interface DocumentStatus {
   status: 'missing' | 'uploaded' | 'validated' | 'rejected';
@@ -97,6 +98,7 @@ const EspaceProspect: React.FC = () => {
     return 'documents';
   });
   const [refreshing, setRefreshing] = useState(false);
+  const [pendingPayments, setPendingPayments] = useState<any[]>([]);
 
   // Mettre à jour l'onglet actif si le paramètre URL change
   useEffect(() => {
@@ -157,6 +159,19 @@ const EspaceProspect: React.FC = () => {
         setLeadInfo(leadData);
         if (leadData.converted_to_client) {
           setActiveTab('contrat');
+        }
+
+        // Charger les paiements en attente via RPC (utilise le token du prospect)
+        const { data: payments, error: paymentsError } = await anonClient
+          .rpc('get_payments_by_token', { p_token: token })
+          .then(res => ({
+            data: res.data?.filter((p: any) => p.status === 'pending'),
+            error: res.error
+          }));
+
+        if (!paymentsError && payments) {
+          console.log('Paiements en attente:', payments);
+          setPendingPayments(payments || []);
         }
       } else {
         console.warn('No lead found for token');
@@ -689,10 +704,63 @@ const EspaceProspect: React.FC = () => {
 
         {activeTab === 'paiement' && (
           <div className="space-y-6">
-            {!leadInfo.quote_accepted_at ? (
+            {/* Afficher les paiements en attente en priorité */}
+            {pendingPayments.length > 0 && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 mb-4">
+                  <CreditCard className="text-blue-400" size={24} />
+                  <h3 className="text-xl font-bold text-white">Paiements en attente</h3>
+                </div>
+                {pendingPayments.map((payment) => (
+                  <div key={payment.id} className="bg-gradient-to-br from-blue-900/40 to-blue-800/20 border border-blue-500/30 rounded-xl p-6">
+                    <div className="flex items-start justify-between mb-4">
+                      <div>
+                        <h4 className="text-lg font-bold text-white mb-2">{payment.description || 'Paiement comptant assurance taxi'}</h4>
+                        <div className="space-y-1 text-sm">
+                          <p className="text-gray-400">
+                            <span className="text-gray-500">Montant :</span>{' '}
+                            <span className="text-white font-bold text-xl">{payment.amount} €</span>
+                          </p>
+                          <p className="text-gray-400">
+                            <span className="text-gray-500">Référence :</span>{' '}
+                            <span className="text-white font-mono">{payment.payment_reference}</span>
+                          </p>
+                        </div>
+                      </div>
+                      <div className="bg-yellow-500/20 text-yellow-400 px-3 py-1 rounded-full text-sm font-semibold">
+                        ⏳ En attente
+                      </div>
+                    </div>
+
+                    <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4 mb-4">
+                      <div className="flex items-start gap-2">
+                        <Lock className="text-yellow-400 flex-shrink-0 mt-0.5" size={16} />
+                        <div className="text-sm text-gray-300">
+                          <p className="font-semibold text-yellow-400 mb-1">🔒 Paiement 100% Sécurisé</p>
+                          <p>
+                            Vos données bancaires sont protégées par Monetico Paiement (CIC),
+                            certifié PCI-DSS niveau 1. Technologie 3D Secure activée.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <ClientMoneticoPayment
+                      leadId={leadInfo.id}
+                      amount={parseFloat(payment.amount)}
+                      reference={payment.payment_reference}
+                      description={payment.description}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Si aucun paiement en attente ET pas de devis accepté */}
+            {pendingPayments.length === 0 && !leadInfo.quote_accepted_at && (
               <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-8 text-center">
                 <Euro className="text-amber-400 mx-auto mb-4" size={48} />
-                <h3 className="text-xl font-bold text-white mb-2">Devis non accepte</h3>
+                <h3 className="text-xl font-bold text-white mb-2">Devis non accepté</h3>
                 <p className="text-gray-400 mb-4">
                   Veuillez d'abord accepter votre devis pour renseigner vos informations bancaires.
                 </p>
@@ -704,7 +772,10 @@ const EspaceProspect: React.FC = () => {
                   <ChevronRight size={18} />
                 </button>
               </div>
-            ) : (
+            )}
+
+            {/* Si devis accepté, afficher le formulaire de souscription */}
+            {leadInfo.quote_accepted_at && (
               <div className="space-y-6">
                 <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-700 rounded-xl p-6">
                   <ClientSubscriptionForm
