@@ -100,6 +100,7 @@ const EspaceProspect: React.FC = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [pendingPayments, setPendingPayments] = useState<any[]>([]);
   const [allPayments, setAllPayments] = useState<any[]>([]);
+  const [finalDocuments, setFinalDocuments] = useState<any[]>([]);
 
   // Mettre à jour l'onglet actif si le paramètre URL change
   useEffect(() => {
@@ -210,10 +211,31 @@ const EspaceProspect: React.FC = () => {
     }
   }, [token, anonClient, leadInfo]); // Retirer loadDocuments des dépendances
 
+  const loadFinalDocuments = useCallback(async () => {
+    if (!token || !anonClient) return;
+
+    try {
+      const { data, error } = await anonClient
+        .rpc('get_final_documents_by_token', { p_token: token });
+
+      if (error) throw error;
+      setFinalDocuments(data || []);
+    } catch (err) {
+      console.error('Error loading final documents:', err);
+    }
+  }, [token, anonClient]);
+
+  useEffect(() => {
+    if (token && anonClient && leadInfo) {
+      loadFinalDocuments();
+    }
+  }, [token, anonClient, leadInfo]);
+
   const handleRefresh = async () => {
     setRefreshing(true);
     await loadLeadInfo();
     await loadDocuments();
+    await loadFinalDocuments();
     setRefreshing(false);
   };
 
@@ -874,48 +896,88 @@ const EspaceProspect: React.FC = () => {
               </div>
             ) : (
               <div className="space-y-6">
-                {leadInfo.contract_pdf_url && (
-                  <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-6">
-                    <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-                      <FileSignature className="text-blue-400" size={24} />
-                      Votre Contrat
-                    </h3>
-                    <a
-                      href={leadInfo.contract_pdf_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-4 px-6 rounded-xl transition-colors flex items-center justify-center gap-2"
-                    >
-                      <Download size={20} />
-                      Telecharger mon contrat
-                    </a>
-                  </div>
-                )}
+                {/* Documents finaux uploadés par le commercial */}
+                {finalDocuments.length > 0 ? (
+                  finalDocuments.map((doc) => {
+                    // Configuration par type de document
+                    const docConfig = {
+                      contrat_signe: {
+                        icon: FileSignature,
+                        iconColor: 'text-blue-400',
+                        bgGradient: 'from-blue-900/40 to-blue-800/20',
+                        borderColor: 'border-blue-500/30',
+                        buttonColor: 'bg-blue-500 hover:bg-blue-600',
+                        title: doc.custom_label || 'Contrat Signe'
+                      },
+                      attestation_assurance: {
+                        icon: Shield,
+                        iconColor: 'text-green-400',
+                        bgGradient: 'from-green-900/40 to-emerald-800/20',
+                        borderColor: 'border-green-500/30',
+                        buttonColor: 'bg-green-500 hover:bg-green-600',
+                        title: doc.custom_label || 'Attestation d\'Assurance'
+                      },
+                      memo_vehicule: {
+                        icon: Car,
+                        iconColor: 'text-purple-400',
+                        bgGradient: 'from-purple-900/40 to-purple-800/20',
+                        borderColor: 'border-purple-500/30',
+                        buttonColor: 'bg-purple-500 hover:bg-purple-600',
+                        title: doc.custom_label || 'Memo du Vehicule'
+                      }
+                    };
 
-                {leadInfo.attestation_pdf_url && (
-                  <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-6">
-                    <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-                      <Shield className="text-green-400" size={24} />
-                      Attestation d'Assurance
-                    </h3>
-                    <a
-                      href={leadInfo.attestation_pdf_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-4 px-6 rounded-xl transition-colors flex items-center justify-center gap-2"
-                    >
-                      <Download size={20} />
-                      Telecharger mon attestation
-                    </a>
-                  </div>
-                )}
+                    const config = docConfig[doc.document_type as keyof typeof docConfig];
+                    if (!config) return null;
 
-                {!leadInfo.contract_pdf_url && !leadInfo.attestation_pdf_url && (
+                    const DocIcon = config.icon;
+
+                    return (
+                      <div key={doc.id} className={`bg-gradient-to-br ${config.bgGradient} border ${config.borderColor} rounded-xl p-6`}>
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="flex items-center gap-3">
+                            <div className={`p-3 rounded-lg bg-gray-900/50`}>
+                              <DocIcon className={config.iconColor} size={28} />
+                            </div>
+                            <div>
+                              <h3 className="text-xl font-bold text-white">{config.title}</h3>
+                              <p className="text-sm text-gray-400">
+                                {doc.file_name}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="bg-green-500/20 text-green-400 px-3 py-1 rounded-full text-sm font-semibold flex items-center gap-1">
+                            <CheckCircle size={14} />
+                            Disponible
+                          </div>
+                        </div>
+
+                        <div className="text-sm text-gray-400 mb-4">
+                          <p>Uploade le {new Date(doc.uploaded_at).toLocaleDateString('fr-FR', {
+                            day: 'numeric',
+                            month: 'long',
+                            year: 'numeric'
+                          })}</p>
+                        </div>
+
+                        <a
+                          href={doc.file_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={`w-full ${config.buttonColor} text-white font-bold py-4 px-6 rounded-xl transition-colors flex items-center justify-center gap-2`}
+                        >
+                          <Download size={20} />
+                          Telecharger ce document
+                        </a>
+                      </div>
+                    );
+                  })
+                ) : (
                   <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-8 text-center">
                     <Clock className="text-blue-400 mx-auto mb-4" size={48} />
                     <h3 className="text-xl font-bold text-white mb-2">Documents en preparation</h3>
                     <p className="text-gray-400">
-                      Votre contrat et votre attestation sont en cours de preparation.
+                      Vos documents finaux (contrat, attestation, memo vehicule) sont en cours de preparation.
                       Vous recevrez un email des qu'ils seront disponibles.
                     </p>
                   </div>
