@@ -261,6 +261,8 @@ const CRMLeadDetail: React.FC = () => {
 </body>
 </html>`;
 
+      console.log('📧 Sending prospect access email to:', lead.email);
+
       const { data, error } = await supabase.functions.invoke('send-email-universal', {
         body: {
           to: lead.email,
@@ -270,27 +272,34 @@ const CRMLeadDetail: React.FC = () => {
           from: 'team@taxiassur.com',
           fromName: 'TaxiAssur',
           lead_id: leadId,
-          trackOpens: true,
-          trackClicks: true
+          trackOpens: false,  // Désactiver le tracking pour éviter les erreurs
+          trackClicks: false  // Désactiver le tracking pour éviter les erreurs
         }
       });
 
+      console.log('Email send response:', { data, error });
+
       if (error) {
-        console.error('Edge Function error:', error);
+        console.error('❌ Edge Function error:', error);
+        const errorDetails = JSON.stringify(error, null, 2);
+        alert(`Erreur lors de l'envoi de l'email:\n\n${error.message || 'Erreur Edge Function'}\n\nDétails: ${errorDetails}\n\nVérifiez que les credentials SMTP IONOS sont configurés dans les secrets Supabase.`);
         throw new Error(error.message || 'Erreur Edge Function');
       }
 
       if (data && !data.success) {
-        console.error('Email sending failed:', data);
+        console.error('❌ Email sending failed:', data);
         const failedDetails = data.failed?.[0];
-        throw new Error(failedDetails?.error || 'Échec de l\'envoi email');
+        const errorMsg = failedDetails?.error || data.error || 'Échec de l\'envoi email';
+        alert(`Erreur lors de l'envoi de l'email:\n\n${errorMsg}\n\nVérifiez que les credentials SMTP IONOS sont configurés correctement.`);
+        throw new Error(errorMsg);
       }
 
-      alert('Email d\'accès envoyé avec succès !');
+      console.log('✅ Email sent successfully!');
+      alert(`✅ Email d'accès envoyé avec succès à ${lead.email} !`);
     } catch (err: any) {
       logger.error('Error sending email:', err);
       const errorMessage = err?.message || 'Erreur inconnue lors de l\'envoi de l\'email';
-      alert(`Erreur lors de l'envoi de l'email: ${errorMessage}`);
+      console.error('Full error:', err);
     }
   };
 

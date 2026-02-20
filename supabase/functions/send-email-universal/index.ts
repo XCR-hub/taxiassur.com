@@ -208,33 +208,41 @@ Deno.serve(async (req: Request) => {
 
         // Create tracking record if tracking enabled
         if (emailData.trackOpens || emailData.trackClicks) {
-          const trackingData: any = {
-            email_to: recipient,
-            email_from: emailData.from || "team@taxiassur.com",
-            subject: emailData.subject,
-            status: 'sent',
-            provider: 'ionos'
-          };
+          try {
+            const trackingData: any = {
+              email_to: recipient,
+              email_from: emailData.from || "team@taxiassur.com",
+              subject: emailData.subject,
+              status: 'sent',
+              provider: 'ionos'
+            };
 
-          if (emailData.lead_id) trackingData.lead_id = emailData.lead_id;
-          if (emailData.campaign_id) trackingData.campaign_id = emailData.campaign_id;
-          if (emailData.metadata) trackingData.metadata = emailData.metadata;
+            if (emailData.lead_id) trackingData.lead_id = emailData.lead_id;
+            if (emailData.campaign_id) trackingData.campaign_id = emailData.campaign_id;
+            if (emailData.metadata) trackingData.metadata = emailData.metadata;
 
-          const { data: emailRecord } = await supabase
-            .from('email_sends')
-            .insert(trackingData)
-            .select('tracking_id')
-            .single();
+            const { data: emailRecord, error: trackingError } = await supabase
+              .from('email_sends')
+              .insert(trackingData)
+              .select('tracking_id')
+              .single();
 
-          trackingId = emailRecord?.tracking_id;
+            if (trackingError) {
+              console.warn('⚠️ Tracking insert failed (continuing without tracking):', trackingError.message);
+            } else {
+              trackingId = emailRecord?.tracking_id;
 
-          if (trackingId) {
-            if (emailData.trackClicks) {
-              emailHtml = addLinkTracking(emailHtml, trackingId, supabaseUrl);
+              if (trackingId) {
+                if (emailData.trackClicks) {
+                  emailHtml = addLinkTracking(emailHtml, trackingId, supabaseUrl);
+                }
+                if (emailData.trackOpens) {
+                  emailHtml = addTrackingPixel(emailHtml, trackingId, supabaseUrl);
+                }
+              }
             }
-            if (emailData.trackOpens) {
-              emailHtml = addTrackingPixel(emailHtml, trackingId, supabaseUrl);
-            }
+          } catch (trackingErr) {
+            console.warn('⚠️ Tracking setup failed (continuing without tracking):', trackingErr);
           }
         }
 
