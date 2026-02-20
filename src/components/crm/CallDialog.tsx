@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Phone,
   PhoneOff,
@@ -54,16 +54,24 @@ export const CallDialog: React.FC<CallDialogProps> = ({
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
 
-  useEffect(() => {
-    if (!isOpen) {
-      cleanup();
-    } else {
-      // Initialize Keyyo on open
-      initializeKeyyo();
+  const cleanup = useCallback(() => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
     }
-  }, [isOpen]);
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.stop();
+    }
+    setCallStatus('idle');
+    setCallDuration(0);
+    setIsRecording(false);
+    setNotes('');
+    setRecordingStartTime(null);
+    setKeyyoCallId(null);
+    audioChunksRef.current = [];
+  }, []);
 
-  const initializeKeyyo = async () => {
+  const initializeKeyyo = useCallback(async () => {
     try {
       const isConfigured = await keyyoService.isConfigured();
       setKeyyoEnabled(isConfigured);
@@ -81,7 +89,16 @@ export const CallDialog: React.FC<CallDialogProps> = ({
     } catch (error) {
       logger.error('Failed to initialize Keyyo:', error);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (!isOpen) {
+      cleanup();
+    } else {
+      // Initialize Keyyo on open
+      initializeKeyyo();
+    }
+  }, [isOpen, cleanup, initializeKeyyo]);
 
   useEffect(() => {
     if (callStatus === 'active') {
@@ -101,23 +118,6 @@ export const CallDialog: React.FC<CallDialogProps> = ({
       }
     };
   }, [callStatus]);
-
-  const cleanup = () => {
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-      timerRef.current = null;
-    }
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-      mediaRecorderRef.current.stop();
-    }
-    setCallStatus('idle');
-    setCallDuration(0);
-    setIsRecording(false);
-    setNotes('');
-    setRecordingStartTime(null);
-    setKeyyoCallId(null);
-    audioChunksRef.current = [];
-  };
 
   const startCall = async () => {
     setCallStatus('ringing');
