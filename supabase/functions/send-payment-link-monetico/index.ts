@@ -208,9 +208,11 @@ Deno.serve(async (req: Request) => {
         },
         body: JSON.stringify({
           to: lead.email,
+          toName: `${lead.first_name} ${lead.last_name}`,
           subject: `💳 Votre lien de paiement comptant - ${payment.amount}€`,
-          html: emailHtml,
-          from: 'contact@taxiassur.com',
+          htmlBody: emailHtml,
+          fromEmail: 'contact@taxiassur.com',
+          fromName: 'TaxiAssur',
         }),
       }
     );
