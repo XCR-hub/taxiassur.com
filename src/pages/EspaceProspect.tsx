@@ -717,7 +717,9 @@ const EspaceProspect: React.FC = () => {
                         <div className="space-y-1 text-sm">
                           <p className="text-gray-400">
                             <span className="text-gray-500">Montant :</span>{' '}
-                            <span className="text-white font-bold text-xl">{payment.amount} €</span>
+                            <span className="text-white font-bold text-xl">
+                              {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(parseFloat(payment.amount))}
+                            </span>
                           </p>
                           <p className="text-gray-400">
                             <span className="text-gray-500">Référence :</span>{' '}
@@ -769,7 +771,9 @@ const EspaceProspect: React.FC = () => {
                         <div className="space-y-1 text-sm">
                           <p className="text-gray-400">
                             <span className="text-gray-500">Montant :</span>{' '}
-                            <span className="text-white font-bold text-xl">{payment.amount} €</span>
+                            <span className="text-white font-bold text-xl">
+                              {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(parseFloat(payment.amount))}
+                            </span>
                           </p>
                           <p className="text-gray-400">
                             <span className="text-gray-500">Référence :</span>{' '}
