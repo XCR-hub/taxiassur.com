@@ -1,0 +1,40 @@
+═══════════════════════════════════════════════════════════
+           💳 CARTE MONÉTICO - VERSION FINALE
+═══════════════════════════════════════════════════════════
+
+✅ CARTE QUI FONCTIONNE :
+
+    5017670000001800
+    Date : 12/26
+    CVV  : 123
+
+
+❌ Carte qui NE fonctionne PAS :
+
+    5017670000000800 (supprimée)
+
+
+📋 Pour tester :
+
+    Copier : 5017670000001800
+
+
+🔧 Configuration :
+    ✅ Mode TEST actif
+    ✅ URL : test/paiement.cgi
+    ✅ TPE : 7374133
+    ✅ Build régénéré
+
+
+💡 Pour tester un refus :
+
+    Contacter : support@ingineco.com
+    Demander : Carte de test pour paiement refusé
+
+
+🚀 Prêt à déployer !
+
+═══════════════════════════════════════════════════════════
+
+Date : 20 février 2026
+Status : ✅ VALIDÉ ET TESTÉ

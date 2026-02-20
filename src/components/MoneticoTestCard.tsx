@@ -15,8 +15,8 @@ interface TestCardData {
   result: 'success' | 'error';
 }
 
-// ✅ CARTES DE TEST VALIDÉES - Fonctionnent avec votre configuration Monético
-// Ces cartes sont spécifiques à vos identifiants TEST
+// ✅ CARTE DE TEST VALIDÉE - Fonctionne avec votre configuration Monético
+// Carte spécifique à vos identifiants TEST
 const TEST_CARDS: TestCardData[] = [
   {
     number: '5017670000001800',
@@ -24,13 +24,6 @@ const TEST_CARDS: TestCardData[] = [
     cvv: '123',
     name: 'TEST ACCEPTED',
     result: 'success'
-  },
-  {
-    number: '5017670000000800',
-    expiry: '12/26',
-    cvv: '123',
-    name: 'TEST REFUSED',
-    result: 'error'
   }
 ];
 
@@ -155,19 +148,33 @@ export function MoneticoTestCard() {
               </div>
             ))}
 
-            {/* Confirmation cartes validées */}
+            {/* Confirmation carte validée */}
             <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-sm">
               <div className="flex items-start gap-2">
                 <Check className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
                 <div>
                   <p className="font-semibold text-green-800 mb-1">
-                    ✅ Cartes validées
+                    ✅ Carte validée
                   </p>
                   <ul className="text-green-700 space-y-1 text-xs">
-                    <li>Ces 2 cartes fonctionnent avec votre configuration Monético</li>
-                    <li>Utilisez <strong>5017670000001800</strong> pour un paiement accepté</li>
-                    <li>Utilisez <strong>5017670000000800</strong> pour tester un refus</li>
+                    <li>Cette carte fonctionne avec votre configuration Monético</li>
+                    <li>Utilisez <strong>5017670000001800</strong> pour tester les paiements</li>
                   </ul>
+                </div>
+              </div>
+            </div>
+
+            {/* Info carte refus */}
+            <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 text-sm">
+              <div className="flex items-start gap-2">
+                <AlertTriangle className="w-4 h-4 text-orange-600 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="font-semibold text-orange-800 mb-1">
+                    Carte de test refus non disponible
+                  </p>
+                  <p className="text-orange-700 text-xs">
+                    Pour tester un paiement refusé, contactez Ingineco/Monético pour obtenir une carte de test spécifique.
+                  </p>
                 </div>
               </div>
             </div>
