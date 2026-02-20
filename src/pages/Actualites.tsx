@@ -37,6 +37,7 @@ export default function Actualites() {
         .from('news_articles')
         .select('*')
         .eq('status', 'published')
+        .not('published_at', 'is', null)
         .order('published_at', { ascending: false })
         .limit(20);
 
