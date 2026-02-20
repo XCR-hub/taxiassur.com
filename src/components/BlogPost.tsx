@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Calendar, Clock, Tag, ArrowLeft, User } from 'lucide-react';
 import { BlogPost as BlogPostType } from '../lib/schema';
 import { getBlogPost } from '../lib/content';
 import { formatDate, calculateReadingTime } from '../lib/utils';
+import { markdownToHtml } from '../lib/text-utils';
 import Seo from './Seo';
 import JsonLd from './JsonLd';
 import FaqList from './FaqList';
@@ -91,6 +92,19 @@ const BlogPost: React.FC = () => {
     { name: post.title, url: `/blog/${post.id}` }
   ];
 
+  // Convertir le contenu markdown en HTML bien structuré
+  const htmlContent = useMemo(() => {
+    if (!post.content) return '';
+
+    // Si le contenu contient déjà du HTML, le retourner tel quel
+    if (post.content.includes('<p>') || post.content.includes('<div>')) {
+      return post.content;
+    }
+
+    // Sinon, convertir le markdown en HTML
+    return markdownToHtml(post.content);
+  }, [post.content]);
+
   return (
     <>
       <Seo
@@ -174,10 +188,10 @@ const BlogPost: React.FC = () => {
             </header>
 
             {/* Content */}
-            <article className="mb-12">
+            <article className="mb-12 prose prose-lg max-w-none">
               <div
-                className="blog-content text-gray-700 leading-relaxed space-y-6"
-                dangerouslySetInnerHTML={{ __html: post.content }}
+                className="blog-content"
+                dangerouslySetInnerHTML={{ __html: htmlContent }}
               />
             </article>
 
