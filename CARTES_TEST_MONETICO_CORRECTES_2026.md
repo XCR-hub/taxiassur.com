@@ -48,31 +48,31 @@ URL de paiement : `https://p.monetico-services.com/test/paiement.cgi`
 
 ---
 
-## 💳 AUTRES CARTES DE TEST
+## ⚠️ ATTENTION : Autres cartes NON VALIDES
 
-### MasterCard - Acceptée
+Les cartes suivantes **NE FONCTIONNENT PAS** avec Monético CIC :
+
+### ❌ MasterCard - NON SUPPORTÉE
 ```
 Numéro : 5017 6700 0000 0900
-Exp    : 12/26
-CVV    : 123
-Résultat : ✅ ACCEPTÉ
+❌ Cette carte ne fonctionne PAS avec Monético CIC
 ```
 
-### CB Française - Acceptée
+### ❌ CB Française - NON SUPPORTÉE
 ```
 Numéro : 4970 1000 0000 0001
-Exp    : 12/26
-CVV    : 123
-Résultat : ✅ ACCEPTÉ
+❌ Cette carte ne fonctionne PAS avec Monético CIC
 ```
 
-### American Express - Acceptée
+### ❌ American Express - NON SUPPORTÉE
 ```
 Numéro : 3745 0000 0000 006
-Exp    : 12/26
-CVV    : 1234 (4 chiffres pour Amex)
-Résultat : ✅ ACCEPTÉ
+❌ Cette carte ne fonctionne PAS avec Monético CIC
 ```
+
+**Note importante :** Monético CIC en mode TEST n'accepte que 2 cartes :
+- ✅ `5017670000001800` (paiement accepté)
+- ✅ `5017670000000800` (paiement refusé)
 
 ---
 

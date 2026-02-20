@@ -15,6 +15,8 @@ interface TestCardData {
   result: 'success' | 'error';
 }
 
+// ATTENTION : Seules ces 2 cartes fonctionnent avec Monético CIC
+// Ne pas ajouter d'autres cartes sans vérification officielle
 const TEST_CARDS: TestCardData[] = [
   {
     number: '5017670000001800',

@@ -1,39 +1,49 @@
 ╔══════════════════════════════════════════════════════════╗
 ║                                                          ║
-║      💳 CARTE DE TEST MONÉTICO - À UTILISER             ║
+║   💳 CARTES DE TEST MONÉTICO CIC - OFFICIELLES          ║
 ║                                                          ║
 ╠══════════════════════════════════════════════════════════╣
 ║                                                          ║
+║  ✅ CARTE N°1 : PAIEMENT ACCEPTÉ                        ║
+║                                                          ║
 ║  ┌─────────────────────────────────────────┐            ║
-║  │                                         │            ║
 ║  │  VISA TEST                              │            ║
 ║  │                                         │            ║
 ║  │  5017 6700 0000 1800                   │            ║
 ║  │                                         │            ║
 ║  │  Exp: 12/26        CVV: 123            │            ║
-║  │                                         │            ║
-║  │  Nom: TEST ACCEPTED                     │            ║
-║  │                                         │            ║
 ║  └─────────────────────────────────────────┘            ║
 ║                                                          ║
-║  ✅ Résultat : PAIEMENT ACCEPTÉ                         ║
-║  ✅ Montant : Tous montants < 1000€                     ║
-║  ✅ 3D Secure : NON (validation directe)                ║
+║  Numéro : 5017670000001800                              ║
+║  Date   : 12/26                                         ║
+║  CVV    : 123                                           ║
 ║                                                          ║
 ╠══════════════════════════════════════════════════════════╣
 ║                                                          ║
-║  🎯 COPIER-COLLER RAPIDE                                ║
+║  ❌ CARTE N°2 : PAIEMENT REFUSÉ (pour tests erreurs)   ║
 ║                                                          ║
-║     Numéro : 5017670000001800                           ║
-║     Date   : 12/26                                      ║
-║     CVV    : 123                                        ║
+║  ┌─────────────────────────────────────────┐            ║
+║  │  VISA TEST                              │            ║
+║  │                                         │            ║
+║  │  5017 6700 0000 0800                   │            ║
+║  │                                         │            ║
+║  │  Exp: 12/26        CVV: 123            │            ║
+║  └─────────────────────────────────────────┘            ║
+║                                                          ║
+║  Numéro : 5017670000000800                              ║
+║  Date   : 12/26                                         ║
+║  CVV    : 123                                           ║
 ║                                                          ║
 ╠══════════════════════════════════════════════════════════╣
 ║                                                          ║
-║  ⚠️  ATTENTION AUX ERREURS                              ║
+║  ⚠️  SEULEMENT CES 2 CARTES FONCTIONNENT !              ║
 ║                                                          ║
-║  ❌ 5017870000001800 ← FAUX (8 au lieu de 6)           ║
-║  ❌ 5017670000000180 ← FAUX (15 chiffres)              ║
-║  ✅ 5017670000001800 ← BON                             ║
+║  Les cartes suivantes NE MARCHENT PAS :                 ║
+║                                                          ║
+║  ❌ 4970100000000001 (CB France)                        ║
+║  ❌ 5017670000000900 (MasterCard)                       ║
+║  ❌ Toute autre carte                                   ║
+║                                                          ║
+║  Monético CIC n'accepte que les 2 cartes ci-dessus !    ║
 ║                                                          ║
 ╚══════════════════════════════════════════════════════════╝

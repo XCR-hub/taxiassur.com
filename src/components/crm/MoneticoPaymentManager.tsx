@@ -441,82 +441,18 @@ export function MoneticoPaymentManager({ leadId, onPaymentSuccess }: MoneticoPay
             </div>
           </div>
 
-          {/* Carte CB France */}
-          <div className="bg-white border-2 border-blue-300 rounded-lg p-4">
-            <div className="flex items-center gap-2 mb-3">
-              <CheckCircle className="w-4 h-4 text-blue-600" />
-              <span className="font-semibold text-blue-900">CB France - Accepté</span>
-            </div>
-            <div className="space-y-2 font-mono text-sm">
-              <div className="flex justify-between">
-                <span className="text-gray-600">Numéro:</span>
-                <button
-                  onClick={() => {
-                    navigator.clipboard.writeText('4970100000000001');
-                    alert('✅ Numéro copié !');
-                  }}
-                  className="font-bold text-blue-700 hover:text-blue-800 cursor-pointer"
-                >
-                  4970 1000 0000 0001 📋
-                </button>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Expiration:</span>
-                <span className="font-semibold text-gray-900">12/26</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">CVV:</span>
-                <span className="font-semibold text-gray-900">123</span>
-              </div>
-            </div>
-            <div className="mt-3 pt-3 border-t border-blue-200">
-              <p className="text-xs text-blue-800">
-                ✅ Carte Bleue locale française
-              </p>
-            </div>
-          </div>
-
-          {/* Carte MasterCard */}
-          <div className="bg-white border-2 border-purple-300 rounded-lg p-4">
-            <div className="flex items-center gap-2 mb-3">
-              <CheckCircle className="w-4 h-4 text-purple-600" />
-              <span className="font-semibold text-purple-900">MasterCard - Accepté</span>
-            </div>
-            <div className="space-y-2 font-mono text-sm">
-              <div className="flex justify-between">
-                <span className="text-gray-600">Numéro:</span>
-                <button
-                  onClick={() => {
-                    navigator.clipboard.writeText('5017670000000900');
-                    alert('✅ Numéro copié !');
-                  }}
-                  className="font-bold text-purple-700 hover:text-purple-800 cursor-pointer"
-                >
-                  5017 6700 0000 0900 📋
-                </button>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Expiration:</span>
-                <span className="font-semibold text-gray-900">12/26</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">CVV:</span>
-                <span className="font-semibold text-gray-900">123</span>
-              </div>
-            </div>
-            <div className="mt-3 pt-3 border-t border-purple-200">
-              <p className="text-xs text-purple-800">
-                ✅ Test de carte MasterCard
-              </p>
-            </div>
-          </div>
+          {/* IMPORTANT : Les cartes CB France et MasterCard ne fonctionnent PAS avec Monético CIC */}
+          {/* Elles ont été supprimées car elles causent des erreurs "Carte invalide" */}
+          {/* Seules les 2 cartes ci-dessus (1800 et 0800) sont valides */}
         </div>
 
+        {/* Avertissement : Seulement 2 cartes valides */}
         <div className="mt-4 pt-4 border-t border-orange-200">
           <div className="flex items-start gap-2">
             <AlertCircle className="w-4 h-4 text-orange-600 flex-shrink-0 mt-0.5" />
             <div className="text-xs text-orange-900 space-y-1">
-              <p><strong>IMPORTANT :</strong> Les cartes doivent avoir exactement <strong>16 chiffres</strong> (sauf AMEX: 15)</p>
+              <p><strong>⚠️ ATTENTION :</strong> Monético CIC n'accepte que <strong>2 cartes de test</strong></p>
+              <p>Les cartes CB France (4970...) et MasterCard (5017...0900) <strong>ne fonctionnent PAS</strong></p>
               <p>Cliquez sur le numéro de carte pour le copier dans le presse-papier</p>
               <p>Ces cartes ne fonctionnent qu'en <strong>MODE TEST</strong> (aucun prélèvement réel)</p>
             </div>
