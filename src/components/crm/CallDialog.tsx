@@ -12,10 +12,13 @@ import {
   Save,
   Play,
   Pause,
-  Circle
+  Circle,
+  Headphones,
+  AlertCircle
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
+import { keyyoService } from '@/lib/keyyo-service';
 
 interface CallDialogProps {
   isOpen: boolean;
@@ -42,6 +45,10 @@ export const CallDialog: React.FC<CallDialogProps> = ({
   const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
   const [recordingStartTime, setRecordingStartTime] = useState<Date | null>(null);
+  const [keyyoEnabled, setKeyyoEnabled] = useState(false);
+  const [keyyoCallId, setKeyyoCallId] = useState<string | null>(null);
+  const [userExtension, setUserExtension] = useState<string | null>(null);
+  const [callMode, setCallMode] = useState<'manual' | 'keyyo'>('manual');
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -50,8 +57,31 @@ export const CallDialog: React.FC<CallDialogProps> = ({
   useEffect(() => {
     if (!isOpen) {
       cleanup();
+    } else {
+      // Initialize Keyyo on open
+      initializeKeyyo();
     }
   }, [isOpen]);
+
+  const initializeKeyyo = async () => {
+    try {
+      const isConfigured = await keyyoService.isConfigured();
+      setKeyyoEnabled(isConfigured);
+
+      if (isConfigured) {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const extension = await keyyoService.getUserExtension(user.id);
+          setUserExtension(extension);
+          if (extension) {
+            setCallMode('keyyo');
+          }
+        }
+      }
+    } catch (error) {
+      logger.error('Failed to initialize Keyyo:', error);
+    }
+  };
 
   useEffect(() => {
     if (callStatus === 'active') {
@@ -85,16 +115,44 @@ export const CallDialog: React.FC<CallDialogProps> = ({
     setIsRecording(false);
     setNotes('');
     setRecordingStartTime(null);
+    setKeyyoCallId(null);
     audioChunksRef.current = [];
   };
 
   const startCall = async () => {
     setCallStatus('ringing');
 
-    // Simulate ringing for 2 seconds
-    setTimeout(() => {
-      setCallStatus('active');
-    }, 2000);
+    if (callMode === 'keyyo' && keyyoEnabled && userExtension && leadPhone) {
+      // Real call via Keyyo
+      try {
+        const result = await keyyoService.initiateCall({
+          fromExtension: userExtension,
+          toNumber: leadPhone,
+          leadId: leadId,
+        });
+
+        if (result.success && result.callId) {
+          setKeyyoCallId(result.callId);
+          // Keyyo will handle the actual call
+          // Simulate transition to active state
+          setTimeout(() => {
+            setCallStatus('active');
+          }, 3000);
+        } else {
+          throw new Error(result.error || 'Failed to initiate call');
+        }
+      } catch (error: any) {
+        logger.error('Failed to start Keyyo call:', error);
+        alert('Erreur lors de l\'initiation de l\'appel Keyyo: ' + error.message);
+        setCallStatus('idle');
+        return;
+      }
+    } else {
+      // Manual mode - simulate ringing
+      setTimeout(() => {
+        setCallStatus('active');
+      }, 2000);
+    }
   };
 
   const endCall = () => {
@@ -144,52 +202,43 @@ export const CallDialog: React.FC<CallDialogProps> = ({
 
       const { data: { user } } = await supabase.auth.getUser();
 
-      // Save call interaction
-      const interactionData: any = {
-        lead_id: leadId,
-        type: 'call',
-        subject: 'Appel téléphonique',
-        content: notes || 'Appel sans notes',
-        created_by: user?.id,
-        metadata: {
-          call_duration: callDuration,
-          recording_available: isRecording || audioChunksRef.current.length > 0,
-          recording_start_time: recordingStartTime?.toISOString()
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
+
+      // If Keyyo call, save to telephony_calls
+      if (callMode === 'keyyo' && keyyoCallId) {
+        await keyyoService.updateCallNotes(keyyoCallId, notes);
+      } else {
+        // Manual call - save to telephony_calls
+        const result = await keyyoService.saveCall({
+          leadId: leadId,
+          userId: user.id,
+          direction: 'outbound',
+          fromNumber: userExtension || 'unknown',
+          toNumber: leadPhone || 'unknown',
+          status: 'completed',
+          duration: callDuration,
+          talkTime: callDuration,
+          notes: notes,
+        });
+
+        if (!result.success) {
+          throw new Error(result.error || 'Failed to save call');
         }
-      };
 
-      const { data: interaction, error: interactionError } = await supabase
-        .from('crm_interactions')
-        .insert(interactionData)
-        .select()
-        .single();
+        // If we have audio data, save it
+        if (audioChunksRef.current.length > 0) {
+          const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+          const fileName = `call_${leadId}_${Date.now()}.webm`;
 
-      if (interactionError) throw interactionError;
+          const { error: uploadError } = await supabase.storage
+            .from('telephony-recordings')
+            .upload(fileName, audioBlob);
 
-      // If we have audio data, save it
-      if (audioChunksRef.current.length > 0) {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-        const fileName = `call_${leadId}_${Date.now()}.webm`;
-
-        // Upload to Supabase Storage (assuming a bucket exists)
-        const { error: uploadError } = await supabase.storage
-          .from('call-recordings')
-          .upload(fileName, audioBlob);
-
-        if (uploadError) {
-          logger.error('Error uploading recording:', uploadError);
-          // Don't fail the whole save if upload fails
-        } else {
-          // Update interaction with recording URL
-          await supabase
-            .from('crm_interactions')
-            .update({
-              metadata: {
-                ...interactionData.metadata,
-                recording_url: fileName
-              }
-            })
-            .eq('id', interaction.id);
+          if (uploadError) {
+            logger.error('Error uploading recording:', uploadError);
+          }
         }
       }
 
@@ -341,6 +390,56 @@ export const CallDialog: React.FC<CallDialogProps> = ({
             </div>
           )}
 
+          {/* Call Mode Selection */}
+          {callStatus === 'idle' && keyyoEnabled && userExtension && (
+            <div className="bg-blue-900/20 border border-blue-700/30 rounded-lg p-4">
+              <div className="flex items-center gap-3 mb-3">
+                <Headphones className="w-5 h-5 text-blue-400" />
+                <span className="font-medium text-white">Mode d'appel</span>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  onClick={() => setCallMode('keyyo')}
+                  className={`
+                    flex flex-col items-center gap-2 p-3 rounded-lg border-2 transition-all
+                    ${callMode === 'keyyo'
+                      ? 'border-blue-500 bg-blue-600/20 text-white'
+                      : 'border-gray-600 bg-gray-800 text-gray-400 hover:border-gray-500'
+                    }
+                  `}
+                >
+                  <Headphones className="w-6 h-6" />
+                  <div className="text-center">
+                    <div className="font-medium text-sm">Keyyo</div>
+                    <div className="text-xs opacity-75">Click-to-Call</div>
+                  </div>
+                </button>
+                <button
+                  onClick={() => setCallMode('manual')}
+                  className={`
+                    flex flex-col items-center gap-2 p-3 rounded-lg border-2 transition-all
+                    ${callMode === 'manual'
+                      ? 'border-blue-500 bg-blue-600/20 text-white'
+                      : 'border-gray-600 bg-gray-800 text-gray-400 hover:border-gray-500'
+                    }
+                  `}
+                >
+                  <Phone className="w-6 h-6" />
+                  <div className="text-center">
+                    <div className="font-medium text-sm">Manuel</div>
+                    <div className="text-xs opacity-75">Enregistrement</div>
+                  </div>
+                </button>
+              </div>
+              {callMode === 'keyyo' && (
+                <div className="mt-3 flex items-center gap-2 text-sm text-blue-300">
+                  <AlertCircle className="w-4 h-4" />
+                  <span>Extension: {userExtension}</span>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Call Actions */}
           <div className="space-y-3">
             {callStatus === 'idle' && (
@@ -348,8 +447,8 @@ export const CallDialog: React.FC<CallDialogProps> = ({
                 onClick={startCall}
                 className="w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white font-semibold py-4 rounded-lg transition-all shadow-lg shadow-green-500/30"
               >
-                <Phone className="w-5 h-5" />
-                Démarrer l'appel
+                {callMode === 'keyyo' ? <Headphones className="w-5 h-5" /> : <Phone className="w-5 h-5" />}
+                {callMode === 'keyyo' ? 'Appeler via Keyyo' : 'Démarrer l\'appel'}
               </button>
             )}
 
