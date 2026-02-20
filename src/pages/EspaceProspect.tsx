@@ -723,7 +723,7 @@ const EspaceProspect: React.FC = () => {
                           </p>
                           <p className="text-gray-400">
                             <span className="text-gray-500">Référence :</span>{' '}
-                            <span className="text-white font-mono">{payment.payment_reference}</span>
+                            <span className="text-white font-mono">{payment.reference}</span>
                           </p>
                         </div>
                       </div>
@@ -748,7 +748,7 @@ const EspaceProspect: React.FC = () => {
                     <ClientMoneticoPayment
                       leadId={leadInfo.id}
                       amount={parseFloat(payment.amount)}
-                      reference={payment.payment_reference}
+                      reference={payment.reference}
                       description={payment.description}
                     />
                   </div>
@@ -774,8 +774,8 @@ const EspaceProspect: React.FC = () => {
               </div>
             )}
 
-            {/* Si devis accepté, afficher le formulaire de souscription */}
-            {leadInfo.quote_accepted_at && (
+            {/* Si devis accepté mais aucun paiement en attente, afficher le formulaire de souscription */}
+            {leadInfo.quote_accepted_at && pendingPayments.length === 0 && (
               <div className="space-y-6">
                 <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-700 rounded-xl p-6">
                   <ClientSubscriptionForm
