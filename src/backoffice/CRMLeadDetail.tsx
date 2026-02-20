@@ -261,7 +261,7 @@ const CRMLeadDetail: React.FC = () => {
 </body>
 </html>`;
 
-      const { error } = await supabase.functions.invoke('send-email-universal', {
+      const { data, error } = await supabase.functions.invoke('send-email-universal', {
         body: {
           to: lead.email,
           toName: `${firstName} ${lastName}`.trim(),
@@ -275,11 +275,22 @@ const CRMLeadDetail: React.FC = () => {
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Edge Function error:', error);
+        throw new Error(error.message || 'Erreur Edge Function');
+      }
+
+      if (data && !data.success) {
+        console.error('Email sending failed:', data);
+        const failedDetails = data.failed?.[0];
+        throw new Error(failedDetails?.error || 'Échec de l\'envoi email');
+      }
+
       alert('Email d\'accès envoyé avec succès !');
-    } catch (err) {
+    } catch (err: any) {
       logger.error('Error sending email:', err);
-      alert('Erreur lors de l\'envoi de l\'email');
+      const errorMessage = err?.message || 'Erreur inconnue lors de l\'envoi de l\'email';
+      alert(`Erreur lors de l'envoi de l'email: ${errorMessage}`);
     }
   };
 

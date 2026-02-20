@@ -48,10 +48,22 @@ async function sendEmailSMTP(
   const SMTP_HOST = Deno.env.get("IONOS_SMTP_HOST") || "smtp.ionos.fr";
   const SMTP_PORT = parseInt(Deno.env.get("IONOS_SMTP_PORT") || "587");
   const SMTP_USER = Deno.env.get("IONOS_EMAIL_USER") || "team@taxiassur.com";
-  const SMTP_PASS = Deno.env.get("IONOS_EMAIL_PASSWORD");
+
+  // Try both secret names for backward compatibility
+  let SMTP_PASS = Deno.env.get("IONOS_EMAIL_PASSWORD");
+  if (!SMTP_PASS) {
+    SMTP_PASS = Deno.env.get("IONOS_SMTP_PASSWORD");
+  }
+
+  console.log("📧 SMTP Configuration:");
+  console.log("  Host:", SMTP_HOST);
+  console.log("  Port:", SMTP_PORT);
+  console.log("  User:", SMTP_USER);
+  console.log("  Password configured:", !!SMTP_PASS);
 
   if (!SMTP_PASS) {
-    throw new Error("IONOS_EMAIL_PASSWORD not configured");
+    console.error("❌ IONOS_EMAIL_PASSWORD ou IONOS_SMTP_PASSWORD non configuré");
+    throw new Error("Configuration SMTP manquante. Veuillez configurer IONOS_EMAIL_PASSWORD ou IONOS_SMTP_PASSWORD dans les secrets Supabase.");
   }
 
   const conn = await Deno.connect({
