@@ -99,6 +99,7 @@ const EspaceProspect: React.FC = () => {
   });
   const [refreshing, setRefreshing] = useState(false);
   const [pendingPayments, setPendingPayments] = useState<any[]>([]);
+  const [allPayments, setAllPayments] = useState<any[]>([]);
 
   // Mettre à jour l'onglet actif si le paramètre URL change
   useEffect(() => {
@@ -161,17 +162,14 @@ const EspaceProspect: React.FC = () => {
           setActiveTab('contrat');
         }
 
-        // Charger les paiements en attente via RPC (utilise le token du prospect)
+        // Charger tous les paiements via RPC (utilise le token du prospect)
         const { data: payments, error: paymentsError } = await anonClient
-          .rpc('get_payments_by_token', { p_token: token })
-          .then(res => ({
-            data: res.data?.filter((p: any) => p.status === 'pending'),
-            error: res.error
-          }));
+          .rpc('get_payments_by_token', { p_token: token });
 
         if (!paymentsError && payments) {
-          console.log('Paiements en attente:', payments);
-          setPendingPayments(payments || []);
+          console.log('Tous les paiements:', payments);
+          setAllPayments(payments || []);
+          setPendingPayments(payments?.filter((p: any) => p.status === 'pending') || []);
         }
       } else {
         console.warn('No lead found for token');
@@ -751,6 +749,65 @@ const EspaceProspect: React.FC = () => {
                       reference={payment.reference}
                       description={payment.description}
                     />
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Afficher l'historique des paiements effectués */}
+            {allPayments.filter(p => p.status === 'success').length > 0 && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 mb-4">
+                  <CheckCircle className="text-green-400" size={24} />
+                  <h3 className="text-xl font-bold text-white">Paiements effectués</h3>
+                </div>
+                {allPayments.filter(p => p.status === 'success').map((payment) => (
+                  <div key={payment.id} className="bg-gradient-to-br from-green-900/40 to-emerald-800/20 border border-green-500/30 rounded-xl p-6">
+                    <div className="flex items-start justify-between mb-4">
+                      <div>
+                        <h4 className="text-lg font-bold text-white mb-2">{payment.description || 'Paiement comptant assurance taxi'}</h4>
+                        <div className="space-y-1 text-sm">
+                          <p className="text-gray-400">
+                            <span className="text-gray-500">Montant :</span>{' '}
+                            <span className="text-white font-bold text-xl">{payment.amount} €</span>
+                          </p>
+                          <p className="text-gray-400">
+                            <span className="text-gray-500">Référence :</span>{' '}
+                            <span className="text-white font-mono">{payment.reference}</span>
+                          </p>
+                          {payment.payment_date && (
+                            <p className="text-gray-400">
+                              <span className="text-gray-500">Payé le :</span>{' '}
+                              <span className="text-white">
+                                {new Date(payment.payment_date).toLocaleDateString('fr-FR', {
+                                  day: 'numeric',
+                                  month: 'long',
+                                  year: 'numeric',
+                                  hour: '2-digit',
+                                  minute: '2-digit'
+                                })}
+                              </span>
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="bg-green-500/20 text-green-400 px-3 py-1 rounded-full text-sm font-semibold flex items-center gap-2">
+                        <CheckCircle size={16} />
+                        Payé
+                      </div>
+                    </div>
+
+                    <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-4">
+                      <div className="flex items-start gap-2">
+                        <CheckCircle className="text-green-400 flex-shrink-0 mt-0.5" size={16} />
+                        <div className="text-sm text-gray-300">
+                          <p className="font-semibold text-green-400 mb-1">✅ Paiement confirmé</p>
+                          <p>
+                            Votre paiement a été traité avec succès. Votre contrat sera activé sous 24h.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 ))}
               </div>
