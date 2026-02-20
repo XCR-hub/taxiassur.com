@@ -56,21 +56,20 @@ Deno.serve(async (req: Request) => {
 
     console.log('Monetico webhook received:', webhookData);
 
-    const {
-      reference,
-      montant,
-      code_retour,
-      cvx,
-      motifrefus,
-      numauto,
-      date,
-      heure,
-      TPE,
-      MAC: receivedMAC,
-      authentification,
-      brand,
-      modepaiement,
-    } = webhookData;
+    // ⚠️ IMPORTANT: Monético envoie des noms avec tirets, pas underscores
+    const reference = webhookData.reference;
+    const montant = webhookData.montant;
+    const codeRetour = webhookData['code-retour']; // Tiret, pas underscore!
+    const cvx = webhookData.cvx;
+    const motifrefus = webhookData.motifrefus;
+    const numauto = webhookData.numauto;
+    const date = webhookData.date;
+    const heure = webhookData.heure;
+    const TPE = webhookData.TPE;
+    const receivedMAC = webhookData.MAC;
+    const authentification = webhookData.authentification;
+    const brand = webhookData.brand;
+    const modepaiement = webhookData.modepaiement;
 
     if (!reference) {
       console.error('Missing reference');
@@ -88,12 +87,12 @@ Deno.serve(async (req: Request) => {
     const brand_field = brand || '';
 
     // Construction chaîne MAC selon documentation Monético CGI2
-    const macString = `${TPE}*${date}*${montant}*${reference}*${texte_libre}*${version}*${code_retour}*${cvx}*${vld}*${brand_field}`;
+    const macString = `${TPE}*${date}*${montant}*${reference}*${texte_libre}*${version}*${codeRetour}*${cvx}*${vld}*${brand_field}`;
 
     console.log('MAC verification:', {
       macString,
       receivedMAC,
-      fields: { TPE, date, montant, reference, texte_libre, version, code_retour, cvx, vld, brand: brand_field }
+      fields: { TPE, date, montant, reference, texte_libre, version, codeRetour, cvx, vld, brand: brand_field }
     });
 
     const isValidMAC = await verifyMAC(macString, receivedMAC);
@@ -125,15 +124,15 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    // Déterminer le statut
+    // Déterminer le statut (contrainte DB: pending, processing, success, failed, cancelled, refunded)
     let paymentStatus = 'failed';
-    if (code_retour === 'payetest' || code_retour === 'paye') {
-      paymentStatus = 'paid';
-    } else if (code_retour === 'Annulation') {
+    if (codeRetour === 'payetest' || codeRetour === 'paye') {
+      paymentStatus = 'success'; // ✅ Correspond à la contrainte DB
+    } else if (codeRetour === 'Annulation') {
       paymentStatus = 'cancelled';
     }
 
-    console.log('Processing payment:', { reference, paymentStatus });
+    console.log('Processing payment:', { reference, codeRetour, paymentStatus });
 
     // Traiter via la fonction RPC
     const { error: processError } = await supabase.rpc('process_monetico_payment', {
@@ -152,7 +151,7 @@ Deno.serve(async (req: Request) => {
     }
 
     // Créer notification CRM si paiement réussi
-    if (paymentStatus === 'paid' && payment.created_by) {
+    if (paymentStatus === 'success' && payment.created_by) {
       try {
         await supabase.from('crm_event_notifications').insert({
           lead_id: payment.lead_id,
