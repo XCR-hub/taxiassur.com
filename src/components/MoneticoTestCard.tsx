@@ -33,13 +33,13 @@ const TEST_CARDS: TestCardData[] = [
 ];
 
 export function MoneticoTestCard() {
-  const [copiedField, setCopiedField] = useState<string | null>(null);
-  const [showHelp, setShowHelp] = useState(false);
-
-  // N'afficher qu'en mode développement
+  // N'afficher qu'en mode développement - VÉRIFIER AVANT LES HOOKS
   if (import.meta.env.PROD) {
     return null;
   }
+
+  const [copiedField, setCopiedField] = useState<string | null>(null);
+  const [showHelp, setShowHelp] = useState(false);
 
   const copyToClipboard = async (text: string, field: string) => {
     try {
