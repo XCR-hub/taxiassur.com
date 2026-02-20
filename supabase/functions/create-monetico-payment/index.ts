@@ -69,10 +69,12 @@ async function calculateMAC(data: string): Promise<string> {
 }
 
 function generateReference(): string {
-  const timestamp = Date.now();
-  const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
-  const prefix = TEST_MODE ? 'TEST' : 'TAX';
-  return `${prefix}${timestamp}${random}`;
+  // Monético exige MAX 12 caractères pour la référence
+  // Format: Txxxxxxxxxxxx (12 caractères)
+  const timestamp = Date.now().toString().slice(-8); // 8 derniers chiffres du timestamp
+  const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0'); // 3 chiffres
+  const prefix = TEST_MODE ? 'T' : 'P'; // 1 caractère (T=test, P=prod)
+  return `${prefix}${timestamp}${random}`; // Total = 1 + 8 + 3 = 12 caractères
 }
 
 function formatMoneticoDate(date: Date): string {
