@@ -203,6 +203,12 @@ export function MoneticoPaymentManager({ leadId, onPaymentSuccess }: MoneticoPay
   }
 
   const hasSuccessfulPayment = payments.some(p => p.status === 'success');
+  const totalPaid = payments
+    .filter(p => p.status === 'success')
+    .reduce((sum, p) => sum + p.amount, 0);
+  const totalPending = payments
+    .filter(p => p.status === 'pending')
+    .reduce((sum, p) => sum + p.amount, 0);
 
   return (
     <div className="space-y-6">
@@ -216,28 +222,38 @@ export function MoneticoPaymentManager({ leadId, onPaymentSuccess }: MoneticoPay
         </div>
       )}
 
-      {hasSuccessfulPayment && (
-        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-          <div className="flex items-start gap-3">
-            <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+      {/* Résumé des paiements */}
+      {payments.length > 0 && (
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4">
+          <div className="grid grid-cols-2 gap-4">
             <div>
-              <h4 className="font-medium text-green-900">Paiement comptant reçu</h4>
-              <p className="text-sm text-green-700 mt-1">
-                Le prospect a effectué son paiement comptant avec succès.
+              <p className="text-sm text-gray-600 mb-1">Total payé</p>
+              <p className="text-2xl font-bold text-green-600">{totalPaid.toFixed(2)} €</p>
+              <p className="text-xs text-gray-500 mt-1">
+                {payments.filter(p => p.status === 'success').length} paiement(s) réussi(s)
+              </p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-600 mb-1">En attente</p>
+              <p className="text-2xl font-bold text-orange-600">{totalPending.toFixed(2)} €</p>
+              <p className="text-xs text-gray-500 mt-1">
+                {payments.filter(p => p.status === 'pending').length} paiement(s) en attente
               </p>
             </div>
           </div>
         </div>
       )}
 
-      {!hasSuccessfulPayment && (
-        <div className="bg-white border border-gray-200 rounded-lg p-6">
-          <div className="flex items-center gap-2 mb-4">
-            <CreditCard className="w-5 h-5 text-blue-600" />
-            <h3 className="font-semibold text-gray-900">Demander un paiement comptant</h3>
-          </div>
+      {/* Formulaire toujours visible */}
+      <div className="bg-white border border-gray-200 rounded-lg p-6">
+        <div className="flex items-center gap-2 mb-4">
+          <CreditCard className="w-5 h-5 text-blue-600" />
+          <h3 className="font-semibold text-gray-900">
+            {hasSuccessfulPayment ? 'Demander un paiement supplémentaire' : 'Demander un paiement comptant'}
+          </h3>
+        </div>
 
-          <div className="space-y-4">
+        <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Montant (€)
@@ -359,41 +375,62 @@ export function MoneticoPaymentManager({ leadId, onPaymentSuccess }: MoneticoPay
               </button>
             </div>
 
-            <p className="text-xs text-gray-500 text-center">
-              <strong>Encaisser :</strong> Ouvre le paiement (vous payez pour le client)
-              <br />
-              <strong>Envoyer par email :</strong> Envoie le lien au client
-            </p>
-          </div>
+          <p className="text-xs text-gray-500 text-center">
+            <strong>Encaisser :</strong> Ouvre le paiement (vous payez pour le client)
+            <br />
+            <strong>Envoyer par email :</strong> Envoie le lien au client
+          </p>
         </div>
-      )}
+      </div>
 
+      {/* Historique des paiements */}
       {payments.length > 0 && (
         <div className="bg-white border border-gray-200 rounded-lg p-6">
-          <h4 className="font-semibold text-gray-900 mb-4">Historique des paiements</h4>
+          <div className="flex items-center justify-between mb-4">
+            <h4 className="font-semibold text-gray-900">
+              Historique des paiements ({payments.length})
+            </h4>
+            {payments.length > 1 && (
+              <div className="text-sm text-gray-600">
+                Total : {payments.reduce((sum, p) => sum + p.amount, 0).toFixed(2)} €
+              </div>
+            )}
+          </div>
           <div className="space-y-3">
-            {payments.map((payment) => (
+            {payments.map((payment, index) => (
               <div
                 key={payment.id}
-                className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
+                className={`flex items-center justify-between p-4 rounded-lg border-2 ${
+                  payment.status === 'success'
+                    ? 'bg-green-50 border-green-200'
+                    : payment.status === 'pending'
+                    ? 'bg-yellow-50 border-yellow-200'
+                    : payment.status === 'failed'
+                    ? 'bg-red-50 border-red-200'
+                    : 'bg-gray-50 border-gray-200'
+                }`}
               >
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
-                    <span className="font-medium text-gray-900">
-                      {payment.amount} €
+                    <span className="text-xs font-medium text-gray-500">
+                      #{payments.length - index}
+                    </span>
+                    <span className="font-bold text-lg text-gray-900">
+                      {payment.amount.toFixed(2)} €
                     </span>
                     {getStatusBadge(payment.status)}
                   </div>
-                  <p className="text-sm text-gray-600">
-                    Référence: {payment.reference}
+                  <p className="text-sm text-gray-600 font-mono">
+                    Réf: {payment.reference}
                   </p>
                   {payment.card_type && payment.card_last4 && (
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-xs text-gray-500 mt-1 flex items-center gap-1">
+                      <CreditCard className="w-3 h-3" />
                       {payment.card_type} •••• {payment.card_last4}
                     </p>
                   )}
                   <p className="text-xs text-gray-500 mt-1">
-                    Créé le {new Date(payment.created_at).toLocaleDateString('fr-FR', {
+                    {new Date(payment.created_at).toLocaleDateString('fr-FR', {
                       day: '2-digit',
                       month: 'long',
                       year: 'numeric',
@@ -401,6 +438,17 @@ export function MoneticoPaymentManager({ leadId, onPaymentSuccess }: MoneticoPay
                       minute: '2-digit'
                     })}
                   </p>
+                  {payment.payment_date && (
+                    <p className="text-xs text-green-600 mt-1 font-medium">
+                      Payé le {new Date(payment.payment_date).toLocaleDateString('fr-FR', {
+                        day: '2-digit',
+                        month: 'long',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </p>
+                  )}
                 </div>
 
                 {payment.status === 'pending' && (
@@ -417,7 +465,7 @@ export function MoneticoPaymentManager({ leadId, onPaymentSuccess }: MoneticoPay
                     ) : (
                       <>
                         <Mail className="w-4 h-4" />
-                        Envoyer par email
+                        {payments.filter(p => p.status === 'pending').length > 1 ? 'Renvoyer' : 'Envoyer par email'}
                       </>
                     )}
                   </button>
@@ -432,12 +480,13 @@ export function MoneticoPaymentManager({ leadId, onPaymentSuccess }: MoneticoPay
         <div className="flex items-start gap-3">
           <AlertCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
           <div className="text-sm text-blue-800">
-            <p className="font-medium mb-2">Deux options de paiement :</p>
+            <p className="font-medium mb-2">Paiements multiples :</p>
             <ul className="space-y-1 ml-4">
-              <li><strong>Encaisser :</strong> Ouvre une nouvelle fenêtre pour payer directement (utile si le client est avec vous)</li>
-              <li><strong>Envoyer par email :</strong> Envoie un email avec le lien de paiement sécurisé au prospect</li>
+              <li><strong>Encaisser :</strong> Ouvre une nouvelle fenêtre pour payer directement (client présent)</li>
+              <li><strong>Envoyer par email :</strong> Envoie un email avec le lien de paiement sécurisé</li>
+              <li><strong>Plusieurs paiements :</strong> Vous pouvez demander autant de paiements que nécessaire (acomptes, soldes, frais supplémentaires...)</li>
             </ul>
-            <p className="mt-2">Tous les paiements sont sécurisés via Monetico CIC (3D Secure, PCI-DSS niveau 1)</p>
+            <p className="mt-2 text-xs">Tous les paiements sont sécurisés via Monetico CIC (3D Secure, PCI-DSS niveau 1)</p>
           </div>
         </div>
       </div>
