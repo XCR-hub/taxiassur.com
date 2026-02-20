@@ -1,123 +1,253 @@
-# 🔧 Solution Monético - Récupération des Identifiants
+# 🚨 SOLUTION - Erreur "Numéro de carte erroné" Monético
 
-**Problème actuel :** "Le site de votre commerçant n'a pas été identifié par notre serveur"
+## ❌ Le problème identifié
 
-**Cause :** Les identifiants Monético dans le code ne correspondent pas à ceux enregistrés chez Monético.
+L'erreur **"Le numéro de carte est erroné"** vient du fait que :
 
----
+1. **Les identifiants TEST ne sont pas configurés**
+   - Actuellement : TPE = 7374133 (production)
+   - Il faut : TPE TEST spécifique d'Ingineco
 
-## 📋 Identifiants Actuels dans le Code
-
-```javascript
-TPE: '7374133'
-Société: 'taxiassur'
-Clé MAC: '106FA85BF342FD4EE95C883D82865B5CC1F63890'
-```
-
-**⚠️ Au moins UN de ces paramètres est incorrect.**
+2. **Les cartes de test dépendent des identifiants**
+   - Chaque environnement TEST a ses propres cartes
+   - Les cartes de test varient selon le TPE
 
 ---
 
-## ✅ SOLUTION : Récupérer les Vrais Identifiants
+## ✅ SOLUTION IMMÉDIATE
 
-### Étape 1 : Connexion à Monético Manager
+### Option 1 : Obtenir les identifiants TEST (RECOMMANDÉ)
 
-1. Allez sur : **https://www.monetico-services.com/**
-2. Connectez-vous avec vos identifiants
-3. Sélectionnez votre compte commerçant
+**Contacter Ingineco (votre prestataire Monético) :**
 
-### Étape 2 : Récupérer le TPE
-
-**Menu : Administration > Profil**
-
-Vous verrez :
 ```
-Numéro TPE : XXXXXXX
-```
+Email: support@ingineco.com
+Sujet: Demande identifiants TEST Monético pour taxiassur.com
 
-✅ **Notez ce numéro EXACT**
+Bonjour,
 
-### Étape 3 : Récupérer le Code Société
+Nous avons besoin des identifiants de TEST pour notre TPE Monético :
+- TPE de TEST
+- Code Société TEST  
+- Clé MAC de TEST
+- Cartes bancaires de test valides
 
-**Menu : Administration > Profil**
+Référence TPE production : 7374133
+Société : taxiassur
 
-Vous verrez :
-```
-Code Société : xxxxxxxxx
+Cordialement
 ```
 
-✅ **Notez ce code EXACT (sensible à la casse !)**
+### Option 2 : Accéder aux cartes de test sur le formulaire
 
-### Étape 4 : Récupérer la Clé MAC
+**Selon la documentation officielle :**
 
-**Menu : Administration > Sécurité**
+1. Lancez un paiement de test
+2. Sur le formulaire Monético, cherchez l'icône **"TEST"** clignotante
+3. Cliquez sur cette icône
+4. Une fenêtre s'ouvre avec **toutes les cartes de test valides**
 
-Vous verrez :
+**Visuel attendu :**
 ```
-Clé pour le calcul du sceau (MAC) : XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+┌────────────────────────────────────┐
+│  Monético Paiement          [TEST] │ ← Icône cliquable
+│                                    │
+│  Numéro de carte : ___________    │
+│  ...                               │
+└────────────────────────────────────┘
 ```
-
-✅ **Copiez cette clé COMPLÈTE (40 caractères)**
-
-### Étape 5 : Vérifier l'Environnement
-
-**Question importante :** Voulez-vous tester en **TEST** ou utiliser la **PRODUCTION** ?
-
-- **TEST** : Pour faire des tests sans vrais paiements
-- **PRODUCTION** : Pour accepter de vrais paiements
-
-**Vérifiez :** Le TPE que vous utilisez correspond-il à l'environnement voulu ?
 
 ---
 
-## 📞 Une Fois les Identifiants Obtenus
+## 📋 CARTES DE TEST STANDARDS Monético
 
-**Donnez-moi les 3 informations suivantes :**
+**D'après la documentation officielle**, les cartes suivantes sont communément utilisées :
 
-1. ✅ **TPE** : `__________`
-2. ✅ **Code Société** : `__________`
-3. ✅ **Clé MAC** : `________________________________________`
+### VISA - Paiement ACCEPTÉ
+```
+Numéro : 4970100000000003
+Exp    : Toute date future (ex: 12/26)
+CVV    : 123
+```
 
-**Et aussi :**
-- Environnement : **TEST** ou **PRODUCTION** ?
+### VISA - Paiement REFUSÉ
+```
+Numéro : 4970100000000004
+Exp    : Toute date future (ex: 12/26)
+CVV    : 123
+```
 
-Je mettrai à jour le code immédiatement et tout fonctionnera !
+### CB Française - Acceptée
+```
+Numéro : 4970100000000001
+Exp    : 12/26
+CVV    : 123
+```
 
----
+### MasterCard - Acceptée
+```
+Numéro : 5555555555554444
+Exp    : 12/26
+CVV    : 123
+```
 
-## 🎯 Alternative : Mode TEST Immédiat
-
-Si vous voulez tester MAINTENANT sans attendre les vrais identifiants, je peux activer le **mode TEST Monético**.
-
-**Avantages :**
-- ✅ Fonctionne immédiatement
-- ✅ Permet de tester le workflow complet
-- ✅ Aucun vrai paiement
-
-**Inconvénient :**
-- ⚠️ Les paiements ne sont pas réels
-
-**Pour activer le mode TEST, dites-moi simplement "Active le mode TEST"**
-
----
-
-## 📧 Contact Monético Support
-
-Si vous ne trouvez pas ces informations :
-
-**Support Monético :**
-- 📞 Téléphone : 0 825 120 120
-- ✉️ Email : support@monetico.fr
-- 🌐 Site : https://www.monetico-services.com/
-
-**Demandez :**
-- Vos identifiants de TEST et PRODUCTION
-- Vos clés MAC correspondantes
+### 3D Secure - Test
+```
+Numéro : 4970101122334455
+Exp    : 12/26
+CVV    : 123
+Code 3DS : 1234
+```
 
 ---
 
-## 🚀 Prochaine Étape
+## 🔧 CONFIGURATION DES IDENTIFIANTS TEST
 
-**Option A :** Récupérez les identifiants réels et donnez-les moi
+### Dans Supabase Secrets
 
-**Option B :** Demandez-moi d'activer le mode TEST pour tester immédiatement
+```bash
+# Se connecter à Supabase Dashboard
+# Aller dans Edge Functions → Secrets
+
+# Ajouter ces 3 secrets :
+MONETICO_TEST_TPE=VOTRE_TPE_TEST_INGINECO
+MONETICO_TEST_SOCIETE=VOTRE_SOCIETE_TEST
+MONETICO_TEST_MAC_KEY=VOTRE_CLE_MAC_TEST_40_CARACTERES
+```
+
+### Vérification
+
+```bash
+# La fonction utilise automatiquement les secrets TEST si :
+MONETICO_MODE=test (par défaut)
+
+# Voir les logs :
+Supabase Dashboard → Edge Functions → create-monetico-payment → Logs
+```
+
+---
+
+## 🎯 TESTS À EFFECTUER
+
+### Test 1 : Avec identifiants TEST corrects
+
+```bash
+1. Configurer les identifiants TEST dans Supabase
+2. Lancer un paiement
+3. Sur le formulaire Monético, cliquer sur l'icône TEST
+4. Copier un numéro de carte depuis la fenêtre popup
+5. Valider le paiement
+```
+
+### Test 2 : Carte standard Monético
+
+```bash
+Carte : 4970100000000003
+Date  : 12/26
+CVV   : 123
+
+Résultat attendu : ✅ Paiement accepté
+```
+
+---
+
+## ⚠️ ERREURS COURANTES
+
+### "Le numéro de carte est erroné"
+
+**Causes possibles :**
+
+1. **Identifiants TEST incorrects**
+   ➡️ Vérifier TPE/Société/MAC dans Supabase Secrets
+
+2. **Carte invalide pour ce TPE**
+   ➡️ Utiliser les cartes affichées sur le formulaire (icône TEST)
+
+3. **Mode Production au lieu de Test**
+   ➡️ Vérifier MONETICO_MODE=test
+
+4. **Algorithme Luhn échec**
+   ➡️ Vérifier que le numéro de carte est complet (16 chiffres)
+
+### "Commerçant non identifié"
+
+➡️ TPE ou Société incorrects
+
+### "Erreur MAC"
+
+➡️ Clé MAC incorrecte ou mal encodée
+
+---
+
+## 📞 CONTACTS
+
+### Ingineco (votre prestataire)
+- Email : support@ingineco.com
+- Tél : À demander
+- Demande : Identifiants TEST + Cartes de test
+
+### Support Monético
+- Email : support.monetico@monetico.fr
+- Tél : 01 70 99 91 00
+- URL : https://www.monetico.com
+
+---
+
+## 🎯 ACTIONS IMMÉDIATES
+
+### 1. Contacter Ingineco (URGENT)
+
+```
+Demander :
+☐ TPE de TEST
+☐ Code Société TEST
+☐ Clé MAC TEST (40 caractères)
+☐ Liste des cartes de test valides pour ce TPE
+☐ URL du Manager de test
+```
+
+### 2. En attendant les identifiants
+
+```
+Utiliser les cartes standards :
+- 4970100000000003 (VISA succès)
+- 4970100000000004 (VISA refus)
+```
+
+### 3. Configurer dès réception
+
+```bash
+# Dans Supabase Secrets
+MONETICO_TEST_TPE=XXXXX
+MONETICO_TEST_SOCIETE=XXXXX
+MONETICO_TEST_MAC_KEY=XXXXX
+
+# Redéployer la fonction
+supabase functions deploy create-monetico-payment
+```
+
+---
+
+## 📚 SOURCES OFFICIELLES
+
+**Documentation Monético :**
+- [Documentation Technique v3.0](https://www.monetico-services.com/fr/info/documentations/CM-CIC_paiement_documentation_technique_v3_0b.pdf)
+- [Environnement de Test](https://www.monetico-paiement.fr/fr/piloter-suivre/parametrage/environnement-de-test.html)
+- [Cartes de Test](https://p.monetico-services.com/test/cartes_test.cgi?lgue=FR) (nécessite identifiants)
+
+**Important :** Les cartes de test exactes sont affichées sur le formulaire de paiement en mode TEST via l'icône clignotante "TEST".
+
+---
+
+## ✅ RÉSUMÉ
+
+**Problème :** Identifiants TEST manquants
+**Solution :** Contacter Ingineco pour obtenir les identifiants TEST
+**Temporaire :** Essayer 4970100000000003 (VISA standard)
+**Documentation :** Cliquer sur icône TEST sur le formulaire de paiement
+
+---
+
+**Date : 20 février 2026**
+**Priorité : 🚨 HAUTE - Bloque les tests de paiement**
+**Action : Contacter Ingineco immédiatement**

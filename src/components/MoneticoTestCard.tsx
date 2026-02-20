@@ -15,22 +15,38 @@ interface TestCardData {
   result: 'success' | 'error';
 }
 
-// ATTENTION : Seules ces 2 cartes fonctionnent avec Monético CIC
-// Ne pas ajouter d'autres cartes sans vérification officielle
+// CARTES DE TEST STANDARDS MONÉTICO
+// Source : Documentation officielle Monético CM-CIC
+// IMPORTANT : Les cartes exactes dépendent de vos identifiants TEST
+// Cliquez sur l'icône TEST du formulaire Monético pour voir vos cartes
 const TEST_CARDS: TestCardData[] = [
   {
-    number: '5017670000001800',
+    number: '4970100000000003',
     expiry: '12/26',
     cvv: '123',
-    name: 'TEST ACCEPTED',
+    name: 'VISA TEST ACCEPTED',
     result: 'success'
   },
   {
-    number: '5017670000000800',
+    number: '4970100000000004',
     expiry: '12/26',
     cvv: '123',
-    name: 'TEST REFUSED',
+    name: 'VISA TEST REFUSED',
     result: 'error'
+  },
+  {
+    number: '4970100000000001',
+    expiry: '12/26',
+    cvv: '123',
+    name: 'CB FRANCE',
+    result: 'success'
+  },
+  {
+    number: '5555555555554444',
+    expiry: '12/26',
+    cvv: '123',
+    name: 'MASTERCARD TEST',
+    result: 'success'
   }
 ];
 
@@ -155,18 +171,18 @@ export function MoneticoTestCard() {
               </div>
             ))}
 
-            {/* Avertissement */}
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-sm">
+            {/* Avertissement : Identifiants TEST requis */}
+            <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 text-sm">
               <div className="flex items-start gap-2">
-                <AlertTriangle className="w-4 h-4 text-yellow-600 mt-0.5 flex-shrink-0" />
+                <AlertTriangle className="w-4 h-4 text-orange-600 mt-0.5 flex-shrink-0" />
                 <div>
-                  <p className="font-semibold text-yellow-800 mb-1">
-                    Attention aux erreurs de saisie
+                  <p className="font-semibold text-orange-800 mb-1">
+                    Identifiants TEST requis
                   </p>
-                  <ul className="text-yellow-700 space-y-1 text-xs">
-                    <li>❌ 5017<strong className="text-red-600">8</strong>70... (8 au lieu de 6)</li>
-                    <li>❌ ...00000180 (15 chiffres au lieu de 16)</li>
-                    <li>✅ 5017<strong className="text-green-600">6</strong>70000001800 (correct)</li>
+                  <ul className="text-orange-700 space-y-1 text-xs">
+                    <li>⚠️ Les cartes exactes dépendent de vos identifiants TEST</li>
+                    <li>📋 Contactez Ingineco pour obtenir les identifiants TEST</li>
+                    <li>🔍 Cliquez sur l'icône TEST du formulaire Monético pour voir vos cartes</li>
                   </ul>
                 </div>
               </div>
@@ -176,6 +192,7 @@ export function MoneticoTestCard() {
             <div className="text-xs text-gray-500 space-y-1">
               <p>💡 <strong>Astuce :</strong> Utilisez les boutons "Copier" pour éviter les fautes</p>
               <p>🔒 Mode TEST - Aucun prélèvement réel</p>
+              <p>📄 Guide complet : <strong>SOLUTION_MONETICO_IDENTIFIANTS_2026.md</strong></p>
             </div>
           </div>
 

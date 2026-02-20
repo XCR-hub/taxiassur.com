@@ -1,0 +1,118 @@
+╔══════════════════════════════════════════════════════════════════╗
+║                                                                  ║
+║          💳 CARTES DE TEST MONÉTICO - STANDARDS 2026            ║
+║                                                                  ║
+╠══════════════════════════════════════════════════════════════════╣
+║                                                                  ║
+║  ✅ CARTE #1 : VISA ACCEPTÉE                                    ║
+║                                                                  ║
+║  ┌──────────────────────────────────────────────┐               ║
+║  │  VISA TEST                                   │               ║
+║  │                                              │               ║
+║  │  4970 1000 0000 0003                        │               ║
+║  │                                              │               ║
+║  │  Exp: 12/26        CVV: 123                 │               ║
+║  └──────────────────────────────────────────────┘               ║
+║                                                                  ║
+║  Numéro : 4970100000000003                                      ║
+║  Date   : 12/26                                                 ║
+║  CVV    : 123                                                   ║
+║  Résultat : ✅ Paiement ACCEPTÉ                                 ║
+║                                                                  ║
+╠══════════════════════════════════════════════════════════════════╣
+║                                                                  ║
+║  ❌ CARTE #2 : VISA REFUSÉE (test erreurs)                     ║
+║                                                                  ║
+║  ┌──────────────────────────────────────────────┐               ║
+║  │  VISA TEST                                   │               ║
+║  │                                              │               ║
+║  │  4970 1000 0000 0004                        │               ║
+║  │                                              │               ║
+║  │  Exp: 12/26        CVV: 123                 │               ║
+║  └──────────────────────────────────────────────┘               ║
+║                                                                  ║
+║  Numéro : 4970100000000004                                      ║
+║  Date   : 12/26                                                 ║
+║  CVV    : 123                                                   ║
+║  Résultat : ❌ Paiement REFUSÉ                                  ║
+║                                                                  ║
+╠══════════════════════════════════════════════════════════════════╣
+║                                                                  ║
+║  ✅ CARTE #3 : CB FRANCE                                        ║
+║                                                                  ║
+║  ┌──────────────────────────────────────────────┐               ║
+║  │  CB TEST                                     │               ║
+║  │                                              │               ║
+║  │  4970 1000 0000 0001                        │               ║
+║  │                                              │               ║
+║  │  Exp: 12/26        CVV: 123                 │               ║
+║  └──────────────────────────────────────────────┘               ║
+║                                                                  ║
+║  Numéro : 4970100000000001                                      ║
+║  Date   : 12/26                                                 ║
+║  CVV    : 123                                                   ║
+║  Résultat : ✅ Paiement ACCEPTÉ                                 ║
+║                                                                  ║
+╠══════════════════════════════════════════════════════════════════╣
+║                                                                  ║
+║  ✅ CARTE #4 : MASTERCARD                                       ║
+║                                                                  ║
+║  ┌──────────────────────────────────────────────┐               ║
+║  │  MASTERCARD TEST                             │               ║
+║  │                                              │               ║
+║  │  5555 5555 5555 4444                        │               ║
+║  │                                              │               ║
+║  │  Exp: 12/26        CVV: 123                 │               ║
+║  └──────────────────────────────────────────────┘               ║
+║                                                                  ║
+║  Numéro : 5555555555554444                                      ║
+║  Date   : 12/26                                                 ║
+║  CVV    : 123                                                   ║
+║  Résultat : ✅ Paiement ACCEPTÉ                                 ║
+║                                                                  ║
+╠══════════════════════════════════════════════════════════════════╣
+║                                                                  ║
+║  ⚠️  ATTENTION IMPORTANTE                                       ║
+║                                                                  ║
+║  Ces cartes sont les cartes STANDARDS Monético.                 ║
+║                                                                  ║
+║  Les cartes EXACTES dépendent de vos identifiants TEST :        ║
+║  - Contactez Ingineco pour obtenir les identifiants TEST        ║
+║  - Sur le formulaire Monético, cliquez sur l'icône [TEST]       ║
+║    pour voir vos cartes spécifiques                             ║
+║                                                                  ║
+║  ❌ Anciennes cartes (INVALIDES) :                              ║
+║     5017670000001800                                            ║
+║     5017670000000800                                            ║
+║                                                                  ║
+║  ✅ Nouvelles cartes (STANDARDS) :                              ║
+║     4970100000000003 ← Utilisez celle-ci en priorité            ║
+║                                                                  ║
+╠══════════════════════════════════════════════════════════════════╣
+║                                                                  ║
+║  📋 COPIER-COLLER RAPIDE (VISA Acceptée)                        ║
+║                                                                  ║
+║     Numéro : 4970100000000003                                   ║
+║     Date   : 12/26                                              ║
+║     CVV    : 123                                                ║
+║                                                                  ║
+╠══════════════════════════════════════════════════════════════════╣
+║                                                                  ║
+║  🎯 ACTION REQUISE                                              ║
+║                                                                  ║
+║  1. Contacter Ingineco : support@ingineco.com                   ║
+║     Demander : Identifiants TEST + Cartes spécifiques           ║
+║                                                                  ║
+║  2. Tester avec : 4970100000000003                              ║
+║                                                                  ║
+║  3. OU cliquer sur [TEST] sur le formulaire Monético            ║
+║                                                                  ║
+╚══════════════════════════════════════════════════════════════════╝
+
+Sources :
+- Documentation officielle Monético CM-CIC v3.0
+- https://www.monetico-services.com
+- https://www.absoluteweb.net/monetico-carte-test/
+
+Date : 20 février 2026
+Version : 2.0 - Cartes STANDARDS
