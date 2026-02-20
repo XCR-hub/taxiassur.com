@@ -2,20 +2,32 @@
 
 ## Cartes Bancaires de Test Officielles
 
-### ✅ VISA - Paiement ACCEPTÉ
+### ✅ VISA - Paiement ACCEPTÉ (CARTE PRINCIPALE)
 ```
 Numéro      : 5017670000001800
+             ↑ Attention : 6 et 1 importants !
 Exp         : 12/26
 CVV         : 123
-Résultat    : Paiement autorisé
+Nom         : TEST ACCEPTED
+Résultat    : ✅ Paiement autorisé immédiatement
 ```
 
-### ❌ VISA - Paiement REFUSÉ
+### ❌ VISA - Paiement REFUSÉ (pour tester les erreurs)
 ```
 Numéro      : 5017670000000800
+             ↑ Même début mais 0 au lieu de 1
 Exp         : 12/26
 CVV         : 123
-Résultat    : Paiement refusé (fonds insuffisants)
+Nom         : TEST REFUSED
+Résultat    : ❌ Paiement refusé (fonds insuffisants)
+```
+
+### ⚠️ ATTENTION : Fautes de frappe courantes
+```
+❌ 5017870000001800 (8 au lieu de 6) → ERREUR
+❌ 5017670000000180 (15 chiffres) → ERREUR
+❌ 50176700 00001800 (espaces mal placés) → ERREUR
+✅ 5017670000001800 (16 chiffres, 6 bien placé) → OK
 ```
 
 ---

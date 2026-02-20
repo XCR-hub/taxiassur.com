@@ -8,6 +8,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 
 const PerformanceOptimizer = lazy(() => import('./components/PerformanceOptimizer'));
 const AITaxiBackground = lazy(() => import('./components/AITaxiBackground'));
+const MoneticoTestCard = lazy(() => import('./components/MoneticoTestCard').then(m => ({ default: m.MoneticoTestCard })));
 
 const SimpleFallback = () => (
   <div style={{
@@ -44,6 +45,12 @@ function App() {
             <Suspense fallback={<SimpleFallback />}>
               <RouterProvider router={router} />
             </Suspense>
+            {/* Aide pour les tests Monético (dev only) */}
+            {showEnhancements && (
+              <Suspense fallback={null}>
+                <MoneticoTestCard />
+              </Suspense>
+            )}
           </ModalProvider>
         </ToastProvider>
       </ThemeProvider>
