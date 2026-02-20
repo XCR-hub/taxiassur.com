@@ -174,7 +174,7 @@ const EspaceProspect: React.FC = () => {
     if (token && anonClient) {
       loadLeadInfo();
     }
-  }, [token, anonClient, loadLeadInfo]);
+  }, [token, anonClient]); // Retirer loadLeadInfo des dépendances
 
   const loadDocuments = useCallback(async () => {
     if (!token || !anonClient) return;
@@ -195,7 +195,7 @@ const EspaceProspect: React.FC = () => {
     if (token && anonClient && leadInfo) {
       loadDocuments();
     }
-  }, [token, anonClient, leadInfo, loadDocuments]);
+  }, [token, anonClient, leadInfo]); // Retirer loadDocuments des dépendances
 
   const handleRefresh = async () => {
     setRefreshing(true);

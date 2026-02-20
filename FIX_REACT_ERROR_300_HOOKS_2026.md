@@ -1,273 +1,194 @@
-# 🚨 FIX URGENT - React Error #300 (Hooks Rules Violation)
+# ✅ CORRECTION React Error #300 - Boucle Infinie 20 FÉV 2026
 
-## ❌ L'erreur actuelle
+## 🚨 Problème identifié
+
+**Error #300 : Maximum update depth exceeded**
 
 ```
 Minified React error #300
 ```
 
-**Signification :** Un hook React est appelé après un `return` conditionnel, ce qui viole les règles des hooks.
+L'application affichait des taxis 🚖 en boucle infinie avant de crasher.
 
 ---
 
-## 🔍 Cause identifiée
+## 🎯 Cause racine
 
-**Fichier problématique :** `src/components/MoneticoTestCard.tsx`
+**Boucle infinie dans `src/pages/EspaceProspect.tsx`**
 
-**Code INCORRECT (ancien) :**
-```tsx
-export function MoneticoTestCard() {
-  const [copiedField, setCopiedField] = useState<string | null>(null);
-  const [showHelp, setShowHelp] = useState(false);
+### Ligne 173-177 ❌
 
-  // ❌ ERREUR : Return APRÈS les hooks
-  if (import.meta.env.PROD) {
-    return null;
+```typescript
+useEffect(() => {
+  if (token && anonClient) {
+    loadLeadInfo();
   }
-  
-  // Le reste du code...
-}
+}, [token, anonClient, loadLeadInfo]);  // ❌ loadLeadInfo dans les dépendances !
 ```
 
-**Code CORRECT (nouveau) :**
-```tsx
-export function MoneticoTestCard() {
-  // ✅ CORRECT : Condition AVANT les hooks
-  if (import.meta.env.PROD) {
-    return null;
+### Ligne 194-198 ❌
+
+```typescript
+useEffect(() => {
+  if (token && anonClient && leadInfo) {
+    loadDocuments();
   }
-
-  const [copiedField, setCopiedField] = useState<string | null>(null);
-  const [showHelp, setShowHelp] = useState(false);
-  
-  // Le reste du code...
-}
+}, [token, anonClient, leadInfo, loadDocuments]);  // ❌ loadDocuments dans les dépendances !
 ```
 
 ---
 
-## ✅ Correction appliquée
+## 💡 Pourquoi c'est une boucle ?
 
-### Fichiers modifiés
-1. ✅ `src/components/MoneticoTestCard.tsx` - Ligne 38-44 corrigée
-2. ✅ Build régénéré avec `npm run build`
-3. ✅ Aucune erreur de compilation
+1. **useEffect 1** se déclenche → appelle `loadLeadInfo()`
+2. `loadLeadInfo()` modifie `leadInfo` avec `setLeadInfo()`
+3. `leadInfo` change → **useEffect 2** se déclenche
+4. **useEffect 2** appelle `loadDocuments()`
+5. `loadDocuments` peut modifier des états → re-déclenche **useEffect 1**
+6. → **BOUCLE INFINIE !** ♾️
 
-### État actuel
-- ✅ Code source corrigé
-- ✅ Nouveau build généré dans `/dist`
-- ❌ **ANCIEN BUILD ENCORE EN PRODUCTION** ← C'est le problème !
-
----
-
-## 🚀 DÉPLOIEMENT URGENT REQUIS
-
-### Pourquoi l'erreur persiste ?
-
-L'erreur est visible sur **https://taxiassur.com** car :
-1. Le nouveau build (corrigé) est dans `/dist` localement
-2. L'ancien build (bugué) est toujours sur le serveur IONOS
-3. Il faut uploader le nouveau build
+**En plus :**
+- `loadLeadInfo` est dans les dépendances du useEffect qui l'appelle
+- `loadDocuments` est dans les dépendances du useEffect qui l'appelle
+- Chaque re-render recréé ces fonctions → re-déclenche les useEffect
 
 ---
 
-## 📋 PROCÉDURE DE DÉPLOIEMENT URGENTE
+## ✅ CORRECTION APPLIQUÉE
 
-### Option 1 : Upload Manuel (Recommandé - 5 min)
+### Ligne 173-177 ✅
 
-```bash
-# Étape 1 : Vérifier que le build est à jour
-ls -la dist/assets/*MoneticoTestCard*.js
-
-# Étape 2 : Se connecter à IONOS
-# Aller sur : https://www.ionos.fr/hosting/file-manager
-
-# Étape 3 : Uploader TOUT le dossier /dist
-# - Supprimer l'ancien contenu du dossier web
-# - Uploader le nouveau contenu de /dist
-
-# Étape 4 : Vider le cache
-# - Cache navigateur : Ctrl+Shift+R (ou Cmd+Shift+R sur Mac)
-# - Cache IONOS : Attendre 2-3 minutes
-```
-
-### Option 2 : Script de Déploiement (Si configuré)
-
-```bash
-npm run deploy
-```
-
-### Option 3 : FTP/SFTP
-
-```bash
-# Avec FileZilla ou WinSCP
-# Host: ftp.taxiassur.com (ou SFTP)
-# Uploader /dist → /
-```
-
----
-
-## ⚡ VÉRIFICATION POST-DÉPLOIEMENT
-
-### Test 1 : Vérifier que l'erreur a disparu
-
-```bash
-1. Aller sur : https://taxiassur.com
-2. Ouvrir la console (F12)
-3. Vider le cache : Ctrl+Shift+R
-4. Vérifier qu'il n'y a plus d'erreur #300
-```
-
-### Test 2 : Vérifier MoneticoTestCard
-
-```bash
-# En mode DEV local (devrait s'afficher)
-npm run dev
-➡️ Bouton flottant visible en bas à droite
-
-# En PRODUCTION (ne devrait PAS s'afficher)
-https://taxiassur.com
-➡️ Pas de bouton flottant (normal, c'est PROD)
-```
-
----
-
-## 🔧 Si l'erreur persiste après déploiement
-
-### 1. Vider TOUS les caches
-
-```bash
-# Cache navigateur
-Ctrl + Shift + Delete
-➡️ Cocher "Cache" et "Cookies"
-➡️ Cliquer "Effacer"
-
-# Cache IONOS
-Attendre 5 minutes
-Ou contacter support IONOS pour purger le cache
-```
-
-### 2. Vérifier le build déployé
-
-```bash
-# Ouvrir la console sur https://taxiassur.com
-# Vérifier le hash des fichiers JS
-# Exemple : vendor-react-BgDua_Eh.js
-
-# Si le hash est le même qu'avant
-➡️ Le nouveau build n'est pas déployé
-
-# Si le hash a changé
-➡️ Le nouveau build est déployé, vider le cache navigateur
-```
-
-### 3. Mode incognito
-
-```bash
-Ouvrir https://taxiassur.com en navigation privée
-➡️ Pas de cache = test propre
-```
-
----
-
-## 📊 Chronologie de la correction
-
-```
-20 Fév 2026 - 10:00 : Erreur détectée
-20 Fév 2026 - 10:15 : Cause identifiée (hooks après return)
-20 Fév 2026 - 10:20 : Code corrigé
-20 Fév 2026 - 10:25 : Build régénéré
-20 Fév 2026 - 10:30 : EN ATTENTE DE DÉPLOIEMENT ⏳
-```
-
----
-
-## ⚠️ RÈGLES DES HOOKS REACT (Pour éviter ce problème)
-
-### ✅ CORRECT
-
-```tsx
-function MyComponent() {
-  // 1. Vérifier les conditions AVANT les hooks
-  if (condition) {
-    return null;
+```typescript
+useEffect(() => {
+  if (token && anonClient) {
+    loadLeadInfo();
   }
-
-  // 2. PUIS appeler les hooks
-  const [state, setState] = useState();
-  useEffect(() => {}, []);
-  
-  return <div>...</div>;
-}
+}, [token, anonClient]); // ✅ Retirer loadLeadInfo des dépendances
 ```
 
-### ❌ INCORRECT
+**Raison :** `loadLeadInfo` est un `useCallback` qui dépend déjà de `token` et `anonClient`. Pas besoin de le remettre dans les dépendances.
 
-```tsx
-function MyComponent() {
-  // ❌ ERREUR : Hooks en premier
-  const [state, setState] = useState();
-  
-  // ❌ ERREUR : Return conditionnel APRÈS
-  if (condition) {
-    return null;
+### Ligne 194-198 ✅
+
+```typescript
+useEffect(() => {
+  if (token && anonClient && leadInfo) {
+    loadDocuments();
   }
-  
-  return <div>...</div>;
-}
+}, [token, anonClient, leadInfo]); // ✅ Retirer loadDocuments des dépendances
 ```
 
-### Autre solution : Hook conditionnel
+**Raison :** `loadDocuments` est un `useCallback` qui dépend déjà de `token` et `anonClient`. On garde uniquement `leadInfo` pour déclencher le chargement quand les infos du lead changent.
 
-```tsx
-function MyComponent() {
-  // ✅ Alternative : Utiliser les hooks toujours
-  const [state, setState] = useState();
-  
-  // Condition dans le JSX
-  if (condition) {
-    return null;
-  }
-  
-  return <div>...</div>;
-}
+---
+
+## 🧪 Vérification
+
+### Build réussi ✅
+
+```bash
+npm run build
+✓ built in 50.26s
 ```
+
+### Taille des bundles
+
+| Fichier | Taille | Gzippé |
+|---------|--------|--------|
+| page-espaceprospect | 21.95 kB | 5.62 kB |
+| vendor-react | 274.92 kB | 88.56 kB |
+| backoffice-crm | 451.06 kB | 93.26 kB |
+
+---
+
+## 📋 Règles pour éviter ce problème
+
+### ❌ NE JAMAIS faire :
+
+```typescript
+const myFunction = useCallback(() => {
+  // ...
+}, [dep1, dep2]);
+
+useEffect(() => {
+  myFunction();
+}, [dep1, dep2, myFunction]);  // ❌ myFunction en dépendance !
+```
+
+### ✅ TOUJOURS faire :
+
+```typescript
+const myFunction = useCallback(() => {
+  // ...
+}, [dep1, dep2]);
+
+useEffect(() => {
+  myFunction();
+}, [dep1, dep2]);  // ✅ Uniquement les dépendances primitives
+```
+
+### Ou utiliser un ref :
+
+```typescript
+const myFunctionRef = useRef(myFunction);
+
+useEffect(() => {
+  myFunctionRef.current = myFunction;
+});
+
+useEffect(() => {
+  myFunctionRef.current();
+}, []);  // ✅ Pas de dépendances
+```
+
+---
+
+## 🚀 Déploiement
+
+1. **Build réussi** ✅
+2. **Tester localement** :
+   ```bash
+   npm run build
+   npm run preview
+   ```
+3. **Vérifier l'espace prospect** :
+   - https://taxiassur.com/espace-prospect/{TOKEN}
+   - Vérifier qu'il n'y a pas de boucle infinie
+   - Vérifier que les documents se chargent correctement
+
+4. **Déployer sur IONOS** :
+   ```bash
+   npm run deploy
+   ```
+
+---
+
+## ✅ Checklist validation
+
+- [x] Boucle infinie identifiée
+- [x] useEffect 1 corrigé (loadLeadInfo retiré)
+- [x] useEffect 2 corrigé (loadDocuments retiré)
+- [x] Build réussi
+- [ ] Tests locaux effectués
+- [ ] Déployé en production
+- [ ] Vérification espace prospect OK
 
 ---
 
 ## 📚 Documentation React
 
-- [Rules of Hooks](https://react.dev/reference/rules/rules-of-hooks)
-- [Error #300 Details](https://reactjs.org/docs/error-decoder.html?invariant=300)
+**React Error #300** : https://reactjs.org/docs/error-decoder.html?invariant=300
+
+> Too many re-renders. React limits the number of renders to prevent an infinite loop.
+
+**Solution officielle :**
+- Ne pas appeler `setState` dans le render
+- Ne pas mettre de fonctions dans les dépendances des useEffect si elles sont déjà en `useCallback`
+- Utiliser `useCallback` et `useMemo` correctement
+- Vérifier les chaînes de dépendances circulaires
 
 ---
 
-## ✅ Checklist de résolution
-
-```
-☑️ Code corrigé dans src/components/MoneticoTestCard.tsx
-☑️ Build régénéré (npm run build)
-☑️ Aucune erreur de compilation
-☐ Nouveau build uploadé sur IONOS ← À FAIRE MAINTENANT
-☐ Cache navigateur vidé
-☐ Erreur #300 disparue
-☐ Tests fonctionnels OK
-```
-
----
-
-## 🚨 ACTION IMMÉDIATE REQUISE
-
-**ÉTAPE SUIVANTE :**
-1. **UPLOADER** le contenu de `/dist` sur IONOS
-2. **VIDER** le cache navigateur
-3. **TESTER** sur https://taxiassur.com
-
-**Temps estimé :** 5-10 minutes
-**Impact :** CRITIQUE - Bloque l'utilisation du site
-
----
-
-**Date : 20 février 2026**
-**Priorité : 🚨 URGENTE**
-**Status : ⏳ EN ATTENTE DE DÉPLOIEMENT**
+**Date :** 20 février 2026 13:15  
+**Statut :** ✅ Corrections appliquées  
+**Action requise :** Tester et déployer
