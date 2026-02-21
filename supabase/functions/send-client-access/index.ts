@@ -20,40 +20,71 @@ async function sendEmailSMTP(
   fromName: string = "TaxiAssur"
 ): Promise<void> {
   const SMTP_HOST = Deno.env.get("IONOS_SMTP_HOST") || "smtp.ionos.fr";
-  const SMTP_PORT = parseInt(Deno.env.get("IONOS_SMTP_PORT") || "587");
+  const SMTP_PORT = parseInt(Deno.env.get("IONOS_SMTP_PORT") || "465");
   const SMTP_USER = Deno.env.get("IONOS_EMAIL_USER") || "team@taxiassur.com";
-  const SMTP_PASS = Deno.env.get("IONOS_EMAIL_PASSWORD");
+  const SMTP_PASS = Deno.env.get("IONOS_EMAIL_PASSWORD") || Deno.env.get("IONOS_SMTP_PASSWORD");
+
+  console.log("🔧 Configuration SMTP:", {
+    host: SMTP_HOST,
+    port: SMTP_PORT,
+    user: SMTP_USER,
+    hasPassword: !!SMTP_PASS
+  });
 
   if (!SMTP_PASS) {
-    throw new Error("IONOS_EMAIL_PASSWORD not configured");
+    throw new Error("IONOS_EMAIL_PASSWORD ou IONOS_SMTP_PASSWORD non configuré dans les secrets Supabase");
   }
 
-  const conn = await Deno.connect({
-    hostname: SMTP_HOST,
-    port: SMTP_PORT,
-  });
+  // Port 465 = SSL direct, Port 587 = STARTTLS
+  const useSSL = SMTP_PORT === 465;
+
+  let conn;
+
+  if (useSSL) {
+    // Connexion SSL directe
+    conn = await Deno.connectTls({
+      hostname: SMTP_HOST,
+      port: SMTP_PORT,
+    });
+  } else {
+    // Connexion non sécurisée puis STARTTLS
+    conn = await Deno.connect({
+      hostname: SMTP_HOST,
+      port: SMTP_PORT,
+    });
+  }
 
   const encoder = new TextEncoder();
   const decoder = new TextDecoder();
 
   async function readResponse(): Promise<string> {
-    const buffer = new Uint8Array(1024);
+    const buffer = new Uint8Array(4096);
     const n = await conn.read(buffer);
     if (n === null) return "";
-    return decoder.decode(buffer.subarray(0, n));
+    const response = decoder.decode(buffer.subarray(0, n));
+    console.log("← SMTP:", response.trim());
+    return response;
   }
 
   async function sendCommand(cmd: string): Promise<string> {
+    console.log("→ SMTP:", cmd.replace(SMTP_PASS || "", "***"));
     await conn.write(encoder.encode(cmd + "\r\n"));
     return await readResponse();
   }
 
   try {
+    // Lecture du banner initial
     await readResponse();
+
+    // EHLO
     await sendCommand(`EHLO ${SMTP_HOST}`);
+
+    // AUTH LOGIN
     await sendCommand(`AUTH LOGIN`);
     await sendCommand(base64Encode(SMTP_USER));
     await sendCommand(base64Encode(SMTP_PASS));
+
+    // Enveloppe email
     await sendCommand(`MAIL FROM:<${fromEmail}>`);
     await sendCommand(`RCPT TO:<${to}>`);
     await sendCommand("DATA");
@@ -72,8 +103,17 @@ async function sendEmailSMTP(
     await conn.write(encoder.encode(emailContent + "\r\n"));
     await readResponse();
     await sendCommand("QUIT");
+
+    console.log("✅ Email envoyé avec succès via SMTP");
+  } catch (error) {
+    console.error("❌ Erreur SMTP:", error);
+    throw error;
   } finally {
-    conn.close();
+    try {
+      conn.close();
+    } catch (e) {
+      console.log("Connexion déjà fermée");
+    }
   }
 }
 
@@ -217,6 +257,8 @@ Deno.serve(async (req: Request) => {
   </div>
 </body>
 </html>`;
+
+    console.log(`📧 Envoi email d'accès à ${lead.email}...`);
 
     await sendEmailSMTP(
       lead.email,

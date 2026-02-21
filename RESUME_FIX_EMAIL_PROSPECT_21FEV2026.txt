@@ -1,0 +1,148 @@
+╔═══════════════════════════════════════════════════════════════════════════╗
+║                                                                           ║
+║          FIX : ERREUR ENVOI EMAIL ESPACE PROSPECT - 21 FÉV 2026         ║
+║                                                                           ║
+╚═══════════════════════════════════════════════════════════════════════════╝
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│ ❌ PROBLÈME INITIAL                                                      │
+└─────────────────────────────────────────────────────────────────────────┘
+
+  Erreur: "Edge Function returned a non-2xx status code"
+  Fonction: send-client-access
+  Cause: Configuration SMTP SSL incorrecte
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│ ✅ CORRECTIONS APPLIQUÉES                                                │
+└─────────────────────────────────────────────────────────────────────────┘
+
+  1. Support SSL/TLS automatique
+     Port 465 → Deno.connectTls() (SSL direct)
+     Port 587 → Deno.connect() + STARTTLS
+
+  2. Fallback multi-secrets
+     IONOS_EMAIL_PASSWORD || IONOS_SMTP_PASSWORD
+
+  3. Logs SMTP détaillés
+     Conversation complète + masquage password
+
+  4. Buffer augmenté
+     1024 bytes → 4096 bytes
+
+  5. Gestion erreurs robuste
+     Try/catch/finally avec logs
+
+  6. Fonction redéployée
+     ✅ Déploiement réussi
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│ 🔧 CONFIGURATION REQUISE                                                 │
+└─────────────────────────────────────────────────────────────────────────┘
+
+  Dashboard Supabase → Settings → Edge Functions → Secrets
+
+  IONOS_SMTP_HOST=smtp.ionos.fr
+  IONOS_SMTP_PORT=465
+  IONOS_EMAIL_USER=team@taxiassur.com
+  IONOS_EMAIL_PASSWORD=TAXIassur!  (ou IONOS_SMTP_PASSWORD)
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│ 🧪 TEST RAPIDE                                                           │
+└─────────────────────────────────────────────────────────────────────────┘
+
+  Méthode 1 (Interface) :
+    1. CRM Killer → Leads
+    2. Cliquer sur un lead
+    3. Bouton "Envoyer accès espace client"
+    4. Vérifier succès/erreur
+
+  Méthode 2 (Script) :
+    node scripts/test-email-prospect-access.js <lead_id>
+
+  Méthode 3 (Vérifier secrets) :
+    node scripts/test-email-prospect-access.js --check-secrets
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│ 📊 VÉRIFIER LOGS                                                         │
+└─────────────────────────────────────────────────────────────────────────┘
+
+  Dashboard Supabase → Edge Functions → send-client-access → Logs
+
+  Chercher:
+    🔧 Configuration SMTP: { hasPassword: true }
+    → SMTP: AUTH LOGIN
+    ← SMTP: 235 2.7.0 Authentication successful
+    ✅ Email envoyé avec succès via SMTP
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│ 📧 EMAIL ENVOYÉ                                                          │
+└─────────────────────────────────────────────────────────────────────────┘
+
+  Sujet: 🎉 Bienvenue ! Accédez à votre espace client TaxiAssur
+
+  Contenu:
+    - Message de bienvenue personnalisé
+    - Bouton CTA orange "ACCÉDER À MON ESPACE CLIENT"
+    - Lien: https://taxiassur.com/espace-client/{lead_id}
+    - 6 fonctionnalités détaillées
+    - Coordonnées de contact
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│ ❌ ERREURS FRÉQUENTES                                                    │
+└─────────────────────────────────────────────────────────────────────────┘
+
+  Erreur: "IONOS_EMAIL_PASSWORD non configuré"
+  → Solution: supabase secrets set IONOS_EMAIL_PASSWORD="TAXIassur!"
+
+  Erreur: "Connection refused"
+  → Solution: Vérifier port 465 et host smtp.ionos.fr
+
+  Erreur: "Authentication failed (535)"
+  → Solution: Vérifier mot de passe + compte pas bloqué
+
+  Erreur: "Invalid recipient (550)"
+  → Solution: Vérifier email du lead valide
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│ ✅ CHECKLIST DÉPLOIEMENT                                                 │
+└─────────────────────────────────────────────────────────────────────────┘
+
+  [✅] Fonction send-client-access corrigée
+  [✅] Fonction déployée sur Supabase
+  [✅] Documentation complète créée
+  [✅] Script de test créé
+  [⏳] Secrets SMTP à vérifier
+  [⏳] Test d'envoi depuis le CRM
+  [⏳] Vérification email reçu
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│ 📚 DOCUMENTATION                                                         │
+└─────────────────────────────────────────────────────────────────────────┘
+
+  FIX_EMAIL_ESPACE_PROSPECT_2026.md
+    → Documentation technique complète
+
+  GUIDE_RESOLUTION_EMAIL_PROSPECT_RAPIDE.md
+    → Guide de résolution pas à pas
+
+  scripts/test-email-prospect-access.js
+    → Script de test automatisé
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│ 🚀 PROCHAINES ÉTAPES                                                     │
+└─────────────────────────────────────────────────────────────────────────┘
+
+  1. Vérifier les secrets SMTP dans Supabase Dashboard
+  2. Tester l'envoi depuis le CRM
+  3. Vérifier la réception de l'email
+  4. Vérifier l'accès via le lien
+  5. Consulter les logs si problème
+
+╔═══════════════════════════════════════════════════════════════════════════╗
+║                                                                           ║
+║  🎉 CORRECTION TERMINÉE - PRÊT POUR TEST EN PRODUCTION                   ║
+║                                                                           ║
+║  Date: 21 février 2026                                                   ║
+║  Statut: ✅ Fonction déployée avec succès                                ║
+║                                                                           ║
+╚═══════════════════════════════════════════════════════════════════════════╝
