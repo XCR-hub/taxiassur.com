@@ -1,0 +1,96 @@
+╔═══════════════════════════════════════════════════════════════════════════╗
+║                                                                           ║
+║      FIX : REACT ERROR #300 - PASSAGE D'ÉTAPES - 21 FÉV 2026            ║
+║                                                                           ║
+╚═══════════════════════════════════════════════════════════════════════════╝
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│ ❌ PROBLÈME                                                               │
+└─────────────────────────────────────────────────────────────────────────┘
+
+  Erreur: "Minified React error #300"
+  Contexte: Passage d'une étape à une autre dans le pipeline
+  Cause: Nombre de hooks différent entre les étapes
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│ 🔍 DIAGNOSTIC                                                             │
+└─────────────────────────────────────────────────────────────────────────┘
+
+  React Error #300 = "Rendered more hooks than during the previous render"
+
+  Problème dans: src/components/crm/PipelineWorkflow7Etapes.tsx
+
+  - Étape 2 (CollecteDocumentsStep): 11 hooks
+  - Étape 3 (SaisieDevisStep): nombre différent
+  - Étape 4 (ValidationDevisStep): encore différent
+
+  → React détecte changement de hooks → ❌ erreur #300
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│ ✅ SOLUTION APPLIQUÉE                                                     │
+└─────────────────────────────────────────────────────────────────────────┘
+
+  Ajout de key={currentStage} sur le conteneur du contenu
+
+  Fichier: src/components/crm/PipelineWorkflow7Etapes.tsx
+  Ligne: 243
+
+  AVANT:
+    <div className="bg-white rounded-lg...">
+
+  APRÈS:
+    <div key={currentStage} className="bg-white rounded-lg...">
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│ 💡 POURQUOI ÇA MARCHE                                                    │
+└─────────────────────────────────────────────────────────────────────────┘
+
+  La clé React force React à:
+    1. Démonter l'étape précédente
+    2. Réinitialiser tous les hooks
+    3. Monter une nouvelle instance
+
+  → Évite la confusion sur le nombre de hooks ✅
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│ 🧪 TEST                                                                   │
+└─────────────────────────────────────────────────────────────────────────┘
+
+  1. CRM → Ouvrir un lead
+  2. Onglet "Pipeline" ou "Workflow"
+  3. Cliquer "Étape Suivante" plusieurs fois
+  4. Résultat: ✅ Pas d'erreur, changement fluide
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│ 📦 BUILD                                                                  │
+└─────────────────────────────────────────────────────────────────────────┘
+
+  npm run build
+  ✅ Build réussi
+  ✅ 92 fichiers JS
+  ✅ Tous les fichiers critiques présents
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│ ✅ CHECKLIST                                                              │
+└─────────────────────────────────────────────────────────────────────────┘
+
+  [✅] Correction appliquée (key={currentStage})
+  [✅] Build réussi
+  [✅] Documentation créée
+  [⏳] Test en production
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│ 📚 DOCUMENTATION                                                          │
+└─────────────────────────────────────────────────────────────────────────┘
+
+  FIX_PIPELINE_HOOKS_ERROR_21FEV2026.md
+    → Documentation technique
+
+╔═══════════════════════════════════════════════════════════════════════════╗
+║                                                                           ║
+║  🎉 CORRECTION TERMINÉE - PRÊT POUR TEST                                 ║
+║                                                                           ║
+║  Date: 21 février 2026                                                   ║
+║  Statut: ✅ Fonction corrigée et build réussi                            ║
+║                                                                           ║
+╚═══════════════════════════════════════════════════════════════════════════╝

@@ -175,7 +175,6 @@ export default function PipelineWorkflow7Etapes({ leadId, leadData }: PipelineWo
   const previousStage = getPreviousStage();
   const nextStage = getNextStage();
 
-  // Fonction pour envoyer une relance par email
   return (
     <div className="space-y-6">
       {/* Progress Steps */}
@@ -241,7 +240,7 @@ export default function PipelineWorkflow7Etapes({ leadId, leadData }: PipelineWo
       </div>
 
       {/* Current Step Content */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <div key={currentStage} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-lg font-semibold text-gray-900">
             Étape {currentStepNumber} : {PIPELINE_STEPS.find(s => s.key === currentStage)?.title}

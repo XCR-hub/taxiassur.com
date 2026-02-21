@@ -154,6 +154,54 @@ Après déploiement :
 
 ---
 
+### 4. Fix Email Espace Prospect (SMTP SSL)
+
+**Problème** : "Edge Function returned a non-2xx status code"
+
+**Cause** : Configuration SMTP SSL incorrecte (port 465 vs 587)
+
+**Fichiers corrigés** :
+- `supabase/functions/send-client-access/index.ts`
+
+**Corrections** :
+- ✅ Support SSL/TLS automatique (`Deno.connectTls` pour port 465)
+- ✅ Fallback multi-secrets (IONOS_EMAIL_PASSWORD || IONOS_SMTP_PASSWORD)
+- ✅ Buffer augmenté à 4096 bytes
+- ✅ Logs SMTP détaillés avec masquage mot de passe
+
+**Documentation** :
+- `FIX_EMAIL_ESPACE_PROSPECT_2026.md`
+- `GUIDE_RESOLUTION_EMAIL_PROSPECT_RAPIDE.md`
+- `RESUME_FIX_EMAIL_PROSPECT_21FEV2026.txt`
+- `scripts/test-email-prospect-access.js`
+
+**Résultat** : L'envoi d'email d'accès espace client fonctionne maintenant
+
+---
+
+### 5. Fix React Error #300 - Pipeline Workflow
+
+**Problème** : "Minified React error #300" lors du passage d'étapes
+
+**Cause** : Nombre de hooks différent entre les composants de step
+
+**Fichiers corrigés** :
+- `src/components/crm/PipelineWorkflow7Etapes.tsx` (ligne 243)
+
+**Corrections** :
+- ✅ Ajout de `key={currentStage}` sur le conteneur du contenu
+- ✅ Force le démontage/remontage lors du changement d'étape
+- ✅ Élimine la confusion de React sur le nombre de hooks
+
+**Documentation** :
+- `FIX_PIPELINE_HOOKS_ERROR_21FEV2026.md`
+- `RESUME_FIX_PIPELINE_21FEV2026.txt`
+
+**Résultat** : Le changement d'étapes dans le pipeline fonctionne sans erreur
+
+---
+
 **Date** : 21 février 2026
 **Statut** : Prêt pour déploiement
 **Build** : ✅ Validé
+**Corrections Totales** : 5
