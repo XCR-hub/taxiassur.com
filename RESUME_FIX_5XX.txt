@@ -1,0 +1,91 @@
+╔═══════════════════════════════════════════════════════════════════════════╗
+║                                                                           ║
+║              ✅ FIX ERREURS 5XX AHREFS - 21 FÉVRIER 2026                 ║
+║                                                                           ║
+╚═══════════════════════════════════════════════════════════════════════════╝
+
+📊 DIAGNOSTIC AHREFS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  ❌ 66 erreurs 5XX détectées
+     • 60+ pages → 502 Bad Gateway
+     • 6 pages   → 504 Gateway Timeout
+
+  Pages affectées :
+     ❌ /blog/* (tous les articles)
+     ❌ /ville/* (toutes les villes)
+     ❌ /faq, /plan-du-site, /backoffice
+     ❌ Pages principales
+
+
+🔍 CAUSE IDENTIFIÉE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  🐛 Fichier .htaccess ABSENT du dossier dist/
+
+  Conséquence :
+     Apache ne sait pas router les URLs React → index.html
+     → Erreurs 502/504 sur toutes les routes
+
+
+✅ SOLUTION APPLIQUÉE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  1. ✓ .htaccess copié dans dist/
+  2. ✓ Script de vérification automatique créé
+  3. ✓ Script de test post-déploiement créé
+  4. ✓ Documentation complète créée
+
+
+🛠️ FICHIERS CRÉÉS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  📄 FIX_ERREURS_5XX_AHREFS_2026.md
+     → Analyse détaillée du problème et solution
+
+  📄 GUIDE_DEPLOIEMENT_URGENT.md
+     → Guide pas-à-pas pour déployer
+
+  📄 scripts/verify-build.js
+     → Vérifie que tous les fichiers critiques sont présents
+
+  📄 scripts/test-deployment.js
+     → Teste les URLs après déploiement
+
+
+🚀 DÉPLOIEMENT (3 étapes)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  1️⃣  Build local
+      $ npm run build
+      → Vérifie automatiquement que .htaccess est présent
+
+  2️⃣  Upload sur IONOS
+      • Uploader TOUT le contenu de dist/ vers la racine web
+      • ⚠️ Vérifier que .htaccess est bien uploadé (fichier caché)
+
+  3️⃣  Tester
+      $ npm run test:deployment
+      → Vérifie que les URLs retournent 200 OK
+
+
+📈 RÉSULTATS ATTENDUS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Après déploiement correct :
+
+  ✅ 0 erreur 5XX (au lieu de 66)
+  ✅ Toutes les pages accessibles (200 OK)
+  ✅ React Router fonctionne correctement
+  ✅ SEO optimisé (redirections 301 actives)
+  ✅ Cache et compression activés
+
+
+⚡ COMMANDES UTILES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  npm run build              → Build + vérification automatique
+  npm run verify:build       → Vérifier le build manuellement
+  npm run test:deployment    → Tester après déploiement
+
+
+💡 PRÉVENTION FUTURE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Le script verify-build.js s'exécute automatiquement après chaque build
+  → Plus jamais d'erreurs 5XX dues à un .htaccess manquant !
+
+
+═══════════════════════════════════════════════════════════════════════════
