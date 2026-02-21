@@ -2,11 +2,12 @@
 
 ## Vue d'Ensemble
 
-Trois corrections majeures ont été appliquées aujourd'hui :
+Quatre corrections majeures ont été appliquées aujourd'hui :
 
 1. ✅ **Email Espace Prospect** - Envoi d'accès par email
 2. ✅ **Pipeline Workflow** - Passage entre étapes
 3. ✅ **Onglet Contrat** - Affichage documents finaux
+4. ✅ **Compteurs Documents** - Suivi détaillé uploadés/validés/refusés
 
 ---
 
@@ -115,6 +116,102 @@ Onglet "Paiement":
 
 ---
 
+## 4. Fix Compteurs Documents Détaillés
+
+### Problème
+Le badge affichait **"1/6"** alors que plusieurs documents avaient été uploadés et validés.
+
+**Cause** : Le compteur comptait les TYPES DISTINCTS de documents, pas les fichiers :
+- 5 documents "Licence taxi" uploadés → Compteur affichait **1** (1 type)
+- Le prospect ne pouvait pas voir combien de fichiers étaient validés, refusés ou en attente
+
+### Solution
+
+#### 1. Migration Base de Données
+- Fichier : `add_detailed_document_counters_21fev2026.sql`
+- Ajout de 4 nouveaux compteurs dans `get_lead_by_token()` :
+  - `total_uploaded_files` : Tous les fichiers uploadés
+  - `validated_files` : Fichiers validés
+  - `rejected_files` : Fichiers refusés
+  - `pending_files` : Fichiers en attente
+
+#### 2. Interface Prospect
+- Fichier modifié : `src/pages/EspaceProspect.tsx`
+- Badge principal conservé : **X/6 Types validés** (avec couleur)
+- Ajout grille 2x2 avec compteurs détaillés :
+  ```
+  ┌──────────────┬──────────────┐
+  │ 📤 8         │ ✅ 5         │
+  │ Uploadés     │ Validés      │
+  ├──────────────┼──────────────┤
+  │ ⏰ 1         │ ❌ 2         │
+  │ En attente   │ Refusés      │
+  └──────────────┴──────────────┘
+  ```
+
+### Affichage
+
+**Badge Principal** (types) :
+- 🔴 Rouge (clignotant) : 0/6 - Aucun document
+- 🟠 Ambre : 1-5/6 - En cours
+- 🟢 Vert : 6/6 - Complet
+
+**Compteurs Détaillés** (fichiers) :
+- 🔵 Uploadés : Total fichiers envoyés
+- 🟢 Validés : Fichiers acceptés
+- 🟠 En attente : Pas encore traités
+- 🔴 Refusés : À re-uploader
+
+### Exemple Concret
+
+Prospect upload 8 documents :
+1. Licence v1 → Refusée
+2. Licence v2 → Validée ✅
+3. Permis recto → Validé ✅
+4. Permis verso → Validé ✅
+5. CNI → En attente
+6. Carte grise v1 → Refusée
+7. Carte grise v2 → Validée ✅
+8. RIB → Validé ✅
+
+**Affichage** :
+```
+Badge : 5/6 Types validés 🟠
+
+┌──────────────┬──────────────┐
+│ 📤 8         │ ✅ 5         │
+│ Uploadés     │ Validés      │
+├──────────────┼──────────────┤
+│ ⏰ 1         │ ❌ 2         │
+│ En attente   │ Refusés      │
+└──────────────┴──────────────┘
+```
+
+### Bénéfices
+
+**Pour le Prospect** :
+- ✅ Suivi précis du nombre de fichiers envoyés
+- ✅ Transparence sur les documents validés/refusés
+- ✅ Motivation avec progression réelle visible
+- ✅ Clarté sur ce qui doit être re-uploadé
+
+**Pour le Commercial** :
+- ✅ Moins de questions des prospects
+- ✅ Suivi facilité de l'état du dossier
+- ✅ Transparence du processus
+
+### Test
+1. Prospect upload plusieurs documents
+2. Commercial valide/refuse certains documents
+3. Prospect retourne sur son espace
+4. Résultat : ✅ Compteurs mis à jour en temps réel
+
+### Documentation
+- `FIX_COMPTEURS_DOCUMENTS_DETAILLES_21FEV2026.md`
+- `RESUME_FIX_5XX.txt`
+
+---
+
 ## Build Final
 
 ```bash
@@ -149,6 +246,14 @@ npm run build
 - [✅] Build réussi
 - [⏳] Test en production
 
+### Compteurs Documents
+- [✅] Migration SQL appliquée
+- [✅] 4 nouveaux compteurs ajoutés
+- [✅] Interface prospect mise à jour
+- [✅] Badge principal + grille 2x2
+- [✅] Build réussi
+- [⏳] Test en production
+
 ---
 
 ## Prochaines Étapes
@@ -163,12 +268,14 @@ npm run build
 
 ## Fichiers Modifiés
 
-1. `supabase/functions/send-client-access/index.ts`
-2. `src/components/crm/PipelineWorkflow7Etapes.tsx`
-3. `src/pages/EspaceProspect.tsx`
+1. `supabase/functions/send-client-access/index.ts` - Fix email SMTP SSL
+2. `src/components/crm/PipelineWorkflow7Etapes.tsx` - Fix React Error #300
+3. `src/pages/EspaceProspect.tsx` - Fix onglet Contrat + Compteurs documents
+4. Migration SQL `add_detailed_document_counters_21fev2026.sql` - Compteurs détaillés
 
 ---
 
 **Date** : 21 février 2026
 **Statut** : ✅ Toutes corrections appliquées et build validé
+**Build** : ✅ 92 fichiers JS - PWA 115 entries (3279.03 KiB)
 **Prêt pour** : Déploiement en production

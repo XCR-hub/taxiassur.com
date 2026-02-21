@@ -45,6 +45,11 @@ interface LeadInfo {
   total_documents?: number;
   uploaded_documents?: number;
   validated_documents?: number;
+  // Nouveaux compteurs détaillés
+  total_uploaded_files?: number;
+  validated_files?: number;
+  rejected_files?: number;
+  pending_files?: number;
   quote_amount?: number;
   quote_accepted_at?: string;
   contract_signed_at?: string;
@@ -490,6 +495,7 @@ const EspaceProspect: React.FC = () => {
                   </div>
                 </div>
                 <div className="text-center md:text-right">
+                  {/* Badge principal : Types de documents complétés */}
                   <div className={`text-white font-black text-xl px-5 py-3 rounded-xl mb-2 ${
                     (leadInfo.validated_documents || 0) === 0
                       ? 'bg-red-500 animate-bounce'
@@ -499,11 +505,50 @@ const EspaceProspect: React.FC = () => {
                   }`}>
                     {leadInfo.validated_documents || 0} / {leadInfo.total_documents || 6}
                   </div>
-                  <p className="text-sm text-gray-400 font-semibold">
+                  <p className="text-xs text-gray-400 font-semibold mb-3">
                     {(leadInfo.validated_documents || 0) === (leadInfo.total_documents || 6)
-                      ? 'Documents complets'
-                      : 'Documents validés'}
+                      ? 'Types complets'
+                      : 'Types validés'}
                   </p>
+
+                  {/* Compteurs détaillés */}
+                  <div className="grid grid-cols-2 gap-2 mt-3">
+                    {/* Uploadés */}
+                    <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-2">
+                      <div className="flex items-center justify-center gap-1 text-blue-400 font-bold text-lg">
+                        <Upload size={16} />
+                        {leadInfo.total_uploaded_files || 0}
+                      </div>
+                      <p className="text-xs text-gray-400 mt-1">Uploadés</p>
+                    </div>
+
+                    {/* Validés */}
+                    <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-2">
+                      <div className="flex items-center justify-center gap-1 text-green-400 font-bold text-lg">
+                        <CheckCircle size={16} />
+                        {leadInfo.validated_files || 0}
+                      </div>
+                      <p className="text-xs text-gray-400 mt-1">Validés</p>
+                    </div>
+
+                    {/* En attente */}
+                    <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-2">
+                      <div className="flex items-center justify-center gap-1 text-amber-400 font-bold text-lg">
+                        <Clock size={16} />
+                        {leadInfo.pending_files || 0}
+                      </div>
+                      <p className="text-xs text-gray-400 mt-1">En attente</p>
+                    </div>
+
+                    {/* Refusés */}
+                    <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-2">
+                      <div className="flex items-center justify-center gap-1 text-red-400 font-bold text-lg">
+                        <XCircle size={16} />
+                        {leadInfo.rejected_files || 0}
+                      </div>
+                      <p className="text-xs text-gray-400 mt-1">Refusés</p>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>

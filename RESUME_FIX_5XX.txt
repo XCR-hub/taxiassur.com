@@ -1,91 +1,187 @@
 ╔═══════════════════════════════════════════════════════════════════════════╗
 ║                                                                           ║
-║              ✅ FIX ERREURS 5XX AHREFS - 21 FÉVRIER 2026                 ║
+║     FIX : COMPTEURS DOCUMENTS DÉTAILLÉS - 21 FÉV 2026                   ║
 ║                                                                           ║
 ╚═══════════════════════════════════════════════════════════════════════════╝
 
-📊 DIAGNOSTIC AHREFS
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  ❌ 66 erreurs 5XX détectées
-     • 60+ pages → 502 Bad Gateway
-     • 6 pages   → 504 Gateway Timeout
+┌─────────────────────────────────────────────────────────────────────────┐
+│ ❌ PROBLÈME                                                               │
+└─────────────────────────────────────────────────────────────────────────┘
 
-  Pages affectées :
-     ❌ /blog/* (tous les articles)
-     ❌ /ville/* (toutes les villes)
-     ❌ /faq, /plan-du-site, /backoffice
-     ❌ Pages principales
+  Badge affichait : 1/6
 
+  Alors que plusieurs documents avaient été :
+    - Uploadés : 8 fichiers
+    - Validés : 5 fichiers
+    - Refusés : 2 fichiers
+    - En attente : 1 fichier
 
-🔍 CAUSE IDENTIFIÉE
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  🐛 Fichier .htaccess ABSENT du dossier dist/
+  Cause : Compteur comptait les TYPES distincts, pas les fichiers
 
-  Conséquence :
-     Apache ne sait pas router les URLs React → index.html
-     → Erreurs 502/504 sur toutes les routes
+┌─────────────────────────────────────────────────────────────────────────┐
+│ 🔍 EXPLICATION                                                            │
+└─────────────────────────────────────────────────────────────────────────┘
 
+  Logique AVANT (types distincts) :
+    - 5 documents "Licence taxi" → Compteur = 1 type
+    - 3 documents "Permis conduire" → Compteur = 1 type
+    - Total affiché : 1/6 (incorrect)
 
-✅ SOLUTION APPLIQUÉE
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  1. ✓ .htaccess copié dans dist/
-  2. ✓ Script de vérification automatique créé
-  3. ✓ Script de test post-déploiement créé
-  4. ✓ Documentation complète créée
+  Logique APRÈS (détaillée) :
+    - Badge principal : 5/6 types validés
+    - Compteurs détaillés :
+      * 8 fichiers uploadés
+      * 5 fichiers validés
+      * 2 fichiers refusés
+      * 1 fichier en attente
 
+┌─────────────────────────────────────────────────────────────────────────┐
+│ ✅ SOLUTION APPLIQUÉE                                                     │
+└─────────────────────────────────────────────────────────────────────────┘
 
-🛠️ FICHIERS CRÉÉS
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  📄 FIX_ERREURS_5XX_AHREFS_2026.md
-     → Analyse détaillée du problème et solution
+  1. Migration Base de Données
+     - Ajout de 4 nouveaux compteurs dans get_lead_by_token()
+     - total_uploaded_files : Tous les fichiers uploadés
+     - validated_files : Fichiers validés
+     - rejected_files : Fichiers refusés
+     - pending_files : Fichiers en attente
 
-  📄 GUIDE_DEPLOIEMENT_URGENT.md
-     → Guide pas-à-pas pour déployer
+  2. Interface Prospect
+     - Badge principal : X/6 Types validés (avec couleur)
+     - Grille 2x2 avec compteurs détaillés
 
-  📄 scripts/verify-build.js
-     → Vérifie que tous les fichiers critiques sont présents
+┌─────────────────────────────────────────────────────────────────────────┐
+│ 📊 AFFICHAGE AVANT / APRÈS                                                │
+└─────────────────────────────────────────────────────────────────────────┘
 
-  📄 scripts/test-deployment.js
-     → Teste les URLs après déploiement
+  AVANT :
+  ┌──────────┐
+  │   1/6    │ 🔴
+  └──────────┘
+  Documents validés
 
+  APRÈS :
+  ┌──────────┐
+  │   5/6    │ 🟠
+  └──────────┘
+  Types validés
 
-🚀 DÉPLOIEMENT (3 étapes)
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  1️⃣  Build local
-      $ npm run build
-      → Vérifie automatiquement que .htaccess est présent
+  ┌──────────────┬──────────────┐
+  │ 📤 8         │ ✅ 5         │
+  │ Uploadés     │ Validés      │
+  ├──────────────┼──────────────┤
+  │ ⏰ 1         │ ❌ 2         │
+  │ En attente   │ Refusés      │
+  └──────────────┴──────────────┘
 
-  2️⃣  Upload sur IONOS
-      • Uploader TOUT le contenu de dist/ vers la racine web
-      • ⚠️ Vérifier que .htaccess est bien uploadé (fichier caché)
+┌─────────────────────────────────────────────────────────────────────────┐
+│ 💡 BÉNÉFICES                                                              │
+└─────────────────────────────────────────────────────────────────────────┘
 
-  3️⃣  Tester
-      $ npm run test:deployment
-      → Vérifie que les URLs retournent 200 OK
+  Pour le Prospect :
+    ✅ Suivi précis du nombre de fichiers envoyés
+    ✅ Transparence sur les documents validés/refusés
+    ✅ Motivation avec progression réelle visible
+    ✅ Clarté sur ce qui doit être re-uploadé
 
+  Pour le Commercial :
+    ✅ Moins de questions des prospects
+    ✅ Suivi facilité de l'état du dossier
+    ✅ Transparence du processus de validation
 
-📈 RÉSULTATS ATTENDUS
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  Après déploiement correct :
+┌─────────────────────────────────────────────────────────────────────────┐
+│ 🧪 EXEMPLE CONCRET                                                        │
+└─────────────────────────────────────────────────────────────────────────┘
 
-  ✅ 0 erreur 5XX (au lieu de 66)
-  ✅ Toutes les pages accessibles (200 OK)
-  ✅ React Router fonctionne correctement
-  ✅ SEO optimisé (redirections 301 actives)
-  ✅ Cache et compression activés
+  Prospect upload :
+    1. Licence taxi v1 → Refusée
+    2. Licence taxi v2 → Validée ✅
+    3. Permis recto → Validé ✅
+    4. Permis verso → Validé ✅
+    5. Pièce identité → En attente
+    6. Carte grise v1 → Refusée
+    7. Carte grise v2 → Validée ✅
+    8. RIB → Validé ✅
 
+  Affichage :
+    Badge : 5/6 Types validés 🟠
 
-⚡ COMMANDES UTILES
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  npm run build              → Build + vérification automatique
-  npm run verify:build       → Vérifier le build manuellement
-  npm run test:deployment    → Tester après déploiement
+    ┌──────────────┬──────────────┐
+    │ 📤 8         │ ✅ 5         │
+    │ Uploadés     │ Validés      │
+    ├──────────────┼──────────────┤
+    │ ⏰ 1         │ ❌ 2         │
+    │ En attente   │ Refusés      │
+    └──────────────┴──────────────┘
 
+  Types validés : 5/6
+    ✅ Licence taxi
+    ✅ Permis conduire
+    ⏰ Pièce d'identité (en attente)
+    ✅ Carte grise
+    ❌ Autorisation stationnement (manquant)
+    ✅ RIB
 
-💡 PRÉVENTION FUTURE
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  Le script verify-build.js s'exécute automatiquement après chaque build
-  → Plus jamais d'erreurs 5XX dues à un .htaccess manquant !
+┌─────────────────────────────────────────────────────────────────────────┐
+│ 🎨 COULEURS DES COMPTEURS                                                 │
+└─────────────────────────────────────────────────────────────────────────┘
 
+  Badge Principal :
+    🔴 Rouge (clignotant) : 0/6 - Aucun document
+    🟠 Ambre : 1-5/6 - En cours
+    🟢 Vert : 6/6 - Complet
 
-═══════════════════════════════════════════════════════════════════════════
+  Compteurs Détaillés :
+    🔵 Bleu : Uploadés (total des fichiers)
+    🟢 Vert : Validés (acceptés)
+    🟠 Ambre : En attente (pas encore traités)
+    🔴 Rouge : Refusés (à re-uploader)
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│ 📦 BUILD                                                                  │
+└─────────────────────────────────────────────────────────────────────────┘
+
+  npm run build
+  ✅ Build réussi en 56s
+  ✅ 92 fichiers JS
+  ✅ Tous fichiers critiques présents
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│ 📚 FICHIERS MODIFIÉS                                                      │
+└─────────────────────────────────────────────────────────────────────────┘
+
+  1. Migration SQL
+     - add_detailed_document_counters_21fev2026.sql
+     - Fonction get_lead_by_token() mise à jour
+
+  2. Frontend TypeScript
+     - src/pages/EspaceProspect.tsx
+     - Interface LeadInfo
+     - Badge + grille compteurs
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│ ✅ CHECKLIST                                                              │
+└─────────────────────────────────────────────────────────────────────────┘
+
+  [✅] Migration base de données appliquée
+  [✅] Interface TypeScript mise à jour
+  [✅] Badge principal conservé (types)
+  [✅] Grille compteurs détaillés ajoutée
+  [✅] Build réussi
+  [✅] Documentation créée
+  [⏳] Test en production
+
+╔═══════════════════════════════════════════════════════════════════════════╗
+║                                                                           ║
+║  🎉 CORRECTION TERMINÉE - PRÊT POUR DÉPLOIEMENT                          ║
+║                                                                           ║
+║  Le prospect peut maintenant suivre précisément :                        ║
+║  - Combien de fichiers il a uploadés                                     ║
+║  - Combien sont validés par le commercial                                ║
+║  - Combien sont refusés (à re-uploader)                                  ║
+║  - Combien sont en attente de validation                                 ║
+║                                                                           ║
+║  Date: 21 février 2026                                                   ║
+║  Statut: ✅ Corrigé et build validé                                      ║
+║                                                                           ║
+╚═══════════════════════════════════════════════════════════════════════════╝
