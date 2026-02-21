@@ -890,25 +890,8 @@ const EspaceProspect: React.FC = () => {
 
         {activeTab === 'contrat' && (
           <div className="space-y-6">
-            {!leadInfo.payment_completed_at ? (
-              <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-8 text-center">
-                <FileSignature className="text-amber-400 mx-auto mb-4" size={48} />
-                <h3 className="text-xl font-bold text-white mb-2">Paiement en attente</h3>
-                <p className="text-gray-400 mb-4">
-                  Votre contrat sera disponible des que le paiement sera valide.
-                </p>
-                <button
-                  onClick={() => setActiveTab('paiement')}
-                  className="inline-flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-black font-bold py-3 px-6 rounded-xl transition-colors"
-                >
-                  Proceder au paiement
-                  <ChevronRight size={18} />
-                </button>
-              </div>
-            ) : (
-              <div className="space-y-6">
-                {/* Documents finaux uploadés par le commercial */}
-                {finalDocuments.length > 0 ? (
+            {/* Documents finaux uploadés par le commercial */}
+            {finalDocuments.length > 0 ? (
                   finalDocuments.map((doc) => {
                     // Configuration par type de document
                     const docConfig = {
@@ -1012,8 +995,6 @@ const EspaceProspect: React.FC = () => {
                     </div>
                   </div>
                 )}
-              </div>
-            )}
           </div>
         )}
 
