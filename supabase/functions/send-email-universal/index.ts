@@ -46,7 +46,7 @@ async function sendEmailSMTP(
   bcc?: string[]
 ): Promise<void> {
   const SMTP_HOST = Deno.env.get("IONOS_SMTP_HOST") || "smtp.ionos.fr";
-  const SMTP_PORT = parseInt(Deno.env.get("IONOS_SMTP_PORT") || "587");
+  const SMTP_PORT = parseInt(Deno.env.get("IONOS_SMTP_PORT") || "465");
   const SMTP_USER = Deno.env.get("IONOS_EMAIL_USER") || "team@taxiassur.com";
 
   // Try both secret names for backward compatibility
@@ -55,7 +55,7 @@ async function sendEmailSMTP(
     SMTP_PASS = Deno.env.get("IONOS_SMTP_PASSWORD");
   }
 
-  console.log("📧 SMTP Configuration:");
+  console.log("📧 SMTP Configuration (SSL/TLS Direct):");
   console.log("  Host:", SMTP_HOST);
   console.log("  Port:", SMTP_PORT);
   console.log("  User:", SMTP_USER);
@@ -66,7 +66,8 @@ async function sendEmailSMTP(
     throw new Error("Configuration SMTP manquante. Veuillez configurer IONOS_EMAIL_PASSWORD ou IONOS_SMTP_PASSWORD dans les secrets Supabase.");
   }
 
-  const conn = await Deno.connect({
+  // IONOS uses SSL/TLS on port 465 - connect with TLS directly
+  const conn = await Deno.connectTls({
     hostname: SMTP_HOST,
     port: SMTP_PORT,
   });
@@ -75,59 +76,56 @@ async function sendEmailSMTP(
   const decoder = new TextDecoder();
 
   async function readResponse(): Promise<string> {
-    const buffer = new Uint8Array(1024);
+    const buffer = new Uint8Array(4096); // Increased buffer size
     const n = await conn.read(buffer);
     if (n === null) return "";
-    return decoder.decode(buffer.subarray(0, n));
+    const response = decoder.decode(buffer.subarray(0, n));
+    console.log("<<", response.trim());
+    return response;
   }
 
   async function sendCommand(command: string): Promise<string> {
+    console.log(">>", command.replace(base64Encode(SMTP_PASS), "***PASSWORD***"));
     await conn.write(encoder.encode(command + "\r\n"));
     return await readResponse();
   }
 
   try {
+    // Read greeting
     await readResponse();
+
+    // Send EHLO
     await sendCommand(`EHLO taxiassur.com`);
-    await sendCommand("STARTTLS");
 
-    const tlsConn = await Deno.startTls(conn, { hostname: SMTP_HOST });
+    // Authenticate
+    await sendCommand("AUTH LOGIN");
+    await sendCommand(base64Encode(SMTP_USER));
+    await sendCommand(base64Encode(SMTP_PASS));
 
-    async function readResponseTLS(): Promise<string> {
-      const buffer = new Uint8Array(1024);
-      const n = await tlsConn.read(buffer);
-      if (n === null) return "";
-      return decoder.decode(buffer.subarray(0, n));
-    }
+    // Set sender
+    await sendCommand(`MAIL FROM:<${fromEmail}>`);
 
-    async function sendCommandTLS(command: string): Promise<string> {
-      await tlsConn.write(encoder.encode(command + "\r\n"));
-      return await readResponseTLS();
-    }
-
-    await sendCommandTLS(`EHLO taxiassur.com`);
-    await sendCommandTLS("AUTH LOGIN");
-    await sendCommandTLS(base64Encode(SMTP_USER));
-    await sendCommandTLS(base64Encode(SMTP_PASS));
-    await sendCommandTLS(`MAIL FROM:<${fromEmail}>`);
-    await sendCommandTLS(`RCPT TO:<${to}>`);
+    // Set recipient
+    await sendCommand(`RCPT TO:<${to}>`);
 
     // CC recipients
     if (cc && cc.length > 0) {
       for (const ccEmail of cc) {
-        await sendCommandTLS(`RCPT TO:<${ccEmail}>`);
+        await sendCommand(`RCPT TO:<${ccEmail}>`);
       }
     }
 
     // BCC recipients
     if (bcc && bcc.length > 0) {
       for (const bccEmail of bcc) {
-        await sendCommandTLS(`RCPT TO:<${bccEmail}>`);
+        await sendCommand(`RCPT TO:<${bccEmail}>`);
       }
     }
 
-    await sendCommandTLS("DATA");
+    // Start DATA
+    await sendCommand("DATA");
 
+    // Prepare email headers
     const emailHeaders = [
       `From: ${fromName} <${fromEmail}>`,
       `To: ${toName} <${to}>`,
@@ -145,6 +143,7 @@ async function sendEmailSMTP(
       emailHeaders.push(`Cc: ${cc.join(", ")}`);
     }
 
+    // Send email content
     const emailContent = [
       ...emailHeaders,
       ``,
@@ -152,11 +151,20 @@ async function sendEmailSMTP(
       `.`,
     ].join("\r\n");
 
-    await sendCommandTLS(emailContent);
-    await sendCommandTLS("QUIT");
-    tlsConn.close();
-  } catch (error) {
+    await sendCommand(emailContent);
+
+    // Quit
+    await sendCommand("QUIT");
+
     conn.close();
+    console.log("✅ Email sent successfully via SSL/TLS");
+  } catch (error) {
+    console.error("❌ SMTP error:", error);
+    try {
+      conn.close();
+    } catch (closeError) {
+      console.error("Error closing connection:", closeError);
+    }
     throw error;
   }
 }

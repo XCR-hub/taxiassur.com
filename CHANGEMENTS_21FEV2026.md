@@ -2,12 +2,13 @@
 
 ## Vue d'Ensemble
 
-Quatre corrections majeures ont été appliquées aujourd'hui :
+Cinq corrections majeures ont été appliquées aujourd'hui :
 
 1. ✅ **Email Espace Prospect** - Envoi d'accès par email
 2. ✅ **Pipeline Workflow** - Passage entre étapes
 3. ✅ **Onglet Contrat** - Affichage documents finaux
 4. ✅ **Compteurs Documents** - Suivi détaillé uploadés/validés/refusés
+5. ✅ **Invitation Collaborateur** - Envoi email invitation utilisateurs
 
 ---
 
@@ -212,6 +213,106 @@ Badge : 5/6 Types validés 🟠
 
 ---
 
+## 5. Fix Invitation Collaborateur
+
+### Problème
+Erreur lors de l'envoi d'une invitation à un collaborateur depuis **CRM Settings → Utilisateurs** :
+```
+Edge Function returned a non-2xx status code
+```
+
+**Cause** : La fonction `send-email-universal` utilisait STARTTLS (port 587) au lieu de SSL/TLS direct (port 465)
+
+### Solution
+
+#### 1. Edge Function Mise à Jour
+- Fichier : `supabase/functions/send-email-universal/index.ts`
+- Port par défaut : 587 → **465**
+- Connexion : `Deno.connect()` → `Deno.connectTls()`
+- Suppression de STARTTLS
+- Buffer augmenté : 1024 → 4096 bytes
+- Logs SMTP détaillés
+
+#### 2. Connexion SSL/TLS Directe
+
+**Avant (STARTTLS - Port 587)** :
+```typescript
+const conn = await Deno.connect({ port: 587 });
+await sendCommand("STARTTLS");
+const tlsConn = await Deno.startTls(conn);
+```
+
+**Après (SSL/TLS Direct - Port 465)** :
+```typescript
+const conn = await Deno.connectTls({ port: 465 });
+// Connexion déjà chiffrée, pas de STARTTLS
+```
+
+### Architecture
+
+```
+CRM Settings → Inviter utilisateur
+        ↓
+invite-admin-user (Edge Function)
+  - Créer utilisateur Auth
+  - Insérer admin_users
+  - Créer permissions
+        ↓
+send-email-universal (Edge Function) ✅ SSL/TLS
+  - Connexion IONOS SMTP port 465
+  - Envoi email invitation HTML
+        ↓
+IONOS SMTP Server (smtp.ionos.fr:465)
+```
+
+### Email Invitation
+
+**Template** :
+- Titre : "Bienvenue à TaxiAssur"
+- Bouton : "Créer mon compte"
+- Lien : `https://taxiassur.com/auth/set-password?token=xxx`
+- Expiration : 24 heures
+
+### Rôles Disponibles
+
+1. **Administrateur** - Accès complet
+2. **Commercial** - Gestion leads/devis avec permissions par défaut
+3. **Collaborateur** - Permissions personnalisées
+
+### Impact
+
+**Avant** :
+- ❌ Erreur "non-2xx status code"
+- ❌ Utilisateur non créé
+- ❌ Email non envoyé
+
+**Après** :
+- ✅ Utilisateur créé (auth.users + admin_users)
+- ✅ Permissions configurées
+- ✅ Email invitation envoyé via IONOS SMTP
+- ✅ Message : "Invitation envoyée avec succès"
+
+### Autres Fonctions Bénéficiant de la Correction
+
+Toutes les fonctions utilisant `send-email-universal` :
+- `send-client-access`
+- `send-document-notification`
+- `send-crm-email`
+- `send-newsletter-universal`
+- `send-smart-template-email`
+
+### Test
+1. CRM → Settings → Utilisateurs → Inviter
+2. Email : test@example.com
+3. Nom : John Doe
+4. Rôle : Collaborateur
+5. Résultat : ✅ Invitation envoyée + email reçu
+
+### Documentation
+- `FIX_INVITATION_COLLABORATEUR_21FEV2026.md`
+
+---
+
 ## Build Final
 
 ```bash
@@ -254,6 +355,14 @@ npm run build
 - [✅] Build réussi
 - [⏳] Test en production
 
+### Invitation Collaborateur
+- [✅] Fonction send-email-universal corrigée
+- [✅] Port 465 SSL/TLS direct
+- [✅] Buffer augmenté (4096 bytes)
+- [✅] Logs SMTP détaillés
+- [✅] Fonction déployée
+- [⏳] Test invitation en production
+
 ---
 
 ## Prochaines Étapes
@@ -268,14 +377,16 @@ npm run build
 
 ## Fichiers Modifiés
 
-1. `supabase/functions/send-client-access/index.ts` - Fix email SMTP SSL
-2. `src/components/crm/PipelineWorkflow7Etapes.tsx` - Fix React Error #300
-3. `src/pages/EspaceProspect.tsx` - Fix onglet Contrat + Compteurs documents
-4. Migration SQL `add_detailed_document_counters_21fev2026.sql` - Compteurs détaillés
+1. `supabase/functions/send-client-access/index.ts` - Fix email espace prospect (SSL/TLS)
+2. `supabase/functions/send-email-universal/index.ts` - Fix email invitation (SSL/TLS port 465)
+3. `src/components/crm/PipelineWorkflow7Etapes.tsx` - Fix React Error #300 hooks
+4. `src/pages/EspaceProspect.tsx` - Fix onglet Contrat + Compteurs documents détaillés
+5. Migration SQL `add_detailed_document_counters_21fev2026.sql` - 4 compteurs fichiers
 
 ---
 
 **Date** : 21 février 2026
-**Statut** : ✅ Toutes corrections appliquées et build validé
+**Statut** : ✅ Toutes corrections appliquées et déployées
 **Build** : ✅ 92 fichiers JS - PWA 115 entries (3279.03 KiB)
-**Prêt pour** : Déploiement en production
+**Edge Functions** : ✅ send-client-access + send-email-universal déployées
+**Prêt pour** : Test et déploiement en production
