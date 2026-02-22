@@ -144,6 +144,7 @@ const CityPageGenerator = lazy(() => import('./backoffice/CityPageGenerator'));
 const TrendAnalyzer = lazy(() => import('./backoffice/TrendAnalyzer'));
 const SeoTools = lazy(() => import('./backoffice/SeoTools'));
 const SEOStrategyDashboard = lazy(() => import('./backoffice/SEOStrategyDashboard'));
+const GSCOptimizationDashboard = lazy(() => import('./backoffice/GSCOptimizationDashboard'));
 const BacklinkManager = lazy(() => import('./backoffice/BacklinkManager'));
 const BacklinkProspector = lazy(() => import('./backoffice/BacklinkProspector'));
 const BacklinkAutomationDashboard = lazy(() => import('./backoffice/BacklinkAutomationDashboard'));
@@ -774,6 +775,10 @@ export const router = createBrowserRouter([
   {
     path: '/backoffice/seo-strategy',
     element: <SEOStrategyDashboard />,
+  },
+  {
+    path: '/backoffice/gsc-optimization',
+    element: <GSCOptimizationDashboard />,
   },
   {
     path: '/backoffice/backlinks',
