@@ -1,0 +1,179 @@
+╔══════════════════════════════════════════════════════════════╗
+║     MONÉTICO PAIEMENT - PASSAGE EN PRODUCTION               ║
+║                 23 Février 2026                             ║
+╚══════════════════════════════════════════════════════════════╝
+
+✅ CONFIRMATION CIC
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  TPE : 7374133
+  Code société : taxiassur
+  Langues : FR, EN
+  Status : ✅ ACTIVÉ EN PRODUCTION
+
+  Dashboard : https://www.monetico-services.com/fr
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🚀 CONFIGURATION REQUISE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1️⃣  RÉCUPÉRER LA CLÉ MAC DE PRODUCTION
+────────────────────────────────────────────────────────────
+
+   ⚠️  La clé MAC de production est DIFFÉRENTE de celle de test
+
+   Où la trouver ?
+   → https://www.monetico-services.com/fr
+   → Menu : Configuration > Paramètres TPE
+   → Section : Clé de sécurité / Clé MAC
+   → Format : 40 caractères hexadécimaux
+
+   Exemple : 106FA85BF342FD4EE95C883D82865B5CC1F63890
+
+
+2️⃣  CONFIGURER LES SECRETS SUPABASE
+────────────────────────────────────────────────────────────
+
+   OPTION A - Script automatique (recommandé) :
+   ──────────────────────────────────────────
+   ./scripts/configure-monetico-production.sh
+
+
+   OPTION B - Commandes manuelles :
+   ──────────────────────────────────────────
+   supabase secrets set MONETICO_MODE="production"
+   supabase secrets set MONETICO_TPE="7374133"
+   supabase secrets set MONETICO_SOCIETE="taxiassur"
+   supabase secrets set MONETICO_MAC_KEY="VOTRE_CLE_MAC_PRODUCTION"
+
+
+   OPTION C - Via Dashboard Supabase :
+   ──────────────────────────────────────────
+   https://supabase.com/dashboard/project/bpwcakjtwgdtfwghylwv
+   → Settings > Edge Functions > Secrets
+
+
+3️⃣  CONFIGURER LES URLS DANS MONÉTICO
+────────────────────────────────────────────────────────────
+
+   Connectez-vous à : https://www.monetico-services.com/fr
+   Menu : Configuration > URLs de notification
+
+   URL de retour OK :
+   https://taxiassur.com/espace-prospect/paiement-success
+
+   URL de retour KO :
+   https://taxiassur.com/espace-prospect/paiement-error
+
+   URL du webhook serveur :
+   https://bpwcakjtwgdtfwghylwv.supabase.co/functions/v1/monetico-webhook
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🧪 TESTER LA CONFIGURATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+   ⚠️  ATTENTION : Les paiements seront RÉELS en production
+
+   Test avec 1€ (recommandé) :
+   ./scripts/test-monetico-production.sh
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📊 DIFFÉRENCES TEST vs PRODUCTION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+   Paramètre       │ Test                    │ Production
+   ────────────────┼─────────────────────────┼─────────────────────
+   URL Paiement    │ /test/paiement.cgi      │ /paiement.cgi
+   Référence       │ Préfixe "T"             │ Préfixe "P"
+   Cartes          │ Cartes de test CIC      │ Vraies cartes
+   Clé MAC         │ Clé de test             │ Clé de production
+   Débits          │ Fictifs                 │ RÉELS ⚠️
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎯 CHECKLIST DE MISE EN PRODUCTION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+   [ ] Récupérer la clé MAC de production depuis Monético
+   [ ] Configurer MONETICO_MODE="production" dans Supabase
+   [ ] Configurer MONETICO_MAC_KEY avec la clé de production
+   [ ] Configurer les URLs de retour dans Monético
+   [ ] Configurer l'URL du webhook dans Monético
+   [ ] Tester avec un paiement de 1€ en production
+   [ ] Vérifier que le webhook fonctionne correctement
+   [ ] Vérifier les emails de confirmation
+   [ ] Monitorer les premiers paiements réels
+   [ ] Documenter pour l'équipe
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📈 MONITORING DES PAIEMENTS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+   Statistiques du jour :
+   ──────────────────────
+   SELECT * FROM get_monetico_production_today();
+
+
+   Derniers paiements :
+   ──────────────────────
+   SELECT * FROM get_monetico_recent_production(10);
+
+
+   Statistiques globales :
+   ──────────────────────
+   SELECT * FROM monetico_production_stats
+   ORDER BY date DESC LIMIT 30;
+
+
+   Logs Edge Functions :
+   ──────────────────────
+   Dashboard Supabase > Edge Functions > Logs
+   Filtrer : create-monetico-payment, monetico-webhook
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚠️  SÉCURITÉ PRODUCTION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+   À FAIRE :
+   ✓ Ne JAMAIS committer la clé MAC dans le code
+   ✓ Ne JAMAIS exposer la clé MAC dans les logs
+   ✓ Vérifier la signature MAC de TOUS les webhooks
+   ✓ Utiliser HTTPS uniquement
+   ✓ Monitorer les paiements suspects
+
+   À NE PAS FAIRE :
+   ✗ Utiliser les cartes de test CIC en production
+   ✗ Désactiver la vérification MAC du webhook
+   ✗ Stocker les numéros de carte (PCI-DSS)
+   ✗ Logger les données sensibles
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📞 SUPPORT MONÉTICO
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+   Hotline Commerçants (7j/7 - 24h/24) :
+   📞 0 820 821 735 (0,15€/min)
+   📧 centrecom@e-i.com
+   💻 https://www.monetico-services.com/fr
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📚 DOCUMENTATION CRÉÉE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+   ✓ MONETICO_PRODUCTION_23FEV2026.md (guide complet)
+   ✓ scripts/configure-monetico-production.sh (script config)
+   ✓ scripts/test-monetico-production.sh (script test)
+   ✓ Migration DB avec fonctions de monitoring
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🚀 SYSTÈME PRÊT POUR LA PRODUCTION
+   Action requise : Configurer la clé MAC de production
+
