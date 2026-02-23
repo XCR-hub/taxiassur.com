@@ -45,7 +45,7 @@ async function testSMTP() {
   try {
     const { data, error } = await supabase.functions.invoke('send-email-ionos', {
       body: {
-        to: 'contact@taxiassur.pro',
+        to: 'team@taxiassur.com',
         subject: '✅ Test configuration IONOS SMTP',
         html: `
           <h2>Configuration SMTP réussie !</h2>
@@ -66,7 +66,7 @@ async function testSMTP() {
     }
 
     console.log('✅ Email envoyé avec succès');
-    console.log('   Vérifiez votre boîte mail contact@taxiassur.pro\n');
+    console.log('   Vérifiez votre boîte mail team@taxiassur.com\n');
     return true;
   } catch (err) {
     console.log('❌ Erreur SMTP :', err.message, '\n');

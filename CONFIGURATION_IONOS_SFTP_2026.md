@@ -3,7 +3,7 @@
 ## ✅ Identifiants configurés
 
 ### 📧 IONOS Email (SMTP + IMAP)
-- **Email** : contact@taxiassur.pro
+- **Email** : team@taxiassur.com
 - **Mot de passe** : TAXIassur2026!,&
 - **SMTP** : smtp.ionos.fr:587
 - **IMAP** : imap.ionos.fr:993

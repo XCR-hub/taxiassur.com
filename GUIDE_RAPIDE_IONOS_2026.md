@@ -53,7 +53,7 @@ npm run deploy
 ## 🔑 Identifiants configurés
 
 ### Email IONOS
-- **Adresse** : contact@taxiassur.pro
+- **Adresse** : team@taxiassur.com
 - **SMTP** : smtp.ionos.fr:587
 - **IMAP** : imap.ionos.fr:993
 
