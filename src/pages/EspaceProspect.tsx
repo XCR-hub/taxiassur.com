@@ -162,10 +162,11 @@ const EspaceProspect: React.FC = () => {
         throw leadError;
       }
 
-      if (leadData) {
-        console.log('Lead found:', leadData.id);
-        setLeadInfo(leadData);
-        if (leadData.converted_to_client) {
+      if (leadData && leadData.lead) {
+        console.log('Lead found:', leadData.lead.id);
+        // Extraire les données du lead depuis la structure imbriquée
+        setLeadInfo(leadData.lead);
+        if (leadData.lead.converted_to_client) {
           setActiveTab('contrat');
         }
 
