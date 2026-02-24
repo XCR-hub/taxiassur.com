@@ -341,6 +341,9 @@ export interface CreateLeadInput {
 
 export async function createLead(input: CreateLeadInput): Promise<{ success: boolean; error?: string; leadId?: string; accessToken?: string }> {
   try {
+    console.log('🚀 [FORM] === DÉBUT CRÉATION LEAD ===');
+    console.log('🚀 [FORM] Input:', JSON.stringify(input, null, 2));
+
     const nameParts = input.name.trim().split(/\s+/);
     const firstName = nameParts[0] || 'Client';
     const lastName = nameParts.slice(1).join(' ') || '';
@@ -348,6 +351,9 @@ export async function createLead(input: CreateLeadInput): Promise<{ success: boo
 
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://drohhxrkoequjphvabvq.supabase.co';
     const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || ((window as any).ENV_CONFIG?.VITE_SUPABASE_ANON_KEY) || '';
+
+    console.log('🔧 [FORM] Supabase URL:', supabaseUrl);
+    console.log('🔧 [FORM] Supabase Key présente:', supabaseKey ? 'OUI' : 'NON');
 
     const leadParams = {
       p_email: input.email,
@@ -363,25 +369,34 @@ export async function createLead(input: CreateLeadInput): Promise<{ success: boo
       }
     };
 
+    console.log('📦 [FORM] Lead params:', JSON.stringify(leadParams, null, 2));
+
     let result: { lead_id: string; access_token: string; is_new: boolean } | null = null;
 
     // === METHODE 1 : RPC via Supabase client ===
+    console.log('📞 [FORM] Méthode 1: Tentative RPC via Supabase client...');
     try {
       const { data, error } = await supabase.rpc('upsert_lead', leadParams);
+      console.log('📞 [FORM] RPC Response:', { data, error });
       if (!error && data?.[0]) {
         result = data[0];
+        console.log('✅ [FORM] Lead créé via RPC Supabase client!');
         logger.log('Lead created via RPC');
       } else if (error) {
+        console.error('❌ [FORM] RPC failed:', error.message, error.code, error);
         logger.warn('RPC failed:', error.message, error.code);
       }
     } catch (rpcErr) {
+      console.error('❌ [FORM] RPC exception:', rpcErr);
       logger.warn('RPC exception:', rpcErr);
     }
 
     // === METHODE 2 : Edge Function via fetch direct (bypass supabase client) ===
     if (!result) {
+      console.log('🌐 [FORM] Méthode 2: Tentative Edge Function...');
       try {
         const edgeUrl = `${supabaseUrl}/functions/v1/create-lead-direct`;
+        console.log('🌐 [FORM] Edge URL:', edgeUrl);
         const resp = await fetch(edgeUrl, {
           method: 'POST',
           headers: {
@@ -392,30 +407,39 @@ export async function createLead(input: CreateLeadInput): Promise<{ success: boo
           body: JSON.stringify(leadParams)
         });
 
+        console.log('🌐 [FORM] Edge Response status:', resp.status, resp.statusText);
         if (resp.ok) {
           const edgeData = await resp.json();
+          console.log('🌐 [FORM] Edge Data:', edgeData);
           if (edgeData?.success) {
             result = {
               lead_id: edgeData.lead_id,
               access_token: edgeData.access_token,
               is_new: edgeData.is_new
             };
+            console.log('✅ [FORM] Lead créé via Edge Function!');
             logger.log('Lead created via Edge Function');
           } else {
+            console.error('❌ [FORM] Edge Function returned error:', edgeData?.error);
             logger.warn('Edge Function returned error:', edgeData?.error);
           }
         } else {
+          const errorText = await resp.text();
+          console.error('❌ [FORM] Edge Function HTTP error:', resp.status, errorText);
           logger.warn('Edge Function HTTP error:', resp.status, resp.statusText);
         }
       } catch (edgeErr) {
+        console.error('❌ [FORM] Edge Function exception:', edgeErr);
         logger.warn('Edge Function exception:', edgeErr);
       }
     }
 
     // === METHODE 3 : RPC via fetch direct (bypass supabase client entirely) ===
     if (!result) {
+      console.log('🔄 [FORM] Méthode 3: Tentative RPC direct...');
       try {
         const rpcUrl = `${supabaseUrl}/rest/v1/rpc/upsert_lead`;
+        console.log('🔄 [FORM] RPC URL:', rpcUrl);
         const resp = await fetch(rpcUrl, {
           method: 'POST',
           headers: {
@@ -426,24 +450,34 @@ export async function createLead(input: CreateLeadInput): Promise<{ success: boo
           body: JSON.stringify(leadParams)
         });
 
+        console.log('🔄 [FORM] RPC Response status:', resp.status, resp.statusText);
         if (resp.ok) {
           const rpcData = await resp.json();
+          console.log('🔄 [FORM] RPC Data:', rpcData);
           if (Array.isArray(rpcData) && rpcData[0]) {
             result = rpcData[0];
+            console.log('✅ [FORM] Lead créé via RPC direct!');
             logger.log('Lead created via direct RPC fetch');
           }
         } else {
           const errText = await resp.text();
+          console.error('❌ [FORM] Direct RPC fetch failed:', resp.status, errText);
           logger.error('Direct RPC fetch failed:', resp.status, errText);
         }
       } catch (fetchErr) {
+        console.error('❌ [FORM] Direct RPC fetch exception:', fetchErr);
         logger.error('Direct RPC fetch exception:', fetchErr);
       }
     }
 
     if (!result) {
+      console.error('❌ [FORM] TOUTES LES MÉTHODES ONT ÉCHOUÉ!');
+      console.error('❌ [FORM] Vérifiez la console ci-dessus pour les détails');
       return { success: false, error: 'Impossible de créer le lead. Veuillez réessayer ou nous appeler au 01 80 85 57 86.' };
     }
+
+    console.log('✅ [FORM] SUCCESS! Lead ID:', result.lead_id);
+    console.log('✅ [FORM] Access Token:', result.access_token);
 
     sendLeadNotificationEmails({
       id: result.lead_id,
