@@ -19,11 +19,11 @@ fi
 echo ""
 echo "📧 Configuration des secrets IONOS Email..."
 
-# IONOS SMTP (envoi d'emails)
+# IONOS SMTP (envoi d'emails) - Port 465 pour TLS direct
 supabase secrets set IONOS_SMTP_HOST="smtp.ionos.fr"
-supabase secrets set IONOS_SMTP_PORT="587"
+supabase secrets set IONOS_SMTP_PORT="465"
 supabase secrets set IONOS_SMTP_USER="team@taxiassur.com"
-supabase secrets set IONOS_SMTP_PASSWORD="TAXIassur2026!,&"
+supabase secrets set IONOS_SMTP_PASSWORD="TAXIassur!,"
 supabase secrets set IONOS_FROM_EMAIL="team@taxiassur.com"
 supabase secrets set IONOS_FROM_NAME="TaxiAssur"
 
@@ -31,7 +31,7 @@ supabase secrets set IONOS_FROM_NAME="TaxiAssur"
 supabase secrets set IONOS_IMAP_HOST="imap.ionos.fr"
 supabase secrets set IONOS_IMAP_PORT="993"
 supabase secrets set IONOS_IMAP_USER="team@taxiassur.com"
-supabase secrets set IONOS_IMAP_PASSWORD="TAXIassur2026!,&"
+supabase secrets set IONOS_IMAP_PASSWORD="TAXIassur!,"
 supabase secrets set IONOS_IMAP_SECURE="true"
 
 echo ""
