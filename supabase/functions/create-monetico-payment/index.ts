@@ -131,34 +131,34 @@ serve(async (req: Request) => {
 
       console.log('📊 Résultat:', { lead: leadData, leadError });
 
-      if (leadError) {
-        console.error('❌ Erreur DB:', leadError);
-        return new Response(
-          JSON.stringify({
-            error: 'Lead non trouvé',
-            details: leadError.message,
-            leadId: leadId
-          }),
-          { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
+      if (leadError || !leadData) {
+        // Fallback sur les données passées en paramètre si la requête échoue
+        console.log('⚠️ Lead non trouvé en DB, utilisation du fallback');
 
-      if (!leadData) {
-        console.error('❌ Lead null');
-        return new Response(
-          JSON.stringify({
-            error: 'Lead non trouvé (null)',
-            leadId: leadId
-          }),
-          { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
+        if (!customerEmail || !customerFirstName || !customerLastName) {
+          console.error('❌ Données insuffisantes');
+          return new Response(
+            JSON.stringify({
+              error: 'Lead non trouvé et données client manquantes',
+              details: leadError?.message || 'Lead non trouvé',
+              leadId: leadId,
+              hint: 'Passez customerEmail, customerFirstName et customerLastName en paramètre'
+            }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
 
-      lead = leadData;
-      email = lead.email || 'test@taxiassur.fr';
-      firstName = lead.first_name || 'Client';
-      lastName = lead.last_name || 'TaxiAssur';
-      phone = lead.phone || null;
+        email = customerEmail;
+        firstName = customerFirstName;
+        lastName = customerLastName;
+        phone = customerPhone || null;
+      } else {
+        lead = leadData;
+        email = lead.email || customerEmail || 'test@taxiassur.fr';
+        firstName = lead.first_name || customerFirstName || 'Client';
+        lastName = lead.last_name || customerLastName || 'TaxiAssur';
+        phone = lead.phone || customerPhone || null;
+      }
     } else {
       // Mode facturation libre (sans lead)
       console.log('💳 Mode facturation libre');

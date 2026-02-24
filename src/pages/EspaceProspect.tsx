@@ -828,6 +828,10 @@ const EspaceProspect: React.FC = () => {
                       amount={parseFloat(payment.amount)}
                       reference={payment.reference}
                       description={payment.description}
+                      customerEmail={leadInfo.email}
+                      customerFirstName={leadInfo.first_name}
+                      customerLastName={leadInfo.last_name}
+                      customerPhone={leadInfo.phone}
                     />
                   </div>
                 ))}

@@ -6,9 +6,22 @@ interface Props {
   amount: number;
   reference: string;
   description?: string;
+  customerEmail?: string;
+  customerFirstName?: string;
+  customerLastName?: string;
+  customerPhone?: string;
 }
 
-export default function ClientMoneticoPayment({ leadId, amount, reference, description }: Props) {
+export default function ClientMoneticoPayment({
+  leadId,
+  amount,
+  reference,
+  description,
+  customerEmail,
+  customerFirstName,
+  customerLastName,
+  customerPhone
+}: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -30,7 +43,11 @@ export default function ClientMoneticoPayment({ leadId, amount, reference, descr
             leadId,
             amount,
             description: description || 'Paiement comptant assurance taxi',
-            customReference: reference, // Utiliser la référence existante
+            customReference: reference,
+            customerEmail,
+            customerFirstName,
+            customerLastName,
+            customerPhone,
           }),
         }
       );
