@@ -5,6 +5,7 @@ import { ToastProvider } from './contexts/ToastContext';
 import { ModalProvider } from './contexts/ModalContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import ErrorBoundary from './components/ErrorBoundary';
+import GlobalErrorBoundary from './components/GlobalErrorBoundary';
 
 const PerformanceOptimizer = lazy(() => import('./components/PerformanceOptimizer'));
 const AITaxiBackground = lazy(() => import('./components/AITaxiBackground'));
@@ -31,30 +32,32 @@ function App() {
   }, []);
 
   return (
-    <ErrorBoundary>
-      <ThemeProvider>
-        <ToastProvider>
-          <ModalProvider>
-            {showEnhancements && (
-              <Suspense fallback={null}>
-                <PerformanceOptimizer>
-                  <AITaxiBackground intensity="low" />
-                </PerformanceOptimizer>
+    <GlobalErrorBoundary>
+      <ErrorBoundary>
+        <ThemeProvider>
+          <ToastProvider>
+            <ModalProvider>
+              {showEnhancements && (
+                <Suspense fallback={null}>
+                  <PerformanceOptimizer>
+                    <AITaxiBackground intensity="low" />
+                  </PerformanceOptimizer>
+                </Suspense>
+              )}
+              <Suspense fallback={<SimpleFallback />}>
+                <RouterProvider router={router} />
               </Suspense>
-            )}
-            <Suspense fallback={<SimpleFallback />}>
-              <RouterProvider router={router} />
-            </Suspense>
-            {/* Aide pour les tests Monético (dev only) */}
-            {showEnhancements && (
-              <Suspense fallback={null}>
-                <MoneticoTestCard />
-              </Suspense>
-            )}
-          </ModalProvider>
-        </ToastProvider>
-      </ThemeProvider>
-    </ErrorBoundary>
+              {/* Aide pour les tests Monético (dev only) */}
+              {showEnhancements && (
+                <Suspense fallback={null}>
+                  <MoneticoTestCard />
+                </Suspense>
+              )}
+            </ModalProvider>
+          </ToastProvider>
+        </ThemeProvider>
+      </ErrorBoundary>
+    </GlobalErrorBoundary>
   );
 }
 
