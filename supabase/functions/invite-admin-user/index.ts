@@ -124,9 +124,9 @@ Deno.serve(async (req: Request) => {
 
     if (!email || !full_name) {
       return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: 'Email et nom complet requis' 
+        JSON.stringify({
+          success: false,
+          error: 'Email et nom complet requis'
         }),
         {
           status: 400,
@@ -135,7 +135,38 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    console.log('Inviting user:', email, full_name, role);
+    // Validate email format
+    const emailRegex = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
+    if (!emailRegex.test(email)) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'Format d\'email invalide. L\'email doit contenir un domaine valide (ex: user@domain.com)'
+        }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
+    }
+
+    // Validate role
+    const validRoles = ['master', 'admin', 'collaborator', 'commercial', 'support'];
+    const userRole = role || 'collaborator';
+    if (!validRoles.includes(userRole)) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: `Rôle invalide. Rôles valides: ${validRoles.join(', ')}`
+        }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
+    }
+
+    console.log('Inviting user:', email, full_name, userRole);
 
     const redirectUrl = `${req.headers.get('origin') || 'https://taxiassur.com'}/auth/set-password`;
 
@@ -216,13 +247,25 @@ Deno.serve(async (req: Request) => {
 
     if (dbError) {
       console.error('Database error:', dbError);
-      
+
+      // Cleanup: delete auth user if DB insert failed
       await supabaseAdmin.auth.admin.deleteUser(userId);
-      
+
+      // Provide user-friendly error messages
+      let errorMessage = dbError.message;
+
+      if (dbError.message.includes('valid_email')) {
+        errorMessage = 'Format d\'email invalide. Veuillez utiliser un email avec domaine complet (ex: user@domain.com)';
+      } else if (dbError.message.includes('admin_users_role_check')) {
+        errorMessage = 'Rôle invalide. Rôles autorisés: master, admin, collaborator, commercial, support';
+      } else if (dbError.message.includes('duplicate key') || dbError.message.includes('unique')) {
+        errorMessage = 'Cet email est déjà utilisé par un autre utilisateur';
+      }
+
       return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: `Erreur base de données: ${dbError.message}` 
+        JSON.stringify({
+          success: false,
+          error: errorMessage
         }),
         {
           status: 400,

@@ -214,6 +214,13 @@ const CRMAdminSettings: React.FC = () => {
       return;
     }
 
+    // Validation frontend de l'email
+    const emailRegex = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
+    if (!emailRegex.test(inviteForm.email)) {
+      alert('Format d\'email invalide. L\'email doit contenir un domaine complet (ex: utilisateur@entreprise.com)');
+      return;
+    }
+
     setInviting(true);
     try {
       const { data, error } = await supabase.functions.invoke('invite-admin-user', {
@@ -224,19 +231,25 @@ const CRMAdminSettings: React.FC = () => {
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Edge Function error:', error);
+        throw new Error(error.message || 'Erreur lors de l\'appel à l\'Edge Function');
+      }
 
-      if (data.success) {
+      if (data && data.success) {
         alert(`Invitation envoyée avec succès à ${inviteForm.email}`);
         setShowInviteModal(false);
         setInviteForm({ email: '', full_name: '', role: 'collaborator' });
         loadUsers();
       } else {
-        alert(data.error || 'Erreur lors de l\'invitation');
+        const errorMsg = data?.error || 'Erreur inconnue lors de l\'invitation';
+        console.error('Invitation failed:', errorMsg);
+        alert(errorMsg);
       }
     } catch (error: any) {
       console.error('Erreur invitation:', error);
-      alert(error.message || 'Erreur lors de l\'invitation');
+      const errorMessage = error.message || 'Erreur lors de l\'invitation. Veuillez vérifier votre connexion.';
+      alert(errorMessage);
     } finally {
       setInviting(false);
     }
@@ -1309,9 +1322,12 @@ const CRMAdminSettings: React.FC = () => {
                   type="email"
                   value={inviteForm.email}
                   onChange={(e) => setInviteForm({ ...inviteForm, email: e.target.value })}
-                  placeholder="utilisateur@exemple.com"
+                  placeholder="utilisateur@entreprise.com"
                   className="w-full px-4 py-2 bg-white text-gray-900 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
+                <p className="mt-1 text-xs text-gray-500">
+                  L'email doit avoir un domaine complet (ex: @gmail.com, @taxiassur.com)
+                </p>
               </div>
 
               <div>
