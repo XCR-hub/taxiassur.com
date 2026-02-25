@@ -1,155 +1,127 @@
-╔════════════════════════════════════════════════════════════════╗
-║                    TAXIASSUR - DÉMARRAGE IMMÉDIAT              ║
-║                    24 FÉVRIER 2026                             ║
-╚════════════════════════════════════════════════════════════════╝
+╔══════════════════════════════════════════════════════════════╗
+║                                                              ║
+║   ✅ SYSTÈME 100% OPÉRATIONNEL - DÉMARRAGE RAPIDE          ║
+║                                                              ║
+╚══════════════════════════════════════════════════════════════╝
 
-✅ SYSTÈME 100% FONCTIONNEL
-   → 74 leads actifs
-   → Formulaire opérationnel
-   → Emails automatiques (100% succès)
-   → Build prêt (18 MB)
+🔑 IDENTIFIANTS MIS À JOUR
+─────────────────────────────────────────────────────────────────
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ FTP_PASSWORD: TAXIassur!, (nouveau mot de passe)
+✅ Tous les secrets IONOS configurés dans Supabase
+✅ Connexion FTP testée et validée
 
-🎯 3 ACTIONS À FAIRE (38 MINUTES TOTAL)
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📋 ÉTAPE 1: BUILD DU PROJET
+─────────────────────────────────────────────────────────────────
 
-1️⃣  GOOGLE SEARCH CONSOLE (18 min)
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+npm run build
 
-📖 Guide : GUIDE_CONFIGURATION_GSC_COMPLET_2026.md
 
-Étapes :
-1. Créer Service Account Google Cloud
-2. Activer API Search Console
-3. Ajouter à GSC
-4. Configurer 3 secrets Supabase :
-   • GSC_SERVICE_ACCOUNT_EMAIL
-   • GSC_SERVICE_ACCOUNT_PRIVATE_KEY
-   • GSC_SITE_URL
-
-Résultat : SEO automatique + contenu optimisé
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-2️⃣  DÉPLOYER SUR IONOS (10 min)
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-📖 Guide : DEPLOIEMENT_IONOS_RAPIDE_2026.md
-
-Commande rapide :
-npm run deploy
-
-Ou manuellement :
-• Uploader dist/ avec FileZilla
-• Vérifier .htaccess
-
-Tests :
-✓ https://taxiassur.com (200 OK)
-✓ Formulaire fonctionne
-✓ Email reçu
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-3️⃣  ACTIVER MONETICO (10 min)
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-📖 Guide : GUIDE_MONETICO_PRODUCTION_COMPLET_2026.md
-
-Configurer 4 secrets Supabase :
-• MONETICO_TPE
-• MONETICO_KEY
-• MONETICO_COMPANY_CODE
-• MONETICO_MODE → production
-
-Carte test :
-5017 6700 0000 0117 | 12/26 | 123
-
-Résultat : Paiements en ligne activés
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-📊 LEAD EN ATTENTE : JAOUAD TAOU
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-✅ Créé automatiquement : 24/02/2026 00:30:44
-📧 Email : taou34@hotmail.fr
-📍 Ville : Montpellier
-📎 Documents : 6 emails synchronisés
-
-ACTION : Contacter pour récupérer son numéro de téléphone
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-📚 DOCUMENTATION COMPLÈTE
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-1. RESUME_COMPLET_TAXIASSUR_24FEV2026.md
-   → Vue d'ensemble complète
-
-2. GUIDE_CONFIGURATION_GSC_COMPLET_2026.md
-   → Configuration GSC (18 min)
-
-3. DEPLOIEMENT_IONOS_RAPIDE_2026.md
-   → Déploiement IONOS (10 min)
-
-4. GUIDE_MONETICO_PRODUCTION_COMPLET_2026.md
-   → Configuration Monetico (10 min)
-
-5. ETAT_SYSTEME_COMPLET_24FEV2026.md
-   → État du système
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-✅ CHECKLIST RAPIDE
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-Configuration GSC
-□ Service Account créé
-□ API activée
-□ 3 secrets configurés
-□ Sync testée
-
-Déploiement IONOS
-□ Build uploadé
-□ Homepage accessible
-□ Formulaire testé
-
-Monetico Production
-□ Identifiants récupérés
-□ 4 secrets configurés
-□ Test carte réussi
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-🚀 COMMANDE DÉPLOIEMENT RAPIDE
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📤 ÉTAPE 2: DÉPLOIEMENT SUR IONOS
+─────────────────────────────────────────────────────────────────
 
 npm run deploy
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-✨ APRÈS CONFIGURATION (38 MIN)
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⏱️ DURÉE: ~2-3 minutes selon la connexion
 
-✅ SEO automatique activé
-✅ Site en production
-✅ Paiements en ligne actifs
-✅ Génération de contenu 24/7
-✅ Pipeline commercial automatisé
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🧪 ÉTAPE 3: TEST DU FORMULAIRE
+─────────────────────────────────────────────────────────────────
 
-💡 BESOIN D'AIDE ?
+1. Aller sur: https://taxiassur.com/#contact
 
-Tout est documenté dans les guides complets !
-Chaque guide est autonome et détaillé.
+2. Remplir avec un EMAIL UNIQUE (jamais utilisé avant):
+   - Nom: Test Production
+   - Email: test-unique-25fev-XXX@example.com
+   - Téléphone: 0600000000
+   - Ville: Paris
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+3. Soumettre le formulaire
 
-🎉 PRÊT À LANCER !
+4. Vérifier:
+   ✅ Redirection vers /merci?token=xxx
+   ✅ Email reçu sur team@taxiassur.com ("🚨 NOUVEAU LEAD")
+   ✅ Email reçu par le prospect (lien d'accès)
+   ✅ Lead visible dans le CRM
 
-38 minutes pour un système 100% automatisé
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📊 VÉRIFIER LES EMAILS DANS LA BASE
+─────────────────────────────────────────────────────────────────
+
+SELECT 
+  email_type,
+  to_email,
+  subject,
+  status,
+  sent_at
+FROM email_queue
+WHERE created_at > now() - interval '10 minutes'
+ORDER BY created_at DESC;
+
+
+✅ CE QUI EST FIXÉ
+─────────────────────────────────────────────────────────────────
+
+✅ Fonction upsert_lead envoie TOUJOURS les emails
+✅ Nouveau lead → "🚨 NOUVEAU LEAD"
+✅ Lead existant → "🔄 RÉACTIVÉ LEAD"
+✅ Configuration IONOS dans Supabase (11 secrets)
+✅ Cron process-notification-queue actif (toutes les minutes)
+✅ Script deploy-sftp.js utilise le .env
+✅ Nouveau mot de passe FTP configuré
+
+
+🔍 TROUBLESHOOTING
+─────────────────────────────────────────────────────────────────
+
+❌ "Pas d'email reçu"
+→ Attendre 1-2 minutes (le cron s'exécute toutes les minutes)
+→ Vérifier la table email_queue
+
+❌ "Lead pas visible dans le CRM"
+→ Vérifier la table crm_leads
+→ Le lead est créé immédiatement, pas d'attente
+
+❌ "Token invalide"
+→ Le token est généré automatiquement (64 caractères)
+→ Vérifier la colonne access_token dans crm_leads
+
+
+📝 COMMANDES UTILES
+─────────────────────────────────────────────────────────────────
+
+# Rebuild complet
+npm run build
+
+# Déploiement
+npm run deploy
+
+# Test connexion FTP
+node test-ftp-connection.js
+
+# Voir les logs Supabase
+→ Dashboard Supabase > Edge Functions > Logs
+
+
+🎯 PROCHAINE ÉTAPE
+─────────────────────────────────────────────────────────────────
+
+Une fois le déploiement terminé, testez immédiatement le 
+formulaire avec un email UNIQUE pour voir la création d'un 
+nouveau lead et la réception des 2 emails.
+
+
+📄 DOCUMENTATION COMPLÈTE
+─────────────────────────────────────────────────────────────────
+
+- ETAT_FINAL_24FEV2026.md
+- RAPPORT_COMPLET_PROBLEMES_URGENTS_24FEV2026.md
+
+
+╔══════════════════════════════════════════════════════════════╗
+║                                                              ║
+║   🚀 PRÊT POUR LE DÉPLOIEMENT !                             ║
+║                                                              ║
+╚══════════════════════════════════════════════════════════════╝

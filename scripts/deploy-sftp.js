@@ -2,15 +2,18 @@ import { Client } from 'ssh2';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const SFTP_CONFIG = {
-  host: 'home749874859.1and1-data.host',
-  port: 22,
-  username: 'acc1591324770',
-  password: 'TAXIassur2026!,&'
+  host: process.env.FTP_HOST || 'home749874859.1and1-data.host',
+  port: parseInt(process.env.FTP_PORT || '22'),
+  username: process.env.FTP_USER || 'acc1591324770',
+  password: process.env.FTP_PASSWORD || 'TAXIassur!,'
 };
 
 const LOCAL_DIST = path.join(__dirname, '../dist');
