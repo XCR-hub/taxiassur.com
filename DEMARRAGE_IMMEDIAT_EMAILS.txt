@@ -1,0 +1,52 @@
+🔥 DEMARRAGE IMMEDIAT DES EMAILS (COPIER-COLLER)
+
+Le système est prêt SAUF les secrets IONOS !
+
+┌─────────────────────────────────────────────────────────────┐
+│  ACTION UNIQUE À FAIRE (30 secondes chrono)                 │
+└─────────────────────────────────────────────────────────────┘
+
+1. Ouvrir ce lien dans votre navigateur :
+   https://supabase.com/dashboard/project/drohhxrkoequjphvabvq/settings/vault/secrets
+
+2. Cliquer sur "New secret" et ajouter ces 4 secrets :
+
+   Secret 1 :
+   Name  : IONOS_SMTP_HOST
+   Value : smtp.ionos.fr
+
+   Secret 2 :
+   Name  : IONOS_SMTP_PORT
+   Value : 465
+
+   Secret 3 :
+   Name  : IONOS_EMAIL_USER
+   Value : team@taxiassur.com
+
+   Secret 4 :
+   Name  : IONOS_EMAIL_PASSWORD
+   Value : TAXIassur!,
+
+3. Attendre 30 secondes
+
+4. DONE ! Les emails partiront automatiquement !
+
+┌─────────────────────────────────────────────────────────────┐
+│  POURQUOI LES EMAILS NE PARTENT PAS ACTUELLEMENT ?          │
+└─────────────────────────────────────────────────────────────┘
+
+La fonction send-email-ionos est déployée et fonctionne, MAIS :
+- Elle ne trouve pas IONOS_EMAIL_PASSWORD dans les secrets
+- Donc elle ne peut pas s'authentifier sur le serveur SMTP
+- Donc les emails ne partent jamais (même si marqués "sent")
+
+┌─────────────────────────────────────────────────────────────┐
+│  UNE FOIS CONFIGURÉ                                          │
+└─────────────────────────────────────────────────────────────┘
+
+✅ Chaque nouveau lead → Email au client + Email à l'équipe
+✅ Upload de document → Email aux commerciaux
+✅ Notifications CRM → Emails automatiques
+✅ Emails de relance → Envoyés via IONOS SMTP
+
+Tout fonctionne EN AUTOMATIQUE, vous n'avez RIEN d'autre à faire !
