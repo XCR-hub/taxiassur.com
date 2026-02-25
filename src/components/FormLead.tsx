@@ -2,11 +2,24 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Shield, Phone, Clock, Send } from 'lucide-react';
 import { logger } from '@/lib/logger';
-import { createLead } from '@/lib/leads';
+import { createLead, checkExistingEmail, resendAccess } from '@/lib/leads';
+import ExistingLeadChoiceModal from './ExistingLeadChoiceModal';
+
+interface ExistingLeadData {
+  email: string;
+  firstName: string;
+  lastName: string;
+  phone: string;
+  city: string;
+  vehicleCount: number;
+  createdAt: string;
+}
 
 const FormLead: React.FC = () => {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [existingLead, setExistingLead] = useState<ExistingLeadData | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -34,6 +47,36 @@ const FormLead: React.FC = () => {
     setIsSubmitting(true);
 
     try {
+      // Vérifier si l'email existe déjà
+      const existingData = await checkExistingEmail(formData.email);
+
+      if (existingData.exists) {
+        // Email existe : afficher le modal de choix
+        setExistingLead({
+          email: formData.email,
+          firstName: existingData.firstName || '',
+          lastName: existingData.lastName || '',
+          phone: existingData.phone || '',
+          city: existingData.city || '',
+          vehicleCount: existingData.vehicleCount || 1,
+          createdAt: existingData.createdAt || new Date().toISOString()
+        });
+        setShowModal(true);
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Email n'existe pas : créer le lead normalement
+      await submitNewLead(false);
+    } catch (error) {
+      logger.error('Form submission error:', error);
+      alert('Erreur de connexion. Veuillez vérifier votre connexion internet.');
+      setIsSubmitting(false);
+    }
+  };
+
+  const submitNewLead = async (forceNew: boolean) => {
+    try {
       const result = await createLead({
         name: formData.name,
         email: formData.email,
@@ -42,14 +85,14 @@ const FormLead: React.FC = () => {
         status: formData.status as 'taxi' | 'vtc' | 'autre',
         immatriculation: formData.immatriculation,
         source: 'website'
-      });
+      }, forceNew);
 
       if (result.success) {
         // Track conversion
         if (typeof gtag !== 'undefined') {
           gtag('event', 'conversion', {
             event_category: 'lead',
-            event_label: 'form_submission'
+            event_label: forceNew ? 'form_submission_additional' : 'form_submission'
           });
         }
         const tokenParam = result.accessToken ? `?token=${result.accessToken}` : '';
@@ -59,11 +102,51 @@ const FormLead: React.FC = () => {
         alert(result.error || 'Erreur lors de l\'envoi. Veuillez réessayer.');
       }
     } catch (error) {
-      logger.error('Form submission error:', error);
-      alert('Erreur de connexion. Veuillez vérifier votre connexion internet.');
+      logger.error('Lead creation error:', error);
+      alert('Erreur lors de la création du lead.');
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleAccessExisting = async () => {
+    setShowModal(false);
+    setIsSubmitting(true);
+
+    try {
+      const result = await resendAccess(formData.email);
+
+      if (result.success) {
+        alert('Un email avec vos accès vous a été envoyé ! Consultez votre boîte de réception.');
+        setFormData({
+          name: '',
+          email: '',
+          phone: '',
+          city: '',
+          status: 'taxi',
+          immatriculation: '',
+          company: ''
+        });
+      } else {
+        alert('Erreur lors de l\'envoi de l\'email. Veuillez réessayer.');
+      }
+    } catch (error) {
+      logger.error('Error resending access:', error);
+      alert('Erreur de connexion.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleCreateNew = async () => {
+    setShowModal(false);
+    setIsSubmitting(true);
+    await submitNewLead(true); // Force la création d'un nouveau lead
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setIsSubmitting(false);
   };
 
   return (
@@ -256,6 +339,15 @@ const FormLead: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Modal de choix pour lead existant */}
+      <ExistingLeadChoiceModal
+        isOpen={showModal}
+        existingLead={existingLead}
+        onClose={handleCloseModal}
+        onAccessExisting={handleAccessExisting}
+        onCreateNew={handleCreateNew}
+      />
     </section>
   );
 };

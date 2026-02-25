@@ -339,7 +339,84 @@ export interface CreateLeadInput {
   notes?: string;
 }
 
-export async function createLead(input: CreateLeadInput): Promise<{ success: boolean; error?: string; leadId?: string; accessToken?: string }> {
+export async function checkExistingEmail(email: string): Promise<{
+  exists: boolean;
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
+  city?: string;
+  vehicleCount?: number;
+  createdAt?: string;
+}> {
+  try {
+    console.log('[CHECK_EMAIL] Checking email:', email);
+
+    const { data, error } = await supabase.rpc('check_existing_email', {
+      p_email: email
+    });
+
+    if (error) {
+      console.error('[CHECK_EMAIL] Error:', error);
+      return { exists: false };
+    }
+
+    if (!data || data.length === 0 || !data[0].email_exists) {
+      console.log('[CHECK_EMAIL] Email does not exist');
+      return { exists: false };
+    }
+
+    const existingLead = data[0];
+    console.log('[CHECK_EMAIL] Email exists:', existingLead);
+
+    return {
+      exists: true,
+      firstName: existingLead.first_name,
+      lastName: existingLead.last_name,
+      phone: existingLead.phone,
+      city: existingLead.city,
+      vehicleCount: existingLead.vehicle_count,
+      createdAt: existingLead.created_at
+    };
+  } catch (error) {
+    console.error('[CHECK_EMAIL] Exception:', error);
+    return { exists: false };
+  }
+}
+
+export async function resendAccess(email: string): Promise<{
+  success: boolean;
+  accessToken?: string;
+  error?: string;
+}> {
+  try {
+    console.log('[RESEND_ACCESS] Resending access for:', email);
+
+    const { data, error } = await supabase.rpc('resend_lead_access', {
+      p_email: email
+    });
+
+    if (error) {
+      console.error('[RESEND_ACCESS] Error:', error);
+      return { success: false, error: error.message };
+    }
+
+    if (!data || data.length === 0 || !data[0].success) {
+      console.error('[RESEND_ACCESS] Failed to resend');
+      return { success: false, error: 'Impossible de renvoyer les accès' };
+    }
+
+    console.log('[RESEND_ACCESS] Success');
+    return {
+      success: true,
+      accessToken: data[0].access_token
+    };
+  } catch (error: any) {
+    console.error('[RESEND_ACCESS] Exception:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+export async function createLead(input: CreateLeadInput, forceNew: boolean = false): Promise<{ success: boolean; error?: string; leadId?: string; accessToken?: string }> {
   try {
     console.log('🚀 [FORM] === DÉBUT CRÉATION LEAD ===');
     console.log('🚀 [FORM] Input:', JSON.stringify(input, null, 2));
@@ -366,10 +443,12 @@ export async function createLead(input: CreateLeadInput): Promise<{ success: boo
         vehicle_type: vehicleType,
         immatriculation: input.immatriculation || '',
         notes: input.notes || ''
-      }
+      },
+      p_force_new_lead: forceNew
     };
 
     console.log('📦 [FORM] Lead params:', JSON.stringify(leadParams, null, 2));
+    console.log('📦 [FORM] Force New:', forceNew);
 
     let result: { lead_id: string; access_token: string; is_new: boolean } | null = null;
 
