@@ -441,16 +441,16 @@ const CRMLeadDetail: React.FC = () => {
 
       {/* Content */}
       <div className="max-w-7xl mx-auto px-6 py-6">
-        {activeTab === 'overview' && (
+        <div style={{ display: activeTab === 'overview' ? 'block' : 'none' }}>
           <div className="space-y-6">
             <PipelineWorkflow7Etapes
               leadId={leadId!}
               leadData={lead}
             />
           </div>
-        )}
+        </div>
 
-        {activeTab === 'documents' && (
+        <div style={{ display: activeTab === 'documents' ? 'block' : 'none' }}>
           <div className="space-y-6">
             <DocumentValidationComplete
               caseId={leadId!}
@@ -459,21 +459,21 @@ const CRMLeadDetail: React.FC = () => {
               onDocumentClassified={() => loadStats()}
             />
           </div>
-        )}
+        </div>
 
-        {activeTab === 'quotes' && (
+        <div style={{ display: activeTab === 'quotes' ? 'block' : 'none' }}>
           <div className="space-y-6">
             <LeadCompanyQuotes leadId={leadId!} />
           </div>
-        )}
+        </div>
 
-        {activeTab === 'contract' && (
+        <div style={{ display: activeTab === 'contract' ? 'block' : 'none' }}>
           <div className="space-y-6">
             <ContractSignatureManager leadId={leadId!} />
           </div>
-        )}
+        </div>
 
-        {activeTab === 'history' && (
+        <div style={{ display: activeTab === 'history' ? 'block' : 'none' }}>
           <div className="space-y-6">
             <CompleteTimeline
               leadId={leadId!}
@@ -481,7 +481,7 @@ const CRMLeadDetail: React.FC = () => {
               leadPhone={lead.phone}
             />
           </div>
-        )}
+        </div>
       </div>
     </div>
   );
