@@ -47,6 +47,12 @@ const CRMLayout: React.FC = () => {
   const { user, signOut, isAuthenticated, loading } = useAdminAuth();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [stats] = useState<CRMStats>({
+    unread_messages: 0,
+    pending_items: 0,
+    at_risk_clients: 0,
+    ai_decisions_pending: 0
+  });
 
   // Log pour vérifier la version déployée
   useEffect(() => {
@@ -69,13 +75,6 @@ const CRMLayout: React.FC = () => {
   if (!isAuthenticated) {
     return <AdminLogin onSuccess={() => window.location.reload()} />;
   }
-
-  const [stats] = useState<CRMStats>({
-    unread_messages: 0,
-    pending_items: 0,
-    at_risk_clients: 0,
-    ai_decisions_pending: 0
-  });
 
   const menuItems = [
     {

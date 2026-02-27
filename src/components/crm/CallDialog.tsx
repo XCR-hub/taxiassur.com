@@ -39,6 +39,9 @@ export const CallDialog: React.FC<CallDialogProps> = ({
   leadEmail,
   onCallCompleted
 }) => {
+  // CRITICAL: Guard must come BEFORE all hooks to prevent React Error #300
+  if (!isOpen) return null;
+
   const [callStatus, setCallStatus] = useState<'idle' | 'ringing' | 'active' | 'ended'>('idle');
   const [isRecording, setIsRecording] = useState(false);
   const [callDuration, setCallDuration] = useState(0);
@@ -258,8 +261,6 @@ export const CallDialog: React.FC<CallDialogProps> = ({
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
-
-  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
