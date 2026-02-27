@@ -53,11 +53,19 @@ Deno.serve(async (req: Request) => {
         openaiKey
       );
 
+      // 🚀 NOUVEAU: Générer automatiquement le code pour les top recommandations
+      const codeGenerationResults = await generateCodeFromRecommendations(
+        analysisResult,
+        supabaseUrl,
+        supabaseKey
+      );
+
       return new Response(
         JSON.stringify({
           success: true,
           session_id: sessionId,
           analysis: analysisResult,
+          code_generation: codeGenerationResults,
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
@@ -101,6 +109,116 @@ Deno.serve(async (req: Request) => {
     );
   }
 });
+
+// 🚀 NOUVELLE FONCTION: Générer du code à partir des recommandations SEO
+async function generateCodeFromRecommendations(
+  analysisResult: any,
+  supabaseUrl: string,
+  supabaseKey: string
+) {
+  const results = [];
+  const recommendations = analysisResult?.recommendations || [];
+
+  console.log(`🤖 Génération de code pour ${recommendations.length} recommandations`);
+
+  for (const rec of recommendations.slice(0, 5)) { // Top 5 recommandations
+    try {
+      let action = null;
+      let data = {};
+
+      // Déterminer l'action en fonction du type de recommandation
+      if (rec.action_type === 'create_city_page') {
+        action = 'create_city_page';
+        data = {
+          city: rec.city || extractCityFromQuery(rec.target_query),
+          keyword: rec.target_query,
+          metadata: rec,
+        };
+      } else if (rec.action_type === 'optimize_existing_page') {
+        action = 'optimize_existing_page';
+        data = {
+          current_content: rec.current_content || '',
+          seo_recommendations: rec.seo_optimizations,
+          metadata: rec,
+        };
+      } else if (rec.action_type === 'create_blog_article') {
+        // Pour l'instant, on skip les articles blog (non implémenté)
+        console.log(`⏭️ Skip blog article: ${rec.target_query}`);
+        continue;
+      }
+
+      if (action) {
+        // Appeler l'edge function de génération de code
+        const response = await fetch(
+          `${supabaseUrl}/functions/v1/ai-code-generator`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${supabaseKey}`,
+            },
+            body: JSON.stringify({
+              action,
+              data,
+              priority: rec.priority === 'urgent' ? 10 : rec.priority === 'high' ? 7 : 5,
+            }),
+          }
+        );
+
+        const result = await response.json();
+
+        if (result.success) {
+          console.log(`✅ Code généré et ajouté à la queue: ${result.file_path}`);
+          results.push({
+            recommendation: rec.target_query,
+            success: true,
+            queue_id: result.queue_id,
+            file_path: result.file_path,
+          });
+        } else {
+          console.error(`❌ Erreur génération code: ${result.error}`);
+          results.push({
+            recommendation: rec.target_query,
+            success: false,
+            error: result.error,
+          });
+        }
+      }
+    } catch (error) {
+      console.error(`❌ Erreur traitement recommandation:`, error);
+      results.push({
+        recommendation: rec.target_query,
+        success: false,
+        error: error instanceof Error ? error.message : 'Erreur inconnue',
+      });
+    }
+  }
+
+  return {
+    total_recommendations: recommendations.length,
+    code_generated: results.filter(r => r.success).length,
+    results,
+  };
+}
+
+// Helper: Extraire le nom de ville d'une requête
+function extractCityFromQuery(query: string): string {
+  // Patterns courants pour détecter les villes
+  const patterns = [
+    /assurance taxi (\w+)/i,
+    /taxi (\w+)/i,
+    /(\w+) taxi/i,
+  ];
+
+  for (const pattern of patterns) {
+    const match = query.match(pattern);
+    if (match && match[1]) {
+      return match[1].charAt(0).toUpperCase() + match[1].slice(1).toLowerCase();
+    }
+  }
+
+  return 'Unknown';
+}
 
 // Fonction : Analyse collaborative entre les IA
 async function runCollaborativeAnalysis(
