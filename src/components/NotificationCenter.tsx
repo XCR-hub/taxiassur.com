@@ -79,7 +79,7 @@ export function NotificationCenter() {
                 <div className="flex items-center gap-2">
                   <button
                     onClick={handleManualRefresh}
-                    className="rounded p-1 text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
+                    className="rounded p-1 text-gray-300 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
                     title="Recharger la page"
                   >
                     <RefreshCw className="h-4 w-4" />
@@ -124,7 +124,7 @@ export function NotificationCenter() {
                         <h4 className="font-medium text-gray-900 dark:text-white">
                           {notification.title}
                         </h4>
-                        <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                        <p className="mt-1 text-sm text-gray-300 dark:text-gray-400">
                           {notification.message}
                         </p>
                         <p className="mt-2 text-xs text-gray-500">
@@ -157,7 +157,7 @@ export function NotificationCenter() {
                           aria-label="Fermer la notification"
                           title="Fermer et masquer cette notification"
                         >
-                          <X className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+                          <X className="h-4 w-4 text-gray-300 dark:text-gray-400" />
                         </button>
                       </div>
                     </div>

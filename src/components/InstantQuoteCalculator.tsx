@@ -299,9 +299,9 @@ const InstantQuoteCalculator: React.FC = () => {
 
             <div className="grid md:grid-cols-2 gap-6 mb-8">
               <div className="bg-gray-700 border-2 border-gray-600 rounded-2xl p-8">
-                <div className="text-sm text-gray-600 font-semibold mb-2">Prix Marché</div>
+                <div className="text-sm text-gray-300 font-semibold mb-2">Prix Marché</div>
                 <div className="text-4xl font-black text-gray-300 mb-2 line-through">{quote.basePrice}€</div>
-                <div className="text-sm text-gray-600 font-medium">par an</div>
+                <div className="text-sm text-gray-300 font-medium">par an</div>
               </div>
 
               <div className="bg-yellow-500/20 border-2 border-yellow-500 rounded-2xl p-8 relative shadow-lg">
@@ -445,7 +445,7 @@ const InstantQuoteCalculator: React.FC = () => {
                 className={`ml-auto px-8 py-4 rounded-xl font-bold transition-all text-base md:text-lg shadow-lg ${
                   isStepValid()
                     ? 'bg-yellow-500 hover:bg-yellow-600 text-gray-900 hover:scale-105'
-                    : 'bg-gray-700 text-gray-600 cursor-not-allowed'
+                    : 'bg-gray-700 text-gray-300 cursor-not-allowed'
                 }`}
               >
                 {step === 5 ? 'Calculer mon devis →' : 'Suivant →'}

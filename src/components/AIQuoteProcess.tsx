@@ -386,7 +386,7 @@ const AIQuoteProcess: React.FC = () => {
                   <div className={`relative w-12 h-12 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-500 taxi-step-number ${
                     index <= currentStep 
                       ? `bg-gradient-to-r ${step.color} text-black shadow-lg scale-110` 
-                      : 'bg-gray-800 text-gray-600 border-2 border-gray-700'
+                      : 'bg-gray-800 text-gray-300 border-2 border-gray-700'
                   }`}
                   style={{ animationDelay: `${index * 0.2}s` }}>
                     {index < currentStep ? (

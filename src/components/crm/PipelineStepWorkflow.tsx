@@ -407,7 +407,7 @@ export const PipelineStepWorkflow: React.FC<PipelineStepWorkflowProps> = ({
               ${
                 canGoBack && !changing
                   ? 'bg-gray-700 hover:bg-gray-600 text-white'
-                  : 'bg-gray-800 text-gray-600 cursor-not-allowed'
+                  : 'bg-gray-800 text-gray-300 cursor-not-allowed'
               }
             `}
           >
@@ -424,7 +424,7 @@ export const PipelineStepWorkflow: React.FC<PipelineStepWorkflowProps> = ({
               ${
                 canGoForward && !changing
                   ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-500/30'
-                  : 'bg-gray-800 text-gray-600 cursor-not-allowed'
+                  : 'bg-gray-800 text-gray-300 cursor-not-allowed'
               }
             `}
           >
