@@ -187,9 +187,9 @@ const FreeInvoicing: React.FC = () => {
   };
 
   return (
-    <div className="flex h-screen bg-gradient-to-br from-gray-900 via-slate-900 to-gray-800 overflow-hidden">
+    <div className="flex h-screen bg-gradient-to-br from-gray-900 via-slate-900 to-gray-800">
       {/* Sidebar */}
-      <div className="w-80 bg-gradient-to-b from-slate-800 to-gray-900 border-r border-gray-700 overflow-y-auto p-6">
+      <div className="w-80 bg-gradient-to-b from-slate-800 to-gray-900 border-r border-gray-700 p-6 flex flex-col">
         <div className="mb-6">
           <Link
             to="/backoffice"
@@ -203,9 +203,8 @@ const FreeInvoicing: React.FC = () => {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 overflow-y-auto">
-        <div className="min-h-full bg-gradient-to-br from-slate-50 to-blue-50 p-6">
-          <div className="max-w-7xl mx-auto">
+      <div className="flex-1 bg-gradient-to-br from-slate-50 to-blue-50 p-6 overflow-y-auto">
+        <div className="max-w-7xl mx-auto">
             {/* Header with Back Button */}
             <div className="mb-8">
               <div className="flex items-center gap-4 mb-6">
@@ -508,8 +507,7 @@ const FreeInvoicing: React.FC = () => {
               )}
             </div>
           </div>
-            </div>
-          </div>
+        </div>
         </div>
       </div>
     </div>

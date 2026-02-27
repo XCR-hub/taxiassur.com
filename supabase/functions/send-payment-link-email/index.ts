@@ -25,8 +25,11 @@ async function sendEmailSMTP(
   const SMTP_PASS = Deno.env.get("IONOS_EMAIL_PASSWORD");
 
   if (!SMTP_PASS) {
-    throw new Error("IONOS_EMAIL_PASSWORD not configured");
+    console.error("⚠️ IONOS_EMAIL_PASSWORD not configured in Supabase secrets");
+    throw new Error("Configuration email IONOS manquante. Veuillez contacter l'administrateur.");
   }
+
+  console.log(`📧 Tentative envoi email SMTP vers ${to} via ${SMTP_HOST}:${SMTP_PORT}`);
 
   const conn = await Deno.connect({
     hostname: SMTP_HOST,
