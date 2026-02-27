@@ -126,44 +126,52 @@ const CRMPipelineKanban: React.FC = () => {
           continue;
         }
 
-        const [emailsResult, documentsResult, interactionsResult, contractsResult] = await Promise.all([
-          // Nouveaux emails non lus
-          supabase
-            .from('email_messages')
-            .select('id', { count: 'exact', head: true })
-            .in('lead_id', leadIds)
-            .eq('is_from_user', false)
-            .gte('received_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()),
+        const [emailsResult, documentsResult, interactionsResult, contractsResult] = await Promise.allSettled([
+          // Nouveaux emails non lus - Limiter à 20 IDs max pour éviter erreur 400
+          leadIds.length <= 20
+            ? supabase
+                .from('email_messages')
+                .select('id', { count: 'exact', head: true })
+                .in('lead_id', leadIds)
+                .eq('is_from_user', false)
+                .gte('received_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
+            : Promise.resolve({ count: 0, data: [] }),
 
           // Nouveaux documents uploadés (dernières 24h)
-          supabase
-            .from('crm_lead_documents')
-            .select('id', { count: 'exact', head: true })
-            .in('lead_id', leadIds)
-            .eq('status', 'pending_validation')
-            .gte('uploaded_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()),
+          leadIds.length <= 20
+            ? supabase
+                .from('crm_lead_documents')
+                .select('id', { count: 'exact', head: true })
+                .in('lead_id', leadIds)
+                .eq('status', 'pending_validation')
+                .gte('uploaded_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
+            : Promise.resolve({ count: 0, data: [] }),
 
           // Appels + SMS récents
-          supabase
-            .from('crm_interactions')
-            .select('channel', { count: 'exact' })
-            .in('lead_id', leadIds)
-            .in('channel', ['phone', 'sms'])
-            .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()),
+          leadIds.length <= 20
+            ? supabase
+                .from('crm_interactions')
+                .select('channel', { count: 'exact' })
+                .in('lead_id', leadIds)
+                .in('channel', ['phone', 'sms'])
+                .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
+            : Promise.resolve({ count: 0, data: [] }),
 
           // Signatures en attente + paiements dus
-          supabase
-            .from('lead_contracts')
-            .select('status, down_payment_status', { count: 'exact' })
-            .in('lead_id', leadIds)
+          leadIds.length <= 20
+            ? supabase
+                .from('lead_contracts')
+                .select('status, down_payment_status', { count: 'exact' })
+                .in('lead_id', leadIds)
+            : Promise.resolve({ count: 0, data: [] })
         ]);
 
-        const interactions = interactionsResult.data || [];
-        const contracts = contractsResult.data || [];
+        const interactions = (interactionsResult.status === 'fulfilled' ? interactionsResult.value.data : null) || [];
+        const contracts = (contractsResult.status === 'fulfilled' ? contractsResult.value.data : null) || [];
 
         notifications[status] = {
-          newEmails: emailsResult.count || 0,
-          newDocuments: documentsResult.count || 0,
+          newEmails: (emailsResult.status === 'fulfilled' ? emailsResult.value.count : null) || 0,
+          newDocuments: (documentsResult.status === 'fulfilled' ? documentsResult.value.count : null) || 0,
           missedCalls: interactions.filter(i => i.channel === 'phone').length,
           newSMS: interactions.filter(i => i.channel === 'sms').length,
           pendingSignatures: contracts.filter(c => c.status === 'pending' || c.status === 'sent').length,

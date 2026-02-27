@@ -61,7 +61,7 @@ export const PipelineCard: React.FC<PipelineCardProps> = ({
   useEffect(() => {
     const loadIndicators = async () => {
       try {
-        const [docsResult, companyQuotesResult, contractResult, interactionsResult, automationsResult, leadDataResult] = await Promise.all([
+        const [docsResult, companyQuotesResult, contractResult, interactionsResult, automationsResult, leadDataResult] = await Promise.allSettled([
           supabase.from('crm_lead_documents').select('status').eq('lead_id', lead.id),
           supabase.from('lead_company_quotes').select('status').eq('lead_id', lead.id),
           supabase.from('lead_contracts').select('status, down_payment_status, down_payment_amount').eq('lead_id', lead.id).limit(1),
@@ -70,17 +70,17 @@ export const PipelineCard: React.FC<PipelineCardProps> = ({
           supabase.from('crm_leads').select('last_automation_result, automation_count').eq('id', lead.id).maybeSingle()
         ]);
 
-        const docs = docsResult.data || [];
+        const docs = (docsResult.status === 'fulfilled' ? docsResult.value.data : null) || [];
         const validatedDocs = docs.filter(d => d.status === 'validated').length;
 
-        const companyQuotes = companyQuotesResult.data || [];
+        const companyQuotes = (companyQuotesResult.status === 'fulfilled' ? companyQuotesResult.value.data : null) || [];
         const quotedCompanies = companyQuotes.filter(q => q.status === 'quote_submitted' || q.status === 'validated').length;
         const refusedCompanies = companyQuotes.filter(q => q.status === 'refused').length;
 
-        const contract = contractResult.data?.[0];
-        const lastInteraction = interactionsResult.data?.[0];
-        const pendingAutomations = automationsResult.data?.length || 0;
-        const leadData = leadDataResult.data;
+        const contract = contractResult.status === 'fulfilled' ? contractResult.value.data?.[0] : null;
+        const lastInteraction = interactionsResult.status === 'fulfilled' ? interactionsResult.value.data?.[0] : null;
+        const pendingAutomations = (automationsResult.status === 'fulfilled' ? automationsResult.value.data?.length : null) || 0;
+        const leadData = leadDataResult.status === 'fulfilled' ? leadDataResult.value.data : null;
 
         const daysInPipeline = Math.floor((Date.now() - new Date(lead.created_at).getTime()) / (1000 * 60 * 60 * 24));
         const lastInteractionDays = lastInteraction
