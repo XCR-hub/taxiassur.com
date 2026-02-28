@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../../lib/supabase';
 import { getDocumentPublicUrl } from '../../lib/utils';
+import { useRealtimeDocuments } from '@/hooks/useRealtimeDocuments';
 import { FileText, Download, X, CheckCircle2, AlertCircle, Loader2, Eye } from 'lucide-react';
 import DocumentViewer from './DocumentViewer';
 
@@ -50,6 +51,19 @@ export default function DocumentBasket({ caseId, onDocumentClassified }: Documen
   const [draggedItem, setDraggedItem] = useState<string | null>(null);
   const [classifying, setClassifying] = useState<string | null>(null);
   const [viewingDoc, setViewingDoc] = useState<{url: string; fileName: string; mimeType: string} | null>(null);
+
+  // Rafraîchir automatiquement le panier quand un document change
+  const handleDocumentChange = useCallback(() => {
+    console.log('📄 Document changed, refreshing basket...');
+    loadBasket();
+  }, [caseId]);
+
+  // Subscribe aux changements de documents en temps réel
+  useRealtimeDocuments({
+    leadId: caseId,
+    onDocumentChange: handleDocumentChange,
+    enabled: !!caseId
+  });
 
   useEffect(() => {
     loadBasket();

@@ -1,8 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Mail, Phone, AlertCircle, Link2, Copy, CheckCircle } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
+import { useRealtimeDocuments } from '@/hooks/useRealtimeDocuments';
+import { useDocumentToast, DocumentToastContainer } from '@/components/crm/DocumentToast';
 import { LeadWorkflowTabs, WorkflowTab } from '@/components/crm/LeadWorkflowTabs';
 import PipelineWorkflow7Etapes from '@/components/crm/PipelineWorkflow7Etapes';
 import DocumentValidationComplete from '@/components/crm/DocumentValidationComplete';
@@ -49,12 +51,8 @@ const CRMLeadDetail: React.FC = () => {
     totalInteractions: 0,
   });
 
-  useEffect(() => {
-    if (leadId) {
-      loadLeadData();
-      loadStats();
-    }
-  }, [leadId]);
+  // Toast pour les notifications
+  const { toasts, showToast, removeToast } = useDocumentToast();
 
   const loadLeadData = async () => {
     try {
@@ -148,6 +146,28 @@ const CRMLeadDetail: React.FC = () => {
       logger.error('Error loading stats:', err);
     }
   };
+
+  // Rafraîchir les stats en temps réel quand un document change
+  const handleDocumentChange = useCallback(() => {
+    logger.info('📄 Document changed, refreshing stats...');
+    showToast('Nouveau document reçu!', 'success');
+    loadStats();
+    loadLeadData(); // Aussi recharger les données du lead au cas où
+  }, [leadId, showToast]);
+
+  // Subscribe aux changements de documents en temps réel
+  useRealtimeDocuments({
+    leadId,
+    onDocumentChange: handleDocumentChange,
+    enabled: !!leadId
+  });
+
+  useEffect(() => {
+    if (leadId) {
+      loadLeadData();
+      loadStats();
+    }
+  }, [leadId]);
 
   const copyProspectSpaceLink = async () => {
     if (!lead?.access_token) {
@@ -346,6 +366,9 @@ const CRMLeadDetail: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Toast notifications */}
+      <DocumentToastContainer toasts={toasts} onRemove={removeToast} />
+
       {/* Header */}
       <div className="bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-6 py-4">
