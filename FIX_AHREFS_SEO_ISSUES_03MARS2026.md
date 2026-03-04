@@ -258,13 +258,13 @@ curl -I https://www.taxiassur.com
 1. **Immédiat (aujourd'hui)**
    - [x] Créer UnifiedSEO
    - [x] Remplacer www par non-www
-   - [ ] Tester le build
-   - [ ] Déployer
+   - [x] Tester le build
+   - [x] Régénérer sitemap propre
+   - [ ] Déployer en production
 
 2. **Cette semaine**
    - [ ] Corriger toutes les erreurs 5XX
    - [ ] Optimiser les pages lentes
-   - [ ] Régénérer sitemap propre
    - [ ] Re-crawler avec Ahrefs
 
 3. **Ce mois**
@@ -275,5 +275,11 @@ curl -I https://www.taxiassur.com
 ---
 
 **Date de création:** 03 Mars 2026
-**Status:** 🟡 En cours
+**Date de mise à jour:** 04 Mars 2026
+**Status:** 🟢 Prêt pour déploiement
 **Priorité:** 🔴 URGENT
+
+## 📄 Documents Associés
+- `DEPLOYMENT_READY_04MARS2026.md` - Instructions de déploiement complètes
+- `AHREFS_ISSUES_REPORT_2026.md` - Rapport détaillé des problèmes
+- `scripts/verify-seo-fixes.sh` - Script de vérification post-déploiement
