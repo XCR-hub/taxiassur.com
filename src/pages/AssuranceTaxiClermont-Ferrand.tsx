@@ -10,7 +10,7 @@ const AssuranceTaxiClermontFerrand: React.FC = () => {
       <Helmet>
         <title>Assurance Taxi Clermont-Ferrand : Tarifs 2024 | TaxiAssur</title>
         <meta name="description" content="Assurance Taxi Clermont-Ferrand dès 1410€/an (-35%). RC Pro incluse." />
-        <link rel="canonical" href="https://www.taxiassur.com/assurance-taxi-clermont-ferrand" />
+        <link rel="canonical" href="https://taxiassur.com/assurance-taxi-clermont-ferrand" />
       </Helmet>
       <Header />
       <main>

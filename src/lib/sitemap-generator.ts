@@ -8,7 +8,7 @@ export interface SitemapUrl {
 }
 
 export async function generateSitemap(): Promise<string> {
-  const baseUrl = 'https://www.taxiassur.com';
+  const baseUrl = 'https://taxiassur.com';
   const urls: SitemapUrl[] = [];
 
   urls.push({
@@ -140,7 +140,7 @@ function escapeXml(unsafe: string): string {
 }
 
 export async function generateSitemapIndex(): Promise<string> {
-  const baseUrl = 'https://www.taxiassur.com';
+  const baseUrl = 'https://taxiassur.com';
 
   const sitemaps = [
     { loc: `${baseUrl}/sitemap.xml`, lastmod: new Date().toISOString() },

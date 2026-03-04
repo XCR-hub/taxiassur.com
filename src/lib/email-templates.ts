@@ -73,7 +73,7 @@ export function generateWelcomeEmail(data: WelcomeEmailData): EmailTemplate {
         <li>Déclarer un sinistre 24h/24</li>
       </ul>
 
-      <a href="https://www.taxiassur.com/espace-client" class="button">Accéder à mon espace</a>
+      <a href="https://taxiassur.com/espace-client" class="button">Accéder à mon espace</a>
 
       <p>Notre équipe reste à votre disposition pour toute question.</p>
 
@@ -82,7 +82,7 @@ export function generateWelcomeEmail(data: WelcomeEmailData): EmailTemplate {
     <div class="footer">
       <p>TaxiAssur - Courtier en assurances<br>
       📧 contact@taxiassur.com | 📞 01 XX XX XX XX<br>
-      <a href="https://www.taxiassur.com">www.taxiassur.com</a></p>
+      <a href="https://taxiassur.com">taxiassur.com</a></p>
     </div>
   </div>
 </body>
@@ -103,7 +103,7 @@ Vous pouvez maintenant :
 - Gérer vos documents d'assurance
 - Déclarer un sinistre 24h/24
 
-Accédez à votre espace : https://www.taxiassur.com/espace-client
+Accédez à votre espace : https://taxiassur.com/espace-client
 
 Notre équipe reste à votre disposition pour toute question.
 
@@ -112,7 +112,7 @@ L'équipe TaxiAssur
 
 TaxiAssur - Courtier en assurances
 contact@taxiassur.com | 01 XX XX XX XX
-www.taxiassur.com
+taxiassur.com
   `;
 
   return {
@@ -169,7 +169,7 @@ export function generateQuoteEmail(data: QuoteEmailData): EmailTemplate {
         <li>Garantie conducteur</li>
       </ul>
 
-      <a href="https://www.taxiassur.com/devis/${data.quoteReference}" class="button">Voir mon devis détaillé</a>
+      <a href="https://taxiassur.com/devis/${data.quoteReference}" class="button">Voir mon devis détaillé</a>
 
       <p>Ce devis est valable 30 jours. N'hésitez pas à nous contacter pour toute question.</p>
 
@@ -178,7 +178,7 @@ export function generateQuoteEmail(data: QuoteEmailData): EmailTemplate {
     <div class="footer">
       <p>TaxiAssur - Courtier en assurances<br>
       📧 contact@taxiassur.com | 📞 01 XX XX XX XX<br>
-      <a href="https://www.taxiassur.com">www.taxiassur.com</a></p>
+      <a href="https://taxiassur.com">taxiassur.com</a></p>
     </div>
   </div>
 </body>
@@ -203,7 +203,7 @@ Garanties incluses :
 - Assistance 24h/24
 - Garantie conducteur
 
-Voir mon devis : https://www.taxiassur.com/devis/${data.quoteReference}
+Voir mon devis : https://taxiassur.com/devis/${data.quoteReference}
 
 Ce devis est valable 30 jours. N'hésitez pas à nous contacter pour toute question.
 
@@ -212,7 +212,7 @@ L'équipe TaxiAssur
 
 TaxiAssur - Courtier en assurances
 contact@taxiassur.com | 01 XX XX XX XX
-www.taxiassur.com
+taxiassur.com
   `;
 
   return {
@@ -270,7 +270,7 @@ export function generateContractEmail(data: ContractEmailData): EmailTemplate {
     <div class="footer">
       <p>TaxiAssur - Courtier en assurances<br>
       📧 contact@taxiassur.com | 📞 01 XX XX XX XX<br>
-      <a href="https://www.taxiassur.com">www.taxiassur.com</a></p>
+      <a href="https://taxiassur.com">taxiassur.com</a></p>
     </div>
   </div>
 </body>
@@ -305,7 +305,7 @@ L'équipe TaxiAssur
 
 TaxiAssur - Courtier en assurances
 contact@taxiassur.com | 01 XX XX XX XX
-www.taxiassur.com
+taxiassur.com
   `;
 
   return {

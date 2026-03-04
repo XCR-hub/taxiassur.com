@@ -1,6 +1,6 @@
 export function generateRobotsTxt(environment: 'production' | 'development' | 'staging'): string {
   const siteUrl = environment === 'production'
-    ? 'https://www.taxiassur.com'
+    ? 'https://taxiassur.com'
     : 'http://localhost:5173';
 
   if (environment === 'production') {

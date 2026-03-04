@@ -16,7 +16,7 @@ const AssuranceMotoTaxi: React.FC = () => {
           content="Assurance Moto Taxi dès 1,300€/an. Couverture complète transport passagers moto, RC Pro incluse, garanties spécifiques deux-roues. Devis gratuit 2 min."
         />
         <meta name="keywords" content="assurance moto taxi, assurance taxi moto, moto taxi assurance, prix assurance moto taxi" />
-        <link rel="canonical" href="https://www.taxiassur.com/assurance-moto-taxi" />
+        <link rel="canonical" href="https://taxiassur.com/assurance-moto-taxi" />
 
         <script type="application/ld+json">
           {JSON.stringify({

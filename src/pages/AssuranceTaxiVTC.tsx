@@ -16,7 +16,7 @@ const AssuranceTaxiVTC: React.FC = () => {
           content="Assurance Taxi VTC complète dès 1,170€/an (-35%). Découvrez les différences Taxi vs VTC, obligations légales et devis gratuit en 2 min. RC Pro incluse."
         />
         <meta name="keywords" content="assurance taxi vtc, assurance vtc et taxi, assurance pour vtc, assurance chauffeur vtc, prix assurance vtc taxi" />
-        <link rel="canonical" href="https://www.taxiassur.com/assurance-taxi-vtc" />
+        <link rel="canonical" href="https://taxiassur.com/assurance-taxi-vtc" />
 
         <script type="application/ld+json">
           {JSON.stringify({

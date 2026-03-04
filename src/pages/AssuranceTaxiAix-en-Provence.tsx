@@ -10,7 +10,7 @@ const AssuranceTaxiAixEnProvence: React.FC = () => {
       <Helmet>
         <title>Assurance Taxi Aix-en-Provence : Tarifs 2024 | TaxiAssur</title>
         <meta name="description" content="Assurance Taxi Aix-en-Provence dès 1580€/an (-35%). RC Pro incluse." />
-        <link rel="canonical" href="https://www.taxiassur.com/assurance-taxi-aix-en-provence" />
+        <link rel="canonical" href="https://taxiassur.com/assurance-taxi-aix-en-provence" />
       </Helmet>
       <Header />
       <main>

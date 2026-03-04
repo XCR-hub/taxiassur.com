@@ -10,7 +10,7 @@ const AssuranceTaxiOrleans: React.FC = () => {
       <Helmet>
         <title>Assurance Taxi Orleans : Tarifs 2024 | TaxiAssur</title>
         <meta name="description" content="Assurance Taxi Orleans dès 1440€/an (-35%). RC Pro incluse." />
-        <link rel="canonical" href="https://www.taxiassur.com/assurance-taxi-orleans" />
+        <link rel="canonical" href="https://taxiassur.com/assurance-taxi-orleans" />
       </Helmet>
       <Header />
       <main>

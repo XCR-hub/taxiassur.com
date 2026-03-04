@@ -267,7 +267,7 @@ const CRMLeadDetail: React.FC = () => {
                 <strong>TaxiAssur</strong> - Assurance Taxi & VTC Professionnelle
               </p>
               <p style="margin: 0 0 15px 0; font-size: 13px; color: #999999;">
-                team@taxiassur.com | www.taxiassur.com
+                team@taxiassur.com | taxiassur.com
               </p>
               <p style="margin: 0; font-size: 12px; color: #999999;">
                 Vous recevez cet email car vous avez demandé un devis sur TaxiAssur.com

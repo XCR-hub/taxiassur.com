@@ -10,7 +10,7 @@ const AssuranceTaxiBrest: React.FC = () => {
       <Helmet>
         <title>Assurance Taxi Brest : Tarifs 2024 | TaxiAssur</title>
         <meta name="description" content="Assurance Taxi Brest dès 1470€/an (-35%). RC Pro incluse." />
-        <link rel="canonical" href="https://www.taxiassur.com/assurance-taxi-brest" />
+        <link rel="canonical" href="https://taxiassur.com/assurance-taxi-brest" />
       </Helmet>
       <Header />
       <main>

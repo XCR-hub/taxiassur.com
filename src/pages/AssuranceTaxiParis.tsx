@@ -16,7 +16,7 @@ const AssuranceTaxiParis: React.FC = () => {
           content="Assurance Taxi Paris dès 2,080€/an (-35%). Tarifs par arrondissement, couverture G7, Alpha, taxis parisiens. Devis gratuit en 2 min spécial Paris."
         />
         <meta name="keywords" content="assurance taxi paris, assurance taxi parisien, assurance g7 taxi, prix assurance taxi paris, taxi paris assurance" />
-        <link rel="canonical" href="https://www.taxiassur.com/assurance-taxi-paris" />
+        <link rel="canonical" href="https://taxiassur.com/assurance-taxi-paris" />
 
         <script type="application/ld+json">
           {JSON.stringify({

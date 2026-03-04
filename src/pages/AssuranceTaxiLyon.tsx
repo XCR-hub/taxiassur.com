@@ -12,7 +12,7 @@ const AssuranceTaxiLyon: React.FC = () => {
       <Helmet>
         <title>Assurance Taxi Lyon : Tarifs 2024 | TaxiAssur</title>
         <meta name="description" content="Assurance Taxi Lyon dès 1,690€/an (-35%). Tarifs négociés pour chauffeurs lyonnais, RC Pro incluse. Devis gratuit 2 min." />
-        <link rel="canonical" href="https://www.taxiassur.com/assurance-taxi-lyon" />
+        <link rel="canonical" href="https://taxiassur.com/assurance-taxi-lyon" />
       </Helmet>
       <Header />
       <main className="min-h-screen bg-white">

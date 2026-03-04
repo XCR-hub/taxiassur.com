@@ -10,7 +10,7 @@ const AssuranceTaxiNice: React.FC = () => {
       <Helmet>
         <title>Assurance Taxi Nice : Tarifs Côte d'Azur 2024</title>
         <meta name="description" content="Assurance Taxi Nice dès 1,820€/an. Couverture aéroport + Côte d'Azur." />
-        <link rel="canonical" href="https://www.taxiassur.com/assurance-taxi-nice" />
+        <link rel="canonical" href="https://taxiassur.com/assurance-taxi-nice" />
       </Helmet>
       <Header />
       <main>

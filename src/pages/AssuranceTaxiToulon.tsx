@@ -10,7 +10,7 @@ const AssuranceTaxiToulon: React.FC = () => {
       <Helmet>
         <title>Assurance Taxi Toulon : Tarifs 2024 | TaxiAssur</title>
         <meta name="description" content="Assurance Taxi Toulon dès 1620€/an. RC Pro incluse, assistance 24/7. Devis gratuit 2 min." />
-        <link rel="canonical" href="https://www.taxiassur.com/assurance-taxi-toulon" />
+        <link rel="canonical" href="https://taxiassur.com/assurance-taxi-toulon" />
       </Helmet>
       <Header />
       <main>

@@ -19,7 +19,7 @@ export function SEOMetaTags({
   title,
   description,
   canonical,
-  image = 'https://www.taxiassur.com/logo-600x300.png',
+  image = 'https://taxiassur.com/logo-600x300.png',
   type = 'website',
   author,
   publishedTime,
@@ -29,7 +29,7 @@ export function SEOMetaTags({
   noindex = false,
   nofollow = false,
 }: SEOMetaTagsProps) {
-  const siteUrl = 'https://www.taxiassur.com';
+  const siteUrl = 'https://taxiassur.com';
   const fullCanonical = canonical ? `${siteUrl}${canonical}` : undefined;
   const fullImage = image.startsWith('http') ? image : `${siteUrl}${image}`;
 

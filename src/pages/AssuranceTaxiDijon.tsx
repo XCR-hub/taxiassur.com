@@ -10,7 +10,7 @@ const AssuranceTaxiDijon: React.FC = () => {
       <Helmet>
         <title>Assurance Taxi Dijon : Tarifs 2024 | TaxiAssur</title>
         <meta name="description" content="Assurance Taxi Dijon dès 1430€/an. RC Pro incluse, assistance 24/7. Devis gratuit 2 min." />
-        <link rel="canonical" href="https://www.taxiassur.com/assurance-taxi-dijon" />
+        <link rel="canonical" href="https://taxiassur.com/assurance-taxi-dijon" />
       </Helmet>
       <Header />
       <main>

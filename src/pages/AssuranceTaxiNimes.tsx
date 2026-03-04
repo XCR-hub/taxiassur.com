@@ -10,7 +10,7 @@ const AssuranceTaxiNimes: React.FC = () => {
       <Helmet>
         <title>Assurance Taxi Nimes : Tarifs 2024 | TaxiAssur</title>
         <meta name="description" content="Assurance Taxi Nimes dès 1530€/an (-35%). RC Pro incluse." />
-        <link rel="canonical" href="https://www.taxiassur.com/assurance-taxi-nimes" />
+        <link rel="canonical" href="https://taxiassur.com/assurance-taxi-nimes" />
       </Helmet>
       <Header />
       <main>

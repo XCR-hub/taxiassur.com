@@ -15,7 +15,7 @@ const QuelleAssuranceTaxi: React.FC = () => {
           name="description"
           content="Quelle assurance choisir pour taxi ? RC Pro obligatoire, garanties recommandées, comparatif assureurs. Guide complet + devis gratuit 2 min."
         />
-        <link rel="canonical" href="https://www.taxiassur.com/quelle-assurance-pour-taxi" />
+        <link rel="canonical" href="https://taxiassur.com/quelle-assurance-pour-taxi" />
       </Helmet>
 
       <Header />

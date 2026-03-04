@@ -10,7 +10,7 @@ const AssuranceTaxiAmiens: React.FC = () => {
       <Helmet>
         <title>Assurance Taxi Amiens : Tarifs 2024 | TaxiAssur</title>
         <meta name="description" content="Assurance Taxi Amiens dès 1450€/an (-35%). RC Pro incluse." />
-        <link rel="canonical" href="https://www.taxiassur.com/assurance-taxi-amiens" />
+        <link rel="canonical" href="https://taxiassur.com/assurance-taxi-amiens" />
       </Helmet>
       <Header />
       <main>

@@ -256,7 +256,7 @@ const Footer: React.FC = () => {
                       navigator.share({
                         title: 'TaxiAssur - Assurance Taxi Pas Cher',
                         text: 'Découvrez TaxiAssur : devis gratuit en 2min, économisez 35%',
-                        url: 'https://www.taxiassur.com'
+                        url: 'https://taxiassur.com'
                       });
                     }
                   }}

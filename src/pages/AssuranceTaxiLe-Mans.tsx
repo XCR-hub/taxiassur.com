@@ -10,7 +10,7 @@ const AssuranceTaxiLeMans: React.FC = () => {
       <Helmet>
         <title>Assurance Taxi Le-Mans : Tarifs 2024 | TaxiAssur</title>
         <meta name="description" content="Assurance Taxi Le-Mans dès 1400€/an (-35%). RC Pro incluse." />
-        <link rel="canonical" href="https://www.taxiassur.com/assurance-taxi-le-mans" />
+        <link rel="canonical" href="https://taxiassur.com/assurance-taxi-le-mans" />
       </Helmet>
       <Header />
       <main>

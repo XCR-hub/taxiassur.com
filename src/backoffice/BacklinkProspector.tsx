@@ -280,7 +280,7 @@ Qu'en pensez-vous ?
 Bien cordialement,
 L'équipe TaxiAssur
 Courtier ORIAS 11 061 425
-www.taxiassur.com
+taxiassur.com
 `;
   };
 

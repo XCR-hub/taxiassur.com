@@ -10,7 +10,7 @@ const AssuranceTaxiNantes: React.FC = () => {
       <Helmet>
         <title>Assurance Taxi Nantes : Tarifs 2024 | TaxiAssur</title>
         <meta name="description" content="Assurance Taxi Nantes dès 1480€/an. RC Pro incluse, assistance 24/7. Devis gratuit 2 min." />
-        <link rel="canonical" href="https://www.taxiassur.com/assurance-taxi-nantes" />
+        <link rel="canonical" href="https://taxiassur.com/assurance-taxi-nantes" />
       </Helmet>
       <Header />
       <main>

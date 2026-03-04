@@ -92,7 +92,7 @@ En attendant, n'hesitez pas a nous contacter si vous avez des questions.
 Cordialement,
 L'equipe TaxiAssur
 Tel : 01 76 39 00 60
-www.taxiassur.com`
+taxiassur.com`
   },
   {
     id: 'documents_request',
@@ -119,7 +119,7 @@ Si vous avez des questions ou besoin d'aide, n'hesitez pas a nous contacter au 0
 
 Cordialement,
 L'equipe TaxiAssur
-www.taxiassur.com`
+taxiassur.com`
   },
   {
     id: 'documents_reminder',
@@ -303,7 +303,7 @@ Merci de votre confiance !
 Cordialement,
 L'equipe TaxiAssur
 01 76 39 00 60
-www.taxiassur.com`
+taxiassur.com`
   },
   {
     id: 'renewal_reminder',
