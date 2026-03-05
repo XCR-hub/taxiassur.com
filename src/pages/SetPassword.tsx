@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams, useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { Lock, CheckCircle, AlertCircle, Eye, EyeOff } from 'lucide-react';
 
 const SetPassword: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const token = searchParams.get('token');
 
   const [password, setPassword] = useState('');
@@ -17,10 +18,34 @@ const SetPassword: React.FC = () => {
   const [success, setSuccess] = useState(false);
 
   useEffect(() => {
+    // Check for errors in hash (from Supabase redirect)
+    const hash = location.hash;
+    if (hash) {
+      const params = new URLSearchParams(hash.substring(1));
+      const errorType = params.get('error');
+      const errorCode = params.get('error_code');
+      const errorDescription = params.get('error_description');
+
+      if (errorType) {
+        let errorMessage = 'Erreur lors de la verification du lien d\'invitation';
+
+        if (errorCode === 'otp_expired') {
+          errorMessage = 'Le lien d\'invitation a expire. Veuillez demander une nouvelle invitation.';
+        } else if (errorType === 'access_denied') {
+          errorMessage = 'Lien d\'invitation invalide ou expire. Veuillez demander une nouvelle invitation.';
+        } else if (errorDescription) {
+          errorMessage = decodeURIComponent(errorDescription);
+        }
+
+        setError(errorMessage);
+        return;
+      }
+    }
+
     if (!token) {
       setError('Token de verification manquant. Veuillez utiliser le lien recu par email.');
     }
-  }, [token]);
+  }, [token, location.hash]);
 
   const validatePassword = (pwd: string): string | null => {
     if (pwd.length < 8) {
@@ -102,6 +127,39 @@ const SetPassword: React.FC = () => {
       setLoading(false);
     }
   };
+
+  // Show error state if there's an error from URL hash
+  if (error && !token) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
+          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <AlertCircle className="w-8 h-8 text-red-600" />
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Lien invalide ou expire</h2>
+          <p className="text-gray-600 mb-6">
+            {error}
+          </p>
+
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+            <h3 className="font-semibold text-blue-900 mb-2">Que faire ?</h3>
+            <ol className="text-sm text-blue-800 space-y-2 list-decimal list-inside">
+              <li>Demandez une nouvelle invitation a votre administrateur</li>
+              <li>Verifiez que vous utilisez le lien le plus recent</li>
+              <li>Les liens d'invitation expirent apres 24 heures</li>
+            </ol>
+          </div>
+
+          <button
+            onClick={() => navigate('/backoffice/crm-killer')}
+            className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+          >
+            Retour a la connexion
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (success) {
     return (
