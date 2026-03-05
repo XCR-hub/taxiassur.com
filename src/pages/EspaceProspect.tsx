@@ -7,6 +7,7 @@ import ClientSubscriptionForm from '../components/client/ClientSubscriptionForm'
 import CompanyDocumentsLibrary from '../components/client/CompanyDocumentsLibrary';
 import ClientPaymentButton from '../components/client/ClientPaymentButton';
 import ClientMoneticoPayment from '../components/client/ClientMoneticoPayment';
+import DragDropUploader from '../components/client/DragDropUploader';
 
 interface DocumentStatus {
   status: 'missing' | 'uploaded' | 'validated' | 'rejected';
@@ -288,28 +289,47 @@ const EspaceProspect: React.FC = () => {
   };
 
   const handleFileUpload = async (documentType: string, file: File) => {
-    if (!token || !anonClient) return;
+    if (!token || !anonClient) {
+      throw new Error('Configuration manquante');
+    }
 
     setUploading(documentType);
     setError(null);
     setSuccess(null);
 
     try {
+      // Validation du fichier
+      const maxSize = 10 * 1024 * 1024; // 10MB
+      if (file.size > maxSize) {
+        throw new Error(`Fichier trop volumineux. Taille max: 10MB`);
+      }
+
       const fileExt = file.name.split('.').pop();
+      if (!fileExt) {
+        throw new Error('Extension de fichier invalide');
+      }
+
       const fileName = `${token}/${documentType}_${Date.now()}.${fileExt}`;
 
-      // Upload vers Storage
-      const { error: uploadError } = await anonClient.storage
+      console.log('📤 [UPLOAD] Début upload:', { documentType, fileName, size: file.size });
+
+      // Étape 1: Upload vers Storage
+      const { data: uploadData, error: uploadError } = await anonClient.storage
         .from('prospect-documents')
         .upload(fileName, file, {
           cacheControl: '3600',
           upsert: false
         });
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error('❌ [UPLOAD] Storage error:', uploadError);
+        throw new Error(`Erreur upload storage: ${uploadError.message}`);
+      }
 
-      // Utiliser la fonction RPC pour créer le document
-      const { error: dbError } = await anonClient.rpc('upload_prospect_document_by_token', {
+      console.log('✅ [UPLOAD] Storage OK:', uploadData);
+
+      // Étape 2: Enregistrer le document en base via RPC
+      const { data: rpcData, error: dbError } = await anonClient.rpc('upload_prospect_document_by_token', {
         p_token: token,
         p_document_type: documentType,
         p_file_name: file.name,
@@ -317,16 +337,32 @@ const EspaceProspect: React.FC = () => {
         p_file_size: file.size
       });
 
-      if (dbError) throw dbError;
+      if (dbError) {
+        console.error('❌ [UPLOAD] DB error:', dbError);
+        throw new Error(`Erreur enregistrement: ${dbError.message}`);
+      }
 
-      setSuccess(`Document "${file.name}" uploadé avec succès ! Vous allez recevoir un email de confirmation.`);
+      console.log('✅ [UPLOAD] DB OK:', rpcData);
+
+      setSuccess(`✅ Document "${file.name}" uploadé avec succès ! Vous recevrez un email de confirmation sous 60 secondes.`);
+
+      // Scroll vers le haut pour afficher le message de succès
+      window.scrollTo({ top: 0, behavior: 'smooth' });
 
       // Les documents seront rechargés automatiquement via realtime
-      // Mais on force un refresh immédiat au cas où
-      await loadDocuments();
-      await loadLeadInfo();
+      // Mais on force un refresh immédiat pour être sûr
+      setTimeout(() => {
+        loadDocuments();
+        loadLeadInfo();
+      }, 500);
+
     } catch (err: any) {
-      setError(err.message || "Erreur lors de l'upload");
+      console.error('❌ [UPLOAD] Global error:', err);
+      const errorMessage = err.message || "Erreur inconnue lors de l'upload";
+      setError(`❌ Upload échoué: ${errorMessage}`);
+      // Scroll vers le haut pour afficher l'erreur
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      throw err; // Propager l'erreur pour que le composant DragDrop l'affiche aussi
     } finally {
       setUploading(null);
     }
@@ -755,38 +791,16 @@ const EspaceProspect: React.FC = () => {
                       </div>
                     </div>
                   ) : (
-                    <label className="block cursor-pointer">
-                      <input
-                        type="file"
-                        accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) handleFileUpload(docType.id, file);
-                        }}
-                        disabled={isUploading}
-                        className="hidden"
-                      />
-                      <div className={`border-2 border-dashed rounded-xl p-5 text-center transition-colors ${
-                        needsReupload
-                          ? 'border-red-500/50 hover:border-red-500 bg-red-500/5'
-                          : 'border-gray-600 hover:border-amber-500'
-                      }`}>
-                        {isUploading ? (
-                          <div className="flex items-center justify-center gap-3 text-amber-400">
-                            <Loader2 className="animate-spin" size={24} />
-                            <span>Upload en cours...</span>
-                          </div>
-                        ) : (
-                          <>
-                            <Upload className={needsReupload ? 'text-red-400 mx-auto mb-2' : 'text-gray-400 mx-auto mb-2'} size={28} />
-                            <p className={`text-sm ${needsReupload ? 'text-red-400' : 'text-gray-400'}`}>
-                              {needsReupload ? 'Cliquez pour renvoyer ce document' : 'Cliquez pour selectionner un fichier'}
-                            </p>
-                            <p className="text-xs text-gray-500 mt-1">PDF, JPG, PNG ou Word (max 10MB)</p>
-                          </>
-                        )}
-                      </div>
-                    </label>
+                    <DragDropUploader
+                      onFileSelect={(file) => handleFileUpload(docType.id, file)}
+                      accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                      maxSize={10}
+                      isUploading={uploading === docType.id}
+                      isRejected={needsReupload}
+                      rejectionReason={status.rejection_reason}
+                      documentLabel={docType.label}
+                      documentDescription={docType.description}
+                    />
                   )}
                 </div>
               );
