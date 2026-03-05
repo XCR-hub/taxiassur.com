@@ -218,6 +218,52 @@ const EspaceProspect: React.FC = () => {
     }
   }, [token, anonClient, leadInfo]); // Retirer loadDocuments des dépendances
 
+  // ========================================
+  // REALTIME: Écouter les changements sur prospect_documents
+  // ========================================
+  useEffect(() => {
+    if (!anonClient || !leadInfo?.id) return;
+
+    console.log('🔴 Setting up realtime subscription for prospect_documents');
+
+    // Créer une souscription realtime
+    const channel = anonClient
+      .channel('prospect_documents_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // Écouter tous les événements (INSERT, UPDATE, DELETE)
+          schema: 'public',
+          table: 'prospect_documents',
+          filter: `lead_id=eq.${leadInfo.id}`,
+        },
+        (payload) => {
+          console.log('🔴 REALTIME: Document change detected!', payload);
+
+          // Recharger automatiquement les documents
+          loadDocuments();
+
+          // Recharger aussi les infos du lead pour mettre à jour les compteurs
+          loadLeadInfo();
+
+          // Afficher une notification visuelle
+          if (payload.eventType === 'INSERT') {
+            setSuccess('Nouveau document ajouté !');
+            setTimeout(() => setSuccess(null), 3000);
+          }
+        }
+      )
+      .subscribe((status) => {
+        console.log('🔴 REALTIME subscription status:', status);
+      });
+
+    // Cleanup: Se désabonner quand le composant est démonté
+    return () => {
+      console.log('🔴 Cleaning up realtime subscription');
+      anonClient.removeChannel(channel);
+    };
+  }, [anonClient, leadInfo?.id]); // loadDocuments et loadLeadInfo sont stables
+
   const loadFinalDocuments = useCallback(async () => {
     if (!token || !anonClient) return;
 
@@ -278,7 +324,10 @@ const EspaceProspect: React.FC = () => {
 
       if (dbError) throw dbError;
 
-      setSuccess(`Document "${file.name}" uploade avec succes !`);
+      setSuccess(`Document "${file.name}" uploadé avec succès ! Vous allez recevoir un email de confirmation.`);
+
+      // Les documents seront rechargés automatiquement via realtime
+      // Mais on force un refresh immédiat au cas où
       await loadDocuments();
       await loadLeadInfo();
     } catch (err: any) {
