@@ -120,13 +120,20 @@ Deno.serve(async (req: Request) => {
       }
     });
 
-    const { email, full_name, role, permissions } = await req.json();
+    const body = await req.json();
+    console.log('Request body received:', JSON.stringify(body));
+
+    const { email, full_name, role, permissions } = body;
+
+    console.log('Parsed values:', { email, full_name, role, permissions });
 
     if (!email || !full_name) {
+      console.error('Missing required fields:', { email: !!email, full_name: !!full_name });
       return new Response(
         JSON.stringify({
           success: false,
-          error: 'Email et nom complet requis'
+          error: 'Email et nom complet requis',
+          received: { email: !!email, full_name: !!full_name }
         }),
         {
           status: 400,
@@ -137,11 +144,14 @@ Deno.serve(async (req: Request) => {
 
     // Validate email format
     const emailRegex = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
+    console.log('Validating email format:', email);
     if (!emailRegex.test(email)) {
+      console.error('Invalid email format:', email);
       return new Response(
         JSON.stringify({
           success: false,
-          error: 'Format d\'email invalide. L\'email doit contenir un domaine valide (ex: user@domain.com)'
+          error: 'Format d\'email invalide. L\'email doit contenir un domaine valide (ex: user@domain.com)',
+          email_provided: email
         }),
         {
           status: 400,
@@ -149,6 +159,7 @@ Deno.serve(async (req: Request) => {
         }
       );
     }
+    console.log('Email format valid:', email);
 
     // Validate role
     const validRoles = ['master', 'admin', 'collaborator', 'commercial', 'support'];

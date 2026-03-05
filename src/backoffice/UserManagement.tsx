@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, UserPlus, Shield, Lock, Mail, Eye, EyeOff, Edit2, Trash2, CheckCircle, XCircle, Search, Filter, RefreshCw, Key, Send } from 'lucide-react';
+import { Users, UserPlus, Shield, Lock, Mail, Eye, EyeOff, CreditCard as Edit2, Trash2, CheckCircle, XCircle, Search, Filter, RefreshCw, Key, Send } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
 
@@ -114,6 +114,13 @@ const UserManagement: React.FC = () => {
           delete: perms.delete
         }));
 
+      console.log('Sending invitation request:', {
+        email: newUser.email,
+        full_name: newUser.full_name,
+        role: newUser.role,
+        permissions
+      });
+
       const { data, error } = await supabase.functions.invoke('invite-admin-user', {
         body: {
           email: newUser.email,
@@ -123,14 +130,18 @@ const UserManagement: React.FC = () => {
         }
       });
 
+      console.log('Edge function response:', { data, error });
+
       if (error) {
         logger.error('Edge function error:', error);
-        alert(`Erreur lors de l'invitation: ${error.message}`);
+        console.error('Full error details:', JSON.stringify(error, null, 2));
+        alert(`Erreur lors de l'invitation: ${error.message}\n\nDétails: ${JSON.stringify(error.context || {})}`);
         return;
       }
 
       if (!data || !data.success) {
-        alert(`Erreur: ${data?.error || 'Erreur inconnue'}`);
+        console.error('Edge function returned error:', data);
+        alert(`Erreur: ${data?.error || 'Erreur inconnue'}\n\nEmail: ${newUser.email}\nNom: ${newUser.full_name}\nRôle: ${newUser.role}`);
         return;
       }
 
