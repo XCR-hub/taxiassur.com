@@ -65,6 +65,10 @@ interface UploadedDocument {
   file_size: number;
   uploaded_at: string;
   status: string;
+  validated: boolean;
+  validated_at?: string;
+  refusal_reason?: string;
+  notes?: string;
 }
 
 const DOCUMENT_TYPES = [
@@ -215,22 +219,22 @@ const EspaceProspect: React.FC = () => {
   }, [token, anonClient, leadInfo]); // Retirer loadDocuments des dépendances
 
   // ========================================
-  // REALTIME: Écouter les changements sur prospect_documents
+  // REALTIME: Écouter les changements sur crm_lead_documents
   // ========================================
   useEffect(() => {
     if (!anonClient || !leadInfo?.id) return;
 
-    console.log('🔴 Setting up realtime subscription for prospect_documents');
+    console.log('🔴 Setting up realtime subscription for crm_lead_documents');
 
     // Créer une souscription realtime
     const channel = anonClient
-      .channel('prospect_documents_changes')
+      .channel('crm_lead_documents_changes')
       .on(
         'postgres_changes',
         {
           event: '*', // Écouter tous les événements (INSERT, UPDATE, DELETE)
           schema: 'public',
-          table: 'prospect_documents',
+          table: 'crm_lead_documents',
           filter: `lead_id=eq.${leadInfo.id}`,
         },
         (payload) => {
@@ -244,8 +248,17 @@ const EspaceProspect: React.FC = () => {
 
           // Afficher une notification visuelle
           if (payload.eventType === 'INSERT') {
-            setSuccess('Nouveau document ajouté !');
+            setSuccess('✅ Nouveau document ajouté !');
             setTimeout(() => setSuccess(null), 3000);
+          } else if (payload.eventType === 'UPDATE') {
+            const newRecord = payload.new as any;
+            if (newRecord.validated) {
+              setSuccess('✅ Document validé par notre équipe !');
+              setTimeout(() => setSuccess(null), 3000);
+            } else if (newRecord.status === 'refused') {
+              setError('❌ Un document a été refusé. Veuillez le re-soumettre.');
+              setTimeout(() => setError(null), 5000);
+            }
           }
         }
       )
@@ -390,6 +403,22 @@ const EspaceProspect: React.FC = () => {
   };
 
   const getDocumentStatus = (docType: string): DocumentStatus => {
+    // Chercher le document uploadé dans crm_lead_documents
+    const uploaded = uploadedDocuments.find(d => d.document_type === docType);
+
+    if (uploaded) {
+      return {
+        status: uploaded.validated ? 'validated' : (uploaded.status === 'refused' ? 'rejected' : 'uploaded'),
+        validated: uploaded.validated,
+        validated_at: uploaded.validated_at,
+        uploaded_at: uploaded.uploaded_at,
+        file_name: uploaded.file_name,
+        rejection_reason: uploaded.refusal_reason,
+        notes: uploaded.notes
+      };
+    }
+
+    // Sinon, fallback sur le document_checklist (legacy)
     const defaultStatus: DocumentStatus = { status: 'missing', validated: false };
     return leadInfo?.document_checklist?.[docType] || defaultStatus;
   };
