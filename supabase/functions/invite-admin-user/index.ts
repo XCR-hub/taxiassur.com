@@ -181,28 +181,9 @@ Deno.serve(async (req: Request) => {
       }
     );
 
-    // Send custom email invitation
-    if (!authError && authData?.user?.id) {
-      const invitationLink = `${req.headers.get('origin') || 'https://taxiassur.com'}/auth/set-password?token=${authData.user.user_metadata?.email_verification_token || 'verification_token'}`;
-
-      const emailHtml = generateInvitationEmail(full_name, invitationLink, req.headers.get('origin') || 'https://taxiassur.com');
-
-      try {
-        await supabaseAdmin.functions.invoke('send-email-universal', {
-          body: {
-            to: email,
-            toName: full_name,
-            subject: `Invitation TaxiAssur - Créer votre compte`,
-            html: emailHtml,
-            from: 'team@taxiassur.com',
-            fromName: 'TaxiAssur'
-          }
-        });
-      } catch (emailError) {
-        console.error('Error sending invitation email:', emailError);
-        // Continue anyway, invitation is created even if email fails
-      }
-    }
+    // Note: Supabase envoie déjà un email d'invitation automatique
+    // Pas besoin d'envoyer un email custom supplémentaire
+    console.log('User invited successfully, Supabase will send invitation email');
 
     if (authError) {
       console.error('Auth error:', authError);

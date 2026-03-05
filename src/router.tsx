@@ -83,6 +83,7 @@ const AuthCallbackLinkedin = lazy(() => import('./pages/AuthCallbackLinkedin'));
 const AuthCallbackTwitter = lazy(() => import('./pages/AuthCallbackTwitter'));
 const AuthCallbackYoutube = lazy(() => import('./pages/AuthCallbackYoutube'));
 const AuthCallbackPinterest = lazy(() => import('./pages/AuthCallbackPinterest'));
+const SetPassword = lazy(() => import('./pages/SetPassword'));
 
 const ClientDashboard = lazy(() => import('./pages/client/ClientDashboard'));
 const ClientDocuments = lazy(() => import('./pages/client/ClientDocuments'));
@@ -504,6 +505,10 @@ export const router = createBrowserRouter([
   {
     path: '/auth/callback/pinterest',
     element: <AuthCallbackPinterest />,
+  },
+  {
+    path: '/auth/set-password',
+    element: <SetPassword />,
   },
   {
     path: '/client/dashboard',
