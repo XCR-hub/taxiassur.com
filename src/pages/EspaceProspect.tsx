@@ -1,11 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useSearchParams, useParams, Link } from 'react-router-dom';
-import {
-  Upload, CheckCircle, AlertCircle, FileText, Loader2, X, Download,
-  User, Phone, Mail, MapPin, Car, Shield, CreditCard, FileSignature,
-  Clock, CheckCircle2, XCircle, Eye, ChevronRight, Lock, RefreshCw,
-  Building, Calendar, Euro, FileCheck, Send, AlertTriangle
-} from 'lucide-react';
+import { Upload, CheckCircle, AlertCircle, FileText, Loader2, X, Download, User, Phone, Mail, MapPin, Car, Shield, CreditCard, Ligature as FileSignature, Clock, CheckCircle2, XCircle, Eye, ChevronRight, Lock, RefreshCw, Building, Calendar, Euro, FileCheck, Send, AlertTriangle } from 'lucide-react';
 import { createClient } from '@supabase/supabase-js';
 import ClientQuotesViewer from '../components/client/ClientQuotesViewer';
 import ClientSubscriptionForm from '../components/client/ClientSubscriptionForm';
