@@ -179,6 +179,67 @@ Deno.serve(async (req: Request) => {
 
     console.log('Inviting user:', email, full_name, userRole);
 
+    // Check if user already exists
+    const { data: existingUser, error: checkError } = await supabaseAdmin
+      .from('admin_users')
+      .select('id, email, full_name, role, is_active')
+      .eq('email', email)
+      .maybeSingle();
+
+    if (existingUser) {
+      console.log('User already exists:', existingUser);
+
+      // If user exists but is inactive, reactivate them
+      if (!existingUser.is_active) {
+        console.log('Reactivating inactive user:', email);
+
+        const { error: updateError } = await supabaseAdmin
+          .from('admin_users')
+          .update({ is_active: true })
+          .eq('id', existingUser.id);
+
+        if (updateError) {
+          console.error('Error reactivating user:', updateError);
+        }
+
+        // Resend invitation
+        const redirectUrl = `${req.headers.get('origin') || 'https://taxiassur.com'}/auth/set-password`;
+        const { error: resendError } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
+          data: { full_name, role: userRole },
+          redirectTo: redirectUrl
+        });
+
+        if (resendError) {
+          console.error('Error resending invitation:', resendError);
+        }
+
+        return new Response(
+          JSON.stringify({
+            success: true,
+            message: `Utilisateur ${existingUser.full_name} réactivé et invitation renvoyée à ${email}`,
+            user_id: existingUser.id,
+            reactivated: true
+          }),
+          {
+            status: 200,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          }
+        );
+      }
+
+      // User exists and is active
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: `L'utilisateur ${existingUser.full_name} (${email}) existe déjà et est actif. Utilisez "Renvoyer l'invitation" si besoin.`
+        }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
+    }
+
     const redirectUrl = `${req.headers.get('origin') || 'https://taxiassur.com'}/auth/set-password`;
 
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.inviteUserByEmail(
