@@ -443,8 +443,7 @@ export async function createLead(input: CreateLeadInput, forceNew: boolean = fal
         vehicle_type: vehicleType,
         immatriculation: input.immatriculation || '',
         notes: input.notes || ''
-      },
-      p_force_new_lead: forceNew
+      }
     };
 
     console.log('📦 [FORM] Lead params:', JSON.stringify(leadParams, null, 2));
