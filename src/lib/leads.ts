@@ -556,20 +556,7 @@ export async function createLead(input: CreateLeadInput, forceNew: boolean = fal
 
     console.log('✅ [FORM] SUCCESS! Lead ID:', result.lead_id);
     console.log('✅ [FORM] Access Token:', result.access_token);
-
-    sendLeadNotificationEmails({
-      id: result.lead_id,
-      name: input.name,
-      email: input.email,
-      phone: input.phone,
-      city: input.city,
-      status: input.status,
-      immatriculation: input.immatriculation,
-      access_token: result.access_token,
-      created_at: new Date().toISOString()
-    }).catch((emailError) => {
-      logger.error('Email notification error (non-blocking):', emailError);
-    });
+    console.log('📧 [FORM] Les emails sont envoyés automatiquement par la fonction upsert_lead');
 
     return { success: true, leadId: result.lead_id, accessToken: result.access_token };
   } catch (error: any) {
@@ -578,35 +565,6 @@ export async function createLead(input: CreateLeadInput, forceNew: boolean = fal
   }
 }
 
-async function sendLeadNotificationEmails(lead: any): Promise<void> {
-  try {
-    const { data, error } = await supabase.functions.invoke('send-lead-email-brevo', {
-      body: {
-        type: 'INSERT',
-        table: 'crm_leads',
-        record: {
-          id: lead.id,
-          name: lead.name,
-          email: lead.email,
-          phone: lead.phone,
-          city: lead.city,
-          status: lead.status || 'taxi',
-          immatriculation: lead.immatriculation || lead.metadata?.immatriculation || '',
-          access_token: lead.access_token,
-          created_at: lead.created_at || new Date().toISOString()
-        }
-      }
-    });
-
-    if (error) {
-      logger.error('Brevo notification error:', error);
-      throw error;
-    }
-
-    logger.log('Emails sent via Brevo successfully:', data);
-  } catch (err) {
-    logger.error('Failed to send Brevo notifications:', err);
-    throw err;
-  }
-}
+// Fonction supprimée - Les emails sont maintenant envoyés automatiquement
+// par la fonction SQL upsert_lead via le système de queue (queue_simple_email)
 
