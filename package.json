@@ -43,7 +43,8 @@
     "seo:indexnow": "node scripts/submit-indexnow.js",
     "seo:full": "npm run seo:sitemap && npm run seo:indexnow",
     "secrets:configure": "bash scripts/configure-supabase-secrets.sh",
-    "secrets:list": "supabase secrets list"
+    "secrets:list": "supabase secrets list",
+    "configure:bolt-webhook": "bash scripts/configure-bolt-webhook.sh"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4",
