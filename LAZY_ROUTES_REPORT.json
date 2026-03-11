@@ -1,0 +1,614 @@
+{
+  "valid": [
+    {
+      "componentName": "Home",
+      "importPath": "./pages/Home"
+    },
+    {
+      "componentName": "AdminDashboard",
+      "importPath": "./pages/AdminDashboard"
+    },
+    {
+      "componentName": "EspaceClient",
+      "importPath": "./pages/EspaceClient"
+    },
+    {
+      "componentName": "ClientAccessByToken",
+      "importPath": "./pages/ClientAccessByToken"
+    },
+    {
+      "componentName": "EspaceProspect",
+      "importPath": "./pages/EspaceProspect"
+    },
+    {
+      "componentName": "ProspectDocuments",
+      "importPath": "./pages/ProspectDocuments"
+    },
+    {
+      "componentName": "Contact",
+      "importPath": "./pages/Contact"
+    },
+    {
+      "componentName": "Blog",
+      "importPath": "./pages/Blog"
+    },
+    {
+      "componentName": "Post",
+      "importPath": "./pages/Post"
+    },
+    {
+      "componentName": "AssuranceTaxi",
+      "importPath": "./pages/AssuranceTaxi"
+    },
+    {
+      "componentName": "AssuranceMotoTaxi",
+      "importPath": "./pages/AssuranceMotoTaxi"
+    },
+    {
+      "componentName": "AssuranceTaxiVTC",
+      "importPath": "./pages/AssuranceTaxiVTC"
+    },
+    {
+      "componentName": "AssuranceObligatoireTaxi",
+      "importPath": "./pages/AssuranceObligatoireTaxi"
+    },
+    {
+      "componentName": "PrixAssuranceTaxi",
+      "importPath": "./pages/PrixAssuranceTaxi"
+    },
+    {
+      "componentName": "QuelleAssuranceTaxi",
+      "importPath": "./pages/QuelleAssuranceTaxi"
+    },
+    {
+      "componentName": "RCProfessionnelle",
+      "importPath": "./pages/RCProfessionnelle"
+    },
+    {
+      "componentName": "FlotteVehicules",
+      "importPath": "./pages/FlotteVehicules"
+    },
+    {
+      "componentName": "GestionSinistres",
+      "importPath": "./pages/GestionSinistres"
+    },
+    {
+      "componentName": "TaxisSinistres",
+      "importPath": "./pages/TaxisSinistres"
+    },
+    {
+      "componentName": "ConfianceEtCertifications",
+      "importPath": "./pages/ConfianceEtCertifications"
+    },
+    {
+      "componentName": "ConseilPersonnalise",
+      "importPath": "./pages/ConseilPersonnalise"
+    },
+    {
+      "componentName": "FAQ",
+      "importPath": "./pages/FAQ"
+    },
+    {
+      "componentName": "Legal",
+      "importPath": "./pages/Legal"
+    },
+    {
+      "componentName": "Policy",
+      "importPath": "./pages/Policy"
+    },
+    {
+      "componentName": "Conditions",
+      "importPath": "./pages/Conditions"
+    },
+    {
+      "componentName": "Merci",
+      "importPath": "./pages/Merci"
+    },
+    {
+      "componentName": "Reviews",
+      "importPath": "./pages/Reviews"
+    },
+    {
+      "componentName": "Offers",
+      "importPath": "./pages/Offers"
+    },
+    {
+      "componentName": "Partners",
+      "importPath": "./pages/Partners"
+    },
+    {
+      "componentName": "PartnershipPage",
+      "importPath": "./pages/PartnershipPage"
+    },
+    {
+      "componentName": "AmbassadorSignup",
+      "importPath": "./pages/AmbassadorSignup"
+    },
+    {
+      "componentName": "Newsletter",
+      "importPath": "./pages/Newsletter"
+    },
+    {
+      "componentName": "NewsletterSubscribe",
+      "importPath": "./pages/NewsletterSubscribe"
+    },
+    {
+      "componentName": "NewsletterUnsubscribe",
+      "importPath": "./pages/NewsletterUnsubscribe"
+    },
+    {
+      "componentName": "Actualites",
+      "importPath": "./pages/Actualites"
+    },
+    {
+      "componentName": "NewsArticle",
+      "importPath": "./pages/NewsArticle"
+    },
+    {
+      "componentName": "SitemapPage",
+      "importPath": "./pages/SitemapPage"
+    },
+    {
+      "componentName": "CityIndex",
+      "importPath": "./pages/CityIndex"
+    },
+    {
+      "componentName": "CityPage",
+      "importPath": "./pages/CityPage"
+    },
+    {
+      "componentName": "MirrorPage",
+      "importPath": "./pages/MirrorPage"
+    },
+    {
+      "componentName": "DownPaymentPage",
+      "importPath": "./pages/DownPaymentPage"
+    },
+    {
+      "componentName": "TestNotifications",
+      "importPath": "./pages/TestNotifications"
+    },
+    {
+      "componentName": "PaiementSuccess",
+      "importPath": "./pages/PaiementSuccess"
+    },
+    {
+      "componentName": "PaiementError",
+      "importPath": "./pages/PaiementError"
+    },
+    {
+      "componentName": "AssuranceTaxiParis",
+      "importPath": "./pages/AssuranceTaxiParis"
+    },
+    {
+      "componentName": "AssuranceTaxiMarseille",
+      "importPath": "./pages/AssuranceTaxiMarseille"
+    },
+    {
+      "componentName": "AssuranceTaxiLyon",
+      "importPath": "./pages/AssuranceTaxiLyon"
+    },
+    {
+      "componentName": "AssuranceTaxiToulouse",
+      "importPath": "./pages/AssuranceTaxiToulouse"
+    },
+    {
+      "componentName": "AssuranceTaxiNice",
+      "importPath": "./pages/AssuranceTaxiNice"
+    },
+    {
+      "componentName": "AssuranceTaxiNantes",
+      "importPath": "./pages/AssuranceTaxiNantes"
+    },
+    {
+      "componentName": "AssuranceTaxiStrasbourg",
+      "importPath": "./pages/AssuranceTaxiStrasbourg"
+    },
+    {
+      "componentName": "AssuranceTaxiMontpellier",
+      "importPath": "./pages/AssuranceTaxiMontpellier"
+    },
+    {
+      "componentName": "AssuranceTaxiBordeaux",
+      "importPath": "./pages/AssuranceTaxiBordeaux"
+    },
+    {
+      "componentName": "AssuranceTaxiRennes",
+      "importPath": "./pages/AssuranceTaxiRennes"
+    },
+    {
+      "componentName": "AssuranceTaxiReims",
+      "importPath": "./pages/AssuranceTaxiReims"
+    },
+    {
+      "componentName": "AssuranceTaxiLeMans",
+      "importPath": "./pages/AssuranceTaxiLe-Mans"
+    },
+    {
+      "componentName": "AssuranceTaxiAixEnProvence",
+      "importPath": "./pages/AssuranceTaxiAix-en-Provence"
+    },
+    {
+      "componentName": "AssuranceTaxiClermontFerrand",
+      "importPath": "./pages/AssuranceTaxiClermont-Ferrand"
+    },
+    {
+      "componentName": "AssuranceTaxiGrenoble",
+      "importPath": "./pages/AssuranceTaxiGrenoble"
+    },
+    {
+      "componentName": "AssuranceTaxiDijon",
+      "importPath": "./pages/AssuranceTaxiDijon"
+    },
+    {
+      "componentName": "AssuranceTaxiAngers",
+      "importPath": "./pages/AssuranceTaxiAngers"
+    },
+    {
+      "componentName": "AssuranceTaxiNimes",
+      "importPath": "./pages/AssuranceTaxiNimes"
+    },
+    {
+      "componentName": "AssuranceTaxiVilleurbanne",
+      "importPath": "./pages/AssuranceTaxiVilleurbanne"
+    },
+    {
+      "componentName": "AssuranceTaxiLeHavre",
+      "importPath": "./pages/AssuranceTaxiLe-Havre"
+    },
+    {
+      "componentName": "AssuranceTaxiSaintEtienne",
+      "importPath": "./pages/AssuranceTaxiSaint-Etienne"
+    },
+    {
+      "componentName": "AssuranceTaxiToulon",
+      "importPath": "./pages/AssuranceTaxiToulon"
+    },
+    {
+      "componentName": "AssuranceTaxiOrleans",
+      "importPath": "./pages/AssuranceTaxiOrleans"
+    },
+    {
+      "componentName": "AssuranceTaxiBesancon",
+      "importPath": "./pages/AssuranceTaxiBesancon"
+    },
+    {
+      "componentName": "AssuranceTaxiAmiens",
+      "importPath": "./pages/AssuranceTaxiAmiens"
+    },
+    {
+      "componentName": "AssuranceTaxiTours",
+      "importPath": "./pages/AssuranceTaxiTours"
+    },
+    {
+      "componentName": "AssuranceTaxiLimoges",
+      "importPath": "./pages/AssuranceTaxiLimoges"
+    },
+    {
+      "componentName": "AssuranceTaxiMetz",
+      "importPath": "./pages/AssuranceTaxiMetz"
+    },
+    {
+      "componentName": "AssuranceTaxiBrest",
+      "importPath": "./pages/AssuranceTaxiBrest"
+    },
+    {
+      "componentName": "AssuranceTaxiPerpignan",
+      "importPath": "./pages/AssuranceTaxiPerpignan"
+    },
+    {
+      "componentName": "AuthCallbackLinkedin",
+      "importPath": "./pages/AuthCallbackLinkedin"
+    },
+    {
+      "componentName": "AuthCallbackTwitter",
+      "importPath": "./pages/AuthCallbackTwitter"
+    },
+    {
+      "componentName": "AuthCallbackYoutube",
+      "importPath": "./pages/AuthCallbackYoutube"
+    },
+    {
+      "componentName": "AuthCallbackPinterest",
+      "importPath": "./pages/AuthCallbackPinterest"
+    },
+    {
+      "componentName": "SetPassword",
+      "importPath": "./pages/SetPassword"
+    },
+    {
+      "componentName": "ClientDashboard",
+      "importPath": "./pages/client/ClientDashboard"
+    },
+    {
+      "componentName": "ClientDocuments",
+      "importPath": "./pages/client/ClientDocuments"
+    },
+    {
+      "componentName": "ClientNotifications",
+      "importPath": "./pages/client/ClientNotifications"
+    },
+    {
+      "componentName": "ClientPaiements",
+      "importPath": "./pages/client/ClientPaiements"
+    },
+    {
+      "componentName": "ClientProfil",
+      "importPath": "./pages/client/ClientProfil"
+    },
+    {
+      "componentName": "ClientSinistres",
+      "importPath": "./pages/client/ClientSinistres"
+    },
+    {
+      "componentName": "ClientInsuranceSpace",
+      "importPath": "./pages/client/ClientInsuranceSpace"
+    },
+    {
+      "componentName": "BackofficeDashboard",
+      "importPath": "./backoffice/Dashboard"
+    },
+    {
+      "componentName": "CRMLayout",
+      "importPath": "./backoffice/CRMLayout"
+    },
+    {
+      "componentName": "CRMKillerDashboard",
+      "importPath": "./backoffice/CRMKillerDashboard"
+    },
+    {
+      "componentName": "CRMLeadDetail",
+      "importPath": "./backoffice/CRMLeadDetail"
+    },
+    {
+      "componentName": "CRMPipelineKanban",
+      "importPath": "./backoffice/CRMPipelineKanban"
+    },
+    {
+      "componentName": "CRMInboxMulticanal",
+      "importPath": "./backoffice/CRMInboxMulticanal"
+    },
+    {
+      "componentName": "CRMRetentionCenter",
+      "importPath": "./backoffice/CRMRetentionCenter"
+    },
+    {
+      "componentName": "CRMAIGovernance",
+      "importPath": "./backoffice/CRMAIGovernance"
+    },
+    {
+      "componentName": "CRMAdminSettings",
+      "importPath": "./backoffice/CRMAdminSettings"
+    },
+    {
+      "componentName": "EmailBlacklistManager",
+      "importPath": "./backoffice/EmailBlacklistManager"
+    },
+    {
+      "componentName": "CRMTemplatesManager",
+      "importPath": "./backoffice/CRMTemplatesManager"
+    },
+    {
+      "componentName": "CRMCommercial",
+      "importPath": "./backoffice/CRMCommercial"
+    },
+    {
+      "componentName": "InboxIntelligent",
+      "importPath": "./backoffice/InboxIntelligent"
+    },
+    {
+      "componentName": "LeadManager",
+      "importPath": "./backoffice/LeadManager"
+    },
+    {
+      "componentName": "PartnerPortal",
+      "importPath": "./backoffice/PartnerPortal"
+    },
+    {
+      "componentName": "PartnerAuth",
+      "importPath": "./backoffice/PartnerAuth"
+    },
+    {
+      "componentName": "SocialMediaManager",
+      "importPath": "./backoffice/SocialMediaManager"
+    },
+    {
+      "componentName": "AutomationDashboard",
+      "importPath": "./backoffice/AutomationDashboard"
+    },
+    {
+      "componentName": "AnalyticsDashboard",
+      "importPath": "./backoffice/AnalyticsDashboard"
+    },
+    {
+      "componentName": "WhatsAppManager",
+      "importPath": "./backoffice/WhatsAppManager"
+    },
+    {
+      "componentName": "EmailMarketingHub",
+      "importPath": "./backoffice/EmailMarketingHub"
+    },
+    {
+      "componentName": "DuplicateLeadsManager",
+      "importPath": "./backoffice/DuplicateLeadsManager"
+    },
+    {
+      "componentName": "TestAutomations",
+      "importPath": "./backoffice/TestAutomations"
+    },
+    {
+      "componentName": "ClientsManager",
+      "importPath": "./backoffice/ClientsManager"
+    },
+    {
+      "componentName": "ClientInsuranceManager",
+      "importPath": "./backoffice/ClientInsuranceManager"
+    },
+    {
+      "componentName": "MoneticoAccountingDashboard",
+      "importPath": "./backoffice/MoneticoAccountingDashboard"
+    },
+    {
+      "componentName": "FreeInvoicing",
+      "importPath": "./backoffice/FreeInvoicing"
+    },
+    {
+      "componentName": "LeadInvoicing",
+      "importPath": "./backoffice/LeadInvoicing"
+    },
+    {
+      "componentName": "CRMProductionManager",
+      "importPath": "./backoffice/CRMProductionManager"
+    },
+    {
+      "componentName": "WebImportManager",
+      "importPath": "./backoffice/WebImportManager"
+    },
+    {
+      "componentName": "InsuranceCompaniesManager",
+      "importPath": "./backoffice/InsuranceCompaniesManager"
+    },
+    {
+      "componentName": "InsuranceCompaniesStats",
+      "importPath": "./backoffice/InsuranceCompaniesStats"
+    },
+    {
+      "componentName": "QuotesManager",
+      "importPath": "./backoffice/QuotesManager"
+    },
+    {
+      "componentName": "PendingDocumentsManager",
+      "importPath": "./backoffice/PendingDocumentsManager"
+    },
+    {
+      "componentName": "AllDocumentsViewer",
+      "importPath": "./backoffice/AllDocumentsViewer"
+    },
+    {
+      "componentName": "QuoteQueueDashboard",
+      "importPath": "./backoffice/QuoteQueueDashboard"
+    },
+    {
+      "componentName": "NewsletterDashboard",
+      "importPath": "./backoffice/NewsletterDashboard"
+    },
+    {
+      "componentName": "NotificationsManager",
+      "importPath": "./backoffice/NotificationsManager"
+    },
+    {
+      "componentName": "PartnerManager",
+      "importPath": "./backoffice/PartnerManager"
+    },
+    {
+      "componentName": "LLMDashboard",
+      "importPath": "./backoffice/LLMDashboard"
+    },
+    {
+      "componentName": "LLMCouncilDashboard",
+      "importPath": "./backoffice/LLMCouncilDashboard"
+    },
+    {
+      "componentName": "AIAutonomousDashboard",
+      "importPath": "./backoffice/AIAutonomousDashboard"
+    },
+    {
+      "componentName": "MasterAI",
+      "importPath": "./backoffice/MasterAI"
+    },
+    {
+      "componentName": "AutomationScheduler",
+      "importPath": "./backoffice/AutomationScheduler"
+    },
+    {
+      "componentName": "AutoOptimizer",
+      "importPath": "./backoffice/AutoOptimizer"
+    },
+    {
+      "componentName": "AIContentGeneratorUnified",
+      "importPath": "./backoffice/AIContentGeneratorUnified"
+    },
+    {
+      "componentName": "ContentManager",
+      "importPath": "./backoffice/ContentManager"
+    },
+    {
+      "componentName": "NewsManager",
+      "importPath": "./backoffice/NewsManager"
+    },
+    {
+      "componentName": "PopupManager",
+      "importPath": "./backoffice/PopupManager"
+    },
+    {
+      "componentName": "CityPageGenerator",
+      "importPath": "./backoffice/CityPageGenerator"
+    },
+    {
+      "componentName": "TrendAnalyzer",
+      "importPath": "./backoffice/TrendAnalyzer"
+    },
+    {
+      "componentName": "SeoTools",
+      "importPath": "./backoffice/SeoTools"
+    },
+    {
+      "componentName": "SEOStrategyDashboard",
+      "importPath": "./backoffice/SEOStrategyDashboard"
+    },
+    {
+      "componentName": "GSCOptimizationDashboard",
+      "importPath": "./backoffice/GSCOptimizationDashboard"
+    },
+    {
+      "componentName": "BacklinkManager",
+      "importPath": "./backoffice/BacklinkManager"
+    },
+    {
+      "componentName": "BacklinkProspector",
+      "importPath": "./backoffice/BacklinkProspector"
+    },
+    {
+      "componentName": "BacklinkAutomationDashboard",
+      "importPath": "./backoffice/BacklinkAutomationDashboard"
+    },
+    {
+      "componentName": "OutreachComposer",
+      "importPath": "./backoffice/OutreachComposer"
+    },
+    {
+      "componentName": "MarketingTemplates",
+      "importPath": "./backoffice/MarketingTemplates"
+    },
+    {
+      "componentName": "QRCodeGenerator",
+      "importPath": "./backoffice/QRCodeGenerator"
+    },
+    {
+      "componentName": "Dashboard",
+      "importPath": "./backoffice/Dashboard"
+    },
+    {
+      "componentName": "ConversionAnalytics",
+      "importPath": "./backoffice/ConversionAnalytics"
+    },
+    {
+      "componentName": "LeadMarketplace",
+      "importPath": "./backoffice/LeadMarketplace"
+    },
+    {
+      "componentName": "UserManagement",
+      "importPath": "./backoffice/UserManagement"
+    },
+    {
+      "componentName": "SecurityDashboard",
+      "importPath": "./backoffice/SecurityDashboard"
+    },
+    {
+      "componentName": "ComplianceCenter",
+      "importPath": "./backoffice/ComplianceCenter"
+    }
+  ],
+  "missing": [],
+  "suspicious": []
+}
