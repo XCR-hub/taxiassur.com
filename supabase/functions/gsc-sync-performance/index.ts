@@ -211,14 +211,57 @@ async function getGoogleAccessToken(email: string, privateKey: string): Promise<
     iat: now
   };
 
-  // Create JWT (simplified - in production use a proper JWT library)
-  const encodedHeader = btoa(JSON.stringify(header));
-  const encodedClaim = btoa(JSON.stringify(claim));
+  // Encoder en base64url
+  const base64UrlEncode = (obj: any) => {
+    const str = JSON.stringify(obj);
+    return btoa(str)
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=/g, '');
+  };
+
+  const encodedHeader = base64UrlEncode(header);
+  const encodedClaim = base64UrlEncode(claim);
   const signatureInput = `${encodedHeader}.${encodedClaim}`;
 
-  // Note: Pour la production, utiliser une bibliothèque JWT complète
-  // Cette implémentation simplifiée nécessite la clé privée formatée correctement
+  // Nettoyer et importer la clé privée
+  const pemContents = privateKey
+    .replace(/-----BEGIN PRIVATE KEY-----/, '')
+    .replace(/-----END PRIVATE KEY-----/, '')
+    .replace(/\\n/g, '\n')
+    .replace(/\n/g, '')
+    .trim();
 
+  const binaryKey = Uint8Array.from(atob(pemContents), c => c.charCodeAt(0));
+
+  // Importer la clé pour signature
+  const cryptoKey = await crypto.subtle.importKey(
+    'pkcs8',
+    binaryKey,
+    {
+      name: 'RSASSA-PKCS1-v1_5',
+      hash: 'SHA-256',
+    },
+    false,
+    ['sign']
+  );
+
+  // Signer
+  const signature = await crypto.subtle.sign(
+    'RSASSA-PKCS1-v1_5',
+    cryptoKey,
+    new TextEncoder().encode(signatureInput)
+  );
+
+  // Encoder la signature en base64url
+  const signatureBase64 = btoa(String.fromCharCode(...new Uint8Array(signature)))
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=/g, '');
+
+  const jwt = `${signatureInput}.${signatureBase64}`;
+
+  // Échanger le JWT contre un access token
   const response = await fetch("https://oauth2.googleapis.com/token", {
     method: "POST",
     headers: {
@@ -226,9 +269,14 @@ async function getGoogleAccessToken(email: string, privateKey: string): Promise<
     },
     body: new URLSearchParams({
       grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer",
-      assertion: `${signatureInput}.${privateKey}` // Simplifié pour l'exemple
+      assertion: jwt
     })
   });
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`Failed to get access token: ${error}`);
+  }
 
   const data = await response.json();
   return data.access_token;
