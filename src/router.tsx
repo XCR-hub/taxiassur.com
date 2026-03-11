@@ -147,6 +147,7 @@ const TrendAnalyzer = lazy(() => import('./backoffice/TrendAnalyzer'));
 const SeoTools = lazy(() => import('./backoffice/SeoTools'));
 const SEOStrategyDashboard = lazy(() => import('./backoffice/SEOStrategyDashboard'));
 const GSCOptimizationDashboard = lazy(() => import('./backoffice/GSCOptimizationDashboard'));
+const SEOOpportunitiesDashboard = lazy(() => import('./backoffice/SEOOpportunitiesDashboard'));
 const BacklinkManager = lazy(() => import('./backoffice/BacklinkManager'));
 const BacklinkProspector = lazy(() => import('./backoffice/BacklinkProspector'));
 const BacklinkAutomationDashboard = lazy(() => import('./backoffice/BacklinkAutomationDashboard'));
