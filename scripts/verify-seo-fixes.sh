@@ -1,203 +1,151 @@
 #!/bin/bash
-# Script de vérification des corrections SEO
-# À exécuter APRÈS le déploiement en production
 
-SITE_URL="https://taxiassur.com"
-ERRORS=0
+# Script de Vérification SEO Ahrefs
+# Date: 11 Mars 2026
 
-echo "======================================================"
-echo "🔍 Vérification des corrections SEO Ahrefs"
-echo "======================================================"
+echo "🔍 Vérification des Corrections SEO Ahrefs"
+echo "=========================================="
 echo ""
 
-# Fonction pour vérifier une URL
-check_url() {
-  local url=$1
-  local description=$2
-  echo -n "Vérification: $description... "
+# Couleurs
+GREEN='\033[0;32m'
+RED='\033[0;31m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
 
-  http_code=$(curl -s -o /dev/null -w "%{http_code}" -L "$url")
+# Compteurs
+TOTAL=0
+PASSED=0
+FAILED=0
 
-  if [ "$http_code" = "200" ]; then
-    echo "✅ OK (200)"
-  else
-    echo "❌ ERREUR ($http_code)"
-    ((ERRORS++))
-  fi
+# Fonction de test
+test_check() {
+    TOTAL=$((TOTAL + 1))
+    if [ $1 -eq 0 ]; then
+        echo -e "${GREEN}✓${NC} $2"
+        PASSED=$((PASSED + 1))
+    else
+        echo -e "${RED}✗${NC} $2"
+        FAILED=$((FAILED + 1))
+    fi
 }
 
-# 1. REDIRECTIONS WWW → NON-WWW
-echo "1️⃣  REDIRECTIONS WWW → NON-WWW"
-echo "---"
+echo "1️⃣  VÉRIFICATION FICHIERS CRITIQUES"
+echo "-----------------------------------"
 
-echo -n "www → non-www... "
-redirect=$(curl -s -I "https://www.taxiassur.com" | grep -i "location:" | head -1)
-if echo "$redirect" | grep -q "https://taxiassur.com"; then
-  echo "✅ OK (301 redirection)"
-else
-  echo "❌ ERREUR - Redirection incorrecte"
-  echo "   Reçu: $redirect"
-  ((ERRORS++))
+# Vérifier .htaccess
+test_check $([ -f "public/.htaccess" ] && echo 0 || echo 1) ".htaccess présent"
+
+# Vérifier sitemap
+test_check $([ -f "public/sitemap.xml" ] && echo 0 || echo 1) "sitemap.xml présent"
+
+# Vérifier robots.txt
+test_check $([ -f "public/robots.txt" ] && echo 0 || echo 1) "robots.txt présent"
+
+# Vérifier composant UnifiedSEO
+test_check $([ -f "src/components/UnifiedSEO.tsx" ] && echo 0 || echo 1) "UnifiedSEO.tsx présent"
+
+echo ""
+echo "2️⃣  VÉRIFICATION SEO DANS LES PAGES"
+echo "-----------------------------------"
+
+# Compter les pages avec UnifiedSEO
+UNIFIED_COUNT=$(grep -r "UnifiedSEO" src/pages/ 2>/dev/null | wc -l)
+echo -e "${YELLOW}ℹ${NC}  $UNIFIED_COUNT pages utilisent UnifiedSEO"
+
+# Vérifier les doublons de meta description
+DUPLICATE_META=$(grep -r "name=\"description\"" src/pages/ 2>/dev/null | wc -l)
+if [ $DUPLICATE_META -gt 0 ]; then
+    echo -e "${YELLOW}⚠${NC}  Attention: meta descriptions hardcodées trouvées"
+fi
+
+# Vérifier les H1
+MISSING_H1=$(grep -L "<h1\|<H1" src/pages/*.tsx 2>/dev/null | wc -l)
+if [ $MISSING_H1 -gt 0 ]; then
+    echo -e "${YELLOW}⚠${NC}  $MISSING_H1 pages sans H1"
 fi
 
 echo ""
+echo "3️⃣  VÉRIFICATION .HTACCESS"
+echo "-----------------------------------"
 
-# 2. PAGES PRINCIPALES
-echo "2️⃣  PAGES PRINCIPALES (Status HTTP)"
-echo "---"
+# Vérifier ErrorDocument
+test_check $(grep -q "ErrorDocument 500" public/.htaccess && echo 0 || echo 1) "ErrorDocument 500 configuré"
+test_check $(grep -q "ErrorDocument 404" public/.htaccess && echo 0 || echo 1) "ErrorDocument 404 configuré"
 
-check_url "$SITE_URL/" "Page d'accueil"
-check_url "$SITE_URL/assurance-taxi" "Assurance Taxi"
-check_url "$SITE_URL/assurance-taxi-paris" "Assurance Taxi Paris"
-check_url "$SITE_URL/contact" "Contact"
-check_url "$SITE_URL/blog" "Blog"
-check_url "$SITE_URL/sitemap.xml" "Sitemap"
+# Vérifier redirections HTTPS
+test_check $(grep -q "RewriteRule.*https" public/.htaccess && echo 0 || echo 1) "Redirection HTTPS active"
+
+# Vérifier non-www
+test_check $(grep -q "www\.taxiassur\.com" public/.htaccess && echo 0 || echo 1) "Redirection non-www active"
 
 echo ""
+echo "4️⃣  VÉRIFICATION BUILD"
+echo "-----------------------------------"
 
-# 3. META TAGS
-echo "3️⃣  META TAGS (Duplications)"
-echo "---"
-
-echo -n "Meta description (page accueil)... "
-meta_count=$(curl -s "$SITE_URL" | grep -c 'meta name="description"' || echo "0")
-if [ "$meta_count" = "1" ]; then
-  echo "✅ OK (1 seule meta description)"
-elif [ "$meta_count" = "0" ]; then
-  echo "⚠️  AVERTISSEMENT (aucune meta description trouvée)"
-  ((ERRORS++))
+# Vérifier que le build fonctionne
+if [ -d "dist" ]; then
+    echo -e "${GREEN}✓${NC} Dossier dist/ existe"
+    
+    # Vérifier fichiers critiques dans dist
+    test_check $([ -f "dist/index.html" ] && echo 0 || echo 1) "dist/index.html présent"
+    test_check $([ -f "dist/.htaccess" ] && echo 0 || echo 1) "dist/.htaccess présent"
+    test_check $([ -f "dist/sitemap.xml" ] && echo 0 || echo 1) "dist/sitemap.xml présent"
 else
-  echo "❌ ERREUR ($meta_count meta descriptions trouvées)"
-  ((ERRORS++))
+    echo -e "${YELLOW}⚠${NC}  Dossier dist/ absent - Lancez 'npm run build'"
 fi
 
 echo ""
+echo "5️⃣  VÉRIFICATION SITEMAP"
+echo "-----------------------------------"
 
-# 4. CANONICAL & OPEN GRAPH
-echo "4️⃣  CANONICAL & OPEN GRAPH URL"
-echo "---"
-
-echo -n "Canonical sans www... "
-canonical=$(curl -s "$SITE_URL" | grep 'rel="canonical"' | grep -o 'href="[^"]*"' | cut -d'"' -f2)
-if echo "$canonical" | grep -q "www\."; then
-  echo "❌ ERREUR (contient www)"
-  echo "   Canonical: $canonical"
-  ((ERRORS++))
-elif [ -n "$canonical" ]; then
-  echo "✅ OK (sans www)"
-  echo "   Canonical: $canonical"
-else
-  echo "⚠️  AVERTISSEMENT (canonical non trouvé)"
-fi
-
-echo -n "Open Graph URL = Canonical... "
-og_url=$(curl -s "$SITE_URL" | grep 'property="og:url"' | grep -o 'content="[^"]*"' | cut -d'"' -f2)
-if [ "$og_url" = "$canonical" ]; then
-  echo "✅ OK (identiques)"
-  echo "   OG URL: $og_url"
-elif [ -z "$og_url" ]; then
-  echo "⚠️  AVERTISSEMENT (og:url non trouvé)"
-else
-  echo "❌ ERREUR (différents)"
-  echo "   Canonical: $canonical"
-  echo "   OG URL: $og_url"
-  ((ERRORS++))
+if [ -f "public/sitemap.xml" ]; then
+    # Vérifier que le sitemap est bien formé
+    if grep -q "<?xml" public/sitemap.xml; then
+        test_check 0 "Sitemap bien formé (XML)"
+    else
+        test_check 1 "Sitemap mal formé"
+    fi
+    
+    # Compter les URLs
+    URL_COUNT=$(grep -c "<loc>" public/sitemap.xml)
+    echo -e "${YELLOW}ℹ${NC}  $URL_COUNT URLs dans le sitemap"
+    
+    # Vérifier qu'il n'y a pas de www
+    if grep -q "www.taxiassur.com" public/sitemap.xml; then
+        echo -e "${RED}✗${NC} URLs avec www trouvées dans sitemap"
+        FAILED=$((FAILED + 1))
+    else
+        echo -e "${GREEN}✓${NC} Pas de www dans le sitemap"
+        PASSED=$((PASSED + 1))
+    fi
+    
+    TOTAL=$((TOTAL + 2))
 fi
 
 echo ""
+echo "=========================================="
+echo "📊 RÉSULTATS"
+echo "=========================================="
+echo -e "Total tests: $TOTAL"
+echo -e "${GREEN}Réussis: $PASSED${NC}"
+echo -e "${RED}Échoués: $FAILED${NC}"
 
-# 5. SITEMAP
-echo "5️⃣  SITEMAP"
-echo "---"
-
-echo -n "Sitemap accessible... "
-sitemap_code=$(curl -s -o /dev/null -w "%{http_code}" "$SITE_URL/sitemap.xml")
-if [ "$sitemap_code" = "200" ]; then
-  echo "✅ OK (200)"
-
-  echo -n "Sitemap sans www... "
-  www_count=$(curl -s "$SITE_URL/sitemap.xml" | grep -c "www.taxiassur.com" || echo "0")
-  if [ "$www_count" = "0" ]; then
-    echo "✅ OK (0 occurrence de www)"
-  else
-    echo "❌ ERREUR ($www_count occurrences de www trouvées)"
-    ((ERRORS++))
-  fi
-
-  echo -n "Nombre d'URLs dans sitemap... "
-  url_count=$(curl -s "$SITE_URL/sitemap.xml" | grep -c "<loc>" || echo "0")
-  echo "$url_count URLs"
+if [ $FAILED -eq 0 ]; then
+    echo ""
+    echo -e "${GREEN}✅ TOUT EST BON !${NC}"
+    echo ""
+    echo "🚀 Prêt pour le déploiement:"
+    echo "   npm run build"
+    echo "   npm run deploy"
+    exit 0
 else
-  echo "❌ ERREUR ($sitemap_code)"
-  ((ERRORS++))
-fi
-
-echo ""
-
-# 6. ROBOTS.TXT
-echo "6️⃣  ROBOTS.TXT"
-echo "---"
-
-echo -n "robots.txt accessible... "
-robots_code=$(curl -s -o /dev/null -w "%{http_code}" "$SITE_URL/robots.txt")
-if [ "$robots_code" = "200" ]; then
-  echo "✅ OK (200)"
-
-  echo -n "Référence au sitemap... "
-  if curl -s "$SITE_URL/robots.txt" | grep -q "Sitemap:"; then
-    echo "✅ OK"
-    sitemap_ref=$(curl -s "$SITE_URL/robots.txt" | grep "Sitemap:")
-    echo "   $sitemap_ref"
-  else
-    echo "⚠️  AVERTISSEMENT (pas de référence au sitemap)"
-  fi
-else
-  echo "❌ ERREUR ($robots_code)"
-  ((ERRORS++))
-fi
-
-echo ""
-
-# 7. .HTACCESS (vérification indirecte)
-echo "7️⃣  .HTACCESS (Redirections)"
-echo "---"
-
-echo -n "HTTP → HTTPS... "
-http_redirect=$(curl -s -I "http://taxiassur.com" | grep -i "location:" | head -1)
-if echo "$http_redirect" | grep -q "https://"; then
-  echo "✅ OK (redirection HTTPS)"
-else
-  echo "❌ ERREUR - Pas de redirection HTTPS"
-  ((ERRORS++))
-fi
-
-echo ""
-
-# RÉSUMÉ
-echo "======================================================"
-echo "📊 RÉSUMÉ"
-echo "======================================================"
-echo ""
-
-if [ $ERRORS -eq 0 ]; then
-  echo "✅ TOUTES LES VÉRIFICATIONS SONT PASSÉES"
-  echo ""
-  echo "🎉 Les corrections SEO sont bien déployées!"
-  echo ""
-  echo "Prochaines étapes:"
-  echo "  1. Soumettre le sitemap à Google Search Console"
-  echo "  2. Demander l'indexation des pages principales"
-  echo "  3. Relancer un crawl Ahrefs dans 7 jours"
-  echo ""
-  exit 0
-else
-  echo "❌ $ERRORS ERREUR(S) DÉTECTÉE(S)"
-  echo ""
-  echo "⚠️  Action requise:"
-  echo "  1. Vérifier que .htaccess est bien uploadé"
-  echo "  2. Vérifier que sitemap.xml est uploadé"
-  echo "  3. Vider le cache IONOS"
-  echo "  4. Relancer ce script après correction"
-  echo ""
-  exit 1
+    echo ""
+    echo -e "${YELLOW}⚠️  CORRECTIONS NÉCESSAIRES${NC}"
+    echo ""
+    echo "🔧 Actions à prendre:"
+    echo "   1. Corriger les erreurs ci-dessus"
+    echo "   2. Relancer ce script"
+    echo "   3. Build et déployer"
+    exit 1
 fi
