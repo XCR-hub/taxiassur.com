@@ -1,20 +1,86 @@
-# Netlify/Cloudflare Redirects pour TaxiAssur.com
-# Force HTTPS et version canonique sans www
+# Netlify Redirects - TaxiAssur.com
+# Résout 86+ erreurs d'indexation GSC
 
-# Force HTTPS
-http://taxiassur.com/* https://taxiassur.com/:splat 301!
+# ============================================================
+# 1. FORCE WWW → NON-WWW (PRIORITÉ ABSOLUE)
+# ============================================================
+https://www.taxiassur.com/* https://taxiassur.com/:splat 301!
 http://www.taxiassur.com/* https://taxiassur.com/:splat 301!
 
-# Force non-www
-https://www.taxiassur.com/* https://taxiassur.com/:splat 301!
+# ============================================================
+# 2. FORCE HTTP → HTTPS
+# ============================================================
+http://taxiassur.com/* https://taxiassur.com/:splat 301!
 
-# Anciennes URLs avec redirections
-/offres https://taxiassur.com/assurance-taxi 301
-/comparateur-axa-taxi https://taxiassur.com/assurance-taxi 301
-/devis-instantane https://taxiassur.com/contact 301
+# ============================================================
+# 3. REDIRECTIONS URLS OBSOLÈTES (/taxi-* → /assurance-taxi-*)
+# Résout 29 erreurs 5xx
+# ============================================================
+/taxi-valence /assurance-taxi 301
+/taxi-caen /assurance-taxi 301
+/taxi-nancy /assurance-taxi 301
+/taxi-asni-res-sur-seine /assurance-taxi 301
+/taxi-sarcelles /assurance-taxi 301
+/taxi-villeurbanne /assurance-taxi-villeurbanne 301
+/taxi-toulon /assurance-taxi-toulon 301
+/taxi-hy-res /assurance-taxi 301
+/taxi-boulogne-billancourt /assurance-taxi 301
+/taxi-clichy /assurance-taxi 301
+/taxi-noisy-le-grand /assurance-taxi 301
+/taxi-cr-teil /assurance-taxi 301
+/taxi-perpignan /assurance-taxi-perpignan 301
+/taxi-mulhouse /assurance-taxi 301
+/taxi--vry /assurance-taxi 301
+/taxi-m-rignac /assurance-taxi 301
+/taxi-nice /assurance-taxi-nice 301
+/taxi-antibes /assurance-taxi 301
+/taxi-angers /assurance-taxi-angers 301
+/taxi-beauvais /assurance-taxi 301
+/taxi-montreuil /assurance-taxi 301
+/taxi-cholet /assurance-taxi 301
+/taxi-lyon /assurance-taxi-lyon 301
+/taxi-poitiers /assurance-taxi 301
+/taxi-cayenne /assurance-taxi 301
 
-# Ville Amiens fix (éviter 5xx)
-/ville/amiens https://taxiassur.com/ville/amiens 200
+# ============================================================
+# 4. REDIRECTIONS ANCIENNES URLs
+# Résout Soft 404
+# ============================================================
+/offres /assurance-taxi 301
+/comparateur-axa-taxi /assurance-taxi 301
+/devis-instantane /contact 301
+/devis /contact 301
 
-# SPA Routing - doit être en dernier
+# ============================================================
+# 5. REDIRECTIONS /ville/* MAL FORMÉES
+# ============================================================
+/ville/n-mes /ville/nimes 301
+/ville/assurance-taxi-bruges /assurance-taxi 301
+/ville/assurance-taxi-romans-sur-isere /assurance-taxi 301
+/ville/assurance-taxi-pas-cher-sens /assurance-taxi 301
+/ville/assurance-taxi-rosny-sous-bois /assurance-taxi 301
+/ville/assurance-taxi-tarbes /assurance-taxi 301
+
+# ============================================================
+# 6. REDIRECTIONS PAGES DUPLIQUÉES
+# ============================================================
+/partenaires /programme-partenaires 301
+/partners /programme-partenaires 301
+/plan-du-site /villes 301
+/merci.html /merci 301
+/conditions /conditions-generales 301
+/legal /mentions-legales 301
+/policy /politique-confidentialite 301
+/reviews /avis 301
+
+# ============================================================
+# 7. REDIRECTIONS BLOG DUPLIQUÉS
+# Résout "Page en double sans canonical"
+# ============================================================
+/blog/sinistre-taxi-procedure /blog/sinistre-taxi-procedure-complete-2025 301
+/blog/double-activit /blog/double-activite-taxi-vtc-assurance 301
+
+# ============================================================
+# 8. SPA ROUTING (TOUJOURS EN DERNIER)
+# ============================================================
 /*    /index.html   200
