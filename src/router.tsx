@@ -147,6 +147,7 @@ const TrendAnalyzer = lazy(() => import('./backoffice/TrendAnalyzer'));
 const SeoTools = lazy(() => import('./backoffice/SeoTools'));
 const SEOStrategyDashboard = lazy(() => import('./backoffice/SEOStrategyDashboard'));
 const GSCOptimizationDashboard = lazy(() => import('./backoffice/GSCOptimizationDashboard'));
+const GSCAutonomousDashboard = lazy(() => import('./backoffice/GSCAutonomousDashboard'));
 const SEOOpportunitiesDashboard = lazy(() => import('./backoffice/SEOOpportunitiesDashboard'));
 const BacklinkManager = lazy(() => import('./backoffice/BacklinkManager'));
 const BacklinkProspector = lazy(() => import('./backoffice/BacklinkProspector'));
@@ -786,6 +787,10 @@ export const router = createBrowserRouter([
   {
     path: '/backoffice/gsc-optimization',
     element: <GSCOptimizationDashboard />,
+  },
+  {
+    path: '/backoffice/gsc-autonomous',
+    element: <GSCAutonomousDashboard />,
   },
   {
     path: '/backoffice/backlinks',
