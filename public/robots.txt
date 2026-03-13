@@ -1,23 +1,27 @@
+# Robots.txt optimisé pour SEO - TaxiAssur.com
 User-agent: *
 Allow: /
-Allow: /blog/
-Allow: /ville/
-Allow: /assurance-taxi*
-Allow: /faq
-Allow: /contact
 
-# Interdictions
-Disallow: /admin/
-Disallow: /api/
+# Bloquer les chemins sensibles
 Disallow: /backoffice/
+Disallow: /api/
 Disallow: /webhooks/
-Disallow: /*?*utm_
-Disallow: /*?*session
-Disallow: /*?*ref=
+Disallow: /admin/
+Disallow: /*.json$
+Disallow: /*?*utm_*
 
-# Sitemaps (MULTIPLE pour meilleure indexation)
+# Autoriser les crawlers spécifiques
+User-agent: Googlebot
+Allow: /
+
+User-agent: Googlebot-Image
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+# Indiquer le sitemap
 Sitemap: https://taxiassur.com/sitemap.xml
-Sitemap: https://taxiassur.com/feeds/sitemap.xml
 
-# Crawl delay naturel (pas trop rapide = humain)
+# Crawl-delay pour éviter surcharge
 Crawl-delay: 1

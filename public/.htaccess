@@ -132,10 +132,15 @@ ErrorDocument 504 /index.html
 # Limiter la taille des requêtes pour éviter les 500
 LimitRequestBody 52428800
 
-# PHP settings (si PHP est utilisé pour API)
+# PHP settings optimisés (si PHP est utilisé pour API)
 <IfModule mod_php.c>
-    php_value memory_limit 256M
-    php_value max_execution_time 300
-    php_value post_max_size 50M
-    php_value upload_max_filesize 50M
+    php_value memory_limit 512M
+    php_value max_execution_time 600
+    php_value post_max_size 100M
+    php_value upload_max_filesize 100M
+    php_value max_input_time 600
+    php_value max_input_vars 3000
+    php_flag display_errors Off
+    php_flag log_errors On
+    php_value error_reporting 0
 </IfModule>
