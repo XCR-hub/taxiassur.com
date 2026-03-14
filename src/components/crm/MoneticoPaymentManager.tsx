@@ -114,10 +114,15 @@ export function MoneticoPaymentManager({ leadId, onPaymentSuccess }: MoneticoPay
       }
 
       if (result.success && result.htmlForm) {
-        const newWindow = window.open('', '_blank');
+        const blob = new Blob([result.htmlForm], { type: 'text/html; charset=utf-8' });
+        const blobUrl = URL.createObjectURL(blob);
+        const newWindow = window.open(blobUrl, '_blank');
         if (newWindow) {
-          newWindow.document.write(result.htmlForm);
-          newWindow.document.close();
+          newWindow.addEventListener('load', () => {
+            URL.revokeObjectURL(blobUrl);
+          });
+        } else {
+          URL.revokeObjectURL(blobUrl);
         }
 
         setAmount('');
