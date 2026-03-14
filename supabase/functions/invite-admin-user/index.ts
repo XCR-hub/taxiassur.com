@@ -259,10 +259,49 @@ Deno.serve(async (req: Request) => {
 
     if (authError) {
       console.error('Auth error:', authError);
+
+      // If user already exists in Auth but not in admin_users, look up their auth ID
+      if (authError.message?.includes('already been registered') || authError.message?.includes('already registered') || authError.code === 'email_exists') {
+        const { data: usersData } = await supabaseAdmin.auth.admin.listUsers();
+        const existingAuthUser = usersData?.users?.find((u: any) => u.email === email);
+
+        if (existingAuthUser) {
+          const userId = existingAuthUser.id;
+
+          const { error: dbInsertError } = await supabaseAdmin
+            .from('admin_users')
+            .insert([{
+              id: userId,
+              email,
+              full_name,
+              role: role || 'collaborator',
+              is_active: true,
+              mfa_enabled: false,
+              created_at: new Date().toISOString()
+            }]);
+
+          if (dbInsertError) {
+            return new Response(
+              JSON.stringify({ success: false, error: dbInsertError.message }),
+              { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            );
+          }
+
+          return new Response(
+            JSON.stringify({
+              success: true,
+              message: `Utilisateur ${full_name} ajouté avec succès. Un email de réinitialisation de mot de passe va être envoyé.`,
+              user_id: userId
+            }),
+            { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+      }
+
       return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: authError.message 
+        JSON.stringify({
+          success: false,
+          error: authError.message
         }),
         {
           status: 400,

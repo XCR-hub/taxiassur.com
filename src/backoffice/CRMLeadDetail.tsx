@@ -100,7 +100,7 @@ const CRMLeadDetail: React.FC = () => {
 
       // Contrat
       const { data: contracts } = await supabase
-        .from('crm_production_contracts')
+        .from('lead_contracts')
         .select('id')
         .eq('lead_id', leadId)
         .limit(1);

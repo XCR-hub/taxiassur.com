@@ -133,7 +133,7 @@ const CRMPipelineKanban: React.FC = () => {
                 .from('email_messages')
                 .select('id', { count: 'exact', head: true })
                 .in('lead_id', leadIds)
-                .eq('is_from_user', false)
+                .eq('direction', 'inbound')
                 .gte('received_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
             : Promise.resolve({ count: 0, data: [] }),
 
