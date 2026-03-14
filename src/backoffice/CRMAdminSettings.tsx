@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Settings, Users, Bell, Shield, Database, Zap, Mail, MessageSquare, Bot, Save, CheckCircle, X, UserPlus, Trash2, Lock, Eye, Edit, AlertTriangle } from 'lucide-react';
+import { Settings, Users, Bell, Shield, Database, Zap, Mail, MessageSquare, Bot, Save, CheckCircle, X, UserPlus, Trash2, Lock, Eye, CreditCard as Edit, AlertTriangle } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
 interface CRMSettings {
@@ -233,7 +233,9 @@ const CRMAdminSettings: React.FC = () => {
 
       if (error) {
         console.error('Edge Function error:', error);
-        throw new Error(error.message || 'Erreur lors de l\'appel à l\'Edge Function');
+        const errorMsg = data?.error || error.message || 'Erreur lors de l\'invitation';
+        alert(errorMsg);
+        return;
       }
 
       if (data && data.success) {
