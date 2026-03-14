@@ -118,6 +118,7 @@ const DuplicateLeadsManager = lazy(() => import('./backoffice/DuplicateLeadsMana
 const TestAutomations = lazy(() => import('./backoffice/TestAutomations'));
 const ClientsManager = lazy(() => import('./backoffice/ClientsManager'));
 const ClientInsuranceManager = lazy(() => import('./backoffice/ClientInsuranceManager'));
+const ClientsLayout = lazy(() => import('./backoffice/ClientsLayout'));
 const MoneticoAccountingDashboard = lazy(() => import('./backoffice/MoneticoAccountingDashboard'));
 const FreeInvoicing = lazy(() => import('./backoffice/FreeInvoicing'));
 const LeadInvoicing = lazy(() => import('./backoffice/LeadInvoicing'));
@@ -558,11 +559,17 @@ export const router = createBrowserRouter([
   },
   {
     path: '/backoffice/clients',
-    element: <ClientsManager />,
-  },
-  {
-    path: '/backoffice/clients/:leadId',
-    element: <ClientInsuranceManager />,
+    element: <ClientsLayout />,
+    children: [
+      {
+        index: true,
+        element: <ClientsManager />,
+      },
+      {
+        path: ':leadId',
+        element: <ClientInsuranceManager />,
+      },
+    ],
   },
   {
     path: '/backoffice/monetico-accounting',
