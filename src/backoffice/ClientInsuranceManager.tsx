@@ -1,12 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
-import {
-  ArrowLeft, User, FileText, AlertCircle, DollarSign, CheckSquare, Clock,
-  Shield, Car, Building2, Phone, Mail, MapPin, Calendar, Edit, Save, X,
-  Plus, Download, Upload, Trash2, Eye, ChevronDown, ChevronUp, Activity,
-  Bell, TrendingUp, AlertTriangle, CheckCircle2, Loader2, RefreshCw
-} from 'lucide-react';
+import { ArrowLeft, User, FileText, AlertCircle, DollarSign, CheckSquare, Clock, Shield, Car, Building2, Phone, Mail, MapPin, Calendar, CreditCard as Edit, Save, X, Plus, Download, Upload, Trash2, Eye, ChevronDown, ChevronUp, Activity, Bell, TrendingUp, AlertTriangle, CheckCircle2, Loader2, RefreshCw } from 'lucide-react';
 
 interface ClientData {
   id: string;
@@ -85,6 +80,36 @@ interface Alert {
 
 type TabType = 'profile' | 'contracts' | 'claims' | 'payments' | 'tasks' | 'history';
 
+interface ContractForm {
+  contract_type: string;
+  insurer_name: string;
+  contract_number: string;
+  premium_ttc: string;
+  premium_ht: string;
+  payment_frequency: string;
+  effective_date: string;
+  renewal_date: string;
+  status: string;
+  main_guarantees: string;
+  franchise_amount: string;
+  internal_notes: string;
+}
+
+const defaultContractForm: ContractForm = {
+  contract_type: 'auto_taxi',
+  insurer_name: '',
+  contract_number: '',
+  premium_ttc: '',
+  premium_ht: '',
+  payment_frequency: 'annuel',
+  effective_date: '',
+  renewal_date: '',
+  status: 'active',
+  main_guarantees: '',
+  franchise_amount: '',
+  internal_notes: ''
+};
+
 export default function ClientInsuranceManager() {
   const { leadId } = useParams<{ leadId: string }>();
   const navigate = useNavigate();
@@ -99,6 +124,11 @@ export default function ClientInsuranceManager() {
   const [activeTab, setActiveTab] = useState<TabType>('profile');
   const [editingProfile, setEditingProfile] = useState(false);
   const [editedProfile, setEditedProfile] = useState<TaxiProfile>({});
+  const [showContractForm, setShowContractForm] = useState(false);
+  const [editingContractId, setEditingContractId] = useState<string | null>(null);
+  const [contractForm, setContractForm] = useState<ContractForm>(defaultContractForm);
+  const [savingContract, setSavingContract] = useState(false);
+  const [contractError, setContractError] = useState<string | null>(null);
 
   useEffect(() => {
     if (leadId) {
@@ -223,6 +253,100 @@ export default function ClientInsuranceManager() {
     } catch (error: any) {
       alert('Erreur lors de la sauvegarde: ' + error.message);
     }
+  }
+
+  function openNewContractForm() {
+    setContractForm(defaultContractForm);
+    setEditingContractId(null);
+    setContractError(null);
+    setShowContractForm(true);
+  }
+
+  function openEditContractForm(contract: Contract) {
+    setContractForm({
+      contract_type: contract.contract_type,
+      insurer_name: contract.insurer_name,
+      contract_number: contract.contract_number || '',
+      premium_ttc: contract.premium_ttc?.toString() || '',
+      premium_ht: '',
+      payment_frequency: contract.payment_frequency || 'annuel',
+      effective_date: contract.effective_date ? contract.effective_date.split('T')[0] : '',
+      renewal_date: contract.renewal_date ? contract.renewal_date.split('T')[0] : '',
+      status: contract.status,
+      main_guarantees: '',
+      franchise_amount: '',
+      internal_notes: ''
+    });
+    setEditingContractId(contract.id);
+    setContractError(null);
+    setShowContractForm(true);
+  }
+
+  async function saveContract() {
+    setContractError(null);
+    if (!contractForm.insurer_name.trim()) {
+      setContractError("Le nom de la compagnie est obligatoire.");
+      return;
+    }
+    if (!contractForm.premium_ttc || isNaN(Number(contractForm.premium_ttc))) {
+      setContractError("La prime TTC doit être un nombre valide.");
+      return;
+    }
+    if (!contractForm.effective_date) {
+      setContractError("La date d'effet est obligatoire.");
+      return;
+    }
+    if (!contractForm.renewal_date) {
+      setContractError("La date de renouvellement est obligatoire.");
+      return;
+    }
+
+    setSavingContract(true);
+    try {
+      const payload = {
+        lead_id: leadId,
+        contract_type: contractForm.contract_type,
+        insurer_name: contractForm.insurer_name.trim(),
+        contract_number: contractForm.contract_number.trim() || null,
+        premium_ttc: parseFloat(contractForm.premium_ttc),
+        premium_ht: contractForm.premium_ht ? parseFloat(contractForm.premium_ht) : null,
+        payment_frequency: contractForm.payment_frequency,
+        effective_date: contractForm.effective_date,
+        renewal_date: contractForm.renewal_date,
+        status: contractForm.status,
+        main_guarantees: contractForm.main_guarantees.trim() || null,
+        franchise_amount: contractForm.franchise_amount ? parseFloat(contractForm.franchise_amount) : null,
+        internal_notes: contractForm.internal_notes.trim() || null
+      };
+
+      if (editingContractId) {
+        const { error } = await supabase
+          .from('insurance_contracts')
+          .update(payload)
+          .eq('id', editingContractId);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('insurance_contracts')
+          .insert(payload);
+        if (error) throw error;
+      }
+
+      await loadContracts();
+      setShowContractForm(false);
+      setEditingContractId(null);
+      setContractForm(defaultContractForm);
+    } catch (err: any) {
+      setContractError("Erreur : " + err.message);
+    } finally {
+      setSavingContract(false);
+    }
+  }
+
+  async function deleteContract(contractId: string) {
+    if (!confirm("Supprimer ce contrat ?")) return;
+    const { error } = await supabase.from('insurance_contracts').delete().eq('id', contractId);
+    if (!error) await loadContracts();
   }
 
   const getContractTypeLabel = (type: string) => {
@@ -585,27 +709,232 @@ export default function ClientInsuranceManager() {
           <div>
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-bold text-gray-900">Contrats d'assurance</h2>
-              <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">
+              <button
+                onClick={openNewContractForm}
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium"
+              >
                 <Plus size={18} />
                 Nouveau contrat
               </button>
             </div>
 
+            {/* Contract form modal */}
+            {showContractForm && (
+              <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+                  <div className="flex items-center justify-between p-6 border-b border-gray-200">
+                    <h3 className="text-xl font-bold text-gray-900">
+                      {editingContractId ? 'Modifier le contrat' : 'Nouveau contrat'}
+                    </h3>
+                    <button
+                      onClick={() => { setShowContractForm(false); setContractError(null); }}
+                      className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                    >
+                      <X size={20} />
+                    </button>
+                  </div>
+
+                  <div className="p-6 space-y-5">
+                    {contractError && (
+                      <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg px-4 py-3 text-sm flex items-start gap-2">
+                        <AlertCircle size={16} className="flex-shrink-0 mt-0.5" />
+                        {contractError}
+                      </div>
+                    )}
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-1.5">Type de contrat *</label>
+                        <select
+                          value={contractForm.contract_type}
+                          onChange={(e) => setContractForm({ ...contractForm, contract_type: e.target.value })}
+                          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm"
+                        >
+                          <option value="auto_taxi">Auto Taxi</option>
+                          <option value="rc_pro_taxi">RC Pro Taxi</option>
+                          <option value="protection_juridique">Protection Juridique</option>
+                          <option value="prevoyance">Prévoyance</option>
+                          <option value="sante_tns">Santé TNS</option>
+                          <option value="multirisque_pro">Multirisque Pro</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-1.5">Statut *</label>
+                        <select
+                          value={contractForm.status}
+                          onChange={(e) => setContractForm({ ...contractForm, status: e.target.value })}
+                          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm"
+                        >
+                          <option value="active">Actif</option>
+                          <option value="quote">Devis</option>
+                          <option value="suspended">Suspendu</option>
+                          <option value="terminated">Résilié</option>
+                        </select>
+                      </div>
+
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-semibold text-gray-700 mb-1.5">Compagnie d'assurance *</label>
+                        <input
+                          type="text"
+                          value={contractForm.insurer_name}
+                          onChange={(e) => setContractForm({ ...contractForm, insurer_name: e.target.value })}
+                          placeholder="Ex: Generali, MFA, Solly Azar..."
+                          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-1.5">N° de contrat</label>
+                        <input
+                          type="text"
+                          value={contractForm.contract_number}
+                          onChange={(e) => setContractForm({ ...contractForm, contract_number: e.target.value })}
+                          placeholder="Ex: POL-2026-001234"
+                          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-1.5">Fréquence de paiement</label>
+                        <select
+                          value={contractForm.payment_frequency}
+                          onChange={(e) => setContractForm({ ...contractForm, payment_frequency: e.target.value })}
+                          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm"
+                        >
+                          <option value="annuel">Annuel</option>
+                          <option value="mensuel">Mensuel</option>
+                          <option value="trimestriel">Trimestriel</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-1.5">Prime TTC (€) *</label>
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={contractForm.premium_ttc}
+                          onChange={(e) => setContractForm({ ...contractForm, premium_ttc: e.target.value })}
+                          placeholder="0.00"
+                          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-1.5">Prime HT (€)</label>
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={contractForm.premium_ht}
+                          onChange={(e) => setContractForm({ ...contractForm, premium_ht: e.target.value })}
+                          placeholder="0.00"
+                          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-1.5">Date d'effet *</label>
+                        <input
+                          type="date"
+                          value={contractForm.effective_date}
+                          onChange={(e) => setContractForm({ ...contractForm, effective_date: e.target.value })}
+                          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-1.5">Date de renouvellement *</label>
+                        <input
+                          type="date"
+                          value={contractForm.renewal_date}
+                          onChange={(e) => setContractForm({ ...contractForm, renewal_date: e.target.value })}
+                          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-1.5">Franchise (€)</label>
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={contractForm.franchise_amount}
+                          onChange={(e) => setContractForm({ ...contractForm, franchise_amount: e.target.value })}
+                          placeholder="0.00"
+                          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                        />
+                      </div>
+
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-semibold text-gray-700 mb-1.5">Garanties principales</label>
+                        <textarea
+                          value={contractForm.main_guarantees}
+                          onChange={(e) => setContractForm({ ...contractForm, main_guarantees: e.target.value })}
+                          rows={2}
+                          placeholder="RC, Vol, Incendie, Bris de glaces..."
+                          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm resize-none"
+                        />
+                      </div>
+
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-semibold text-gray-700 mb-1.5">Notes internes</label>
+                        <textarea
+                          value={contractForm.internal_notes}
+                          onChange={(e) => setContractForm({ ...contractForm, internal_notes: e.target.value })}
+                          rows={2}
+                          placeholder="Notes de suivi, conditions particulières..."
+                          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm resize-none"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-200 bg-gray-50 rounded-b-2xl">
+                    <button
+                      onClick={() => { setShowContractForm(false); setContractError(null); }}
+                      className="px-4 py-2 text-gray-700 hover:bg-gray-200 rounded-lg transition-colors font-medium text-sm"
+                      disabled={savingContract}
+                    >
+                      Annuler
+                    </button>
+                    <button
+                      onClick={saveContract}
+                      disabled={savingContract}
+                      className="flex items-center gap-2 px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium text-sm disabled:opacity-50"
+                    >
+                      {savingContract ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+                      {editingContractId ? 'Mettre à jour' : 'Créer le contrat'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {contracts.length === 0 ? (
-              <div className="text-center py-12 text-gray-500">
-                <FileText className="mx-auto mb-3" size={48} />
-                <p>Aucun contrat pour ce client</p>
+              <div className="text-center py-16 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200">
+                <FileText className="mx-auto mb-3 text-gray-300" size={56} />
+                <p className="text-gray-700 font-semibold text-lg mb-1">Aucun contrat</p>
+                <p className="text-gray-500 text-sm mb-4">Créez le premier contrat pour ce client</p>
+                <button
+                  onClick={openNewContractForm}
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm font-medium"
+                >
+                  <Plus size={16} />
+                  Ajouter un contrat
+                </button>
               </div>
             ) : (
               <div className="space-y-4">
                 {contracts.map(contract => (
                   <div
                     key={contract.id}
-                    className="border border-gray-200 rounded-lg p-6 hover:border-blue-300 transition-colors"
+                    className="bg-white border border-gray-200 rounded-xl p-6 hover:border-blue-300 hover:shadow-sm transition-all"
                   >
                     <div className="flex items-start justify-between mb-4">
                       <div>
-                        <div className="flex items-center gap-3 mb-2">
+                        <div className="flex items-center gap-3 mb-1.5">
                           <h3 className="text-lg font-bold text-gray-900">
                             {getContractTypeLabel(contract.contract_type)}
                           </h3>
@@ -614,45 +943,50 @@ export default function ClientInsuranceManager() {
                           </span>
                         </div>
                         <p className="text-sm text-gray-600">
-                          {contract.insurer_name} • {contract.contract_number}
+                          {contract.insurer_name}{contract.contract_number ? ` • ${contract.contract_number}` : ''}
                         </p>
                       </div>
                       <div className="text-right">
                         <p className="text-2xl font-bold text-blue-600">
-                          {contract.premium_ttc.toFixed(2)} €
+                          {contract.premium_ttc?.toFixed(2)} €
                         </p>
-                        <p className="text-sm text-gray-600">{contract.payment_frequency}</p>
+                        <p className="text-sm text-gray-500 capitalize">{contract.payment_frequency}</p>
                       </div>
                     </div>
 
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                       <div>
-                        <p className="text-gray-600">Date effet</p>
+                        <p className="text-gray-500 text-xs mb-0.5">Date effet</p>
                         <p className="font-semibold text-gray-900">
                           {new Date(contract.effective_date).toLocaleDateString('fr-FR')}
                         </p>
                       </div>
                       <div>
-                        <p className="text-gray-600">Renouvellement</p>
+                        <p className="text-gray-500 text-xs mb-0.5">Renouvellement</p>
                         <p className="font-semibold text-gray-900">
                           {new Date(contract.renewal_date).toLocaleDateString('fr-FR')}
                         </p>
                       </div>
                       <div>
-                        <p className="text-gray-600">Créé le</p>
+                        <p className="text-gray-500 text-xs mb-0.5">Créé le</p>
                         <p className="font-semibold text-gray-900">
                           {new Date(contract.created_at).toLocaleDateString('fr-FR')}
                         </p>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <button className="p-2 hover:bg-gray-100 rounded transition-colors">
-                          <Eye size={18} className="text-gray-600" />
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          onClick={() => openEditContractForm(contract)}
+                          className="flex items-center gap-1 px-3 py-1.5 text-blue-600 hover:bg-blue-50 border border-blue-200 rounded-lg transition-colors text-xs font-medium"
+                        >
+                          <Edit size={14} />
+                          Modifier
                         </button>
-                        <button className="p-2 hover:bg-gray-100 rounded transition-colors">
-                          <Edit size={18} className="text-gray-600" />
-                        </button>
-                        <button className="p-2 hover:bg-gray-100 rounded transition-colors">
-                          <Download size={18} className="text-gray-600" />
+                        <button
+                          onClick={() => deleteContract(contract.id)}
+                          className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                          title="Supprimer"
+                        >
+                          <Trash2 size={16} />
                         </button>
                       </div>
                     </div>
