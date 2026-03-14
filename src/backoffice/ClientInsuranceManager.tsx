@@ -105,6 +105,7 @@ interface ClaimForm {
   estimated_amount: string;
   status: string;
   internal_notes: string;
+  contract_id: string;
 }
 
 const defaultClaimForm: ClaimForm = {
@@ -116,7 +117,8 @@ const defaultClaimForm: ClaimForm = {
   insurer_claim_number: '',
   estimated_amount: '',
   status: 'declared',
-  internal_notes: ''
+  internal_notes: '',
+  contract_id: ''
 };
 
 const defaultContractForm: ContractForm = {
@@ -390,12 +392,13 @@ export default function ClientInsuranceManager() {
       claim_type: claim.claim_type,
       claim_date: claim.claim_date ? claim.claim_date.split('T')[0] : '',
       circumstances: claim.circumstances || '',
-      location: '',
-      vehicle_plate: '',
+      location: (claim as any).location || '',
+      vehicle_plate: (claim as any).vehicle_plate || '',
       insurer_claim_number: claim.insurer_claim_number || '',
       estimated_amount: claim.estimated_amount?.toString() || '',
       status: claim.status,
-      internal_notes: ''
+      internal_notes: (claim as any).internal_notes || '',
+      contract_id: (claim as any).contract_id || ''
     });
     setEditingClaimId(claim.id);
     setClaimError(null);
@@ -425,7 +428,8 @@ export default function ClientInsuranceManager() {
         insurer_claim_number: claimForm.insurer_claim_number.trim() || null,
         estimated_amount: claimForm.estimated_amount ? parseFloat(claimForm.estimated_amount) : null,
         status: claimForm.status,
-        internal_notes: claimForm.internal_notes.trim() || null
+        internal_notes: claimForm.internal_notes.trim() || null,
+        contract_id: claimForm.contract_id || null
       };
 
       if (editingClaimId) {
@@ -1178,6 +1182,38 @@ export default function ClientInsuranceManager() {
                       </div>
                     )}
 
+                    {contracts.length > 0 && (
+                      <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                        <label className="block text-sm font-semibold text-blue-800 mb-2 flex items-center gap-2">
+                          <FileText size={15} />
+                          Contrat concerné
+                        </label>
+                        <select
+                          value={claimForm.contract_id}
+                          onChange={(e) => setClaimForm({ ...claimForm, contract_id: e.target.value })}
+                          className="w-full px-3 py-2.5 border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm"
+                        >
+                          <option value="">-- Aucun contrat associé --</option>
+                          {contracts.map(c => (
+                            <option key={c.id} value={c.id}>
+                              {c.insurer_name}
+                              {c.contract_number ? ` — N° ${c.contract_number}` : ''}
+                              {` (${getContractTypeLabel(c.contract_type)})`}
+                              {` — ${c.status === 'active' ? 'Actif' : c.status}`}
+                            </option>
+                          ))}
+                        </select>
+                        {claimForm.contract_id && (() => {
+                          const selected = contracts.find(c => c.id === claimForm.contract_id);
+                          return selected ? (
+                            <p className="mt-2 text-xs text-blue-600">
+                              Prime : <strong>{selected.premium_ttc.toFixed(2)} €</strong> / {selected.payment_frequency} — Renouvellement : {new Date(selected.renewal_date).toLocaleDateString('fr-FR')}
+                            </p>
+                          ) : null;
+                        })()}
+                      </div>
+                    )}
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-1.5">Type de sinistre *</label>
@@ -1344,6 +1380,10 @@ export default function ClientInsuranceManager() {
                           <p className="text-xs text-gray-500">
                             {new Date(claim.claim_date).toLocaleDateString('fr-FR')}
                             {claim.insurer_claim_number && ` • N° ${claim.insurer_claim_number}`}
+                            {(claim as any).contract_id && (() => {
+                              const c = contracts.find(ct => ct.id === (claim as any).contract_id);
+                              return c ? <span className="ml-1 inline-flex items-center gap-1 text-blue-600 font-medium"><FileText size={10} />{c.insurer_name}{c.contract_number ? ' N° ' + c.contract_number : ''}</span> : null;
+                            })()}
                           </p>
                         </div>
                       </div>
