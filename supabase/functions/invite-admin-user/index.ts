@@ -234,7 +234,7 @@ Deno.serve(async (req: Request) => {
           error: `L'utilisateur ${existingUser.full_name} (${email}) existe déjà et est actif. Utilisez "Renvoyer l'invitation" si besoin.`
         }),
         {
-          status: 400,
+          status: 200,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         }
       );
