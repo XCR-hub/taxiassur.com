@@ -9,12 +9,7 @@ interface ResourceHint {
 }
 
 const defaultHints: ResourceHint[] = [
-  { rel: 'dns-prefetch', href: 'https://fonts.googleapis.com' },
-  { rel: 'dns-prefetch', href: 'https://fonts.gstatic.com' },
-  { rel: 'preconnect', href: 'https://fonts.googleapis.com', crossOrigin: 'anonymous' },
   { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossOrigin: 'anonymous' },
-  { rel: 'dns-prefetch', href: process.env.VITE_SUPABASE_URL || '' },
-  { rel: 'preconnect', href: process.env.VITE_SUPABASE_URL || '', crossOrigin: 'anonymous' },
 ];
 
 export function ResourceHints({ additionalHints = [] }: { additionalHints?: ResourceHint[] }) {

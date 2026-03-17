@@ -151,6 +151,11 @@ export default defineConfig(({ mode }) => ({
             return 'client-portal';
           }
 
+          // Group all city-specific assurance pages together
+          if (id.includes('/pages/AssuranceTaxi') && !id.match(/AssuranceTaxi\.(tsx|js)$/)) {
+            return 'pages-cities';
+          }
+
           // Pages split by route
           if (id.includes('/pages/')) {
             const match = id.match(/pages\/([^/]+)/);

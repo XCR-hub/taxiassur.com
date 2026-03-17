@@ -12,22 +12,22 @@ createRoot(document.getElementById('root')!).render(
   </StrictMode>
 );
 
-requestIdleCallback(() => {
-  import('./lib/supabase').then(({ supabase }) => {
-    supabase.auth.getSession().catch(() => {});
-  }).catch(() => {});
+// Defer all non-critical initializations after page is interactive
+const scheduleIdleTask = (fn: () => void, timeout = 3000) => {
+  if ('requestIdleCallback' in window) {
+    (window as any).requestIdleCallback(fn, { timeout });
+  } else {
+    setTimeout(fn, timeout);
+  }
+};
 
+scheduleIdleTask(() => {
   if (import.meta.env.PROD) {
+    // Delay monitoring by 5s to not compete with page load
     setTimeout(() => {
       import('./lib/web-vitals').then(({ initWebVitals }) => {
         initWebVitals();
       }).catch(() => {});
-
-      if (import.meta.env.VITE_SENTRY_DSN) {
-        import('./lib/monitoring').then(({ monitoring }) => {
-          monitoring.addBreadcrumb('Application started', 'lifecycle');
-        }).catch(() => {});
-      }
-    }, 3000);
+    }, 5000);
   }
-}, { timeout: 2000 });
+}, 4000);
