@@ -90,7 +90,12 @@ export default defineConfig(({ mode }) => ({
             dep.includes('lib-core')
           );
         }
-        return [];
+        return deps.filter(dep =>
+          dep.includes('vendor-react') ||
+          dep.includes('vendor-router') ||
+          dep.includes('vendor-supabase') ||
+          dep.includes('lib-core')
+        );
       }
     },
     rollupOptions: {

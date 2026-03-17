@@ -28,7 +28,7 @@ function App() {
 
   useEffect(() => {
     const isMobile = window.innerWidth < 1024;
-    const delay = isMobile ? 2000 : 500;
+    const delay = isMobile ? 800 : 300;
     const timer = setTimeout(() => setShowEnhancements(true), delay);
     return () => clearTimeout(timer);
   }, []);
@@ -50,7 +50,7 @@ function App() {
                 <RouterProvider router={router} />
               </Suspense>
               {/* Aide pour les tests Monético (dev only) */}
-              {showEnhancements && (
+              {showEnhancements && import.meta.env.DEV && (
                 <Suspense fallback={null}>
                   <MoneticoTestCard />
                 </Suspense>

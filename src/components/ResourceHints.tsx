@@ -8,9 +8,7 @@ interface ResourceHint {
   crossOrigin?: 'anonymous' | 'use-credentials';
 }
 
-const defaultHints: ResourceHint[] = [
-  { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossOrigin: 'anonymous' },
-];
+const defaultHints: ResourceHint[] = [];
 
 export function ResourceHints({ additionalHints = [] }: { additionalHints?: ResourceHint[] }) {
   useEffect(() => {
