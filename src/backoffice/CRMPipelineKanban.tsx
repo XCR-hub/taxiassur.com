@@ -16,68 +16,78 @@ interface ColumnNotifications {
 }
 
 // Palette de couleurs alignée sur la charte TaxiAssur (jaune/noir/gris)
-const STATUS_COLORS: Record<PipelineStatus, { bg: string; border: string; text: string; badge: string }> = {
+const STATUS_COLORS: Record<string, { bg: string; border: string; text: string; badge: string; accent: string }> = {
   NOUVEAU_LEAD: {
     bg: 'bg-gradient-to-br from-yellow-50 to-amber-50',
     border: 'border-yellow-400',
     text: 'text-yellow-900',
-    badge: 'bg-yellow-500 text-black'
+    badge: 'bg-yellow-500 text-black',
+    accent: '#eab308'
   },
   COLLECTE_DOCUMENTS: {
     bg: 'bg-gradient-to-br from-amber-50 to-yellow-50',
     border: 'border-amber-400',
     text: 'text-amber-900',
-    badge: 'bg-amber-500 text-black'
+    badge: 'bg-amber-500 text-black',
+    accent: '#f59e0b'
   },
   DEVIS: {
     bg: 'bg-gradient-to-br from-gray-800 to-gray-900',
     border: 'border-yellow-500',
     text: 'text-yellow-400',
-    badge: 'bg-yellow-500 text-black'
+    badge: 'bg-yellow-500 text-black',
+    accent: '#d97706'
   },
   DECISION_CLIENT: {
     bg: 'bg-gradient-to-br from-yellow-100 to-yellow-50',
     border: 'border-yellow-500',
     text: 'text-yellow-900',
-    badge: 'bg-yellow-600 text-black'
+    badge: 'bg-yellow-600 text-black',
+    accent: '#ca8a04'
   },
   PAIEMENT: {
     bg: 'bg-gradient-to-br from-green-50 to-emerald-50',
     border: 'border-green-400',
     text: 'text-green-900',
-    badge: 'bg-green-600 text-white'
+    badge: 'bg-green-600 text-white',
+    accent: '#16a34a'
   },
   CONTRAT_SIGNATURE: {
     bg: 'bg-gradient-to-br from-gray-900 to-black',
     border: 'border-yellow-400',
     text: 'text-yellow-300',
-    badge: 'bg-yellow-400 text-black'
+    badge: 'bg-yellow-400 text-black',
+    accent: '#a3a3a3'
   },
   CLIENT_ACTIF: {
     bg: 'bg-gradient-to-br from-green-100 to-emerald-50',
     border: 'border-green-500',
     text: 'text-green-900',
-    badge: 'bg-green-600 text-white'
+    badge: 'bg-green-600 text-white',
+    accent: '#22c55e'
   },
   RELANCE: {
     bg: 'bg-gradient-to-br from-orange-50 to-amber-50',
     border: 'border-orange-400',
     text: 'text-orange-900',
-    badge: 'bg-orange-500 text-white'
+    badge: 'bg-orange-500 text-white',
+    accent: '#f97316'
   },
   PERDU: {
     bg: 'bg-gradient-to-br from-gray-100 to-gray-50',
     border: 'border-gray-400',
     text: 'text-gray-700',
-    badge: 'bg-gray-600 text-white'
+    badge: 'bg-gray-600 text-white',
+    accent: '#6b7280'
   },
   RECONTACT_PROGRAMME: {
     bg: 'bg-gradient-to-br from-yellow-50 to-amber-100',
     border: 'border-amber-500',
     text: 'text-amber-900',
-    badge: 'bg-amber-600 text-black'
+    badge: 'bg-amber-600 text-black',
+    accent: '#b45309'
   }
-} as any;
+};
 
 const CRMPipelineKanban: React.FC = () => {
   const navigate = useNavigate();
@@ -545,202 +555,142 @@ const CRMPipelineKanban: React.FC = () => {
   }
 
   return (
-    <div className="h-full bg-gray-100 flex flex-col overflow-hidden">
-      {/* Header */}
+    <div className="h-full bg-gray-950 flex flex-col overflow-hidden">
+      {/* Header — compact single strip */}
       <div className="bg-black border-b border-gray-800 z-10 shadow-lg flex-shrink-0">
-        <div className="max-w-full px-6 py-4">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h1 className="text-2xl font-bold text-white flex items-center gap-3">
-                <span className="w-8 h-8 bg-gradient-to-br from-yellow-500 to-yellow-400 rounded-lg flex items-center justify-center text-black text-sm font-black">K</span>
-                Pipeline Kanban
-                {refreshing && (
-                  <RefreshCw className="animate-spin text-yellow-400" size={20} />
-                )}
-              </h1>
-              <div className="flex items-center gap-3 text-sm text-gray-400 mt-1">
-                <span>Gestion visuelle du cycle de vie client</span>
-                <span className="text-gray-600">•</span>
-                <div className="flex items-center gap-1">
-                  <Clock size={13} />
-                  <span>Mis à jour: {lastUpdate.toLocaleTimeString('fr-FR')}</span>
-                </div>
-              </div>
+        <div className="px-4 py-2">
+
+          {/* Row 1: title + search + actions */}
+          <div className="flex items-center gap-3">
+            {/* Title */}
+            <div className="flex items-center gap-2 shrink-0">
+              <span className="w-6 h-6 bg-gradient-to-br from-yellow-500 to-yellow-400 rounded flex items-center justify-center text-black text-xs font-black">K</span>
+              <span className="text-base font-bold text-white">Pipeline Kanban</span>
+              {refreshing && <RefreshCw className="animate-spin text-yellow-400" size={14} />}
             </div>
 
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-2 px-3 py-2 bg-gray-900 rounded-lg border border-gray-700">
-                <div className={`w-2 h-2 rounded-full ${autoRefreshEnabled ? 'bg-yellow-400 animate-pulse' : 'bg-gray-600'}`}></div>
-                <span className="text-xs text-gray-400">Auto-refresh {autoRefreshEnabled ? 'ON' : 'OFF'}</span>
-                <button
-                  onClick={() => setAutoRefreshEnabled(!autoRefreshEnabled)}
-                  className="ml-1 text-xs text-yellow-400 hover:text-yellow-300 font-medium"
-                  title={autoRefreshEnabled ? 'Désactiver' : 'Activer'}
-                >
-                  {autoRefreshEnabled ? 'OFF' : 'ON'}
-                </button>
-              </div>
+            {/* Search */}
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={14} />
+              <input
+                type="text"
+                placeholder="Rechercher par nom, email, téléphone..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full pl-9 pr-3 py-1.5 bg-gray-900 border border-gray-700 text-white placeholder-gray-500 rounded-lg focus:outline-none focus:ring-1 focus:ring-yellow-500 focus:border-yellow-500 text-sm"
+              />
+            </div>
 
+            {/* Actions */}
+            <div className="flex items-center gap-1.5 shrink-0">
+              <button
+                onClick={() => setAutoRefreshEnabled(!autoRefreshEnabled)}
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-colors ${autoRefreshEnabled ? 'border-yellow-600 bg-yellow-600/10 text-yellow-400' : 'border-gray-700 text-gray-500 hover:text-gray-300'}`}
+                title={autoRefreshEnabled ? 'Désactiver auto-refresh' : 'Activer auto-refresh'}
+              >
+                <div className={`w-1.5 h-1.5 rounded-full ${autoRefreshEnabled ? 'bg-yellow-400 animate-pulse' : 'bg-gray-600'}`}></div>
+                Auto
+              </button>
               <button
                 onClick={handleRefresh}
                 disabled={refreshing}
-                className="px-4 py-2 border border-gray-700 text-gray-300 rounded-lg font-medium hover:bg-gray-800 hover:text-white transition-colors flex items-center gap-2 disabled:opacity-50"
+                className="p-1.5 border border-gray-700 text-gray-400 rounded-lg hover:bg-gray-800 hover:text-white transition-colors disabled:opacity-50"
+                title="Actualiser"
               >
-                <RefreshCw size={18} className={refreshing ? 'animate-spin' : ''} />
-                Actualiser
+                <RefreshCw size={14} className={refreshing ? 'animate-spin' : ''} />
               </button>
               <button
                 onClick={handleSyncEmails}
                 disabled={syncingEmails}
-                className="px-4 py-2 border border-yellow-600 bg-yellow-600/10 text-yellow-400 rounded-lg font-medium hover:bg-yellow-600/20 transition-colors flex items-center gap-2 disabled:opacity-50"
-                title="Synchroniser les emails et créer les nouveaux leads automatiquement"
+                className="flex items-center gap-1.5 px-2.5 py-1.5 border border-yellow-600 bg-yellow-600/10 text-yellow-400 rounded-lg text-xs font-medium hover:bg-yellow-600/20 transition-colors disabled:opacity-50"
               >
-                <Mail size={18} className={syncingEmails ? 'animate-bounce' : ''} />
-                {syncingEmails ? 'Sync...' : 'Sync Emails'}
+                <Mail size={13} className={syncingEmails ? 'animate-bounce' : ''} />
+                {syncingEmails ? 'Sync...' : 'Emails'}
               </button>
               <button
                 onClick={() => navigate('/backoffice/crm-killer')}
-                className="px-4 py-2 bg-gradient-to-r from-yellow-600 to-yellow-500 text-black rounded-lg font-bold hover:from-yellow-700 hover:to-yellow-600 transition-all flex items-center gap-2"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-yellow-600 to-yellow-500 text-black rounded-lg text-xs font-bold hover:from-yellow-700 hover:to-yellow-600 transition-all"
               >
-                <Plus size={18} />
+                <Plus size={13} />
                 Nouveau Lead
               </button>
             </div>
           </div>
 
-          {/* Error message */}
-          {error && (
-            <div className="mb-4 p-4 bg-red-900/30 border border-red-700 rounded-lg flex items-center gap-2 text-red-300">
-              <AlertCircle size={18} />
-              <span>{error}</span>
-              <button onClick={() => setError(null)} className="ml-auto text-red-400 hover:text-red-200">✕</button>
+          {/* Alerts row (only shown when needed) */}
+          {(error || syncMessage || newLeadNotification) && (
+            <div className="mt-2 flex flex-col gap-1">
+              {error && (
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-red-900/30 border border-red-700 rounded-lg text-red-300 text-xs">
+                  <AlertCircle size={13} />
+                  <span className="flex-1">{error}</span>
+                  <button onClick={() => setError(null)} className="text-red-400 hover:text-red-200">✕</button>
+                </div>
+              )}
+              {syncMessage && (
+                <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs ${syncMessage.includes('✅') ? 'bg-green-900/30 border border-green-700 text-green-300' : syncMessage.includes('❌') ? 'bg-red-900/30 border border-red-700 text-red-300' : 'bg-yellow-900/30 border border-yellow-700 text-yellow-300'}`}>
+                  <span className="flex-1 font-medium">{syncMessage}</span>
+                  <button onClick={() => setSyncMessage(null)} className="hover:opacity-75">✕</button>
+                </div>
+              )}
+              {newLeadNotification && (
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-yellow-600 text-black rounded-lg text-xs font-bold animate-pulse">
+                  <div className="w-2 h-2 bg-black rounded-full animate-ping"></div>
+                  <span className="flex-1">{newLeadNotification}</span>
+                  <button onClick={() => setNewLeadNotification(null)} className="font-bold hover:opacity-75">✕</button>
+                </div>
+              )}
             </div>
           )}
 
-          {/* Sync message */}
-          {syncMessage && (
-            <div className={`mb-4 p-4 rounded-lg flex items-center gap-2 ${
-              syncMessage.includes('✅')
-                ? 'bg-green-900/30 border border-green-700 text-green-300'
-                : syncMessage.includes('❌')
-                ? 'bg-red-900/30 border border-red-700 text-red-300'
-                : 'bg-yellow-900/30 border border-yellow-700 text-yellow-300'
-            }`}>
-              <span className="font-medium">{syncMessage}</span>
-              <button onClick={() => setSyncMessage(null)} className="ml-auto hover:opacity-75">✕</button>
+          {/* Row 2: Workflow funnel — compact pill strip */}
+          <div className="mt-2 flex items-center h-7 bg-gray-900/80 border border-gray-700/60 rounded-lg overflow-hidden text-xs">
+            <div className="flex items-center gap-1 px-3 border-r border-gray-700/60 h-full">
+              <div className="w-1.5 h-1.5 bg-yellow-400 rounded-full animate-pulse"></div>
+              <span className="font-bold text-white">{statistics.total}</span>
+              <span className="text-gray-500">leads</span>
             </div>
-          )}
-
-          {/* Notification nouveau lead */}
-          {newLeadNotification && (
-            <div className="mb-4 p-4 bg-gradient-to-r from-yellow-600 to-yellow-500 text-black rounded-lg flex items-center gap-3 shadow-lg animate-bounce">
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 bg-black rounded-full animate-pulse"></div>
-                <span className="font-bold text-lg">{newLeadNotification}</span>
+            <div className="text-gray-600 px-1">›</div>
+            <div className={`flex items-center gap-1 px-3 border-r border-gray-700/60 h-full ${statistics.needsAction > 0 ? 'bg-red-900/20' : ''}`}>
+              <AlertTriangle size={11} className="text-red-400" />
+              <span className="font-bold text-red-300">{statistics.needsAction}</span>
+              <span className="text-red-500/70">urgents</span>
+            </div>
+            <div className="text-gray-600 px-1">›</div>
+            <div className="flex items-center gap-1 px-3 border-r border-gray-700/60 h-full">
+              <FileText size={11} className="text-yellow-400" />
+              <span className="font-bold text-yellow-300">{statistics.documentsStage}</span>
+              <span className="text-gray-500">docs</span>
+            </div>
+            <div className="text-gray-600 px-1">›</div>
+            <div className="flex items-center gap-1 px-3 border-r border-gray-700/60 h-full">
+              <Building2 size={11} className="text-amber-400" />
+              <span className="font-bold text-amber-300">{statistics.quoteStage}</span>
+              <span className="text-gray-500">devis</span>
+            </div>
+            <div className="text-gray-600 px-1">›</div>
+            <div className="flex items-center gap-1 px-3 border-r border-gray-700/60 h-full">
+              <PenTool size={11} className="text-gray-300" />
+              <span className="font-bold text-white">{statistics.signatureStage}</span>
+              <span className="text-gray-500">sign.</span>
+            </div>
+            <div className="text-gray-600 px-1">›</div>
+            <div className="flex items-center gap-1 px-3 border-r border-gray-700/60 h-full">
+              <Euro size={11} className="text-green-400" />
+              <span className="font-bold text-green-300">{statistics.paymentStage}</span>
+              <span className="text-gray-500">paiement</span>
+            </div>
+            <div className="text-gray-600 px-1">›</div>
+            <div className="flex items-center gap-1 px-3 bg-green-900/20 h-full">
+              <TrendingUp size={11} className="text-green-400" />
+              <span className="font-bold text-green-300">{statistics.active}</span>
+              <span className="text-green-600">clients actifs</span>
+            </div>
+            <div className="ml-auto flex items-center px-3 border-l border-gray-700/60 h-full">
+              <div className="flex items-center gap-1 text-gray-600">
+                <Clock size={10} />
+                <span>{lastUpdate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</span>
               </div>
-              <button onClick={() => setNewLeadNotification(null)} className="ml-auto font-bold hover:opacity-75">✕</button>
-            </div>
-          )}
-
-          {/* Search and filters */}
-          <div className="flex items-center gap-3">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
-              <input
-                type="text"
-                placeholder="Rechercher par nom, email, téléphone, entreprise ou ville..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 bg-gray-900 border border-gray-700 text-white placeholder-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 text-sm"
-              />
-            </div>
-            <button className="px-4 py-2 border border-gray-700 text-gray-300 rounded-lg hover:bg-gray-800 hover:text-white transition-colors flex items-center gap-2 text-sm">
-              <Filter size={18} />
-              Filtres
-            </button>
-          </div>
-
-          {/* Workflow TaxiAssur — funnel pipeline */}
-          <div className="mt-4 flex items-stretch gap-0 bg-gray-900/60 border border-gray-700 rounded-xl overflow-hidden">
-            {/* Total */}
-            <div className="flex items-center gap-2 px-4 py-3 border-r border-gray-700">
-              <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse shrink-0"></div>
-              <div>
-                <div className="text-sm font-bold text-white">{statistics.total}</div>
-                <div className="text-xs text-gray-400">Total</div>
-              </div>
-            </div>
-
-            {/* Separator arrow */}
-            <div className="flex items-center px-1 text-gray-600 font-bold text-sm select-none">›</div>
-
-            {/* Urgents */}
-            <div className={`flex items-center gap-2 px-4 py-3 border-r border-gray-700 ${statistics.needsAction > 0 ? 'bg-red-900/20' : ''}`}>
-              <AlertTriangle size={14} className="text-red-400 shrink-0" />
-              <div>
-                <div className="text-sm font-bold text-red-300">{statistics.needsAction}</div>
-                <div className="text-xs text-red-400">Urgents</div>
-              </div>
-            </div>
-
-            <div className="flex items-center px-1 text-gray-600 font-bold text-sm select-none">›</div>
-
-            {/* Documents */}
-            <div className="flex items-center gap-2 px-4 py-3 border-r border-gray-700 bg-yellow-900/10">
-              <FileText size={14} className="text-yellow-400 shrink-0" />
-              <div>
-                <div className="text-sm font-bold text-yellow-300">{statistics.documentsStage}</div>
-                <div className="text-xs text-yellow-500">Docs</div>
-              </div>
-            </div>
-
-            <div className="flex items-center px-1 text-gray-600 font-bold text-sm select-none">›</div>
-
-            {/* Devis */}
-            <div className="flex items-center gap-2 px-4 py-3 border-r border-gray-700 bg-amber-900/10">
-              <Building2 size={14} className="text-amber-400 shrink-0" />
-              <div>
-                <div className="text-sm font-bold text-amber-300">{statistics.quoteStage}</div>
-                <div className="text-xs text-amber-500">Devis</div>
-              </div>
-            </div>
-
-            <div className="flex items-center px-1 text-gray-600 font-bold text-sm select-none">›</div>
-
-            {/* Signature */}
-            <div className="flex items-center gap-2 px-4 py-3 border-r border-gray-700">
-              <PenTool size={14} className="text-gray-300 shrink-0" />
-              <div>
-                <div className="text-sm font-bold text-white">{statistics.signatureStage}</div>
-                <div className="text-xs text-gray-400">Signature</div>
-              </div>
-            </div>
-
-            <div className="flex items-center px-1 text-gray-600 font-bold text-sm select-none">›</div>
-
-            {/* Paiement */}
-            <div className="flex items-center gap-2 px-4 py-3 border-r border-gray-700 bg-green-900/10">
-              <Euro size={14} className="text-green-400 shrink-0" />
-              <div>
-                <div className="text-sm font-bold text-green-300">{statistics.paymentStage}</div>
-                <div className="text-xs text-green-500">Paiement</div>
-              </div>
-            </div>
-
-            <div className="flex items-center px-1 text-gray-600 font-bold text-sm select-none">›</div>
-
-            {/* Clients actifs */}
-            <div className="flex items-center gap-2 px-4 py-3 bg-green-900/25 flex-1">
-              <TrendingUp size={14} className="text-green-400 shrink-0" />
-              <div>
-                <div className="text-sm font-bold text-green-300">{statistics.active}</div>
-                <div className="text-xs text-green-400 font-medium">Clients actifs</div>
-              </div>
-            </div>
-
-            {/* Label Workflow */}
-            <div className="flex items-center px-4 py-3 border-l border-gray-700 ml-auto">
-              <span className="text-xs font-bold text-yellow-500 uppercase tracking-wider whitespace-nowrap">Workflow TaxiAssur</span>
             </div>
           </div>
         </div>
@@ -757,12 +707,14 @@ const CRMPipelineKanban: React.FC = () => {
       )}
 
       {/* Kanban board */}
-      <div className="flex-1 p-6 overflow-x-auto overflow-y-hidden">
-        <div className="flex gap-4 h-full" style={{ minWidth: 'max-content' }}>
+      <div className="flex-1 px-3 py-3 overflow-x-auto overflow-y-hidden">
+        <div className="flex gap-3 h-full" style={{ minWidth: 'max-content' }}>
           {visibleStatuses.map((status) => {
             const statusInfo = PIPELINE_STATUSES[status];
             const leads = filteredKanbanData[status] || [];
             const isDropTarget = dragOverStatus === status && draggedLead?.status !== status;
+            const accentColor = STATUS_COLORS[status]?.accent || '#6b7280';
+            const avgQuality = leads.length > 0 ? Math.round(leads.reduce((sum, l) => sum + (l.quality_score || 0), 0) / leads.length) : 0;
 
             return (
               <div
@@ -771,88 +723,84 @@ const CRMPipelineKanban: React.FC = () => {
                 onDragLeave={handleDragLeave}
                 onDrop={(e) => handleDrop(e, status)}
                 className={cn(
-                  'w-80 flex-shrink-0 transition-all duration-300 flex flex-col',
-                  isDropTarget && 'scale-[1.02]'
+                  'w-72 flex-shrink-0 transition-all duration-300 flex flex-col',
+                  isDropTarget && 'scale-[1.015]'
                 )}
-                style={{ maxHeight: 'calc(100vh - 300px)' }}
+                style={{ maxHeight: 'calc(100vh - 200px)' }}
               >
-                {/* Column header - Coloré! */}
-                <div className={cn(
-                  'rounded-lg p-3 mb-3 transition-all duration-300 border-2 flex-shrink-0',
-                  isDropTarget
-                    ? 'bg-gradient-to-br from-yellow-100 to-amber-50 border-yellow-500 shadow-lg scale-105'
-                    : `${STATUS_COLORS[status]?.bg || 'bg-gradient-to-br from-gray-100 to-gray-50'} ${STATUS_COLORS[status]?.border || 'border-gray-200'}`
-                )}>
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <span className="text-lg">{statusInfo.icon}</span>
-                      <h3 className={cn('font-bold', STATUS_COLORS[status]?.text || 'text-gray-900')}>
-                        {statusInfo.label}
-                      </h3>
+                {/* Column header — compact dark card with colored left border */}
+                <div
+                  className={cn(
+                    'rounded-lg mb-2 flex-shrink-0 bg-gray-900 border border-gray-700/80 transition-all duration-200',
+                    isDropTarget && 'border-yellow-500/60 bg-yellow-900/10 shadow-lg shadow-yellow-900/20'
+                  )}
+                  style={{ borderLeft: `3px solid ${accentColor}` }}
+                >
+                  {/* Top row */}
+                  <div className="flex items-center justify-between px-3 pt-2.5 pb-1">
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <span className="text-sm leading-none">{statusInfo.icon}</span>
+                      <h3 className="text-sm font-semibold text-white truncate">{statusInfo.label}</h3>
                     </div>
                     <span className={cn(
-                      'px-2 py-1 rounded-full text-sm font-bold transition-all duration-200 shadow-sm',
-                      isDropTarget
-                        ? 'bg-blue-600 text-white scale-110 shadow-md'
-                        : STATUS_COLORS[status]?.badge || 'bg-gray-700 text-white'
+                      'ml-2 shrink-0 min-w-[22px] h-[22px] flex items-center justify-center rounded-full text-xs font-bold transition-all duration-200',
+                      isDropTarget ? 'bg-yellow-500 text-black scale-110' : STATUS_COLORS[status]?.badge || 'bg-gray-700 text-white'
                     )}>
                       {leads.length}
                     </span>
                   </div>
 
-                  {/* Badges de notifications */}
-                  {columnNotifications[status] && (
-                    <div className="flex flex-wrap gap-1.5 mb-2">
-                      {columnNotifications[status].newEmails > 0 && (
-                        <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-blue-600 text-white text-xs font-medium animate-pulse">
-                          <Mail size={12} />
-                          {columnNotifications[status].newEmails}
+                  {/* Bottom row: quality + notification badges */}
+                  <div className="flex items-center gap-1.5 px-3 pb-2">
+                    {leads.length > 0 && (
+                      <div className="flex items-center gap-1 mr-1">
+                        <div className="w-16 h-1 bg-gray-700 rounded-full overflow-hidden">
+                          <div className="h-full rounded-full" style={{ width: `${avgQuality}%`, backgroundColor: accentColor, opacity: 0.7 }}></div>
                         </div>
-                      )}
-                      {columnNotifications[status].newDocuments > 0 && (
-                        <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-600 text-white text-xs font-medium animate-pulse">
-                          <FileCheck size={12} />
-                          {columnNotifications[status].newDocuments}
-                        </div>
-                      )}
-                      {columnNotifications[status].missedCalls > 0 && (
-                        <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-red-600 text-white text-xs font-medium animate-pulse">
-                          <Phone size={12} />
-                          {columnNotifications[status].missedCalls}
-                        </div>
-                      )}
-                      {columnNotifications[status].newSMS > 0 && (
-                        <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-purple-600 text-white text-xs font-medium animate-pulse">
-                          <MessageSquare size={12} />
-                          {columnNotifications[status].newSMS}
-                        </div>
-                      )}
-                      {columnNotifications[status].pendingSignatures > 0 && (
-                        <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-indigo-600 text-white text-xs font-medium">
-                          <PenTool size={12} />
-                          {columnNotifications[status].pendingSignatures}
-                        </div>
-                      )}
-                      {columnNotifications[status].paymentDue > 0 && (
-                        <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-amber-600 text-white text-xs font-medium">
-                          <Euro size={12} />
-                          {columnNotifications[status].paymentDue}
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {leads.length > 0 && (
-                    <div className={cn('text-xs font-medium', STATUS_COLORS[status]?.text || 'text-gray-600')}>
-                      Qualité moyenne: {Math.round(leads.reduce((sum, l) => sum + (l.quality_score || 0), 0) / leads.length) || 0}%
-                    </div>
-                  )}
+                        <span className="text-xs text-gray-500">{avgQuality}%</span>
+                      </div>
+                    )}
+                    {columnNotifications[status] && (
+                      <>
+                        {columnNotifications[status].newEmails > 0 && (
+                          <div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-blue-600/80 text-white text-xs font-medium animate-pulse">
+                            <Mail size={10} />{columnNotifications[status].newEmails}
+                          </div>
+                        )}
+                        {columnNotifications[status].newDocuments > 0 && (
+                          <div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-emerald-600/80 text-white text-xs font-medium animate-pulse">
+                            <FileCheck size={10} />{columnNotifications[status].newDocuments}
+                          </div>
+                        )}
+                        {columnNotifications[status].missedCalls > 0 && (
+                          <div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-red-600/80 text-white text-xs font-medium animate-pulse">
+                            <Phone size={10} />{columnNotifications[status].missedCalls}
+                          </div>
+                        )}
+                        {columnNotifications[status].newSMS > 0 && (
+                          <div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-pink-600/80 text-white text-xs font-medium animate-pulse">
+                            <MessageSquare size={10} />{columnNotifications[status].newSMS}
+                          </div>
+                        )}
+                        {columnNotifications[status].pendingSignatures > 0 && (
+                          <div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-slate-600/80 text-white text-xs font-medium">
+                            <PenTool size={10} />{columnNotifications[status].pendingSignatures}
+                          </div>
+                        )}
+                        {columnNotifications[status].paymentDue > 0 && (
+                          <div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-amber-600/80 text-white text-xs font-medium">
+                            <Euro size={10} />{columnNotifications[status].paymentDue}
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
                 </div>
 
                 {/* Column content */}
                 <div className={cn(
-                  'space-y-3 flex-1 overflow-y-auto pr-2 rounded-lg transition-all duration-300',
-                  isDropTarget && 'bg-gradient-to-b from-blue-50/80 to-blue-100/30 p-3 ring-2 ring-blue-400/50'
+                  'space-y-2 flex-1 overflow-y-auto pr-1 rounded-lg transition-all duration-300',
+                  isDropTarget && 'bg-yellow-900/5 p-2 ring-1 ring-yellow-500/30'
                 )}>
                   {leads.length === 0 ? (
                     <div className={cn(
