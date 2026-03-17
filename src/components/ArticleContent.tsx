@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { BookOpen, ChevronRight } from 'lucide-react';
 import { formatArticleForDisplay } from '@/lib/article-formatter';
+import '@/styles/blog.css';
 
 interface ArticleContentProps {
   content: string;

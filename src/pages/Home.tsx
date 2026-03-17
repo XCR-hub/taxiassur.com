@@ -1,52 +1,49 @@
-import React, { useEffect } from 'react';
+import React, { lazy, Suspense } from 'react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import Hero from '../components/Hero';
 import StickyCTA from '../components/StickyCTA';
-import Avantages from '../components/Avantages';
-import Steps from '../components/Steps';
-import FAQ from '../components/FAQ';
-import Avis from '../components/Avis';
 import SEOHead from '../components/SEOHead';
-import SocialProof from '../components/SocialProof';
-import TrustSignals from '../components/TrustSignals';
 import JsonLd from '../components/JsonLd';
-import PerformanceOptimizer from '../components/PerformanceOptimizer';
-import Newsletter from '../components/Newsletter';
-import LocalSEO from '../components/LocalSEO';
-import UltimateConversion from '../components/UltimateConversion';
-import TrustBadges from '../components/TrustBadges';
-import InstantQuoteCalculator from '../components/InstantQuoteCalculator';
-import DynamicReviews from '../components/DynamicReviews';
-import SubtleConversionHelper from '../components/SubtleConversionHelper';
-import InteractiveQuiz from '../components/InteractiveQuiz';
-import NewsSection from '../components/NewsSection';
 import { usePageTracking } from '../hooks/usePageTracking';
+
+const SocialProof = lazy(() => import('../components/SocialProof'));
+const Avantages = lazy(() => import('../components/Avantages'));
+const Steps = lazy(() => import('../components/Steps'));
+const FAQ = lazy(() => import('../components/FAQ'));
+const InstantQuoteCalculator = lazy(() => import('../components/InstantQuoteCalculator'));
+const DynamicReviews = lazy(() => import('../components/DynamicReviews'));
+const InteractiveQuiz = lazy(() => import('../components/InteractiveQuiz'));
+const Avis = lazy(() => import('../components/Avis'));
+const NewsSection = lazy(() => import('../components/NewsSection'));
+const LocalSEO = lazy(() => import('../components/LocalSEO'));
+const TrustSignals = lazy(() => import('../components/TrustSignals'));
+const TrustBadges = lazy(() => import('../components/TrustBadges'));
+const Newsletter = lazy(() => import('../components/Newsletter'));
+const SubtleConversionHelper = lazy(() => import('../components/SubtleConversionHelper'));
+const UltimateConversion = lazy(() => import('../components/UltimateConversion'));
+
+const SectionSkeleton = () => (
+  <div className="py-16 animate-pulse">
+    <div className="container-max">
+      <div className="h-8 bg-gray-800/50 rounded w-1/3 mx-auto mb-6" />
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {[1, 2, 3].map(i => (
+          <div key={i} className="h-32 bg-gray-800/30 rounded-xl" />
+        ))}
+      </div>
+    </div>
+  </div>
+);
 
 const Home: React.FC = () => {
   usePageTracking();
-
-  useEffect(() => {
-    localStorage.setItem('taxiassur_visited', 'true');
-
-    const preloadLinks = [
-      'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap'
-    ];
-
-    preloadLinks.forEach(href => {
-      const link = document.createElement('link');
-      link.rel = 'preload';
-      link.href = href;
-      link.as = 'style';
-      document.head.appendChild(link);
-    });
-  }, []);
 
   return (
     <>
       <SEOHead
         title="Assurance Taxi Pas Cher - Devis Gratuit 2 min | TaxiAssur Courtier ORIAS"
-        description="🚖 ASSURANCE TAXI PAS CHER : Devis GRATUIT 2 min ✓ Économisez 35% ✓ RC Pro incluse ✓ Courtier ORIAS ✓ Réponse 15min ✓ Tarifs négociés ✓ Service expert taxi"
+        description="ASSURANCE TAXI PAS CHER : Devis GRATUIT 2 min. Economisez 35% - RC Pro incluse - Courtier ORIAS - Reponse 15min - Tarifs negocies - Service expert taxi"
         keywords="assurance taxi, insurance for taxi, assurance taxi pas cher, taxi insurance cheap, courtier assurance taxi, devis assurance taxi gratuit, prix assurance taxi, taxi insurance cost, insurance for taxi drivers, rc professionnelle taxi, assurance taxi professionnel, insurance for taxi company, taxi insurance near me, how much is taxi insurance, assurance taxi france, assurance taxi paris, assurance taxi lyon, assurance taxi marseille"
         canonical="/"
       />
@@ -65,7 +62,7 @@ const Home: React.FC = () => {
         },
         {
           question: "What insurance is required for taxi drivers?",
-          answer: "Taxi drivers in France must have: 1) Third-party liability insurance (RC Pro - Responsabilité Civile Professionnelle), 2) Comprehensive vehicle insurance, 3) Passenger coverage. TaxiAssur provides all-in-one insurance packages for taxi drivers with RC Pro included."
+          answer: "Taxi drivers in France must have: 1) Third-party liability insurance (RC Pro), 2) Comprehensive vehicle insurance, 3) Passenger coverage. TaxiAssur provides all-in-one insurance packages for taxi drivers with RC Pro included."
         },
         {
           question: "Combien de temps pour recevoir mon devis ?",
@@ -80,83 +77,95 @@ const Home: React.FC = () => {
           answer: "Oui, grâce à la loi Hamon, vous pouvez résilier votre assurance taxi à tout moment après la première année. Nous gérons gratuitement toutes vos démarches de résiliation."
         }
       ]} />
-      
-      <PerformanceOptimizer>
-        <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-black">
-          <Header />
-          <main>
-            {/* 1. Hero avec formulaire intégré - Conversion immédiate */}
-            <Hero />
-            
-            {/* 2. Preuves sociales immédiates - Confiance */}
+
+      <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-black">
+        <Header />
+        <main>
+          <Hero />
+
+          <Suspense fallback={<SectionSkeleton />}>
             <SocialProof />
-            
-            {/* 3. Avantages concrets - Différenciation */}
+          </Suspense>
+
+          <Suspense fallback={<SectionSkeleton />}>
             <Avantages />
-            
-            {/* 4. Processus simple - Rassurance */}
+          </Suspense>
+
+          <Suspense fallback={<SectionSkeleton />}>
             <Steps />
-            
-            {/* 5. FAQ essentielles - Featured snippets */}
+          </Suspense>
+
+          <Suspense fallback={<SectionSkeleton />}>
             <FAQ />
-            
-            {/* 6. Calculateur devis instantané - Engagement */}
+          </Suspense>
+
+          <Suspense fallback={<SectionSkeleton />}>
             <InstantQuoteCalculator />
+          </Suspense>
 
-            {/* 7. Avis clients dynamiques - Social proof */}
+          <Suspense fallback={<SectionSkeleton />}>
             <DynamicReviews />
+          </Suspense>
 
-            {/* 8. Quiz interactif - Lead gen ludique */}
-            <section className="py-16 bg-gradient-to-br from-gray-950 via-gray-900 to-black">
+          <Suspense fallback={<SectionSkeleton />}>
+            <section className="py-12 sm:py-16 bg-gradient-to-br from-gray-950 via-gray-900 to-black">
               <div className="container mx-auto px-4">
-                <div className="text-center mb-12">
-                  <h2 className="text-4xl font-black mb-4 text-white">Testez Vos Connaissances !</h2>
-                  <p className="text-xl text-gray-300 font-semibold">5 questions pour devenir expert assurance taxi</p>
+                <div className="text-center mb-8 sm:mb-12">
+                  <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black mb-3 sm:mb-4 text-white">Testez Vos Connaissances !</h2>
+                  <p className="text-base sm:text-xl text-gray-300 font-semibold">5 questions pour devenir expert assurance taxi</p>
                 </div>
                 <InteractiveQuiz />
               </div>
             </section>
+          </Suspense>
 
-            {/* 9. Avis clients classiques - Social proof */}
+          <Suspense fallback={<SectionSkeleton />}>
             <Avis />
+          </Suspense>
 
-            {/* 9.5. Actualités - News section */}
+          <Suspense fallback={<SectionSkeleton />}>
             <NewsSection limit={3} showTitle={true} />
+          </Suspense>
 
-            {/* 10. SEO local - Pages villes */}
+          <Suspense fallback={<SectionSkeleton />}>
             <LocalSEO />
+          </Suspense>
 
-            {/* 11. Signaux de confiance - Autorité */}
+          <Suspense fallback={<SectionSkeleton />}>
             <TrustSignals />
+          </Suspense>
 
-            {/* 11.5. Badges de confiance professionnels */}
-            <section className="py-16 bg-white border border-yellow-100">
+          <Suspense fallback={<SectionSkeleton />}>
+            <section className="py-12 sm:py-16 bg-white border border-yellow-100">
               <div className="container-max">
                 <TrustBadges variant="compact" showLogos={false} />
-                <div className="text-center mt-8">
+                <div className="text-center mt-6 sm:mt-8">
                   <a
                     href="/confiance-certifications"
-                    className="inline-block bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-gray-900 font-semibold font-bold px-8 py-4 rounded-xl transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+                    className="inline-block bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-gray-900 font-bold px-6 sm:px-8 py-3 sm:py-4 rounded-xl transition-all shadow-lg hover:shadow-xl"
                   >
                     En savoir plus sur nos certifications
                   </a>
                 </div>
               </div>
             </section>
+          </Suspense>
 
-            {/* 12. Newsletter - Engagement */}
+          <Suspense fallback={<SectionSkeleton />}>
             <Newsletter />
+          </Suspense>
 
-            {/* 13. Aide conversion subtile et intelligente */}
+          <Suspense fallback={null}>
             <SubtleConversionHelper />
-            
-            {/* 10. Conversion ultime - CTA final */}
+          </Suspense>
+
+          <Suspense fallback={<SectionSkeleton />}>
             <UltimateConversion />
-          </main>
-          <Footer />
-          <StickyCTA />
-        </div>
-      </PerformanceOptimizer>
+          </Suspense>
+        </main>
+        <Footer />
+        <StickyCTA />
+      </div>
     </>
   );
 };

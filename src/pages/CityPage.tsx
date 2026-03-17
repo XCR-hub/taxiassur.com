@@ -6,6 +6,7 @@ import Seo from '../components/Seo';
 import JsonLd from '../components/JsonLd';
 import LeadForm from '../components/LeadForm';
 import AITaxiBackground from '../components/AITaxiBackground';
+import '@/styles/city-pages.css';
 import { generateCityPages } from '../lib/ping';
 import { MapPin, Phone, CheckCircle, Users, Award, TrendingDown, Shield, Clock, Star, Target, Zap, Crown, Gift } from 'lucide-react';
 import Card from '../components/Card';

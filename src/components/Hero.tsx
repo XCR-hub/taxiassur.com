@@ -80,8 +80,10 @@ const Hero: React.FC = () => {
   };
 
   return (
-    <section id="devis" className="relative bg-gradient-to-br from-gray-950 via-gray-900 to-black text-white py-20 overflow-hidden">
-      <AITaxiBackground section="hero" intensity="medium" />
+    <section id="devis" className="relative bg-gradient-to-br from-gray-950 via-gray-900 to-black text-white py-14 sm:py-20 overflow-hidden">
+      <div className="hidden sm:block">
+        <AITaxiBackground section="hero" intensity="medium" />
+      </div>
       
       <div className="container-max relative z-20">
         <div className="lg:flex lg:items-center lg:space-x-12">
@@ -179,17 +181,17 @@ const Hero: React.FC = () => {
 
             {/* Phone CTA */}
             <div className="text-center mt-4 sm:mt-6">
-              <button
+              <a
                 href="tel:0180855786"
-                onClick={() => window.open('tel:0180855786')}
                 className="inline-flex items-center space-x-2 sm:space-x-3 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-black font-bold py-2 sm:py-3 px-4 sm:px-6 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl border-2 border-yellow-400 hover:scale-105"
+                aria-label="Appeler TaxiAssur au 01 80 85 57 86"
               >
-                📞
+                <Phone size={18} className="flex-shrink-0" aria-hidden="true" />
                 <div className="text-left">
                   <div className="text-base sm:text-lg font-bold">01 80 85 57 86</div>
                   <div className="text-xs opacity-90 hidden sm:block">Ligne directe expert</div>
                 </div>
-              </button>
+              </a>
             </div>
           </div>
 
@@ -356,8 +358,8 @@ const Hero: React.FC = () => {
                       </>
                     ) : (
                       <>
-                        <Send size={18} className="sm:w-5 sm:h-5" />
-                        <span className="text-sm sm:text-base">🎯 OBTENIR MON DEVIS GRATUIT</span>
+                        <Send size={18} className="sm:w-5 sm:h-5" aria-hidden="true" />
+                        <span className="text-sm sm:text-base">OBTENIR MON DEVIS GRATUIT</span>
                       </>
                     )}
                   </button>
