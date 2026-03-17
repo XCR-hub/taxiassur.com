@@ -32,10 +32,10 @@ interface LeadData {
 const STATUS_CONFIG: Record<string, { label: string; bg: string; text: string; border: string; icon: any }> = {
   success: { label: 'Payé', bg: 'bg-green-50', text: 'text-green-700', border: 'border-green-200', icon: CheckCircle },
   pending: { label: 'En attente', bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200', icon: Clock },
-  processing: { label: 'En cours', bg: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-200', icon: Loader },
+  processing: { label: 'En cours', bg: 'bg-yellow-50', text: 'text-yellow-700', border: 'border-yellow-200', icon: Loader },
   failed: { label: 'Refusé', bg: 'bg-red-50', text: 'text-red-700', border: 'border-red-200', icon: XCircle },
   cancelled: { label: 'Annulé', bg: 'bg-gray-50', text: 'text-gray-600', border: 'border-gray-200', icon: XCircle },
-  refunded: { label: 'Remboursé', bg: 'bg-purple-50', text: 'text-purple-700', border: 'border-purple-200', icon: RefreshCw },
+  refunded: { label: 'Remboursé', bg: 'bg-gray-100', text: 'text-gray-700', border: 'border-gray-300', icon: RefreshCw },
 };
 
 function StatusBadge({ status }: { status: string }) {

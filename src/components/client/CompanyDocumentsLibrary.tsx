@@ -166,7 +166,7 @@ export default function CompanyDocumentsLibrary({ companyId, showAllCompanies = 
                 onClick={() => setSelectedCompany(company.id)}
                 className={`p-3 border rounded-lg text-center transition-all ${
                   selectedCompany === company.id
-                    ? 'border-blue-600 bg-blue-50 text-blue-900'
+                    ? 'border-yellow-600 bg-yellow-50 text-yellow-900'
                     : 'border-gray-300 hover:border-gray-400'
                 }`}
               >
@@ -209,7 +209,7 @@ export default function CompanyDocumentsLibrary({ companyId, showAllCompanies = 
                 return (
                   <div key={docType} className="p-4">
                     <div className="flex items-start gap-3 mb-3">
-                      <Icon className="w-5 h-5 text-blue-600 mt-0.5" />
+                      <Icon className="w-5 h-5 text-yellow-600 mt-0.5" />
                       <div>
                         <h4 className="font-semibold">{typeInfo.label}</h4>
                         <p className="text-sm text-gray-600">{typeInfo.description}</p>
@@ -255,7 +255,7 @@ export default function CompanyDocumentsLibrary({ companyId, showAllCompanies = 
                             <a
                               href={doc.file_url}
                               download
-                              className="px-3 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center gap-1.5 text-sm"
+                              className="px-3 py-1.5 bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-700 hover:to-yellow-600 text-black font-semibold rounded flex items-center gap-1.5 text-sm"
                             >
                               <Download className="w-3.5 h-3.5" />
                               Télécharger
@@ -272,10 +272,10 @@ export default function CompanyDocumentsLibrary({ companyId, showAllCompanies = 
         </div>
       )}
 
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
         <div className="flex items-start gap-3">
-          <Shield className="w-5 h-5 text-blue-600 mt-0.5" />
-          <div className="text-sm text-blue-800">
+          <Shield className="w-5 h-5 text-yellow-600 mt-0.5" />
+          <div className="text-sm text-yellow-800">
             <p className="font-medium mb-1">Documents contractuels importants</p>
             <p>
               Nous vous recommandons de lire attentivement ces documents avant la souscription.

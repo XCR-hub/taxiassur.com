@@ -489,7 +489,7 @@ export default function ClientInsuranceManager() {
 
   const getClaimStatusBadge = (status: string) => {
     const styles: Record<string, string> = {
-      'declared': 'bg-blue-100 text-blue-700 border-blue-200',
+      'declared': 'bg-yellow-100 text-yellow-700 border-yellow-200',
       'in_progress': 'bg-yellow-100 text-yellow-700 border-yellow-200',
       'expertise': 'bg-orange-100 text-orange-700 border-orange-200',
       'closed': 'bg-green-100 text-green-700 border-green-200',
@@ -523,7 +523,7 @@ export default function ClientInsuranceManager() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+        <Loader2 className="h-8 w-8 animate-spin text-yellow-500" />
       </div>
     );
   }
@@ -536,7 +536,7 @@ export default function ClientInsuranceManager() {
           <h2 className="text-xl font-bold text-gray-900 mb-2">Client introuvable</h2>
           <button
             onClick={() => navigate('/backoffice/clients')}
-            className="text-blue-600 hover:underline"
+            className="text-yellow-600 hover:underline"
           >
             Retour à la liste
           </button>
@@ -588,7 +588,7 @@ export default function ClientInsuranceManager() {
               </button>
               <button
                 onClick={() => window.open(`/espace-client/${client.access_token || client.id}`, '_blank')}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-700 hover:to-yellow-600 text-black rounded-lg transition-colors font-semibold"
               >
                 <Eye size={18} />
                 Voir comme client
@@ -609,7 +609,7 @@ export default function ClientInsuranceManager() {
                   ? 'bg-red-50 border-red-200'
                   : alert.severity === 'warning'
                   ? 'bg-yellow-50 border-yellow-200'
-                  : 'bg-blue-50 border-blue-200'
+                  : 'bg-yellow-50 border-yellow-200'
               }`}
             >
               <div className="flex items-start gap-3">
@@ -618,7 +618,7 @@ export default function ClientInsuranceManager() {
                 ) : alert.severity === 'warning' ? (
                   <AlertCircle className="text-yellow-600 flex-shrink-0 mt-0.5" size={20} />
                 ) : (
-                  <Bell className="text-blue-600 flex-shrink-0 mt-0.5" size={20} />
+                  <Bell className="text-yellow-600 flex-shrink-0 mt-0.5" size={20} />
                 )}
                 <div>
                   <h4 className="font-semibold text-gray-900">{alert.title}</h4>
@@ -661,7 +661,7 @@ export default function ClientInsuranceManager() {
                   onClick={() => setActiveTab(tab.id as TabType)}
                   className={`flex items-center gap-2 px-1 py-4 border-b-2 font-medium text-sm transition-colors ${
                     activeTab === tab.id
-                      ? 'border-blue-500 text-blue-600'
+                      ? 'border-yellow-500 text-yellow-600'
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                   }`}
                 >
@@ -683,7 +683,7 @@ export default function ClientInsuranceManager() {
               {!editingProfile ? (
                 <button
                   onClick={() => setEditingProfile(true)}
-                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-700 hover:to-yellow-600 text-black rounded-lg transition-colors font-semibold"
                 >
                   <Edit size={18} />
                   Modifier
@@ -718,7 +718,7 @@ export default function ClientInsuranceManager() {
                   <select
                     value={editedProfile.taxi_type || ''}
                     onChange={(e) => setEditedProfile({ ...editedProfile, taxi_type: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
                   >
                     <option value="">Sélectionner...</option>
                     <option value="artisan">Artisan</option>
@@ -738,7 +738,7 @@ export default function ClientInsuranceManager() {
                         type="text"
                         value={editedProfile.company_name || ''}
                         onChange={(e) => setEditedProfile({ ...editedProfile, company_name: e.target.value })}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
                       />
                     ) : (
                       <p className="text-gray-900">{taxiProfile?.company_name || '-'}</p>
@@ -752,7 +752,7 @@ export default function ClientInsuranceManager() {
                         type="text"
                         value={editedProfile.siret || ''}
                         onChange={(e) => setEditedProfile({ ...editedProfile, siret: e.target.value })}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
                       />
                     ) : (
                       <p className="text-gray-900">{taxiProfile?.siret || '-'}</p>
@@ -768,7 +768,7 @@ export default function ClientInsuranceManager() {
                     type="text"
                     value={editedProfile.ads_number || ''}
                     onChange={(e) => setEditedProfile({ ...editedProfile, ads_number: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
                   />
                 ) : (
                   <p className="text-gray-900">{taxiProfile?.ads_number || '-'}</p>
@@ -782,7 +782,7 @@ export default function ClientInsuranceManager() {
                     type="text"
                     value={editedProfile.ads_issuing_city || ''}
                     onChange={(e) => setEditedProfile({ ...editedProfile, ads_issuing_city: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
                   />
                 ) : (
                   <p className="text-gray-900">{taxiProfile?.ads_issuing_city || '-'}</p>
@@ -796,7 +796,7 @@ export default function ClientInsuranceManager() {
                     type="text"
                     value={editedProfile.plate_number || ''}
                     onChange={(e) => setEditedProfile({ ...editedProfile, plate_number: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
                   />
                 ) : (
                   <p className="text-gray-900">{taxiProfile?.plate_number || '-'}</p>
@@ -810,7 +810,7 @@ export default function ClientInsuranceManager() {
                     type="text"
                     value={editedProfile.vehicle_brand || ''}
                     onChange={(e) => setEditedProfile({ ...editedProfile, vehicle_brand: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
                   />
                 ) : (
                   <p className="text-gray-900">{taxiProfile?.vehicle_brand || '-'}</p>
@@ -824,7 +824,7 @@ export default function ClientInsuranceManager() {
                     type="text"
                     value={editedProfile.vehicle_model || ''}
                     onChange={(e) => setEditedProfile({ ...editedProfile, vehicle_model: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
                   />
                 ) : (
                   <p className="text-gray-900">{taxiProfile?.vehicle_model || '-'}</p>
@@ -837,7 +837,7 @@ export default function ClientInsuranceManager() {
                   <select
                     value={editedProfile.vehicle_energy || ''}
                     onChange={(e) => setEditedProfile({ ...editedProfile, vehicle_energy: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
                   >
                     <option value="">Sélectionner...</option>
                     <option value="essence">Essence</option>
@@ -860,7 +860,7 @@ export default function ClientInsuranceManager() {
               <h2 className="text-xl font-bold text-gray-900">Contrats d'assurance</h2>
               <button
                 onClick={openNewContractForm}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium"
+                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-700 hover:to-yellow-600 text-black rounded-lg transition-colors font-semibold"
               >
                 <Plus size={18} />
                 Nouveau contrat
@@ -897,7 +897,7 @@ export default function ClientInsuranceManager() {
                         <select
                           value={contractForm.contract_type}
                           onChange={(e) => setContractForm({ ...contractForm, contract_type: e.target.value })}
-                          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm"
+                          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 bg-white text-sm"
                         >
                           <option value="auto_taxi">Auto Taxi</option>
                           <option value="rc_pro_taxi">RC Pro Taxi</option>
@@ -913,7 +913,7 @@ export default function ClientInsuranceManager() {
                         <select
                           value={contractForm.status}
                           onChange={(e) => setContractForm({ ...contractForm, status: e.target.value })}
-                          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm"
+                          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 bg-white text-sm"
                         >
                           <option value="active">Actif</option>
                           <option value="quote">Devis</option>
@@ -929,7 +929,7 @@ export default function ClientInsuranceManager() {
                           value={contractForm.insurer_name}
                           onChange={(e) => setContractForm({ ...contractForm, insurer_name: e.target.value })}
                           placeholder="Ex: Generali, MFA, Solly Azar..."
-                          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 text-sm"
                         />
                       </div>
 
@@ -940,7 +940,7 @@ export default function ClientInsuranceManager() {
                           value={contractForm.contract_number}
                           onChange={(e) => setContractForm({ ...contractForm, contract_number: e.target.value })}
                           placeholder="Ex: POL-2026-001234"
-                          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 text-sm"
                         />
                       </div>
 
@@ -949,7 +949,7 @@ export default function ClientInsuranceManager() {
                         <select
                           value={contractForm.payment_frequency}
                           onChange={(e) => setContractForm({ ...contractForm, payment_frequency: e.target.value })}
-                          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm"
+                          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 bg-white text-sm"
                         >
                           <option value="annuel">Annuel</option>
                           <option value="mensuel">Mensuel</option>
@@ -966,7 +966,7 @@ export default function ClientInsuranceManager() {
                           value={contractForm.premium_ttc}
                           onChange={(e) => setContractForm({ ...contractForm, premium_ttc: e.target.value })}
                           placeholder="0.00"
-                          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 text-sm"
                         />
                       </div>
 
@@ -979,7 +979,7 @@ export default function ClientInsuranceManager() {
                           value={contractForm.premium_ht}
                           onChange={(e) => setContractForm({ ...contractForm, premium_ht: e.target.value })}
                           placeholder="0.00"
-                          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 text-sm"
                         />
                       </div>
 
@@ -989,7 +989,7 @@ export default function ClientInsuranceManager() {
                           type="date"
                           value={contractForm.effective_date}
                           onChange={(e) => setContractForm({ ...contractForm, effective_date: e.target.value })}
-                          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 text-sm"
                         />
                       </div>
 
@@ -999,7 +999,7 @@ export default function ClientInsuranceManager() {
                           type="date"
                           value={contractForm.renewal_date}
                           onChange={(e) => setContractForm({ ...contractForm, renewal_date: e.target.value })}
-                          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 text-sm"
                         />
                       </div>
 
@@ -1012,7 +1012,7 @@ export default function ClientInsuranceManager() {
                           value={contractForm.franchise_amount}
                           onChange={(e) => setContractForm({ ...contractForm, franchise_amount: e.target.value })}
                           placeholder="0.00"
-                          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 text-sm"
                         />
                       </div>
 
@@ -1023,7 +1023,7 @@ export default function ClientInsuranceManager() {
                           onChange={(e) => setContractForm({ ...contractForm, main_guarantees: e.target.value })}
                           rows={2}
                           placeholder="RC, Vol, Incendie, Bris de glaces..."
-                          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm resize-none"
+                          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 text-sm resize-none"
                         />
                       </div>
 
@@ -1034,7 +1034,7 @@ export default function ClientInsuranceManager() {
                           onChange={(e) => setContractForm({ ...contractForm, internal_notes: e.target.value })}
                           rows={2}
                           placeholder="Notes de suivi, conditions particulières..."
-                          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm resize-none"
+                          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 text-sm resize-none"
                         />
                       </div>
                     </div>
@@ -1051,7 +1051,7 @@ export default function ClientInsuranceManager() {
                     <button
                       onClick={saveContract}
                       disabled={savingContract}
-                      className="flex items-center gap-2 px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium text-sm disabled:opacity-50"
+                      className="flex items-center gap-2 px-5 py-2 bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-700 hover:to-yellow-600 text-black rounded-lg transition-colors font-semibold text-sm disabled:opacity-50"
                     >
                       {savingContract ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
                       {editingContractId ? 'Mettre à jour' : 'Créer le contrat'}
@@ -1068,7 +1068,7 @@ export default function ClientInsuranceManager() {
                 <p className="text-gray-500 text-sm mb-4">Créez le premier contrat pour ce client</p>
                 <button
                   onClick={openNewContractForm}
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm font-medium"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-700 hover:to-yellow-600 text-black rounded-lg transition-colors text-sm font-semibold"
                 >
                   <Plus size={16} />
                   Ajouter un contrat
@@ -1079,7 +1079,7 @@ export default function ClientInsuranceManager() {
                 {contracts.map(contract => (
                   <div
                     key={contract.id}
-                    className="bg-white border border-gray-200 rounded-xl p-6 hover:border-blue-300 hover:shadow-sm transition-all"
+                    className="bg-white border border-gray-200 rounded-xl p-6 hover:border-yellow-300 hover:shadow-sm transition-all"
                   >
                     <div className="flex items-start justify-between mb-4">
                       <div>
@@ -1096,7 +1096,7 @@ export default function ClientInsuranceManager() {
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className="text-2xl font-bold text-blue-600">
+                        <p className="text-2xl font-bold text-yellow-600">
                           {contract.premium_ttc?.toFixed(2)} €
                         </p>
                         <p className="text-sm text-gray-500 capitalize">{contract.payment_frequency}</p>
@@ -1125,7 +1125,7 @@ export default function ClientInsuranceManager() {
                       <div className="flex items-center gap-1.5">
                         <button
                           onClick={() => openEditContractForm(contract)}
-                          className="flex items-center gap-1 px-3 py-1.5 text-blue-600 hover:bg-blue-50 border border-blue-200 rounded-lg transition-colors text-xs font-medium"
+                          className="flex items-center gap-1 px-3 py-1.5 text-yellow-700 hover:bg-yellow-50 border border-yellow-200 rounded-lg transition-colors text-xs font-medium"
                         >
                           <Edit size={14} />
                           Modifier
@@ -1152,7 +1152,7 @@ export default function ClientInsuranceManager() {
               <h2 className="text-xl font-bold text-gray-900">Sinistres</h2>
               <button
                 onClick={openNewClaimForm}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium"
+                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-700 hover:to-yellow-600 text-black rounded-lg transition-colors font-semibold"
               >
                 <Plus size={18} />
                 Déclarer un sinistre
@@ -1184,15 +1184,15 @@ export default function ClientInsuranceManager() {
                     )}
 
                     {contracts.length > 0 && (
-                      <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-                        <label className="block text-sm font-semibold text-blue-800 mb-2 flex items-center gap-2">
+                      <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
+                        <label className="block text-sm font-semibold text-yellow-800 mb-2 flex items-center gap-2">
                           <FileText size={15} />
                           Contrat concerné
                         </label>
                         <select
                           value={claimForm.contract_id}
                           onChange={(e) => setClaimForm({ ...claimForm, contract_id: e.target.value })}
-                          className="w-full px-3 py-2.5 border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm"
+                          className="w-full px-3 py-2.5 border border-yellow-200 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 bg-white text-sm"
                         >
                           <option value="">-- Aucun contrat associé --</option>
                           {contracts.map(c => (
@@ -1207,7 +1207,7 @@ export default function ClientInsuranceManager() {
                         {claimForm.contract_id && (() => {
                           const selected = contracts.find(c => c.id === claimForm.contract_id);
                           return selected ? (
-                            <p className="mt-2 text-xs text-blue-600">
+                            <p className="mt-2 text-xs text-yellow-600">
                               Prime : <strong>{selected.premium_ttc.toFixed(2)} €</strong> / {selected.payment_frequency} — Renouvellement : {new Date(selected.renewal_date).toLocaleDateString('fr-FR')}
                             </p>
                           ) : null;
@@ -1221,7 +1221,7 @@ export default function ClientInsuranceManager() {
                         <select
                           value={claimForm.claim_type}
                           onChange={(e) => setClaimForm({ ...claimForm, claim_type: e.target.value })}
-                          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm"
+                          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 bg-white text-sm"
                         >
                           <option value="accident">Accident</option>
                           <option value="vol">Vol</option>
@@ -1238,7 +1238,7 @@ export default function ClientInsuranceManager() {
                         <select
                           value={claimForm.status}
                           onChange={(e) => setClaimForm({ ...claimForm, status: e.target.value })}
-                          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm"
+                          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 bg-white text-sm"
                         >
                           <option value="declared">Déclaré</option>
                           <option value="in_progress">En cours</option>
@@ -1254,7 +1254,7 @@ export default function ClientInsuranceManager() {
                           type="date"
                           value={claimForm.claim_date}
                           onChange={(e) => setClaimForm({ ...claimForm, claim_date: e.target.value })}
-                          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 text-sm"
                         />
                       </div>
 
@@ -1265,7 +1265,7 @@ export default function ClientInsuranceManager() {
                           value={claimForm.location}
                           onChange={(e) => setClaimForm({ ...claimForm, location: e.target.value })}
                           placeholder="Ex: Paris 12ème, Autoroute A6..."
-                          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 text-sm"
                         />
                       </div>
 
@@ -1276,7 +1276,7 @@ export default function ClientInsuranceManager() {
                           value={claimForm.vehicle_plate}
                           onChange={(e) => setClaimForm({ ...claimForm, vehicle_plate: e.target.value.toUpperCase() })}
                           placeholder="Ex: AB-123-CD"
-                          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 text-sm"
                         />
                       </div>
 
@@ -1287,7 +1287,7 @@ export default function ClientInsuranceManager() {
                           value={claimForm.insurer_claim_number}
                           onChange={(e) => setClaimForm({ ...claimForm, insurer_claim_number: e.target.value })}
                           placeholder="Numéro fourni par l'assureur"
-                          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 text-sm"
                         />
                       </div>
 
@@ -1300,7 +1300,7 @@ export default function ClientInsuranceManager() {
                           value={claimForm.estimated_amount}
                           onChange={(e) => setClaimForm({ ...claimForm, estimated_amount: e.target.value })}
                           placeholder="0.00"
-                          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 text-sm"
                         />
                       </div>
 
@@ -1311,7 +1311,7 @@ export default function ClientInsuranceManager() {
                           onChange={(e) => setClaimForm({ ...claimForm, circumstances: e.target.value })}
                           rows={3}
                           placeholder="Décrivez les circonstances du sinistre..."
-                          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm resize-none"
+                          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 text-sm resize-none"
                         />
                       </div>
 
@@ -1322,7 +1322,7 @@ export default function ClientInsuranceManager() {
                           onChange={(e) => setClaimForm({ ...claimForm, internal_notes: e.target.value })}
                           rows={2}
                           placeholder="Notes de suivi interne..."
-                          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm resize-none"
+                          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 text-sm resize-none"
                         />
                       </div>
                     </div>
@@ -1339,7 +1339,7 @@ export default function ClientInsuranceManager() {
                     <button
                       onClick={saveClaim}
                       disabled={savingClaim}
-                      className="flex items-center gap-2 px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium text-sm disabled:opacity-50"
+                      className="flex items-center gap-2 px-5 py-2 bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-700 hover:to-yellow-600 text-black rounded-lg transition-colors font-semibold text-sm disabled:opacity-50"
                     >
                       {savingClaim ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
                       {editingClaimId ? 'Mettre à jour' : 'Déclarer le sinistre'}
@@ -1356,7 +1356,7 @@ export default function ClientInsuranceManager() {
                 <p className="text-gray-500 text-sm mb-4">Déclarez le premier sinistre pour ce client</p>
                 <button
                   onClick={openNewClaimForm}
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm font-medium"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-700 hover:to-yellow-600 text-black rounded-lg transition-colors text-sm font-semibold"
                 >
                   <Plus size={16} />
                   Déclarer un sinistre
@@ -1367,7 +1367,7 @@ export default function ClientInsuranceManager() {
                 {claims.map(claim => (
                   <div
                     key={claim.id}
-                    className="bg-white border border-gray-200 rounded-xl p-6 hover:border-blue-300 hover:shadow-sm transition-all"
+                    className="bg-white border border-gray-200 rounded-xl p-6 hover:border-yellow-300 hover:shadow-sm transition-all"
                   >
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center gap-3">
@@ -1383,7 +1383,7 @@ export default function ClientInsuranceManager() {
                             {claim.insurer_claim_number && ` • N° ${claim.insurer_claim_number}`}
                             {(claim as any).contract_id && (() => {
                               const c = contracts.find(ct => ct.id === (claim as any).contract_id);
-                              return c ? <span className="ml-1 inline-flex items-center gap-1 text-blue-600 font-medium"><FileText size={10} />{c.insurer_name}{c.contract_number ? ' N° ' + c.contract_number : ''}</span> : null;
+                              return c ? <span className="ml-1 inline-flex items-center gap-1 text-yellow-600 font-medium"><FileText size={10} />{c.insurer_name}{c.contract_number ? ' N° ' + c.contract_number : ''}</span> : null;
                             })()}
                           </p>
                         </div>
@@ -1408,7 +1408,7 @@ export default function ClientInsuranceManager() {
                       <div className="flex items-center gap-1.5">
                         <button
                           onClick={() => openEditClaimForm(claim)}
-                          className="flex items-center gap-1 px-3 py-1.5 text-blue-600 hover:bg-blue-50 border border-blue-200 rounded-lg transition-colors text-xs font-medium"
+                          className="flex items-center gap-1 px-3 py-1.5 text-yellow-700 hover:bg-yellow-50 border border-yellow-200 rounded-lg transition-colors text-xs font-medium"
                         >
                           <Edit size={14} />
                           Modifier
@@ -1443,7 +1443,7 @@ export default function ClientInsuranceManager() {
           <div>
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-bold text-gray-900">Tâches à faire</h2>
-              <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">
+              <button className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-700 hover:to-yellow-600 text-black rounded-lg transition-colors font-semibold">
                 <Plus size={18} />
                 Nouvelle tâche
               </button>
@@ -1459,12 +1459,12 @@ export default function ClientInsuranceManager() {
                 {tasks.map(task => (
                   <div
                     key={task.id}
-                    className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:border-blue-300 transition-colors"
+                    className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:border-yellow-300 transition-colors"
                   >
                     <div className="flex items-center gap-4">
                       <input
                         type="checkbox"
-                        className="w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                        className="w-5 h-5 text-yellow-500 rounded border-gray-300 focus:ring-yellow-500"
                       />
                       <div>
                         <h4 className="font-semibold text-gray-900">{task.title}</h4>

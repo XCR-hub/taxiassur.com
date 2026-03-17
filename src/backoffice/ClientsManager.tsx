@@ -1,11 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import {
-  Users, Search, Filter, ChevronRight, Phone, Mail, MapPin, Calendar,
-  FileText, Receipt, Clock, CheckCircle2, AlertCircle, MoreVertical,
-  TrendingUp, Shield, DollarSign, Car, Building2, Download, Send,
-  MessageSquare, Eye, Edit, Loader2, ArrowUpDown, Activity
-} from 'lucide-react';
+import { Users, Search, Filter, ChevronRight, Phone, Mail, MapPin, Calendar, FileText, Receipt, Clock, CheckCircle2, AlertCircle, MoreVertical, TrendingUp, Shield, DollarSign, Car, Building2, Download, Send, MessageSquare, Eye, CreditCard as Edit, Loader2, ArrowUpDown, Activity } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 interface Client {
@@ -131,21 +126,21 @@ export default function ClientsManager() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+        <Loader2 className="h-8 w-8 animate-spin text-yellow-500" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/20 to-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-yellow-50/10 to-gray-50">
       <div className="p-6 max-w-[1800px] mx-auto">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-                <div className="p-2 bg-blue-600 rounded-xl shadow-lg">
-                  <Users className="h-8 w-8 text-white" />
+                <div className="p-2 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-xl shadow-lg">
+                  <Users className="h-8 w-8 text-black" />
                 </div>
                 Gestion des Clients Actifs
               </h1>
@@ -153,7 +148,7 @@ export default function ClientsManager() {
                 Suivi et gestion de votre portefeuille clients
               </p>
             </div>
-            <button className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 shadow-lg hover:shadow-xl transition-all font-medium">
+            <button className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-yellow-600 to-yellow-500 text-black rounded-xl hover:from-yellow-700 hover:to-yellow-600 shadow-lg hover:shadow-xl transition-all font-semibold">
               <Download className="h-5 w-5" />
               Exporter
             </button>
@@ -165,8 +160,8 @@ export default function ClientsManager() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <div className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all border border-gray-100 group">
               <div className="flex items-center justify-between mb-4">
-                <div className="p-3 bg-blue-50 rounded-xl group-hover:bg-blue-100 transition-colors">
-                  <Users className="h-7 w-7 text-blue-600" />
+                <div className="p-3 bg-yellow-50 rounded-xl group-hover:bg-yellow-100 transition-colors">
+                  <Users className="h-7 w-7 text-yellow-600" />
                 </div>
                 <div className="text-right">
                   <p className="text-3xl font-bold text-gray-900">{stats.total_clients}</p>
@@ -235,7 +230,7 @@ export default function ClientsManager() {
                   placeholder="Rechercher un client (nom, email, téléphone)..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white transition-all"
+                  className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 focus:bg-white transition-all"
                 />
               </div>
             </div>
@@ -247,7 +242,7 @@ export default function ClientsManager() {
                 <select
                   value={filterCompany}
                   onChange={(e) => setFilterCompany(e.target.value)}
-                  className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white appearance-none transition-all cursor-pointer"
+                  className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 focus:bg-white appearance-none transition-all cursor-pointer"
                 >
                   <option value="all">Toutes les compagnies</option>
                   {companies.map(company => (
@@ -264,7 +259,7 @@ export default function ClientsManager() {
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value as any)}
-                  className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white appearance-none transition-all cursor-pointer"
+                  className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 focus:bg-white appearance-none transition-all cursor-pointer"
                 >
                   <option value="date">Date mise à jour</option>
                   <option value="name">Nom (A-Z)</option>
@@ -277,7 +272,7 @@ export default function ClientsManager() {
 
         {/* Results Count */}
         <div className="mb-4 text-sm font-medium text-gray-700 flex items-center gap-2">
-          <div className="h-2 w-2 bg-blue-500 rounded-full"></div>
+          <div className="h-2 w-2 bg-yellow-500 rounded-full"></div>
           {filteredClients.length} client{filteredClients.length > 1 ? 's' : ''} trouvé{filteredClients.length > 1 ? 's' : ''}
         </div>
 
@@ -286,7 +281,7 @@ export default function ClientsManager() {
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="bg-gradient-to-r from-gray-50 to-blue-50/30 border-b-2 border-gray-200">
+                <tr className="bg-gradient-to-r from-gray-50 to-yellow-50/30 border-b-2 border-gray-200">
                   <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
                     Client
                   </th>
@@ -309,11 +304,11 @@ export default function ClientsManager() {
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {filteredClients.map((client) => (
-                  <tr key={client.id} className="hover:bg-blue-50/30 transition-colors group">
+                  <tr key={client.id} className="hover:bg-yellow-50/30 transition-colors group">
                     <td className="px-6 py-5">
                       <div className="flex items-center gap-3">
-                        <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-md">
-                          <span className="text-white font-bold text-sm">
+                        <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-yellow-500 to-yellow-600 flex items-center justify-center shadow-md">
+                          <span className="text-black font-bold text-sm">
                             {client.first_name?.[0]}{client.last_name?.[0]}
                           </span>
                         </div>
@@ -331,8 +326,8 @@ export default function ClientsManager() {
                     <td className="px-6 py-5">
                       <div className="space-y-2">
                         <div className="flex items-center gap-2 text-sm text-gray-700">
-                          <Mail className="h-4 w-4 text-blue-500" />
-                          <a href={`mailto:${client.email}`} className="hover:text-blue-600 hover:underline font-medium">
+                          <Mail className="h-4 w-4 text-yellow-500" />
+                          <a href={`mailto:${client.email}`} className="hover:text-yellow-600 hover:underline font-medium">
                             {client.email}
                           </a>
                         </div>
@@ -372,8 +367,8 @@ export default function ClientsManager() {
                     </td>
                     <td className="px-6 py-5">
                       <div className="flex items-center gap-2">
-                        <div className="p-1.5 bg-blue-50 rounded-lg">
-                          <Calendar className="h-4 w-4 text-blue-600" />
+                        <div className="p-1.5 bg-yellow-50 rounded-lg">
+                          <Calendar className="h-4 w-4 text-yellow-600" />
                         </div>
                         <span className="text-sm font-medium text-gray-700">
                           {client.contract_start_date
@@ -387,7 +382,7 @@ export default function ClientsManager() {
                       <div className="flex items-center gap-2">
                         <Link
                           to={`/backoffice/clients/${client.id}`}
-                          className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-all text-sm font-semibold shadow-md hover:shadow-lg"
+                          className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-700 hover:to-yellow-600 text-black rounded-xl transition-all text-sm font-semibold shadow-md hover:shadow-lg"
                           title="Gérer ce client"
                         >
                           <Shield className="h-4 w-4" />
@@ -439,15 +434,15 @@ export default function ClientsManager() {
         </div>
 
         {/* Quick Info */}
-        <div className="mt-8 bg-gradient-to-br from-blue-50 to-cyan-50 border-2 border-blue-200 rounded-2xl p-6 shadow-lg">
+        <div className="mt-8 bg-gradient-to-br from-yellow-50 to-amber-50 border-2 border-yellow-200 rounded-2xl p-6 shadow-lg">
           <div className="flex items-start gap-4">
-            <div className="p-3 bg-blue-600 rounded-xl shadow-md flex-shrink-0">
-              <Activity className="h-6 w-6 text-white" />
+            <div className="p-3 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-xl shadow-md flex-shrink-0">
+              <Activity className="h-6 w-6 text-black" />
             </div>
             <div>
-              <p className="font-bold text-blue-900 text-lg mb-2">Gestion des Clients Actifs</p>
-              <p className="text-blue-800 leading-relaxed">
-                Cette page affiche tous les prospects transformés en clients actifs (statut <span className="font-semibold bg-blue-100 px-2 py-0.5 rounded">CLIENT_ACTIF</span>).
+              <p className="font-bold text-yellow-900 text-lg mb-2">Gestion des Clients Actifs</p>
+              <p className="text-yellow-800 leading-relaxed">
+                Cette page affiche tous les prospects transformés en clients actifs (statut <span className="font-semibold bg-yellow-100 px-2 py-0.5 rounded">CLIENT_ACTIF</span>).
                 Utilisez les filtres pour affiner votre recherche et cliquez sur un client pour accéder à sa fiche complète.
               </p>
             </div>

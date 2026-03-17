@@ -34,7 +34,7 @@ const ClientsLayout = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
-          <RefreshCw className="animate-spin mx-auto mb-4 text-blue-600" size={48} />
+          <RefreshCw className="animate-spin mx-auto mb-4 text-yellow-500" size={48} />
           <p className="text-gray-700 font-medium">Chargement...</p>
         </div>
       </div>
@@ -167,15 +167,15 @@ const ClientsLayout = () => {
   const SidebarContent = () => (
     <div className="flex flex-col h-full">
       {/* Logo / Titre section */}
-      <div className="px-4 py-5 border-b border-gray-100">
+      <div className="px-4 py-5 border-b border-gray-800">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center shadow-md flex-shrink-0">
-            <Users size={20} className="text-white" />
+          <div className="w-10 h-10 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-xl flex items-center justify-center shadow-md shadow-yellow-500/20 flex-shrink-0">
+            <Users size={20} className="text-black" />
           </div>
           {sidebarOpen && (
             <div className="min-w-0">
-              <div className="font-bold text-gray-900 text-sm leading-tight">Gestion Clients</div>
-              <div className="text-xs text-blue-600 font-medium mt-0.5">Portefeuille actif</div>
+              <div className="font-bold text-white text-sm leading-tight">Gestion Clients</div>
+              <div className="text-xs text-yellow-400 font-medium mt-0.5">Portefeuille actif</div>
             </div>
           )}
         </div>
@@ -186,7 +186,7 @@ const ClientsLayout = () => {
         {menuGroups.map((group) => (
           <div key={group.label}>
             {sidebarOpen && (
-              <div className="px-3 mb-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+              <div className="px-3 mb-1.5 text-[10px] font-bold text-gray-600 uppercase tracking-widest">
                 {group.label}
               </div>
             )}
@@ -204,17 +204,17 @@ const ClientsLayout = () => {
                     title={!sidebarOpen ? item.label : undefined}
                     className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-left group relative ${
                       active
-                        ? 'bg-blue-600 text-white shadow-md shadow-blue-200'
-                        : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                        ? 'bg-gradient-to-r from-yellow-500 to-yellow-600 text-black shadow-md shadow-yellow-500/20'
+                        : 'text-gray-400 hover:bg-gray-800 hover:text-white'
                     }`}
                   >
-                    <Icon size={18} className={`flex-shrink-0 ${active ? 'text-white' : 'text-gray-500 group-hover:text-gray-700'}`} />
+                    <Icon size={18} className={`flex-shrink-0 ${active ? 'text-black' : 'text-gray-500 group-hover:text-yellow-400'}`} />
                     {sidebarOpen && (
                       <div className="min-w-0 flex-1">
-                        <div className={`text-sm font-medium leading-tight ${active ? 'text-white' : 'text-gray-700'}`}>
+                        <div className={`text-sm font-medium leading-tight ${active ? 'text-black' : 'text-gray-300'}`}>
                           {item.label}
                         </div>
-                        <div className={`text-[11px] mt-0.5 ${active ? 'text-blue-100' : 'text-gray-400'}`}>
+                        <div className={`text-[11px] mt-0.5 ${active ? 'text-black/70' : 'text-gray-600'}`}>
                           {item.description}
                         </div>
                       </div>
@@ -228,7 +228,7 @@ const ClientsLayout = () => {
       </nav>
 
       {/* Footer sidebar */}
-      <div className="border-t border-gray-100 p-3 space-y-1">
+      <div className="border-t border-gray-800 p-3 space-y-1">
         {/* Retour menu principal */}
         <button
           onClick={() => navigate('/backoffice/crm')}
@@ -250,13 +250,13 @@ const ClientsLayout = () => {
 
         {/* Utilisateur */}
         {sidebarOpen && user && (
-          <div className="mt-2 px-3 py-3 bg-gray-50 rounded-xl">
+          <div className="mt-2 px-3 py-3 bg-gray-900 rounded-xl border border-gray-800">
             <div className="flex items-center gap-2.5 mb-2">
-              <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+              <div className="w-8 h-8 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-full flex items-center justify-center text-black font-bold text-sm flex-shrink-0">
                 {user.full_name?.[0]?.toUpperCase() || 'A'}
               </div>
               <div className="min-w-0">
-                <div className="text-sm font-semibold text-gray-900 truncate">{user.full_name || 'Admin'}</div>
+                <div className="text-sm font-semibold text-white truncate">{user.full_name || 'Admin'}</div>
                 <div className="text-xs text-gray-500 truncate">{user.email}</div>
               </div>
             </div>
@@ -288,15 +288,15 @@ const ClientsLayout = () => {
 
       {/* Sidebar desktop */}
       <aside
-        className={`hidden lg:flex flex-col bg-white border-r border-gray-200 shadow-sm transition-all duration-300 flex-shrink-0 ${
+        className={`hidden lg:flex flex-col bg-black border-r border-gray-800 shadow-sm transition-all duration-300 flex-shrink-0 ${
           sidebarOpen ? 'w-64' : 'w-[68px]'
         }`}
       >
         {/* Toggle collapse */}
-        <div className={`flex items-center border-b border-gray-100 px-3 py-3 ${sidebarOpen ? 'justify-end' : 'justify-center'}`}>
+        <div className={`flex items-center border-b border-gray-800 px-3 py-3 ${sidebarOpen ? 'justify-end' : 'justify-center'}`}>
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors text-gray-500 hover:text-gray-700"
+            className="p-1.5 hover:bg-gray-800 rounded-lg transition-colors text-gray-500 hover:text-yellow-400"
             title={sidebarOpen ? 'Réduire' : 'Agrandir'}
           >
             <Menu size={18} />
@@ -315,15 +315,15 @@ const ClientsLayout = () => {
 
       {/* Sidebar mobile */}
       <aside
-        className={`fixed left-0 top-0 h-full w-72 bg-white border-r border-gray-200 shadow-xl z-50 lg:hidden transition-transform duration-300 ${
+        className={`fixed left-0 top-0 h-full w-72 bg-black border-r border-gray-800 shadow-xl z-50 lg:hidden transition-transform duration-300 ${
           mobileOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
-          <span className="font-bold text-gray-900 text-sm">Gestion Clients</span>
+        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-800">
+          <span className="font-bold text-white text-sm">Gestion Clients</span>
           <button
             onClick={() => setMobileOpen(false)}
-            className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-1.5 hover:bg-gray-800 rounded-lg transition-colors text-gray-400"
           >
             <X size={18} />
           </button>
@@ -342,8 +342,8 @@ const ClientsLayout = () => {
             <Menu size={20} />
           </button>
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 bg-blue-600 rounded-lg flex items-center justify-center">
-              <Users size={14} className="text-white" />
+            <div className="w-7 h-7 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-lg flex items-center justify-center">
+              <Users size={14} className="text-black" />
             </div>
             <span className="font-bold text-gray-900 text-sm">Gestion Clients</span>
           </div>

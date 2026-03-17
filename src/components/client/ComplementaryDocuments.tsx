@@ -124,7 +124,7 @@ export const ComplementaryDocuments: React.FC<ComplementaryDocumentsProps> = ({
   if (loading) {
     return (
       <div className="flex justify-center items-center py-8">
-        <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+        <Loader2 className="w-8 h-8 text-yellow-500 animate-spin" />
       </div>
     );
   }
@@ -136,7 +136,7 @@ export const ComplementaryDocuments: React.FC<ComplementaryDocumentsProps> = ({
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-        <FileText className="w-5 h-5 text-blue-600" />
+        <FileText className="w-5 h-5 text-yellow-600" />
         Documents Complémentaires
         {requests.some(r => r.obligatoire && r.statut !== 'valide') && (
           <span className="text-sm px-2 py-1 bg-orange-100 text-orange-700 rounded-full">
@@ -190,7 +190,7 @@ export const ComplementaryDocuments: React.FC<ComplementaryDocumentsProps> = ({
               className={`border rounded-lg p-4 transition-all ${
                 isValidated ? 'bg-green-50 border-green-300' :
                 isRefused ? 'bg-red-50 border-red-300' :
-                isUploaded ? 'bg-blue-50 border-blue-300' :
+                isUploaded ? 'bg-yellow-50 border-yellow-300' :
                 request.bloquant ? 'bg-orange-50 border-orange-300' :
                 'bg-white border-gray-300'
               }`}
@@ -240,7 +240,7 @@ export const ComplementaryDocuments: React.FC<ComplementaryDocumentsProps> = ({
                     </div>
                   )}
                   {!isValidated && !isRefused && isUploaded && (
-                    <div className="flex items-center gap-2 text-blue-600">
+                    <div className="flex items-center gap-2 text-yellow-600">
                       <Clock className="w-5 h-5" />
                       <span className="text-sm font-medium">En attente</span>
                     </div>
@@ -263,9 +263,9 @@ export const ComplementaryDocuments: React.FC<ComplementaryDocumentsProps> = ({
               )}
 
               {isUploaded && request.document_filename && (
-                <div className="mb-3 p-3 bg-blue-100 rounded flex items-center gap-2">
-                  <FileText className="w-4 h-4 text-blue-600" />
-                  <span className="text-sm text-blue-800">{request.document_filename}</span>
+                <div className="mb-3 p-3 bg-yellow-100 rounded flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-yellow-600" />
+                  <span className="text-sm text-yellow-800">{request.document_filename}</span>
                   {isValidated && (
                     <CheckCircle className="w-4 h-4 text-green-600 ml-auto" />
                   )}
@@ -293,7 +293,7 @@ export const ComplementaryDocuments: React.FC<ComplementaryDocumentsProps> = ({
                       className={`flex items-center justify-center gap-2 px-4 py-3 rounded-lg cursor-pointer transition-colors ${
                         isUploading
                           ? 'bg-gray-300 cursor-not-allowed'
-                          : 'bg-blue-600 hover:bg-blue-700 text-white'
+                          : 'bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-700 hover:to-yellow-600 text-black font-semibold'
                       }`}
                     >
                       {isUploading ? (

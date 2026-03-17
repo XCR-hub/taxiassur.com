@@ -235,12 +235,12 @@ export default function ClientSubscriptionForm({ leadId, acceptedQuoteId, onSubm
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
         <div className="flex items-start gap-3">
-          <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5" />
+          <AlertCircle className="w-5 h-5 text-yellow-600 mt-0.5" />
           <div>
-            <h4 className="font-semibold text-blue-900 mb-1">Dernière étape avant votre contrat</h4>
-            <p className="text-sm text-blue-800">
+            <h4 className="font-semibold text-yellow-900 mb-1">Dernière étape avant votre contrat</h4>
+            <p className="text-sm text-yellow-800">
               Pour finaliser votre souscription, nous avons besoin de vos coordonnées bancaires et des dates souhaitées.
               Ces informations sont sécurisées et ne seront utilisées que pour le prélèvement de votre prime d'assurance.
             </p>
@@ -393,7 +393,7 @@ export default function ClientSubscriptionForm({ leadId, acceptedQuoteId, onSubm
       <button
         type="submit"
         disabled={submitting}
-        className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-lg font-semibold"
+        className="w-full bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-700 hover:to-yellow-600 text-black py-3 px-6 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-lg font-semibold shadow-sm transition-all"
       >
         {submitting ? (
           <>

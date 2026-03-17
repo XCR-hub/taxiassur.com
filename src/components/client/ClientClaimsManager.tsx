@@ -228,7 +228,7 @@ export const ClientClaimsManager: React.FC<ClientClaimsManagerProps> = ({
     return (
       <div className="bg-white rounded-xl border border-gray-200 p-6">
         <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-500"></div>
         </div>
       </div>
     );
@@ -244,7 +244,7 @@ export const ClientClaimsManager: React.FC<ClientClaimsManagerProps> = ({
         {!showDeclarationForm && (
           <button
             onClick={() => setShowDeclarationForm(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium"
+            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-700 hover:to-yellow-600 text-black font-semibold rounded-lg shadow-sm transition-all text-sm"
           >
             <Plus className="w-4 h-4" />
             <span>Déclarer un sinistre</span>
@@ -276,7 +276,7 @@ export const ClientClaimsManager: React.FC<ClientClaimsManagerProps> = ({
                 onChange={e => setFormData(prev => ({ ...prev, claim_date: e.target.value }))}
                 max={new Date().toISOString().split('T')[0]}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500"
               />
             </div>
             <div>
@@ -286,7 +286,7 @@ export const ClientClaimsManager: React.FC<ClientClaimsManagerProps> = ({
                 value={formData.claim_time}
                 onChange={e => setFormData(prev => ({ ...prev, claim_time: e.target.value }))}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500"
               />
             </div>
           </div>
@@ -297,7 +297,7 @@ export const ClientClaimsManager: React.FC<ClientClaimsManagerProps> = ({
               value={formData.claim_type}
               onChange={e => setFormData(prev => ({ ...prev, claim_type: e.target.value }))}
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500"
             >
               {Object.entries(CLAIM_TYPES).map(([key, label]) => (
                 <option key={key} value={key}>
@@ -315,7 +315,7 @@ export const ClientClaimsManager: React.FC<ClientClaimsManagerProps> = ({
               onChange={e => setFormData(prev => ({ ...prev, location: e.target.value }))}
               placeholder="Adresse complète"
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500"
             />
           </div>
 
@@ -329,7 +329,7 @@ export const ClientClaimsManager: React.FC<ClientClaimsManagerProps> = ({
               rows={4}
               required
               placeholder="Décrivez les circonstances du sinistre..."
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500"
             />
           </div>
 
@@ -339,7 +339,7 @@ export const ClientClaimsManager: React.FC<ClientClaimsManagerProps> = ({
               id="has_other_party"
               checked={formData.has_other_party}
               onChange={e => setFormData(prev => ({ ...prev, has_other_party: e.target.checked }))}
-              className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+              className="w-4 h-4 text-yellow-500 rounded focus:ring-yellow-500"
             />
             <label htmlFor="has_other_party" className="text-sm text-gray-700">
               Un tiers est impliqué
@@ -354,7 +354,7 @@ export const ClientClaimsManager: React.FC<ClientClaimsManagerProps> = ({
                   type="text"
                   value={formData.other_party_name}
                   onChange={e => setFormData(prev => ({ ...prev, other_party_name: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500"
                 />
               </div>
               <div>
@@ -364,7 +364,7 @@ export const ClientClaimsManager: React.FC<ClientClaimsManagerProps> = ({
                   value={formData.other_party_contact}
                   onChange={e => setFormData(prev => ({ ...prev, other_party_contact: e.target.value }))}
                   placeholder="Téléphone ou email"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500"
                 />
               </div>
             </div>
@@ -406,7 +406,7 @@ export const ClientClaimsManager: React.FC<ClientClaimsManagerProps> = ({
           <button
             type="submit"
             disabled={submitting}
-            className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 font-semibold"
+            className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-700 hover:to-yellow-600 text-black disabled:opacity-50 font-semibold rounded-lg shadow-sm transition-all"
           >
             {submitting ? (
               <>

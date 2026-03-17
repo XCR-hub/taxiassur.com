@@ -149,7 +149,7 @@ export default function ClientInsuranceSpace() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+        <Loader2 className="h-8 w-8 animate-spin text-yellow-500" />
       </div>
     );
   }
@@ -188,7 +188,7 @@ export default function ClientInsuranceSpace() {
                     ? 'bg-red-50 border-red-200'
                     : alert.severity === 'warning'
                     ? 'bg-yellow-50 border-yellow-200'
-                    : 'bg-blue-50 border-blue-200'
+                    : 'bg-yellow-50 border-yellow-200'
                 }`}
               >
                 <div className="flex items-start gap-3">
@@ -197,7 +197,7 @@ export default function ClientInsuranceSpace() {
                   ) : alert.severity === 'warning' ? (
                     <AlertCircle className="text-yellow-600 flex-shrink-0 mt-0.5" size={20} />
                   ) : (
-                    <Bell className="text-blue-600 flex-shrink-0 mt-0.5" size={20} />
+                    <Bell className="text-yellow-600 flex-shrink-0 mt-0.5" size={20} />
                   )}
                   <div>
                     <h4 className="font-semibold text-gray-900">{alert.title}</h4>
@@ -211,15 +211,15 @@ export default function ClientInsuranceSpace() {
 
         {/* Quick Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-6 text-white shadow-lg">
+          <div className="bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-xl p-6 text-black shadow-lg">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-blue-100 text-sm font-medium">Contrats Actifs</p>
+                <p className="text-black/70 text-sm font-medium">Contrats Actifs</p>
                 <p className="text-3xl font-bold mt-2">
                   {contracts.filter(c => c.status === 'active').length}
                 </p>
               </div>
-              <FileText className="h-12 w-12 text-blue-200" />
+              <FileText className="h-12 w-12 text-black/30" />
             </div>
           </div>
 
@@ -243,15 +243,15 @@ export default function ClientInsuranceSpace() {
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-6 text-white shadow-lg">
+          <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 text-white shadow-lg">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-purple-100 text-sm font-medium">Sinistres en Cours</p>
+                <p className="text-gray-400 text-sm font-medium">Sinistres en Cours</p>
                 <p className="text-3xl font-bold mt-2">
                   {claims.filter(c => !['settled', 'closed', 'rejected'].includes(c.status)).length}
                 </p>
               </div>
-              <AlertCircle className="h-12 w-12 text-purple-200" />
+              <AlertCircle className="h-12 w-12 text-gray-600" />
             </div>
           </div>
         </div>
@@ -273,7 +273,7 @@ export default function ClientInsuranceSpace() {
                     onClick={() => setActiveTab(tab.id as TabType)}
                     className={`flex items-center gap-2 px-1 py-4 border-b-2 font-medium text-sm transition-colors ${
                       activeTab === tab.id
-                        ? 'border-blue-500 text-blue-600'
+                        ? 'border-yellow-500 text-yellow-600'
                         : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                     }`}
                   >
@@ -302,7 +302,7 @@ export default function ClientInsuranceSpace() {
                   {contracts.map(contract => (
                     <div
                       key={contract.id}
-                      className="border border-gray-200 rounded-lg p-6 hover:border-blue-300 transition-colors"
+                      className="border border-gray-200 rounded-lg p-6 hover:border-yellow-300 transition-colors"
                     >
                       <div className="flex items-start justify-between mb-4">
                         <div>
@@ -321,7 +321,7 @@ export default function ClientInsuranceSpace() {
                           </div>
                         </div>
                         <div className="text-right">
-                          <p className="text-2xl font-bold text-blue-600">
+                          <p className="text-2xl font-bold text-yellow-600">
                             {contract.premium_ttc.toFixed(2)} €
                           </p>
                           <p className="text-sm text-gray-600 capitalize">{contract.payment_frequency}</p>
@@ -449,9 +449,9 @@ export default function ClientInsuranceSpace() {
               <h2 className="text-xl font-bold text-gray-900 mb-6">Mon Profil</h2>
               <div className="max-w-2xl">
                 <div className="space-y-4">
-                  <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
                     <div className="flex items-start gap-3">
-                      <User className="text-blue-600 flex-shrink-0 mt-0.5" size={20} />
+                      <User className="text-yellow-600 flex-shrink-0 mt-0.5" size={20} />
                       <div>
                         <h4 className="font-semibold text-gray-900 mb-1">Informations personnelles</h4>
                         <p className="text-sm text-gray-600">
@@ -478,23 +478,23 @@ export default function ClientInsuranceSpace() {
         </div>
 
         {/* Contact Section */}
-        <div className="mt-8 bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl p-6 text-white">
+        <div className="mt-8 bg-black rounded-xl p-6 text-white border border-gray-800">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-xl font-bold mb-2">Besoin d'aide ?</h3>
-              <p className="text-blue-100">Notre équipe est là pour vous accompagner</p>
+              <p className="text-gray-400">Notre équipe est là pour vous accompagner</p>
             </div>
             <div className="flex gap-3">
               <a
                 href="tel:0180855786"
-                className="flex items-center gap-2 px-6 py-3 bg-white text-blue-600 font-semibold rounded-lg hover:bg-blue-50 transition-colors"
+                className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-yellow-500 to-yellow-600 text-black font-semibold rounded-lg hover:from-yellow-600 hover:to-yellow-700 transition-colors"
               >
                 <Phone size={18} />
                 01 80 85 57 86
               </a>
               <a
                 href="mailto:team@taxiassur.com"
-                className="flex items-center gap-2 px-6 py-3 bg-blue-500 hover:bg-blue-400 text-white font-semibold rounded-lg transition-colors"
+                className="flex items-center gap-2 px-6 py-3 bg-gray-800 hover:bg-gray-700 text-white font-semibold rounded-lg transition-colors"
               >
                 <Mail size={18} />
                 Email

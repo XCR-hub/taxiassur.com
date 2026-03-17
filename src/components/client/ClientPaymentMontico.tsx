@@ -64,7 +64,7 @@ export default function ClientPaymentMontico({ token, supabaseClient }: Props) {
       case 'cancelled':
         return <XCircle className="w-6 h-6 text-red-500" />;
       case 'sent':
-        return <Clock className="w-6 h-6 text-blue-500" />;
+        return <Clock className="w-6 h-6 text-yellow-500" />;
       default:
         return <AlertCircle className="w-6 h-6 text-gray-400" />;
     }
@@ -90,7 +90,7 @@ export default function ClientPaymentMontico({ token, supabaseClient }: Props) {
       case 'paid':
         return 'bg-green-50 border-green-200';
       case 'sent':
-        return 'bg-blue-50 border-blue-200';
+        return 'bg-yellow-50 border-yellow-200';
       case 'failed':
       case 'cancelled':
         return 'bg-red-50 border-red-200';
@@ -171,7 +171,7 @@ export default function ClientPaymentMontico({ token, supabaseClient }: Props) {
                   payment.status === 'paid'
                     ? 'bg-green-100 text-green-800'
                     : payment.status === 'sent'
-                    ? 'bg-blue-100 text-blue-800'
+                    ? 'bg-yellow-100 text-yellow-800'
                     : 'bg-gray-100 text-gray-800'
                 }`}>
                   {getStatusLabel(payment.status)}
@@ -198,8 +198,8 @@ export default function ClientPaymentMontico({ token, supabaseClient }: Props) {
             )}
 
             {canPay && (
-              <div className="bg-white border border-blue-200 rounded-lg p-4 mb-4">
-                <div className="flex items-center gap-2 text-blue-800 mb-3">
+              <div className="bg-white border border-yellow-200 rounded-lg p-4 mb-4">
+                <div className="flex items-center gap-2 text-yellow-800 mb-3">
                   <Clock className="w-5 h-5" />
                   <span className="font-semibold">Paiement en attente</span>
                 </div>

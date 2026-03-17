@@ -90,9 +90,9 @@ export default function ClientPaymentButton({ leadId }: Props) {
             })}
           </p>
         )}
-        <div className="mt-6 bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
-          <p className="text-sm text-blue-300">
-            ✅ Votre contrat sera activé sous 24h. Vous recevrez une confirmation par email.
+        <div className="mt-6 bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4">
+          <p className="text-sm text-yellow-300">
+            Votre contrat sera activé sous 24h. Vous recevrez une confirmation par email.
           </p>
         </div>
       </div>
@@ -159,12 +159,12 @@ export default function ClientPaymentButton({ leadId }: Props) {
       )}
 
       {paymentInfo.status === 'processing' && (
-        <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4 mb-6">
+        <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4 mb-6">
           <div className="flex items-start gap-3">
-            <Loader2 className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5 animate-spin" />
+            <Loader2 className="w-5 h-5 text-yellow-400 flex-shrink-0 mt-0.5 animate-spin" />
             <div>
-              <p className="text-blue-300 font-semibold mb-1">Paiement en cours de traitement</p>
-              <p className="text-sm text-blue-400">
+              <p className="text-yellow-300 font-semibold mb-1">Paiement en cours de traitement</p>
+              <p className="text-sm text-yellow-400">
                 Votre paiement est en cours de validation. Cela peut prendre quelques minutes.
               </p>
             </div>

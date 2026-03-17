@@ -286,7 +286,7 @@ export default function ClientQuotesViewer({ leadId, token, supabaseClient }: Pr
                     <div key={quote.id} className="bg-gray-900/50 border border-gray-700 rounded-lg p-5">
                       <div className="flex items-start justify-between mb-4">
                         <div className="flex items-start gap-3 flex-1">
-                          <FileText className="w-6 h-6 text-blue-400 flex-shrink-0 mt-1" />
+                          <FileText className="w-6 h-6 text-yellow-400 flex-shrink-0 mt-1" />
                           <div className="flex-1 min-w-0">
                             <p className="font-semibold text-white text-lg mb-1 truncate">
                               {decodeURIComponent(fileName)}
@@ -329,7 +329,7 @@ export default function ClientQuotesViewer({ leadId, token, supabaseClient }: Pr
                           href={fileUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors text-sm"
+                          className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-700 hover:to-yellow-600 text-black font-semibold rounded-lg transition-all text-sm"
                         >
                           <Eye className="w-4 h-4" />
                           Consulter
@@ -419,7 +419,7 @@ export default function ClientQuotesViewer({ leadId, token, supabaseClient }: Pr
         })}
       </div>
 
-      <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-6 mt-6">
+      <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-6 mt-6">
         <h4 className="font-bold text-white mb-2">Besoin d'aide pour choisir ?</h4>
         <p className="text-gray-300 mb-4">
           Notre équipe est là pour vous accompagner et répondre à toutes vos questions.
@@ -513,7 +513,7 @@ export default function ClientQuotesViewer({ leadId, token, supabaseClient }: Pr
                 onChange={(e) => setRefusalReason(e.target.value)}
                 placeholder="Raison du refus (optionnel)"
                 rows={3}
-                className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:border-blue-500 focus:outline-none resize-none"
+                className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:border-yellow-500 focus:outline-none resize-none"
               />
             </div>
 

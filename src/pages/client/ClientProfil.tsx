@@ -1,5 +1,5 @@
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { User, Mail, Phone, MapPin, Shield, Calendar, Lock, CreditCard, Car, X, Check, AlertCircle, Loader2, Edit2, Save, Building2 } from 'lucide-react';
+import { User, Mail, Phone, MapPin, Shield, Calendar, Lock, CreditCard, Car, X, Check, AlertCircle, Loader2, CreditCard as Edit2, Save, Building2 } from 'lucide-react';
 import ClientLayout from '../../components/client/ClientLayout';
 import SEOHead from '../../components/SEOHead';
 import { useEffect, useState } from 'react';
@@ -613,10 +613,10 @@ export default function ClientProfil() {
                 />
               </div>
 
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                 <div className="flex items-start gap-2">
-                  <Shield className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-                  <p className="text-sm text-blue-800">
+                  <Shield className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+                  <p className="text-sm text-yellow-800">
                     Vos coordonnees bancaires sont chiffrees et securisees. La modification prendra effet au prochain prelevement.
                   </p>
                 </div>

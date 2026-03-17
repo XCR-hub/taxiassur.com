@@ -1,9 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  FileText, Download, Eye, Trash2, CheckCircle, XCircle, Clock,
-  File, Image, AlertCircle, Calendar, User, ZoomIn, Upload,
-  Search, Filter, Grid, List, Star, RefreshCw, ExternalLink
-} from 'lucide-react';
+import { FileText, Download, Eye, Trash2, CheckCircle, XCircle, Clock, File, Image, AlertCircle, Calendar, User, ZoomIn, Upload, Search, Filter, Grid2x2 as Grid, List, Star, RefreshCw, ExternalLink } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
 interface Document {
@@ -213,13 +209,13 @@ const ClientDocumentsViewer: React.FC<ClientDocumentsViewerProps> = ({ leadId, c
     <div className="space-y-6">
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-xl border border-blue-200">
+        <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 p-6 rounded-xl border border-yellow-200">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-blue-600 text-sm font-semibold">Total</p>
-              <p className="text-4xl font-bold text-blue-700 mt-2">{stats.total}</p>
+              <p className="text-yellow-600 text-sm font-semibold">Total</p>
+              <p className="text-4xl font-bold text-yellow-700 mt-2">{stats.total}</p>
             </div>
-            <FileText className="w-12 h-12 text-blue-500 opacity-30" />
+            <FileText className="w-12 h-12 text-yellow-500 opacity-30" />
           </div>
         </div>
 
@@ -349,7 +345,7 @@ const ClientDocumentsViewer: React.FC<ClientDocumentsViewerProps> = ({ leadId, c
                 </button>
                 <button
                   onClick={(e) => { e.stopPropagation(); previewDocument(doc); }}
-                  className="flex items-center justify-center px-4 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors"
+                  className="flex items-center justify-center px-4 py-2 bg-yellow-50 text-yellow-600 rounded-lg hover:bg-yellow-100 transition-colors"
                 >
                   <Eye className="w-4 h-4" />
                 </button>
@@ -392,7 +388,7 @@ const ClientDocumentsViewer: React.FC<ClientDocumentsViewerProps> = ({ leadId, c
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => previewDocument(doc)}
-                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                          className="p-2 text-yellow-600 hover:bg-yellow-50 rounded-lg transition-colors"
                         >
                           <Eye className="w-5 h-5" />
                         </button>

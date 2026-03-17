@@ -178,7 +178,7 @@ export const ClientCompleteDocuments: React.FC<ClientCompleteDocumentsProps> = (
     return (
       <div className="bg-white rounded-xl border border-gray-200 p-6">
         <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-500"></div>
         </div>
       </div>
     );
@@ -207,7 +207,7 @@ export const ClientCompleteDocuments: React.FC<ClientCompleteDocumentsProps> = (
           onClick={() => setSelectedCategory('all')}
           className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
             selectedCategory === 'all'
-              ? 'bg-blue-600 text-white'
+              ? 'bg-gradient-to-r from-yellow-600 to-yellow-500 text-black'
               : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
           }`}
         >
@@ -221,7 +221,7 @@ export const ClientCompleteDocuments: React.FC<ClientCompleteDocumentsProps> = (
               onClick={() => setSelectedCategory(key)}
               className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors flex items-center gap-2 ${
                 selectedCategory === key
-                  ? `bg-${category.color}-600 text-white`
+                  ? 'bg-gradient-to-r from-yellow-600 to-yellow-500 text-black'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
@@ -252,8 +252,8 @@ export const ClientCompleteDocuments: React.FC<ClientCompleteDocumentsProps> = (
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4 flex-1">
-                  <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <FileText className="w-6 h-6 text-blue-600" />
+                  <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
+                    <FileText className="w-6 h-6 text-yellow-600" />
                   </div>
                   <div className="flex-1">
                     <h4 className="font-medium text-gray-900">{doc.document_name}</h4>
@@ -296,7 +296,7 @@ export const ClientCompleteDocuments: React.FC<ClientCompleteDocumentsProps> = (
                     href={doc.document_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium flex items-center gap-2"
+                    className="px-4 py-2 bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-700 hover:to-yellow-600 text-black font-semibold rounded-lg text-sm flex items-center gap-2"
                   >
                     <ExternalLink className="w-4 h-4" />
                     <span>Voir</span>
@@ -309,10 +309,10 @@ export const ClientCompleteDocuments: React.FC<ClientCompleteDocumentsProps> = (
       </div>
 
       {/* Aide */}
-      <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+      <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
         <div className="flex items-start gap-3">
-          <Shield className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-          <div className="text-sm text-blue-900">
+          <Shield className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+          <div className="text-sm text-yellow-900">
             <strong>Besoin d'aide ?</strong> Tous vos documents sont sécurisés et accessibles 24h/24.
             Pour toute question, contactez-nous via le chat ou par email à tim@taxiassur.com.
           </div>

@@ -112,7 +112,7 @@ export const ClientUnifiedDashboard: React.FC<ClientUnifiedDashboardProps> = ({
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-500"></div>
       </div>
     );
   }
@@ -138,8 +138,8 @@ export const ClientUnifiedDashboard: React.FC<ClientUnifiedDashboardProps> = ({
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
-                <Shield className="w-8 h-8 text-blue-600" />
+              <div className="w-16 h-16 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-full flex items-center justify-center shadow-md shadow-yellow-500/20">
+                <Shield className="w-8 h-8 text-black" />
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">
@@ -152,7 +152,7 @@ export const ClientUnifiedDashboard: React.FC<ClientUnifiedDashboardProps> = ({
             </div>
             <button
               onClick={() => setShowChat(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-700 hover:to-yellow-600 text-black font-semibold rounded-lg shadow-sm transition-all"
             >
               <MessageSquare className="w-5 h-5" />
               <span>Chat avec Léa</span>
@@ -164,17 +164,17 @@ export const ClientUnifiedDashboard: React.FC<ClientUnifiedDashboardProps> = ({
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Carte de statut principale */}
         {!isActive && (
-          <div className="mb-8 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl shadow-lg p-6 text-white">
+          <div className="mb-8 bg-gradient-to-r from-yellow-500 to-yellow-600 rounded-xl shadow-lg p-6 text-black">
             <div className="flex items-center gap-3 mb-4">
               <Clock className="w-8 h-8" />
               <div>
                 <h2 className="text-xl font-bold">Votre dossier est en cours de traitement</h2>
-                <p className="text-blue-100">
+                <p className="text-black/70">
                   {getWorkflowStageLabel(lead.workflow_stage)}
                 </p>
               </div>
             </div>
-            <div className="text-sm text-blue-100">
+            <div className="text-sm text-black/70">
               Nous travaillons activement sur votre dossier. Vous serez notifié à chaque étape importante.
             </div>
           </div>
@@ -196,8 +196,8 @@ export const ClientUnifiedDashboard: React.FC<ClientUnifiedDashboardProps> = ({
             {choice && (
               <div className="bg-white rounded-xl border border-gray-200 p-6">
                 <div className="flex items-center gap-3 mb-2">
-                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <Calendar className="w-5 h-5 text-blue-600" />
+                  <div className="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">
+                    <Calendar className="w-5 h-5 text-yellow-600" />
                   </div>
                   <div className="text-sm text-gray-600">Date d'effet</div>
                 </div>
@@ -214,8 +214,8 @@ export const ClientUnifiedDashboard: React.FC<ClientUnifiedDashboardProps> = ({
             {attestation && (
               <div className="bg-white rounded-xl border border-gray-200 p-6">
                 <div className="flex items-center gap-3 mb-2">
-                  <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                    <Shield className="w-5 h-5 text-purple-600" />
+                  <div className="w-10 h-10 bg-yellow-50 rounded-lg flex items-center justify-center">
+                    <Shield className="w-5 h-5 text-yellow-600" />
                   </div>
                   <div className="text-sm text-gray-600">Validité</div>
                 </div>
@@ -258,7 +258,7 @@ export const ClientUnifiedDashboard: React.FC<ClientUnifiedDashboardProps> = ({
               onClick={() => setActiveTab(tab.key as any)}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium whitespace-nowrap transition-colors ${
                 activeTab === tab.key
-                  ? 'bg-blue-600 text-white'
+                  ? 'bg-gradient-to-r from-yellow-600 to-yellow-500 text-black shadow-sm'
                   : 'bg-white text-gray-700 hover:bg-gray-100'
               }`}
             >
@@ -284,9 +284,9 @@ export const ClientUnifiedDashboard: React.FC<ClientUnifiedDashboardProps> = ({
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                       <button
                         onClick={() => setActiveTab('documents')}
-                        className="p-4 border border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-colors text-center"
+                        className="p-4 border border-gray-200 rounded-lg hover:border-yellow-500 hover:bg-yellow-50 transition-colors text-center"
                       >
-                        <FileText className="w-8 h-8 text-blue-600 mx-auto mb-2" />
+                        <FileText className="w-8 h-8 text-yellow-600 mx-auto mb-2" />
                         <div className="text-sm font-medium text-gray-900">Documents</div>
                       </button>
                       <button
@@ -305,9 +305,9 @@ export const ClientUnifiedDashboard: React.FC<ClientUnifiedDashboardProps> = ({
                       </button>
                       <button
                         onClick={() => setShowChat(true)}
-                        className="p-4 border border-gray-200 rounded-lg hover:border-purple-500 hover:bg-purple-50 transition-colors text-center"
+                        className="p-4 border border-gray-200 rounded-lg hover:border-yellow-500 hover:bg-yellow-50 transition-colors text-center"
                       >
-                        <MessageSquare className="w-8 h-8 text-purple-600 mx-auto mb-2" />
+                        <MessageSquare className="w-8 h-8 text-yellow-600 mx-auto mb-2" />
                         <div className="text-sm font-medium text-gray-900">Contacter Léa</div>
                       </button>
                     </div>
@@ -317,7 +317,7 @@ export const ClientUnifiedDashboard: React.FC<ClientUnifiedDashboardProps> = ({
 
               {!isActive && (
                 <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
-                  <Clock className="w-16 h-16 text-blue-600 mx-auto mb-4" />
+                  <Clock className="w-16 h-16 text-yellow-500 mx-auto mb-4" />
                   <h3 className="text-xl font-semibold text-gray-900 mb-2">
                     Votre contrat est en cours de traitement
                   </h3>
@@ -326,7 +326,7 @@ export const ClientUnifiedDashboard: React.FC<ClientUnifiedDashboardProps> = ({
                   </p>
                   <button
                     onClick={() => setShowChat(true)}
-                    className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
+                    className="px-6 py-3 bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-700 hover:to-yellow-600 text-black font-semibold rounded-lg shadow-sm transition-all"
                   >
                     Besoin d'aide ? Contactez Léa
                   </button>
@@ -359,8 +359,8 @@ export const ClientUnifiedDashboard: React.FC<ClientUnifiedDashboardProps> = ({
           <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[80vh] flex flex-col">
             <div className="p-4 border-b border-gray-200 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
-                  <MessageSquare className="w-5 h-5 text-purple-600" />
+                <div className="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center">
+                  <MessageSquare className="w-5 h-5 text-yellow-600" />
                 </div>
                 <div>
                   <h3 className="font-semibold text-gray-900">Léa - Assistance TaxiAssur</h3>

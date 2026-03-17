@@ -94,7 +94,7 @@ export default function ClientMoneticoPayment({
       <button
         onClick={handlePayment}
         disabled={loading}
-        className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed text-white py-4 px-6 rounded-xl flex items-center justify-center gap-3 text-lg font-bold transition-all transform hover:scale-105 shadow-lg hover:shadow-xl disabled:transform-none"
+        className="w-full bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-700 hover:to-yellow-600 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed text-black py-4 px-6 rounded-xl flex items-center justify-center gap-3 text-lg font-bold transition-all transform hover:scale-105 shadow-lg hover:shadow-xl disabled:transform-none"
       >
         {loading ? (
           <>
