@@ -660,58 +660,87 @@ const CRMPipelineKanban: React.FC = () => {
             </button>
           </div>
 
-          {/* Workflow Stats */}
-          <div className="mt-4 grid grid-cols-2 lg:grid-cols-7 gap-2">
-            {statistics.needsAction > 0 && (
-              <div className="flex items-center gap-2 px-3 py-2 bg-red-900/30 border border-red-700 rounded-lg">
-                <AlertTriangle size={15} className="text-red-400" />
-                <div>
-                  <div className="text-base font-bold text-red-300">{statistics.needsAction}</div>
-                  <div className="text-xs text-red-400">Urgents</div>
-                </div>
-              </div>
-            )}
-            <div className="flex items-center gap-2 px-3 py-2 bg-yellow-900/20 border border-yellow-700 rounded-lg">
-              <FileText size={15} className="text-yellow-400" />
+          {/* Workflow TaxiAssur — funnel pipeline */}
+          <div className="mt-4 flex items-stretch gap-0 bg-gray-900/60 border border-gray-700 rounded-xl overflow-hidden">
+            {/* Total */}
+            <div className="flex items-center gap-2 px-4 py-3 border-r border-gray-700">
+              <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse shrink-0"></div>
               <div>
-                <div className="text-base font-bold text-yellow-300">{statistics.documentsStage}</div>
-                <div className="text-xs text-yellow-500">Documents</div>
+                <div className="text-sm font-bold text-white">{statistics.total}</div>
+                <div className="text-xs text-gray-400">Total</div>
               </div>
             </div>
-            <div className="flex items-center gap-2 px-3 py-2 bg-amber-900/20 border border-amber-700 rounded-lg">
-              <Building2 size={15} className="text-amber-400" />
+
+            {/* Separator arrow */}
+            <div className="flex items-center px-1 text-gray-600 font-bold text-sm select-none">›</div>
+
+            {/* Urgents */}
+            <div className={`flex items-center gap-2 px-4 py-3 border-r border-gray-700 ${statistics.needsAction > 0 ? 'bg-red-900/20' : ''}`}>
+              <AlertTriangle size={14} className="text-red-400 shrink-0" />
               <div>
-                <div className="text-base font-bold text-amber-300">{statistics.quoteStage}</div>
+                <div className="text-sm font-bold text-red-300">{statistics.needsAction}</div>
+                <div className="text-xs text-red-400">Urgents</div>
+              </div>
+            </div>
+
+            <div className="flex items-center px-1 text-gray-600 font-bold text-sm select-none">›</div>
+
+            {/* Documents */}
+            <div className="flex items-center gap-2 px-4 py-3 border-r border-gray-700 bg-yellow-900/10">
+              <FileText size={14} className="text-yellow-400 shrink-0" />
+              <div>
+                <div className="text-sm font-bold text-yellow-300">{statistics.documentsStage}</div>
+                <div className="text-xs text-yellow-500">Docs</div>
+              </div>
+            </div>
+
+            <div className="flex items-center px-1 text-gray-600 font-bold text-sm select-none">›</div>
+
+            {/* Devis */}
+            <div className="flex items-center gap-2 px-4 py-3 border-r border-gray-700 bg-amber-900/10">
+              <Building2 size={14} className="text-amber-400 shrink-0" />
+              <div>
+                <div className="text-sm font-bold text-amber-300">{statistics.quoteStage}</div>
                 <div className="text-xs text-amber-500">Devis</div>
               </div>
             </div>
-            <div className="flex items-center gap-2 px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg">
-              <PenTool size={15} className="text-gray-300" />
+
+            <div className="flex items-center px-1 text-gray-600 font-bold text-sm select-none">›</div>
+
+            {/* Signature */}
+            <div className="flex items-center gap-2 px-4 py-3 border-r border-gray-700">
+              <PenTool size={14} className="text-gray-300 shrink-0" />
               <div>
-                <div className="text-base font-bold text-white">{statistics.signatureStage}</div>
+                <div className="text-sm font-bold text-white">{statistics.signatureStage}</div>
                 <div className="text-xs text-gray-400">Signature</div>
               </div>
             </div>
-            <div className="flex items-center gap-2 px-3 py-2 bg-green-900/20 border border-green-700 rounded-lg">
-              <Euro size={15} className="text-green-400" />
+
+            <div className="flex items-center px-1 text-gray-600 font-bold text-sm select-none">›</div>
+
+            {/* Paiement */}
+            <div className="flex items-center gap-2 px-4 py-3 border-r border-gray-700 bg-green-900/10">
+              <Euro size={14} className="text-green-400 shrink-0" />
               <div>
-                <div className="text-base font-bold text-green-300">{statistics.paymentStage}</div>
+                <div className="text-sm font-bold text-green-300">{statistics.paymentStage}</div>
                 <div className="text-xs text-green-500">Paiement</div>
               </div>
             </div>
-            <div className="flex items-center gap-2 px-3 py-2 bg-green-900/30 border border-green-600 rounded-lg">
-              <TrendingUp size={15} className="text-green-400" />
+
+            <div className="flex items-center px-1 text-gray-600 font-bold text-sm select-none">›</div>
+
+            {/* Clients actifs */}
+            <div className="flex items-center gap-2 px-4 py-3 bg-green-900/25 flex-1">
+              <TrendingUp size={14} className="text-green-400 shrink-0" />
               <div>
-                <div className="text-base font-bold text-green-300">{statistics.active}</div>
+                <div className="text-sm font-bold text-green-300">{statistics.active}</div>
                 <div className="text-xs text-green-400 font-medium">Clients actifs</div>
               </div>
             </div>
-            <div className="flex items-center gap-2 px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg">
-              <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></div>
-              <div>
-                <div className="text-sm font-bold text-white">{statistics.total}</div>
-                <div className="text-xs text-gray-400">Total leads</div>
-              </div>
+
+            {/* Label Workflow */}
+            <div className="flex items-center px-4 py-3 border-l border-gray-700 ml-auto">
+              <span className="text-xs font-bold text-yellow-500 uppercase tracking-wider whitespace-nowrap">Workflow TaxiAssur</span>
             </div>
           </div>
         </div>
@@ -865,41 +894,6 @@ const CRMPipelineKanban: React.FC = () => {
         </div>
       </div>
 
-      {/* TaxiAssur Workflow Panel */}
-      <div className="fixed bottom-6 right-6 bg-black rounded-xl shadow-2xl border border-gray-700 p-4 z-40">
-        <div className="text-xs font-bold text-yellow-500 mb-3 uppercase tracking-wider">Workflow TaxiAssur</div>
-        <div className="flex items-center gap-2">
-          <div className="text-center px-2">
-            <div className="text-lg font-bold text-red-400">{statistics.needsAction}</div>
-            <div className="text-xs text-gray-500">Urgents</div>
-          </div>
-          <div className="text-yellow-600 font-bold">→</div>
-          <div className="text-center px-2">
-            <div className="text-lg font-bold text-yellow-400">{statistics.documentsStage}</div>
-            <div className="text-xs text-gray-500">Docs</div>
-          </div>
-          <div className="text-yellow-600 font-bold">→</div>
-          <div className="text-center px-2">
-            <div className="text-lg font-bold text-amber-400">{statistics.quoteStage}</div>
-            <div className="text-xs text-gray-500">Devis</div>
-          </div>
-          <div className="text-yellow-600 font-bold">→</div>
-          <div className="text-center px-2">
-            <div className="text-lg font-bold text-gray-300">{statistics.signatureStage}</div>
-            <div className="text-xs text-gray-500">Sign.</div>
-          </div>
-          <div className="text-yellow-600 font-bold">→</div>
-          <div className="text-center px-2">
-            <div className="text-lg font-bold text-green-400">{statistics.paymentStage}</div>
-            <div className="text-xs text-gray-500">Paiement</div>
-          </div>
-          <div className="text-yellow-600 font-bold">→</div>
-          <div className="text-center px-2 bg-green-900/40 rounded-lg py-1">
-            <div className="text-lg font-bold text-green-400">{statistics.active}</div>
-            <div className="text-xs text-green-500 font-medium">Clients</div>
-          </div>
-        </div>
-      </div>
     </div>
   );
 };
