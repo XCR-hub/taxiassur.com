@@ -8,51 +8,48 @@ import AITaxiBackground from '../components/AITaxiBackground';
 import StickyCTA from '../components/StickyCTA';
 import { getFaqEntries } from '../lib/content';
 
-const FAQ: React.FC = () => {
-  // Static FAQs for immediate structured data (mainEntity field for Google)
-  const staticFaqs = [
-    {
-      question: "Combien coûte une assurance taxi avec TaxiAssur ?",
-      answer: "Nos tarifs négociés vous font économiser jusqu'à 35% vs assureurs classiques. Prix selon zone, expérience, véhicule. Moyenne clients : 890-1800€/an au lieu de 1200-2500€. Demandez votre devis personnalisé gratuit !"
-    },
-    {
-      question: "Quelles garanties sont incluses dans l'assurance taxi TaxiAssur ?",
-      answer: "RC Pro obligatoire, protection conducteur, dommages collision, vol incendie, bris de glace, assistance 0km, protection juridique, garantie contenu véhicule. Toutes les garanties essentielles en standard."
-    },
-    {
-      question: "TaxiAssur couvre-t-il toute la France ?",
-      answer: "Oui ! Notre réseau de partenaires assureurs couvre l'ensemble du territoire français. Paris, Lyon, Marseille, Toulouse, Nice, Bordeaux... Partout en France métropolitaine et DOM-TOM."
-    },
-    {
-      question: "Quel est le délai pour recevoir mon attestation d'assurance taxi ?",
-      answer: "Attestation d'assurance émise immédiatement par email après validation du dossier. Envoi postal sous 48h. Effet de garantie : le jour même ou date de votre choix."
-    },
-    {
-      question: "Y a-t-il des frais cachés avec TaxiAssur ?",
-      answer: "Non ! Tarifs transparents sans surprises. Pas de frais de dossier, pas de frais de modification, devis 100% gratuit. Le prix annoncé est le prix final, garantie satisfait ou remboursé."
-    },
-    {
-      question: "Quels documents sont nécessaires pour souscrire une assurance taxi ?",
-      answer: "Carte grise du véhicule, permis de conduire valide, carte professionnelle taxi ou VTC en cours de validité, relevé d'information de votre ancien assureur si vous en aviez un."
-    },
-    {
-      question: "Comment résilier mon ancienne assurance taxi ?",
-      answer: "TaxiAssur s'occupe de tout ! Nous gérons la résiliation de votre ancien contrat selon la loi Hamon (après 1 an) ou échéance annuelle. Vous n'avez rien à faire, nous nous chargeons des démarches administratives."
-    },
-    {
-      question: "Que faire en cas de sinistre avec mon taxi assuré chez TaxiAssur ?",
-      answer: "1) Appelez immédiatement le 01 80 85 57 86 (24h/7j). 2) Remplissez le constat amiable. 3) Envoyez-nous les documents sous 5 jours. 4) Notre expert traite votre dossier rapidement. Assistance et véhicule de remplacement disponibles."
-    }
-  ];
+const SCHEMA_FAQS = [
+  {
+    question: "Combien coûte une assurance taxi avec TaxiAssur ?",
+    answer: "Nos tarifs négociés vous font économiser jusqu'à 35% vs assureurs classiques. Prix selon zone, expérience, véhicule. Moyenne clients : 890-1800€/an au lieu de 1200-2500€. Demandez votre devis personnalisé gratuit !"
+  },
+  {
+    question: "Quelles garanties sont incluses dans l'assurance taxi TaxiAssur ?",
+    answer: "RC Pro obligatoire, protection conducteur, dommages collision, vol incendie, bris de glace, assistance 0km, protection juridique, garantie contenu véhicule. Toutes les garanties essentielles en standard."
+  },
+  {
+    question: "TaxiAssur couvre-t-il toute la France ?",
+    answer: "Oui ! Notre réseau de partenaires assureurs couvre l'ensemble du territoire français. Paris, Lyon, Marseille, Toulouse, Nice, Bordeaux... Partout en France métropolitaine et DOM-TOM."
+  },
+  {
+    question: "Quel est le délai pour recevoir mon attestation d'assurance taxi ?",
+    answer: "Attestation d'assurance émise immédiatement par email après validation du dossier. Envoi postal sous 48h. Effet de garantie : le jour même ou date de votre choix."
+  },
+  {
+    question: "Y a-t-il des frais cachés avec TaxiAssur ?",
+    answer: "Non ! Tarifs transparents sans surprises. Pas de frais de dossier, pas de frais de modification, devis 100% gratuit. Le prix annoncé est le prix final, garantie satisfait ou remboursé."
+  },
+  {
+    question: "Quels documents sont nécessaires pour souscrire une assurance taxi ?",
+    answer: "Carte grise du véhicule, permis de conduire valide, carte professionnelle taxi ou VTC en cours de validité, relevé d'information de votre ancien assureur si vous en aviez un."
+  },
+  {
+    question: "Comment résilier mon ancienne assurance taxi ?",
+    answer: "TaxiAssur s'occupe de tout ! Nous gérons la résiliation de votre ancien contrat selon la loi Hamon (après 1 an) ou échéance annuelle. Vous n'avez rien à faire, nous nous chargeons des démarches administratives."
+  },
+  {
+    question: "Que faire en cas de sinistre avec mon taxi assuré chez TaxiAssur ?",
+    answer: "1) Appelez immédiatement le 01 80 85 57 86 (24h/7j). 2) Remplissez le constat amiable. 3) Envoyez-nous les documents sous 5 jours. 4) Notre expert traite votre dossier rapidement. Assistance et véhicule de remplacement disponibles."
+  }
+];
 
-  const [faqs, setFaqs] = React.useState(staticFaqs);
+const FAQ: React.FC = () => {
   const [faqCount, setFaqCount] = React.useState(50);
 
   React.useEffect(() => {
     const loadFaqs = async () => {
       const faqData = await getFaqEntries();
       if (faqData && faqData.length > 0) {
-        setFaqs(faqData);
         setFaqCount(faqData.length);
       }
     };
@@ -72,7 +69,7 @@ const FAQ: React.FC = () => {
         canonical="/faq"
         keywords="meilleure assurance taxi pas chere France, assurance taxi comparatif prix conseils, best cheap taxi insurance France, taxi insurance tips pricing France, FAQ assurance taxi, questions frequentes taxi, aide assurance taxi, guide assurance taxi, reponses expert taxi, tarifs assurance taxi, garanties taxi"
       />
-      <JsonLd type="faq" data={faqs} />
+      <JsonLd type="faq" data={SCHEMA_FAQS} />
       <JsonLd type="breadcrumb" data={breadcrumbs} />
       <JsonLd type="organization" />
 
