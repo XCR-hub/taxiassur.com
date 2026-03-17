@@ -83,10 +83,14 @@ export default defineConfig(({ mode }) => ({
     modulePreload: {
       polyfill: false,
       resolveDependencies: (filename, deps) => {
-        return deps.filter(dep =>
-          dep.includes('vendor-react') ||
-          dep.includes('lib-core')
-        );
+        if (filename.includes('index')) {
+          return deps.filter(dep =>
+            dep.includes('vendor-react') ||
+            dep.includes('vendor-router') ||
+            dep.includes('lib-core')
+          );
+        }
+        return [];
       }
     },
     rollupOptions: {

@@ -70,7 +70,7 @@ const Header: React.FC = () => {
   }, []);
 
   return (
-    <header className="bg-black/95 backdrop-blur-lg border-b border-gray-800 sticky top-0 z-50 shadow-lg">
+    <header className="bg-black border-b border-gray-800 sticky top-0 z-50 shadow-lg lg:bg-black/95 lg:backdrop-blur-sm backdrop-header">
       {/* Top bar */}
       <div className="bg-gradient-to-r from-yellow-500 to-amber-500 text-gray-900 py-1.5 sm:py-2">
         <div className="container-max">

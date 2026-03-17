@@ -284,3 +284,61 @@
   90% { opacity: 0.3; }
   100% { transform: translateX(100%); opacity: 0; }
 }
+
+/* ===== MOBILE PERFORMANCE OPTIMIZATIONS ===== */
+
+/* Disable costly animations on mobile/low-end devices */
+@media (max-width: 1023px) {
+  /* Skip backdrop-filter on mobile — GPU expensive */
+  .backdrop-blur-sm,
+  .backdrop-blur,
+  .backdrop-blur-md,
+  .backdrop-blur-lg,
+  .backdrop-blur-xl {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  /* Disable taxi animations entirely on mobile */
+  [style*="taxiMove"],
+  [style*="taxiLineFlow"] {
+    animation: none !important;
+    display: none !important;
+  }
+
+  /* Reduce motion for accessibility + perf */
+  .animate-pulse {
+    animation-duration: 3s;
+  }
+
+  /* Improve touch scroll performance */
+  .overflow-y-auto,
+  .overflow-y-scroll {
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* content-visibility for below-fold sections */
+@media (max-width: 1023px) {
+  .section-below-fold {
+    content-visibility: auto;
+    contain-intrinsic-size: 0 400px;
+  }
+}
+
+/* Reduce repaints for sticky header */
+header[class*="sticky"] {
+  will-change: auto;
+  transform: translateZ(0);
+}
+
+/* Prefers reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

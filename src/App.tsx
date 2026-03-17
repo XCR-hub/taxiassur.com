@@ -27,7 +27,9 @@ function App() {
   const [showEnhancements, setShowEnhancements] = useState(false);
 
   useEffect(() => {
-    const timer = setTimeout(() => setShowEnhancements(true), 500);
+    const isMobile = window.innerWidth < 1024;
+    const delay = isMobile ? 2000 : 500;
+    const timer = setTimeout(() => setShowEnhancements(true), delay);
     return () => clearTimeout(timer);
   }, []);
 

@@ -6,10 +6,10 @@
 
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 
-  <!-- Critical preconnect -->
-  <link rel="preconnect" href="https://qiavtxpaznxpttkdaevy.supabase.co" crossorigin />
+  <!-- Critical preconnect (max 4 to avoid PageSpeed warning) -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="dns-prefetch" href="https://qiavtxpaznxpttkdaevy.supabase.co" />
 
   <!-- Fonts: non-blocking (display=swap) -->
   <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" onload="this.onload=null;this.rel='stylesheet'" />
@@ -26,8 +26,12 @@
     .loading-text{color:#D4AF37;font-size:14px;font-weight:600;letter-spacing:.05em}
     @keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
     /* Critical above-fold: header height reservation prevents CLS */
-    header{min-height:80px}
-    @media(max-width:640px){header{min-height:72px}}
+    header{min-height:80px;contain:layout style}
+    @media(max-width:640px){header{min-height:64px}}
+    /* Reserve LCP image space to eliminate layout shift */
+    .hero-image-slot{aspect-ratio:16/9;background:#111;contain:strict}
+    /* Prevent FOUC on mobile */
+    @media(max-width:1024px){.backdrop-blur-header{background:#000 !important;backdrop-filter:none !important;-webkit-backdrop-filter:none !important}}
   </style>
 
   <title>TaxiAssur - Assurance Taxi Pas Cher | Devis Gratuit</title>
@@ -50,6 +54,6 @@
     </div>
   </div>
 
-  <script type="module" src="/src/main.tsx"></script>
+  <script type="module" src="/src/main.tsx" fetchpriority="high"></script>
 </body>
 </html>

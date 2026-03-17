@@ -81,8 +81,8 @@ const Hero: React.FC = () => {
 
   return (
     <section id="devis" className="relative bg-gradient-to-br from-gray-950 via-gray-900 to-black text-white py-14 sm:py-20 overflow-hidden">
-      <div className="hidden sm:block">
-        <AITaxiBackground section="hero" intensity="medium" />
+      <div className="hidden lg:block">
+        <AITaxiBackground section="hero" intensity="low" />
       </div>
       
       <div className="container-max relative z-20">

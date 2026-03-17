@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
 interface AITaxiBackgroundProps {
   intensity?: 'low' | 'medium' | 'high';
@@ -6,11 +6,22 @@ interface AITaxiBackgroundProps {
   className?: string;
 }
 
-const AITaxiBackground: React.FC<AITaxiBackgroundProps> = ({ 
+const AITaxiBackground: React.FC<AITaxiBackgroundProps> = ({
   intensity = 'medium',
   section = 'content',
   className = ''
 }) => {
+  const [isMobile, setIsMobile] = useState(true);
+
+  useEffect(() => {
+    const mql = window.matchMedia('(min-width: 1024px)');
+    setIsMobile(!mql.matches);
+    const handler = (e: MediaQueryListEvent) => setIsMobile(!e.matches);
+    mql.addEventListener('change', handler);
+    return () => mql.removeEventListener('change', handler);
+  }, []);
+
+  if (isMobile) return null;
   const getOpacity = () => {
     switch (intensity) {
       case 'low': return 'opacity-40';
