@@ -739,7 +739,7 @@ const CRMInboxMulticanal: React.FC = () => {
       name: 'Boîte de réception',
       icon: <Inbox size={18} />,
       count: stats.total,
-      color: 'text-blue-600',
+      color: 'text-yellow-400',
       filter: () => true,
     },
     {
@@ -747,7 +747,7 @@ const CRMInboxMulticanal: React.FC = () => {
       name: 'Non lus',
       icon: <MailOpen size={18} />,
       count: stats.unread,
-      color: 'text-orange-600',
+      color: 'text-amber-400',
       filter: (e) => !e.is_read,
     },
     {
@@ -755,7 +755,7 @@ const CRMInboxMulticanal: React.FC = () => {
       name: 'Favoris',
       icon: <Star size={18} />,
       count: stats.starred,
-      color: 'text-yellow-500',
+      color: 'text-yellow-400',
       filter: (e) => e.is_starred,
     },
     {
@@ -763,7 +763,7 @@ const CRMInboxMulticanal: React.FC = () => {
       name: 'Leads',
       icon: <Users size={18} />,
       count: stats.leads,
-      color: 'text-green-600',
+      color: 'text-green-400',
       filter: (e) => !!e.lead_id,
     },
     {
@@ -771,7 +771,7 @@ const CRMInboxMulticanal: React.FC = () => {
       name: 'Mails',
       icon: <Folder size={18} />,
       count: stats.mails,
-      color: 'text-gray-600',
+      color: 'text-gray-400',
       filter: (e) => e.classification === 'non_lead',
     },
     {
@@ -812,12 +812,12 @@ const CRMInboxMulticanal: React.FC = () => {
       )}
 
       {/* COLONNE 1: Dossiers */}
-      <div className="w-64 bg-white border-r border-gray-200 flex flex-col">
-        <div className="p-4 border-b border-gray-200 space-y-3">
+      <div className="w-64 bg-black border-r border-gray-800 flex flex-col">
+        <div className="p-4 border-b border-gray-800 space-y-3">
           <button
             onClick={syncEmails}
             disabled={syncing}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 font-medium"
+            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-yellow-600 to-yellow-500 text-black rounded-lg hover:from-yellow-700 hover:to-yellow-600 transition-all disabled:opacity-50 font-semibold shadow"
           >
             <RefreshCw size={18} className={syncing ? 'animate-spin' : ''} />
             {syncing ? 'Sync...' : 'Synchroniser'}
@@ -826,7 +826,7 @@ const CRMInboxMulticanal: React.FC = () => {
           <button
             onClick={autoCreateLeads}
             disabled={syncing}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 font-medium"
+            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-800 text-yellow-400 border border-gray-700 rounded-lg hover:bg-gray-700 transition-all disabled:opacity-50 font-medium"
             title="Créer automatiquement les leads depuis les emails sans lead"
           >
             <Zap size={18} />
@@ -834,8 +834,8 @@ const CRMInboxMulticanal: React.FC = () => {
           </button>
 
           {autoSyncActive && lastAutoSync && (
-            <div className="text-xs text-gray-500 flex items-center gap-1">
-              <CheckCircle size={12} className="text-green-500" />
+            <div className="text-xs text-gray-400 flex items-center gap-1">
+              <CheckCircle size={12} className="text-green-400" />
               Auto: {new Date(lastAutoSync).toLocaleTimeString('fr-FR')}
             </div>
           )}
@@ -851,18 +851,18 @@ const CRMInboxMulticanal: React.FC = () => {
                 onDrop={(e) => handleDrop(e, folder.id)}
                 className={`flex items-center justify-between px-3 py-2.5 rounded-lg cursor-pointer transition-all ${
                   filter === folder.id
-                    ? 'bg-blue-50 border-2 border-blue-500'
-                    : 'hover:bg-gray-100 border-2 border-transparent'
+                    ? 'bg-yellow-500/20 border-2 border-yellow-500'
+                    : 'hover:bg-gray-800 border-2 border-transparent'
                 }`}
               >
                 <div className="flex items-center gap-3 flex-1">
                   <span className={folder.color}>{folder.icon}</span>
-                  <span className={`text-sm font-medium ${filter === folder.id ? 'text-blue-900' : 'text-gray-700'}`}>
+                  <span className={`text-sm font-medium ${filter === folder.id ? 'text-yellow-400' : 'text-gray-300'}`}>
                     {folder.name}
                   </span>
                 </div>
                 <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
-                  filter === folder.id ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'
+                  filter === folder.id ? 'bg-yellow-500 text-black' : 'bg-gray-700 text-gray-300'
                 }`}>
                   {folder.count}
                 </span>
@@ -871,7 +871,7 @@ const CRMInboxMulticanal: React.FC = () => {
           </div>
         </div>
 
-        <div className="p-4 border-t border-gray-200">
+        <div className="p-4 border-t border-gray-800">
           <div className="text-xs text-gray-500 space-y-1">
             <div className="flex items-center gap-2">
               <Clock size={12} />
@@ -879,7 +879,7 @@ const CRMInboxMulticanal: React.FC = () => {
             </div>
             <div className="flex items-center gap-2">
               <Settings size={12} />
-              <a href="/backoffice/email-settings" className="text-blue-600 hover:underline">
+              <a href="/backoffice/email-settings" className="text-yellow-500 hover:text-yellow-400 hover:underline">
                 Configuration
               </a>
             </div>
@@ -897,7 +897,7 @@ const CRMInboxMulticanal: React.FC = () => {
               placeholder="Rechercher..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+              className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 text-sm"
             />
           </div>
         </div>
@@ -905,7 +905,7 @@ const CRMInboxMulticanal: React.FC = () => {
         <div className="flex-1 overflow-y-auto">
           {loading ? (
             <div className="flex items-center justify-center h-full">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-500"></div>
             </div>
           ) : filteredMessages.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-gray-400 p-6">
@@ -925,10 +925,10 @@ const CRMInboxMulticanal: React.FC = () => {
                   }}
                   className={`p-3 cursor-pointer transition-all relative group ${
                     selectedMessage?.id === email.id
-                      ? 'bg-blue-50 border-l-4 border-l-blue-600'
+                      ? 'bg-yellow-50 border-l-4 border-l-yellow-500'
                       : email.is_read
                       ? 'hover:bg-gray-50'
-                      : 'bg-blue-50/30 hover:bg-blue-50/50'
+                      : 'bg-yellow-50/30 hover:bg-yellow-50/60'
                   }`}
                 >
                   <div className="flex items-start gap-3">
@@ -1041,7 +1041,7 @@ const CRMInboxMulticanal: React.FC = () => {
                   {!foundLeadId && extractedInfo && (
                     <button
                       onClick={() => createLeadFromEmail(selectedMessage)}
-                      className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+                      className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-yellow-600 to-yellow-500 text-black rounded-lg hover:from-yellow-700 hover:to-yellow-600 transition-all text-sm font-semibold shadow"
                     >
                       <UserPlus size={16} />
                       Créer le lead
@@ -1083,7 +1083,7 @@ const CRMInboxMulticanal: React.FC = () => {
                         setReplyContent('');
                         setShowReplyModal(true);
                       }}
-                      className="p-2 hover:bg-blue-50 rounded-lg transition-colors text-blue-600"
+                      className="p-2 hover:bg-yellow-50 rounded-lg transition-colors text-yellow-600"
                       title="Répondre (R)"
                     >
                       <Send size={20} />
@@ -1165,8 +1165,8 @@ const CRMInboxMulticanal: React.FC = () => {
                         key={idx}
                         className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors group"
                       >
-                        <div className="p-2 bg-blue-100 rounded-lg">
-                          <FileDown size={18} className="text-blue-600" />
+                        <div className="p-2 bg-yellow-100 rounded-lg">
+                          <FileDown size={18} className="text-yellow-700" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="font-medium text-gray-900 text-sm truncate">
@@ -1187,7 +1187,7 @@ const CRMInboxMulticanal: React.FC = () => {
                             download
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium opacity-0 group-hover:opacity-100"
+                            className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-yellow-600 to-yellow-500 text-black rounded-lg hover:from-yellow-700 hover:to-yellow-600 transition-all text-sm font-semibold opacity-0 group-hover:opacity-100"
                           >
                             <Download size={16} />
                             Télécharger
@@ -1198,7 +1198,7 @@ const CRMInboxMulticanal: React.FC = () => {
                             download
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium opacity-0 group-hover:opacity-100"
+                            className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-yellow-600 to-yellow-500 text-black rounded-lg hover:from-yellow-700 hover:to-yellow-600 transition-all text-sm font-semibold opacity-0 group-hover:opacity-100"
                           >
                             <Download size={16} />
                             Télécharger
@@ -1264,9 +1264,9 @@ const CRMInboxMulticanal: React.FC = () => {
 
             <div className="p-6 space-y-6">
               {emailsFoundInContent.length > 0 && (
-                <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-4">
+                <div className="bg-yellow-50 border-2 border-yellow-200 rounded-lg p-4">
                   <p className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                    <Mail size={18} className="text-blue-600" />
+                    <Mail size={18} className="text-yellow-600" />
                     Emails trouvés dans le contenu:
                   </p>
                   <div className="space-y-2">
@@ -1277,9 +1277,9 @@ const CRMInboxMulticanal: React.FC = () => {
                           setLeadSearchQuery(email);
                           searchLeads(email);
                         }}
-                        className="w-full text-left px-4 py-2 bg-white border border-blue-300 rounded-lg hover:bg-blue-100 hover:border-blue-400 transition-colors"
+                        className="w-full text-left px-4 py-2 bg-white border border-yellow-300 rounded-lg hover:bg-yellow-50 hover:border-yellow-500 transition-colors"
                       >
-                        <code className="text-sm font-mono text-blue-900">{email}</code>
+                        <code className="text-sm font-mono text-yellow-900">{email}</code>
                       </button>
                     ))}
                   </div>
@@ -1300,14 +1300,14 @@ const CRMInboxMulticanal: React.FC = () => {
                       searchLeads(e.target.value);
                     }}
                     placeholder="Tapez au moins 3 caractères..."
-                    className="w-full pl-10 pr-4 py-3 border-2 border-gray-300 rounded-lg focus:border-orange-500 focus:outline-none text-gray-900"
+                    className="w-full pl-10 pr-4 py-3 border-2 border-gray-300 rounded-lg focus:border-yellow-500 focus:outline-none text-gray-900"
                   />
                 </div>
               </div>
 
               {searchingLeads && (
                 <div className="text-center py-4">
-                  <div className="animate-spin w-8 h-8 border-4 border-orange-600 border-t-transparent rounded-full mx-auto"></div>
+                  <div className="animate-spin w-8 h-8 border-4 border-yellow-500 border-t-transparent rounded-full mx-auto"></div>
                   <p className="text-sm text-gray-600 mt-2">Recherche en cours...</p>
                 </div>
               )}
@@ -1347,7 +1347,7 @@ const CRMInboxMulticanal: React.FC = () => {
                                 </div>
                               )}
                               <div>
-                                <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">
+                                <span className="px-2 py-1 bg-yellow-100 text-yellow-900 text-xs font-medium rounded-full">
                                   {lead.status}
                                 </span>
                               </div>
@@ -1355,7 +1355,7 @@ const CRMInboxMulticanal: React.FC = () => {
                           </div>
                           <button
                             onClick={() => assignEmailToLead(lead.id, selectedMessage.id)}
-                            className="flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors text-sm font-medium whitespace-nowrap"
+                            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-yellow-600 to-yellow-500 text-black rounded-lg hover:from-yellow-700 hover:to-yellow-600 transition-all text-sm font-semibold whitespace-nowrap shadow"
                           >
                             <LinkIcon size={16} />
                             Assigner
@@ -1386,7 +1386,7 @@ const CRMInboxMulticanal: React.FC = () => {
             <div className="p-6 border-b border-gray-200">
               <div className="flex items-center justify-between">
                 <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                  <Send className="w-5 h-5 text-blue-600" />
+                  <Send className="w-5 h-5 text-yellow-600" />
                   Répondre à : {selectedMessage.from_email}
                 </h2>
                 <button
@@ -1414,7 +1414,7 @@ const CRMInboxMulticanal: React.FC = () => {
                   onChange={(e) => setReplyContent(e.target.value)}
                   placeholder="Tapez votre réponse..."
                   rows={10}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 resize-none"
                 />
               </div>
 
@@ -1437,7 +1437,7 @@ const CRMInboxMulticanal: React.FC = () => {
               <button
                 onClick={sendReply}
                 disabled={replySending || !replyContent.trim()}
-                className="px-6 py-2.5 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                className="px-6 py-2.5 bg-gradient-to-r from-yellow-600 to-yellow-500 text-black rounded-lg font-semibold hover:from-yellow-700 hover:to-yellow-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 shadow"
               >
                 {replySending ? (
                   <>

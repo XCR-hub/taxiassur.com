@@ -178,16 +178,17 @@ export default function PipelineWorkflow7Etapes({ leadId, leadData }: PipelineWo
   return (
     <div className="space-y-6">
       {/* Progress Steps */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h2 className="text-xl font-bold text-gray-900 mb-6">
+      <div className="bg-black rounded-xl shadow-lg border border-gray-800 p-6">
+        <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
+          <span className="w-2 h-6 bg-gradient-to-b from-yellow-500 to-yellow-600 rounded-full inline-block"></span>
           Pipeline Commercial - 7 Étapes
         </h2>
 
         <div className="relative">
           {/* Progress Line */}
-          <div className="absolute top-6 left-0 right-0 h-1 bg-gray-200">
+          <div className="absolute top-6 left-0 right-0 h-1 bg-gray-800">
             <div
-              className="h-full bg-blue-600 transition-all duration-500"
+              className="h-full bg-gradient-to-r from-yellow-600 to-yellow-400 transition-all duration-500"
               style={{ width: `${((currentStepNumber - 1) / (PIPELINE_STEPS.length - 1)) * 100}%` }}
             />
           </div>
@@ -197,7 +198,6 @@ export default function PipelineWorkflow7Etapes({ leadId, leadData }: PipelineWo
             {PIPELINE_STEPS.map((step) => {
               const isActive = step.key === currentStage;
               const isCompleted = step.number < currentStepNumber;
-              const isFuture = step.number > currentStepNumber;
 
               return (
                 <button
@@ -208,12 +208,12 @@ export default function PipelineWorkflow7Etapes({ leadId, leadData }: PipelineWo
                   title={`Aller à l'étape ${step.number}: ${step.title}`}
                 >
                   <div
-                    className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg mb-2 transition-all ${
+                    className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg mb-2 transition-all shadow-md ${
                       isCompleted
-                        ? 'bg-green-600 text-white group-hover:bg-green-700'
+                        ? 'bg-green-500 text-white group-hover:bg-green-400'
                         : isActive
-                        ? 'bg-blue-600 text-white ring-4 ring-blue-100'
-                        : 'bg-gray-200 text-gray-500 group-hover:bg-gray-300'
+                        ? 'bg-gradient-to-br from-yellow-500 to-yellow-600 text-black ring-4 ring-yellow-500/30 shadow-yellow-500/20'
+                        : 'bg-gray-800 text-gray-500 border border-gray-700 group-hover:bg-gray-700 group-hover:text-gray-300'
                     }`}
                   >
                     {isCompleted ? (
@@ -225,12 +225,12 @@ export default function PipelineWorkflow7Etapes({ leadId, leadData }: PipelineWo
                   <div className="text-center">
                     <p
                       className={`text-xs font-semibold mb-1 ${
-                        isActive ? 'text-blue-600' : isCompleted ? 'text-green-600' : 'text-gray-500'
+                        isActive ? 'text-yellow-400' : isCompleted ? 'text-green-400' : 'text-gray-500'
                       }`}
                     >
                       {step.title}
                     </p>
-                    <p className="text-xs text-gray-500 hidden xl:block">{step.description}</p>
+                    <p className="text-xs text-gray-600 hidden xl:block">{step.description}</p>
                   </div>
                 </button>
               );
@@ -240,24 +240,25 @@ export default function PipelineWorkflow7Etapes({ leadId, leadData }: PipelineWo
       </div>
 
       {/* Current Step Content */}
-      <div key={currentStage} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <div key={currentStage} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-lg font-semibold text-gray-900">
-            Étape {currentStepNumber} : {PIPELINE_STEPS.find(s => s.key === currentStage)?.title}
+          <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+            <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-gradient-to-br from-yellow-500 to-yellow-600 text-black text-sm font-bold">{currentStepNumber}</span>
+            {PIPELINE_STEPS.find(s => s.key === currentStage)?.title}
           </h3>
-          {loading && <Loader2 className="h-5 w-5 animate-spin text-blue-600" />}
+          {loading && <Loader2 className="h-5 w-5 animate-spin text-yellow-500" />}
         </div>
 
         {/* Étape 1 : Nouveau Lead */}
         {currentStage === 'nouveau_lead' && (
           <div className="space-y-4">
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <p className="text-sm text-blue-900 mb-4">
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+              <p className="text-sm text-yellow-900 mb-4">
                 <strong>Objectif :</strong> Contacter le prospect par téléphone, email, SMS ou WhatsApp pour qualifier son besoin.
               </p>
               <button
                 onClick={() => setShowCallDialog(true)}
-                className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold"
+                className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-yellow-600 to-yellow-500 text-black rounded-lg hover:from-yellow-700 hover:to-yellow-600 font-semibold shadow transition-all"
               >
                 Appeler le Prospect
               </button>
@@ -482,13 +483,13 @@ export default function PipelineWorkflow7Etapes({ leadId, leadData }: PipelineWo
         {/* Client Actif */}
         {currentStage === 'client_actif' && (
           <div className="text-center py-12">
-            <div className="inline-flex items-center justify-center w-20 h-20 bg-green-100 rounded-full mb-4">
+            <div className="inline-flex items-center justify-center w-20 h-20 bg-green-100 rounded-full mb-4 shadow-lg">
               <CheckCircle2 className="h-12 w-12 text-green-600" />
             </div>
             <h3 className="text-2xl font-bold text-gray-900 mb-2">
               Client Actif !
             </h3>
-            <p className="text-gray-600 mb-4">
+            <p className="text-gray-600 mb-6">
               Ce prospect est maintenant un client actif. Tous les documents sont disponibles dans son espace client.
             </p>
             {leadData.access_token && (
@@ -496,7 +497,7 @@ export default function PipelineWorkflow7Etapes({ leadId, leadData }: PipelineWo
                 href={`${window.location.origin}/espace-client?token=${leadData.access_token}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-yellow-600 to-yellow-500 text-black rounded-lg hover:from-yellow-700 hover:to-yellow-600 font-semibold shadow transition-all"
               >
                 Accéder à l'Espace Client
                 <ChevronRight className="h-5 w-5" />

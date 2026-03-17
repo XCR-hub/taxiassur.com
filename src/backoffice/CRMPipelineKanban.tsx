@@ -15,67 +15,67 @@ interface ColumnNotifications {
   paymentDue: number;
 }
 
-// Couleurs vives et distinctes pour chaque statut (plus de gris!)
+// Palette de couleurs alignée sur la charte TaxiAssur (jaune/noir/gris)
 const STATUS_COLORS: Record<PipelineStatus, { bg: string; border: string; text: string; badge: string }> = {
   NOUVEAU_LEAD: {
-    bg: 'bg-gradient-to-br from-blue-100 to-blue-50',
-    border: 'border-blue-300',
-    text: 'text-blue-900',
-    badge: 'bg-blue-600 text-white'
+    bg: 'bg-gradient-to-br from-yellow-50 to-amber-50',
+    border: 'border-yellow-400',
+    text: 'text-yellow-900',
+    badge: 'bg-yellow-500 text-black'
   },
   COLLECTE_DOCUMENTS: {
-    bg: 'bg-gradient-to-br from-emerald-100 to-emerald-50',
-    border: 'border-emerald-300',
-    text: 'text-emerald-900',
-    badge: 'bg-emerald-600 text-white'
+    bg: 'bg-gradient-to-br from-amber-50 to-yellow-50',
+    border: 'border-amber-400',
+    text: 'text-amber-900',
+    badge: 'bg-amber-500 text-black'
   },
   DEVIS: {
-    bg: 'bg-gradient-to-br from-cyan-100 to-cyan-50',
-    border: 'border-cyan-300',
-    text: 'text-cyan-900',
-    badge: 'bg-cyan-600 text-white'
+    bg: 'bg-gradient-to-br from-gray-800 to-gray-900',
+    border: 'border-yellow-500',
+    text: 'text-yellow-400',
+    badge: 'bg-yellow-500 text-black'
   },
   DECISION_CLIENT: {
-    bg: 'bg-gradient-to-br from-violet-100 to-violet-50',
-    border: 'border-violet-300',
-    text: 'text-violet-900',
-    badge: 'bg-violet-600 text-white'
+    bg: 'bg-gradient-to-br from-yellow-100 to-yellow-50',
+    border: 'border-yellow-500',
+    text: 'text-yellow-900',
+    badge: 'bg-yellow-600 text-black'
   },
   PAIEMENT: {
-    bg: 'bg-gradient-to-br from-amber-100 to-amber-50',
-    border: 'border-amber-300',
-    text: 'text-amber-900',
-    badge: 'bg-amber-600 text-white'
+    bg: 'bg-gradient-to-br from-green-50 to-emerald-50',
+    border: 'border-green-400',
+    text: 'text-green-900',
+    badge: 'bg-green-600 text-white'
   },
   CONTRAT_SIGNATURE: {
-    bg: 'bg-gradient-to-br from-indigo-100 to-indigo-50',
-    border: 'border-indigo-300',
-    text: 'text-indigo-900',
-    badge: 'bg-indigo-600 text-white'
+    bg: 'bg-gradient-to-br from-gray-900 to-black',
+    border: 'border-yellow-400',
+    text: 'text-yellow-300',
+    badge: 'bg-yellow-400 text-black'
   },
   CLIENT_ACTIF: {
-    bg: 'bg-gradient-to-br from-green-100 to-green-50',
-    border: 'border-green-300',
+    bg: 'bg-gradient-to-br from-green-100 to-emerald-50',
+    border: 'border-green-500',
     text: 'text-green-900',
     badge: 'bg-green-600 text-white'
   },
   RELANCE: {
-    bg: 'bg-gradient-to-br from-orange-100 to-orange-50',
-    border: 'border-orange-300',
+    bg: 'bg-gradient-to-br from-orange-50 to-amber-50',
+    border: 'border-orange-400',
     text: 'text-orange-900',
-    badge: 'bg-orange-600 text-white'
+    badge: 'bg-orange-500 text-white'
   },
   PERDU: {
-    bg: 'bg-gradient-to-br from-red-100 to-red-50',
-    border: 'border-red-300',
-    text: 'text-red-900',
-    badge: 'bg-red-600 text-white'
+    bg: 'bg-gradient-to-br from-gray-100 to-gray-50',
+    border: 'border-gray-400',
+    text: 'text-gray-700',
+    badge: 'bg-gray-600 text-white'
   },
   RECONTACT_PROGRAMME: {
-    bg: 'bg-gradient-to-br from-purple-100 to-purple-50',
-    border: 'border-purple-300',
-    text: 'text-purple-900',
-    badge: 'bg-purple-600 text-white'
+    bg: 'bg-gradient-to-br from-yellow-50 to-amber-100',
+    border: 'border-amber-500',
+    text: 'text-amber-900',
+    badge: 'bg-amber-600 text-black'
   }
 } as any;
 
@@ -545,37 +545,37 @@ const CRMPipelineKanban: React.FC = () => {
   }
 
   return (
-    <div className="h-full bg-gray-50 dark:bg-gray-900 flex flex-col overflow-hidden">
+    <div className="h-full bg-gray-100 flex flex-col overflow-hidden">
       {/* Header */}
-      <div className="bg-white dark:bg-gray-800 border-b dark:border-gray-700 z-10 shadow-sm flex-shrink-0">
+      <div className="bg-black border-b border-gray-800 z-10 shadow-lg flex-shrink-0">
         <div className="max-w-full px-6 py-4">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
+              <h1 className="text-2xl font-bold text-white flex items-center gap-3">
+                <span className="w-8 h-8 bg-gradient-to-br from-yellow-500 to-yellow-400 rounded-lg flex items-center justify-center text-black text-sm font-black">K</span>
                 Pipeline Kanban
                 {refreshing && (
-                  <RefreshCw className="animate-spin text-blue-600" size={24} />
+                  <RefreshCw className="animate-spin text-yellow-400" size={20} />
                 )}
               </h1>
-              <div className="flex items-center gap-3 text-sm text-gray-600 mt-1">
+              <div className="flex items-center gap-3 text-sm text-gray-400 mt-1">
                 <span>Gestion visuelle du cycle de vie client</span>
-                <span className="text-gray-400">•</span>
+                <span className="text-gray-600">•</span>
                 <div className="flex items-center gap-1">
-                  <Clock size={14} />
+                  <Clock size={13} />
                   <span>Mis à jour: {lastUpdate.toLocaleTimeString('fr-FR')}</span>
                 </div>
               </div>
             </div>
 
             <div className="flex items-center gap-2">
-              {/* Indicateur auto-refresh */}
-              <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-lg border border-gray-200">
-                <div className={`w-2 h-2 rounded-full ${autoRefreshEnabled ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`}></div>
-                <span className="text-xs text-gray-600">Auto-refresh {autoRefreshEnabled ? 'ON' : 'OFF'}</span>
+              <div className="flex items-center gap-2 px-3 py-2 bg-gray-900 rounded-lg border border-gray-700">
+                <div className={`w-2 h-2 rounded-full ${autoRefreshEnabled ? 'bg-yellow-400 animate-pulse' : 'bg-gray-600'}`}></div>
+                <span className="text-xs text-gray-400">Auto-refresh {autoRefreshEnabled ? 'ON' : 'OFF'}</span>
                 <button
                   onClick={() => setAutoRefreshEnabled(!autoRefreshEnabled)}
-                  className="ml-1 text-xs text-blue-600 hover:text-blue-800 font-medium"
-                  title={autoRefreshEnabled ? 'Désactiver le rafraîchissement automatique' : 'Activer le rafraîchissement automatique'}
+                  className="ml-1 text-xs text-yellow-400 hover:text-yellow-300 font-medium"
+                  title={autoRefreshEnabled ? 'Désactiver' : 'Activer'}
                 >
                   {autoRefreshEnabled ? 'OFF' : 'ON'}
                 </button>
@@ -584,25 +584,25 @@ const CRMPipelineKanban: React.FC = () => {
               <button
                 onClick={handleRefresh}
                 disabled={refreshing}
-                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors flex items-center gap-2 disabled:opacity-50"
+                className="px-4 py-2 border border-gray-700 text-gray-300 rounded-lg font-medium hover:bg-gray-800 hover:text-white transition-colors flex items-center gap-2 disabled:opacity-50"
               >
-                <RefreshCw size={20} className={refreshing ? 'animate-spin' : ''} />
+                <RefreshCw size={18} className={refreshing ? 'animate-spin' : ''} />
                 Actualiser
               </button>
               <button
                 onClick={handleSyncEmails}
                 disabled={syncingEmails}
-                className="px-4 py-2 border border-emerald-300 bg-emerald-50 text-emerald-700 rounded-lg font-medium hover:bg-emerald-100 transition-colors flex items-center gap-2 disabled:opacity-50"
+                className="px-4 py-2 border border-yellow-600 bg-yellow-600/10 text-yellow-400 rounded-lg font-medium hover:bg-yellow-600/20 transition-colors flex items-center gap-2 disabled:opacity-50"
                 title="Synchroniser les emails et créer les nouveaux leads automatiquement"
               >
-                <Mail size={20} className={syncingEmails ? 'animate-bounce' : ''} />
-                {syncingEmails ? 'Synchronisation...' : 'Sync Emails'}
+                <Mail size={18} className={syncingEmails ? 'animate-bounce' : ''} />
+                {syncingEmails ? 'Sync...' : 'Sync Emails'}
               </button>
               <button
                 onClick={() => navigate('/backoffice/crm-killer')}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center gap-2"
+                className="px-4 py-2 bg-gradient-to-r from-yellow-600 to-yellow-500 text-black rounded-lg font-bold hover:from-yellow-700 hover:to-yellow-600 transition-all flex items-center gap-2"
               >
-                <Plus size={20} />
+                <Plus size={18} />
                 Nouveau Lead
               </button>
             </div>
@@ -610,15 +610,10 @@ const CRMPipelineKanban: React.FC = () => {
 
           {/* Error message */}
           {error && (
-            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 text-red-800">
-              <AlertCircle size={20} />
+            <div className="mb-4 p-4 bg-red-900/30 border border-red-700 rounded-lg flex items-center gap-2 text-red-300">
+              <AlertCircle size={18} />
               <span>{error}</span>
-              <button
-                onClick={() => setError(null)}
-                className="ml-auto text-red-600 hover:text-red-800"
-              >
-                ✕
-              </button>
+              <button onClick={() => setError(null)} className="ml-auto text-red-400 hover:text-red-200">✕</button>
             </div>
           )}
 
@@ -626,112 +621,96 @@ const CRMPipelineKanban: React.FC = () => {
           {syncMessage && (
             <div className={`mb-4 p-4 rounded-lg flex items-center gap-2 ${
               syncMessage.includes('✅')
-                ? 'bg-emerald-50 border border-emerald-200 text-emerald-800'
+                ? 'bg-green-900/30 border border-green-700 text-green-300'
                 : syncMessage.includes('❌')
-                ? 'bg-red-50 border border-red-200 text-red-800'
-                : 'bg-blue-50 border border-blue-200 text-blue-800'
+                ? 'bg-red-900/30 border border-red-700 text-red-300'
+                : 'bg-yellow-900/30 border border-yellow-700 text-yellow-300'
             }`}>
               <span className="font-medium">{syncMessage}</span>
-              <button
-                onClick={() => setSyncMessage(null)}
-                className="ml-auto hover:opacity-75"
-              >
-                ✕
-              </button>
+              <button onClick={() => setSyncMessage(null)} className="ml-auto hover:opacity-75">✕</button>
             </div>
           )}
 
           {/* Notification nouveau lead */}
           {newLeadNotification && (
-            <div className="mb-4 p-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg flex items-center gap-3 shadow-lg animate-bounce">
+            <div className="mb-4 p-4 bg-gradient-to-r from-yellow-600 to-yellow-500 text-black rounded-lg flex items-center gap-3 shadow-lg animate-bounce">
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 bg-white rounded-full animate-pulse"></div>
+                <div className="w-3 h-3 bg-black rounded-full animate-pulse"></div>
                 <span className="font-bold text-lg">{newLeadNotification}</span>
               </div>
-              <button
-                onClick={() => setNewLeadNotification(null)}
-                className="ml-auto text-white hover:text-gray-200 font-bold"
-              >
-                ✕
-              </button>
+              <button onClick={() => setNewLeadNotification(null)} className="ml-auto font-bold hover:opacity-75">✕</button>
             </div>
           )}
 
           {/* Search and filters */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
               <input
                 type="text"
                 placeholder="Rechercher par nom, email, téléphone, entreprise ou ville..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full pl-10 pr-4 py-2 bg-gray-900 border border-gray-700 text-white placeholder-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 text-sm"
               />
             </div>
-            <button className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2">
-              <Filter size={20} />
+            <button className="px-4 py-2 border border-gray-700 text-gray-300 rounded-lg hover:bg-gray-800 hover:text-white transition-colors flex items-center gap-2 text-sm">
+              <Filter size={18} />
               Filtres
             </button>
           </div>
 
-          {/* TaxiAssur Workflow Stats */}
+          {/* Workflow Stats */}
           <div className="mt-4 grid grid-cols-2 lg:grid-cols-7 gap-2">
             {statistics.needsAction > 0 && (
-              <div className="flex items-center gap-2 px-3 py-2 bg-red-50 border border-red-200 rounded-lg">
-                <AlertTriangle size={16} className="text-red-600" />
+              <div className="flex items-center gap-2 px-3 py-2 bg-red-900/30 border border-red-700 rounded-lg">
+                <AlertTriangle size={15} className="text-red-400" />
                 <div>
-                  <div className="text-lg font-bold text-red-700">{statistics.needsAction}</div>
-                  <div className="text-xs text-red-600">Actions urgentes</div>
+                  <div className="text-base font-bold text-red-300">{statistics.needsAction}</div>
+                  <div className="text-xs text-red-400">Urgents</div>
                 </div>
               </div>
             )}
-
-            <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg">
-              <FileText size={16} className="text-blue-600" />
+            <div className="flex items-center gap-2 px-3 py-2 bg-yellow-900/20 border border-yellow-700 rounded-lg">
+              <FileText size={15} className="text-yellow-400" />
               <div>
-                <div className="text-lg font-bold text-blue-700">{statistics.documentsStage}</div>
-                <div className="text-xs text-blue-600">Documents</div>
+                <div className="text-base font-bold text-yellow-300">{statistics.documentsStage}</div>
+                <div className="text-xs text-yellow-500">Documents</div>
               </div>
             </div>
-
-            <div className="flex items-center gap-2 px-3 py-2 bg-cyan-50 border border-cyan-200 rounded-lg">
-              <Building2 size={16} className="text-cyan-600" />
+            <div className="flex items-center gap-2 px-3 py-2 bg-amber-900/20 border border-amber-700 rounded-lg">
+              <Building2 size={15} className="text-amber-400" />
               <div>
-                <div className="text-lg font-bold text-cyan-700">{statistics.quoteStage}</div>
-                <div className="text-xs text-cyan-600">Devis</div>
+                <div className="text-base font-bold text-amber-300">{statistics.quoteStage}</div>
+                <div className="text-xs text-amber-500">Devis</div>
               </div>
             </div>
-
-            <div className="flex items-center gap-2 px-3 py-2 bg-indigo-50 border border-indigo-200 rounded-lg">
-              <PenTool size={16} className="text-indigo-600" />
+            <div className="flex items-center gap-2 px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg">
+              <PenTool size={15} className="text-gray-300" />
               <div>
-                <div className="text-lg font-bold text-indigo-700">{statistics.signatureStage}</div>
-                <div className="text-xs text-indigo-600">Signature</div>
+                <div className="text-base font-bold text-white">{statistics.signatureStage}</div>
+                <div className="text-xs text-gray-400">Signature</div>
               </div>
             </div>
-
-            <div className="flex items-center gap-2 px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg">
-              <Euro size={16} className="text-amber-600" />
+            <div className="flex items-center gap-2 px-3 py-2 bg-green-900/20 border border-green-700 rounded-lg">
+              <Euro size={15} className="text-green-400" />
               <div>
-                <div className="text-lg font-bold text-amber-700">{statistics.paymentStage}</div>
-                <div className="text-xs text-amber-600">Paiement</div>
+                <div className="text-base font-bold text-green-300">{statistics.paymentStage}</div>
+                <div className="text-xs text-green-500">Paiement</div>
               </div>
             </div>
-
-            <div className="flex items-center gap-2 px-3 py-2 bg-green-50 border border-green-200 rounded-lg">
-              <TrendingUp size={16} className="text-green-600" />
+            <div className="flex items-center gap-2 px-3 py-2 bg-green-900/30 border border-green-600 rounded-lg">
+              <TrendingUp size={15} className="text-green-400" />
               <div>
-                <div className="text-lg font-bold text-green-700">{statistics.active}</div>
-                <div className="text-xs text-green-600">Clients actifs</div>
+                <div className="text-base font-bold text-green-300">{statistics.active}</div>
+                <div className="text-xs text-green-400 font-medium">Clients actifs</div>
               </div>
             </div>
-
-            <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg">
-              <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+            <div className="flex items-center gap-2 px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg">
+              <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></div>
               <div>
-                <div className="text-sm font-bold text-gray-700">{statistics.total}</div>
-                <div className="text-xs text-gray-500">Total leads</div>
+                <div className="text-sm font-bold text-white">{statistics.total}</div>
+                <div className="text-xs text-gray-400">Total leads</div>
               </div>
             </div>
           </div>
@@ -741,11 +720,9 @@ const CRMPipelineKanban: React.FC = () => {
       {/* Dragging indicator */}
       {draggedLead && (
         <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 pointer-events-none">
-          <div className="bg-blue-600 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 animate-bounce">
-            <div className="w-3 h-3 bg-white rounded-full animate-pulse"></div>
-            <span className="font-bold">
-              Déplacement de {draggedLead.full_name}...
-            </span>
+          <div className="bg-gradient-to-r from-yellow-600 to-yellow-500 text-black px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 animate-bounce font-bold">
+            <div className="w-3 h-3 bg-black rounded-full animate-pulse"></div>
+            <span>Déplacement de {draggedLead.full_name}...</span>
           </div>
         </div>
       )}
@@ -774,7 +751,7 @@ const CRMPipelineKanban: React.FC = () => {
                 <div className={cn(
                   'rounded-lg p-3 mb-3 transition-all duration-300 border-2 flex-shrink-0',
                   isDropTarget
-                    ? 'bg-gradient-to-br from-blue-100 to-blue-50 border-blue-500 shadow-lg scale-105'
+                    ? 'bg-gradient-to-br from-yellow-100 to-amber-50 border-yellow-500 shadow-lg scale-105'
                     : `${STATUS_COLORS[status]?.bg || 'bg-gradient-to-br from-gray-100 to-gray-50'} ${STATUS_COLORS[status]?.border || 'border-gray-200'}`
                 )}>
                   <div className="flex items-center justify-between mb-2">
@@ -889,37 +866,37 @@ const CRMPipelineKanban: React.FC = () => {
       </div>
 
       {/* TaxiAssur Workflow Panel */}
-      <div className="fixed bottom-6 right-6 bg-white rounded-xl shadow-xl border-2 border-gray-200 p-4 z-40">
-        <div className="text-xs font-semibold text-gray-500 mb-3 uppercase tracking-wide">Workflow TaxiAssur</div>
-        <div className="flex items-center gap-3">
+      <div className="fixed bottom-6 right-6 bg-black rounded-xl shadow-2xl border border-gray-700 p-4 z-40">
+        <div className="text-xs font-bold text-yellow-500 mb-3 uppercase tracking-wider">Workflow TaxiAssur</div>
+        <div className="flex items-center gap-2">
           <div className="text-center px-2">
-            <div className="text-xl font-bold text-red-600">{statistics.needsAction}</div>
+            <div className="text-lg font-bold text-red-400">{statistics.needsAction}</div>
             <div className="text-xs text-gray-500">Urgents</div>
           </div>
-          <div className="text-gray-300">→</div>
+          <div className="text-yellow-600 font-bold">→</div>
           <div className="text-center px-2">
-            <div className="text-xl font-bold text-blue-600">{statistics.documentsStage}</div>
+            <div className="text-lg font-bold text-yellow-400">{statistics.documentsStage}</div>
             <div className="text-xs text-gray-500">Docs</div>
           </div>
-          <div className="text-gray-300">→</div>
+          <div className="text-yellow-600 font-bold">→</div>
           <div className="text-center px-2">
-            <div className="text-xl font-bold text-cyan-600">{statistics.quoteStage}</div>
+            <div className="text-lg font-bold text-amber-400">{statistics.quoteStage}</div>
             <div className="text-xs text-gray-500">Devis</div>
           </div>
-          <div className="text-gray-300">→</div>
+          <div className="text-yellow-600 font-bold">→</div>
           <div className="text-center px-2">
-            <div className="text-xl font-bold text-indigo-600">{statistics.signatureStage}</div>
+            <div className="text-lg font-bold text-gray-300">{statistics.signatureStage}</div>
             <div className="text-xs text-gray-500">Sign.</div>
           </div>
-          <div className="text-gray-300">→</div>
+          <div className="text-yellow-600 font-bold">→</div>
           <div className="text-center px-2">
-            <div className="text-xl font-bold text-amber-600">{statistics.paymentStage}</div>
+            <div className="text-lg font-bold text-green-400">{statistics.paymentStage}</div>
             <div className="text-xs text-gray-500">Paiement</div>
           </div>
-          <div className="text-gray-300">→</div>
-          <div className="text-center px-2 bg-green-50 rounded-lg py-1 px-3">
-            <div className="text-xl font-bold text-green-600">{statistics.active}</div>
-            <div className="text-xs text-green-600 font-medium">Clients</div>
+          <div className="text-yellow-600 font-bold">→</div>
+          <div className="text-center px-2 bg-green-900/40 rounded-lg py-1">
+            <div className="text-lg font-bold text-green-400">{statistics.active}</div>
+            <div className="text-xs text-green-500 font-medium">Clients</div>
           </div>
         </div>
       </div>
