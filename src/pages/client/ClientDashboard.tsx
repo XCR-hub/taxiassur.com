@@ -27,14 +27,11 @@ export default function ClientDashboard() {
   const loadUserData = async () => {
     try {
       const { data, error } = await supabase
-        .from('client_portal_users')
-        .select('*')
-        .eq('email', email.toLowerCase().trim())
-        .maybeSingle();
+        .rpc('get_client_portal_data_by_email', { p_email: email.toLowerCase().trim() });
 
       if (error) throw error;
 
-      if (data) {
+      if (data?.success) {
         setUserData(data);
       }
     } catch (error) {
@@ -153,7 +150,7 @@ export default function ClientDashboard() {
         <div className="space-y-6">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              Bonjour {userData.client_name || 'Client'}
+              Bonjour {userData.first_name || 'Client'}
             </h1>
             <p className="text-gray-600">
               Bienvenue dans votre espace personnel TaxiAssur
@@ -192,11 +189,11 @@ export default function ClientDashboard() {
                 <div className="space-y-2 text-sm">
                   <div className="flex items-center gap-2">
                     <CheckCircle size={16} />
-                    <span>Police N° {userData.policy_number || 'TAXI-2024-XXX'}</span>
+                    <span>{userData.company_name || 'TaxiAssur'}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Calendar size={16} />
-                    <span>Échéance : {userData.renewal_date || '31/12/2025'}</span>
+                    <span>Membre depuis : {userData.created_at ? new Date(userData.created_at).toLocaleDateString('fr-FR') : '-'}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <TrendingUp size={16} />
