@@ -16,73 +16,29 @@ export default function ClientAccessByToken() {
     }
   }, [token]);
 
-  const verifyAndCreateAccess = async (leadId: string) => {
+  const verifyAndCreateAccess = async (tokenOrId: string) => {
     try {
       setMessage('Vérification de votre identité...');
 
-      // 1. Vérifier si le lead existe
-      const { data: lead, error: leadError } = await supabase
-        .from('crm_leads')
-        .select('id, email, first_name, last_name, phone, status')
-        .eq('id', leadId)
-        .maybeSingle();
+      const { data, error } = await supabase
+        .rpc('get_or_create_client_portal_access', { p_token: tokenOrId });
 
-      if (leadError) {
-        logger.error('Error fetching lead:', leadError);
-        throw new Error('Impossible de vérifier votre identité');
+      if (error) {
+        logger.error('RPC error:', error);
+        throw new Error('Impossible de vérifier votre accès');
       }
 
-      if (!lead) {
+      if (!data || !data.success) {
         setStatus('error');
-        setMessage('Accès non valide. Veuillez contacter notre service client.');
+        setMessage(data?.error || 'Accès non valide. Veuillez contacter notre service client.');
         return;
-      }
-
-      if (!lead.email) {
-        setStatus('error');
-        setMessage('Votre email n\'est pas enregistré. Veuillez contacter notre service client.');
-        return;
-      }
-
-      setMessage('Création de votre espace client...');
-
-      // 2. Vérifier si un portail client existe déjà
-      const { data: existingPortal } = await supabase
-        .from('client_portal_users')
-        .select('*')
-        .eq('email', lead.email.toLowerCase().trim())
-        .maybeSingle();
-
-      if (!existingPortal) {
-        // 3. Créer un accès portail client
-        const { error: portalError } = await supabase
-          .from('client_portal_users')
-          .insert({
-            email: lead.email.toLowerCase().trim(),
-            lead_id: lead.id,
-            first_name: lead.first_name,
-            last_name: lead.last_name,
-            phone: lead.phone,
-            is_active: true,
-            metadata: {
-              created_from: 'client_access_token',
-              created_at: new Date().toISOString(),
-              initial_status: lead.status
-            }
-          });
-
-        if (portalError) {
-          logger.error('Error creating portal user:', portalError);
-          throw new Error('Erreur lors de la création de votre espace');
-        }
       }
 
       setMessage('Connexion à votre espace...');
       setStatus('success');
 
-      // 4. Rediriger vers le dashboard client
       setTimeout(() => {
-        navigate(`/client/dashboard?email=${encodeURIComponent(lead.email)}`);
+        navigate(`/client/dashboard?email=${encodeURIComponent(data.email)}`);
       }, 1500);
 
     } catch (error) {
@@ -96,7 +52,6 @@ export default function ClientAccessByToken() {
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full">
         <div className="text-center">
-          {/* Icône */}
           <div className="mb-6">
             {status === 'loading' && (
               <Loader2 className="w-16 h-16 text-blue-600 mx-auto animate-spin" />
@@ -113,27 +68,21 @@ export default function ClientAccessByToken() {
             )}
           </div>
 
-          {/* Titre */}
           <h1 className="text-2xl font-bold text-gray-900 mb-3">
             {status === 'loading' && 'Accès à votre espace'}
             {status === 'success' && 'Accès autorisé !'}
             {status === 'error' && 'Accès refusé'}
           </h1>
 
-          {/* Message */}
-          <p className={`mb-6 ${
-            status === 'error' ? 'text-red-600' : 'text-gray-600'
-          }`}>
+          <p className={`mb-6 ${status === 'error' ? 'text-red-600' : 'text-gray-600'}`}>
             {message}
           </p>
 
-          {/* Logo */}
           <div className="flex items-center justify-center gap-2 text-gray-400 text-sm">
             <Shield className="w-4 h-4" />
             <span>TaxiAssur - Espace Client Sécurisé</span>
           </div>
 
-          {/* Bouton retour si erreur */}
           {status === 'error' && (
             <div className="mt-6">
               <a

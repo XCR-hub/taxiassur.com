@@ -14,6 +14,7 @@ interface ClientData {
   postal_code: string;
   status: string;
   created_at: string;
+  access_token?: string;
 }
 
 interface TaxiProfile {
@@ -586,7 +587,7 @@ export default function ClientInsuranceManager() {
                 <RefreshCw size={20} className="text-gray-600" />
               </button>
               <button
-                onClick={() => window.open(`/espace-client/${client.id}`, '_blank')}
+                onClick={() => window.open(`/espace-client/${client.access_token || client.id}`, '_blank')}
                 className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
               >
                 <Eye size={18} />
