@@ -86,11 +86,24 @@ export const CompleteTimeline: React.FC<CompleteTimelineProps> = ({
     try {
       const allEvents: TimelineEvent[] = [];
 
+      // Récupérer tous les IDs de leads liés au même email (doublons inclus)
+      let allLeadIds = [leadId];
+      if (leadEmail) {
+        const { data: siblingLeads } = await supabase
+          .from('crm_leads')
+          .select('id')
+          .ilike('email', leadEmail.trim());
+        if (siblingLeads && siblingLeads.length > 0) {
+          const ids = siblingLeads.map((l: any) => l.id);
+          allLeadIds = [...new Set([leadId, ...ids])];
+        }
+      }
+
       // 1. Charger les emails
       const { data: emails } = await supabase
         .from('email_messages')
         .select('*')
-        .eq('lead_id', leadId)
+        .in('lead_id', allLeadIds)
         .order('created_at', { ascending: false });
 
       if (emails) {
@@ -130,7 +143,7 @@ export const CompleteTimeline: React.FC<CompleteTimelineProps> = ({
       const { data: interactions } = await supabase
         .from('crm_interactions')
         .select('*')
-        .eq('lead_id', leadId)
+        .in('lead_id', allLeadIds)
         .order('created_at', { ascending: false });
 
       if (interactions) {
@@ -180,7 +193,7 @@ export const CompleteTimeline: React.FC<CompleteTimelineProps> = ({
       const { data: documents } = await supabase
         .from('crm_lead_documents')
         .select('*')
-        .eq('lead_id', leadId)
+        .in('lead_id', allLeadIds)
         .order('uploaded_at', { ascending: false });
 
       if (documents) {
@@ -215,7 +228,7 @@ export const CompleteTimeline: React.FC<CompleteTimelineProps> = ({
       const { data: aiDecisions } = await supabase
         .from('crm_ai_decisions')
         .select('*')
-        .eq('lead_id', leadId)
+        .in('lead_id', allLeadIds)
         .order('created_at', { ascending: false });
 
       if (aiDecisions) {
@@ -241,7 +254,7 @@ export const CompleteTimeline: React.FC<CompleteTimelineProps> = ({
       const { data: notifications } = await supabase
         .from('crm_event_notifications')
         .select('*')
-        .eq('lead_id', leadId)
+        .in('lead_id', allLeadIds)
         .order('created_at', { ascending: false });
 
       if (notifications) {
@@ -264,10 +277,18 @@ export const CompleteTimeline: React.FC<CompleteTimelineProps> = ({
         });
       }
 
-      // Trier tous les événements par date décroissante
-      allEvents.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+      // Dédupliquer par ID pour éviter les doublons si même événement lié à plusieurs leads
+      const seen = new Set<string>();
+      const deduped = allEvents.filter(e => {
+        if (seen.has(e.id)) return false;
+        seen.add(e.id);
+        return true;
+      });
 
-      setEvents(allEvents);
+      // Trier tous les événements par date décroissante
+      deduped.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+
+      setEvents(deduped);
     } catch (error) {
       console.error('Error loading timeline:', error);
     } finally {
