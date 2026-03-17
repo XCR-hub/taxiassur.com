@@ -190,206 +190,147 @@ export const PipelineCard: React.FC<PipelineCardProps> = ({
         }
       }}
       className={cn(
-        'bg-white rounded-lg shadow-sm border-2 border-gray-200 p-4 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500',
+        'rounded-lg border px-3 py-2.5 transition-all duration-200 focus:outline-none focus:ring-1 focus:ring-yellow-500/50 select-none',
         isDragging
-          ? 'opacity-30 scale-95 cursor-grabbing border-blue-400'
-          : 'cursor-grab hover:shadow-lg hover:border-blue-300 hover:-translate-y-1',
-        'active:cursor-grabbing active:scale-98',
+          ? 'opacity-25 scale-95 cursor-grabbing border-yellow-500/40 bg-gray-800'
+          : 'cursor-grab bg-gray-800/90 border-gray-700/60 hover:bg-gray-800 hover:border-gray-600 hover:-translate-y-0.5 hover:shadow-md hover:shadow-black/40',
+        'active:cursor-grabbing',
         className
       )}
     >
-      <div className="flex items-start justify-between mb-3">
+      {/* Top: name + score */}
+      <div className="flex items-start justify-between gap-2 mb-2">
         <div className="flex-1 min-w-0">
-          <h3 className="font-semibold text-gray-900 truncate text-sm">
+          <h3 className="font-semibold text-white truncate text-sm leading-tight">
             {lead.full_name}
           </h3>
           {lead.company_name && (
-            <p className="text-xs text-gray-600 truncate">{lead.company_name}</p>
+            <p className="text-xs text-gray-500 truncate mt-0.5">{lead.company_name}</p>
           )}
-          <div className="flex items-center gap-1 mt-1">
-            <Calendar size={11} className="text-gray-400" />
-            <span className="text-xs text-gray-500" title={`Créé le ${new Date(lead.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' })} à ${new Date(lead.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`}>
-              {indicators.daysInPipeline === 0
-                ? "Aujourd'hui"
-                : indicators.daysInPipeline === 1
-                  ? "Hier"
-                  : `Il y a ${indicators.daysInPipeline}j`}
-            </span>
-          </div>
         </div>
         {lead.quality_score && (
-          <div className={cn('text-xs font-bold ml-2', getScoreColor(lead.quality_score))}>
+          <div className={cn('text-xs font-bold shrink-0', getScoreColor(lead.quality_score))}>
             {lead.quality_score}%
           </div>
         )}
       </div>
 
-      <div className="space-y-2">
-        <div className="flex items-center text-xs text-gray-600">
-          <Mail size={12} className="mr-1.5 flex-shrink-0" />
+      {/* Contact info */}
+      <div className="space-y-1 mb-2.5">
+        <div className="flex items-center gap-1.5 text-xs text-gray-400">
+          <Mail size={11} className="shrink-0 text-gray-600" />
           <span className="truncate">{lead.email}</span>
         </div>
-
         {lead.phone && (
-          <div className="flex items-center text-xs text-gray-600">
-            <Phone size={12} className="mr-1.5 flex-shrink-0" />
+          <div className="flex items-center gap-1.5 text-xs text-gray-400">
+            <Phone size={11} className="shrink-0 text-gray-600" />
             <span className="truncate">{lead.phone}</span>
           </div>
         )}
-
         {lead.city && (
-          <div className="flex items-center text-xs text-gray-600">
-            <Tag size={12} className="mr-1.5 flex-shrink-0" />
+          <div className="flex items-center gap-1.5 text-xs text-gray-400">
+            <Tag size={11} className="shrink-0 text-gray-600" />
             <span className="truncate">{lead.city}</span>
           </div>
         )}
       </div>
 
-      <div className="mt-3 pt-3 border-t border-gray-100">
-        {indicators.needsRelance && (
-          <div className="flex items-center gap-1 mb-2 px-2 py-1 rounded bg-red-50 border border-red-200">
-            <AlertTriangle size={12} className="text-red-600" />
-            <span className="text-xs font-medium text-red-700">Relance necessaire ({indicators.lastInteractionDays}j)</span>
-          </div>
-        )}
+      {/* Relance alert */}
+      {indicators.needsRelance && (
+        <div className="flex items-center gap-1 mb-2 px-2 py-1 rounded-md bg-red-900/40 border border-red-700/50">
+          <AlertTriangle size={11} className="text-red-400 shrink-0" />
+          <span className="text-xs font-medium text-red-300">Relance necessaire ({indicators.lastInteractionDays}j)</span>
+        </div>
+      )}
 
-        <div className="flex flex-wrap items-center gap-1.5 mb-2">
+      {/* Bottom: indicator chips + date */}
+      <div className="flex items-center justify-between gap-1">
+        <div className="flex items-center gap-1 flex-wrap">
           <div
             className={cn(
-              'flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium',
+              'flex items-center gap-0.5 px-1.5 py-0.5 rounded text-xs font-medium',
               indicators.documentsValidated >= 7
-                ? 'bg-green-100 text-green-700'
+                ? 'bg-green-900/60 text-green-400'
                 : indicators.documentsValidated >= 4
-                  ? 'bg-yellow-100 text-yellow-700'
-                  : 'bg-orange-100 text-orange-700'
+                  ? 'bg-yellow-900/60 text-yellow-400'
+                  : 'bg-orange-900/50 text-orange-400'
             )}
-            title={`${indicators.documentsValidated}/${indicators.documentsTotal} documents valides`}
+            title={`${indicators.documentsValidated}/${indicators.documentsTotal} documents validés`}
           >
-            <FileCheck size={10} />
+            <FileCheck size={9} />
             {indicators.documentsValidated}/{indicators.documentsTotal}
           </div>
 
           <div
             className={cn(
-              'flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium',
+              'flex items-center gap-0.5 px-1.5 py-0.5 rounded text-xs font-medium',
               (indicators.companiesQuoted + indicators.companiesRefused) >= 5
-                ? 'bg-green-100 text-green-700'
+                ? 'bg-green-900/60 text-green-400'
                 : indicators.companiesQuoted > 0
-                  ? 'bg-cyan-100 text-cyan-700'
-                  : 'bg-gray-100 text-gray-600'
+                  ? 'bg-cyan-900/60 text-cyan-400'
+                  : 'bg-gray-700/60 text-gray-500'
             )}
-            title={`${indicators.companiesQuoted} devis, ${indicators.companiesRefused} refus sur ${indicators.companiesTotal} compagnies`}
+            title={`${indicators.companiesQuoted} devis, ${indicators.companiesRefused} refus`}
           >
-            <Building2 size={10} />
+            <Building2 size={9} />
             {indicators.companiesQuoted + indicators.companiesRefused}/{indicators.companiesTotal}
           </div>
 
           {indicators.hasSignature && (
-            <div className="flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-700" title="Contrat signe">
-              <PenTool size={10} />
-              Signe
+            <div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded text-xs font-medium bg-blue-900/60 text-blue-400">
+              <PenTool size={9} />Signé
             </div>
           )}
 
           {indicators.downPaymentStatus === 'paid' && (
-            <div className="flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-green-100 text-green-700" title="Comptant recu">
-              <Euro size={10} />
-              Paye
+            <div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded text-xs font-medium bg-green-900/60 text-green-400">
+              <Euro size={9} />Payé
             </div>
           )}
-
           {indicators.downPaymentStatus === 'pending' && (
-            <div className="flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-700 animate-pulse" title="En attente du comptant">
-              <Euro size={10} />
-              Attente
+            <div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded text-xs font-medium bg-yellow-900/50 text-yellow-400 animate-pulse">
+              <Euro size={9} />Attente
             </div>
           )}
-
           {indicators.downPaymentStatus === 'required' && (
-            <div className="flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-700" title="Comptant requis">
-              <CreditCard size={10} />
-              Comptant
-            </div>
-          )}
-
-          {indicators.daysInPipeline > 7 && (
-            <div
-              className={cn(
-                'flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium',
-                indicators.daysInPipeline > 14 ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'
-              )}
-              title={`${indicators.daysInPipeline} jours dans le pipeline`}
-            >
-              <Clock size={10} />
-              {indicators.daysInPipeline}j
+            <div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded text-xs font-medium bg-orange-900/50 text-orange-400">
+              <CreditCard size={9} />Comptant
             </div>
           )}
 
           {indicators.pendingAutomations > 0 && (
-            <div
-              className="flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-700 animate-pulse"
-              title={`${indicators.pendingAutomations} action(s) en cours`}
-            >
-              <Loader2 size={10} className="animate-spin" />
-              {indicators.pendingAutomations}
-            </div>
-          )}
-
-          {indicators.automationCount > 0 && indicators.pendingAutomations === 0 && (
-            <div
-              className={cn(
-                'flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium',
-                indicators.lastAutomationResult === 'success'
-                  ? 'bg-emerald-100 text-emerald-700'
-                  : indicators.lastAutomationResult === 'failed'
-                    ? 'bg-red-100 text-red-700'
-                    : 'bg-gray-100 text-gray-600'
-              )}
-              title={`${indicators.automationCount} automatisations executees`}
-            >
-              {indicators.lastAutomationResult === 'success' ? (
-                <CheckCircle size={10} />
-              ) : indicators.lastAutomationResult === 'failed' ? (
-                <XCircle size={10} />
-              ) : (
-                <Zap size={10} />
-              )}
-              {indicators.automationCount}
+            <div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded text-xs font-medium bg-blue-900/60 text-blue-400 animate-pulse">
+              <Loader2 size={9} className="animate-spin" />{indicators.pendingAutomations}
             </div>
           )}
         </div>
 
-        <div className="flex items-center justify-between">
-          {lead.last_contact && (
-            <div className="flex items-center text-xs text-gray-500">
-              <Calendar size={12} className="mr-1" />
-              <span>{new Date(lead.last_contact).toLocaleDateString('fr-FR')}</span>
-            </div>
+        {/* Age badge */}
+        <div
+          className={cn(
+            'flex items-center gap-0.5 shrink-0 text-xs font-medium px-1.5 py-0.5 rounded',
+            indicators.daysInPipeline > 14
+              ? 'bg-red-900/50 text-red-400'
+              : indicators.daysInPipeline > 7
+                ? 'bg-amber-900/40 text-amber-400'
+                : 'text-gray-600'
           )}
-
-          {lead.retention_score && (
-            <div className="flex items-center text-xs">
-              <TrendingUp size={12} className="mr-1" />
-              <span className={getScoreColor(lead.retention_score)}>
-                {lead.retention_score}%
-              </span>
-            </div>
-          )}
+          title={`${indicators.daysInPipeline} jours dans le pipeline`}
+        >
+          <Clock size={9} />
+          {indicators.daysInPipeline === 0 ? "Auj." : `${indicators.daysInPipeline}j`}
         </div>
       </div>
 
       {lead.tags && lead.tags.length > 0 && (
         <div className="mt-2 flex flex-wrap gap-1">
           {lead.tags.slice(0, 2).map((tag, index) => (
-            <span
-              key={index}
-              className="inline-block px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded-full"
-            >
+            <span key={index} className="inline-block px-1.5 py-0.5 bg-gray-700 text-gray-300 text-xs rounded">
               {tag}
             </span>
           ))}
           {lead.tags.length > 2 && (
-            <span className="text-xs text-gray-500">+{lead.tags.length - 2}</span>
+            <span className="text-xs text-gray-600">+{lead.tags.length - 2}</span>
           )}
         </div>
       )}
