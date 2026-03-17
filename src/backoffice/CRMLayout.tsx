@@ -192,33 +192,35 @@ const CRMLayout: React.FC = () => {
   const currentPath = location.pathname;
 
   return (
-    <div className="flex h-screen bg-gray-50 dark:bg-gray-900 overflow-hidden">
+    <div className="flex h-screen bg-gray-50 overflow-hidden">
       {/* SIDEBAR À GAUCHE - FIXE */}
-      <aside className={`bg-gradient-to-b from-gray-900 via-blue-900 to-purple-900 text-white transition-all duration-300 flex flex-col flex-shrink-0 ${sidebarOpen ? 'w-64' : 'w-20'}`}>
+      <aside className={`bg-black text-white transition-all duration-300 flex flex-col flex-shrink-0 ${sidebarOpen ? 'w-64' : 'w-20'}`}>
         {/* Logo & Toggle */}
-        <div className="p-4 flex items-center justify-between border-b border-white/10">
+        <div className="p-4 flex items-center justify-between border-b border-gray-800">
           {sidebarOpen ? (
             <>
-              <div className="flex items-center gap-2">
-                <Zap className="text-yellow-400" size={28} />
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-xl flex items-center justify-center shadow-lg">
+                  <Zap size={20} className="text-black" />
+                </div>
                 <div>
-                  <div className="font-bold text-lg">CRM Killer</div>
-                  <div className="text-xs text-blue-200">by TaxiAssur</div>
+                  <div className="font-bold text-base leading-tight">CRM Admin</div>
+                  <div className="text-xs text-gray-400">TaxiAssur</div>
                 </div>
               </div>
-              <button onClick={() => setSidebarOpen(false)} className="hover:bg-white/10 p-2 rounded-lg transition-colors">
-                <X size={20} />
+              <button onClick={() => setSidebarOpen(false)} className="hover:bg-gray-800 p-1.5 rounded-lg transition-colors text-gray-400 hover:text-white">
+                <X size={18} />
               </button>
             </>
           ) : (
-            <button onClick={() => setSidebarOpen(true)} className="hover:bg-white/10 p-2 rounded-lg transition-colors mx-auto">
-              <Menu size={24} />
+            <button onClick={() => setSidebarOpen(true)} className="hover:bg-gray-800 p-2 rounded-lg transition-colors mx-auto text-gray-400 hover:text-white">
+              <Menu size={22} />
             </button>
           )}
         </div>
 
         {/* Navigation Menu */}
-        <nav className="flex-1 overflow-y-auto py-4">
+        <nav className="flex-1 overflow-y-auto py-3 px-2">
           {menuItems.map((item) => {
             const Icon = item.icon;
             const isActive = currentPath === item.path || currentPath.startsWith(item.path + '/');
@@ -227,26 +229,27 @@ const CRMLayout: React.FC = () => {
               <button
                 key={item.id}
                 onClick={() => navigate(item.path)}
-                className={`w-full flex items-center gap-3 px-4 py-3 transition-all relative group ${
+                title={!sidebarOpen ? item.label : undefined}
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all relative group mb-0.5 ${
                   isActive
-                    ? 'bg-white/20 text-white border-r-4 border-yellow-400'
-                    : 'text-blue-100 hover:bg-white/10 hover:text-white'
+                    ? 'bg-gradient-to-r from-yellow-500 to-yellow-600 text-black font-semibold shadow-md'
+                    : 'text-gray-400 hover:bg-gray-800 hover:text-white'
                 }`}
               >
-                <Icon size={22} className="flex-shrink-0" />
+                <Icon size={20} className="flex-shrink-0" />
                 {sidebarOpen && (
                   <>
-                    <span className="font-medium flex-1 text-left">{item.label}</span>
+                    <span className="text-sm flex-1 text-left">{item.label}</span>
                     {item.badge && item.badge > 0 && (
-                      <span className="bg-red-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center">
-                        {item.badge}
+                      <span className={`text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center ${isActive ? 'bg-black/20 text-black' : 'bg-red-500 text-white'}`}>
+                        {item.badge > 9 ? '9+' : item.badge}
                       </span>
                     )}
                   </>
                 )}
                 {!sidebarOpen && item.badge && item.badge > 0 && (
-                  <span className="absolute top-2 right-2 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
-                    {item.badge}
+                  <span className="absolute top-1.5 right-1.5 bg-red-500 text-white text-xs font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                    {item.badge > 9 ? '9+' : item.badge}
                   </span>
                 )}
               </button>
@@ -255,82 +258,83 @@ const CRMLayout: React.FC = () => {
         </nav>
 
         {/* User Section en bas */}
-        <div className="border-t border-white/10 p-4">
-          <button
-            onClick={() => navigate('/backoffice/crm-killer/settings')}
-            className={`w-full flex items-center gap-3 px-3 py-2 hover:bg-white/10 rounded-lg transition-colors mb-2 ${!sidebarOpen && 'justify-center'}`}
-          >
-            <Settings size={20} />
-            {sidebarOpen && <span>Paramètres</span>}
-          </button>
-
+        <div className="border-t border-gray-800 p-3 space-y-1">
           {sidebarOpen && (
-            <div className="bg-white/10 rounded-lg p-3 mb-2">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-8 h-8 bg-yellow-400 rounded-full flex items-center justify-center text-gray-900 font-bold">
-                  {user?.full_name?.[0] || 'A'}
+            <div className="bg-gray-900 rounded-xl p-3 mb-2">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-full flex items-center justify-center text-black font-bold text-sm flex-shrink-0">
+                  {user?.full_name?.[0]?.toUpperCase() || 'A'}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium truncate">{user?.full_name || 'Admin'}</div>
-                  <div className="text-xs text-blue-200 truncate">{user?.email}</div>
+                  <div className="text-sm font-medium text-white truncate">{user?.full_name || 'Admin'}</div>
+                  <div className="text-xs text-gray-500 truncate">{user?.email}</div>
                 </div>
               </div>
             </div>
           )}
 
           <button
-            onClick={() => navigate('/backoffice')}
-            className={`w-full flex items-center gap-3 px-3 py-2 hover:bg-white/10 rounded-lg transition-colors mb-2 ${!sidebarOpen && 'justify-center'}`}
+            onClick={() => navigate('/backoffice/crm-killer/settings')}
+            title={!sidebarOpen ? 'Paramètres' : undefined}
+            className={`w-full flex items-center gap-3 px-3 py-2 text-gray-400 hover:bg-gray-800 hover:text-white rounded-xl transition-colors ${!sidebarOpen && 'justify-center'}`}
           >
-            <Home size={20} />
-            {sidebarOpen && <span>Dashboard Principal</span>}
+            <Settings size={18} />
+            {sidebarOpen && <span className="text-sm">Paramètres</span>}
+          </button>
+
+          <button
+            onClick={() => navigate('/backoffice')}
+            title={!sidebarOpen ? 'Dashboard Principal' : undefined}
+            className={`w-full flex items-center gap-3 px-3 py-2 text-gray-400 hover:bg-gray-800 hover:text-white rounded-xl transition-colors ${!sidebarOpen && 'justify-center'}`}
+          >
+            <Home size={18} />
+            {sidebarOpen && <span className="text-sm">Dashboard Principal</span>}
           </button>
 
           <button
             onClick={handleLogout}
-            className={`w-full flex items-center gap-3 px-3 py-2 bg-red-500/20 hover:bg-red-500/30 rounded-lg transition-colors ${!sidebarOpen && 'justify-center'}`}
+            title={!sidebarOpen ? 'Déconnexion' : undefined}
+            className={`w-full flex items-center gap-3 px-3 py-2 text-red-400 hover:bg-red-950 hover:text-red-300 rounded-xl transition-colors ${!sidebarOpen && 'justify-center'}`}
           >
-            <LogOut size={20} />
-            {sidebarOpen && <span>Déconnexion</span>}
+            <LogOut size={18} />
+            {sidebarOpen && <span className="text-sm">Déconnexion</span>}
           </button>
         </div>
       </aside>
 
       {/* CONTENU PRINCIPAL À DROITE */}
       <main className="flex-1 flex flex-col overflow-hidden min-w-0">
-        {/* Header avec Search */}
-        <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex items-center justify-between flex-shrink-0">
+        {/* Header */}
+        <header className="bg-white border-b border-gray-200 px-6 py-3.5 flex items-center justify-between flex-shrink-0">
           <div className="flex items-center gap-4 flex-1 min-w-0">
             <div className="relative flex-1 max-w-lg">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500" size={20} />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
               <input
                 type="text"
                 placeholder="Rechercher un lead, contact, email..."
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-yellow-400 focus:border-transparent bg-gray-50 placeholder-gray-400"
               />
             </div>
           </div>
 
-          <div className="flex items-center gap-3 flex-shrink-0">
+          <div className="flex items-center gap-2 flex-shrink-0">
             <button
               onClick={() => setRefreshing(!refreshing)}
               disabled={refreshing}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-50"
+              className="p-2 hover:bg-gray-100 rounded-xl transition-colors disabled:opacity-50"
               title="Actualiser"
             >
-              <RefreshCw size={20} className={`text-gray-600 dark:text-gray-300 ${refreshing ? 'animate-spin' : ''}`} />
+              <RefreshCw size={18} className={`text-gray-500 ${refreshing ? 'animate-spin' : ''}`} />
             </button>
-
-            <ThemeToggle />
 
             <RealtimeNotifications />
           </div>
         </header>
 
-        {/* Notifications push qui glissent de droite à gauche */}
+        {/* Notifications push */}
         <CRMPushNotifications />
 
-        {/* Contenu - ICI ON AFFICHE LES PAGES ENFANTS */}
+        {/* Contenu - pages enfants */}
         <div className="flex-1 overflow-auto min-h-0">
           <Outlet />
         </div>

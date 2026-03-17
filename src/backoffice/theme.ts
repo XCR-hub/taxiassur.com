@@ -1,74 +1,62 @@
-// Thème unifié du Backoffice - Basé sur QRCodeGenerator
-// Couleurs professionnelles slate-blue
-
 export const backofficeTheme = {
-  // Backgrounds
-  pageBackground: 'bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900',
-  cardBackground: 'bg-slate-800',
-  cardBorder: 'border-slate-700',
-  inputBackground: 'bg-slate-700',
-  inputBorder: 'border-slate-600',
-  hoverBackground: 'hover:bg-slate-700',
-  activeBackground: 'bg-slate-700',
+  pageBackground: 'bg-gray-50',
+  cardBackground: 'bg-white',
+  cardBorder: 'border-gray-200',
+  inputBackground: 'bg-gray-50',
+  inputBorder: 'border-gray-200',
+  hoverBackground: 'hover:bg-gray-50',
+  activeBackground: 'bg-gray-100',
 
-  // Text colors
-  textPrimary: 'text-white',
-  textSecondary: 'text-slate-300',
-  textMuted: 'text-slate-400',
-  textDisabled: 'text-slate-500',
+  textPrimary: 'text-gray-900',
+  textSecondary: 'text-gray-600',
+  textMuted: 'text-gray-400',
+  textDisabled: 'text-gray-300',
 
-  // Button colors
-  buttonPrimary: 'bg-orange-600 hover:bg-orange-700 text-white',
-  buttonSecondary: 'bg-slate-700 hover:bg-slate-600 text-white',
+  buttonPrimary: 'bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-black font-semibold',
+  buttonSecondary: 'bg-white border border-gray-200 hover:bg-gray-50 text-gray-700',
   buttonSuccess: 'bg-green-600 hover:bg-green-700 text-white',
   buttonDanger: 'bg-red-600 hover:bg-red-700 text-white',
-  buttonWarning: 'bg-amber-600 hover:bg-amber-700 text-white',
+  buttonWarning: 'bg-amber-500 hover:bg-amber-600 text-black',
 
-  // Accent gradients
-  gradientBlue: 'bg-gradient-to-br from-orange-600 to-orange-700',
-  gradientPurple: 'bg-gradient-to-br from-orange-600 to-orange-700',
-  gradientGreen: 'bg-gradient-to-br from-green-600 to-green-700',
-  gradientAmber: 'bg-gradient-to-br from-amber-600 to-amber-700',
+  gradientPrimary: 'bg-gradient-to-r from-yellow-500 to-yellow-600',
+  gradientDark: 'bg-black',
+  gradientGreen: 'bg-gradient-to-br from-green-600 to-emerald-700',
+  gradientAmber: 'bg-gradient-to-br from-amber-500 to-yellow-600',
   gradientRed: 'bg-gradient-to-br from-red-600 to-red-700',
-  gradientCyan: 'bg-gradient-to-br from-cyan-600 to-cyan-700',
 
-  // Status colors
-  statusSuccess: 'text-green-400 bg-green-900/20',
-  statusWarning: 'text-amber-400 bg-amber-900/20',
-  statusError: 'text-red-400 bg-red-900/20',
-  statusInfo: 'text-orange-400 bg-orange-900/20',
+  statusSuccess: 'text-green-700 bg-green-50 border-green-200',
+  statusWarning: 'text-amber-700 bg-amber-50 border-amber-200',
+  statusError: 'text-red-700 bg-red-50 border-red-200',
+  statusInfo: 'text-gray-700 bg-gray-100 border-gray-200',
 
-  // Border colors
-  borderDefault: 'border-slate-700',
-  borderHover: 'hover:border-slate-600',
-  borderFocus: 'focus:border-orange-500',
+  borderDefault: 'border-gray-200',
+  borderHover: 'hover:border-yellow-400',
+  borderFocus: 'focus:border-yellow-400',
 
-  // Loading states
-  skeleton: 'bg-slate-700 animate-pulse',
-  spinner: 'text-orange-500',
+  skeleton: 'bg-gray-200 animate-pulse',
+  spinner: 'text-yellow-500',
 };
 
-// Classes complètes pré-composées pour usage direct
 export const themeClasses = {
-  page: 'min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-6',
+  page: 'min-h-screen bg-gray-50 p-6',
   container: 'max-w-7xl mx-auto space-y-6',
-  card: 'bg-slate-800 border border-slate-700 rounded-lg p-6',
-  cardHover: 'bg-slate-800 border border-slate-700 rounded-lg p-6 hover:border-slate-600 transition',
-  input: 'w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:border-orange-500 focus:ring-1 focus:ring-blue-500',
-  select: 'w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:border-orange-500 focus:ring-1 focus:ring-blue-500',
-  button: 'px-4 py-2 rounded-lg font-semibold transition flex items-center gap-2',
-  buttonPrimary: 'px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-semibold transition flex items-center gap-2',
-  buttonSecondary: 'px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg font-semibold transition flex items-center gap-2',
-  buttonSuccess: 'px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition flex items-center gap-2',
-  badge: 'px-3 py-1 rounded-full text-sm font-semibold',
-  badgeSuccess: 'px-3 py-1 rounded-full text-sm font-semibold bg-green-900/20 text-green-400 border border-green-500/30',
-  badgeWarning: 'px-3 py-1 rounded-full text-sm font-semibold bg-amber-900/20 text-amber-400 border border-amber-500/30',
-  badgeError: 'px-3 py-1 rounded-full text-sm font-semibold bg-red-900/20 text-red-400 border border-red-500/30',
-  badgeInfo: 'px-3 py-1 rounded-full text-sm font-semibold bg-orange-900/20 text-orange-400 border border-orange-500/30',
+  card: 'bg-white border border-gray-200 rounded-2xl p-6 shadow-sm',
+  cardHover: 'bg-white border border-gray-200 rounded-2xl p-6 hover:border-yellow-400 hover:shadow-md transition-all cursor-pointer',
+  input: 'w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/20 outline-none',
+  select: 'w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/20 outline-none',
+  button: 'px-4 py-2.5 rounded-xl font-semibold transition-all flex items-center gap-2',
+  buttonPrimary: 'px-4 py-2.5 bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-black rounded-xl font-semibold transition-all flex items-center gap-2 shadow-md shadow-yellow-500/20',
+  buttonSecondary: 'px-4 py-2.5 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 rounded-xl font-medium transition-all flex items-center gap-2',
+  buttonSuccess: 'px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-xl font-semibold transition-all flex items-center gap-2',
+  badge: 'px-2.5 py-1 rounded-full text-xs font-semibold',
+  badgeSuccess: 'px-2.5 py-1 rounded-full text-xs font-semibold bg-green-50 text-green-700 border border-green-200',
+  badgeWarning: 'px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200',
+  badgeError: 'px-2.5 py-1 rounded-full text-xs font-semibold bg-red-50 text-red-700 border border-red-200',
+  badgeInfo: 'px-2.5 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-700 border border-gray-200',
   table: 'w-full border-collapse',
-  tableRow: 'border-b border-slate-700 hover:bg-slate-700/30 transition',
-  tableHeader: 'px-4 py-3 text-left text-slate-300 font-semibold text-sm',
-  tableCell: 'px-4 py-3 text-white',
+  tableRow: 'border-b border-gray-100 hover:bg-gray-50 transition-colors',
+  tableHeader: 'px-4 py-3 text-left text-gray-500 font-semibold text-xs uppercase tracking-wide',
+  tableCell: 'px-4 py-3 text-gray-900 text-sm',
 };
 
 export default backofficeTheme;
