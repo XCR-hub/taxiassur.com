@@ -1,17 +1,57 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { FileText, Shield, CreditCard, Bell, TrendingUp, Calendar, CheckCircle, Clock, AlertCircle } from 'lucide-react';
+import { FileText, Shield, CreditCard, Bell, TrendingUp, Calendar, CheckCircle, Clock, AlertCircle, ChevronRight, Package } from 'lucide-react';
 import ClientLayout from '../../components/client/ClientLayout';
 import SEOHead from '../../components/SEOHead';
 import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
+
+interface UserData {
+  success: boolean;
+  id: string;
+  email: string;
+  first_name: string;
+  last_name: string;
+  phone: string;
+  company_name: string;
+  is_active: boolean;
+  created_at: string;
+  lead_id?: string;
+  access_token?: string;
+  pipeline_stage?: string;
+  workflow_stage?: string;
+  lead_status?: string;
+  lead_created_at?: string;
+  doc_count: number;
+  quote_count: number;
+  notification_count: number;
+}
+
+interface RecentActivity {
+  id: string;
+  label: string;
+  date: string;
+  type: 'document' | 'quote' | 'notification' | 'payment';
+}
+
+const PIPELINE_LABELS: Record<string, { label: string; color: string; progress: number }> = {
+  nouveau_lead:        { label: 'Nouveau dossier',          color: 'text-gray-500',  progress: 10 },
+  collecte_documents:  { label: 'Collecte des documents',   color: 'text-yellow-600', progress: 25 },
+  devis_en_cours:      { label: 'Devis en cours',           color: 'text-yellow-600', progress: 45 },
+  devis_envoye:        { label: 'Devis envoyés',            color: 'text-yellow-500', progress: 60 },
+  validation_devis:    { label: 'En attente de validation', color: 'text-yellow-500', progress: 70 },
+  signature_contrat:   { label: 'Signature du contrat',     color: 'text-green-600',  progress: 85 },
+  contrat_signe:       { label: 'Contrat signé',            color: 'text-green-600',  progress: 95 },
+  client_actif:        { label: 'Client actif',             color: 'text-green-600',  progress: 100 },
+};
 
 export default function ClientDashboard() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const email = searchParams.get('email') || sessionStorage.getItem('client_email') || '';
 
-  const [userData, setUserData] = useState<any>(null);
+  const [userData, setUserData] = useState<UserData | null>(null);
+  const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -19,7 +59,6 @@ export default function ClientDashboard() {
       navigate('/espace-client');
       return;
     }
-
     sessionStorage.setItem('client_email', email);
     loadUserData();
   }, [email, navigate]);
@@ -32,12 +71,77 @@ export default function ClientDashboard() {
       if (error) throw error;
 
       if (data?.success) {
-        setUserData(data);
+        setUserData(data as UserData);
+        if (data.lead_id) {
+          loadRecentActivity(data.lead_id);
+        }
       }
     } catch (error) {
       logger.error('Error loading user data:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadRecentActivity = async (leadId: string) => {
+    try {
+      const [docsRes, quotesRes, notifsRes] = await Promise.all([
+        supabase
+          .from('prospect_documents')
+          .select('id, file_name, uploaded_at, status')
+          .eq('lead_id', leadId)
+          .order('uploaded_at', { ascending: false })
+          .limit(3),
+        supabase
+          .from('lead_company_quotes')
+          .select('id, created_at, status')
+          .eq('lead_id', leadId)
+          .not('quote_file_url', 'is', null)
+          .order('created_at', { ascending: false })
+          .limit(2),
+        supabase
+          .from('crm_event_notifications')
+          .select('id, title, created_at')
+          .eq('lead_id', leadId)
+          .order('created_at', { ascending: false })
+          .limit(2),
+      ]);
+
+      const activities: RecentActivity[] = [];
+
+      (docsRes.data || []).forEach((doc: any) => {
+        activities.push({
+          id: doc.id,
+          label: doc.status === 'verified'
+            ? `Document vérifié : ${doc.file_name}`
+            : `Document reçu : ${doc.file_name}`,
+          date: doc.uploaded_at,
+          type: 'document',
+        });
+      });
+
+      (quotesRes.data || []).forEach((q: any) => {
+        activities.push({
+          id: q.id,
+          label: q.status === 'validated' ? 'Devis validé' : 'Nouveau devis disponible',
+          date: q.created_at,
+          type: 'quote',
+        });
+      });
+
+      (notifsRes.data || []).forEach((n: any) => {
+        activities.push({
+          id: n.id,
+          label: n.title || 'Nouvelle notification',
+          date: n.created_at,
+          type: 'notification',
+        });
+      });
+
+      activities.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      setRecentActivity(activities.slice(0, 5));
+    } catch (err) {
+      logger.error('Error loading activity:', err);
     }
   };
 
@@ -58,9 +162,7 @@ export default function ClientDashboard() {
         <div className="bg-white rounded-xl shadow-lg p-8 max-w-md text-center">
           <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
           <h2 className="text-2xl font-bold text-gray-900 mb-2">Accès Refusé</h2>
-          <p className="text-gray-600 mb-6">
-            Votre compte n'a pas été trouvé ou est inactif.
-          </p>
+          <p className="text-gray-600 mb-6">Votre compte n'a pas été trouvé ou est inactif.</p>
           <a
             href="/espace-client"
             className="inline-block px-6 py-3 bg-gradient-to-r from-yellow-600 to-yellow-500 text-black rounded-lg font-bold hover:from-yellow-700 hover:to-yellow-600 transition-all"
@@ -72,14 +174,24 @@ export default function ClientDashboard() {
     );
   }
 
+  const pipelineInfo = PIPELINE_LABELS[userData.pipeline_stage || userData.workflow_stage || ''] || null;
+
   const stats = [
     {
       icon: FileText,
       label: 'Documents',
-      value: '12',
-      sublabel: 'Disponibles',
+      value: String(userData.doc_count),
+      sublabel: userData.doc_count === 0 ? 'Aucun document' : userData.doc_count === 1 ? 'Document reçu' : 'Documents reçus',
       color: 'bg-yellow-100 text-yellow-600',
       link: '/client/documents'
+    },
+    {
+      icon: Package,
+      label: 'Devis',
+      value: String(userData.quote_count),
+      sublabel: userData.quote_count === 0 ? 'En attente' : userData.quote_count === 1 ? 'Devis disponible' : 'Devis disponibles',
+      color: userData.quote_count > 0 ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-500',
+      link: '/espace-prospect'
     },
     {
       icon: Shield,
@@ -90,53 +202,24 @@ export default function ClientDashboard() {
       link: '/client/sinistres'
     },
     {
-      icon: CreditCard,
-      label: 'Prochaine Échéance',
-      value: '15/02',
-      sublabel: '235.00€',
-      color: 'bg-gray-100 text-gray-600',
-      link: '/client/paiements'
-    },
-    {
       icon: Bell,
       label: 'Notifications',
-      value: '3',
-      sublabel: 'Nouvelles',
-      color: 'bg-gray-100 text-gray-600',
+      value: String(userData.notification_count),
+      sublabel: userData.notification_count === 0 ? 'Aucune' : 'Non lues',
+      color: userData.notification_count > 0 ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-gray-500',
       link: '/client/notifications'
     }
   ];
 
-  const quickActions = [
-    {
-      icon: FileText,
-      label: 'Télécharger Attestation',
-      description: 'Attestation d\'assurance valide',
-      link: '/client/documents',
-      color: 'from-yellow-600 to-yellow-500'
-    },
-    {
-      icon: Shield,
-      label: 'Déclarer un Sinistre',
-      description: 'Déclaration en 3 minutes',
-      link: '/client/sinistres',
-      color: 'from-red-600 to-red-700'
-    },
-    {
-      icon: CreditCard,
-      label: 'Gérer mes Paiements',
-      description: 'Factures et échéances',
-      link: '/client/paiements',
-      color: 'from-green-600 to-green-700'
+  const activityIcon = (type: RecentActivity['type']) => {
+    switch (type) {
+      case 'document': return { Icon: FileText, color: 'text-yellow-600' };
+      case 'quote':    return { Icon: Package,  color: 'text-green-600' };
+      case 'notification': return { Icon: Bell, color: 'text-gray-500' };
+      case 'payment':  return { Icon: CreditCard, color: 'text-green-600' };
+      default:         return { Icon: Clock, color: 'text-gray-400' };
     }
-  ];
-
-  const recentActivity = [
-    { icon: CheckCircle, label: 'Attestation téléchargée', date: '23/12/2024', color: 'text-green-600' },
-    { icon: FileText, label: 'Document validé', date: '20/12/2024', color: 'text-yellow-600' },
-    { icon: CheckCircle, label: 'Paiement effectué', date: '15/12/2024', color: 'text-green-600' },
-    { icon: Bell, label: 'Rappel échéance', date: '10/12/2024', color: 'text-gray-600' }
-  ];
+  };
 
   return (
     <>
@@ -148,116 +231,193 @@ export default function ClientDashboard() {
 
       <ClientLayout email={email}>
         <div className="space-y-6">
+
+          {/* Header */}
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            <h1 className="text-3xl font-bold text-gray-900 mb-1">
               Bonjour {userData.first_name || 'Client'}
             </h1>
-            <p className="text-gray-600">
+            <p className="text-gray-500">
               Bienvenue dans votre espace personnel TaxiAssur
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Pipeline progress banner */}
+          {pipelineInfo && (
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-sm font-semibold text-gray-700">Avancement de votre dossier</span>
+                <span className={`text-sm font-bold ${pipelineInfo.color}`}>{pipelineInfo.label}</span>
+              </div>
+              <div className="w-full bg-gray-100 rounded-full h-2.5">
+                <div
+                  className="bg-gradient-to-r from-yellow-500 to-yellow-400 h-2.5 rounded-full transition-all duration-700"
+                  style={{ width: `${pipelineInfo.progress}%` }}
+                />
+              </div>
+              <div className="flex justify-between mt-1.5 text-xs text-gray-400">
+                <span>Nouveau dossier</span>
+                <span>{pipelineInfo.progress}%</span>
+                <span>Client actif</span>
+              </div>
+            </div>
+          )}
+
+          {/* Stats grid */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {stats.map((stat, index) => {
               const Icon = stat.icon;
               return (
                 <a
                   key={index}
                   href={stat.link}
-                  className="bg-white rounded-xl p-6 shadow-md hover:shadow-lg transition-all border border-gray-100 hover:border-yellow-400"
+                  className="bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-all border border-gray-100 hover:border-yellow-400 group"
                 >
-                  <div className="flex items-start justify-between mb-4">
-                    <div className={`w-12 h-12 ${stat.color} rounded-xl flex items-center justify-center`}>
-                      <Icon size={24} />
-                    </div>
+                  <div className={`w-11 h-11 ${stat.color} rounded-xl flex items-center justify-center mb-3`}>
+                    <Icon size={22} />
                   </div>
-                  <div className="text-3xl font-bold text-gray-900 mb-1">{stat.value}</div>
-                  <div className="text-sm font-medium text-gray-600">{stat.label}</div>
-                  <div className="text-xs text-gray-500 mt-1">{stat.sublabel}</div>
+                  <div className="text-2xl font-bold text-gray-900 mb-0.5">{stat.value}</div>
+                  <div className="text-sm font-medium text-gray-700">{stat.label}</div>
+                  <div className="text-xs text-gray-400 mt-0.5">{stat.sublabel}</div>
                 </a>
               );
             })}
           </div>
 
+          {/* Contract / Info card */}
           <div className="bg-gradient-to-r from-yellow-600 to-yellow-500 rounded-xl p-6 text-black">
             <div className="flex items-start justify-between">
-              <div>
-                <h2 className="text-xl font-bold mb-2">Contrat Actif</h2>
-                <p className="text-sm opacity-90 mb-4">
-                  Votre assurance taxi tous risques
-                </p>
+              <div className="flex-1">
+                <h2 className="text-xl font-bold mb-1">Votre Dossier</h2>
+                <p className="text-sm opacity-80 mb-4">Géré par TaxiAssur — Courtier ORIAS</p>
                 <div className="space-y-2 text-sm">
+                  {userData.company_name && (
+                    <div className="flex items-center gap-2">
+                      <CheckCircle size={15} />
+                      <span className="font-medium">{userData.company_name}</span>
+                    </div>
+                  )}
                   <div className="flex items-center gap-2">
-                    <CheckCircle size={16} />
-                    <span>{userData.company_name || 'TaxiAssur'}</span>
+                    <Calendar size={15} />
+                    <span>
+                      Dossier ouvert le{' '}
+                      {new Date(userData.lead_created_at || userData.created_at).toLocaleDateString('fr-FR', {
+                        day: 'numeric', month: 'long', year: 'numeric'
+                      })}
+                    </span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Calendar size={16} />
-                    <span>Membre depuis : {userData.created_at ? new Date(userData.created_at).toLocaleDateString('fr-FR') : '-'}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <TrendingUp size={16} />
-                    <span>Statut : Actif et à jour</span>
+                    <TrendingUp size={15} />
+                    <span>Statut : {pipelineInfo?.label || 'En cours de traitement'}</span>
                   </div>
                 </div>
               </div>
-              <div className="hidden sm:block">
-                <Shield size={64} className="opacity-20" />
-              </div>
+              <Shield size={56} className="opacity-20 flex-shrink-0 hidden sm:block" />
             </div>
+
+            {userData.access_token && userData.quote_count > 0 && (
+              <a
+                href={`/espace-prospect?token=${userData.access_token}`}
+                className="mt-4 inline-flex items-center gap-2 px-4 py-2.5 bg-black/20 hover:bg-black/30 text-black rounded-lg font-semibold text-sm transition-all"
+              >
+                Voir mes devis
+                <ChevronRight size={16} />
+              </a>
+            )}
           </div>
 
-          <div className="grid lg:grid-cols-3 gap-4">
-            {quickActions.map((action, index) => {
-              const Icon = action.icon;
-              return (
-                <a
-                  key={index}
-                  href={action.link}
-                  className={`bg-gradient-to-r ${action.color} rounded-xl p-6 text-white hover:opacity-90 transition-all shadow-md hover:shadow-lg`}
-                >
-                  <Icon size={32} className="mb-4" />
-                  <h3 className="text-lg font-bold mb-1">{action.label}</h3>
-                  <p className="text-sm opacity-90">{action.description}</p>
-                </a>
-              );
-            })}
-          </div>
-
-          <div className="bg-white rounded-xl shadow-md border border-gray-100">
-            <div className="p-6 border-b border-gray-100">
-              <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                <Clock size={24} className="text-yellow-600" />
-                Activité Récente
-              </h2>
-            </div>
-            <div className="p-6">
-              <div className="space-y-4">
-                {recentActivity.map((activity, index) => {
-                  const Icon = activity.icon;
-                  return (
-                    <div key={index} className="flex items-center gap-4 py-3 border-b border-gray-100 last:border-0">
-                      <Icon size={20} className={activity.color} />
-                      <div className="flex-1">
-                        <div className="font-medium text-gray-900">{activity.label}</div>
-                        <div className="text-sm text-gray-500">{activity.date}</div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-gray-50 border border-gray-200 rounded-xl p-6">
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0">
-                <Bell className="w-6 h-6 text-gray-600" />
+          {/* Quick actions */}
+          <div className="grid sm:grid-cols-3 gap-4">
+            <a
+              href="/client/documents"
+              className="bg-white rounded-xl p-5 border border-gray-100 hover:border-yellow-400 hover:shadow-md transition-all flex items-center gap-4 group"
+            >
+              <div className="w-12 h-12 bg-yellow-100 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:bg-yellow-200 transition-colors">
+                <FileText size={22} className="text-yellow-600" />
               </div>
               <div>
-                <h3 className="font-bold text-gray-900 mb-2">Besoin d'Aide ?</h3>
-                <p className="text-gray-700 mb-4">
-                  Notre équipe est disponible du lundi au vendredi de 9h à 18h pour répondre à toutes vos questions.
+                <div className="font-semibold text-gray-900">Mes Documents</div>
+                <div className="text-xs text-gray-500">{userData.doc_count} fichier{userData.doc_count !== 1 ? 's' : ''}</div>
+              </div>
+              <ChevronRight size={16} className="text-gray-400 ml-auto" />
+            </a>
+
+            <a
+              href="/client/sinistres"
+              className="bg-white rounded-xl p-5 border border-gray-100 hover:border-red-300 hover:shadow-md transition-all flex items-center gap-4 group"
+            >
+              <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:bg-red-200 transition-colors">
+                <Shield size={22} className="text-red-600" />
+              </div>
+              <div>
+                <div className="font-semibold text-gray-900">Déclarer un Sinistre</div>
+                <div className="text-xs text-gray-500">En 3 minutes</div>
+              </div>
+              <ChevronRight size={16} className="text-gray-400 ml-auto" />
+            </a>
+
+            <a
+              href="/client/paiements"
+              className="bg-white rounded-xl p-5 border border-gray-100 hover:border-green-300 hover:shadow-md transition-all flex items-center gap-4 group"
+            >
+              <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:bg-green-200 transition-colors">
+                <CreditCard size={22} className="text-green-600" />
+              </div>
+              <div>
+                <div className="font-semibold text-gray-900">Paiements</div>
+                <div className="text-xs text-gray-500">Factures et échéances</div>
+              </div>
+              <ChevronRight size={16} className="text-gray-400 ml-auto" />
+            </a>
+          </div>
+
+          {/* Recent activity */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100">
+            <div className="p-5 border-b border-gray-100 flex items-center gap-2">
+              <Clock size={20} className="text-yellow-600" />
+              <h2 className="text-lg font-bold text-gray-900">Activité Récente</h2>
+            </div>
+            <div className="p-5">
+              {recentActivity.length === 0 ? (
+                <div className="text-center py-8 text-gray-400">
+                  <Clock size={36} className="mx-auto mb-3 opacity-30" />
+                  <p className="text-sm">Aucune activité récente</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {recentActivity.map((activity) => {
+                    const { Icon, color } = activityIcon(activity.type);
+                    return (
+                      <div key={activity.id} className="flex items-center gap-3 py-2.5 border-b border-gray-50 last:border-0">
+                        <div className={`w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center flex-shrink-0`}>
+                          <Icon size={16} className={color} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium text-gray-800 text-sm truncate">{activity.label}</div>
+                          <div className="text-xs text-gray-400">
+                            {new Date(activity.date).toLocaleDateString('fr-FR', {
+                              day: 'numeric', month: 'short', year: 'numeric'
+                            })}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Help block */}
+          <div className="bg-gray-50 border border-gray-200 rounded-xl p-6">
+            <div className="flex items-start gap-4">
+              <div className="w-11 h-11 bg-yellow-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                <Bell className="w-5 h-5 text-yellow-600" />
+              </div>
+              <div>
+                <h3 className="font-bold text-gray-900 mb-1">Besoin d'Aide ?</h3>
+                <p className="text-sm text-gray-600 mb-4">
+                  Notre équipe est disponible du lundi au vendredi de 9h à 18h.
                 </p>
                 <div className="flex flex-wrap gap-3">
                   <a
@@ -268,7 +428,7 @@ export default function ClientDashboard() {
                   </a>
                   <a
                     href="mailto:team@taxiassur.com"
-                    className="px-4 py-2 bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 rounded-lg font-semibold text-sm transition-all"
+                    className="px-4 py-2 bg-white hover:bg-gray-100 text-gray-700 border border-gray-300 rounded-lg font-semibold text-sm transition-all"
                   >
                     team@taxiassur.com
                   </a>
@@ -276,6 +436,7 @@ export default function ClientDashboard() {
               </div>
             </div>
           </div>
+
         </div>
       </ClientLayout>
     </>
