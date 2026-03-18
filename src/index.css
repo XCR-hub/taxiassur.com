@@ -324,6 +324,11 @@
   contain-intrinsic-size: 0 500px;
 }
 
+/* Promote hero form to its own layer — avoids repaints of background */
+[data-form="devis"] {
+  contain: layout style;
+}
+
 /* Reduce repaints for sticky header */
 header[class*="sticky"] {
   will-change: auto;

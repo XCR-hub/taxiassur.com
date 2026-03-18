@@ -24,12 +24,12 @@ const SubtleConversionHelper = lazy(() => import('../components/SubtleConversion
 const UltimateConversion = lazy(() => import('../components/UltimateConversion'));
 
 const SectionSkeleton = () => (
-  <div className="py-16 animate-pulse">
+  <div className="py-16">
     <div className="container-max">
-      <div className="h-8 bg-gray-800/50 rounded w-1/3 mx-auto mb-6" />
+      <div className="h-8 bg-gray-800/30 rounded w-1/3 mx-auto mb-6" />
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {[1, 2, 3].map(i => (
-          <div key={i} className="h-32 bg-gray-800/30 rounded-xl" />
+          <div key={i} className="h-32 bg-gray-800/20 rounded-xl" />
         ))}
       </div>
     </div>

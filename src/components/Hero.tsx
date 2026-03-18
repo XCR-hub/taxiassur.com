@@ -85,7 +85,7 @@ const Hero: React.FC = () => {
           <div className="lg:w-1/2 mb-8 lg:mb-0 px-3 sm:px-4">
             {/* Badge ORIAS */}
             <div className="mb-4 sm:mb-6 lg:mb-8">
-              <div className="inline-flex items-center space-x-2 bg-gradient-to-r from-amber-500/20 to-yellow-500/20 px-3 sm:px-4 lg:px-6 py-2 sm:py-2.5 lg:py-3 rounded-xl sm:rounded-2xl border border-amber-500/40 backdrop-blur-sm">
+              <div className="inline-flex items-center space-x-2 bg-amber-900/30 px-3 sm:px-4 lg:px-6 py-2 sm:py-2.5 lg:py-3 rounded-xl sm:rounded-2xl border border-amber-500/40">
                 <Shield className="text-yellow-500 drop-shadow-lg" size={14} />
                 <span className="text-amber-300 font-bold text-xs tracking-wide drop-shadow-md">COURTIER ORIAS</span>
                 <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-green-400 rounded-full animate-pulse"></div>
@@ -105,7 +105,7 @@ const Hero: React.FC = () => {
             </p>
 
             {/* SEO Rich Content - 250+ words */}
-            <div className="mb-4 sm:mb-6 lg:mb-8 space-y-2 bg-gray-900/40 backdrop-blur-sm rounded-lg sm:rounded-xl p-3 sm:p-4 lg:p-5 border border-gray-700/50">
+            <div className="mb-4 sm:mb-6 lg:mb-8 space-y-2 bg-gray-900/60 rounded-lg sm:rounded-xl p-3 sm:p-4 lg:p-5 border border-gray-700/50">
               <p className="text-xs sm:text-sm text-gray-200 leading-relaxed hidden sm:block">
                 <strong className="text-yellow-500">TaxiAssur</strong> est le <strong className="text-yellow-400">courtier spécialisé en assurance taxi</strong> leader en France.
                 Notre expertise unique depuis septembre 2025 nous permet de négocier les <strong className="text-green-400">meilleurs tarifs d'assurance taxi</strong> du marché.
@@ -191,7 +191,7 @@ const Hero: React.FC = () => {
 
           {/* Right Column: Form */}
           <div className="lg:w-1/2">
-            <div className="bg-gray-900/95 backdrop-blur-lg rounded-2xl p-4 sm:p-6 lg:p-8 shadow-2xl border border-amber-500/60" data-form="devis">
+            <div className="bg-gray-900 rounded-2xl p-4 sm:p-6 lg:p-8 shadow-2xl border border-amber-500/60" data-form="devis">
                 {/* Form Header */}
                 <div className="text-center mb-4 sm:mb-6">
                   <h2 className="text-xl sm:text-2xl font-bold text-gradient mb-2 sm:mb-4">

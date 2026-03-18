@@ -78,7 +78,7 @@ export default defineConfig(({ mode }) => ({
     assetsDir: 'assets',
     sourcemap: false,
     minify: 'terser',
-    target: 'es2020',
+    target: ['es2020', 'chrome80', 'safari14'],
     chunkSizeWarningLimit: 500,
     modulePreload: {
       polyfill: false,
@@ -211,13 +211,13 @@ export default defineConfig(({ mode }) => ({
     },
     copyPublicDir: true,
     emptyOutDir: true,
-    assetsInlineLimit: 8192,
+    assetsInlineLimit: 10240,
     cssCodeSplit: true,
     terserOptions: {
       compress: {
         drop_console: true,
         drop_debugger: true,
-        passes: 3,
+        passes: 2,
         pure_funcs: ['console.log', 'console.info', 'console.debug', 'console.warn', 'console.error'],
         pure_getters: true,
         unsafe: false,

@@ -4,6 +4,14 @@ import { HelmetProvider } from 'react-helmet-async';
 import App from './App.tsx';
 import './index.css';
 
+// Remove loading screen as soon as React starts rendering — improves FCP
+const loadingScreen = document.getElementById('loading-screen');
+if (loadingScreen) {
+  loadingScreen.style.transition = 'opacity 0.2s';
+  loadingScreen.style.opacity = '0';
+  setTimeout(() => loadingScreen.remove(), 200);
+}
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <HelmetProvider>

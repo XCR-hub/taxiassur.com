@@ -69,10 +69,22 @@ export function useRealStats(): RealStats {
       }
     };
 
-    fetchStats();
+    // Defer stats fetching until after LCP — use idle callback or 2s delay
+    // This prevents Supabase queries from competing with initial page paint
+    let timerId: ReturnType<typeof setTimeout>;
+    if ('requestIdleCallback' in window) {
+      (window as any).requestIdleCallback(() => {
+        if (mounted) fetchStats();
+      }, { timeout: 3000 });
+    } else {
+      timerId = setTimeout(() => {
+        if (mounted) fetchStats();
+      }, 2000);
+    }
 
     return () => {
       mounted = false;
+      if (timerId) clearTimeout(timerId);
     };
   }, []);
 
