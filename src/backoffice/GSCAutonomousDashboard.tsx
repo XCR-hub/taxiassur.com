@@ -4,7 +4,8 @@ import {
   Brain, Zap, TrendingUp, CheckCircle, Clock, AlertCircle,
   Target, Sparkles, Search, RefreshCw, ArrowUp, ArrowDown,
   Minus, Globe, FileText, Link, AlertTriangle, Play,
-  BarChart3, ChevronRight, Eye, MousePointer, Award, Layers
+  BarChart3, ChevronRight, Eye, MousePointer, Award, Layers,
+  CalendarClock, Activity, XCircle
 } from 'lucide-react';
 
 interface AutonomousStats {
@@ -56,6 +57,31 @@ interface IndexationIssue {
   resolved_at: string | null;
 }
 
+interface CronLog {
+  id: string;
+  cron_name: string;
+  mode: string;
+  status: string;
+  started_at: string;
+  finished_at: string | null;
+  duration_ms: number | null;
+  tasks_processed: number;
+  tasks_succeeded: number;
+  urls_indexed: number;
+  new_tasks_created: number;
+  error_message: string | null;
+}
+
+interface DominatorStats {
+  top3_keywords: number;
+  top10_keywords: number;
+  avg_position: number;
+  last_cron_run: string | null;
+  tasks_succeeded_today: number;
+  urls_indexed_today: number;
+  pending_tasks: number;
+}
+
 const TARGET_KEYWORDS = [
   'assurance taxi', 'assurance taxi prix', 'meilleure assurance taxi',
   'assurance taxi pas cher', 'devis assurance taxi', 'assurance taxi vtc',
@@ -73,17 +99,30 @@ const TASK_LABELS: Record<string, string> = {
   optimize_metadata: 'Optimiser métadonnées',
   improve_ctr: 'Améliorer CTR',
   fix_content_gap: 'Combler lacune contenu',
+  generate_faq_schema: 'Générer FAQ schema',
 };
 
-type TabId = 'overview' | 'keywords' | 'tasks' | 'issues' | 'patterns';
+const CRON_DEFINITIONS = [
+  { name: 'gsc-seo-dominator-2h', label: 'SEO Dominator Batch', schedule: 'Toutes les 2h', icon: '⚡', color: 'teal' },
+  { name: 'gsc-detect-opportunities-4h', label: 'Détection opportunités', schedule: 'Toutes les 4h', icon: '🔍', color: 'blue' },
+  { name: 'gsc-autonomous-engine-6h', label: 'Moteur autonome', schedule: 'Toutes les 6h', icon: '🤖', color: 'amber' },
+  { name: 'gsc-indexnow-positions-12h', label: 'IndexNow + Positions', schedule: 'Toutes les 12h', icon: '🌐', color: 'green' },
+  { name: 'gsc-learning-cleanup-3am', label: 'Apprentissage IA + Nettoyage', schedule: 'Quotidien 3h00', icon: '🧠', color: 'orange' },
+  { name: 'gsc-keyword-snapshot-6am', label: 'Snapshot positions', schedule: 'Quotidien 6h00', icon: '📊', color: 'cyan' },
+  { name: 'gsc-weekly-deep-audit', label: 'Audit hebdomadaire', schedule: 'Dimanche 2h00', icon: '🏆', color: 'red' },
+];
+
+type TabId = 'overview' | 'keywords' | 'tasks' | 'issues' | 'patterns' | 'crons';
 
 export default function GSCAutonomousDashboard() {
   const [tab, setTab] = useState<TabId>('overview');
   const [stats, setStats] = useState<AutonomousStats | null>(null);
+  const [dominatorStats, setDominatorStats] = useState<DominatorStats | null>(null);
   const [tasks, setTasks] = useState<OptimizationTask[]>([]);
   const [patterns, setPatterns] = useState<LearningPattern[]>([]);
   const [keywords, setKeywords] = useState<KeywordRanking[]>([]);
   const [issues, setIssues] = useState<IndexationIssue[]>([]);
+  const [cronLogs, setCronLogs] = useState<CronLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [executing, setExecuting] = useState(false);
   const [executingTask, setExecutingTask] = useState<string | null>(null);
@@ -97,20 +136,24 @@ export default function GSCAutonomousDashboard() {
 
   const loadData = useCallback(async () => {
     try {
-      const [statsRes, tasksRes, patternsRes, kwRes, issuesRes, syncRes] = await Promise.all([
+      const [statsRes, domStatsRes, tasksRes, patternsRes, kwRes, issuesRes, syncRes, cronRes] = await Promise.all([
         supabase.rpc('get_autonomous_system_stats').maybeSingle(),
+        supabase.rpc('get_seo_dominator_stats').maybeSingle(),
         supabase.from('gsc_autonomous_tasks').select('*').order('priority', { ascending: false }).order('created_at', { ascending: false }).limit(30),
         supabase.from('gsc_learning_patterns').select('*').eq('is_active', true).order('success_rate', { ascending: false }),
         supabase.from('gsc_performance_data').select('query,clicks,impressions,ctr,position,page_url').order('impressions', { ascending: false }).limit(200),
         supabase.from('gsc_indexation_issues').select('*').is('resolved_at', null).order('priority', { ascending: false }).limit(30),
         supabase.from('gsc_sync_history').select('synced_at').order('synced_at', { ascending: false }).limit(1).maybeSingle(),
+        supabase.from('gsc_seo_cron_log').select('*').order('started_at', { ascending: false }).limit(50),
       ]);
 
       if (statsRes.data) setStats(statsRes.data);
+      if (domStatsRes.data) setDominatorStats(domStatsRes.data as DominatorStats);
       setTasks(tasksRes.data || []);
       setPatterns(patternsRes.data || []);
       setKeywords(kwRes.data || []);
       setIssues(issuesRes.data || []);
+      setCronLogs(cronRes.data || []);
       if (syncRes.data) setLastSync((syncRes.data as { synced_at: string }).synced_at);
     } catch (err) {
       console.error('GSC load error:', err);
@@ -128,9 +171,9 @@ export default function GSCAutonomousDashboard() {
   const executeAll = async () => {
     setExecuting(true);
     try {
-      const { error } = await supabase.functions.invoke('gsc-ultra-autonomous-engine', { body: { manual_trigger: true } });
+      const { error } = await supabase.functions.invoke('gsc-seo-dominator', { body: { mode: 'auto' } });
       if (error) throw error;
-      showToast('Moteur IA lancé avec succès !');
+      showToast('Moteur SEO Dominator lancé — batch de 5 tâches !');
       await loadData();
     } catch {
       showToast('Erreur lors du lancement');
@@ -218,12 +261,17 @@ export default function GSCAutonomousDashboard() {
   const top3Count = keywords.filter((k) => k.position <= 3).length;
   const pendingTasks = tasks.filter((t) => t.status === 'pending').length;
 
+  const activeRunningCrons = cronLogs.filter(
+    (c) => c.status === 'running' && new Date(c.started_at) > new Date(Date.now() - 10 * 60 * 1000)
+  ).length;
+
   const tabs: { id: TabId; label: string; icon: React.ReactNode; badge?: number }[] = [
     { id: 'overview', label: 'Vue d\'ensemble', icon: <BarChart3 size={15} /> },
-    { id: 'keywords', label: 'Mots-clés', icon: <Search size={15} />, badge: top3Count },
+    { id: 'keywords', label: 'Mots-clés', icon: <Search size={15} />, badge: dominatorStats?.top3_keywords ?? top3Count },
     { id: 'tasks', label: 'Tâches IA', icon: <Zap size={15} />, badge: pendingTasks },
     { id: 'issues', label: 'Indexation', icon: <AlertTriangle size={15} />, badge: issues.length },
     { id: 'patterns', label: 'Apprentissage', icon: <Brain size={15} /> },
+    { id: 'crons', label: 'Crons IA', icon: <CalendarClock size={15} />, badge: activeRunningCrons },
   ];
 
   if (loading) {
@@ -287,8 +335,8 @@ export default function GSCAutonomousDashboard() {
             { label: 'Impressions', value: totalImpressions.toLocaleString('fr'), icon: <Eye size={18} />, color: 'text-teal-600', bg: 'bg-teal-50' },
             { label: 'Position moy.', value: avgPosition > 0 ? avgPosition.toFixed(1) : 'N/A', icon: <TrendingUp size={18} />, color: 'text-amber-600', bg: 'bg-amber-50' },
             { label: 'CTR moyen', value: avgCtr > 0 ? `${(avgCtr * 100).toFixed(1)}%` : 'N/A', icon: <Target size={18} />, color: 'text-green-600', bg: 'bg-green-50' },
-            { label: 'Top 3', value: top3Count.toString(), icon: <Award size={18} />, color: 'text-emerald-700', bg: 'bg-emerald-50' },
-            { label: 'Tâches IA', value: (stats?.pending_tasks || 0).toString(), icon: <Brain size={18} />, color: 'text-gray-700', bg: 'bg-gray-100' },
+            { label: 'Top 3', value: (dominatorStats?.top3_keywords ?? top3Count).toString(), icon: <Award size={18} />, color: 'text-emerald-700', bg: 'bg-emerald-50' },
+            { label: 'Tâches IA', value: (dominatorStats?.pending_tasks ?? stats?.pending_tasks ?? 0).toString(), icon: <Brain size={18} />, color: 'text-gray-700', bg: 'bg-gray-100' },
           ].map((kpi) => (
             <div key={kpi.label} className="bg-white rounded-xl border border-gray-200 p-4 flex flex-col gap-2">
               <div className={`${kpi.bg} ${kpi.color} p-2 rounded-lg w-fit`}>{kpi.icon}</div>
@@ -585,6 +633,170 @@ export default function GSCAutonomousDashboard() {
                     ))}
                   </div>
                 )}
+              </div>
+            )}
+
+            {tab === 'crons' && (
+              <div className="space-y-6">
+                {/* Planning des 7 crons */}
+                <div>
+                  <h2 className="text-base font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                    <CalendarClock size={16} className="text-teal-600" />
+                    Planning automatique — 7 crons IA actifs
+                  </h2>
+                  <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-2">
+                    {CRON_DEFINITIONS.map((cron) => {
+                      const lastLog = cronLogs.find((l) => l.cron_name === cron.name);
+                      const isRunning = lastLog?.status === 'running';
+                      const isOk = lastLog?.status === 'completed';
+                      const isFailed = lastLog?.status === 'failed';
+                      return (
+                        <div
+                          key={cron.name}
+                          className={`border rounded-xl p-4 transition-colors ${
+                            isRunning ? 'border-teal-300 bg-teal-50/50' :
+                            isFailed ? 'border-red-200 bg-red-50/30' :
+                            'border-gray-200 bg-white hover:border-teal-200'
+                          }`}
+                        >
+                          <div className="flex items-start justify-between mb-2">
+                            <div className="flex items-center gap-2">
+                              <span className="text-lg">{cron.icon}</span>
+                              <div>
+                                <p className="text-sm font-semibold text-gray-900">{cron.label}</p>
+                                <p className="text-xs text-gray-400">{cron.schedule}</p>
+                              </div>
+                            </div>
+                            <div>
+                              {isRunning && <RefreshCw size={14} className="text-teal-500 animate-spin" />}
+                              {isOk && <CheckCircle size={14} className="text-green-500" />}
+                              {isFailed && <XCircle size={14} className="text-red-500" />}
+                              {!lastLog && <Clock size={14} className="text-gray-300" />}
+                            </div>
+                          </div>
+                          {lastLog && (
+                            <div className="mt-2 pt-2 border-t border-gray-100 space-y-1">
+                              <p className="text-xs text-gray-500">
+                                Dernier lancement: {new Date(lastLog.started_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                              </p>
+                              {lastLog.duration_ms && (
+                                <p className="text-xs text-gray-400">Durée: {(lastLog.duration_ms / 1000).toFixed(1)}s</p>
+                              )}
+                              <div className="flex gap-3 text-xs">
+                                {lastLog.tasks_succeeded > 0 && (
+                                  <span className="text-green-600 font-medium">{lastLog.tasks_succeeded} tâches OK</span>
+                                )}
+                                {lastLog.urls_indexed > 0 && (
+                                  <span className="text-blue-600">{lastLog.urls_indexed} URLs indexées</span>
+                                )}
+                                {lastLog.new_tasks_created > 0 && (
+                                  <span className="text-amber-600">+{lastLog.new_tasks_created} tâches</span>
+                                )}
+                              </div>
+                              {lastLog.error_message && (
+                                <p className="text-xs text-red-500 truncate">{lastLog.error_message}</p>
+                              )}
+                            </div>
+                          )}
+                          {!lastLog && (
+                            <p className="text-xs text-gray-300 mt-2">Pas encore exécuté</p>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Stats aujourd'hui */}
+                {dominatorStats && (
+                  <div className="border border-teal-200 bg-teal-50/40 rounded-xl p-5">
+                    <h3 className="text-sm font-semibold text-teal-900 mb-4 flex items-center gap-2">
+                      <Activity size={15} className="text-teal-600" />
+                      Performance aujourd'hui
+                    </h3>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                      {[
+                        { label: 'Mots-clés Top 3', value: dominatorStats.top3_keywords, color: 'text-green-700' },
+                        { label: 'Mots-clés Top 10', value: dominatorStats.top10_keywords, color: 'text-teal-700' },
+                        { label: 'Position moyenne', value: dominatorStats.avg_position ? `#${dominatorStats.avg_position}` : 'N/A', color: 'text-amber-700' },
+                        { label: 'URLs indexées', value: dominatorStats.urls_indexed_today, color: 'text-blue-700' },
+                      ].map((s) => (
+                        <div key={s.label} className="text-center">
+                          <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
+                          <p className="text-xs text-gray-500 mt-1">{s.label}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Historique des exécutions */}
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                    <Activity size={14} className="text-gray-400" />
+                    Historique des 50 dernières exécutions
+                  </h3>
+                  {cronLogs.length === 0 ? (
+                    <div className="text-center py-8 text-gray-400">
+                      <CalendarClock size={36} className="mx-auto mb-2 opacity-30" />
+                      <p>Aucune exécution enregistrée</p>
+                      <p className="text-xs mt-1">Les crons démarreront automatiquement selon le planning</p>
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-xs">
+                        <thead>
+                          <tr className="text-left text-gray-500 border-b border-gray-100">
+                            <th className="pb-2 font-medium">Cron</th>
+                            <th className="pb-2 font-medium">Statut</th>
+                            <th className="pb-2 font-medium">Démarré</th>
+                            <th className="pb-2 font-medium text-right">Durée</th>
+                            <th className="pb-2 font-medium text-right">Tâches</th>
+                            <th className="pb-2 font-medium text-right">URLs</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-50">
+                          {cronLogs.map((log) => (
+                            <tr key={log.id} className="hover:bg-gray-50">
+                              <td className="py-2 pr-4">
+                                <span className="font-medium text-gray-800">
+                                  {CRON_DEFINITIONS.find((c) => c.name === log.cron_name)?.label || log.cron_name}
+                                </span>
+                              </td>
+                              <td className="py-2 pr-4">
+                                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-medium text-xs ${
+                                  log.status === 'completed' ? 'bg-green-50 text-green-700' :
+                                  log.status === 'running' ? 'bg-blue-50 text-blue-700' :
+                                  log.status === 'failed' ? 'bg-red-50 text-red-700' :
+                                  'bg-gray-50 text-gray-600'
+                                }`}>
+                                  {log.status === 'completed' && <CheckCircle size={10} />}
+                                  {log.status === 'running' && <RefreshCw size={10} className="animate-spin" />}
+                                  {log.status === 'failed' && <XCircle size={10} />}
+                                  {log.status}
+                                </span>
+                              </td>
+                              <td className="py-2 pr-4 text-gray-500">
+                                {new Date(log.started_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                              </td>
+                              <td className="py-2 pr-4 text-right text-gray-500">
+                                {log.duration_ms ? `${(log.duration_ms / 1000).toFixed(1)}s` : '—'}
+                              </td>
+                              <td className="py-2 pr-4 text-right">
+                                {log.tasks_succeeded > 0 ? (
+                                  <span className="text-green-600 font-medium">{log.tasks_succeeded}/{log.tasks_processed}</span>
+                                ) : '—'}
+                              </td>
+                              <td className="py-2 text-right text-blue-600">
+                                {log.urls_indexed > 0 ? log.urls_indexed : '—'}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>
