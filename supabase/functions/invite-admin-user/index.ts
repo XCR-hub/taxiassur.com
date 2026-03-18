@@ -6,93 +6,229 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Client-Info, Apikey',
 };
 
-function generateInvitationEmail(fullName: string, invitationLink: string, baseUrl: string): string {
-  return `
-<!DOCTYPE html>
-<html>
+const ROLE_LABELS: Record<string, string> = {
+  master: 'Super Administrateur',
+  admin: 'Administrateur',
+  collaborator: 'Collaborateur',
+  commercial: 'Commercial',
+  support: 'Support client',
+};
+
+function buildInvitationEmail(fullName: string, invitationLink: string, role: string): string {
+  const firstName = fullName.split(' ')[0];
+  const roleLabel = ROLE_LABELS[role] || 'Collaborateur';
+
+  return `<!DOCTYPE html>
+<html lang="fr">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Invitation TaxiAssur</title>
 </head>
-<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f5f5f5;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f5f5f5; padding: 40px 20px;">
+<body style="margin:0;padding:0;background-color:#F1F5F9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;">
+
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#F1F5F9;padding:40px 16px;">
     <tr>
       <td align="center">
-        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+        <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
 
-          <!-- Header -->
+          <!-- LOGO BAR -->
           <tr>
-            <td style="background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%); padding: 40px 30px; text-align: center;">
-              <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700;">
-                Bienvenue à TaxiAssur
-              </h1>
-              <p style="margin: 10px 0 0 0; color: #e0e7ff; font-size: 16px;">
-                Plateforme de Gestion Assurance Taxi
-              </p>
+            <td align="center" style="padding-bottom:28px;">
+              <table cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="background-color:#0F172A;border-radius:10px;padding:10px 20px;">
+                    <span style="font-size:20px;font-weight:900;color:#FFFFFF;letter-spacing:-0.5px;">
+                      Taxi<span style="color:#F59E0B;">Assur</span>
+                    </span>
+                  </td>
+                </tr>
+              </table>
             </td>
           </tr>
 
-          <!-- Content -->
+          <!-- MAIN CARD -->
           <tr>
-            <td style="padding: 40px 30px;">
-              <p style="margin: 0 0 20px 0; font-size: 16px; color: #333333; line-height: 1.6;">
-                Bonjour <strong>${fullName}</strong>,
-              </p>
+            <td style="background-color:#FFFFFF;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
 
-              <p style="margin: 0 0 20px 0; font-size: 16px; color: #333333; line-height: 1.6;">
-                Vous avez été invité à rejoindre la plateforme TaxiAssur. Créez votre compte en cliquant sur le bouton ci-dessous pour accéder à tous les outils de gestion assurance.
-              </p>
-
-              <table width="100%" cellpadding="0" cellspacing="0" style="margin: 30px 0;">
+              <!-- HEADER -->
+              <table width="100%" cellpadding="0" cellspacing="0">
                 <tr>
-                  <td align="center">
-                    <a href="${invitationLink}" style="display: inline-block; background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%); color: #ffffff; text-decoration: none; padding: 16px 40px; border-radius: 8px; font-size: 16px; font-weight: 600; box-shadow: 0 4px 6px rgba(37, 99, 235, 0.3);">
-                      Créer mon compte
-                    </a>
+                  <td style="background-color:#0F172A;padding:48px 40px 44px;text-align:center;position:relative;">
+                    <div style="width:64px;height:64px;background:rgba(245,158,11,0.15);border-radius:50%;margin:0 auto 20px;display:flex;align-items:center;justify-content:center;border:2px solid rgba(245,158,11,0.3);">
+                      <!-- Taxi icon placeholder -->
+                      <span style="font-size:28px;line-height:64px;display:block;">&#128664;</span>
+                    </div>
+                    <h1 style="margin:0 0 8px 0;font-size:26px;font-weight:800;color:#FFFFFF;letter-spacing:-0.5px;line-height:1.2;">
+                      Vous etes invite !
+                    </h1>
+                    <p style="margin:0;font-size:15px;color:rgba(255,255,255,0.55);line-height:1.5;">
+                      Rejoignez l'espace d'administration TaxiAssur
+                    </p>
+                    <!-- STRIPE -->
+                    <div style="position:absolute;bottom:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#F59E0B 0%,#D97706 60%,transparent 100%);"></div>
                   </td>
                 </tr>
               </table>
 
-              <p style="margin: 30px 0 10px 0; font-size: 14px; color: #666666; line-height: 1.6;">
-                Ou copiez ce lien dans votre navigateur :
-              </p>
-              <p style="margin: 0; padding: 15px; background-color: #f8f8f8; border-radius: 6px; font-size: 12px; color: #0066cc; word-break: break-all;">
-                ${invitationLink}
-              </p>
+              <!-- BODY -->
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="padding:40px 40px 8px;">
 
-              <div style="margin: 30px 0; padding: 20px; background-color: #f0f4ff; border-left: 4px solid #2563eb; border-radius: 6px;">
-                <p style="margin: 0; font-size: 14px; color: #1e3a8a; line-height: 1.6;">
-                  <strong>Ce lien expire dans 24 heures.</strong> Si vous n'avez pas demandé cette invitation, ignorez cet email ou contactez-nous immédiatement.
-                </p>
-              </div>
+                    <p style="margin:0 0 6px 0;font-size:18px;font-weight:700;color:#0F172A;">
+                      Bonjour ${firstName},
+                    </p>
+                    <p style="margin:0 0 28px 0;font-size:15px;color:#475569;line-height:1.6;">
+                      Vous avez ete invite a rejoindre la plateforme de gestion <strong style="color:#0F172A;">TaxiAssur</strong>. Votre acces a ete configure avec le profil suivant :
+                    </p>
 
-              <h3 style="margin: 30px 0 15px 0; font-size: 16px; color: #1e40af; font-weight: 600;">
-                Accès à la plateforme
-              </h3>
-              <ul style="margin: 0 0 20px 20px; padding: 0; color: #333333; font-size: 14px; line-height: 1.8;">
-                <li style="margin-bottom: 8px;">Gestion complète de vos prospects et clients</li>
-                <li style="margin-bottom: 8px;">Suivi des devis et contrats en temps réel</li>
-                <li style="margin-bottom: 8px;">Outils de communication intégrés</li>
-                <li style="margin-bottom: 8px;">Rapports et analyses détaillés</li>
-                <li>Support client 24/7</li>
-              </ul>
+                    <!-- ROLE BADGE -->
+                    <table cellpadding="0" cellspacing="0" style="margin-bottom:32px;">
+                      <tr>
+                        <td style="background-color:#FFFBEB;border:1px solid rgba(245,158,11,0.3);border-radius:8px;padding:12px 20px;">
+                          <span style="font-size:12px;font-weight:700;color:#92400E;letter-spacing:0.5px;text-transform:uppercase;">Role attribue</span>
+                          <br>
+                          <span style="font-size:16px;font-weight:800;color:#D97706;">${roleLabel}</span>
+                        </td>
+                      </tr>
+                    </table>
+
+                    <!-- STEP 1 -->
+                    <p style="margin:0 0 20px 0;font-size:14px;color:#475569;line-height:1.6;">
+                      Pour activer votre compte, cliquez sur le bouton ci-dessous et choisissez votre mot de passe personnel. Le lien est valable <strong style="color:#0F172A;">24 heures</strong>.
+                    </p>
+
+                    <!-- CTA BUTTON -->
+                    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:32px;">
+                      <tr>
+                        <td align="center">
+                          <a href="${invitationLink}"
+                             style="display:inline-block;background-color:#F59E0B;color:#0F172A;text-decoration:none;padding:16px 48px;border-radius:10px;font-size:16px;font-weight:800;letter-spacing:-0.3px;box-shadow:0 4px 14px rgba(245,158,11,0.35);">
+                            Creer mon mot de passe &rarr;
+                          </a>
+                        </td>
+                      </tr>
+                    </table>
+
+                    <!-- DIVIDER -->
+                    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
+                      <tr>
+                        <td style="border-top:1px solid #E2E8F0;"></td>
+                      </tr>
+                    </table>
+
+                    <!-- FEATURES -->
+                    <p style="margin:0 0 16px 0;font-size:13px;font-weight:700;color:#0F172A;text-transform:uppercase;letter-spacing:0.5px;">
+                      Ce que vous pouvez faire sur la plateforme
+                    </p>
+
+                    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:32px;">
+                      <tr>
+                        <td style="padding:0 0 10px 0;">
+                          <table cellpadding="0" cellspacing="0">
+                            <tr>
+                              <td style="width:28px;vertical-align:top;padding-top:2px;">
+                                <span style="display:inline-block;width:20px;height:20px;background-color:#D1FAE5;border-radius:50%;text-align:center;line-height:20px;font-size:11px;color:#059669;font-weight:900;">&#10003;</span>
+                              </td>
+                              <td style="font-size:14px;color:#334155;line-height:1.5;padding-left:10px;">Gestion des <strong>leads et prospects</strong> dans le CRM pipeline</td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding:0 0 10px 0;">
+                          <table cellpadding="0" cellspacing="0">
+                            <tr>
+                              <td style="width:28px;vertical-align:top;padding-top:2px;">
+                                <span style="display:inline-block;width:20px;height:20px;background-color:#D1FAE5;border-radius:50%;text-align:center;line-height:20px;font-size:11px;color:#059669;font-weight:900;">&#10003;</span>
+                              </td>
+                              <td style="font-size:14px;color:#334155;line-height:1.5;padding-left:10px;">Suivi des <strong>devis et contrats</strong> en temps reel</td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding:0 0 10px 0;">
+                          <table cellpadding="0" cellspacing="0">
+                            <tr>
+                              <td style="width:28px;vertical-align:top;padding-top:2px;">
+                                <span style="display:inline-block;width:20px;height:20px;background-color:#D1FAE5;border-radius:50%;text-align:center;line-height:20px;font-size:11px;color:#059669;font-weight:900;">&#10003;</span>
+                              </td>
+                              <td style="font-size:14px;color:#334155;line-height:1.5;padding-left:10px;">Messagerie et <strong>communication integree</strong> avec les clients</td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding:0 0 10px 0;">
+                          <table cellpadding="0" cellspacing="0">
+                            <tr>
+                              <td style="width:28px;vertical-align:top;padding-top:2px;">
+                                <span style="display:inline-block;width:20px;height:20px;background-color:#D1FAE5;border-radius:50%;text-align:center;line-height:20px;font-size:11px;color:#059669;font-weight:900;">&#10003;</span>
+                              </td>
+                              <td style="font-size:14px;color:#334155;line-height:1.5;padding-left:10px;">Validation des <strong>documents clients</strong> et gestion documentaire</td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td>
+                          <table cellpadding="0" cellspacing="0">
+                            <tr>
+                              <td style="width:28px;vertical-align:top;padding-top:2px;">
+                                <span style="display:inline-block;width:20px;height:20px;background-color:#D1FAE5;border-radius:50%;text-align:center;line-height:20px;font-size:11px;color:#059669;font-weight:900;">&#10003;</span>
+                              </td>
+                              <td style="font-size:14px;color:#334155;line-height:1.5;padding-left:10px;">Tableaux de bord et <strong>statistiques commerciales</strong></td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                    </table>
+
+                    <!-- SECURITY NOTE -->
+                    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:32px;">
+                      <tr>
+                        <td style="background-color:#FFFBEB;border-left:3px solid #F59E0B;border-radius:0 8px 8px 0;padding:14px 18px;">
+                          <p style="margin:0;font-size:13px;color:#92400E;line-height:1.5;">
+                            <strong>Securite :</strong> Ce lien d'invitation expire dans 24 heures. Si vous n'avez pas demande cet acces, ignorez cet email ou contactez immediatement <a href="mailto:team@taxiassur.com" style="color:#D97706;font-weight:600;">team@taxiassur.com</a>.
+                          </p>
+                        </td>
+                      </tr>
+                    </table>
+
+                    <!-- FALLBACK LINK -->
+                    <p style="margin:0 0 6px 0;font-size:12px;color:#94A3B8;">
+                      Si le bouton ne fonctionne pas, copiez ce lien dans votre navigateur :
+                    </p>
+                    <p style="margin:0 0 40px 0;padding:12px 14px;background-color:#F8FAFC;border:1px solid #E2E8F0;border-radius:6px;font-size:11px;color:#3B82F6;word-break:break-all;line-height:1.5;">
+                      ${invitationLink}
+                    </p>
+
+                  </td>
+                </tr>
+              </table>
+
             </td>
           </tr>
 
-          <!-- Footer -->
+          <!-- FOOTER -->
           <tr>
-            <td style="background-color: #f8f8f8; padding: 30px; text-align: center; border-top: 1px solid #e5e5e5;">
-              <p style="margin: 0 0 10px 0; font-size: 14px; color: #666666;">
-                <strong>TaxiAssur</strong> - Plateforme Assurance Taxi & VTC Professionnelle
+            <td style="padding:28px 0 0 0;text-align:center;">
+              <p style="margin:0 0 6px 0;font-size:13px;font-weight:700;color:#475569;">
+                TaxiAssur — Plateforme Assurance Taxi &amp; VTC
               </p>
-              <p style="margin: 0 0 15px 0; font-size: 13px; color: #999999;">
-                team@taxiassur.com | www.taxiassur.com | ${baseUrl}
+              <p style="margin:0 0 4px 0;font-size:12px;color:#94A3B8;">
+                <a href="mailto:team@taxiassur.com" style="color:#94A3B8;text-decoration:none;">team@taxiassur.com</a>
+                &nbsp;&bull;&nbsp;
+                <a href="https://taxiassur.com" style="color:#94A3B8;text-decoration:none;">www.taxiassur.com</a>
               </p>
-              <p style="margin: 0; font-size: 12px; color: #999999;">
-                © 2026 TaxiAssur. Tous droits réservés.
+              <p style="margin:0;font-size:11px;color:#CBD5E1;">
+                &copy; 2026 TaxiAssur. Tous droits reserves.
               </p>
             </td>
           </tr>
+
         </table>
       </td>
     </tr>
@@ -101,325 +237,252 @@ function generateInvitationEmail(fullName: string, invitationLink: string, baseU
 </html>`;
 }
 
+async function sendInvitationEmail(to: string, fullName: string, invitationLink: string, role: string): Promise<void> {
+  const SMTP_HOST = Deno.env.get('IONOS_SMTP_HOST') || 'smtp.ionos.fr';
+  const SMTP_PORT = parseInt(Deno.env.get('IONOS_SMTP_PORT') || '465');
+  const SMTP_USER = Deno.env.get('IONOS_EMAIL_USER') || 'team@taxiassur.com';
+  const SMTP_PASS = Deno.env.get('IONOS_EMAIL_PASSWORD');
+
+  if (!SMTP_PASS) {
+    throw new Error('IONOS_EMAIL_PASSWORD not configured');
+  }
+
+  const htmlBody = buildInvitationEmail(fullName, invitationLink, role);
+  const subject = `Votre invitation TaxiAssur — Creez votre mot de passe`;
+
+  const conn = await Deno.connectTls({ hostname: SMTP_HOST, port: SMTP_PORT });
+  const encoder = new TextEncoder();
+  const decoder = new TextDecoder();
+
+  async function read(): Promise<string> {
+    const buf = new Uint8Array(4096);
+    const n = await conn.read(buf);
+    if (n === null) return '';
+    return decoder.decode(buf.subarray(0, n));
+  }
+
+  async function cmd(c: string): Promise<string> {
+    await conn.write(encoder.encode(c + '\r\n'));
+    return await read();
+  }
+
+  try {
+    await read();
+    await cmd('EHLO taxiassur.com');
+    await cmd('AUTH LOGIN');
+    await cmd(btoa(SMTP_USER));
+    const authResp = await cmd(btoa(SMTP_PASS));
+    if (authResp.includes('535')) throw new Error('SMTP authentication failed');
+
+    await cmd(`MAIL FROM:<team@taxiassur.com>`);
+    await cmd(`RCPT TO:<${to}>`);
+    await cmd('DATA');
+
+    const msg = [
+      `From: TaxiAssur <team@taxiassur.com>`,
+      `To: ${fullName} <${to}>`,
+      `Subject: ${subject}`,
+      `MIME-Version: 1.0`,
+      `Content-Type: text/html; charset=UTF-8`,
+      `Content-Transfer-Encoding: 8bit`,
+      ``,
+      htmlBody,
+      `.`,
+    ].join('\r\n');
+
+    await cmd(msg);
+    await cmd('QUIT');
+    conn.close();
+    console.log(`Invitation email sent to ${to}`);
+  } catch (err) {
+    conn.close();
+    throw err;
+  }
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, {
-      status: 200,
-      headers: corsHeaders,
-    });
+    return new Response(null, { status: 200, headers: corsHeaders });
   }
 
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    
+
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false
-      }
+      auth: { autoRefreshToken: false, persistSession: false },
     });
 
     const body = await req.json();
-    console.log('Request body received:', JSON.stringify(body));
-
     const { email, full_name, role, permissions } = body;
 
-    console.log('Parsed values:', { email, full_name, role, permissions });
-
     if (!email || !full_name) {
-      console.error('Missing required fields:', { email: !!email, full_name: !!full_name });
       return new Response(
-        JSON.stringify({
-          success: false,
-          error: 'Email et nom complet requis',
-          received: { email: !!email, full_name: !!full_name }
-        }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
+        JSON.stringify({ success: false, error: 'Email et nom complet requis' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Validate email format
     const emailRegex = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
-    console.log('Validating email format:', email);
     if (!emailRegex.test(email)) {
-      console.error('Invalid email format:', email);
       return new Response(
-        JSON.stringify({
-          success: false,
-          error: 'Format d\'email invalide. L\'email doit contenir un domaine valide (ex: user@domain.com)',
-          email_provided: email
-        }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
+        JSON.stringify({ success: false, error: "Format d'email invalide" }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
-    console.log('Email format valid:', email);
 
-    // Validate role
     const validRoles = ['master', 'admin', 'collaborator', 'commercial', 'support'];
     const userRole = role || 'collaborator';
     if (!validRoles.includes(userRole)) {
       return new Response(
-        JSON.stringify({
-          success: false,
-          error: `Rôle invalide. Rôles valides: ${validRoles.join(', ')}`
-        }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
+        JSON.stringify({ success: false, error: `Role invalide. Roles valides: ${validRoles.join(', ')}` }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log('Inviting user:', email, full_name, userRole);
-
-    // Check if user already exists
-    const { data: existingUser, error: checkError } = await supabaseAdmin
+    // Check if user already exists in admin_users
+    const { data: existingUser } = await supabaseAdmin
       .from('admin_users')
       .select('id, email, full_name, role, is_active')
       .eq('email', email)
       .maybeSingle();
 
     if (existingUser) {
-      console.log('User already exists:', existingUser);
-
-      // If user exists but is inactive, reactivate them
       if (!existingUser.is_active) {
-        console.log('Reactivating inactive user:', email);
-
-        const { error: updateError } = await supabaseAdmin
-          .from('admin_users')
-          .update({ is_active: true })
-          .eq('id', existingUser.id);
-
-        if (updateError) {
-          console.error('Error reactivating user:', updateError);
-        }
-
-        // Resend invitation
-        const redirectUrl = `${req.headers.get('origin') || 'https://taxiassur.com'}/auth/set-password`;
-        const { error: resendError } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
-          data: { full_name, role: userRole },
-          redirectTo: redirectUrl
-        });
-
-        if (resendError) {
-          console.error('Error resending invitation:', resendError);
-        }
-
+        await supabaseAdmin.from('admin_users').update({ is_active: true }).eq('id', existingUser.id);
+      } else {
         return new Response(
           JSON.stringify({
-            success: true,
-            message: `Utilisateur ${existingUser.full_name} réactivé et invitation renvoyée à ${email}`,
-            user_id: existingUser.id,
-            reactivated: true
+            success: false,
+            error: `L'utilisateur ${existingUser.full_name} (${email}) existe deja et est actif.`,
           }),
-          {
-            status: 200,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          }
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
-
-      // User exists and is active
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: `L'utilisateur ${existingUser.full_name} (${email}) existe déjà et est actif. Utilisez "Renvoyer l'invitation" si besoin.`
-        }),
-        {
-          status: 200,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      );
     }
 
     const redirectUrl = `${req.headers.get('origin') || 'https://taxiassur.com'}/auth/set-password`;
 
-    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.inviteUserByEmail(
+    // Generate invite link without sending Supabase default plain email
+    const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
+      type: 'invite',
       email,
-      {
-        data: {
-          full_name,
-          role: role || 'collaborator'
-        },
-        redirectTo: redirectUrl
-      }
-    );
+      options: {
+        data: { full_name, role: userRole },
+        redirectTo: redirectUrl,
+      },
+    });
 
-    // Note: Supabase envoie déjà un email d'invitation automatique
-    // Pas besoin d'envoyer un email custom supplémentaire
-    console.log('User invited successfully, Supabase will send invitation email');
-
-    if (authError) {
-      console.error('Auth error:', authError);
-
-      // If user already exists in Auth but not in admin_users, look up their auth ID
-      if (authError.message?.includes('already been registered') || authError.message?.includes('already registered') || authError.code === 'email_exists') {
+    if (linkError) {
+      // Fallback: if user already exists in auth, look them up
+      if (linkError.message?.includes('already') || linkError.message?.includes('registered')) {
         const { data: usersData } = await supabaseAdmin.auth.admin.listUsers();
         const existingAuthUser = usersData?.users?.find((u: any) => u.email === email);
 
         if (existingAuthUser) {
           const userId = existingAuthUser.id;
+          await supabaseAdmin.from('admin_users').insert([{
+            id: userId, email, full_name, role: userRole,
+            is_active: true, mfa_enabled: false, created_at: new Date().toISOString(),
+          }]);
 
-          const { error: dbInsertError } = await supabaseAdmin
-            .from('admin_users')
-            .insert([{
-              id: userId,
-              email,
-              full_name,
-              role: role || 'collaborator',
-              is_active: true,
-              mfa_enabled: false,
-              created_at: new Date().toISOString()
-            }]);
+          // Generate reset link as fallback
+          const { data: resetData } = await supabaseAdmin.auth.admin.generateLink({
+            type: 'recovery',
+            email,
+            options: { redirectTo: redirectUrl },
+          });
 
-          if (dbInsertError) {
-            return new Response(
-              JSON.stringify({ success: false, error: dbInsertError.message }),
-              { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-            );
+          if (resetData?.properties?.action_link) {
+            try {
+              await sendInvitationEmail(email, full_name, resetData.properties.action_link, userRole);
+            } catch (mailErr) {
+              console.error('Email send error (fallback):', mailErr);
+            }
           }
 
           return new Response(
-            JSON.stringify({
-              success: true,
-              message: `Utilisateur ${full_name} ajouté avec succès. Un email de réinitialisation de mot de passe va être envoyé.`,
-              user_id: userId
-            }),
+            JSON.stringify({ success: true, message: `Invitation envoyee a ${email}`, user_id: userId }),
             { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           );
         }
       }
 
       return new Response(
-        JSON.stringify({
-          success: false,
-          error: authError.message
-        }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
+        JSON.stringify({ success: false, error: linkError.message }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    if (!authData.user) {
+    const userId = linkData.user?.id;
+    const invitationLink = linkData.properties?.action_link;
+
+    if (!userId) {
       return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: 'Aucun utilisateur créé' 
-        }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
+        JSON.stringify({ success: false, error: 'Aucun utilisateur cree' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const userId = authData.user.id;
-
-    const { error: dbError } = await supabaseAdmin
-      .from('admin_users')
-      .insert([{
-        id: userId,
-        email,
-        full_name,
-        role: role || 'collaborator',
-        is_active: true,
-        mfa_enabled: false,
-        created_at: new Date().toISOString()
-      }]);
+    // Insert into admin_users
+    const { error: dbError } = await supabaseAdmin.from('admin_users').insert([{
+      id: userId, email, full_name, role: userRole,
+      is_active: true, mfa_enabled: false, created_at: new Date().toISOString(),
+    }]);
 
     if (dbError) {
-      console.error('Database error:', dbError);
-
-      // Cleanup: delete auth user if DB insert failed
       await supabaseAdmin.auth.admin.deleteUser(userId);
-
-      // Provide user-friendly error messages
       let errorMessage = dbError.message;
-
-      if (dbError.message.includes('valid_email')) {
-        errorMessage = 'Format d\'email invalide. Veuillez utiliser un email avec domaine complet (ex: user@domain.com)';
-      } else if (dbError.message.includes('admin_users_role_check')) {
-        errorMessage = 'Rôle invalide. Rôles autorisés: master, admin, collaborator, commercial, support';
-      } else if (dbError.message.includes('duplicate key') || dbError.message.includes('unique')) {
-        errorMessage = 'Cet email est déjà utilisé par un autre utilisateur';
-      }
-
+      if (dbError.message.includes('valid_email')) errorMessage = "Format d'email invalide";
+      else if (dbError.message.includes('admin_users_role_check')) errorMessage = 'Role invalide';
+      else if (dbError.message.includes('duplicate key') || dbError.message.includes('unique')) errorMessage = 'Email deja utilise';
       return new Response(
-        JSON.stringify({
-          success: false,
-          error: errorMessage
-        }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
+        JSON.stringify({ success: false, error: errorMessage }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Si rôle commercial, créer permissions par défaut
-    if (role === 'commercial') {
-      const { error: permError } = await supabaseAdmin.rpc('create_commercial_default_permissions', {
-        p_user_id: userId
-      });
-
-      if (permError) {
-        console.error('Error creating commercial permissions:', permError);
-        // Continue quand même, ne pas bloquer la création
-      } else {
-        console.log('Commercial default permissions created for:', userId);
-      }
+    // Create permissions
+    if (userRole === 'commercial') {
+      await supabaseAdmin.rpc('create_commercial_default_permissions', { p_user_id: userId }).catch(() => {});
     } else if (permissions && Array.isArray(permissions)) {
-      // Pour les autres rôles, utiliser les permissions personnalisées
       for (const perm of permissions) {
         if (perm.view || perm.edit || perm.delete) {
-          await supabaseAdmin
-            .from('user_permissions')
-            .insert([{
-              user_id: userId,
-              permission_type: perm.type,
-              can_view: perm.view || false,
-              can_edit: perm.edit || false,
-              can_delete: perm.delete || false,
-              can_create: perm.create || false
-            }]);
+          await supabaseAdmin.from('user_permissions').insert([{
+            user_id: userId,
+            permission_type: perm.type,
+            can_view: perm.view || false,
+            can_edit: perm.edit || false,
+            can_delete: perm.delete || false,
+            can_create: perm.create || false,
+          }]);
         }
       }
     }
 
-    console.log('User invited successfully:', userId);
+    // Send beautiful branded invitation email
+    if (invitationLink) {
+      try {
+        await sendInvitationEmail(email, full_name, invitationLink, userRole);
+        console.log('Branded invitation email sent successfully to', email);
+      } catch (mailErr) {
+        console.error('Failed to send branded email, proceeding anyway:', mailErr);
+      }
+    }
 
     return new Response(
       JSON.stringify({
         success: true,
-        message: `Invitation envoyée avec succès à ${email}`,
-        user_id: userId
+        message: `Invitation envoyee avec succes a ${email}`,
+        user_id: userId,
       }),
-      {
-        status: 200,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      }
+      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
     console.error('Error in invite-admin-user:', error);
     return new Response(
-      JSON.stringify({ 
-        success: false, 
-        error: error.message || 'Erreur serveur' 
-      }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      }
+      JSON.stringify({ success: false, error: error.message || 'Erreur serveur' }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });
