@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Briefing Equipe Commerciale - TaxiAssur - 18 mars 2026</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --yellow: #F59E0B;
+      --yellow-light: #FEF3C7;
+      --yellow-dark: #D97706;
+      --dark: #0F172A;
+      --slate: #1E293B;
+      --slate-2: #334155;
+      --slate-3: #475569;
+      --muted: #64748B;
+      --border: #E2E8F0;
+      --bg: #F8FAFC;
+      --white: #FFFFFF;
+      --green: #10B981;
+      --green-light: #D1FAE5;
+      --red: #EF4444;
+      --red-light: #FEE2E2;
+      --blue: #3B82F6;
+      --blue-light: #DBEAFE;
+      --orange: #F97316;
+      --orange-light: #FFEDD5;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--dark);
+      line-height: 1.6;
+    }
+
+    /* HEADER */
+    .header {
+      background: var(--dark);
+      padding: 0;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .header-inner {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 40px 32px 48px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .header-stripe {
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--yellow) 0%, var(--yellow-dark) 100%);
+    }
+
+    .logo-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 28px;
+    }
+
+    .logo-icon {
+      width: 44px;
+      height: 44px;
+      background: var(--yellow);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .logo-icon svg { width: 26px; height: 26px; }
+
+    .logo-text {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--white);
+      letter-spacing: -0.3px;
+    }
+
+    .logo-text span { color: var(--yellow); }
+
+    .header h1 {
+      font-size: 32px;
+      font-weight: 800;
+      color: var(--white);
+      letter-spacing: -0.5px;
+      line-height: 1.2;
+      margin-bottom: 12px;
+    }
+
+    .header h1 span {
+      color: var(--yellow);
+    }
+
+    .header-meta {
+      display: flex;
+      gap: 24px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+    }
+
+    .badge-date {
+      background: rgba(255,255,255,0.12);
+      color: rgba(255,255,255,0.85);
+      border: 1px solid rgba(255,255,255,0.15);
+    }
+
+    .badge-urgent {
+      background: var(--yellow);
+      color: var(--dark);
+    }
+
+    .badge-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    /* MAIN */
+    .main {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 40px 32px 80px;
+    }
+
+    /* ALERT BANNER */
+    .alert-banner {
+      background: var(--yellow-light);
+      border: 2px solid var(--yellow);
+      border-radius: 12px;
+      padding: 20px 24px;
+      margin-bottom: 40px;
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+    }
+
+    .alert-icon {
+      width: 36px;
+      height: 36px;
+      background: var(--yellow);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .alert-banner h3 {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--dark);
+      margin-bottom: 4px;
+    }
+
+    .alert-banner p {
+      font-size: 14px;
+      color: var(--slate-2);
+      line-height: 1.5;
+    }
+
+    /* STATS ROW */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 48px;
+    }
+
+    .stat-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+    }
+
+    .stat-card.green::before { background: var(--green); }
+    .stat-card.orange::before { background: var(--orange); }
+    .stat-card.blue::before { background: var(--blue); }
+
+    .stat-number {
+      font-size: 42px;
+      font-weight: 800;
+      letter-spacing: -1px;
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+
+    .stat-card.green .stat-number { color: var(--green); }
+    .stat-card.orange .stat-number { color: var(--orange); }
+    .stat-card.blue .stat-number { color: var(--blue); }
+
+    .stat-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .stat-sub {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    /* SECTION */
+    .section {
+      margin-bottom: 48px;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .section-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 9px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .section-icon.green { background: var(--green-light); color: var(--green); }
+    .section-icon.orange { background: var(--orange-light); color: var(--orange); }
+    .section-icon.blue { background: var(--blue-light); color: var(--blue); }
+    .section-icon.yellow { background: var(--yellow-light); color: var(--yellow-dark); }
+
+    .section-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--dark);
+    }
+
+    .section-subtitle {
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 1px;
+    }
+
+    /* PRIORITY LEAD CARD */
+    .priority-card {
+      background: var(--white);
+      border: 2px solid var(--green);
+      border-radius: 14px;
+      padding: 28px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .priority-card::before {
+      content: 'PRIORITE #1';
+      position: absolute;
+      top: 16px;
+      right: 20px;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      color: var(--white);
+      background: var(--green);
+      padding: 3px 10px;
+      border-radius: 20px;
+    }
+
+    .lead-name {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--dark);
+      margin-bottom: 4px;
+      letter-spacing: -0.3px;
+    }
+
+    .lead-city {
+      font-size: 14px;
+      color: var(--muted);
+      margin-bottom: 20px;
+    }
+
+    .lead-contacts {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 24px;
+    }
+
+    .contact-chip {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--slate);
+      text-decoration: none;
+      transition: all 0.15s;
+    }
+
+    .contact-chip:hover {
+      border-color: var(--green);
+      background: var(--green-light);
+      color: var(--green);
+    }
+
+    .contact-chip svg { flex-shrink: 0; }
+
+    .actions-list {
+      background: var(--bg);
+      border-radius: 10px;
+      padding: 16px 20px;
+    }
+
+    .actions-list h4 {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+
+    .action-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .action-item:last-child { border-bottom: none; }
+
+    .step-num {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--green);
+      color: var(--white);
+      font-size: 11px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .action-item span {
+      font-size: 14px;
+      color: var(--slate);
+      line-height: 1.4;
+    }
+
+    .action-item strong {
+      color: var(--dark);
+    }
+
+    /* TABLE */
+    .table-wrap {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    thead {
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+    }
+
+    th {
+      text-align: left;
+      padding: 12px 16px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: var(--muted);
+    }
+
+    td {
+      padding: 14px 16px;
+      font-size: 14px;
+      color: var(--slate);
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+
+    tr:last-child td { border-bottom: none; }
+
+    tr:hover td { background: var(--bg); }
+
+    .name-cell strong {
+      display: block;
+      font-weight: 600;
+      color: var(--dark);
+      margin-bottom: 2px;
+    }
+
+    .name-cell small {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .stage-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .stage-pill.orange { background: var(--orange-light); color: var(--orange); }
+    .stage-pill.blue { background: var(--blue-light); color: var(--blue); }
+    .stage-pill.red { background: var(--red-light); color: var(--red); }
+    .stage-pill.green { background: var(--green-light); color: var(--green); }
+
+    .action-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      background: var(--dark);
+      color: var(--white);
+      border: none;
+      border-radius: 7px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.15s;
+    }
+
+    .action-btn:hover { background: var(--slate-2); }
+
+    /* PROCESS BOX */
+    .process-box {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .process-step {
+      display: flex;
+      gap: 20px;
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border);
+      align-items: flex-start;
+    }
+
+    .process-step:last-child { border-bottom: none; }
+
+    .process-num {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--yellow);
+      color: var(--dark);
+      font-size: 14px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .process-content h4 {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--dark);
+      margin-bottom: 4px;
+    }
+
+    .process-content p {
+      font-size: 13px;
+      color: var(--slate-3);
+      line-height: 1.5;
+    }
+
+    .process-time {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--yellow-dark);
+      background: var(--yellow-light);
+      padding: 2px 8px;
+      border-radius: 20px;
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+
+    /* INFO BOX */
+    .info-box {
+      background: var(--blue-light);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      border-radius: 10px;
+      padding: 16px 20px;
+      margin-top: 16px;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+
+    .info-box p {
+      font-size: 13px;
+      color: var(--blue);
+      line-height: 1.5;
+    }
+
+    .info-box strong { font-weight: 700; }
+
+    /* CRM LINK BOX */
+    .crm-box {
+      background: var(--dark);
+      border-radius: 14px;
+      padding: 28px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      flex-wrap: wrap;
+    }
+
+    .crm-box-text h3 {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--white);
+      margin-bottom: 4px;
+    }
+
+    .crm-box-text p {
+      font-size: 13px;
+      color: rgba(255,255,255,0.6);
+    }
+
+    .crm-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 24px;
+      background: var(--yellow);
+      color: var(--dark);
+      border-radius: 9px;
+      font-size: 14px;
+      font-weight: 700;
+      text-decoration: none;
+      transition: all 0.15s;
+      flex-shrink: 0;
+    }
+
+    .crm-btn:hover { background: var(--yellow-dark); color: var(--white); }
+
+    /* FOOTER */
+    .footer {
+      border-top: 1px solid var(--border);
+      padding: 24px 32px;
+      max-width: 960px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: gap;
+      gap: 12px;
+    }
+
+    .footer p {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    /* DIVIDER */
+    .divider {
+      height: 1px;
+      background: var(--border);
+      margin: 40px 0;
+    }
+
+    /* RESPONSIVE */
+    @media (max-width: 640px) {
+      .main { padding: 24px 20px 60px; }
+      .header-inner { padding: 28px 20px 36px; }
+      .stats-grid { grid-template-columns: 1fr; }
+      .header h1 { font-size: 24px; }
+      .crm-box { flex-direction: column; }
+      th, td { padding: 10px 12px; }
+      .footer { flex-direction: column; }
+    }
+
+    @media print {
+      .crm-btn, .action-btn { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-stripe"></div>
+    <div class="header-inner">
+      <div class="logo-row">
+        <div class="logo-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#0F172A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 17H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v3"/>
+            <rect x="9" y="11" width="14" height="10" rx="2"/>
+            <circle cx="12" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
+          </svg>
+        </div>
+        <div class="logo-text">Taxi<span>Assur</span></div>
+      </div>
+      <h1>Briefing Equipe Commerciale<br><span>18 mars 2026</span></h1>
+      <div class="header-meta">
+        <span class="badge badge-date">
+          <span class="badge-dot"></span>
+          Redige le 18/03/2026
+        </span>
+        <span class="badge badge-urgent">
+          <span class="badge-dot"></span>
+          Action requise aujourd'hui
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <div class="main">
+
+    <!-- ALERT -->
+    <div class="alert-banner">
+      <div class="alert-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0F172A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+      </div>
+      <div>
+        <h3>Contexte - Nouveau depart du systeme automatise</h3>
+        <p>Le systeme d'emailing automatique a ete reinitialise aujourd'hui. <strong>Les anciens leads (avant le 17/03) ne seront pas contactes automatiquement</strong> — ils ont deja ete traites. A partir d'aujourd'hui, chaque nouveau lead recoIt automatiquement un email de confirmation et entre dans le circuit de suivi. Votre role : traiter les nouveaux entrants et verifier les dossiers avances encore ouverts.</p>
+      </div>
+    </div>
+
+    <!-- STATS -->
+    <div class="stats-grid">
+      <div class="stat-card green">
+        <div class="stat-number">1</div>
+        <div class="stat-label">Nouveau lead</div>
+        <div class="stat-sub">Aujourd'hui - a appeler maintenant</div>
+      </div>
+      <div class="stat-card orange">
+        <div class="stat-number">9</div>
+        <div class="stat-label">Dossiers avances</div>
+        <div class="stat-sub">A verifier manuellement</div>
+      </div>
+      <div class="stat-card blue">
+        <div class="stat-number">100%</div>
+        <div class="stat-label">Automatise</div>
+        <div class="stat-sub">Nouveaux leads = 0 effort manuel</div>
+      </div>
+    </div>
+
+    <!-- SECTION 1 : NOUVEAU LEAD PRIORITAIRE -->
+    <div class="section">
+      <div class="section-header">
+        <div class="section-icon green">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+          </svg>
+        </div>
+        <div>
+          <div class="section-title">Nouveau lead a traiter maintenant</div>
+          <div class="section-subtitle">Entre aujourd'hui - email automatique envoye - appel a faire dans les 2h</div>
+        </div>
+      </div>
+
+      <div class="priority-card">
+        <div class="lead-name">OIKNINE</div>
+        <div class="lead-city">Paris</div>
+
+        <div class="lead-contacts">
+          <a href="tel:0609185987" class="contact-chip">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.99 12 19.79 19.79 0 0 1 1.93 3.37 2 2 0 0 1 3.91 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 8.91a16 16 0 0 0 5.99 5.99l1.09-1.09a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>
+            </svg>
+            06 09 18 59 87
+          </a>
+          <a href="mailto:contact@chparis.fr" class="contact-chip">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>
+            </svg>
+            contact@chparis.fr
+          </a>
+        </div>
+
+        <div class="actions-list">
+          <h4>Procedure a suivre</h4>
+          <div class="action-item">
+            <div class="step-num">1</div>
+            <span><strong>Appeler maintenant</strong> — premier contact dans les 2h suivant la demande, le taux de conversion chute drastiquement apres.</span>
+          </div>
+          <div class="action-item">
+            <div class="step-num">2</div>
+            <span><strong>Qualifier le besoin</strong> — type de taxi (artisan, flotte), vehicule, historique sinistres, date d'effet souhaitee.</span>
+          </div>
+          <div class="action-item">
+            <div class="step-num">3</div>
+            <span><strong>Saisir le devis dans le CRM</strong> — etape "Saisie devis" avec la ou les compagnies selectionnees (Solly Azar, Generali, MFA, Zephir).</span>
+          </div>
+          <div class="action-item">
+            <div class="step-num">4</div>
+            <span><strong>Envoyer le devis via l'espace prospect</strong> — le client recoit un lien personnel pour consulter et valider en ligne.</span>
+          </div>
+          <div class="action-item">
+            <div class="step-num">5</div>
+            <span><strong>Collecter les documents</strong> — carte grise, permis, carte taxi, releve d'information, RIB.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 2 : DOSSIERS AVANCES -->
+    <div class="section">
+      <div class="section-header">
+        <div class="section-icon orange">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>
+          </svg>
+        </div>
+        <div>
+          <div class="section-title">Dossiers en cours a verifier manuellement</div>
+          <div class="section-subtitle">Ces dossiers ont avance mais n'ont pas ete finalises — a recontacter si non traites</div>
+        </div>
+      </div>
+
+      <div class="info-box">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; margin-top:2px;">
+          <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+        <p><strong>Note importante :</strong> Ces leads ont ete traites en dehors du systeme. Verifiez d'abord dans votre historique interne si un contrat a deja ete signe. Ne recontactez que ceux pour lesquels aucune suite n'a ete donnee.</p>
+      </div>
+
+      <div class="table-wrap" style="margin-top: 16px;">
+        <table>
+          <thead>
+            <tr>
+              <th>Client</th>
+              <th>Contact</th>
+              <th>Ville</th>
+              <th>Etape actuelle</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="name-cell">
+                <strong>SAID NOUREDDINE</strong>
+                <small>services.bordeaux33@gmail.com</small>
+              </td>
+              <td><a href="tel:0675897108" style="color: var(--blue); font-weight:600;">06 75 89 71 08</a></td>
+              <td>Cestas (33)</td>
+              <td><span class="stage-pill red">Signature devis</span></td>
+              <td><a href="https://taxiassur.com/backoffice/crm-killer" class="action-btn" target="_blank">Voir CRM</a></td>
+            </tr>
+            <tr>
+              <td class="name-cell">
+                <strong>TONY CERDA</strong>
+                <small>tcerda@xcr.fr</small>
+              </td>
+              <td><a href="tel:0180855781" style="color: var(--blue); font-weight:600;">01 80 85 57 81</a></td>
+              <td>Milly-la-Foret (91)</td>
+              <td><span class="stage-pill red">Signature contrat</span></td>
+              <td><a href="https://taxiassur.com/backoffice/crm-killer" class="action-btn" target="_blank">Voir CRM</a></td>
+            </tr>
+            <tr>
+              <td class="name-cell">
+                <strong>Tony Cerda (2e dossier)</strong>
+                <small>abdammarie@gmail.com</small>
+              </td>
+              <td><a href="tel:0160991426" style="color: var(--blue); font-weight:600;">01 60 99 14 26</a></td>
+              <td>Dammarie-les-Lys (77)</td>
+              <td><span class="stage-pill red">Signature contrat</span></td>
+              <td><a href="https://taxiassur.com/backoffice/crm-killer" class="action-btn" target="_blank">Voir CRM</a></td>
+            </tr>
+            <tr>
+              <td class="name-cell">
+                <strong>SAID SALMI</strong>
+                <small>saidsalmi54@yahoo.fr</small>
+              </td>
+              <td><span style="color: var(--muted); font-size:12px;">Non renseigne</span></td>
+              <td>—</td>
+              <td><span class="stage-pill blue">Saisie devis</span></td>
+              <td><a href="https://taxiassur.com/backoffice/crm-killer" class="action-btn" target="_blank">Voir CRM</a></td>
+            </tr>
+            <tr>
+              <td class="name-cell">
+                <strong>Tony Email (XCR)</strong>
+                <small>contact@xcr.fr</small>
+              </td>
+              <td><a href="tel:0180855780" style="color: var(--blue); font-weight:600;">01 80 85 57 80</a></td>
+              <td>Milly-la-Foret (91)</td>
+              <td><span class="stage-pill blue">Saisie devis</span></td>
+              <td><a href="https://taxiassur.com/backoffice/crm-killer" class="action-btn" target="_blank">Voir CRM</a></td>
+            </tr>
+            <tr>
+              <td class="name-cell">
+                <strong>Brouillet Emmanuelle</strong>
+                <small>taxi.brouillet16@orange.fr</small>
+              </td>
+              <td><a href="tel:0686802546" style="color: var(--blue); font-weight:600;">06 86 80 25 46</a></td>
+              <td>Bonnes (16)</td>
+              <td><span class="stage-pill orange">Collecte documents</span></td>
+              <td><a href="https://taxiassur.com/backoffice/crm-killer" class="action-btn" target="_blank">Voir CRM</a></td>
+            </tr>
+            <tr>
+              <td class="name-cell">
+                <strong>Beddiar Zahira</strong>
+                <small>zahira.beddiar@outlook.fr</small>
+              </td>
+              <td><a href="tel:0699162076" style="color: var(--blue); font-weight:600;">06 99 16 20 76</a></td>
+              <td>Saint-Fons (69)</td>
+              <td><span class="stage-pill orange">Collecte documents</span></td>
+              <td><a href="https://taxiassur.com/backoffice/crm-killer" class="action-btn" target="_blank">Voir CRM</a></td>
+            </tr>
+            <tr>
+              <td class="name-cell">
+                <strong>YAHIAOUI Fethallah</strong>
+                <small>SARLADELVTC@GMAIL.COM</small>
+              </td>
+              <td><a href="tel:0755461073" style="color: var(--blue); font-weight:600;">07 55 46 10 73</a></td>
+              <td>Bordeaux (33)</td>
+              <td><span class="stage-pill orange">Collecte documents</span></td>
+              <td><a href="https://taxiassur.com/backoffice/crm-killer" class="action-btn" target="_blank">Voir CRM</a></td>
+            </tr>
+            <tr>
+              <td class="name-cell">
+                <strong>TONY CERDA (3e dossier)</strong>
+                <small>tcerda@xcr.fr</small>
+              </td>
+              <td><a href="tel:0180855781" style="color: var(--blue); font-weight:600;">01 80 85 57 81</a></td>
+              <td>Milly-la-Foret (91)</td>
+              <td><span class="stage-pill orange">Collecte documents</span></td>
+              <td><a href="https://taxiassur.com/backoffice/crm-killer" class="action-btn" target="_blank">Voir CRM</a></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- SECTION 3 : NOUVEAU PROCESSUS -->
+    <div class="section">
+      <div class="section-header">
+        <div class="section-icon yellow">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+          </svg>
+        </div>
+        <div>
+          <div class="section-title">Le nouveau processus — a partir d'aujourd'hui</div>
+          <div class="section-subtitle">Le systeme fait le travail de fond, vous vous concentrez sur la relation et la cloture</div>
+        </div>
+      </div>
+
+      <div class="process-box">
+        <div class="process-step">
+          <div class="process-num">1</div>
+          <div class="process-content">
+            <h4>Lead entre via le formulaire <span class="process-time">Instant</span></h4>
+            <p>Le prospect remplit le formulaire sur taxiassur.com. Le lead apparait immediatement dans le CRM avec toutes ses infos. Un email de confirmation lui est envoye automatiquement.</p>
+          </div>
+        </div>
+        <div class="process-step">
+          <div class="process-num">2</div>
+          <div class="process-content">
+            <h4>Notification commerciale <span class="process-time">Instant</span></h4>
+            <p>Vous recevez une alerte dans le CRM (cloche en haut a droite). Le lead est en statut "Nouveau lead" dans le pipeline. Objectif : appeler dans les 2h.</p>
+          </div>
+        </div>
+        <div class="process-step">
+          <div class="process-num">3</div>
+          <div class="process-content">
+            <h4>Qualification + devis <span class="process-time">J+0 / J+1</span></h4>
+            <p>Appel de qualification, saisie du devis dans le CRM, envoi via l'espace prospect personnalise. Le client valide ou refuse en ligne — vous etes notifie en temps reel.</p>
+          </div>
+        </div>
+        <div class="process-step">
+          <div class="process-num">4</div>
+          <div class="process-content">
+            <h4>Collecte documents + signature <span class="process-time">J+1 / J+3</span></h4>
+            <p>L'espace prospect permet au client de deposer ses documents directement (carte grise, permis, carte taxi, RI, RIB). Vous validez chaque document dans le CRM. La signature electronique se fait en ligne.</p>
+          </div>
+        </div>
+        <div class="process-step">
+          <div class="process-num">5</div>
+          <div class="process-content">
+            <h4>Paiement + activation contrat <span class="process-time">J+3 / J+7</span></h4>
+            <p>L'acompte est paye en ligne via Monetico (CB securise). A reception du paiement et de tous les documents, le contrat est transmis a la compagnie. L'attestation est envoyee au client.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CRM LINK -->
+    <div class="crm-box">
+      <div class="crm-box-text">
+        <h3>Acceder au CRM TaxiAssur</h3>
+        <p>Tous vos leads, dossiers, devis et documents en un seul endroit.</p>
+      </div>
+      <a href="https://taxiassur.com/backoffice/crm-killer" target="_blank" class="crm-btn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+        </svg>
+        Ouvrir le CRM
+      </a>
+    </div>
+
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer">
+    <p>TaxiAssur — Document interne — 18 mars 2026 — Confidentiel</p>
+    <p>Genere automatiquement par le systeme CRM TaxiAssur</p>
+  </div>
+
+</body>
+</html>
