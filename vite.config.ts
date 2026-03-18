@@ -83,18 +83,18 @@ export default defineConfig(({ mode }) => ({
     modulePreload: {
       polyfill: false,
       resolveDependencies: (filename, deps) => {
-        if (filename.includes('index')) {
+        // For the main entry, only preload the minimal critical chain
+        if (filename.includes('index') || filename.includes('main')) {
           return deps.filter(dep =>
             dep.includes('vendor-react') ||
             dep.includes('vendor-router') ||
             dep.includes('lib-core')
           );
         }
+        // For page chunks, preload react + router only (supabase deferred)
         return deps.filter(dep =>
           dep.includes('vendor-react') ||
-          dep.includes('vendor-router') ||
-          dep.includes('vendor-supabase') ||
-          dep.includes('lib-core')
+          dep.includes('vendor-router')
         );
       }
     },
@@ -131,9 +131,28 @@ export default defineConfig(({ mode }) => ({
               id.includes('bundle-analyzer') ||
               id.includes('newsAggregator') ||
               id.includes('aiSynthesizer') ||
-              id.includes('trendAnalyzer')
+              id.includes('trendAnalyzer') ||
+              id.includes('crm-') ||
+              id.includes('email-') ||
+              id.includes('payment-') ||
+              id.includes('referral') ||
+              id.includes('outreach') ||
+              id.includes('web-push') ||
+              id.includes('keyyo') ||
+              id.includes('backlinks') ||
+              id.includes('gsc-')
             ) {
               return 'lib-heavy';
+            }
+            // Supabase-dependent libs: separate to avoid loading supabase on public pages
+            if (
+              id.includes('leads') ||
+              id.includes('auth') ||
+              id.includes('supabase-instance') ||
+              id.includes('commercial-workflow') ||
+              id.includes('crm-pipeline')
+            ) {
+              return 'lib-supabase';
             }
             return 'lib-core';
           }

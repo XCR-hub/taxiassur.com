@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, lazy, Suspense } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { CheckCircle, Phone, Send, Shield, Clock, Award, TrendingDown, Zap, Target, Star, FileText, MapPin, Users, User, Mail } from 'lucide-react';
-import AITaxiBackground from './AITaxiBackground';
 import { useRealStats } from '../hooks/useRealStats';
+
+const AITaxiBackground = lazy(() => import('./AITaxiBackground'));
 import { logger } from '@/lib/logger';
 import { createLead } from '@/lib/leads';
 
@@ -82,7 +83,9 @@ const Hero: React.FC = () => {
   return (
     <section id="devis" className="relative bg-gradient-to-br from-gray-950 via-gray-900 to-black text-white py-14 sm:py-20 overflow-hidden">
       <div className="hidden lg:block">
-        <AITaxiBackground section="hero" intensity="low" />
+        <Suspense fallback={null}>
+          <AITaxiBackground section="hero" intensity="low" />
+        </Suspense>
       </div>
       
       <div className="container-max relative z-20">

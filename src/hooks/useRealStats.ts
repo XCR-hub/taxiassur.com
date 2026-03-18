@@ -1,6 +1,13 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { logger } from '@/lib/logger';
+
+const STATIC_DEFAULTS = {
+  totalArticles: 25,
+  totalFaqs: 50,
+  totalCities: 80,
+  totalLeads: 0,
+  totalReviews: 6,
+};
 
 interface RealStats {
   totalArticles: number;
@@ -14,12 +21,8 @@ interface RealStats {
 
 export function useRealStats(): RealStats {
   const [stats, setStats] = useState<RealStats>({
-    totalArticles: 0,
-    totalFaqs: 0,
-    totalCities: 0,
-    totalLeads: 0,
-    totalReviews: 6,
-    loading: true,
+    ...STATIC_DEFAULTS,
+    loading: false,
     error: null,
   });
 
@@ -28,93 +31,40 @@ export function useRealStats(): RealStats {
 
     const fetchStats = async () => {
       try {
-        // Wait a bit for Supabase to be fully initialized
-        await new Promise(resolve => setTimeout(resolve, 100));
-
-        if (!mounted) return;
-
-        // Fetch all counts sequentially to avoid overwhelming Supabase
-        let articlesCount = 0;
-        let faqsCount = 0;
-        let citiesCount = 0;
-        let leadsCount = 0;
-        const reviewsCount = 6;
-
-        try {
-          const { count, error } = await supabase
+        const [articlesRes, faqsRes, citiesRes] = await Promise.allSettled([
+          supabase
             .from('blog_posts')
             .select('*', { count: 'exact', head: true })
-            .eq('published', true);
-
-          if (!error && count !== null) {
-            articlesCount = count;
-          }
-        } catch (err) {
-          logger.warn('Articles count skipped:', err);
-        }
-
-        if (!mounted) return;
-
-        try {
-          const { count, error } = await supabase
+            .eq('published', true),
+          supabase
             .from('faq_entries')
-            .select('*', { count: 'exact', head: true });
-
-          if (!error && count !== null) {
-            faqsCount = count;
-          }
-        } catch (err) {
-          logger.warn('FAQs count skipped:', err);
-        }
-
-        if (!mounted) return;
-
-        try {
-          const { count, error } = await supabase
+            .select('*', { count: 'exact', head: true }),
+          supabase
             .from('city_pages')
             .select('*', { count: 'exact', head: true })
-            .eq('status', 'published');
-
-          if (!error && count !== null) {
-            citiesCount = count;
-          }
-        } catch (err) {
-          logger.warn('Cities count skipped:', err);
-        }
+            .eq('status', 'published'),
+        ]);
 
         if (!mounted) return;
 
-        try {
-          const { count, error } = await supabase
-            .from('crm_leads')
-            .select('*', { count: 'exact', head: true });
-
-          if (!error && count !== null) {
-            leadsCount = count;
-          }
-        } catch (err) {
-          logger.warn('Leads count skipped:', err);
-        }
-
+        setStats({
+          totalArticles: articlesRes.status === 'fulfilled' && !articlesRes.value.error && articlesRes.value.count !== null
+            ? articlesRes.value.count
+            : STATIC_DEFAULTS.totalArticles,
+          totalFaqs: faqsRes.status === 'fulfilled' && !faqsRes.value.error && faqsRes.value.count !== null
+            ? faqsRes.value.count
+            : STATIC_DEFAULTS.totalFaqs,
+          totalCities: citiesRes.status === 'fulfilled' && !citiesRes.value.error && citiesRes.value.count !== null
+            ? citiesRes.value.count
+            : STATIC_DEFAULTS.totalCities,
+          totalLeads: STATIC_DEFAULTS.totalLeads,
+          totalReviews: STATIC_DEFAULTS.totalReviews,
+          loading: false,
+          error: null,
+        });
+      } catch {
         if (mounted) {
-          setStats({
-            totalArticles: articlesCount,
-            totalFaqs: faqsCount,
-            totalCities: citiesCount,
-            totalLeads: leadsCount,
-            totalReviews: reviewsCount,
-            loading: false,
-            error: null,
-          });
-        }
-      } catch (err) {
-        logger.error('Error fetching stats:', err);
-        if (mounted) {
-          setStats(prev => ({
-            ...prev,
-            loading: false,
-            error: null, // Don't show error, just use 0 values
-          }));
+          setStats(prev => ({ ...prev, loading: false, error: null }));
         }
       }
     };
