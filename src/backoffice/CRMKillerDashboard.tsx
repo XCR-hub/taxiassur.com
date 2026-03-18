@@ -201,6 +201,7 @@ const CRMKillerDashboard: React.FC = () => {
     { label: 'Pipeline', icon: BarChart3, path: '/backoffice/crm-killer/pipeline', color: 'blue' },
     { label: 'File Devis', icon: ClipboardList, path: '/backoffice/quote-queue', color: 'green', badge: stats.ready_for_quote },
     { label: 'Inbox', icon: Inbox, path: '/backoffice/crm-killer/inbox', color: 'purple', badge: stats.unread_messages },
+    { label: 'Sinistres', icon: AlertTriangle, path: '/backoffice/claims', color: 'orange' },
     { label: 'Retention', icon: Shield, path: '/backoffice/crm-killer/retention', color: 'red' },
     { label: 'IA', icon: Brain, path: '/backoffice/crm-killer/ia', color: 'cyan' },
     { label: 'Templates', icon: FileText, path: '/backoffice/crm-killer/templates', color: 'amber' },

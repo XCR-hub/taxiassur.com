@@ -100,6 +100,7 @@ const CRMLeadDetail = lazy(() => import('./backoffice/CRMLeadDetail'));
 const CRMPipelineKanban = lazy(() => import('./backoffice/CRMPipelineKanban'));
 const CRMInboxMulticanal = lazy(() => import('./backoffice/CRMInboxMulticanal'));
 const CRMRetentionCenter = lazy(() => import('./backoffice/CRMRetentionCenter'));
+const ClaimsManager = lazy(() => import('./backoffice/ClaimsManager'));
 const CRMAIGovernance = lazy(() => import('./backoffice/CRMAIGovernance'));
 const CRMAdminSettings = lazy(() => import('./backoffice/CRMAdminSettings'));
 const EmailBlacklistManager = lazy(() => import('./backoffice/EmailBlacklistManager'));
@@ -544,6 +545,16 @@ export const router = createBrowserRouter([
       {
         index: true,
         element: <CRMKillerDashboard />,
+      },
+    ],
+  },
+  {
+    path: '/backoffice/claims',
+    element: <CRMLayout />,
+    children: [
+      {
+        index: true,
+        element: <ClaimsManager />,
       },
     ],
   },
