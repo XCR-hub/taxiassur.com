@@ -89,31 +89,14 @@ export default function ClientSinistres() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const { data: portal } = await supabase
-        .from('client_portal_users')
-        .select('lead_id')
-        .eq('email', email.toLowerCase().trim())
-        .maybeSingle();
+      const { data, error } = await supabase
+        .rpc('get_client_claims_by_email', { p_email: email.toLowerCase().trim() });
 
-      let id = portal?.lead_id;
-      if (!id) {
-        const { data: lead } = await supabase
-          .from('crm_leads')
-          .select('id')
-          .eq('email', email.toLowerCase().trim())
-          .maybeSingle();
-        id = lead?.id;
-      }
+      if (error) throw error;
 
-      if (id) {
-        setLeadId(id);
-        const { data, error } = await supabase
-          .from('crm_claims')
-          .select('id, claim_number, incident_type, claim_type, incident_date, incident_description, claim_status, created_at, estimated_amount')
-          .eq('lead_id', id)
-          .order('created_at', { ascending: false });
-
-        if (!error) setClaims((data || []) as Claim[]);
+      if (data?.success) {
+        setLeadId(data.lead_id || null);
+        setClaims((data.claims || []) as Claim[]);
       }
     } catch (err) {
       logger.error('Error loading claims:', err);
@@ -130,24 +113,19 @@ export default function ClientSinistres() {
     setSubmitError(null);
 
     try {
-      const { error } = await supabase.from('crm_claims').insert({
-        lead_id: leadId,
-        incident_type: form.incident_type,
-        claim_type: form.incident_type,
-        incident_date: form.incident_date,
-        incident_description: form.description,
-        incident_location: form.location || null,
-        third_party_involved: form.third_party_involved,
-        third_party_info: form.third_party_involved ? form.third_party_info : null,
-        police_report_number: form.police_report ? form.police_report_number : null,
-        claim_status: 'open',
-        reported_by: 'client',
-        declared_at: new Date().toISOString(),
-        client_notes: form.description,
-        claim_number: `SIN-${Date.now()}`,
+      const { data, error } = await supabase.rpc('insert_client_claim', {
+        p_email:                 email.toLowerCase().trim(),
+        p_incident_type:         form.incident_type,
+        p_claim_type:            form.incident_type,
+        p_incident_date:         form.incident_date,
+        p_incident_description:  form.description,
+        p_third_party_involved:  form.third_party_involved,
+        p_third_party_info:      form.third_party_involved ? form.third_party_info : null,
+        p_police_report_number:  form.police_report ? form.police_report_number : null,
       });
 
       if (error) throw error;
+      if (data && !data.success) throw new Error(data.error || 'Erreur lors de la déclaration');
 
       setSubmitSuccess(true);
       setShowForm(false);

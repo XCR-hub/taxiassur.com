@@ -86,14 +86,14 @@ export default function ClientDashboard() {
     }
   };
 
-  const loadSinistresCount = async (leadId: string) => {
+  const loadSinistresCount = async (_leadId: string) => {
     try {
-      const { count } = await supabase
-        .from('crm_claims')
-        .select('id', { count: 'exact', head: true })
-        .eq('lead_id', leadId)
-        .not('claim_status', 'eq', 'closed');
-      setSinistresCount(count || 0);
+      const { data } = await supabase
+        .rpc('get_client_claims_by_email', { p_email: email.toLowerCase().trim() });
+      if (data?.success) {
+        const active = (data.claims || []).filter((c: any) => c.claim_status !== 'closed' && c.claim_status !== 'rejected');
+        setSinistresCount(active.length);
+      }
     } catch {
     }
   };
