@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
-import { ArrowLeft, User, FileText, AlertCircle, DollarSign, CheckSquare, Clock, Shield, Car, Building2, Phone, Mail, MapPin, Calendar, CreditCard as Edit, Save, X, Plus, Download, Upload, Trash2, Eye, ChevronDown, ChevronUp, Activity, Bell, TrendingUp, AlertTriangle, CheckCircle2, Loader2, RefreshCw } from 'lucide-react';
+import { ArrowLeft, User, FileText, AlertCircle, DollarSign, CheckSquare, Clock, Shield, Car, Building2, Phone, Mail, MapPin, Calendar, CreditCard as Edit, Save, X, Plus, Download, Upload, Trash2, Eye, ChevronDown, ChevronUp, Activity, Bell, TrendingUp, AlertTriangle, CheckCircle2, Loader2, RefreshCw, FolderOpen } from 'lucide-react';
+import DocumentsViewer from './DocumentsViewer';
 
 interface ClientData {
   id: string;
@@ -79,7 +80,7 @@ interface Alert {
   dismissed: boolean;
 }
 
-type TabType = 'profile' | 'contracts' | 'claims' | 'payments' | 'tasks' | 'history';
+type TabType = 'profile' | 'contracts' | 'documents' | 'claims' | 'payments' | 'tasks' | 'history';
 
 interface ContractForm {
   contract_type: string;
@@ -144,6 +145,7 @@ export default function ClientInsuranceManager() {
   const [client, setClient] = useState<ClientData | null>(null);
   const [taxiProfile, setTaxiProfile] = useState<TaxiProfile | null>(null);
   const [contracts, setContracts] = useState<Contract[]>([]);
+  const [crmDocs, setCrmDocs] = useState<{id:string;file_name:string;document_type:string;status:string;created_at:string;file_url:string|null}[]>([]);
   const [claims, setClaims] = useState<Claim[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [alerts, setAlerts] = useState<Alert[]>([]);
@@ -175,6 +177,7 @@ export default function ClientInsuranceManager() {
         loadClient(),
         loadTaxiProfile(),
         loadContracts(),
+        loadCrmDocs(),
         loadClaims(),
         loadTasks(),
         loadAlerts()
@@ -220,6 +223,18 @@ export default function ClientInsuranceManager() {
 
     if (!error) {
       setContracts(data || []);
+    }
+  }
+
+  async function loadCrmDocs() {
+    const { data, error } = await supabase
+      .from('crm_lead_documents')
+      .select('id, file_name, document_type, status, created_at, file_url')
+      .eq('lead_id', leadId)
+      .order('created_at', { ascending: false });
+
+    if (!error) {
+      setCrmDocs(data || []);
     }
   }
 
@@ -649,6 +664,7 @@ export default function ClientInsuranceManager() {
             {[
               { id: 'profile', label: 'Profil Taxi', icon: User },
               { id: 'contracts', label: 'Contrats', icon: FileText },
+              { id: 'documents', label: 'Documents', icon: FolderOpen },
               { id: 'claims', label: 'Sinistres', icon: AlertCircle },
               { id: 'payments', label: 'Paiements', icon: DollarSign },
               { id: 'tasks', label: 'Tâches', icon: CheckSquare },
@@ -1061,7 +1077,7 @@ export default function ClientInsuranceManager() {
               </div>
             )}
 
-            {contracts.length === 0 ? (
+            {contracts.length === 0 && crmDocs.length === 0 ? (
               <div className="text-center py-16 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200">
                 <FileText className="mx-auto mb-3 text-gray-300" size={56} />
                 <p className="text-gray-700 font-semibold text-lg mb-1">Aucun contrat</p>
@@ -1073,6 +1089,47 @@ export default function ClientInsuranceManager() {
                   <Plus size={16} />
                   Ajouter un contrat
                 </button>
+              </div>
+            ) : contracts.length === 0 && crmDocs.length > 0 ? (
+              <div>
+                <div className="mb-4 px-4 py-3 bg-blue-50 border border-blue-200 rounded-xl text-sm text-blue-700 flex items-center gap-2">
+                  <FolderOpen size={16} />
+                  Documents transmis pendant le suivi commercial — créez un contrat pour formaliser.
+                </div>
+                <div className="space-y-3">
+                  {crmDocs.map(doc => (
+                    <div key={doc.id} className="bg-white border border-gray-200 rounded-xl p-4 flex items-center justify-between hover:border-yellow-300 transition-colors">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="p-2 bg-gray-100 rounded-lg shrink-0">
+                          <FileText size={18} className="text-gray-500" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-medium text-gray-900 text-sm truncate">{doc.file_name}</p>
+                          <p className="text-xs text-gray-500 mt-0.5 capitalize">{doc.document_type?.replace(/_/g, ' ')} · {new Date(doc.created_at).toLocaleDateString('fr-FR')}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0 ml-3">
+                        <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${doc.status === 'validated' ? 'bg-green-100 text-green-700' : doc.status === 'pending' ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 text-gray-600'}`}>
+                          {doc.status === 'validated' ? 'Validé' : doc.status === 'pending' ? 'En attente' : doc.status}
+                        </span>
+                        {doc.file_url && (
+                          <a href={doc.file_url} target="_blank" rel="noopener noreferrer" className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+                            <Eye size={16} />
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-6 text-center">
+                  <button
+                    onClick={openNewContractForm}
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-700 hover:to-yellow-600 text-black rounded-lg transition-colors text-sm font-semibold"
+                  >
+                    <Plus size={16} />
+                    Formaliser un contrat
+                  </button>
+                </div>
               </div>
             ) : (
               <div className="space-y-4">
@@ -1492,6 +1549,13 @@ export default function ClientInsuranceManager() {
                 ))}
               </div>
             )}
+          </div>
+        )}
+
+        {activeTab === 'documents' && (
+          <div>
+            <h2 className="text-xl font-bold text-gray-900 mb-6">Documents</h2>
+            <DocumentsViewer leadId={leadId} />
           </div>
         )}
 

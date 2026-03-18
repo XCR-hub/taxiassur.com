@@ -1,10 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  FileText, Download, Eye, Trash2, CheckCircle, XCircle, Clock,
-  File, Image, FileCode, Archive, AlertCircle, Calendar, User,
-  ChevronLeft, ChevronRight, ZoomIn, ZoomOut, RefreshCw, Filter,
-  Search, Upload, Star, Tag, ExternalLink, Grid, List
-} from 'lucide-react';
+import { FileText, Download, Eye, Trash2, CheckCircle, XCircle, Clock, File, Image, FileCode, Archive, AlertCircle, Calendar, User, ChevronLeft, ChevronRight, ZoomIn, ZoomOut, RefreshCw, Filter, Search, Upload, Star, Tag, ExternalLink, Grid2x2 as Grid, List } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
 interface Document {
@@ -15,7 +10,7 @@ interface Document {
   file_size?: number;
   mime_type?: string;
   status: string;
-  upload_date: string;
+  uploaded_at: string;
   verified_at?: string;
   verified_by?: string;
   notes?: string;
@@ -51,8 +46,8 @@ const DocumentsViewer: React.FC<DocumentsViewerProps> = ({ leadId, clientId, com
     try {
       let query = supabase
         .from('prospect_documents')
-        .select('id, file_name, document_type, file_path, file_size, mime_type, status, upload_date, verified_at, verified_by, notes, lead_id, metadata')
-        .order('upload_date', { ascending: false });
+        .select('id, file_name, document_type, file_path, file_size, mime_type, status, uploaded_at, verified_at, verified_by, notes, lead_id, metadata')
+        .order('uploaded_at', { ascending: false });
 
       if (leadId) {
         query = query.eq('lead_id', leadId);
@@ -337,7 +332,7 @@ const DocumentsViewer: React.FC<DocumentsViewerProps> = ({ leadId, clientId, com
                 </div>
                 <div className="flex items-center gap-2">
                   <Calendar className="w-4 h-4 text-purple-400" />
-                  <span>{new Date(doc.upload_date).toLocaleDateString('fr-FR')}</span>
+                  <span>{new Date(doc.uploaded_at).toLocaleDateString('fr-FR')}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <File className="w-4 h-4 text-purple-400" />
@@ -389,7 +384,7 @@ const DocumentsViewer: React.FC<DocumentsViewerProps> = ({ leadId, clientId, com
                     {getDocumentTypeLabel(doc.document_type)}
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-300">
-                    {new Date(doc.upload_date).toLocaleDateString('fr-FR')}
+                    {new Date(doc.uploaded_at).toLocaleDateString('fr-FR')}
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-300">
                     {formatFileSize(doc.file_size)}
