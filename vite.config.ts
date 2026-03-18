@@ -119,8 +119,22 @@ export default defineConfig(({ mode }) => ({
             return 'vendor';
           }
 
-          // Core lib before backoffice to prevent circular dependencies
+          // Core lib split: separate heavy libs from lightweight ones
           if (id.includes('/lib/')) {
+            // Heavy/rarely-used libs in separate chunk
+            if (
+              id.includes('pdf-generator') ||
+              id.includes('export-utils') ||
+              id.includes('sitemap-generator') ||
+              id.includes('robots-generator') ||
+              id.includes('session-recording') ||
+              id.includes('bundle-analyzer') ||
+              id.includes('newsAggregator') ||
+              id.includes('aiSynthesizer') ||
+              id.includes('trendAnalyzer')
+            ) {
+              return 'lib-heavy';
+            }
             return 'lib-core';
           }
 
@@ -148,7 +162,7 @@ export default defineConfig(({ mode }) => ({
               return 'backoffice-seo';
             }
             // Analytics
-            if (id.includes('Analytics') || id.includes('Dashboard') && !id.includes('Master')) {
+            if (id.includes('Analytics') || (id.includes('Dashboard') && !id.includes('Master'))) {
               return 'backoffice-analytics';
             }
             // Core last as fallback
@@ -184,18 +198,22 @@ export default defineConfig(({ mode }) => ({
       compress: {
         drop_console: true,
         drop_debugger: true,
-        passes: 2,
-        pure_funcs: ['console.log', 'console.info', 'console.debug'],
-        pure_getters: false,
+        passes: 3,
+        pure_funcs: ['console.log', 'console.info', 'console.debug', 'console.warn', 'console.error'],
+        pure_getters: true,
         unsafe: false,
         unsafe_comps: false,
         unsafe_math: true,
         unsafe_methods: false,
-        arguments: false,
+        arguments: true,
         reduce_vars: true,
         reduce_funcs: true,
         keep_fargs: false,
-        keep_infinity: true
+        keep_infinity: true,
+        dead_code: true,
+        unused: true,
+        collapse_vars: true,
+        inline: 2
       },
       mangle: {
         safari10: true,

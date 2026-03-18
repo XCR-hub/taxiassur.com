@@ -85,10 +85,6 @@ const Seo: React.FC<SeoProps> = ({
       <meta name="geo.placename" content="France" />
       <meta name="language" content="French" />
 
-      {/* Preconnect pour performance */}
-      <link rel="preconnect" href="https://fonts.googleapis.com" />
-      <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-      <link rel="dns-prefetch" href="https://drohhxrkoequjphvabvq.supabase.co" />
 
       {children}
     </Helmet>

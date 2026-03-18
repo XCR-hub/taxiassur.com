@@ -6,10 +6,14 @@
 
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 
-  <!-- Critical preconnect (max 4 to avoid PageSpeed warning) -->
+  <!-- Critical preconnect: max 4, only the most important origins -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="dns-prefetch" href="https://qiavtxpaznxpttkdaevy.supabase.co" />
+  <link rel="preconnect" href="https://images.pexels.com" crossorigin />
+  <link rel="dns-prefetch" href="https://drohhxrkoequjphvabvq.supabase.co" />
+
+  <!-- LCP preload: hero background image loaded as early as possible -->
+  <link rel="preload" as="image" href="https://images.pexels.com/photos/1545743/pexels-photo-1545743.jpeg?auto=compress&cs=tinysrgb&w=1200&h=675&fit=crop" fetchpriority="high" />
 
   <!-- Fonts: non-blocking (display=swap) -->
   <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" onload="this.onload=null;this.rel='stylesheet'" />

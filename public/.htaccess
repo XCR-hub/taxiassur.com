@@ -115,10 +115,22 @@
     ExpiresByType text/xml "access plus 1 hour"
 </IfModule>
 
-# Immutable cache for hashed assets (Vite adds content hash to filenames)
+# Immutable cache for Vite hashed assets (content hash in filename = safe forever)
 <IfModule mod_headers.c>
-    <FilesMatch "\.([0-9a-f]{8,})\.(js|css)$">
+    <FilesMatch "\-[0-9a-zA-Z_]{8,}\.(js|css|woff2|woff|png|jpg|jpeg|svg|webp|avif)$">
         Header set Cache-Control "public, max-age=31536000, immutable"
+        Header unset ETag
+    </FilesMatch>
+    # Fonts always immutable
+    <FilesMatch "\.(woff2|woff|ttf|otf)$">
+        Header set Cache-Control "public, max-age=31536000, immutable"
+    </FilesMatch>
+</IfModule>
+
+# Disable ETag for hashed assets (redundant with immutable Cache-Control)
+<IfModule mod_headers.c>
+    <FilesMatch "\-[0-9a-zA-Z_]{8,}\.(js|css)$">
+        FileETag None
     </FilesMatch>
 </IfModule>
 

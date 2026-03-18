@@ -79,10 +79,6 @@ const SEOHead: React.FC<SEOHeadProps> = ({
       <meta name="geo.region" content="FR" />
       <meta name="geo.placename" content={city || "France"} />
       
-      {/* Preconnect for performance */}
-      <link rel="preconnect" href="https://fonts.googleapis.com" />
-      <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
-      <link rel="preconnect" href="https://images.pexels.com" />
       
       {/* Theme */}
       <meta name="theme-color" content="#f59e0b" />
