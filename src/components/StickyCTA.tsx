@@ -7,11 +7,9 @@ const StickyCTA: React.FC = () => {
 
   useEffect(() => {
     const handleScroll = () => {
-      // Show sticky CTA after scrolling 300px
       setIsVisible(window.scrollY > 300);
     };
 
-    // Observer to hide CTA when form is visible
     const formObserver = new IntersectionObserver(
       ([entry]) => {
         setIsFormVisible(entry.isIntersecting);
@@ -19,15 +17,18 @@ const StickyCTA: React.FC = () => {
       { threshold: 0.3 }
     );
 
-    const formElement = document.querySelector('#devis, [id="devis"], .lead-form, form');
-    if (formElement) {
-      formObserver.observe(formElement);
-    }
+    // Defer DOM query to avoid blocking initial paint
+    const setupObserver = () => {
+      const formElement = document.querySelector('#devis');
+      if (formElement) formObserver.observe(formElement);
+    };
 
-    window.addEventListener('scroll', handleScroll);
-    
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    const tid = setTimeout(setupObserver, 1000);
+
     return () => {
       window.removeEventListener('scroll', handleScroll);
+      clearTimeout(tid);
       formObserver.disconnect();
     };
   }, []);

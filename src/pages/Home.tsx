@@ -83,85 +83,113 @@ const Home: React.FC = () => {
         <main>
           <Hero />
 
-          <Suspense fallback={<SectionSkeleton />}>
-            <SocialProof />
-          </Suspense>
+          <div className="section-below-fold">
+            <Suspense fallback={<SectionSkeleton />}>
+              <SocialProof />
+            </Suspense>
+          </div>
 
-          <Suspense fallback={<SectionSkeleton />}>
-            <Avantages />
-          </Suspense>
+          <div className="section-below-fold">
+            <Suspense fallback={<SectionSkeleton />}>
+              <Avantages />
+            </Suspense>
+          </div>
 
-          <Suspense fallback={<SectionSkeleton />}>
-            <Steps />
-          </Suspense>
+          <div className="section-below-fold">
+            <Suspense fallback={<SectionSkeleton />}>
+              <Steps />
+            </Suspense>
+          </div>
 
-          <Suspense fallback={<SectionSkeleton />}>
-            <FAQ />
-          </Suspense>
+          <div className="section-below-fold">
+            <Suspense fallback={<SectionSkeleton />}>
+              <FAQ />
+            </Suspense>
+          </div>
 
-          <Suspense fallback={<SectionSkeleton />}>
-            <InstantQuoteCalculator />
-          </Suspense>
+          <div className="section-below-fold">
+            <Suspense fallback={<SectionSkeleton />}>
+              <InstantQuoteCalculator />
+            </Suspense>
+          </div>
 
-          <Suspense fallback={<SectionSkeleton />}>
-            <DynamicReviews />
-          </Suspense>
+          <div className="section-below-fold">
+            <Suspense fallback={<SectionSkeleton />}>
+              <DynamicReviews />
+            </Suspense>
+          </div>
 
-          <Suspense fallback={<SectionSkeleton />}>
-            <section className="py-12 sm:py-16 bg-gradient-to-br from-gray-950 via-gray-900 to-black">
-              <div className="container mx-auto px-4">
-                <div className="text-center mb-8 sm:mb-12">
-                  <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black mb-3 sm:mb-4 text-white">Testez Vos Connaissances !</h2>
-                  <p className="text-base sm:text-xl text-gray-300 font-semibold">5 questions pour devenir expert assurance taxi</p>
+          <div className="section-below-fold">
+            <Suspense fallback={<SectionSkeleton />}>
+              <section className="py-12 sm:py-16 bg-gradient-to-br from-gray-950 via-gray-900 to-black">
+                <div className="container mx-auto px-4">
+                  <div className="text-center mb-8 sm:mb-12">
+                    <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black mb-3 sm:mb-4 text-white">Testez Vos Connaissances !</h2>
+                    <p className="text-base sm:text-xl text-gray-300 font-semibold">5 questions pour devenir expert assurance taxi</p>
+                  </div>
+                  <InteractiveQuiz />
                 </div>
-                <InteractiveQuiz />
-              </div>
-            </section>
-          </Suspense>
+              </section>
+            </Suspense>
+          </div>
 
-          <Suspense fallback={<SectionSkeleton />}>
-            <Avis />
-          </Suspense>
+          <div className="section-below-fold">
+            <Suspense fallback={<SectionSkeleton />}>
+              <Avis />
+            </Suspense>
+          </div>
 
-          <Suspense fallback={<SectionSkeleton />}>
-            <NewsSection limit={3} showTitle={true} />
-          </Suspense>
+          <div className="section-below-fold">
+            <Suspense fallback={<SectionSkeleton />}>
+              <NewsSection limit={3} showTitle={true} />
+            </Suspense>
+          </div>
 
-          <Suspense fallback={<SectionSkeleton />}>
-            <LocalSEO />
-          </Suspense>
+          <div className="section-below-fold">
+            <Suspense fallback={<SectionSkeleton />}>
+              <LocalSEO />
+            </Suspense>
+          </div>
 
-          <Suspense fallback={<SectionSkeleton />}>
-            <TrustSignals />
-          </Suspense>
+          <div className="section-below-fold">
+            <Suspense fallback={<SectionSkeleton />}>
+              <TrustSignals />
+            </Suspense>
+          </div>
 
-          <Suspense fallback={<SectionSkeleton />}>
-            <section className="py-12 sm:py-16 bg-white border border-yellow-100">
-              <div className="container-max">
-                <TrustBadges variant="compact" showLogos={false} />
-                <div className="text-center mt-6 sm:mt-8">
-                  <a
-                    href="/confiance-certifications"
-                    className="inline-block bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-gray-900 font-bold px-6 sm:px-8 py-3 sm:py-4 rounded-xl transition-all shadow-lg hover:shadow-xl"
-                  >
-                    En savoir plus sur nos certifications
-                  </a>
+          <div className="section-below-fold">
+            <Suspense fallback={<SectionSkeleton />}>
+              <section className="py-12 sm:py-16 bg-white border border-yellow-100">
+                <div className="container-max">
+                  <TrustBadges variant="compact" showLogos={false} />
+                  <div className="text-center mt-6 sm:mt-8">
+                    <a
+                      href="/confiance-certifications"
+                      className="inline-block bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-gray-900 font-bold px-6 sm:px-8 py-3 sm:py-4 rounded-xl transition-all shadow-lg hover:shadow-xl"
+                    >
+                      En savoir plus sur nos certifications
+                    </a>
+                  </div>
                 </div>
-              </div>
-            </section>
-          </Suspense>
+              </section>
+            </Suspense>
+          </div>
 
-          <Suspense fallback={<SectionSkeleton />}>
-            <Newsletter />
-          </Suspense>
+          <div className="section-below-fold">
+            <Suspense fallback={<SectionSkeleton />}>
+              <Newsletter />
+            </Suspense>
+          </div>
 
           <Suspense fallback={null}>
             <SubtleConversionHelper />
           </Suspense>
 
-          <Suspense fallback={<SectionSkeleton />}>
-            <UltimateConversion />
-          </Suspense>
+          <div className="section-below-fold">
+            <Suspense fallback={<SectionSkeleton />}>
+              <UltimateConversion />
+            </Suspense>
+          </div>
         </main>
         <Footer />
         <StickyCTA />

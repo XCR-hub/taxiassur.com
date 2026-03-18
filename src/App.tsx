@@ -8,7 +8,6 @@ import ErrorBoundary from './components/ErrorBoundary';
 import GlobalErrorBoundary from './components/GlobalErrorBoundary';
 
 const PerformanceOptimizer = lazy(() => import('./components/PerformanceOptimizer'));
-const AITaxiBackground = lazy(() => import('./components/AITaxiBackground'));
 const MoneticoTestCard = lazy(() => import('./components/MoneticoTestCard').then(m => ({ default: m.MoneticoTestCard })));
 
 const SimpleFallback = () => (
@@ -27,10 +26,18 @@ function App() {
   const [showEnhancements, setShowEnhancements] = useState(false);
 
   useEffect(() => {
-    const isMobile = window.innerWidth < 1024;
-    const delay = isMobile ? 800 : 300;
-    const timer = setTimeout(() => setShowEnhancements(true), delay);
-    return () => clearTimeout(timer);
+    // Delay non-critical enhancements until well after LCP
+    // Use requestIdleCallback when available for zero impact on main thread
+    const schedule = (cb: () => void, ms: number) => {
+      if ('requestIdleCallback' in window) {
+        const id = (window as any).requestIdleCallback(cb, { timeout: ms + 2000 });
+        return () => (window as any).cancelIdleCallback(id);
+      }
+      const id = setTimeout(cb, ms);
+      return () => clearTimeout(id);
+    };
+
+    return schedule(() => setShowEnhancements(true), 4000);
   }, []);
 
   return (
@@ -39,17 +46,14 @@ function App() {
         <ThemeProvider>
           <ToastProvider>
             <ModalProvider>
-              {showEnhancements && (
-                <Suspense fallback={null}>
-                  <PerformanceOptimizer>
-                    <AITaxiBackground intensity="low" />
-                  </PerformanceOptimizer>
-                </Suspense>
-              )}
               <Suspense fallback={<SimpleFallback />}>
                 <RouterProvider router={router} />
               </Suspense>
-              {/* Aide pour les tests Monético (dev only) */}
+              {showEnhancements && (
+                <Suspense fallback={null}>
+                  <PerformanceOptimizer />
+                </Suspense>
+              )}
               {showEnhancements && import.meta.env.DEV && (
                 <Suspense fallback={null}>
                   <MoneticoTestCard />

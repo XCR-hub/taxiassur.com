@@ -1,11 +1,7 @@
-import React, { useState, lazy, Suspense } from 'react';
+import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { CheckCircle, Phone, Send, Shield, Clock, Award, TrendingDown, Zap, Target, Star, FileText, MapPin, Users, User, Mail } from 'lucide-react';
 import { useRealStats } from '../hooks/useRealStats';
-
-const AITaxiBackground = lazy(() => import('./AITaxiBackground'));
-import { logger } from '@/lib/logger';
-import { createLead } from '@/lib/leads';
 
 const Hero: React.FC = () => {
   const navigate = useNavigate();
@@ -56,6 +52,7 @@ const Hero: React.FC = () => {
     }
 
     try {
+      const { createLead } = await import('@/lib/leads');
       const response = await createLead({
         name: formData.name,
         email: formData.email,
@@ -73,7 +70,6 @@ const Hero: React.FC = () => {
         setErrors([response.error || 'Erreur lors de l\'envoi. Veuillez réessayer.']);
       }
     } catch (error: any) {
-      logger.error('Erreur soumission formulaire:', error);
       setErrors([error.message || 'Une erreur est survenue']);
     } finally {
       setIsSubmitting(false);
@@ -82,11 +78,6 @@ const Hero: React.FC = () => {
 
   return (
     <section id="devis" className="relative bg-gradient-to-br from-gray-950 via-gray-900 to-black text-white py-14 sm:py-20 overflow-hidden">
-      <div className="hidden lg:block">
-        <Suspense fallback={null}>
-          <AITaxiBackground section="hero" intensity="low" />
-        </Suspense>
-      </div>
       
       <div className="container-max relative z-20">
         <div className="lg:flex lg:items-center lg:space-x-12">

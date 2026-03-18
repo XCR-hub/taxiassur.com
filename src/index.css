@@ -318,12 +318,10 @@
   }
 }
 
-/* content-visibility for below-fold sections */
-@media (max-width: 1023px) {
-  .section-below-fold {
-    content-visibility: auto;
-    contain-intrinsic-size: 0 400px;
-  }
+/* content-visibility for below-fold sections — skips rendering until near viewport */
+.section-below-fold {
+  content-visibility: auto;
+  contain-intrinsic-size: 0 500px;
 }
 
 /* Reduce repaints for sticky header */

@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
-import { supabase } from '@/lib/supabase';
-import { logger } from '@/lib/logger';
+
+const DEFER_MS = 3000;
 
 export const usePageTracking = () => {
   const startTimeRef = useRef<number>(Date.now());
@@ -8,62 +8,61 @@ export const usePageTracking = () => {
 
   useEffect(() => {
     let sessionId = sessionStorage.getItem('session_id');
-
     if (!sessionId) {
       sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       sessionStorage.setItem('session_id', sessionId);
     }
-
     sessionIdRef.current = sessionId;
     startTimeRef.current = Date.now();
 
-    const trackPageView = async () => {
+    let timerId: ReturnType<typeof setTimeout>;
+    let intervalId: ReturnType<typeof setInterval>;
+    let isMounted = true;
+
+    const runTracking = async () => {
+      if (!isMounted) return;
       try {
+        const { supabase } = await import('@/lib/supabase');
+
         await supabase.from('page_analytics').insert({
           page_url: window.location.href,
           session_id: sessionId!,
           user_agent: navigator.userAgent,
           referrer: document.referrer || null,
           viewport_width: window.innerWidth,
-          viewport_height: window.innerHeight
+          viewport_height: window.innerHeight,
         });
-      } catch (error) {
-        logger.error('Error tracking page view:', error);
+
+        const updateDuration = async () => {
+          const duration = Math.floor((Date.now() - startTimeRef.current) / 1000);
+          if (duration > 5 && isMounted) {
+            try {
+              await supabase
+                .from('page_analytics')
+                .update({ duration_seconds: duration })
+                .eq('session_id', sessionIdRef.current)
+                .eq('page_url', window.location.href)
+                .order('created_at', { ascending: false })
+                .limit(1);
+            } catch {
+              // silent
+            }
+          }
+        };
+
+        intervalId = setInterval(updateDuration, 30000);
+        window.addEventListener('beforeunload', updateDuration, { passive: true });
+      } catch {
+        // silent — analytics must never block the page
       }
     };
 
-    trackPageView();
-
-    const updateDuration = async () => {
-      const duration = Math.floor((Date.now() - startTimeRef.current) / 1000);
-
-      if (duration > 5) {
-        try {
-          await supabase
-            .from('page_analytics')
-            .update({ duration_seconds: duration })
-            .eq('session_id', sessionIdRef.current)
-            .eq('page_url', window.location.href)
-            .order('created_at', { ascending: false })
-            .limit(1);
-        } catch (error) {
-          logger.error('Error updating duration:', error);
-        }
-      }
-    };
-
-    const handleBeforeUnload = () => {
-      updateDuration();
-    };
-
-    const durationInterval = setInterval(updateDuration, 30000);
-
-    window.addEventListener('beforeunload', handleBeforeUnload);
+    timerId = setTimeout(runTracking, DEFER_MS);
 
     return () => {
-      clearInterval(durationInterval);
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-      updateDuration();
+      isMounted = false;
+      clearTimeout(timerId);
+      clearInterval(intervalId);
     };
   }, []);
 
