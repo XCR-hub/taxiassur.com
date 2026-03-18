@@ -11,6 +11,16 @@ const AssuranceTaxiPerpignan: React.FC = () => {
         <title>Assurance Taxi Perpignan : Tarifs 2024 | TaxiAssur</title>
         <meta name="description" content="Assurance Taxi Perpignan dès 1510€/an (-35%). RC Pro incluse." />
         <link rel="canonical" href="https://taxiassur.com/assurance-taxi-perpignan" />
+              <meta property="og:type" content="website" />
+        <meta property="og:title" content="Assurance Taxi Perpignan : Tarifs 2024 | TaxiAssur" />
+        <meta property="og:description" content="Assurance Taxi Perpignan dès 1510€/an (-35%). RC Pro incluse." />
+        <meta property="og:url" content="https://taxiassur.com/assurance-taxi-perpignan" />
+        <meta property="og:image" content="https://taxiassur.com/logo-600x300.png" />
+        <meta property="og:site_name" content="TaxiAssur" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Assurance Taxi Perpignan : Tarifs 2024 | TaxiAssur" />
+        <meta name="twitter:description" content="Assurance Taxi Perpignan dès 1510€/an (-35%). RC Pro incluse." />
+        <meta name="twitter:image" content="https://taxiassur.com/logo-600x300.png" />
       </Helmet>
       <Header />
       <main>
