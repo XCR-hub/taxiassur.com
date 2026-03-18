@@ -22,28 +22,31 @@ interface Claim {
 }
 
 const INCIDENT_TYPES = [
-  { value: 'accident_responsable',   label: 'Accident responsable' },
-  { value: 'accident_non_responsable', label: 'Accident non responsable' },
-  { value: 'bris_de_glace',          label: 'Bris de glace' },
-  { value: 'vol',                    label: 'Vol ou tentative de vol' },
-  { value: 'incendie',               label: 'Incendie' },
-  { value: 'catastrophe_naturelle',  label: 'Catastrophe naturelle' },
-  { value: 'vandalisme',             label: 'Vandalisme / dégradation' },
-  { value: 'autre',                  label: 'Autre incident' },
+  { value: 'ACCIDENT_RESPONSABLE',     label: 'Accident responsable' },
+  { value: 'ACCIDENT_NON_RESPONSABLE', label: 'Accident non responsable' },
+  { value: 'BRIS_GLACE',              label: 'Bris de glace' },
+  { value: 'VOL',                     label: 'Vol ou tentative de vol' },
+  { value: 'INCENDIE',                label: 'Incendie' },
+  { value: 'CATASTROPHE_NATURELLE',   label: 'Catastrophe naturelle' },
+  { value: 'VANDALISME',              label: 'Vandalisme / dégradation' },
+  { value: 'DOMMAGES_COLLISION',      label: 'Dommages / collision' },
+  { value: 'ASSISTANCE',              label: 'Assistance' },
+  { value: 'AUTRE',                   label: 'Autre incident' },
 ];
 
 const STATUS_CONFIG: Record<string, { label: string; bg: string; text: string; icon: any }> = {
-  open:        { label: 'Ouvert',          bg: 'bg-yellow-100', text: 'text-yellow-700', icon: Clock },
-  in_progress: { label: 'En cours',        bg: 'bg-yellow-100', text: 'text-yellow-700', icon: Clock },
-  pending:     { label: 'En attente',      bg: 'bg-amber-100',  text: 'text-amber-700',  icon: Clock },
-  resolved:    { label: 'Résolu',          bg: 'bg-green-100',  text: 'text-green-700',  icon: CheckCircle },
-  closed:      { label: 'Clôturé',         bg: 'bg-gray-100',   text: 'text-gray-600',   icon: CheckCircle },
-  rejected:    { label: 'Refusé',          bg: 'bg-red-100',    text: 'text-red-700',    icon: AlertCircle },
-  default:     { label: 'Ouvert',          bg: 'bg-yellow-100', text: 'text-yellow-700', icon: Clock },
+  DECLARED:          { label: 'Déclaré',         bg: 'bg-yellow-100', text: 'text-yellow-700', icon: Clock },
+  DOCUMENTS_PENDING: { label: 'Docs attendus',   bg: 'bg-amber-100',  text: 'text-amber-700',  icon: Clock },
+  UNDER_REVIEW:      { label: 'En examen',        bg: 'bg-blue-100',   text: 'text-blue-700',   icon: Clock },
+  APPROVED:          { label: 'Approuvé',         bg: 'bg-green-100',  text: 'text-green-700',  icon: CheckCircle },
+  REJECTED:          { label: 'Refusé',           bg: 'bg-red-100',    text: 'text-red-700',    icon: AlertCircle },
+  PAID:              { label: 'Indemnisé',        bg: 'bg-green-100',  text: 'text-green-700',  icon: CheckCircle },
+  CLOSED:            { label: 'Clôturé',          bg: 'bg-gray-100',   text: 'text-gray-600',   icon: CheckCircle },
+  default:           { label: 'Déclaré',          bg: 'bg-yellow-100', text: 'text-yellow-700', icon: Clock },
 };
 
 function StatusBadge({ status }: { status: string | null }) {
-  const cfg = STATUS_CONFIG[status || 'default'] || STATUS_CONFIG.default;
+  const cfg = STATUS_CONFIG[status?.toUpperCase() || 'default'] || STATUS_CONFIG.default;
   const Icon = cfg.icon;
   return (
     <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold ${cfg.bg} ${cfg.text}`}>
@@ -148,8 +151,8 @@ export default function ClientSinistres() {
     }
   };
 
-  const activeClaims = claims.filter(c => !['closed', 'rejected'].includes(c.claim_status || 'open'));
-  const closedClaims = claims.filter(c => ['closed', 'rejected'].includes(c.claim_status || 'open'));
+  const activeClaims = claims.filter(c => !['CLOSED', 'REJECTED', 'PAID'].includes(c.claim_status || 'DECLARED'));
+  const closedClaims = claims.filter(c => ['CLOSED', 'REJECTED', 'PAID'].includes(c.claim_status || 'DECLARED'));
 
   return (
     <>
