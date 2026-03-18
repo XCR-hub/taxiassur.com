@@ -192,8 +192,8 @@ export const PipelineCard: React.FC<PipelineCardProps> = ({
       className={cn(
         'rounded-lg border px-3 py-2.5 transition-all duration-200 focus:outline-none focus:ring-1 focus:ring-yellow-500/50 select-none',
         isDragging
-          ? 'opacity-25 scale-95 cursor-grabbing border-yellow-500/40 bg-[#2a2a2a]'
-          : 'cursor-grab bg-[#242424] border-gray-700/50 hover:bg-[#2c2c2c] hover:border-gray-500/60 hover:-translate-y-0.5 hover:shadow-md hover:shadow-black/50',
+          ? 'opacity-20 scale-95 cursor-grabbing border-yellow-400/30 bg-[#2d2d2d]'
+          : 'cursor-grab bg-[#272727] border-[#383838] hover:bg-[#2f2f2f] hover:border-[#484848] hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/40',
         'active:cursor-grabbing',
         className
       )}
@@ -217,19 +217,19 @@ export const PipelineCard: React.FC<PipelineCardProps> = ({
 
       {/* Contact info */}
       <div className="space-y-1 mb-2.5">
-        <div className="flex items-center gap-1.5 text-xs text-gray-400">
-          <Mail size={11} className="shrink-0 text-gray-600" />
+        <div className="flex items-center gap-1.5 text-xs text-gray-300">
+          <Mail size={11} className="shrink-0 text-gray-500" />
           <span className="truncate">{lead.email}</span>
         </div>
         {lead.phone && (
-          <div className="flex items-center gap-1.5 text-xs text-gray-400">
-            <Phone size={11} className="shrink-0 text-gray-600" />
+          <div className="flex items-center gap-1.5 text-xs text-gray-300">
+            <Phone size={11} className="shrink-0 text-gray-500" />
             <span className="truncate">{lead.phone}</span>
           </div>
         )}
         {lead.city && (
           <div className="flex items-center gap-1.5 text-xs text-gray-400">
-            <Tag size={11} className="shrink-0 text-gray-600" />
+            <Tag size={11} className="shrink-0 text-gray-500" />
             <span className="truncate">{lead.city}</span>
           </div>
         )}

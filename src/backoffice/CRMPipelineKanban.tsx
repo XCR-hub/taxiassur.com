@@ -19,77 +19,84 @@ interface ColumnNotifications {
 // Palette de couleurs alignée sur la charte TaxiAssur (jaune/noir/gris)
 const STATUS_COLORS: Record<string, {
   bg: string; border: string; text: string; badge: string; accent: string;
-  colBg: string; colBorder: string; headerBg: string;
+  colBg: string; colBorder: string; headerBg: string; topBar: string;
 }> = {
   NOUVEAU_LEAD: {
     bg: 'bg-gradient-to-br from-yellow-50 to-amber-50',
     border: 'border-yellow-400',
     text: 'text-yellow-900',
     badge: 'bg-yellow-500 text-black',
-    accent: '#eab308',
-    colBg: 'bg-yellow-950/30',
-    colBorder: 'border-yellow-700/30',
-    headerBg: 'bg-yellow-900/25'
+    accent: '#f59e0b',
+    colBg: 'bg-[#1d1d1d]',
+    colBorder: 'border-[#2e2e2e]',
+    headerBg: 'bg-[#252318]',
+    topBar: '#f59e0b'
   },
   COLLECTE_DOCUMENTS: {
     bg: 'bg-gradient-to-br from-amber-50 to-yellow-50',
     border: 'border-amber-400',
     text: 'text-amber-900',
     badge: 'bg-amber-500 text-black',
-    accent: '#f59e0b',
-    colBg: 'bg-amber-950/30',
-    colBorder: 'border-amber-700/30',
-    headerBg: 'bg-amber-900/25'
+    accent: '#fb923c',
+    colBg: 'bg-[#1d1d1d]',
+    colBorder: 'border-[#2e2e2e]',
+    headerBg: 'bg-[#261e15]',
+    topBar: '#fb923c'
   },
   DEVIS: {
     bg: 'bg-gradient-to-br from-gray-800 to-gray-900',
     border: 'border-yellow-500',
     text: 'text-yellow-400',
     badge: 'bg-yellow-500 text-black',
-    accent: '#d97706',
-    colBg: 'bg-orange-950/30',
-    colBorder: 'border-orange-700/30',
-    headerBg: 'bg-orange-900/25'
+    accent: '#38bdf8',
+    colBg: 'bg-[#1d1d1d]',
+    colBorder: 'border-[#2e2e2e]',
+    headerBg: 'bg-[#16202a]',
+    topBar: '#38bdf8'
   },
   DECISION_CLIENT: {
     bg: 'bg-gradient-to-br from-yellow-100 to-yellow-50',
     border: 'border-yellow-500',
     text: 'text-yellow-900',
     badge: 'bg-yellow-600 text-black',
-    accent: '#ca8a04',
-    colBg: 'bg-yellow-950/25',
-    colBorder: 'border-yellow-700/25',
-    headerBg: 'bg-yellow-900/20'
+    accent: '#a78bfa',
+    colBg: 'bg-[#1d1d1d]',
+    colBorder: 'border-[#2e2e2e]',
+    headerBg: 'bg-[#1e1825]',
+    topBar: '#a78bfa'
   },
   PAIEMENT: {
     bg: 'bg-gradient-to-br from-green-50 to-emerald-50',
     border: 'border-green-400',
     text: 'text-green-900',
     badge: 'bg-green-600 text-white',
-    accent: '#16a34a',
-    colBg: 'bg-green-950/30',
-    colBorder: 'border-green-700/30',
-    headerBg: 'bg-green-900/25'
+    accent: '#34d399',
+    colBg: 'bg-[#1d1d1d]',
+    colBorder: 'border-[#2e2e2e]',
+    headerBg: 'bg-[#141f1a]',
+    topBar: '#34d399'
   },
   CONTRAT_SIGNATURE: {
     bg: 'bg-gradient-to-br from-gray-900 to-black',
     border: 'border-yellow-400',
     text: 'text-yellow-300',
     badge: 'bg-yellow-400 text-black',
-    accent: '#a3a3a3',
-    colBg: 'bg-gray-800/40',
-    colBorder: 'border-gray-600/30',
-    headerBg: 'bg-gray-700/30'
+    accent: '#60a5fa',
+    colBg: 'bg-[#1d1d1d]',
+    colBorder: 'border-[#2e2e2e]',
+    headerBg: 'bg-[#141924]',
+    topBar: '#60a5fa'
   },
   CLIENT_ACTIF: {
     bg: 'bg-gradient-to-br from-green-100 to-emerald-50',
     border: 'border-green-500',
     text: 'text-green-900',
     badge: 'bg-green-600 text-white',
-    accent: '#22c55e',
-    colBg: 'bg-emerald-950/35',
-    colBorder: 'border-emerald-700/30',
-    headerBg: 'bg-emerald-900/25'
+    accent: '#4ade80',
+    colBg: 'bg-[#1d1d1d]',
+    colBorder: 'border-[#2e2e2e]',
+    headerBg: 'bg-[#132018]',
+    topBar: '#4ade80'
   },
   RELANCE: {
     bg: 'bg-gradient-to-br from-orange-50 to-amber-50',
@@ -97,29 +104,32 @@ const STATUS_COLORS: Record<string, {
     text: 'text-orange-900',
     badge: 'bg-orange-500 text-white',
     accent: '#f97316',
-    colBg: 'bg-orange-950/35',
-    colBorder: 'border-orange-700/30',
-    headerBg: 'bg-orange-900/25'
+    colBg: 'bg-[#1d1d1d]',
+    colBorder: 'border-[#2e2e2e]',
+    headerBg: 'bg-[#251510]',
+    topBar: '#f97316'
   },
   PERDU: {
     bg: 'bg-gradient-to-br from-gray-100 to-gray-50',
     border: 'border-gray-400',
     text: 'text-gray-700',
-    badge: 'bg-gray-600 text-white',
+    badge: 'bg-gray-500 text-white',
     accent: '#6b7280',
-    colBg: 'bg-gray-800/35',
-    colBorder: 'border-gray-600/30',
-    headerBg: 'bg-gray-700/25'
+    colBg: 'bg-[#1d1d1d]',
+    colBorder: 'border-[#2e2e2e]',
+    headerBg: 'bg-[#1e1e1e]',
+    topBar: '#6b7280'
   },
   RECONTACT_PROGRAMME: {
     bg: 'bg-gradient-to-br from-yellow-50 to-amber-100',
     border: 'border-amber-500',
     text: 'text-amber-900',
     badge: 'bg-amber-600 text-black',
-    accent: '#b45309',
-    colBg: 'bg-amber-950/35',
-    colBorder: 'border-amber-700/30',
-    headerBg: 'bg-amber-900/25'
+    accent: '#fbbf24',
+    colBg: 'bg-[#1d1d1d]',
+    colBorder: 'border-[#2e2e2e]',
+    headerBg: 'bg-[#231f10]',
+    topBar: '#fbbf24'
   }
 };
 
@@ -589,9 +599,9 @@ const CRMPipelineKanban: React.FC = () => {
   }
 
   return (
-    <div className="h-full bg-gray-950 flex flex-col overflow-hidden">
+    <div className="h-full bg-[#181818] flex flex-col overflow-hidden">
       {/* Header — compact single strip */}
-      <div className="bg-black border-b border-gray-800 z-10 shadow-lg flex-shrink-0">
+      <div className="bg-[#1e1e1e] border-b border-white/[0.07] z-10 shadow-lg flex-shrink-0">
         <div className="px-4 py-2">
 
           {/* Row 1: title + search + actions */}
@@ -763,22 +773,24 @@ const CRMPipelineKanban: React.FC = () => {
                 onDragLeave={handleDragLeave}
                 onDrop={(e) => handleDrop(e, status)}
                 className={cn(
-                  'w-[270px] flex-shrink-0 transition-all duration-300 flex flex-col rounded-xl border',
+                  'w-[272px] flex-shrink-0 transition-all duration-300 flex flex-col rounded-xl border overflow-hidden',
                   colors.colBg,
                   isDropTarget
-                    ? 'border-yellow-500/70 shadow-lg shadow-yellow-900/20 scale-[1.015]'
+                    ? 'border-yellow-400/60 shadow-xl shadow-yellow-900/20 scale-[1.015]'
                     : colors.colBorder
                 )}
                 style={{ maxHeight: 'calc(100vh - 200px)' }}
               >
+                {/* Colored top stripe */}
+                <div style={{ height: '3px', backgroundColor: isDropTarget ? '#eab308' : colors.topBar }} />
+
                 {/* Column header */}
                 <div
                   className={cn(
-                    'flex-shrink-0 rounded-t-xl border-b px-3 pt-3 pb-2.5',
+                    'flex-shrink-0 border-b px-3 pt-2.5 pb-2',
                     colors.headerBg,
-                    isDropTarget ? 'border-yellow-600/40' : 'border-white/5'
+                    isDropTarget ? 'border-yellow-600/20' : 'border-white/[0.06]'
                   )}
-                  style={{ borderLeft: `3px solid ${accentColor}` }}
                 >
                   {/* Title row */}
                   <div className="flex items-center justify-between mb-2">
