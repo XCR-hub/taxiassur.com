@@ -192,8 +192,8 @@ export const PipelineCard: React.FC<PipelineCardProps> = ({
       className={cn(
         'rounded-lg border px-3 py-2.5 transition-all duration-200 focus:outline-none focus:ring-1 focus:ring-yellow-500/50 select-none',
         isDragging
-          ? 'opacity-25 scale-95 cursor-grabbing border-yellow-500/40 bg-gray-800'
-          : 'cursor-grab bg-gray-800/90 border-gray-700/60 hover:bg-gray-800 hover:border-gray-600 hover:-translate-y-0.5 hover:shadow-md hover:shadow-black/40',
+          ? 'opacity-25 scale-95 cursor-grabbing border-yellow-500/40 bg-[#2a2a2a]'
+          : 'cursor-grab bg-[#242424] border-gray-700/50 hover:bg-[#2c2c2c] hover:border-gray-500/60 hover:-translate-y-0.5 hover:shadow-md hover:shadow-black/50',
         'active:cursor-grabbing',
         className
       )}

@@ -21,7 +21,6 @@ import {
   LogOut,
   Menu,
   X,
-  Search,
   RefreshCw,
   Copy,
   Receipt,
@@ -30,7 +29,6 @@ import {
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { AdminSessionKeepAlive } from '@/components/AdminSessionKeepAlive';
-import RealtimeNotifications from '@/components/crm/RealtimeNotifications';
 import { CRMPushNotifications } from '@/components/CRMPushNotifications';
 import AdminLogin from '@/components/AdminLogin';
 
@@ -46,7 +44,7 @@ const CRMLayout: React.FC = () => {
   const location = useLocation();
   const { user, signOut, isAuthenticated, loading } = useAdminAuth();
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
+
   const [stats] = useState<CRMStats>({
     unread_messages: 0,
     pending_items: 0,
@@ -304,32 +302,7 @@ const CRMLayout: React.FC = () => {
 
       {/* CONTENU PRINCIPAL À DROITE */}
       <main className="flex-1 flex flex-col overflow-hidden min-w-0">
-        {/* Header */}
-        <header className="bg-white border-b border-gray-200 px-6 py-3.5 flex items-center justify-between flex-shrink-0">
-          <div className="flex items-center gap-4 flex-1 min-w-0">
-            <div className="relative flex-1 max-w-lg">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-              <input
-                type="text"
-                placeholder="Rechercher un lead, contact, email..."
-                className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-yellow-400 focus:border-transparent bg-gray-50 placeholder-gray-400"
-              />
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <button
-              onClick={() => setRefreshing(!refreshing)}
-              disabled={refreshing}
-              className="p-2 hover:bg-gray-100 rounded-xl transition-colors disabled:opacity-50"
-              title="Actualiser"
-            >
-              <RefreshCw size={18} className={`text-gray-500 ${refreshing ? 'animate-spin' : ''}`} />
-            </button>
-
-            <RealtimeNotifications />
-          </div>
-        </header>
+        {/* Notifications push only — no header bar */}
 
         {/* Notifications push */}
         <CRMPushNotifications />

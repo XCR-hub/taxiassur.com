@@ -5,6 +5,7 @@ import { pipelineService, PIPELINE_STATUSES, PipelineStatus, CRMLead } from '@/l
 import { PipelineCard } from '@/components/crm/PipelineCard';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/lib/supabase';
+import RealtimeNotifications from '@/components/crm/RealtimeNotifications';
 
 interface ColumnNotifications {
   newEmails: number;
@@ -26,9 +27,9 @@ const STATUS_COLORS: Record<string, {
     text: 'text-yellow-900',
     badge: 'bg-yellow-500 text-black',
     accent: '#eab308',
-    colBg: 'bg-[#1a1800]',
-    colBorder: 'border-yellow-900/40',
-    headerBg: 'bg-yellow-950/60'
+    colBg: 'bg-yellow-950/30',
+    colBorder: 'border-yellow-700/30',
+    headerBg: 'bg-yellow-900/25'
   },
   COLLECTE_DOCUMENTS: {
     bg: 'bg-gradient-to-br from-amber-50 to-yellow-50',
@@ -36,9 +37,9 @@ const STATUS_COLORS: Record<string, {
     text: 'text-amber-900',
     badge: 'bg-amber-500 text-black',
     accent: '#f59e0b',
-    colBg: 'bg-[#1c1500]',
-    colBorder: 'border-amber-900/40',
-    headerBg: 'bg-amber-950/60'
+    colBg: 'bg-amber-950/30',
+    colBorder: 'border-amber-700/30',
+    headerBg: 'bg-amber-900/25'
   },
   DEVIS: {
     bg: 'bg-gradient-to-br from-gray-800 to-gray-900',
@@ -46,9 +47,9 @@ const STATUS_COLORS: Record<string, {
     text: 'text-yellow-400',
     badge: 'bg-yellow-500 text-black',
     accent: '#d97706',
-    colBg: 'bg-[#1a1100]',
-    colBorder: 'border-orange-900/40',
-    headerBg: 'bg-orange-950/60'
+    colBg: 'bg-orange-950/30',
+    colBorder: 'border-orange-700/30',
+    headerBg: 'bg-orange-900/25'
   },
   DECISION_CLIENT: {
     bg: 'bg-gradient-to-br from-yellow-100 to-yellow-50',
@@ -56,9 +57,9 @@ const STATUS_COLORS: Record<string, {
     text: 'text-yellow-900',
     badge: 'bg-yellow-600 text-black',
     accent: '#ca8a04',
-    colBg: 'bg-[#191600]',
-    colBorder: 'border-yellow-900/30',
-    headerBg: 'bg-yellow-950/50'
+    colBg: 'bg-yellow-950/25',
+    colBorder: 'border-yellow-700/25',
+    headerBg: 'bg-yellow-900/20'
   },
   PAIEMENT: {
     bg: 'bg-gradient-to-br from-green-50 to-emerald-50',
@@ -66,9 +67,9 @@ const STATUS_COLORS: Record<string, {
     text: 'text-green-900',
     badge: 'bg-green-600 text-white',
     accent: '#16a34a',
-    colBg: 'bg-[#001510]',
-    colBorder: 'border-green-900/40',
-    headerBg: 'bg-green-950/60'
+    colBg: 'bg-green-950/30',
+    colBorder: 'border-green-700/30',
+    headerBg: 'bg-green-900/25'
   },
   CONTRAT_SIGNATURE: {
     bg: 'bg-gradient-to-br from-gray-900 to-black',
@@ -76,9 +77,9 @@ const STATUS_COLORS: Record<string, {
     text: 'text-yellow-300',
     badge: 'bg-yellow-400 text-black',
     accent: '#a3a3a3',
-    colBg: 'bg-[#141414]',
-    colBorder: 'border-gray-700/50',
-    headerBg: 'bg-gray-800/60'
+    colBg: 'bg-gray-800/40',
+    colBorder: 'border-gray-600/30',
+    headerBg: 'bg-gray-700/30'
   },
   CLIENT_ACTIF: {
     bg: 'bg-gradient-to-br from-green-100 to-emerald-50',
@@ -86,9 +87,9 @@ const STATUS_COLORS: Record<string, {
     text: 'text-green-900',
     badge: 'bg-green-600 text-white',
     accent: '#22c55e',
-    colBg: 'bg-[#001a0e]',
-    colBorder: 'border-green-800/40',
-    headerBg: 'bg-green-950/70'
+    colBg: 'bg-emerald-950/35',
+    colBorder: 'border-emerald-700/30',
+    headerBg: 'bg-emerald-900/25'
   },
   RELANCE: {
     bg: 'bg-gradient-to-br from-orange-50 to-amber-50',
@@ -96,9 +97,9 @@ const STATUS_COLORS: Record<string, {
     text: 'text-orange-900',
     badge: 'bg-orange-500 text-white',
     accent: '#f97316',
-    colBg: 'bg-[#1c0d00]',
-    colBorder: 'border-orange-900/40',
-    headerBg: 'bg-orange-950/60'
+    colBg: 'bg-orange-950/35',
+    colBorder: 'border-orange-700/30',
+    headerBg: 'bg-orange-900/25'
   },
   PERDU: {
     bg: 'bg-gradient-to-br from-gray-100 to-gray-50',
@@ -106,9 +107,9 @@ const STATUS_COLORS: Record<string, {
     text: 'text-gray-700',
     badge: 'bg-gray-600 text-white',
     accent: '#6b7280',
-    colBg: 'bg-[#101010]',
-    colBorder: 'border-gray-800/50',
-    headerBg: 'bg-gray-900/60'
+    colBg: 'bg-gray-800/35',
+    colBorder: 'border-gray-600/30',
+    headerBg: 'bg-gray-700/25'
   },
   RECONTACT_PROGRAMME: {
     bg: 'bg-gradient-to-br from-yellow-50 to-amber-100',
@@ -116,9 +117,9 @@ const STATUS_COLORS: Record<string, {
     text: 'text-amber-900',
     badge: 'bg-amber-600 text-black',
     accent: '#b45309',
-    colBg: 'bg-[#180f00]',
-    colBorder: 'border-amber-900/40',
-    headerBg: 'bg-amber-950/60'
+    colBg: 'bg-amber-950/35',
+    colBorder: 'border-amber-700/30',
+    headerBg: 'bg-amber-900/25'
   }
 };
 
@@ -647,6 +648,11 @@ const CRMPipelineKanban: React.FC = () => {
                 <Plus size={13} />
                 Nouveau Lead
               </button>
+
+              {/* Notifications déplacées depuis le header global */}
+              <div className="ml-1 pl-2 border-l border-gray-700">
+                <RealtimeNotifications />
+              </div>
             </div>
           </div>
 
