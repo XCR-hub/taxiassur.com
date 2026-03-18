@@ -113,7 +113,7 @@ export default function ClientNotifications() {
 
       await supabase
         .from('crm_event_notifications')
-        .update({ read_at: new Date().toISOString() })
+        .update({ read_at: new Date().toISOString(), is_read: true })
         .in('id', unread);
 
       setNotifications(prev => prev.map(n => ({
@@ -131,7 +131,7 @@ export default function ClientNotifications() {
     try {
       await supabase
         .from('crm_event_notifications')
-        .update({ read_at: new Date().toISOString() })
+        .update({ read_at: new Date().toISOString(), is_read: true })
         .eq('id', id);
 
       setNotifications(prev => prev.map(n =>
