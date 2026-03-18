@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { FileText, Shield, CreditCard, Bell, TrendingUp, Calendar, CheckCircle, Clock, AlertCircle, ChevronRight, Package } from 'lucide-react';
+import { FileText, Shield, CreditCard, Bell, TrendingUp, Calendar, CheckCircle, Clock, AlertCircle, ChevronRight, Package, Phone, Mail } from 'lucide-react';
 import ClientLayout from '../../components/client/ClientLayout';
 import SEOHead from '../../components/SEOHead';
 import { supabase } from '@/lib/supabase';
@@ -52,7 +52,9 @@ export default function ClientDashboard() {
 
   const [userData, setUserData] = useState<UserData | null>(null);
   const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
+  const [sinistresCount, setSinistresCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const emailParam = email ? `?email=${encodeURIComponent(email)}` : '';
 
   useEffect(() => {
     if (!email) {
@@ -74,12 +76,25 @@ export default function ClientDashboard() {
         setUserData(data as UserData);
         if (data.lead_id) {
           loadRecentActivity(data.lead_id);
+          loadSinistresCount(data.lead_id);
         }
       }
     } catch (error) {
       logger.error('Error loading user data:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadSinistresCount = async (leadId: string) => {
+    try {
+      const { count } = await supabase
+        .from('crm_claims')
+        .select('id', { count: 'exact', head: true })
+        .eq('lead_id', leadId)
+        .not('claim_status', 'eq', 'closed');
+      setSinistresCount(count || 0);
+    } catch {
     }
   };
 
@@ -183,7 +198,7 @@ export default function ClientDashboard() {
       value: String(userData.doc_count),
       sublabel: userData.doc_count === 0 ? 'Aucun document' : userData.doc_count === 1 ? 'Document reçu' : 'Documents reçus',
       color: 'bg-yellow-100 text-yellow-600',
-      link: '/client/documents'
+      link: `/client/documents${emailParam}`
     },
     {
       icon: Package,
@@ -191,15 +206,15 @@ export default function ClientDashboard() {
       value: String(userData.quote_count),
       sublabel: userData.quote_count === 0 ? 'En attente' : userData.quote_count === 1 ? 'Devis disponible' : 'Devis disponibles',
       color: userData.quote_count > 0 ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-500',
-      link: '/espace-prospect'
+      link: userData.access_token ? `/espace-prospect?token=${userData.access_token}` : '/espace-prospect'
     },
     {
       icon: Shield,
       label: 'Sinistres',
-      value: '0',
-      sublabel: 'En cours',
-      color: 'bg-green-100 text-green-600',
-      link: '/client/sinistres'
+      value: String(sinistresCount),
+      sublabel: sinistresCount === 0 ? 'Aucun en cours' : 'En cours',
+      color: sinistresCount > 0 ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600',
+      link: `/client/sinistres${emailParam}`
     },
     {
       icon: Bell,
@@ -207,7 +222,7 @@ export default function ClientDashboard() {
       value: String(userData.notification_count),
       sublabel: userData.notification_count === 0 ? 'Aucune' : 'Non lues',
       color: userData.notification_count > 0 ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-gray-500',
-      link: '/client/notifications'
+      link: `/client/notifications${emailParam}`
     }
   ];
 
@@ -329,7 +344,7 @@ export default function ClientDashboard() {
           {/* Quick actions */}
           <div className="grid sm:grid-cols-3 gap-4">
             <a
-              href="/client/documents"
+              href={`/client/documents${emailParam}`}
               className="bg-white rounded-xl p-5 border border-gray-100 hover:border-yellow-400 hover:shadow-md transition-all flex items-center gap-4 group"
             >
               <div className="w-12 h-12 bg-yellow-100 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:bg-yellow-200 transition-colors">
@@ -343,7 +358,7 @@ export default function ClientDashboard() {
             </a>
 
             <a
-              href="/client/sinistres"
+              href={`/client/sinistres${emailParam}`}
               className="bg-white rounded-xl p-5 border border-gray-100 hover:border-red-300 hover:shadow-md transition-all flex items-center gap-4 group"
             >
               <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:bg-red-200 transition-colors">
@@ -357,7 +372,7 @@ export default function ClientDashboard() {
             </a>
 
             <a
-              href="/client/paiements"
+              href={`/client/paiements${emailParam}`}
               className="bg-white rounded-xl p-5 border border-gray-100 hover:border-green-300 hover:shadow-md transition-all flex items-center gap-4 group"
             >
               <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:bg-green-200 transition-colors">
@@ -409,31 +424,26 @@ export default function ClientDashboard() {
           </div>
 
           {/* Help block */}
-          <div className="bg-gray-50 border border-gray-200 rounded-xl p-6">
-            <div className="flex items-start gap-4">
-              <div className="w-11 h-11 bg-yellow-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                <Bell className="w-5 h-5 text-yellow-600" />
-              </div>
-              <div>
-                <h3 className="font-bold text-gray-900 mb-1">Besoin d'Aide ?</h3>
-                <p className="text-sm text-gray-600 mb-4">
-                  Notre équipe est disponible du lundi au vendredi de 9h à 18h.
-                </p>
-                <div className="flex flex-wrap gap-3">
-                  <a
-                    href="tel:0180855786"
-                    className="px-4 py-2 bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-700 hover:to-yellow-600 text-black rounded-lg font-semibold text-sm transition-all"
-                  >
-                    01 80 85 57 86
-                  </a>
-                  <a
-                    href="mailto:team@taxiassur.com"
-                    className="px-4 py-2 bg-white hover:bg-gray-100 text-gray-700 border border-gray-300 rounded-lg font-semibold text-sm transition-all"
-                  >
-                    team@taxiassur.com
-                  </a>
-                </div>
-              </div>
+          <div className="bg-gray-50 border border-gray-200 rounded-xl p-5">
+            <h3 className="font-bold text-gray-900 mb-1">Besoin d'aide ?</h3>
+            <p className="text-sm text-gray-600 mb-3">
+              Notre équipe est disponible du lundi au vendredi de 9h à 18h.
+            </p>
+            <div className="flex flex-wrap gap-3">
+              <a
+                href="tel:0180855786"
+                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-700 hover:to-yellow-600 text-black rounded-lg font-semibold text-sm transition-all"
+              >
+                <Phone size={14} />
+                01 80 85 57 86
+              </a>
+              <a
+                href="mailto:team@taxiassur.com"
+                className="flex items-center gap-2 px-4 py-2 bg-white hover:bg-gray-100 text-gray-700 border border-gray-200 rounded-lg font-semibold text-sm transition-all"
+              >
+                <Mail size={14} />
+                team@taxiassur.com
+              </a>
             </div>
           </div>
 
