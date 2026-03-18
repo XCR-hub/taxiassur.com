@@ -62,13 +62,10 @@ export default function ClientProfil() {
     setLoading(true);
     try {
       const { data, error } = await supabase
-        .from('client_portal_users')
-        .select('*')
-        .eq('email', email.toLowerCase().trim())
-        .maybeSingle();
+        .rpc('get_client_portal_data_by_email', { p_email: email.toLowerCase().trim() });
 
       if (error) throw error;
-      if (data) {
+      if (data?.success) {
         setUserData(data);
         setAddressForm({
           street: data.address || '',
@@ -77,9 +74,9 @@ export default function ClientProfil() {
           country: 'France'
         });
         setRibForm({
-          iban: data.iban || '',
-          bic: data.bic || '',
-          account_holder: data.client_name || ''
+          iban: '',
+          bic: '',
+          account_holder: data.full_name || ''
         });
       }
     } catch (error) {
@@ -99,9 +96,9 @@ export default function ClientProfil() {
           client_email: email,
           request_type: 'address_change',
           old_data: {
-            street: userData?.address,
-            postal_code: userData?.postal_code,
-            city: userData?.city
+            street: userData?.address || '',
+            postal_code: userData?.postal_code || '',
+            city: userData?.city || ''
           },
           new_data: addressForm,
           status: 'pending'
@@ -247,10 +244,10 @@ export default function ClientProfil() {
               </div>
               <div>
                 <h2 className="text-2xl font-bold mb-1">
-                  {userData?.client_name || 'Client TaxiAssur'}
+                  {userData?.full_name || (userData?.first_name ? `${userData.first_name} ${userData.last_name || ''}`.trim() : 'Client TaxiAssur')}
                 </h2>
                 <p className="text-sm opacity-90">
-                  Membre depuis {userData?.created_at ? new Date(userData.created_at).getFullYear() : '2024'}
+                  Membre depuis {userData?.created_at ? new Date(userData.created_at).getFullYear() : new Date().getFullYear()}
                 </p>
               </div>
             </div>
@@ -274,7 +271,7 @@ export default function ClientProfil() {
                   <div>
                     <div className="text-sm text-gray-600">Nom Complet</div>
                     <div className="font-semibold text-gray-900">
-                      {userData?.client_name || 'Non renseigne'}
+                      {userData?.full_name || (userData?.first_name ? `${userData.first_name} ${userData.last_name || ''}`.trim() : 'Non renseigne')}
                     </div>
                   </div>
                 </div>
@@ -302,7 +299,7 @@ export default function ClientProfil() {
                   <div>
                     <div className="text-sm text-gray-600">Adresse</div>
                     <div className="font-semibold text-gray-900">
-                      {userData?.address || 'Non renseignee'}
+                      {[userData?.address, userData?.postal_code, userData?.city].filter(Boolean).join(', ') || 'Non renseignee'}
                     </div>
                   </div>
                 </div>
@@ -326,7 +323,7 @@ export default function ClientProfil() {
                   <div>
                     <div className="text-sm text-gray-600">Numero de Police</div>
                     <div className="font-semibold text-gray-900">
-                      {userData?.policy_number || 'TAXI-2024-XXX'}
+                      {userData?.lead_id ? `REF-${String(userData.lead_id).substring(0, 8).toUpperCase()}` : 'En cours'}
                     </div>
                   </div>
                 </div>
@@ -334,9 +331,11 @@ export default function ClientProfil() {
                 <div className="flex items-start gap-3">
                   <Calendar size={20} className="text-gray-600 mt-0.5" />
                   <div>
-                    <div className="text-sm text-gray-600">Date d'Echeance</div>
+                    <div className="text-sm text-gray-600">Date de signature</div>
                     <div className="font-semibold text-gray-900">
-                      {userData?.renewal_date || '31/12/2025'}
+                      {userData?.contract_signed_at
+                        ? new Date(userData.contract_signed_at).toLocaleDateString('fr-FR')
+                        : 'En attente'}
                     </div>
                   </div>
                 </div>
@@ -344,17 +343,19 @@ export default function ClientProfil() {
                 <div className="flex items-start gap-3">
                   <CreditCard size={20} className="text-gray-600 mt-0.5" />
                   <div>
-                    <div className="text-sm text-gray-600">Formule</div>
+                    <div className="text-sm text-gray-600">Etape dossier</div>
                     <div className="font-semibold text-gray-900">
-                      {userData?.contract_type || 'Tous Risques'}
+                      {userData?.pipeline_stage || userData?.current_stage_key || 'En cours de traitement'}
                     </div>
                   </div>
                 </div>
 
-                <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
-                  <div className="flex items-center gap-2 text-green-700">
+                <div className={`mt-4 p-4 rounded-lg border ${userData?.contract_signed ? 'bg-green-50 border-green-200' : 'bg-yellow-50 border-yellow-200'}`}>
+                  <div className={`flex items-center gap-2 ${userData?.contract_signed ? 'text-green-700' : 'text-yellow-700'}`}>
                     <Shield size={16} />
-                    <span className="font-semibold text-sm">Contrat Actif</span>
+                    <span className="font-semibold text-sm">
+                      {userData?.contract_signed ? 'Contrat Signe' : 'Dossier en cours'}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -420,7 +421,7 @@ export default function ClientProfil() {
                   <div>
                     <div className="text-sm text-gray-600">Vehicule Assure</div>
                     <div className="font-semibold text-gray-900">
-                      {userData?.vehicle_info || 'Non renseigne'}
+                      {userData?.company_name ? `Taxi assuré via ${userData.company_name}` : 'Non renseigne'}
                     </div>
                   </div>
                 </div>
@@ -430,7 +431,7 @@ export default function ClientProfil() {
                   <div>
                     <div className="text-sm text-gray-600">Immatriculation</div>
                     <div className="font-semibold text-gray-900 font-mono">
-                      {userData?.license_plate || 'XX-XXX-XX'}
+                      {userData?.immatriculation || 'XX-XXX-XX'}
                     </div>
                   </div>
                 </div>
