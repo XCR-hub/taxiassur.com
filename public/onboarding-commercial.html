@@ -1,0 +1,1890 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Guide de bienvenue - Commercial TaxiAssur</title>
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --yellow: #F59E0B;
+      --yellow-50: #FFFBEB;
+      --yellow-100: #FEF3C7;
+      --yellow-dark: #D97706;
+      --yellow-xdark: #92400E;
+      --dark: #0F172A;
+      --slate-800: #1E293B;
+      --slate-700: #334155;
+      --slate-600: #475569;
+      --slate-500: #64748B;
+      --slate-300: #CBD5E1;
+      --slate-200: #E2E8F0;
+      --slate-100: #F1F5F9;
+      --slate-50: #F8FAFC;
+      --white: #FFFFFF;
+      --green-600: #059669;
+      --green-500: #10B981;
+      --green-100: #D1FAE5;
+      --green-50: #ECFDF5;
+      --blue-600: #2563EB;
+      --blue-500: #3B82F6;
+      --blue-100: #DBEAFE;
+      --blue-50: #EFF6FF;
+      --orange-600: #EA580C;
+      --orange-500: #F97316;
+      --orange-100: #FFEDD5;
+      --red-500: #EF4444;
+      --red-100: #FEE2E2;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+      background: var(--slate-50);
+      color: var(--dark);
+      line-height: 1.6;
+      font-size: 15px;
+    }
+
+    /* ─── NAV ─── */
+    .nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(15, 23, 42, 0.97);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .nav-inner {
+      max-width: 1040px;
+      margin: 0 auto;
+      padding: 0 32px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+    }
+
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      flex-shrink: 0;
+    }
+
+    .nav-logo-icon {
+      width: 30px;
+      height: 30px;
+      background: var(--yellow);
+      border-radius: 7px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .nav-logo span {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--white);
+    }
+
+    .nav-logo span em {
+      font-style: normal;
+      color: var(--yellow);
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 4px;
+      list-style: none;
+      overflow-x: auto;
+    }
+
+    .nav-links a {
+      display: block;
+      padding: 6px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      color: rgba(255,255,255,0.6);
+      text-decoration: none;
+      border-radius: 6px;
+      white-space: nowrap;
+      transition: all 0.15s;
+    }
+
+    .nav-links a:hover {
+      color: var(--white);
+      background: rgba(255,255,255,0.08);
+    }
+
+    /* ─── HERO ─── */
+    .hero {
+      background: var(--dark);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-bg {
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(circle at 20% 50%, rgba(245,158,11,0.12) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(59,130,246,0.08) 0%, transparent 40%);
+    }
+
+    .hero-stripe {
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--yellow) 0%, var(--yellow-dark) 60%, transparent 100%);
+    }
+
+    .hero-inner {
+      max-width: 1040px;
+      margin: 0 auto;
+      padding: 80px 32px 96px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(245,158,11,0.15);
+      border: 1px solid rgba(245,158,11,0.3);
+      color: var(--yellow);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 6px 14px;
+      border-radius: 20px;
+      margin-bottom: 28px;
+    }
+
+    .hero h1 {
+      font-size: clamp(32px, 5vw, 52px);
+      font-weight: 900;
+      color: var(--white);
+      letter-spacing: -1.5px;
+      line-height: 1.1;
+      margin-bottom: 20px;
+    }
+
+    .hero h1 span { color: var(--yellow); }
+
+    .hero-lead {
+      font-size: 18px;
+      color: rgba(255,255,255,0.65);
+      max-width: 580px;
+      line-height: 1.6;
+      margin-bottom: 40px;
+    }
+
+    .hero-cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      max-width: 560px;
+    }
+
+    .hero-card {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 10px;
+      padding: 16px;
+      text-align: center;
+    }
+
+    .hero-card-num {
+      font-size: 28px;
+      font-weight: 900;
+      color: var(--yellow);
+      letter-spacing: -1px;
+      line-height: 1;
+    }
+
+    .hero-card-label {
+      font-size: 11px;
+      color: rgba(255,255,255,0.5);
+      margin-top: 4px;
+      line-height: 1.3;
+    }
+
+    /* ─── LAYOUT ─── */
+    .page {
+      max-width: 1040px;
+      margin: 0 auto;
+      padding: 0 32px 100px;
+    }
+
+    /* ─── SECTION ─── */
+    .section {
+      padding-top: 72px;
+    }
+
+    .section-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    .section-eyebrow.yellow { color: var(--yellow-dark); }
+    .section-eyebrow.green  { color: var(--green-600); }
+    .section-eyebrow.blue   { color: var(--blue-600); }
+    .section-eyebrow.orange { color: var(--orange-600); }
+
+    .section-eyebrow span {
+      width: 20px;
+      height: 2px;
+      background: currentColor;
+      display: inline-block;
+      border-radius: 2px;
+    }
+
+    .section > h2 {
+      font-size: clamp(22px, 3vw, 30px);
+      font-weight: 800;
+      color: var(--dark);
+      letter-spacing: -0.5px;
+      margin-bottom: 8px;
+      line-height: 1.2;
+    }
+
+    .section > p.lead {
+      font-size: 16px;
+      color: var(--slate-500);
+      max-width: 640px;
+      margin-bottom: 36px;
+      line-height: 1.6;
+    }
+
+    .divider {
+      height: 1px;
+      background: var(--slate-200);
+      margin-top: 72px;
+    }
+
+    /* ─── GRID CARDS ─── */
+    .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+
+    .card {
+      background: var(--white);
+      border: 1px solid var(--slate-200);
+      border-radius: 14px;
+      padding: 24px;
+    }
+
+    .card-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 14px;
+      flex-shrink: 0;
+    }
+
+    .card-icon.yellow { background: var(--yellow-100); color: var(--yellow-dark); }
+    .card-icon.green  { background: var(--green-100); color: var(--green-600); }
+    .card-icon.blue   { background: var(--blue-100); color: var(--blue-600); }
+    .card-icon.orange { background: var(--orange-100); color: var(--orange-600); }
+    .card-icon.red    { background: var(--red-100); color: var(--red-500); }
+
+    .card h3 {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--dark);
+      margin-bottom: 6px;
+    }
+
+    .card p {
+      font-size: 13px;
+      color: var(--slate-500);
+      line-height: 1.55;
+    }
+
+    /* ─── PRODUCT CARDS ─── */
+    .product-card {
+      background: var(--white);
+      border: 1px solid var(--slate-200);
+      border-radius: 14px;
+      padding: 0;
+      overflow: hidden;
+      transition: box-shadow 0.2s;
+    }
+
+    .product-card:hover { box-shadow: 0 8px 24px rgba(0,0,0,0.08); }
+
+    .product-card-header {
+      padding: 24px 24px 16px;
+      border-bottom: 1px solid var(--slate-100);
+    }
+
+    .product-tag {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      padding: 3px 10px;
+      border-radius: 20px;
+      margin-bottom: 10px;
+    }
+
+    .product-tag.yellow { background: var(--yellow-100); color: var(--yellow-dark); }
+    .product-tag.blue   { background: var(--blue-100); color: var(--blue-600); }
+    .product-tag.green  { background: var(--green-100); color: var(--green-600); }
+    .product-tag.orange { background: var(--orange-100); color: var(--orange-600); }
+
+    .product-card h3 {
+      font-size: 17px;
+      font-weight: 800;
+      color: var(--dark);
+      margin-bottom: 6px;
+    }
+
+    .product-card > div p {
+      font-size: 13px;
+      color: var(--slate-500);
+      line-height: 1.5;
+    }
+
+    .product-card-body {
+      padding: 16px 24px 20px;
+    }
+
+    .product-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .product-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--slate-600);
+      line-height: 1.4;
+    }
+
+    .product-list li::before {
+      content: '';
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--yellow);
+      flex-shrink: 0;
+      margin-top: 6px;
+    }
+
+    /* ─── PARTNERS ─── */
+    .partner-card {
+      background: var(--white);
+      border: 1px solid var(--slate-200);
+      border-radius: 12px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .partner-logo-box {
+      height: 52px;
+      display: flex;
+      align-items: center;
+    }
+
+    .partner-logo-box img {
+      max-height: 44px;
+      max-width: 120px;
+      object-fit: contain;
+    }
+
+    .partner-logo-text {
+      font-size: 20px;
+      font-weight: 900;
+      color: var(--dark);
+      letter-spacing: -0.5px;
+    }
+
+    .partner-card h4 {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--dark);
+    }
+
+    .partner-contact {
+      font-size: 12px;
+      color: var(--slate-500);
+      line-height: 1.6;
+    }
+
+    .partner-contact a {
+      color: var(--blue-500);
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .partner-contact a:hover { text-decoration: underline; }
+
+    /* ─── PIPELINE ─── */
+    .pipeline {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .pipeline-step {
+      display: flex;
+      gap: 24px;
+      position: relative;
+    }
+
+    .pipeline-left {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 48px;
+      flex-shrink: 0;
+    }
+
+    .pipeline-circle {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      font-weight: 900;
+      flex-shrink: 0;
+      position: relative;
+      z-index: 1;
+    }
+
+    .pipeline-line {
+      width: 2px;
+      flex: 1;
+      min-height: 24px;
+      margin: 4px 0;
+    }
+
+    .pipeline-right {
+      background: var(--white);
+      border: 1px solid var(--slate-200);
+      border-radius: 14px;
+      padding: 20px 24px;
+      margin-bottom: 16px;
+      flex: 1;
+      transition: box-shadow 0.2s;
+    }
+
+    .pipeline-right:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.06); }
+
+    .pipeline-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .pipeline-right h3 {
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--dark);
+    }
+
+    .pipeline-time {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 20px;
+      background: var(--slate-100);
+      color: var(--slate-500);
+    }
+
+    .pipeline-right p {
+      font-size: 13px;
+      color: var(--slate-500);
+      line-height: 1.55;
+      margin-bottom: 12px;
+    }
+
+    .pipeline-tasks {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .ptask {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--slate-600);
+    }
+
+    .ptask-icon {
+      width: 18px;
+      height: 18px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    /* ─── DOCS CHECKLIST ─── */
+    .docs-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+
+    .doc-group {
+      background: var(--white);
+      border: 1px solid var(--slate-200);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .doc-group-header {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--slate-100);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .doc-group-header h4 {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--dark);
+    }
+
+    .doc-group-header small {
+      font-size: 11px;
+      color: var(--slate-400);
+      margin-left: auto;
+    }
+
+    .doc-list {
+      padding: 8px 0;
+    }
+
+    .doc-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 18px;
+      border-bottom: 1px solid var(--slate-100);
+    }
+
+    .doc-item:last-child { border-bottom: none; }
+
+    .doc-check {
+      width: 18px;
+      height: 18px;
+      border-radius: 4px;
+      border: 2px solid var(--slate-300);
+      flex-shrink: 0;
+    }
+
+    .doc-item span {
+      font-size: 13px;
+      color: var(--slate-600);
+    }
+
+    .doc-required {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--red-500);
+      background: var(--red-100);
+      padding: 1px 6px;
+      border-radius: 10px;
+      margin-left: auto;
+      flex-shrink: 0;
+    }
+
+    .doc-optional {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--slate-400);
+      background: var(--slate-100);
+      padding: 1px 6px;
+      border-radius: 10px;
+      margin-left: auto;
+      flex-shrink: 0;
+    }
+
+    /* ─── TOOLS ─── */
+    .tool-card {
+      background: var(--white);
+      border: 1px solid var(--slate-200);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+
+    .tool-header {
+      padding: 20px 24px 16px;
+      border-bottom: 1px solid var(--slate-100);
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+    }
+
+    .tool-body {
+      padding: 16px 24px 20px;
+    }
+
+    .tool-body ul {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .tool-body li {
+      display: flex;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--slate-600);
+      line-height: 1.4;
+    }
+
+    .tool-body li::before {
+      content: '→';
+      color: var(--yellow-dark);
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .tool-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 14px;
+      padding: 8px 16px;
+      background: var(--dark);
+      color: var(--white);
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      text-decoration: none;
+      transition: all 0.15s;
+    }
+
+    .tool-link:hover { background: var(--slate-700); }
+
+    /* ─── DAILY ─── */
+    .day-section {
+      background: var(--white);
+      border: 1px solid var(--slate-200);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+
+    .day-header {
+      padding: 14px 20px;
+      background: var(--slate-800);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .day-header span {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--white);
+    }
+
+    .day-header small {
+      font-size: 11px;
+      color: rgba(255,255,255,0.5);
+      margin-left: auto;
+    }
+
+    .day-items {
+      padding: 4px 0;
+    }
+
+    .day-item {
+      display: flex;
+      gap: 16px;
+      padding: 12px 20px;
+      border-bottom: 1px solid var(--slate-100);
+      align-items: flex-start;
+    }
+
+    .day-item:last-child { border-bottom: none; }
+
+    .day-time {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--yellow-dark);
+      background: var(--yellow-100);
+      padding: 2px 8px;
+      border-radius: 6px;
+      white-space: nowrap;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .day-item p {
+      font-size: 13px;
+      color: var(--slate-600);
+      line-height: 1.45;
+    }
+
+    .day-item strong {
+      color: var(--dark);
+      font-weight: 600;
+    }
+
+    /* ─── RULES ─── */
+    .rules-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .rule-card {
+      border-radius: 12px;
+      padding: 20px;
+    }
+
+    .rule-card.do   { background: var(--green-50);  border: 1px solid rgba(16,185,129,0.2); }
+    .rule-card.dont { background: var(--red-100); border: 1px solid rgba(239,68,68,0.2); }
+
+    .rule-card-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .rule-card-header h4 {
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .rule-card.do   h4 { color: var(--green-600); }
+    .rule-card.dont h4 { color: var(--red-500); }
+
+    .rule-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .rule-list li {
+      display: flex;
+      gap: 8px;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .rule-card.do   li { color: var(--green-600); }
+    .rule-card.dont li { color: var(--red-500); }
+
+    .rule-list li::before {
+      flex-shrink: 0;
+      font-weight: 900;
+    }
+
+    .rule-card.do   li::before { content: '✓'; }
+    .rule-card.dont li::before { content: '✗'; }
+
+    /* ─── LINKS FOOTER ─── */
+    .links-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+
+    .link-card {
+      background: var(--dark);
+      border-radius: 12px;
+      padding: 20px;
+      text-decoration: none;
+      transition: all 0.2s;
+      display: block;
+    }
+
+    .link-card:hover { background: var(--slate-700); transform: translateY(-2px); }
+
+    .link-card-icon {
+      width: 36px;
+      height: 36px;
+      background: rgba(245,158,11,0.15);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 12px;
+      color: var(--yellow);
+    }
+
+    .link-card h4 {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--white);
+      margin-bottom: 3px;
+    }
+
+    .link-card p {
+      font-size: 12px;
+      color: rgba(255,255,255,0.45);
+      line-height: 1.4;
+    }
+
+    /* ─── TIP BOX ─── */
+    .tip-box {
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+      border-radius: 10px;
+      padding: 16px 20px;
+      margin-top: 20px;
+    }
+
+    .tip-box.blue   { background: var(--blue-50);   border: 1px solid rgba(59,130,246,0.2); }
+    .tip-box.yellow { background: var(--yellow-50); border: 1px solid rgba(245,158,11,0.3); }
+    .tip-box.green  { background: var(--green-50);  border: 1px solid rgba(16,185,129,0.2); }
+
+    .tip-box.blue   p { color: var(--blue-600); }
+    .tip-box.yellow p { color: var(--yellow-xdark); }
+    .tip-box.green  p { color: var(--green-600); }
+
+    .tip-box p {
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .tip-box strong { font-weight: 700; }
+
+    /* ─── WELCOME BANNER ─── */
+    .welcome-banner {
+      background: linear-gradient(135deg, var(--dark) 0%, var(--slate-800) 100%);
+      border-radius: 16px;
+      padding: 40px;
+      margin-top: 72px;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 32px;
+      flex-wrap: wrap;
+    }
+
+    .welcome-banner::before {
+      content: '';
+      position: absolute;
+      top: -40px; right: -40px;
+      width: 200px; height: 200px;
+      background: radial-gradient(circle, rgba(245,158,11,0.15) 0%, transparent 70%);
+      border-radius: 50%;
+    }
+
+    .welcome-banner h3 {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--white);
+      margin-bottom: 6px;
+      position: relative;
+    }
+
+    .welcome-banner p {
+      font-size: 14px;
+      color: rgba(255,255,255,0.55);
+      position: relative;
+    }
+
+    .welcome-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 28px;
+      background: var(--yellow);
+      color: var(--dark);
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 800;
+      text-decoration: none;
+      transition: all 0.15s;
+      position: relative;
+      white-space: nowrap;
+    }
+
+    .welcome-btn:hover { background: var(--yellow-dark); color: var(--white); }
+
+    /* ─── FOOTER ─── */
+    footer {
+      border-top: 1px solid var(--slate-200);
+      margin-top: 80px;
+      padding: 32px;
+      text-align: center;
+      font-size: 12px;
+      color: var(--slate-400);
+    }
+
+    /* ─── RESPONSIVE ─── */
+    @media (max-width: 768px) {
+      .nav-links { display: none; }
+      .page { padding: 0 20px 80px; }
+      .hero-inner { padding: 56px 20px 72px; }
+      .hero-cards { grid-template-columns: repeat(3, 1fr); }
+      .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+      .docs-grid, .rules-grid, .links-grid { grid-template-columns: 1fr; }
+      .welcome-banner { padding: 28px 24px; }
+      .pipeline-right h3 { font-size: 15px; }
+    }
+
+    @media print {
+      .nav { display: none; }
+      .tool-link, .welcome-btn { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav class="nav">
+    <div class="nav-inner">
+      <a href="#" class="nav-logo">
+        <div class="nav-logo-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0F172A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 17H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v3"/>
+            <rect x="9" y="11" width="14" height="10" rx="2"/>
+            <circle cx="12" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
+          </svg>
+        </div>
+        <span>Taxi<em>Assur</em> — Guide Commercial</span>
+      </a>
+      <ul class="nav-links">
+        <li><a href="#entreprise">L'entreprise</a></li>
+        <li><a href="#produits">Produits</a></li>
+        <li><a href="#compagnies">Compagnies</a></li>
+        <li><a href="#pipeline">Pipeline</a></li>
+        <li><a href="#documents">Documents</a></li>
+        <li><a href="#outils">Outils</a></li>
+        <li><a href="#quotidien">Quotidien</a></li>
+        <li><a href="#regles">Regles</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-stripe"></div>
+    <div class="hero-inner">
+      <div class="hero-eyebrow">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+        Guide de prise de poste
+      </div>
+      <h1>Bienvenue chez<br><span>TaxiAssur.</span></h1>
+      <p class="hero-lead">
+        Ce guide vous explique tout ce dont vous avez besoin pour demarrer : les produits, les outils, les clients, le processus de vente et les bonnes pratiques.
+      </p>
+      <div class="hero-cards">
+        <div class="hero-card">
+          <div class="hero-card-num">50+</div>
+          <div class="hero-card-label">Leads actifs dans le CRM</div>
+        </div>
+        <div class="hero-card">
+          <div class="hero-card-num">5</div>
+          <div class="hero-card-label">Compagnies partenaires</div>
+        </div>
+        <div class="hero-card">
+          <div class="hero-card-num">7</div>
+          <div class="hero-card-label">Etapes dans le pipeline</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="page">
+
+    <!-- ─── 1. L'ENTREPRISE ─── -->
+    <div class="section" id="entreprise">
+      <div class="section-eyebrow yellow"><span></span> L'entreprise</div>
+      <h2>Qui est TaxiAssur ?</h2>
+      <p class="lead">Un courtier specialise dans l'assurance des chauffeurs de taxi et VTC en France. Notre valeur : rapidite, transparence et expertise metier.</p>
+
+      <div class="grid-3">
+        <div class="card">
+          <div class="card-icon yellow">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          </div>
+          <h3>Specialiste taxi</h3>
+          <p>Nous sommes courtiers, pas assureurs. Nous comparons les offres de plusieurs compagnies pour trouver la meilleure solution pour chaque client.</p>
+        </div>
+        <div class="card">
+          <div class="card-icon blue">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </div>
+          <h3>Rapidite d'execution</h3>
+          <p>Notre promesse : devis sous 24h, contrat sous 72h. Les clients taxi ont des contraintes de dates fortes (renouvellement, nouvelle carte).</p>
+        </div>
+        <div class="card">
+          <div class="card-icon green">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          </div>
+          <h3>Processus 100% digital</h3>
+          <p>Devis en ligne, espace prospect, signature electronique, paiement CB securise. Le client n'a jamais besoin de se deplacer.</p>
+        </div>
+        <div class="card">
+          <div class="card-icon orange">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </div>
+          <h3>Clientele cible</h3>
+          <p>Artisans taxis, VTC, motos-taxis, flottes de vehicules. Profils : auto-entrepreneurs, SARL familiales, jeunes chauffeurs, seniors en renouvellement.</p>
+        </div>
+        <div class="card">
+          <div class="card-icon yellow">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          </div>
+          <h3>Revenu commercial</h3>
+          <p>Commissionnement sur chaque contrat signe. Plus le dossier est qualifie rapidement, plus le taux de transformation est eleve. La rapidite = la performance.</p>
+        </div>
+        <div class="card">
+          <div class="card-icon green">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          </div>
+          <h3>Zone geographique</h3>
+          <p>France entiere. Les leads viennent de toutes les villes (Paris, Lyon, Marseille, Bordeaux...). Pas de secteur exclusif — premier arrive, premier servi dans le CRM.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ─── 2. PRODUITS ─── -->
+    <div class="section" id="produits">
+      <div class="section-eyebrow blue"><span></span> Nos produits</div>
+      <h2>Ce que vous vendez</h2>
+      <p class="lead">Quatre grandes familles d'assurance. La majorite des dossiers concerne l'assurance taxi individuelle (artisan) ou flotte.</p>
+
+      <div class="grid-2">
+        <div class="product-card">
+          <div class="product-card-header">
+            <span class="product-tag yellow">Coeur de metier</span>
+            <h3>Assurance Taxi Artisan</h3>
+            <p>Le produit phare. Couvre l'activite de transport de personnes avec compteur (artisan taxi independant).</p>
+          </div>
+          <div class="product-card-body">
+            <ul class="product-list">
+              <li>Responsabilite Civile Professionnelle (obligatoire)</li>
+              <li>Garantie conducteur</li>
+              <li>Tous risques / Tiers etendu</li>
+              <li>Bris de glace, vol, incendie</li>
+              <li>Assistance 0km / vehicule de remplacement</li>
+              <li>Contenu professionnel (compteur, terminal CB)</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="product-card">
+          <div class="product-card-header">
+            <span class="product-tag blue">En developpement</span>
+            <h3>Assurance VTC</h3>
+            <p>Pour les chauffeurs VTC (Uber, Bolt...). Produit distinct du taxi — legislation differente, assureurs differents.</p>
+          </div>
+          <div class="product-card-body">
+            <ul class="product-list">
+              <li>RC obligatoire transport de personnes (pas taxi)</li>
+              <li>Garanties similaires au taxi mais tarifs differents</li>
+              <li>Importante difference : pas de carte taxi professionnelle</li>
+              <li>Renvoi vers compagnies specialisees si besoin</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="product-card">
+          <div class="product-card-header">
+            <span class="product-tag orange">Specifique</span>
+            <h3>Assurance Moto-Taxi</h3>
+            <p>Transport de personnes en 2 roues motorises. Produit de niche avec peu de compagnies acceptantes.</p>
+          </div>
+          <div class="product-card-body">
+            <ul class="product-list">
+              <li>RC pro transport 2 roues</li>
+              <li>Specifique zones urbaines denses (Paris, Lyon)</li>
+              <li>Compagnies acceptantes limitees — traitement manuel</li>
+              <li>Delai de traitement plus long</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="product-card">
+          <div class="product-card-header">
+            <span class="product-tag green">Volume</span>
+            <h3>Assurance Flotte Taxi</h3>
+            <p>Pour les societes exploitant plusieurs vehicules. Ticket moyen plus eleve, dossier plus complexe.</p>
+          </div>
+          <div class="product-card-body">
+            <ul class="product-list">
+              <li>A partir de 2 vehicules</li>
+              <li>Tarification globalisee plus avantageuse</li>
+              <li>Interlocuteur unique pour la gestion</li>
+              <li>Necessite un devis specifique aupres des compagnies</li>
+              <li>Documents supplementaires (Kbis, bilans...)</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="tip-box yellow">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0; margin-top:2px;">
+          <path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 1 1 7.072 0l-.548.547A3.374 3.374 0 0 0 14 18.469V19a2 2 0 1 1-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+        </svg>
+        <p><strong>Le plus vendu :</strong> l'assurance taxi artisan tous risques. C'est l'offre sur laquelle vous serez le plus souvent positionne. Maitrisez-la en priorite.</p>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ─── 3. COMPAGNIES ─── -->
+    <div class="section" id="compagnies">
+      <div class="section-eyebrow green"><span></span> Partenaires</div>
+      <h2>Les compagnies d'assurance</h2>
+      <p class="lead">Nous travaillons avec 5 compagnies partenaires. Vous soumettez le dossier a plusieurs compagnies en parallele et presentez les meilleures offres au client.</p>
+
+      <div class="grid-3" style="margin-bottom: 20px;">
+
+        <div class="partner-card">
+          <div class="partner-logo-box">
+            <img src="/logo-officiel-solly-azar_0.png" alt="Solly Azar" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+            <span class="partner-logo-text" style="display:none;">Solly Azar</span>
+          </div>
+          <h4>Solly Azar</h4>
+          <div class="partner-contact">
+            <div>Specialiste transport de personnes</div>
+            <div>Tel : <a href="tel:0180055000">01 80 05 50 00</a></div>
+            <div>Email : <a href="mailto:productioniard@sollyazar.com">productioniard@sollyazar.com</a></div>
+          </div>
+        </div>
+
+        <div class="partner-card">
+          <div class="partner-logo-box">
+            <img src="/logo_generali.png" alt="Generali" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+            <span class="partner-logo-text" style="display:none;">Generali</span>
+          </div>
+          <h4>Generali</h4>
+          <div class="partner-contact">
+            <div>Grands risques professionnels</div>
+            <div>Tel : <a href="tel:0158384100">01 58 38 41 00</a></div>
+            <div>Email : <a href="mailto:courtage.professionnel@generali.fr">courtage.professionnel@generali.fr</a></div>
+            <div>Site : <a href="https://www.generali.fr" target="_blank">generali.fr</a></div>
+          </div>
+        </div>
+
+        <div class="partner-card">
+          <div class="partner-logo-box">
+            <img src="/logo_mfa.png" alt="2MA / MFA" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+            <span class="partner-logo-text" style="display:none;">2MA</span>
+          </div>
+          <h4>2MA (MFA)</h4>
+          <div class="partner-contact">
+            <div>Specialiste artisans taxi</div>
+            <div>Tel : <a href="tel:0140227900">01 40 22 79 00</a></div>
+            <div>Email : <a href="mailto:contact@mfa.fr">contact@mfa.fr</a></div>
+            <div>Site : <a href="https://www.mfa.fr" target="_blank">mfa.fr</a></div>
+          </div>
+        </div>
+
+        <div class="partner-card">
+          <div class="partner-logo-box">
+            <img src="/logo_zephir.png" alt="Zephir" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+            <span class="partner-logo-text" style="display:none;">Zephir</span>
+          </div>
+          <h4>Zephir</h4>
+          <div class="partner-contact">
+            <div>Tarifs competitifs profils difficiles</div>
+            <div style="color: #94A3B8; font-style: italic;">Contacts via gestionnaire interne</div>
+          </div>
+        </div>
+
+        <div class="partner-card">
+          <div class="partner-logo-box">
+            <span class="partner-logo-text">+Simple</span>
+          </div>
+          <h4>+Simple</h4>
+          <div class="partner-contact">
+            <div>Plateforme multi-compagnies digitale</div>
+            <div style="color: #94A3B8; font-style: italic;">Contacts via gestionnaire interne</div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="tip-box blue">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0; margin-top:2px;">
+          <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+        <p><strong>Regle de base :</strong> soumettez toujours le dossier a au moins 2 compagnies en parallele. Presentez les 2 meilleures offres au client avec une recommandation claire. Evitez de submerger le client avec trop de chiffres.</p>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ─── 4. PIPELINE ─── -->
+    <div class="section" id="pipeline">
+      <div class="section-eyebrow orange"><span></span> Processus de vente</div>
+      <h2>Le pipeline commercial en 7 etapes</h2>
+      <p class="lead">Chaque lead suit un parcours structure dans le CRM. Votre job est de le faire progresser le plus vite possible vers la signature.</p>
+
+      <div class="pipeline">
+
+        <!-- Etape 1 -->
+        <div class="pipeline-step">
+          <div class="pipeline-left">
+            <div class="pipeline-circle" style="background:#FEF3C7; color:#D97706;">1</div>
+            <div class="pipeline-line" style="background:#E2E8F0;"></div>
+          </div>
+          <div class="pipeline-right">
+            <div class="pipeline-header">
+              <h3>Nouveau lead</h3>
+              <span class="pipeline-time">J+0 — sous 2h</span>
+            </div>
+            <p>Le prospect vient de soumettre sa demande sur le site. Un email de confirmation lui a ete envoye automatiquement. C'est l'etape ou le lead est le plus chaud.</p>
+            <div class="pipeline-tasks">
+              <div class="ptask">
+                <div class="ptask-icon" style="background:#FEF3C7;">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>
+                <span>Appeler dans les 2h (le taux de reponse chute a -60% apres 2h)</span>
+              </div>
+              <div class="ptask">
+                <div class="ptask-icon" style="background:#FEF3C7;">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>
+                <span>Qualifier : type taxi/VTC, ville, vehicule, anciennete permis, sinistres</span>
+              </div>
+              <div class="ptask">
+                <div class="ptask-icon" style="background:#FEF3C7;">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>
+                <span>Logger l'appel dans le CRM (etape "Saisie devis" si qualifie)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Etape 2 -->
+        <div class="pipeline-step">
+          <div class="pipeline-left">
+            <div class="pipeline-circle" style="background:#DBEAFE; color:#2563EB;">2</div>
+            <div class="pipeline-line" style="background:#E2E8F0;"></div>
+          </div>
+          <div class="pipeline-right">
+            <div class="pipeline-header">
+              <h3>Saisie du devis</h3>
+              <span class="pipeline-time">J+0 / J+1</span>
+            </div>
+            <p>Vous saisissez le devis dans le CRM en entrant les informations collectees. Vous soumettez simultanement aux compagnies partenaires et attendez leurs retours.</p>
+            <div class="pipeline-tasks">
+              <div class="ptask">
+                <div class="ptask-icon" style="background:#DBEAFE;">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>
+                <span>Remplir la fiche devis dans le CRM (vehicule, garanties demandees, date d'effet)</span>
+              </div>
+              <div class="ptask">
+                <div class="ptask-icon" style="background:#DBEAFE;">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>
+                <span>Selectionner les compagnies a consulter (2 minimum)</span>
+              </div>
+              <div class="ptask">
+                <div class="ptask-icon" style="background:#DBEAFE;">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>
+                <span>Demander au client de preparer ses documents en attendant</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Etape 3 -->
+        <div class="pipeline-step">
+          <div class="pipeline-left">
+            <div class="pipeline-circle" style="background:#FFEDD5; color:#EA580C;">3</div>
+            <div class="pipeline-line" style="background:#E2E8F0;"></div>
+          </div>
+          <div class="pipeline-right">
+            <div class="pipeline-header">
+              <h3>Validation du devis</h3>
+              <span class="pipeline-time">J+1 / J+2</span>
+            </div>
+            <p>Vous avez recu les retours des compagnies. Vous presentez les 2 meilleures offres au client par email via l'espace prospect, avec une recommandation claire.</p>
+            <div class="pipeline-tasks">
+              <div class="ptask">
+                <div class="ptask-icon" style="background:#FFEDD5;">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#EA580C" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>
+                <span>Saisir les montants des devis dans le CRM</span>
+              </div>
+              <div class="ptask">
+                <div class="ptask-icon" style="background:#FFEDD5;">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#EA580C" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>
+                <span>Envoyer via "Espace Prospect" — le client recoit un lien personnel securise</span>
+              </div>
+              <div class="ptask">
+                <div class="ptask-icon" style="background:#FFEDD5;">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#EA580C" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>
+                <span>Rappeler le client pour presenter les offres et repondre aux questions</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Etape 4 -->
+        <div class="pipeline-step">
+          <div class="pipeline-left">
+            <div class="pipeline-circle" style="background:#D1FAE5; color:#059669;">4</div>
+            <div class="pipeline-line" style="background:#E2E8F0;"></div>
+          </div>
+          <div class="pipeline-right">
+            <div class="pipeline-header">
+              <h3>Signature du devis</h3>
+              <span class="pipeline-time">J+2 / J+3</span>
+            </div>
+            <p>Le client a accepte un devis (en ligne via l'espace prospect ou par telephone). Vous passez a la collecte des documents necessaires a la mise en place du contrat.</p>
+            <div class="pipeline-tasks">
+              <div class="ptask">
+                <div class="ptask-icon" style="background:#D1FAE5;">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>
+                <span>Confirmer le devis selectionne dans le CRM</span>
+              </div>
+              <div class="ptask">
+                <div class="ptask-icon" style="background:#D1FAE5;">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>
+                <span>Envoyer la liste des documents a fournir via l'espace prospect</span>
+              </div>
+              <div class="ptask">
+                <div class="ptask-icon" style="background:#D1FAE5;">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>
+                <span>Fixer une date d'effet avec le client</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Etape 5 -->
+        <div class="pipeline-step">
+          <div class="pipeline-left">
+            <div class="pipeline-circle" style="background:#FEF3C7; color:#D97706;">5</div>
+            <div class="pipeline-line" style="background:#E2E8F0;"></div>
+          </div>
+          <div class="pipeline-right">
+            <div class="pipeline-header">
+              <h3>Collecte des documents</h3>
+              <span class="pipeline-time">J+2 / J+5</span>
+            </div>
+            <p>Le client envoie ses documents via son espace prospect ou par email. Vous validez chaque document dans le CRM (conforme / a renvoyer). C'est souvent l'etape qui prend le plus de temps.</p>
+            <div class="pipeline-tasks">
+              <div class="ptask">
+                <div class="ptask-icon" style="background:#FEF3C7;">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>
+                <span>Verifier chaque document : lisibilite, coherence, date de validite</span>
+              </div>
+              <div class="ptask">
+                <div class="ptask-icon" style="background:#FEF3C7;">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>
+                <span>Relancer proactivement si un document manque (appel + email)</span>
+              </div>
+              <div class="ptask">
+                <div class="ptask-icon" style="background:#FEF3C7;">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>
+                <span>Transmettre le dossier complet a la compagnie des que tout est valide</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Etape 6 -->
+        <div class="pipeline-step">
+          <div class="pipeline-left">
+            <div class="pipeline-circle" style="background:#DBEAFE; color:#2563EB;">6</div>
+            <div class="pipeline-line" style="background:#E2E8F0;"></div>
+          </div>
+          <div class="pipeline-right">
+            <div class="pipeline-header">
+              <h3>Signature du contrat + Paiement</h3>
+              <span class="pipeline-time">J+5 / J+7</span>
+            </div>
+            <p>La compagnie a valide le dossier. Le client signe electroniquement le contrat et regle l'acompte via notre systeme de paiement securise (Monetico / CB).</p>
+            <div class="pipeline-tasks">
+              <div class="ptask">
+                <div class="ptask-icon" style="background:#DBEAFE;">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>
+                <span>Envoyer le lien de signature electronique via l'espace prospect</span>
+              </div>
+              <div class="ptask">
+                <div class="ptask-icon" style="background:#DBEAFE;">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>
+                <span>Envoyer le lien de paiement (acompte ou premier terme)</span>
+              </div>
+              <div class="ptask">
+                <div class="ptask-icon" style="background:#DBEAFE;">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>
+                <span>Confirmer la reception du paiement dans le CRM</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Etape 7 -->
+        <div class="pipeline-step">
+          <div class="pipeline-left">
+            <div class="pipeline-circle" style="background:#D1FAE5; color:#059669;">7</div>
+          </div>
+          <div class="pipeline-right" style="border-color: #10B981; border-width: 2px;">
+            <div class="pipeline-header">
+              <h3>Contrat actif — Client</h3>
+              <span class="pipeline-time" style="background:#D1FAE5; color:#059669;">Gagne !</span>
+            </div>
+            <p>Le contrat est en vigueur. Le client bascule vers l'Espace Client ou il peut consulter son contrat, ses documents et declarer un sinistre. Votre dossier est cloture.</p>
+            <div class="pipeline-tasks">
+              <div class="ptask">
+                <div class="ptask-icon" style="background:#D1FAE5;">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>
+                <span>Envoyer l'email de bienvenue avec l'acces a l'espace client</span>
+              </div>
+              <div class="ptask">
+                <div class="ptask-icon" style="background:#D1FAE5;">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>
+                <span>Passer le lead en statut "Client" dans le CRM</span>
+              </div>
+              <div class="ptask">
+                <div class="ptask-icon" style="background:#D1FAE5;">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>
+                <span>Programmer un rappel 3 mois avant la date d'echeance pour le renouvellement</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ─── 5. DOCUMENTS ─── -->
+    <div class="section" id="documents">
+      <div class="section-eyebrow yellow"><span></span> Documents</div>
+      <h2>La checklist documentaire</h2>
+      <p class="lead">Ces documents sont indispensables pour soumettre un dossier a une compagnie. A demander des la signature du devis.</p>
+
+      <div class="docs-grid">
+
+        <div class="doc-group">
+          <div class="doc-group-header">
+            <div class="card-icon green" style="width:28px; height:28px; border-radius:7px; margin:0;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 7H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+            </div>
+            <h4>Documents du vehicule</h4>
+            <small>Obligatoire</small>
+          </div>
+          <div class="doc-list">
+            <div class="doc-item"><div class="doc-check"></div><span>Carte grise (certificat d'immatriculation)</span><span class="doc-required">Obligatoire</span></div>
+            <div class="doc-item"><div class="doc-check"></div><span>Constat amiable si sinistres recents</span><span class="doc-optional">Si besoin</span></div>
+            <div class="doc-item"><div class="doc-check"></div><span>Rapport d'expertise (si vehicule accidente)</span><span class="doc-optional">Si besoin</span></div>
+          </div>
+        </div>
+
+        <div class="doc-group">
+          <div class="doc-group-header">
+            <div class="card-icon blue" style="width:28px; height:28px; border-radius:7px; margin:0;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            </div>
+            <h4>Documents du conducteur</h4>
+            <small>Obligatoire</small>
+          </div>
+          <div class="doc-list">
+            <div class="doc-item"><div class="doc-check"></div><span>Permis de conduire (recto/verso)</span><span class="doc-required">Obligatoire</span></div>
+            <div class="doc-item"><div class="doc-check"></div><span>Carte professionnelle de taxi</span><span class="doc-required">Obligatoire</span></div>
+            <div class="doc-item"><div class="doc-check"></div><span>Releve d'Information (RI assureur precedent)</span><span class="doc-required">Obligatoire</span></div>
+            <div class="doc-item"><div class="doc-check"></div><span>Piece d'identite</span><span class="doc-optional">Selon compagnie</span></div>
+          </div>
+        </div>
+
+        <div class="doc-group">
+          <div class="doc-group-header">
+            <div class="card-icon yellow" style="width:28px; height:28px; border-radius:7px; margin:0;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            </div>
+            <h4>Documents bancaires / paiement</h4>
+            <small>Contrat uniquement</small>
+          </div>
+          <div class="doc-list">
+            <div class="doc-item"><div class="doc-check"></div><span>RIB (Releve d'Identite Bancaire)</span><span class="doc-required">Obligatoire</span></div>
+            <div class="doc-item"><div class="doc-check"></div><span>Mandat de prelevement SEPA signe</span><span class="doc-required">Obligatoire</span></div>
+          </div>
+        </div>
+
+        <div class="doc-group">
+          <div class="doc-group-header">
+            <div class="card-icon orange" style="width:28px; height:28px; border-radius:7px; margin:0;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+            </div>
+            <h4>Flotte et societe (si applicable)</h4>
+            <small>Flotte uniquement</small>
+          </div>
+          <div class="doc-list">
+            <div class="doc-item"><div class="doc-check"></div><span>Kbis (extrait registre commerce)</span><span class="doc-required">Societes</span></div>
+            <div class="doc-item"><div class="doc-check"></div><span>Liste des conducteurs (nom, permis, anciennete)</span><span class="doc-required">Flotte</span></div>
+            <div class="doc-item"><div class="doc-check"></div><span>Bilan comptable N-1 (si flotte importante)</span><span class="doc-optional">Optionnel</span></div>
+            <div class="doc-item"><div class="doc-check"></div><span>Historique sinistres flotte (tableau)</span><span class="doc-optional">Selon compagnie</span></div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="tip-box green" style="margin-top:20px;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0; margin-top:2px;">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+        </svg>
+        <p><strong>Astuce :</strong> le Releve d'Information est souvent oublie. Rappeler au client de le demander a son assureur actuel des la prise de contact — cela peut prendre 48h a obtenir et bloque souvent la finalisation du dossier.</p>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ─── 6. OUTILS ─── -->
+    <div class="section" id="outils">
+      <div class="section-eyebrow blue"><span></span> Outils</div>
+      <h2>Vos outils au quotidien</h2>
+      <p class="lead">Tout se passe dans le CRM. Les autres outils sont complementaires et accessibles depuis le backoffice.</p>
+
+      <div class="grid-2">
+
+        <div class="tool-card">
+          <div class="tool-header">
+            <div class="card-icon yellow">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+            </div>
+            <div>
+              <h3 style="font-size:16px; font-weight:700; color:#0F172A; margin-bottom:3px;">CRM — Pipeline Commercial</h3>
+              <p style="font-size:12px; color:#64748B;">Votre outil principal, tous les jours</p>
+            </div>
+          </div>
+          <div class="tool-body">
+            <ul>
+              <li>Voir tous vos leads et leur etape dans le pipeline</li>
+              <li>Ajouter des notes, logs d'appels, interactions</li>
+              <li>Saisir et envoyer les devis aux compagnies</li>
+              <li>Valider les documents uploades par les clients</li>
+              <li>Recevoir des alertes en temps reel (nouveau lead, doc recu, devis accepte)</li>
+            </ul>
+            <a href="https://taxiassur.com/backoffice/crm-killer" target="_blank" class="tool-link">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+              Ouvrir le CRM
+            </a>
+          </div>
+        </div>
+
+        <div class="tool-card">
+          <div class="tool-header">
+            <div class="card-icon blue">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 14.66V20a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h5.34"/><polygon points="18 2 22 6 12 16 8 16 8 12 18 2"/></svg>
+            </div>
+            <div>
+              <h3 style="font-size:16px; font-weight:700; color:#0F172A; margin-bottom:3px;">Espace Prospect</h3>
+              <p style="font-size:12px; color:#64748B;">Ce que voit votre client</p>
+            </div>
+          </div>
+          <div class="tool-body">
+            <ul>
+              <li>Chaque client a un lien personnel unique et securise</li>
+              <li>Il peut consulter ses devis et en accepter un en ligne</li>
+              <li>Il peut uploader ses documents directement</li>
+              <li>Il peut signer le contrat et payer l'acompte</li>
+              <li>Vous recevez une notification a chaque action du client</li>
+            </ul>
+            <a href="https://taxiassur.com/espace-prospect" target="_blank" class="tool-link">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+              Voir l'espace prospect
+            </a>
+          </div>
+        </div>
+
+        <div class="tool-card">
+          <div class="tool-header">
+            <div class="card-icon green">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            </div>
+            <div>
+              <h3 style="font-size:16px; font-weight:700; color:#0F172A; margin-bottom:3px;">Messagerie integree</h3>
+              <p style="font-size:12px; color:#64748B;">Emails lies aux leads automatiquement</p>
+            </div>
+          </div>
+          <div class="tool-body">
+            <ul>
+              <li>Tous les emails echanges avec un lead sont visibles dans son dossier CRM</li>
+              <li>Envoyez des emails directement depuis le CRM</li>
+              <li>Utilisez les modeles de templates pre-rediges (devis, relance, bienvenue...)</li>
+              <li>Historique complet des communications visible en un coup d'oeil</li>
+            </ul>
+            <a href="https://taxiassur.com/backoffice/inbox" target="_blank" class="tool-link">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+              Ouvrir la messagerie
+            </a>
+          </div>
+        </div>
+
+        <div class="tool-card">
+          <div class="tool-header">
+            <div class="card-icon orange">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+            </div>
+            <div>
+              <h3 style="font-size:16px; font-weight:700; color:#0F172A; margin-bottom:3px;">Tableau de bord</h3>
+              <p style="font-size:12px; color:#64748B;">Votre performance en un coup d'oeil</p>
+            </div>
+          </div>
+          <div class="tool-body">
+            <ul>
+              <li>Nombre de leads par etape (kanban visuel)</li>
+              <li>Chiffre d'affaires genere et previsionnel</li>
+              <li>Taux de conversion par etape</li>
+              <li>Alertes sur les dossiers a relancer</li>
+              <li>Statistiques d'emails (ouvertures, clics)</li>
+            </ul>
+            <a href="https://taxiassur.com/backoffice/dashboard" target="_blank" class="tool-link">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+              Ouvrir le dashboard
+            </a>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ─── 7. QUOTIDIEN ─── -->
+    <div class="section" id="quotidien">
+      <div class="section-eyebrow green"><span></span> Organisation</div>
+      <h2>Une journee type</h2>
+      <p class="lead">Voici comment structurer votre journee pour maximiser votre performance et ne rien laisser passer.</p>
+
+      <div style="display: flex; flex-direction: column; gap: 12px;">
+
+        <div class="day-section">
+          <div class="day-header">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            <span>Matin — 9h00 a 12h00</span>
+            <small>Priorisation et actions urgentes</small>
+          </div>
+          <div class="day-items">
+            <div class="day-item">
+              <div class="day-time">9h00</div>
+              <p><strong>Verifier le CRM</strong> — Nouveaux leads entres la nuit et le matin. Les leads "nouveau_lead" sont a appeler en priorite absolue.</p>
+            </div>
+            <div class="day-item">
+              <div class="day-time">9h15</div>
+              <p><strong>Consulter les notifications</strong> — Devis acceptes, documents uploades, paiements recus. Chaque notification est une action a faire immediatement.</p>
+            </div>
+            <div class="day-item">
+              <div class="day-time">9h30</div>
+              <p><strong>Appels sortants prioritaires</strong> — Nouveaux leads d'abord, puis relances dossiers bloques (attente document, devis non lu).</p>
+            </div>
+            <div class="day-item">
+              <div class="day-time">11h00</div>
+              <p><strong>Saisie des devis</strong> — Traitement des dossiers qualifies la veille, envoi aux compagnies partenaires.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="day-section">
+          <div class="day-header">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            <span>Apres-midi — 14h00 a 18h00</span>
+            <small>Suivi et clotures</small>
+          </div>
+          <div class="day-items">
+            <div class="day-item">
+              <div class="day-time">14h00</div>
+              <p><strong>Validation documents</strong> — Passer en revue les documents uploades par les clients et les valider ou renvoyer avec commentaire.</p>
+            </div>
+            <div class="day-item">
+              <div class="day-time">15h00</div>
+              <p><strong>Relances ciblees</strong> — Dossiers en attente depuis plus de 48h. Un appel de relance augmente de 35% la probabilite de cloture dans la semaine.</p>
+            </div>
+            <div class="day-item">
+              <div class="day-time">16h00</div>
+              <p><strong>Traitement emails</strong> — Repondre aux emails recus dans la journee. Utiliser les templates CRM pour aller vite.</p>
+            </div>
+            <div class="day-item">
+              <div class="day-time">17h30</div>
+              <p><strong>Mise a jour CRM</strong> — Loguer toutes les interactions de la journee (appels, emails). Un CRM vide ne protege personne et vous prive de suivi.</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ─── 8. REGLES ─── -->
+    <div class="section" id="regles">
+      <div class="section-eyebrow orange"><span></span> Bonnes pratiques</div>
+      <h2>Ce qu'il faut faire — et eviter</h2>
+      <p class="lead">Les regles qui font la difference entre un bon commercial et un excellent commercial chez TaxiAssur.</p>
+
+      <div class="rules-grid">
+        <div class="rule-card do">
+          <div class="rule-card-header">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            <h4>A faire</h4>
+          </div>
+          <ul class="rule-list">
+            <li>Appeler chaque nouveau lead dans les 2h suivant sa demande</li>
+            <li>Logger chaque appel et email dans le CRM le jour meme</li>
+            <li>Toujours presenter au moins 2 devis de compagnies differentes</li>
+            <li>Etre transparent sur les delais de traitement des compagnies</li>
+            <li>Relancer proactivement sans attendre que le client rappelle</li>
+            <li>Verifier la validite et la lisibilite de chaque document avant de l'envoyer a la compagnie</li>
+            <li>Confirmer chaque rendez-vous telephonique par SMS/email</li>
+          </ul>
+        </div>
+        <div class="rule-card dont">
+          <div class="rule-card-header">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+            <h4>A eviter absolument</h4>
+          </div>
+          <ul class="rule-list">
+            <li>Laisser un lead "nouveau" sans contact plus de 24h</li>
+            <li>Promettre une date d'effet sans avoir confirme avec la compagnie</li>
+            <li>Envoyer un dossier incomplet a une compagnie (risque de refus)</li>
+            <li>Contacter un client en dehors du CRM sans tracer l'interaction</li>
+            <li>Accorder des remises sur les tarifs sans validation du responsable</li>
+            <li>Transmettre des documents clients a des tiers non autorises</li>
+            <li>Negliger les anciens clients — ils sont une source de recommandation</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="tip-box blue" style="margin-top: 20px;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0; margin-top:2px;">
+          <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+        <p><strong>RGPD :</strong> les donnees clients sont confidentielles. Ne jamais partager d'informations personnelles par chat ou email non securise. Le CRM est le seul systeme autorise pour stocker et partager les donnees clients.</p>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ─── LIENS UTILES ─── -->
+    <div class="section" id="liens">
+      <div class="section-eyebrow yellow"><span></span> Acces rapides</div>
+      <h2>Tous vos liens utiles</h2>
+      <p class="lead">Enregistrez ces liens dans vos favoris des maintenant.</p>
+
+      <div class="links-grid">
+        <a href="https://taxiassur.com/backoffice/crm-killer" target="_blank" class="link-card">
+          <div class="link-card-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          </div>
+          <h4>CRM Pipeline</h4>
+          <p>Tous vos leads et leur avancement</p>
+        </a>
+        <a href="https://taxiassur.com/backoffice/dashboard" target="_blank" class="link-card">
+          <div class="link-card-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+          </div>
+          <h4>Tableau de bord</h4>
+          <p>Stats et performance commerciale</p>
+        </a>
+        <a href="https://taxiassur.com/backoffice/inbox" target="_blank" class="link-card">
+          <div class="link-card-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          </div>
+          <h4>Messagerie</h4>
+          <p>Emails lies aux dossiers clients</p>
+        </a>
+        <a href="https://taxiassur.com/backoffice/documents" target="_blank" class="link-card">
+          <div class="link-card-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          </div>
+          <h4>Documents clients</h4>
+          <p>Toutes les pieces a valider</p>
+        </a>
+        <a href="https://taxiassur.com/backoffice/devis" target="_blank" class="link-card">
+          <div class="link-card-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          </div>
+          <h4>Gestion devis</h4>
+          <p>Saisie et suivi des devis compagnies</p>
+        </a>
+        <a href="https://taxiassur.com/briefing-commercial.html" target="_blank" class="link-card">
+          <div class="link-card-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </div>
+          <h4>Briefing equipe</h4>
+          <p>Taches commerciales du jour</p>
+        </a>
+      </div>
+    </div>
+
+    <!-- WELCOME BANNER -->
+    <div class="welcome-banner">
+      <div>
+        <h3>Vous etes pret a demarrer.</h3>
+        <p>Le premier lead est dans le CRM. Bonne vente et bienvenue dans l'equipe.</p>
+      </div>
+      <a href="https://taxiassur.com/backoffice/crm-killer" target="_blank" class="welcome-btn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        Ouvrir le CRM maintenant
+      </a>
+    </div>
+
+  </div>
+
+  <footer>
+    <p>TaxiAssur — Document interne — Prise de poste commerciale — Confidentiel</p>
+    <p style="margin-top: 6px;">Ce document est mis a jour regulierement. Pour toute question : <a href="mailto:team@taxiassur.com" style="color: #F59E0B; text-decoration: none;">team@taxiassur.com</a></p>
+  </footer>
+
+</body>
+</html>
