@@ -1,7 +1,11 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
-import Card from '../components/Card';
-import { Brain, Zap, TrendingUp, CheckCircle, Clock, AlertCircle, Target, Sparkles } from 'lucide-react';
+import {
+  Brain, Zap, TrendingUp, CheckCircle, Clock, AlertCircle,
+  Target, Sparkles, Search, RefreshCw, ArrowUp, ArrowDown,
+  Minus, Globe, FileText, Link, AlertTriangle, Play,
+  BarChart3, ChevronRight, Eye, MousePointer, Award, Layers
+} from 'lucide-react';
 
 interface AutonomousStats {
   pending_tasks: number;
@@ -19,9 +23,10 @@ interface OptimizationTask {
   target_url: string;
   status: string;
   priority: number;
-  current_metrics: any;
+  current_metrics: { impressions?: number; ctr?: number; position?: number } | null;
   created_at: string;
   completed_at: string | null;
+  error_message: string | null;
 }
 
 interface LearningPattern {
@@ -31,334 +36,575 @@ interface LearningPattern {
   success_rate: number;
   samples_count: number;
   is_active: boolean;
-  last_validated_at: string | null;
 }
 
+interface KeywordRanking {
+  query: string;
+  clicks: number;
+  impressions: number;
+  ctr: number;
+  position: number;
+  page_url: string;
+}
+
+interface IndexationIssue {
+  id: string;
+  issue_type: string;
+  url: string;
+  priority: number;
+  detected_at: string;
+  resolved_at: string | null;
+}
+
+const TARGET_KEYWORDS = [
+  'assurance taxi', 'assurance taxi prix', 'meilleure assurance taxi',
+  'assurance taxi pas cher', 'devis assurance taxi', 'assurance taxi vtc',
+  'assurance taxi obligatoire', 'rc pro taxi', 'assurance taxi paris',
+  'assurance taxi lyon', 'assurance taxi marseille', 'assurance flotte taxi',
+  'assurance taxi jeune conducteur', 'assurance taxi electrique',
+  'comparateur assurance taxi', 'assurance taxi moto', 'assurance vtc prix',
+  'assurance professionnelle taxi', 'cotisation assurance taxi', 'taxiassur',
+];
+
+const TASK_LABELS: Record<string, string> = {
+  enrich_content: 'Enrichir contenu',
+  add_internal_links: 'Liens internes',
+  submit_indexation: 'Soumettre indexation',
+  optimize_metadata: 'Optimiser métadonnées',
+  improve_ctr: 'Améliorer CTR',
+  fix_content_gap: 'Combler lacune contenu',
+};
+
+type TabId = 'overview' | 'keywords' | 'tasks' | 'issues' | 'patterns';
+
 export default function GSCAutonomousDashboard() {
+  const [tab, setTab] = useState<TabId>('overview');
   const [stats, setStats] = useState<AutonomousStats | null>(null);
   const [tasks, setTasks] = useState<OptimizationTask[]>([]);
   const [patterns, setPatterns] = useState<LearningPattern[]>([]);
+  const [keywords, setKeywords] = useState<KeywordRanking[]>([]);
+  const [issues, setIssues] = useState<IndexationIssue[]>([]);
   const [loading, setLoading] = useState(true);
   const [executing, setExecuting] = useState(false);
+  const [executingTask, setExecutingTask] = useState<string | null>(null);
+  const [lastSync, setLastSync] = useState<string | null>(null);
+  const [toastMsg, setToastMsg] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadDashboardData();
-    const interval = setInterval(loadDashboardData, 30000);
-    return () => clearInterval(interval);
-  }, []);
+  const showToast = (msg: string) => {
+    setToastMsg(msg);
+    setTimeout(() => setToastMsg(null), 3000);
+  };
 
-  const loadDashboardData = async () => {
+  const loadData = useCallback(async () => {
     try {
-      const { data: statsData } = await supabase.rpc('get_autonomous_system_stats');
-      setStats(statsData);
+      const [statsRes, tasksRes, patternsRes, kwRes, issuesRes, syncRes] = await Promise.all([
+        supabase.rpc('get_autonomous_system_stats').maybeSingle(),
+        supabase.from('gsc_autonomous_tasks').select('*').order('priority', { ascending: false }).order('created_at', { ascending: false }).limit(30),
+        supabase.from('gsc_learning_patterns').select('*').eq('is_active', true).order('success_rate', { ascending: false }),
+        supabase.from('gsc_performance_data').select('query,clicks,impressions,ctr,position,page_url').order('impressions', { ascending: false }).limit(200),
+        supabase.from('gsc_indexation_issues').select('*').is('resolved_at', null).order('priority', { ascending: false }).limit(30),
+        supabase.from('gsc_sync_history').select('synced_at').order('synced_at', { ascending: false }).limit(1).maybeSingle(),
+      ]);
 
-      const { data: tasksData } = await supabase
-        .from('gsc_autonomous_tasks')
-        .select('*')
-        .order('priority', { ascending: false })
-        .order('created_at', { ascending: false })
-        .limit(20);
-      setTasks(tasksData || []);
-
-      const { data: patternsData } = await supabase
-        .from('gsc_learning_patterns')
-        .select('*')
-        .eq('is_active', true)
-        .order('success_rate', { ascending: false });
-      setPatterns(patternsData || []);
-
-    } catch (error) {
-      console.error('Erreur chargement dashboard:', error);
+      if (statsRes.data) setStats(statsRes.data);
+      setTasks(tasksRes.data || []);
+      setPatterns(patternsRes.data || []);
+      setKeywords(kwRes.data || []);
+      setIssues(issuesRes.data || []);
+      if (syncRes.data) setLastSync((syncRes.data as { synced_at: string }).synced_at);
+    } catch (err) {
+      console.error('GSC load error:', err);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const executeManually = async () => {
+  useEffect(() => {
+    loadData();
+    const interval = setInterval(loadData, 30000);
+    return () => clearInterval(interval);
+  }, [loadData]);
+
+  const executeAll = async () => {
     setExecuting(true);
     try {
-      const { data, error } = await supabase.functions.invoke('gsc-ultra-autonomous-engine', {
-        body: { manual_trigger: true }
-      });
-
+      const { error } = await supabase.functions.invoke('gsc-ultra-autonomous-engine', { body: { manual_trigger: true } });
       if (error) throw error;
-
-      alert('Tâche exécutée avec succès !');
-      await loadDashboardData();
-    } catch (error) {
-      console.error('Erreur exécution manuelle:', error);
-      alert('Erreur lors de l\'exécution');
+      showToast('Moteur IA lancé avec succès !');
+      await loadData();
+    } catch {
+      showToast('Erreur lors du lancement');
     } finally {
       setExecuting(false);
     }
   };
 
-  const createNewTasks = async () => {
+  const createTasks = async () => {
     setExecuting(true);
     try {
       const { data, error } = await supabase.rpc('auto_create_optimization_tasks');
-
       if (error) throw error;
-
-      alert(`${data || 0} nouvelles tâches créées !`);
-      await loadDashboardData();
-    } catch (error) {
-      console.error('Erreur création tâches:', error);
-      alert('Erreur lors de la création des tâches');
+      showToast(`${data || 0} nouvelles tâches créées !`);
+      await loadData();
+    } catch {
+      showToast('Erreur création tâches');
     } finally {
       setExecuting(false);
     }
   };
 
+  const executeTask = async (taskId: string) => {
+    setExecutingTask(taskId);
+    try {
+      const { error } = await supabase.functions.invoke('gsc-ultra-autonomous-engine', { body: { task_id: taskId } });
+      if (error) throw error;
+      showToast('Tâche exécutée !');
+      await loadData();
+    } catch {
+      showToast('Erreur exécution tâche');
+    } finally {
+      setExecutingTask(null);
+    }
+  };
+
+  const submitIndexNow = async () => {
+    setExecuting(true);
+    try {
+      const { error } = await supabase.functions.invoke('indexnow-ping', { body: {} });
+      if (error) throw error;
+      showToast('Pages soumises à IndexNow !');
+    } catch {
+      showToast('Erreur IndexNow');
+    } finally {
+      setExecuting(false);
+    }
+  };
+
+  const getStatusIcon = (status: string) => {
+    if (status === 'completed') return <CheckCircle size={14} className="text-green-500" />;
+    if (status === 'processing') return <RefreshCw size={14} className="text-blue-500 animate-spin" />;
+    if (status === 'failed') return <AlertCircle size={14} className="text-red-500" />;
+    return <Clock size={14} className="text-amber-500" />;
+  };
+
+  const getPositionIcon = (pos: number) => {
+    if (pos <= 3) return <Award size={14} className="text-green-600" />;
+    if (pos <= 10) return <ArrowUp size={14} className="text-amber-500" />;
+    if (pos <= 20) return <Minus size={14} className="text-orange-500" />;
+    return <ArrowDown size={14} className="text-red-400" />;
+  };
+
+  const getPositionColor = (pos: number) => {
+    if (pos <= 3) return 'text-green-700 bg-green-50 border-green-200';
+    if (pos <= 10) return 'text-amber-700 bg-amber-50 border-amber-200';
+    if (pos <= 20) return 'text-orange-600 bg-orange-50 border-orange-200';
+    return 'text-red-600 bg-red-50 border-red-200';
+  };
+
+  const targetKeywordsWithData = TARGET_KEYWORDS.map((kw) => {
+    const found = keywords.find((k) => k.query?.toLowerCase().trim() === kw.toLowerCase().trim());
+    return { kw, data: found || null };
+  });
+
+  const quickWins = keywords
+    .filter((k) => k.position >= 4 && k.position <= 15 && k.impressions > 50)
+    .sort((a, b) => b.impressions - a.impressions)
+    .slice(0, 15);
+
+  const totalClicks = keywords.reduce((s, k) => s + (k.clicks || 0), 0);
+  const totalImpressions = keywords.reduce((s, k) => s + (k.impressions || 0), 0);
+  const avgPosition = keywords.length > 0 ? keywords.reduce((s, k) => s + (k.position || 0), 0) / keywords.length : 0;
+  const avgCtr = keywords.length > 0 ? keywords.reduce((s, k) => s + (k.ctr || 0), 0) / keywords.length : 0;
+  const top3Count = keywords.filter((k) => k.position <= 3).length;
+  const pendingTasks = tasks.filter((t) => t.status === 'pending').length;
+
+  const tabs: { id: TabId; label: string; icon: React.ReactNode; badge?: number }[] = [
+    { id: 'overview', label: 'Vue d\'ensemble', icon: <BarChart3 size={15} /> },
+    { id: 'keywords', label: 'Mots-clés', icon: <Search size={15} />, badge: top3Count },
+    { id: 'tasks', label: 'Tâches IA', icon: <Zap size={15} />, badge: pendingTasks },
+    { id: 'issues', label: 'Indexation', icon: <AlertTriangle size={15} />, badge: issues.length },
+    { id: 'patterns', label: 'Apprentissage', icon: <Brain size={15} /> },
+  ];
+
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Chargement du moteur autonome...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600 mx-auto" />
+          <p className="mt-4 text-gray-500 text-sm">Chargement du moteur SEO...</p>
         </div>
       </div>
     );
   }
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'completed': return 'text-green-600 bg-green-50';
-      case 'processing': return 'text-blue-600 bg-blue-50';
-      case 'failed': return 'text-red-600 bg-red-50';
-      default: return 'text-yellow-600 bg-yellow-50';
-    }
-  };
-
-  const getTaskTypeLabel = (type: string) => {
-    const labels: Record<string, string> = {
-      'enrich_content': 'Enrichir contenu',
-      'add_internal_links': 'Ajouter liens internes',
-      'submit_indexation': 'Soumettre indexation',
-      'optimize_metadata': 'Optimiser métadonnées'
-    };
-    return labels[type] || type;
-  };
-
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-gray-50 p-4 lg:p-6">
+      {toastMsg && (
+        <div className="fixed top-4 right-4 z-50 bg-gray-900 text-white px-4 py-3 rounded-lg shadow-xl text-sm flex items-center gap-2 animate-fade-in">
+          <CheckCircle size={16} className="text-green-400" />
+          {toastMsg}
+        </div>
+      )}
+
       <div className="max-w-7xl mx-auto">
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex flex-wrap items-start justify-between gap-4 mb-6">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-              <Brain className="text-purple-600" size={36} />
-              Moteur Autonome GSC Ultra-Intelligent
-            </h1>
-            <p className="text-gray-600 mt-2">
-              IA qui optimise automatiquement votre indexation Google
+            <div className="flex items-center gap-2 mb-1">
+              <div className="bg-teal-600 p-2 rounded-lg">
+                <Target size={22} className="text-white" />
+              </div>
+              <h1 className="text-2xl font-bold text-gray-900">SEO #1 — Assurance Taxi</h1>
+            </div>
+            <p className="text-gray-500 text-sm ml-12">
+              Moteur IA autonome — Google Search Console
+              {lastSync && (
+                <span className="ml-2 text-xs text-gray-400">
+                  Sync: {new Date(lastSync).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                </span>
+              )}
             </p>
           </div>
-          <div className="flex gap-3">
-            <button
-              onClick={createNewTasks}
-              disabled={executing}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
-            >
-              <Target size={18} />
-              Détecter nouvelles tâches
+          <div className="flex flex-wrap gap-2">
+            <button onClick={createTasks} disabled={executing} className="px-3 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-50 flex items-center gap-2 text-sm font-medium shadow-sm">
+              <Layers size={15} />
+              Détecter tâches
             </button>
-            <button
-              onClick={executeManually}
-              disabled={executing}
-              className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 flex items-center gap-2"
-            >
-              <Zap size={18} />
-              {executing ? 'Exécution...' : 'Exécuter maintenant'}
+            <button onClick={submitIndexNow} disabled={executing} className="px-3 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-50 flex items-center gap-2 text-sm font-medium shadow-sm">
+              <Globe size={15} />
+              IndexNow
+            </button>
+            <button onClick={executeAll} disabled={executing} className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 disabled:opacity-50 flex items-center gap-2 text-sm font-semibold shadow-sm">
+              <Zap size={15} />
+              {executing ? 'En cours...' : 'Tout optimiser'}
             </button>
           </div>
         </div>
 
-        {/* Stats principales */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-blue-100 text-sm">Tâches en attente</p>
-                <p className="text-3xl font-bold mt-1">{stats?.pending_tasks || 0}</p>
-              </div>
-              <Clock size={40} className="text-blue-200" />
+        {/* KPI Strip */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
+          {[
+            { label: 'Clics totaux', value: totalClicks.toLocaleString('fr'), icon: <MousePointer size={18} />, color: 'text-blue-600', bg: 'bg-blue-50' },
+            { label: 'Impressions', value: totalImpressions.toLocaleString('fr'), icon: <Eye size={18} />, color: 'text-teal-600', bg: 'bg-teal-50' },
+            { label: 'Position moy.', value: avgPosition > 0 ? avgPosition.toFixed(1) : 'N/A', icon: <TrendingUp size={18} />, color: 'text-amber-600', bg: 'bg-amber-50' },
+            { label: 'CTR moyen', value: avgCtr > 0 ? `${(avgCtr * 100).toFixed(1)}%` : 'N/A', icon: <Target size={18} />, color: 'text-green-600', bg: 'bg-green-50' },
+            { label: 'Top 3', value: top3Count.toString(), icon: <Award size={18} />, color: 'text-emerald-700', bg: 'bg-emerald-50' },
+            { label: 'Tâches IA', value: (stats?.pending_tasks || 0).toString(), icon: <Brain size={18} />, color: 'text-gray-700', bg: 'bg-gray-100' },
+          ].map((kpi) => (
+            <div key={kpi.label} className="bg-white rounded-xl border border-gray-200 p-4 flex flex-col gap-2">
+              <div className={`${kpi.bg} ${kpi.color} p-2 rounded-lg w-fit`}>{kpi.icon}</div>
+              <p className="text-xs text-gray-500">{kpi.label}</p>
+              <p className={`text-xl font-bold ${kpi.color}`}>{kpi.value}</p>
             </div>
-          </Card>
-
-          <Card className="bg-gradient-to-br from-green-500 to-green-600 text-white">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-green-100 text-sm">Complétées aujourd'hui</p>
-                <p className="text-3xl font-bold mt-1">{stats?.completed_today || 0}</p>
-              </div>
-              <CheckCircle size={40} className="text-green-200" />
-            </div>
-          </Card>
-
-          <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-purple-100 text-sm">Taux de succès 7j</p>
-                <p className="text-3xl font-bold mt-1">
-                  {stats?.success_rate_7d ? `${stats.success_rate_7d.toFixed(0)}%` : 'N/A'}
-                </p>
-              </div>
-              <TrendingUp size={40} className="text-purple-200" />
-            </div>
-          </Card>
-
-          <Card className="bg-gradient-to-br from-orange-500 to-orange-600 text-white">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-orange-100 text-sm">Patterns appris</p>
-                <p className="text-3xl font-bold mt-1">{stats?.learned_patterns || 0}</p>
-              </div>
-              <Sparkles size={40} className="text-orange-200" />
-            </div>
-          </Card>
+          ))}
         </div>
 
-        {/* Amélioration CTR moyenne */}
+        {/* Tabs */}
+        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+          <div className="flex overflow-x-auto border-b border-gray-200">
+            {tabs.map((t) => (
+              <button
+                key={t.id}
+                onClick={() => setTab(t.id)}
+                className={`flex items-center gap-2 px-5 py-3.5 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${
+                  tab === t.id
+                    ? 'border-teal-600 text-teal-700 bg-teal-50/50'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                {t.icon}
+                {t.label}
+                {t.badge !== undefined && t.badge > 0 && (
+                  <span className="bg-teal-100 text-teal-700 text-xs font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center">
+                    {t.badge}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+
+          <div className="p-5">
+            {tab === 'overview' && (
+              <div className="space-y-6">
+                <div>
+                  <h2 className="text-base font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                    <Sparkles size={16} className="text-amber-500" />
+                    Victoires rapides — Pages en positions 4–15
+                    <span className="text-xs font-normal text-gray-400 ml-1">(à pousser en top 3)</span>
+                  </h2>
+                  {quickWins.length === 0 ? (
+                    <p className="text-gray-400 text-sm py-4 text-center">Pas encore de données GSC synchronisées</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {quickWins.map((kw, i) => (
+                        <div key={i} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-100 hover:border-teal-200 transition-colors">
+                          <div className={`flex items-center gap-1 px-2 py-1 rounded border text-xs font-bold min-w-[52px] justify-center ${getPositionColor(kw.position)}`}>
+                            {getPositionIcon(kw.position)}
+                            #{kw.position.toFixed(0)}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-900 truncate">{kw.query}</p>
+                            <p className="text-xs text-gray-400 truncate">{kw.page_url}</p>
+                          </div>
+                          <div className="hidden sm:flex items-center gap-4 text-xs text-gray-500">
+                            <span className="flex items-center gap-1"><Eye size={11} />{kw.impressions.toLocaleString('fr')}</span>
+                            <span className="flex items-center gap-1"><MousePointer size={11} />{kw.clicks}</span>
+                            <span>{(kw.ctr * 100).toFixed(1)}% CTR</span>
+                          </div>
+                          <ChevronRight size={14} className="text-gray-300" />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="border-t border-gray-100 pt-5">
+                  <h2 className="text-base font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                    <Brain size={16} className="text-teal-600" />
+                    Moteur autonome — Comment ça fonctionne
+                  </h2>
+                  <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-3">
+                    {[
+                      { step: '1', title: 'Détection', desc: 'Analyse GSC toutes les 6h, identifie pages sous-performantes', icon: <Search size={18} />, color: 'bg-blue-50 border-blue-200 text-blue-700' },
+                      { step: '2', title: 'Stratégie IA', desc: 'Génère du contenu enrichi, optimise balises, densifie les mots-clés cibles', icon: <Brain size={18} />, color: 'bg-teal-50 border-teal-200 text-teal-700' },
+                      { step: '3', title: 'Liens internes', desc: 'Tisse des maillages inter-pages pour renforcer l\'autorité thématique', icon: <Link size={18} />, color: 'bg-amber-50 border-amber-200 text-amber-700' },
+                      { step: '4', title: 'Soumission', desc: 'Envoie IndexNow + demande de réindexation Google Search Console', icon: <Globe size={18} />, color: 'bg-green-50 border-green-200 text-green-700' },
+                      { step: '5', title: 'Auto-apprentissage', desc: 'Mémorise les succès, adapte les stratégies en temps réel', icon: <Sparkles size={18} />, color: 'bg-orange-50 border-orange-200 text-orange-700' },
+                    ].map((s) => (
+                      <div key={s.step} className={`border rounded-xl p-4 ${s.color}`}>
+                        <div className="flex items-center gap-2 mb-2">
+                          {s.icon}
+                          <span className="font-bold text-sm">{s.title}</span>
+                        </div>
+                        <p className="text-xs opacity-80 leading-relaxed">{s.desc}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {tab === 'keywords' && (
+              <div>
+                <h2 className="text-base font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                  <Search size={16} className="text-teal-600" />
+                  Positionnement — 20 mots-clés cibles assurance taxi
+                </h2>
+                <div className="grid sm:grid-cols-2 gap-2">
+                  {targetKeywordsWithData.map(({ kw, data }) => (
+                    <div key={kw} className="flex items-center justify-between p-3 rounded-lg border border-gray-100 bg-gray-50 hover:bg-white transition-colors">
+                      <div className="flex items-center gap-2 min-w-0">
+                        {data ? getPositionIcon(data.position) : <Minus size={14} className="text-gray-300" />}
+                        <span className="text-sm text-gray-800 truncate">{kw}</span>
+                      </div>
+                      <div className="flex items-center gap-3 ml-2 shrink-0">
+                        {data ? (
+                          <>
+                            <span className="text-xs text-gray-400 hidden sm:block">{data.impressions.toLocaleString('fr')} imp.</span>
+                            <span className={`text-xs font-bold px-2 py-0.5 rounded border ${getPositionColor(data.position)}`}>
+                              #{data.position.toFixed(0)}
+                            </span>
+                          </>
+                        ) : (
+                          <span className="text-xs text-gray-300 italic">Non classé</span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                {keywords.length > 0 && (
+                  <div className="mt-6">
+                    <h3 className="text-sm font-semibold text-gray-700 mb-3">Top 20 requêtes par impressions</h3>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="text-left text-xs text-gray-500 border-b border-gray-100">
+                            <th className="pb-2 font-medium">Requête</th>
+                            <th className="pb-2 font-medium text-right">Pos.</th>
+                            <th className="pb-2 font-medium text-right">CTR</th>
+                            <th className="pb-2 font-medium text-right">Clics</th>
+                            <th className="pb-2 font-medium text-right">Impr.</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-50">
+                          {keywords.slice(0, 20).map((k, i) => (
+                            <tr key={i} className="hover:bg-gray-50">
+                              <td className="py-2 pr-4 max-w-[200px] truncate text-gray-800">{k.query}</td>
+                              <td className="py-2 text-right">
+                                <span className={`text-xs font-bold px-1.5 py-0.5 rounded border ${getPositionColor(k.position)}`}>
+                                  #{k.position.toFixed(0)}
+                                </span>
+                              </td>
+                              <td className="py-2 text-right text-gray-600">{(k.ctr * 100).toFixed(1)}%</td>
+                              <td className="py-2 text-right text-gray-800 font-medium">{k.clicks}</td>
+                              <td className="py-2 text-right text-gray-500">{k.impressions.toLocaleString('fr')}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {tab === 'tasks' && (
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-base font-semibold text-gray-800 flex items-center gap-2">
+                    <Zap size={16} className="text-amber-500" />
+                    Tâches d'optimisation IA
+                  </h2>
+                  <div className="flex gap-2 text-xs text-gray-500">
+                    <span className="bg-amber-50 text-amber-700 px-2 py-0.5 rounded">{tasks.filter(t => t.status === 'pending').length} en attente</span>
+                    <span className="bg-green-50 text-green-700 px-2 py-0.5 rounded">{tasks.filter(t => t.status === 'completed').length} terminées</span>
+                  </div>
+                </div>
+                {tasks.length === 0 ? (
+                  <div className="text-center py-12 text-gray-400">
+                    <Layers size={40} className="mx-auto mb-3 opacity-30" />
+                    <p>Aucune tâche — cliquez "Détecter tâches" pour analyser</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {tasks.map((task) => (
+                      <div key={task.id} className="border border-gray-200 rounded-xl p-4 hover:border-teal-200 transition-colors">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex items-start gap-3 flex-1 min-w-0">
+                            <div className="mt-0.5">{getStatusIcon(task.status)}</div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex flex-wrap items-center gap-2 mb-1">
+                                <span className="text-sm font-medium text-gray-900">
+                                  {TASK_LABELS[task.task_type] || task.task_type}
+                                </span>
+                                <span className={`text-xs px-2 py-0.5 rounded-full border font-medium ${
+                                  task.priority >= 8 ? 'bg-red-50 text-red-700 border-red-200' :
+                                  task.priority >= 5 ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                                  'bg-gray-50 text-gray-600 border-gray-200'
+                                }`}>
+                                  P{task.priority}
+                                </span>
+                              </div>
+                              <p className="text-xs text-gray-500 truncate">{task.target_url}</p>
+                              {task.current_metrics && (
+                                <div className="flex gap-4 mt-2 text-xs text-gray-400">
+                                  {task.current_metrics.position && <span>Pos. #{task.current_metrics.position.toFixed(1)}</span>}
+                                  {task.current_metrics.impressions && <span>{task.current_metrics.impressions.toFixed(0)} imp.</span>}
+                                  {task.current_metrics.ctr && <span>{(task.current_metrics.ctr * 100).toFixed(1)}% CTR</span>}
+                                </div>
+                              )}
+                              {task.error_message && <p className="text-xs text-red-500 mt-1">{task.error_message}</p>}
+                            </div>
+                          </div>
+                          {task.status === 'pending' && (
+                            <button
+                              onClick={() => executeTask(task.id)}
+                              disabled={executingTask === task.id}
+                              className="shrink-0 flex items-center gap-1 px-3 py-1.5 bg-teal-600 text-white text-xs rounded-lg hover:bg-teal-700 disabled:opacity-50 font-medium"
+                            >
+                              <Play size={11} />
+                              {executingTask === task.id ? '...' : 'Exécuter'}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {tab === 'issues' && (
+              <div>
+                <h2 className="text-base font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                  <AlertTriangle size={16} className="text-red-500" />
+                  Problèmes d'indexation non résolus
+                </h2>
+                {issues.length === 0 ? (
+                  <div className="text-center py-12 text-gray-400">
+                    <CheckCircle size={40} className="mx-auto mb-3 text-green-400 opacity-60" />
+                    <p className="text-green-600 font-medium">Aucun problème d'indexation détecté</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {issues.map((issue) => (
+                      <div key={issue.id} className="flex items-start gap-3 p-4 border border-red-100 bg-red-50/50 rounded-xl">
+                        <AlertCircle size={16} className="text-red-500 mt-0.5 shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="text-sm font-medium text-gray-900">{issue.issue_type}</span>
+                            {issue.priority >= 8 && (
+                              <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded font-medium">Urgent</span>
+                            )}
+                          </div>
+                          <p className="text-xs text-gray-500 truncate">{issue.url}</p>
+                          <p className="text-xs text-gray-400 mt-1">
+                            Détecté {new Date(issue.detected_at).toLocaleDateString('fr-FR')}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {tab === 'patterns' && (
+              <div>
+                <h2 className="text-base font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                  <Brain size={16} className="text-teal-600" />
+                  Patterns appris par l'IA — Base de connaissance SEO
+                </h2>
+                {patterns.length === 0 ? (
+                  <div className="text-center py-12 text-gray-400">
+                    <Brain size={40} className="mx-auto mb-3 opacity-30" />
+                    <p>L'IA apprendra des patterns au fil des optimisations</p>
+                    <p className="text-xs mt-1">Lancez "Tout optimiser" pour commencer l'apprentissage</p>
+                  </div>
+                ) : (
+                  <div className="grid sm:grid-cols-2 gap-3">
+                    {patterns.map((p) => (
+                      <div key={p.id} className="border border-gray-200 rounded-xl p-4 hover:border-teal-200 transition-colors">
+                        <div className="flex items-start justify-between mb-3">
+                          <div>
+                            <h3 className="font-semibold text-gray-900 text-sm">{p.pattern_name}</h3>
+                            <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded mt-1 inline-block">{p.pattern_type}</span>
+                          </div>
+                          <div className={`text-right ${p.success_rate >= 70 ? 'text-green-600' : p.success_rate >= 50 ? 'text-amber-600' : 'text-red-500'}`}>
+                            <p className="text-2xl font-bold">{p.success_rate.toFixed(0)}%</p>
+                            <p className="text-xs">succès</p>
+                          </div>
+                        </div>
+                        <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                          <div
+                            className={`h-full rounded-full ${p.success_rate >= 70 ? 'bg-green-500' : p.success_rate >= 50 ? 'bg-amber-500' : 'bg-red-400'}`}
+                            style={{ width: `${p.success_rate}%` }}
+                          />
+                        </div>
+                        <p className="text-xs text-gray-400 mt-2">{p.samples_count} échantillons analysés</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+
         {stats?.avg_ctr_improvement && stats.avg_ctr_improvement > 0 && (
-          <Card className="mb-8 bg-gradient-to-r from-green-50 to-emerald-50 border-green-200">
-            <div className="flex items-center gap-4">
-              <div className="bg-green-500 text-white p-3 rounded-lg">
-                <TrendingUp size={24} />
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Amélioration moyenne du CTR (7 derniers jours)</p>
-                <p className="text-2xl font-bold text-green-600">
-                  +{stats.avg_ctr_improvement.toFixed(1)}%
-                </p>
-              </div>
+          <div className="mt-4 bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-center gap-4">
+            <div className="bg-emerald-500 text-white p-2.5 rounded-lg">
+              <TrendingUp size={20} />
             </div>
-          </Card>
-        )}
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Tâches en cours */}
-          <Card>
-            <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-              <Zap className="text-blue-600" />
-              Tâches d'optimisation
-            </h2>
-            <div className="space-y-3 max-h-96 overflow-y-auto">
-              {tasks.length === 0 ? (
-                <p className="text-gray-500 text-center py-8">Aucune tâche</p>
-              ) : (
-                tasks.map((task) => (
-                  <div
-                    key={task.id}
-                    className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors"
-                  >
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(task.status)}`}>
-                            {task.status}
-                          </span>
-                          <span className="text-xs text-gray-500">
-                            Priorité: {task.priority}
-                          </span>
-                        </div>
-                        <p className="text-sm font-medium text-gray-900 mb-1">
-                          {getTaskTypeLabel(task.task_type)}
-                        </p>
-                        <p className="text-xs text-gray-600 truncate">
-                          {task.target_url}
-                        </p>
-                      </div>
-                    </div>
-                    {task.current_metrics && (
-                      <div className="grid grid-cols-3 gap-2 mt-3 pt-3 border-t border-gray-100">
-                        <div>
-                          <p className="text-xs text-gray-500">Impressions</p>
-                          <p className="text-sm font-medium">
-                            {task.current_metrics.impressions?.toFixed(0) || 'N/A'}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-gray-500">CTR</p>
-                          <p className="text-sm font-medium">
-                            {task.current_metrics.ctr ? `${(task.current_metrics.ctr * 100).toFixed(2)}%` : 'N/A'}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-gray-500">Position</p>
-                          <p className="text-sm font-medium">
-                            {task.current_metrics.position?.toFixed(1) || 'N/A'}
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ))
-              )}
-            </div>
-          </Card>
-
-          {/* Patterns appris */}
-          <Card>
-            <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-              <Sparkles className="text-purple-600" />
-              Patterns appris par l'IA
-            </h2>
-            <div className="space-y-3 max-h-96 overflow-y-auto">
-              {patterns.length === 0 ? (
-                <p className="text-gray-500 text-center py-8">
-                  L'IA n'a pas encore appris de patterns
-                </p>
-              ) : (
-                patterns.map((pattern) => (
-                  <div
-                    key={pattern.id}
-                    className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors"
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-medium text-gray-900 text-sm">
-                        {pattern.pattern_name}
-                      </h3>
-                      <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded">
-                        {pattern.pattern_type}
-                      </span>
-                    </div>
-                    <div className="grid grid-cols-2 gap-3 mt-3">
-                      <div>
-                        <p className="text-xs text-gray-500">Taux de succès</p>
-                        <p className="text-lg font-bold text-green-600">
-                          {pattern.success_rate.toFixed(0)}%
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-500">Échantillons</p>
-                        <p className="text-lg font-bold text-blue-600">
-                          {pattern.samples_count}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </Card>
-        </div>
-
-        {/* Info sur le fonctionnement */}
-        <Card className="mt-6 bg-blue-50 border-blue-200">
-          <div className="flex items-start gap-3">
-            <Brain className="text-blue-600 flex-shrink-0 mt-1" size={24} />
             <div>
-              <h3 className="font-bold text-blue-900 mb-2">Comment fonctionne le moteur autonome ?</h3>
-              <ul className="text-sm text-blue-800 space-y-1">
-                <li>• <strong>Détection automatique</strong> : Analyse GSC toutes les 6h et détecte les pages sous-performantes</li>
-                <li>• <strong>Optimisation IA</strong> : Enrichit le contenu, ajoute des liens internes, optimise les métadonnées</li>
-                <li>• <strong>Soumission Google</strong> : Envoie automatiquement les pages optimisées via IndexNow</li>
-                <li>• <strong>Auto-apprentissage</strong> : Apprend des succès et améliore ses stratégies en continu</li>
-                <li>• <strong>Monitoring</strong> : Suit l'évolution des métriques et ajuste les priorités</li>
-              </ul>
+              <p className="text-sm text-gray-600">Amélioration moyenne du CTR (7 derniers jours)</p>
+              <p className="text-2xl font-bold text-emerald-600">+{stats.avg_ctr_improvement.toFixed(1)}%</p>
+            </div>
+            <div className="ml-auto text-sm text-emerald-700 font-medium flex items-center gap-1">
+              <FileText size={14} />
+              {stats.completed_today} pages optimisées aujourd'hui
             </div>
           </div>
-        </Card>
+        )}
       </div>
     </div>
   );

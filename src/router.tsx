@@ -808,7 +808,8 @@ export const router = createBrowserRouter([
   },
   {
     path: '/backoffice/gsc-autonomous',
-    element: <GSCAutonomousDashboard />,
+    element: <CRMLayout />,
+    children: [{ index: true, element: <GSCAutonomousDashboard /> }],
   },
   {
     path: '/backoffice/backlinks',
