@@ -280,39 +280,33 @@ function buildInvitationEmail(fullName: string, invitationLink: string, role: st
 }
 
 async function sendInvitationEmail(to: string, fullName: string, invitationLink: string, role: string): Promise<void> {
-  const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-  const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+  const BREVO_API_KEY = Deno.env.get('BREVO_API_KEY');
+  if (!BREVO_API_KEY) throw new Error('BREVO_API_KEY not configured');
 
   const htmlBody = buildInvitationEmail(fullName, invitationLink, role);
   const subject = `Votre invitation TaxiAssur — Creez votre mot de passe`;
 
-  const res = await fetch(`${supabaseUrl}/functions/v1/send-email-ionos`, {
+  const res = await fetch('https://api.brevo.com/v3/smtp/email', {
     method: 'POST',
     headers: {
+      'Accept': 'application/json',
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${supabaseAnonKey}`,
+      'api-key': BREVO_API_KEY,
     },
     body: JSON.stringify({
-      to,
-      toName: fullName,
+      sender: { name: 'TaxiAssur', email: 'team@taxiassur.com' },
+      to: [{ email: to, name: fullName }],
       subject,
-      html: htmlBody,
-      fromName: 'TaxiAssur',
-      from: 'team@taxiassur.com',
+      htmlContent: htmlBody,
     }),
   });
 
   if (!res.ok) {
     const errText = await res.text();
-    throw new Error(`send-email-ionos HTTP ${res.status}: ${errText}`);
+    throw new Error(`Brevo API ${res.status}: ${errText}`);
   }
 
-  const result = await res.json();
-  if (!result.success) {
-    throw new Error(result.error || 'Echec envoi email');
-  }
-
-  console.log(`Invitation email sent to ${to}`);
+  console.log(`Invitation email sent via Brevo to ${to}`);
 }
 
 Deno.serve(async (req: Request) => {

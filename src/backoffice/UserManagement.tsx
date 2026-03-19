@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   Users, UserPlus, Shield, Mail, Eye, EyeOff,
   CreditCard as Edit2, Trash2, CheckCircle, XCircle,
-  Search, Filter, RefreshCw, Key, Send, AlertTriangle, X
+  Search, Filter, RefreshCw, Key, Send, AlertTriangle, X, Copy, Link
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
@@ -67,6 +67,8 @@ const UserManagement: React.FC = () => {
   const [sending, setSending] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
+  const [manualLinkData, setManualLinkData] = useState<{ email: string; link: string } | null>(null);
+  const [linkCopied, setLinkCopied] = useState(false);
 
   const [newUser, setNewUser] = useState({
     email: '',
@@ -173,6 +175,11 @@ const UserManagement: React.FC = () => {
 
       if (error || !data?.success) {
         showToast('error', error?.message || data?.error || 'Erreur inconnue');
+        return;
+      }
+
+      if (!data.email_sent && data.action_link) {
+        setManualLinkData({ email: user.email, link: data.action_link });
         return;
       }
 
@@ -667,6 +674,55 @@ const UserManagement: React.FC = () => {
       )}
 
       {/* PERMISSIONS MODAL */}
+      {manualLinkData && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+          <div className="bg-gray-900 border border-yellow-500/30 rounded-2xl p-8 max-w-lg w-full shadow-2xl">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-yellow-500/20 rounded-xl flex items-center justify-center">
+                  <Link className="text-yellow-400" size={20} />
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-white">Email non envoye — lien manuel</h2>
+                  <p className="text-gray-400 text-sm">{manualLinkData.email}</p>
+                </div>
+              </div>
+              <button onClick={() => { setManualLinkData(null); setLinkCopied(false); }} className="p-2 text-gray-400 hover:text-white transition-colors">
+                <X size={20} />
+              </button>
+            </div>
+
+            <p className="text-gray-300 text-sm mb-4">
+              Le lien de connexion a ete genere mais l'email n'a pas pu etre envoye. Copiez ce lien et transmettez-le directement a l'utilisateur.
+            </p>
+
+            <div className="bg-gray-800/60 border border-gray-700 rounded-xl p-3 mb-4 break-all text-xs text-blue-300 font-mono select-all">
+              {manualLinkData.link}
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(manualLinkData.link);
+                  setLinkCopied(true);
+                  setTimeout(() => setLinkCopied(false), 3000);
+                }}
+                className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-bold transition-all ${linkCopied ? 'bg-green-600 text-white' : 'bg-blue-600 hover:bg-blue-500 text-white'}`}
+              >
+                {linkCopied ? <CheckCircle size={16} /> : <Copy size={16} />}
+                {linkCopied ? 'Copie !' : 'Copier le lien'}
+              </button>
+              <button
+                onClick={() => { setManualLinkData(null); setLinkCopied(false); }}
+                className="px-6 py-3 bg-gray-800 text-white rounded-xl font-bold hover:bg-gray-700 transition-all border border-gray-700"
+              >
+                Fermer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showPermissionsModal && selectedUser && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
           <div className="bg-gray-900 border border-gray-700 rounded-2xl p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
