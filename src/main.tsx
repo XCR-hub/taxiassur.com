@@ -4,6 +4,21 @@ import { HelmetProvider } from 'react-helmet-async';
 import App from './App.tsx';
 import './index.css';
 
+// Redirect auth hash fragments to the set-password page before React mounts
+// Supabase redirects to the root with #access_token when redirectTo is not in allowed list
+;(() => {
+  const hash = window.location.hash;
+  if (
+    hash &&
+    hash.includes('access_token=') &&
+    (hash.includes('type=recovery') || hash.includes('type=invite'))
+  ) {
+    if (!window.location.pathname.includes('/auth/set-password')) {
+      window.location.replace('/auth/set-password' + hash);
+    }
+  }
+})();
+
 // Remove loading screen as soon as React starts rendering — improves FCP
 const loadingScreen = document.getElementById('loading-screen');
 if (loadingScreen) {

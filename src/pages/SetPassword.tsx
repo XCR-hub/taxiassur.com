@@ -7,129 +7,115 @@ const SetPassword: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const token = searchParams.get('token');
+
+  const legacyToken = searchParams.get('token');
+
+  const hashParams = new URLSearchParams(location.hash.substring(1));
+  const accessToken = hashParams.get('access_token');
+  const refreshToken = hashParams.get('refresh_token');
+  const hashType = hashParams.get('type');
+  const hashError = hashParams.get('error');
+  const hashErrorCode = hashParams.get('error_code');
+  const hashErrorDescription = hashParams.get('error_description');
+
+  const isHashFlow = !!(accessToken && (hashType === 'recovery' || hashType === 'invite'));
+  const hasValidEntry = isHashFlow || !!legacyToken;
 
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [sessionReady, setSessionReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
   useEffect(() => {
-    // Check for errors in hash (from Supabase redirect)
-    const hash = location.hash;
-    if (hash) {
-      const params = new URLSearchParams(hash.substring(1));
-      const errorType = params.get('error');
-      const errorCode = params.get('error_code');
-      const errorDescription = params.get('error_description');
-
-      if (errorType) {
-        let errorMessage = 'Erreur lors de la verification du lien d\'invitation';
-
-        if (errorCode === 'otp_expired') {
-          errorMessage = 'Le lien d\'invitation a expire. Veuillez demander une nouvelle invitation.';
-        } else if (errorType === 'access_denied') {
-          errorMessage = 'Lien d\'invitation invalide ou expire. Veuillez demander une nouvelle invitation.';
-        } else if (errorDescription) {
-          errorMessage = decodeURIComponent(errorDescription);
-        }
-
-        setError(errorMessage);
-        return;
+    if (hashError) {
+      let msg = 'Lien invalide ou expire.';
+      if (hashErrorCode === 'otp_expired') {
+        msg = 'Le lien d\'invitation a expire. Demandez une nouvelle invitation.';
+      } else if (hashErrorDescription) {
+        msg = decodeURIComponent(hashErrorDescription.replace(/\+/g, ' '));
       }
+      setError(msg);
+      return;
     }
 
-    if (!token) {
-      setError('Token de verification manquant. Veuillez utiliser le lien recu par email.');
+    if (isHashFlow && accessToken && refreshToken) {
+      supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken })
+        .then(({ error: sessionError }) => {
+          if (sessionError) {
+            setError('Session invalide. Demandez une nouvelle invitation.');
+          } else {
+            setSessionReady(true);
+          }
+        });
+      return;
     }
-  }, [token, location.hash]);
 
-  const validatePassword = (pwd: string): string | null => {
-    if (pwd.length < 8) {
-      return 'Le mot de passe doit contenir au moins 8 caracteres';
+    if (!legacyToken && !isHashFlow) {
+      setError('Token de verification manquant. Utilisez le lien recu par email.');
     }
-    if (!/[A-Z]/.test(pwd)) {
-      return 'Le mot de passe doit contenir au moins une majuscule';
-    }
-    if (!/[a-z]/.test(pwd)) {
-      return 'Le mot de passe doit contenir au moins une minuscule';
-    }
-    if (!/[0-9]/.test(pwd)) {
-      return 'Le mot de passe doit contenir au moins un chiffre';
-    }
-    return null;
+  }, []);
+
+  const criteria = {
+    length: password.length >= 8,
+    upper: /[A-Z]/.test(password),
+    lower: /[a-z]/.test(password),
+    digit: /[0-9]/.test(password),
   };
+
+  const passwordValid = Object.values(criteria).every(Boolean);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
-    const passwordError = validatePassword(password);
-    if (passwordError) {
-      setError(passwordError);
+    if (!passwordValid) {
+      setError('Le mot de passe ne remplit pas tous les criteres requis');
       return;
     }
-
     if (password !== confirmPassword) {
       setError('Les mots de passe ne correspondent pas');
-      return;
-    }
-
-    if (!token) {
-      setError('Token de verification manquant');
       return;
     }
 
     setLoading(true);
 
     try {
-      // Verify the token and update the password
-      const { error: updateError } = await supabase.auth.verifyOtp({
-        token_hash: token,
-        type: 'email',
-      });
+      if (isHashFlow) {
+        const { error: updateError } = await supabase.auth.updateUser({ password });
+        if (updateError) throw updateError;
+      } else {
+        const { error: verifyError } = await supabase.auth.verifyOtp({
+          token_hash: legacyToken!,
+          type: 'email',
+        });
+        if (verifyError) throw verifyError;
 
-      if (updateError) {
-        throw updateError;
-      }
-
-      // Update the password
-      const { error: passwordError } = await supabase.auth.updateUser({
-        password: password
-      });
-
-      if (passwordError) {
-        throw passwordError;
+        const { error: updateError } = await supabase.auth.updateUser({ password });
+        if (updateError) throw updateError;
       }
 
       setSuccess(true);
-
-      setTimeout(() => {
-        navigate('/backoffice/crm-killer');
-      }, 2000);
-
+      setTimeout(() => navigate('/backoffice/crm-killer'), 2000);
     } catch (err: any) {
-      console.error('Error setting password:', err);
-
-      let errorMessage = 'Erreur lors de la creation du mot de passe';
-
+      let msg = 'Erreur lors de la creation du mot de passe';
       if (err.message?.includes('expired')) {
-        errorMessage = 'Le lien d\'invitation a expire. Veuillez demander une nouvelle invitation.';
-      } else if (err.message?.includes('invalid')) {
-        errorMessage = 'Lien d\'invitation invalide. Veuillez demander une nouvelle invitation.';
+        msg = 'Le lien a expire. Demandez une nouvelle invitation.';
+      } else if (err.message?.includes('invalid') || err.message?.includes('Invalid')) {
+        msg = 'Lien invalide. Demandez une nouvelle invitation.';
+      } else if (err.message) {
+        msg = err.message;
       }
-
-      setError(errorMessage);
+      setError(msg);
     } finally {
       setLoading(false);
     }
   };
 
-  // Show error state if there's an error from URL hash
-  if (error && !token) {
+  if (error && !hasValidEntry) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 flex items-center justify-center p-4">
         <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
@@ -137,19 +123,15 @@ const SetPassword: React.FC = () => {
             <AlertCircle className="w-8 h-8 text-red-600" />
           </div>
           <h2 className="text-2xl font-bold text-gray-900 mb-2">Lien invalide ou expire</h2>
-          <p className="text-gray-600 mb-6">
-            {error}
-          </p>
-
+          <p className="text-gray-600 mb-6">{error}</p>
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
             <h3 className="font-semibold text-blue-900 mb-2">Que faire ?</h3>
             <ol className="text-sm text-blue-800 space-y-2 list-decimal list-inside">
               <li>Demandez une nouvelle invitation a votre administrateur</li>
               <li>Verifiez que vous utilisez le lien le plus recent</li>
-              <li>Les liens d'invitation expirent apres 24 heures</li>
+              <li>Les liens expirent apres 1 heure</li>
             </ol>
           </div>
-
           <button
             onClick={() => navigate('/backoffice/crm-killer')}
             className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors"
@@ -169,13 +151,13 @@ const SetPassword: React.FC = () => {
             <CheckCircle className="w-8 h-8 text-green-600" />
           </div>
           <h2 className="text-2xl font-bold text-gray-900 mb-2">Mot de passe defini !</h2>
-          <p className="text-gray-600 mb-6">
-            Votre compte a ete cree avec succes. Redirection vers l'application...
-          </p>
+          <p className="text-gray-600">Votre compte a ete cree avec succes. Redirection...</p>
         </div>
       </div>
     );
   }
+
+  const formDisabled = isHashFlow ? !sessionReady : !legacyToken;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 flex items-center justify-center p-4">
@@ -185,10 +167,14 @@ const SetPassword: React.FC = () => {
             <Lock className="w-8 h-8 text-blue-600" />
           </div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Creer votre compte</h1>
-          <p className="text-gray-600">
-            Definissez votre mot de passe pour acceder a TaxiAssur
-          </p>
+          <p className="text-gray-600">Definissez votre mot de passe pour acceder a TaxiAssur</p>
         </div>
+
+        {isHashFlow && !sessionReady && !error && (
+          <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800 text-center">
+            Verification du lien en cours...
+          </div>
+        )}
 
         {error && (
           <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
@@ -211,7 +197,7 @@ const SetPassword: React.FC = () => {
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-12"
                 placeholder="Minimum 8 caracteres"
                 required
-                disabled={!token}
+                disabled={formDisabled}
               />
               <button
                 type="button"
@@ -222,18 +208,10 @@ const SetPassword: React.FC = () => {
               </button>
             </div>
             <ul className="mt-2 space-y-1 text-xs text-gray-600">
-              <li className={password.length >= 8 ? 'text-green-600' : ''}>
-                • Au moins 8 caracteres
-              </li>
-              <li className={/[A-Z]/.test(password) ? 'text-green-600' : ''}>
-                • Au moins une majuscule
-              </li>
-              <li className={/[a-z]/.test(password) ? 'text-green-600' : ''}>
-                • Au moins une minuscule
-              </li>
-              <li className={/[0-9]/.test(password) ? 'text-green-600' : ''}>
-                • Au moins un chiffre
-              </li>
+              <li className={criteria.length ? 'text-green-600' : ''}>• Au moins 8 caracteres</li>
+              <li className={criteria.upper ? 'text-green-600' : ''}>• Au moins une majuscule</li>
+              <li className={criteria.lower ? 'text-green-600' : ''}>• Au moins une minuscule</li>
+              <li className={criteria.digit ? 'text-green-600' : ''}>• Au moins un chiffre</li>
             </ul>
           </div>
 
@@ -250,7 +228,7 @@ const SetPassword: React.FC = () => {
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-12"
                 placeholder="Confirmer votre mot de passe"
                 required
-                disabled={!token}
+                disabled={formDisabled}
               />
               <button
                 type="button"
@@ -261,15 +239,13 @@ const SetPassword: React.FC = () => {
               </button>
             </div>
             {confirmPassword && password !== confirmPassword && (
-              <p className="mt-1 text-xs text-red-600">
-                Les mots de passe ne correspondent pas
-              </p>
+              <p className="mt-1 text-xs text-red-600">Les mots de passe ne correspondent pas</p>
             )}
           </div>
 
           <button
             type="submit"
-            disabled={loading || !token || !password || !confirmPassword || password !== confirmPassword}
+            disabled={loading || formDisabled || !passwordValid || !confirmPassword || password !== confirmPassword}
             className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 px-4 rounded-lg font-medium hover:from-blue-700 hover:to-blue-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? 'Creation en cours...' : 'Creer mon compte'}
