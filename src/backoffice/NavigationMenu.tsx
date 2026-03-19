@@ -1,12 +1,5 @@
-import { Link } from 'react-router-dom';
-import {
-  Users, DollarSign, BarChart3, PieChart, Handshake,
-  Zap, FileEdit, Newspaper, Package, TrendingUp, FileText,
-  Search, Link2, Mail, Eye, Plus, Send, Building2, FileCheck, Inbox,
-  UserCircle, Clock, Megaphone, Shield, Globe, Settings, BookOpen,
-  QrCode, MessageSquare, Brain, MapPin, UserCog, Sparkles, Receipt,
-  ClipboardList, LayoutDashboard, Target, Activity, Bell, CreditCard
-} from 'lucide-react';
+import { Link, useLocation } from 'react-router-dom';
+import { Users, DollarSign, BarChart3, PieChart, Handshake, Zap, File as FileEdit, Newspaper, Package, TrendingUp, FileText, Search, Link2, Mail, Eye, Plus, Send, Building2, FileCheck, Inbox, CircleUser as UserCircle, Clock, Megaphone, Shield, Globe, Settings, BookOpen, QrCode, MessageSquare, Brain, MapPin, UserCog, Sparkles, Receipt, ClipboardList, LayoutDashboard, Target, Activity, Bell, CreditCard } from 'lucide-react';
 import { getCurrentUser, hasPermission } from '../lib/auth';
 import { usePendingDocumentsCount } from '../hooks/usePendingDocumentsCount';
 
@@ -29,6 +22,7 @@ interface NavSection {
 export default function NavigationMenu() {
   const currentUser = getCurrentUser();
   const isMaster = currentUser?.role === 'master';
+  const { pathname } = useLocation();
   const { count: pendingDocsCount } = usePendingDocumentsCount();
 
   const canViewCRM = isMaster || hasPermission('crm_leads', 'view');
@@ -68,7 +62,7 @@ export default function NavigationMenu() {
     {
       title: 'Clients',
       icon: Users,
-      color: 'violet',
+      color: 'teal',
       permission: canViewCRM,
       links: [
         { to: '/backoffice/clients', icon: Users, label: 'Gestion Clients', highlight: true },
@@ -196,59 +190,30 @@ export default function NavigationMenu() {
     },
   ];
 
-  const getColorClasses = (color: string, highlight?: boolean) => {
-    const colors: Record<string, { bg: string; hover: string; border: string }> = {
-      slate: { bg: 'from-slate-600 to-slate-700', hover: 'hover:from-slate-700 hover:to-slate-800', border: 'border-slate-400' },
-      blue: { bg: 'from-blue-600 to-blue-700', hover: 'hover:from-blue-700 hover:to-blue-800', border: 'border-blue-400' },
-      green: { bg: 'from-green-600 to-green-700', hover: 'hover:from-green-700 hover:to-green-800', border: 'border-green-400' },
-      amber: { bg: 'from-amber-500 to-amber-600', hover: 'hover:from-amber-600 hover:to-amber-700', border: 'border-amber-400' },
-      sky: { bg: 'from-sky-600 to-sky-700', hover: 'hover:from-sky-700 hover:to-sky-800', border: 'border-sky-400' },
-      cyan: { bg: 'from-cyan-600 to-cyan-700', hover: 'hover:from-cyan-700 hover:to-cyan-800', border: 'border-cyan-400' },
-      orange: { bg: 'from-orange-500 to-orange-600', hover: 'hover:from-orange-600 hover:to-orange-700', border: 'border-orange-400' },
-      emerald: { bg: 'from-emerald-600 to-emerald-700', hover: 'hover:from-emerald-700 hover:to-emerald-800', border: 'border-emerald-400' },
-      rose: { bg: 'from-rose-500 to-rose-600', hover: 'hover:from-rose-600 hover:to-rose-700', border: 'border-rose-400' },
-      pink: { bg: 'from-pink-500 to-pink-600', hover: 'hover:from-pink-600 hover:to-pink-700', border: 'border-pink-400' },
-      violet: { bg: 'from-violet-600 to-violet-700', hover: 'hover:from-violet-700 hover:to-violet-800', border: 'border-violet-400' },
-    };
-    const c = colors[color] || colors.slate;
-    return highlight
+  const colorMap: Record<string, { bg: string; hover: string; border: string; active: string; sectionBg: string; titleColor: string }> = {
+    slate:   { bg: 'from-slate-600 to-slate-700',   hover: 'hover:from-slate-700 hover:to-slate-800',     border: 'border-slate-400',   active: 'ring-2 ring-white/60 brightness-125', sectionBg: 'from-slate-800/50 to-slate-900/50 border-slate-600/50',     titleColor: 'text-slate-300' },
+    blue:    { bg: 'from-blue-600 to-blue-700',      hover: 'hover:from-blue-700 hover:to-blue-800',       border: 'border-blue-400',    active: 'ring-2 ring-white/60 brightness-125', sectionBg: 'from-blue-900/40 to-blue-950/40 border-blue-600/50',         titleColor: 'text-blue-300' },
+    green:   { bg: 'from-green-600 to-green-700',    hover: 'hover:from-green-700 hover:to-green-800',     border: 'border-green-400',   active: 'ring-2 ring-white/60 brightness-125', sectionBg: 'from-green-900/40 to-green-950/40 border-green-600/50',     titleColor: 'text-green-300' },
+    amber:   { bg: 'from-amber-500 to-amber-600',    hover: 'hover:from-amber-600 hover:to-amber-700',     border: 'border-amber-400',   active: 'ring-2 ring-white/60 brightness-125', sectionBg: 'from-amber-900/40 to-amber-950/40 border-amber-600/50',     titleColor: 'text-amber-300' },
+    sky:     { bg: 'from-sky-600 to-sky-700',        hover: 'hover:from-sky-700 hover:to-sky-800',         border: 'border-sky-400',     active: 'ring-2 ring-white/60 brightness-125', sectionBg: 'from-sky-900/40 to-sky-950/40 border-sky-600/50',           titleColor: 'text-sky-300' },
+    cyan:    { bg: 'from-cyan-600 to-cyan-700',      hover: 'hover:from-cyan-700 hover:to-cyan-800',       border: 'border-cyan-400',    active: 'ring-2 ring-white/60 brightness-125', sectionBg: 'from-cyan-900/40 to-cyan-950/40 border-cyan-600/50',         titleColor: 'text-cyan-300' },
+    orange:  { bg: 'from-orange-500 to-orange-600',  hover: 'hover:from-orange-600 hover:to-orange-700',   border: 'border-orange-400',  active: 'ring-2 ring-white/60 brightness-125', sectionBg: 'from-orange-900/40 to-orange-950/40 border-orange-600/50', titleColor: 'text-orange-300' },
+    emerald: { bg: 'from-emerald-600 to-emerald-700',hover: 'hover:from-emerald-700 hover:to-emerald-800', border: 'border-emerald-400', active: 'ring-2 ring-white/60 brightness-125', sectionBg: 'from-emerald-900/40 to-emerald-950/40 border-emerald-600/50', titleColor: 'text-emerald-300' },
+    rose:    { bg: 'from-rose-500 to-rose-600',      hover: 'hover:from-rose-600 hover:to-rose-700',       border: 'border-rose-400',    active: 'ring-2 ring-white/60 brightness-125', sectionBg: 'from-rose-900/40 to-rose-950/40 border-rose-600/50',         titleColor: 'text-rose-300' },
+    pink:    { bg: 'from-pink-500 to-pink-600',      hover: 'hover:from-pink-600 hover:to-pink-700',       border: 'border-pink-400',    active: 'ring-2 ring-white/60 brightness-125', sectionBg: 'from-pink-900/40 to-pink-950/40 border-pink-600/50',         titleColor: 'text-pink-300' },
+    teal:    { bg: 'from-teal-600 to-teal-700',      hover: 'hover:from-teal-700 hover:to-teal-800',       border: 'border-teal-400',    active: 'ring-2 ring-white/60 brightness-125', sectionBg: 'from-teal-900/40 to-teal-950/40 border-teal-600/50',         titleColor: 'text-teal-300' },
+  };
+
+  const getColorClasses = (color: string, highlight?: boolean, isActive?: boolean) => {
+    const c = colorMap[color] || colorMap.slate;
+    const base = highlight
       ? `bg-gradient-to-r ${c.bg} ${c.hover} border-2 ${c.border} shadow-lg`
       : `bg-gradient-to-r ${c.bg} ${c.hover} shadow-md`;
+    return isActive ? `${base} ${c.active} scale-[1.02]` : base;
   };
 
-  const getSectionBg = (color: string) => {
-    const bgs: Record<string, string> = {
-      slate: 'from-slate-800/50 to-slate-900/50 border-slate-600/50',
-      blue: 'from-blue-900/40 to-blue-950/40 border-blue-600/50',
-      green: 'from-green-900/40 to-green-950/40 border-green-600/50',
-      amber: 'from-amber-900/40 to-amber-950/40 border-amber-600/50',
-      sky: 'from-sky-900/40 to-sky-950/40 border-sky-600/50',
-      cyan: 'from-cyan-900/40 to-cyan-950/40 border-cyan-600/50',
-      orange: 'from-orange-900/40 to-orange-950/40 border-orange-600/50',
-      emerald: 'from-emerald-900/40 to-emerald-950/40 border-emerald-600/50',
-      rose: 'from-rose-900/40 to-rose-950/40 border-rose-600/50',
-      pink: 'from-pink-900/40 to-pink-950/40 border-pink-600/50',
-      violet: 'from-violet-900/40 to-violet-950/40 border-violet-600/50',
-    };
-    return bgs[color] || bgs.slate;
-  };
-
-  const getTitleColor = (color: string) => {
-    const colors: Record<string, string> = {
-      slate: 'text-slate-300',
-      blue: 'text-blue-300',
-      green: 'text-green-300',
-      amber: 'text-amber-300',
-      sky: 'text-sky-300',
-      cyan: 'text-cyan-300',
-      orange: 'text-orange-300',
-      emerald: 'text-emerald-300',
-      rose: 'text-rose-300',
-      pink: 'text-pink-300',
-      violet: 'text-violet-300',
-    };
-    return colors[color] || 'text-gray-300';
-  };
+  const getSectionBg = (color: string) => (colorMap[color] || colorMap.slate).sectionBg;
+  const getTitleColor = (color: string) => (colorMap[color] || colorMap.slate).titleColor;
 
   return (
     <div className="space-y-3">
@@ -265,21 +230,32 @@ export default function NavigationMenu() {
               {section.title}
             </h3>
             <div className="flex flex-col gap-1">
-              {section.links.map((link) => (
-                <Link
-                  key={link.to}
-                  to={link.to}
-                  className={`flex items-center gap-2 px-3 py-2 text-white rounded-md font-medium transition-all text-xs hover:scale-105 ${getColorClasses(section.color, link.highlight)}`}
-                >
-                  <link.icon className="w-3.5 h-3.5 flex-shrink-0" />
-                  <span className="flex-1 truncate">{link.label}</span>
-                  {link.badge && (
-                    <span className="bg-white/30 text-xs px-1.5 py-0.5 rounded-full font-bold">
-                      {link.badge}
-                    </span>
-                  )}
-                </Link>
-              ))}
+              {section.links.map((link) => {
+                const isActive = pathname === link.to || pathname.startsWith(link.to + '/');
+                return (
+                  <Link
+                    key={link.to}
+                    to={link.to}
+                    className={`flex items-center gap-2 px-3 py-2 text-white rounded-md font-medium transition-all text-xs ${isActive ? '' : 'hover:scale-105'} ${getColorClasses(section.color, link.highlight, isActive)}`}
+                  >
+                    <link.icon className="w-3.5 h-3.5 flex-shrink-0" />
+                    <span className="flex-1 truncate">{link.label}</span>
+                    {isActive && (
+                      <span className="w-1.5 h-1.5 rounded-full bg-white flex-shrink-0" />
+                    )}
+                    {!isActive && link.badge && (
+                      <span className="bg-white/30 text-xs px-1.5 py-0.5 rounded-full font-bold">
+                        {link.badge}
+                      </span>
+                    )}
+                    {isActive && link.badge && (
+                      <span className="bg-white/50 text-xs px-1.5 py-0.5 rounded-full font-bold">
+                        {link.badge}
+                      </span>
+                    )}
+                  </Link>
+                );
+              })}
             </div>
           </div>
         );
