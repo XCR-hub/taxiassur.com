@@ -82,9 +82,9 @@ const JsonLd: React.FC<JsonLdProps> = ({ type, data }) => {
           "aggregateRating": {
             "@type": "AggregateRating",
             "ratingValue": "5.0",
-            "reviewCount": "50",
+            "reviewCount": "8",
             "bestRating": "5",
-            "worstRating": "4"
+            "worstRating": "1"
           },
           "sameAs": [
             "https://www.linkedin.com/company/xcr",

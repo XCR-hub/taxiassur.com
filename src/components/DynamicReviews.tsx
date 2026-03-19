@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Star, ThumbsUp, MapPin } from 'lucide-react';
+import { Helmet } from 'react-helmet-async';
 import { useRealStats } from '../hooks/useRealStats';
 
 interface Review {
@@ -116,8 +117,44 @@ const DynamicReviews: React.FC = () => {
   }, []);
 
   const averageRating = 5.0;
+  const siteUrl = 'https://taxiassur.com';
+
+  const reviewsSchema = {
+    "@context": "https://schema.org",
+    "@type": "InsuranceAgency",
+    "name": "TaxiAssur",
+    "url": siteUrl,
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "5.0",
+      "reviewCount": String(reviews.length),
+      "bestRating": "5",
+      "worstRating": "1"
+    },
+    "review": reviews.map(review => ({
+      "@type": "Review",
+      "author": {
+        "@type": "Person",
+        "name": review.name
+      },
+      "datePublished": review.date,
+      "reviewBody": review.text,
+      "reviewRating": {
+        "@type": "Rating",
+        "ratingValue": String(review.rating),
+        "bestRating": "5",
+        "worstRating": "1"
+      }
+    }))
+  };
 
   return (
+    <>
+    <Helmet>
+      <script type="application/ld+json">
+        {JSON.stringify(reviewsSchema)}
+      </script>
+    </Helmet>
     <section className="py-16 bg-gradient-to-br from-gray-950 via-gray-900 to-black">
       <div className="container mx-auto px-4">
         <div className="max-w-6xl mx-auto">
@@ -230,6 +267,7 @@ const DynamicReviews: React.FC = () => {
         </div>
       </div>
     </section>
+    </>
   );
 };
 

@@ -4,15 +4,12 @@ import {
   CheckCircle, Phone, Upload, ArrowRight, FileText,
   Clock, Shield, Copy, ExternalLink, Sparkles
 } from 'lucide-react';
+import SEOHead from '../components/SEOHead';
 
 const Merci: React.FC = () => {
   const [searchParams] = useSearchParams();
   const token = searchParams.get('token');
   const [copied, setCopied] = useState(false);
-
-  useEffect(() => {
-    document.title = 'Merci ! Votre demande a ete recue - TaxiAssur.com';
-  }, []);
 
   const prospectSpaceUrl = token
     ? `${window.location.origin}/espace-prospect/${token}`
@@ -27,6 +24,13 @@ const Merci: React.FC = () => {
   };
 
   return (
+    <>
+    <SEOHead
+      title="Merci - Demande recue"
+      description="Votre demande de devis a ete recue. Un expert vous contacte sous 15 minutes."
+      noindex={true}
+      canonical="/merci"
+    />
     <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950 flex items-center justify-center p-4">
       <div className="w-full max-w-2xl">
 
@@ -234,6 +238,7 @@ const Merci: React.FC = () => {
 
       </div>
     </div>
+    </>
   );
 };
 
