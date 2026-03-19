@@ -837,7 +837,7 @@ const CRMPipelineKanban: React.FC = () => {
 
       {/* Kanban board */}
       <div className="flex-1 px-3 py-3 overflow-x-auto overflow-y-hidden">
-        <div className="flex gap-2 h-full" style={{ minWidth: 'max-content' }}>
+        <div className="flex gap-2.5 h-full" style={{ minWidth: 'max-content' }}>
           {visibleStatuses.map((status) => {
             const statusInfo = PIPELINE_STATUSES[status];
             const leads = filteredKanbanData[status] || [];
@@ -853,84 +853,106 @@ const CRMPipelineKanban: React.FC = () => {
                 onDragLeave={handleDragLeave}
                 onDrop={(e) => handleDrop(e, status)}
                 className={cn(
-                  'w-[272px] flex-shrink-0 transition-all duration-300 flex flex-col rounded-xl border overflow-hidden',
-                  colors.colBg,
-                  isDropTarget
-                    ? 'border-yellow-400/60 shadow-xl shadow-yellow-900/20 scale-[1.015]'
-                    : colors.colBorder
+                  'w-[284px] flex-shrink-0 transition-all duration-300 flex flex-col rounded-xl overflow-hidden',
+                  isDropTarget ? 'scale-[1.012]' : ''
                 )}
-                style={{ maxHeight: 'calc(100vh - 200px)' }}
+                style={{
+                  maxHeight: 'calc(100vh - 196px)',
+                  background: '#1c1c1c',
+                  boxShadow: isDropTarget
+                    ? `0 0 0 1.5px ${accentColor}70, 0 8px 32px rgba(0,0,0,0.4)`
+                    : '0 1px 4px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.04)',
+                }}
               >
                 {/* Colored top stripe */}
-                <div style={{ height: '3px', backgroundColor: isDropTarget ? '#eab308' : colors.topBar }} />
+                <div
+                  className="flex-shrink-0 transition-all duration-300"
+                  style={{
+                    height: '4px',
+                    background: isDropTarget
+                      ? `linear-gradient(90deg, ${accentColor}, #eab308)`
+                      : `linear-gradient(90deg, ${accentColor}cc, ${accentColor}44)`,
+                  }}
+                />
 
                 {/* Column header */}
                 <div
-                  className={cn(
-                    'flex-shrink-0 border-b px-3 pt-2.5 pb-2',
-                    colors.headerBg,
-                    isDropTarget ? 'border-yellow-600/20' : 'border-white/[0.06]'
-                  )}
+                  className="flex-shrink-0 px-3 pt-2.5 pb-2.5"
+                  style={{
+                    background: `linear-gradient(180deg, ${accentColor}0d 0%, transparent 100%)`,
+                    borderBottom: `1px solid rgba(255,255,255,0.06)`,
+                  }}
                 >
                   {/* Title row */}
-                  <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center justify-between mb-2.5">
                     <div className="flex items-center gap-2 min-w-0">
-                      <span className="text-base leading-none">{statusInfo.icon}</span>
-                      <h3 className="text-sm font-bold text-white truncate tracking-wide">{statusInfo.label}</h3>
+                      <div
+                        className="w-7 h-7 rounded-lg flex items-center justify-center text-sm shrink-0"
+                        style={{
+                          background: `${accentColor}18`,
+                          border: `1px solid ${accentColor}30`,
+                        }}
+                      >
+                        {statusInfo.icon}
+                      </div>
+                      <h3 className="text-sm font-semibold text-white truncate">{statusInfo.label}</h3>
                     </div>
-                    <span
-                      className={cn(
-                        'ml-2 shrink-0 min-w-[24px] h-[24px] flex items-center justify-center rounded-full text-xs font-bold shadow-sm transition-all duration-200',
-                        isDropTarget ? 'bg-yellow-500 text-black scale-110' : colors.badge
-                      )}
-                    >
-                      {leads.length}
-                    </span>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <span
+                        className="min-w-[22px] h-[22px] flex items-center justify-center rounded-full text-xs font-bold px-1.5 transition-all duration-200"
+                        style={isDropTarget ? {
+                          background: '#eab308',
+                          color: '#000',
+                          transform: 'scale(1.1)',
+                        } : {
+                          background: `${accentColor}22`,
+                          color: accentColor,
+                          border: `1px solid ${accentColor}30`,
+                        }}
+                      >
+                        {leads.length}
+                      </span>
+                    </div>
                   </div>
 
-                  {/* Quality bar + notification pills */}
-                  <div className="flex items-center gap-1.5">
+                  {/* Quality + notifications row */}
+                  <div className="flex items-center gap-1.5 min-h-[18px]">
                     {leads.length > 0 && (
                       <div className="flex items-center gap-1.5 shrink-0">
-                        <div className="w-14 h-1.5 bg-black/30 rounded-full overflow-hidden">
+                        <div className="w-16 h-1 bg-black/50 rounded-full overflow-hidden">
                           <div
                             className="h-full rounded-full transition-all duration-500"
-                            style={{ width: `${avgQuality}%`, backgroundColor: accentColor }}
+                            style={{ width: `${avgQuality}%`, backgroundColor: accentColor, opacity: 0.85 }}
                           />
                         </div>
-                        <span className="text-xs font-medium" style={{ color: accentColor }}>{avgQuality}%</span>
+                        <span className="text-[10px] font-semibold" style={{ color: accentColor }}>{avgQuality}%</span>
                       </div>
                     )}
                     {columnNotifications[status] && (
                       <div className="flex items-center gap-1 ml-auto">
                         {columnNotifications[status].newEmails > 0 && (
-                          <div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-blue-600/80 text-white text-xs font-semibold animate-pulse">
-                            <Mail size={9} />{columnNotifications[status].newEmails}
+                          <div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[10px] font-bold animate-pulse" style={{ background: 'rgba(59,130,246,0.2)', color: '#60a5fa', border: '1px solid rgba(59,130,246,0.3)' }}>
+                            <Mail size={8} />{columnNotifications[status].newEmails}
                           </div>
                         )}
                         {columnNotifications[status].newDocuments > 0 && (
-                          <div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-emerald-600/80 text-white text-xs font-semibold animate-pulse">
-                            <FileCheck size={9} />{columnNotifications[status].newDocuments}
+                          <div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[10px] font-bold animate-pulse" style={{ background: 'rgba(16,185,129,0.2)', color: '#34d399', border: '1px solid rgba(16,185,129,0.3)' }}>
+                            <FileCheck size={8} />{columnNotifications[status].newDocuments}
                           </div>
                         )}
                         {columnNotifications[status].missedCalls > 0 && (
-                          <div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-red-600/80 text-white text-xs font-semibold animate-pulse">
-                            <Phone size={9} />{columnNotifications[status].missedCalls}
-                          </div>
-                        )}
-                        {columnNotifications[status].newSMS > 0 && (
-                          <div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-pink-600/80 text-white text-xs font-semibold animate-pulse">
-                            <MessageSquare size={9} />{columnNotifications[status].newSMS}
+                          <div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[10px] font-bold animate-pulse" style={{ background: 'rgba(239,68,68,0.2)', color: '#f87171', border: '1px solid rgba(239,68,68,0.3)' }}>
+                            <Phone size={8} />{columnNotifications[status].missedCalls}
                           </div>
                         )}
                         {columnNotifications[status].pendingSignatures > 0 && (
-                          <div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-slate-600/80 text-white text-xs font-semibold">
-                            <PenTool size={9} />{columnNotifications[status].pendingSignatures}
+                          <div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[10px] font-bold" style={{ background: 'rgba(148,163,184,0.15)', color: '#94a3b8', border: '1px solid rgba(148,163,184,0.2)' }}>
+                            <PenTool size={8} />{columnNotifications[status].pendingSignatures}
                           </div>
                         )}
                         {columnNotifications[status].paymentDue > 0 && (
-                          <div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-amber-600/80 text-white text-xs font-semibold">
-                            <Euro size={9} />{columnNotifications[status].paymentDue}
+                          <div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[10px] font-bold" style={{ background: 'rgba(245,158,11,0.2)', color: '#fbbf24', border: '1px solid rgba(245,158,11,0.3)' }}>
+                            <Euro size={8} />{columnNotifications[status].paymentDue}
                           </div>
                         )}
                       </div>
@@ -939,30 +961,29 @@ const CRMPipelineKanban: React.FC = () => {
                 </div>
 
                 {/* Column scrollable cards area */}
-                <div className={cn(
-                  'space-y-2 flex-1 overflow-y-auto p-2 rounded-b-xl transition-all duration-300',
-                  isDropTarget && 'ring-1 ring-inset ring-yellow-500/30'
-                )}>
+                <div
+                  className={cn(
+                    'flex-1 overflow-y-auto p-2 space-y-2 transition-all duration-300',
+                    isDropTarget && 'bg-yellow-900/5'
+                  )}
+                  style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.06) transparent' }}
+                >
                   {leads.length === 0 ? (
-                    <div className={cn(
-                      'border border-dashed rounded-lg p-8 text-center transition-all duration-300 mt-1',
-                      isDropTarget
-                        ? 'border-yellow-500/50 bg-yellow-900/10'
-                        : 'border-white/10'
-                    )}>
-                      <p className={cn(
-                        'text-xs font-medium transition-all duration-200',
-                        isDropTarget ? 'text-yellow-400 animate-pulse' : 'text-gray-600'
-                      )}>
-                        {isDropTarget ? (
-                          <>
-                            <span className="block text-2xl mb-1">↓</span>
-                            <span>Déposez ici</span>
-                          </>
-                        ) : (
-                          'Aucun lead'
-                        )}
-                      </p>
+                    <div
+                      className="rounded-xl p-8 text-center transition-all duration-300 mt-1"
+                      style={{
+                        border: `1px dashed ${isDropTarget ? accentColor + '60' : 'rgba(255,255,255,0.08)'}`,
+                        background: isDropTarget ? `${accentColor}08` : 'transparent',
+                      }}
+                    >
+                      {isDropTarget ? (
+                        <div className="space-y-1">
+                          <div className="text-2xl" style={{ color: accentColor }}>↓</div>
+                          <p className="text-xs font-semibold animate-pulse" style={{ color: accentColor }}>Deposez ici</p>
+                        </div>
+                      ) : (
+                        <p className="text-xs text-gray-600">Aucun lead</p>
+                      )}
                     </div>
                   ) : (
                     leads.map((lead) => (
