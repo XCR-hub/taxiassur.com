@@ -108,6 +108,7 @@ const CRMAdminSettings: React.FC = () => {
   const [deleting, setDeleting] = useState(false);
   const [actionUser, setActionUser] = useState<AdminUser | null>(null);
   const [toastMsg, setToastMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [fallbackLink, setFallbackLink] = useState<{ email: string; link: string } | null>(null);
   const [showIntegrationModal, setShowIntegrationModal] = useState<string | null>(null);
   const [integrationSettings, setIntegrationSettings] = useState({
     brevo: { api_key: '', sender_email: '', sender_name: '' },
@@ -263,9 +264,13 @@ const CRMAdminSettings: React.FC = () => {
         return;
       }
 
-      showToast('success', `Invitation renvoyee a ${user.email}`);
-    } catch (error: any) {
-      showToast('error', error.message || "Erreur lors du renvoi");
+      if (data.email_sent === false && data.action_link) {
+        setFallbackLink({ email: user.email, link: data.action_link });
+      } else {
+        showToast('success', `Email d'invitation envoye a ${user.email}`);
+      }
+    } catch (err: any) {
+      showToast('error', err.message || "Erreur lors du renvoi");
     } finally {
       setActionUser(null);
     }
@@ -479,6 +484,43 @@ const CRMAdminSettings: React.FC = () => {
                 className="px-6 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors"
               >
                 Annuler
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* FALLBACK LINK MODAL */}
+      {fallbackLink && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[100] p-4">
+          <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-lg w-full border-2 border-amber-200">
+            <div className="flex items-center gap-4 mb-4">
+              <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                <Key className="text-amber-600" size={24} />
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-gray-900">Email non envoye — lien manuel</h3>
+                <p className="text-gray-500 text-sm">{fallbackLink.email}</p>
+              </div>
+            </div>
+            <p className="text-gray-600 text-sm mb-4">
+              Le lien de connexion a ete genere mais l'email n'a pas pu etre envoye via SMTP. Copiez ce lien et transmettez-le directement a l'utilisateur.
+            </p>
+            <div className="bg-gray-50 border border-gray-200 rounded-xl p-3 mb-4 font-mono text-xs text-gray-700 break-all select-all">
+              {fallbackLink.link}
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => { navigator.clipboard.writeText(fallbackLink.link); showToast('success', 'Lien copie !'); }}
+                className="flex-1 flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-600 text-white px-6 py-3 rounded-xl font-bold transition-colors"
+              >
+                Copier le lien
+              </button>
+              <button
+                onClick={() => setFallbackLink(null)}
+                className="px-6 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors"
+              >
+                Fermer
               </button>
             </div>
           </div>

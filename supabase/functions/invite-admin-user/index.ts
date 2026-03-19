@@ -414,21 +414,40 @@ Deno.serve(async (req: Request) => {
       }
 
       if (force_resend) {
-        // Re-send invitation as a password reset link
-        const { data: resetData } = await supabaseAdmin.auth.admin.generateLink({
+        const { data: resetData, error: resetError } = await supabaseAdmin.auth.admin.generateLink({
           type: 'recovery',
           email,
           options: { redirectTo: redirectUrl },
         });
-        if (resetData?.properties?.action_link) {
-          try {
-            await sendInvitationEmail(email, existingUser.full_name || full_name, resetData.properties.action_link, existingUser.role || userRole);
-          } catch (mailErr) {
-            console.error('Email send error (force_resend):', mailErr);
-          }
+
+        if (resetError || !resetData?.properties?.action_link) {
+          return new Response(
+            JSON.stringify({ success: false, error: `Impossible de generer le lien: ${resetError?.message || 'lien vide'}` }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
         }
+
+        const actionLink = resetData.properties.action_link;
+        let emailSent = false;
+        let emailError = '';
+
+        try {
+          await sendInvitationEmail(email, existingUser.full_name || full_name, actionLink, existingUser.role || userRole);
+          emailSent = true;
+        } catch (mailErr: any) {
+          emailError = mailErr?.message || 'Erreur SMTP inconnue';
+          console.error('Email send error (force_resend):', mailErr);
+        }
+
         return new Response(
-          JSON.stringify({ success: true, message: `Invitation renvoyee a ${email}` }),
+          JSON.stringify({
+            success: true,
+            email_sent: emailSent,
+            action_link: actionLink,
+            message: emailSent
+              ? `Invitation renvoyee a ${email}`
+              : `Lien genere mais email non envoye (${emailError}). Copiez le lien manuellement.`,
+          }),
           { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
