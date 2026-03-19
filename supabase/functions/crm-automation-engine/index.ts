@@ -113,9 +113,9 @@ async function autoScoreAllLeads(supabase: any): Promise<number> {
   console.log("📊 Auto-scoring all leads...");
 
   const { data: leads } = await supabase
-    .from('leads')
+    .from('crm_leads')
     .select('id')
-    .eq('status', 'active');
+    .not('status', 'in', '("CLIENT_ACTIF","PERDU","SPAM")');
 
   if (!leads || leads.length === 0) {
     return 0;
@@ -141,7 +141,7 @@ async function processActivities(supabase: any): Promise<number> {
 
   const { data: activities } = await supabase
     .from('crm_lead_activities')
-    .select('*, leads(id, lead_score, stage)')
+    .select('*, crm_leads(id, lead_score, pipeline_stage)')
     .gte('created_at', new Date(Date.now() - 3600000).toISOString())
     .order('created_at', { ascending: false });
 
@@ -152,7 +152,7 @@ async function processActivities(supabase: any): Promise<number> {
   let processed = 0;
 
   for (const activity of activities) {
-    const lead = activity.crm_leads_enhanced;
+    const lead = activity.crm_leads;
 
     if (activity.activity_type === 'email_opened' && activity.score_impact === 0) {
       await supabase
@@ -203,14 +203,14 @@ async function generateAISuggestions(
   console.log("🧠 Generating AI suggestions...");
 
   const query = supabase
-    .from('leads')
+    .from('crm_leads')
     .select(`
       *,
       crm_interactions(count),
-      crm_documents(count),
+      crm_lead_documents(count),
       crm_ai_suggestions(count)
     `)
-    .eq('status', 'active');
+    .not('status', 'in', '("CLIENT_ACTIF","PERDU","SPAM")');
 
   if (leadId) {
     query.eq('id', leadId);
@@ -305,9 +305,9 @@ async function executeWorkflows(supabase: any, openaiKey?: string): Promise<numb
     try {
       if (rule.trigger_type === 'time_based') {
         const { data: leads } = await supabase
-          .from('leads')
+          .from('crm_leads')
           .select('*')
-          .eq('status', 'active');
+          .not('status', 'in', '("CLIENT_ACTIF","PERDU","SPAM")');
 
         if (leads) {
           for (const lead of leads) {
@@ -370,8 +370,8 @@ async function executeAction(supabase: any, lead: any, action: any, ruleId: stri
 
       case 'change_stage':
         await supabase
-          .from('leads')
-          .update({ stage: action.new_stage })
+          .from('crm_leads')
+          .update({ pipeline_stage: action.new_stage })
           .eq('id', lead.id);
         break;
     }

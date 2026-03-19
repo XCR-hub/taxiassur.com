@@ -49,15 +49,16 @@ async function sendEmail(
 }
 
 async function logInteraction(leadId: string, subject: string, content: string): Promise<void> {
-  await supabase.from("crm_interactions").insert({
+  const { error } = await supabase.from("crm_interactions").insert({
     lead_id: leadId,
-    interaction_type: "email",
-    direction: "outgoing",
+    type: "email",
+    direction: "outbound",
     subject,
     content,
-    channel: "email",
-    is_automated: true,
   });
+  if (error) {
+    console.error(`[logInteraction] Failed for lead ${leadId}:`, error.message);
+  }
 }
 
 async function processQuoteReminders(): Promise<RelanceResult> {
