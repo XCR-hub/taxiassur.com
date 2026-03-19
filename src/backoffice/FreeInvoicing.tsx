@@ -40,6 +40,7 @@ const FreeInvoicing: React.FC = () => {
   const [recentPayments, setRecentPayments] = useState<any[]>([]);
   const [sendEmail, setSendEmail] = useState(true);
   const [emailSent, setEmailSent] = useState(false);
+  const [lastClientEmail, setLastClientEmail] = useState('');
   const [copiedLink, setCopiedLink] = useState(false);
 
   React.useEffect(() => {
@@ -68,6 +69,7 @@ const FreeInvoicing: React.FC = () => {
     setLoading(true);
     setPaymentLink(null);
     setEmailSent(false);
+    setLastClientEmail('');
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -109,26 +111,38 @@ const FreeInvoicing: React.FC = () => {
         const fullPaymentUrl = `${window.location.origin}/paiement/${response.reference}`;
         setPaymentLink(fullPaymentUrl);
 
-        // Si l'option d'envoi d'email est cochée
-        if (sendEmail && form.email) {
+        const clientEmail = form.email;
+        const clientFirstName = form.firstName;
+        const clientLastName = form.lastName;
+        setLastClientEmail(clientEmail);
+
+        if (sendEmail && clientEmail) {
           try {
-            await supabase.functions.invoke('send-payment-link-email', {
+            const { data: emailData, error: emailError } = await supabase.functions.invoke('send-payment-link-email', {
               body: {
-                lead_id: null, // Pas de lead pour facturation libre
+                lead_id: null,
                 payment_url: fullPaymentUrl,
                 amount: amount,
-                email: form.email,
-                first_name: form.firstName,
-                last_name: form.lastName
+                email: clientEmail,
+                first_name: clientFirstName,
+                last_name: clientLastName
               }
             });
+
+            if (emailError) {
+              throw emailError;
+            }
+
+            if (emailData && emailData.success === false) {
+              throw new Error(emailData.error || 'Erreur inconnue');
+            }
+
             setEmailSent(true);
-          } catch (emailError) {
+          } catch (emailError: any) {
             console.error('Erreur envoi email:', emailError);
-            alert('Lien créé mais erreur lors de l\'envoi de l\'email. Vous pouvez copier le lien ci-dessous.');
+            alert(`Lien créé mais erreur lors de l'envoi de l'email: ${emailError?.message || 'Erreur inconnue'}. Vous pouvez copier le lien ci-dessous.`);
           }
         } else if (!sendEmail && response.htmlForm) {
-          // Si pas d'email, ouvrir directement la fenêtre de paiement
           const newWindow = window.open('', '_blank', 'width=800,height=600');
           if (newWindow) {
             newWindow.document.write(response.htmlForm);
@@ -388,7 +402,7 @@ const FreeInvoicing: React.FC = () => {
                       <span className="font-semibold">Email envoyé avec succès !</span>
                     </div>
                     <p className="text-sm text-green-700">
-                      Le client ({form.email}) a reçu un email professionnel avec le lien de paiement sécurisé.
+                      Le client ({lastClientEmail}) a reçu un email professionnel avec le lien de paiement sécurisé.
                     </p>
                   </div>
                 ) : (
