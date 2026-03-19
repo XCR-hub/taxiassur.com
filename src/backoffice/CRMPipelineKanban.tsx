@@ -610,7 +610,7 @@ const CRMPipelineKanban: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="h-full bg-[#1a1d23] p-8 flex items-center justify-center">
+      <div className="h-full bg-[#f0f2f5] p-8 flex items-center justify-center">
         <div className="animate-pulse w-full max-w-6xl">
           <div className="h-20 bg-gray-200 dark:bg-gray-700 rounded-xl mb-6"></div>
           <div className="flex gap-4 overflow-x-auto">
@@ -624,9 +624,9 @@ const CRMPipelineKanban: React.FC = () => {
   }
 
   return (
-    <div className="h-full bg-[#1a1d23] flex flex-col overflow-hidden">
-      {/* Header — compact single strip */}
-      <div className="bg-[#1e2128] border-b border-white/[0.08] z-10 shadow-lg flex-shrink-0">
+    <div className="h-full bg-[#f0f2f5] flex flex-col overflow-hidden">
+      {/* Header — dark taxi branding */}
+      <div className="bg-[#111318] border-b border-black/20 z-10 shadow-md flex-shrink-0">
         <div className="px-4 py-2">
 
           {/* Row 1: title + search + actions */}
@@ -646,7 +646,7 @@ const CRMPipelineKanban: React.FC = () => {
                 placeholder="Rechercher par nom, email, téléphone..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-9 pr-3 py-1.5 bg-[#252931] border border-white/[0.1] text-white placeholder-slate-500 rounded-lg focus:outline-none focus:ring-1 focus:ring-yellow-500 focus:border-yellow-500 text-sm"
+                className="w-full pl-9 pr-3 py-1.5 bg-white/[0.07] border border-white/[0.12] text-white placeholder-gray-500 rounded-lg focus:outline-none focus:ring-1 focus:ring-yellow-500 focus:border-yellow-500 text-sm"
               />
             </div>
 
@@ -654,7 +654,7 @@ const CRMPipelineKanban: React.FC = () => {
             <div className="flex items-center gap-1.5 shrink-0">
               <button
                 onClick={() => setAutoRefreshEnabled(!autoRefreshEnabled)}
-                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-colors ${autoRefreshEnabled ? 'border-yellow-600/60 bg-yellow-600/10 text-yellow-400' : 'border-white/[0.1] text-slate-400 hover:text-slate-200'}`}
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-colors ${autoRefreshEnabled ? 'border-yellow-500/60 bg-yellow-500/10 text-yellow-400' : 'border-white/[0.1] text-gray-500 hover:text-gray-300'}`}
                 title={autoRefreshEnabled ? 'Désactiver auto-refresh' : 'Activer auto-refresh'}
               >
                 <div className={`w-1.5 h-1.5 rounded-full ${autoRefreshEnabled ? 'bg-yellow-400 animate-pulse' : 'bg-gray-600'}`}></div>
@@ -663,7 +663,7 @@ const CRMPipelineKanban: React.FC = () => {
               <button
                 onClick={handleRefresh}
                 disabled={refreshing}
-                className="p-1.5 border border-white/[0.1] text-slate-400 rounded-lg hover:bg-white/[0.07] hover:text-white transition-colors disabled:opacity-50"
+                className="p-1.5 border border-white/[0.1] text-gray-500 rounded-lg hover:bg-white/[0.06] hover:text-white transition-colors disabled:opacity-50"
                 title="Actualiser"
               >
                 <RefreshCw size={14} className={refreshing ? 'animate-spin' : ''} />
@@ -671,44 +671,43 @@ const CRMPipelineKanban: React.FC = () => {
               <button
                 onClick={handleSyncEmails}
                 disabled={syncingEmails}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 border border-yellow-600 bg-yellow-600/10 text-yellow-400 rounded-lg text-xs font-medium hover:bg-yellow-600/20 transition-colors disabled:opacity-50"
+                className="flex items-center gap-1.5 px-2.5 py-1.5 border border-yellow-600/60 bg-yellow-600/10 text-yellow-400 rounded-lg text-xs font-medium hover:bg-yellow-600/20 transition-colors disabled:opacity-50"
               >
                 <Mail size={13} className={syncingEmails ? 'animate-bounce' : ''} />
                 {syncingEmails ? 'Sync...' : 'Emails'}
               </button>
               <button
                 onClick={() => navigate('/backoffice/crm-killer')}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-yellow-600 to-yellow-500 text-black rounded-lg text-xs font-bold hover:from-yellow-700 hover:to-yellow-600 transition-all"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-yellow-500 to-amber-500 text-black rounded-lg text-xs font-bold hover:from-yellow-400 hover:to-amber-400 transition-all shadow-sm shadow-yellow-900/30"
               >
                 <Plus size={13} />
                 Nouveau Lead
               </button>
 
-              {/* Notifications déplacées depuis le header global */}
-              <div className="ml-1 pl-2 border-l border-gray-700">
+              <div className="ml-1 pl-2 border-l border-white/[0.08]">
                 <RealtimeNotifications />
               </div>
             </div>
           </div>
 
-          {/* Alerts row (only shown when needed) */}
+          {/* Alerts row */}
           {(error || syncMessage || newLeadNotification) && (
             <div className="mt-2 flex flex-col gap-1">
               {error && (
-                <div className="flex items-center gap-2 px-3 py-1.5 bg-red-900/30 border border-red-700 rounded-lg text-red-300 text-xs">
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-red-900/40 border border-red-700/50 rounded-lg text-red-300 text-xs">
                   <AlertCircle size={13} />
                   <span className="flex-1">{error}</span>
                   <button onClick={() => setError(null)} className="text-red-400 hover:text-red-200">✕</button>
                 </div>
               )}
               {syncMessage && (
-                <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs ${syncMessage.includes('✅') ? 'bg-green-900/30 border border-green-700 text-green-300' : syncMessage.includes('❌') ? 'bg-red-900/30 border border-red-700 text-red-300' : 'bg-yellow-900/30 border border-yellow-700 text-yellow-300'}`}>
+                <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs ${syncMessage.includes('✅') ? 'bg-green-900/40 border border-green-700/50 text-green-300' : syncMessage.includes('❌') ? 'bg-red-900/40 border border-red-700/50 text-red-300' : 'bg-yellow-900/40 border border-yellow-700/50 text-yellow-300'}`}>
                   <span className="flex-1 font-medium">{syncMessage}</span>
                   <button onClick={() => setSyncMessage(null)} className="hover:opacity-75">✕</button>
                 </div>
               )}
               {newLeadNotification && (
-                <div className="flex items-center gap-2 px-3 py-1.5 bg-yellow-600 text-black rounded-lg text-xs font-bold animate-pulse">
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-yellow-500 text-black rounded-lg text-xs font-bold animate-pulse">
                   <div className="w-2 h-2 bg-black rounded-full animate-ping"></div>
                   <span className="flex-1">{newLeadNotification}</span>
                   <button onClick={() => setNewLeadNotification(null)} className="font-bold hover:opacity-75">✕</button>
@@ -722,10 +721,10 @@ const CRMPipelineKanban: React.FC = () => {
             <button
               onClick={() => setViewFilter('all')}
               className={cn(
-                'flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium transition-colors',
+                'flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium transition-all',
                 viewFilter === 'all'
-                  ? 'bg-yellow-500 text-black'
-                  : 'bg-white/[0.05] text-slate-400 border border-white/[0.09] hover:text-white hover:bg-white/[0.08]'
+                  ? 'bg-yellow-500 text-black shadow-sm'
+                  : 'bg-white/[0.06] text-gray-400 border border-white/[0.08] hover:text-white hover:bg-white/[0.1]'
               )}
             >
               <Users size={11} />
@@ -734,10 +733,10 @@ const CRMPipelineKanban: React.FC = () => {
             <button
               onClick={() => setViewFilter('mine')}
               className={cn(
-                'flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium transition-colors',
+                'flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium transition-all',
                 viewFilter === 'mine'
-                  ? 'bg-yellow-500 text-black'
-                  : 'bg-white/[0.05] text-slate-400 border border-white/[0.09] hover:text-white hover:bg-white/[0.08]'
+                  ? 'bg-yellow-500 text-black shadow-sm'
+                  : 'bg-white/[0.06] text-gray-400 border border-white/[0.08] hover:text-white hover:bg-white/[0.1]'
               )}
             >
               <User size={11} />
@@ -746,24 +745,24 @@ const CRMPipelineKanban: React.FC = () => {
             <button
               onClick={() => setViewFilter('unassigned')}
               className={cn(
-                'flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium transition-colors',
+                'flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium transition-all',
                 viewFilter === 'unassigned'
-                  ? 'bg-yellow-500 text-black'
-                  : 'bg-white/[0.05] text-slate-400 border border-white/[0.09] hover:text-white hover:bg-white/[0.08]'
+                  ? 'bg-yellow-500 text-black shadow-sm'
+                  : 'bg-white/[0.06] text-gray-400 border border-white/[0.08] hover:text-white hover:bg-white/[0.1]'
               )}
             >
               <User size={11} className="opacity-40" />
               Non attribues
             </button>
             {adminUsers.length > 0 && (
-              <div className="ml-auto flex items-center gap-1 text-xs text-gray-500">
+              <div className="ml-auto flex items-center gap-1 text-xs text-gray-600">
                 <Users size={10} />
                 {adminUsers.map(u => (
                   <button
                     key={u.id}
                     onClick={() => {}}
                     title={u.full_name}
-                    className="w-5 h-5 rounded-full bg-white/[0.1] border border-white/[0.15] flex items-center justify-center text-white font-bold text-[9px] hover:border-yellow-500 transition-colors"
+                    className="w-5 h-5 rounded-full bg-white/[0.12] border border-white/[0.18] flex items-center justify-center text-white font-bold text-[9px] hover:border-yellow-500 transition-colors"
                   >
                     {u.full_name.charAt(0)}
                   </button>
@@ -772,51 +771,51 @@ const CRMPipelineKanban: React.FC = () => {
             )}
           </div>
 
-          {/* Row 3: Workflow funnel — compact pill strip */}
-          <div className="mt-2 flex items-center h-7 bg-[#1a1d23]/80 border border-white/[0.08] rounded-lg overflow-hidden text-xs">
+          {/* Row 3: Workflow funnel */}
+          <div className="mt-2 flex items-center h-7 bg-white/[0.05] border border-white/[0.08] rounded-lg overflow-hidden text-xs">
             <div className="flex items-center gap-1 px-3 border-r border-white/[0.07] h-full">
               <div className="w-1.5 h-1.5 bg-yellow-400 rounded-full animate-pulse"></div>
               <span className="font-bold text-white">{statistics.total}</span>
-              <span className="text-slate-500">leads</span>
+              <span className="text-gray-500">leads</span>
             </div>
-            <div className="text-slate-600 px-1">›</div>
+            <div className="text-gray-600 px-1">›</div>
             <div className={`flex items-center gap-1 px-3 border-r border-white/[0.07] h-full ${statistics.needsAction > 0 ? 'bg-red-500/10' : ''}`}>
               <AlertTriangle size={11} className="text-red-400" />
               <span className="font-bold text-red-300">{statistics.needsAction}</span>
-              <span className="text-red-400/60">urgents</span>
+              <span className="text-red-400/70">urgents</span>
             </div>
-            <div className="text-slate-600 px-1">›</div>
+            <div className="text-gray-600 px-1">›</div>
             <div className="flex items-center gap-1 px-3 border-r border-white/[0.07] h-full">
               <FileText size={11} className="text-yellow-400" />
               <span className="font-bold text-yellow-300">{statistics.documentsStage}</span>
-              <span className="text-slate-500">docs</span>
+              <span className="text-gray-500">docs</span>
             </div>
-            <div className="text-slate-600 px-1">›</div>
+            <div className="text-gray-600 px-1">›</div>
             <div className="flex items-center gap-1 px-3 border-r border-white/[0.07] h-full">
               <Building2 size={11} className="text-amber-400" />
               <span className="font-bold text-amber-300">{statistics.quoteStage}</span>
-              <span className="text-slate-500">devis</span>
+              <span className="text-gray-500">devis</span>
             </div>
-            <div className="text-slate-600 px-1">›</div>
+            <div className="text-gray-600 px-1">›</div>
             <div className="flex items-center gap-1 px-3 border-r border-white/[0.07] h-full">
-              <PenTool size={11} className="text-slate-300" />
+              <PenTool size={11} className="text-gray-300" />
               <span className="font-bold text-white">{statistics.signatureStage}</span>
-              <span className="text-slate-500">sign.</span>
+              <span className="text-gray-500">sign.</span>
             </div>
-            <div className="text-slate-600 px-1">›</div>
+            <div className="text-gray-600 px-1">›</div>
             <div className="flex items-center gap-1 px-3 border-r border-white/[0.07] h-full">
               <Euro size={11} className="text-emerald-400" />
               <span className="font-bold text-emerald-300">{statistics.paymentStage}</span>
-              <span className="text-slate-500">paiement</span>
+              <span className="text-gray-500">paiement</span>
             </div>
-            <div className="text-slate-600 px-1">›</div>
+            <div className="text-gray-600 px-1">›</div>
             <div className="flex items-center gap-1 px-3 bg-emerald-500/10 h-full">
               <TrendingUp size={11} className="text-emerald-400" />
               <span className="font-bold text-emerald-300">{statistics.active}</span>
-              <span className="text-emerald-600/80">clients actifs</span>
+              <span className="text-emerald-500/80">clients actifs</span>
             </div>
             <div className="ml-auto flex items-center px-3 border-l border-white/[0.07] h-full">
-              <div className="flex items-center gap-1 text-slate-600">
+              <div className="flex items-center gap-1 text-gray-600">
                 <Clock size={10} />
                 <span>{lastUpdate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</span>
               </div>
@@ -858,10 +857,10 @@ const CRMPipelineKanban: React.FC = () => {
                 )}
                 style={{
                   maxHeight: 'calc(100vh - 196px)',
-                  background: '#21242d',
+                  background: '#ffffff',
                   boxShadow: isDropTarget
-                    ? `0 0 0 1.5px ${accentColor}70, 0 8px 32px rgba(0,0,0,0.3)`
-                    : '0 1px 4px rgba(0,0,0,0.25), 0 0 0 1px rgba(255,255,255,0.06)',
+                    ? `0 0 0 2px ${accentColor}90, 0 8px 24px rgba(0,0,0,0.12)`
+                    : '0 1px 3px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.06)',
                 }}
               >
                 {/* Colored top stripe */}
@@ -879,8 +878,8 @@ const CRMPipelineKanban: React.FC = () => {
                 <div
                   className="flex-shrink-0 px-3 pt-2.5 pb-2.5"
                   style={{
-                    background: `linear-gradient(180deg, ${accentColor}0d 0%, transparent 100%)`,
-                    borderBottom: `1px solid rgba(255,255,255,0.06)`,
+                    background: `linear-gradient(180deg, ${accentColor}12 0%, #fafafa 100%)`,
+                    borderBottom: `1px solid rgba(0,0,0,0.06)`,
                   }}
                 >
                   {/* Title row */}
@@ -889,25 +888,25 @@ const CRMPipelineKanban: React.FC = () => {
                       <div
                         className="w-7 h-7 rounded-lg flex items-center justify-center text-sm shrink-0"
                         style={{
-                          background: `${accentColor}18`,
-                          border: `1px solid ${accentColor}30`,
+                          background: `${accentColor}20`,
+                          border: `1px solid ${accentColor}35`,
                         }}
                       >
                         {statusInfo.icon}
                       </div>
-                      <h3 className="text-sm font-semibold text-white truncate">{statusInfo.label}</h3>
+                      <h3 className="text-sm font-bold text-gray-800 truncate">{statusInfo.label}</h3>
                     </div>
                     <div className="flex items-center gap-1.5 shrink-0">
                       <span
                         className="min-w-[22px] h-[22px] flex items-center justify-center rounded-full text-xs font-bold px-1.5 transition-all duration-200"
                         style={isDropTarget ? {
-                          background: '#eab308',
+                          background: '#f59e0b',
                           color: '#000',
                           transform: 'scale(1.1)',
                         } : {
-                          background: `${accentColor}22`,
+                          background: `${accentColor}18`,
                           color: accentColor,
-                          border: `1px solid ${accentColor}30`,
+                          border: `1px solid ${accentColor}35`,
                         }}
                       >
                         {leads.length}
@@ -919,39 +918,39 @@ const CRMPipelineKanban: React.FC = () => {
                   <div className="flex items-center gap-1.5 min-h-[18px]">
                     {leads.length > 0 && (
                       <div className="flex items-center gap-1.5 shrink-0">
-                        <div className="w-16 h-1 bg-white/[0.1] rounded-full overflow-hidden">
+                        <div className="w-16 h-1 bg-black/[0.08] rounded-full overflow-hidden">
                           <div
                             className="h-full rounded-full transition-all duration-500"
-                            style={{ width: `${avgQuality}%`, backgroundColor: accentColor, opacity: 0.85 }}
+                            style={{ width: `${avgQuality}%`, backgroundColor: accentColor }}
                           />
                         </div>
-                        <span className="text-[10px] font-semibold" style={{ color: accentColor }}>{avgQuality}%</span>
+                        <span className="text-[10px] font-bold" style={{ color: accentColor }}>{avgQuality}%</span>
                       </div>
                     )}
                     {columnNotifications[status] && (
                       <div className="flex items-center gap-1 ml-auto">
                         {columnNotifications[status].newEmails > 0 && (
-                          <div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[10px] font-bold animate-pulse" style={{ background: 'rgba(59,130,246,0.2)', color: '#60a5fa', border: '1px solid rgba(59,130,246,0.3)' }}>
+                          <div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[10px] font-bold animate-pulse" style={{ background: 'rgba(59,130,246,0.12)', color: '#2563eb', border: '1px solid rgba(59,130,246,0.25)' }}>
                             <Mail size={8} />{columnNotifications[status].newEmails}
                           </div>
                         )}
                         {columnNotifications[status].newDocuments > 0 && (
-                          <div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[10px] font-bold animate-pulse" style={{ background: 'rgba(16,185,129,0.2)', color: '#34d399', border: '1px solid rgba(16,185,129,0.3)' }}>
+                          <div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[10px] font-bold animate-pulse" style={{ background: 'rgba(16,185,129,0.12)', color: '#059669', border: '1px solid rgba(16,185,129,0.25)' }}>
                             <FileCheck size={8} />{columnNotifications[status].newDocuments}
                           </div>
                         )}
                         {columnNotifications[status].missedCalls > 0 && (
-                          <div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[10px] font-bold animate-pulse" style={{ background: 'rgba(239,68,68,0.2)', color: '#f87171', border: '1px solid rgba(239,68,68,0.3)' }}>
+                          <div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[10px] font-bold animate-pulse" style={{ background: 'rgba(239,68,68,0.12)', color: '#dc2626', border: '1px solid rgba(239,68,68,0.25)' }}>
                             <Phone size={8} />{columnNotifications[status].missedCalls}
                           </div>
                         )}
                         {columnNotifications[status].pendingSignatures > 0 && (
-                          <div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[10px] font-bold" style={{ background: 'rgba(148,163,184,0.15)', color: '#94a3b8', border: '1px solid rgba(148,163,184,0.2)' }}>
+                          <div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[10px] font-bold" style={{ background: 'rgba(100,116,139,0.12)', color: '#475569', border: '1px solid rgba(100,116,139,0.2)' }}>
                             <PenTool size={8} />{columnNotifications[status].pendingSignatures}
                           </div>
                         )}
                         {columnNotifications[status].paymentDue > 0 && (
-                          <div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[10px] font-bold" style={{ background: 'rgba(245,158,11,0.2)', color: '#fbbf24', border: '1px solid rgba(245,158,11,0.3)' }}>
+                          <div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[10px] font-bold" style={{ background: 'rgba(245,158,11,0.12)', color: '#d97706', border: '1px solid rgba(245,158,11,0.25)' }}>
                             <Euro size={8} />{columnNotifications[status].paymentDue}
                           </div>
                         )}
@@ -964,15 +963,15 @@ const CRMPipelineKanban: React.FC = () => {
                 <div
                   className={cn(
                     'flex-1 overflow-y-auto p-2 space-y-2 transition-all duration-300',
-                    isDropTarget && 'bg-yellow-900/5'
+                    isDropTarget && 'bg-yellow-50'
                   )}
-                  style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.06) transparent' }}
+                  style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(0,0,0,0.12) transparent' }}
                 >
                   {leads.length === 0 ? (
                     <div
                       className="rounded-xl p-8 text-center transition-all duration-300 mt-1"
                       style={{
-                        border: `1px dashed ${isDropTarget ? accentColor + '60' : 'rgba(255,255,255,0.08)'}`,
+                        border: `1px dashed ${isDropTarget ? accentColor + '60' : 'rgba(0,0,0,0.12)'}`,
                         background: isDropTarget ? `${accentColor}08` : 'transparent',
                       }}
                     >

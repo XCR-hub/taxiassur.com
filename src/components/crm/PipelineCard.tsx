@@ -191,8 +191,8 @@ export const PipelineCard: React.FC<PipelineCardProps> = ({
         className
       )}
       style={{
-        background: isDragging ? '#262931' : 'linear-gradient(145deg, #2d3140 0%, #282d3a 100%)',
-        boxShadow: isDragging ? 'none' : `0 1px 3px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.07), inset 0 1px 0 rgba(255,255,255,0.06)`,
+        background: isDragging ? '#f5f6f8' : '#ffffff',
+        boxShadow: isDragging ? 'none' : `0 1px 3px rgba(0,0,0,0.07), 0 0 0 1px rgba(0,0,0,0.06)`,
       }}
     >
       {/* Left accent stripe */}
@@ -204,7 +204,7 @@ export const PipelineCard: React.FC<PipelineCardProps> = ({
       {/* Hover glow overlay */}
       <div
         className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none rounded-xl"
-        style={{ boxShadow: `inset 0 0 0 1px ${accentColor}22`, background: `radial-gradient(ellipse at 0% 0%, ${accentColor}08 0%, transparent 60%)` }}
+        style={{ boxShadow: `inset 0 0 0 1px ${accentColor}30`, background: `radial-gradient(ellipse at 0% 0%, ${accentColor}06 0%, transparent 60%)` }}
       />
 
       {/* Content */}
@@ -213,7 +213,7 @@ export const PipelineCard: React.FC<PipelineCardProps> = ({
         {/* Name + score */}
         <div className="flex items-start justify-between gap-2 mb-2">
           <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-white text-sm leading-tight truncate">
+            <h3 className="font-semibold text-gray-900 text-sm leading-tight truncate">
               {lead.full_name}
             </h3>
             {lead.company_name && (
@@ -224,9 +224,9 @@ export const PipelineCard: React.FC<PipelineCardProps> = ({
             <div
               className="shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded-md leading-none"
               style={{
-                background: lead.quality_score >= 80 ? 'rgba(74,222,128,0.12)' : lead.quality_score >= 60 ? 'rgba(245,158,11,0.12)' : 'rgba(239,68,68,0.12)',
-                color: lead.quality_score >= 80 ? '#4ade80' : lead.quality_score >= 60 ? '#fbbf24' : '#f87171',
-                border: `1px solid ${lead.quality_score >= 80 ? 'rgba(74,222,128,0.2)' : lead.quality_score >= 60 ? 'rgba(245,158,11,0.2)' : 'rgba(239,68,68,0.2)'}`,
+                background: lead.quality_score >= 80 ? 'rgba(22,163,74,0.1)' : lead.quality_score >= 60 ? 'rgba(217,119,6,0.1)' : 'rgba(220,38,38,0.1)',
+                color: lead.quality_score >= 80 ? '#16a34a' : lead.quality_score >= 60 ? '#d97706' : '#dc2626',
+                border: `1px solid ${lead.quality_score >= 80 ? 'rgba(22,163,74,0.25)' : lead.quality_score >= 60 ? 'rgba(217,119,6,0.25)' : 'rgba(220,38,38,0.25)'}`,
               }}
             >
               {lead.quality_score}%
@@ -237,19 +237,19 @@ export const PipelineCard: React.FC<PipelineCardProps> = ({
         {/* Contact info */}
         <div className="space-y-[5px] mb-2.5">
           <div className="flex items-center gap-1.5">
-            <Mail size={10} className="shrink-0 text-slate-500" />
-            <span className="text-[11px] text-slate-300 truncate">{lead.email}</span>
+            <Mail size={10} className="shrink-0 text-gray-400" />
+            <span className="text-[11px] text-gray-600 truncate">{lead.email}</span>
           </div>
           {lead.phone && (
             <div className="flex items-center gap-1.5">
-              <Phone size={10} className="shrink-0 text-slate-500" />
-              <span className="text-[11px] text-slate-300 truncate">{lead.phone}</span>
+              <Phone size={10} className="shrink-0 text-gray-400" />
+              <span className="text-[11px] text-gray-600 truncate">{lead.phone}</span>
             </div>
           )}
           {lead.city && (
             <div className="flex items-center gap-1.5">
-              <MapPin size={10} className="shrink-0 text-slate-500" />
-              <span className="text-[11px] text-slate-400 truncate">{lead.city}</span>
+              <MapPin size={10} className="shrink-0 text-gray-400" />
+              <span className="text-[11px] text-gray-500 truncate">{lead.city}</span>
             </div>
           )}
         </div>
@@ -258,10 +258,10 @@ export const PipelineCard: React.FC<PipelineCardProps> = ({
         {indicators.needsRelance && (
           <div
             className="flex items-center gap-1.5 mb-2.5 px-2 py-1.5 rounded-lg"
-            style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)' }}
+            style={{ background: 'rgba(220,38,38,0.07)', border: '1px solid rgba(220,38,38,0.2)' }}
           >
-            <AlertTriangle size={10} className="text-red-400 shrink-0" />
-            <span className="text-[11px] text-red-400 font-medium">Relance — {indicators.lastInteractionDays}j sans contact</span>
+            <AlertTriangle size={10} className="text-red-600 shrink-0" />
+            <span className="text-[11px] text-red-600 font-medium">Relance — {indicators.lastInteractionDays}j sans contact</span>
           </div>
         )}
 
@@ -269,22 +269,22 @@ export const PipelineCard: React.FC<PipelineCardProps> = ({
         <div className="mb-2">
           <div className="flex items-center justify-between mb-1">
             <div className="flex items-center gap-1">
-              <FileCheck size={9} className="text-slate-500" />
-              <span className="text-[10px] text-slate-500">Docs</span>
+              <FileCheck size={9} className="text-gray-400" />
+              <span className="text-[10px] text-gray-500">Docs</span>
             </div>
             <span className={cn(
               'text-[10px] font-semibold',
-              indicators.documentsValidated >= 7 ? 'text-green-400' : indicators.documentsValidated >= 4 ? 'text-yellow-400' : 'text-orange-400'
+              indicators.documentsValidated >= 7 ? 'text-green-600' : indicators.documentsValidated >= 4 ? 'text-amber-600' : 'text-orange-500'
             )}>
               {indicators.documentsValidated}/{indicators.documentsTotal}
             </span>
           </div>
-          <div className="h-1 bg-white/[0.08] rounded-full overflow-hidden">
+          <div className="h-1 bg-gray-150 rounded-full overflow-hidden" style={{ backgroundColor: 'rgba(0,0,0,0.08)' }}>
             <div
               className="h-full rounded-full transition-all duration-500"
               style={{
                 width: `${docPct}%`,
-                background: indicators.documentsValidated >= 7 ? '#4ade80' : indicators.documentsValidated >= 4 ? '#fbbf24' : '#fb923c'
+                background: indicators.documentsValidated >= 7 ? '#16a34a' : indicators.documentsValidated >= 4 ? '#d97706' : '#ea580c'
               }}
             />
           </div>
@@ -299,10 +299,10 @@ export const PipelineCard: React.FC<PipelineCardProps> = ({
               className={cn(
                 'flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[10px] font-medium',
                 (indicators.companiesQuoted + indicators.companiesRefused) >= 5
-                  ? 'bg-green-900/40 text-green-400'
+                  ? 'bg-green-100 text-green-700'
                   : indicators.companiesQuoted > 0
-                    ? 'bg-sky-900/40 text-sky-400'
-                    : 'bg-white/[0.07] text-slate-500'
+                    ? 'bg-sky-100 text-sky-700'
+                    : 'bg-gray-100 text-gray-500'
               )}
               title={`${indicators.companiesQuoted} devis, ${indicators.companiesRefused} refus`}
             >
@@ -311,29 +311,29 @@ export const PipelineCard: React.FC<PipelineCardProps> = ({
             </div>
 
             {indicators.hasSignature && (
-              <div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[10px] font-medium bg-blue-900/40 text-blue-400">
+              <div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[10px] font-medium bg-blue-100 text-blue-700">
                 <PenTool size={8} />Signé
               </div>
             )}
 
             {indicators.downPaymentStatus === 'paid' && (
-              <div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[10px] font-medium bg-green-900/40 text-green-400">
+              <div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[10px] font-medium bg-green-100 text-green-700">
                 <Euro size={8} />Payé
               </div>
             )}
             {indicators.downPaymentStatus === 'pending' && (
-              <div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[10px] font-medium bg-yellow-900/30 text-yellow-400 animate-pulse">
+              <div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[10px] font-medium bg-amber-100 text-amber-700 animate-pulse">
                 <Euro size={8} />Attente
               </div>
             )}
             {indicators.downPaymentStatus === 'required' && (
-              <div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[10px] font-medium bg-orange-900/30 text-orange-400">
+              <div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[10px] font-medium bg-orange-100 text-orange-700">
                 <CreditCard size={8} />Comptant
               </div>
             )}
 
             {indicators.pendingAutomations > 0 && (
-              <div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[10px] font-medium bg-blue-900/40 text-blue-400 animate-pulse">
+              <div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[10px] font-medium bg-sky-100 text-sky-700 animate-pulse">
                 <Loader2 size={8} className="animate-spin" />{indicators.pendingAutomations}
               </div>
             )}
@@ -344,10 +344,10 @@ export const PipelineCard: React.FC<PipelineCardProps> = ({
             className={cn(
               'shrink-0 flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded-md',
               indicators.daysInPipeline > 14
-                ? 'bg-red-900/30 text-red-400'
+                ? 'bg-red-100 text-red-700'
                 : indicators.daysInPipeline > 7
-                  ? 'bg-amber-900/20 text-amber-500'
-                  : 'text-gray-600'
+                  ? 'bg-amber-100 text-amber-700'
+                  : 'text-gray-500'
             )}
           >
             <Clock size={8} />
@@ -358,34 +358,34 @@ export const PipelineCard: React.FC<PipelineCardProps> = ({
         {lead.tags && lead.tags.length > 0 && (
           <div className="mt-2 flex flex-wrap gap-1">
             {lead.tags.slice(0, 2).map((tag, index) => (
-              <span key={index} className="inline-block px-1.5 py-0.5 bg-white/[0.05] text-gray-400 text-[10px] rounded-md border border-white/[0.06]">
+              <span key={index} className="inline-block px-1.5 py-0.5 bg-gray-100 text-gray-500 text-[10px] rounded-md border border-gray-200">
                 {tag}
               </span>
             ))}
             {lead.tags.length > 2 && (
-              <span className="text-[10px] text-slate-500">+{lead.tags.length - 2}</span>
+              <span className="text-[10px] text-gray-400">+{lead.tags.length - 2}</span>
             )}
           </div>
         )}
 
         {/* Assignee footer */}
-        <div className="mt-2 pt-2 flex items-center gap-1.5" style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+        <div className="mt-2 pt-2 flex items-center gap-1.5" style={{ borderTop: '1px solid rgba(0,0,0,0.07)' }}>
           {assigneeName ? (
             <>
               <div
                 className="w-[18px] h-[18px] rounded-full flex items-center justify-center text-[9px] font-bold shrink-0"
-                style={{ background: `${accentColor}25`, border: `1px solid ${accentColor}40`, color: accentColor }}
+                style={{ background: `${accentColor}18`, border: `1px solid ${accentColor}35`, color: accentColor }}
               >
                 {assigneeName.charAt(0).toUpperCase()}
               </div>
-              <span className="text-[10px] text-slate-400 truncate">{assigneeName}</span>
+              <span className="text-[10px] text-gray-500 truncate">{assigneeName}</span>
             </>
           ) : (
             <>
-              <div className="w-[18px] h-[18px] rounded-full bg-white/[0.08] border border-white/[0.12] flex items-center justify-center shrink-0">
-                <User size={8} className="text-slate-500" />
+              <div className="w-[18px] h-[18px] rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center shrink-0">
+                <User size={8} className="text-gray-400" />
               </div>
-              <span className="text-[10px] text-slate-500 italic">Non attribue</span>
+              <span className="text-[10px] text-gray-400 italic">Non attribue</span>
             </>
           )}
         </div>
