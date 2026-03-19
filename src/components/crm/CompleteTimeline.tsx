@@ -1,33 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
-  Mail,
-  Phone,
-  MessageSquare,
-  Send,
-  Download,
-  ArrowDownLeft,
-  ArrowUpRight,
-  Paperclip,
-  ChevronDown,
-  ChevronUp,
-  Clock,
-  User,
-  FileText,
-  Image as ImageIcon,
-  File,
-  Bot,
-  CheckCircle,
-  XCircle,
-  AlertCircle,
-  RefreshCw,
-  Filter,
-  Search,
-  TrendingUp,
-  Calendar,
-  Eye,
-  Upload,
-  Settings,
-  Zap
+  Mail, Phone, MessageSquare, Send, Download, ArrowDownLeft, ArrowUpRight,
+  Paperclip, ChevronDown, ChevronUp, Clock, FileText, Image as ImageIcon,
+  File, Bot, CheckCircle, XCircle, AlertCircle, RefreshCw, Search, TrendingUp,
+  Calendar, Eye, Upload, Settings, Bell, StickyNote, Plus, X, Loader2,
+  Hash, Star, Tag, CornerDownRight, MailOpen, PhoneCall, PhoneMissed,
+  PhoneIncoming, PhoneOutgoing, Inbox
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { getDocumentPublicUrl } from '@/lib/utils';
@@ -55,8 +33,6 @@ interface TimelineEvent {
   status?: string;
   attachments?: Attachment[];
   metadata?: any;
-  icon?: React.ReactNode;
-  color?: string;
 }
 
 interface CompleteTimelineProps {
@@ -65,649 +41,485 @@ interface CompleteTimelineProps {
   leadPhone?: string;
 }
 
-export const CompleteTimeline: React.FC<CompleteTimelineProps> = ({
-  leadId,
-  leadEmail,
-  leadPhone
-}) => {
+const stripHtml = (html: string): string => {
+  if (!html) return '';
+  return html
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/p>/gi, '\n')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+};
+
+const formatFileSize = (bytes: number): string => {
+  if (!bytes) return '';
+  if (bytes < 1024) return `${bytes} o`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} Ko`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} Mo`;
+};
+
+const EVENT_CONFIG: Record<string, {
+  icon: React.ReactNode;
+  label: string;
+  dotColor: string;
+  bgColor: string;
+  textColor: string;
+  borderColor: string;
+  badgeBg: string;
+}> = {
+  email_out: {
+    icon: <Send className="w-4 h-4" />,
+    label: 'Email envoyé',
+    dotColor: 'bg-sky-500',
+    bgColor: 'bg-sky-50',
+    textColor: 'text-sky-700',
+    borderColor: 'border-l-sky-400',
+    badgeBg: 'bg-sky-100 text-sky-700',
+  },
+  email_in: {
+    icon: <MailOpen className="w-4 h-4" />,
+    label: 'Email reçu',
+    dotColor: 'bg-blue-500',
+    bgColor: 'bg-blue-50',
+    textColor: 'text-blue-700',
+    borderColor: 'border-l-blue-400',
+    badgeBg: 'bg-blue-100 text-blue-700',
+  },
+  call: {
+    icon: <PhoneCall className="w-4 h-4" />,
+    label: 'Appel',
+    dotColor: 'bg-emerald-500',
+    bgColor: 'bg-emerald-50',
+    textColor: 'text-emerald-700',
+    borderColor: 'border-l-emerald-400',
+    badgeBg: 'bg-emerald-100 text-emerald-700',
+  },
+  sms: {
+    icon: <MessageSquare className="w-4 h-4" />,
+    label: 'SMS',
+    dotColor: 'bg-violet-500',
+    bgColor: 'bg-violet-50',
+    textColor: 'text-violet-700',
+    borderColor: 'border-l-violet-400',
+    badgeBg: 'bg-violet-100 text-violet-700',
+  },
+  note: {
+    icon: <StickyNote className="w-4 h-4" />,
+    label: 'Note',
+    dotColor: 'bg-amber-500',
+    bgColor: 'bg-amber-50',
+    textColor: 'text-amber-700',
+    borderColor: 'border-l-amber-400',
+    badgeBg: 'bg-amber-100 text-amber-700',
+  },
+  document: {
+    icon: <FileText className="w-4 h-4" />,
+    label: 'Document',
+    dotColor: 'bg-teal-500',
+    bgColor: 'bg-teal-50',
+    textColor: 'text-teal-700',
+    borderColor: 'border-l-teal-400',
+    badgeBg: 'bg-teal-100 text-teal-700',
+  },
+  ai_decision: {
+    icon: <Bot className="w-4 h-4" />,
+    label: 'IA',
+    dotColor: 'bg-rose-500',
+    bgColor: 'bg-rose-50',
+    textColor: 'text-rose-700',
+    borderColor: 'border-l-rose-400',
+    badgeBg: 'bg-rose-100 text-rose-700',
+  },
+  notification: {
+    icon: <Bell className="w-4 h-4" />,
+    label: 'Système',
+    dotColor: 'bg-gray-400',
+    bgColor: 'bg-gray-50',
+    textColor: 'text-gray-600',
+    borderColor: 'border-l-gray-300',
+    badgeBg: 'bg-gray-100 text-gray-600',
+  },
+};
+
+const getEventConfig = (event: TimelineEvent) => {
+  if (event.type === 'email') {
+    return event.direction === 'inbound' ? EVENT_CONFIG.email_in : EVENT_CONFIG.email_out;
+  }
+  if (event.type === 'call') return EVENT_CONFIG.call;
+  if (event.type === 'sms') return EVENT_CONFIG.sms;
+  if (event.type === 'note') return EVENT_CONFIG.note;
+  if (event.type === 'document') return EVENT_CONFIG.document;
+  if (event.type === 'ai_decision') return EVENT_CONFIG.ai_decision;
+  return EVENT_CONFIG.notification;
+};
+
+export const CompleteTimeline: React.FC<CompleteTimelineProps> = ({ leadId, leadEmail }) => {
   const [events, setEvents] = useState<TimelineEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [filter, setFilter] = useState<'all' | 'communication' | 'system' | 'documents' | 'ai'>('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [viewingDoc, setViewingDoc] = useState<{url: string; fileName: string; mimeType: string} | null>(null);
+  const [viewingDoc, setViewingDoc] = useState<{ url: string; fileName: string; mimeType: string } | null>(null);
+  const [showNoteComposer, setShowNoteComposer] = useState(false);
+  const [newNote, setNewNote] = useState('');
+  const [savingNote, setSavingNote] = useState(false);
+  const noteRef = useRef<HTMLTextAreaElement>(null);
 
-  useEffect(() => {
-    loadCompleteTimeline();
-  }, [leadId]);
+  useEffect(() => { loadCompleteTimeline(); }, [leadId]);
+  useEffect(() => { if (showNoteComposer) noteRef.current?.focus(); }, [showNoteComposer]);
 
   const loadCompleteTimeline = async () => {
     setLoading(true);
     try {
       const allEvents: TimelineEvent[] = [];
-
-      // Récupérer tous les IDs de leads liés au même email (doublons inclus)
       let allLeadIds = [leadId];
       if (leadEmail) {
-        const { data: siblingLeads } = await supabase
-          .from('crm_leads')
-          .select('id')
-          .ilike('email', leadEmail.trim());
-        if (siblingLeads && siblingLeads.length > 0) {
-          const ids = siblingLeads.map((l: any) => l.id);
-          allLeadIds = [...new Set([leadId, ...ids])];
-        }
+        const { data: siblings } = await supabase.from('crm_leads').select('id').ilike('email', leadEmail.trim());
+        if (siblings?.length) allLeadIds = [...new Set([leadId, ...siblings.map((l: any) => l.id)])];
       }
 
-      // 1. Charger les emails
-      const { data: emails } = await supabase
-        .from('email_messages')
-        .select('*')
-        .in('lead_id', allLeadIds)
-        .order('created_at', { ascending: false });
+      const [emailsRes, interactionsRes, documentsRes, aiRes, notifRes] = await Promise.all([
+        supabase.from('email_messages').select('*, email_attachments(*)').in('lead_id', allLeadIds).order('created_at', { ascending: false }),
+        supabase.from('crm_interactions').select('*').in('lead_id', allLeadIds).order('created_at', { ascending: false }),
+        supabase.from('crm_lead_documents').select('*').in('lead_id', allLeadIds).order('uploaded_at', { ascending: false }),
+        supabase.from('crm_ai_decisions').select('*').in('lead_id', allLeadIds).order('created_at', { ascending: false }),
+        supabase.from('crm_event_notifications').select('*').in('lead_id', allLeadIds).order('created_at', { ascending: false }),
+      ]);
 
-      if (emails) {
-        for (const email of emails) {
-          // Charger les pièces jointes
-          const { data: attachments } = await supabase
-            .from('email_attachments')
-            .select('*')
-            .eq('email_id', email.id);
-
-          allEvents.push({
-            id: `email-${email.id}`,
-            type: 'email',
-            direction: email.direction,
-            timestamp: email.received_at || email.created_at,
-            title: email.subject || 'Sans objet',
-            content: email.body_text || email.body_html || '',
-            from: email.from_email,
-            to: Array.isArray(email.to_emails) ? email.to_emails.join(', ') : email.to_emails,
-            status: email.status,
-            attachments: attachments?.map(a => ({
-              id: a.id,
-              file_name: a.filename,
-              file_type: a.content_type,
-              file_size: a.file_size,
-              download_url: a.download_url || '',
-              storage_path: a.storage_path,
-              auto_detected_type: a.auto_detected_type
-            })),
-            icon: <Mail className="h-5 w-5" />,
-            color: email.direction === 'inbound' ? 'blue' : 'green'
-          });
-        }
-      }
-
-      // 2. Charger les interactions (SMS, WhatsApp, appels, notes)
-      const { data: interactions } = await supabase
-        .from('crm_interactions')
-        .select('*')
-        .in('lead_id', allLeadIds)
-        .order('created_at', { ascending: false });
-
-      if (interactions) {
-        interactions.forEach(int => {
-          let icon = <MessageSquare className="h-5 w-5" />;
-          let color = 'purple';
-          let title = 'Interaction';
-
-          switch (int.channel) {
-            case 'call':
-              icon = <Phone className="h-5 w-5" />;
-              color = int.direction === 'inbound' ? 'orange' : 'teal';
-              title = int.direction === 'inbound' ? 'Appel reçu' : 'Appel passé';
-              break;
-            case 'sms':
-              icon = <MessageSquare className="h-5 w-5" />;
-              color = 'indigo';
-              title = int.direction === 'inbound' ? 'SMS reçu' : 'SMS envoyé';
-              break;
-            case 'whatsapp':
-              icon = <MessageSquare className="h-5 w-5" />;
-              color = 'green';
-              title = int.direction === 'inbound' ? 'WhatsApp reçu' : 'WhatsApp envoyé';
-              break;
-            case 'note':
-              icon = <FileText className="h-5 w-5" />;
-              color = 'gray';
-              title = 'Note ajoutée';
-              break;
-          }
-
-          allEvents.push({
-            id: `interaction-${int.id}`,
-            type: int.channel,
-            direction: int.direction,
-            timestamp: int.created_at,
-            title,
-            content: int.content || int.notes || int.subject || '',
-            metadata: int.metadata,
-            icon,
-            color
-          });
+      (emailsRes.data || []).forEach((email: any) => {
+        allEvents.push({
+          id: `email-${email.id}`,
+          type: 'email',
+          direction: email.direction,
+          timestamp: email.received_at || email.created_at,
+          title: email.subject || '(Sans objet)',
+          content: email.body_text || stripHtml(email.body_html || ''),
+          from: email.from_email,
+          to: Array.isArray(email.to_emails) ? email.to_emails.join(', ') : email.to_emails,
+          status: email.status,
+          attachments: (email.email_attachments || []).map((a: any) => ({
+            id: a.id, file_name: a.filename, file_type: a.content_type,
+            file_size: a.file_size, download_url: a.download_url || '',
+            storage_path: a.storage_path, auto_detected_type: a.auto_detected_type,
+          })),
         });
-      }
-
-      // 3. Charger les documents uploadés
-      const { data: documents } = await supabase
-        .from('crm_lead_documents')
-        .select('*')
-        .in('lead_id', allLeadIds)
-        .order('uploaded_at', { ascending: false });
-
-      if (documents) {
-        documents.forEach(doc => {
-          allEvents.push({
-            id: `document-${doc.id}`,
-            type: 'document',
-            direction: 'inbound',
-            timestamp: doc.uploaded_at,
-            title: `Document uploadé: ${doc.file_name}`,
-            content: `Type: ${doc.document_type || 'Non spécifié'} - Statut: ${doc.status || 'En attente'}`,
-            attachments: [{
-              id: doc.id,
-              file_name: doc.file_name,
-              file_type: doc.mime_type || 'application/octet-stream',
-              file_size: doc.file_size || 0,
-              download_url: getDocumentPublicUrl(doc.file_path, 'crm_lead_documents', supabase),
-              storage_path: doc.file_path
-            }],
-            metadata: {
-              validation_status: doc.status,
-              validated_by: doc.validated_by,
-              validated_at: doc.validated_at
-            },
-            icon: <Upload className="h-5 w-5" />,
-            color: 'cyan'
-          });
-        });
-      }
-
-      // 4. Charger les décisions IA
-      const { data: aiDecisions } = await supabase
-        .from('crm_ai_decisions')
-        .select('*')
-        .in('lead_id', allLeadIds)
-        .order('created_at', { ascending: false });
-
-      if (aiDecisions) {
-        aiDecisions.forEach(decision => {
-          allEvents.push({
-            id: `ai-${decision.id}`,
-            type: 'ai_decision',
-            timestamp: decision.created_at,
-            title: `IA: ${decision.decision_type}`,
-            content: decision.reasoning || decision.suggestion || '',
-            status: decision.status,
-            metadata: {
-              confidence: decision.confidence_score,
-              applied: decision.applied_at ? 'Appliqué' : 'En attente'
-            },
-            icon: <Bot className="h-5 w-5" />,
-            color: 'violet'
-          });
-        });
-      }
-
-      // 5. Charger les événements système/notifications
-      const { data: notifications } = await supabase
-        .from('crm_event_notifications')
-        .select('*')
-        .in('lead_id', allLeadIds)
-        .order('created_at', { ascending: false });
-
-      if (notifications) {
-        notifications.forEach(notif => {
-          let icon = <Bell className="h-5 w-5" />;
-          if (notif.event_type?.includes('document')) icon = <FileText className="h-5 w-5" />;
-          if (notif.event_type?.includes('quote')) icon = <TrendingUp className="h-5 w-5" />;
-          if (notif.event_type?.includes('contract')) icon = <CheckCircle className="h-5 w-5" />;
-
-          allEvents.push({
-            id: `notification-${notif.id}`,
-            type: 'notification',
-            timestamp: notif.created_at,
-            title: notif.title || 'Notification système',
-            content: notif.message || '',
-            metadata: notif.metadata,
-            icon,
-            color: 'yellow'
-          });
-        });
-      }
-
-      // Dédupliquer par ID pour éviter les doublons si même événement lié à plusieurs leads
-      const seen = new Set<string>();
-      const deduped = allEvents.filter(e => {
-        if (seen.has(e.id)) return false;
-        seen.add(e.id);
-        return true;
       });
 
-      // Trier tous les événements par date décroissante
-      deduped.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+      (interactionsRes.data || []).forEach((int: any) => {
+        const labelMap: Record<string, string> = {
+          call: int.direction === 'inbound' ? 'Appel reçu' : 'Appel passé',
+          sms: int.direction === 'inbound' ? 'SMS reçu' : 'SMS envoyé',
+          whatsapp: int.direction === 'inbound' ? 'WhatsApp reçu' : 'WhatsApp envoyé',
+          note: 'Note ajoutée',
+        };
+        allEvents.push({
+          id: `interaction-${int.id}`,
+          type: int.channel || 'note',
+          direction: int.direction,
+          timestamp: int.created_at,
+          title: labelMap[int.channel] || 'Interaction',
+          content: int.content || int.notes || int.subject || '',
+          metadata: int.metadata,
+        });
+      });
 
+      (documentsRes.data || []).forEach((doc: any) => {
+        allEvents.push({
+          id: `document-${doc.id}`,
+          type: 'document',
+          direction: 'inbound',
+          timestamp: doc.uploaded_at,
+          title: doc.file_name,
+          content: `${doc.document_type || 'Document'} — statut : ${doc.status || 'En attente'}`,
+          attachments: [{
+            id: doc.id, file_name: doc.file_name,
+            file_type: doc.mime_type || 'application/octet-stream',
+            file_size: doc.file_size || 0,
+            download_url: getDocumentPublicUrl(doc.file_path, 'crm_lead_documents', supabase),
+            storage_path: doc.file_path,
+          }],
+          metadata: { statut: doc.status, validé_par: doc.validated_by },
+        });
+      });
+
+      (aiRes.data || []).forEach((d: any) => {
+        allEvents.push({
+          id: `ai-${d.id}`, type: 'ai_decision', timestamp: d.created_at,
+          title: `IA : ${d.decision_type}`,
+          content: d.reasoning || d.suggestion || '',
+          status: d.status,
+          metadata: { confiance: d.confidence_score ? `${Math.round(d.confidence_score * 100)}%` : undefined, statut: d.applied_at ? 'Appliqué' : 'En attente' },
+        });
+      });
+
+      (notifRes.data || []).forEach((n: any) => {
+        allEvents.push({
+          id: `notification-${n.id}`, type: 'notification', timestamp: n.created_at,
+          title: n.title || 'Notification système',
+          content: n.message || '',
+          metadata: n.metadata,
+        });
+      });
+
+      const seen = new Set<string>();
+      const deduped = allEvents.filter(e => { if (seen.has(e.id)) return false; seen.add(e.id); return true; });
+      deduped.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
       setEvents(deduped);
-    } catch (error) {
-      console.error('Error loading timeline:', error);
+    } catch (err) {
+      console.error('Error loading timeline:', err);
     } finally {
       setLoading(false);
     }
   };
 
+  const handleAddNote = async () => {
+    if (!newNote.trim()) return;
+    setSavingNote(true);
+    try {
+      await supabase.from('crm_interactions').insert([{
+        lead_id: leadId, channel: 'note', direction: 'outbound',
+        content: newNote.trim(), created_at: new Date().toISOString(),
+      }]);
+      setNewNote('');
+      setShowNoteComposer(false);
+      await loadCompleteTimeline();
+    } catch (err) {
+      console.error('Error saving note:', err);
+    } finally {
+      setSavingNote(false);
+    }
+  };
+
   const getFilteredEvents = () => {
     let filtered = events;
-
-    // Filtre par type
-    if (filter === 'communication') {
-      filtered = filtered.filter(e => ['email', 'sms', 'whatsapp', 'call', 'note'].includes(e.type));
-    } else if (filter === 'system') {
-      filtered = filtered.filter(e => ['status_change', 'system', 'notification'].includes(e.type));
-    } else if (filter === 'documents') {
-      filtered = filtered.filter(e => e.type === 'document');
-    } else if (filter === 'ai') {
-      filtered = filtered.filter(e => e.type === 'ai_decision');
-    }
-
-    // Recherche
+    if (filter === 'communication') filtered = filtered.filter(e => ['email', 'sms', 'whatsapp', 'call', 'note'].includes(e.type));
+    else if (filter === 'system') filtered = filtered.filter(e => ['status_change', 'system', 'notification'].includes(e.type));
+    else if (filter === 'documents') filtered = filtered.filter(e => e.type === 'document');
+    else if (filter === 'ai') filtered = filtered.filter(e => e.type === 'ai_decision');
     if (searchQuery) {
-      const query = searchQuery.toLowerCase();
+      const q = searchQuery.toLowerCase();
       filtered = filtered.filter(e =>
-        e.title.toLowerCase().includes(query) ||
-        e.content.toLowerCase().includes(query) ||
-        e.from?.toLowerCase().includes(query) ||
-        e.to?.toLowerCase().includes(query)
+        e.title.toLowerCase().includes(q) || e.content.toLowerCase().includes(q) ||
+        e.from?.toLowerCase().includes(q) || e.to?.toLowerCase().includes(q)
       );
     }
-
     return filtered;
   };
 
-  const groupEventsByDate = (events: TimelineEvent[]) => {
-    const groups: { [key: string]: TimelineEvent[] } = {};
-
-    events.forEach(event => {
-      const date = new Date(event.timestamp).toLocaleDateString('fr-FR', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      });
-
-      if (!groups[date]) {
-        groups[date] = [];
-      }
-      groups[date].push(event);
+  const groupByDate = (evts: TimelineEvent[]) => {
+    const groups: Record<string, TimelineEvent[]> = {};
+    evts.forEach(e => {
+      const d = new Date(e.timestamp);
+      const today = new Date();
+      const yesterday = new Date(today); yesterday.setDate(today.getDate() - 1);
+      let label: string;
+      if (d.toDateString() === today.toDateString()) label = "Aujourd'hui";
+      else if (d.toDateString() === yesterday.toDateString()) label = 'Hier';
+      else label = d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+      if (!groups[label]) groups[label] = [];
+      groups[label].push(e);
     });
-
     return groups;
   };
 
-  const getColorClasses = (color: string) => {
-    const colors: Record<string, { bg: string; text: string; border: string }> = {
-      blue: { bg: 'bg-blue-100', text: 'text-blue-600', border: 'border-blue-300' },
-      green: { bg: 'bg-green-100', text: 'text-green-600', border: 'border-green-300' },
-      orange: { bg: 'bg-orange-100', text: 'text-orange-600', border: 'border-orange-300' },
-      purple: { bg: 'bg-purple-100', text: 'text-purple-600', border: 'border-purple-300' },
-      teal: { bg: 'bg-teal-100', text: 'text-teal-600', border: 'border-teal-300' },
-      indigo: { bg: 'bg-indigo-100', text: 'text-indigo-600', border: 'border-indigo-300' },
-      cyan: { bg: 'bg-cyan-100', text: 'text-cyan-600', border: 'border-cyan-300' },
-      violet: { bg: 'bg-violet-100', text: 'text-violet-600', border: 'border-violet-300' },
-      yellow: { bg: 'bg-yellow-100', text: 'text-yellow-600', border: 'border-yellow-300' },
-      gray: { bg: 'bg-gray-100', text: 'text-gray-600', border: 'border-gray-300' }
-    };
-    return colors[color] || colors.gray;
-  };
-
-  const formatFileSize = (bytes: number): string => {
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  const stats = {
+    email: events.filter(e => e.type === 'email').length,
+    call: events.filter(e => e.type === 'call').length,
+    document: events.filter(e => e.type === 'document').length,
+    ai: events.filter(e => e.type === 'ai_decision').length,
+    system: events.filter(e => ['notification', 'system', 'status_change'].includes(e.type)).length,
   };
 
   const filteredEvents = getFilteredEvents();
-  const groupedEvents = groupEventsByDate(filteredEvents);
+  const grouped = groupByDate(filteredEvents);
+
+  const STAT_CARDS = [
+    { key: 'communication', label: 'Emails', count: stats.email, icon: <Mail className="w-4 h-4" />, color: 'text-sky-600', bg: 'bg-sky-50 hover:bg-sky-100', active: 'bg-sky-600 text-white' },
+    { key: 'communication', label: 'Appels', count: stats.call, icon: <Phone className="w-4 h-4" />, color: 'text-emerald-600', bg: 'bg-emerald-50 hover:bg-emerald-100', active: 'bg-emerald-600 text-white' },
+    { key: 'documents', label: 'Documents', count: stats.document, icon: <FileText className="w-4 h-4" />, color: 'text-teal-600', bg: 'bg-teal-50 hover:bg-teal-100', active: 'bg-teal-600 text-white' },
+    { key: 'ai', label: 'IA', count: stats.ai, icon: <Bot className="w-4 h-4" />, color: 'text-rose-600', bg: 'bg-rose-50 hover:bg-rose-100', active: 'bg-rose-600 text-white' },
+    { key: 'system', label: 'Système', count: stats.system, icon: <Settings className="w-4 h-4" />, color: 'text-gray-600', bg: 'bg-gray-50 hover:bg-gray-100', active: 'bg-gray-700 text-white' },
+  ] as const;
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Chargement de l'historique complet...</p>
+      <div className="flex items-center justify-center py-24">
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="w-10 h-10 text-sky-500 animate-spin" />
+          <p className="text-gray-500 text-sm font-medium">Chargement de l'historique...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header avec stats */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <div className="flex items-center justify-between mb-6">
+    <div className="space-y-4">
+      {/* ── Header / Stats ── */}
+      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+        <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">Historique Complet</h2>
-            <p className="text-sm text-gray-600 mt-1">
-              Tous les événements, communications et actions système
-            </p>
+            <h2 className="text-lg font-bold text-gray-900">Historique & Communication</h2>
+            <p className="text-xs text-gray-500 mt-0.5">{events.length} événement{events.length > 1 ? 's' : ''} au total</p>
           </div>
-          <button
-            onClick={loadCompleteTimeline}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            <RefreshCw className="h-4 w-4" />
-            Actualiser
-          </button>
-        </div>
-
-        {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
-          <div className="bg-blue-50 rounded-lg p-4">
-            <div className="flex items-center gap-2 mb-1">
-              <Mail className="h-4 w-4 text-blue-600" />
-              <span className="text-xs font-medium text-blue-600">Emails</span>
-            </div>
-            <p className="text-2xl font-bold text-blue-900">
-              {events.filter(e => e.type === 'email').length}
-            </p>
-          </div>
-          <div className="bg-green-50 rounded-lg p-4">
-            <div className="flex items-center gap-2 mb-1">
-              <Phone className="h-4 w-4 text-green-600" />
-              <span className="text-xs font-medium text-green-600">Appels</span>
-            </div>
-            <p className="text-2xl font-bold text-green-900">
-              {events.filter(e => e.type === 'call').length}
-            </p>
-          </div>
-          <div className="bg-cyan-50 rounded-lg p-4">
-            <div className="flex items-center gap-2 mb-1">
-              <FileText className="h-4 w-4 text-cyan-600" />
-              <span className="text-xs font-medium text-cyan-600">Documents</span>
-            </div>
-            <p className="text-2xl font-bold text-cyan-900">
-              {events.filter(e => e.type === 'document').length}
-            </p>
-          </div>
-          <div className="bg-violet-50 rounded-lg p-4">
-            <div className="flex items-center gap-2 mb-1">
-              <Bot className="h-4 w-4 text-violet-600" />
-              <span className="text-xs font-medium text-violet-600">IA</span>
-            </div>
-            <p className="text-2xl font-bold text-violet-900">
-              {events.filter(e => e.type === 'ai_decision').length}
-            </p>
-          </div>
-          <div className="bg-gray-50 rounded-lg p-4">
-            <div className="flex items-center gap-2 mb-1">
-              <Settings className="h-4 w-4 text-gray-600" />
-              <span className="text-xs font-medium text-gray-600">Système</span>
-            </div>
-            <p className="text-2xl font-bold text-gray-900">
-              {events.filter(e => ['notification', 'system', 'status_change'].includes(e.type)).length}
-            </p>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowNoteComposer(v => !v)}
+              className="flex items-center gap-2 px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-sm font-semibold transition-colors shadow-sm"
+            >
+              <StickyNote className="w-4 h-4" />
+              Ajouter une note
+            </button>
+            <button
+              onClick={loadCompleteTimeline}
+              className="flex items-center gap-2 px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-xl text-sm font-semibold transition-colors shadow-sm"
+            >
+              <RefreshCw className="w-4 h-4" />
+              Actualiser
+            </button>
           </div>
         </div>
 
-        {/* Filtres et recherche */}
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="flex-1">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Rechercher dans l'historique..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-          </div>
-          <div className="flex gap-2">
-            {[
-              { value: 'all', label: 'Tout', icon: <Calendar className="h-4 w-4" /> },
-              { value: 'communication', label: 'Communication', icon: <MessageSquare className="h-4 w-4" /> },
-              { value: 'documents', label: 'Documents', icon: <FileText className="h-4 w-4" /> },
-              { value: 'ai', label: 'IA', icon: <Bot className="h-4 w-4" /> },
-              { value: 'system', label: 'Système', icon: <Settings className="h-4 w-4" /> }
-            ].map(({ value, label, icon }) => (
-              <button
-                key={value}
-                onClick={() => setFilter(value as any)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-                  filter === value
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                {icon}
-                <span className="hidden md:inline">{label}</span>
-              </button>
-            ))}
-          </div>
+        {/* Stats clickable */}
+        <div className="grid grid-cols-5 divide-x divide-gray-100">
+          {STAT_CARDS.map((s, i) => (
+            <button
+              key={i}
+              onClick={() => setFilter(f => f === s.key ? 'all' : s.key)}
+              className={`flex flex-col items-center gap-1.5 py-4 transition-colors ${filter === s.key ? s.active : s.bg}`}
+            >
+              <div className={filter === s.key ? 'text-white' : s.color}>{s.icon}</div>
+              <span className={`text-2xl font-black leading-none ${filter === s.key ? 'text-white' : 'text-gray-900'}`}>{s.count}</span>
+              <span className={`text-xs font-semibold ${filter === s.key ? 'text-white/80' : 'text-gray-500'}`}>{s.label}</span>
+            </button>
+          ))}
         </div>
       </div>
 
-      {/* Timeline */}
-      {Object.keys(groupedEvents).length === 0 ? (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
-          <AlertCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Aucun événement</h3>
-          <p className="text-gray-600">
-            {searchQuery ? 'Aucun résultat pour votre recherche' : 'Aucun événement trouvé pour ce lead'}
+      {/* ── Note composer ── */}
+      {showNoteComposer && (
+        <div className="bg-white rounded-2xl border border-amber-200 shadow-sm overflow-hidden">
+          <div className="px-5 py-3 border-b border-amber-100 bg-amber-50 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <StickyNote className="w-4 h-4 text-amber-600" />
+              <span className="text-sm font-bold text-amber-800">Nouvelle note</span>
+            </div>
+            <button onClick={() => { setShowNoteComposer(false); setNewNote(''); }} className="text-amber-500 hover:text-amber-700">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+          <div className="p-4">
+            <textarea
+              ref={noteRef}
+              value={newNote}
+              onChange={e => setNewNote(e.target.value)}
+              placeholder="Écrivez votre note ici..."
+              rows={4}
+              className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-400/20 resize-none"
+            />
+            <div className="flex items-center justify-end gap-2 mt-3">
+              <button onClick={() => { setShowNoteComposer(false); setNewNote(''); }} className="px-4 py-2 text-sm font-semibold text-gray-600 hover:text-gray-900 transition-colors">
+                Annuler
+              </button>
+              <button
+                onClick={handleAddNote}
+                disabled={!newNote.trim() || savingNote}
+                className="flex items-center gap-2 px-5 py-2 bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white rounded-xl text-sm font-bold transition-colors shadow-sm"
+              >
+                {savingNote ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
+                Enregistrer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Search + Filter tabs ── */}
+      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm px-4 py-3 flex items-center gap-3">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Rechercher dans l'historique..."
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            className="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-400/20 focus:bg-white transition-all"
+          />
+          {searchQuery && (
+            <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
+        <div className="flex items-center gap-1 bg-gray-100 rounded-xl p-1">
+          {([
+            { value: 'all', label: 'Tout', icon: <Calendar className="w-3.5 h-3.5" /> },
+            { value: 'communication', label: 'Communication', icon: <Mail className="w-3.5 h-3.5" /> },
+            { value: 'documents', label: 'Documents', icon: <FileText className="w-3.5 h-3.5" /> },
+            { value: 'ai', label: 'IA', icon: <Bot className="w-3.5 h-3.5" /> },
+            { value: 'system', label: 'Système', icon: <Settings className="w-3.5 h-3.5" /> },
+          ] as const).map(btn => (
+            <button
+              key={btn.value}
+              onClick={() => setFilter(btn.value)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                filter === btn.value
+                  ? 'bg-white text-gray-900 shadow-sm'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              {btn.icon}
+              <span className="hidden lg:inline">{btn.label}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* ── Timeline ── */}
+      {Object.keys(grouped).length === 0 ? (
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-16 text-center">
+          <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <Inbox className="w-7 h-7 text-gray-400" />
+          </div>
+          <h3 className="text-base font-bold text-gray-700 mb-1">Aucun événement</h3>
+          <p className="text-sm text-gray-400">
+            {searchQuery ? 'Aucun résultat pour votre recherche.' : 'Aucun événement trouvé pour ce lead.'}
           </p>
         </div>
       ) : (
-        <div className="space-y-8">
-          {Object.entries(groupedEvents).map(([date, dateEvents]) => (
+        <div className="space-y-6">
+          {Object.entries(grouped).map(([date, dateEvents]) => (
             <div key={date}>
-              <div className="flex items-center gap-4 mb-4">
-                <div className="flex items-center gap-2 bg-gray-100 px-4 py-2 rounded-lg">
-                  <Calendar className="h-4 w-4 text-gray-600" />
-                  <h3 className="text-sm font-semibold text-gray-900 capitalize">{date}</h3>
+              {/* Date separator */}
+              <div className="flex items-center gap-3 mb-3">
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-200 rounded-full shadow-sm">
+                  <Calendar className="w-3.5 h-3.5 text-gray-400" />
+                  <span className="text-xs font-bold text-gray-700 capitalize">{date}</span>
                 </div>
-                <div className="flex-1 h-px bg-gray-200"></div>
-                <span className="text-sm text-gray-500">{dateEvents.length} événement(s)</span>
+                <div className="flex-1 h-px bg-gray-200" />
+                <span className="text-xs text-gray-400 font-medium whitespace-nowrap">
+                  {dateEvents.length} événement{dateEvents.length > 1 ? 's' : ''}
+                </span>
               </div>
 
-              <div className="space-y-3">
-                {dateEvents.map((event) => {
-                  const isExpanded = expandedId === event.id;
-                  const colors = getColorClasses(event.color || 'gray');
-
-                  return (
-                    <div
+              {/* Events list with vertical line */}
+              <div className="relative ml-4">
+                <div className="absolute left-4 top-0 bottom-0 w-px bg-gray-200" />
+                <div className="space-y-2">
+                  {dateEvents.map(event => (
+                    <EventCard
                       key={event.id}
-                      className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow"
-                    >
-                      <div
-                        className="p-4 cursor-pointer"
-                        onClick={() => setExpandedId(isExpanded ? null : event.id)}
-                      >
-                        <div className="flex items-start gap-4">
-                          <div className={`flex-shrink-0 w-10 h-10 rounded-full ${colors.bg} flex items-center justify-center ${colors.text}`}>
-                            {event.icon}
-                          </div>
-
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-start justify-between gap-4 mb-2">
-                              <div className="flex-1">
-                                <h4 className="text-sm font-semibold text-gray-900 mb-1">
-                                  {event.title}
-                                </h4>
-                                <div className="flex items-center gap-3 text-xs text-gray-500">
-                                  <div className="flex items-center gap-1">
-                                    <Clock className="h-3 w-3" />
-                                    {new Date(event.timestamp).toLocaleTimeString('fr-FR', {
-                                      hour: '2-digit',
-                                      minute: '2-digit'
-                                    })}
-                                  </div>
-                                  {event.direction && (
-                                    <div className="flex items-center gap-1">
-                                      {event.direction === 'inbound' ? (
-                                        <>
-                                          <ArrowDownLeft className="h-3 w-3 text-blue-500" />
-                                          <span>Reçu</span>
-                                        </>
-                                      ) : (
-                                        <>
-                                          <ArrowUpRight className="h-3 w-3 text-green-500" />
-                                          <span>Envoyé</span>
-                                        </>
-                                      )}
-                                    </div>
-                                  )}
-                                  {event.status && (
-                                    <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-                                      event.status === 'delivered' ? 'bg-green-100 text-green-700' :
-                                      event.status === 'failed' ? 'bg-red-100 text-red-700' :
-                                      'bg-gray-100 text-gray-700'
-                                    }`}>
-                                      {event.status}
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                {event.attachments && event.attachments.length > 0 && (
-                                  <div className="flex items-center gap-1 text-xs text-gray-500">
-                                    <Paperclip className="h-3 w-3" />
-                                    {event.attachments.length}
-                                  </div>
-                                )}
-                                {isExpanded ? (
-                                  <ChevronUp className="h-5 w-5 text-gray-400" />
-                                ) : (
-                                  <ChevronDown className="h-5 w-5 text-gray-400" />
-                                )}
-                              </div>
-                            </div>
-
-                            {!isExpanded && event.content && (
-                              <p className="text-sm text-gray-600 line-clamp-2">
-                                {event.content.substring(0, 150)}...
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-
-                      {isExpanded && (
-                        <div className="px-4 pb-4 border-t border-gray-100 pt-4 mt-2">
-                          {/* Détails */}
-                          {event.from && (
-                            <div className="mb-2 text-sm">
-                              <span className="font-medium text-gray-700">De:</span>{' '}
-                              <span className="text-gray-600">{event.from}</span>
-                            </div>
-                          )}
-                          {event.to && (
-                            <div className="mb-2 text-sm">
-                              <span className="font-medium text-gray-700">À:</span>{' '}
-                              <span className="text-gray-600">{event.to}</span>
-                            </div>
-                          )}
-
-                          {event.content && (
-                            <div className="mb-4 text-sm text-gray-600 whitespace-pre-wrap bg-gray-50 rounded p-3">
-                              {event.content}
-                            </div>
-                          )}
-
-                          {/* Métadonnées */}
-                          {event.metadata && Object.keys(event.metadata).length > 0 && (
-                            <div className="mb-4 p-3 bg-gray-50 rounded">
-                              <p className="text-xs font-medium text-gray-700 mb-2">Informations complémentaires</p>
-                              <div className="grid grid-cols-2 gap-2">
-                                {Object.entries(event.metadata).map(([key, value]) => (
-                                  <div key={key} className="text-xs">
-                                    <span className="text-gray-500">{key}:</span>{' '}
-                                    <span className="text-gray-900 font-medium">
-                                      {typeof value === 'object' ? JSON.stringify(value) : String(value)}
-                                    </span>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-
-                          {/* Pièces jointes */}
-                          {event.attachments && event.attachments.length > 0 && (
-                            <div>
-                              <p className="text-sm font-medium text-gray-900 mb-2">
-                                Pièces jointes ({event.attachments.length})
-                              </p>
-                              <div className="space-y-2">
-                                {event.attachments.map((attachment) => {
-                                  const isPDF = attachment.file_type?.includes('pdf');
-                                  const isImage = attachment.file_type?.startsWith('image/');
-
-                                  return (
-                                    <div
-                                      key={attachment.id}
-                                      className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-                                    >
-                                      <div className="flex items-center gap-3 flex-1 min-w-0">
-                                        {isImage ? (
-                                          <ImageIcon className="h-5 w-5 text-blue-500 flex-shrink-0" />
-                                        ) : isPDF ? (
-                                          <FileText className="h-5 w-5 text-red-500 flex-shrink-0" />
-                                        ) : (
-                                          <File className="h-5 w-5 text-gray-500 flex-shrink-0" />
-                                        )}
-                                        <div className="flex-1 min-w-0">
-                                          <p className="text-sm font-medium text-gray-900 truncate">
-                                            {attachment.file_name}
-                                          </p>
-                                          <p className="text-xs text-gray-500">
-                                            {formatFileSize(attachment.file_size)}
-                                            {attachment.auto_detected_type && ` • ${attachment.auto_detected_type}`}
-                                          </p>
-                                        </div>
-                                      </div>
-                                      <div className="flex items-center gap-2">
-                                        {(isPDF || isImage) && (
-                                          <button
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                              let url = attachment.download_url;
-                                              if (attachment.storage_path && !url) {
-                                                url = getDocumentPublicUrl(attachment.storage_path, 'crm_lead_documents', supabase);
-                                              }
-                                              setViewingDoc({
-                                                url,
-                                                fileName: attachment.file_name,
-                                                mimeType: attachment.file_type
-                                              });
-                                            }}
-                                            className="p-2 text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                                            title="Voir"
-                                          >
-                                            <Eye className="h-4 w-4" />
-                                          </button>
-                                        )}
-                                        <a
-                                          href={attachment.download_url || '#'}
-                                          download={attachment.file_name}
-                                          onClick={(e) => e.stopPropagation()}
-                                          className="p-2 text-gray-600 hover:bg-gray-100 rounded transition-colors"
-                                          title="Télécharger"
-                                        >
-                                          <Download className="h-4 w-4" />
-                                        </a>
-                                      </div>
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
+                      event={event}
+                      isExpanded={expandedId === event.id}
+                      onToggle={() => setExpandedId(expandedId === event.id ? null : event.id)}
+                      onViewDoc={(url, fileName, mimeType) => setViewingDoc({ url, fileName, mimeType })}
+                    />
+                  ))}
+                </div>
               </div>
             </div>
           ))}
@@ -726,7 +538,165 @@ export const CompleteTimeline: React.FC<CompleteTimelineProps> = ({
   );
 };
 
-export default CompleteTimeline;
+/* ── EventCard ── */
+const EventCard: React.FC<{
+  event: TimelineEvent;
+  isExpanded: boolean;
+  onToggle: () => void;
+  onViewDoc: (url: string, fileName: string, mimeType: string) => void;
+}> = ({ event, isExpanded, onToggle, onViewDoc }) => {
+  const cfg = getEventConfig(event);
+  const plainContent = event.type === 'email' ? event.content : event.content;
+  const previewText = plainContent ? plainContent.substring(0, 180) : '';
+  const hasMore = plainContent.length > 180;
+  const hasAttachments = event.attachments && event.attachments.length > 0;
+  const time = new Date(event.timestamp).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
 
-// Import missing icon
-import { Bell } from 'lucide-react';
+  return (
+    <div className="relative pl-10">
+      {/* Dot on timeline */}
+      <div className={`absolute left-0 top-4 w-9 h-9 rounded-full flex items-center justify-center ${cfg.bgColor} border-2 border-white shadow-sm z-10`}>
+        <span className={cfg.textColor}>{cfg.icon}</span>
+      </div>
+
+      <div className={`bg-white rounded-xl border border-gray-200 border-l-4 ${cfg.borderColor} shadow-sm hover:shadow-md transition-shadow overflow-hidden`}>
+        {/* Card header */}
+        <div className="px-4 py-3 cursor-pointer" onClick={onToggle}>
+          <div className="flex items-start gap-3">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap mb-1">
+                <span className={`inline-flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full ${cfg.badgeBg}`}>
+                  {cfg.icon}
+                  {cfg.label}
+                </span>
+                {event.direction && (
+                  <span className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full ${
+                    event.direction === 'inbound'
+                      ? 'bg-blue-50 text-blue-600'
+                      : 'bg-green-50 text-green-600'
+                  }`}>
+                    {event.direction === 'inbound'
+                      ? <ArrowDownLeft className="w-3 h-3" />
+                      : <ArrowUpRight className="w-3 h-3" />
+                    }
+                    {event.direction === 'inbound' ? 'Reçu' : 'Envoyé'}
+                  </span>
+                )}
+                {event.status && (
+                  <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                    event.status === 'delivered' || event.status === 'sent' ? 'bg-emerald-50 text-emerald-700'
+                    : event.status === 'failed' ? 'bg-red-50 text-red-700'
+                    : event.status === 'validated' ? 'bg-green-50 text-green-700'
+                    : 'bg-gray-100 text-gray-600'
+                  }`}>
+                    {event.status}
+                  </span>
+                )}
+                {hasAttachments && (
+                  <span className="inline-flex items-center gap-1 text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
+                    <Paperclip className="w-3 h-3" />
+                    {event.attachments!.length}
+                  </span>
+                )}
+              </div>
+              <h4 className="text-sm font-semibold text-gray-900 truncate">{event.title}</h4>
+              {event.from && (
+                <p className="text-xs text-gray-500 mt-0.5">
+                  <span className="font-medium">De :</span> {event.from}
+                  {event.to && <><span className="mx-1">→</span><span className="font-medium">À :</span> {event.to}</>}
+                </p>
+              )}
+              {!isExpanded && previewText && (
+                <p className="text-xs text-gray-500 mt-1.5 line-clamp-2 leading-relaxed">
+                  {previewText}{hasMore && '…'}
+                </p>
+              )}
+            </div>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <span className="text-xs text-gray-400 font-medium">{time}</span>
+              {isExpanded
+                ? <ChevronUp className="w-4 h-4 text-gray-400" />
+                : <ChevronDown className="w-4 h-4 text-gray-400" />
+              }
+            </div>
+          </div>
+        </div>
+
+        {/* Expanded content */}
+        {isExpanded && (
+          <div className="px-4 pb-4 border-t border-gray-100 pt-3 space-y-3">
+            {plainContent && (
+              <div className="bg-gray-50 rounded-xl p-4 text-sm text-gray-700 leading-relaxed whitespace-pre-wrap max-h-64 overflow-y-auto border border-gray-100">
+                {plainContent}
+              </div>
+            )}
+
+            {event.metadata && Object.values(event.metadata).some(v => v !== undefined && v !== null) && (
+              <div className="flex flex-wrap gap-2">
+                {Object.entries(event.metadata).filter(([, v]) => v !== undefined && v !== null).map(([k, v]) => (
+                  <span key={k} className="inline-flex items-center gap-1.5 text-xs bg-gray-100 text-gray-700 px-3 py-1.5 rounded-lg border border-gray-200">
+                    <Tag className="w-3 h-3 text-gray-400" />
+                    <span className="font-medium text-gray-500">{k} :</span>
+                    <span className="font-semibold">{typeof v === 'object' ? JSON.stringify(v) : String(v)}</span>
+                  </span>
+                ))}
+              </div>
+            )}
+
+            {hasAttachments && (
+              <div>
+                <p className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-2">
+                  Pièces jointes ({event.attachments!.length})
+                </p>
+                <div className="space-y-1.5">
+                  {event.attachments!.map(att => {
+                    const isPDF = att.file_type?.includes('pdf');
+                    const isImage = att.file_type?.startsWith('image/');
+                    return (
+                      <div key={att.id} className="flex items-center justify-between px-3 py-2.5 bg-gray-50 rounded-xl border border-gray-200 hover:bg-gray-100 transition-colors">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${isImage ? 'bg-blue-100' : isPDF ? 'bg-red-100' : 'bg-gray-200'}`}>
+                            {isImage ? <ImageIcon className="w-4 h-4 text-blue-600" /> : isPDF ? <FileText className="w-4 h-4 text-red-600" /> : <File className="w-4 h-4 text-gray-500" />}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-sm font-semibold text-gray-800 truncate">{att.file_name}</p>
+                            <p className="text-xs text-gray-500">
+                              {formatFileSize(att.file_size)}
+                              {att.auto_detected_type && ` · ${att.auto_detected_type}`}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1 flex-shrink-0 ml-2">
+                          {(isPDF || isImage) && (
+                            <button
+                              onClick={e => { e.stopPropagation(); let url = att.download_url; if (att.storage_path && !url) url = getDocumentPublicUrl(att.storage_path, 'crm_lead_documents', supabase); onViewDoc(url, att.file_name, att.file_type); }}
+                              className="p-1.5 text-sky-600 hover:bg-sky-100 rounded-lg transition-colors"
+                              title="Voir"
+                            >
+                              <Eye className="w-4 h-4" />
+                            </button>
+                          )}
+                          <a
+                            href={att.download_url || '#'}
+                            download={att.file_name}
+                            onClick={e => e.stopPropagation()}
+                            className="p-1.5 text-gray-500 hover:bg-gray-200 rounded-lg transition-colors"
+                            title="Télécharger"
+                          >
+                            <Download className="w-4 h-4" />
+                          </a>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default CompleteTimeline;
