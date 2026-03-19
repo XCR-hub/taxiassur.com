@@ -356,7 +356,24 @@ Deno.serve(async (req: Request) => {
     });
 
     const body = await req.json();
-    const { email, full_name, role, permissions } = body;
+    const { action, user_id, email, full_name, role, permissions, force_resend } = body;
+
+    // --- DELETE ACTION ---
+    if (action === 'delete') {
+      if (!user_id) {
+        return new Response(
+          JSON.stringify({ success: false, error: 'user_id requis pour la suppression' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      await supabaseAdmin.from('user_permissions').delete().eq('user_id', user_id);
+      await supabaseAdmin.from('admin_users').delete().eq('id', user_id);
+      await supabaseAdmin.auth.admin.deleteUser(user_id);
+      return new Response(
+        JSON.stringify({ success: true, message: 'Utilisateur supprime avec succes' }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     if (!email || !full_name) {
       return new Response(
@@ -382,6 +399,8 @@ Deno.serve(async (req: Request) => {
       );
     }
 
+    const redirectUrl = `${req.headers.get('origin') || 'https://taxiassur.com'}/auth/set-password`;
+
     // Check if user already exists in admin_users
     const { data: existingUser } = await supabaseAdmin
       .from('admin_users')
@@ -392,7 +411,29 @@ Deno.serve(async (req: Request) => {
     if (existingUser) {
       if (!existingUser.is_active) {
         await supabaseAdmin.from('admin_users').update({ is_active: true }).eq('id', existingUser.id);
-      } else {
+      }
+
+      if (force_resend) {
+        // Re-send invitation as a password reset link
+        const { data: resetData } = await supabaseAdmin.auth.admin.generateLink({
+          type: 'recovery',
+          email,
+          options: { redirectTo: redirectUrl },
+        });
+        if (resetData?.properties?.action_link) {
+          try {
+            await sendInvitationEmail(email, existingUser.full_name || full_name, resetData.properties.action_link, existingUser.role || userRole);
+          } catch (mailErr) {
+            console.error('Email send error (force_resend):', mailErr);
+          }
+        }
+        return new Response(
+          JSON.stringify({ success: true, message: `Invitation renvoyee a ${email}` }),
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      if (existingUser.is_active) {
         return new Response(
           JSON.stringify({
             success: false,
@@ -402,8 +443,6 @@ Deno.serve(async (req: Request) => {
         );
       }
     }
-
-    const redirectUrl = `${req.headers.get('origin') || 'https://taxiassur.com'}/auth/set-password`;
 
     // Generate invite link without sending Supabase default plain email
     const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
