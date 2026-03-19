@@ -86,6 +86,8 @@ const InsuranceCompaniesManager: React.FC = () => {
   const [editForm, setEditForm] = useState<Partial<Company>>({});
   const [toast, setToast] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
   const [isNewCompany, setIsNewCompany] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const logoInputRef = useRef<HTMLInputElement>(null);
   const docInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
@@ -165,6 +167,31 @@ const InsuranceCompaniesManager: React.FC = () => {
       showToast('error', 'Erreur lors de la sauvegarde');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleDeleteCompany = async () => {
+    if (!selectedCompany) return;
+    setDeleting(true);
+    try {
+      const { data: docs } = await supabase.from('company_documents').select('file_url').eq('company_id', selectedCompany.id);
+      if (docs && docs.length > 0) {
+        const paths = docs.map(d => {
+          const parts = d.file_url?.split('/company-documents/');
+          return parts?.[1] || null;
+        }).filter(Boolean) as string[];
+        if (paths.length > 0) await supabase.storage.from('company-documents').remove(paths);
+        await supabase.from('company_documents').delete().eq('company_id', selectedCompany.id);
+      }
+      await supabase.from('insurance_companies').delete().eq('id', selectedCompany.id);
+      setConfirmDelete(false);
+      setSelectedCompany(null);
+      await loadCompanies();
+      showToast('success', 'Compagnie supprimée');
+    } catch {
+      showToast('error', 'Erreur lors de la suppression');
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -279,6 +306,46 @@ const InsuranceCompaniesManager: React.FC = () => {
         }`}>
           {toast.type === 'success' ? <CheckCircle className="w-4 h-4" /> : <XCircle className="w-4 h-4" />}
           {toast.msg}
+        </div>
+      )}
+
+      {/* Confirm delete modal */}
+      {confirmDelete && selectedCompany && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
+            <div className="flex items-center gap-3 px-6 pt-6 pb-4">
+              <div className="w-11 h-11 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
+                <Trash2 className="w-5 h-5 text-red-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-gray-900">Supprimer la compagnie</h3>
+                <p className="text-sm text-gray-500 mt-0.5">Cette action est irréversible</p>
+              </div>
+            </div>
+            <div className="px-6 pb-5">
+              <p className="text-sm text-gray-700 bg-red-50 border border-red-100 rounded-xl px-4 py-3">
+                Vous allez supprimer <span className="font-semibold text-gray-900">{selectedCompany.name}</span>{' '}
+                ainsi que tous ses documents associés. Cette action ne peut pas être annulée.
+              </p>
+            </div>
+            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-100 bg-gray-50">
+              <button
+                onClick={() => setConfirmDelete(false)}
+                disabled={deleting}
+                className="px-5 py-2.5 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 font-semibold text-sm transition-colors"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={handleDeleteCompany}
+                disabled={deleting}
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white font-semibold text-sm transition-colors"
+              >
+                {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                Supprimer définitivement
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -457,6 +524,17 @@ const InsuranceCompaniesManager: React.FC = () => {
                       )}
                     </div>
                   </div>
+
+                  {/* Delete button (existing companies only) */}
+                  {!isNewCompany && selectedCompany && (
+                    <button
+                      onClick={() => setConfirmDelete(true)}
+                      className="flex items-center gap-2 px-4 py-3 bg-white hover:bg-red-50 border border-red-200 hover:border-red-300 text-red-600 hover:text-red-700 rounded-xl font-semibold text-sm transition-colors flex-shrink-0"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      Supprimer
+                    </button>
+                  )}
 
                   {/* Save button */}
                   <button
