@@ -184,18 +184,22 @@ const CRMPipelineKanbanOptimized: React.FC = () => {
   }, [draggedLead, loadKanbanData]);
 
   const filteredKanbanData = useMemo(() => {
-    if (!debouncedSearch) return kanbanData;
-
     const filtered: Record<PipelineStatus, CRMLead[]> = {} as any;
     const searchLower = debouncedSearch.toLowerCase();
 
     Object.entries(kanbanData).forEach(([status, leads]) => {
-      filtered[status as PipelineStatus] = leads.filter(lead =>
-        lead.full_name?.toLowerCase().includes(searchLower) ||
-        lead.email?.toLowerCase().includes(searchLower) ||
-        lead.phone?.includes(debouncedSearch) ||
-        (lead as any).immatriculation?.toLowerCase().includes(searchLower) ||
-        lead.city?.toLowerCase().includes(searchLower)
+      let result = leads;
+      if (debouncedSearch) {
+        result = result.filter(lead =>
+          lead.full_name?.toLowerCase().includes(searchLower) ||
+          lead.email?.toLowerCase().includes(searchLower) ||
+          lead.phone?.includes(debouncedSearch) ||
+          (lead as any).immatriculation?.toLowerCase().includes(searchLower) ||
+          lead.city?.toLowerCase().includes(searchLower)
+        );
+      }
+      filtered[status as PipelineStatus] = result.slice().sort((a, b) =>
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       );
     });
     return filtered;

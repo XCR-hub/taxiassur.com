@@ -559,7 +559,9 @@ const CRMPipelineKanban: React.FC = () => {
         result = result.filter(lead => !lead.assigned_to);
       }
 
-      filtered[status as PipelineStatus] = result;
+      filtered[status as PipelineStatus] = result.slice().sort((a, b) =>
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
     });
     return filtered;
   }, [kanbanData, debouncedSearch, viewFilter, user?.id]);
