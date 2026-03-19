@@ -423,7 +423,7 @@ Deno.serve(async (req: Request) => {
         if (resetError || !resetData?.properties?.action_link) {
           return new Response(
             JSON.stringify({ success: false, error: `Impossible de generer le lien: ${resetError?.message || 'lien vide'}` }),
-            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           );
         }
 
