@@ -280,66 +280,39 @@ function buildInvitationEmail(fullName: string, invitationLink: string, role: st
 }
 
 async function sendInvitationEmail(to: string, fullName: string, invitationLink: string, role: string): Promise<void> {
-  const SMTP_HOST = Deno.env.get('IONOS_SMTP_HOST') || 'smtp.ionos.fr';
-  const SMTP_PORT = parseInt(Deno.env.get('IONOS_SMTP_PORT') || '465');
-  const SMTP_USER = Deno.env.get('IONOS_EMAIL_USER') || 'team@taxiassur.com';
-  const SMTP_PASS = Deno.env.get('IONOS_EMAIL_PASSWORD');
-
-  if (!SMTP_PASS) {
-    throw new Error('IONOS_EMAIL_PASSWORD not configured');
-  }
+  const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+  const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
 
   const htmlBody = buildInvitationEmail(fullName, invitationLink, role);
   const subject = `Votre invitation TaxiAssur — Creez votre mot de passe`;
 
-  const conn = await Deno.connectTls({ hostname: SMTP_HOST, port: SMTP_PORT });
-  const encoder = new TextEncoder();
-  const decoder = new TextDecoder();
+  const res = await fetch(`${supabaseUrl}/functions/v1/send-email-ionos`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${supabaseAnonKey}`,
+    },
+    body: JSON.stringify({
+      to,
+      toName: fullName,
+      subject,
+      html: htmlBody,
+      fromName: 'TaxiAssur',
+      from: 'team@taxiassur.com',
+    }),
+  });
 
-  async function read(): Promise<string> {
-    const buf = new Uint8Array(4096);
-    const n = await conn.read(buf);
-    if (n === null) return '';
-    return decoder.decode(buf.subarray(0, n));
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(`send-email-ionos HTTP ${res.status}: ${errText}`);
   }
 
-  async function cmd(c: string): Promise<string> {
-    await conn.write(encoder.encode(c + '\r\n'));
-    return await read();
+  const result = await res.json();
+  if (!result.success) {
+    throw new Error(result.error || 'Echec envoi email');
   }
 
-  try {
-    await read();
-    await cmd('EHLO taxiassur.com');
-    await cmd('AUTH LOGIN');
-    await cmd(btoa(SMTP_USER));
-    const authResp = await cmd(btoa(SMTP_PASS));
-    if (authResp.includes('535')) throw new Error('SMTP authentication failed');
-
-    await cmd(`MAIL FROM:<team@taxiassur.com>`);
-    await cmd(`RCPT TO:<${to}>`);
-    await cmd('DATA');
-
-    const msg = [
-      `From: TaxiAssur <team@taxiassur.com>`,
-      `To: ${fullName} <${to}>`,
-      `Subject: ${subject}`,
-      `MIME-Version: 1.0`,
-      `Content-Type: text/html; charset=UTF-8`,
-      `Content-Transfer-Encoding: 8bit`,
-      ``,
-      htmlBody,
-      `.`,
-    ].join('\r\n');
-
-    await cmd(msg);
-    await cmd('QUIT');
-    conn.close();
-    console.log(`Invitation email sent to ${to}`);
-  } catch (err) {
-    conn.close();
-    throw err;
-  }
+  console.log(`Invitation email sent to ${to}`);
 }
 
 Deno.serve(async (req: Request) => {
