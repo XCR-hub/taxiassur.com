@@ -223,18 +223,12 @@ export function useAdminAuth() {
           const expiresAt = parsed.expires_at * 1000;
           const timeUntilExpiry = expiresAt - Date.now();
 
-          if (timeUntilExpiry < -7 * 24 * 60 * 60 * 1000) {
-            console.log('🔄 Session expired >7 days, will re-authenticate');
-            localStorage.removeItem('taxiassur-auth');
-            localStorage.removeItem('taxiassur_user');
+          if (timeUntilExpiry < 0) {
+            console.log('⏰ Session token expired, letting Supabase auto-refresh...');
             return null;
           }
 
-          if (timeUntilExpiry < 0) {
-            console.log('⏰ Session technique expirée mais cache valide - keep-alive actif');
-          } else {
-            console.log(`✅ Session active (expire dans ${Math.round(timeUntilExpiry / 60000)} min)`);
-          }
+          console.log(`✅ Session active (expire dans ${Math.round(timeUntilExpiry / 60000)} min)`);
         }
 
         return parsed;
