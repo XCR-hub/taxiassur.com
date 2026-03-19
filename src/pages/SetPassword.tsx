@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { Lock, CheckCircle, AlertCircle, Eye, EyeOff } from 'lucide-react';
+import { Lock, CheckCircle, AlertCircle, Eye, EyeOff, Mail, RefreshCw } from 'lucide-react';
 
 const SetPassword: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -29,6 +29,10 @@ const SetPassword: React.FC = () => {
   const [sessionReady, setSessionReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
+  const [resetSent, setResetSent] = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
+  const [resetError, setResetError] = useState<string | null>(null);
 
   useEffect(() => {
     if (hashError) {
@@ -115,29 +119,115 @@ const SetPassword: React.FC = () => {
     }
   };
 
+  const handlePasswordReset = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!resetEmail) return;
+    setResetLoading(true);
+    setResetError(null);
+    try {
+      const { error: resetErr } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+        redirectTo: `${window.location.origin}/auth/set-password`,
+      });
+      if (resetErr) throw resetErr;
+      setResetSent(true);
+    } catch (err: any) {
+      setResetError(err.message || 'Erreur lors de l\'envoi du lien');
+    } finally {
+      setResetLoading(false);
+    }
+  };
+
   if (error && !hasValidEntry) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 flex items-center justify-center p-4">
         <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
           <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <AlertCircle className="w-8 h-8 text-red-600" />
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Lien invalide ou expire</h2>
-          <p className="text-gray-600 mb-6">{error}</p>
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-            <h3 className="font-semibold text-blue-900 mb-2">Que faire ?</h3>
-            <ol className="text-sm text-blue-800 space-y-2 list-decimal list-inside">
-              <li>Demandez une nouvelle invitation a votre administrateur</li>
-              <li>Verifiez que vous utilisez le lien le plus recent</li>
-              <li>Les liens expirent apres 1 heure</li>
-            </ol>
-          </div>
-          <button
-            onClick={() => navigate('/backoffice/crm-killer')}
-            className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors"
-          >
-            Retour a la connexion
-          </button>
+          <h2 className="text-2xl font-bold text-gray-900 text-center mb-2">Lien expire</h2>
+          <p className="text-gray-500 text-center text-sm mb-6">
+            Ce lien d'invitation n'est plus valide. Les liens expirent apres 1 heure.
+          </p>
+
+          {!resetSent ? (
+            <>
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
+                <p className="text-sm font-semibold text-amber-900 mb-1">Obtenir un nouveau lien</p>
+                <p className="text-xs text-amber-700">
+                  Entrez votre adresse email pour recevoir un nouveau lien de connexion immediatement.
+                </p>
+              </div>
+
+              <form onSubmit={handlePasswordReset} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Votre adresse email
+                  </label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <input
+                      type="email"
+                      value={resetEmail}
+                      onChange={(e) => setResetEmail(e.target.value)}
+                      placeholder="votre@email.com"
+                      required
+                      className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm"
+                    />
+                  </div>
+                </div>
+
+                {resetError && (
+                  <p className="text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg p-3">{resetError}</p>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={resetLoading || !resetEmail}
+                  className="w-full bg-green-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {resetLoading ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                      Envoi en cours...
+                    </>
+                  ) : (
+                    <>
+                      <Mail className="w-4 h-4" />
+                      Recevoir un nouveau lien
+                    </>
+                  )}
+                </button>
+              </form>
+
+              <div className="mt-4 pt-4 border-t border-gray-100 text-center">
+                <button
+                  onClick={() => navigate('/backoffice/crm-killer')}
+                  className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
+                >
+                  J'ai deja un compte - Se connecter
+                </button>
+              </div>
+            </>
+          ) : (
+            <div className="text-center">
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <CheckCircle className="w-8 h-8 text-green-600" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Email envoye !</h3>
+              <p className="text-sm text-gray-600 mb-6">
+                Verifiez votre boite mail <strong>{resetEmail}</strong> et cliquez sur le lien pour definir votre mot de passe.
+              </p>
+              <p className="text-xs text-gray-400">
+                Le lien est valable pendant 1 heure. Pensez a verifier vos spams.
+              </p>
+              <button
+                onClick={() => navigate('/backoffice/crm-killer')}
+                className="mt-6 w-full bg-gray-900 text-white py-3 px-4 rounded-lg font-medium hover:bg-gray-800 transition-colors"
+              >
+                Retour a la connexion
+              </button>
+            </div>
+          )}
         </div>
       </div>
     );
