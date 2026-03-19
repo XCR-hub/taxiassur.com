@@ -473,7 +473,7 @@ Deno.serve(async (req: Request) => {
           const userId = existingAuthUser.id;
           await supabaseAdmin.from('admin_users').insert([{
             id: userId, email, full_name, role: userRole,
-            is_active: true, mfa_enabled: false, created_at: new Date().toISOString(),
+            is_active: true, created_at: new Date().toISOString(),
           }]);
 
           // Generate reset link as fallback
@@ -517,7 +517,7 @@ Deno.serve(async (req: Request) => {
     // Insert into admin_users
     const { error: dbError } = await supabaseAdmin.from('admin_users').insert([{
       id: userId, email, full_name, role: userRole,
-      is_active: true, mfa_enabled: false, created_at: new Date().toISOString(),
+      is_active: true, created_at: new Date().toISOString(),
     }]);
 
     if (dbError) {
