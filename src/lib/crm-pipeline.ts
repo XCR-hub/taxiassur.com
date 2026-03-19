@@ -180,6 +180,7 @@ export interface CRMLead {
   city?: string;
   status: PipelineStatus;
   assigned_to?: string;
+  assigned_at?: string;
   source?: string;
   lead_score?: number;
   quality_score?: number;
@@ -190,6 +191,13 @@ export interface CRMLead {
   tags?: string[];
   created_at: string;
   updated_at: string;
+}
+
+export interface AdminUser {
+  id: string;
+  email: string;
+  full_name: string;
+  role: string;
 }
 
 export interface TimelineEvent {
@@ -505,5 +513,29 @@ export const pipelineService = {
 
   getAvailableTransitions(currentStatus: PipelineStatus): PipelineTransition[] {
     return PIPELINE_TRANSITIONS.filter(t => t.from === currentStatus);
+  },
+
+  async getAdminUsers(): Promise<AdminUser[]> {
+    const { data, error } = await supabase
+      .from('admin_users')
+      .select('id, email, full_name, role')
+      .eq('is_active', true)
+      .order('full_name');
+
+    if (error) {
+      console.error('getAdminUsers error:', error);
+      return [];
+    }
+    return data || [];
+  },
+
+  async autoAssignLead(leadId: string, userId: string): Promise<boolean> {
+    const { error } = await supabase
+      .from('crm_leads')
+      .update({ assigned_to: userId, assigned_at: new Date().toISOString() })
+      .eq('id', leadId)
+      .is('assigned_to', null);
+
+    return !error;
   }
 };

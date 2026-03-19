@@ -1,10 +1,12 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Mail, Phone, AlertCircle, Link2, Copy, CheckCircle } from 'lucide-react';
+import { ArrowLeft, Mail, Phone, AlertCircle, Link2, Copy, CheckCircle, User } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
 import { useRealtimeDocuments } from '@/hooks/useRealtimeDocuments';
 import { useDocumentToast, DocumentToastContainer } from '@/components/crm/DocumentToast';
+import { useAdminAuth } from '@/hooks/useAdminAuth';
+import { pipelineService } from '@/lib/crm-pipeline';
 import { LeadWorkflowTabs, WorkflowTab } from '@/components/crm/LeadWorkflowTabs';
 import PipelineWorkflow7Etapes from '@/components/crm/PipelineWorkflow7Etapes';
 import DocumentValidationComplete from '@/components/crm/DocumentValidationComplete';
@@ -31,14 +33,18 @@ interface Lead {
   company_name?: string;
   vehicle_type?: string;
   immatriculation?: string;
+  assigned_to?: string;
+  assigned_at?: string;
 }
 
 const CRMLeadDetail: React.FC = () => {
   const { leadId } = useParams<{ leadId: string }>();
   const navigate = useNavigate();
+  const { user } = useAdminAuth();
   const [lead, setLead] = useState<Lead | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [assigneeName, setAssigneeName] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<WorkflowTab>('overview');
   const [linkCopied, setLinkCopied] = useState(false);
   const [stats, setStats] = useState({
@@ -168,6 +174,26 @@ const CRMLeadDetail: React.FC = () => {
       loadStats();
     }
   }, [leadId]);
+
+  // Auto-assign when a commercial opens an unassigned lead
+  useEffect(() => {
+    if (!lead || !user?.id || !leadId) return;
+
+    if (!lead.assigned_to) {
+      pipelineService.autoAssignLead(leadId, user.id).then((ok) => {
+        if (ok) {
+          setLead(prev => prev ? { ...prev, assigned_to: user.id, assigned_at: new Date().toISOString() } : prev);
+          setAssigneeName(user.full_name);
+        }
+      });
+    } else {
+      // Load assignee name
+      pipelineService.getAdminUsers().then((users) => {
+        const found = users.find(u => u.id === lead.assigned_to);
+        setAssigneeName(found?.full_name || null);
+      });
+    }
+  }, [lead?.id, lead?.assigned_to, user?.id, leadId]);
 
   const copyProspectSpaceLink = async () => {
     if (!lead?.access_token) {
@@ -400,6 +426,14 @@ const CRMLeadDetail: React.FC = () => {
                     {lead.phone}
                   </div>
                 )}
+                <div className="flex items-center gap-1.5">
+                  <User className="h-4 w-4 text-gray-400" />
+                  {assigneeName ? (
+                    <span className="text-sm font-medium text-gray-700">{assigneeName}</span>
+                  ) : (
+                    <span className="text-sm text-gray-400 italic">Non attribue</span>
+                  )}
+                </div>
               </div>
 
               {/* Boutons d'accès espace prospect */}

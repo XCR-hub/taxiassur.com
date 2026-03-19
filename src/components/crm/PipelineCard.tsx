@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { Calendar, Tag, TrendingUp, Mail, Phone, FileCheck, CreditCard, Clock, Building2, PenTool, AlertTriangle, Euro, Zap, Loader2, CheckCircle, XCircle } from 'lucide-react';
+import { Tag, Mail, Phone, FileCheck, CreditCard, Clock, Building2, PenTool, AlertTriangle, Euro, Loader2, User } from 'lucide-react';
 import { CRMLead, PIPELINE_STATUSES } from '@/lib/crm-pipeline';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/lib/supabase';
@@ -11,6 +11,7 @@ interface PipelineCardProps {
   onDragEnd?: () => void;
   isDragging?: boolean;
   className?: string;
+  assigneeName?: string;
 }
 
 interface LeadIndicators {
@@ -36,7 +37,8 @@ export const PipelineCard: React.FC<PipelineCardProps> = ({
   onDragStart,
   onDragEnd,
   isDragging,
-  className
+  className,
+  assigneeName
 }) => {
   const statusInfo = PIPELINE_STATUSES[lead.status];
   const isDraggingRef = useRef(false);
@@ -334,6 +336,16 @@ export const PipelineCard: React.FC<PipelineCardProps> = ({
           )}
         </div>
       )}
+
+      {/* Assignee */}
+      <div className="mt-2 pt-2 border-t border-[#323232] flex items-center gap-1.5">
+        <User size={10} className="shrink-0 text-gray-600" />
+        {assigneeName ? (
+          <span className="text-xs text-gray-400 truncate">{assigneeName}</span>
+        ) : (
+          <span className="text-xs text-gray-600 italic">Non attribue</span>
+        )}
+      </div>
     </div>
   );
 };

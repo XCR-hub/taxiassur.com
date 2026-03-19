@@ -1,11 +1,12 @@
 import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Search, Filter, RefreshCw, AlertCircle, TrendingUp, Clock, FileText, Building2, Euro, PenTool, AlertTriangle, Mail, Phone, MessageSquare, FileCheck } from 'lucide-react';
-import { pipelineService, PIPELINE_STATUSES, PipelineStatus, CRMLead } from '@/lib/crm-pipeline';
+import { Plus, Search, RefreshCw, AlertCircle, TrendingUp, Clock, FileText, Building2, Euro, PenTool, AlertTriangle, Mail, Phone, FileCheck, Users, User } from 'lucide-react';
+import { pipelineService, PIPELINE_STATUSES, PipelineStatus, CRMLead, AdminUser } from '@/lib/crm-pipeline';
 import { PipelineCard } from '@/components/crm/PipelineCard';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/lib/supabase';
 import RealtimeNotifications from '@/components/crm/RealtimeNotifications';
+import { useAdminAuth } from '@/hooks/useAdminAuth';
 
 interface ColumnNotifications {
   newEmails: number;
@@ -135,6 +136,7 @@ const STATUS_COLORS: Record<string, {
 
 const CRMPipelineKanban: React.FC = () => {
   const navigate = useNavigate();
+  const { user } = useAdminAuth();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [kanbanData, setKanbanData] = useState<Record<PipelineStatus, CRMLead[]>>({} as any);
@@ -148,9 +150,17 @@ const CRMPipelineKanban: React.FC = () => {
   const [updateCount, setUpdateCount] = useState(0);
   const [newLeadNotification, setNewLeadNotification] = useState<string | null>(null);
   const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(true);
+  const [adminUsers, setAdminUsers] = useState<AdminUser[]>([]);
+  const [viewFilter, setViewFilter] = useState<'all' | 'mine' | 'unassigned'>('all');
   const autoRefreshInterval = useRef<NodeJS.Timeout | null>(null);
   const realtimeChannel = useRef<any>(null);
   const previousLeadCount = useRef<number>(0);
+
+  const adminUsersMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    adminUsers.forEach(u => { map[u.id] = u.full_name; });
+    return map;
+  }, [adminUsers]);
 
   // Debounce search
   useEffect(() => {
@@ -159,6 +169,11 @@ const CRMPipelineKanban: React.FC = () => {
     }, 300);
     return () => clearTimeout(timer);
   }, [search]);
+
+  // Load admin users for assignment display
+  useEffect(() => {
+    pipelineService.getAdminUsers().then(setAdminUsers);
+  }, []);
 
   // Load column notifications (emails, documents, calls, SMS)
   const loadColumnNotifications = useCallback(async () => {
@@ -522,22 +537,32 @@ const CRMPipelineKanban: React.FC = () => {
   }, [draggedLead, loadKanbanData]);
 
   const filteredKanbanData = useMemo(() => {
-    if (!debouncedSearch) return kanbanData;
-
     const filtered: Record<PipelineStatus, CRMLead[]> = {} as any;
     const searchLower = debouncedSearch.toLowerCase();
 
     Object.entries(kanbanData).forEach(([status, leads]) => {
-      filtered[status as PipelineStatus] = leads.filter(lead =>
-        lead.full_name?.toLowerCase().includes(searchLower) ||
-        lead.email?.toLowerCase().includes(searchLower) ||
-        lead.phone?.includes(debouncedSearch) ||
-        lead.company_name?.toLowerCase().includes(searchLower) ||
-        lead.city?.toLowerCase().includes(searchLower)
-      );
+      let result = leads;
+
+      if (debouncedSearch) {
+        result = result.filter(lead =>
+          lead.full_name?.toLowerCase().includes(searchLower) ||
+          lead.email?.toLowerCase().includes(searchLower) ||
+          lead.phone?.includes(debouncedSearch) ||
+          lead.company_name?.toLowerCase().includes(searchLower) ||
+          lead.city?.toLowerCase().includes(searchLower)
+        );
+      }
+
+      if (viewFilter === 'mine' && user?.id) {
+        result = result.filter(lead => lead.assigned_to === user.id);
+      } else if (viewFilter === 'unassigned') {
+        result = result.filter(lead => !lead.assigned_to);
+      }
+
+      filtered[status as PipelineStatus] = result;
     });
     return filtered;
-  }, [kanbanData, debouncedSearch]);
+  }, [kanbanData, debouncedSearch, viewFilter, user?.id]);
 
   // 🎯 PIPELINE TAXIASSUR SIMPLIFIÉ - 7 ÉTAPES
   const visibleStatuses: PipelineStatus[] = [
@@ -692,7 +717,62 @@ const CRMPipelineKanban: React.FC = () => {
             </div>
           )}
 
-          {/* Row 2: Workflow funnel — compact pill strip */}
+          {/* Row 2: Assignment filter tabs */}
+          <div className="mt-2 flex items-center gap-1">
+            <button
+              onClick={() => setViewFilter('all')}
+              className={cn(
+                'flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium transition-colors',
+                viewFilter === 'all'
+                  ? 'bg-yellow-500 text-black'
+                  : 'bg-gray-800 text-gray-400 border border-gray-700 hover:text-white'
+              )}
+            >
+              <Users size={11} />
+              Tous les leads
+            </button>
+            <button
+              onClick={() => setViewFilter('mine')}
+              className={cn(
+                'flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium transition-colors',
+                viewFilter === 'mine'
+                  ? 'bg-yellow-500 text-black'
+                  : 'bg-gray-800 text-gray-400 border border-gray-700 hover:text-white'
+              )}
+            >
+              <User size={11} />
+              Mes leads
+            </button>
+            <button
+              onClick={() => setViewFilter('unassigned')}
+              className={cn(
+                'flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium transition-colors',
+                viewFilter === 'unassigned'
+                  ? 'bg-yellow-500 text-black'
+                  : 'bg-gray-800 text-gray-400 border border-gray-700 hover:text-white'
+              )}
+            >
+              <User size={11} className="opacity-40" />
+              Non attribues
+            </button>
+            {adminUsers.length > 0 && (
+              <div className="ml-auto flex items-center gap-1 text-xs text-gray-500">
+                <Users size={10} />
+                {adminUsers.map(u => (
+                  <button
+                    key={u.id}
+                    onClick={() => {}}
+                    title={u.full_name}
+                    className="w-5 h-5 rounded-full bg-gray-700 border border-gray-600 flex items-center justify-center text-white font-bold text-[9px] hover:border-yellow-500 transition-colors"
+                  >
+                    {u.full_name.charAt(0)}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Row 3: Workflow funnel — compact pill strip */}
           <div className="mt-2 flex items-center h-7 bg-gray-900/80 border border-gray-700/60 rounded-lg overflow-hidden text-xs">
             <div className="flex items-center gap-1 px-3 border-r border-gray-700/60 h-full">
               <div className="w-1.5 h-1.5 bg-yellow-400 rounded-full animate-pulse"></div>
@@ -893,6 +973,7 @@ const CRMPipelineKanban: React.FC = () => {
                         onDragStart={() => handleDragStart(lead)}
                         onDragEnd={handleDragEnd}
                         isDragging={draggedLead?.id === lead.id}
+                        assigneeName={lead.assigned_to ? adminUsersMap[lead.assigned_to] : undefined}
                       />
                     ))
                   )}
