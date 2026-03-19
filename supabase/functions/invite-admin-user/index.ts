@@ -414,20 +414,43 @@ Deno.serve(async (req: Request) => {
       }
 
       if (force_resend) {
+        let actionLink: string | null = null;
+
+        // Try recovery link first (user already has auth account)
         const { data: resetData, error: resetError } = await supabaseAdmin.auth.admin.generateLink({
           type: 'recovery',
           email,
           options: { redirectTo: redirectUrl },
         });
 
-        if (resetError || !resetData?.properties?.action_link) {
-          return new Response(
-            JSON.stringify({ success: false, error: `Impossible de generer le lien: ${resetError?.message || 'lien vide'}` }),
-            { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
-        }
+        if (resetData?.properties?.action_link) {
+          actionLink = resetData.properties.action_link;
+        } else {
+          // Auth user doesn't exist — create it via invite
+          console.log('Recovery failed, creating auth user via invite:', resetError?.message);
+          const { data: inviteData, error: inviteError } = await supabaseAdmin.auth.admin.generateLink({
+            type: 'invite',
+            email,
+            options: {
+              data: { full_name: existingUser.full_name || full_name, role: existingUser.role || userRole },
+              redirectTo: redirectUrl,
+            },
+          });
 
-        const actionLink = resetData.properties.action_link;
+          if (inviteError || !inviteData?.properties?.action_link) {
+            return new Response(
+              JSON.stringify({ success: false, error: `Impossible de generer le lien: ${inviteError?.message || resetError?.message || 'erreur inconnue'}` }),
+              { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            );
+          }
+
+          actionLink = inviteData.properties.action_link;
+
+          // Sync the new auth user id back to admin_users if needed
+          if (inviteData.user?.id && inviteData.user.id !== existingUser.id) {
+            await supabaseAdmin.from('admin_users').update({ id: inviteData.user.id }).eq('email', email);
+          }
+        }
         let emailSent = false;
         let emailError = '';
 
