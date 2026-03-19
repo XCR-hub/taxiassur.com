@@ -520,7 +520,7 @@ const CRMInboxMulticanal: React.FC = () => {
 
   return (
     <div className="flex h-screen bg-gray-100 overflow-hidden">
-      <NavigationMenu />
+      <NavigationMenu excludeSections={['Administration']} />
 
       {/* Toast */}
       {toast && (

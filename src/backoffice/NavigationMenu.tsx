@@ -19,7 +19,11 @@ interface NavSection {
   permission?: boolean;
 }
 
-export default function NavigationMenu() {
+interface NavigationMenuProps {
+  excludeSections?: string[];
+}
+
+export default function NavigationMenu({ excludeSections = [] }: NavigationMenuProps) {
   const currentUser = getCurrentUser();
   const isMaster = currentUser?.role === 'master';
   const { pathname } = useLocation();
@@ -219,6 +223,7 @@ export default function NavigationMenu() {
     <div className="space-y-3">
       {sections.map((section) => {
         if (section.permission === false) return null;
+        if (excludeSections.includes(section.title)) return null;
 
         return (
           <div
