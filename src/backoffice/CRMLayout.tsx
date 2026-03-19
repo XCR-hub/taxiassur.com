@@ -24,7 +24,8 @@ import {
   RefreshCw,
   Copy,
   Receipt,
-  Building2
+  Building2,
+  ClipboardList
 } from 'lucide-react';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { ThemeToggle } from '@/components/ThemeToggle';
@@ -112,9 +113,16 @@ const CRMLayout: React.FC = () => {
     },
     {
       id: 'production',
-      label: 'Production & Compagnies',
-      icon: Building2,
+      label: 'Production',
+      icon: ClipboardList,
       path: '/backoffice/production',
+      badge: null
+    },
+    {
+      id: 'insurance-companies',
+      label: 'Compagnies',
+      icon: Building2,
+      path: '/backoffice/insurance-companies',
       badge: null
     },
     {
