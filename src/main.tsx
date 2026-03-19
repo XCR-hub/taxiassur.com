@@ -8,14 +8,19 @@ import './index.css';
 // Supabase redirects to the root with #access_token when redirectTo is not in allowed list
 ;(() => {
   const hash = window.location.hash;
-  if (
-    hash &&
+  if (!hash) return;
+  if (window.location.pathname.includes('/auth/set-password')) return;
+
+  const isAuthSuccess =
     hash.includes('access_token=') &&
-    (hash.includes('type=recovery') || hash.includes('type=invite'))
-  ) {
-    if (!window.location.pathname.includes('/auth/set-password')) {
-      window.location.replace('/auth/set-password' + hash);
-    }
+    (hash.includes('type=recovery') || hash.includes('type=invite'));
+
+  const isAuthError =
+    hash.includes('error=') &&
+    (hash.includes('error_code=otp_expired') || hash.includes('error=access_denied'));
+
+  if (isAuthSuccess || isAuthError) {
+    window.location.replace('/auth/set-password' + hash);
   }
 })();
 
