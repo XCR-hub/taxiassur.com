@@ -191,8 +191,8 @@ export const PipelineCard: React.FC<PipelineCardProps> = ({
         className
       )}
       style={{
-        background: isDragging ? '#1e1e1e' : 'linear-gradient(145deg, #252525 0%, #202020 100%)',
-        boxShadow: isDragging ? 'none' : `0 1px 3px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.04), inset 0 1px 0 rgba(255,255,255,0.04)`,
+        background: isDragging ? '#262931' : 'linear-gradient(145deg, #2d3140 0%, #282d3a 100%)',
+        boxShadow: isDragging ? 'none' : `0 1px 3px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.07), inset 0 1px 0 rgba(255,255,255,0.06)`,
       }}
     >
       {/* Left accent stripe */}
@@ -237,19 +237,19 @@ export const PipelineCard: React.FC<PipelineCardProps> = ({
         {/* Contact info */}
         <div className="space-y-[5px] mb-2.5">
           <div className="flex items-center gap-1.5">
-            <Mail size={10} className="shrink-0 text-gray-600" />
-            <span className="text-[11px] text-gray-400 truncate">{lead.email}</span>
+            <Mail size={10} className="shrink-0 text-slate-500" />
+            <span className="text-[11px] text-slate-300 truncate">{lead.email}</span>
           </div>
           {lead.phone && (
             <div className="flex items-center gap-1.5">
-              <Phone size={10} className="shrink-0 text-gray-600" />
-              <span className="text-[11px] text-gray-400 truncate">{lead.phone}</span>
+              <Phone size={10} className="shrink-0 text-slate-500" />
+              <span className="text-[11px] text-slate-300 truncate">{lead.phone}</span>
             </div>
           )}
           {lead.city && (
             <div className="flex items-center gap-1.5">
-              <MapPin size={10} className="shrink-0 text-gray-600" />
-              <span className="text-[11px] text-gray-500 truncate">{lead.city}</span>
+              <MapPin size={10} className="shrink-0 text-slate-500" />
+              <span className="text-[11px] text-slate-400 truncate">{lead.city}</span>
             </div>
           )}
         </div>
@@ -269,8 +269,8 @@ export const PipelineCard: React.FC<PipelineCardProps> = ({
         <div className="mb-2">
           <div className="flex items-center justify-between mb-1">
             <div className="flex items-center gap-1">
-              <FileCheck size={9} className="text-gray-600" />
-              <span className="text-[10px] text-gray-600">Docs</span>
+              <FileCheck size={9} className="text-slate-500" />
+              <span className="text-[10px] text-slate-500">Docs</span>
             </div>
             <span className={cn(
               'text-[10px] font-semibold',
@@ -279,7 +279,7 @@ export const PipelineCard: React.FC<PipelineCardProps> = ({
               {indicators.documentsValidated}/{indicators.documentsTotal}
             </span>
           </div>
-          <div className="h-1 bg-black/40 rounded-full overflow-hidden">
+          <div className="h-1 bg-white/[0.08] rounded-full overflow-hidden">
             <div
               className="h-full rounded-full transition-all duration-500"
               style={{
@@ -302,7 +302,7 @@ export const PipelineCard: React.FC<PipelineCardProps> = ({
                   ? 'bg-green-900/40 text-green-400'
                   : indicators.companiesQuoted > 0
                     ? 'bg-sky-900/40 text-sky-400'
-                    : 'bg-white/[0.04] text-gray-600'
+                    : 'bg-white/[0.07] text-slate-500'
               )}
               title={`${indicators.companiesQuoted} devis, ${indicators.companiesRefused} refus`}
             >
@@ -363,7 +363,7 @@ export const PipelineCard: React.FC<PipelineCardProps> = ({
               </span>
             ))}
             {lead.tags.length > 2 && (
-              <span className="text-[10px] text-gray-600">+{lead.tags.length - 2}</span>
+              <span className="text-[10px] text-slate-500">+{lead.tags.length - 2}</span>
             )}
           </div>
         )}
@@ -378,14 +378,14 @@ export const PipelineCard: React.FC<PipelineCardProps> = ({
               >
                 {assigneeName.charAt(0).toUpperCase()}
               </div>
-              <span className="text-[10px] text-gray-500 truncate">{assigneeName}</span>
+              <span className="text-[10px] text-slate-400 truncate">{assigneeName}</span>
             </>
           ) : (
             <>
-              <div className="w-[18px] h-[18px] rounded-full bg-white/[0.04] border border-white/[0.07] flex items-center justify-center shrink-0">
-                <User size={8} className="text-gray-600" />
+              <div className="w-[18px] h-[18px] rounded-full bg-white/[0.08] border border-white/[0.12] flex items-center justify-center shrink-0">
+                <User size={8} className="text-slate-500" />
               </div>
-              <span className="text-[10px] text-gray-600 italic">Non attribue</span>
+              <span className="text-[10px] text-slate-500 italic">Non attribue</span>
             </>
           )}
         </div>

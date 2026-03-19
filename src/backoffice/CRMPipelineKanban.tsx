@@ -610,7 +610,7 @@ const CRMPipelineKanban: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="h-full bg-gray-50 dark:bg-gray-900 p-8 flex items-center justify-center">
+      <div className="h-full bg-[#1a1d23] p-8 flex items-center justify-center">
         <div className="animate-pulse w-full max-w-6xl">
           <div className="h-20 bg-gray-200 dark:bg-gray-700 rounded-xl mb-6"></div>
           <div className="flex gap-4 overflow-x-auto">
@@ -624,9 +624,9 @@ const CRMPipelineKanban: React.FC = () => {
   }
 
   return (
-    <div className="h-full bg-[#181818] flex flex-col overflow-hidden">
+    <div className="h-full bg-[#1a1d23] flex flex-col overflow-hidden">
       {/* Header — compact single strip */}
-      <div className="bg-[#1e1e1e] border-b border-white/[0.07] z-10 shadow-lg flex-shrink-0">
+      <div className="bg-[#1e2128] border-b border-white/[0.08] z-10 shadow-lg flex-shrink-0">
         <div className="px-4 py-2">
 
           {/* Row 1: title + search + actions */}
@@ -646,7 +646,7 @@ const CRMPipelineKanban: React.FC = () => {
                 placeholder="Rechercher par nom, email, téléphone..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-9 pr-3 py-1.5 bg-gray-900 border border-gray-700 text-white placeholder-gray-500 rounded-lg focus:outline-none focus:ring-1 focus:ring-yellow-500 focus:border-yellow-500 text-sm"
+                className="w-full pl-9 pr-3 py-1.5 bg-[#252931] border border-white/[0.1] text-white placeholder-slate-500 rounded-lg focus:outline-none focus:ring-1 focus:ring-yellow-500 focus:border-yellow-500 text-sm"
               />
             </div>
 
@@ -654,7 +654,7 @@ const CRMPipelineKanban: React.FC = () => {
             <div className="flex items-center gap-1.5 shrink-0">
               <button
                 onClick={() => setAutoRefreshEnabled(!autoRefreshEnabled)}
-                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-colors ${autoRefreshEnabled ? 'border-yellow-600 bg-yellow-600/10 text-yellow-400' : 'border-gray-700 text-gray-500 hover:text-gray-300'}`}
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-colors ${autoRefreshEnabled ? 'border-yellow-600/60 bg-yellow-600/10 text-yellow-400' : 'border-white/[0.1] text-slate-400 hover:text-slate-200'}`}
                 title={autoRefreshEnabled ? 'Désactiver auto-refresh' : 'Activer auto-refresh'}
               >
                 <div className={`w-1.5 h-1.5 rounded-full ${autoRefreshEnabled ? 'bg-yellow-400 animate-pulse' : 'bg-gray-600'}`}></div>
@@ -663,7 +663,7 @@ const CRMPipelineKanban: React.FC = () => {
               <button
                 onClick={handleRefresh}
                 disabled={refreshing}
-                className="p-1.5 border border-gray-700 text-gray-400 rounded-lg hover:bg-gray-800 hover:text-white transition-colors disabled:opacity-50"
+                className="p-1.5 border border-white/[0.1] text-slate-400 rounded-lg hover:bg-white/[0.07] hover:text-white transition-colors disabled:opacity-50"
                 title="Actualiser"
               >
                 <RefreshCw size={14} className={refreshing ? 'animate-spin' : ''} />
@@ -725,7 +725,7 @@ const CRMPipelineKanban: React.FC = () => {
                 'flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium transition-colors',
                 viewFilter === 'all'
                   ? 'bg-yellow-500 text-black'
-                  : 'bg-gray-800 text-gray-400 border border-gray-700 hover:text-white'
+                  : 'bg-white/[0.05] text-slate-400 border border-white/[0.09] hover:text-white hover:bg-white/[0.08]'
               )}
             >
               <Users size={11} />
@@ -737,7 +737,7 @@ const CRMPipelineKanban: React.FC = () => {
                 'flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium transition-colors',
                 viewFilter === 'mine'
                   ? 'bg-yellow-500 text-black'
-                  : 'bg-gray-800 text-gray-400 border border-gray-700 hover:text-white'
+                  : 'bg-white/[0.05] text-slate-400 border border-white/[0.09] hover:text-white hover:bg-white/[0.08]'
               )}
             >
               <User size={11} />
@@ -749,7 +749,7 @@ const CRMPipelineKanban: React.FC = () => {
                 'flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium transition-colors',
                 viewFilter === 'unassigned'
                   ? 'bg-yellow-500 text-black'
-                  : 'bg-gray-800 text-gray-400 border border-gray-700 hover:text-white'
+                  : 'bg-white/[0.05] text-slate-400 border border-white/[0.09] hover:text-white hover:bg-white/[0.08]'
               )}
             >
               <User size={11} className="opacity-40" />
@@ -763,7 +763,7 @@ const CRMPipelineKanban: React.FC = () => {
                     key={u.id}
                     onClick={() => {}}
                     title={u.full_name}
-                    className="w-5 h-5 rounded-full bg-gray-700 border border-gray-600 flex items-center justify-center text-white font-bold text-[9px] hover:border-yellow-500 transition-colors"
+                    className="w-5 h-5 rounded-full bg-white/[0.1] border border-white/[0.15] flex items-center justify-center text-white font-bold text-[9px] hover:border-yellow-500 transition-colors"
                   >
                     {u.full_name.charAt(0)}
                   </button>
@@ -773,50 +773,50 @@ const CRMPipelineKanban: React.FC = () => {
           </div>
 
           {/* Row 3: Workflow funnel — compact pill strip */}
-          <div className="mt-2 flex items-center h-7 bg-gray-900/80 border border-gray-700/60 rounded-lg overflow-hidden text-xs">
-            <div className="flex items-center gap-1 px-3 border-r border-gray-700/60 h-full">
+          <div className="mt-2 flex items-center h-7 bg-[#1a1d23]/80 border border-white/[0.08] rounded-lg overflow-hidden text-xs">
+            <div className="flex items-center gap-1 px-3 border-r border-white/[0.07] h-full">
               <div className="w-1.5 h-1.5 bg-yellow-400 rounded-full animate-pulse"></div>
               <span className="font-bold text-white">{statistics.total}</span>
-              <span className="text-gray-500">leads</span>
+              <span className="text-slate-500">leads</span>
             </div>
-            <div className="text-gray-600 px-1">›</div>
-            <div className={`flex items-center gap-1 px-3 border-r border-gray-700/60 h-full ${statistics.needsAction > 0 ? 'bg-red-900/20' : ''}`}>
+            <div className="text-slate-600 px-1">›</div>
+            <div className={`flex items-center gap-1 px-3 border-r border-white/[0.07] h-full ${statistics.needsAction > 0 ? 'bg-red-500/10' : ''}`}>
               <AlertTriangle size={11} className="text-red-400" />
               <span className="font-bold text-red-300">{statistics.needsAction}</span>
-              <span className="text-red-500/70">urgents</span>
+              <span className="text-red-400/60">urgents</span>
             </div>
-            <div className="text-gray-600 px-1">›</div>
-            <div className="flex items-center gap-1 px-3 border-r border-gray-700/60 h-full">
+            <div className="text-slate-600 px-1">›</div>
+            <div className="flex items-center gap-1 px-3 border-r border-white/[0.07] h-full">
               <FileText size={11} className="text-yellow-400" />
               <span className="font-bold text-yellow-300">{statistics.documentsStage}</span>
-              <span className="text-gray-500">docs</span>
+              <span className="text-slate-500">docs</span>
             </div>
-            <div className="text-gray-600 px-1">›</div>
-            <div className="flex items-center gap-1 px-3 border-r border-gray-700/60 h-full">
+            <div className="text-slate-600 px-1">›</div>
+            <div className="flex items-center gap-1 px-3 border-r border-white/[0.07] h-full">
               <Building2 size={11} className="text-amber-400" />
               <span className="font-bold text-amber-300">{statistics.quoteStage}</span>
-              <span className="text-gray-500">devis</span>
+              <span className="text-slate-500">devis</span>
             </div>
-            <div className="text-gray-600 px-1">›</div>
-            <div className="flex items-center gap-1 px-3 border-r border-gray-700/60 h-full">
-              <PenTool size={11} className="text-gray-300" />
+            <div className="text-slate-600 px-1">›</div>
+            <div className="flex items-center gap-1 px-3 border-r border-white/[0.07] h-full">
+              <PenTool size={11} className="text-slate-300" />
               <span className="font-bold text-white">{statistics.signatureStage}</span>
-              <span className="text-gray-500">sign.</span>
+              <span className="text-slate-500">sign.</span>
             </div>
-            <div className="text-gray-600 px-1">›</div>
-            <div className="flex items-center gap-1 px-3 border-r border-gray-700/60 h-full">
-              <Euro size={11} className="text-green-400" />
-              <span className="font-bold text-green-300">{statistics.paymentStage}</span>
-              <span className="text-gray-500">paiement</span>
+            <div className="text-slate-600 px-1">›</div>
+            <div className="flex items-center gap-1 px-3 border-r border-white/[0.07] h-full">
+              <Euro size={11} className="text-emerald-400" />
+              <span className="font-bold text-emerald-300">{statistics.paymentStage}</span>
+              <span className="text-slate-500">paiement</span>
             </div>
-            <div className="text-gray-600 px-1">›</div>
-            <div className="flex items-center gap-1 px-3 bg-green-900/20 h-full">
-              <TrendingUp size={11} className="text-green-400" />
-              <span className="font-bold text-green-300">{statistics.active}</span>
-              <span className="text-green-600">clients actifs</span>
+            <div className="text-slate-600 px-1">›</div>
+            <div className="flex items-center gap-1 px-3 bg-emerald-500/10 h-full">
+              <TrendingUp size={11} className="text-emerald-400" />
+              <span className="font-bold text-emerald-300">{statistics.active}</span>
+              <span className="text-emerald-600/80">clients actifs</span>
             </div>
-            <div className="ml-auto flex items-center px-3 border-l border-gray-700/60 h-full">
-              <div className="flex items-center gap-1 text-gray-600">
+            <div className="ml-auto flex items-center px-3 border-l border-white/[0.07] h-full">
+              <div className="flex items-center gap-1 text-slate-600">
                 <Clock size={10} />
                 <span>{lastUpdate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</span>
               </div>
@@ -858,10 +858,10 @@ const CRMPipelineKanban: React.FC = () => {
                 )}
                 style={{
                   maxHeight: 'calc(100vh - 196px)',
-                  background: '#1c1c1c',
+                  background: '#21242d',
                   boxShadow: isDropTarget
-                    ? `0 0 0 1.5px ${accentColor}70, 0 8px 32px rgba(0,0,0,0.4)`
-                    : '0 1px 4px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.04)',
+                    ? `0 0 0 1.5px ${accentColor}70, 0 8px 32px rgba(0,0,0,0.3)`
+                    : '0 1px 4px rgba(0,0,0,0.25), 0 0 0 1px rgba(255,255,255,0.06)',
                 }}
               >
                 {/* Colored top stripe */}
@@ -919,7 +919,7 @@ const CRMPipelineKanban: React.FC = () => {
                   <div className="flex items-center gap-1.5 min-h-[18px]">
                     {leads.length > 0 && (
                       <div className="flex items-center gap-1.5 shrink-0">
-                        <div className="w-16 h-1 bg-black/50 rounded-full overflow-hidden">
+                        <div className="w-16 h-1 bg-white/[0.1] rounded-full overflow-hidden">
                           <div
                             className="h-full rounded-full transition-all duration-500"
                             style={{ width: `${avgQuality}%`, backgroundColor: accentColor, opacity: 0.85 }}
