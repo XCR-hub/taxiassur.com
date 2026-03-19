@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Settings, Users, Bell, Shield, Database, Zap, Mail, MessageSquare, Bot, Save, CheckCircle, X, UserPlus, Trash2, Lock, Eye, CreditCard as Edit, AlertTriangle } from 'lucide-react';
+import { Settings, Users, Bell, Shield, Database, Zap, Mail, MessageSquare, Bot, Save, CheckCircle, X, UserPlus, Trash2, Lock, Eye, CreditCard as Edit, AlertTriangle, Send, Key } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
 interface CRMSettings {
@@ -104,6 +104,10 @@ const CRMAdminSettings: React.FC = () => {
     role: 'collaborator'
   });
   const [inviting, setInviting] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<AdminUser | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [actionUser, setActionUser] = useState<AdminUser | null>(null);
+  const [toastMsg, setToastMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [showIntegrationModal, setShowIntegrationModal] = useState<string | null>(null);
   const [integrationSettings, setIntegrationSettings] = useState({
     brevo: { api_key: '', sender_email: '', sender_name: '' },
@@ -208,73 +212,85 @@ const CRMAdminSettings: React.FC = () => {
     }
   };
 
+  const showToast = (type: 'success' | 'error', text: string) => {
+    setToastMsg({ type, text });
+    setTimeout(() => setToastMsg(null), 4000);
+  };
+
   const inviteUser = async () => {
     if (!inviteForm.email || !inviteForm.full_name) {
-      alert('Email et nom complet requis');
+      showToast('error', 'Email et nom complet requis');
       return;
     }
 
-    // Validation frontend de l'email
     const emailRegex = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
     if (!emailRegex.test(inviteForm.email)) {
-      alert('Format d\'email invalide. L\'email doit contenir un domaine complet (ex: utilisateur@entreprise.com)');
+      showToast('error', "Format d'email invalide");
       return;
     }
 
     setInviting(true);
     try {
       const { data, error } = await supabase.functions.invoke('invite-admin-user', {
-        body: {
-          email: inviteForm.email,
-          full_name: inviteForm.full_name,
-          role: inviteForm.role
-        }
+        body: { email: inviteForm.email, full_name: inviteForm.full_name, role: inviteForm.role }
       });
 
-      if (error) {
-        console.error('Edge Function error:', error);
-        const errorMsg = data?.error || error.message || 'Erreur lors de l\'invitation';
-        alert(errorMsg);
+      if (error || !data?.success) {
+        showToast('error', data?.error || error?.message || "Erreur lors de l'invitation");
         return;
       }
 
-      if (data && data.success) {
-        alert(`Invitation envoyée avec succès à ${inviteForm.email}`);
-        setShowInviteModal(false);
-        setInviteForm({ email: '', full_name: '', role: 'collaborator' });
-        loadUsers();
-      } else {
-        const errorMsg = data?.error || 'Erreur inconnue lors de l\'invitation';
-        console.error('Invitation failed:', errorMsg);
-        alert(errorMsg);
-      }
+      showToast('success', `Invitation envoyee a ${inviteForm.email}`);
+      setShowInviteModal(false);
+      setInviteForm({ email: '', full_name: '', role: 'collaborator' });
+      loadUsers();
     } catch (error: any) {
-      console.error('Erreur invitation:', error);
-      const errorMessage = error.message || 'Erreur lors de l\'invitation. Veuillez vérifier votre connexion.';
-      alert(errorMessage);
+      showToast('error', error.message || "Erreur lors de l'invitation");
     } finally {
       setInviting(false);
     }
   };
 
-  const deleteUser = async (userId: string, email: string) => {
-    if (!confirm(`Voulez-vous vraiment supprimer l'utilisateur ${email} ?`)) {
-      return;
-    }
-
+  const resendInvite = async (user: AdminUser) => {
+    setActionUser(user);
     try {
-      const { error } = await supabase
-        .from('admin_users')
-        .update({ is_active: false })
-        .eq('id', userId);
+      const { data, error } = await supabase.functions.invoke('invite-admin-user', {
+        body: { email: user.email, full_name: user.full_name, role: user.role, permissions: [], force_resend: true }
+      });
 
-      if (error) throw error;
+      if (error || !data?.success) {
+        showToast('error', data?.error || error?.message || 'Erreur inconnue');
+        return;
+      }
 
-      alert('Utilisateur désactivé avec succès');
+      showToast('success', `Invitation renvoyee a ${user.email}`);
+    } catch (error: any) {
+      showToast('error', error.message || "Erreur lors du renvoi");
+    } finally {
+      setActionUser(null);
+    }
+  };
+
+  const deleteUser = async () => {
+    if (!userToDelete) return;
+    setDeleting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('invite-admin-user', {
+        body: { action: 'delete', user_id: userToDelete.id, email: userToDelete.email }
+      });
+
+      if (error || !data?.success) {
+        showToast('error', data?.error || error?.message || 'Erreur lors de la suppression');
+        return;
+      }
+
+      showToast('success', `${userToDelete.full_name || userToDelete.email} supprime`);
+      setUserToDelete(null);
       loadUsers();
-    } catch (error) {
-      console.error('Erreur suppression:', error);
-      alert('Erreur lors de la suppression');
+    } catch (error: any) {
+      showToast('error', error.message || 'Erreur lors de la suppression');
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -422,6 +438,53 @@ const CRMAdminSettings: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+
+      {/* TOAST */}
+      {toastMsg && (
+        <div className={`fixed top-4 right-4 z-[200] flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg text-sm font-semibold text-white transition-all ${toastMsg.type === 'success' ? 'bg-green-600' : 'bg-red-600'}`}>
+          {toastMsg.type === 'success' ? <CheckCircle size={16} /> : <X size={16} />}
+          {toastMsg.text}
+        </div>
+      )}
+
+      {/* DELETE CONFIRM MODAL */}
+      {userToDelete && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[100] p-4">
+          <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full border-2 border-red-200">
+            <div className="flex items-center gap-4 mb-6">
+              <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                <AlertTriangle className="text-red-600" size={24} />
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-gray-900">Supprimer cet utilisateur ?</h3>
+                <p className="text-gray-500 text-sm">Cette action est irreversible</p>
+              </div>
+            </div>
+            <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 mb-6">
+              <p className="font-semibold text-gray-900">{userToDelete.full_name}</p>
+              <p className="text-gray-500 text-sm">{userToDelete.email}</p>
+            </div>
+            <p className="text-gray-500 text-sm mb-6">Le compte d'authentification, les donnees admin et toutes les permissions seront supprimes.</p>
+            <div className="flex gap-3">
+              <button
+                onClick={deleteUser}
+                disabled={deleting}
+                className="flex-1 flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-xl font-bold transition-colors disabled:opacity-50"
+              >
+                <Trash2 size={18} />
+                {deleting ? 'Suppression...' : 'Supprimer definitivement'}
+              </button>
+              <button
+                onClick={() => setUserToDelete(null)}
+                className="px-6 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors"
+              >
+                Annuler
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="bg-gradient-to-r from-gray-900 to-gray-800 text-white">
         <div className="max-w-7xl mx-auto px-6 py-8">
           <div className="flex items-center gap-3">
@@ -592,13 +655,23 @@ const CRMAdminSettings: React.FC = () => {
                             </div>
                           </div>
                           {user.role !== 'master' && (
-                            <button
-                              onClick={() => deleteUser(user.id, user.email)}
-                              className="flex items-center gap-2 px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                            >
-                              <Trash2 size={16} />
-                              Supprimer
-                            </button>
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => resendInvite(user)}
+                                disabled={actionUser?.id === user.id}
+                                className="flex items-center gap-2 px-4 py-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                              >
+                                <Send size={16} />
+                                Reinviter
+                              </button>
+                              <button
+                                onClick={() => setUserToDelete(user)}
+                                className="flex items-center gap-2 px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                              >
+                                <Trash2 size={16} />
+                                Supprimer
+                              </button>
+                            </div>
                           )}
                         </div>
                       ))
