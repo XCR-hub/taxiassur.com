@@ -3,9 +3,28 @@ import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 import { visualizer } from 'rollup-plugin-visualizer';
 import path from 'path'
+import fs from 'fs'
+
+const skipBrokenPublicFiles = () => ({
+  name: 'skip-broken-public-files',
+  buildStart() {
+    const orig = (fs as any).copyFileSync;
+    (fs as any).copyFileSync = function(src: string, dest: string, ...rest: any[]) {
+      try {
+        orig.call(this, src, dest, ...rest);
+      } catch (e: any) {
+        if (e.code === 'EAGAIN' || e.code === 'EACCES') {
+          return;
+        }
+        throw e;
+      }
+    };
+  },
+});
 
 export default defineConfig(({ mode }) => ({
   plugins: [
+    skipBrokenPublicFiles(),
     react(),
     VitePWA({
       registerType: 'autoUpdate',
