@@ -6,6 +6,7 @@ import { BlogPost as BlogPostType } from '../lib/schema';
 import { getBlogPost } from '../lib/content';
 import { formatDate, calculateReadingTime } from '../lib/utils';
 import ArticleContent from './ArticleContent';
+import LeadMagnetSection from './LeadMagnetSection';
 import { logger } from '@/lib/logger';
 
 const BlogPost: React.FC = () => {
@@ -305,6 +306,8 @@ const BlogPost: React.FC = () => {
             </Link>
           </div>
         </article>
+
+        <LeadMagnetSection sourcePage={`blog/${slug}`} variant="compact" />
 
         {/* CTA */}
         <section className="bg-gradient-to-r from-yellow-500 to-yellow-600 text-white py-16">

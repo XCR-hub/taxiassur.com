@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Guide Complet Assurance Taxi 2026 — TaxiAssur</title>
+<meta name="robots" content="noindex, nofollow">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Georgia', serif;
+    color: #1a1a2e;
+    background: #fff;
+    line-height: 1.7;
+    font-size: 16px;
+  }
+  .page { max-width: 800px; margin: 0 auto; padding: 48px 40px; }
+
+  /* Cover */
+  .cover {
+    background: linear-gradient(135deg, #1a1a2e 0%, #0f3460 50%, #1a1a2e 100%);
+    color: #fff;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 60px 48px;
+    page-break-after: always;
+    position: relative;
+    overflow: hidden;
+  }
+  .cover::before {
+    content: '';
+    position: absolute;
+    top: -80px; right: -80px;
+    width: 400px; height: 400px;
+    background: radial-gradient(circle, rgba(245,180,0,0.15) 0%, transparent 70%);
+  }
+  .cover-badge {
+    display: inline-block;
+    background: rgba(245,180,0,0.2);
+    border: 1px solid rgba(245,180,0,0.5);
+    color: #f5b400;
+    font-size: 12px;
+    font-family: sans-serif;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    padding: 6px 16px;
+    border-radius: 100px;
+    margin-bottom: 32px;
+  }
+  .cover h1 {
+    font-size: 48px;
+    font-weight: 400;
+    line-height: 1.2;
+    color: #fff;
+    margin-bottom: 24px;
+  }
+  .cover h1 em {
+    color: #f5b400;
+    font-style: normal;
+  }
+  .cover-subtitle {
+    font-size: 20px;
+    color: rgba(255,255,255,0.7);
+    font-family: sans-serif;
+    margin-bottom: 48px;
+    max-width: 480px;
+  }
+  .cover-divider { width: 60px; height: 4px; background: #f5b400; border-radius: 2px; margin-bottom: 40px; }
+  .cover-meta {
+    font-family: sans-serif;
+    font-size: 14px;
+    color: rgba(255,255,255,0.5);
+  }
+  .cover-logo {
+    font-family: sans-serif;
+    font-size: 24px;
+    font-weight: 900;
+    color: #f5b400;
+    margin-bottom: 16px;
+  }
+  .cover-promises {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 48px;
+  }
+  .cover-promise {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-family: sans-serif;
+    font-size: 15px;
+    color: rgba(255,255,255,0.85);
+  }
+  .cover-promise-dot {
+    width: 8px; height: 8px;
+    background: #f5b400;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  /* Content pages */
+  h2 {
+    font-size: 30px;
+    font-weight: 700;
+    color: #0f3460;
+    margin: 48px 0 16px;
+    padding-bottom: 12px;
+    border-bottom: 3px solid #f5b400;
+  }
+  h3 {
+    font-size: 20px;
+    font-weight: 700;
+    color: #1a1a2e;
+    margin: 32px 0 12px;
+  }
+  p { margin-bottom: 16px; color: #333; }
+  ul { margin: 12px 0 20px 0; padding-left: 0; list-style: none; }
+  ul li {
+    position: relative;
+    padding-left: 20px;
+    margin-bottom: 8px;
+    color: #444;
+  }
+  ul li::before {
+    content: '→';
+    position: absolute;
+    left: 0;
+    color: #f5b400;
+    font-weight: bold;
+  }
+
+  .callout {
+    background: #fff8e1;
+    border-left: 4px solid #f5b400;
+    padding: 16px 20px;
+    margin: 24px 0;
+    border-radius: 0 8px 8px 0;
+  }
+  .callout strong { color: #0f3460; }
+  .callout-danger {
+    background: #fff0f0;
+    border-left-color: #e53e3e;
+  }
+  .callout-tip {
+    background: #f0fff4;
+    border-left-color: #38a169;
+  }
+
+  .table-wrap { overflow-x: auto; margin: 24px 0; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: sans-serif;
+    font-size: 14px;
+  }
+  th {
+    background: #0f3460;
+    color: #fff;
+    padding: 12px 16px;
+    text-align: left;
+    font-weight: 700;
+  }
+  td {
+    padding: 10px 16px;
+    border-bottom: 1px solid #e8e8e8;
+    color: #333;
+  }
+  tr:nth-child(even) td { background: #f8f9fa; }
+  .check { color: #38a169; font-weight: bold; }
+  .cross  { color: #e53e3e; font-weight: bold; }
+
+  .stat-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    margin: 32px 0;
+  }
+  .stat-card {
+    background: linear-gradient(135deg, #0f3460, #1a1a2e);
+    color: #fff;
+    border-radius: 12px;
+    padding: 24px;
+    text-align: center;
+  }
+  .stat-number { font-size: 36px; font-weight: 900; color: #f5b400; font-family: sans-serif; }
+  .stat-label  { font-size: 13px; color: rgba(255,255,255,0.7); font-family: sans-serif; margin-top: 4px; }
+
+  .erreur-box {
+    background: #fff;
+    border: 2px solid #e53e3e;
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin: 20px 0;
+  }
+  .erreur-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #e53e3e;
+    margin-bottom: 8px;
+    font-family: sans-serif;
+  }
+
+  .cta-box {
+    background: linear-gradient(135deg, #f5b400, #e09a00);
+    border-radius: 16px;
+    padding: 40px;
+    text-align: center;
+    margin: 48px 0 0;
+    page-break-inside: avoid;
+  }
+  .cta-box h3 { color: #1a1a2e; font-size: 24px; margin-bottom: 12px; }
+  .cta-box p  { color: rgba(26,26,46,0.8); margin-bottom: 24px; font-size: 16px; }
+  .cta-btn {
+    display: inline-block;
+    background: #1a1a2e;
+    color: #f5b400;
+    font-family: sans-serif;
+    font-weight: 700;
+    font-size: 16px;
+    padding: 14px 36px;
+    border-radius: 8px;
+    text-decoration: none;
+  }
+
+  .section-number {
+    display: inline-block;
+    background: #f5b400;
+    color: #1a1a2e;
+    font-family: sans-serif;
+    font-weight: 900;
+    font-size: 13px;
+    padding: 4px 10px;
+    border-radius: 4px;
+    margin-right: 8px;
+    vertical-align: middle;
+  }
+
+  .toc { background: #f8f9fa; border-radius: 12px; padding: 32px; margin: 48px 0; }
+  .toc h3 { color: #0f3460; margin-top: 0; margin-bottom: 20px; font-size: 18px; }
+  .toc ol { padding-left: 20px; }
+  .toc li {
+    color: #444;
+    margin-bottom: 10px;
+    font-family: sans-serif;
+    font-size: 15px;
+  }
+  .toc li strong { color: #0f3460; }
+
+  .page-break { page-break-before: always; }
+
+  @media print {
+    .cover { page-break-after: always; }
+    h2 { page-break-before: auto; }
+    .cta-box { page-break-inside: avoid; }
+    a { color: inherit; text-decoration: none; }
+    @page { margin: 20mm; }
+  }
+</style>
+</head>
+<body>
+
+<!-- COVER PAGE -->
+<div class="cover">
+  <div class="cover-logo">TaxiAssur</div>
+  <div class="cover-badge">Edition 2026 · Guide Officiel</div>
+  <h1>Guide Complet<br><em>Assurance Taxi</em><br>2026</h1>
+  <div class="cover-subtitle">Tout ce que vous devez savoir pour bien assurer votre taxi, economiser jusqu'a 35% et eviter les pieges.</div>
+  <div class="cover-divider"></div>
+  <div class="cover-promises">
+    <div class="cover-promise"><div class="cover-promise-dot"></div>Les garanties obligatoires et optionnelles expliquees simplement</div>
+    <div class="cover-promise"><div class="cover-promise-dot"></div>Tableau comparatif des 5 assureurs specialistes taxi</div>
+    <div class="cover-promise"><div class="cover-promise-dot"></div>Les 7 erreurs qui font exploser votre prime</div>
+    <div class="cover-promise"><div class="cover-promise-dot"></div>Strategie complete pour negocier votre contrat</div>
+    <div class="cover-promise"><div class="cover-promise-dot"></div>Simulateur d'economie annuelle inclus</div>
+  </div>
+  <div class="cover-meta">TaxiAssur · Courtier ORIAS · taxiassur.com · 2026</div>
+</div>
+
+<!-- TABLE DES MATIERES -->
+<div class="page">
+  <div class="toc">
+    <h3>Table des matieres</h3>
+    <ol>
+      <li><strong>Pourquoi votre assurance taxi est cruciale</strong> — Ce que vous risquez sans la bonne couverture</li>
+      <li><strong>Les garanties obligatoires</strong> — Ce que la loi impose aux chauffeurs de taxi</li>
+      <li><strong>Les garanties recommandees</strong> — Celles qui vous sauvent vraiment en cas de sinistre</li>
+      <li><strong>Les garanties facultatives</strong> — Utiles ou superflues selon votre profil</li>
+      <li><strong>Comparatif des assureurs taxi</strong> — Les 5 acteurs specialistes du marche</li>
+      <li><strong>Les 7 erreurs qui font exploser votre prime</strong> — Comment les eviter</li>
+      <li><strong>Comment negocier votre contrat</strong> — Les arguments qui font baisser la prime</li>
+      <li><strong>Changer d'assurance en cours d'annee</strong> — Vos droits et la procedure</li>
+      <li><strong>Que faire en cas de sinistre</strong> — Les etapes a suivre imperativement</li>
+    </ol>
+  </div>
+
+  <!-- SECTION 1 -->
+  <h2><span class="section-number">01</span>Pourquoi votre assurance taxi est cruciale</h2>
+  <p>En France, un chauffeur de taxi transporte en moyenne <strong>40 passagers par jour</strong>. Chaque trajet representt une responsabilite professionnelle et personnelle considerable. Une assurance inadaptee, c'est une bombe a retardement financiere.</p>
+
+  <div class="stat-row">
+    <div class="stat-card">
+      <div class="stat-number">35%</div>
+      <div class="stat-label">d'economie moyenne avec un courtier</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number">48h</div>
+      <div class="stat-label">delai d'attestation provisoire</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number">15+</div>
+      <div class="stat-label">assureurs compares par TaxiAssur</div>
+    </div>
+  </div>
+
+  <p>Contrairement a un particulier, le chauffeur de taxi exerce une <strong>activite professionnelle de transport</strong>. Cela implique des obligations legales specifiques, une sinistralite plus elevee que la moyenne, et des risques que les assurances auto classiques ne couvrent tout simplement pas.</p>
+
+  <div class="callout">
+    <strong>Attention :</strong> Si vous utilisez votre vehicule professionnel avec une assurance "auto particulier", votre assureur peut refuser de vous indemniser en cas de sinistre survenu pendant une course. Ce refus est legal et systematique.
+  </div>
+
+  <!-- SECTION 2 -->
+  <h2 class="page-break"><span class="section-number">02</span>Les garanties obligatoires</h2>
+  <p>La loi impose un socle minimum de garanties pour tout vehicule utilisé a titre professionnel de transport de personnes.</p>
+
+  <h3>La Responsabilite Civile (RC) vehicule</h3>
+  <p>C'est la garantie de base, obligatoire pour tout vehicule motorise en France. Elle couvre les dommages corporels et materiels causes aux tiers (autres conducteurs, pietons, passagers de votre vehicule). Sans elle, vous etes en infraction penale.</p>
+
+  <h3>La Responsabilite Civile Professionnelle (RC Pro)</h3>
+  <p>Specifique aux taxis, la RC Pro couvre les dommages causes dans le cadre de votre activite professionnelle : un bagage deteriore, une chute d'un passager en descendant du taxi, un incident lors d'une livraison... Elle est <strong>obligatoire pour tous les taxis et VTC</strong> depuis 2014.</p>
+
+  <div class="callout callout-danger">
+    <strong>Risque :</strong> Exercer sans RC Pro vous expose a des poursuites civiles pouvant depasser votre patrimoine. Une blessure grave d'un passager peut engager des condamnations de plusieurs centaines de milliers d'euros.
+  </div>
+
+  <h3>L'assurance des passagers transportes</h3>
+  <p>Elle couvre specifiquement les blessures ou le deces des passagers a bord de votre vehicule. Cette garantie est liee a votre statut de transporteur professionnel et n'est pas incluse dans les contrats auto standards.</p>
+
+  <!-- SECTION 3 -->
+  <h2><span class="section-number">03</span>Les garanties recommandees</h2>
+
+  <h3>La protection du vehicule (tous risques ou vol/incendie)</h3>
+  <p>Votre taxi est votre outil de travail. Sans lui, pas de revenus. Une protection tous risques garantit le remplacement ou la reparation en toutes circonstances, y compris si l'accident est de votre fait.</p>
+
+  <h3>Le vehicule de remplacement professionnel</h3>
+  <p>Garantie souvent neglee et pourtant essentielle : en cas d'immobilisation de votre taxi, un vehicule de remplacement equivalent (7 places si necessaire) vous est fourni sous 24 a 48h. Sans cette garantie, chaque jour d'immobilisation = perte de revenus directe.</p>
+
+  <h3>La protection juridique professionnelle</h3>
+  <p>Elle prend en charge vos frais d'avocat, d'expertise et de procedure judiciaire en cas de litige lié a votre activite. Indispensable face aux contestations clients, conflits avec des assureurs adverses ou litiges liés a des sinistres complexes.</p>
+
+  <div class="callout callout-tip">
+    <strong>Conseil TaxiAssur :</strong> Les garanties "tous risques" sont souvent moins cheres que ce que les chauffeurs imaginent. Pour un taxi de moins de 5 ans, la difference de prime entre "vol/incendie" et "tous risques" est generalement de 150 a 300€/an. Le risque de ne pas etre couvre peut valoir des milliers d'euros.
+  </div>
+
+  <!-- SECTION 4 -->
+  <h2><span class="section-number">04</span>Les garanties facultatives selon votre profil</h2>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Garantie</th>
+          <th>Utile si...</th>
+          <th>A eviter si...</th>
+          <th>Cout moyen</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Bris de glace</td>
+          <td>Vehicule < 3 ans</td>
+          <td>Vehicule > 7 ans</td>
+          <td>80-150€/an</td>
+        </tr>
+        <tr>
+          <td>Assistance 0km</td>
+          <td>Zone urbaine dense</td>
+          <td>Jamais – toujours utile</td>
+          <td>50-100€/an</td>
+        </tr>
+        <tr>
+          <td>Catastrophes naturelles</td>
+          <td>Zone inondable</td>
+          <td>Zone non exposee</td>
+          <td>30-80€/an</td>
+        </tr>
+        <tr>
+          <td>Perte financiere (GAP)</td>
+          <td>Vehicule en LOA/credit</td>
+          <td>Vehicule possede en propre</td>
+          <td>100-200€/an</td>
+        </tr>
+        <tr>
+          <td>Conducteur supplementaire</td>
+          <td>Remplacants reguliers</td>
+          <td>Conducteur unique</td>
+          <td>50-150€/an</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- SECTION 5 -->
+  <h2 class="page-break"><span class="section-number">05</span>Comparatif des principaux assureurs taxi</h2>
+  <p>Le marche de l'assurance taxi en France est domine par quelques acteurs specialistes. Voici une analyse objective basee sur nos experiences avec plus de 1 200 dossiers traites.</p>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Assureur</th>
+          <th>Specialiste taxi</th>
+          <th>Prix</th>
+          <th>Delai attestation</th>
+          <th>Service sinistres</th>
+          <th>Note globale</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Generali Taxi</strong></td>
+          <td class="check">✓ Oui</td>
+          <td>€€€</td>
+          <td>24h</td>
+          <td>⭐⭐⭐⭐⭐</td>
+          <td>4.5/5</td>
+        </tr>
+        <tr>
+          <td><strong>MFA Taxi</strong></td>
+          <td class="check">✓ Oui</td>
+          <td>€€</td>
+          <td>48h</td>
+          <td>⭐⭐⭐⭐</td>
+          <td>4.3/5</td>
+        </tr>
+        <tr>
+          <td><strong>Solly Azar</strong></td>
+          <td class="check">✓ Oui</td>
+          <td>€€</td>
+          <td>24h</td>
+          <td>⭐⭐⭐⭐</td>
+          <td>4.2/5</td>
+        </tr>
+        <tr>
+          <td><strong>Zephir Assurances</strong></td>
+          <td class="check">✓ Oui</td>
+          <td>€</td>
+          <td>72h</td>
+          <td>⭐⭐⭐</td>
+          <td>3.8/5</td>
+        </tr>
+        <tr>
+          <td><strong>AXA Pro</strong></td>
+          <td class="cross">Non</td>
+          <td>€€€€</td>
+          <td>72-96h</td>
+          <td>⭐⭐⭐</td>
+          <td>3.2/5</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <strong>Note :</strong> Ces comparaisons sont indicatives. Votre prime depend de votre profil specifique (zone, annees d'experience, sinistralite, type de vehicule). TaxiAssur consulte plus de 15 assureurs pour trouver la meilleure offre pour votre situation exacte.
+  </div>
+
+  <!-- SECTION 6 -->
+  <h2><span class="section-number">06</span>Les 7 erreurs qui font exploser votre prime</h2>
+
+  <div class="erreur-box">
+    <div class="erreur-title">Erreur #1 — Sous-declarer votre kilometrage annuel</div>
+    <p>Declarer 40 000 km au lieu de 60 000 km peut reduire la prime apparente de 15%. Mais en cas de sinistre, l'assureur peut refuser d'indemniser ou appliquer une regle proportionnelle. Le cout reel peut etre 10x superieur aux economies realisees.</p>
+  </div>
+
+  <div class="erreur-box">
+    <div class="erreur-title">Erreur #2 — Ne pas declarer un sinistre non materiel</div>
+    <p>Beaucoup de chauffeurs ne declarent pas les petits accrochages "regles entre eux". Si l'autre partie declare le sinistre des mois plus tard, votre assureur le decouverta par l'IDA et votre non-declaration devient une faute contractuelle.</p>
+  </div>
+
+  <div class="erreur-box">
+    <div class="erreur-title">Erreur #3 — Renouveler son contrat sans negocier</div>
+    <p>83% des chauffeurs renouvellent leur contrat par tacite reconduction sans comparer. Nos statistiques montrent qu'apres 3 ans de meme contrat, le chauffeur paie en moyenne 28% de trop par rapport au marche.</p>
+  </div>
+
+  <div class="erreur-box">
+    <div class="erreur-title">Erreur #4 — Choisir le prix le plus bas</div>
+    <p>Une prime de 800€ sans garantie de remplacement du vehicule, c'est potentiellement 3 000€ de revenus perdus en cas d'immobilisation de 10 jours. Comparez le cout reel (prime + risques non couverts).</p>
+  </div>
+
+  <div class="erreur-box">
+    <div class="erreur-title">Erreur #5 — Ignorer la protection juridique</div>
+    <p>Un litige avec un client ou un autre conducteur peut couter 5 000 a 15 000€ en frais de justice. La protection juridique professionnelle coute 80 a 150€/an. Le calcul est vite fait.</p>
+  </div>
+
+  <div class="erreur-box">
+    <div class="erreur-title">Erreur #6 — Oublier de mettre a jour son contrat</div>
+    <p>Changement de vehicule, de zone d'exploitation, ajout d'un remplacant... Chaque modification non declaree peut invalider votre contrat. Faites un audit annuel avec votre courtier.</p>
+  </div>
+
+  <div class="erreur-box">
+    <div class="erreur-title">Erreur #7 — Ne pas profiter de l'experience professionnelle</div>
+    <p>Apres 3 ans sans sinistre responsable, votre coefficient bonus/malus descend significativement. Beaucoup de chauffeurs ne savent pas qu'ils peuvent negocier une reduction supplementaire sur cette base.</p>
+  </div>
+
+  <!-- SECTION 7 -->
+  <h2 class="page-break"><span class="section-number">07</span>Comment negocier votre contrat</h2>
+
+  <p>La negociation d'une assurance taxi est un metier. Voici les arguments concrets que vous pouvez utiliser :</p>
+
+  <h3>Arguments qui font baisser la prime</h3>
+  <ul>
+    <li>Votre historique sinistre : plus de 3 ans sans sinistre responsable = reduction potentielle de 10 a 20%</li>
+    <li>Le paiement annuel comptant vs mensuel (economie de 3 a 6% sur la prime)</li>
+    <li>La conduite exclusive (pas de conducteur secondaire) = -5 a -15%</li>
+    <li>L'installation d'un systeme de tracking GPS certifie = -5 a -10%</li>
+    <li>L'appartenance a une association professionnelle de taxis = -5 a -15%</li>
+    <li>La franchise volontaire plus elevee (calculez le seuil de rentabilite)</li>
+  </ul>
+
+  <h3>La strategie de mise en concurrence</h3>
+  <p>Contactez 3 assureurs differents, obtenez des devis formels, puis negociez avec votre assureur actuel en montrant ces devis. En passant par un courtier comme TaxiAssur, cette mise en concurrence est faite automatiquement avec plus de 15 assureurs.</p>
+
+  <div class="callout callout-tip">
+    <strong>Pro tip :</strong> Le meilleur moment pour negocier est 2 a 3 mois avant l'echeance de votre contrat. Apres, vous n'avez plus de levier de negotiation temporelle.
+  </div>
+
+  <!-- SECTION 8 -->
+  <h2><span class="section-number">08</span>Changer d'assurance en cours d'annee</h2>
+
+  <h3>La loi Hamon (depuis 2015)</h3>
+  <p>Depuis la loi Hamon, tout assure peut resilier son contrat auto a tout moment apres la premiere annee d'engagement, sans justification, avec un preavis de 1 mois. Cette loi s'applique pleinement aux assurances taxi.</p>
+
+  <h3>La procedure en 4 etapes</h3>
+  <ul>
+    <li><strong>Etape 1 :</strong> Obtenez votre nouveau contrat avec prise d'effet immediate chez le nouvel assureur</li>
+    <li><strong>Etape 2 :</strong> Le nouvel assureur envoie la lettre de resiliation a votre assureur actuel en votre nom</li>
+    <li><strong>Etape 3 :</strong> Votre ancien assureur dispose de 30 jours pour confirmer la resiliation</li>
+    <li><strong>Etape 4 :</strong> Vous recevez le remboursement prorata de votre prime restante sous 30 jours</li>
+  </ul>
+
+  <p>Chez TaxiAssur, <strong>nous gerons integralement cette procedure</strong> pour vous. Vous n'avez rien a faire.</p>
+
+  <!-- SECTION 9 -->
+  <h2><span class="section-number">09</span>Que faire en cas de sinistre</h2>
+
+  <h3>Les 24 premieres heures</h3>
+  <ul>
+    <li>Remplir un constat amiable, meme si vous etes seul en cause (accident avec seul conducteur)</li>
+    <li>Prendre des photos de la scene, des degats et des documents de l'autre partie</li>
+    <li>Recueillir les coordonnees des temoins eventuels</li>
+    <li>Contacter votre assureur ou courtier dans les 24h pour declarer le sinistre</li>
+  </ul>
+
+  <h3>Les 5 jours suivants</h3>
+  <ul>
+    <li>Envoyer le constat rempli et signe par voie recommandee a votre assureur</li>
+    <li>Demander l'activation de votre vehicule de remplacement si vous en avez la garantie</li>
+    <li>Conserver tous les justificatifs de depenses liees au sinistre</li>
+  </ul>
+
+  <div class="callout callout-danger">
+    <strong>Ne jamais :</strong> Reconnaitre votre responsabilite verbalement, signer un document dans l'urgence, ou accepter un reglement "a l'amiable" sans declarer le sinistre a votre assureur. Ces comportements peuvent invalider vos droits.
+  </div>
+
+  <!-- CTA FINAL -->
+  <div class="cta-box">
+    <h3>Economisez 35% sur votre assurance taxi</h3>
+    <p>Notre equipe de courtiers experts compare plus de 15 assureurs et negocie pour vous la meilleure offre. Reponse sous 15 minutes.</p>
+    <a href="https://taxiassur.com/#devis" class="cta-btn">Obtenir mon devis gratuit →</a>
+  </div>
+</div>
+
+</body>
+</html>

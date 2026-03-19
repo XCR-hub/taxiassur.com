@@ -22,6 +22,7 @@ const TrustBadges = lazy(() => import('../components/TrustBadges'));
 const Newsletter = lazy(() => import('../components/Newsletter'));
 const SubtleConversionHelper = lazy(() => import('../components/SubtleConversionHelper'));
 const UltimateConversion = lazy(() => import('../components/UltimateConversion'));
+const LeadMagnetSection = lazy(() => import('../components/LeadMagnetSection'));
 
 const SectionSkeleton = () => (
   <div className="py-16">
@@ -116,6 +117,12 @@ const Home: React.FC = () => {
           <div className="section-below-fold">
             <Suspense fallback={<SectionSkeleton />}>
               <DynamicReviews />
+            </Suspense>
+          </div>
+
+          <div className="section-below-fold">
+            <Suspense fallback={<SectionSkeleton />}>
+              <LeadMagnetSection sourcePage="homepage" />
             </Suspense>
           </div>
 

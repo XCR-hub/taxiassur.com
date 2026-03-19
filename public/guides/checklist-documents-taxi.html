@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Checklist Documents Assurance Taxi — TaxiAssur</title>
+<meta name="robots" content="noindex, nofollow">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Arial', sans-serif;
+    color: #1a1a2e;
+    background: #fff;
+    line-height: 1.6;
+    font-size: 15px;
+  }
+  .page { max-width: 800px; margin: 0 auto; padding: 40px; }
+
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 32px;
+    padding-bottom: 24px;
+    border-bottom: 3px solid #f5b400;
+  }
+  .header-left h1 { font-size: 28px; color: #0f3460; line-height: 1.2; margin-bottom: 6px; }
+  .header-left p  { color: #666; font-size: 14px; }
+  .header-right {
+    text-align: right;
+  }
+  .header-logo {
+    font-size: 20px;
+    font-weight: 900;
+    color: #f5b400;
+    background: #1a1a2e;
+    padding: 8px 16px;
+    border-radius: 8px;
+    display: inline-block;
+    margin-bottom: 6px;
+  }
+  .header-sub { font-size: 11px; color: #888; }
+
+  .intro {
+    background: #fff8e1;
+    border-left: 4px solid #f5b400;
+    padding: 14px 18px;
+    margin-bottom: 28px;
+    border-radius: 0 8px 8px 0;
+    font-size: 14px;
+    color: #555;
+  }
+  .intro strong { color: #0f3460; }
+
+  .category {
+    margin-bottom: 28px;
+    break-inside: avoid;
+  }
+  .category-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #0f3460;
+    color: #fff;
+    padding: 10px 16px;
+    border-radius: 8px 8px 0 0;
+    font-weight: 700;
+    font-size: 15px;
+  }
+  .category-icon {
+    width: 28px; height: 28px;
+    background: #f5b400;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 900;
+    color: #1a1a2e;
+    flex-shrink: 0;
+  }
+  .category-body {
+    border: 2px solid #0f3460;
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+    overflow: hidden;
+  }
+  .item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 16px;
+    border-bottom: 1px solid #e8e8e8;
+  }
+  .item:last-child { border-bottom: none; }
+  .item:nth-child(even) { background: #f8f9fa; }
+  .checkbox {
+    width: 22px; height: 22px;
+    border: 2px solid #0f3460;
+    border-radius: 4px;
+    flex-shrink: 0;
+    margin-top: 1px;
+    background: #fff;
+    cursor: pointer;
+  }
+  .item-content { flex: 1; }
+  .item-title { font-weight: 700; color: #1a1a2e; font-size: 14px; margin-bottom: 3px; }
+  .item-detail { font-size: 12px; color: #666; line-height: 1.4; }
+  .item-required {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: #fff;
+    background: #e53e3e;
+    padding: 2px 8px;
+    border-radius: 100px;
+    flex-shrink: 0;
+    align-self: center;
+  }
+  .item-optional {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: #fff;
+    background: #718096;
+    padding: 2px 8px;
+    border-radius: 100px;
+    flex-shrink: 0;
+    align-self: center;
+  }
+
+  .tips-box {
+    background: #f0fff4;
+    border: 2px solid #38a169;
+    border-radius: 12px;
+    padding: 20px;
+    margin-top: 28px;
+  }
+  .tips-box h3 { color: #276749; font-size: 15px; margin-bottom: 12px; }
+  .tip { display: flex; gap: 10px; margin-bottom: 8px; font-size: 13px; color: #444; }
+  .tip-dot { color: #38a169; font-size: 18px; line-height: 1; flex-shrink: 0; margin-top: -2px; }
+
+  .footer {
+    margin-top: 32px;
+    padding-top: 20px;
+    border-top: 1px solid #e8e8e8;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .footer-cta {
+    background: #f5b400;
+    color: #1a1a2e;
+    font-weight: 700;
+    font-size: 13px;
+    padding: 10px 20px;
+    border-radius: 8px;
+    text-decoration: none;
+    display: inline-block;
+  }
+  .footer-info { font-size: 12px; color: #888; }
+
+  .progress-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    font-size: 13px;
+    color: #666;
+  }
+  .progress-bar {
+    height: 6px;
+    background: #e8e8e8;
+    border-radius: 3px;
+    margin-bottom: 24px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #f5b400, #e09a00);
+    border-radius: 3px;
+    width: 0%;
+    transition: width 0.3s;
+  }
+
+  @media print {
+    body { font-size: 13px; }
+    .page { padding: 20px; }
+    .footer-cta { border: 2px solid #f5b400; }
+    .checkbox { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    @page { margin: 15mm; size: A4; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="header">
+    <div class="header-left">
+      <h1>Checklist Documents<br>Assurance Taxi</h1>
+      <p>Edition 2026 — Tout ce dont vous avez besoin pour votre dossier</p>
+    </div>
+    <div class="header-right">
+      <div class="header-logo">TaxiAssur</div>
+      <div class="header-sub">Courtier ORIAS · taxiassur.com</div>
+    </div>
+  </div>
+
+  <div class="intro">
+    <strong>Comment utiliser cette checklist :</strong> Cochez chaque document au fur et a mesure que vous le rassemblez. Les documents <span style="background:#e53e3e;color:#fff;padding:1px 6px;border-radius:3px;font-size:11px;font-weight:bold;">OBLIGATOIRE</span> sont indispensables pour etablir votre contrat. Les autres accelerent le traitement de votre dossier.
+  </div>
+
+  <!-- CATEGORY 1: VEHICULE -->
+  <div class="category">
+    <div class="category-header">
+      <div class="category-icon">1</div>
+      Documents du vehicule
+    </div>
+    <div class="category-body">
+      <div class="item">
+        <div class="checkbox" onclick="this.style.background=this.style.background?'':'#f5b400'"></div>
+        <div class="item-content">
+          <div class="item-title">Carte grise (certificat d'immatriculation)</div>
+          <div class="item-detail">Original ou copie certifiee conforme. Doit etre au nom du souscripteur ou de la societe.</div>
+        </div>
+        <span class="item-required">Obligatoire</span>
+      </div>
+      <div class="item">
+        <div class="checkbox" onclick="this.style.background=this.style.background?'':'#f5b400'"></div>
+        <div class="item-content">
+          <div class="item-title">Autorisation de stationnement (medaillon taxi)</div>
+          <div class="item-detail">Licence taxi T3P delivree par la prefecture. Indique votre droit d'exercer.</div>
+        </div>
+        <span class="item-required">Obligatoire</span>
+      </div>
+      <div class="item">
+        <div class="checkbox" onclick="this.style.background=this.style.background?'':'#f5b400'"></div>
+        <div class="item-content">
+          <div class="item-title">Attestation du controle technique</div>
+          <div class="item-detail">Moins de 6 mois (taxis soumis a controle semestriel). Doit etre favorable.</div>
+        </div>
+        <span class="item-required">Obligatoire</span>
+      </div>
+      <div class="item">
+        <div class="checkbox" onclick="this.style.background=this.style.background?'':'#f5b400'"></div>
+        <div class="item-content">
+          <div class="item-title">Facture d'achat ou contrat de LOA/LLD</div>
+          <div class="item-detail">Utile pour calculer la valeur du vehicule et la garantie perte financiere.</div>
+        </div>
+        <span class="item-optional">Recommande</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- CATEGORY 2: CHAUFFEUR -->
+  <div class="category">
+    <div class="category-header">
+      <div class="category-icon">2</div>
+      Documents du chauffeur principal
+    </div>
+    <div class="category-body">
+      <div class="item">
+        <div class="checkbox" onclick="this.style.background=this.style.background?'':'#f5b400'"></div>
+        <div class="item-content">
+          <div class="item-title">Permis de conduire (recto/verso)</div>
+          <div class="item-detail">Permis B valide. Si conduite plus de 3,5T : mention specifique requise.</div>
+        </div>
+        <span class="item-required">Obligatoire</span>
+      </div>
+      <div class="item">
+        <div class="checkbox" onclick="this.style.background=this.style.background?'':'#f5b400'"></div>
+        <div class="item-content">
+          <div class="item-title">Releve d'information (RI) de l'assurance precedente</div>
+          <div class="item-detail">Document officiel de votre ancien assureur recapitulant vos 5 dernieres annees de sinistres et votre coefficient bonus/malus.</div>
+        </div>
+        <span class="item-required">Obligatoire</span>
+      </div>
+      <div class="item">
+        <div class="checkbox" onclick="this.style.background=this.style.background?'':'#f5b400'"></div>
+        <div class="item-content">
+          <div class="item-title">Carte nationale d'identite ou passeport</div>
+          <div class="item-detail">Document d'identite en cours de validite du souscripteur du contrat.</div>
+        </div>
+        <span class="item-required">Obligatoire</span>
+      </div>
+      <div class="item">
+        <div class="checkbox" onclick="this.style.background=this.style.background?'':'#f5b400'"></div>
+        <div class="item-content">
+          <div class="item-title">Carte de conducteur de taxi (agrement prefectoral)</div>
+          <div class="item-detail">Carte professionnelle attestant de votre aptitude a exercer la profession de taxi.</div>
+        </div>
+        <span class="item-required">Obligatoire</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- CATEGORY 3: PROFESSIONNEL -->
+  <div class="category">
+    <div class="category-header">
+      <div class="category-icon">3</div>
+      Documents professionnels / entreprise
+    </div>
+    <div class="category-body">
+      <div class="item">
+        <div class="checkbox" onclick="this.style.background=this.style.background?'':'#f5b400'"></div>
+        <div class="item-content">
+          <div class="item-title">Extrait Kbis ou avis de situation SIRENE</div>
+          <div class="item-detail">Moins de 3 mois. Prouve l'existence legale de votre entreprise (SIREN/SIRET).</div>
+        </div>
+        <span class="item-required">Obligatoire</span>
+      </div>
+      <div class="item">
+        <div class="checkbox" onclick="this.style.background=this.style.background?'':'#f5b400'"></div>
+        <div class="item-content">
+          <div class="item-title">Justificatif de domicile professionnel</div>
+          <div class="item-detail">Facture de moins de 3 mois (electricite, telephone, loyer) a votre adresse professionnelle.</div>
+        </div>
+        <span class="item-required">Obligatoire</span>
+      </div>
+      <div class="item">
+        <div class="checkbox" onclick="this.style.background=this.style.background?'':'#f5b400'"></div>
+        <div class="item-content">
+          <div class="item-title">Releve de kilométrage annuel estime</div>
+          <div class="item-detail">Estimation de vos km professionnels annuels. Impact direct sur votre prime.</div>
+        </div>
+        <span class="item-optional">Recommande</span>
+      </div>
+      <div class="item">
+        <div class="checkbox" onclick="this.style.background=this.style.background?'':'#f5b400'"></div>
+        <div class="item-content">
+          <div class="item-title">Attestation d'assurance precedente (echeancier)</div>
+          <div class="item-detail">Pour prouver votre historique de couverture et eviter la majoration "premiere assurance".</div>
+        </div>
+        <span class="item-optional">Recommande</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- CATEGORY 4: CONDUCTEURS SECONDAIRES -->
+  <div class="category">
+    <div class="category-header">
+      <div class="category-icon">4</div>
+      Documents conducteurs secondaires (si applicable)
+    </div>
+    <div class="category-body">
+      <div class="item">
+        <div class="checkbox" onclick="this.style.background=this.style.background?'':'#f5b400'"></div>
+        <div class="item-content">
+          <div class="item-title">Permis de conduire de chaque conducteur secondaire</div>
+          <div class="item-detail">Memes exigences que le conducteur principal. A fournir pour chaque remplacant declare.</div>
+        </div>
+        <span class="item-optional">Si applicable</span>
+      </div>
+      <div class="item">
+        <div class="checkbox" onclick="this.style.background=this.style.background?'':'#f5b400'"></div>
+        <div class="item-content">
+          <div class="item-title">Releve d'information de chaque conducteur secondaire</div>
+          <div class="item-detail">Leur bonus/malus peut influencer la prime globale de votre contrat.</div>
+        </div>
+        <span class="item-optional">Si applicable</span>
+      </div>
+      <div class="item">
+        <div class="checkbox" onclick="this.style.background=this.style.background?'':'#f5b400'"></div>
+        <div class="item-content">
+          <div class="item-title">Carte professionnelle de chaque conducteur secondaire</div>
+          <div class="item-detail">Tous les conducteurs doivent avoir leur propre agrement prefectoral.</div>
+        </div>
+        <span class="item-optional">Si applicable</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="tips-box">
+    <h3>Conseils pour aller plus vite</h3>
+    <div class="tip"><span class="tip-dot">✓</span> Scannez tous vos documents en PDF et creez un dossier "Assurance Taxi" dans votre cloud (Drive, Dropbox). Ca prend 20 minutes et vous fait gagner des heures chaque annee.</div>
+    <div class="tip"><span class="tip-dot">✓</span> Le releve d'information peut etre demande gratuitement a votre assureur actuel par email. Delai : 48h maximum (obligation legale).</div>
+    <div class="tip"><span class="tip-dot">✓</span> Si votre permis est en mauvais etat, demandez un duplicata a la prefecture avant de constituer votre dossier. Un permis illisible peut bloquer votre souscription.</div>
+    <div class="tip"><span class="tip-dot">✓</span> Chez TaxiAssur, nous pouvons vous fournir une attestation provisoire en 15 minutes une fois votre dossier complet.</div>
+  </div>
+
+  <div class="footer">
+    <div class="footer-info">
+      <strong>TaxiAssur</strong> · Courtier d'assurance ORIAS N°XXXXX<br>
+      taxiassur.com · 01 XX XX XX XX
+    </div>
+    <a href="https://taxiassur.com/#devis" class="footer-cta">Devis gratuit en 2 min →</a>
+  </div>
+
+</div>
+</body>
+</html>
