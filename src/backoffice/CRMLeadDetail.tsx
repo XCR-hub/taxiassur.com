@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Mail, Phone, AlertCircle, Link2, Copy, CheckCircle, User } from 'lucide-react';
+import { ArrowLeft, Mail, Phone, AlertCircle, Copy, CheckCircle, User, Building2, MapPin, Car, FileText, Calculator, ClipboardCheck, MessageSquare, Star, TrendingUp } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
 import { useRealtimeDocuments } from '@/hooks/useRealtimeDocuments';
@@ -378,112 +378,175 @@ const CRMLeadDetail: React.FC = () => {
     );
   }
 
-  const statusColors: Record<string, string> = {
-    'nouveau_lead': 'bg-blue-100 text-blue-800',
-    'en_cours_de_traitement': 'bg-yellow-100 text-yellow-800',
-    'documents_en_attente': 'bg-orange-100 text-orange-800',
-    'pret_pour_devis': 'bg-purple-100 text-purple-800',
-    'devis_envoye': 'bg-indigo-100 text-indigo-800',
-    'acompte_requis': 'bg-pink-100 text-pink-800',
-    'contrat_en_cours': 'bg-cyan-100 text-cyan-800',
-    'won': 'bg-green-100 text-green-800',
-    'lost': 'bg-red-100 text-red-800',
+  const STATUS_LABEL: Record<string, { label: string; color: string; bg: string; border: string }> = {
+    'NOUVEAU_LEAD':          { label: 'Nouveau Lead',        color: '#b45309', bg: 'rgba(245,158,11,0.12)',  border: 'rgba(245,158,11,0.35)' },
+    'COLLECTE_DOCUMENTS':    { label: 'Collecte Docs',       color: '#c2410c', bg: 'rgba(251,146,60,0.12)', border: 'rgba(251,146,60,0.35)' },
+    'DEVIS':                 { label: 'Devis',               color: '#0369a1', bg: 'rgba(56,189,248,0.12)', border: 'rgba(56,189,248,0.35)' },
+    'DECISION_CLIENT':       { label: 'Décision Client',     color: '#7c3aed', bg: 'rgba(167,139,250,0.12)', border: 'rgba(167,139,250,0.35)' },
+    'PAIEMENT':              { label: 'Paiement',            color: '#047857', bg: 'rgba(52,211,153,0.12)', border: 'rgba(52,211,153,0.35)' },
+    'CONTRAT_SIGNATURE':     { label: 'Contrat & Signature', color: '#1d4ed8', bg: 'rgba(96,165,250,0.12)', border: 'rgba(96,165,250,0.35)' },
+    'CLIENT_ACTIF':          { label: 'Client Actif',        color: '#15803d', bg: 'rgba(74,222,128,0.12)', border: 'rgba(74,222,128,0.35)' },
+    'RELANCE':               { label: 'Relance',             color: '#c2410c', bg: 'rgba(249,115,22,0.12)', border: 'rgba(249,115,22,0.35)' },
+    'PERDU':                 { label: 'Perdu',               color: '#6b7280', bg: 'rgba(107,114,128,0.12)', border: 'rgba(107,114,128,0.35)' },
+    'RECONTACT_PROGRAMME':   { label: 'Recontact Programmé', color: '#b45309', bg: 'rgba(251,191,36,0.12)', border: 'rgba(251,191,36,0.35)' },
   };
 
+  const statusInfo = STATUS_LABEL[lead.status?.toUpperCase?.()] || { label: lead.status?.replace(/_/g, ' ').toUpperCase() || '?', color: '#6b7280', bg: 'rgba(107,114,128,0.12)', border: 'rgba(107,114,128,0.35)' };
+  const leadName = `${lead.first_name || ''} ${lead.last_name || ''}`.trim() || 'Lead sans nom';
+  const initials = lead.first_name ? `${lead.first_name[0]}${lead.last_name ? lead.last_name[0] : ''}` : '?';
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#f0f2f5]">
       {/* Toast notifications */}
       <DocumentToastContainer toasts={toasts} onRemove={removeToast} />
 
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <button
-            onClick={() => navigate('/backoffice/crm-killer/pipeline')}
-            className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4"
-          >
-            <ArrowLeft className="h-5 w-5" />
-            Retour au pipeline
-          </button>
+      {/* Dark taxi header */}
+      <div className="bg-[#111318] shadow-lg border-b border-black/20">
+        <div className="max-w-7xl mx-auto px-6">
 
-          <div className="flex items-start justify-between">
-            <div className="flex-1">
-              <h1 className="text-2xl font-bold text-gray-900 mb-2">
-                {lead.first_name || lead.last_name
-                  ? `${lead.first_name || ''} ${lead.last_name || ''}`.trim()
-                  : 'Lead sans nom'}
-              </h1>
-              <div className="flex items-center gap-4 text-sm text-gray-600 mb-3">
+          {/* Top bar: back + status */}
+          <div className="flex items-center justify-between pt-3 pb-2 border-b border-white/[0.06]">
+            <button
+              onClick={() => navigate('/backoffice/crm-killer/pipeline')}
+              className="flex items-center gap-1.5 text-gray-400 hover:text-white text-sm transition-colors group"
+            >
+              <ArrowLeft className="h-4 w-4 group-hover:-translate-x-0.5 transition-transform" />
+              Retour au pipeline
+            </button>
+            <span
+              className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider"
+              style={{ color: statusInfo.color, background: statusInfo.bg, border: `1px solid ${statusInfo.border}` }}
+            >
+              {statusInfo.label}
+            </span>
+          </div>
+
+          {/* Main header row */}
+          <div className="flex items-start gap-4 py-4">
+            {/* Avatar */}
+            <div
+              className="w-12 h-12 rounded-xl flex items-center justify-center text-base font-bold shrink-0 shadow-md"
+              style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)', color: '#000' }}
+            >
+              {initials.toUpperCase()}
+            </div>
+
+            {/* Name + info */}
+            <div className="flex-1 min-w-0">
+              <h1 className="text-xl font-bold text-white leading-tight mb-1.5">{leadName}</h1>
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-400">
                 {lead.email && (
-                  <div className="flex items-center gap-1">
-                    <Mail className="h-4 w-4" />
+                  <a href={`mailto:${lead.email}`} className="flex items-center gap-1.5 hover:text-yellow-400 transition-colors">
+                    <Mail className="h-3.5 w-3.5" />
                     {lead.email}
-                  </div>
+                  </a>
                 )}
                 {lead.phone && (
-                  <div className="flex items-center gap-1">
-                    <Phone className="h-4 w-4" />
+                  <a href={`tel:${lead.phone}`} className="flex items-center gap-1.5 hover:text-yellow-400 transition-colors">
+                    <Phone className="h-3.5 w-3.5" />
                     {lead.phone}
-                  </div>
+                  </a>
                 )}
-                <div className="flex items-center gap-1.5">
-                  <User className="h-4 w-4 text-gray-400" />
+                {lead.city && (
+                  <span className="flex items-center gap-1.5">
+                    <MapPin className="h-3.5 w-3.5" />
+                    {lead.city}
+                  </span>
+                )}
+                {lead.company_name && (
+                  <span className="flex items-center gap-1.5">
+                    <Building2 className="h-3.5 w-3.5" />
+                    {lead.company_name}
+                  </span>
+                )}
+                {lead.vehicle_type && (
+                  <span className="flex items-center gap-1.5">
+                    <Car className="h-3.5 w-3.5" />
+                    {lead.vehicle_type}
+                  </span>
+                )}
+                <span className="flex items-center gap-1.5">
+                  <User className="h-3.5 w-3.5" />
                   {assigneeName ? (
-                    <span className="text-sm font-medium text-gray-700">{assigneeName}</span>
+                    <span className="text-gray-300">{assigneeName}</span>
                   ) : (
-                    <span className="text-sm text-gray-400 italic">Non attribue</span>
+                    <span className="italic text-gray-500">Non attribué</span>
                   )}
-                </div>
-              </div>
-
-              {/* Boutons d'accès espace prospect */}
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={copyProspectSpaceLink}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                    linkCopied
-                      ? 'bg-green-100 text-green-700 border-2 border-green-300'
-                      : 'bg-blue-50 text-blue-700 border-2 border-blue-200 hover:bg-blue-100'
-                  }`}
-                  title="Copier le lien d'accès à l'espace prospect"
-                >
-                  {linkCopied ? (
-                    <>
-                      <CheckCircle className="h-4 w-4" />
-                      Lien copié !
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="h-4 w-4" />
-                      Copier lien espace prospect
-                    </>
-                  )}
-                </button>
-
-                <button
-                  onClick={sendProspectSpaceEmail}
-                  className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-yellow-500 to-yellow-600 text-black rounded-lg text-sm font-medium hover:from-yellow-600 hover:to-yellow-700 transition-all"
-                  title="Envoyer l'accès espace prospect par email"
-                >
-                  <Mail className="h-4 w-4" />
-                  Envoyer accès espace prospect
-                </button>
-
-                <LeadDeleteSecure
-                  leadId={lead.id}
-                  leadName={`${lead.first_name || ''} ${lead.last_name || ''}`.trim() || 'Sans nom'}
-                  leadEmail={lead.email}
-                />
+                </span>
               </div>
             </div>
-            <div>
-              <span
-                className={`px-3 py-1 rounded-full text-sm font-medium ${
-                  statusColors[lead.status] || 'bg-gray-100 text-gray-800'
+
+            {/* Action buttons */}
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                onClick={copyProspectSpaceLink}
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all border ${
+                  linkCopied
+                    ? 'bg-green-500/15 text-green-400 border-green-500/40'
+                    : 'bg-white/[0.06] text-gray-300 border-white/[0.12] hover:bg-white/[0.1] hover:text-white'
                 }`}
+                title="Copier le lien d'accès à l'espace prospect"
               >
-                {lead.status?.replace(/_/g, ' ').toUpperCase()}
+                {linkCopied ? <CheckCircle className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                {linkCopied ? 'Copié !' : 'Lien prospect'}
+              </button>
+
+              <button
+                onClick={sendProspectSpaceEmail}
+                className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-yellow-500 to-amber-500 text-black rounded-lg text-sm font-bold hover:from-yellow-400 hover:to-amber-400 transition-all shadow-sm shadow-yellow-900/30"
+                title="Envoyer l'accès espace prospect par email"
+              >
+                <Mail className="h-4 w-4" />
+                Envoyer accès
+              </button>
+
+              <LeadDeleteSecure
+                leadId={lead.id}
+                leadName={leadName}
+                leadEmail={lead.email}
+              />
+            </div>
+          </div>
+
+          {/* Quick stats strip */}
+          <div className="flex items-center gap-1 pb-3">
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/[0.05] border border-white/[0.08]">
+              <FileText className="h-3.5 w-3.5 text-amber-400" />
+              <span className="text-xs text-gray-400">Docs</span>
+              <span className={`text-xs font-bold ${stats.documentsComplete ? 'text-green-400' : stats.documentsMissing > 0 ? 'text-amber-400' : 'text-gray-500'}`}>
+                {stats.documentsComplete ? '✓ Complets' : stats.documentsMissing > 0 ? `${stats.documentsMissing} manquants` : 'En attente'}
               </span>
+            </div>
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/[0.05] border border-white/[0.08]">
+              <Calculator className="h-3.5 w-3.5 text-sky-400" />
+              <span className="text-xs text-gray-400">Devis</span>
+              <span className={`text-xs font-bold ${stats.quotesCount > 0 ? 'text-sky-400' : 'text-gray-500'}`}>
+                {stats.quotesCount > 0 ? stats.quotesCount : '0'}
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/[0.05] border border-white/[0.08]">
+              <ClipboardCheck className="h-3.5 w-3.5 text-emerald-400" />
+              <span className="text-xs text-gray-400">Contrat</span>
+              <span className={`text-xs font-bold ${stats.hasContract ? 'text-emerald-400' : 'text-gray-500'}`}>
+                {stats.hasContract ? '✓ Signé' : 'En attente'}
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/[0.05] border border-white/[0.08]">
+              <MessageSquare className="h-3.5 w-3.5 text-violet-400" />
+              <span className="text-xs text-gray-400">Interactions</span>
+              <span className="text-xs font-bold text-violet-400">{stats.totalInteractions}</span>
+            </div>
+            {lead.lead_score !== undefined && lead.lead_score !== null && (
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/[0.05] border border-white/[0.08]">
+                <Star className="h-3.5 w-3.5 text-yellow-400" />
+                <span className="text-xs text-gray-400">Score</span>
+                <span className={`text-xs font-bold ${lead.lead_score >= 70 ? 'text-green-400' : lead.lead_score >= 40 ? 'text-yellow-400' : 'text-red-400'}`}>
+                  {lead.lead_score}%
+                </span>
+              </div>
+            )}
+            <div className="ml-auto text-xs text-gray-600">
+              Créé le {new Date(lead.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })}
             </div>
           </div>
         </div>

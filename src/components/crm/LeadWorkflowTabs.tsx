@@ -78,9 +78,9 @@ export const LeadWorkflowTabs: React.FC<LeadWorkflowTabsProps> = ({
   ];
 
   return (
-    <div className="bg-white border-b border-gray-200">
+    <div className="bg-white border-b border-gray-200 shadow-sm">
       <div className="max-w-7xl mx-auto px-6">
-        <nav className="flex gap-1 overflow-x-auto" aria-label="Workflow tabs">
+        <nav className="flex gap-0.5 overflow-x-auto" aria-label="Workflow tabs">
           {tabs.map((tab) => {
             const isActive = activeTab === tab.id;
 
@@ -88,32 +88,35 @@ export const LeadWorkflowTabs: React.FC<LeadWorkflowTabsProps> = ({
               <button
                 key={tab.id}
                 onClick={() => onTabChange(tab.id)}
-                className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-all whitespace-nowrap ${
+                className={`relative flex items-center gap-2 px-4 py-3.5 text-sm font-medium transition-all whitespace-nowrap group ${
                   isActive
-                    ? 'border-blue-600 text-blue-600 bg-blue-50/50'
-                    : 'border-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                    ? 'text-gray-900'
+                    : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50/70'
                 }`}
               >
-                <span className={isActive ? 'text-blue-600' : 'text-gray-400'}>
+                {isActive && (
+                  <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-yellow-500 to-amber-400 rounded-t" />
+                )}
+                <span className={`transition-colors ${isActive ? 'text-amber-600' : 'text-gray-400 group-hover:text-gray-600'}`}>
                   {tab.icon}
                 </span>
                 <span>{tab.label}</span>
 
                 {tab.status === 'complete' && (
-                  <CheckCircle className="w-4 h-4 text-green-500" />
+                  <CheckCircle className="w-3.5 h-3.5 text-green-500" />
                 )}
 
                 {tab.status === 'warning' && (
-                  <AlertCircle className="w-4 h-4 text-orange-500" />
+                  <AlertCircle className="w-3.5 h-3.5 text-orange-500" />
                 )}
 
                 {tab.badge !== undefined && tab.badge > 0 && (
-                  <span className={`px-2 py-0.5 text-xs rounded-full font-semibold ${
+                  <span className={`px-1.5 py-0.5 text-[10px] rounded-full font-bold ${
                     tab.status === 'warning'
                       ? 'bg-orange-100 text-orange-700'
                       : tab.status === 'complete'
                       ? 'bg-green-100 text-green-700'
-                      : 'bg-blue-100 text-blue-700'
+                      : 'bg-amber-100 text-amber-700'
                   }`}>
                     {tab.badge}
                   </span>

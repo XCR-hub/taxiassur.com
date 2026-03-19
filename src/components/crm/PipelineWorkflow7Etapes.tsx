@@ -175,26 +175,48 @@ export default function PipelineWorkflow7Etapes({ leadId, leadData }: PipelineWo
   const previousStage = getPreviousStage();
   const nextStage = getNextStage();
 
+  const progressPct = ((currentStepNumber - 1) / (PIPELINE_STEPS.length - 1)) * 100;
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Progress Steps */}
-      <div className="bg-black rounded-xl shadow-lg border border-gray-800 p-6">
-        <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
-          <span className="w-2 h-6 bg-gradient-to-b from-yellow-500 to-yellow-600 rounded-full inline-block"></span>
-          Pipeline Commercial - 7 Étapes
-        </h2>
+      <div
+        className="rounded-2xl shadow-xl border border-black/20 p-6 overflow-hidden"
+        style={{ background: 'linear-gradient(145deg, #0f1117 0%, #161b22 50%, #0f1117 100%)' }}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-base font-bold text-white flex items-center gap-2.5">
+            <span className="w-1.5 h-5 bg-gradient-to-b from-yellow-400 to-yellow-600 rounded-full inline-block"></span>
+            Pipeline Commercial
+            <span className="text-yellow-400/70 font-normal text-sm">— 7 Étapes</span>
+          </h2>
+          <div className="flex items-center gap-2 text-xs">
+            <span className="text-gray-500">Progression</span>
+            <div className="w-24 h-1.5 bg-gray-800 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-yellow-500 to-amber-400 rounded-full transition-all duration-700"
+                style={{ width: `${progressPct}%` }}
+              />
+            </div>
+            <span className="text-yellow-400 font-bold">{Math.round(progressPct)}%</span>
+          </div>
+        </div>
 
         <div className="relative">
-          {/* Progress Line */}
-          <div className="absolute top-6 left-0 right-0 h-1 bg-gray-800">
-            <div
-              className="h-full bg-gradient-to-r from-yellow-600 to-yellow-400 transition-all duration-500"
-              style={{ width: `${((currentStepNumber - 1) / (PIPELINE_STEPS.length - 1)) * 100}%` }}
-            />
-          </div>
+          {/* Background track line */}
+          <div className="absolute top-[22px] left-[20px] right-[20px] h-0.5 bg-gray-800/80" />
+          {/* Progress fill */}
+          <div
+            className="absolute top-[22px] left-[20px] h-0.5 bg-gradient-to-r from-yellow-500 via-amber-400 to-yellow-400 transition-all duration-700 shadow-sm"
+            style={{
+              width: `calc(${progressPct}% * (100% - 40px) / 100)`,
+              boxShadow: '0 0 8px rgba(245,158,11,0.5)'
+            }}
+          />
 
           {/* Steps */}
-          <div className="relative grid grid-cols-7 gap-2">
+          <div className="relative grid grid-cols-7 gap-1">
             {PIPELINE_STEPS.map((step) => {
               const isActive = step.key === currentStage;
               const isCompleted = step.number < currentStepNumber;
@@ -204,33 +226,32 @@ export default function PipelineWorkflow7Etapes({ leadId, leadData }: PipelineWo
                   key={step.key}
                   onClick={() => moveToStage(step.key)}
                   disabled={loading}
-                  className="flex flex-col items-center group disabled:cursor-not-allowed hover:scale-105 transition-transform"
+                  className="flex flex-col items-center group disabled:cursor-not-allowed transition-all duration-200"
                   title={`Aller à l'étape ${step.number}: ${step.title}`}
                 >
                   <div
-                    className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg mb-2 transition-all shadow-md ${
+                    className={`w-11 h-11 rounded-full flex items-center justify-center font-bold text-sm mb-2 transition-all duration-200 shadow-md group-hover:scale-110 ${
                       isCompleted
-                        ? 'bg-green-500 text-white group-hover:bg-green-400'
+                        ? 'bg-gradient-to-br from-green-500 to-emerald-600 text-white shadow-green-900/40'
                         : isActive
-                        ? 'bg-gradient-to-br from-yellow-500 to-yellow-600 text-black ring-4 ring-yellow-500/30 shadow-yellow-500/20'
-                        : 'bg-gray-800 text-gray-500 border border-gray-700 group-hover:bg-gray-700 group-hover:text-gray-300'
+                        ? 'bg-gradient-to-br from-yellow-400 to-amber-500 text-black ring-4 ring-yellow-500/30 shadow-yellow-900/50 scale-110'
+                        : 'bg-gray-800/80 text-gray-500 border border-gray-700/80 group-hover:bg-gray-700 group-hover:text-gray-300 group-hover:border-gray-500'
                     }`}
                   >
                     {isCompleted ? (
-                      <CheckCircle2 className="h-6 w-6" />
+                      <CheckCircle2 className="h-5 w-5" />
                     ) : (
                       <span>{step.number}</span>
                     )}
                   </div>
-                  <div className="text-center">
+                  <div className="text-center px-0.5">
                     <p
-                      className={`text-xs font-semibold mb-1 ${
-                        isActive ? 'text-yellow-400' : isCompleted ? 'text-green-400' : 'text-gray-500'
+                      className={`text-[10px] font-semibold leading-tight ${
+                        isActive ? 'text-yellow-400' : isCompleted ? 'text-green-400' : 'text-gray-600 group-hover:text-gray-400'
                       }`}
                     >
                       {step.title}
                     </p>
-                    <p className="text-xs text-gray-600 hidden xl:block">{step.description}</p>
                   </div>
                 </button>
               );
@@ -240,11 +261,26 @@ export default function PipelineWorkflow7Etapes({ leadId, leadData }: PipelineWo
       </div>
 
       {/* Current Step Content */}
-      <div key={currentStage} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-            <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-gradient-to-br from-yellow-500 to-yellow-600 text-black text-sm font-bold">{currentStepNumber}</span>
+      <div
+        key={currentStage}
+        className="bg-white rounded-xl shadow-sm border-l-4 p-6"
+        style={{
+          borderLeftColor: '#f59e0b',
+          borderTopColor: '#e5e7eb',
+          borderRightColor: '#e5e7eb',
+          borderBottomColor: '#e5e7eb',
+          borderTopWidth: '1px',
+          borderRightWidth: '1px',
+          borderBottomWidth: '1px',
+        }}
+      >
+        <div className="flex items-center justify-between mb-5">
+          <h3 className="text-base font-bold text-gray-900 flex items-center gap-2.5">
+            <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-gradient-to-br from-yellow-500 to-amber-500 text-black text-sm font-bold shadow-sm">{currentStepNumber}</span>
             {PIPELINE_STEPS.find(s => s.key === currentStage)?.title}
+            <span className="text-xs font-normal text-gray-400 ml-1">
+              {PIPELINE_STEPS.find(s => s.key === currentStage)?.description}
+            </span>
           </h3>
           {loading && <Loader2 className="h-5 w-5 animate-spin text-yellow-500" />}
         </div>
@@ -269,7 +305,7 @@ export default function PipelineWorkflow7Etapes({ leadId, leadData }: PipelineWo
                 <button
                   onClick={() => moveToStage(nextStage)}
                   disabled={loading}
-                  className="flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-semibold disabled:opacity-50 transition-colors"
+                  className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-yellow-500 to-amber-500 text-black rounded-lg hover:from-yellow-400 hover:to-amber-400 font-bold disabled:opacity-50 transition-all shadow-sm text-sm"
                 >
                   Étape Suivante
                   <ChevronRight className="h-5 w-5" />
@@ -298,7 +334,7 @@ export default function PipelineWorkflow7Etapes({ leadId, leadData }: PipelineWo
                 <button
                   onClick={() => moveToStage(previousStage)}
                   disabled={loading}
-                  className="flex items-center gap-2 px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 font-semibold disabled:opacity-50 transition-colors"
+                  className="flex items-center gap-2 px-5 py-2.5 bg-gray-100 text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-200 font-semibold disabled:opacity-50 transition-all text-sm"
                 >
                   <ChevronLeft className="h-5 w-5" />
                   Étape Précédente
@@ -309,7 +345,7 @@ export default function PipelineWorkflow7Etapes({ leadId, leadData }: PipelineWo
                 <button
                   onClick={() => moveToStage(nextStage)}
                   disabled={loading}
-                  className="flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-semibold disabled:opacity-50 transition-colors ml-auto"
+                  className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-yellow-500 to-amber-500 text-black rounded-lg hover:from-yellow-400 hover:to-amber-400 font-bold disabled:opacity-50 transition-all shadow-sm ml-auto text-sm"
                 >
                   Étape Suivante
                   <ChevronRight className="h-5 w-5" />
@@ -337,7 +373,7 @@ export default function PipelineWorkflow7Etapes({ leadId, leadData }: PipelineWo
                 <button
                   onClick={() => moveToStage(previousStage)}
                   disabled={loading}
-                  className="flex items-center gap-2 px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 font-semibold disabled:opacity-50 transition-colors"
+                  className="flex items-center gap-2 px-5 py-2.5 bg-gray-100 text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-200 font-semibold disabled:opacity-50 transition-all text-sm"
                 >
                   <ChevronLeft className="h-5 w-5" />
                   Étape Précédente
@@ -348,7 +384,7 @@ export default function PipelineWorkflow7Etapes({ leadId, leadData }: PipelineWo
                 <button
                   onClick={() => moveToStage(nextStage)}
                   disabled={loading}
-                  className="flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-semibold disabled:opacity-50 transition-colors ml-auto"
+                  className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-yellow-500 to-amber-500 text-black rounded-lg hover:from-yellow-400 hover:to-amber-400 font-bold disabled:opacity-50 transition-all shadow-sm ml-auto text-sm"
                 >
                   Étape Suivante
                   <ChevronRight className="h-5 w-5" />
@@ -384,7 +420,7 @@ export default function PipelineWorkflow7Etapes({ leadId, leadData }: PipelineWo
                 <button
                   onClick={() => moveToStage(previousStage)}
                   disabled={loading}
-                  className="flex items-center gap-2 px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 font-semibold disabled:opacity-50 transition-colors"
+                  className="flex items-center gap-2 px-5 py-2.5 bg-gray-100 text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-200 font-semibold disabled:opacity-50 transition-all text-sm"
                 >
                   <ChevronLeft className="h-5 w-5" />
                   Étape Précédente
@@ -395,7 +431,7 @@ export default function PipelineWorkflow7Etapes({ leadId, leadData }: PipelineWo
                 <button
                   onClick={() => moveToStage(nextStage)}
                   disabled={loading}
-                  className="flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-semibold disabled:opacity-50 transition-colors ml-auto"
+                  className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-yellow-500 to-amber-500 text-black rounded-lg hover:from-yellow-400 hover:to-amber-400 font-bold disabled:opacity-50 transition-all shadow-sm ml-auto text-sm"
                 >
                   Étape Suivante
                   <ChevronRight className="h-5 w-5" />
@@ -423,7 +459,7 @@ export default function PipelineWorkflow7Etapes({ leadId, leadData }: PipelineWo
                 <button
                   onClick={() => moveToStage(previousStage)}
                   disabled={loading}
-                  className="flex items-center gap-2 px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 font-semibold disabled:opacity-50 transition-colors"
+                  className="flex items-center gap-2 px-5 py-2.5 bg-gray-100 text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-200 font-semibold disabled:opacity-50 transition-all text-sm"
                 >
                   <ChevronLeft className="h-5 w-5" />
                   Étape Précédente
@@ -434,7 +470,7 @@ export default function PipelineWorkflow7Etapes({ leadId, leadData }: PipelineWo
                 <button
                   onClick={() => moveToStage(nextStage)}
                   disabled={loading}
-                  className="flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-semibold disabled:opacity-50 transition-colors ml-auto"
+                  className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-yellow-500 to-amber-500 text-black rounded-lg hover:from-yellow-400 hover:to-amber-400 font-bold disabled:opacity-50 transition-all shadow-sm ml-auto text-sm"
                 >
                   Étape Suivante
                   <ChevronRight className="h-5 w-5" />
@@ -459,7 +495,7 @@ export default function PipelineWorkflow7Etapes({ leadId, leadData }: PipelineWo
                 <button
                   onClick={() => moveToStage(previousStage)}
                   disabled={loading}
-                  className="flex items-center gap-2 px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 font-semibold disabled:opacity-50 transition-colors"
+                  className="flex items-center gap-2 px-5 py-2.5 bg-gray-100 text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-200 font-semibold disabled:opacity-50 transition-all text-sm"
                 >
                   <ChevronLeft className="h-5 w-5" />
                   Étape Précédente
@@ -470,7 +506,7 @@ export default function PipelineWorkflow7Etapes({ leadId, leadData }: PipelineWo
                 <button
                   onClick={() => moveToStage(nextStage)}
                   disabled={loading}
-                  className="flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-semibold disabled:opacity-50 transition-colors ml-auto"
+                  className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-yellow-500 to-amber-500 text-black rounded-lg hover:from-yellow-400 hover:to-amber-400 font-bold disabled:opacity-50 transition-all shadow-sm ml-auto text-sm"
                 >
                   Étape Suivante
                   <ChevronRight className="h-5 w-5" />
