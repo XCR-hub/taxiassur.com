@@ -186,6 +186,48 @@ function buildInvitationEmail(fullName: string, invitationLink: string, role: st
                       </tr>
                     </table>
 
+                    <!-- ONBOARDING BLOCK -->
+                    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
+                      <tr>
+                        <td style="background-color:#F8FAFC;border:1px solid #E2E8F0;border-radius:12px;padding:24px 24px 20px;">
+                          <table width="100%" cellpadding="0" cellspacing="0">
+                            <tr>
+                              <td style="vertical-align:middle;padding-bottom:12px;">
+                                <table cellpadding="0" cellspacing="0">
+                                  <tr>
+                                    <td style="width:36px;height:36px;background-color:#0F172A;border-radius:8px;text-align:center;vertical-align:middle;">
+                                      <span style="font-size:18px;line-height:36px;display:block;">&#128218;</span>
+                                    </td>
+                                    <td style="padding-left:12px;vertical-align:middle;">
+                                      <p style="margin:0;font-size:14px;font-weight:800;color:#0F172A;line-height:1.2;">Guide de bienvenue</p>
+                                      <p style="margin:2px 0 0 0;font-size:12px;color:#64748B;">Prenez connaissance de votre poste avant votre premiere connexion</p>
+                                    </td>
+                                  </tr>
+                                </table>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td>
+                                <p style="margin:0 0 16px 0;font-size:13px;color:#475569;line-height:1.6;">
+                                  Nous avons prepare une presentation complete de votre role, de nos outils, et de nos processus internes. Consultez-la avant votre premiere connexion pour demarrer dans les meilleures conditions.
+                                </p>
+                                <table cellpadding="0" cellspacing="0">
+                                  <tr>
+                                    <td>
+                                      <a href="https://taxiassur.com/onboarding-commercial.html"
+                                         style="display:inline-block;background-color:#0F172A;color:#FFFFFF;text-decoration:none;padding:11px 24px;border-radius:8px;font-size:13px;font-weight:700;letter-spacing:-0.2px;">
+                                        Lire le guide d'onboarding &rarr;
+                                      </a>
+                                    </td>
+                                  </tr>
+                                </table>
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                    </table>
+
                     <!-- SECURITY NOTE -->
                     <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:32px;">
                       <tr>
