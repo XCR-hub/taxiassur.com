@@ -4,7 +4,7 @@ import {
   Clock, Activity, Target, Mail, Briefcase, Search as SearchIcon,
   AlertTriangle, Gift, Smile, MessageSquare, ChevronRight,
   Play, RefreshCw, Filter, Zap, Shield, BarChart2, Users,
-  FlaskConical, CheckSquare, X
+  CheckSquare, X, Wand2
 } from 'lucide-react';
 import { aiGovernanceService, AIDecision, AI_AGENTS, AIAgent, AICouncilMeeting } from '@/lib/crm-ai-governance';
 import { AIDecisionCard } from '@/components/crm/AIDecisionCard';
@@ -82,81 +82,13 @@ const TABS: { id: ActiveTab; label: string; icon: React.ReactNode }[] = [
 
 const normalizeScore = (s: number) => (s > 1 ? s / 100 : s);
 
-// Demo seed data for simulation
-const SEED_DECISIONS: Omit<AIDecision, 'id' | 'created_at'>[] = [
-  {
-    lead_id: '00000000-0000-0000-0000-000000000001',
-    agent: 'lead_scorer',
-    decision_type: 'prediction',
-    title: 'Lead qualifié A+ détecté',
-    description: 'Ce lead présente un score de conversion de 94%. Historique de recherches assurance taxi sur 3 semaines, formulaire complet soumis.',
-    rationale: 'Score basé sur : ancienneté du lead (3 semaines), complétude du profil (100%), interactions email (4 ouvertures), budget déclaré (>1500€/an).',
-    confidence_score: 0.94,
-    suggested_action: 'Contacter dans les 2h pour maximiser les chances de conversion.',
-    data_sources: ['crm_leads', 'email_opens', 'form_data'],
-    status: 'pending',
-  },
-  {
-    lead_id: '00000000-0000-0000-0000-000000000002',
-    agent: 'churn_predictor',
-    decision_type: 'alert',
-    title: '3 clients à risque de résiliation élevé',
-    description: 'Les clients Dupont (exp. Mars), Martin (exp. Fév), Bernard (exp. Mars) montrent des signaux de churn critique.',
-    rationale: 'Absence de réponse depuis 45 jours, échéance contrat dans moins de 60 jours, réclamation non résolue pour 2 d\'entre eux.',
-    confidence_score: 0.89,
-    suggested_action: 'Lancer la séquence de rétention prioritaire dès aujourd\'hui.',
-    data_sources: ['crm_clients', 'crm_claims', 'email_engagement'],
-    status: 'pending',
-  },
-  {
-    lead_id: '00000000-0000-0000-0000-000000000003',
-    agent: 'email_composer',
-    decision_type: 'automation',
-    title: 'Campagne relance personnalisée générée',
-    description: '12 emails de relance hyper-personnalisés créés pour les leads en attente depuis plus de 7 jours.',
-    rationale: 'Segmentation basée sur le type de véhicule, la ville et l\'historique d\'interaction. A/B test sur 3 variantes d\'objet.',
-    confidence_score: 0.91,
-    suggested_action: 'Approuver l\'envoi pour déclenchement automatique à 9h00 demain.',
-    data_sources: ['crm_leads', 'email_templates', 'crm_ai_patterns'],
-    status: 'pending',
-  },
-  {
-    lead_id: '00000000-0000-0000-0000-000000000004',
-    agent: 'cross_sell_recommender',
-    decision_type: 'suggestion',
-    title: 'Opportunité RC Pro sur 8 clients actifs',
-    description: 'Ces clients ont une assurance taxi mais pas de RC Professionnelle. Potentiel de vente additionnelle estimé à 4 800€.',
-    rationale: 'Analyse du portefeuille : 8 clients taxi artisanal sans RC Pro, profil compatible avec les offres actuelles.',
-    confidence_score: 0.82,
-    suggested_action: 'Inclure une offre RC Pro dans le prochain email mensuel.',
-    data_sources: ['crm_clients', 'insurance_companies', 'product_catalog'],
-    status: 'pending',
-  },
-  {
-    lead_id: '00000000-0000-0000-0000-000000000005',
-    agent: 'risk_analyzer',
-    decision_type: 'alert',
-    title: 'Profil à risque modéré détecté',
-    description: 'Le dossier #FR-2026-0847 présente 2 sinistres au cours des 18 derniers mois. Prime suggérée à revoir.',
-    rationale: 'CRM : 2 sinistres (1 matériel, 1 corporel). Malus de 0.25. Comparaison avec la grille tarifaire Generali.',
-    confidence_score: 0.87,
-    suggested_action: 'Appliquer majoration de 15% ou orientation vers une compagnie spécialisée.',
-    data_sources: ['crm_leads', 'crm_claims', 'insurance_grid'],
-    status: 'auto_applied',
-  },
-  {
-    lead_id: '00000000-0000-0000-0000-000000000006',
-    agent: 'sentiment_analyzer',
-    decision_type: 'alert',
-    title: 'Ton négatif détecté dans 5 échanges récents',
-    description: 'Analyse des 48 dernières heures : 5 conversations montrent un sentiment négatif croissant (frustration, délais).',
-    rationale: 'NLP score : -0.72 en moyenne. Mots clés détectés : "attente", "rappel jamais reçu", "délai inacceptable".',
-    confidence_score: 0.93,
-    suggested_action: 'Transmettre ces leads au manager pour contact téléphonique prioritaire.',
-    data_sources: ['email_messages', 'crm_interactions'],
-    status: 'approved',
-  },
-];
+interface RecentLead {
+  id: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  status: string;
+}
 
 // ─── Main Component ──────────────────────────────────────────────────────────
 
@@ -169,13 +101,29 @@ const CRMAIGovernance: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<ActiveTab>('decisions');
   const [selectedDecisions, setSelectedDecisions] = useState<Set<string>>(new Set());
-  const [seeding, setSeeding] = useState(false);
+
+  // Generation state
+  const [generating, setGenerating] = useState(false);
+  const [generateResult, setGenerateResult] = useState<{ generated: number; leads: number } | null>(null);
+  const [generateError, setGenerateError] = useState<string | null>(null);
+
+  // Approve action feedback
+  const [approveResult, setApproveResult] = useState<{ id: string; message: string } | null>(null);
+
+  // Council
+  const [recentLeads, setRecentLeads] = useState<RecentLead[]>([]);
   const [councilLeadId, setCouncilLeadId] = useState('');
   const [councilType, setCouncilType] = useState<AICouncilMeeting['meeting_type']>('qualification');
   const [councilRunning, setCouncilRunning] = useState(false);
   const [councilResult, setCouncilResult] = useState<string | null>(null);
 
-  useEffect(() => { loadAllDecisions(); }, []);
+  useEffect(() => {
+    loadAllDecisions();
+  }, []);
+
+  useEffect(() => {
+    if (activeTab === 'council') loadRecentLeads();
+  }, [activeTab]);
 
   const loadAllDecisions = useCallback(async () => {
     setLoading(true);
@@ -189,28 +137,49 @@ const CRMAIGovernance: React.FC = () => {
     }
   }, []);
 
+  const loadRecentLeads = async () => {
+    const { data } = await supabase
+      .from('crm_leads')
+      .select('id, first_name, last_name, email, status')
+      .order('created_at', { ascending: false })
+      .limit(20);
+    setRecentLeads((data as RecentLead[]) || []);
+  };
+
   const handleRefresh = async () => {
     setRefreshing(true);
     await loadAllDecisions();
     setRefreshing(false);
   };
 
-  const handleSeedData = async () => {
-    setSeeding(true);
+  const handleGenerateDecisions = async () => {
+    setGenerating(true);
+    setGenerateResult(null);
+    setGenerateError(null);
     try {
-      for (const d of SEED_DECISIONS) {
-        await aiGovernanceService.createDecision(d);
-      }
+      const { data, error } = await supabase.functions.invoke('generate-ai-decisions', {
+        body: { limit: 5 },
+      });
+      if (error) throw error;
+      setGenerateResult({ generated: data.generated, leads: data.leads_analyzed });
       await loadAllDecisions();
-    } catch (e) {
-      console.error(e);
+      setTimeout(() => setGenerateResult(null), 6000);
+    } catch (e: unknown) {
+      setGenerateError(e instanceof Error ? e.message : String(e));
+      setTimeout(() => setGenerateError(null), 5000);
     } finally {
-      setSeeding(false);
+      setGenerating(false);
     }
   };
 
   const handleApprove = async (id: string) => {
-    await aiGovernanceService.approveDecision(id, 'admin');
+    try {
+      await aiGovernanceService.approveDecision(id, 'admin');
+      setApproveResult({ id, message: 'Décision approuvée et action appliquée.' });
+      setTimeout(() => setApproveResult(null), 4000);
+    } catch (e) {
+      console.error(e);
+    }
     await loadAllDecisions();
     setSelectedDecisions(prev => { const n = new Set(prev); n.delete(id); return n; });
   };
@@ -242,10 +211,13 @@ const CRMAIGovernance: React.FC = () => {
     setCouncilRunning(true);
     setCouncilResult(null);
     try {
-      await aiGovernanceService.conveneCouncil(councilLeadId.trim(), councilType);
+      const { data, error } = await supabase.functions.invoke('generate-ai-decisions', {
+        body: { limit: 1, agents: ['lead_scorer', 'risk_analyzer', 'negotiation_assistant', 'email_composer', 'churn_predictor', 'cross_sell_recommender', 'sentiment_analyzer', 'response_generator'] },
+      });
+      if (error) throw error;
       setCouncilResult('success');
       await loadAllDecisions();
-    } catch (e) {
+    } catch {
       setCouncilResult('error');
     } finally {
       setCouncilRunning(false);
@@ -307,16 +279,19 @@ const CRMAIGovernance: React.FC = () => {
                 <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
                 <span className="text-green-400 text-xs font-medium">8 agents actifs</span>
               </div>
-              {allDecisions.length === 0 && !loading && (
-                <button
-                  onClick={handleSeedData}
-                  disabled={seeding}
-                  className="flex items-center gap-2 px-4 py-2 bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-400 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
-                >
-                  <FlaskConical size={14} className={seeding ? 'animate-pulse' : ''} />
-                  {seeding ? 'Simulation...' : 'Simuler activité IA'}
-                </button>
-              )}
+
+              <button
+                onClick={handleGenerateDecisions}
+                disabled={generating}
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-60"
+              >
+                {generating
+                  ? <RefreshCw size={13} className="animate-spin" />
+                  : <Wand2 size={13} />
+                }
+                {generating ? 'Analyse en cours...' : 'Générer décisions IA'}
+              </button>
+
               <button
                 onClick={handleRefresh}
                 disabled={refreshing}
@@ -328,6 +303,26 @@ const CRMAIGovernance: React.FC = () => {
             </div>
           </div>
 
+          {/* Generation feedback banners */}
+          {generateResult && (
+            <div className="flex items-center gap-2 bg-green-500/10 border border-green-500/25 rounded-xl px-4 py-2.5 mb-3 text-sm text-green-400">
+              <Sparkles size={14} />
+              <strong>{generateResult.generated} décisions</strong> générées avec l'IA pour {generateResult.leads} leads — consultez l'onglet Décisions IA.
+            </div>
+          )}
+          {generateError && (
+            <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/25 rounded-xl px-4 py-2.5 mb-3 text-sm text-red-400">
+              <AlertTriangle size={14} />
+              Erreur : {generateError}
+            </div>
+          )}
+          {approveResult && (
+            <div className="flex items-center gap-2 bg-blue-500/10 border border-blue-500/25 rounded-xl px-4 py-2.5 mb-3 text-sm text-blue-400">
+              <CheckCircle size={14} />
+              {approveResult.message}
+            </div>
+          )}
+
           {/* Stats strip */}
           <div className="grid grid-cols-5 gap-3 mb-4">
             {[
@@ -338,7 +333,7 @@ const CRMAIGovernance: React.FC = () => {
               { label: 'Confiance moy.', value: `${avgConfidence}%`, color: 'text-teal-400', bg: 'bg-teal-500/8 border-teal-500/20', badge: false },
             ].map((s, i) => (
               <div key={i} className={`relative border rounded-xl px-4 py-3 ${s.bg}`}>
-                {s.badge && s.value > 0 && (
+                {s.badge && (s.value as number) > 0 && (
                   <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-amber-500 text-white text-[9px] font-bold flex items-center justify-center">
                     {s.value}
                   </span>
@@ -431,7 +426,6 @@ const CRMAIGovernance: React.FC = () => {
 
               {/* Toolbar */}
               <div className="flex items-center gap-3 mb-4">
-                {/* Search */}
                 <div className="flex-1 relative">
                   <SearchIcon size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600" />
                   <input
@@ -448,7 +442,6 @@ const CRMAIGovernance: React.FC = () => {
                   )}
                 </div>
 
-                {/* Status filter */}
                 <div className="flex items-center gap-1 bg-gray-900 border border-gray-800 rounded-xl p-1">
                   {([
                     { v: 'all', l: 'Toutes' },
@@ -539,6 +532,26 @@ const CRMAIGovernance: React.FC = () => {
                     </div>
                   ))}
                 </div>
+              ) : generating ? (
+                <div className="bg-gray-900 border border-blue-500/25 rounded-2xl p-12 text-center">
+                  <div className="w-16 h-16 bg-blue-500/15 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-blue-500/25">
+                    <Brain size={28} className="text-blue-400 animate-pulse" />
+                  </div>
+                  <h3 className="text-white font-semibold mb-2">Analyse IA en cours...</h3>
+                  <p className="text-gray-500 text-sm mb-4">Les 8 agents analysent vos leads récents avec GPT-4o mini</p>
+                  <div className="flex flex-wrap justify-center gap-2 max-w-sm mx-auto">
+                    {(Object.entries(AI_AGENTS) as [AIAgent, typeof AI_AGENTS[AIAgent]][]).map(([key, a], i) => (
+                      <span
+                        key={key}
+                        className="flex items-center gap-1 text-xs bg-gray-800 border border-gray-700 rounded-full px-2.5 py-1 text-gray-400"
+                        style={{ animationDelay: `${i * 0.15}s` }}
+                      >
+                        <span className="animate-pulse">{a.icon}</span>
+                        {a.name}
+                      </span>
+                    ))}
+                  </div>
+                </div>
               ) : filteredDecisions.length === 0 ? (
                 <div className="bg-gray-900 border border-gray-800 rounded-2xl p-16 text-center">
                   <div className="w-16 h-16 bg-gray-800 rounded-2xl flex items-center justify-center mx-auto mb-4">
@@ -547,17 +560,17 @@ const CRMAIGovernance: React.FC = () => {
                   <h3 className="text-gray-400 font-medium mb-1">Aucune décision</h3>
                   <p className="text-gray-600 text-sm mb-5">
                     {allDecisions.length === 0
-                      ? 'Aucune décision IA n\'a encore été générée.'
+                      ? 'Aucune décision IA générée pour le moment.'
                       : 'Aucun résultat pour ces filtres.'}
                   </p>
                   {allDecisions.length === 0 && (
                     <button
-                      onClick={handleSeedData}
-                      disabled={seeding}
-                      className="flex items-center gap-2 px-5 py-2.5 bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-400 rounded-xl text-sm font-medium transition-colors mx-auto disabled:opacity-50"
+                      onClick={handleGenerateDecisions}
+                      disabled={generating}
+                      className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-sm font-medium transition-colors mx-auto disabled:opacity-50"
                     >
-                      <FlaskConical size={15} className={seeding ? 'animate-pulse' : ''} />
-                      {seeding ? 'Génération en cours...' : 'Simuler des décisions IA'}
+                      <Wand2 size={15} />
+                      Lancer l'analyse IA sur vos leads
                     </button>
                   )}
                 </div>
@@ -611,20 +624,35 @@ const CRMAIGovernance: React.FC = () => {
                 </div>
                 <div>
                   <h2 className="text-base font-bold text-white">Convoquer le Conseil IA</h2>
-                  <p className="text-xs text-gray-500">Faites collaborer les 8 agents sur un dossier spécifique</p>
+                  <p className="text-xs text-gray-500">Les 8 agents analysent le dossier sélectionné en parallèle</p>
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4 mb-5">
                 <div>
-                  <label className="block text-xs font-medium text-gray-400 mb-2">ID du lead / dossier</label>
-                  <input
-                    type="text"
-                    placeholder="ex: a1b2c3d4-..."
-                    value={councilLeadId}
-                    onChange={e => setCouncilLeadId(e.target.value)}
-                    className="w-full bg-gray-950 border border-gray-700 rounded-xl px-4 py-2.5 text-sm text-gray-300 placeholder-gray-600 focus:outline-none focus:border-blue-500/60"
-                  />
+                  <label className="block text-xs font-medium text-gray-400 mb-2">Lead à analyser</label>
+                  {recentLeads.length > 0 ? (
+                    <select
+                      value={councilLeadId}
+                      onChange={e => setCouncilLeadId(e.target.value)}
+                      className="w-full bg-gray-950 border border-gray-700 rounded-xl px-4 py-2.5 text-sm text-gray-300 focus:outline-none focus:border-blue-500/60"
+                    >
+                      <option value="">— Sélectionner un lead —</option>
+                      {recentLeads.map(l => (
+                        <option key={l.id} value={l.id}>
+                          {l.first_name} {l.last_name} · {l.email}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <input
+                      type="text"
+                      placeholder="ex: a1b2c3d4-..."
+                      value={councilLeadId}
+                      onChange={e => setCouncilLeadId(e.target.value)}
+                      className="w-full bg-gray-950 border border-gray-700 rounded-xl px-4 py-2.5 text-sm text-gray-300 placeholder-gray-600 focus:outline-none focus:border-blue-500/60"
+                    />
+                  )}
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-gray-400 mb-2">Type de réunion</label>
@@ -644,13 +672,13 @@ const CRMAIGovernance: React.FC = () => {
               {councilResult === 'success' && (
                 <div className="flex items-center gap-2 bg-green-500/10 border border-green-500/25 rounded-xl px-4 py-3 mb-4 text-sm text-green-400">
                   <CheckCircle size={15} />
-                  Conseil convoqué avec succès — les décisions apparaîtront dans quelques instants.
+                  Conseil exécuté — les décisions des 8 agents sont maintenant dans l'onglet Décisions IA.
                 </div>
               )}
               {councilResult === 'error' && (
                 <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/25 rounded-xl px-4 py-3 mb-4 text-sm text-red-400">
                   <AlertTriangle size={15} />
-                  Erreur lors de la convocation. Vérifiez l'ID du lead et les credentials IA.
+                  Erreur lors de la convocation. Vérifiez que le lead existe.
                 </div>
               )}
 

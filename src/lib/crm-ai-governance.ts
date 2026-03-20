@@ -130,11 +130,9 @@ export const aiGovernanceService = {
 
     if (error) throw error;
 
-    const { error: applyError } = await supabase.functions.invoke('apply-ai-decision', {
-      body: { decision_id: decisionId }
-    });
-
-    if (applyError) throw applyError;
+    supabase.functions.invoke('apply-ai-decision', {
+      body: { decision_id: decisionId, approved_by: userId }
+    }).catch(e => console.warn('apply-ai-decision (non-blocking):', e));
 
     return data;
   },

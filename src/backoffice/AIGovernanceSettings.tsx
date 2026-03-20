@@ -71,23 +71,37 @@ const AIGovernanceSettings: React.FC = () => {
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
-    loadRules();
+    loadAll();
   }, []);
 
-  const loadRules = async () => {
+  const loadAll = async () => {
     setLoading(true);
     try {
-      const { data } = await supabase
-        .from('ai_governance_rules')
-        .select('id, rule_name, rule_type, description, is_active, priority')
-        .order('priority', { ascending: false });
-      setRules((data as GovernanceRule[]) || []);
+      const [{ data: rulesData }, { data: configData }] = await Promise.all([
+        supabase
+          .from('ai_governance_rules')
+          .select('id, rule_name, rule_type, description, is_active, priority')
+          .order('priority', { ascending: false }),
+        supabase
+          .from('system_config')
+          .select('key, value')
+          .in('key', ['ai_auto_approve_threshold', 'ai_max_decisions_per_day']),
+      ]);
+      setRules((rulesData as GovernanceRule[]) || []);
+      if (configData) {
+        for (const row of configData) {
+          if (row.key === 'ai_auto_approve_threshold') setAutoApproveThreshold(Number(row.value));
+          if (row.key === 'ai_max_decisions_per_day') setMaxDecisionsPerDay(Number(row.value));
+        }
+      }
     } catch (e) {
       console.error(e);
     } finally {
       setLoading(false);
     }
   };
+
+  const loadRules = loadAll;
 
   const toggleRule = async (rule: GovernanceRule) => {
     setSaving(rule.id);
@@ -102,9 +116,26 @@ const AIGovernanceSettings: React.FC = () => {
     }
   };
 
-  const saveThresholds = () => {
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+  const saveThresholds = async () => {
+    setSaving('thresholds');
+    try {
+      await Promise.all([
+        supabase.from('system_config').upsert(
+          { key: 'ai_auto_approve_threshold', value: String(autoApproveThreshold) },
+          { onConflict: 'key' }
+        ),
+        supabase.from('system_config').upsert(
+          { key: 'ai_max_decisions_per_day', value: String(maxDecisionsPerDay) },
+          { onConflict: 'key' }
+        ),
+      ]);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setSaving(null);
+    }
   };
 
   const grouped = rules.reduce((acc, rule) => {
@@ -268,14 +299,15 @@ const AIGovernanceSettings: React.FC = () => {
 
         <button
           onClick={saveThresholds}
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-all ${
+          disabled={saving === 'thresholds'}
+          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-all disabled:opacity-60 ${
             saved
               ? 'bg-green-600 text-white'
               : 'bg-blue-600 hover:bg-blue-500 text-white'
           }`}
         >
-          {saved ? <CheckCircle size={15} /> : <Save size={15} />}
-          {saved ? 'Enregistré !' : 'Enregistrer les seuils'}
+          {saved ? <CheckCircle size={15} /> : saving === 'thresholds' ? <RefreshCw size={15} className="animate-spin" /> : <Save size={15} />}
+          {saved ? 'Enregistré !' : saving === 'thresholds' ? 'Sauvegarde...' : 'Enregistrer les seuils'}
         </button>
       </div>
     </div>
