@@ -115,6 +115,7 @@ const PartnerPortal = lazy(() => import('./backoffice/PartnerPortal'));
 const PartnerAuth = lazy(() => import('./backoffice/PartnerAuth'));
 const SocialMediaManager = lazy(() => import('./backoffice/SocialMediaManager'));
 const AutomationDashboard = lazy(() => import('./backoffice/AutomationDashboard'));
+const AutomationLayout = lazy(() => import('./backoffice/AutomationLayout'));
 const AnalyticsDashboard = lazy(() => import('./backoffice/AnalyticsDashboard'));
 const WhatsAppManager = lazy(() => import('./backoffice/WhatsAppManager'));
 const WhatsAppLayout = lazy(() => import('./backoffice/WhatsAppLayout'));
@@ -710,11 +711,23 @@ export const router = createBrowserRouter([
   },
   {
     path: '/backoffice/automations',
-    element: <AutomationDashboard />,
+    element: <CRMLayout />,
+    children: [
+      {
+        element: <AutomationLayout />,
+        children: [{ index: true, element: <AutomationDashboard /> }],
+      },
+    ],
   },
   {
     path: '/backoffice/test-automations',
-    element: <TestAutomations />,
+    element: <CRMLayout />,
+    children: [
+      {
+        element: <AutomationLayout />,
+        children: [{ index: true, element: <TestAutomations /> }],
+      },
+    ],
   },
   {
     path: '/backoffice/analytics',
@@ -856,7 +869,13 @@ export const router = createBrowserRouter([
   },
   {
     path: '/backoffice/automation-scheduler',
-    element: <AutomationScheduler />,
+    element: <CRMLayout />,
+    children: [
+      {
+        element: <AutomationLayout />,
+        children: [{ index: true, element: <AutomationScheduler /> }],
+      },
+    ],
   },
   {
     path: '/backoffice/auto-optimizer',
@@ -913,7 +932,13 @@ export const router = createBrowserRouter([
   },
   {
     path: '/backoffice/backlink-automation',
-    element: <BacklinkAutomationDashboard />,
+    element: <CRMLayout />,
+    children: [
+      {
+        element: <AutomationLayout />,
+        children: [{ index: true, element: <BacklinkAutomationDashboard /> }],
+      },
+    ],
   },
   {
     path: '/backoffice/outreach',
