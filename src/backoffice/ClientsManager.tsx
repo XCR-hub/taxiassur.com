@@ -199,7 +199,7 @@ export default function ClientsManager() {
           insurance_contracts(insurer_name, contract_number, premium_ttc, renewal_date, effective_date, status, contract_type),
           insurance_claims(id, status)
         `)
-        .in('status', ['client_actif', 'CLIENT_ACTIF'])
+        .in('status', ['CLIENT_ACTIF', 'ACTIVE_CLIENT'])
         .is('deleted_at', null)
         .order('updated_at', { ascending: false });
 
