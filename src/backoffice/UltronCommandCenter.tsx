@@ -41,6 +41,25 @@ interface SystemConfig {
   value: string;
 }
 
+interface LeadQueueItem {
+  id: string;
+  lead_id: string;
+  lead_email: string;
+  lead_name: string;
+  status: string;
+  pipeline_started: boolean;
+  decisions_generated: boolean;
+  created_at: string;
+}
+
+interface QueueStats {
+  total: number;
+  pending: number;
+  processing: number;
+  processed: number;
+  error: number;
+}
+
 const MISSION_META: Record<string, { label: string; icon: typeof Target; color: string; bg: string }> = {
   MISSION_1_GOOGLE_RANK_1: {
     label: '#1 Google Assurance Taxi',
@@ -95,6 +114,8 @@ export default function UltronCommandCenter() {
   const [loading, setLoading] = useState(true);
   const [triggering, setTriggering] = useState<string | null>(null);
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
+  const [leadQueue, setLeadQueue] = useState<LeadQueueItem[]>([]);
+  const [queueStats, setQueueStats] = useState<QueueStats>({ total: 0, pending: 0, processing: 0, processed: 0, error: 0 });
   const [gscData, setGscData] = useState<{ queries: number; avgPosition: number | null; topQuery: string | null }>({
     queries: 0,
     avgPosition: null,
@@ -103,7 +124,7 @@ export default function UltronCommandCenter() {
 
   const load = useCallback(async () => {
     try {
-      const [missionsRes, logsRes, cronsRes, configsRes, gscRes] = await Promise.all([
+      const [missionsRes, logsRes, cronsRes, configsRes, gscRes, queueRes] = await Promise.all([
         supabase.from('ultron_missions').select('*').order('created_at'),
         supabase.from('ultron_command_log').select('*').order('timestamp', { ascending: false }).limit(20),
         supabase.rpc('get_active_crons').catch(() => ({ data: null, error: null })),
@@ -118,6 +139,10 @@ export default function UltronCommandCenter() {
           .gte('date', new Date(Date.now() - 7 * 86400000).toISOString().split('T')[0])
           .order('impressions', { ascending: false })
           .limit(100),
+        supabase.from('ultron_lead_queue')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(30),
       ]);
 
       if (missionsRes.data) setMissions(missionsRes.data);
@@ -131,6 +156,18 @@ export default function UltronCommandCenter() {
           queries: rows.length,
           avgPosition: Math.round(avgPos * 10) / 10,
           topQuery: rows[0]?.query || null,
+        });
+      }
+
+      if (queueRes.data) {
+        const items = queueRes.data as LeadQueueItem[];
+        setLeadQueue(items);
+        setQueueStats({
+          total: items.length,
+          pending: items.filter(i => i.status === 'pending').length,
+          processing: items.filter(i => i.status === 'processing').length,
+          processed: items.filter(i => i.status === 'processed').length,
+          error: items.filter(i => i.status === 'error').length,
         });
       }
 
@@ -482,6 +519,91 @@ export default function UltronCommandCenter() {
               ))}
             </div>
           </div>
+        </div>
+
+        {/* Queue Leads ULTRON */}
+        <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <Users className="w-4 h-4 text-emerald-400" />
+              <h3 className="font-semibold text-white">Pipeline Leads ULTRON</h3>
+              <span className="text-xs bg-emerald-900/50 text-emerald-400 border border-emerald-700 px-2 py-0.5 rounded-full">
+                Trigger actif
+              </span>
+            </div>
+            <button
+              onClick={() => triggerFunction('pipeline-automation-engine', { action: 'all' })}
+              disabled={!!triggering}
+              className="text-xs px-3 py-1.5 bg-emerald-900/30 text-emerald-400 border border-emerald-800 rounded-lg hover:bg-emerald-900/50 transition-colors disabled:opacity-50"
+            >
+              Forcer traitement
+            </button>
+          </div>
+
+          {/* Stats queue */}
+          <div className="grid grid-cols-4 gap-3 mb-4">
+            {[
+              { label: 'Total', value: queueStats.total, color: 'text-gray-300' },
+              { label: 'En attente', value: queueStats.pending, color: 'text-amber-400' },
+              { label: 'Traites', value: queueStats.processed, color: 'text-emerald-400' },
+              { label: 'Erreurs', value: queueStats.error, color: 'text-red-400' },
+            ].map(stat => (
+              <div key={stat.label} className="bg-gray-800 rounded-lg p-3 text-center">
+                <p className={`text-xl font-bold ${stat.color}`}>{stat.value}</p>
+                <p className="text-xs text-gray-500 mt-0.5">{stat.label}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Liste leads recents */}
+          <div className="space-y-2 max-h-64 overflow-y-auto">
+            {leadQueue.length === 0 && (
+              <div className="text-center py-6 text-gray-600">
+                <Users className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                <p className="text-sm">Aucun lead dans la queue</p>
+              </div>
+            )}
+            {leadQueue.slice(0, 15).map(item => (
+              <div key={item.id} className="flex items-center justify-between px-3 py-2 bg-gray-800/50 rounded-lg">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
+                    item.status === 'processed' ? 'bg-emerald-400' :
+                    item.status === 'pending' ? 'bg-amber-400 animate-pulse' :
+                    item.status === 'processing' ? 'bg-blue-400 animate-pulse' :
+                    'bg-red-400'
+                  }`} />
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-gray-200 truncate">
+                      {item.lead_name || 'Lead sans nom'}
+                    </p>
+                    <p className="text-xs text-gray-500 truncate">{item.lead_email}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 flex-shrink-0">
+                  {item.pipeline_started && (
+                    <span className="text-xs text-emerald-400">Pipeline</span>
+                  )}
+                  <span className={`text-xs px-2 py-0.5 rounded-full ${
+                    item.status === 'processed' ? 'bg-emerald-900/50 text-emerald-400' :
+                    item.status === 'pending' ? 'bg-amber-900/50 text-amber-400' :
+                    item.status === 'processing' ? 'bg-blue-900/50 text-blue-400' :
+                    'bg-red-900/50 text-red-400'
+                  }`}>
+                    {item.status === 'processed' ? 'Traite' :
+                     item.status === 'pending' ? 'En attente' :
+                     item.status === 'processing' ? 'En cours' : 'Erreur'}
+                  </span>
+                  <span className="text-xs text-gray-600">
+                    {new Date(item.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <p className="text-xs text-gray-600 mt-3">
+            Chaque nouveau lead declenche automatiquement : scoring IA + email notification + pipeline commercial
+          </p>
         </div>
 
         {/* Configuration Active */}
