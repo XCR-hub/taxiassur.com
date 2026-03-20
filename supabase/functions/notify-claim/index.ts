@@ -274,7 +274,7 @@ Deno.serve(async (req: Request) => {
     const results: { to: string; success: boolean; error?: string }[] = [];
 
     if (data.type === "new_claim") {
-      const teamEmail = Deno.env.get("TEAM_NOTIFICATION_EMAIL") || "tim@taxiassur.com";
+      const teamEmail = Deno.env.get("TEAM_NOTIFICATION_EMAIL") || "team@taxiassur.com";
       const subject = `Nouveau sinistre déclaré — ${data.client_name}${data.claim_reference ? ` (${data.claim_reference})` : ""}`;
 
       try {
