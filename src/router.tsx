@@ -149,6 +149,7 @@ const LLMDashboard = lazy(() => import('./backoffice/LLMDashboard'));
 const LLMCouncilDashboard = lazy(() => import('./backoffice/LLMCouncilDashboard'));
 const AIAutonomousDashboard = lazy(() => import('./backoffice/AIAutonomousDashboard'));
 const MasterAI = lazy(() => import('./backoffice/MasterAI'));
+const UltronCommandCenter = lazy(() => import('./backoffice/UltronCommandCenter'));
 const AutomationScheduler = lazy(() => import('./backoffice/AutomationScheduler'));
 const AutoOptimizer = lazy(() => import('./backoffice/AutoOptimizer'));
 const AIContentGeneratorUnified = lazy(() => import('./backoffice/AIContentGeneratorUnified'));
@@ -878,6 +879,10 @@ export const router = createBrowserRouter([
   {
     path: '/backoffice/master-ai',
     element: <MasterAI />,
+  },
+  {
+    path: '/backoffice/ultron',
+    element: <UltronCommandCenter />,
   },
   {
     path: '/backoffice/automation-scheduler',

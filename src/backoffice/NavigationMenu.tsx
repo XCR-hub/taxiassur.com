@@ -133,6 +133,7 @@ export default function NavigationMenu({ excludeSections = [] }: NavigationMenuP
       color: 'cyan',
       permission: canViewContentIA || canViewSettings,
       links: [
+        { to: '/backoffice/ultron', icon: Sparkles, label: 'ULTRON', highlight: true },
         { to: '/backoffice/llm-dashboard', icon: Brain, label: 'LLM Agents', highlight: true },
         { to: '/backoffice/llm-council', icon: Users, label: 'LLM Council', highlight: true },
         { to: '/backoffice/ai-autonomous', icon: Zap, label: 'IA Autonome' },
