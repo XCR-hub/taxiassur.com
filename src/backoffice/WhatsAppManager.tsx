@@ -1,7 +1,22 @@
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
-import { MessageSquare, Send, User, Check, CheckCheck, Clock, AlertCircle, Tag, UserPlus } from 'lucide-react';
+import {
+  MessageSquare,
+  Send,
+  Search,
+  Check,
+  CheckCheck,
+  Clock,
+  AlertCircle,
+  Tag,
+  UserPlus,
+  X,
+  Phone,
+  ChevronDown,
+  Ban,
+  RefreshCw,
+  MessageCircle,
+} from 'lucide-react';
 import { logger } from '@/lib/logger';
 
 interface Contact {
@@ -43,9 +58,70 @@ interface Template {
   category: string;
 }
 
+const AVATAR_COLORS = [
+  'from-green-500 to-emerald-600',
+  'from-blue-500 to-indigo-600',
+  'from-amber-500 to-orange-600',
+  'from-rose-500 to-pink-600',
+  'from-cyan-500 to-teal-600',
+  'from-violet-500 to-purple-600',
+];
+
+function getAvatarColor(name: string) {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash += name.charCodeAt(i);
+  return AVATAR_COLORS[hash % AVATAR_COLORS.length];
+}
+
+function getInitials(name: string) {
+  const parts = name.trim().split(' ');
+  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+  return name.slice(0, 2).toUpperCase();
+}
+
+function formatRelativeTime(dateStr: string) {
+  const date = new Date(dateStr);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMin = Math.floor(diffMs / 60000);
+  const diffH = Math.floor(diffMs / 3600000);
+  const diffD = Math.floor(diffMs / 86400000);
+
+  if (diffMin < 1) return 'maintenant';
+  if (diffMin < 60) return `${diffMin}m`;
+  if (diffH < 24) return `${diffH}h`;
+  if (diffD === 1) return 'hier';
+  if (diffD < 7) return `${diffD}j`;
+  return date.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' });
+}
+
+function formatMessageTime(dateStr: string) {
+  return new Date(dateStr).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+}
+
+function groupMessagesByDate(messages: Message[]) {
+  const groups: { date: string; messages: Message[] }[] = [];
+  let currentDate = '';
+  messages.forEach((msg) => {
+    const d = new Date(msg.created_at);
+    const now = new Date();
+    const diffD = Math.floor((now.getTime() - d.getTime()) / 86400000);
+    let label = '';
+    if (diffD === 0) label = "Aujourd'hui";
+    else if (diffD === 1) label = 'Hier';
+    else label = d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+    if (label !== currentDate) {
+      currentDate = label;
+      groups.push({ date: label, messages: [msg] });
+    } else {
+      groups[groups.length - 1].messages.push(msg);
+    }
+  });
+  return groups;
+}
+
 export default function WhatsAppManager() {
-  const navigate = useNavigate();
-const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [messageText, setMessageText] = useState('');
@@ -53,7 +129,11 @@ const [conversations, setConversations] = useState<Conversation[]>([]);
   const [showTemplates, setShowTemplates] = useState(false);
   const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState<'all' | 'unread' | 'assigned'>('all');
+  const [search, setSearch] = useState('');
+  const [templateVars, setTemplateVars] = useState<Record<string, string>>({});
+  const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     loadConversations();
@@ -79,17 +159,10 @@ const [conversations, setConversations] = useState<Conversation[]>([]);
       .from('wa_conversations')
       .select('*, wa_contacts(*)')
       .order('last_message_at', { ascending: false });
-
-    if (filter === 'unread') {
-      query = query.gt('unread_count', 0);
-    } else if (filter === 'assigned') {
-      query = query.not('assigned_to_user_id', 'is', null);
-    }
-
+    if (filter === 'unread') query = query.gt('unread_count', 0);
+    else if (filter === 'assigned') query = query.not('assigned_to_user_id', 'is', null);
     const { data, error } = await query;
-    if (!error && data) {
-      setConversations(data);
-    }
+    if (!error && data) setConversations(data);
   };
 
   const loadMessages = async (conversationId: string) => {
@@ -98,10 +171,7 @@ const [conversations, setConversations] = useState<Conversation[]>([]);
       .select('*')
       .eq('conversation_id', conversationId)
       .order('created_at', { ascending: true });
-
-    if (!error && data) {
-      setMessages(data);
-    }
+    if (!error && data) setMessages(data);
   };
 
   const loadTemplates = async () => {
@@ -110,54 +180,45 @@ const [conversations, setConversations] = useState<Conversation[]>([]);
       .select('*')
       .eq('approved', true)
       .order('name');
-
     if (data) setTemplates(data);
   };
 
   const sendMessage = async () => {
     if (!selectedConversation || !messageText.trim()) return;
-
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('send-whatsapp', {
-        body: {
-          conversationId: selectedConversation.id,
-          body: messageText,
-        },
+      await supabase.functions.invoke('send-whatsapp', {
+        body: { conversationId: selectedConversation.id, body: messageText },
       });
-
-      if (error) throw error;
-
       setMessageText('');
+      if (textareaRef.current) textareaRef.current.style.height = 'auto';
       await loadMessages(selectedConversation.id);
       await loadConversations();
     } catch (error) {
       logger.error('Error sending WhatsApp:', error);
-      alert('Erreur lors de l\'envoi du message');
     } finally {
       setLoading(false);
     }
   };
 
-  const sendTemplate = async (template: Template, variables: Record<string, string>) => {
-    if (!selectedConversation) return;
-
+  const sendTemplate = async () => {
+    if (!selectedConversation || !selectedTemplate) return;
     setLoading(true);
     try {
       await supabase.functions.invoke('send-whatsapp', {
         body: {
           conversationId: selectedConversation.id,
-          templateName: template.name,
-          templateVariables: variables,
+          templateName: selectedTemplate.name,
+          templateVariables: templateVars,
         },
       });
-
       setShowTemplates(false);
+      setSelectedTemplate(null);
+      setTemplateVars({});
       await loadMessages(selectedConversation.id);
       await loadConversations();
     } catch (error) {
       logger.error('Error sending template:', error);
-      alert('Erreur lors de l\'envoi du template');
     } finally {
       setLoading(false);
     }
@@ -165,282 +226,442 @@ const [conversations, setConversations] = useState<Conversation[]>([]);
 
   const markAsRead = async () => {
     if (!selectedConversation) return;
-
-    await supabase
-      .from('wa_conversations')
-      .update({ unread_count: 0 })
-      .eq('id', selectedConversation.id);
-
+    await supabase.from('wa_conversations').update({ unread_count: 0 }).eq('id', selectedConversation.id);
     await loadConversations();
   };
 
   const assignToMe = async () => {
     if (!selectedConversation) return;
-
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
-
     await supabase
       .from('wa_conversations')
       .update({ assigned_to_user_id: user.id })
       .eq('id', selectedConversation.id);
-
     await loadConversations();
   };
 
   const getStatusIcon = (message: Message) => {
     if (message.direction === 'inbound') return null;
-
     switch (message.status) {
       case 'queued':
-      case 'sent':
-        return <Clock className="w-3 h-3 text-gray-400" />;
-      case 'delivered':
-        return <CheckCheck className="w-3 h-3 text-gray-400" />;
-      case 'read':
-        return <CheckCheck className="w-3 h-3 text-blue-500" />;
-      case 'failed':
-        return <AlertCircle className="w-3 h-3 text-red-500" />;
-      default:
-        return <Check className="w-3 h-3 text-gray-400" />;
+      case 'sent': return <Clock className="w-3 h-3 text-green-200" />;
+      case 'delivered': return <CheckCheck className="w-3 h-3 text-green-200" />;
+      case 'read': return <CheckCheck className="w-3 h-3 text-white" />;
+      case 'failed': return <AlertCircle className="w-3 h-3 text-red-300" />;
+      default: return <Check className="w-3 h-3 text-green-200" />;
     }
   };
 
+  const filteredConversations = conversations.filter((c) => {
+    if (!search) return true;
+    const q = search.toLowerCase();
+    return (
+      c.wa_contacts.display_name.toLowerCase().includes(q) ||
+      c.wa_contacts.phone_e164.includes(q)
+    );
+  });
+
+  const totalUnread = conversations.reduce((s, c) => s + (c.unread_count || 0), 0);
+  const openCount = conversations.filter((c) => c.status === 'open').length;
+
+  const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setMessageText(e.target.value);
+    e.target.style.height = 'auto';
+    e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  };
+
+  const messageGroups = groupMessagesByDate(messages);
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
-        <div className="container-max py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-black text-gray-900 flex items-center gap-3">
-                <MessageSquare className="text-green-600" />
-                WhatsApp Manager
-              </h1>
-              <p className="text-gray-600">Gérez vos conversations WhatsApp Business</p>
-            </div>
-            <button onClick={() => navigate("/backoffice")} className="flex items-center space-x-2 bg-gray-100 hover:bg-gray-200 text-gray-900 font-bold py-2 px-4 rounded-lg transition-colors">
-              <User size={18} />
-              <span>Accueil Admin</span>
-            </button>
+    <div className="flex flex-col h-full bg-gray-50">
+      {/* Top stats bar */}
+      <div className="bg-white border-b border-gray-200 px-6 py-3 flex items-center gap-6 flex-shrink-0">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg flex items-center justify-center">
+            <MessageSquare size={16} className="text-white" />
           </div>
+          <div>
+            <div className="text-sm font-bold text-gray-900">WhatsApp Business</div>
+            <div className="text-xs text-gray-500">Conversations en direct</div>
+          </div>
+        </div>
+        <div className="flex items-center gap-4 ml-4">
+          <StatPill label="Ouvertes" value={openCount} color="green" />
+          <StatPill label="Non lues" value={totalUnread} color={totalUnread > 0 ? 'amber' : 'gray'} />
+          <StatPill label="Total" value={conversations.length} color="blue" />
+        </div>
+        <div className="ml-auto">
+          <button
+            onClick={loadConversations}
+            className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-700 px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
+          >
+            <RefreshCw size={13} />
+            Actualiser
+          </button>
         </div>
       </div>
 
-      <div className="container-max py-6">
-        <div className="flex h-[calc(100vh-200px)] bg-white rounded-lg shadow-lg overflow-hidden">
-          <div className="w-1/3 border-r flex flex-col">
-            <div className="p-4 border-b bg-gradient-to-r from-green-500 to-green-600">
-              <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                <MessageSquare className="w-6 h-6" />
-                Conversations
-              </h2>
-              <div className="flex gap-2 mt-3">
-            <button
-              onClick={() => setFilter('all')}
-              className={`px-3 py-1 rounded text-sm ${
-                filter === 'all' ? 'bg-white text-green-600 font-medium' : 'bg-green-400 text-white'
-              }`}
-            >
-              Toutes
-            </button>
-            <button
-              onClick={() => setFilter('unread')}
-              className={`px-3 py-1 rounded text-sm ${
-                filter === 'unread' ? 'bg-white text-green-600 font-medium' : 'bg-green-400 text-white'
-              }`}
-            >
-              Non lues
-            </button>
-            <button
-              onClick={() => setFilter('assigned')}
-              className={`px-3 py-1 rounded text-sm ${
-                filter === 'assigned' ? 'bg-white text-green-600 font-medium' : 'bg-green-400 text-white'
-              }`}
-            >
-              Assignées
-            </button>
+      {/* Main split panel */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Left panel: Conversations list */}
+        <div className="w-80 flex-shrink-0 bg-white border-r border-gray-200 flex flex-col">
+          {/* Search + Filter */}
+          <div className="p-3 border-b border-gray-100 space-y-2">
+            <div className="relative">
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Rechercher..."
+                className="w-full pl-8 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-400 bg-gray-50"
+              />
+            </div>
+            <div className="flex gap-1.5">
+              {(['all', 'unread', 'assigned'] as const).map((f) => (
+                <button
+                  key={f}
+                  onClick={() => setFilter(f)}
+                  className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                    filter === f
+                      ? 'bg-green-500 text-white'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                >
+                  {f === 'all' ? 'Toutes' : f === 'unread' ? 'Non lues' : 'Assignées'}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
 
-        <div className="flex-1 overflow-y-auto">
-          {conversations.map((conv) => (
-            <div
-              key={conv.id}
-              onClick={() => setSelectedConversation(conv)}
-              className={`p-4 border-b cursor-pointer hover:bg-gray-50 transition ${
-                selectedConversation?.id === conv.id ? 'bg-green-50 border-l-4 border-green-500' : ''
-              }`}
-            >
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <User className="w-4 h-4 text-gray-400" />
-                    <span className="font-semibold text-gray-900">
-                      {conv.wa_contacts.display_name}
-                    </span>
-                    {conv.unread_count > 0 && (
-                      <span className="bg-green-500 text-white text-xs px-2 py-1 rounded-full">
-                        {conv.unread_count}
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-sm text-gray-500 mt-1">{conv.wa_contacts.phone_e164}</p>
-                  <p className="text-sm text-gray-600 mt-1 truncate">
-                    {conv.last_message_preview || 'Aucun message'}
-                  </p>
-                </div>
-                <span className="text-xs text-gray-400">
-                  {conv.last_message_at
-                    ? new Date(conv.last_message_at).toLocaleTimeString('fr-FR', {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })
-                    : ''}
-                </span>
+          {/* Conversation list */}
+          <div className="flex-1 overflow-y-auto">
+            {filteredConversations.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-40 text-gray-400">
+                <MessageCircle size={32} className="mb-2 opacity-40" />
+                <p className="text-sm">Aucune conversation</p>
               </div>
-              {conv.wa_contacts.opted_out && (
-                <span className="inline-block mt-2 text-xs bg-red-100 text-red-600 px-2 py-1 rounded">
-                  Désabonné
-                </span>
-              )}
-            </div>
-          ))}
+            ) : (
+              filteredConversations.map((conv) => {
+                const name = conv.wa_contacts.display_name;
+                const isSelected = selectedConversation?.id === conv.id;
+                return (
+                  <button
+                    key={conv.id}
+                    onClick={() => { setSelectedConversation(conv); markAsRead(); }}
+                    className={`w-full text-left px-3 py-3 border-b border-gray-100 hover:bg-gray-50 transition-colors relative ${
+                      isSelected ? 'bg-green-50 border-l-2 border-l-green-500' : ''
+                    }`}
+                  >
+                    <div className="flex items-start gap-3">
+                      {/* Avatar */}
+                      <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${getAvatarColor(name)} flex items-center justify-center flex-shrink-0`}>
+                        <span className="text-xs font-bold text-white">{getInitials(name)}</span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-1">
+                          <span className={`text-sm font-semibold truncate ${conv.unread_count > 0 ? 'text-gray-900' : 'text-gray-700'}`}>
+                            {name}
+                          </span>
+                          <span className="text-[11px] text-gray-400 flex-shrink-0">
+                            {conv.last_message_at ? formatRelativeTime(conv.last_message_at) : ''}
+                          </span>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-0.5">{conv.wa_contacts.phone_e164}</p>
+                        <div className="flex items-center justify-between mt-1">
+                          <p className={`text-xs truncate flex-1 ${conv.unread_count > 0 ? 'text-gray-700 font-medium' : 'text-gray-400'}`}>
+                            {conv.last_message_preview || 'Aucun message'}
+                          </p>
+                          {conv.unread_count > 0 && (
+                            <span className="ml-2 w-5 h-5 bg-green-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center flex-shrink-0">
+                              {conv.unread_count > 9 ? '9+' : conv.unread_count}
+                            </span>
+                          )}
+                        </div>
+                        {conv.wa_contacts.opted_out && (
+                          <span className="inline-flex items-center gap-1 mt-1 text-[10px] bg-red-100 text-red-500 px-1.5 py-0.5 rounded">
+                            <Ban size={9} /> Désabonné
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </button>
+                );
+              })
+            )}
+          </div>
         </div>
-      </div>
 
-      <div className="flex-1 flex flex-col">
+        {/* Right panel: Conversation thread */}
         {selectedConversation ? (
-          <>
-            <div className="p-4 border-b bg-gray-50 flex items-center justify-between">
-              <div>
-                <h3 className="font-semibold text-lg">
-                  {selectedConversation.wa_contacts.display_name}
-                </h3>
-                <p className="text-sm text-gray-500">
-                  {selectedConversation.wa_contacts.phone_e164}
-                </p>
+          <div className="flex-1 flex flex-col overflow-hidden">
+            {/* Conversation header */}
+            <div className="bg-white border-b border-gray-200 px-5 py-3 flex items-center justify-between flex-shrink-0">
+              <div className="flex items-center gap-3">
+                <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${getAvatarColor(selectedConversation.wa_contacts.display_name)} flex items-center justify-center`}>
+                  <span className="text-xs font-bold text-white">
+                    {getInitials(selectedConversation.wa_contacts.display_name)}
+                  </span>
+                </div>
+                <div>
+                  <div className="font-semibold text-gray-900 text-sm">
+                    {selectedConversation.wa_contacts.display_name}
+                  </div>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <Phone size={11} className="text-gray-400" />
+                    <span className="text-xs text-gray-500">{selectedConversation.wa_contacts.phone_e164}</span>
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
+                      selectedConversation.status === 'open'
+                        ? 'bg-green-100 text-green-700'
+                        : 'bg-gray-100 text-gray-600'
+                    }`}>
+                      {selectedConversation.status === 'open' ? 'Ouverte' : selectedConversation.status}
+                    </span>
+                  </div>
+                </div>
               </div>
-              <div className="flex gap-2">
+              <div className="flex items-center gap-2">
                 <button
                   onClick={markAsRead}
-                  className="px-3 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm"
+                  className="flex items-center gap-1.5 text-xs text-gray-600 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-lg transition-colors"
                 >
+                  <CheckCheck size={13} />
                   Marquer lu
                 </button>
                 <button
                   onClick={assignToMe}
-                  className="px-3 py-2 bg-purple-500 text-white rounded hover:bg-purple-600 text-sm flex items-center gap-1"
+                  className="flex items-center gap-1.5 text-xs text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors"
                 >
-                  <UserPlus className="w-4 h-4" />
+                  <UserPlus size={13} />
                   M'assigner
                 </button>
               </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
-              {messages.map((msg) => (
-                <div
-                  key={msg.id}
-                  className={`mb-4 flex ${msg.direction === 'outbound' ? 'justify-end' : 'justify-start'}`}
-                >
-                  <div
-                    className={`max-w-[70%] rounded-lg p-3 ${
-                      msg.direction === 'outbound'
-                        ? 'bg-green-500 text-white'
-                        : 'bg-white border border-gray-200 text-gray-900'
-                    }`}
-                  >
-                    {msg.media_url && (
-                      <img
-                        src={msg.media_url}
-                        alt="Media"
-                        className="rounded mb-2 max-w-full"
-                      />
-                    )}
-                    <p className="whitespace-pre-wrap">{msg.body}</p>
-                    <div className="flex items-center gap-1 mt-1 text-xs opacity-75">
-                      <span>
-                        {new Date(msg.created_at).toLocaleTimeString('fr-FR', {
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}
-                      </span>
-                      {getStatusIcon(msg)}
-                    </div>
+            {/* Messages */}
+            <div
+              className="flex-1 overflow-y-auto px-5 py-4 space-y-4"
+              style={{ background: 'linear-gradient(135deg, #f0fdf4 0%, #f9fafb 100%)' }}
+            >
+              {messageGroups.map((group) => (
+                <div key={group.date}>
+                  <div className="flex items-center gap-3 my-3">
+                    <div className="flex-1 h-px bg-gray-200" />
+                    <span className="text-[11px] text-gray-400 bg-white border border-gray-200 px-2 py-0.5 rounded-full">
+                      {group.date}
+                    </span>
+                    <div className="flex-1 h-px bg-gray-200" />
+                  </div>
+                  <div className="space-y-2">
+                    {group.messages.map((msg) => (
+                      <div
+                        key={msg.id}
+                        className={`flex ${msg.direction === 'outbound' ? 'justify-end' : 'justify-start'}`}
+                      >
+                        <div
+                          className={`max-w-[72%] rounded-2xl px-4 py-2.5 shadow-sm ${
+                            msg.direction === 'outbound'
+                              ? 'bg-green-500 text-white rounded-tr-sm'
+                              : 'bg-white border border-gray-200 text-gray-900 rounded-tl-sm'
+                          }`}
+                        >
+                          {msg.media_url && (
+                            <img src={msg.media_url} alt="Media" className="rounded-lg mb-2 max-w-full" />
+                          )}
+                          <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.body}</p>
+                          <div className={`flex items-center gap-1 mt-1 ${msg.direction === 'outbound' ? 'justify-end' : 'justify-start'}`}>
+                            <span className={`text-[11px] ${msg.direction === 'outbound' ? 'text-green-200' : 'text-gray-400'}`}>
+                              {formatMessageTime(msg.created_at)}
+                            </span>
+                            {getStatusIcon(msg)}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
               ))}
               <div ref={messagesEndRef} />
             </div>
 
-            <div className="p-4 border-t bg-white">
-              {showTemplates && (
-                <div className="mb-3 p-3 bg-gray-50 rounded max-h-48 overflow-y-auto">
-                  <p className="text-sm font-semibold mb-2">Templates WhatsApp :</p>
-                  {templates.map((tpl) => (
-                    <button
-                      key={tpl.id}
-                      onClick={() => {
-                        const vars: Record<string, string> = {};
-                        tpl.variables.forEach((v) => {
-                          const value = prompt(`Variable ${v} :`);
-                          if (value) vars[v] = value;
-                        });
-                        sendTemplate(tpl, vars);
-                      }}
-                      className="block w-full text-left px-3 py-2 mb-2 bg-white border rounded hover:bg-gray-50 text-sm"
-                    >
-                      <span className="font-medium">{tpl.name}</span>
-                      <p className="text-xs text-gray-500 mt-1">{tpl.body.substring(0, 100)}...</p>
-                    </button>
-                  ))}
+            {/* Compose area */}
+            <div className="bg-white border-t border-gray-200 px-4 py-3 flex-shrink-0">
+              {selectedConversation.wa_contacts.opted_out ? (
+                <div className="flex items-center gap-2 py-3 px-4 bg-red-50 border border-red-200 rounded-xl text-sm text-red-600">
+                  <Ban size={16} />
+                  Ce contact s'est désabonné. Vous ne pouvez plus lui envoyer de messages.
                 </div>
-              )}
+              ) : (
+                <>
+                  {/* Template panel */}
+                  {showTemplates && (
+                    <div className="mb-3 border border-gray-200 rounded-xl overflow-hidden">
+                      <div className="flex items-center justify-between px-4 py-2.5 bg-gray-50 border-b border-gray-200">
+                        <span className="text-xs font-semibold text-gray-700">Templates WhatsApp approuvés</span>
+                        <button onClick={() => { setShowTemplates(false); setSelectedTemplate(null); setTemplateVars({}); }}
+                          className="text-gray-400 hover:text-gray-600">
+                          <X size={14} />
+                        </button>
+                      </div>
+                      {selectedTemplate ? (
+                        <div className="p-4 space-y-3">
+                          <div className="p-3 bg-green-50 border border-green-200 rounded-lg text-sm text-gray-700">
+                            {selectedTemplate.body}
+                          </div>
+                          {selectedTemplate.variables.length > 0 && (
+                            <div className="space-y-2">
+                              <p className="text-xs font-medium text-gray-600">Variables requises :</p>
+                              {selectedTemplate.variables.map((v) => (
+                                <div key={v} className="flex items-center gap-2">
+                                  <span className="text-xs text-gray-500 w-24 flex-shrink-0">{`{{${v}}}`}</span>
+                                  <input
+                                    type="text"
+                                    value={templateVars[v] || ''}
+                                    onChange={(e) => setTemplateVars((prev) => ({ ...prev, [v]: e.target.value }))}
+                                    placeholder={`Valeur pour ${v}`}
+                                    className="flex-1 text-xs border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-green-500/30"
+                                  />
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => { setSelectedTemplate(null); setTemplateVars({}); }}
+                              className="flex-1 text-xs py-2 border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors"
+                            >
+                              Retour
+                            </button>
+                            <button
+                              onClick={sendTemplate}
+                              disabled={loading}
+                              className="flex-1 text-xs py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors disabled:opacity-50"
+                            >
+                              Envoyer ce template
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="max-h-44 overflow-y-auto divide-y divide-gray-100">
+                          {templates.length === 0 ? (
+                            <div className="py-6 text-center text-sm text-gray-400">
+                              Aucun template approuvé
+                            </div>
+                          ) : (
+                            templates.map((tpl) => (
+                              <button
+                                key={tpl.id}
+                                onClick={() => setSelectedTemplate(tpl)}
+                                className="w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors"
+                              >
+                                <div className="flex items-center justify-between gap-2">
+                                  <span className="text-xs font-semibold text-gray-800">{tpl.name}</span>
+                                  <span className="text-[10px] text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded">{tpl.category}</span>
+                                </div>
+                                <p className="text-xs text-gray-500 mt-0.5 truncate">{tpl.body}</p>
+                                {tpl.variables.length > 0 && (
+                                  <div className="flex items-center gap-1 mt-1">
+                                    <ChevronDown size={10} className="text-gray-400" />
+                                    <span className="text-[10px] text-gray-400">{tpl.variables.length} variable(s)</span>
+                                  </div>
+                                )}
+                              </button>
+                            ))
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
 
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setShowTemplates(!showTemplates)}
-                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
-                  title="Templates"
-                >
-                  <Tag className="w-5 h-5" />
-                </button>
-                <input
-                  type="text"
-                  value={messageText}
-                  onChange={(e) => setMessageText(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && sendMessage()}
-                  placeholder="Tapez votre message..."
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                  disabled={selectedConversation.wa_contacts.opted_out || loading}
-                />
-                <button
-                  onClick={sendMessage}
-                  disabled={!messageText.trim() || selectedConversation.wa_contacts.opted_out || loading}
-                  className="px-6 py-2 bg-green-500 text-white rounded hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                >
-                  <Send className="w-5 h-5" />
-                  Envoyer
-                </button>
-              </div>
-              {selectedConversation.wa_contacts.opted_out && (
-                <p className="text-sm text-red-600 mt-2">
-                  ⚠️ Ce contact s'est désabonné. Vous ne pouvez plus lui envoyer de messages.
-                </p>
+                  <div className="flex items-end gap-2">
+                    <button
+                      onClick={() => { setShowTemplates(!showTemplates); if (showTemplates) { setSelectedTemplate(null); setTemplateVars({}); } }}
+                      title="Templates"
+                      className={`p-2 rounded-lg transition-colors flex-shrink-0 ${
+                        showTemplates ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                      }`}
+                    >
+                      <Tag size={18} />
+                    </button>
+                    <div className="flex-1 relative">
+                      <textarea
+                        ref={textareaRef}
+                        value={messageText}
+                        onChange={handleTextareaChange}
+                        onKeyDown={handleKeyDown}
+                        placeholder="Tapez votre message… (Entrée pour envoyer)"
+                        rows={1}
+                        className="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-400 transition-colors"
+                        style={{ minHeight: '42px', maxHeight: '120px' }}
+                        disabled={loading}
+                      />
+                      {messageText.length > 0 && (
+                        <span className="absolute right-3 bottom-2 text-[10px] text-gray-400">
+                          {messageText.length}/4096
+                        </span>
+                      )}
+                    </div>
+                    <button
+                      onClick={sendMessage}
+                      disabled={!messageText.trim() || loading}
+                      className="flex items-center gap-2 px-4 py-2.5 bg-green-500 text-white rounded-xl hover:bg-green-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex-shrink-0 text-sm font-medium"
+                    >
+                      {loading ? (
+                        <RefreshCw size={16} className="animate-spin" />
+                      ) : (
+                        <Send size={16} />
+                      )}
+                      Envoyer
+                    </button>
+                  </div>
+                  <p className="text-[11px] text-gray-400 mt-1.5 px-1">
+                    Shift+Entrée pour saut de ligne · Les messages sont soumis aux politiques WhatsApp Business
+                  </p>
+                </>
               )}
             </div>
-          </>
+          </div>
         ) : (
-          <div className="flex-1 flex items-center justify-center text-gray-400">
+          <div className="flex-1 flex items-center justify-center">
             <div className="text-center">
-              <MessageSquare className="w-16 h-16 mx-auto mb-4 opacity-50" />
-              <p className="text-lg">Sélectionnez une conversation pour commencer</p>
+              <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <MessageSquare size={36} className="text-gray-300" />
+              </div>
+              <h3 className="text-gray-500 font-medium">Sélectionnez une conversation</h3>
+              <p className="text-sm text-gray-400 mt-1">Choisissez une conversation dans la liste à gauche</p>
             </div>
           </div>
         )}
       </div>
-        </div>
-      </div>
+    </div>
+  );
+}
+
+interface StatPillProps {
+  label: string;
+  value: number;
+  color: 'green' | 'amber' | 'blue' | 'gray';
+}
+
+function StatPill({ label, value, color }: StatPillProps) {
+  const colors = {
+    green: 'bg-green-50 text-green-700 border-green-200',
+    amber: 'bg-amber-50 text-amber-700 border-amber-200',
+    blue: 'bg-blue-50 text-blue-700 border-blue-200',
+    gray: 'bg-gray-50 text-gray-600 border-gray-200',
+  };
+  return (
+    <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium ${colors[color]}`}>
+      <span className="text-sm font-bold">{value}</span>
+      <span className="opacity-75">{label}</span>
     </div>
   );
 }

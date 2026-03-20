@@ -117,6 +117,8 @@ const SocialMediaManager = lazy(() => import('./backoffice/SocialMediaManager'))
 const AutomationDashboard = lazy(() => import('./backoffice/AutomationDashboard'));
 const AnalyticsDashboard = lazy(() => import('./backoffice/AnalyticsDashboard'));
 const WhatsAppManager = lazy(() => import('./backoffice/WhatsAppManager'));
+const WhatsAppLayout = lazy(() => import('./backoffice/WhatsAppLayout'));
+const WhatsAppSettings = lazy(() => import('./backoffice/WhatsAppSettings'));
 const EmailMarketingHub = lazy(() => import('./backoffice/EmailMarketingHub'));
 const DuplicateLeadsManager = lazy(() => import('./backoffice/DuplicateLeadsManager'));
 const TestAutomations = lazy(() => import('./backoffice/TestAutomations'));
@@ -719,7 +721,23 @@ export const router = createBrowserRouter([
   },
   {
     path: '/backoffice/whatsapp',
-    element: <WhatsAppManager />,
+    element: <CRMLayout />,
+    children: [
+      {
+        element: <WhatsAppLayout />,
+        children: [{ index: true, element: <WhatsAppManager /> }],
+      },
+    ],
+  },
+  {
+    path: '/backoffice/whatsapp-settings',
+    element: <CRMLayout />,
+    children: [
+      {
+        element: <WhatsAppLayout />,
+        children: [{ index: true, element: <WhatsAppSettings /> }],
+      },
+    ],
   },
   {
     path: '/backoffice/email-marketing',
