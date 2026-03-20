@@ -5,7 +5,7 @@ import {
   Target, Sparkles, Search, RefreshCw, ArrowUp, ArrowDown,
   Minus, Globe, FileText, Link, AlertTriangle, Play,
   BarChart3, ChevronRight, Eye, MousePointer, Award, Layers,
-  CalendarClock, Activity, XCircle
+  CalendarClock, Activity, XCircle, Database, Signal, Users
 } from 'lucide-react';
 
 interface AutonomousStats {
@@ -82,6 +82,30 @@ interface DominatorStats {
   pending_tasks: number;
 }
 
+interface GA4Signal {
+  page_path: string;
+  full_url: string;
+  sessions: number;
+  engaged_sessions: number;
+  bounce_rate: number;
+  avg_session_duration: number;
+  engagement_rate: number;
+  behavioral_score: number;
+  semantic_score: number | null;
+  improvement_hints: string[] | null;
+  gsc_position: number | null;
+  gsc_impressions: number | null;
+  combined_priority: number | null;
+}
+
+interface GA4Summary {
+  total_pages: number;
+  avg_behavioral_score: number;
+  avg_semantic_score: number;
+  pages_needing_optimization: number;
+  high_traffic_low_engagement: number;
+}
+
 const TARGET_KEYWORDS = [
   'assurance taxi', 'assurance taxi prix', 'meilleure assurance taxi',
   'assurance taxi pas cher', 'devis assurance taxi', 'assurance taxi vtc',
@@ -112,7 +136,7 @@ const CRON_DEFINITIONS = [
   { name: 'gsc-weekly-deep-audit', label: 'Audit hebdomadaire', schedule: 'Dimanche 2h00', icon: '🏆', color: 'red' },
 ];
 
-type TabId = 'overview' | 'keywords' | 'tasks' | 'issues' | 'patterns' | 'crons';
+type TabId = 'overview' | 'keywords' | 'tasks' | 'issues' | 'patterns' | 'crons' | 'ga4';
 
 export default function GSCAutonomousDashboard() {
   const [tab, setTab] = useState<TabId>('overview');
@@ -123,6 +147,10 @@ export default function GSCAutonomousDashboard() {
   const [keywords, setKeywords] = useState<KeywordRanking[]>([]);
   const [issues, setIssues] = useState<IndexationIssue[]>([]);
   const [cronLogs, setCronLogs] = useState<CronLog[]>([]);
+  const [ga4Signals, setGa4Signals] = useState<GA4Signal[]>([]);
+  const [ga4Summary, setGa4Summary] = useState<GA4Summary | null>(null);
+  const [ga4Syncing, setGa4Syncing] = useState(false);
+  const [nlpScoring, setNlpScoring] = useState(false);
   const [loading, setLoading] = useState(true);
   const [executing, setExecuting] = useState(false);
   const [executingTask, setExecutingTask] = useState<string | null>(null);
@@ -136,7 +164,7 @@ export default function GSCAutonomousDashboard() {
 
   const loadData = useCallback(async () => {
     try {
-      const [statsRes, domStatsRes, tasksRes, patternsRes, kwRes, issuesRes, syncRes, cronRes] = await Promise.all([
+      const [statsRes, domStatsRes, tasksRes, patternsRes, kwRes, issuesRes, syncRes, cronRes, ga4SignalsRes, ga4SummaryRes] = await Promise.all([
         supabase.rpc('get_autonomous_system_stats').maybeSingle(),
         supabase.rpc('get_seo_dominator_stats').maybeSingle(),
         supabase.from('gsc_autonomous_tasks').select('*').order('priority', { ascending: false }).order('created_at', { ascending: false }).limit(30),
@@ -145,6 +173,8 @@ export default function GSCAutonomousDashboard() {
         supabase.from('gsc_indexation_issues').select('*').is('resolved_at', null).order('priority', { ascending: false }).limit(30),
         supabase.from('gsc_sync_history').select('synced_at').order('synced_at', { ascending: false }).limit(1).maybeSingle(),
         supabase.from('gsc_seo_cron_log').select('*').order('started_at', { ascending: false }).limit(50),
+        supabase.rpc('get_ga4_seo_combined_signals', { limit_rows: 50 }),
+        supabase.rpc('get_ga4_summary_stats').maybeSingle(),
       ]);
 
       if (statsRes.data) setStats(statsRes.data);
@@ -155,6 +185,8 @@ export default function GSCAutonomousDashboard() {
       setIssues(issuesRes.data || []);
       setCronLogs(cronRes.data || []);
       if (syncRes.data) setLastSync((syncRes.data as { synced_at: string }).synced_at);
+      setGa4Signals(ga4SignalsRes.data || []);
+      if (ga4SummaryRes.data) setGa4Summary(ga4SummaryRes.data as GA4Summary);
     } catch (err) {
       console.error('GSC load error:', err);
     } finally {
@@ -223,6 +255,34 @@ export default function GSCAutonomousDashboard() {
     }
   };
 
+  const syncGA4 = async () => {
+    setGa4Syncing(true);
+    try {
+      const { error } = await supabase.functions.invoke('sync-ga4-signals', { body: { days: 30 } });
+      if (error) throw error;
+      showToast('Synchronisation GA4 lancée !');
+      await loadData();
+    } catch {
+      showToast('Erreur GA4 — Vérifiez GA4_PROPERTY_ID et GOOGLE_SERVICE_ACCOUNT_*');
+    } finally {
+      setGa4Syncing(false);
+    }
+  };
+
+  const scoreNLP = async () => {
+    setNlpScoring(true);
+    try {
+      const { error } = await supabase.functions.invoke('score-content-nlp', { body: { max_pages: 20 } });
+      if (error) throw error;
+      showToast('Scoring NLP des contenus lancé — 20 pages analysées !');
+      await loadData();
+    } catch {
+      showToast('Erreur NLP — Vérifiez la clé GOOGLE_NLP_API_KEY');
+    } finally {
+      setNlpScoring(false);
+    }
+  };
+
   const getStatusIcon = (status: string) => {
     if (status === 'completed') return <CheckCircle size={14} className="text-green-500" />;
     if (status === 'processing') return <RefreshCw size={14} className="text-blue-500 animate-spin" />;
@@ -272,6 +332,7 @@ export default function GSCAutonomousDashboard() {
     { id: 'issues', label: 'Indexation', icon: <AlertTriangle size={15} />, badge: issues.length },
     { id: 'patterns', label: 'Apprentissage', icon: <Brain size={15} /> },
     { id: 'crons', label: 'Crons IA', icon: <CalendarClock size={15} />, badge: activeRunningCrons },
+    { id: 'ga4', label: 'GA4 + NLP', icon: <Signal size={15} />, badge: ga4Summary?.pages_needing_optimization ?? undefined },
   ];
 
   if (loading) {
@@ -797,6 +858,147 @@ export default function GSCAutonomousDashboard() {
                     </div>
                   )}
                 </div>
+              </div>
+            )}
+            {tab === 'ga4' && (
+              <div className="space-y-6">
+                {/* Header + Actions */}
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                  <div>
+                    <h2 className="text-base font-semibold text-gray-800 flex items-center gap-2">
+                      <Signal size={16} className="text-blue-600" />
+                      Signaux comportementaux GA4 + Scoring NLP
+                    </h2>
+                    <p className="text-xs text-gray-400 mt-0.5">
+                      Engagement utilisateur (GA4) croisé avec la qualité sémantique (Natural Language API)
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={scoreNLP}
+                      disabled={nlpScoring}
+                      className="flex items-center gap-2 px-3 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-50 text-sm font-medium shadow-sm"
+                    >
+                      <Brain size={14} className={nlpScoring ? 'animate-pulse text-teal-600' : ''} />
+                      {nlpScoring ? 'Analyse en cours...' : 'Scorer NLP'}
+                    </button>
+                    <button
+                      onClick={syncGA4}
+                      disabled={ga4Syncing}
+                      className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 text-sm font-semibold shadow-sm"
+                    >
+                      <Database size={14} className={ga4Syncing ? 'animate-pulse' : ''} />
+                      {ga4Syncing ? 'Sync en cours...' : 'Syncer GA4'}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Summary KPIs */}
+                {ga4Summary ? (
+                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                    {[
+                      { label: 'Pages analysées', value: ga4Summary.total_pages, color: 'text-blue-700', bg: 'bg-blue-50', icon: <Globe size={16} /> },
+                      { label: 'Score engagement moy.', value: `${ga4Summary.avg_behavioral_score?.toFixed(0) ?? '—'}/100`, color: 'text-teal-700', bg: 'bg-teal-50', icon: <Activity size={16} /> },
+                      { label: 'Score NLP moyen', value: `${ga4Summary.avg_semantic_score?.toFixed(0) ?? '—'}/100`, color: 'text-amber-700', bg: 'bg-amber-50', icon: <Brain size={16} /> },
+                      { label: 'Pages à optimiser', value: ga4Summary.pages_needing_optimization, color: 'text-red-700', bg: 'bg-red-50', icon: <AlertTriangle size={16} /> },
+                      { label: 'Trafic ↑ engagement ↓', value: ga4Summary.high_traffic_low_engagement, color: 'text-orange-700', bg: 'bg-orange-50', icon: <Users size={16} /> },
+                    ].map((kpi) => (
+                      <div key={kpi.label} className="bg-white border border-gray-200 rounded-xl p-4 flex flex-col gap-2">
+                        <div className={`${kpi.bg} ${kpi.color} p-1.5 rounded-lg w-fit`}>{kpi.icon}</div>
+                        <p className="text-xs text-gray-500 leading-tight">{kpi.label}</p>
+                        <p className={`text-xl font-bold ${kpi.color}`}>{kpi.value}</p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="bg-blue-50 border border-blue-200 rounded-xl p-5 text-center">
+                    <Database size={32} className="mx-auto mb-2 text-blue-400 opacity-60" />
+                    <p className="text-sm text-blue-700 font-medium">Aucune donnée GA4 synchronisée</p>
+                    <p className="text-xs text-blue-500 mt-1">
+                      Cliquez "Syncer GA4" après avoir configuré GA4_PROPERTY_ID et GOOGLE_SERVICE_ACCOUNT_* dans les secrets Supabase
+                    </p>
+                  </div>
+                )}
+
+                {/* Combined signals table */}
+                {ga4Signals.length > 0 ? (
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                      <BarChart3 size={14} className="text-gray-400" />
+                      Pages classées par priorité d'optimisation combinée
+                    </h3>
+                    <div className="overflow-x-auto rounded-xl border border-gray-200">
+                      <table className="w-full text-xs">
+                        <thead>
+                          <tr className="text-left text-gray-500 bg-gray-50 border-b border-gray-200">
+                            <th className="px-4 py-3 font-medium">Page</th>
+                            <th className="px-3 py-3 font-medium text-center">Pos. GSC</th>
+                            <th className="px-3 py-3 font-medium text-center">Engagement</th>
+                            <th className="px-3 py-3 font-medium text-center">NLP</th>
+                            <th className="px-3 py-3 font-medium text-right">Sessions</th>
+                            <th className="px-3 py-3 font-medium text-right">Taux rebond</th>
+                            <th className="px-3 py-3 font-medium text-center">Priorité</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100">
+                          {ga4Signals.map((row, i) => {
+                            const engColor = row.behavioral_score >= 70 ? 'text-green-700 bg-green-50' : row.behavioral_score >= 50 ? 'text-amber-700 bg-amber-50' : 'text-red-700 bg-red-50';
+                            const nlpColor = !row.semantic_score ? 'text-gray-400 bg-gray-50' : row.semantic_score >= 70 ? 'text-green-700 bg-green-50' : row.semantic_score >= 50 ? 'text-amber-700 bg-amber-50' : 'text-red-700 bg-red-50';
+                            const priorityColor = (row.combined_priority ?? 0) >= 70 ? 'bg-red-100 text-red-800 border-red-200' : (row.combined_priority ?? 0) >= 40 ? 'bg-amber-100 text-amber-800 border-amber-200' : 'bg-gray-100 text-gray-600 border-gray-200';
+                            return (
+                              <tr key={i} className="hover:bg-gray-50 transition-colors">
+                                <td className="px-4 py-2.5 max-w-[200px]">
+                                  <p className="font-medium text-gray-800 truncate">{row.page_path}</p>
+                                  {row.improvement_hints && row.improvement_hints.length > 0 && (
+                                    <p className="text-gray-400 truncate mt-0.5">{row.improvement_hints[0]}</p>
+                                  )}
+                                </td>
+                                <td className="px-3 py-2.5 text-center">
+                                  {row.gsc_position ? (
+                                    <span className={`font-bold px-1.5 py-0.5 rounded border text-xs ${getPositionColor(row.gsc_position)}`}>
+                                      #{row.gsc_position.toFixed(0)}
+                                    </span>
+                                  ) : <span className="text-gray-300">—</span>}
+                                </td>
+                                <td className="px-3 py-2.5 text-center">
+                                  <span className={`font-bold px-2 py-0.5 rounded-full text-xs ${engColor}`}>
+                                    {row.behavioral_score}/100
+                                  </span>
+                                </td>
+                                <td className="px-3 py-2.5 text-center">
+                                  <span className={`font-bold px-2 py-0.5 rounded-full text-xs ${nlpColor}`}>
+                                    {row.semantic_score != null ? `${row.semantic_score}/100` : '—'}
+                                  </span>
+                                </td>
+                                <td className="px-3 py-2.5 text-right text-gray-700 font-medium">
+                                  {row.sessions.toLocaleString('fr')}
+                                </td>
+                                <td className="px-3 py-2.5 text-right">
+                                  <span className={row.bounce_rate > 0.6 ? 'text-red-600 font-semibold' : row.bounce_rate > 0.4 ? 'text-amber-600' : 'text-green-600'}>
+                                    {(row.bounce_rate * 100).toFixed(0)}%
+                                  </span>
+                                </td>
+                                <td className="px-3 py-2.5 text-center">
+                                  <span className={`text-xs font-bold px-2 py-0.5 rounded border ${priorityColor}`}>
+                                    {row.combined_priority?.toFixed(0) ?? '—'}
+                                  </span>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                    <p className="text-xs text-gray-400 mt-2">
+                      Priorité = position GSC (40pts) + score engagement GA4 inversé (30pts) + score NLP inversé (30pts). Plus le score est élevé, plus la page a besoin d'optimisation.
+                    </p>
+                  </div>
+                ) : ga4Summary && (
+                  <div className="text-center py-10 text-gray-400">
+                    <Activity size={36} className="mx-auto mb-2 opacity-30" />
+                    <p>Lancez "Syncer GA4" puis "Scorer NLP" pour peupler ce tableau</p>
+                  </div>
+                )}
               </div>
             )}
           </div>

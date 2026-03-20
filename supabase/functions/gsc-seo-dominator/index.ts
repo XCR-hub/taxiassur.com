@@ -233,7 +233,6 @@ Deno.serve(async (req: Request) => {
 async function detectKeywordOpportunities(supabase: any): Promise<number> {
   let created = 0;
   try {
-    // Get performance data for target keywords
     const { data: kwData } = await supabase
       .from("gsc_queries")
       .select("query, position, impressions, ctr, page_url")
@@ -242,14 +241,56 @@ async function detectKeywordOpportunities(supabase: any): Promise<number> {
 
     if (!kwData) return 0;
 
+    // Pre-fetch GA4 behavioral scores and NLP semantic scores for all relevant URLs
+    const pageUrls = [...new Set(kwData.map((k: any) => k.page_url).filter(Boolean))] as string[];
+
+    const [ga4Res, nlpRes] = await Promise.all([
+      pageUrls.length > 0
+        ? supabase
+            .from("ga4_page_signals")
+            .select("full_url, behavioral_score, engagement_rate")
+            .in("full_url", pageUrls.slice(0, 30))
+            .order("synced_at", { ascending: false })
+            .limit(30)
+        : Promise.resolve({ data: [] }),
+      pageUrls.length > 0
+        ? supabase
+            .from("nlp_content_scores")
+            .select("page_url, semantic_score")
+            .in("page_url", pageUrls.slice(0, 30))
+            .order("analyzed_at", { ascending: false })
+            .limit(30)
+        : Promise.resolve({ data: [] }),
+    ]);
+
+    // Build maps: URL → score (keep most recent per URL)
+    const ga4Map = new Map<string, number>();
+    for (const g of (ga4Res.data || [])) {
+      if (!ga4Map.has(g.full_url)) ga4Map.set(g.full_url, g.behavioral_score);
+    }
+    const nlpMap = new Map<string, number>();
+    for (const n of (nlpRes.data || [])) {
+      if (!nlpMap.has(n.page_url)) nlpMap.set(n.page_url, n.semantic_score);
+    }
+
+    console.log(`[PHASE 1] GA4 signals: ${ga4Map.size} pages, NLP scores: ${nlpMap.size} pages`);
+
     for (const kw of kwData) {
       if (!kw.page_url) continue;
 
+      const behavioralScore = ga4Map.has(kw.page_url) ? ga4Map.get(kw.page_url)! : null;
+      const semanticScore = nlpMap.has(kw.page_url) ? nlpMap.get(kw.page_url)! : null;
+
+      // GA4 boost: poor engagement despite GSC visibility = urgent
+      const ga4Boost = behavioralScore !== null && behavioralScore < 50 ? 2 : 0;
+      // NLP boost: poor semantic content = content needs enrichment
+      const nlpBoost = semanticScore !== null && semanticScore < 60 ? 1 : 0;
+
       // Pages in positions 2-10 — push them to #1
       if (kw.position > 1.5 && kw.position <= 10 && kw.impressions >= 20) {
-        const priority = Math.round(10 - kw.position + (kw.impressions / 100));
+        const basePriority = Math.round(10 - kw.position + (kw.impressions / 100));
+        const priority = Math.min(10, basePriority + ga4Boost + nlpBoost);
 
-        // Check if task already exists for this URL + type
         const { data: existing } = await supabase
           .from("gsc_autonomous_tasks")
           .select("id")
@@ -263,12 +304,14 @@ async function detectKeywordOpportunities(supabase: any): Promise<number> {
             task_type: "enrich_content",
             target_url: kw.page_url,
             status: "pending",
-            priority: Math.min(priority, 10),
+            priority,
             current_metrics: {
               position: kw.position,
               impressions: kw.impressions,
               ctr: kw.ctr,
               keyword: kw.query,
+              behavioral_score: behavioralScore,
+              semantic_score: semanticScore,
             },
             target_metrics: { position: 1, ctr: 0.15 },
           });
@@ -291,24 +334,59 @@ async function detectKeywordOpportunities(supabase: any): Promise<number> {
             task_type: "improve_ctr",
             target_url: kw.page_url,
             status: "pending",
-            priority: 8,
+            priority: Math.min(10, 8 + ga4Boost),
             current_metrics: {
               position: kw.position,
               impressions: kw.impressions,
               ctr: kw.ctr,
               keyword: kw.query,
+              behavioral_score: behavioralScore,
             },
             target_metrics: { ctr: 0.12 },
           });
           created++;
         }
       }
+
+      // NLP-triggered: poor semantic score on a visible page → urgent content enrichment
+      if (
+        semanticScore !== null && semanticScore < 55 &&
+        kw.impressions >= 50 && kw.position <= 20 &&
+        !(kw.position > 1.5 && kw.position <= 10 && kw.impressions >= 20)
+      ) {
+        const { data: existing } = await supabase
+          .from("gsc_autonomous_tasks")
+          .select("id")
+          .eq("target_url", kw.page_url)
+          .eq("task_type", "enrich_content")
+          .eq("status", "pending")
+          .maybeSingle();
+
+        if (!existing) {
+          await supabase.from("gsc_autonomous_tasks").insert({
+            task_type: "enrich_content",
+            target_url: kw.page_url,
+            status: "pending",
+            priority: Math.min(10, 7 + ga4Boost),
+            current_metrics: {
+              position: kw.position,
+              impressions: kw.impressions,
+              ctr: kw.ctr,
+              keyword: kw.query,
+              semantic_score: semanticScore,
+              behavioral_score: behavioralScore,
+              source: "nlp_triggered",
+            },
+            target_metrics: { semantic_score: 75, position: 1 },
+          });
+          created++;
+        }
+      }
     }
 
-    // Also detect pages NOT ranking at all for target keywords
-    // (no data = need new content)
-    const rankedUrls = new Set(kwData.map((k: any) => k.query));
-    const missingKeywords = TARGET_KEYWORDS.filter((kw) => !rankedUrls.has(kw));
+    // Pages NOT ranking at all for target keywords
+    const rankedQueries = new Set(kwData.map((k: any) => k.query));
+    const missingKeywords = TARGET_KEYWORDS.filter((kw) => !rankedQueries.has(kw));
 
     for (const missingKw of missingKeywords.slice(0, 3)) {
       const { data: existing } = await supabase
@@ -331,7 +409,6 @@ async function detectKeywordOpportunities(supabase: any): Promise<number> {
       }
     }
 
-    // Run the existing detection function too
     await supabase.rpc("auto_create_optimization_tasks").catch(() => null);
   } catch (err) {
     console.error("[detectKeywordOpportunities]", err);
