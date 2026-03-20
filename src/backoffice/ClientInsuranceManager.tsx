@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
-import { ArrowLeft, User, FileText, AlertCircle, DollarSign, CheckSquare, Clock, Shield, Car, Building2, Phone, Mail, MapPin, Calendar, CreditCard as Edit, Save, X, Plus, Download, Upload, Trash2, Eye, ChevronDown, ChevronUp, Activity, Bell, TrendingUp, AlertTriangle, CheckCircle2, Loader2, RefreshCw, FolderOpen } from 'lucide-react';
+import { ArrowLeft, User, FileText, AlertCircle, DollarSign, CheckSquare, Clock, Phone, Mail, MapPin, CreditCard as Edit, Save, X, Plus, Trash2, Eye, Activity, Bell, AlertTriangle, CheckCircle2, Loader2, RefreshCw, FolderOpen, Link, Copy, Check, MessageSquare, Send, Calendar } from 'lucide-react';
 import DocumentsViewer from './DocumentsViewer';
 
 interface ClientData {
@@ -79,6 +79,56 @@ interface Alert {
   trigger_date: string;
   dismissed: boolean;
 }
+
+interface Payment {
+  id: string;
+  amount: number;
+  currency: string;
+  status: string;
+  payment_date?: string;
+  created_at: string;
+  reference?: string;
+  description?: string;
+  payment_method?: string;
+}
+
+interface Interaction {
+  id: string;
+  type: string;
+  direction?: string;
+  subject?: string;
+  content?: string;
+  created_at: string;
+  metadata?: any;
+}
+
+interface HistoryEvent {
+  id: string;
+  kind: 'interaction' | 'notification';
+  type: string;
+  title?: string;
+  message?: string;
+  subject?: string;
+  content?: string;
+  direction?: string;
+  created_at: string;
+}
+
+interface TaskForm {
+  title: string;
+  description: string;
+  task_type: string;
+  priority: string;
+  due_date: string;
+}
+
+const defaultTaskForm: TaskForm = {
+  title: '',
+  description: '',
+  task_type: 'follow_up',
+  priority: 'medium',
+  due_date: ''
+};
 
 type TabType = 'profile' | 'contracts' | 'documents' | 'claims' | 'payments' | 'tasks' | 'history';
 
@@ -163,6 +213,12 @@ export default function ClientInsuranceManager() {
   const [claimForm, setClaimForm] = useState<ClaimForm>(defaultClaimForm);
   const [savingClaim, setSavingClaim] = useState(false);
   const [claimError, setClaimError] = useState<string | null>(null);
+  const [payments, setPayments] = useState<Payment[]>([]);
+  const [history, setHistory] = useState<HistoryEvent[]>([]);
+  const [showTaskForm, setShowTaskForm] = useState(false);
+  const [taskForm, setTaskForm] = useState<TaskForm>(defaultTaskForm);
+  const [savingTask, setSavingTask] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
 
   useEffect(() => {
     if (leadId) {
@@ -180,7 +236,9 @@ export default function ClientInsuranceManager() {
         loadCrmDocs(),
         loadClaims(),
         loadTasks(),
-        loadAlerts()
+        loadAlerts(),
+        loadPayments(),
+        loadHistory()
       ]);
     } catch (error) {
       console.error('Error loading data:', error);
@@ -274,6 +332,98 @@ export default function ClientInsuranceManager() {
     if (!error) {
       setAlerts(data || []);
     }
+  }
+
+  async function loadPayments() {
+    const { data } = await supabase
+      .from('monetico_payments')
+      .select('id, amount, currency, status, payment_date, created_at, reference, description, payment_method')
+      .eq('lead_id', leadId)
+      .order('created_at', { ascending: false });
+    setPayments(data || []);
+  }
+
+  async function loadHistory() {
+    const [interactionsRes, notificationsRes] = await Promise.all([
+      supabase
+        .from('crm_interactions')
+        .select('id, type, direction, subject, content, created_at, metadata')
+        .eq('lead_id', leadId)
+        .order('created_at', { ascending: false })
+        .limit(50),
+      supabase
+        .from('crm_event_notifications')
+        .select('id, event_type, title, message, created_at')
+        .eq('lead_id', leadId)
+        .order('created_at', { ascending: false })
+        .limit(50)
+    ]);
+
+    const events: HistoryEvent[] = [
+      ...(interactionsRes.data || []).map((i: Interaction) => ({
+        id: i.id,
+        kind: 'interaction' as const,
+        type: i.type,
+        subject: i.subject,
+        content: i.content,
+        direction: i.direction,
+        created_at: i.created_at
+      })),
+      ...(notificationsRes.data || []).map((n: any) => ({
+        id: n.id,
+        kind: 'notification' as const,
+        type: n.event_type,
+        title: n.title,
+        message: n.message,
+        created_at: n.created_at
+      }))
+    ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+    setHistory(events);
+  }
+
+  async function createTask() {
+    if (!taskForm.title.trim()) return;
+    setSavingTask(true);
+    try {
+      const { error } = await supabase.from('client_tasks').insert({
+        lead_id: leadId,
+        title: taskForm.title.trim(),
+        description: taskForm.description.trim() || null,
+        task_type: taskForm.task_type,
+        priority: taskForm.priority,
+        due_date: taskForm.due_date || null,
+        status: 'pending'
+      });
+      if (error) throw error;
+      setTaskForm(defaultTaskForm);
+      setShowTaskForm(false);
+      await loadTasks();
+    } catch (err: any) {
+      alert('Erreur: ' + err.message);
+    } finally {
+      setSavingTask(false);
+    }
+  }
+
+  async function completeTask(taskId: string) {
+    await supabase.from('client_tasks').update({ status: 'completed' }).eq('id', taskId);
+    await loadTasks();
+  }
+
+  async function deleteTask(taskId: string) {
+    if (!confirm('Supprimer cette tâche ?')) return;
+    await supabase.from('client_tasks').delete().eq('id', taskId);
+    await loadTasks();
+  }
+
+  function copyPortalLink() {
+    const token = client?.access_token || client?.id;
+    const url = `${window.location.origin}/espace-client/${token}`;
+    navigator.clipboard.writeText(url).then(() => {
+      setCopiedLink(true);
+      setTimeout(() => setCopiedLink(false), 2000);
+    });
   }
 
   async function saveTaxiProfile() {
@@ -593,13 +743,35 @@ export default function ClientInsuranceManager() {
                 </span>
               </div>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
               <button
                 onClick={loadAllData}
                 className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
                 title="Actualiser"
               >
                 <RefreshCw size={20} className="text-gray-600" />
+              </button>
+              <a
+                href={`mailto:${client.email}`}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-600"
+                title="Envoyer un email"
+              >
+                <Mail size={20} />
+              </a>
+              <a
+                href={`tel:${client.phone}`}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-600"
+                title="Appeler"
+              >
+                <Phone size={20} />
+              </a>
+              <button
+                onClick={copyPortalLink}
+                className={`flex items-center gap-2 px-3 py-2 border rounded-lg transition-colors font-medium text-sm ${copiedLink ? 'bg-green-50 border-green-300 text-green-700' : 'bg-white border-gray-200 hover:bg-gray-50 text-gray-700'}`}
+                title="Copier le lien espace client"
+              >
+                {copiedLink ? <Check size={16} /> : <Copy size={16} />}
+                {copiedLink ? 'Copié !' : 'Lien client'}
               </button>
               <button
                 onClick={() => window.open(`/espace-client/${client.access_token || client.id}`, '_blank')}
@@ -1488,11 +1660,89 @@ export default function ClientInsuranceManager() {
 
         {activeTab === 'payments' && (
           <div>
-            <h2 className="text-xl font-bold text-gray-900 mb-6">Paiements et échéances</h2>
-            <div className="text-center py-12 text-gray-500">
-              <DollarSign className="mx-auto mb-3" size={48} />
-              <p>Aucun échéancier configuré</p>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-gray-900">Paiements</h2>
+              {payments.length > 0 && (
+                <div className="flex items-center gap-3 text-sm">
+                  <span className="text-gray-500">Total encaissé :</span>
+                  <span className="font-bold text-green-700 text-lg">
+                    {payments.filter(p => p.status === 'success' || p.status === 'completed').reduce((s, p) => s + (p.amount || 0), 0).toFixed(2)} €
+                  </span>
+                </div>
+              )}
             </div>
+
+            {contracts.length > 0 && (
+              <div className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                {contracts.filter(c => c.status === 'active').map(c => {
+                  const daysToRenewal = Math.ceil((new Date(c.renewal_date).getTime() - Date.now()) / 86400000);
+                  return (
+                    <div key={c.id} className="bg-gradient-to-br from-yellow-50 to-amber-50 border border-yellow-200 rounded-xl p-4">
+                      <div className="flex items-start justify-between mb-3">
+                        <div>
+                          <p className="font-semibold text-gray-900 text-sm">{c.insurer_name}</p>
+                          <p className="text-xs text-gray-500">{getContractTypeLabel(c.contract_type)}{c.contract_number ? ` · N° ${c.contract_number}` : ''}</p>
+                        </div>
+                        <span className="text-xl font-bold text-yellow-700">{c.premium_ttc?.toFixed(2)} €</span>
+                      </div>
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-gray-600 capitalize">{c.payment_frequency}</span>
+                        <span className={`font-semibold ${daysToRenewal <= 30 ? 'text-red-600' : 'text-gray-600'}`}>
+                          Renouvellement : {new Date(c.renewal_date).toLocaleDateString('fr-FR')}
+                          {daysToRenewal <= 30 && ` (J-${daysToRenewal})`}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {payments.length === 0 ? (
+              <div className="text-center py-16 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200">
+                <DollarSign className="mx-auto mb-3 text-gray-300" size={56} />
+                <p className="text-gray-700 font-semibold text-lg mb-1">Aucun paiement enregistré</p>
+                <p className="text-gray-500 text-sm">Les paiements Monetico apparaîtront ici automatiquement</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {payments.map(payment => {
+                  const isPaid = payment.status === 'success' || payment.status === 'completed';
+                  const isPending = payment.status === 'pending';
+                  const isFailed = payment.status === 'failed' || payment.status === 'error';
+                  return (
+                    <div key={payment.id} className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-xl hover:border-yellow-300 hover:shadow-sm transition-all">
+                      <div className="flex items-center gap-4">
+                        <div className={`p-2.5 rounded-lg ${isPaid ? 'bg-green-50' : isPending ? 'bg-yellow-50' : 'bg-red-50'}`}>
+                          <DollarSign size={20} className={isPaid ? 'text-green-600' : isPending ? 'text-yellow-600' : 'text-red-500'} />
+                        </div>
+                        <div>
+                          <p className="font-semibold text-gray-900 text-sm">
+                            {payment.description || payment.reference || `Paiement #${payment.id.slice(-8)}`}
+                          </p>
+                          <p className="text-xs text-gray-500 mt-0.5">
+                            {new Date(payment.payment_date || payment.created_at).toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric' })}
+                            {payment.payment_method && ` · ${payment.payment_method}`}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <span className={`px-2.5 py-1 rounded-full text-xs font-semibold border ${
+                          isPaid ? 'bg-green-50 text-green-700 border-green-200' :
+                          isPending ? 'bg-yellow-50 text-yellow-700 border-yellow-200' :
+                          'bg-red-50 text-red-700 border-red-200'
+                        }`}>
+                          {isPaid ? 'Encaissé' : isPending ? 'En attente' : 'Échoué'}
+                        </span>
+                        <span className={`text-lg font-bold ${isPaid ? 'text-green-700' : isFailed ? 'text-red-500 line-through' : 'text-gray-900'}`}>
+                          {payment.amount?.toFixed(2)} {payment.currency || '€'}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         )}
 
@@ -1500,53 +1750,161 @@ export default function ClientInsuranceManager() {
           <div>
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-bold text-gray-900">Tâches à faire</h2>
-              <button className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-700 hover:to-yellow-600 text-black rounded-lg transition-colors font-semibold">
+              <button
+                onClick={() => setShowTaskForm(v => !v)}
+                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-700 hover:to-yellow-600 text-black rounded-lg transition-colors font-semibold"
+              >
                 <Plus size={18} />
                 Nouvelle tâche
               </button>
             </div>
 
-            {tasks.length === 0 ? (
-              <div className="text-center py-12 text-gray-500">
-                <CheckSquare className="mx-auto mb-3" size={48} />
-                <p>Aucune tâche en cours</p>
+            {showTaskForm && (
+              <div className="mb-6 bg-yellow-50 border border-yellow-200 rounded-xl p-5">
+                <h3 className="font-semibold text-gray-800 mb-4 text-sm">Nouvelle tâche</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <div className="md:col-span-2">
+                    <label className="block text-xs font-semibold text-gray-600 mb-1">Titre *</label>
+                    <input
+                      type="text"
+                      value={taskForm.title}
+                      onChange={e => setTaskForm({ ...taskForm, title: e.target.value })}
+                      placeholder="Ex: Relancer pour renouvellement, Envoyer attestation..."
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 text-sm bg-white"
+                      autoFocus
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-600 mb-1">Type</label>
+                    <select
+                      value={taskForm.task_type}
+                      onChange={e => setTaskForm({ ...taskForm, task_type: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 bg-white text-sm"
+                    >
+                      <option value="follow_up">Suivi</option>
+                      <option value="renewal">Renouvellement</option>
+                      <option value="document_request">Demande de document</option>
+                      <option value="payment">Paiement</option>
+                      <option value="call">Appel</option>
+                      <option value="other">Autre</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-600 mb-1">Priorité</label>
+                    <select
+                      value={taskForm.priority}
+                      onChange={e => setTaskForm({ ...taskForm, priority: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 bg-white text-sm"
+                    >
+                      <option value="low">Basse</option>
+                      <option value="medium">Normale</option>
+                      <option value="high">Haute</option>
+                      <option value="urgent">Urgente</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-600 mb-1">Date d'échéance</label>
+                    <input
+                      type="date"
+                      value={taskForm.due_date}
+                      onChange={e => setTaskForm({ ...taskForm, due_date: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 text-sm bg-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-600 mb-1">Note</label>
+                    <input
+                      type="text"
+                      value={taskForm.description}
+                      onChange={e => setTaskForm({ ...taskForm, description: e.target.value })}
+                      placeholder="Détails optionnels..."
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 text-sm bg-white"
+                    />
+                  </div>
+                </div>
+                <div className="flex items-center justify-end gap-2">
+                  <button
+                    onClick={() => { setShowTaskForm(false); setTaskForm(defaultTaskForm); }}
+                    className="px-4 py-2 text-gray-600 hover:bg-yellow-100 rounded-lg text-sm font-medium transition-colors"
+                  >
+                    Annuler
+                  </button>
+                  <button
+                    onClick={createTask}
+                    disabled={savingTask || !taskForm.title.trim()}
+                    className="flex items-center gap-2 px-4 py-2 bg-gray-900 hover:bg-gray-800 text-white rounded-lg text-sm font-semibold transition-colors disabled:opacity-50"
+                  >
+                    {savingTask ? <Loader2 size={15} className="animate-spin" /> : <Plus size={15} />}
+                    Créer la tâche
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {tasks.length === 0 && !showTaskForm ? (
+              <div className="text-center py-16 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200">
+                <CheckSquare className="mx-auto mb-3 text-gray-300" size={56} />
+                <p className="text-gray-700 font-semibold text-lg mb-1">Aucune tâche en cours</p>
+                <p className="text-gray-500 text-sm mb-4">Créez une tâche de suivi pour ce client</p>
+                <button
+                  onClick={() => setShowTaskForm(true)}
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-yellow-600 to-yellow-500 text-black rounded-lg text-sm font-semibold"
+                >
+                  <Plus size={16} />
+                  Nouvelle tâche
+                </button>
               </div>
             ) : (
               <div className="space-y-3">
-                {tasks.map(task => (
-                  <div
-                    key={task.id}
-                    className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:border-yellow-300 transition-colors"
-                  >
-                    <div className="flex items-center gap-4">
-                      <input
-                        type="checkbox"
-                        className="w-5 h-5 text-yellow-500 rounded border-gray-300 focus:ring-yellow-500"
-                      />
-                      <div>
-                        <h4 className="font-semibold text-gray-900">{task.title}</h4>
-                        {task.description && (
-                          <p className="text-sm text-gray-600">{task.description}</p>
+                {tasks.map(task => {
+                  const isOverdue = task.due_date && new Date(task.due_date) < new Date();
+                  return (
+                    <div
+                      key={task.id}
+                      className={`flex items-center justify-between p-4 border rounded-xl hover:shadow-sm transition-all ${isOverdue ? 'border-red-200 bg-red-50' : 'border-gray-200 bg-white hover:border-yellow-300'}`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <button
+                          onClick={() => completeTask(task.id)}
+                          className="w-5 h-5 rounded border-2 border-gray-300 hover:border-green-500 hover:bg-green-50 flex items-center justify-center transition-colors flex-shrink-0"
+                          title="Marquer comme terminée"
+                        >
+                          <Check size={12} className="text-transparent hover:text-green-500" />
+                        </button>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h4 className="font-semibold text-gray-900 text-sm">{task.title}</h4>
+                            <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                              task.priority === 'urgent' ? 'bg-red-100 text-red-700' :
+                              task.priority === 'high' ? 'bg-orange-100 text-orange-700' :
+                              task.priority === 'medium' ? 'bg-yellow-100 text-yellow-700' :
+                              'bg-gray-100 text-gray-600'
+                            }`}>
+                              {task.priority === 'urgent' ? 'Urgent' : task.priority === 'high' ? 'Haute' : task.priority === 'medium' ? 'Normale' : 'Basse'}
+                            </span>
+                          </div>
+                          {task.description && <p className="text-xs text-gray-500 mt-0.5">{task.description}</p>}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        {task.due_date && (
+                          <span className={`flex items-center gap-1 text-xs font-medium ${isOverdue ? 'text-red-600' : 'text-gray-500'}`}>
+                            <Calendar size={12} />
+                            {new Date(task.due_date).toLocaleDateString('fr-FR')}
+                            {isOverdue && ' (En retard)'}
+                          </span>
                         )}
+                        <button
+                          onClick={() => deleteTask(task.id)}
+                          className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                          title="Supprimer"
+                        >
+                          <Trash2 size={14} />
+                        </button>
                       </div>
                     </div>
-                    <div className="flex items-center gap-3">
-                      {task.due_date && (
-                        <span className="text-sm text-gray-600">
-                          {new Date(task.due_date).toLocaleDateString('fr-FR')}
-                        </span>
-                      )}
-                      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                        task.priority === 'urgent' ? 'bg-red-100 text-red-800' :
-                        task.priority === 'high' ? 'bg-orange-100 text-orange-800' :
-                        task.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                        'bg-green-100 text-green-800'
-                      }`}>
-                        {task.priority}
-                      </span>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
@@ -1561,11 +1919,78 @@ export default function ClientInsuranceManager() {
 
         {activeTab === 'history' && (
           <div>
-            <h2 className="text-xl font-bold text-gray-900 mb-6">Historique complet</h2>
-            <div className="text-center py-12 text-gray-500">
-              <Activity className="mx-auto mb-3" size={48} />
-              <p>Aucun historique disponible</p>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-gray-900">Historique</h2>
+              <span className="text-sm text-gray-500">{history.length} événement{history.length !== 1 ? 's' : ''}</span>
             </div>
+
+            {history.length === 0 ? (
+              <div className="text-center py-16 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200">
+                <Activity className="mx-auto mb-3 text-gray-300" size={56} />
+                <p className="text-gray-700 font-semibold text-lg mb-1">Aucun historique</p>
+                <p className="text-gray-500 text-sm">Les interactions et événements apparaîtront ici</p>
+              </div>
+            ) : (
+              <div className="relative">
+                <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-gray-100" />
+                <div className="space-y-4">
+                  {history.map(event => {
+                    const isEmail = event.type === 'email';
+                    const isCall = event.type === 'call' || event.type === 'appel';
+                    const isNote = event.type === 'note';
+                    const isNotif = event.kind === 'notification';
+                    const isInbound = event.direction === 'inbound';
+
+                    let icon = <Activity size={16} className="text-gray-500" />;
+                    let bg = 'bg-gray-100';
+                    if (isEmail) { icon = <Mail size={16} className={isInbound ? 'text-blue-600' : 'text-green-600'} />; bg = isInbound ? 'bg-blue-50' : 'bg-green-50'; }
+                    else if (isCall) { icon = <Phone size={16} className="text-yellow-600" />; bg = 'bg-yellow-50'; }
+                    else if (isNote) { icon = <MessageSquare size={16} className="text-gray-600" />; bg = 'bg-gray-100'; }
+                    else if (isNotif) { icon = <Bell size={16} className="text-orange-500" />; bg = 'bg-orange-50'; }
+                    else if (event.type === 'document') { icon = <FileText size={16} className="text-blue-600" />; bg = 'bg-blue-50'; }
+                    else if (event.type === 'payment') { icon = <DollarSign size={16} className="text-green-600" />; bg = 'bg-green-50'; }
+
+                    const title = event.title || event.subject || (
+                      isEmail ? (isInbound ? 'Email reçu' : 'Email envoyé') :
+                      isCall ? 'Appel' :
+                      isNote ? 'Note' :
+                      isNotif ? 'Notification' :
+                      event.type
+                    );
+
+                    return (
+                      <div key={`${event.kind}-${event.id}`} className="relative flex gap-4 pl-3">
+                        <div className={`relative z-10 flex-shrink-0 w-9 h-9 rounded-full ${bg} border-2 border-white shadow-sm flex items-center justify-center`}>
+                          {icon}
+                        </div>
+                        <div className="flex-1 min-w-0 pb-1">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="min-w-0">
+                              <p className="font-semibold text-gray-900 text-sm leading-tight">{title}</p>
+                              {(event.message || event.content) && (
+                                <p className="text-xs text-gray-500 mt-1 leading-relaxed line-clamp-2">
+                                  {event.message || event.content}
+                                </p>
+                              )}
+                            </div>
+                            <span className="flex-shrink-0 text-xs text-gray-400 whitespace-nowrap">
+                              {new Date(event.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                          </div>
+                          {event.direction && (
+                            <span className={`inline-flex items-center gap-1 mt-1 text-xs font-medium px-1.5 py-0.5 rounded ${
+                              event.direction === 'inbound' ? 'bg-blue-50 text-blue-600' : 'bg-green-50 text-green-600'
+                            }`}>
+                              {event.direction === 'inbound' ? '← Entrant' : '→ Sortant'}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

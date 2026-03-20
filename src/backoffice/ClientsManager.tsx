@@ -1,6 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Users, Search, Filter, ChevronRight, Phone, Mail, MapPin, Calendar, FileText, Receipt, Clock, CheckCircle2, AlertCircle, MoreVertical, TrendingUp, Shield, DollarSign, Car, Building2, Download, Send, MessageSquare, Eye, CreditCard as Edit, Loader2, ArrowUpDown, Activity } from 'lucide-react';
+import {
+  Users, Search, Building2, Download, Loader2, ArrowUpDown,
+  Activity, Shield, Eye, MessageSquare, LayoutGrid, List,
+  Phone, Mail, MapPin, Calendar, DollarSign, ChevronDown,
+  AlertTriangle, Clock, CheckCircle2, Copy, ExternalLink,
+  FileText, Car, MoreVertical, X, Zap, TrendingUp
+} from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 interface Client {
@@ -11,117 +17,260 @@ interface Client {
   phone: string;
   city: string;
   postal_code: string;
-  vehicle_info: any;
+  immatriculation: string | null;
   status: string;
   pipeline_stage: string;
+  access_token: string | null;
   created_at: string;
   updated_at: string;
-  last_contact_date: string;
-  insurance_company: string;
-  contract_start_date: string;
-  contract_annual_premium: number;
+  insurance_contracts: {
+    insurer_name: string;
+    contract_number: string | null;
+    premium_ttc: number;
+    renewal_date: string;
+    effective_date: string;
+    status: string;
+    contract_type: string;
+  }[];
+  insurance_claims: { id: string; status: string }[];
 }
 
-interface Stats {
-  total_clients: number;
-  active_contracts: number;
-  total_premium: number;
-  renewal_due_30days: number;
+type ViewMode = 'table' | 'cards';
+type SortField = 'name' | 'date' | 'premium' | 'renewal';
+type RenewalFilter = 'all' | '7d' | '30d' | '60d' | '90d';
+
+const fmtCurrency = (n: number) =>
+  new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(n);
+
+const fmtDate = (s: string) => new Date(s).toLocaleDateString('fr-FR');
+
+function getRenewalUrgency(renewalDate: string | null): 'critical' | 'warning' | 'ok' | null {
+  if (!renewalDate) return null;
+  const days = Math.ceil((new Date(renewalDate).getTime() - Date.now()) / 86400000);
+  if (days < 0) return 'critical';
+  if (days <= 7) return 'critical';
+  if (days <= 30) return 'warning';
+  return 'ok';
+}
+
+function getRenewalDays(renewalDate: string | null): number | null {
+  if (!renewalDate) return null;
+  return Math.ceil((new Date(renewalDate).getTime() - Date.now()) / 86400000);
+}
+
+function RenewalBadge({ date }: { date: string | null }) {
+  if (!date) return null;
+  const days = getRenewalDays(date);
+  if (days === null) return null;
+  const urgency = getRenewalUrgency(date);
+  if (urgency === 'ok') return null;
+  if (urgency === 'critical')
+    return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-700 border border-red-200"><AlertTriangle size={10} />{days < 0 ? 'Échu' : `J-${days}`}</span>;
+  return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-orange-100 text-orange-700 border border-orange-200"><Clock size={10} />J-{days}</span>;
+}
+
+function ActionMenu({ client }: { client: Client }) {
+  const [open, setOpen] = useState(false);
+
+  const portalUrl = client.access_token
+    ? `${window.location.origin}/espace-client/${client.access_token}`
+    : null;
+
+  const copyPortalLink = async () => {
+    if (portalUrl) {
+      await navigator.clipboard.writeText(portalUrl);
+      setOpen(false);
+    }
+  };
+
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setOpen(v => !v)}
+        className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors"
+      >
+        <MoreVertical size={16} />
+      </button>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
+          <div className="absolute right-0 top-9 z-20 w-52 bg-white rounded-xl shadow-xl border border-gray-200 py-1.5 overflow-hidden">
+            <Link
+              to={`/backoffice/clients/${client.id}`}
+              className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+              onClick={() => setOpen(false)}
+            >
+              <Shield size={15} className="text-yellow-500" />
+              Gérer le dossier
+            </Link>
+            <Link
+              to={`/backoffice/crm-killer/lead/${client.id}`}
+              className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+              onClick={() => setOpen(false)}
+            >
+              <Eye size={15} className="text-gray-500" />
+              Voir fiche CRM
+            </Link>
+            <a
+              href={`mailto:${client.email}`}
+              className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+              onClick={() => setOpen(false)}
+            >
+              <Mail size={15} className="text-blue-500" />
+              Envoyer un email
+            </a>
+            <a
+              href={`tel:${client.phone}`}
+              className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+              onClick={() => setOpen(false)}
+            >
+              <Phone size={15} className="text-green-500" />
+              Appeler
+            </a>
+            {portalUrl && (
+              <>
+                <hr className="my-1 border-gray-100" />
+                <button
+                  onClick={copyPortalLink}
+                  className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                >
+                  <Copy size={15} className="text-gray-400" />
+                  Copier lien espace client
+                </button>
+                <a
+                  href={portalUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                  onClick={() => setOpen(false)}
+                >
+                  <ExternalLink size={15} className="text-gray-400" />
+                  Ouvrir espace client
+                </a>
+              </>
+            )}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+function exportToCsv(clients: Client[]) {
+  const headers = ['Prénom', 'Nom', 'Email', 'Téléphone', 'Ville', 'Immatriculation', 'Compagnie', 'N° Contrat', 'Prime TTC', 'Date effet', 'Renouvellement', 'Sinistres'];
+  const rows = clients.map(c => {
+    const contract = c.insurance_contracts?.[0];
+    const claims = c.insurance_claims?.length ?? 0;
+    return [
+      c.first_name, c.last_name, c.email, c.phone, c.city, c.immatriculation ?? '',
+      contract?.insurer_name ?? '', contract?.contract_number ?? '',
+      contract?.premium_ttc ?? '', contract?.effective_date ?? '', contract?.renewal_date ?? '',
+      claims
+    ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(',');
+  });
+  const csv = [headers.join(','), ...rows].join('\n');
+  const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `clients-actifs-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
 export default function ClientsManager() {
   const [clients, setClients] = useState<Client[]>([]);
-  const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCompany, setFilterCompany] = useState('all');
-  const [sortBy, setSortBy] = useState<'name' | 'date' | 'premium'>('date');
+  const [filterRenewal, setFilterRenewal] = useState<RenewalFilter>('all');
+  const [sortBy, setSortBy] = useState<SortField>('date');
+  const [viewMode, setViewMode] = useState<ViewMode>('table');
   const [companies, setCompanies] = useState<string[]>([]);
 
-  useEffect(() => {
-    loadClientsAndStats();
-    loadCompanies();
-  }, []);
-
-  async function loadClientsAndStats() {
+  const loadClients = useCallback(async () => {
+    setLoading(true);
     try {
-      // Charger les clients actifs
-      const { data: clientsData, error: clientsError } = await supabase
+      const { data, error } = await supabase
         .from('crm_leads')
-        .select('*')
-        .eq('status', 'CLIENT_ACTIF')
+        .select(`
+          id, first_name, last_name, email, phone, city, postal_code,
+          immatriculation, status, pipeline_stage, access_token, created_at, updated_at,
+          insurance_contracts(insurer_name, contract_number, premium_ttc, renewal_date, effective_date, status, contract_type),
+          insurance_claims(id, status)
+        `)
+        .eq('status', 'client_actif')
+        .is('deleted_at', null)
         .order('updated_at', { ascending: false });
 
-      if (clientsError) throw clientsError;
+      if (error) throw error;
+      setClients((data as any[]) || []);
 
-      setClients(clientsData || []);
-
-      // Calculer les stats
-      const totalClients = clientsData?.length || 0;
-      const totalPremium = clientsData?.reduce((sum, c) => sum + (c.contract_annual_premium || 0), 0) || 0;
-
-      // Calculer les renouvellements dans 30 jours
-      const now = new Date();
-      const in30Days = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
-      const renewalDue = clientsData?.filter(c => {
-        if (!c.contract_start_date) return false;
-        const contractDate = new Date(c.contract_start_date);
-        const renewalDate = new Date(contractDate.getTime() + 365 * 24 * 60 * 60 * 1000);
-        return renewalDate >= now && renewalDate <= in30Days;
-      }).length || 0;
-
-      setStats({
-        total_clients: totalClients,
-        active_contracts: totalClients,
-        total_premium: totalPremium,
-        renewal_due_30days: renewalDue
-      });
-
-    } catch (error) {
-      console.error('Error loading clients:', error);
+      const seen = new Set<string>();
+      const insurers: string[] = [];
+      for (const c of data || []) {
+        for (const ic of c.insurance_contracts || []) {
+          if (ic.insurer_name && !seen.has(ic.insurer_name)) {
+            seen.add(ic.insurer_name);
+            insurers.push(ic.insurer_name);
+          }
+        }
+      }
+      setCompanies(insurers.sort());
+    } catch (err) {
+      console.error(err);
     } finally {
       setLoading(false);
     }
-  }
+  }, []);
 
-  async function loadCompanies() {
-    try {
-      const { data, error } = await supabase
-        .from('insurance_companies')
-        .select('name')
-        .eq('is_active', true)
-        .order('name');
+  useEffect(() => { loadClients(); }, [loadClients]);
 
-      if (error) throw error;
-      setCompanies(data?.map(c => c.name) || []);
-    } catch (error) {
-      console.error('Error loading companies:', error);
-    }
-  }
+  const filtered = clients
+    .filter(c => {
+      const s = searchTerm.toLowerCase();
+      const matchesSearch = !s || [c.first_name, c.last_name, c.email, c.phone, c.immatriculation]
+        .some(v => v?.toLowerCase().includes(s));
 
-  const filteredClients = clients
-    .filter(client => {
-      const matchesSearch =
-        client.first_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        client.last_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        client.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        client.phone?.includes(searchTerm);
+      const matchesCompany = filterCompany === 'all' ||
+        c.insurance_contracts?.some(ic => ic.insurer_name === filterCompany);
 
-      const matchesCompany = filterCompany === 'all' || client.insurance_company === filterCompany;
+      let matchesRenewal = true;
+      if (filterRenewal !== 'all') {
+        const days = parseInt(filterRenewal);
+        matchesRenewal = c.insurance_contracts?.some(ic => {
+          const d = getRenewalDays(ic.renewal_date);
+          return d !== null && d >= 0 && d <= days;
+        }) ?? false;
+      }
 
-      return matchesSearch && matchesCompany;
+      return matchesSearch && matchesCompany && matchesRenewal;
     })
     .sort((a, b) => {
-      switch (sortBy) {
-        case 'name':
-          return (a.last_name || '').localeCompare(b.last_name || '');
-        case 'premium':
-          return (b.contract_annual_premium || 0) - (a.contract_annual_premium || 0);
-        case 'date':
-        default:
-          return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
+      if (sortBy === 'name') return (a.last_name ?? '').localeCompare(b.last_name ?? '');
+      if (sortBy === 'premium') {
+        const pa = a.insurance_contracts?.[0]?.premium_ttc ?? 0;
+        const pb = b.insurance_contracts?.[0]?.premium_ttc ?? 0;
+        return pb - pa;
       }
+      if (sortBy === 'renewal') {
+        const da = getRenewalDays(a.insurance_contracts?.[0]?.renewal_date ?? null) ?? 9999;
+        const db = getRenewalDays(b.insurance_contracts?.[0]?.renewal_date ?? null) ?? 9999;
+        return da - db;
+      }
+      return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
     });
+
+  const totalPremium = clients.reduce((s, c) => s + (c.insurance_contracts?.[0]?.premium_ttc ?? 0), 0);
+  const urgentRenewals = clients.filter(c =>
+    c.insurance_contracts?.some(ic => {
+      const d = getRenewalDays(ic.renewal_date);
+      return d !== null && d >= 0 && d <= 30;
+    })
+  ).length;
+  const activeClaims = clients.filter(c =>
+    c.insurance_claims?.some(cl => !['closed', 'refused'].includes(cl.status))
+  ).length;
 
   if (loading) {
     return (
@@ -132,322 +281,336 @@ export default function ClientsManager() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-yellow-50/10 to-gray-50">
-      <div className="p-6 max-w-[1800px] mx-auto">
+    <div className="min-h-screen bg-gray-50">
+      <div className="p-6 max-w-[1800px] mx-auto space-y-6">
+
         {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-                <div className="p-2 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-xl shadow-lg">
-                  <Users className="h-8 w-8 text-black" />
-                </div>
-                Gestion des Clients Actifs
-              </h1>
-              <p className="text-gray-600 mt-2 text-lg">
-                Suivi et gestion de votre portefeuille clients
-              </p>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
+              <div className="p-2 bg-yellow-500 rounded-xl">
+                <Users className="h-6 w-6 text-black" />
+              </div>
+              Portefeuille Clients
+            </h1>
+            <p className="text-gray-500 text-sm mt-1">{clients.length} client{clients.length > 1 ? 's' : ''} actif{clients.length > 1 ? 's' : ''}</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+              <button
+                onClick={() => setViewMode('table')}
+                className={`p-2.5 transition-colors ${viewMode === 'table' ? 'bg-yellow-500 text-black' : 'text-gray-500 hover:bg-gray-50'}`}
+                title="Vue tableau"
+              >
+                <List size={18} />
+              </button>
+              <button
+                onClick={() => setViewMode('cards')}
+                className={`p-2.5 transition-colors ${viewMode === 'cards' ? 'bg-yellow-500 text-black' : 'text-gray-500 hover:bg-gray-50'}`}
+                title="Vue cartes"
+              >
+                <LayoutGrid size={18} />
+              </button>
             </div>
-            <button className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-yellow-600 to-yellow-500 text-black rounded-xl hover:from-yellow-700 hover:to-yellow-600 shadow-lg hover:shadow-xl transition-all font-semibold">
-              <Download className="h-5 w-5" />
-              Exporter
+            <button
+              onClick={() => exportToCsv(filtered)}
+              className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 shadow-sm transition-all text-sm font-medium"
+            >
+              <Download size={16} />
+              Exporter CSV
             </button>
           </div>
         </div>
 
         {/* Stats Cards */}
-        {stats && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <div className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all border border-gray-100 group">
-              <div className="flex items-center justify-between mb-4">
-                <div className="p-3 bg-yellow-50 rounded-xl group-hover:bg-yellow-100 transition-colors">
-                  <Users className="h-7 w-7 text-yellow-600" />
-                </div>
-                <div className="text-right">
-                  <p className="text-3xl font-bold text-gray-900">{stats.total_clients}</p>
-                </div>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {[
+            { label: 'Clients actifs', value: clients.length, icon: Users, color: 'yellow', sub: 'portefeuille total' },
+            { label: 'Primes annuelles', value: fmtCurrency(totalPremium), icon: DollarSign, color: 'green', sub: 'volume total' },
+            { label: 'Renouvellements 30j', value: urgentRenewals, icon: Clock, color: urgentRenewals > 0 ? 'orange' : 'gray', sub: 'à traiter' },
+            { label: 'Sinistres en cours', value: activeClaims, icon: AlertTriangle, color: activeClaims > 0 ? 'red' : 'gray', sub: 'ouverts' },
+          ].map(({ label, value, icon: Icon, color, sub }) => (
+            <div key={label} className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+              <div className={`inline-flex p-2.5 rounded-xl mb-3 ${
+                color === 'yellow' ? 'bg-yellow-50' : color === 'green' ? 'bg-green-50' :
+                color === 'orange' ? 'bg-orange-50' : color === 'red' ? 'bg-red-50' : 'bg-gray-50'
+              }`}>
+                <Icon className={`h-5 w-5 ${
+                  color === 'yellow' ? 'text-yellow-600' : color === 'green' ? 'text-green-600' :
+                  color === 'orange' ? 'text-orange-600' : color === 'red' ? 'text-red-600' : 'text-gray-400'
+                }`} />
               </div>
-              <p className="text-sm font-semibold text-gray-700">Clients Actifs</p>
-              <p className="text-xs text-gray-500 mt-1">Portefeuille total</p>
+              <p className="text-2xl font-bold text-gray-900">{value}</p>
+              <p className="text-sm font-medium text-gray-700 mt-0.5">{label}</p>
+              <p className="text-xs text-gray-400 mt-0.5">{sub}</p>
             </div>
-
-            <div className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all border border-gray-100 group">
-              <div className="flex items-center justify-between mb-4">
-                <div className="p-3 bg-green-50 rounded-xl group-hover:bg-green-100 transition-colors">
-                  <CheckCircle2 className="h-7 w-7 text-green-600" />
-                </div>
-                <div className="text-right">
-                  <p className="text-3xl font-bold text-gray-900">{stats.active_contracts}</p>
-                </div>
-              </div>
-              <p className="text-sm font-semibold text-gray-700">Contrats Actifs</p>
-              <p className="text-xs text-gray-500 mt-1">En cours</p>
-            </div>
-
-            <div className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all border border-gray-100 group">
-              <div className="flex items-center justify-between mb-4">
-                <div className="p-3 bg-cyan-50 rounded-xl group-hover:bg-cyan-100 transition-colors">
-                  <DollarSign className="h-7 w-7 text-cyan-600" />
-                </div>
-                <div className="text-right">
-                  <p className="text-2xl font-bold text-gray-900">
-                    {new Intl.NumberFormat('fr-FR', {
-                      style: 'currency',
-                      currency: 'EUR',
-                      maximumFractionDigits: 0
-                    }).format(stats.total_premium)}
-                  </p>
-                </div>
-              </div>
-              <p className="text-sm font-semibold text-gray-700">Primes Annuelles</p>
-              <p className="text-xs text-gray-500 mt-1">Volume total</p>
-            </div>
-
-            <div className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all border border-gray-100 group">
-              <div className="flex items-center justify-between mb-4">
-                <div className="p-3 bg-orange-50 rounded-xl group-hover:bg-orange-100 transition-colors">
-                  <Clock className="h-7 w-7 text-orange-600" />
-                </div>
-                <div className="text-right">
-                  <p className="text-3xl font-bold text-gray-900">{stats.renewal_due_30days}</p>
-                </div>
-              </div>
-              <p className="text-sm font-semibold text-gray-700">Renouvellements 30j</p>
-              <p className="text-xs text-gray-500 mt-1">À traiter</p>
-            </div>
-          </div>
-        )}
+          ))}
+        </div>
 
         {/* Filters */}
-        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 mb-6">
-          <div className="flex flex-col md:flex-row gap-4">
-            {/* Search */}
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Rechercher un client (nom, email, téléphone)..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 focus:bg-white transition-all"
-                />
-              </div>
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
+          <div className="flex flex-col lg:flex-row gap-3">
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Rechercher par nom, email, téléphone, plaque..."
+                value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 focus:bg-white transition-all"
+              />
             </div>
-
-            {/* Company Filter */}
-            <div className="w-full md:w-64">
-              <div className="relative">
-                <Building2 className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 z-10" />
-                <select
-                  value={filterCompany}
-                  onChange={(e) => setFilterCompany(e.target.value)}
-                  className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 focus:bg-white appearance-none transition-all cursor-pointer"
-                >
-                  <option value="all">Toutes les compagnies</option>
-                  {companies.map(company => (
-                    <option key={company} value={company}>{company}</option>
-                  ))}
-                </select>
-              </div>
+            <div className="relative w-full lg:w-52">
+              <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 z-10" />
+              <select
+                value={filterCompany}
+                onChange={e => setFilterCompany(e.target.value)}
+                className="w-full pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-yellow-500 appearance-none cursor-pointer transition-all"
+              >
+                <option value="all">Toutes compagnies</option>
+                {companies.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
             </div>
-
-            {/* Sort */}
-            <div className="w-full md:w-56">
-              <div className="relative">
-                <ArrowUpDown className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 z-10" />
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value as any)}
-                  className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 focus:bg-white appearance-none transition-all cursor-pointer"
-                >
-                  <option value="date">Date mise à jour</option>
-                  <option value="name">Nom (A-Z)</option>
-                  <option value="premium">Prime (plus élevée)</option>
-                </select>
-              </div>
+            <div className="relative w-full lg:w-48">
+              <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 z-10" />
+              <select
+                value={filterRenewal}
+                onChange={e => setFilterRenewal(e.target.value as RenewalFilter)}
+                className="w-full pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-yellow-500 appearance-none cursor-pointer transition-all"
+              >
+                <option value="all">Tous renouvellements</option>
+                <option value="7d">Renouvellement ≤ 7 jours</option>
+                <option value="30d">Renouvellement ≤ 30 jours</option>
+                <option value="60d">Renouvellement ≤ 60 jours</option>
+                <option value="90d">Renouvellement ≤ 90 jours</option>
+              </select>
             </div>
+            <div className="relative w-full lg:w-44">
+              <ArrowUpDown className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 z-10" />
+              <select
+                value={sortBy}
+                onChange={e => setSortBy(e.target.value as SortField)}
+                className="w-full pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-yellow-500 appearance-none cursor-pointer transition-all"
+              >
+                <option value="date">Plus récents</option>
+                <option value="name">Nom A-Z</option>
+                <option value="premium">Prime la plus haute</option>
+                <option value="renewal">Renouvellement proche</option>
+              </select>
+            </div>
+          </div>
+          <div className="mt-3 text-xs font-medium text-gray-500 flex items-center gap-2">
+            <div className="h-1.5 w-1.5 bg-yellow-500 rounded-full" />
+            {filtered.length} résultat{filtered.length > 1 ? 's' : ''} sur {clients.length} client{clients.length > 1 ? 's' : ''}
+            {filterRenewal !== 'all' && <span className="ml-2 px-2 py-0.5 bg-orange-100 text-orange-700 rounded-full text-xs">Filtre renouvellement actif</span>}
           </div>
         </div>
 
-        {/* Results Count */}
-        <div className="mb-4 text-sm font-medium text-gray-700 flex items-center gap-2">
-          <div className="h-2 w-2 bg-yellow-500 rounded-full"></div>
-          {filteredClients.length} client{filteredClients.length > 1 ? 's' : ''} trouvé{filteredClients.length > 1 ? 's' : ''}
-        </div>
-
-        {/* Clients Table */}
-        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="bg-gradient-to-r from-gray-50 to-yellow-50/30 border-b-2 border-gray-200">
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                    Client
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                    Contact
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                    Compagnie
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                    Prime Annuelle
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                    Date Contrat
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {filteredClients.map((client) => (
-                  <tr key={client.id} className="hover:bg-yellow-50/30 transition-colors group">
-                    <td className="px-6 py-5">
+        {/* Content */}
+        {viewMode === 'table' ? (
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="bg-gray-50 border-b border-gray-200">
+                    {['Client', 'Contact', 'Contrat', 'Prime', 'Renouvellement', 'Sinistres', ''].map(h => (
+                      <th key={h} className="px-5 py-3.5 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {filtered.map(client => {
+                    const contract = client.insurance_contracts?.[0];
+                    const openClaims = client.insurance_claims?.filter(cl => !['closed', 'refused'].includes(cl.status)).length ?? 0;
+                    return (
+                      <tr key={client.id} className="hover:bg-yellow-50/30 transition-colors group">
+                        <td className="px-5 py-4">
+                          <div className="flex items-center gap-3">
+                            <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-yellow-400 to-yellow-600 flex items-center justify-center flex-shrink-0 shadow-sm">
+                              <span className="text-black font-bold text-sm">
+                                {client.first_name?.[0]}{client.last_name?.[0]}
+                              </span>
+                            </div>
+                            <div>
+                              <p className="font-semibold text-gray-900 text-sm">{client.first_name} {client.last_name}</p>
+                              {client.city && (
+                                <p className="text-xs text-gray-400 flex items-center gap-1 mt-0.5">
+                                  <MapPin size={10} />{client.city}
+                                </p>
+                              )}
+                              {client.immatriculation && (
+                                <p className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
+                                  <Car size={10} />{client.immatriculation}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-5 py-4">
+                          <div className="space-y-1.5">
+                            <a href={`mailto:${client.email}`} className="flex items-center gap-1.5 text-xs text-gray-600 hover:text-yellow-600 transition-colors">
+                              <Mail size={12} className="text-gray-400" />{client.email}
+                            </a>
+                            <a href={`tel:${client.phone}`} className="flex items-center gap-1.5 text-xs text-gray-600 hover:text-green-600 transition-colors">
+                              <Phone size={12} className="text-gray-400" />{client.phone}
+                            </a>
+                          </div>
+                        </td>
+                        <td className="px-5 py-4">
+                          {contract ? (
+                            <div>
+                              <p className="text-sm font-semibold text-gray-900">{contract.insurer_name}</p>
+                              {contract.contract_number && (
+                                <p className="text-xs text-gray-400 mt-0.5 font-mono">{contract.contract_number}</p>
+                              )}
+                              <p className="text-xs text-gray-500 mt-0.5 capitalize">{contract.contract_type?.replace(/_/g, ' ')}</p>
+                            </div>
+                          ) : (
+                            <span className="text-xs text-gray-400 italic">Aucun contrat</span>
+                          )}
+                        </td>
+                        <td className="px-5 py-4">
+                          {contract?.premium_ttc ? (
+                            <p className="text-sm font-bold text-gray-900">{fmtCurrency(contract.premium_ttc)}</p>
+                          ) : (
+                            <span className="text-xs text-gray-400">-</span>
+                          )}
+                        </td>
+                        <td className="px-5 py-4">
+                          {contract?.renewal_date ? (
+                            <div className="space-y-1">
+                              <p className="text-sm text-gray-700 font-medium">{fmtDate(contract.renewal_date)}</p>
+                              <RenewalBadge date={contract.renewal_date} />
+                            </div>
+                          ) : (
+                            <span className="text-xs text-gray-400">-</span>
+                          )}
+                        </td>
+                        <td className="px-5 py-4">
+                          {openClaims > 0 ? (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700 border border-red-200">
+                              <AlertTriangle size={10} />{openClaims} en cours
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700 border border-green-200">
+                              <CheckCircle2 size={10} />Aucun
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-5 py-4">
+                          <div className="flex items-center gap-1">
+                            <Link
+                              to={`/backoffice/clients/${client.id}`}
+                              className="flex items-center gap-1.5 px-3 py-1.5 bg-yellow-500 hover:bg-yellow-600 text-black rounded-lg text-xs font-semibold transition-colors shadow-sm"
+                            >
+                              <Shield size={13} />
+                              Gérer
+                            </Link>
+                            <ActionMenu client={client} />
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+            {filtered.length === 0 && (
+              <div className="py-16 text-center">
+                <Users className="mx-auto text-gray-300 mb-3" size={48} />
+                <p className="text-gray-600 font-semibold">Aucun client trouvé</p>
+                <p className="text-gray-400 text-sm mt-1">Modifiez vos filtres de recherche</p>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            {filtered.map(client => {
+              const contract = client.insurance_contracts?.[0];
+              const openClaims = client.insurance_claims?.filter(cl => !['closed', 'refused'].includes(cl.status)).length ?? 0;
+              const urgency = getRenewalUrgency(contract?.renewal_date ?? null);
+              return (
+                <div
+                  key={client.id}
+                  className={`bg-white rounded-2xl shadow-sm border transition-all hover:shadow-md ${
+                    urgency === 'critical' ? 'border-red-200' : urgency === 'warning' ? 'border-orange-200' : 'border-gray-100'
+                  }`}
+                >
+                  <div className="p-5">
+                    <div className="flex items-start justify-between mb-4">
                       <div className="flex items-center gap-3">
-                        <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-yellow-500 to-yellow-600 flex items-center justify-center shadow-md">
-                          <span className="text-black font-bold text-sm">
-                            {client.first_name?.[0]}{client.last_name?.[0]}
-                          </span>
+                        <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-yellow-400 to-yellow-600 flex items-center justify-center shadow-sm flex-shrink-0">
+                          <span className="text-black font-bold text-base">{client.first_name?.[0]}{client.last_name?.[0]}</span>
                         </div>
                         <div>
-                          <div className="font-semibold text-gray-900 text-base">
-                            {client.first_name} {client.last_name}
-                          </div>
-                          <div className="flex items-center gap-1 text-sm text-gray-500 mt-0.5">
-                            <MapPin className="h-3.5 w-3.5" />
-                            {client.city}
-                          </div>
+                          <p className="font-bold text-gray-900">{client.first_name} {client.last_name}</p>
+                          <p className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
+                            <MapPin size={11} />{client.city || 'Ville inconnue'}
+                          </p>
                         </div>
                       </div>
-                    </td>
-                    <td className="px-6 py-5">
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2 text-sm text-gray-700">
-                          <Mail className="h-4 w-4 text-yellow-500" />
-                          <a href={`mailto:${client.email}`} className="hover:text-yellow-600 hover:underline font-medium">
-                            {client.email}
-                          </a>
-                        </div>
-                        <div className="flex items-center gap-2 text-sm text-gray-700">
-                          <Phone className="h-4 w-4 text-green-500" />
-                          <a href={`tel:${client.phone}`} className="hover:text-green-600 hover:underline font-medium">
-                            {client.phone}
-                          </a>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-5">
-                      <div className="flex items-center gap-2">
-                        <div className="p-1.5 bg-gray-100 rounded-lg">
-                          <Building2 className="h-4 w-4 text-gray-600" />
-                        </div>
-                        <span className="text-sm font-semibold text-gray-900">
-                          {client.insurance_company || 'Non renseigné'}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-5">
-                      <div className="flex items-center gap-2">
-                        <div className="p-1.5 bg-green-50 rounded-lg">
-                          <DollarSign className="h-4 w-4 text-green-600" />
-                        </div>
-                        <span className="text-sm font-bold text-gray-900">
-                          {client.contract_annual_premium
-                            ? new Intl.NumberFormat('fr-FR', {
-                                style: 'currency',
-                                currency: 'EUR'
-                              }).format(client.contract_annual_premium)
-                            : '-'
-                          }
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-5">
-                      <div className="flex items-center gap-2">
-                        <div className="p-1.5 bg-yellow-50 rounded-lg">
-                          <Calendar className="h-4 w-4 text-yellow-600" />
-                        </div>
-                        <span className="text-sm font-medium text-gray-700">
-                          {client.contract_start_date
-                            ? new Date(client.contract_start_date).toLocaleDateString('fr-FR')
-                            : '-'
-                          }
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-5">
-                      <div className="flex items-center gap-2">
-                        <Link
-                          to={`/backoffice/clients/${client.id}`}
-                          className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-700 hover:to-yellow-600 text-black rounded-xl transition-all text-sm font-semibold shadow-md hover:shadow-lg"
-                          title="Gérer ce client"
-                        >
-                          <Shield className="h-4 w-4" />
-                          Gérer
-                        </Link>
-                        <Link
-                          to={`/backoffice/crm-killer/lead/${client.id}`}
-                          className="p-2.5 text-gray-600 hover:bg-gray-100 rounded-xl transition-colors"
-                          title="Voir la fiche CRM"
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Link>
-                        <button
-                          className="p-2.5 text-green-600 hover:bg-green-50 rounded-xl transition-colors"
-                          title="Contacter"
-                        >
-                          <MessageSquare className="h-4 w-4" />
-                        </button>
-                        <button
-                          className="p-2.5 text-gray-600 hover:bg-gray-100 rounded-xl transition-colors"
-                          title="Plus d'actions"
-                        >
-                          <MoreVertical className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                      <ActionMenu client={client} />
+                    </div>
 
-          {filteredClients.length === 0 && (
-            <div className="text-center py-16 bg-gray-50">
-              <div className="flex justify-center mb-4">
-                <div className="p-4 bg-gray-100 rounded-2xl">
-                  <Users className="h-12 w-12 text-gray-400" />
+                    <div className="space-y-2 mb-4">
+                      <a href={`mailto:${client.email}`} className="flex items-center gap-2 text-xs text-gray-600 hover:text-yellow-600 transition-colors">
+                        <Mail size={12} className="text-gray-400 flex-shrink-0" />
+                        <span className="truncate">{client.email}</span>
+                      </a>
+                      <a href={`tel:${client.phone}`} className="flex items-center gap-2 text-xs text-gray-600 hover:text-green-600 transition-colors">
+                        <Phone size={12} className="text-gray-400 flex-shrink-0" />{client.phone}
+                      </a>
+                      {client.immatriculation && (
+                        <div className="flex items-center gap-2 text-xs text-gray-600">
+                          <Car size={12} className="text-gray-400 flex-shrink-0" />{client.immatriculation}
+                        </div>
+                      )}
+                    </div>
+
+                    {contract && (
+                      <div className="bg-gray-50 rounded-xl p-3 mb-4 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-gray-500 flex items-center gap-1"><Building2 size={11} />{contract.insurer_name}</span>
+                          <span className="text-sm font-bold text-gray-900">{fmtCurrency(contract.premium_ttc)}</span>
+                        </div>
+                        {contract.renewal_date && (
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs text-gray-500 flex items-center gap-1"><Calendar size={11} />Renouvellement</span>
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-xs font-medium text-gray-700">{fmtDate(contract.renewal_date)}</span>
+                              <RenewalBadge date={contract.renewal_date} />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    <div className="flex items-center gap-2">
+                      <Link
+                        to={`/backoffice/clients/${client.id}`}
+                        className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-yellow-500 hover:bg-yellow-600 text-black rounded-xl text-sm font-semibold transition-colors"
+                      >
+                        <Shield size={14} />
+                        Gérer
+                      </Link>
+                      {openClaims > 0 && (
+                        <span className="flex items-center gap-1 px-2.5 py-2 bg-red-100 text-red-700 rounded-xl text-xs font-semibold">
+                          <AlertTriangle size={12} />{openClaims}
+                        </span>
+                      )}
+                    </div>
+                  </div>
                 </div>
+              );
+            })}
+            {filtered.length === 0 && (
+              <div className="col-span-full py-16 text-center">
+                <Users className="mx-auto text-gray-300 mb-3" size={48} />
+                <p className="text-gray-600 font-semibold">Aucun client trouvé</p>
               </div>
-              <p className="text-gray-900 font-semibold text-lg">Aucun client trouvé</p>
-              <p className="text-gray-500 text-sm mt-2 max-w-md mx-auto">
-                {searchTerm || filterCompany !== 'all'
-                  ? 'Essayez de modifier vos filtres de recherche'
-                  : 'Les prospects finalisés apparaîtront ici automatiquement'
-                }
-              </p>
-            </div>
-          )}
-        </div>
-
-        {/* Quick Info */}
-        <div className="mt-8 bg-gradient-to-br from-yellow-50 to-amber-50 border-2 border-yellow-200 rounded-2xl p-6 shadow-lg">
-          <div className="flex items-start gap-4">
-            <div className="p-3 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-xl shadow-md flex-shrink-0">
-              <Activity className="h-6 w-6 text-black" />
-            </div>
-            <div>
-              <p className="font-bold text-yellow-900 text-lg mb-2">Gestion des Clients Actifs</p>
-              <p className="text-yellow-800 leading-relaxed">
-                Cette page affiche tous les prospects transformés en clients actifs (statut <span className="font-semibold bg-yellow-100 px-2 py-0.5 rounded">CLIENT_ACTIF</span>).
-                Utilisez les filtres pour affiner votre recherche et cliquez sur un client pour accéder à sa fiche complète.
-              </p>
-            </div>
+            )}
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
