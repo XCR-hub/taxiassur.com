@@ -684,135 +684,231 @@ const CRMAIGovernance: React.FC = () => {
         {activeTab === 'council' && (
           <div className="space-y-6">
 
-            {/* Convene form */}
-            <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6">
-              <div className="flex items-center gap-3 mb-5">
-                <div className="w-9 h-9 rounded-xl bg-blue-500/15 border border-blue-500/30 flex items-center justify-center">
-                  <Brain size={17} className="text-blue-400" />
-                </div>
-                <div>
-                  <h2 className="text-base font-bold text-white">Convoquer le Conseil IA</h2>
-                  <p className="text-xs text-gray-500">Les 8 agents analysent le dossier sélectionné en parallèle</p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4 mb-5">
-                <div>
-                  <label className="block text-xs font-medium text-gray-400 mb-2">Lead à analyser</label>
-                  {recentLeads.length > 0 ? (
-                    <select
-                      value={councilLeadId}
-                      onChange={e => setCouncilLeadId(e.target.value)}
-                      className="w-full bg-gray-950 border border-gray-700 rounded-xl px-4 py-2.5 text-sm text-gray-300 focus:outline-none focus:border-blue-500/60"
-                    >
-                      <option value="">— Sélectionner un lead —</option>
-                      {recentLeads.map(l => (
-                        <option key={l.id} value={l.id}>
-                          {l.first_name} {l.last_name} · {l.email}
-                        </option>
-                      ))}
-                    </select>
-                  ) : (
-                    <input
-                      type="text"
-                      placeholder="ex: a1b2c3d4-..."
-                      value={councilLeadId}
-                      onChange={e => setCouncilLeadId(e.target.value)}
-                      className="w-full bg-gray-950 border border-gray-700 rounded-xl px-4 py-2.5 text-sm text-gray-300 placeholder-gray-600 focus:outline-none focus:border-blue-500/60"
-                    />
-                  )}
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-400 mb-2">Type de réunion</label>
-                  <select
-                    value={councilType}
-                    onChange={e => setCouncilType(e.target.value as AICouncilMeeting['meeting_type'])}
-                    className="w-full bg-gray-950 border border-gray-700 rounded-xl px-4 py-2.5 text-sm text-gray-300 focus:outline-none focus:border-blue-500/60"
-                  >
-                    <option value="qualification">Qualification Lead</option>
-                    <option value="risk_assessment">Analyse de Risque</option>
-                    <option value="retention">Rétention Client</option>
-                    <option value="cross_sell">Cross-Sell Strategy</option>
-                  </select>
-                </div>
-              </div>
-
-              {councilResult === 'success' && (
-                <div className="flex items-center gap-2 bg-green-500/10 border border-green-500/25 rounded-xl px-4 py-3 mb-4 text-sm text-green-400">
-                  <CheckCircle size={15} />
-                  Conseil exécuté — les décisions des 8 agents sont maintenant dans l'onglet Décisions IA.
-                </div>
-              )}
-              {councilResult === 'error' && (
-                <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/25 rounded-xl px-4 py-3 mb-4 text-sm text-red-400">
-                  <AlertTriangle size={15} />
-                  Erreur lors de la convocation. Vérifiez que le lead existe.
-                </div>
-              )}
-
-              <button
-                onClick={handleConveneCouncil}
-                disabled={councilRunning || !councilLeadId.trim()}
-                className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-sm font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                {councilRunning
-                  ? <><RefreshCw size={14} className="animate-spin" /> Délibération en cours...</>
-                  : <><Play size={14} /> Convoquer le Conseil</>
-                }
-              </button>
-            </div>
-
-            {/* Council scenarios */}
+            {/* ── Scenario selector ── */}
             <div>
-              <h3 className="text-sm font-semibold text-gray-400 mb-3">Scénarios disponibles</h3>
-              <div className="grid grid-cols-2 gap-4">
+              <p className="text-xs font-semibold text-gray-600 uppercase tracking-wider mb-3">Choisir un scénario</p>
+              <div className="grid grid-cols-4 gap-3">
                 {COUNCIL_ACTIONS.map((action, i) => (
                   <button
                     key={i}
                     onClick={() => setCouncilType(action.type)}
-                    className={`bg-gray-900 border rounded-2xl p-5 text-left transition-all group ${action.color} ${
-                      councilType === action.type ? 'ring-1 ring-current' : ''
+                    className={`relative bg-gray-900 border rounded-2xl p-4 text-left transition-all ${
+                      councilType === action.type
+                        ? `${action.color} ring-1 ring-current shadow-lg`
+                        : 'border-gray-800 hover:border-gray-700'
                     }`}
                   >
-                    <div className="flex items-start justify-between mb-3">
-                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${action.iconBg}`}>
-                        {action.icon}
-                      </div>
-                      {councilType === action.type && (
-                        <CheckCircle size={15} className="text-green-400 mt-1" />
-                      )}
+                    {councilType === action.type && (
+                      <span className="absolute top-3 right-3">
+                        <CheckCircle size={13} className="text-green-400" />
+                      </span>
+                    )}
+                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center mb-3 ${action.iconBg}`}>
+                      {action.icon}
                     </div>
                     <div className="text-sm font-semibold text-white mb-1">{action.title}</div>
-                    <p className="text-xs text-gray-500 leading-relaxed">{action.desc}</p>
-                    <div className="flex -space-x-1.5 mt-3">
-                      {(Object.keys(AI_AGENTS) as AIAgent[]).slice(0, 5).map((k, j) => (
-                        <div key={j} className="w-5 h-5 rounded-full bg-gray-800 border border-gray-700 flex items-center justify-center text-[9px]">
-                          {AI_AGENTS[k].icon}
-                        </div>
-                      ))}
-                      <div className="w-5 h-5 rounded-full bg-gray-700 border border-gray-600 flex items-center justify-center text-[9px] text-gray-400">+3</div>
-                    </div>
+                    <p className="text-[11px] text-gray-500 leading-relaxed">{action.desc}</p>
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* Participating agents */}
-            <div className="bg-gray-900 border border-gray-800 rounded-2xl p-5">
-              <h3 className="text-sm font-semibold text-gray-400 mb-4">Agents disponibles ({Object.keys(AI_AGENTS).length}/8)</h3>
-              <div className="grid grid-cols-4 gap-3">
-                {(Object.entries(AI_AGENTS) as [AIAgent, typeof AI_AGENTS[AIAgent]][]).map(([key, agent]) => (
-                  <div key={key} className="bg-gray-950 border border-gray-800 rounded-xl p-3">
-                    <div className="flex items-center gap-2 mb-1.5">
-                      <span className="text-base">{agent.icon}</span>
-                      <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse flex-shrink-0" />
-                    </div>
-                    <div className="text-xs font-semibold text-white leading-tight">{agent.name}</div>
-                    <div className="text-[10px] text-gray-600 mt-0.5 leading-tight">{agent.description}</div>
+            {/* ── Parliament chamber ── */}
+            <div className="bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden">
+              <div className="px-6 pt-5 pb-4 border-b border-gray-800 flex items-center justify-between">
+                <div>
+                  <h2 className="text-sm font-bold text-white">Chambre du Conseil IA</h2>
+                  <p className="text-[11px] text-gray-500 mt-0.5">8 agents spécialisés · Analyse collaborative</p>
+                </div>
+                {councilRunning && (
+                  <div className="flex items-center gap-2 text-blue-400 text-xs">
+                    <span className="w-2 h-2 rounded-full bg-blue-400 animate-ping" />
+                    Délibération en cours...
                   </div>
-                ))}
+                )}
+              </div>
+
+              <div className="p-6">
+                {/* Agent seats grid (4+4 with center) */}
+                <div className="flex gap-4 items-stretch">
+
+                  {/* Left column: 4 agents */}
+                  <div className="flex flex-col gap-3 w-44">
+                    {(Object.entries(AI_AGENTS) as [AIAgent, typeof AI_AGENTS[AIAgent]][]).slice(0, 4).map(([key, agent], idx) => {
+                      const isDeliberating = councilRunning && idx < 2;
+                      return (
+                        <div
+                          key={key}
+                          className={`flex items-center gap-2.5 bg-gray-950 border rounded-xl px-3 py-2.5 transition-all ${
+                            isDeliberating ? 'border-blue-500/40 shadow-sm shadow-blue-500/10' : 'border-gray-800'
+                          }`}
+                        >
+                          <span className="text-base leading-none flex-shrink-0">{agent.icon}</span>
+                          <div className="min-w-0">
+                            <div className="text-[11px] font-semibold text-white leading-tight truncate">{agent.name}</div>
+                            {isDeliberating && (
+                              <div className="flex gap-0.5 mt-1">
+                                {[0,1,2].map(i => (
+                                  <span key={i} className="w-1 h-1 rounded-full bg-blue-400 animate-bounce"
+                                    style={{ animationDelay: `${i * 0.15}s` }} />
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                          <span className={`ml-auto w-1.5 h-1.5 rounded-full flex-shrink-0 ${
+                            isDeliberating ? 'bg-blue-400 animate-pulse' : 'bg-emerald-400 animate-pulse'
+                          }`} />
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Center: meeting info + lead selector + launch */}
+                  <div className="flex-1 flex flex-col items-center justify-center gap-4">
+                    {/* Circular council badge */}
+                    <div className={`w-20 h-20 rounded-full border-2 flex items-center justify-center transition-all ${
+                      councilRunning
+                        ? 'border-blue-500 shadow-lg shadow-blue-500/20 bg-blue-500/10'
+                        : 'border-gray-700 bg-gray-800'
+                    }`}>
+                      {councilRunning
+                        ? <RefreshCw size={28} className="text-blue-400 animate-spin" />
+                        : <Brain size={28} className="text-gray-400" />
+                      }
+                    </div>
+
+                    {/* Meeting type badge */}
+                    <div className="text-center">
+                      <span className="text-xs font-semibold text-gray-300 block">
+                        {COUNCIL_ACTIONS.find(a => a.type === councilType)?.title}
+                      </span>
+                      <span className="text-[10px] text-gray-600">Session collaborative</span>
+                    </div>
+
+                    {/* Lead selector */}
+                    <div className="w-full">
+                      <label className="block text-[10px] font-medium text-gray-600 mb-1.5 uppercase tracking-wider text-center">Lead à analyser</label>
+                      {recentLeads.length > 0 ? (
+                        <select
+                          value={councilLeadId}
+                          onChange={e => setCouncilLeadId(e.target.value)}
+                          className="w-full bg-gray-950 border border-gray-700 rounded-xl px-3 py-2 text-xs text-gray-300 focus:outline-none focus:border-blue-500/60"
+                        >
+                          <option value="">— Sélectionner un lead —</option>
+                          {recentLeads.map(l => (
+                            <option key={l.id} value={l.id}>
+                              {l.first_name} {l.last_name} · {l.email}
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        <input
+                          type="text"
+                          placeholder="ID du lead..."
+                          value={councilLeadId}
+                          onChange={e => setCouncilLeadId(e.target.value)}
+                          className="w-full bg-gray-950 border border-gray-700 rounded-xl px-3 py-2 text-xs text-gray-300 placeholder-gray-600 focus:outline-none focus:border-blue-500/60"
+                        />
+                      )}
+                    </div>
+
+                    {/* Launch button */}
+                    <button
+                      onClick={handleConveneCouncil}
+                      disabled={councilRunning || !councilLeadId.trim()}
+                      className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-sm font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
+                    >
+                      {councilRunning
+                        ? <><RefreshCw size={13} className="animate-spin" /> Délibération...</>
+                        : <><Play size={13} /> Convoquer le Conseil</>
+                      }
+                    </button>
+
+                    {/* Result feedback */}
+                    {councilResult === 'success' && (
+                      <div className="flex items-center gap-2 bg-green-500/10 border border-green-500/25 rounded-xl px-3 py-2 text-xs text-green-400 w-full">
+                        <CheckCircle size={13} />
+                        Décisions générées → onglet "Décisions IA"
+                      </div>
+                    )}
+                    {councilResult === 'error' && (
+                      <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/25 rounded-xl px-3 py-2 text-xs text-red-400 w-full">
+                        <AlertTriangle size={13} />
+                        Erreur — vérifiez le lead sélectionné
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Right column: 4 agents */}
+                  <div className="flex flex-col gap-3 w-44">
+                    {(Object.entries(AI_AGENTS) as [AIAgent, typeof AI_AGENTS[AIAgent]][]).slice(4, 8).map(([key, agent], idx) => {
+                      const isDeliberating = councilRunning && idx < 2;
+                      return (
+                        <div
+                          key={key}
+                          className={`flex items-center gap-2.5 bg-gray-950 border rounded-xl px-3 py-2.5 transition-all ${
+                            isDeliberating ? 'border-blue-500/40 shadow-sm shadow-blue-500/10' : 'border-gray-800'
+                          }`}
+                        >
+                          <span className="text-base leading-none flex-shrink-0">{agent.icon}</span>
+                          <div className="min-w-0">
+                            <div className="text-[11px] font-semibold text-white leading-tight truncate">{agent.name}</div>
+                            {isDeliberating && (
+                              <div className="flex gap-0.5 mt-1">
+                                {[0,1,2].map(i => (
+                                  <span key={i} className="w-1 h-1 rounded-full bg-blue-400 animate-bounce"
+                                    style={{ animationDelay: `${i * 0.15}s` }} />
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                          <span className={`ml-auto w-1.5 h-1.5 rounded-full flex-shrink-0 ${
+                            isDeliberating ? 'bg-blue-400 animate-pulse' : 'bg-emerald-400 animate-pulse'
+                          }`} />
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
             </div>
+
+            {/* ── How it works ── */}
+            <div className="grid grid-cols-4 gap-3">
+              {[
+                { step: '1', title: 'Sélection', desc: 'Choisissez un lead et un scénario d\'analyse', icon: <Filter size={14} /> },
+                { step: '2', title: 'Délibération', desc: 'Les 8 agents analysent le dossier en parallèle', icon: <Brain size={14} /> },
+                { step: '3', title: 'Consensus', desc: 'Chaque agent génère sa décision et son raisonnement', icon: <Users size={14} /> },
+                { step: '4', title: 'Résultats', desc: 'Les décisions apparaissent dans l\'onglet Décisions IA', icon: <CheckCircle size={14} /> },
+              ].map((s, i) => (
+                <div key={i} className="bg-gray-900 border border-gray-800 rounded-xl p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="w-5 h-5 rounded-full bg-gray-800 border border-gray-700 text-[10px] font-bold text-gray-400 flex items-center justify-center">{s.step}</span>
+                    <span className="text-gray-500">{s.icon}</span>
+                  </div>
+                  <div className="text-xs font-semibold text-white mb-1">{s.title}</div>
+                  <p className="text-[11px] text-gray-600 leading-relaxed">{s.desc}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* ── Recent council decisions ── */}
+            {allDecisions.length > 0 && (
+              <div>
+                <p className="text-xs font-semibold text-gray-600 uppercase tracking-wider mb-3">Dernières décisions du conseil</p>
+                <div className="space-y-2">
+                  {allDecisions.slice(0, 5).map(decision => (
+                    <AIDecisionCard
+                      key={decision.id}
+                      decision={decision}
+                      onApprove={decision.status === 'pending' ? () => handleApprove(decision.id) : undefined}
+                      onReject={decision.status === 'pending' ? () => handleReject(decision.id) : undefined}
+                      compact
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
