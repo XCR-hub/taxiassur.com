@@ -136,6 +136,10 @@ const AllDocumentsViewer = lazy(() => import('./backoffice/AllDocumentsViewer'))
 const QuoteQueueDashboard = lazy(() => import('./backoffice/QuoteQueueDashboard'));
 const NewsletterDashboard = lazy(() => import('./backoffice/NewsletterDashboard'));
 const NotificationsManager = lazy(() => import('./backoffice/NotificationsManager'));
+const EmailMarketingLayout = lazy(() => import('./backoffice/EmailMarketingLayout'));
+const SmartTemplatesManager = lazy(() => import('./backoffice/SmartTemplatesManager'));
+const ABTestingManager = lazy(() => import('./backoffice/ABTestingManager'));
+const EmailAdvancedAnalytics = lazy(() => import('./backoffice/EmailAdvancedAnalytics'));
 const PartnerManager = lazy(() => import('./backoffice/PartnerManager'));
 const LLMDashboard = lazy(() => import('./backoffice/LLMDashboard'));
 const LLMCouncilDashboard = lazy(() => import('./backoffice/LLMCouncilDashboard'));
@@ -719,7 +723,13 @@ export const router = createBrowserRouter([
   },
   {
     path: '/backoffice/email-marketing',
-    element: <EmailMarketingHub />,
+    element: <CRMLayout />,
+    children: [
+      {
+        element: <EmailMarketingLayout />,
+        children: [{ index: true, element: <EmailMarketingHub /> }],
+      },
+    ],
   },
   {
     path: '/backoffice/doublons',
@@ -751,11 +761,53 @@ export const router = createBrowserRouter([
   },
   {
     path: '/backoffice/newsletter',
-    element: <NewsletterDashboard />,
+    element: <CRMLayout />,
+    children: [
+      {
+        element: <EmailMarketingLayout />,
+        children: [{ index: true, element: <NewsletterDashboard /> }],
+      },
+    ],
   },
   {
     path: '/backoffice/notifications',
-    element: <NotificationsManager />,
+    element: <CRMLayout />,
+    children: [
+      {
+        element: <EmailMarketingLayout />,
+        children: [{ index: true, element: <NotificationsManager /> }],
+      },
+    ],
+  },
+  {
+    path: '/backoffice/smart-templates',
+    element: <CRMLayout />,
+    children: [
+      {
+        element: <EmailMarketingLayout />,
+        children: [{ index: true, element: <SmartTemplatesManager /> }],
+      },
+    ],
+  },
+  {
+    path: '/backoffice/ab-testing',
+    element: <CRMLayout />,
+    children: [
+      {
+        element: <EmailMarketingLayout />,
+        children: [{ index: true, element: <ABTestingManager /> }],
+      },
+    ],
+  },
+  {
+    path: '/backoffice/email-analytics',
+    element: <CRMLayout />,
+    children: [
+      {
+        element: <EmailMarketingLayout />,
+        children: [{ index: true, element: <EmailAdvancedAnalytics /> }],
+      },
+    ],
   },
   {
     path: '/backoffice/partners',
