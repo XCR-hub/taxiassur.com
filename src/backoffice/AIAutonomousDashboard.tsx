@@ -1,10 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Brain, Zap, TrendingUp, Users, Target, Activity, RefreshCw, CheckCircle, AlertTriangle, Code, Rocket, Database, BarChart3, Home } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import {
+  Brain, Zap, TrendingUp, Users, Activity, RefreshCw,
+  CheckCircle, AlertTriangle, Code, Rocket, BarChart3,
+  Clock, Play, ChevronRight, X, Shield,
+  Cpu, GitBranch, Database, Sparkles, Circle,
+  ArrowUp, ArrowDown, Minus,
+} from 'lucide-react';
 import { supabase } from '@/lib/supabase';
-import Card from '../components/Card';
 import { logger } from '@/lib/logger';
 
+/* ── Types ── */
 interface AIMetrics {
   total_leads: number;
   conversion_rate: number;
@@ -18,8 +23,8 @@ interface AIMetrics {
 interface AIDecision {
   id: string;
   decision_type: string;
-  context: any;
-  decision: any;
+  context: Record<string, unknown>;
+  decision: Record<string, unknown>;
   confidence_score: number;
   status: string;
   created_at: string;
@@ -41,419 +46,538 @@ interface Deployment {
   changes_summary: string;
   status: string;
   deployed_at: string;
-  performance_before: any;
-  performance_after: any;
+  performance_before: Record<string, unknown>;
+  performance_after: Record<string, unknown>;
 }
 
+/* ── Helpers ── */
+function fmtRelative(iso: string) {
+  const diff = Date.now() - new Date(iso).getTime();
+  const m = Math.floor(diff / 60000);
+  const h = Math.floor(m / 60);
+  const d = Math.floor(h / 24);
+  if (d > 0) return `il y a ${d}j`;
+  if (h > 0) return `il y a ${h}h`;
+  if (m > 0) return `il y a ${m}m`;
+  return 'à l\'instant';
+}
+
+function fmtDate(iso: string) {
+  return new Date(iso).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+}
+
+const DECISION_TYPE_LABELS: Record<string, string> = {
+  performance_optimization: 'Optimisation perf.',
+  lead_scoring: 'Scoring leads',
+  content_generation: 'Génération contenu',
+  email_automation: 'Automatisation email',
+  pipeline_adjustment: 'Ajustement pipeline',
+};
+
+const STATUS_STYLES: Record<string, { bg: string; text: string; dot: string }> = {
+  executed:  { bg: 'bg-green-50',  text: 'text-green-700',  dot: 'bg-green-500'  },
+  pending:   { bg: 'bg-amber-50',  text: 'text-amber-700',  dot: 'bg-amber-500'  },
+  approved:  { bg: 'bg-blue-50',   text: 'text-blue-700',   dot: 'bg-blue-500'   },
+  applied:   { bg: 'bg-green-50',  text: 'text-green-700',  dot: 'bg-green-500'  },
+  success:   { bg: 'bg-green-50',  text: 'text-green-700',  dot: 'bg-green-500'  },
+  failed:    { bg: 'bg-red-50',    text: 'text-red-700',    dot: 'bg-red-500'    },
+  rejected:  { bg: 'bg-red-50',    text: 'text-red-700',    dot: 'bg-red-500'    },
+  default:   { bg: 'bg-gray-50',   text: 'text-gray-600',   dot: 'bg-gray-400'   },
+};
+
+const PRIORITY_META: Record<string, { label: string; color: string; bg: string }> = {
+  high:   { label: 'Haute',   color: 'text-red-700',    bg: 'bg-red-100'    },
+  medium: { label: 'Moyenne', color: 'text-amber-700',  bg: 'bg-amber-100'  },
+  low:    { label: 'Faible',  color: 'text-gray-600',   bg: 'bg-gray-100'   },
+};
+
+function StatusBadge({ status }: { status: string }) {
+  const s = STATUS_STYLES[status] || STATUS_STYLES.default;
+  return (
+    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${s.bg} ${s.text}`}>
+      <span className={`w-1 h-1 rounded-full ${s.dot}`} />
+      {status}
+    </span>
+  );
+}
+
+function ConfidenceBar({ score }: { score: number }) {
+  const pct = Math.min(100, Math.max(0, score));
+  const color = pct >= 80 ? 'bg-green-500' : pct >= 60 ? 'bg-amber-500' : 'bg-red-500';
+  return (
+    <div className="flex items-center gap-2">
+      <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+        <div className={`h-full rounded-full transition-all ${color}`} style={{ width: `${pct}%` }} />
+      </div>
+      <span className="text-xs font-semibold text-gray-600 w-8 text-right">{pct.toFixed(0)}%</span>
+    </div>
+  );
+}
+
+/* ── Confirm Modal ── */
+function ConfirmModal({
+  open, title, description, confirmLabel, onConfirm, onClose, danger = false
+}: {
+  open: boolean; title: string; description: string;
+  confirmLabel: string; onConfirm: () => void; onClose: () => void; danger?: boolean;
+}) {
+  if (!open) return null;
+  return (
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-5">
+        <div className="flex items-start gap-3 mb-4">
+          <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${danger ? 'bg-red-100' : 'bg-orange-100'}`}>
+            <Shield size={18} className={danger ? 'text-red-600' : 'text-orange-600'} />
+          </div>
+          <div>
+            <div className="font-bold text-gray-900 text-sm">{title}</div>
+            <div className="text-xs text-gray-500 mt-1">{description}</div>
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <button onClick={onConfirm}
+            className={`flex-1 py-2 text-sm font-semibold rounded-xl text-white transition-colors ${danger ? 'bg-red-500 hover:bg-red-600' : 'bg-orange-500 hover:bg-orange-600'}`}>
+            {confirmLabel}
+          </button>
+          <button onClick={onClose}
+            className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium rounded-xl transition-colors">
+            Annuler
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ════════════════════════════════════════════════════════════════ */
 export default function AIAutonomousDashboard() {
-  const navigate = useNavigate();
-const [metrics, setMetrics] = useState<AIMetrics | null>(null);
-  const [decisions, setDecisions] = useState<AIDecision[]>([]);
+  const [metrics, setMetrics]       = useState<AIMetrics | null>(null);
+  const [decisions, setDecisions]   = useState<AIDecision[]>([]);
   const [suggestions, setSuggestions] = useState<CodeSuggestion[]>([]);
   const [deployments, setDeployments] = useState<Deployment[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [aiRunning, setAiRunning] = useState(false);
+  const [loading, setLoading]       = useState(true);
+  const [aiRunning, setAiRunning]   = useState(false);
+  const [deploying, setDeploying]   = useState(false);
+  const [toast, setToast]           = useState<{ msg: string; type: 'ok' | 'err' } | null>(null);
+  const [confirm, setConfirm]       = useState<null | 'analyze' | 'deploy'>(null);
+  const [activeTab, setActiveTab]   = useState<'decisions' | 'deployments'>('decisions');
+  const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
 
-  useEffect(() => {
-    loadAIData();
-    const interval = setInterval(loadAIData, 30000);
-    return () => clearInterval(interval);
-  }, []);
+  const showToast = (msg: string, type: 'ok' | 'err' = 'ok') => {
+    setToast({ msg, type });
+    setTimeout(() => setToast(null), 3500);
+  };
 
-  const loadAIData = async () => {
+  const loadData = useCallback(async () => {
     try {
       const [metricsRes, decisionsRes, suggestionsRes, deploymentsRes] = await Promise.all([
         supabase.rpc('calculate_ai_metrics'),
-        supabase.from('ai_decisions').select('*').order('created_at', { ascending: false }).limit(10),
+        supabase.from('ai_decisions').select('*').order('created_at', { ascending: false }).limit(15),
         supabase.from('ai_code_suggestions').select('*').order('created_at', { ascending: false }).limit(10),
-        supabase.from('ai_deployments').select('*').order('created_at', { ascending: false }).limit(10)
+        supabase.from('ai_deployments').select('*').order('created_at', { ascending: false }).limit(10),
       ]);
-
       if (metricsRes.data) setMetrics(metricsRes.data);
       if (decisionsRes.data) setDecisions(decisionsRes.data);
       if (suggestionsRes.data) setSuggestions(suggestionsRes.data);
       if (deploymentsRes.data) setDeployments(deploymentsRes.data);
-    } catch (error) {
-      logger.error('Error loading AI data:', error);
+      setLastRefresh(new Date());
+    } catch (err) {
+      logger.error('loadData', err);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const triggerAIAnalysis = async () => {
+  useEffect(() => {
+    loadData();
+    const iv = setInterval(loadData, 30000);
+    return () => clearInterval(iv);
+  }, [loadData]);
+
+  const doAnalyze = async () => {
+    setConfirm(null);
     setAiRunning(true);
     try {
-      const context = {
-        currentMetrics: metrics,
-        timestamp: new Date().toISOString()
-      };
-
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/autonomous-ai-engine`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            context,
-            decisionType: 'performance_optimization'
-          })
-        }
-      );
-
-      const result = await response.json();
-
-      if (result.success) {
-        alert('Analyse IA terminée avec succès !');
-        loadAIData();
+      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/autonomous-ai-engine`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ context: { currentMetrics: metrics, timestamp: new Date().toISOString() }, decisionType: 'performance_optimization' }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast('Analyse IA terminée avec succès');
+        await loadData();
+      } else {
+        showToast('Analyse terminée avec avertissements', 'err');
       }
-    } catch (error) {
-      logger.error('AI Analysis Error:', error);
-      alert('Erreur lors de l\'analyse IA');
+    } catch (err) {
+      logger.error('analyze', err);
+      showToast('Erreur lors de l\'analyse IA', 'err');
     } finally {
       setAiRunning(false);
     }
   };
 
-  const approveAndDeploy = async () => {
-    if (!confirm('Approuver et déployer automatiquement les améliorations suggérées ?')) {
-      return;
-    }
-
+  const doDeploy = async () => {
+    setConfirm(null);
+    setDeploying(true);
     try {
-      await supabase
-        .from('ai_code_suggestions')
-        .update({ status: 'approved' })
-        .eq('status', 'pending')
-        .in('priority', ['high', 'medium']);
-
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/auto-deploy-improvements`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
-
-      const result = await response.json();
-
-      if (result.success) {
-        alert(`Déploiement réussi ! ${result.changesApplied} modifications appliquées.`);
-        loadAIData();
+      await supabase.from('ai_code_suggestions').update({ status: 'approved' }).eq('status', 'pending').in('priority', ['high', 'medium']);
+      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/auto-deploy-improvements`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json' },
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(`${data.changesApplied ?? 0} modification(s) déployée(s)`);
+        await loadData();
+      } else {
+        showToast('Déploiement partiel', 'err');
       }
-    } catch (error) {
-      logger.error('Deployment Error:', error);
-      alert('Erreur lors du déploiement');
+    } catch (err) {
+      logger.error('deploy', err);
+      showToast('Erreur lors du déploiement', 'err');
+    } finally {
+      setDeploying(false);
     }
   };
 
+  const approveSuggestion = async (id: string) => {
+    await supabase.from('ai_code_suggestions').update({ status: 'approved' }).eq('id', id);
+    await loadData();
+    showToast('Suggestion approuvée');
+  };
+
+  const rejectSuggestion = async (id: string) => {
+    await supabase.from('ai_code_suggestions').update({ status: 'rejected' }).eq('id', id);
+    await loadData();
+    showToast('Suggestion rejetée');
+  };
+
+  /* ── Derived ── */
+  const pendingCount  = suggestions.filter(s => s.status === 'pending').length;
+  const executedCount = decisions.filter(d => d.status === 'executed').length;
+  const successRate   = decisions.length > 0 ? Math.round((executedCount / decisions.length) * 100) : 0;
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 p-8">
-        <div className="animate-pulse space-y-6">
-          <div className="h-8 bg-gray-200 rounded w-1/3"></div>
-          <div className="grid grid-cols-4 gap-6">
-            {[...Array(8)].map((_, i) => (
-              <div key={i} className="h-32 bg-gray-200 rounded"></div>
-            ))}
-          </div>
-        </div>
+      <div className="flex items-center justify-center h-64">
+        <RefreshCw className="animate-spin text-orange-500" size={28} />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
-      <header className="bg-white border-b-2 border-gray-200 shadow-sm mb-8">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center space-x-4">
-              <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center shadow-lg">
-                <Brain className="text-white" size={20} />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">
-                  IA Autonome & Auto-apprenante
-                </h1>
-                <p className="text-sm text-gray-600">
-                  Système d'optimisation continue et déploiement automatique
-                </p>
-              </div>
-            </div>
+    <div className="p-6 space-y-5 max-w-6xl mx-auto">
 
-            <div className="flex items-center space-x-3">
-              <button
-                onClick={triggerAIAnalysis}
-                disabled={aiRunning}
-                className={`flex items-center space-x-2 px-6 py-3 rounded-lg font-bold transition-all shadow-lg ${
-                  aiRunning
-                    ? 'bg-gray-400 cursor-not-allowed'
-                    : 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white'
-                }`}
-              >
-                <Brain size={18} className={aiRunning ? 'animate-pulse' : ''} />
-                <span>{aiRunning ? 'Analyse en cours...' : 'Lancer Analyse IA'}</span>
-              </button>
-
-              <button onClick={() => navigate("/backoffice")} className="bg-orange-600 hover:bg-orange-700 text-white font-medium px-4 py-2 rounded-lg transition-colors flex items-center space-x-2">
-                <Home size={16} />
-                <span>Accueil</span>
-              </button>
-            </div>
-          </div>
+      {/* ── Header ── */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+            <Cpu size={20} className="text-orange-500" />
+            IA Autonome
+          </h1>
+          <p className="text-xs text-gray-500 mt-0.5 flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse inline-block" />
+            Système actif · Actualisation {fmtRelative(lastRefresh.toISOString())}
+          </p>
         </div>
-      </header>
-
-      <div className="max-w-7xl mx-auto space-y-8">
-        {metrics && (
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <Card className="bg-gradient-to-br from-purple-50 to-pink-50 border-purple-200">
-              <div className="flex justify-between items-start mb-3">
-                <div className="p-2 bg-purple-100 rounded-lg">
-                  <Users className="text-purple-600" size={28} />
-                </div>
-                <TrendingUp className="text-purple-400" size={20} />
-              </div>
-              <div className="text-4xl font-bold text-gray-900 mb-1">{metrics.total_leads}</div>
-              <div className="text-sm font-medium text-gray-600">Leads Totaux</div>
-              <div className="mt-2 text-xs text-purple-600 font-medium">
-                Conv: {metrics.conversion_rate?.toFixed(1)}%
-              </div>
-            </Card>
-
-            <Card className="bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-200">
-              <div className="flex justify-between items-start mb-3">
-                <div className="p-2 bg-blue-100 rounded-lg">
-                  <Brain className="text-blue-600" size={28} />
-                </div>
-                <Activity className="text-blue-400" size={20} />
-              </div>
-              <div className="text-4xl font-bold text-gray-900 mb-1">{metrics.active_decisions}</div>
-              <div className="text-sm font-medium text-gray-600">Décisions Actives</div>
-              <div className="mt-2 text-xs text-blue-600 font-medium">
-                {metrics.learning_data_points} données d'apprentissage
-              </div>
-            </Card>
-
-            <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-green-200">
-              <div className="flex justify-between items-start mb-3">
-                <div className="p-2 bg-green-100 rounded-lg">
-                  <Rocket className="text-green-600" size={28} />
-                </div>
-                <CheckCircle className="text-green-400" size={20} />
-              </div>
-              <div className="text-4xl font-bold text-gray-900 mb-1">{metrics.successful_deployments}</div>
-              <div className="text-sm font-medium text-gray-600">Déploiements Réussis</div>
-              <div className="mt-2 text-xs text-green-600 font-medium">
-                100% succès
-              </div>
-            </Card>
-
-            <Card className="bg-gradient-to-br from-amber-50 to-yellow-50 border-amber-200">
-              <div className="flex justify-between items-start mb-3">
-                <div className="p-2 bg-amber-100 rounded-lg">
-                  <Code className="text-amber-600" size={28} />
-                </div>
-                <AlertTriangle className="text-amber-400" size={20} />
-              </div>
-              <div className="text-4xl font-bold text-gray-900 mb-1">{metrics.code_suggestions_pending}</div>
-              <div className="text-sm font-medium text-gray-600">Suggestions en Attente</div>
-              <div className="mt-2 text-xs text-amber-600 font-medium">
-                Prêtes à déployer
-              </div>
-            </Card>
-          </div>
-        )}
-
-        <div className="flex gap-4">
-          <button
-            onClick={approveAndDeploy}
-            disabled={!metrics || metrics.code_suggestions_pending === 0}
-            className={`flex items-center space-x-2 px-6 py-3 rounded-lg font-bold transition-all shadow-lg ${
-              !metrics || metrics.code_suggestions_pending === 0
-                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                : 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white'
-            }`}
-          >
-            <Rocket size={18} />
-            <span>Approuver & Déployer Automatiquement</span>
+        <div className="flex items-center gap-2">
+          <button onClick={() => setConfirm('analyze')} disabled={aiRunning}
+            className="flex items-center gap-2 px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold rounded-xl transition-all disabled:opacity-50 shadow-sm">
+            {aiRunning
+              ? <><RefreshCw size={14} className="animate-spin" /> Analyse…</>
+              : <><Brain size={14} /> Lancer analyse</>}
           </button>
-
-          <button
-            onClick={loadAIData}
-            className="flex items-center space-x-2 bg-gray-600 hover:bg-gray-700 text-white font-medium px-6 py-3 rounded-lg transition-all"
-          >
-            <RefreshCw size={18} />
-            <span>Actualiser</span>
+          <button onClick={() => setConfirm('deploy')} disabled={deploying || pendingCount === 0}
+            className="flex items-center gap-2 px-4 py-2 bg-gray-900 hover:bg-gray-800 text-white text-sm font-semibold rounded-xl transition-all disabled:opacity-40 shadow-sm">
+            {deploying
+              ? <><RefreshCw size={14} className="animate-spin" /> Déploiement…</>
+              : <><Rocket size={14} /> Déployer ({pendingCount})</>}
+          </button>
+          <button onClick={loadData} className="p-2 text-gray-400 hover:bg-gray-100 rounded-xl transition-colors">
+            <RefreshCw size={15} />
           </button>
         </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <Card>
-            <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
-              <Brain className="mr-2 text-purple-600" size={24} />
-              Dernières Décisions IA
-            </h3>
-
-            <div className="space-y-3">
-              {decisions.length === 0 ? (
-                <p className="text-center text-gray-500 py-8">Aucune décision pour le moment</p>
-              ) : (
-                decisions.map(decision => (
-                  <div key={decision.id} className="p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="font-bold text-gray-900 capitalize">{decision.decision_type.replace('_', ' ')}</span>
-                      <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                        decision.status === 'executed' ? 'bg-green-100 text-green-800' :
-                        decision.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                        'bg-gray-100 text-gray-800'
-                      }`}>
-                        {decision.status}
-                      </span>
-                    </div>
-                    <div className="text-sm text-gray-600">
-                      Confiance: {decision.confidence_score.toFixed(1)}%
-                    </div>
-                    <div className="text-xs text-gray-500 mt-2">
-                      {new Date(decision.created_at).toLocaleString('fr-FR')}
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </Card>
-
-          <Card>
-            <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
-              <Code className="mr-2 text-blue-600" size={24} />
-              Suggestions de Code
-            </h3>
-
-            <div className="space-y-3">
-              {suggestions.length === 0 ? (
-                <p className="text-center text-gray-500 py-8">Aucune suggestion pour le moment</p>
-              ) : (
-                suggestions.map(suggestion => (
-                  <div key={suggestion.id} className="p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="font-bold text-gray-900 text-sm">{suggestion.file_path}</span>
-                      <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                        suggestion.priority === 'high' ? 'bg-red-100 text-red-800' :
-                        suggestion.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                        'bg-gray-100 text-gray-800'
-                      }`}>
-                        {suggestion.priority}
-                      </span>
-                    </div>
-                    <div className="text-sm text-gray-700 mb-2">{suggestion.reason}</div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-gray-500">{suggestion.suggestion_type}</span>
-                      <span className={`px-2 py-1 rounded text-xs font-bold ${
-                        suggestion.status === 'applied' ? 'bg-green-100 text-green-800' :
-                        suggestion.status === 'approved' ? 'bg-blue-100 text-blue-800' :
-                        'bg-gray-100 text-gray-800'
-                      }`}>
-                        {suggestion.status}
-                      </span>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </Card>
-        </div>
-
-        <Card>
-          <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
-            <Rocket className="mr-2 text-green-600" size={24} />
-            Historique des Déploiements
-          </h3>
-
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b-2 border-gray-200 bg-gray-50">
-                  <th className="text-left py-3 px-4 font-bold text-gray-900">Type</th>
-                  <th className="text-left py-3 px-4 font-bold text-gray-900">Résumé</th>
-                  <th className="text-left py-3 px-4 font-bold text-gray-900">Statut</th>
-                  <th className="text-left py-3 px-4 font-bold text-gray-900">Date</th>
-                </tr>
-              </thead>
-              <tbody>
-                {deployments.length === 0 ? (
-                  <tr>
-                    <td colSpan={4} className="py-8 text-center text-gray-500">
-                      Aucun déploiement pour le moment
-                    </td>
-                  </tr>
-                ) : (
-                  deployments.map(deployment => (
-                    <tr key={deployment.id} className="border-b border-gray-100 hover:bg-gray-50">
-                      <td className="py-3 px-4 font-medium capitalize">
-                        {deployment.deployment_type.replace('_', ' ')}
-                      </td>
-                      <td className="py-3 px-4 text-gray-700">{deployment.changes_summary}</td>
-                      <td className="py-3 px-4">
-                        <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                          deployment.status === 'success' ? 'bg-green-100 text-green-800' :
-                          deployment.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                          'bg-red-100 text-red-800'
-                        }`}>
-                          {deployment.status}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4 text-gray-600">
-                        {deployment.deployed_at ? new Date(deployment.deployed_at).toLocaleDateString('fr-FR') : '-'}
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-purple-50 to-pink-50">
-          <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
-            <Zap className="mr-2 text-purple-600" size={24} />
-            Capacités de l'IA Autonome
-          </h3>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="p-4 bg-white rounded-lg">
-              <h4 className="font-bold text-purple-900 mb-2">Analyse Continue</h4>
-              <ul className="text-sm text-purple-800 space-y-1">
-                <li>• Surveillance métriques 24/7</li>
-                <li>• Détection anomalies automatique</li>
-                <li>• Apprentissage des patterns</li>
-              </ul>
-            </div>
-
-            <div className="p-4 bg-white rounded-lg">
-              <h4 className="font-bold text-purple-900 mb-2">Collaboration IA</h4>
-              <ul className="text-sm text-purple-800 space-y-1">
-                <li>• Consultation multi-modèles</li>
-                <li>• Prise de décision par consensus</li>
-                <li>• Optimisation collective</li>
-              </ul>
-            </div>
-
-            <div className="p-4 bg-white rounded-lg">
-              <h4 className="font-bold text-purple-900 mb-2">Déploiement Auto</h4>
-              <ul className="text-sm text-purple-800 space-y-1">
-                <li>• Tests automatiques</li>
-                <li>• Rollback si nécessaire</li>
-                <li>• Amélioration continue</li>
-              </ul>
-            </div>
-          </div>
-        </Card>
       </div>
+
+      {/* ── KPI strip ── */}
+      <div className="grid grid-cols-4 gap-3">
+        {[
+          {
+            label: 'Leads totaux', value: metrics?.total_leads ?? 0, icon: Users,
+            sub: `Conv. ${metrics?.conversion_rate?.toFixed(1) ?? 0}%`,
+            subIcon: metrics?.conversion_rate && metrics.conversion_rate > 10 ? ArrowUp : Minus,
+            color: 'text-gray-600', bg: 'bg-gray-50', border: 'border-gray-200',
+          },
+          {
+            label: 'Décisions actives', value: metrics?.active_decisions ?? 0, icon: Brain,
+            sub: `${metrics?.learning_data_points ?? 0} points appris`,
+            subIcon: ArrowUp,
+            color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-200',
+          },
+          {
+            label: 'Taux de succès', value: `${successRate}%`, icon: Activity,
+            sub: `${executedCount}/${decisions.length} exécutées`,
+            subIcon: successRate >= 80 ? ArrowUp : ArrowDown,
+            color: 'text-green-600', bg: 'bg-green-50', border: 'border-green-200',
+          },
+          {
+            label: 'Déploiements OK', value: metrics?.successful_deployments ?? 0, icon: Rocket,
+            sub: `${pendingCount} en attente`,
+            subIcon: pendingCount > 0 ? AlertTriangle : CheckCircle,
+            color: 'text-orange-600', bg: 'bg-orange-50', border: 'border-orange-200',
+          },
+        ].map(k => (
+          <div key={k.label} className={`${k.bg} border ${k.border} rounded-xl px-4 py-3`}>
+            <div className="flex items-center justify-between mb-1">
+              <k.icon size={16} className={k.color} />
+              <k.subIcon size={12} className={k.color} />
+            </div>
+            <div className="text-2xl font-bold text-gray-900 leading-tight">{k.value}</div>
+            <div className="text-xs text-gray-500 mt-0.5">{k.label}</div>
+            <div className={`text-[10px] font-medium mt-1 ${k.color}`}>{k.sub}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* ── Main grid ── */}
+      <div className="grid grid-cols-5 gap-5">
+
+        {/* ── Left: decisions + deployments tabs ── */}
+        <div className="col-span-3 space-y-4">
+
+          {/* Tab bar */}
+          <div className="flex items-center gap-1 p-1 bg-gray-100 rounded-xl w-fit">
+            {([
+              { id: 'decisions', label: 'Décisions IA', icon: Brain },
+              { id: 'deployments', label: 'Déploiements', icon: Rocket },
+            ] as const).map(t => (
+              <button key={t.id} onClick={() => setActiveTab(t.id)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                  activeTab === t.id ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
+                <t.icon size={13} />
+                {t.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Decisions list */}
+          {activeTab === 'decisions' && (
+            <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
+              {decisions.length === 0 ? (
+                <div className="py-16 flex flex-col items-center text-gray-400">
+                  <Brain size={28} className="mb-2 opacity-30" />
+                  <p className="text-sm">Aucune décision enregistrée</p>
+                </div>
+              ) : (
+                <div className="divide-y divide-gray-50">
+                  {decisions.map((d, i) => (
+                    <div key={d.id} className="p-3.5 hover:bg-gray-50/60 transition-colors">
+                      <div className="flex items-start gap-3">
+                        <div className="w-7 h-7 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <Sparkles size={13} className="text-orange-600" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between gap-2 mb-1">
+                            <span className="text-sm font-semibold text-gray-900 truncate">
+                              {DECISION_TYPE_LABELS[d.decision_type] || d.decision_type.replace(/_/g, ' ')}
+                            </span>
+                            <StatusBadge status={d.status} />
+                          </div>
+                          <ConfidenceBar score={d.confidence_score} />
+                          <div className="flex items-center gap-2 mt-1.5">
+                            <Clock size={10} className="text-gray-400" />
+                            <span className="text-[10px] text-gray-400">{fmtRelative(d.created_at)}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Deployments list */}
+          {activeTab === 'deployments' && (
+            <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
+              {deployments.length === 0 ? (
+                <div className="py-16 flex flex-col items-center text-gray-400">
+                  <Rocket size={28} className="mb-2 opacity-30" />
+                  <p className="text-sm">Aucun déploiement</p>
+                </div>
+              ) : (
+                <div className="divide-y divide-gray-50">
+                  {deployments.map(d => (
+                    <div key={d.id} className="p-3.5 hover:bg-gray-50/60 transition-colors">
+                      <div className="flex items-start gap-3">
+                        <div className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5 ${
+                          d.status === 'success' ? 'bg-green-100' : d.status === 'failed' ? 'bg-red-100' : 'bg-amber-100'}`}>
+                          {d.status === 'success'
+                            ? <CheckCircle size={13} className="text-green-600" />
+                            : d.status === 'failed'
+                              ? <AlertTriangle size={13} className="text-red-600" />
+                              : <Clock size={13} className="text-amber-600" />}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between gap-2 mb-0.5">
+                            <span className="text-sm font-semibold text-gray-900 capitalize">
+                              {d.deployment_type.replace(/_/g, ' ')}
+                            </span>
+                            <StatusBadge status={d.status} />
+                          </div>
+                          <p className="text-xs text-gray-600 leading-relaxed">{d.changes_summary}</p>
+                          <div className="flex items-center gap-1.5 mt-1">
+                            <Clock size={10} className="text-gray-400" />
+                            <span className="text-[10px] text-gray-400">
+                              {d.deployed_at ? fmtDate(d.deployed_at) : '—'}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* ── Right: Suggestions + Capabilities ── */}
+        <div className="col-span-2 space-y-4">
+
+          {/* Code suggestions */}
+          <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+              <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2">
+                <Code size={14} className="text-orange-500" />
+                Suggestions de code
+              </h3>
+              {pendingCount > 0 && (
+                <span className="text-xs font-bold px-2 py-0.5 bg-amber-100 text-amber-700 rounded-full">
+                  {pendingCount} en attente
+                </span>
+              )}
+            </div>
+            {suggestions.length === 0 ? (
+              <div className="py-10 flex flex-col items-center text-gray-400">
+                <Code size={24} className="mb-2 opacity-30" />
+                <p className="text-xs">Aucune suggestion</p>
+              </div>
+            ) : (
+              <div className="divide-y divide-gray-50 max-h-80 overflow-y-auto">
+                {suggestions.map(s => {
+                  const pm = PRIORITY_META[s.priority] || PRIORITY_META.low;
+                  return (
+                    <div key={s.id} className="p-3 hover:bg-gray-50/60 transition-colors">
+                      <div className="flex items-start justify-between gap-2 mb-1">
+                        <span className="text-xs font-semibold text-gray-800 truncate flex-1">{s.file_path}</span>
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold flex-shrink-0 ${pm.bg} ${pm.color}`}>
+                          {pm.label}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-gray-600 leading-relaxed mb-2">{s.reason}</p>
+                      <div className="flex items-center justify-between">
+                        <StatusBadge status={s.status} />
+                        {s.status === 'pending' && (
+                          <div className="flex items-center gap-1">
+                            <button onClick={() => approveSuggestion(s.id)}
+                              className="p-1 rounded-md bg-green-100 hover:bg-green-200 transition-colors" title="Approuver">
+                              <CheckCircle size={12} className="text-green-600" />
+                            </button>
+                            <button onClick={() => rejectSuggestion(s.id)}
+                              className="p-1 rounded-md bg-red-100 hover:bg-red-200 transition-colors" title="Rejeter">
+                              <X size={12} className="text-red-600" />
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Capabilities */}
+          <div className="bg-white border border-gray-200 rounded-2xl p-4">
+            <h3 className="text-sm font-bold text-gray-900 mb-3 flex items-center gap-2">
+              <Zap size={14} className="text-orange-500" />
+              Capacités du moteur
+            </h3>
+            <div className="space-y-2.5">
+              {[
+                { icon: Activity,  title: 'Analyse continue',      sub: 'Surveillance métriques 24/7 et détection d\'anomalies' },
+                { icon: Database,  title: 'Apprentissage auto',     sub: `${metrics?.learning_data_points ?? 0} points de données` },
+                { icon: GitBranch, title: 'Multi-modèles',          sub: 'Consensus entre plusieurs LLMs' },
+                { icon: Shield,    title: 'Déploiement sécurisé',   sub: 'Rollback automatique si nécessaire' },
+              ].map((c, i) => (
+                <div key={i} className="flex items-start gap-2.5 p-2 rounded-xl hover:bg-gray-50 transition-colors">
+                  <div className="w-7 h-7 bg-orange-50 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <c.icon size={13} className="text-orange-600" />
+                  </div>
+                  <div>
+                    <div className="text-xs font-semibold text-gray-800">{c.title}</div>
+                    <div className="text-[10px] text-gray-500 mt-0.5">{c.sub}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Learning data */}
+          <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl p-4 text-white">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" />
+                <span className="text-xs font-bold">Système opérationnel</span>
+              </div>
+              <span className="text-[10px] text-slate-400">{fmtRelative(lastRefresh.toISOString())}</span>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              {[
+                { label: 'Taux succès',  value: `${successRate}%` },
+                { label: 'Décisions',    value: decisions.length },
+                { label: 'Déploiements', value: deployments.length },
+                { label: 'Suggestions',  value: suggestions.length },
+              ].map((m, i) => (
+                <div key={i} className="bg-white/5 rounded-lg px-2.5 py-1.5">
+                  <div className="text-lg font-bold text-white leading-tight">{m.value}</div>
+                  <div className="text-[10px] text-slate-400">{m.label}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Modals ── */}
+      <ConfirmModal
+        open={confirm === 'analyze'}
+        title="Lancer l'analyse IA ?"
+        description="Le moteur va analyser les métriques actuelles et générer des recommandations d'optimisation."
+        confirmLabel="Lancer l'analyse"
+        onConfirm={doAnalyze}
+        onClose={() => setConfirm(null)}
+      />
+      <ConfirmModal
+        open={confirm === 'deploy'}
+        title={`Déployer ${pendingCount} suggestion(s) ?`}
+        description="Les suggestions de priorité haute et moyenne seront approuvées et déployées automatiquement."
+        confirmLabel="Déployer automatiquement"
+        onConfirm={doDeploy}
+        onClose={() => setConfirm(null)}
+      />
+
+      {/* ── Toast ── */}
+      {toast && (
+        <div className={`fixed bottom-5 right-5 z-50 flex items-center gap-2.5 px-4 py-3 rounded-xl shadow-lg text-sm font-medium
+          ${toast.type === 'ok' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'}`}>
+          {toast.type === 'ok' ? <CheckCircle size={15} /> : <AlertTriangle size={15} />}
+          {toast.msg}
+        </div>
+      )}
     </div>
   );
 }
