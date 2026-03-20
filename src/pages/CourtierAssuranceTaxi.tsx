@@ -16,24 +16,24 @@ const CourtierAssuranceTaxi: React.FC = () => {
 
   const faqItems = [
     {
-      q: "Qu'est-ce qu'un courtier en assurance taxi ?",
-      a: "Un courtier en assurance taxi est un professionnel indépendant mandaté par ses clients — et non par les assureurs — pour comparer les offres du marché et négocier les meilleures conditions. Contrairement à un agent exclusif, le courtier travaille avec plusieurs compagnies (AXA, Generali, MFA, Zephir, Solly Azar...) et peut ainsi vous proposer le tarif le plus compétitif pour votre profil."
+      question: "Qu'est-ce qu'un courtier en assurance taxi ?",
+      answer: "Un courtier en assurance taxi est un professionnel indépendant mandaté par ses clients — et non par les assureurs — pour comparer les offres du marché et négocier les meilleures conditions. Contrairement à un agent exclusif, le courtier travaille avec plusieurs compagnies (AXA, Generali, MFA, Zephir, Solly Azar...) et peut ainsi vous proposer le tarif le plus compétitif pour votre profil."
     },
     {
-      q: "Pourquoi passer par un courtier plutôt que directement chez un assureur ?",
-      a: "Un courtier professionnel taxi vous fait économiser en moyenne 35% par rapport à une souscription directe. Il négocie des tarifs de groupe, analyse votre situation (zone, expérience, sinistralité) et sélectionne la compagnie la mieux adaptée. Vous bénéficiez aussi d'un accompagnement unique en cas de sinistre."
+      question: "Pourquoi passer par un courtier plutôt que directement chez un assureur ?",
+      answer: "Un courtier professionnel taxi vous fait économiser en moyenne 35% par rapport à une souscription directe. Il négocie des tarifs de groupe, analyse votre situation (zone, expérience, sinistralité) et sélectionne la compagnie la mieux adaptée. Vous bénéficiez aussi d'un accompagnement unique en cas de sinistre."
     },
     {
-      q: "TaxiAssur est-il un courtier agréé ORIAS ?",
-      a: "Oui, TaxiAssur est inscrit au registre ORIAS (Organisme pour le Registre des Intermédiaires en Assurance), gage de sérieux et de conformité réglementaire. Notre numéro ORIAS est vérifiable sur le site officiel orias.fr."
+      question: "TaxiAssur est-il un courtier agréé ORIAS ?",
+      answer: "Oui, TaxiAssur est inscrit au registre ORIAS (Organisme pour le Registre des Intermédiaires en Assurance), gage de sérieux et de conformité réglementaire. Notre numéro ORIAS est vérifiable sur le site officiel orias.fr."
     },
     {
-      q: "Combien coûtent les services d'un courtier assurance taxi ?",
-      a: "Les services de courtage sont gratuits pour vous. Le courtier est rémunéré par une commission versée par la compagnie d'assurance choisie, sans surcoût sur votre prime. Vous bénéficiez d'un service expert sans frais supplémentaires."
+      question: "Combien coûtent les services d'un courtier assurance taxi ?",
+      answer: "Les services de courtage sont gratuits pour vous. Le courtier est rémunéré par une commission versée par la compagnie d'assurance choisie, sans surcoût sur votre prime. Vous bénéficiez d'un service expert sans frais supplémentaires."
     },
     {
-      q: "Quels assureurs travaillent avec TaxiAssur ?",
-      a: "TaxiAssur travaille avec les principaux assureurs spécialisés taxi : MFA, Zephir Assurances, Solly Azar, Generali, et d'autres compagnies partenaires. Ce réseau nous permet de comparer 15+ offres et de vous obtenir le meilleur tarif."
+      question: "Quels assureurs travaillent avec TaxiAssur ?",
+      answer: "TaxiAssur travaille avec les principaux assureurs spécialisés taxi : MFA, Zephir Assurances, Solly Azar, Generali, et d'autres compagnies partenaires. Ce réseau nous permet de comparer 15+ offres et de vous obtenir le meilleur tarif."
     }
   ];
 
@@ -47,6 +47,7 @@ const CourtierAssuranceTaxi: React.FC = () => {
       />
       <JsonLd type="breadcrumb" data={breadcrumbs} />
       <JsonLd type="organization" />
+      <JsonLd type="faq" data={faqItems} />
 
       <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-black">
         <Header />
@@ -357,8 +358,8 @@ const CourtierAssuranceTaxi: React.FC = () => {
                 <div className="space-y-4">
                   {faqItems.map((item, idx) => (
                     <div key={idx} className="ai-card p-6">
-                      <h3 className="text-lg font-bold text-amber-400 mb-3">{item.q}</h3>
-                      <p className="text-gray-300 leading-relaxed text-sm">{item.a}</p>
+                      <h3 className="text-lg font-bold text-amber-400 mb-3">{item.question}</h3>
+                      <p className="text-gray-300 leading-relaxed text-sm">{item.answer}</p>
                     </div>
                   ))}
                 </div>

@@ -14,6 +14,33 @@ const DevisAssuranceTaxi: React.FC = () => {
     { name: 'Devis Assurance Taxi', url: '/devis-assurance-taxi' }
   ];
 
+  const faqItems = [
+    {
+      question: "Le devis assurance taxi est-il vraiment gratuit ?",
+      answer: "Oui, 100% gratuit et sans engagement. TaxiAssur est rémunéré par une commission versée par l'assureur si vous souscrivez un contrat, pas par vous. Vous ne payez rien pour recevoir votre devis comparatif."
+    },
+    {
+      question: "Combien de temps pour recevoir mon devis assurance taxi ?",
+      answer: "Votre devis est transmis à notre équipe en moins de 2 minutes. Un expert taxi vous rappelle sous 15 minutes pendant les heures ouvrées pour vous présenter les meilleures offres sélectionnées pour votre profil."
+    },
+    {
+      question: "Mon devis peut-il évoluer entre la demande et la souscription ?",
+      answer: "Non, le tarif indiqué dans votre devis est garanti 30 jours à compter de sa date d'émission. Si vous souscrivez dans ce délai, le tarif ne peut pas augmenter. Passé 30 jours, une nouvelle simulation peut être nécessaire."
+    },
+    {
+      question: "Puis-je obtenir un devis si je viens de commencer comme chauffeur taxi ?",
+      answer: "Absolument. TaxiAssur accompagne les nouveaux chauffeurs comme les professionnels expérimentés. Nous avons des solutions adaptées aux jeunes conducteurs et aux primo-accédants à la carte taxi."
+    },
+    {
+      question: "Le devis inclut-il la RC Pro obligatoire ?",
+      answer: "Oui, tous nos devis intègrent systématiquement la Responsabilité Civile Professionnelle, qui est légalement obligatoire pour exercer comme chauffeur de taxi. Vous ne pouvez pas souscrire un contrat taxi sans cette garantie."
+    },
+    {
+      question: "Comment est calculé le prix de mon devis ?",
+      answer: "Votre tarif dépend de plusieurs facteurs : votre zone d'activité (Paris coûte plus cher que la province), votre ancienneté, votre coefficient bonus-malus, la valeur de votre véhicule, et le niveau de garanties souhaité. Notre algorithme compare 15+ assureurs et sélectionne le meilleur rapport couverture/prix."
+    }
+  ];
+
   return (
     <>
       <SEOHead
@@ -24,6 +51,7 @@ const DevisAssuranceTaxi: React.FC = () => {
       />
       <JsonLd type="breadcrumb" data={breadcrumbs} />
       <JsonLd type="organization" />
+      <JsonLd type="faq" data={faqItems} />
 
       <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-black">
         <Header />
@@ -259,6 +287,25 @@ const DevisAssuranceTaxi: React.FC = () => {
                     </div>
                   </div>
                 ))}
+              </div>
+            </div>
+          </section>
+
+          {/* FAQ */}
+          <section className="section-padding bg-gradient-to-br from-black via-gray-950 to-gray-900">
+            <div className="container-max">
+              <div className="max-w-3xl mx-auto">
+                <h2 className="text-3xl font-black text-white mb-10 text-center">
+                  Questions Fréquentes sur le Devis Assurance Taxi
+                </h2>
+                <div className="space-y-4">
+                  {faqItems.map((item, idx) => (
+                    <div key={idx} className="ai-card p-6">
+                      <h3 className="text-lg font-bold text-amber-400 mb-3">{item.question}</h3>
+                      <p className="text-gray-300 leading-relaxed text-sm">{item.answer}</p>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </section>
