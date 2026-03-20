@@ -4,7 +4,7 @@ import {
   Clock, Activity, Target, Mail, Briefcase, Search as SearchIcon,
   AlertTriangle, Gift, Smile, MessageSquare, ChevronRight,
   Play, RefreshCw, Filter, Zap, Shield, BarChart2, Users,
-  CheckSquare, X, Wand2
+  CheckSquare, X, Wand2, Timer, Cpu
 } from 'lucide-react';
 import { aiGovernanceService, AIDecision, AI_AGENTS, AIAgent, AICouncilMeeting } from '@/lib/crm-ai-governance';
 import { AIDecisionCard } from '@/components/crm/AIDecisionCard';
@@ -117,13 +117,33 @@ const CRMAIGovernance: React.FC = () => {
   const [councilRunning, setCouncilRunning] = useState(false);
   const [councilResult, setCouncilResult] = useState<string | null>(null);
 
+  // Auto-mode status
+  const [autoStatus, setAutoStatus] = useState<{
+    crons_active: boolean;
+    last_generate: string | null;
+    last_approve: string | null;
+    next_generate_in_minutes: number;
+  } | null>(null);
+
   useEffect(() => {
     loadAllDecisions();
+    loadAutoStatus();
+    const interval = setInterval(loadAutoStatus, 60_000);
+    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
     if (activeTab === 'council') loadRecentLeads();
   }, [activeTab]);
+
+  const loadAutoStatus = useCallback(async () => {
+    try {
+      const { data } = await supabase.rpc('get_ai_governance_status');
+      if (data) setAutoStatus(data as typeof autoStatus);
+    } catch (e) {
+      console.warn('loadAutoStatus:', e);
+    }
+  }, []);
 
   const loadAllDecisions = useCallback(async () => {
     setLoading(true);
@@ -275,21 +295,40 @@ const CRMAIGovernance: React.FC = () => {
             </div>
 
             <div className="flex items-center gap-2.5">
-              <div className="flex items-center gap-1.5 bg-green-500/8 border border-green-500/20 rounded-full px-3 py-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-                <span className="text-green-400 text-xs font-medium">8 agents actifs</span>
-              </div>
+              {autoStatus?.crons_active ? (
+                <div className="flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/25 rounded-full px-3 py-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  <Cpu size={11} className="text-emerald-400" />
+                  <span className="text-emerald-400 text-xs font-semibold">Mode Auto: ON</span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-1.5 bg-gray-500/10 border border-gray-500/25 rounded-full px-3 py-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-gray-400" />
+                  <span className="text-gray-400 text-xs font-medium">8 agents actifs</span>
+                </div>
+              )}
+
+              {autoStatus?.next_generate_in_minutes !== undefined && (
+                <div className="flex items-center gap-1.5 bg-blue-500/8 border border-blue-500/20 rounded-full px-3 py-1.5">
+                  <Timer size={11} className="text-blue-400" />
+                  <span className="text-blue-400 text-xs">
+                    {autoStatus.next_generate_in_minutes < 1
+                      ? 'Analyse imminente'
+                      : `Prochain run: ${Math.round(autoStatus.next_generate_in_minutes)}min`}
+                  </span>
+                </div>
+              )}
 
               <button
                 onClick={handleGenerateDecisions}
                 disabled={generating}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-60"
+                className="flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 border border-gray-700 text-gray-300 rounded-lg text-sm font-medium transition-colors disabled:opacity-60"
               >
                 {generating
                   ? <RefreshCw size={13} className="animate-spin" />
                   : <Wand2 size={13} />
                 }
-                {generating ? 'Analyse en cours...' : 'Générer décisions IA'}
+                {generating ? 'Analyse en cours...' : 'Forcer analyse'}
               </button>
 
               <button
@@ -320,6 +359,35 @@ const CRMAIGovernance: React.FC = () => {
             <div className="flex items-center gap-2 bg-blue-500/10 border border-blue-500/25 rounded-xl px-4 py-2.5 mb-3 text-sm text-blue-400">
               <CheckCircle size={14} />
               {approveResult.message}
+            </div>
+          )}
+
+          {/* Automation schedule info */}
+          {autoStatus?.crons_active && (
+            <div className="flex items-center gap-4 bg-gray-800/60 border border-gray-700/60 rounded-xl px-4 py-2.5 mb-3 text-xs text-gray-400">
+              <div className="flex items-center gap-1.5">
+                <Zap size={11} className="text-emerald-400" />
+                <span className="text-emerald-400 font-medium">Automatisation active</span>
+              </div>
+              <span className="text-gray-600">·</span>
+              <div className="flex items-center gap-1.5">
+                <Clock size={11} />
+                <span>Génération: <strong className="text-gray-300">toutes les 2h</strong></span>
+              </div>
+              <span className="text-gray-600">·</span>
+              <div className="flex items-center gap-1.5">
+                <CheckCircle size={11} />
+                <span>Auto-approbation <strong className="text-gray-300">&gt;85% confiance</strong>: toutes les heures</span>
+              </div>
+              {autoStatus.last_generate && (
+                <>
+                  <span className="text-gray-600">·</span>
+                  <div className="flex items-center gap-1.5">
+                    <Activity size={11} />
+                    <span>Dernier run: <strong className="text-gray-300">{new Date(autoStatus.last_generate).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</strong></span>
+                  </div>
+                </>
+              )}
             </div>
           )}
 
