@@ -38,9 +38,16 @@ Deno.serve(async (req: Request) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     // Configuration GSC
-    const siteUrl = "https://taxiassur.com";
     const googleServiceAccountEmail = Deno.env.get("GOOGLE_SERVICE_ACCOUNT_EMAIL");
     const googleServiceAccountKey = Deno.env.get("GOOGLE_SERVICE_ACCOUNT_KEY");
+
+    // Lire l'URL depuis system_config
+    const { data: configData } = await supabase
+      .from('system_config')
+      .select('value')
+      .eq('key', 'gsc_site_url')
+      .maybeSingle();
+    const siteUrl = configData?.value || "https://www.taxiassur.com";
 
     if (!googleServiceAccountEmail || !googleServiceAccountKey) {
       console.warn("⚠️ Google Service Account non configuré - utilisation de données de test");
