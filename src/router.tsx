@@ -624,7 +624,8 @@ export const router = createBrowserRouter([
   },
   {
     path: '/backoffice/production',
-    element: <CRMProductionManager />,
+    element: <CRMLayout />,
+    children: [{ index: true, element: <CRMProductionManager /> }],
   },
   {
     path: '/backoffice/web-import',
