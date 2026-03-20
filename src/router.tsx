@@ -24,6 +24,8 @@ const GestionSinistres = lazy(() => import('./pages/GestionSinistres'));
 const TaxisSinistres = lazy(() => import('./pages/TaxisSinistres'));
 const ConfianceEtCertifications = lazy(() => import('./pages/ConfianceEtCertifications'));
 const ConseilPersonnalise = lazy(() => import('./pages/ConseilPersonnalise'));
+const CourtierAssuranceTaxi = lazy(() => import('./pages/CourtierAssuranceTaxi'));
+const DevisAssuranceTaxi = lazy(() => import('./pages/DevisAssuranceTaxi'));
 const FAQ = lazy(() => import('./pages/FAQ'));
 const Legal = lazy(() => import('./pages/Legal'));
 const Policy = lazy(() => import('./pages/Policy'));
@@ -277,6 +279,14 @@ export const router = createBrowserRouter([
   {
     path: '/conseil-personnalise',
     element: <ConseilPersonnalise />,
+  },
+  {
+    path: '/courtier-assurance-taxi',
+    element: <CourtierAssuranceTaxi />,
+  },
+  {
+    path: '/devis-assurance-taxi',
+    element: <DevisAssuranceTaxi />,
   },
   {
     path: '/faq',
