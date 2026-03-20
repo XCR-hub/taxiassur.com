@@ -138,6 +138,7 @@ const PendingDocumentsManager = lazy(() => import('./backoffice/PendingDocuments
 const AllDocumentsViewer = lazy(() => import('./backoffice/AllDocumentsViewer'));
 const QuoteQueueDashboard = lazy(() => import('./backoffice/QuoteQueueDashboard'));
 const NewsletterDashboard = lazy(() => import('./backoffice/NewsletterDashboard'));
+const EmailSubscribersManager = lazy(() => import('./backoffice/EmailSubscribersManager'));
 const NotificationsManager = lazy(() => import('./backoffice/NotificationsManager'));
 const EmailMarketingLayout = lazy(() => import('./backoffice/EmailMarketingLayout'));
 const SmartTemplatesManager = lazy(() => import('./backoffice/SmartTemplatesManager'));
@@ -804,6 +805,16 @@ export const router = createBrowserRouter([
       {
         element: <EmailMarketingLayout />,
         children: [{ index: true, element: <NewsletterDashboard /> }],
+      },
+    ],
+  },
+  {
+    path: '/backoffice/email-subscribers',
+    element: <CRMLayout />,
+    children: [
+      {
+        element: <EmailMarketingLayout />,
+        children: [{ index: true, element: <EmailSubscribersManager /> }],
       },
     ],
   },
