@@ -47,9 +47,12 @@ const STATUS_CONFIG = {
   auto_applied: { label: 'Auto-appliquée', color: 'text-blue-400 bg-blue-500/10 border-blue-500/25' },
 };
 
+const normalizeScore = (score: number) => (score > 1 ? score / 100 : score);
+
 const getConfidenceConfig = (score: number) => {
-  if (score >= 0.8) return { color: 'text-green-400', bar: 'bg-green-500', bg: 'bg-green-500/10' };
-  if (score >= 0.6) return { color: 'text-amber-400', bar: 'bg-amber-500', bg: 'bg-amber-500/10' };
+  const s = normalizeScore(score);
+  if (s >= 0.8) return { color: 'text-green-400', bar: 'bg-green-500', bg: 'bg-green-500/10' };
+  if (s >= 0.6) return { color: 'text-amber-400', bar: 'bg-amber-500', bg: 'bg-amber-500/10' };
   return { color: 'text-orange-400', bar: 'bg-orange-500', bg: 'bg-orange-500/10' };
 };
 
@@ -62,12 +65,12 @@ export const AIDecisionCard: React.FC<AIDecisionCardProps> = ({
   const [loading, setLoading] = useState(false);
   const [expanded, setExpanded] = useState(false);
 
-  const agent = AI_AGENTS[decision.agent];
-  const typeConfig = DECISION_TYPE_CONFIG[decision.decision_type];
+  const agent = AI_AGENTS[decision.agent] || { name: decision.agent, description: '', icon: '🤖' };
+  const typeConfig = DECISION_TYPE_CONFIG[decision.decision_type as keyof typeof DECISION_TYPE_CONFIG] || DECISION_TYPE_CONFIG.suggestion;
   const statusConfig = STATUS_CONFIG[decision.status];
   const confidenceConfig = getConfidenceConfig(decision.confidence_score);
   const TypeIcon = typeConfig.icon;
-  const pct = Math.round(decision.confidence_score * 100);
+  const pct = Math.round(normalizeScore(decision.confidence_score) * 100);
 
   const handleApprove = async () => {
     if (!onApprove) return;
