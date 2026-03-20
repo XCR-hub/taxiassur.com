@@ -1,5 +1,5 @@
 import React from 'react';
-import { Shield, Phone, Mail, MapPin, Facebook, Twitter, Linkedin, Share2 } from 'lucide-react';
+import { Shield, Phone, Mail, MapPin, Facebook, Twitter, Linkedin, Share2, BookOpen } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import NewsletterFooterWidget from './NewsletterFooterWidget';
 
@@ -142,7 +142,7 @@ const Footer: React.FC = () => {
             <ul className="space-y-2 text-sm">
               {pages.slice(0, 4).map((page, index) => (
                 <li key={index}>
-                  <Link 
+                  <Link
                     to={page.href}
                     className="text-gray-300 hover:text-orange-300 transition-colors"
                   >
@@ -150,6 +150,32 @@ const Footer: React.FC = () => {
                   </Link>
                 </li>
               ))}
+            </ul>
+
+            <h4 className="text-lg font-bold text-white mb-4 mt-8">Guides Gratuits</h4>
+            <ul className="space-y-3 text-sm">
+              <li>
+                <a
+                  href="/guides/guide-assurance-taxi-2026.html"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-start gap-2 text-amber-400 hover:text-amber-300 transition-colors group"
+                >
+                  <BookOpen size={14} className="flex-shrink-0 mt-0.5" />
+                  <span className="group-hover:underline underline-offset-2">Guide Assurance Taxi 2026</span>
+                </a>
+              </li>
+              <li>
+                <a
+                  href="/guides/checklist-documents-taxi.html"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-start gap-2 text-amber-400 hover:text-amber-300 transition-colors group"
+                >
+                  <BookOpen size={14} className="flex-shrink-0 mt-0.5" />
+                  <span className="group-hover:underline underline-offset-2">Checklist Documents Obligatoires</span>
+                </a>
+              </li>
             </ul>
           </div>
 
