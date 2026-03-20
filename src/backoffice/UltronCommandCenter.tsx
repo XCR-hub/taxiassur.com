@@ -60,6 +60,28 @@ interface QueueStats {
   error: number;
 }
 
+interface HealthCheck {
+  id: string;
+  check_type: string;
+  subsystem: string;
+  status: 'healthy' | 'warning' | 'critical' | 'unknown';
+  score: number;
+  anomalies_found: number;
+  repairs_made: number;
+  checked_at: string;
+  details: Record<string, unknown>;
+}
+
+interface Anomaly {
+  id: string;
+  anomaly_type: string;
+  subsystem: string;
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  description: string;
+  repaired: boolean;
+  detected_at: string;
+}
+
 const MISSION_META: Record<string, { label: string; icon: typeof Target; color: string; bg: string }> = {
   MISSION_1_GOOGLE_RANK_1: {
     label: '#1 Google Assurance Taxi',
@@ -116,6 +138,10 @@ export default function UltronCommandCenter() {
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
   const [leadQueue, setLeadQueue] = useState<LeadQueueItem[]>([]);
   const [queueStats, setQueueStats] = useState<QueueStats>({ total: 0, pending: 0, processing: 0, processed: 0, error: 0 });
+  const [healthChecks, setHealthChecks] = useState<HealthCheck[]>([]);
+  const [anomalies, setAnomalies] = useState<Anomaly[]>([]);
+  const [globalScore, setGlobalScore] = useState<number | null>(null);
+  const [healerRunning, setHealerRunning] = useState(false);
   const [gscData, setGscData] = useState<{ queries: number; avgPosition: number | null; topQuery: string | null }>({
     queries: 0,
     avgPosition: null,
@@ -124,7 +150,7 @@ export default function UltronCommandCenter() {
 
   const load = useCallback(async () => {
     try {
-      const [missionsRes, logsRes, cronsRes, configsRes, gscRes, queueRes] = await Promise.all([
+      const [missionsRes, logsRes, cronsRes, configsRes, gscRes, queueRes, healthRes, anomaliesRes] = await Promise.all([
         supabase.from('ultron_missions').select('*').order('created_at'),
         supabase.from('ultron_command_log').select('*').order('timestamp', { ascending: false }).limit(20),
         supabase.rpc('get_active_crons').catch(() => ({ data: null, error: null })),
@@ -143,6 +169,15 @@ export default function UltronCommandCenter() {
           .select('*')
           .order('created_at', { ascending: false })
           .limit(30),
+        supabase.from('ultron_health_checks')
+          .select('*')
+          .order('checked_at', { ascending: false })
+          .limit(20),
+        supabase.from('ultron_anomalies')
+          .select('*')
+          .eq('repaired', false)
+          .order('detected_at', { ascending: false })
+          .limit(15),
       ]);
 
       if (missionsRes.data) setMissions(missionsRes.data);
@@ -169,6 +204,18 @@ export default function UltronCommandCenter() {
           processed: items.filter(i => i.status === 'processed').length,
           error: items.filter(i => i.status === 'error').length,
         });
+      }
+
+      if (healthRes.data) {
+        setHealthChecks(healthRes.data as HealthCheck[]);
+        const scores = (healthRes.data as HealthCheck[]).map(h => h.score).filter(Boolean);
+        if (scores.length > 0) {
+          setGlobalScore(Math.round(scores.reduce((a, b) => a + b, 0) / scores.length));
+        }
+      }
+
+      if (anomaliesRes.data) {
+        setAnomalies(anomaliesRes.data as Anomaly[]);
       }
 
       if (!cronsRes.data) {
@@ -214,6 +261,18 @@ export default function UltronCommandCenter() {
     }
   };
 
+  const runHealer = async (mode = 'full') => {
+    setHealerRunning(true);
+    try {
+      await supabase.functions.invoke('ultron-site-healer', { body: { mode } });
+      await load();
+    } catch (err) {
+      logger.error('ULTRON healer error', err);
+    } finally {
+      setHealerRunning(false);
+    }
+  };
+
   const getConfigValue = (key: string) => configs.find(c => c.key === key)?.value;
 
   const ultronActive = getConfigValue('ultron_mode') === 'active';
@@ -256,6 +315,24 @@ export default function UltronCommandCenter() {
             </div>
           </div>
           <div className="flex items-center gap-3">
+            {globalScore !== null && (
+              <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold border ${
+                globalScore >= 90 ? 'bg-emerald-900/50 text-emerald-400 border-emerald-700' :
+                globalScore >= 70 ? 'bg-amber-900/50 text-amber-400 border-amber-700' :
+                'bg-red-900/50 text-red-400 border-red-700'
+              }`}>
+                <Shield className="w-3.5 h-3.5" />
+                Santé {globalScore}%
+              </div>
+            )}
+            <button
+              onClick={() => runHealer('full')}
+              disabled={healerRunning}
+              className="flex items-center gap-2 px-3 py-1.5 bg-blue-900/40 text-blue-400 border border-blue-700 rounded-full text-xs font-medium hover:bg-blue-900/60 transition-colors disabled:opacity-50"
+            >
+              <Zap className={`w-3.5 h-3.5 ${healerRunning ? 'animate-pulse' : ''}`} />
+              {healerRunning ? 'Audit...' : 'Lancer Audit'}
+            </button>
             <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium ${
               ultronActive ? 'bg-emerald-900/50 text-emerald-400 border border-emerald-700' : 'bg-gray-800 text-gray-400'
             }`}>
@@ -296,6 +373,157 @@ export default function UltronCommandCenter() {
             </div>
           </div>
         )}
+
+        {/* Sante Systeme ULTRON */}
+        <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${
+                globalScore === null ? 'bg-gray-800' :
+                globalScore >= 90 ? 'bg-emerald-900/50' :
+                globalScore >= 70 ? 'bg-amber-900/50' : 'bg-red-900/50'
+              }`}>
+                <Shield className={`w-5 h-5 ${
+                  globalScore === null ? 'text-gray-500' :
+                  globalScore >= 90 ? 'text-emerald-400' :
+                  globalScore >= 70 ? 'text-amber-400' : 'text-red-400'
+                }`} />
+              </div>
+              <div>
+                <h3 className="font-semibold text-white">Sante Systeme</h3>
+                <p className="text-xs text-gray-500">Surveillance continue — audit toutes les 30 min</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              {anomalies.length > 0 && (
+                <span className="text-xs px-2 py-1 bg-red-900/40 text-red-400 border border-red-800 rounded-full">
+                  {anomalies.length} anomalie{anomalies.length > 1 ? 's' : ''} active{anomalies.length > 1 ? 's' : ''}
+                </span>
+              )}
+              <button
+                onClick={() => runHealer('full')}
+                disabled={healerRunning}
+                className="text-xs px-3 py-1.5 bg-blue-900/30 text-blue-400 border border-blue-800 rounded-lg hover:bg-blue-900/50 transition-colors disabled:opacity-50 flex items-center gap-1.5"
+              >
+                <Zap className={`w-3 h-3 ${healerRunning ? 'animate-pulse' : ''}`} />
+                {healerRunning ? 'Audit en cours...' : 'Audit + Reparation'}
+              </button>
+            </div>
+          </div>
+
+          {/* Score global + sous-systemes */}
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4">
+            <div className={`col-span-2 md:col-span-1 rounded-xl p-4 flex flex-col items-center justify-center ${
+              globalScore === null ? 'bg-gray-800' :
+              globalScore >= 90 ? 'bg-emerald-900/30 border border-emerald-800' :
+              globalScore >= 70 ? 'bg-amber-900/30 border border-amber-800' :
+              'bg-red-900/30 border border-red-800'
+            }`}>
+              <p className={`text-4xl font-black ${
+                globalScore === null ? 'text-gray-600' :
+                globalScore >= 90 ? 'text-emerald-400' :
+                globalScore >= 70 ? 'text-amber-400' : 'text-red-400'
+              }`}>{globalScore ?? '--'}</p>
+              <p className="text-xs text-gray-400 mt-1">Score Global</p>
+            </div>
+            {[
+              { label: 'Crons', key: 'CRON_SYSTEM' },
+              { label: 'Leads', key: 'LEAD_PIPELINE' },
+              { label: 'Emails', key: 'EMAIL_SYSTEM' },
+              { label: 'Storage', key: 'STORAGE' },
+            ].map(({ label, key }) => {
+              const latest = healthChecks.find(h => h.subsystem === key);
+              return (
+                <div key={key} className="bg-gray-800 rounded-xl p-3 flex flex-col items-center justify-center">
+                  <div className={`w-2 h-2 rounded-full mb-2 ${
+                    !latest ? 'bg-gray-600' :
+                    latest.status === 'healthy' ? 'bg-emerald-400' :
+                    latest.status === 'warning' ? 'bg-amber-400 animate-pulse' :
+                    latest.status === 'critical' ? 'bg-red-400 animate-pulse' :
+                    'bg-gray-500'
+                  }`} />
+                  <p className="text-lg font-bold text-white">{latest?.score ?? '--'}</p>
+                  <p className="text-xs text-gray-500 mt-0.5">{label}</p>
+                  {latest && latest.repairs_made > 0 && (
+                    <p className="text-xs text-emerald-400 mt-0.5">{latest.repairs_made} rep.</p>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Derniers checks */}
+          {healthChecks.length > 0 && (
+            <div className="space-y-1.5 mb-4">
+              {healthChecks.slice(0, 6).map(hc => (
+                <div key={hc.id} className="flex items-center justify-between px-3 py-2 bg-gray-800/50 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
+                      hc.status === 'healthy' ? 'bg-emerald-400' :
+                      hc.status === 'warning' ? 'bg-amber-400' :
+                      hc.status === 'critical' ? 'bg-red-400' : 'bg-gray-500'
+                    }`} />
+                    <span className="text-sm text-gray-300 font-medium">{hc.subsystem}</span>
+                    {hc.repairs_made > 0 && (
+                      <span className="text-xs text-emerald-400 bg-emerald-900/30 px-1.5 py-0.5 rounded">
+                        +{hc.repairs_made} rep.
+                      </span>
+                    )}
+                    {hc.anomalies_found > 0 && (
+                      <span className="text-xs text-amber-400 bg-amber-900/30 px-1.5 py-0.5 rounded">
+                        {hc.anomalies_found} anomalie{hc.anomalies_found > 1 ? 's' : ''}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-3 text-xs text-gray-500">
+                    <span>Score {hc.score}</span>
+                    <span>{new Date(hc.checked_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Anomalies actives */}
+          {anomalies.length > 0 && (
+            <div className="border-t border-gray-800 pt-3">
+              <p className="text-xs font-semibold text-red-400 mb-2 flex items-center gap-1.5">
+                <AlertCircle className="w-3.5 h-3.5" />
+                Anomalies actives ({anomalies.length})
+              </p>
+              <div className="space-y-1.5">
+                {anomalies.slice(0, 4).map(a => (
+                  <div key={a.id} className="flex items-start gap-2 px-3 py-2 bg-red-900/10 border border-red-900/30 rounded-lg">
+                    <div className={`w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0 ${
+                      a.severity === 'critical' ? 'bg-red-400' :
+                      a.severity === 'high' ? 'bg-orange-400' :
+                      a.severity === 'medium' ? 'bg-amber-400' : 'bg-yellow-400'
+                    }`} />
+                    <div className="min-w-0">
+                      <p className="text-xs text-gray-300">{a.description}</p>
+                      <p className="text-xs text-gray-600 mt-0.5">{a.subsystem} · {a.severity}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {healthChecks.length === 0 && !healerRunning && (
+            <div className="text-center py-8 text-gray-600">
+              <Shield className="w-10 h-10 mx-auto mb-3 opacity-30" />
+              <p className="text-sm">Aucun audit effectue</p>
+              <p className="text-xs mt-1">Cliquez sur "Audit + Reparation" pour lancer le premier scan</p>
+            </div>
+          )}
+          {healerRunning && (
+            <div className="text-center py-8">
+              <div className="w-10 h-10 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+              <p className="text-sm text-blue-400">Audit en cours...</p>
+              <p className="text-xs text-gray-600 mt-1">Verification de tous les sous-systemes</p>
+            </div>
+          )}
+        </div>
 
         {/* 3 Missions */}
         <div>
