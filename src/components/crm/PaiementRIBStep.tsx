@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Upload, CheckCircle2, X, FileText, Loader2, AlertCircle, CreditCard, Mail } from 'lucide-react';
 import { MoneticoPaymentManager } from './MoneticoPaymentManager';
+import { toast } from '@/lib/toast';
 
 interface PaiementRIBStepProps {
   leadId: string;
@@ -100,11 +101,11 @@ export default function PaiementRIBStep({
 
       if (insertError) throw insertError;
 
-      alert('RIB uploadé avec succès !');
+      toast.success('RIB uploadé avec succès !');
       loadRibs();
     } catch (error) {
       console.error('Error uploading RIB:', error);
-      alert('Erreur lors de l\'upload');
+      toast.error('Erreur lors de l\'upload');
     } finally {
       setUploading(false);
     }
@@ -137,7 +138,7 @@ export default function PaiementRIBStep({
 
       if (error) throw error;
 
-      alert(validated ? 'RIB validé !' : 'RIB rejeté');
+      toast.success(validated ? 'RIB validé !' : 'RIB rejeté');
       setSelectedRib(null);
       setIban('');
       setBic('');
@@ -150,7 +151,7 @@ export default function PaiementRIBStep({
       }
     } catch (error) {
       console.error('Error validating RIB:', error);
-      alert('Erreur lors de la validation');
+      toast.error('Erreur lors de la validation');
     } finally {
       setValidating(null);
     }
@@ -169,17 +170,17 @@ export default function PaiementRIBStep({
 
       if (error) throw error;
 
-      alert('RIB supprimé');
+      toast.success('RIB supprimé');
       loadRibs();
     } catch (error) {
       console.error('Error deleting RIB:', error);
-      alert('Erreur lors de la suppression');
+      toast.error('Erreur lors de la suppression');
     }
   }
 
   async function sendRIBRequestEmail() {
     if (!leadEmail) {
-      alert('Aucune adresse email pour ce lead');
+      toast.warning('Aucune adresse email pour ce lead');
       return;
     }
 
@@ -214,10 +215,10 @@ export default function PaiementRIBStep({
         throw new Error(result.error || 'Erreur lors de l\'envoi');
       }
 
-      alert(`✅ Email envoyé avec succès à ${leadEmail} !\n\nLe prospect recevra un lien pour uploader son RIB.`);
+      toast.success(`✅ Email envoyé avec succès à ${leadEmail} !\n\nLe prospect recevra un lien pour uploader son RIB.`);
     } catch (error) {
       console.error('Error sending RIB request email:', error);
-      alert(`❌ Erreur lors de l'envoi de l'email : ${error.message || 'Erreur inconnue'}`);
+      toast.error(`❌ Erreur lors de l'envoi de l'email : ${error.message || 'Erreur inconnue'}`);
     } finally {
       setSendingEmail(false);
     }
@@ -530,7 +531,7 @@ export default function PaiementRIBStep({
                   <button
                     onClick={() => {
                       navigator.clipboard.writeText(`${window.location.origin}/espace-prospect?token=${leadAccessToken}`);
-                      alert('✅ Lien copié dans le presse-papier !');
+                      toast.success('✅ Lien copié dans le presse-papier !');
                     }}
                     className="px-3 py-2 bg-gray-700 text-white rounded hover:bg-gray-800 text-sm whitespace-nowrap"
                   >

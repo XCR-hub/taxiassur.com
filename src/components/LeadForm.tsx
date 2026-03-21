@@ -6,6 +6,7 @@ import { trackLeadSubmission } from '../lib/email';
 import Card from './Card';
 import { logger } from '@/lib/logger';
 import { createLead } from '@/lib/leads';
+import { toast } from '@/lib/toast';
 
 const LeadForm: React.FC = () => {
   const navigate = useNavigate();
@@ -90,12 +91,12 @@ const LeadForm: React.FC = () => {
         window.location.href = `/merci${tokenParam}`;
       } else {
         logger.error('❌ Lead creation failed:', result.error);
-        alert(result.error || 'Erreur lors de l\'envoi. Veuillez réessayer.');
+        toast.error(result.error || 'Erreur lors de l\'envoi. Veuillez réessayer.');
       }
     } catch (error) {
       logger.error('💥 Form submission error:', error);
       console.error('Full error:', error);
-      alert('Erreur de connexion. Veuillez réessayer.');
+      toast.error('Erreur de connexion. Veuillez réessayer.');
     } finally {
       setIsSubmitting(false);
     }

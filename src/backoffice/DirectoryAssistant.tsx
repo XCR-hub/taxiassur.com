@@ -5,6 +5,7 @@ import { getDirectories, submitToDirectory } from '../lib/partners';
 import { Directory } from '../lib/schema';
 import Card from '../components/Card';
 import { logger } from '@/lib/logger';
+import { toast } from '@/lib/toast';
 
 const DirectoryAssistant: React.FC = () => {
   const navigate = useNavigate();
@@ -72,7 +73,7 @@ Que vous soyez taxi indépendant, compagnie de taxi ou gestionnaire de flotte, n
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
-    alert('✅ Copié dans le presse-papiers');
+    toast.success('✅ Copié dans le presse-papiers');
   };
 
   const handleManualSubmission = (directory: Directory) => {
@@ -90,13 +91,13 @@ Que vous soyez taxi indépendant, compagnie de taxi ou gestionnaire de flotte, n
 
       if (success) {
         setSubmissionStatus(prev => ({ ...prev, [directory.id]: 'submitted' }));
-        alert('✅ Soumission API réussie !');
+        toast.success('✅ Soumission API réussie !');
       } else {
-        alert('❌ Erreur lors de la soumission API');
+        toast.error('❌ Erreur lors de la soumission API');
       }
     } catch (error) {
       logger.error('API submission error:', error);
-      alert('❌ Erreur de connexion API');
+      toast.error('❌ Erreur de connexion API');
     }
   };
 
@@ -104,7 +105,7 @@ Que vous soyez taxi indépendant, compagnie de taxi ou gestionnaire de flotte, n
     const submittableDirectories = directories.filter(d => d.allowed && !submissionStatus[d.id]);
 
     if (submittableDirectories.length === 0) {
-      alert('❌ Aucun annuaire à soumettre (tous déjà soumis ou non autorisés)');
+      toast.error('❌ Aucun annuaire à soumettre (tous déjà soumis ou non autorisés)');
       return;
     }
 
@@ -174,7 +175,7 @@ UTM Link: ${content.url}
     }
 
     setIsAutoSubmitting(false);
-    alert(`✅ ${successCount} onglets ouverts !\n\n📋 Les données du premier annuaire sont copiées dans votre presse-papiers.\n\n👉 Remplissez chaque formulaire et cliquez "Envoyer".\n\nAstuce: Utilisez la fonction "Copier Données" sur chaque annuaire pour copier les données spécifiques.`);
+    toast.success(`✅ ${successCount} onglets ouverts !\n\n📋 Les données du premier annuaire sont copiées dans votre presse-papiers.\n\n👉 Remplissez chaque formulaire et cliquez "Envoyer".\n\nAstuce: Utilisez la fonction "Copier Données" sur chaque annuaire pour copier les données spécifiques.`);
   };
 
   const getCategoryColor = (category: string) => {
@@ -334,7 +335,7 @@ Logo: ${content.logo}
 URL avec tracking: ${content.url}
                           `.trim();
                           navigator.clipboard.writeText(clipboardData);
-                          alert(`✅ Données copiées pour ${directory.name}\n\nCollez-les dans le formulaire !`);
+                          toast.success(`✅ Données copiées pour ${directory.name}\n\nCollez-les dans le formulaire !`);
                         }}
                         className="flex items-center space-x-1 px-2 py-2 bg-green-600 hover:bg-green-700 text-white text-sm rounded-lg transition-colors"
                         title="Copier toutes les données"
@@ -533,7 +534,7 @@ URL avec tracking: ${content.url}
                       onClick={() => {
                         setSubmissionStatus(prev => ({ ...prev, [selectedDirectory.id]: 'submitted' }));
                         setSelectedDirectory(null);
-                        alert('✅ Marqué comme soumis !');
+                        toast.success('✅ Marqué comme soumis !');
                       }}
                       className="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-4 rounded-lg transition-colors"
                     >

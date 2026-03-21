@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Upload, CheckCircle2, X, FileText, Loader2, FileSignature, AlertCircle, PartyPopper, Mail, Send } from 'lucide-react';
+import { Upload, CheckCircle2, X, FileText, Loader2, Ligature as FileSignature, AlertCircle, PartyPopper, Mail, Send } from 'lucide-react';
+import { toast } from '@/lib/toast';
 
 interface ContratSignatureStepProps {
   leadId: string;
@@ -104,11 +105,11 @@ export default function ContratSignatureStep({ leadId, onComplete }: ContratSign
 
       if (insertError) throw insertError;
 
-      alert('Document uploadé avec succès !');
+      toast.success('Document uploadé avec succès !');
       loadDocuments();
     } catch (error) {
       console.error('Error uploading document:', error);
-      alert('Erreur lors de l\'upload');
+      toast.error('Erreur lors de l\'upload');
     } finally {
       setUploading(null);
     }
@@ -127,11 +128,11 @@ export default function ContratSignatureStep({ leadId, onComplete }: ContratSign
 
       if (error) throw error;
 
-      alert('Document supprimé');
+      toast.success('Document supprimé');
       loadDocuments();
     } catch (error) {
       console.error('Error deleting document:', error);
-      alert('Erreur lors de la suppression');
+      toast.error('Erreur lors de la suppression');
     }
   }
 
@@ -170,7 +171,7 @@ export default function ContratSignatureStep({ leadId, onComplete }: ContratSign
 
   async function sendDocumentsEmail() {
     if (documents.length === 0) {
-      alert('Aucun document à envoyer');
+      toast.warning('Aucun document à envoyer');
       return;
     }
 
@@ -294,10 +295,10 @@ export default function ContratSignatureStep({ leadId, onComplete }: ContratSign
 
       if (emailError) throw emailError;
 
-      alert(`✅ Email envoyé avec succès à ${leadData.email} avec ${documents.length} document(s) !`);
+      toast.success(`✅ Email envoyé avec succès à ${leadData.email} avec ${documents.length} document(s) !`);
     } catch (error) {
       console.error('Error sending documents email:', error);
-      alert('Erreur lors de l\'envoi de l\'email : ' + (error as Error).message);
+      toast.error('Erreur lors de l\'envoi de l\'email : ' + (error as Error).message);
     } finally {
       setSendingEmail(false);
     }
@@ -310,7 +311,7 @@ export default function ContratSignatureStep({ leadId, onComplete }: ContratSign
     );
 
     if (!hasAllDocs) {
-      alert('Tous les documents doivent être uploadés avant de valider');
+      toast.info('Tous les documents doivent être uploadés avant de valider');
       return;
     }
 
@@ -373,14 +374,14 @@ export default function ContratSignatureStep({ leadId, onComplete }: ContratSign
         });
       }
 
-      alert('🎉 Contrat finalisé ! Le prospect est maintenant client.');
+      toast.success('🎉 Contrat finalisé ! Le prospect est maintenant client.');
 
       // Recharger la page pour afficher le nouveau statut
       window.location.reload();
 
     } catch (error) {
       console.error('Error transforming to client:', error);
-      alert('Erreur lors de la finalisation : ' + (error as Error).message);
+      toast.error('Erreur lors de la finalisation : ' + (error as Error).message);
     } finally {
       setTransforming(false);
     }

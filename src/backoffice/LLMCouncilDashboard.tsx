@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { toast } from '@/lib/toast';
 import {
   Users,
   Send,
@@ -141,11 +142,11 @@ const LLMCouncilDashboard: React.FC = () => {
         setActiveTab('council');
         await loadSessions();
       } else {
-        alert(`Erreur: ${data.error}`);
+        toast.error(`Erreur: ${data.error}`);
       }
     } catch (error) {
       console.error('Council error:', error);
-      alert('Erreur de communication avec le conseil LLM');
+      toast.error('Erreur de communication avec le conseil LLM');
     } finally {
       setLoading(false);
     }

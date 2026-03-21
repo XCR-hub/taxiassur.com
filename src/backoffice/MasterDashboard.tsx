@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { logger } from '@/lib/logger';
+import { toast } from '@/lib/toast';
 import {
   Activity, Users, TrendingUp, DollarSign, MapPin, Clock,
   CheckCircle, AlertCircle, Play, Square, RefreshCw, Settings,
@@ -181,7 +182,7 @@ const MasterDashboard: React.FC = () => {
 
       if (error) {
         logger.error('Error toggling automation:', error);
-        alert(`❌ Erreur: ${error.message}`);
+        toast.error(`❌ Erreur: ${error.message}`);
         return;
       }
 
@@ -201,15 +202,15 @@ const MasterDashboard: React.FC = () => {
 
       if (error) {
         logger.error('Error updating automations:', error);
-        alert(`❌ Erreur: ${error.message}`);
+        toast.error(`❌ Erreur: ${error.message}`);
         return;
       }
 
       await loadAutomations();
-      alert('✅ Toutes les automatisations sont activées !');
+      toast.success('✅ Toutes les automatisations sont activées !');
     } catch (error) {
       logger.error('Error starting all automations:', error);
-      alert('❌ Erreur lors de l\'activation');
+      toast.error('❌ Erreur lors de l\'activation');
     }
   };
 
@@ -226,15 +227,15 @@ const MasterDashboard: React.FC = () => {
 
       if (error) {
         logger.error('Error updating automations:', error);
-        alert(`❌ Erreur: ${error.message}`);
+        toast.error(`❌ Erreur: ${error.message}`);
         return;
       }
 
       await loadAutomations();
-      alert('🛑 Toutes les automatisations sont arrêtées');
+      toast.success('🛑 Toutes les automatisations sont arrêtées');
     } catch (error) {
       logger.error('Error stopping all automations:', error);
-      alert('❌ Erreur lors de l\'arrêt');
+      toast.error('❌ Erreur lors de l\'arrêt');
     }
   };
 

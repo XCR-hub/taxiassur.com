@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { Mail, MousePointerClick, Eye, Reply, TrendingUp, Clock, CheckCircle } from 'lucide-react';
+import { toast } from '@/lib/toast';
 
 interface EmailStats {
   total_sent: number;
@@ -125,11 +126,11 @@ export default function EmailTrackingDashboard() {
 
       if (error) throw error;
 
-      alert(`${data.message}`);
+      toast.info(`${data.message}`);
       await loadData();
     } catch (error) {
       console.error('Erreur récupération réponses:', error);
-      alert('Erreur lors de la récupération des réponses');
+      toast.error('Erreur lors de la récupération des réponses');
     } finally {
       setFetchingReplies(false);
     }

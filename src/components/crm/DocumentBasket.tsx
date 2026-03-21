@@ -4,6 +4,7 @@ import { getDocumentPublicUrl } from '../../lib/utils';
 import { useRealtimeDocuments } from '@/hooks/useRealtimeDocuments';
 import { FileText, Download, X, CheckCircle2, AlertCircle, Loader2, Eye } from 'lucide-react';
 import DocumentViewer from './DocumentViewer';
+import { toast } from '@/lib/toast';
 
 interface DocumentBasketProps {
   caseId: string;
@@ -105,7 +106,7 @@ export default function DocumentBasket({ caseId, onDocumentClassified }: Documen
       }
     } catch (error) {
       console.error('Error classifying attachment:', error);
-      alert('Erreur lors de la classification du document');
+      toast.error('Erreur lors de la classification du document');
     } finally {
       setClassifying(null);
     }
@@ -134,7 +135,7 @@ export default function DocumentBasket({ caseId, onDocumentClassified }: Documen
       await loadBasket();
     } catch (error) {
       console.error('Error rejecting attachment:', error);
-      alert('Erreur lors du refus du document');
+      toast.error('Erreur lors du refus du document');
     }
   }
 

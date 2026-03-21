@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { toast } from '@/lib/toast';
 
 export default function AuthCallbackYoutube() {
   const [searchParams] = useSearchParams();
@@ -67,7 +68,7 @@ export default function AuthCallbackYoutube() {
 
   function copyToken() {
     navigator.clipboard.writeText(token);
-    alert('✅ Token copié !');
+    toast.success('✅ Token copié !');
   }
 
   return (

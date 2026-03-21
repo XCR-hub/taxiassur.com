@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
+import { toast } from '@/lib/toast';
 import {
   Brain,
   Bot,
@@ -108,11 +109,11 @@ export default function GSCAutonomousSystem() {
 
       if (error) throw error;
 
-      alert('Session stratégique lancée ! Les IA analysent les opportunités...');
+      toast.success('Session stratégique lancée ! Les IA analysent les opportunités...');
       setTimeout(loadSystemData, 3000);
     } catch (error) {
       console.error('Erreur:', error);
-      alert('Erreur lors du lancement de la session');
+      toast.error('Erreur lors du lancement de la session');
     } finally {
       setProcessingAction(false);
     }
@@ -127,11 +128,11 @@ export default function GSCAutonomousSystem() {
 
       if (error) throw error;
 
-      alert(`${data.executed?.length || 0} décisions exécutées avec succès !`);
+      toast.success(`${data.executed?.length || 0} décisions exécutées avec succès !`);
       setTimeout(loadSystemData, 2000);
     } catch (error) {
       console.error('Erreur:', error);
-      alert('Erreur lors de l\'exécution des décisions');
+      toast.error('Erreur lors de l\'exécution des décisions');
     } finally {
       setProcessingAction(false);
     }
@@ -146,11 +147,11 @@ export default function GSCAutonomousSystem() {
 
       if (error) throw error;
 
-      alert('Contenu généré avec succès !');
+      toast.success('Contenu généré avec succès !');
       setTimeout(loadSystemData, 2000);
     } catch (error) {
       console.error('Erreur:', error);
-      alert('Erreur lors de la génération du contenu');
+      toast.error('Erreur lors de la génération du contenu');
     } finally {
       setProcessingAction(false);
     }

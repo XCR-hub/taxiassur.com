@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Shield, Plus, Trash2, AlertCircle, CheckCircle, X, Search, Filter } from 'lucide-react';
+import { toast } from '@/lib/toast';
 
 interface BlacklistEntry {
   id: string;
@@ -71,7 +72,7 @@ export default function EmailBlacklistManager() {
 
   const addToBlacklist = async () => {
     if (!newPattern.email_pattern || !newPattern.reason) {
-      alert('Veuillez remplir tous les champs');
+      toast.warning('Veuillez remplir tous les champs');
       return;
     }
 
@@ -82,12 +83,12 @@ export default function EmailBlacklistManager() {
 
       if (error) throw error;
 
-      alert('Pattern ajouté à la liste noire ✓');
+      toast.success('Pattern ajouté à la liste noire ✓');
       setShowAddModal(false);
       setNewPattern({ email_pattern: '', pattern_type: 'domain', reason: '' });
       loadData();
     } catch (error: any) {
-      alert(`Erreur : ${error.message}`);
+      toast.error(`Erreur : ${error.message}`);
     }
   };
 
@@ -101,7 +102,7 @@ export default function EmailBlacklistManager() {
       if (error) throw error;
       loadData();
     } catch (error: any) {
-      alert(`Erreur : ${error.message}`);
+      toast.error(`Erreur : ${error.message}`);
     }
   };
 
@@ -117,7 +118,7 @@ export default function EmailBlacklistManager() {
       if (error) throw error;
       loadData();
     } catch (error: any) {
-      alert(`Erreur : ${error.message}`);
+      toast.error(`Erreur : ${error.message}`);
     }
   };
 

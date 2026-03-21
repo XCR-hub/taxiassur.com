@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { toast } from '@/lib/toast';
 import {
   Phone,
   PhoneOff,
@@ -146,7 +147,7 @@ export const CallDialog: React.FC<CallDialogProps> = ({
         }
       } catch (error: any) {
         logger.error('Failed to start Keyyo call:', error);
-        alert('Erreur lors de l\'initiation de l\'appel Keyyo: ' + error.message);
+        toast.error('Erreur lors de l\'initiation de l\'appel Keyyo: ' + error.message);
         setCallStatus('idle');
         return;
       }
@@ -188,7 +189,7 @@ export const CallDialog: React.FC<CallDialogProps> = ({
       setRecordingStartTime(new Date());
     } catch (err) {
       logger.error('Error starting recording:', err);
-      alert('Impossible de démarrer l\'enregistrement. Vérifiez les permissions du microphone.');
+      toast.error('Impossible de démarrer l\'enregistrement. Vérifiez les permissions du microphone.');
     }
   };
 
@@ -250,7 +251,7 @@ export const CallDialog: React.FC<CallDialogProps> = ({
       cleanup();
     } catch (err) {
       logger.error('Error saving call:', err);
-      alert('Erreur lors de l\'enregistrement de l\'appel');
+      toast.error('Erreur lors de l\'enregistrement de l\'appel');
     } finally {
       setSaving(false);
     }

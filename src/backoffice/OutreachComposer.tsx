@@ -6,6 +6,7 @@ import { getTemplates, renderTemplate, generateUnsubscribeToken, validateEmailCo
 import { Prospect, Outreach } from '../lib/schema';
 import Card from '../components/Card';
 import { logger } from '@/lib/logger';
+import { toast } from '@/lib/toast';
 
 const OutreachComposer: React.FC = () => {
   const [prospects, setProspects] = useState<Prospect[]>([]);
@@ -85,7 +86,7 @@ setSelectedTemplate(templateId);
 
   const sendCampaign = async () => {
     if (selectedProspects.length === 0 || !selectedTemplate) {
-      alert('Sélectionnez des prospects et un template');
+      toast.info('Sélectionnez des prospects et un template');
       return;
     }
 
@@ -143,12 +144,12 @@ setSelectedTemplate(templateId);
         }
       }
 
-      alert(`✅ Campagne terminée !\n${successCount} envoyés, ${errorCount} erreurs`);
+      toast.error(`✅ Campagne terminée !\n${successCount} envoyés, ${errorCount} erreurs`);
       setSelectedProspects([]);
       loadData(); // Refresh data
     } catch (error) {
       logger.error('Campaign error:', error);
-      alert('❌ Erreur lors de la campagne');
+      toast.error('❌ Erreur lors de la campagne');
     } finally {
       setSending(false);
     }

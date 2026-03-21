@@ -4,6 +4,7 @@ import { Users, Euro, TrendingUp, Download, Calendar, Eye, CheckCircle, Clock, H
 import Card from '../components/Card';
 import { supabase } from '../lib/supabase';
 import { logger } from '@/lib/logger';
+import { toast } from '@/lib/toast';
 
 interface PartnerStats {
   totalLeadsBought: number;
@@ -159,9 +160,9 @@ const PartnerPortal: React.FC = () => {
           : lead
       ));
 
-      alert('✅ Lead marqué comme converti');
+      toast.success('✅ Lead marqué comme converti');
     } catch (error) {
-      alert('❌ Erreur lors de la mise à jour');
+      toast.error('❌ Erreur lors de la mise à jour');
     }
   };
 

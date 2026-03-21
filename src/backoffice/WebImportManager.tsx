@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Download, Settings, Play, Clock, CheckCircle, XCircle, Eye, Loader2, FileText, Database, Key } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { toast } from '@/lib/toast';
 
 interface Credential {
   id: string;
@@ -124,7 +125,7 @@ const WebImportManager: React.FC = () => {
 
   const handleAddCredential = async () => {
     if (!selectedCompany || !portalUsername || !portalPassword) {
-      alert('Veuillez remplir tous les champs');
+      toast.warning('Veuillez remplir tous les champs');
       return;
     }
 
@@ -133,7 +134,7 @@ const WebImportManager: React.FC = () => {
       const { data: { user } } = await supabase.auth.getUser();
 
       if (!user) {
-        alert('Vous devez être connecté pour ajouter des identifiants');
+        toast.info('Vous devez être connecté pour ajouter des identifiants');
         return;
       }
 
@@ -153,35 +154,35 @@ const WebImportManager: React.FC = () => {
 
         // Messages d'erreur personnalisés
         if (error.code === '42501') {
-          alert('Permission refusée. Vous devez être administrateur pour ajouter des identifiants.');
+          toast.info('Permission refusée. Vous devez être administrateur pour ajouter des identifiants.');
         } else if (error.message.includes('violates')) {
-          alert('Erreur de contrainte: ' + error.message);
+          toast.error('Erreur de contrainte: ' + error.message);
         } else {
-          alert('Erreur lors de l\'ajout: ' + error.message);
+          toast.error('Erreur lors de l\'ajout: ' + error.message);
         }
         return;
       }
 
-      alert('Identifiants ajoutés avec succès!');
+      toast.success('Identifiants ajoutés avec succès!');
       setSelectedCompany('');
       setPortalUsername('');
       setPortalPassword('');
       loadCredentials();
     } catch (error: any) {
       console.error('Error adding credential:', error);
-      alert('Erreur inattendue: ' + (error?.message || 'Erreur inconnue'));
+      toast.error('Erreur inattendue: ' + (error?.message || 'Erreur inconnue'));
     }
   };
 
   const handleStartImport = async () => {
     if (!selectedCredential || !selectedClient) {
-      alert('Veuillez sélectionner un client et un assureur');
+      toast.warning('Veuillez sélectionner un client et un assureur');
       return;
     }
 
     const client = clients.find(c => c.id === selectedClient);
     if (!client?.contract_number) {
-      alert('Le client doit avoir un numéro de contrat');
+      toast.info('Le client doit avoir un numéro de contrat');
       return;
     }
 
@@ -194,12 +195,12 @@ const WebImportManager: React.FC = () => {
 
       if (error) throw error;
 
-      alert('Import démarré avec succès!');
+      toast.success('Import démarré avec succès!');
       setActiveTab('jobs');
       loadJobs();
     } catch (error) {
       console.error('Error starting import:', error);
-      alert('Erreur lors du démarrage de l\'import');
+      toast.error('Erreur lors du démarrage de l\'import');
     }
   };
 

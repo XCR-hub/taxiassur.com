@@ -4,6 +4,7 @@ import { Users, Euro, Clock, Target, TrendingUp, Eye, Download, Filter, Calendar
 import Card from '../components/Card';
 import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
+import { toast } from '@/lib/toast';
 
 interface Lead {
   id: string;
@@ -126,9 +127,9 @@ const LeadMarketplace: React.FC = () => {
           : lead
       ));
       
-      alert('✅ Lead acheté avec succès ! Vous recevrez les coordonnées par email.');
+      toast.success('✅ Lead acheté avec succès ! Vous recevrez les coordonnées par email.');
     } catch (error) {
-      alert('❌ Erreur lors de l\'achat');
+      toast.error('❌ Erreur lors de l\'achat');
     }
   };
 

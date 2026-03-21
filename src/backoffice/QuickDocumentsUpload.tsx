@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Upload, Check, AlertCircle, FileText, Download, ExternalLink } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { Badge } from '../components/Badge';
+import { toast } from '@/lib/toast';
 
 interface Company {
   id: string;
@@ -191,7 +192,7 @@ export default function QuickDocumentsUpload() {
     });
 
     if (missingDocs.length === 0) {
-      alert('Tous les documents sont déjà présents pour cette compagnie !');
+      toast.info('Tous les documents sont déjà présents pour cette compagnie !');
       return;
     }
 
@@ -206,7 +207,7 @@ export default function QuickDocumentsUpload() {
         }));
 
       if (docsToInsert.length === 0) {
-        alert('Veuillez remplir au moins une URL de document');
+        toast.warning('Veuillez remplir au moins une URL de document');
         return;
       }
 
@@ -216,13 +217,13 @@ export default function QuickDocumentsUpload() {
 
       if (error) throw error;
 
-      alert(`${docsToInsert.length} document(s) ajouté(s) avec succès !`);
+      toast.success(`${docsToInsert.length} document(s) ajouté(s) avec succès !`);
       await loadData();
       setSelectedCompany(null);
       setUploadData({});
     } catch (error) {
       console.error('Erreur upload:', error);
-      alert('Erreur lors de l\'upload');
+      toast.error('Erreur lors de l\'upload');
     } finally {
       setSaving(false);
     }

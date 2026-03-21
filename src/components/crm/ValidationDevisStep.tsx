@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
+import { toast } from '@/lib/toast';
 import {
   CheckCircle, XCircle, Clock, FileText, Eye, Building2,
   AlertTriangle, Mail, MessageSquare, Phone, Loader2
@@ -122,7 +123,7 @@ export default function ValidationDevisStep({
 
   async function sendEmailReminder() {
     if (!leadEmail) {
-      alert('Le prospect n\'a pas d\'email renseigné');
+      toast.info('Le prospect n\'a pas d\'email renseigné');
       return;
     }
 
@@ -188,10 +189,10 @@ export default function ValidationDevisStep({
 
       if (error) throw error;
 
-      alert('✅ Email de relance envoyé avec succès !');
+      toast.success('✅ Email de relance envoyé avec succès !');
     } catch (error) {
       console.error('Error sending email reminder:', error);
-      alert('❌ Erreur lors de l\'envoi de l\'email');
+      toast.error('❌ Erreur lors de l\'envoi de l\'email');
     } finally {
       setSendingReminder(null);
     }
@@ -199,7 +200,7 @@ export default function ValidationDevisStep({
 
   async function sendWhatsAppReminder() {
     if (!leadPhone) {
-      alert('Le prospect n\'a pas de numéro de téléphone renseigné');
+      toast.info('Le prospect n\'a pas de numéro de téléphone renseigné');
       return;
     }
 
@@ -232,10 +233,10 @@ L'équipe TaxiAssur`;
 
       if (error) throw error;
 
-      alert('✅ Message WhatsApp envoyé avec succès !');
+      toast.success('✅ Message WhatsApp envoyé avec succès !');
     } catch (error) {
       console.error('Error sending WhatsApp reminder:', error);
-      alert('❌ Erreur lors de l\'envoi du message WhatsApp');
+      toast.error('❌ Erreur lors de l\'envoi du message WhatsApp');
     } finally {
       setSendingReminder(null);
     }
@@ -243,7 +244,7 @@ L'équipe TaxiAssur`;
 
   async function sendSMSReminder() {
     if (!leadPhone) {
-      alert('Le prospect n\'a pas de numéro de téléphone renseigné');
+      toast.info('Le prospect n\'a pas de numéro de téléphone renseigné');
       return;
     }
 
@@ -263,10 +264,10 @@ L'équipe TaxiAssur`;
 
       if (error) throw error;
 
-      alert('✅ SMS envoyé avec succès !');
+      toast.success('✅ SMS envoyé avec succès !');
     } catch (error) {
       console.error('Error sending SMS reminder:', error);
-      alert('❌ Erreur lors de l\'envoi du SMS');
+      toast.error('❌ Erreur lors de l\'envoi du SMS');
     } finally {
       setSendingReminder(null);
     }
@@ -468,7 +469,7 @@ L'équipe TaxiAssur`;
             <button
               onClick={() => {
                 navigator.clipboard.writeText(`${window.location.origin}/espace-prospect?token=${leadAccessToken}`);
-                alert('Lien copié !');
+                toast.success('Lien copié !');
               }}
               className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
             >

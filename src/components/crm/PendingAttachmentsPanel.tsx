@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { toast } from '@/lib/toast';
 import {
   Paperclip, FileText, Image, File, Check, X, AlertCircle,
   Download, Eye, Mail, Clock, Sparkles, ChevronDown, ChevronUp
@@ -99,7 +100,7 @@ export const PendingAttachmentsPanel: React.FC<PendingAttachmentsPanelProps> = (
       }
     } catch (err) {
       console.error('Error classifying attachment:', err);
-      alert('Erreur lors de la classification');
+      toast.error('Erreur lors de la classification');
     } finally {
       setClassifying(null);
     }
@@ -119,7 +120,7 @@ export const PendingAttachmentsPanel: React.FC<PendingAttachmentsPanelProps> = (
       setAttachments(prev => prev.filter(a => a.id !== attachmentId));
     } catch (err) {
       console.error('Error ignoring attachment:', err);
-      alert('Erreur lors de l\'action');
+      toast.error('Erreur lors de l\'action');
     } finally {
       setClassifying(null);
     }

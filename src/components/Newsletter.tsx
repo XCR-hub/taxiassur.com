@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Mail, Send, CheckCircle, TrendingUp, FileText, Bell, Gift } from 'lucide-react';
 import AITaxiBackground from './AITaxiBackground';
+import { toast } from '@/lib/toast';
 
 const Newsletter: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -38,10 +39,10 @@ const Newsletter: React.FC = () => {
           });
         }
       } else {
-        alert('Erreur lors de l\'inscription. Veuillez réessayer.');
+        toast.error('Erreur lors de l\'inscription. Veuillez réessayer.');
       }
     } catch (error) {
-      alert('Erreur de connexion. Veuillez réessayer.');
+      toast.error('Erreur de connexion. Veuillez réessayer.');
     } finally {
       setIsSubmitting(false);
     }

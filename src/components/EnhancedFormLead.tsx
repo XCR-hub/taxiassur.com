@@ -5,6 +5,7 @@ import { useFormSecurity } from '../hooks/useFormSecurity';
 import { useAnalytics } from '../hooks/useAnalytics';
 import { logger } from '@/lib/logger';
 import { createLead } from '@/lib/leads';
+import { toast } from '@/lib/toast';
 
 const EnhancedFormLead: React.FC = () => {
   const navigate = useNavigate();
@@ -85,7 +86,7 @@ const EnhancedFormLead: React.FC = () => {
     logger.log('📋 Form submit started');
 
     if (rateLimitState.blocked) {
-      alert('Trop de tentatives. Veuillez patienter avant de soumettre à nouveau.');
+      toast.warning('Trop de tentatives. Veuillez patienter avant de soumettre à nouveau.');
       return;
     }
 
@@ -125,12 +126,12 @@ const EnhancedFormLead: React.FC = () => {
         navigate(`/merci${tokenParam}`);
       } else {
         logger.error('❌ Lead creation failed:', result.error);
-        alert(result.error || 'Erreur lors de l\'envoi. Veuillez réessayer.');
+        toast.error(result.error || 'Erreur lors de l\'envoi. Veuillez réessayer.');
       }
     } catch (error) {
       logger.error('💥 Form submission error:', error);
       console.error('Full error details:', error);
-      alert('Erreur de connexion. Veuillez réessayer.');
+      toast.error('Erreur de connexion. Veuillez réessayer.');
     } finally {
       setIsSubmitting(false);
     }

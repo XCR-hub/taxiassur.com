@@ -3,6 +3,7 @@ import { ArrowRight, CheckCircle, Sparkles, Zap, Shield, Clock, User, Mail, Phon
 import { useNavigate } from 'react-router-dom';
 import { logger } from '@/lib/logger';
 import { createLead } from '@/lib/leads';
+import { toast } from '@/lib/toast';
 
 interface FormData {
   name: string;
@@ -84,12 +85,12 @@ const AIQuoteProcess: React.FC = () => {
         const tokenParam = result.accessToken ? `?token=${result.accessToken}` : '';
         navigate(`/merci${tokenParam}`);
       } else {
-        alert(result.error || 'Erreur lors de l\'envoi. Veuillez réessayer.');
+        toast.error(result.error || 'Erreur lors de l\'envoi. Veuillez réessayer.');
         setCurrentStep(2);
       }
     } catch (error) {
       logger.error('Submission error:', error);
-      alert('Erreur de connexion. Veuillez réessayer.');
+      toast.error('Erreur de connexion. Veuillez réessayer.');
       setCurrentStep(2);
     } finally {
       setIsProcessing(false);

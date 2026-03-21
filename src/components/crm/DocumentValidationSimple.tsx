@@ -3,6 +3,7 @@ import { FileText, Check, X, Download, ExternalLink, AlertCircle, RefreshCw, Eye
 import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
 import DocumentViewer from './DocumentViewer';
+import { toast } from '@/lib/toast';
 
 interface Document {
   id: string;
@@ -86,7 +87,7 @@ const DocumentValidationSimple: React.FC<DocumentValidationSimpleProps> = ({ lea
       await loadDocuments();
     } catch (error) {
       logger.error('Error validating document:', error);
-      alert('Erreur lors de la validation du document');
+      toast.error('Erreur lors de la validation du document');
     } finally {
       setValidating(null);
     }
@@ -111,7 +112,7 @@ const DocumentValidationSimple: React.FC<DocumentValidationSimpleProps> = ({ lea
       await loadDocuments();
     } catch (error) {
       logger.error('Error invalidating document:', error);
-      alert('Erreur lors de l\'annulation');
+      toast.error('Erreur lors de l\'annulation');
     } finally {
       setValidating(null);
     }
@@ -359,7 +360,7 @@ const DocumentValidationSimple: React.FC<DocumentValidationSimpleProps> = ({ lea
               onClick={() => {
                 const url = `${window.location.origin}/espace-prospect?email=${encodeURIComponent(leadEmail)}`;
                 navigator.clipboard.writeText(url);
-                alert('Lien copié !');
+                toast.success('Lien copié !');
               }}
               className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all"
             >

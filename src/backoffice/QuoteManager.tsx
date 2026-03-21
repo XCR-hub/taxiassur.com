@@ -1,22 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import {
-  FileText,
-  Upload,
-  Send,
-  Mail,
-  MessageSquare,
-  Phone,
-  CheckCircle,
-  Clock,
-  Eye,
-  Download,
-  X,
-  AlertCircle,
-  Loader,
-  Edit,
-  RefreshCw,
-  Building2
-} from 'lucide-react';
+import { toast } from '@/lib/toast';
+import { FileText, Upload, Send, Mail, MessageSquare, Phone, CheckCircle, Clock, Eye, Download, X, AlertCircle, Loader, CreditCard as Edit, RefreshCw, Building2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import type { CRMLead, PipelineStatus } from '@/lib/crm-pipeline';
 
@@ -221,11 +205,11 @@ const QuoteManager: React.FC<QuoteManagerProps> = ({ lead, onQuoteSent, onStatus
     if (selectedFile) {
       const validTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
       if (!validTypes.includes(selectedFile.type)) {
-        alert('Format non valide. Utilisez PDF ou Word.');
+        toast.info('Format non valide. Utilisez PDF ou Word.');
         return;
       }
       if (selectedFile.size > 10 * 1024 * 1024) {
-        alert('Fichier trop volumineux (max 10 MB)');
+        toast.info('Fichier trop volumineux (max 10 MB)');
         return;
       }
       setFile(selectedFile);
@@ -261,7 +245,7 @@ const QuoteManager: React.FC<QuoteManagerProps> = ({ lead, onQuoteSent, onStatus
 
       if (dbError) throw dbError;
 
-      alert('✅ Devis uploadé avec succès !');
+      toast.success('✅ Devis uploadé avec succès !');
       setFile(null);
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
@@ -270,7 +254,7 @@ const QuoteManager: React.FC<QuoteManagerProps> = ({ lead, onQuoteSent, onStatus
       setActiveTab('send');
     } catch (err: any) {
       console.error('Upload error:', err);
-      alert(`Erreur : ${err.message}`);
+      toast.error(`Erreur : ${err.message}`);
     } finally {
       setUploading(false);
     }
@@ -278,22 +262,22 @@ const QuoteManager: React.FC<QuoteManagerProps> = ({ lead, onQuoteSent, onStatus
 
   const handleSendQuote = async () => {
     if (isBlocked) {
-      alert('Impossible d\'envoyer le devis : des documents complementaires sont requis.');
+      toast.error('Impossible d\'envoyer le devis : des documents complementaires sont requis.');
       return;
     }
 
     if (!selectedCompany) {
-      alert('Veuillez selectionner une compagnie d\'assurance !');
+      toast.warning('Veuillez selectionner une compagnie d\'assurance !');
       return;
     }
 
     if (!uploadedQuote) {
-      alert('Uploadez d\'abord un devis !');
+      toast.info('Uploadez d\'abord un devis !');
       return;
     }
 
     if (!customBody.trim()) {
-      alert('Le message ne peut pas etre vide !');
+      toast.info('Le message ne peut pas etre vide !');
       return;
     }
 
@@ -375,13 +359,13 @@ const QuoteManager: React.FC<QuoteManagerProps> = ({ lead, onQuoteSent, onStatus
         }
       }
 
-      alert(`✅ Devis envoyé par ${selectedChannel.toUpperCase()} !`);
+      toast.success(`✅ Devis envoyé par ${selectedChannel.toUpperCase()} !`);
       await loadHistory();
       if (onQuoteSent) onQuoteSent();
       setActiveTab('history');
     } catch (err: any) {
       console.error('Send error:', err);
-      alert(`Erreur : ${err.message}`);
+      toast.error(`Erreur : ${err.message}`);
     } finally {
       setSending(false);
     }

@@ -1,11 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { logger } from '@/lib/logger';
-import {
-  Users, Eye, Phone, Mail, FileText, CheckCircle, XCircle, Euro,
-  Search, Filter, Download, Send, Edit as EditIcon, Star,
-  TrendingUp, Clock, Home, Sparkles, Upload, MessageSquare
-} from 'lucide-react';
+import { toast } from '@/lib/toast';
+import { Users, Eye, Phone, Mail, FileText, CheckCircle, XCircle, Euro, Search, Filter, Download, Send, CreditCard as EditIcon, Star, TrendingUp, Clock, Home, Sparkles, Upload, MessageSquare } from 'lucide-react';
 import { getLeads, updateLeadStatus, sendDevisEmail, sendContractEmail, getLeadStatusColor, getLeadStatusLabel, type Lead, type LeadStatus } from '../lib/leads';
 import { formatDate } from '../lib/utils';
 import ElectronicSignature from '../components/ElectronicSignature';
@@ -95,13 +92,13 @@ const LeadManager: React.FC = () => {
         setShowStatusModal(false);
         setSelectedLead(null);
         setStatusUpdate({ newStatus: 'nouveau', primeRealisee: '', notes: '' });
-        alert('✅ Statut mis à jour avec succès !');
+        toast.success('✅ Statut mis à jour avec succès !');
       } else {
-        alert('❌ Erreur lors de la mise à jour');
+        toast.error('❌ Erreur lors de la mise à jour');
       }
     } catch (error) {
       logger.error('Status update error:', error);
-      alert('❌ Erreur de connexion');
+      toast.error('❌ Erreur de connexion');
     }
   };
 
@@ -140,11 +137,11 @@ const LeadManager: React.FC = () => {
         await loadLeads();
         setAttachments({ devis: null, contract: null });
         setShowDetailModal(false);
-        alert(`✅ ${type === 'devis' ? 'Devis' : 'Contrat'} envoyé avec succès !`);
+        toast.success(`✅ ${type === 'devis' ? 'Devis' : 'Contrat'} envoyé avec succès !`);
       }
     } catch (error) {
       logger.error('Email sending error:', error);
-      alert('❌ Erreur lors de l\'envoi');
+      toast.error('❌ Erreur lors de l\'envoi');
     }
   };
 

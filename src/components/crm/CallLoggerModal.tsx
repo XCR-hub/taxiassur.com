@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Phone, X, Check, Calendar, User, FileText, MessageSquare } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { toast } from '@/lib/toast';
 
 interface CallLoggerModalProps {
   leadId: string;
@@ -27,7 +28,7 @@ export const CallLoggerModal: React.FC<CallLoggerModalProps> = ({
 
   const handleSave = async () => {
     if (callAnswered === null) {
-      alert('Veuillez indiquer si le prospect a répondu');
+      toast.warning('Veuillez indiquer si le prospect a répondu');
       return;
     }
 
@@ -72,12 +73,12 @@ ${appointmentDate ? `📅 RDV fixé: ${new Date(appointmentDate).toLocaleDateStr
 
       if (error) throw error;
 
-      alert('✅ Appel enregistré avec succès !');
+      toast.success('✅ Appel enregistré avec succès !');
       onSuccess();
       onClose();
     } catch (error) {
       console.error('Error saving call log:', error);
-      alert('❌ Erreur lors de l\'enregistrement');
+      toast.error('❌ Erreur lors de l\'enregistrement');
     } finally {
       setSaving(false);
     }

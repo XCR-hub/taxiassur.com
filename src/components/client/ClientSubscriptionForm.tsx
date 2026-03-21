@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { CreditCard, Calendar, Upload, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { toast } from '@/lib/toast';
 
 interface Props {
   leadId: string;
@@ -119,12 +120,12 @@ export default function ClientSubscriptionForm({ leadId, acceptedQuoteId, onSubm
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 5 * 1024 * 1024) {
-        alert('Le fichier est trop volumineux (max 5 MB)');
+        toast.info('Le fichier est trop volumineux (max 5 MB)');
         return;
       }
 
       if (!['application/pdf', 'image/jpeg', 'image/png'].includes(file.type)) {
-        alert('Format non accepté. Utilisez PDF, JPG ou PNG');
+        toast.info('Format non accepté. Utilisez PDF, JPG ou PNG');
         return;
       }
 
@@ -213,11 +214,11 @@ export default function ClientSubscriptionForm({ leadId, acceptedQuoteId, onSubm
 
       if (notifError) console.error('Erreur notification:', notifError);
 
-      alert('Vos informations ont été enregistrées avec succès! Notre équipe va maintenant préparer votre contrat.');
+      toast.success('Vos informations ont été enregistrées avec succès! Notre équipe va maintenant préparer votre contrat.');
       onSubmit?.();
     } catch (error: any) {
       console.error('Erreur soumission:', error);
-      alert(error.message || 'Erreur lors de l\'enregistrement');
+      toast.error(error.message || 'Erreur lors de l\'enregistrement');
     } finally {
       setSubmitting(false);
     }

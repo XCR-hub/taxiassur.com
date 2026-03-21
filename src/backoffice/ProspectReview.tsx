@@ -6,6 +6,7 @@ import { generateUnsubscribeToken, generateUnsubscribeUrl } from '../lib/outreac
 import { Prospect, Consent } from '../lib/schema';
 import Card from '../components/Card';
 import { logger } from '@/lib/logger';
+import { toast } from '@/lib/toast';
 
 const ProspectReview: React.FC = () => {
   const [prospects, setProspects] = useState<Prospect[]>([]);
@@ -67,11 +68,11 @@ const ProspectReview: React.FC = () => {
           setShowConsentModal(true);
         }
       } else {
-        alert('Erreur lors de la mise à jour');
+        toast.error('Erreur lors de la mise à jour');
       }
     } catch (error) {
       logger.error('Update error:', error);
-      alert('Erreur de connexion');
+      toast.error('Erreur de connexion');
     }
   };
 
@@ -96,16 +97,16 @@ const ProspectReview: React.FC = () => {
     try {
       const success = await saveConsent(consent);
       if (success) {
-        alert('✅ Consentement enregistré avec succès !');
+        toast.success('✅ Consentement enregistré avec succès !');
         setShowConsentModal(false);
         setSelectedProspect(null);
         setConsentData({ email: '', lawfulBasis: 'legitimate_interest', notes: '' });
       } else {
-        alert('❌ Erreur lors de l\'enregistrement');
+        toast.error('❌ Erreur lors de l\'enregistrement');
       }
     } catch (error) {
       logger.error('Consent save error:', error);
-      alert('❌ Erreur de connexion');
+      toast.error('❌ Erreur de connexion');
     }
   };
 

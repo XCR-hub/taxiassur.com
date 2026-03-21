@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { toast } from '@/lib/toast';
 import {
   FileText, CheckCircle, XCircle, Clock, AlertTriangle, Upload,
   Eye, Download, RefreshCw, Send, RotateCcw, ExternalLink
@@ -207,7 +208,7 @@ export function DocumentChecklistPanelV2({
       await loadData();
     } catch (err) {
       console.error('Error validating document:', err);
-      alert('Erreur lors de la validation');
+      toast.error('Erreur lors de la validation');
     } finally {
       setActionLoading(null);
     }
@@ -215,7 +216,7 @@ export function DocumentChecklistPanelV2({
 
   const handleInvalidate = async (docType: string) => {
     if (!rejectReason.trim()) {
-      alert('Veuillez indiquer une raison');
+      toast.warning('Veuillez indiquer une raison');
       return;
     }
 
@@ -237,7 +238,7 @@ export function DocumentChecklistPanelV2({
       await loadData();
     } catch (err) {
       console.error('Error invalidating document:', err);
-      alert('Erreur lors de l\'invalidation');
+      toast.error('Erreur lors de l\'invalidation');
     } finally {
       setActionLoading(null);
     }
@@ -258,7 +259,7 @@ export function DocumentChecklistPanelV2({
       onRequestDocuments(missingDocs.map(d => d.label));
     } else {
       console.warn('⚠️ onRequestDocuments callback not provided');
-      alert('Fonction de relance non configurée. Veuillez contacter le support.');
+      toast.warning('Fonction de relance non configurée. Veuillez contacter le support.');
     }
   };
 
@@ -277,7 +278,7 @@ export function DocumentChecklistPanelV2({
       try {
         await navigator.clipboard.writeText(url);
         console.log('✅ Link copied to clipboard');
-        alert('✅ Lien copié dans le presse-papier !');
+        toast.success('✅ Lien copié dans le presse-papier !');
       } catch (err) {
         console.error('❌ Error copying to clipboard:', err);
         // Fallback: afficher l'URL dans une alert
@@ -285,7 +286,7 @@ export function DocumentChecklistPanelV2({
       }
     } else {
       console.warn('⚠️ No access token, cannot generate URL');
-      alert('⚠️ Token d\'accès manquant. Impossible de générer le lien.');
+      toast.error('⚠️ Token d\'accès manquant. Impossible de générer le lien.');
     }
   };
 
@@ -336,7 +337,7 @@ export function DocumentChecklistPanelV2({
       await loadData();
     } catch (err) {
       console.error('❌ Error in handleDrop:', err);
-      alert('Erreur lors de la classification du document');
+      toast.error('Erreur lors de la classification du document');
     } finally {
       setActionLoading(null);
       setDraggedAttachment(null);

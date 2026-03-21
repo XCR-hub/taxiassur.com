@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { toast } from '@/lib/toast';
 import {
   Mail,
   RefreshCw,
@@ -149,10 +150,10 @@ const EmailInboxOutlook: React.FC = () => {
 
       await loadMessages();
       await loadStats();
-      alert('✅ Synchronisation réussie !');
+      toast.success('✅ Synchronisation réussie !');
     } catch (error) {
       console.error('Sync error:', error);
-      alert('❌ Erreur lors de la synchronisation');
+      toast.error('❌ Erreur lors de la synchronisation');
     } finally {
       setSyncing(false);
     }
@@ -282,7 +283,7 @@ const EmailInboxOutlook: React.FC = () => {
 
   const handleForward = () => {
     if (!selectedMessage) return;
-    alert('Fonction de transfert en développement');
+    toast.info('Fonction de transfert en développement');
   };
 
   const handleArchive = async () => {
@@ -293,12 +294,12 @@ const EmailInboxOutlook: React.FC = () => {
         .update({ email_status: 'archived', archived_at: new Date().toISOString() })
         .eq('id', selectedMessage.id);
 
-      alert('✅ Email archivé');
+      toast.success('✅ Email archivé');
       await loadMessages();
       setSelectedMessage(null);
     } catch (error) {
       console.error('Error archiving:', error);
-      alert('❌ Erreur lors de l\'archivage');
+      toast.error('❌ Erreur lors de l\'archivage');
     }
   };
 
@@ -312,12 +313,12 @@ const EmailInboxOutlook: React.FC = () => {
         .update({ email_status: 'deleted', deleted_at: new Date().toISOString() })
         .eq('id', selectedMessage.id);
 
-      alert('✅ Email supprimé');
+      toast.success('✅ Email supprimé');
       await loadMessages();
       setSelectedMessage(null);
     } catch (error) {
       console.error('Error deleting:', error);
-      alert('❌ Erreur lors de la suppression');
+      toast.error('❌ Erreur lors de la suppression');
     }
   };
 
@@ -336,13 +337,13 @@ const EmailInboxOutlook: React.FC = () => {
 
       if (error) throw error;
 
-      alert('✅ Réponse envoyée !');
+      toast.success('✅ Réponse envoyée !');
       setShowReplyModal(false);
       setReplyContent('');
       await loadMessages();
     } catch (error) {
       console.error('Error sending reply:', error);
-      alert('❌ Erreur lors de l\'envoi');
+      toast.error('❌ Erreur lors de l\'envoi');
     }
   };
 

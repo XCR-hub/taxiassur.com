@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
+import { toast } from '@/lib/toast';
 import {
   Facebook, Instagram, Twitter, Youtube, Linkedin, MessageSquare,
   Send, Hash, CheckCircle, Clock, AlertCircle, XCircle,
@@ -322,10 +323,10 @@ export default function SocialMediaManager() {
 
       setNewPost({ platforms: [], content: '', hashtags: '', scheduled_at: '' });
       await loadRealStats();
-      alert('✅ Publication créée avec succès !');
+      toast.success('✅ Publication créée avec succès !');
     } catch (error) {
       logger.error('Error publishing:', error);
-      alert('❌ Erreur lors de la publication');
+      toast.error('❌ Erreur lors de la publication');
     }
   };
 
@@ -362,13 +363,13 @@ export default function SocialMediaManager() {
           .eq('id', post.id);
 
         await loadRealStats();
-        alert('✅ Publié sur Pinterest avec succès !');
+        toast.success('✅ Publié sur Pinterest avec succès !');
       } else {
         throw new Error(result.error || 'Erreur de publication');
       }
     } catch (error) {
       logger.error('Error publishing to Pinterest:', error);
-      alert('❌ Erreur lors de la publication sur Pinterest');
+      toast.error('❌ Erreur lors de la publication sur Pinterest');
     }
   };
 

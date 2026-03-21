@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Shield, Award, TrendingUp, Users, Clock, Phone } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
+import { toast } from '@/lib/toast';
 
 interface SmartConversionSystemProps {
   onClose?: () => void;
@@ -121,7 +122,7 @@ const SmartConversionSystem: React.FC<SmartConversionSystemProps> = ({ onClose }
     e.preventDefault();
 
     if (!email || !phone) {
-      alert('Veuillez remplir tous les champs');
+      toast.warning('Veuillez remplir tous les champs');
       return;
     }
 
@@ -163,7 +164,7 @@ const SmartConversionSystem: React.FC<SmartConversionSystemProps> = ({ onClose }
       }, 3000);
     } catch (error) {
       logger.error('Error saving lead:', error);
-      alert('Erreur lors de l\'envoi. Veuillez réessayer ou nous appeler au 01 80 85 57 86.');
+      toast.error('Erreur lors de l\'envoi. Veuillez réessayer ou nous appeler au 01 80 85 57 86.');
     }
   };
 

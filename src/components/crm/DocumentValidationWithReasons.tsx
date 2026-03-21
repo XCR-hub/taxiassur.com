@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react';
-import {
-  FileText, CheckCircle, XCircle, Eye, Download, Printer,
-  AlertCircle, Mail, Edit3, X, Check
-} from 'lucide-react';
+import { toast } from '@/lib/toast';
+import { FileText, CheckCircle, XCircle, Eye, Download, Printer, AlertCircle, Mail, CreditCard as Edit3, X, Check } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
 
@@ -119,7 +117,7 @@ export function DocumentValidationWithReasons({
 
       const doc = documents.find(d => d.id === docId);
       if (!doc) {
-        alert('Document introuvable');
+        toast.error('Document introuvable');
         return;
       }
 
@@ -177,10 +175,10 @@ export function DocumentValidationWithReasons({
       await loadDocuments();
       onValidationComplete?.();
 
-      alert(`Document "${doc.file_name}" validé avec succès !${leadEmail ? '\nEmail de confirmation envoyé au prospect.' : ''}`);
+      toast.success(`Document "${doc.file_name}" validé avec succès !${leadEmail ? '\nEmail de confirmation envoyé au prospect.' : ''}`);
     } catch (err) {
       logger.error('Error validating document:', err);
-      alert('Erreur lors de la validation');
+      toast.error('Erreur lors de la validation');
     } finally {
       setActionLoading(null);
     }
@@ -189,7 +187,7 @@ export function DocumentValidationWithReasons({
   const handleReject = async () => {
     if (!rejectModal) return;
     if (!rejectionForm.reason) {
-      alert('Veuillez sélectionner un motif de rejet');
+      toast.warning('Veuillez sélectionner un motif de rejet');
       return;
     }
 
@@ -266,7 +264,7 @@ export function DocumentValidationWithReasons({
       onValidationComplete?.();
     } catch (err) {
       logger.error('Error rejecting document:', err);
-      alert('Erreur lors du rejet');
+      toast.error('Erreur lors du rejet');
     } finally {
       setActionLoading(null);
     }
@@ -314,7 +312,7 @@ export function DocumentValidationWithReasons({
       await loadDocuments();
     } catch (err) {
       logger.error('Error changing category:', err);
-      alert('Erreur lors du changement de catégorie');
+      toast.error('Erreur lors du changement de catégorie');
     } finally {
       setActionLoading(null);
     }

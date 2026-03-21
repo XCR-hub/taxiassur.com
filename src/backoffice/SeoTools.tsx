@@ -8,6 +8,7 @@ import Card from '../components/Card';
 import { supabase } from '@/lib/supabase';
 import TestAutomationButton from './TestAutomationButton';
 import { logger } from '@/lib/logger';
+import { toast } from '@/lib/toast';
 
 const SeoTools: React.FC = () => {
   const navigate = useNavigate();
@@ -119,13 +120,13 @@ const SeoTools: React.FC = () => {
     try {
       const success = await regenerateFeeds();
       if (success) {
-        alert('✅ Feeds régénérés avec succès !');
+        toast.success('✅ Feeds régénérés avec succès !');
         loadSeoData();
       } else {
-        alert('❌ Erreur lors de la régénération');
+        toast.error('❌ Erreur lors de la régénération');
       }
     } catch (error) {
-      alert('❌ Erreur de connexion');
+      toast.error('❌ Erreur de connexion');
     } finally {
       setIsWorking(false);
     }
@@ -165,7 +166,7 @@ const SeoTools: React.FC = () => {
           status: response.status
         }]);
 
-        alert(`✅ IndexNow Ping Envoyé !
+        toast.success(`✅ IndexNow Ping Envoyé !
 
 ${result.successful || 0}/${result.engines_pinged || 0} moteurs notifiés avec succès :
 ${result.message || ''}
@@ -186,7 +187,7 @@ Votre sitemap sera crawlé dans les prochaines heures.
           error: result.error || 'Erreur inconnue'
         }]);
 
-        alert(`⚠️ Erreur IndexNow : ${result.error || 'Service temporairement indisponible'}
+        toast.error(`⚠️ Erreur IndexNow : ${result.error || 'Service temporairement indisponible'}
 
 Vous pouvez soumettre manuellement via :
 • Google Search Console : https://search.google.com/search-console
@@ -200,7 +201,7 @@ Vous pouvez soumettre manuellement via :
         error: error instanceof Error ? error.message : 'Network error'
       }]);
 
-      alert(`❌ Erreur réseau lors du ping IndexNow
+      toast.error(`❌ Erreur réseau lors du ping IndexNow
 
 Vérifiez :
 1. Votre connexion internet
@@ -234,7 +235,7 @@ Vérifiez :
       const result = await response.json();
 
       if (result.success) {
-        alert(`✅ Optimisation SERP terminée !
+        toast.success(`✅ Optimisation SERP terminée !
 
 Opportunités détectées: ${result.analyzed}
 Volume de recherche total: ${result.total_search_volume}
@@ -245,11 +246,11 @@ Stratégie recommandée: ${result.strategy.focus}
 Consultez le détail dans la console (F12)`);
         logger.log('SERP Optimization Results:', result);
       } else {
-        alert(`❌ Erreur: ${result.error}`);
+        toast.error(`❌ Erreur: ${result.error}`);
       }
     } catch (error) {
       logger.error('SERP optimization error:', error);
-      alert('❌ Erreur lors de l\'optimisation SERP');
+      toast.error('❌ Erreur lors de l\'optimisation SERP');
     } finally {
       setIsWorking(false);
     }
@@ -412,10 +413,10 @@ Consultez le détail dans la console (F12)`);
                       await loadSeoData();
                       await loadCronJobsStatus();
 
-                      alert('✅ Données SEO actualisées depuis Supabase !');
+                      toast.success('✅ Données SEO actualisées depuis Supabase !');
                     } catch (error: any) {
                       logger.error('GSC sync error:', error);
-                      alert(`❌ Erreur: ${error.message}`);
+                      toast.error(`❌ Erreur: ${error.message}`);
                     } finally {
                       setIsWorking(false);
                     }
@@ -447,8 +448,8 @@ Consultez le détail dans la console (F12)`);
                         Pour obtenir les vraies données Google (pages indexées, performances, etc.) :
                       </p>
                       <div className="text-xs text-orange-100 space-y-1 mb-3">
-                        <p><strong>1.</strong> Active l'API dans <a href="https://console.cloud.google.com/apis/library" target="_blank" className="underline hover:text-orange-200">Google Cloud Console</a></p>
-                        <p><strong>2.</strong> Crée une clé API dans <a href="https://console.cloud.google.com/apis/credentials" target="_blank" className="underline hover:text-orange-200">Credentials</a></p>
+                        <p><strong>1.</strong> Active l'API dans <a href="https://console.cloud.google.com/apis/library" target=\"_blank" className="underline hover:text-orange-200">Google Cloud Console</a></p>
+                        <p><strong>2.</strong> Crée une clé API dans <a href="https://console.cloud.google.com/apis/credentials" target=\"_blank" className="underline hover:text-orange-200">Credentials</a></p>
                         <p><strong>3.</strong> Ajoute la clé dans Supabase Secrets :</p>
                       </div>
                       <div className="bg-slate-900 p-2 rounded border border-orange-500 mb-3">

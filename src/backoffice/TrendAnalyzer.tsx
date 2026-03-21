@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { analyzeContentOpportunities, saveContentOpportunities, ContentOpportunity } from '../lib/trendAnalyzer';
 import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
+import { toast } from '@/lib/toast';
 
 export default function TrendAnalyzer() {
   const navigate = useNavigate();
@@ -70,10 +71,10 @@ export default function TrendAnalyzer() {
       await saveContentOpportunities(newOpportunities);
       await loadOpportunities();
 
-      alert(`✅ ${newOpportunities.length} opportunités découvertes !`);
+      toast.success(`✅ ${newOpportunities.length} opportunités découvertes !`);
     } catch (err) {
       logger.error('Analysis error:', err);
-      alert('Erreur lors de l\'analyse. Vérifiez les clés API.');
+      toast.error('Erreur lors de l\'analyse. Vérifiez les clés API.');
     } finally {
       setIsAnalyzing(false);
     }

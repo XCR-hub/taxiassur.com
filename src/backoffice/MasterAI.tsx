@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { logger } from '@/lib/logger';
+import { toast } from '@/lib/toast';
 import {
   Brain, Zap, TrendingUp, AlertTriangle, CheckCircle, Activity,
   Eye, RefreshCw, Settings, BarChart3, Target, Sparkles, Clock,
@@ -114,25 +115,25 @@ const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
 
       if (error) {
         logger.error('Error toggling automation:', error);
-        alert('❌ Erreur lors du changement de mode');
+        toast.error('❌ Erreur lors du changement de mode');
         return;
       }
 
       if (data) {
         setIsAutoMode(data.is_active);
-        alert(data.message);
+        toast.info(data.message);
         await loadDashboardData();
       }
     } catch (error) {
       logger.error('Failed to toggle:', error);
-      alert('❌ Erreur de connexion');
+      toast.error('❌ Erreur de connexion');
     } finally {
       setToggling(false);
     }
   };
 
   const runManualOptimization = async () => {
-    alert('🤖 Lancement manuel de l\'optimisation...\n\nL\'IA analyse et optimise votre système. Résultats dans quelques instants.');
+    toast.info('🤖 Lancement manuel de l\'optimisation...\n\nL\'IA analyse et optimise votre système. Résultats dans quelques instants.');
     await loadDashboardData();
   };
 

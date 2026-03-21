@@ -1208,7 +1208,7 @@ const Dashboard: React.FC = () => {
                     Le système d'intelligence artificielle génère automatiquement du contenu optimisé SEO :
                     <strong> articles de blog, actualités du secteur, FAQet pages locales</strong>.
                     Vous pouvez <strong>publier manuellement</strong> ou <strong>modifier le contenu IA</strong> avant publication.
-                    L'IA s'améliore en continu grâce au machine learning.
+                    L'IA s\'améliore en continu grâce au machine learning.
                   </div>
                   <div className="mt-2 flex items-center gap-4 text-xs text-emerald-700">
                     <span className="flex items-center gap-1">

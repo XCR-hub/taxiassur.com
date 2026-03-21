@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FileText, Download, Eye, Trash2, CheckCircle, XCircle, Clock, File, Image, AlertCircle, Calendar, User, ZoomIn, Upload, Search, Filter, Grid2x2 as Grid, List, Star, RefreshCw, ExternalLink } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { toast } from '@/lib/toast';
 
 interface Document {
   id: string;
@@ -81,10 +82,10 @@ const ClientDocumentsViewer: React.FC<ClientDocumentsViewerProps> = ({ leadId, c
       if (insertError) throw insertError;
 
       await loadDocuments();
-      alert('Document uploadé avec succès !');
+      toast.success('Document uploadé avec succès !');
     } catch (error) {
       console.error('Error uploading file:', error);
-      alert('Erreur lors de l\'upload du document');
+      toast.error('Erreur lors de l\'upload du document');
     } finally {
       setUploading(false);
     }
@@ -147,7 +148,7 @@ const ClientDocumentsViewer: React.FC<ClientDocumentsViewerProps> = ({ leadId, c
 
   const downloadDocument = async (doc: Document) => {
     if (!doc.file_path) {
-      alert('Fichier non disponible');
+      toast.info('Fichier non disponible');
       return;
     }
 
@@ -166,7 +167,7 @@ const ClientDocumentsViewer: React.FC<ClientDocumentsViewerProps> = ({ leadId, c
       URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Error downloading document:', error);
-      alert('Erreur lors du téléchargement');
+      toast.error('Erreur lors du téléchargement');
     }
   };
 

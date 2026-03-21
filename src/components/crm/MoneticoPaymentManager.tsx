@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { CreditCard, CheckCircle, XCircle, Loader, Euro, AlertCircle, ExternalLink, Mail, Send } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { toast } from '@/lib/toast';
 
 interface MoneticoPaymentManagerProps {
   leadId: string;
@@ -522,7 +523,7 @@ export function MoneticoPaymentManager({ leadId, onPaymentSuccess }: MoneticoPay
                 <button
                   onClick={() => {
                     navigator.clipboard.writeText('5017670000001800');
-                    alert('✅ Numéro copié !');
+                    toast.success('✅ Numéro copié !');
                   }}
                   className="font-bold text-green-700 hover:text-green-800 cursor-pointer"
                 >

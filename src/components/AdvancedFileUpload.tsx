@@ -1,5 +1,6 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { Upload, X, FileImage, FileText, File, CheckCircle } from 'lucide-react';
+import { toast } from '@/lib/toast';
 
 interface FileWithPreview {
   file: File;
@@ -92,7 +93,7 @@ export const AdvancedFileUpload: React.FC<AdvancedFileUploadProps> = ({
     const newFiles = Array.from(fileList);
 
     if (files.length + newFiles.length > maxFiles) {
-      alert(`Vous ne pouvez télécharger que ${maxFiles} fichiers maximum`);
+      toast.info(`Vous ne pouvez télécharger que ${maxFiles} fichiers maximum`);
       return;
     }
 
@@ -100,7 +101,7 @@ export const AdvancedFileUpload: React.FC<AdvancedFileUploadProps> = ({
 
     for (const file of newFiles) {
       if (file.size > maxSize) {
-        alert(`${file.name} est trop volumineux (max ${maxSize / 1024 / 1024}MB)`);
+        toast.info(`${file.name} est trop volumineux (max ${maxSize / 1024 / 1024}MB)`);
         continue;
       }
 

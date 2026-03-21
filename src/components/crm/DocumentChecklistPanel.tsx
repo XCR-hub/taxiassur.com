@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { toast } from '@/lib/toast';
 import {
   FileText,
   CheckCircle,
@@ -128,7 +129,7 @@ export function DocumentChecklistPanel({ leadId, onDocumentUpload, onRequestDocu
       if (onDocumentUpload) onDocumentUpload();
     } catch (err) {
       console.error('Upload error:', err);
-      alert('Erreur lors de l\'upload');
+      toast.error('Erreur lors de l\'upload');
     } finally {
       setUploading(false);
     }

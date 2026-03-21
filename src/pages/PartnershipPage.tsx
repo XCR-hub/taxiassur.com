@@ -7,6 +7,7 @@ import Card from '../components/Card';
 import AITaxiBackground from '../components/AITaxiBackground';
 import StickyCTA from '../components/StickyCTA';
 import { logger } from '@/lib/logger';
+import { toast } from '@/lib/toast';
 
 const PartnershipPage: React.FC = () => {
   const [partnerForm, setPartnerForm] = useState({
@@ -168,7 +169,7 @@ const PartnershipPage: React.FC = () => {
       const result = await response.json();
       
       if (response.ok && (result.success || result.ok)) {
-        alert('✅ Demande de partenariat envoyée ! Nous vous recontactons sous 24h.');
+        toast.success('✅ Demande de partenariat envoyée ! Nous vous recontactons sous 24h.');
         setPartnerForm({
           type: 'courtier',
           company: '',
@@ -185,11 +186,11 @@ const PartnershipPage: React.FC = () => {
         });
         setShowForm(false);
       } else {
-        alert(result.error || 'Erreur lors de l\'envoi. Veuillez réessayer.');
+        toast.error(result.error || 'Erreur lors de l\'envoi. Veuillez réessayer.');
       }
     } catch (error) {
       logger.error('Partnership form error:', error);
-      alert('Erreur de connexion. Veuillez réessayer.');
+      toast.error('Erreur de connexion. Veuillez réessayer.');
     } finally {
       setIsSubmitting(false);
     }

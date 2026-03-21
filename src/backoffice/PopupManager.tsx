@@ -4,6 +4,7 @@ import { Plus, CreditCard as Edit, Trash2, Eye, EyeOff, Copy, Save, X, Monitor, 
 import { PopupConfig, PopupConfigSchema, PopupManager } from '../lib/popup';
 import Card from '../components/Card';
 import { logger } from '@/lib/logger';
+import { toast } from '@/lib/toast';
 
 const PopupManagerBackoffice: React.FC = () => {
   const navigate = useNavigate();
@@ -124,13 +125,13 @@ const PopupManagerBackoffice: React.FC = () => {
         });
         
         setEditingPopup(null);
-        alert('✅ Popup sauvegardée avec succès !');
+        toast.success('✅ Popup sauvegardée avec succès !');
       } else {
-        alert('❌ Erreur lors de la sauvegarde');
+        toast.error('❌ Erreur lors de la sauvegarde');
       }
     } catch (error) {
       logger.error('Save error:', error);
-      alert('❌ Erreur de connexion');
+      toast.error('❌ Erreur de connexion');
     }
   };
 
@@ -171,12 +172,12 @@ const PopupManagerBackoffice: React.FC = () => {
 
       if (response.ok) {
         setPopups(prev => prev.filter(p => p.id !== popupId));
-        alert('✅ Popup supprimée');
+        toast.success('✅ Popup supprimée');
       } else {
-        alert('❌ Erreur lors de la suppression');
+        toast.error('❌ Erreur lors de la suppression');
       }
     } catch (error) {
-      alert('❌ Erreur de connexion');
+      toast.error('❌ Erreur de connexion');
     }
   };
 

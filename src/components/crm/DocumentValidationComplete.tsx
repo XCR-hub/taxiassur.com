@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { openDocument } from '../../lib/document-utils';
 import { FileText, Download, X, CheckCircle2, AlertCircle, Loader2, XCircle, Check, MoveHorizontal } from 'lucide-react';
+import { toast } from '@/lib/toast';
 
 interface DocumentValidationCompleteProps {
   caseId: string;
@@ -188,7 +189,7 @@ export default function DocumentValidationComplete({
       }
     } catch (error) {
       console.error('Error classifying attachment:', error);
-      alert('Erreur lors de la classification du document');
+      toast.error('Erreur lors de la classification du document');
     } finally {
       setClassifying(null);
     }
@@ -212,7 +213,7 @@ export default function DocumentValidationComplete({
       onDocumentClassified?.();
     } catch (error) {
       console.error('Error moving document:', error);
-      alert('Erreur lors du déplacement du document');
+      toast.error('Erreur lors du déplacement du document');
     } finally {
       setProcessing(null);
     }
@@ -299,25 +300,25 @@ export default function DocumentValidationComplete({
           });
 
           if (!clientAccessError) {
-            alert('✅ Document validé avec succès !\n\n🎉 Tous les documents sont validés !\n\n📧 Un email avec l\'accès à l\'espace client a été envoyé au prospect.');
+            toast.success('✅ Document validé avec succès !\n\n🎉 Tous les documents sont validés !\n\n📧 Un email avec l\'accès à l\'espace client a été envoyé au prospect.');
           } else {
-            alert('✅ Document validé avec succès !\n\n🎉 Tous les documents sont validés !\n\n⚠️ L\'email d\'accès à l\'espace client n\'a pas pu être envoyé. Envoyez-le manuellement depuis le détail du lead.');
+            toast.success('✅ Document validé avec succès !\n\n🎉 Tous les documents sont validés !\n\n⚠️ L\'email d\'accès à l\'espace client n\'a pas pu être envoyé. Envoyez-le manuellement depuis le détail du lead.');
           }
         } catch (err) {
           console.error('Error sending client access:', err);
-          alert('✅ Document validé avec succès !\n\n🎉 Tous les documents sont validés !\n\n⚠️ L\'email d\'accès à l\'espace client n\'a pas pu être envoyé. Envoyez-le manuellement depuis le détail du lead.');
+          toast.success('✅ Document validé avec succès !\n\n🎉 Tous les documents sont validés !\n\n⚠️ L\'email d\'accès à l\'espace client n\'a pas pu être envoyé. Envoyez-le manuellement depuis le détail du lead.');
         }
       } else if (emailSent) {
-        alert('✅ Document validé avec succès !\n\n📧 Email de confirmation envoyé au prospect.');
+        toast.success('✅ Document validé avec succès !\n\n📧 Email de confirmation envoyé au prospect.');
       } else if (leadEmail) {
-        alert(`✅ Document validé avec succès !\n\n⚠️ Attention : L'email de notification n'a pas pu être envoyé.\nErreur: ${emailErrorMsg}\n\nVeuillez contacter le prospect manuellement.`);
+        toast.error(`✅ Document validé avec succès !\n\n⚠️ Attention : L'email de notification n'a pas pu être envoyé.\nErreur: ${emailErrorMsg}\n\nVeuillez contacter le prospect manuellement.`);
       } else {
-        alert('✅ Document validé avec succès !\n\n⚠️ Aucun email disponible pour ce prospect.');
+        toast.success('✅ Document validé avec succès !\n\n⚠️ Aucun email disponible pour ce prospect.');
       }
 
     } catch (error) {
       console.error('Error validating document:', error);
-      alert('Erreur lors de la validation du document');
+      toast.error('Erreur lors de la validation du document');
     } finally {
       setProcessing(null);
     }
@@ -325,7 +326,7 @@ export default function DocumentValidationComplete({
 
   async function rejectDocument(doc: ClassifiedDocument) {
     if (!rejectionReason.trim()) {
-      alert('Le motif de refus est obligatoire !');
+      toast.warning('Le motif de refus est obligatoire !');
       return;
     }
 
@@ -381,11 +382,11 @@ export default function DocumentValidationComplete({
       setRejectionReason('');
       await loadClassifiedDocuments();
       onDocumentClassified?.();
-      alert('Document refusé et email envoyé au prospect !');
+      toast.success('Document refusé et email envoyé au prospect !');
 
     } catch (error) {
       console.error('Error rejecting document:', error);
-      alert('Erreur lors du refus du document');
+      toast.error('Erreur lors du refus du document');
     } finally {
       setProcessing(null);
     }
@@ -406,7 +407,7 @@ export default function DocumentValidationComplete({
       onDocumentClassified?.();
     } catch (error) {
       console.error('Error removing document:', error);
-      alert('Erreur lors de la suppression du document');
+      toast.error('Erreur lors de la suppression du document');
     }
   }
 

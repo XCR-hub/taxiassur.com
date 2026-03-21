@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { toast } from '@/lib/toast';
 import {
   CheckCircle, XCircle, Clock, Upload, FileText, Send, AlertTriangle,
   Download, Eye, MessageSquare, Building2, Copy, Mail, ExternalLink
@@ -174,7 +175,7 @@ export default function LeadCompanyQuotes({ leadId }: Props) {
 
   const saveQuote = async () => {
     if (!selectedQuote || !quoteFormData.quote_file_url) {
-      alert('Veuillez uploader le devis');
+      toast.warning('Veuillez uploader le devis');
       return;
     }
 
@@ -198,10 +199,10 @@ export default function LeadCompanyQuotes({ leadId }: Props) {
 
       await loadData();
       setIsQuoteModalOpen(false);
-      alert('Devis soumis avec succès !');
+      toast.success('Devis soumis avec succès !');
     } catch (error) {
       console.error('Erreur soumission devis:', error);
-      alert('Erreur lors de la soumission');
+      toast.error('Erreur lors de la soumission');
     } finally {
       setSaving(false);
     }
@@ -209,7 +210,7 @@ export default function LeadCompanyQuotes({ leadId }: Props) {
 
   const saveRefusal = async () => {
     if (!selectedQuote || !refusalFormData.refusal_reason_code) {
-      alert('Veuillez sélectionner le motif de refus');
+      toast.warning('Veuillez sélectionner le motif de refus');
       return;
     }
 
@@ -238,10 +239,10 @@ export default function LeadCompanyQuotes({ leadId }: Props) {
 
       await loadData();
       setIsRefusalModalOpen(false);
-      alert('Refus enregistré avec succès !');
+      toast.success('Refus enregistré avec succès !');
     } catch (error) {
       console.error('Erreur enregistrement refus:', error);
-      alert('Erreur lors de l\'enregistrement');
+      toast.error('Erreur lors de l\'enregistrement');
     } finally {
       setSaving(false);
     }
@@ -270,7 +271,7 @@ export default function LeadCompanyQuotes({ leadId }: Props) {
 
   const copyProspectSpaceLink = async () => {
     if (!lead?.access_token) {
-      alert('Token d\'accès non disponible pour ce prospect');
+      toast.info('Token d\'accès non disponible pour ce prospect');
       return;
     }
     const link = `${window.location.origin}/espace-prospect/${lead.access_token}`;
@@ -280,7 +281,7 @@ export default function LeadCompanyQuotes({ leadId }: Props) {
       setTimeout(() => setLinkCopied(false), 3000);
     } catch (err) {
       console.error('Error copying link:', err);
-      alert('Erreur lors de la copie du lien');
+      toast.error('Erreur lors de la copie du lien');
     }
   };
 
@@ -288,7 +289,7 @@ export default function LeadCompanyQuotes({ leadId }: Props) {
     if (!lead || !leadId) return;
 
     if (!lead.access_token) {
-      alert('Token d\'accès non disponible pour ce prospect');
+      toast.info('Token d\'accès non disponible pour ce prospect');
       return;
     }
 
@@ -308,10 +309,10 @@ export default function LeadCompanyQuotes({ leadId }: Props) {
       });
 
       if (error) throw error;
-      alert('✅ Email d\'accès espace prospect envoyé avec succès !');
+      toast.success('✅ Email d\'accès espace prospect envoyé avec succès !');
     } catch (err) {
       console.error('Error sending email:', err);
-      alert('❌ Erreur lors de l\'envoi de l\'email');
+      toast.error('❌ Erreur lors de l\'envoi de l\'email');
     } finally {
       setSendingEmail(false);
     }

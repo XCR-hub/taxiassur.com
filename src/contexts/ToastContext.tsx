@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import { toast as toastSingleton } from '@/lib/toast';
 import { X, CheckCircle, AlertCircle, Info, AlertTriangle } from 'lucide-react';
 
 type ToastType = 'success' | 'error' | 'info' | 'warning';
@@ -40,6 +41,10 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       }, duration);
     }
   }, []);
+
+  useEffect(() => {
+    toastSingleton._register(showToast);
+  }, [showToast]);
 
   const hideToast = useCallback((id: string) => {
     setToasts(prev => prev.filter(toast => toast.id !== id));

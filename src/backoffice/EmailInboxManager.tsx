@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { toast } from '@/lib/toast';
 import {
   Mail, RefreshCw, Check, X, User, Calendar, MessageCircle, AlertCircle,
   Send, Trash2, Archive, Tag, Filter, Search, Reply, ExternalLink,
@@ -203,11 +204,11 @@ const EmailInboxManager: React.FC = () => {
       }
 
       logger.info('✅ Synchronisation terminée:', data);
-      alert(`✅ ${data?.count || 0} emails récupérés !`);
+      toast.success(`✅ ${data?.count || 0} emails récupérés !`);
       await loadEmails();
     } catch (error) {
       logger.error('❌ Erreur synchronisation:', error);
-      alert('❌ Erreur: ' + (error as Error).message);
+      toast.error('❌ Erreur: ' + (error as Error).message);
     } finally {
       setSyncing(false);
     }
@@ -327,12 +328,12 @@ const EmailInboxManager: React.FC = () => {
 
       if (error) throw error;
 
-      alert('✅ Réponse envoyée !');
+      toast.success('✅ Réponse envoyée !');
       setShowReplyModal(false);
       setReplyContent('');
     } catch (error) {
       logger.error('Erreur envoi réponse:', error);
-      alert('❌ Erreur lors de l\'envoi');
+      toast.error('❌ Erreur lors de l\'envoi');
     }
   };
 
@@ -354,7 +355,7 @@ const EmailInboxManager: React.FC = () => {
     }
 
     setSelectedEmails(new Set());
-    alert(`✅ ${emailsToProcess.length} leads créés !`);
+    toast.success(`✅ ${emailsToProcess.length} leads créés !`);
   };
 
   const bulkMarkAsProcessed = async () => {
@@ -368,7 +369,7 @@ const EmailInboxManager: React.FC = () => {
 
       await loadEmails();
       setSelectedEmails(new Set());
-      alert('✅ Emails marqués comme traités !');
+      toast.success('✅ Emails marqués comme traités !');
     } catch (error) {
       logger.error('Erreur marquage bulk:', error);
     }
@@ -385,7 +386,7 @@ const EmailInboxManager: React.FC = () => {
 
       await loadEmails();
       setSelectedEmails(new Set());
-      alert('✅ Emails archivés !');
+      toast.success('✅ Emails archivés !');
     } catch (error) {
       logger.error('Erreur archivage bulk:', error);
     }

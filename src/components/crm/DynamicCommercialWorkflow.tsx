@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { toast } from '@/lib/toast';
 import {
   CheckCircle,
   X,
@@ -1080,7 +1081,7 @@ export const DynamicCommercialWorkflow: React.FC<Props> = ({
       onStatusChange();
     } catch (error) {
       console.error('Error executing action:', error);
-      alert('❌ Erreur lors de l\'exécution de l\'action : ' + (error instanceof Error ? error.message : 'Erreur inconnue'));
+      toast.error('❌ Erreur lors de l\'exécution de l\'action : ' + (error instanceof Error ? error.message : 'Erreur inconnue'));
     } finally {
       setLoading(false);
     }

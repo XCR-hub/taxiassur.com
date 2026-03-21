@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { CreditCard, Search, User, Mail, Phone, Euro, Send, Loader2, Check, X, ExternalLink, Building2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { toast } from '@/lib/toast';
 
 interface Lead {
   id: string;
@@ -96,7 +97,7 @@ const LeadInvoicing: React.FC = () => {
 
   const handleCreatePayment = async () => {
     if (!selectedLead || !amount || parseFloat(amount) <= 0) {
-      alert('Veuillez sélectionner un lead et entrer un montant valide');
+      toast.warning('Veuillez sélectionner un lead et entrer un montant valide');
       return;
     }
 
@@ -106,7 +107,7 @@ const LeadInvoicing: React.FC = () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        alert('Session expirée');
+        toast.info('Session expirée');
         setCreating(false);
         return;
       }
@@ -121,7 +122,7 @@ const LeadInvoicing: React.FC = () => {
 
       if (error) {
         console.error('Erreur création paiement:', error);
-        alert('Erreur lors de la création du lien de paiement');
+        toast.error('Erreur lors de la création du lien de paiement');
         setCreating(false);
         return;
       }
@@ -141,7 +142,7 @@ const LeadInvoicing: React.FC = () => {
       }
     } catch (err: any) {
       console.error('Erreur:', err);
-      alert('Erreur lors de la création du paiement');
+      toast.error('Erreur lors de la création du paiement');
     } finally {
       setCreating(false);
     }

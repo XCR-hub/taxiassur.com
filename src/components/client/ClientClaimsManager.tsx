@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { toast } from '@/lib/toast';
 import {
   AlertTriangle,
   Plus,
@@ -197,7 +198,7 @@ export const ClientClaimsManager: React.FC<ClientClaimsManagerProps> = ({
         }
       });
 
-      alert('Sinistre déclaré avec succès ! Nous vous recontacterons rapidement.');
+      toast.success('Sinistre déclaré avec succès ! Nous vous recontacterons rapidement.');
       setShowDeclarationForm(false);
       loadClaims();
 
@@ -218,7 +219,7 @@ export const ClientClaimsManager: React.FC<ClientClaimsManagerProps> = ({
       });
     } catch (error: any) {
       console.error('Error submitting claim:', error);
-      alert(error.message || 'Erreur lors de la déclaration');
+      toast.error(error.message || 'Erreur lors de la déclaration');
     } finally {
       setSubmitting(false);
     }

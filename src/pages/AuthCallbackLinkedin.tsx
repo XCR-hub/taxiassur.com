@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
+import { toast } from '@/lib/toast';
 
 export default function AuthCallbackLinkedin() {
   const [searchParams] = useSearchParams();
@@ -120,7 +121,7 @@ export default function AuthCallbackLinkedin() {
 
   function copyToken() {
     navigator.clipboard.writeText(token);
-    alert('✅ Token copié !');
+    toast.success('✅ Token copié !');
   }
 
   const expiresAt = new Date(Date.now() + expiresIn * 1000).toLocaleString('fr-FR');

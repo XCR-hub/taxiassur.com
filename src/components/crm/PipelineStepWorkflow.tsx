@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { toast } from '@/lib/toast';
 import {
   CheckCircle2,
   ChevronRight,
@@ -132,7 +133,7 @@ export const PipelineStepWorkflow: React.FC<PipelineStepWorkflowProps> = ({
       onStageChanged?.();
     } catch (err) {
       logger.error('Error changing stage:', err);
-      alert('Erreur lors du changement d\'étape');
+      toast.error('Erreur lors du changement d\'étape');
     } finally {
       setChanging(false);
     }

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { Sparkles, Plus, Edit2, Trash2, Send, TrendingUp } from 'lucide-react';
+import { Sparkles, Plus, CreditCard as Edit2, Trash2, Send, TrendingUp } from 'lucide-react';
+import { toast } from '@/lib/toast';
 
 interface SmartTemplate {
   id: string;
@@ -54,7 +55,7 @@ export default function SmartTemplatesManager() {
         .eq('id', editingTemplate.id);
 
       if (!error) {
-        alert('Template mis à jour !');
+        toast.info('Template mis à jour !');
         resetForm();
         loadTemplates();
       }
@@ -64,7 +65,7 @@ export default function SmartTemplatesManager() {
         .insert([formData]);
 
       if (!error) {
-        alert('Template créé !');
+        toast.success('Template créé !');
         resetForm();
         loadTemplates();
       }
@@ -104,7 +105,7 @@ export default function SmartTemplatesManager() {
       .eq('id', id);
 
     if (!error) {
-      alert('Template supprimé !');
+      toast.success('Template supprimé !');
       loadTemplates();
     }
   };

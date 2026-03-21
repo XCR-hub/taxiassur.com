@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
+import { toast } from '@/lib/toast';
 import {
   DollarSign,
   Download,
@@ -199,10 +200,10 @@ export default function MoneticoAccountingDashboard() {
 
       if (error) throw error;
 
-      alert('Rapport envoyé avec succès');
+      toast.success('Rapport envoyé avec succès');
     } catch (error) {
       console.error('Erreur envoi rapport:', error);
-      alert('Erreur lors de l\'envoi du rapport');
+      toast.error('Erreur lors de l\'envoi du rapport');
     } finally {
       setSendingReport(false);
     }

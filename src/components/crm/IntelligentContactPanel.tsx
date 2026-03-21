@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { toast } from '@/lib/toast';
 import {
   Phone,
   MessageSquare,
@@ -116,7 +117,7 @@ export const IntelligentContactPanel: React.FC<IntelligentContactPanelProps> = (
       setNotes('');
     } catch (error) {
       console.error('Erreur enregistrement contact:', error);
-      alert('Erreur lors de l\'enregistrement du contact');
+      toast.error('Erreur lors de l\'enregistrement du contact');
     } finally {
       setLoading(false);
     }
@@ -124,7 +125,7 @@ export const IntelligentContactPanel: React.FC<IntelligentContactPanelProps> = (
 
   const handleCallResult = async () => {
     if (callAnswered === null) {
-      alert('Veuillez indiquer si le prospect a répondu');
+      toast.warning('Veuillez indiquer si le prospect a répondu');
       return;
     }
 
@@ -145,12 +146,12 @@ export const IntelligentContactPanel: React.FC<IntelligentContactPanelProps> = (
 
       if (error) throw error;
 
-      alert('Séquence automatique déclenchée : WhatsApp → SMS → Email');
+      toast.info('Séquence automatique déclenchée : WhatsApp → SMS → Email');
       setShowSequenceModal(false);
       setSelectedMethod(null);
     } catch (error) {
       console.error('Erreur déclenchement séquence:', error);
-      alert('Erreur lors du déclenchement de la séquence');
+      toast.error('Erreur lors du déclenchement de la séquence');
     } finally {
       setLoading(false);
     }

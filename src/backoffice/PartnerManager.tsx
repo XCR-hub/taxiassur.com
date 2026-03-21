@@ -4,6 +4,7 @@ import { Globe, Plus, Star, MapPin, Mail, Phone, Home } from 'lucide-react';
 import { getPartners, addPartner, type Partner } from '../lib/backlinks';
 import Card from '../components/Card';
 import { logger } from '@/lib/logger';
+import { toast } from '@/lib/toast';
 
 const PartnerManager: React.FC = () => {
   const [partners, setPartners] = useState<Partner[]>([]);
@@ -68,12 +69,12 @@ const PartnerManager: React.FC = () => {
           }
         });
         loadPartners();
-        alert('Partenaire ajouté avec succès !');
+        toast.success('Partenaire ajouté avec succès !');
       } else {
-        alert('Erreur lors de l\'ajout du partenaire');
+        toast.error('Erreur lors de l\'ajout du partenaire');
       }
     } catch (error) {
-      alert('Erreur de connexion');
+      toast.error('Erreur de connexion');
     }
   };
 

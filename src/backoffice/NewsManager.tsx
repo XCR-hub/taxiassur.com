@@ -6,6 +6,7 @@ import { ProcessedNews } from '../lib/newsAggregator';
 import Card from '../components/Card';
 import TestAutomationButton from './TestAutomationButton';
 import { logger } from '@/lib/logger';
+import { toast } from '@/lib/toast';
 
 const NewsManager: React.FC = () => {
   const navigate = useNavigate();
@@ -98,11 +99,11 @@ const NewsManager: React.FC = () => {
       }
 
       const result = await response.json();
-      alert(`✅ ${result.articles?.length || 0} actualités récupérées et traitées !`);
+      toast.success(`✅ ${result.articles?.length || 0} actualités récupérées et traitées !`);
       await loadProcessedNews();
     } catch (error: any) {
       logger.error('Error refreshing news:', error);
-      alert(`❌ Erreur : ${error.message}`);
+      toast.error(`❌ Erreur : ${error.message}`);
     } finally {
       setLoading(false);
     }
@@ -120,11 +121,11 @@ const NewsManager: React.FC = () => {
 
       if (error) throw error;
 
-      alert('✅ Actualité publiée avec succès !');
+      toast.success('✅ Actualité publiée avec succès !');
       await loadProcessedNews();
     } catch (error: any) {
       logger.error('Error publishing news:', error);
-      alert(`❌ Erreur : ${error.message}`);
+      toast.error(`❌ Erreur : ${error.message}`);
     }
   };
 
@@ -149,14 +150,14 @@ const NewsManager: React.FC = () => {
       const result = await response.json();
 
       if (result.success) {
-        alert(`✅ ${result.message}\n\nTotal: ${result.totalArticles} articles\nNettoyés: ${result.cleanedCount} articles`);
+        toast.success(`✅ ${result.message}\n\nTotal: ${result.totalArticles} articles\nNettoyés: ${result.cleanedCount} articles`);
         await loadProcessedNews();
       } else {
         throw new Error(result.error || 'Erreur inconnue');
       }
     } catch (error: any) {
       logger.error('Error cleaning excerpts:', error);
-      alert(`❌ Erreur lors du nettoyage : ${error.message}`);
+      toast.error(`❌ Erreur lors du nettoyage : ${error.message}`);
     } finally {
       setLoading(false);
     }
@@ -402,7 +403,7 @@ const NewsManager: React.FC = () => {
                     <button
                       onClick={() => {
                         // Show preview modal
-                        alert('Aperçu : ' + news.synthesizedTitle);
+                        toast.info('Aperçu : ' + news.synthesizedTitle);
                       }}
                       className="text-orange-600 hover:text-orange-800"
                     >

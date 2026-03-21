@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { CreditCard, Check, X, Calendar, FileText, Lock, Unlock } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { toast } from '@/lib/toast';
 
 interface PaymentManagerProps {
   leadId: string;
@@ -71,7 +72,7 @@ export const PaymentManager: React.FC<PaymentManagerProps> = ({ leadId, onUpdate
     e.preventDefault();
 
     if (!form.payment_method || !form.payment_date) {
-      alert('Veuillez renseigner la méthode et la date de paiement');
+      toast.warning('Veuillez renseigner la méthode et la date de paiement');
       return;
     }
 
@@ -91,13 +92,13 @@ export const PaymentManager: React.FC<PaymentManagerProps> = ({ leadId, onUpdate
 
       if (error) throw error;
 
-      alert('✅ Paiement confirmé avec succès');
+      toast.success('✅ Paiement confirmé avec succès');
       setEditing(false);
       await loadPaymentData();
       onUpdate?.();
     } catch (error: any) {
       console.error('Erreur confirmation paiement:', error);
-      alert('❌ Erreur : ' + error.message);
+      toast.error('❌ Erreur : ' + error.message);
     } finally {
       setSaving(false);
     }
@@ -122,12 +123,12 @@ export const PaymentManager: React.FC<PaymentManagerProps> = ({ leadId, onUpdate
 
       if (error) throw error;
 
-      alert('✅ Paiement annulé');
+      toast.success('✅ Paiement annulé');
       await loadPaymentData();
       onUpdate?.();
     } catch (error) {
       console.error('Erreur annulation paiement:', error);
-      alert('❌ Erreur lors de l\'annulation');
+      toast.error('❌ Erreur lors de l\'annulation');
     }
   };
 

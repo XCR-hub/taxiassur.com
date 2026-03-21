@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from '@/lib/toast';
 import {
   FileText, Clock, User, Phone, Mail, CheckCircle, AlertTriangle,
   Play, Eye, RefreshCw, TrendingUp, Zap, FileCheck, ArrowRight
@@ -82,7 +83,7 @@ const QuoteQueueDashboard: React.FC = () => {
   const claimLead = async (queueId: string, leadId: string) => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
-      alert('Vous devez être connecté pour prendre un lead');
+      toast.info('Vous devez être connecté pour prendre un lead');
       return;
     }
 
@@ -101,13 +102,13 @@ const QuoteQueueDashboard: React.FC = () => {
       await loadData();
     } catch (error) {
       console.error('Erreur lors de la prise en charge:', error);
-      alert('Erreur lors de la prise en charge du lead');
+      toast.error('Erreur lors de la prise en charge du lead');
     }
   };
 
   const startQuote = async (item: QueueItem) => {
     if (!item.lead_id) {
-      alert('Erreur: Lead ID manquant');
+      toast.error('Erreur: Lead ID manquant');
       return;
     }
 
@@ -136,7 +137,7 @@ const QuoteQueueDashboard: React.FC = () => {
       navigate(`/backoffice/crm/lead/${item.lead_id}`);
     } catch (error) {
       console.error('Erreur lors du démarrage du devis:', error);
-      alert('Erreur lors du démarrage du processus de devis');
+      toast.error('Erreur lors du démarrage du processus de devis');
     }
   };
 
@@ -339,7 +340,7 @@ const QuoteQueueDashboard: React.FC = () => {
                     onClick={() => {
                       console.log('Navigation vers lead:', item.lead_id);
                       if (!item.lead_id) {
-                        alert('Erreur: Lead ID manquant');
+                        toast.error('Erreur: Lead ID manquant');
                         return;
                       }
                       navigate(`/backoffice/crm/lead/${item.lead_id}`);

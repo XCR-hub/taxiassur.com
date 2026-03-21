@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Trash2, AlertTriangle, X, Loader2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useNavigate } from 'react-router-dom';
+import { toast } from '@/lib/toast';
 
 interface Props {
   leadId: string;
@@ -18,7 +19,7 @@ export const LeadDeleteSecure: React.FC<Props> = ({ leadId, leadName, leadEmail 
 
   const handleDelete = async () => {
     if (confirmText !== 'SUPPRIMER' || !deleteReason.trim()) {
-      alert('Veuillez remplir tous les champs requis');
+      toast.warning('Veuillez remplir tous les champs requis');
       return;
     }
 
@@ -40,11 +41,11 @@ export const LeadDeleteSecure: React.FC<Props> = ({ leadId, leadName, leadEmail 
         throw new Error(data.error || 'Erreur lors de la suppression');
       }
 
-      alert('Lead supprimé définitivement avec succès ✓\nL\'action a été enregistrée dans les logs d\'audit.');
+      toast.success('Lead supprimé définitivement avec succès ✓\nL\'action a été enregistrée dans les logs d\'audit.');
       navigate('/backoffice/crm-killer');
     } catch (error: any) {
       console.error('Error deleting lead:', error);
-      alert(`Erreur : ${error.message || 'Erreur lors de la suppression du lead'}`);
+      toast.error(`Erreur : ${error.message || 'Erreur lors de la suppression du lead'}`);
     } finally {
       setLoading(false);
     }

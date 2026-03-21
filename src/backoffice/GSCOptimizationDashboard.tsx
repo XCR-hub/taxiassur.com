@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { TrendingUp, Search, FileText, Target, AlertCircle, CheckCircle, Clock, Sparkles } from 'lucide-react';
+import { toast } from '@/lib/toast';
 
 interface GSCQuery {
   id: string;
@@ -122,11 +123,11 @@ export default function GSCOptimizationDashboard() {
 
       if (error) throw error;
 
-      alert(`✅ Synchronisation réussie !\n${data.data.queries_imported} requêtes importées\n${data.data.opportunities_detected} opportunités détectées`);
+      toast.success(`✅ Synchronisation réussie !\n${data.data.queries_imported} requêtes importées\n${data.data.opportunities_detected} opportunités détectées`);
       loadData();
     } catch (error) {
       console.error('Erreur sync GSC:', error);
-      alert('❌ Erreur lors de la synchronisation GSC');
+      toast.error('❌ Erreur lors de la synchronisation GSC');
     } finally {
       setSyncing(false);
     }
@@ -144,11 +145,11 @@ export default function GSCOptimizationDashboard() {
 
       if (error) throw error;
 
-      alert(`✅ Contenu généré avec succès !\nRequêtes ciblées: ${data.metadata.target_queries.join(', ')}`);
+      toast.success(`✅ Contenu généré avec succès !\nRequêtes ciblées: ${data.metadata.target_queries.join(', ')}`);
       loadData();
     } catch (error) {
       console.error('Erreur génération contenu:', error);
-      alert('❌ Erreur lors de la génération de contenu');
+      toast.error('❌ Erreur lors de la génération de contenu');
     }
   };
 

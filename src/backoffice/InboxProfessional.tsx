@@ -1,12 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import {
-  Inbox, Star, Send, FileEdit, Archive, Trash2, HelpCircle, Handshake,
-  Bell, Mail, Plus, FolderPlus, Search, Filter, RefreshCw, ChevronDown,
-  ChevronRight, Circle, CheckCircle, AlertCircle, Reply, Forward,
-  MoreHorizontal, User, Building2, Sparkles, X, Check, Clock,
-  Tag, Folder, MessageSquare, ExternalLink
-} from 'lucide-react';
+import { toast } from '@/lib/toast';
+import { Inbox, Star, Send, File as FileEdit, Archive, Trash2, HelpCircle, Handshake, Bell, Mail, Plus, FolderPlus, Search, Filter, RefreshCw, ChevronDown, ChevronRight, Circle, CheckCircle, AlertCircle, Reply, Forward, MoreHorizontal, User, Building2, Sparkles, X, Check, Clock, Tag, Folder, MessageSquare, ExternalLink } from 'lucide-react';
 
 interface EmailFolder {
   id: string;
@@ -275,11 +270,11 @@ export default function InboxProfessional() {
         .update({ lead_id: newLead.id })
         .eq('from_email', email.from_email);
 
-      alert(`✅ Lead créé avec succès : ${newLead.full_name}\n\nTous les emails de cet expéditeur ont été liés au lead.`);
+      toast.success(`✅ Lead créé avec succès : ${newLead.full_name}\n\nTous les emails de cet expéditeur ont été liés au lead.`);
       loadInbox();
     } catch (error) {
       console.error('Erreur création lead:', error);
-      alert('Erreur lors de la création du lead');
+      toast.error('Erreur lors de la création du lead');
     } finally {
       setLoading(false);
     }
@@ -295,12 +290,12 @@ export default function InboxProfessional() {
         .update({ lead_id: leadId })
         .eq('id', emailId);
 
-      alert('✅ Email lié au lead avec succès');
+      toast.success('✅ Email lié au lead avec succès');
       setShowLinkLeadDialog(false);
       loadInbox();
     } catch (error) {
       console.error('Erreur liaison email:', error);
-      alert('Erreur lors de la liaison');
+      toast.error('Erreur lors de la liaison');
     } finally {
       setLoading(false);
     }
@@ -337,11 +332,11 @@ export default function InboxProfessional() {
         .update({ folder_id: mailsFolder.id })
         .eq('id', emailId);
 
-      alert('✅ Email classé dans "Mails"');
+      toast.success('✅ Email classé dans "Mails"');
       loadInbox();
     } catch (error) {
       console.error('Erreur classification:', error);
-      alert('Erreur lors de la classification');
+      toast.error('Erreur lors de la classification');
     }
   }
 
@@ -379,14 +374,14 @@ export default function InboxProfessional() {
           });
         }
 
-        alert(`✅ ${unclassifiedEmails.length} emails classifiés avec succès !`);
+        toast.success(`✅ ${unclassifiedEmails.length} emails classifiés avec succès !`);
         loadInbox();
       } else {
-        alert('Aucun email à classifier');
+        toast.warning('Aucun email à classifier');
       }
     } catch (error) {
       console.error('Erreur classification:', error);
-      alert('Erreur lors de la classification automatique');
+      toast.error('Erreur lors de la classification automatique');
     } finally {
       setLoading(false);
     }

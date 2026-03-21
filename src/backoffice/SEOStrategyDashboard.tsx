@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import Card from '../components/Card';
 import { SEARCH_ENGINES, pingAllSearchEngines, getPriorityUrls, SEO_STRATEGY } from '../lib/universal-ping';
 import { logger } from '@/lib/logger';
+import { toast } from '@/lib/toast';
 
 const SEOStrategyDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -17,10 +18,10 @@ const SEOStrategyDashboard: React.FC = () => {
       const urls = getPriorityUrls();
       const result = await pingAllSearchEngines(urls);
       setPingResults(result.results);
-      alert(`✅ ${result.results.length} moteurs notifiés !`);
+      toast.success(`✅ ${result.results.length} moteurs notifiés !`);
     } catch (error) {
       logger.error('Ping error:', error);
-      alert('❌ Erreur lors du ping');
+      toast.error('❌ Erreur lors du ping');
     } finally {
       setIsPinging(false);
     }

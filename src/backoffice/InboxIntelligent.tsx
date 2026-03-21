@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
+import { toast } from '@/lib/toast';
 import {
   Mail,
   Inbox,
@@ -206,14 +207,14 @@ export default function InboxIntelligent() {
 
       if (error) throw error;
 
-      alert(`✅ Email classifié: ${data.classification_type}\n${data.reason}`);
+      toast.success(`✅ Email classifié: ${data.classification_type}\n${data.reason}`);
       loadEmails();
       if (selectedFolder) {
         loadEmailsForFolder(selectedFolder);
       }
     } catch (error: any) {
       console.error('Error classifying email:', error);
-      alert(`❌ Erreur: ${error.message}`);
+      toast.error(`❌ Erreur: ${error.message}`);
     } finally {
       setClassifying(null);
     }
@@ -236,10 +237,10 @@ export default function InboxIntelligent() {
       setNewFolderName('');
       setShowNewFolderModal(false);
       loadFolders();
-      alert('✅ Dossier créé avec succès');
+      toast.success('✅ Dossier créé avec succès');
     } catch (error: any) {
       console.error('Error creating folder:', error);
-      alert(`❌ Erreur: ${error.message}`);
+      toast.error(`❌ Erreur: ${error.message}`);
     }
   }
 
@@ -254,11 +255,11 @@ export default function InboxIntelligent() {
 
       if (error) throw error;
 
-      alert('✅ Email déplacé');
+      toast.success('✅ Email déplacé');
       loadEmails();
     } catch (error: any) {
       console.error('Error moving email:', error);
-      alert(`❌ Erreur: ${error.message}`);
+      toast.error(`❌ Erreur: ${error.message}`);
     }
   }
 
@@ -302,12 +303,12 @@ export default function InboxIntelligent() {
         p_lead_id: lead.id
       });
 
-      alert('✅ Lead créé avec succès !');
+      toast.success('✅ Lead créé avec succès !');
       loadEmails();
       loadFolders();
     } catch (error: any) {
       console.error('Error creating lead:', error);
-      alert(`❌ Erreur: ${error.message}`);
+      toast.error(`❌ Erreur: ${error.message}`);
     }
   }
 
@@ -346,17 +347,17 @@ export default function InboxIntelligent() {
         p_lead_id: lead.id
       });
 
-      alert('✅ Email lié au lead');
+      toast.success('✅ Email lié au lead');
       loadEmails();
     } catch (error: any) {
       console.error('Error linking to lead:', error);
-      alert(`❌ Erreur: ${error.message}`);
+      toast.error(`❌ Erreur: ${error.message}`);
     }
   }
 
   async function sendReply(emailId: string) {
     if (!replyContent.trim()) {
-      alert('Veuillez saisir un message');
+      toast.warning('Veuillez saisir un message');
       return;
     }
 
@@ -384,12 +385,12 @@ export default function InboxIntelligent() {
           metadata: { content: replyContent }
         });
 
-      alert('✅ Réponse envoyée');
+      toast.success('✅ Réponse envoyée');
       setReplyingTo(null);
       setReplyContent('');
     } catch (error: any) {
       console.error('Error sending reply:', error);
-      alert(`❌ Erreur: ${error.message}`);
+      toast.error(`❌ Erreur: ${error.message}`);
     }
   }
 

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { PenTool, Check, X, Calendar, FileText, Lock, Unlock, Upload, ExternalLink } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { toast } from '@/lib/toast';
 
 interface ContractSignatureManagerProps {
   leadId: string;
@@ -87,7 +88,7 @@ export const ContractSignatureManager: React.FC<ContractSignatureManagerProps> =
     e.preventDefault();
 
     if (!form.signature_method || !form.signature_date) {
-      alert('Veuillez renseigner la méthode et la date de signature');
+      toast.warning('Veuillez renseigner la méthode et la date de signature');
       return;
     }
 
@@ -108,13 +109,13 @@ export const ContractSignatureManager: React.FC<ContractSignatureManagerProps> =
 
       if (error) throw error;
 
-      alert('✅ Signature confirmée avec succès');
+      toast.success('✅ Signature confirmée avec succès');
       setEditing(false);
       await loadSignatureData();
       onUpdate?.();
     } catch (error: any) {
       console.error('Erreur confirmation signature:', error);
-      alert('❌ Erreur : ' + error.message);
+      toast.error('❌ Erreur : ' + error.message);
     } finally {
       setSaving(false);
     }
@@ -140,12 +141,12 @@ export const ContractSignatureManager: React.FC<ContractSignatureManagerProps> =
 
       if (error) throw error;
 
-      alert('✅ Signature annulée');
+      toast.success('✅ Signature annulée');
       await loadSignatureData();
       onUpdate?.();
     } catch (error) {
       console.error('Erreur annulation signature:', error);
-      alert('❌ Erreur lors de l\'annulation');
+      toast.error('❌ Erreur lors de l\'annulation');
     }
   };
 
@@ -174,11 +175,11 @@ export const ContractSignatureManager: React.FC<ContractSignatureManagerProps> =
 
       if (updateError) throw updateError;
 
-      alert('✅ Document uploadé avec succès');
+      toast.success('✅ Document uploadé avec succès');
       await loadSignatureData();
     } catch (error) {
       console.error('Erreur upload document:', error);
-      alert('❌ Erreur lors de l\'upload');
+      toast.error('❌ Erreur lors de l\'upload');
     }
   };
 

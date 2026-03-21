@@ -2,13 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { logger } from '@/lib/logger';
 import { toast } from '@/lib/toast';
-import {
-  Phone, Mail, MessageSquare, Calendar, FileText, CheckCircle,
-  XCircle, Clock, TrendingUp, Users, Send, Sparkles, Upload,
-  AlertCircle, ChevronRight, Filter, Search, Plus, Edit, Trash2,
-  Download, Target, BarChart3, Activity, DollarSign, Zap, Eye,
-  ArrowRight, Star, Tag, ExternalLink, RefreshCw, TrendingDown
-} from 'lucide-react';
+import { Phone, Mail, MessageSquare, Calendar, FileText, CheckCircle, XCircle, Clock, TrendingUp, Users, Send, Sparkles, Upload, AlertCircle, ChevronRight, Filter, Search, Plus, CreditCard as Edit, Trash2, Download, Target, BarChart3, Activity, DollarSign, Zap, Eye, ArrowRight, Star, Tag, ExternalLink, RefreshCw, TrendingDown } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import DocumentsViewer from './DocumentsViewer';
 import EmailTrendline from './EmailTrendline';

@@ -8,6 +8,7 @@ import SignatureDevisStep from './SignatureDevisStep';
 import PaiementRIBStep from './PaiementRIBStep';
 import ContratSignatureStep from './ContratSignatureStep';
 import { CallDialog } from './CallDialog';
+import { toast } from '@/lib/toast';
 
 interface PipelineWorkflow7EtapesProps {
   leadId: string;
@@ -144,7 +145,7 @@ export default function PipelineWorkflow7Etapes({ leadId, leadData }: PipelineWo
       setCurrentStage(targetStage);
     } catch (error: any) {
       console.error('Error moving to stage:', error);
-      alert(error.message || 'Erreur lors du changement d\'étape');
+      toast.error(error.message || 'Erreur lors du changement d\'étape');
     } finally {
       setLoading(false);
     }

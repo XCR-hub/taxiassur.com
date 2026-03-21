@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { toast } from '@/lib/toast';
 import {
   FileText,
   Send,
@@ -188,12 +189,12 @@ export const DocumentReminderPanel: React.FC<DocumentReminderPanelProps> = ({
         .update({ last_contact_at: new Date().toISOString() })
         .eq('id', leadId);
 
-      alert(`✅ Relance envoyée avec succès via ${channel} !`);
+      toast.success(`✅ Relance envoyée avec succès via ${channel} !`);
       setSelectedChannel(null);
       setCustomMessage('');
     } catch (error: any) {
       console.error('Erreur envoi relance:', error);
-      alert(`❌ Erreur lors de l'envoi de la relance\n\n${error.message || 'Erreur inconnue'}`);
+      toast.error(`❌ Erreur lors de l'envoi de la relance\n\n${error.message || 'Erreur inconnue'}`);
     } finally {
       setLoading(false);
     }
@@ -202,7 +203,7 @@ export const DocumentReminderPanel: React.FC<DocumentReminderPanelProps> = ({
   const copyAccessLink = async () => {
     const link = await getAccessLink();
     navigator.clipboard.writeText(link);
-    alert('Lien copié dans le presse-papier !');
+    toast.success('Lien copié dans le presse-papier !');
   };
 
   const markDocumentsComplete = async () => {
@@ -223,13 +224,13 @@ export const DocumentReminderPanel: React.FC<DocumentReminderPanelProps> = ({
         status: 'completed'
       });
 
-      alert('Documents validés ! Le lead passe à l\'étape DEVIS.');
+      toast.success('Documents validés ! Le lead passe à l\'étape DEVIS.');
       if (onDocumentsComplete) {
         onDocumentsComplete();
       }
     } catch (error) {
       console.error('Erreur validation documents:', error);
-      alert('Erreur lors de la validation des documents');
+      toast.error('Erreur lors de la validation des documents');
     } finally {
       setLoading(false);
     }

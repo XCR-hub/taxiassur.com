@@ -2,6 +2,7 @@ import React from 'react';
 import { ExternalLink, Download } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
+import { toast } from '@/lib/toast';
 
 interface SecureDocumentLinkProps {
   filePath: string;
@@ -32,7 +33,7 @@ export const SecureDocumentLink: React.FC<SecureDocumentLinkProps> = ({
 
     if (!filePath) {
       logger.error('SecureDocumentLink: filePath is empty');
-      alert('Erreur : chemin du document introuvable');
+      toast.error('Erreur : chemin du document introuvable');
       return;
     }
 
@@ -80,13 +81,13 @@ export const SecureDocumentLink: React.FC<SecureDocumentLinkProps> = ({
 
       if (error) {
         logger.error('Error creating signed URL:', error);
-        alert(`Erreur lors de l'ouverture du document : ${error.message}`);
+        toast.error(`Erreur lors de l'ouverture du document : ${error.message}`);
         return;
       }
 
       if (!data?.signedUrl) {
         logger.error('No signed URL returned');
-        alert('Erreur : URL de document introuvable');
+        toast.error('Erreur : URL de document introuvable');
         return;
       }
 
@@ -96,7 +97,7 @@ export const SecureDocumentLink: React.FC<SecureDocumentLinkProps> = ({
       logger.info('Document opened successfully:', data.signedUrl);
     } catch (err: any) {
       logger.error('Exception opening document:', err);
-      alert(`Erreur : ${err.message || 'Impossible d\'ouvrir le document'}`);
+      toast.error(`Erreur : ${err.message || 'Impossible d\'ouvrir le document'}`);
     }
   };
 

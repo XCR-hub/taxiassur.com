@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Upload, CheckCircle2, X, FileText, Send, Loader2, Building2, AlertCircle, Plus } from 'lucide-react';
+import { toast } from '@/lib/toast';
 
 interface SaisieDevisStepProps {
   leadId: string;
@@ -145,12 +146,12 @@ export default function SaisieDevisStep({
       // Send automatic email to prospect
       await sendQuoteEmail(companyId, company?.name || 'Compagnie', file.name);
 
-      alert(`✅ Devis ${company?.name} uploadé avec succès !`);
+      toast.success(`✅ Devis ${company?.name} uploadé avec succès !`);
       loadQuotes();
 
     } catch (error: any) {
       console.error('Error uploading quote:', error);
-      alert(`❌ Erreur lors de l'upload du devis\n\n${error.message || error}`);
+      toast.error(`❌ Erreur lors de l'upload du devis\n\n${error.message || error}`);
     } finally {
       setUploading(null);
     }
@@ -261,7 +262,7 @@ export default function SaisieDevisStep({
         .eq('id', quote.id);
 
       loadQuotes();
-      alert('Email renvoyé avec succès !');
+      toast.success('Email renvoyé avec succès !');
     }
   }
 
@@ -287,11 +288,11 @@ export default function SaisieDevisStep({
 
       if (error) throw error;
 
-      alert('✅ Devis supprimé avec succès !');
+      toast.success('✅ Devis supprimé avec succès !');
       loadQuotes();
     } catch (error) {
       console.error('Error deleting quote:', error);
-      alert('❌ Erreur lors de la suppression');
+      toast.error('❌ Erreur lors de la suppression');
     }
   }
 
@@ -561,7 +562,7 @@ export default function SaisieDevisStep({
                 <button
                   onClick={() => {
                     navigator.clipboard.writeText(`${window.location.origin}/espace-prospect?token=${leadAccessToken}`);
-                    alert('Lien copié !');
+                    toast.success('Lien copié !');
                   }}
                   className="px-3 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
                 >

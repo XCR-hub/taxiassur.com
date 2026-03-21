@@ -6,6 +6,7 @@ import { ConversionTracker, FormOptimizer, SmartPrefill, ExitIntentDetector } fr
 import { submitSecureLead } from '../lib/email';
 import Card from './Card';
 import { logger } from '@/lib/logger';
+import { toast } from '@/lib/toast';
 
 interface EnhancedLeadFormProps {
   variant?: 'default' | 'minimal' | 'detailed';
@@ -169,7 +170,7 @@ const EnhancedLeadForm: React.FC<EnhancedLeadFormProps> = ({
     // Rate limiting check
     const userIP = await getUserIP();
     if (!RateLimiter.canSubmit(userIP)) {
-      alert('Trop de tentatives. Veuillez patienter avant de soumettre à nouveau.');
+      toast.warning('Trop de tentatives. Veuillez patienter avant de soumettre à nouveau.');
       return;
     }
     
@@ -203,12 +204,12 @@ const EnhancedLeadForm: React.FC<EnhancedLeadFormProps> = ({
         navigate(`/merci${tokenParam}`);
       } else {
         ConversionTracker.track('form_server_error', { error: result.error });
-        alert(result.error || 'Erreur lors de l\'envoi. Veuillez réessayer.');
+        toast.error(result.error || 'Erreur lors de l\'envoi. Veuillez réessayer.');
       }
     } catch (error) {
       logger.error('Form submission error:', error);
       ConversionTracker.track('form_network_error');
-      alert('Erreur de connexion. Veuillez réessayer.');
+      toast.error('Erreur de connexion. Veuillez réessayer.');
     } finally {
       setIsSubmitting(false);
     }

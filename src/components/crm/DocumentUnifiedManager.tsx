@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { toast } from '@/lib/toast';
 import {
   FileText, CheckCircle, XCircle, Clock, AlertTriangle, Upload,
   Eye, Download, RefreshCw, Send, RotateCcw, ExternalLink, GripVertical
@@ -284,7 +285,7 @@ export function DocumentUnifiedManager({
 
     } catch (err) {
       console.error('❌ Error classifying document:', err);
-      alert('Erreur lors de la classification du document');
+      toast.error('Erreur lors de la classification du document');
     } finally {
       setActionLoading(null);
       setDraggedDoc(null);
@@ -334,7 +335,7 @@ export function DocumentUnifiedManager({
       await loadData();
     } catch (err) {
       console.error('Error validating document:', err);
-      alert('Erreur lors de la validation');
+      toast.error('Erreur lors de la validation');
     } finally {
       setActionLoading(null);
     }
@@ -342,7 +343,7 @@ export function DocumentUnifiedManager({
 
   const handleInvalidate = async (docType: string) => {
     if (!rejectReason.trim()) {
-      alert('Veuillez indiquer une raison');
+      toast.warning('Veuillez indiquer une raison');
       return;
     }
 
@@ -364,7 +365,7 @@ export function DocumentUnifiedManager({
       await loadData();
     } catch (err) {
       console.error('Error invalidating document:', err);
-      alert('Erreur lors de l\'invalidation');
+      toast.error('Erreur lors de l\'invalidation');
     } finally {
       setActionLoading(null);
     }

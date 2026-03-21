@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Mail, MessageSquare, Phone, Send, CheckCircle2, AlertCircle, Loader2, FileText, Download, Plus, X } from 'lucide-react';
 import DocumentValidationComplete from './DocumentValidationComplete';
+import { toast } from '@/lib/toast';
 
 interface CollecteDocumentsStepProps {
   leadId: string;
@@ -175,7 +176,7 @@ export default function CollecteDocumentsStep({
 
   async function addCustomDocument() {
     if (!newCustomDoc.trim()) {
-      alert('Veuillez saisir un nom de document');
+      toast.warning('Veuillez saisir un nom de document');
       return;
     }
 
@@ -199,10 +200,10 @@ export default function CollecteDocumentsStep({
       // Reset
       setNewCustomDoc('');
       setShowCustomDocInput(false);
-      alert(`✅ Document "${newCustomDoc}" ajouté à la liste`);
+      toast.success(`✅ Document "${newCustomDoc}" ajouté à la liste`);
     } catch (error: any) {
       console.error('Error adding custom document:', error);
-      alert(`❌ Erreur: ${error.message}`);
+      toast.error(`❌ Erreur: ${error.message}`);
     }
   }
 
@@ -223,22 +224,22 @@ export default function CollecteDocumentsStep({
 
       await loadDocumentStats();
       await loadCustomDocuments();
-      alert(`✅ Document "${docLabel}" supprimé`);
+      toast.success(`✅ Document "${docLabel}" supprimé`);
     } catch (error: any) {
       console.error('Error removing custom document:', error);
-      alert(`❌ Erreur: ${error.message}`);
+      toast.error(`❌ Erreur: ${error.message}`);
     }
   }
 
 
   async function sendCommunication(template: CommunicationTemplate) {
     if (!leadEmail && template.channel === 'email') {
-      alert('Aucun email disponible pour ce lead');
+      toast.warning('Aucun email disponible pour ce lead');
       return;
     }
 
     if (!leadPhone && (template.channel === 'sms' || template.channel === 'whatsapp')) {
-      alert('Aucun téléphone disponible pour ce lead');
+      toast.warning('Aucun téléphone disponible pour ce lead');
       return;
     }
 
@@ -359,12 +360,12 @@ export default function CollecteDocumentsStep({
           });
       }
 
-      alert(`✅ ${template.channel.toUpperCase()} envoyé avec succès !`);
+      toast.success(`✅ ${template.channel.toUpperCase()} envoyé avec succès !`);
       setSelectedTemplate(null);
 
     } catch (error: any) {
       console.error('Error sending communication:', error);
-      alert(`❌ Erreur lors de l'envoi\n\n${error.message || 'Erreur inconnue'}`);
+      toast.error(`❌ Erreur lors de l'envoi\n\n${error.message || 'Erreur inconnue'}`);
     } finally {
       setSending(false);
     }
@@ -618,7 +619,7 @@ export default function CollecteDocumentsStep({
                 <button
                   onClick={() => {
                     navigator.clipboard.writeText(`${window.location.origin}/espace-prospect?token=${leadAccessToken}`);
-                    alert('Lien copié !');
+                    toast.success('Lien copié !');
                   }}
                   className="px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center gap-2"
                 >

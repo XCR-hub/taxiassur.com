@@ -3,6 +3,7 @@ import { FileText, Check, Download, ExternalLink, AlertCircle, RefreshCw, Shoppi
 import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
 import { SecureDocumentLink } from './SecureDocumentLink';
+import { toast } from '@/lib/toast';
 
 interface Document {
   id: string;
@@ -323,16 +324,16 @@ const DocumentDragDropSimple: React.FC<DocumentDragDropSimpleProps> = ({ leadId,
       // Message de confirmation
       const docTypeLabel = DOCUMENT_TYPES.find(t => t.value === docType)?.label || docType;
       if (wasValidated) {
-        alert(`✅ Document reclassé en "${docTypeLabel}"\n\n⚠️ Note: La validation a été réinitialisée, il faudra revalider le document.`);
+        toast.success(`✅ Document reclassé en "${docTypeLabel}"\n\n⚠️ Note: La validation a été réinitialisée, il faudra revalider le document.`);
       } else {
-        alert(`✅ Document reclassé en "${docTypeLabel}"`);
+        toast.success(`✅ Document reclassé en "${docTypeLabel}"`);
       }
 
       setDraggedDoc(null);
     } catch (error: any) {
       logger.error('Error classifying document:', error);
       const errorMsg = error.message || 'Erreur inconnue';
-      alert(`❌ Erreur lors de la reclassification :\n\n${errorMsg}`);
+      toast.error(`❌ Erreur lors de la reclassification :\n\n${errorMsg}`);
     }
   };
 
@@ -449,7 +450,7 @@ const DocumentDragDropSimple: React.FC<DocumentDragDropSimpleProps> = ({ leadId,
           logger.error('Error sending validation email:', errorDetail);
           console.warn('⚠️ Email non envoyé mais validation OK:', errorDetail);
           await loadAllDocuments();
-          alert(`✅ Document "${doc.file_name}" validé avec succès !\n\n⚠️ Attention : L'email de notification n'a pas pu être envoyé au prospect.\nErreur: ${errorDetail}\n\nVeuillez le contacter manuellement.`);
+          toast.error(`✅ Document "${doc.file_name}" validé avec succès !\n\n⚠️ Attention : L'email de notification n'a pas pu être envoyé au prospect.\nErreur: ${errorDetail}\n\nVeuillez le contacter manuellement.`);
           return;
         } else {
           logger.info('Validation email sent successfully to:', emailResult.sent);
@@ -457,11 +458,11 @@ const DocumentDragDropSimple: React.FC<DocumentDragDropSimpleProps> = ({ leadId,
       }
 
       await loadAllDocuments();
-      alert(`✅ Document "${doc.file_name}" validé avec succès !\n\n📧 Email de confirmation envoyé au prospect.`);
+      toast.success(`✅ Document "${doc.file_name}" validé avec succès !\n\n📧 Email de confirmation envoyé au prospect.`);
     } catch (error: any) {
       logger.error('Error validating document:', error);
       const errorMsg = error.message || 'Erreur inconnue';
-      alert(`❌ Erreur lors de la validation :\n\n${errorMsg}\n\nVeuillez réessayer ou contacter le support si le problème persiste.`);
+      toast.error(`❌ Erreur lors de la validation :\n\n${errorMsg}\n\nVeuillez réessayer ou contacter le support si le problème persiste.`);
     }
   };
 

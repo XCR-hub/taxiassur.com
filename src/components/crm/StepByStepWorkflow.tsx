@@ -1,9 +1,6 @@
 import { useState, useEffect } from 'react';
-import {
-  Mail, Phone, Check, ChevronRight, Clock,
-  FileText, AlertCircle, Send, X, Calendar,
-  MessageSquare, CheckCircle2, XCircle, Edit3
-} from 'lucide-react';
+import { toast } from '@/lib/toast';
+import { Mail, Phone, Check, ChevronRight, Clock, FileText, AlertCircle, Send, X, Calendar, MessageSquare, CheckCircle2, XCircle, CreditCard as Edit3 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
 import { DocumentValidationWithReasons } from './DocumentValidationWithReasons';
@@ -100,7 +97,7 @@ export function StepByStepWorkflow({ leadId, leadEmail, leadPhone, onStepComplet
 
   const handleCallSubmit = async () => {
     if (!callForm.notes.trim()) {
-      alert('Les notes de l\'appel sont obligatoires');
+      toast.warning('Les notes de l\'appel sont obligatoires');
       return;
     }
 
@@ -162,7 +159,7 @@ export function StepByStepWorkflow({ leadId, leadEmail, leadPhone, onStepComplet
       onStepCompleted?.();
     } catch (err) {
       logger.error('Error saving call:', err);
-      alert('Erreur lors de l\'enregistrement de l\'appel');
+      toast.error('Erreur lors de l\'enregistrement de l\'appel');
     }
   };
 
@@ -202,7 +199,7 @@ export function StepByStepWorkflow({ leadId, leadEmail, leadPhone, onStepComplet
       onStepCompleted?.();
     } catch (err) {
       logger.error('Error sending email:', err);
-      alert('Erreur lors de l\'envoi de l\'email');
+      toast.error('Erreur lors de l\'envoi de l\'email');
     }
   };
 
@@ -245,7 +242,7 @@ export function StepByStepWorkflow({ leadId, leadEmail, leadPhone, onStepComplet
 
         if (isDevelopment) {
           console.warn('[DEV MODE] Email envoi simulé (clés API non configurées dans bolt.new):', fullError);
-          alert(`[DEV] Email simulé - En production cela fonctionnera.\nErreur: ${fullError}`);
+          toast.error(`[DEV] Email simulé - En production cela fonctionnera.\nErreur: ${fullError}`);
           // Continue anyway in development
         } else {
           throw new Error(fullError);
@@ -267,7 +264,7 @@ export function StepByStepWorkflow({ leadId, leadEmail, leadPhone, onStepComplet
       });
 
       if (isDevelopment) {
-        alert('Mode développement: Email simulé avec succès.\n\nEn production, un vrai email sera envoyé via Brevo API.');
+        toast.success('Mode développement: Email simulé avec succès.\n\nEn production, un vrai email sera envoyé via Brevo API.');
       }
 
       setShowDocumentsModal(true);
@@ -276,7 +273,7 @@ export function StepByStepWorkflow({ leadId, leadEmail, leadPhone, onStepComplet
     } catch (err) {
       logger.error('Error sending document request:', err);
       const errorMessage = err instanceof Error ? err.message : 'Erreur inconnue';
-      alert(`Erreur lors de l'envoi de la demande de documents: ${errorMessage}`);
+      toast.error(`Erreur lors de l'envoi de la demande de documents: ${errorMessage}`);
     }
   };
 
@@ -530,7 +527,7 @@ export function StepByStepWorkflow({ leadId, leadEmail, leadPhone, onStepComplet
                     onStepCompleted?.();
                   } catch (err) {
                     logger.error('Error sending quote:', err);
-                    alert('Erreur lors de l\'envoi du devis');
+                    toast.error('Erreur lors de l\'envoi du devis');
                   }
                 }}
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white px-6 py-4 rounded-lg flex items-center gap-3 transition-colors"
@@ -638,7 +635,7 @@ export function StepByStepWorkflow({ leadId, leadEmail, leadPhone, onStepComplet
                     onStepCompleted?.();
                   } catch (err) {
                     logger.error('Error sending objections response:', err);
-                    alert('Erreur lors de l\'envoi de l\'email');
+                    toast.error('Erreur lors de l\'envoi de l\'email');
                   }
                 }}
                 className="w-full bg-purple-600 hover:bg-purple-700 text-white px-6 py-4 rounded-lg flex items-center gap-3 transition-colors"
@@ -746,10 +743,10 @@ export function StepByStepWorkflow({ leadId, leadEmail, leadPhone, onStepComplet
                       created_by: user?.id
                     });
 
-                    alert('Demande de signature envoyée avec succès !');
+                    toast.success('Demande de signature envoyée avec succès !');
                   } catch (err) {
                     logger.error('Error sending signature request:', err);
-                    alert('Erreur lors de l\'envoi de la demande de signature');
+                    toast.error('Erreur lors de l\'envoi de la demande de signature');
                   }
                 }}
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white px-6 py-4 rounded-lg flex items-center gap-3 transition-colors"
@@ -793,7 +790,7 @@ export function StepByStepWorkflow({ leadId, leadEmail, leadPhone, onStepComplet
 
                     await loadWorkflowSteps();
                     onStepCompleted?.();
-                    alert('Félicitations ! La vente est finalisée.');
+                    toast.success('Félicitations ! La vente est finalisée.');
                   } catch (err) {
                     logger.error('Error finalizing sale:', err);
                   }

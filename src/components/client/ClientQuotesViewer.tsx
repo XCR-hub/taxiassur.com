@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Download, FileText, AlertCircle, CheckCircle2, Printer, Eye, Building2, Check, Loader2, X } from 'lucide-react';
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { toast } from '@/lib/toast';
 
 interface InsuranceCompany {
   id: string;
@@ -44,7 +45,7 @@ export default function ClientQuotesViewer({ leadId, token, supabaseClient }: Pr
 
   const handleValidateQuote = async (quoteId: string, companyName: string) => {
     if (!supabaseClient || !token) {
-      alert('❌ Erreur de configuration. Veuillez recharger la page.');
+      toast.error('❌ Erreur de configuration. Veuillez recharger la page.');
       return;
     }
 
@@ -69,14 +70,14 @@ export default function ClientQuotesViewer({ leadId, token, supabaseClient }: Pr
       // Recharger les données
       await loadData();
 
-      alert(`✅ Devis ${data.company_name || companyName} validé avec succès !\n\nNotre équipe a été notifiée et va vous recontacter très prochainement pour finaliser votre souscription.`);
+      toast.success(`✅ Devis ${data.company_name || companyName} validé avec succès !\n\nNotre équipe a été notifiée et va vous recontacter très prochainement pour finaliser votre souscription.`);
 
       // Fermer le modal de confirmation
       setShowConfirmModal(null);
     } catch (error) {
       console.error('Error validating quote:', error);
       const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue';
-      alert(`❌ Erreur lors de la validation du devis: ${errorMessage}\n\nVeuillez réessayer ou nous contacter.`);
+      toast.error(`❌ Erreur lors de la validation du devis: ${errorMessage}\n\nVeuillez réessayer ou nous contacter.`);
     } finally {
       setValidating(null);
     }
@@ -84,7 +85,7 @@ export default function ClientQuotesViewer({ leadId, token, supabaseClient }: Pr
 
   const handleRefuseQuote = async (quoteId: string, companyName: string) => {
     if (!supabaseClient || !token) {
-      alert('❌ Erreur de configuration. Veuillez recharger la page.');
+      toast.error('❌ Erreur de configuration. Veuillez recharger la page.');
       return;
     }
 
@@ -110,7 +111,7 @@ export default function ClientQuotesViewer({ leadId, token, supabaseClient }: Pr
       // Recharger les données
       await loadData();
 
-      alert(`Devis ${data.company_name || companyName} refusé.\n\nVous pouvez toujours consulter les autres devis disponibles.`);
+      toast.info(`Devis ${data.company_name || companyName} refusé.\n\nVous pouvez toujours consulter les autres devis disponibles.`);
 
       // Fermer le modal et réinitialiser
       setShowRefuseModal(null);
@@ -118,7 +119,7 @@ export default function ClientQuotesViewer({ leadId, token, supabaseClient }: Pr
     } catch (error) {
       console.error('Error refusing quote:', error);
       const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue';
-      alert(`❌ Erreur lors du refus du devis: ${errorMessage}\n\nVeuillez réessayer ou nous contacter.`);
+      toast.error(`❌ Erreur lors du refus du devis: ${errorMessage}\n\nVeuillez réessayer ou nous contacter.`);
     } finally {
       setRefusing(null);
     }

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { CheckCircle2, ExternalLink, Loader2, FileSignature, AlertCircle, Upload, FileCheck, X } from 'lucide-react';
+import { CheckCircle2, ExternalLink, Loader2, Ligature as FileSignature, AlertCircle, Upload, FileCheck, X } from 'lucide-react';
+import { toast } from '@/lib/toast';
 
 interface SignatureDevisStepProps {
   leadId: string;
@@ -88,13 +89,13 @@ export default function SignatureDevisStep({ leadId, onComplete }: SignatureDevi
 
     // Vérifier que c'est un PDF
     if (file.type !== 'application/pdf') {
-      alert('Seuls les fichiers PDF sont acceptés');
+      toast.info('Seuls les fichiers PDF sont acceptés');
       return;
     }
 
     // Vérifier la taille (max 10MB)
     if (file.size > 10 * 1024 * 1024) {
-      alert('Le fichier est trop volumineux (maximum 10MB)');
+      toast.info('Le fichier est trop volumineux (maximum 10MB)');
       return;
     }
 
@@ -142,10 +143,10 @@ export default function SignatureDevisStep({ leadId, onComplete }: SignatureDevi
         uploaded_at: docData.uploaded_at
       });
 
-      alert('Devis signé uploadé avec succès !');
+      toast.success('Devis signé uploadé avec succès !');
     } catch (error) {
       console.error('Error uploading file:', error);
-      alert('Erreur lors de l\'upload du fichier');
+      toast.error('Erreur lors de l\'upload du fichier');
     } finally {
       setUploading(false);
     }
@@ -170,10 +171,10 @@ export default function SignatureDevisStep({ leadId, onComplete }: SignatureDevi
       // await supabase.storage.from('contract-documents').remove([filePath]);
 
       setUploadedFile(null);
-      alert('Document supprimé avec succès');
+      toast.success('Document supprimé avec succès');
     } catch (error) {
       console.error('Error removing file:', error);
-      alert('Erreur lors de la suppression');
+      toast.error('Erreur lors de la suppression');
     }
   }
 
@@ -208,7 +209,7 @@ export default function SignatureDevisStep({ leadId, onComplete }: SignatureDevi
         if (error) throw error;
       }
 
-      alert(signed ? 'Signature confirmée !' : 'Statut enregistré');
+      toast.success(signed ? 'Signature confirmée !' : 'Statut enregistré');
       loadSignature();
 
       if (signed) {
@@ -216,7 +217,7 @@ export default function SignatureDevisStep({ leadId, onComplete }: SignatureDevi
       }
     } catch (error) {
       console.error('Error saving signature:', error);
-      alert('Erreur lors de l\'enregistrement');
+      toast.error('Erreur lors de l\'enregistrement');
     } finally {
       setSaving(false);
     }

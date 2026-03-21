@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { CheckCircle, XCircle, AlertCircle, Eye, Download, FileText, Clock } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { toast } from '@/lib/toast';
 
 interface Document {
   id: string;
@@ -102,7 +103,7 @@ export default function DocumentValidationManager({ leadId, onValidationChange }
       onValidationChange?.();
     } catch (error: any) {
       console.error('Erreur validation document:', error);
-      alert(error.message || 'Erreur lors de la validation');
+      toast.error(error.message || 'Erreur lors de la validation');
     } finally {
       setProcessing(null);
     }
@@ -110,7 +111,7 @@ export default function DocumentValidationManager({ leadId, onValidationChange }
 
   const handleReject = async () => {
     if (!activeModal || activeModal.type !== 'reject' || !rejectionForm.reason) {
-      alert('Veuillez sélectionner un motif de refus');
+      toast.warning('Veuillez sélectionner un motif de refus');
       return;
     }
 
@@ -155,7 +156,7 @@ export default function DocumentValidationManager({ leadId, onValidationChange }
       onValidationChange?.();
     } catch (error: any) {
       console.error('Erreur refus document:', error);
-      alert(error.message || 'Erreur lors du refus');
+      toast.error(error.message || 'Erreur lors du refus');
     } finally {
       setProcessing(null);
     }

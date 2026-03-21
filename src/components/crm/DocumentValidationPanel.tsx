@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { toast } from '@/lib/toast';
 import {
   CheckCircle,
   XCircle,
@@ -121,7 +122,7 @@ const DocumentValidationPanel: React.FC<DocumentValidationPanelProps> = ({ leadI
       }
     } catch (error) {
       logger.error('Error validating document:', error);
-      alert('Erreur lors de la validation');
+      toast.error('Erreur lors de la validation');
     } finally {
       setValidating(null);
     }
@@ -129,7 +130,7 @@ const DocumentValidationPanel: React.FC<DocumentValidationPanelProps> = ({ leadI
 
   const handleReject = async () => {
     if (!rejectModal || !rejectForm.reason) {
-      alert('Veuillez sélectionner un motif de rejet');
+      toast.warning('Veuillez sélectionner un motif de rejet');
       return;
     }
 
@@ -169,7 +170,7 @@ const DocumentValidationPanel: React.FC<DocumentValidationPanelProps> = ({ leadI
       }
     } catch (error) {
       logger.error('Error rejecting document:', error);
-      alert('Erreur lors du rejet');
+      toast.error('Erreur lors du rejet');
     } finally {
       setRejecting(null);
     }

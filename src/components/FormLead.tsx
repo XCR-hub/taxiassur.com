@@ -4,6 +4,7 @@ import { Shield, Phone, Clock, Send } from 'lucide-react';
 import { logger } from '@/lib/logger';
 import { createLead, checkExistingEmail, resendAccess } from '@/lib/leads';
 import ExistingLeadChoiceModal from './ExistingLeadChoiceModal';
+import { toast } from '@/lib/toast';
 
 interface ExistingLeadData {
   email: string;
@@ -70,7 +71,7 @@ const FormLead: React.FC = () => {
       await submitNewLead(false);
     } catch (error) {
       logger.error('Form submission error:', error);
-      alert('Erreur de connexion. Veuillez vérifier votre connexion internet.');
+      toast.error('Erreur de connexion. Veuillez vérifier votre connexion internet.');
       setIsSubmitting(false);
     }
   };
@@ -99,11 +100,11 @@ const FormLead: React.FC = () => {
         window.location.href = `/merci${tokenParam}`;
       } else {
         logger.error('Form error:', result.error);
-        alert(result.error || 'Erreur lors de l\'envoi. Veuillez réessayer.');
+        toast.error(result.error || 'Erreur lors de l\'envoi. Veuillez réessayer.');
       }
     } catch (error) {
       logger.error('Lead creation error:', error);
-      alert('Erreur lors de la création du lead.');
+      toast.error('Erreur lors de la création du lead.');
     } finally {
       setIsSubmitting(false);
     }
@@ -117,7 +118,7 @@ const FormLead: React.FC = () => {
       const result = await resendAccess(formData.email);
 
       if (result.success) {
-        alert('Un email avec vos accès vous a été envoyé ! Consultez votre boîte de réception.');
+        toast.success('Un email avec vos accès vous a été envoyé ! Consultez votre boîte de réception.');
         setFormData({
           name: '',
           email: '',
@@ -128,11 +129,11 @@ const FormLead: React.FC = () => {
           company: ''
         });
       } else {
-        alert('Erreur lors de l\'envoi de l\'email. Veuillez réessayer.');
+        toast.error('Erreur lors de l\'envoi de l\'email. Veuillez réessayer.');
       }
     } catch (error) {
       logger.error('Error resending access:', error);
-      alert('Erreur de connexion.');
+      toast.error('Erreur de connexion.');
     } finally {
       setIsSubmitting(false);
     }

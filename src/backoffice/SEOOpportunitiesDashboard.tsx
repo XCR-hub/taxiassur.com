@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { TrendingUp, Search, Eye, MousePointer, BarChart3, Zap, ChevronRight, RefreshCw, AlertCircle, CheckCircle2, Clock } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { toast } from '@/lib/toast';
 
 interface GSCOpportunity {
   query: string;
@@ -167,14 +168,14 @@ export default function SEOOpportunitiesDashboard() {
       });
 
       if (error) {
-        alert(`Erreur synchronisation: ${error.message}`);
+        toast.error(`Erreur synchronisation: ${error.message}`);
       } else {
-        alert(`✅ Synchronisation réussie!\n${data.data?.queries_imported || 0} requêtes importées\n${data.data?.opportunities_detected || 0} opportunités détectées`);
+        toast.success(`✅ Synchronisation réussie!\n${data.data?.queries_imported || 0} requêtes importées\n${data.data?.opportunities_detected || 0} opportunités détectées`);
         await loadData();
       }
     } catch (error) {
       console.error('Erreur sync:', error);
-      alert('Erreur lors de la synchronisation. Vérifiez que les secrets Google sont configurés.');
+      toast.error('Erreur lors de la synchronisation. Vérifiez que les secrets Google sont configurés.');
     } finally {
       setSyncing(false);
     }
