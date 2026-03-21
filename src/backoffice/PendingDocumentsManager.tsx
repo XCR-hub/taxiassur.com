@@ -145,15 +145,18 @@ function PreviewThumb({ doc }: { doc: PendingDocument }) {
   );
 }
 
-function RejectModal({ state, onClose, onConfirm }: {
+function RejectModal({ state, onClose, onConfirm, batchCount = 0 }: {
   state: RejectModalState;
   onClose: () => void;
   onConfirm: (docId: string, reason: string) => void;
+  batchCount?: number;
 }) {
   const [reason, setReason] = useState(state.reason || REJECT_REASONS[0].value);
   const [custom, setCustom] = useState('');
 
   if (!state.open || !state.docId) return null;
+
+  const isBatch = state.docId === '__BATCH__';
 
   const finalReason = reason === 'autre'
     ? (custom || 'Autre raison')
@@ -165,13 +168,17 @@ function RejectModal({ state, onClose, onConfirm }: {
         <div className="flex items-center justify-between mb-5">
           <h3 className="text-lg font-bold text-white flex items-center gap-2">
             <ShieldX className="w-5 h-5 text-red-400" />
-            Rejeter le document
+            {isBatch ? `Rejeter ${batchCount} document${batchCount > 1 ? 's' : ''}` : 'Rejeter le document'}
           </h3>
           <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-slate-700 text-slate-400 hover:text-white transition-colors">
             <X className="w-4 h-4" />
           </button>
         </div>
-        <p className="text-slate-400 text-sm mb-4">Le prospect sera notifié de la raison du rejet.</p>
+        <p className="text-slate-400 text-sm mb-4">
+          {isBatch
+            ? `Le(s) prospect(s) concerne(s) sera(ont) notifie(s) par email de la raison du rejet.`
+            : 'Le prospect sera notifie de la raison du rejet.'}
+        </p>
         <div className="space-y-2 mb-4">
           {REJECT_REASONS.map(r => (
             <label key={r.value} className={`flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-colors ${reason === r.value ? 'bg-red-500/15 border border-red-500/40' : 'hover:bg-slate-700/50 border border-transparent'}`}>
@@ -359,10 +366,97 @@ export default function PendingDocumentsManager() {
     }
   };
 
+  const sendRejectionEmail = async (doc: PendingDocument, reason: string) => {
+    if (!doc.lead_email) return;
+    const firstName = doc.lead_first_name || 'Prospect';
+    const lastName = doc.lead_last_name || '';
+    const docLabel = DOC_TYPE_LABELS[doc.document_type] || doc.document_type;
+    try {
+      await supabase.functions.invoke('send-email-universal', {
+        body: {
+          to: doc.lead_email,
+          toName: `${firstName} ${lastName}`.trim(),
+          subject: `Action requise : document a renvoyer - ${docLabel}`,
+          html: `<!DOCTYPE html><html><body style="font-family:Arial,sans-serif;background:#f5f5f5;margin:0;padding:0">
+<table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 20px">
+<tr><td align="center">
+<table width="600" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 6px rgba(0,0,0,.1)">
+<tr><td style="background:linear-gradient(135deg,#FFA500 0%,#FF8C00 100%);padding:32px 30px;text-align:center">
+<h1 style="margin:0;color:#000;font-size:24px;font-weight:700">Document non conforme</h1>
+<p style="margin:8px 0 0;color:#000;font-size:15px;opacity:.9">TaxiAssur - Assurance Taxi</p>
+</td></tr>
+<tr><td style="padding:36px 30px">
+<p style="margin:0 0 16px;font-size:16px;color:#333;line-height:1.6">Bonjour <strong>${firstName} ${lastName}</strong>,</p>
+<p style="margin:0 0 16px;font-size:15px;color:#333;line-height:1.6">Nous avons examine votre document <strong>${docLabel}</strong> et il ne peut pas etre accepte pour la raison suivante :</p>
+<div style="margin:20px 0;padding:16px 20px;background:#fff3cd;border-left:4px solid #FFA500;border-radius:6px">
+<p style="margin:0;font-size:15px;color:#856404;font-weight:600">${reason}</p>
+</div>
+<p style="margin:16px 0;font-size:15px;color:#333;line-height:1.6">Merci de renvoyer un nouveau document conforme via votre espace prospect.</p>
+<table width="100%" cellpadding="0" cellspacing="0" style="margin:24px 0">
+<tr><td align="center">
+<a href="${window.location.origin}/espace-prospect" style="display:inline-block;background:linear-gradient(135deg,#FFA500 0%,#FF8C00 100%);color:#000;text-decoration:none;padding:14px 36px;border-radius:8px;font-size:15px;font-weight:600">
+Acceder a mon espace
+</a>
+</td></tr>
+</table>
+</td></tr>
+<tr><td style="background:#f8f8f8;padding:24px 30px;text-align:center;border-top:1px solid #e5e5e5">
+<p style="margin:0 0 8px;font-size:13px;color:#666"><strong>TaxiAssur</strong> - Assurance Taxi &amp; VTC</p>
+<p style="margin:0;font-size:12px;color:#999">team@taxiassur.com | taxiassur.com</p>
+</td></tr>
+</table>
+</td></tr>
+</table>
+</body></html>`,
+          from: 'team@taxiassur.com',
+          fromName: 'TaxiAssur',
+          lead_id: doc.lead_id,
+          trackOpens: false,
+          trackClicks: false,
+        }
+      });
+    } catch (err) {
+      console.error('Erreur envoi email rejet:', err);
+    }
+  };
+
   const handleRejectConfirm = async (docId: string, reason: string) => {
     setRejectModal({ open: false, docId: null, reason: '', custom: '' });
+
+    if (docId === '__BATCH__') {
+      const ids = Array.from(selectedIds);
+      const docsToReject = allDocs.filter(d => ids.includes(d.id));
+      for (const id of ids) {
+        setProcessing(prev => new Set(prev).add(id));
+      }
+      try {
+        const { error } = await supabase
+          .from('prospect_documents')
+          .update({ status: 'rejected', rejection_reason: reason })
+          .in('id', ids);
+        if (error) throw error;
+        setAllDocs(prev => prev.filter(d => !ids.includes(d.id)));
+        setSelectedIds(new Set());
+        const uniqueLeads = new Map<string, PendingDocument>();
+        for (const doc of docsToReject) {
+          if (!uniqueLeads.has(doc.lead_id)) uniqueLeads.set(doc.lead_id, doc);
+        }
+        for (const doc of uniqueLeads.values()) {
+          await sendRejectionEmail(doc, reason);
+        }
+      } catch (err) {
+        console.error('Erreur rejet groupé:', err);
+      } finally {
+        for (const id of ids) {
+          setProcessing(prev => { const s = new Set(prev); s.delete(id); return s; });
+        }
+      }
+      return;
+    }
+
     setProcessing(prev => new Set(prev).add(docId));
     try {
+      const doc = allDocs.find(d => d.id === docId);
       const { error } = await supabase
         .from('prospect_documents')
         .update({ status: 'rejected', rejection_reason: reason })
@@ -370,6 +464,7 @@ export default function PendingDocumentsManager() {
       if (error) throw error;
       setAllDocs(prev => prev.filter(d => d.id !== docId));
       setSelectedIds(prev => { const s = new Set(prev); s.delete(docId); return s; });
+      if (doc) await sendRejectionEmail(doc, reason);
     } catch (err) {
       console.error('Erreur rejet:', err);
     } finally {
@@ -619,13 +714,20 @@ export default function PendingDocumentsManager() {
           {/* Batch actions */}
           {selectedIds.size > 0 && (
             <div className="flex items-center gap-2">
-              <span className="text-gray-400 text-sm">{selectedIds.size} sélectionné(s)</span>
+              <span className="text-gray-400 text-sm">{selectedIds.size} selectionne(s)</span>
               <button
                 onClick={handleBatchValidate}
                 className="flex items-center gap-1.5 px-3 py-2 bg-green-600 hover:bg-green-500 text-white rounded-xl text-sm font-medium transition-colors"
               >
                 <CheckSquare className="w-4 h-4" />
                 Valider tout
+              </button>
+              <button
+                onClick={() => setRejectModal({ open: true, docId: '__BATCH__', reason: REJECT_REASONS[0].value, custom: '' })}
+                className="flex items-center gap-1.5 px-3 py-2 bg-red-600 hover:bg-red-500 text-white rounded-xl text-sm font-medium transition-colors"
+              >
+                <ShieldX className="w-4 h-4" />
+                Rejeter tout
               </button>
               <button
                 onClick={() => setSelectedIds(new Set())}
@@ -820,6 +922,7 @@ export default function PendingDocumentsManager() {
         state={rejectModal}
         onClose={() => setRejectModal({ open: false, docId: null, reason: '', custom: '' })}
         onConfirm={handleRejectConfirm}
+        batchCount={selectedIds.size}
       />
     </div>
   );

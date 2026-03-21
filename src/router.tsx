@@ -2,6 +2,7 @@ import { createBrowserRouter } from 'react-router-dom';
 import { lazy } from 'react';
 import RouteErrorFallback from './components/RouteErrorFallback';
 import GlobalErrorBoundary from './components/GlobalErrorBoundary';
+import NotFound from './pages/NotFound';
 
 const Home = lazy(() => import('./pages/Home'));
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
@@ -1006,5 +1007,9 @@ export const router = createBrowserRouter([
   {
     path: '/backoffice/compliance',
     element: <ComplianceCenter />,
+  },
+  {
+    path: '*',
+    element: <NotFound />,
   },
 ]);

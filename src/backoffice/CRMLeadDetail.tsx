@@ -197,7 +197,7 @@ const CRMLeadDetail: React.FC = () => {
 
   const copyProspectSpaceLink = async () => {
     if (!lead?.access_token) {
-      alert('Token d\'accès non disponible pour ce lead');
+      showToast('Token d\'accès non disponible pour ce lead', 'error');
       return;
     }
     const link = `${window.location.origin}/espace-prospect/${lead.access_token}`;
@@ -208,7 +208,7 @@ const CRMLeadDetail: React.FC = () => {
       setTimeout(() => setLinkCopied(false), 3000);
     } catch (err) {
       logger.error('Error copying link:', err);
-      alert('Erreur lors de la copie du lien');
+      showToast('Erreur lors de la copie du lien', 'error');
     }
   };
 
@@ -216,7 +216,7 @@ const CRMLeadDetail: React.FC = () => {
     if (!lead || !leadId) return;
 
     if (!lead.access_token) {
-      alert('Token d\'accès non disponible pour ce lead');
+      showToast('Token d\'accès non disponible pour ce lead', 'error');
       return;
     }
 
@@ -327,21 +327,20 @@ const CRMLeadDetail: React.FC = () => {
 
       if (error) {
         console.error('❌ Edge Function error:', error);
-        const errorDetails = JSON.stringify(error, null, 2);
-        alert(`Erreur lors de l'envoi de l'email:\n\n${error.message || 'Erreur Edge Function'}\n\nDétails: ${errorDetails}\n\nVérifiez que les credentials SMTP IONOS sont configurés dans les secrets Supabase.`);
+        showToast(`Erreur envoi email: ${error.message || 'Erreur Edge Function'}. Verifiez les secrets SMTP IONOS dans Supabase.`, 'error', 8000);
         throw new Error(error.message || 'Erreur Edge Function');
       }
 
       if (data && !data.success) {
         console.error('❌ Email sending failed:', data);
         const failedDetails = data.failed?.[0];
-        const errorMsg = failedDetails?.error || data.error || 'Échec de l\'envoi email';
-        alert(`Erreur lors de l'envoi de l'email:\n\n${errorMsg}\n\nVérifiez que les credentials SMTP IONOS sont configurés correctement.`);
+        const errorMsg = failedDetails?.error || data.error || 'Echec de l\'envoi email';
+        showToast(`Erreur envoi email: ${errorMsg}`, 'error', 8000);
         throw new Error(errorMsg);
       }
 
       console.log('✅ Email sent successfully!');
-      alert(`✅ Email d'accès envoyé avec succès à ${lead.email} !`);
+      showToast(`Email d'acces envoye avec succes a ${lead.email}`, 'success');
     } catch (err: any) {
       logger.error('Error sending email:', err);
       const errorMessage = err?.message || 'Erreur inconnue lors de l\'envoi de l\'email';
