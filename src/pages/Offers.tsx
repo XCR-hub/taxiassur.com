@@ -39,7 +39,7 @@ const Offers: React.FC = () => {
     <>
       <Seo
         title="Offres Assurance Taxi - Solutions Pro Sur-Mesure | TaxiAssur"
-        description="🎯 Offres assurance taxi TaxiAssur : RC professionnelle ✓ Flotte véhicules ✓ Conseil personnalisé ✓ Gestion sinistres ✓ Solutions sur-mesure ✓ Tarifs négociés ✓ Expert taxi"
+        description="Découvrez les offres assurance taxi TaxiAssur : RC professionnelle, flotte de véhicules, gestion sinistres, solutions sur-mesure et tarifs négociés par des experts."
         canonical="/offres"
         keywords="offres assurance taxi, solutions assurance taxi, RC professionnelle taxi, flotte véhicules taxi, conseil assurance taxi, gestion sinistres taxi, tarifs assurance taxi"
       />

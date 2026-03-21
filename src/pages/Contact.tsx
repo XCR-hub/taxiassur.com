@@ -20,7 +20,7 @@ const Contact: React.FC = () => {
     <>
       <Seo
         title="Contact TaxiAssur - Experts Assurance Taxi | Réponse 15min Garantie"
-        description="📞 Contact TaxiAssur experts assurance taxi : réponse 15min garantie ✓ Devis gratuit ✓ Conseil personnalisé ✓ 01 80 85 57 86 ✓ team@taxiassur.com ✓ Service 7j/7"
+        description="Contactez TaxiAssur, experts assurance taxi : réponse garantie en 15 min, devis gratuit, conseil personnalisé, service 7j/7. Appelez le 01 80 85 57 86."
         canonical="/contact"
         keywords="contact TaxiAssur, expert assurance taxi, conseil taxi, devis assurance taxi gratuit, téléphone taxi assurance, email taxi assurance, rendez-vous taxi"
       />

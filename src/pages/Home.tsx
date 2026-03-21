@@ -49,6 +49,8 @@ const Home: React.FC = () => {
         canonical="/"
       />
       <JsonLd type="organization" />
+      <JsonLd type="local-business" />
+      <JsonLd type="reviews" />
       <JsonLd type="breadcrumb" data={[
         { name: 'Accueil', url: '/' }
       ]} />

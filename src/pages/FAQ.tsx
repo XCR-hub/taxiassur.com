@@ -64,8 +64,8 @@ const FAQ: React.FC = () => {
   return (
     <>
       <SEOHead
-        title="FAQ Assurance Taxi - Meilleure Assurance Taxi Pas Chere France | Questions Expert | TaxiAssur"
-        description="❓ FAQ assurance taxi TaxiAssur : meilleure assurance taxi pas chere France ✓ Comparatif prix conseils ✓ Best cheap taxi insurance France ✓ Taxi insurance tips pricing ✓ Reponses expert ✓ Tarifs detailles ✓ Garanties expliquees"
+        title="FAQ Assurance Taxi - Questions Fréquentes sur l'Assurance Taxi | TaxiAssur"
+        description="Réponses à toutes vos questions sur l'assurance taxi en France. Tarifs, garanties, délais, résiliation et sinistres expliqués par nos experts courtiers spécialisés."
         canonical="/faq"
         keywords="meilleure assurance taxi pas chere France, assurance taxi comparatif prix conseils, best cheap taxi insurance France, taxi insurance tips pricing France, FAQ assurance taxi, questions frequentes taxi, aide assurance taxi, guide assurance taxi, reponses expert taxi, tarifs assurance taxi, garanties taxi"
       />

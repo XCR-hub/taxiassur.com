@@ -18,7 +18,7 @@ const FlotteVehicules: React.FC = () => {
     <>
       <SEOHead
         title="Assurance Flotte Taxi - Tarifs Préférentiels Groupe | TaxiAssur"
-        description="🚐 Assurance flotte taxi avec TaxiAssur. Devis gratuit ✓ Tarifs dégressifs ✓ Gestion centralisée ✓ Conseiller dédié ✓ 2-100+ véhicules ✓ Économies importantes"
+        description="Assurance flotte taxi avec tarifs dégressifs pour 2 à 100 véhicules. Gestion centralisée, conseiller dédié et économies importantes sur votre parc professionnel."
         canonical="/flotte-vehicules"
         keywords="assurance flotte taxi, assurance groupe taxi, tarifs flotte taxi, gestion centralisée taxi, assurance multi-véhicules taxi, courtier flotte taxi"
       />

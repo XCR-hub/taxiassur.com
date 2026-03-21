@@ -20,7 +20,7 @@ const Reviews: React.FC = () => {
     <>
       <Seo
         title="Avis Clients TaxiAssur - Témoignages Authentiques Taxi | 100+ Clients"
-        description="⭐ Avis clients TaxiAssur authentiques : 100+ clients satisfaits ✓ Témoignages taxi réels ✓ Économies réelles ✓ Service expert ✓ Satisfaction garantie ✓ Courtier spécialisé depuis septembre 2025"
+        description="Avis clients TaxiAssur : plus de 100 chauffeurs de taxi témoignent de leurs économies et de la qualité du service. Courtier spécialisé assurance taxi, satisfaction garantie."
         canonical="/avis"
         keywords="avis clients TaxiAssur, témoignages taxi authentiques, satisfaction client taxi, note avis taxi, retour expérience assurance taxi, clients satisfaits taxi"
       />

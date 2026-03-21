@@ -18,7 +18,7 @@ const ConseilPersonnalise: React.FC = () => {
     <>
       <SEOHead
         title="Conseil Assurance Taxi Personnalisé - Expert Dédié | TaxiAssur"
-        description="👨‍💼 Conseil assurance taxi personnalisé avec TaxiAssur. Expert dédié ✓ Analyse sur-mesure ✓ Accompagnement complet ✓ Gratuit ✓ Spécialiste taxi ✓ 15 ans expertise"
+        description="Bénéficiez d'un conseil assurance taxi personnalisé et gratuit avec TaxiAssur. Expert dédié, analyse sur-mesure, accompagnement complet par des spécialistes."
         canonical="/conseil-personnalise"
         keywords="conseil assurance taxi, expert assurance taxi, accompagnement taxi, analyse personnalisée taxi, consultant assurance taxi, expertise taxi"
       />

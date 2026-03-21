@@ -18,7 +18,7 @@ const RCProfessionnelle: React.FC = () => {
     <>
       <SEOHead
         title="RC Professionnelle Taxi - Responsabilité Civile Obligatoire | TaxiAssur"
-        description="🛡️ RC Professionnelle taxi obligatoire avec TaxiAssur. Devis gratuit ✓ Couverture 10M€ ✓ Protection juridique ✓ Assistance 24h/24 ✓ Tarifs négociés ✓ Expert taxi"
+        description="RC professionnelle taxi obligatoire avec TaxiAssur. Couverture jusqu'à 10M€, protection juridique incluse, assistance 24h/24. Devis gratuit en 2 minutes."
         canonical="/rc-professionnelle"
         keywords="RC professionnelle taxi, responsabilité civile taxi, assurance responsabilité taxi, protection juridique taxi, RC pro taxi obligatoire, garantie taxi professionnelle"
       />

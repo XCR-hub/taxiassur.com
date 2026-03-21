@@ -205,7 +205,7 @@ const PartnershipPage: React.FC = () => {
     <>
       <SEOHead
         title="Programme Partenaires TaxiAssur - Monétisez Votre Audience Taxi | Leads Exclusifs Courtiers"
-        description="🤝 Programme partenaires TaxiAssur : commissions 50-300€/lead ✓ Leads taxi exclusifs courtiers ✓ Marketplace B2B ✓ Outils marketing ✓ ROI 500%+ ✓ +50 partenaires actifs"
+        description="Rejoignez le programme partenaires TaxiAssur : commissions de 50 à 300 euros par lead, leads taxi exclusifs, marketplace B2B et outils marketing dédiés."
         canonical="/programme-partenaires"
         keywords="programme partenaires taxi, affiliation assurance taxi, leads taxi exclusifs, courtiers partenaires, marketplace leads taxi, commission courtier taxi, monétisation audience taxi, partenariat B2B assurance"
       />

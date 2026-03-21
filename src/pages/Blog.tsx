@@ -20,8 +20,8 @@ const Blog: React.FC = () => {
   return (
     <>
       <SEOHead
-        title="Blog Assurance Taxi - Meilleure Assurance Taxi Pas Chere France | Conseils Expert | TaxiAssur"
-        description="📰 Blog assurance taxi TaxiAssur : meilleure assurance taxi pas chere France ✓ Comparatif prix conseils ✓ Best cheap taxi insurance France ✓ Taxi insurance tips pricing ✓ Actualites expert ✓ Guides pratiques ✓ Reglementation 2025"
+        title="Blog Assurance Taxi - Conseils, Comparatifs et Actualités Expert | TaxiAssur"
+        description="Blog expert assurance taxi : conseils pratiques, comparatifs de garanties, réglementation taxi 2026 et guides pour réduire vos cotisations. Contenu rédigé par des spécialistes."
         canonical="/blog"
         keywords="meilleure assurance taxi pas chere France, assurance taxi comparatif prix conseils, best cheap taxi insurance France, taxi insurance tips pricing France, blog assurance taxi, actualites assurance taxi, conseils expert taxi, guides pratiques taxi, reglementation taxi 2025, optimisation assurance taxi, cheap taxi insurance tips"
       />

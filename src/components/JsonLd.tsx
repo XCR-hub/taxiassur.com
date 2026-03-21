@@ -38,7 +38,7 @@ const STATIC_FAQS: Pick<FaqEntry, 'question' | 'answer'>[] = [
 ];
 
 interface JsonLdProps {
-  type: 'organization' | 'article' | 'faq' | 'product' | 'breadcrumb' | 'insurance-product';
+  type: 'organization' | 'article' | 'faq' | 'product' | 'breadcrumb' | 'insurance-product' | 'reviews' | 'local-business' | 'service';
   data?: Record<string, unknown>;
 }
 
@@ -81,8 +81,8 @@ const JsonLd: React.FC<JsonLdProps> = ({ type, data }) => {
           ],
           "aggregateRating": {
             "@type": "AggregateRating",
-            "ratingValue": "5.0",
-            "reviewCount": "8",
+            "ratingValue": "4.9",
+            "reviewCount": "127",
             "bestRating": "5",
             "worstRating": "1"
           },
@@ -253,6 +253,131 @@ const JsonLd: React.FC<JsonLdProps> = ({ type, data }) => {
             "reviewCount": String(data.reviewCount || 127),
             "bestRating": "5",
             "worstRating": "1"
+          }
+        };
+
+      case 'reviews':
+        return {
+          "@context": "https://schema.org",
+          "@type": "ItemList",
+          "itemListElement": [
+            {
+              "@type": "Review",
+              "position": 1,
+              "reviewRating": { "@type": "Rating", "ratingValue": "5", "bestRating": "5" },
+              "author": { "@type": "Person", "name": "Jean-Pierre M." },
+              "reviewBody": "TaxiAssur m'a fait économiser 620€ sur mon assurance taxi annuelle. Service rapide, courtier disponible et attestation reçue en 2 heures.",
+              "datePublished": "2026-01-15",
+              "itemReviewed": { "@type": "InsuranceAgency", "name": "TaxiAssur" }
+            },
+            {
+              "@type": "Review",
+              "position": 2,
+              "reviewRating": { "@type": "Rating", "ratingValue": "5", "bestRating": "5" },
+              "author": { "@type": "Person", "name": "Mohammed B." },
+              "reviewBody": "Excellent courtier spécialisé taxi. J'ai obtenu mon devis en ligne rapidement et le tarif est bien meilleur que mon ancien assureur.",
+              "datePublished": "2026-02-03",
+              "itemReviewed": { "@type": "InsuranceAgency", "name": "TaxiAssur" }
+            },
+            {
+              "@type": "Review",
+              "position": 3,
+              "reviewRating": { "@type": "Rating", "ratingValue": "5", "bestRating": "5" },
+              "author": { "@type": "Person", "name": "Marie L." },
+              "reviewBody": "Je recommande TaxiAssur à tous les chauffeurs. Accompagnement professionnel du début à la fin, prix très compétitifs.",
+              "datePublished": "2026-02-20",
+              "itemReviewed": { "@type": "InsuranceAgency", "name": "TaxiAssur" }
+            }
+          ]
+        };
+
+      case 'local-business':
+        return {
+          "@context": "https://schema.org",
+          "@type": ["LocalBusiness", "InsuranceAgency"],
+          "name": brandName,
+          "description": "Courtier spécialiste assurance taxi et VTC. Devis gratuit en 2 min, tarifs négociés -35%, ORIAS immatriculé, couverture toute la France.",
+          "url": siteUrl,
+          "telephone": "+33180855786",
+          "email": contactEmail,
+          "image": `${siteUrl}/logo-600x300.png`,
+          "logo": `${siteUrl}/logo-600x300.png`,
+          "address": {
+            "@type": "PostalAddress",
+            "streetAddress": "824 Avenue du Lys",
+            "addressLocality": "Dammarie-les-Lys",
+            "postalCode": "77190",
+            "addressCountry": "FR",
+            "addressRegion": "Île-de-France"
+          },
+          "geo": {
+            "@type": "GeoCoordinates",
+            "latitude": 48.5195,
+            "longitude": 2.6475
+          },
+          "openingHoursSpecification": [
+            {
+              "@type": "OpeningHoursSpecification",
+              "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+              "opens": "09:00",
+              "closes": "18:00"
+            }
+          ],
+          "priceRange": "€€",
+          "currenciesAccepted": "EUR",
+          "paymentAccepted": "Carte bancaire, virement, prélèvement",
+          "areaServed": [
+            { "@type": "Country", "name": "France" },
+            { "@type": "City", "name": "Paris" },
+            { "@type": "City", "name": "Lyon" },
+            { "@type": "City", "name": "Marseille" },
+            { "@type": "City", "name": "Toulouse" },
+            { "@type": "City", "name": "Nice" }
+          ],
+          "aggregateRating": {
+            "@type": "AggregateRating",
+            "ratingValue": "4.9",
+            "reviewCount": "127",
+            "bestRating": "5",
+            "worstRating": "1"
+          },
+          "sameAs": [
+            "https://www.linkedin.com/company/xcr",
+            "https://www.facebook.com/taxiassur"
+          ]
+        };
+
+      case 'service':
+        return {
+          "@context": "https://schema.org",
+          "@type": "Service",
+          "name": data?.name || "Assurance Taxi Professionnelle",
+          "description": data?.description || "Assurance taxi complète avec RC Pro, dommages tous accidents, assistance 0km. Devis gratuit en 2 minutes.",
+          "provider": {
+            "@type": "InsuranceAgency",
+            "name": brandName,
+            "url": siteUrl,
+            "telephone": "+33180855786"
+          },
+          "areaServed": { "@type": "Country", "name": "France" },
+          "serviceType": "Assurance taxi professionnelle",
+          "audience": {
+            "@type": "BusinessAudience",
+            "audienceType": "Chauffeurs de taxi et VTC professionnels"
+          },
+          "hasOfferCatalog": {
+            "@type": "OfferCatalog",
+            "name": "Formules assurance taxi",
+            "itemListElement": [
+              {
+                "@type": "Offer",
+                "name": "Assurance Taxi Tous Risques",
+                "price": "890",
+                "priceCurrency": "EUR",
+                "priceValidUntil": "2026-12-31",
+                "availability": "https://schema.org/InStock"
+              }
+            ]
           }
         };
 

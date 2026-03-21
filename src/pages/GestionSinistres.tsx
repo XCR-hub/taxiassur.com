@@ -18,7 +18,7 @@ const GestionSinistres: React.FC = () => {
     <>
       <SEOHead
         title="Gestion Sinistres Taxi - Assistance 24h/24 Expert | TaxiAssur"
-        description="🚨 Gestion sinistres taxi avec TaxiAssur. Assistance 24h/24 ✓ Expert dédié ✓ Véhicule remplacement ✓ Accompagnement complet ✓ Déclaration simplifiée ✓ Suivi personnalisé"
+        description="Gestion sinistres taxi rapide et simplifiée avec TaxiAssur. Expert dédié, assistance 24h/24, véhicule de remplacement et accompagnement complet de votre dossier."
         canonical="/gestion-sinistres"
         keywords="gestion sinistres taxi, assistance sinistre taxi, déclaration sinistre taxi, expert sinistre taxi, véhicule remplacement taxi, accompagnement sinistre"
       />

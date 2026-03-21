@@ -11,9 +11,9 @@ const PrixAssuranceTaxi: React.FC = () => {
   return (
     <>
       <SEOHead
-        title="Prix Assurance Taxi 2024 - Meilleure Assurance Taxi Pas Chere France | Comparatif Prix | TaxiAssur"
-        description="💰 Meilleure assurance taxi pas chere France : 1200-3500/an ✓ Comparatif prix conseils ✓ Best cheap taxi insurance France ✓ Taxi insurance tips pricing ✓ Economisez 35% ✓ Guide complet 2024"
-        keywords="meilleure assurance taxi pas chere France, assurance taxi comparatif prix conseils, best cheap taxi insurance France, taxi insurance tips pricing France, prix assurance taxi, taxi insurance cost, cout assurance taxi, tarif assurance taxi, how much is taxi insurance, combien coute assurance taxi, prix moyen assurance taxi, cheap taxi insurance tips"
+        title="Prix Assurance Taxi 2026 - Tarifs & Comparatif Complet | TaxiAssur"
+        description="Prix assurance taxi en France : de 890€ a 1800€/an selon votre profil. Comparatif tarifs 2026, guide complet, economies jusqu'a 35% avec notre courtier specialise ORIAS."
+        keywords="prix assurance taxi, tarif assurance taxi, cout assurance taxi, combien coute assurance taxi, prix moyen assurance taxi, comparatif prix assurance taxi, assurance taxi pas cher"
         canonical="/prix-assurance-taxi"
       />
 

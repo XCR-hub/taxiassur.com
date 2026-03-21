@@ -12,7 +12,6 @@ import LocalSEO from '../components/LocalSEO';
 import SEOInternalLinks from '../components/SEOInternalLinks';
 import UltraConversionCTA from '../components/UltraConversionCTA';
 import { Shield, CheckCircle, Clock, Users } from 'lucide-react';
-import { useEffect } from 'react';
 import { initBehavioralTracking } from '../lib/behavioral-tracking';
 
 const AssuranceTaxi: React.FC = () => {
@@ -51,13 +50,35 @@ const AssuranceTaxi: React.FC = () => {
   return (
     <>
       <SEOHead
-        title="Meilleure Assurance Taxi Pas Chere France | Comparatif Prix Conseils | TaxiAssur"
-        description="🚖 Meilleure assurance taxi pas chere France ✓ Comparatif prix conseils ✓ Best cheap taxi insurance France ✓ Taxi insurance tips pricing ✓ Devis gratuit 2min ✓ Comparateur assurance taxi ✓ Assurance VTC ✓ RC pro taxi ✓ Economisez 35% ✓ ORIAS"
+        title="Assurance Taxi Professionnelle Pas Cher | Devis Gratuit 2min | TaxiAssur"
+        description="Assurance taxi pas chere avec RC Pro incluse. Courtier ORIAS specialise taxi. Devis gratuit 2 minutes, reponse 15 min. Economisez jusqu'a 35% sur votre assurance taxi."
         canonical="/assurance-taxi"
-        keywords="meilleure assurance taxi pas chere France, assurance taxi comparatif prix conseils, best cheap taxi insurance France, taxi insurance tips pricing France, assurance taxi, assurance VTC, assurance chauffeur, rc pro taxi, devis assurance taxi, comparateur assurance taxi, assurance taxi en ligne, assurance flotte taxi, courtier assurance taxi, cheap taxi insurance tips"
+        keywords="assurance taxi, assurance taxi professionnelle, assurance taxi pas cher, devis assurance taxi, courtier assurance taxi, rc pro taxi, assurance VTC, comparateur assurance taxi, assurance taxi en ligne, assurance flotte taxi"
       />
       <JsonLd type="breadcrumb" data={breadcrumbs} />
       <JsonLd type="organization" />
+      <JsonLd type="faq" data={[
+        {
+          question: "Quel est le prix d'une assurance taxi professionnelle ?",
+          answer: "Le prix d'une assurance taxi professionnelle varie entre 890€ et 1800€ par an selon le profil, le véhicule et les garanties choisies. Avec TaxiAssur, nos tarifs négociés permettent d'économiser jusqu'à 35% par rapport aux assureurs classiques."
+        },
+        {
+          question: "Quelles garanties sont incluses dans l'assurance taxi TaxiAssur ?",
+          answer: "L'assurance taxi TaxiAssur inclut : RC Pro obligatoire, protection conducteur, dommages tous accidents, vol et incendie, bris de glace, assistance 0km 24h/24, véhicule de remplacement et protection juridique."
+        },
+        {
+          question: "Combien de temps pour obtenir un devis assurance taxi ?",
+          answer: "Votre devis assurance taxi est disponible en 2 minutes en ligne. Notre équipe de courtiers spécialisés vous rappelle sous 15 minutes pour personnaliser votre offre et finaliser votre dossier."
+        },
+        {
+          question: "TaxiAssur propose-t-il l'assurance taxi en ligne ?",
+          answer: "Oui, TaxiAssur propose un service complet d'assurance taxi en ligne. Devis instantané, souscription numérique et attestation d'assurance transmise par email. Service disponible pour toute la France."
+        },
+        {
+          question: "Comment choisir la meilleure assurance taxi ?",
+          answer: "Pour choisir la meilleure assurance taxi, comparez les garanties (RC Pro, dommages, assistance), les franchises et les prix. TaxiAssur compare 15+ assureurs et negocie des tarifs préférentiels exclusifs pour les professionnels du taxi."
+        }
+      ]} />
       <JsonLd type="insurance-product" data={{
         name: "Assurance Taxi Professionnelle",
         description: "Assurance taxi complète avec RC Pro obligatoire, dommages tous accidents, protection juridique et assistance 0km. Tarifs négociés jusqu'à 35% moins cher.",
