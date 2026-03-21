@@ -792,7 +792,8 @@ export const router = createBrowserRouter([
   },
   {
     path: '/backoffice/pending-documents',
-    element: <PendingDocumentsManager />,
+    element: <CRMLayout />,
+    children: [{ index: true, element: <PendingDocumentsManager /> }],
   },
   {
     path: '/backoffice/documents',
