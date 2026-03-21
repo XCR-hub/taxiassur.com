@@ -90,7 +90,8 @@ export const CommunicationTimeline: React.FC<CommunicationTimelineProps> = ({
           received_at,
           direction,
           status,
-          created_at
+          created_at,
+          attachments
         `)
         .eq('lead_id', leadId)
         .order('created_at', { ascending: false })
@@ -100,11 +101,6 @@ export const CommunicationTimeline: React.FC<CommunicationTimelineProps> = ({
 
       if (emails) {
         for (const email of emails) {
-          const { data: attachments } = await supabase
-            .from('email_attachments')
-            .select('id, filename, content_type, file_size, storage_path, proposed_doc_type')
-            .eq('email_message_id', email.id);
-
           // Nettoyer le contenu des emails avec encodage UTF-8 corrompu
           let cleanContent = email.body_text || email.body_html || '';
 
@@ -146,13 +142,13 @@ export const CommunicationTimeline: React.FC<CommunicationTimelineProps> = ({
             .replace(/倁/g, 'ai')
             .replace(/䰀/g, 'é');
 
-          // Mapper les attachments au format attendu
-          const mappedAttachments = (attachments || []).map(att => ({
-            id: att.id,
-            file_name: att.filename,
-            file_type: att.content_type,
-            file_size: att.file_size,
-            download_url: att.storage_path ? `/storage/${att.storage_path}` : '',
+          // Mapper les attachments depuis le champ JSONB email_messages.attachments
+          const mappedAttachments = ((email.attachments as any[]) || []).map((att: any, idx: number) => ({
+            id: `${email.id}-att-${idx}`,
+            file_name: att.filename || att.name || 'Pièce jointe',
+            file_type: att.contentType || att.content_type || 'application/octet-stream',
+            file_size: att.size || att.file_size || 0,
+            download_url: att.url || '',
             auto_detected_type: att.proposed_doc_type
           }));
 

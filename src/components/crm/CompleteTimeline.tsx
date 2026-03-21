@@ -184,7 +184,7 @@ export const CompleteTimeline: React.FC<CompleteTimelineProps> = ({ leadId, lead
       }
 
       const [emailsRes, interactionsRes, documentsRes, aiRes, notifRes] = await Promise.all([
-        supabase.from('email_messages').select('*, email_attachments(*)').in('lead_id', allLeadIds).order('created_at', { ascending: false }),
+        supabase.from('email_messages').select('*, attachments').in('lead_id', allLeadIds).order('created_at', { ascending: false }),
         supabase.from('crm_interactions').select('*').in('lead_id', allLeadIds).order('created_at', { ascending: false }),
         supabase.from('crm_lead_documents').select('*').in('lead_id', allLeadIds).order('uploaded_at', { ascending: false }),
         supabase.from('crm_ai_decisions').select('*').in('lead_id', allLeadIds).order('created_at', { ascending: false }),
@@ -202,10 +202,14 @@ export const CompleteTimeline: React.FC<CompleteTimelineProps> = ({ leadId, lead
           from: email.from_email,
           to: Array.isArray(email.to_emails) ? email.to_emails.join(', ') : email.to_emails,
           status: email.status,
-          attachments: (email.email_attachments || []).map((a: any) => ({
-            id: a.id, file_name: a.filename, file_type: a.content_type,
-            file_size: a.file_size, download_url: a.download_url || '',
-            storage_path: a.storage_path, auto_detected_type: a.auto_detected_type,
+          attachments: ((email.attachments as any[]) || []).map((a: any, idx: number) => ({
+            id: `${email.id}-${idx}`,
+            file_name: a.filename || a.name || 'Pièce jointe',
+            file_type: a.contentType || a.content_type || 'application/octet-stream',
+            file_size: a.size || a.file_size || 0,
+            download_url: a.url || '',
+            storage_path: a.path || a.storage_path,
+            auto_detected_type: a.proposed_doc_type,
           })),
         });
       });
