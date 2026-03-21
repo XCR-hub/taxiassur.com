@@ -10,6 +10,11 @@ import TestAutomationButton from './TestAutomationButton';
 import { logger } from '@/lib/logger';
 import { toast } from '@/lib/toast';
 
+const GSC_LIBRARY_URL = 'https://console.cloud.google.com/apis/library';
+const GSC_CREDENTIALS_URL = 'https://console.cloud.google.com/apis/credentials';
+const BLANK = '_blank';
+const NOREFERRER = 'noopener noreferrer';
+
 const SeoTools: React.FC = () => {
   const navigate = useNavigate();
   const [seoData, setSeoData] = useState({
@@ -232,7 +237,6 @@ const SeoTools: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-8">
-        {/* Header with Home Button */}
         <header className="bg-gradient-to-r from-slate-800 via-blue-800 to-slate-800 border-b-2 border-amber-500 shadow-lg mb-8">
           <div className="max-w-7xl mx-auto px-6 py-4">
             <div className="flex justify-between items-center">
@@ -250,7 +254,10 @@ const SeoTools: React.FC = () => {
                 </div>
               </div>
 
-              <button onClick={() => navigate("/backoffice/crm-commercial")} className="bg-white/20 hover:bg-white/30 text-white font-medium px-4 py-2 rounded-lg transition-colors flex items-center space-x-2 backdrop-blur-sm">
+              <button
+                onClick={() => navigate('/backoffice/crm-commercial')}
+                className="bg-white/20 hover:bg-white/30 text-white font-medium px-4 py-2 rounded-lg transition-colors flex items-center space-x-2 backdrop-blur-sm"
+              >
                 <Home size={16} />
                 <span>Accueil CRM</span>
               </button>
@@ -261,7 +268,6 @@ const SeoTools: React.FC = () => {
         <div className="max-w-7xl mx-auto">
           <div className="mb-8">
 
-          {/* Info sur les données */}
           {!seoData.isRealData && (
             <div className="mb-6 p-4 bg-red-50 border-2 border-red-400 rounded-lg">
               <div className="flex items-start gap-3">
@@ -274,7 +280,7 @@ const SeoTools: React.FC = () => {
                     Les métriques affichées sont à <strong>zéro</strong> car Google Search Console n'a pas encore été synchronisé.
                   </p>
                   <p className="text-sm text-red-700 font-medium">
-                    Action requise : Cliquez sur le bouton <strong>"Sync Google Search Console"</strong> ci-dessous pour récupérer vos vraies données d'indexation.
+                    Action requise : Cliquez sur <strong>"Sync Google Search Console"</strong> ci-dessous pour récupérer vos vraies données.
                   </p>
                 </div>
               </div>
@@ -290,14 +296,13 @@ const SeoTools: React.FC = () => {
                     <strong>Données réelles</strong> depuis Google Search Console
                   </p>
                   <p className="text-xs text-green-700 mt-1">
-                    Dernière mise à jour : {new Date(seoData.lastUpdate).toLocaleString('fr-FR')} • Prochaine mise à jour automatique dans la nuit
+                    Dernière mise à jour : {new Date(seoData.lastUpdate).toLocaleString('fr-FR')}
                   </p>
                 </div>
               </div>
             </div>
           )}
 
-          {/* SEO Overview */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
             <Card className="text-center bg-slate-800 border border-orange-500">
               <Globe className="mx-auto mb-2 text-orange-400" size={24} />
@@ -329,7 +334,6 @@ const SeoTools: React.FC = () => {
             </Card>
           </div>
 
-          {/* Métriques Google Search Console */}
           {seoData.isRealData && (seoData.impressions30d > 0 || seoData.clicks30d > 0) && (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
               <Card className="text-center bg-gradient-to-br from-orange-50 to-orange-100 border border-orange-300">
@@ -353,7 +357,6 @@ const SeoTools: React.FC = () => {
             </div>
           )}
 
-          {/* Actions & Tools */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
             <Card className="bg-slate-800 border border-slate-700">
               <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
@@ -376,7 +379,6 @@ const SeoTools: React.FC = () => {
                     try {
                       await loadSeoData();
                       await loadCronJobsStatus();
-
                       toast.success('Données SEO actualisées depuis Supabase !');
                     } catch (error) {
                       logger.error('GSC sync error:', error);
@@ -409,12 +411,34 @@ const SeoTools: React.FC = () => {
                         Configuration API Google Search Console
                       </p>
                       <p className="text-xs text-orange-200 mb-3">
-                        Pour obtenir les vraies données Google (pages indexées, performances, etc.) :
+                        Pour obtenir les vraies données Google :
                       </p>
                       <div className="text-xs text-orange-100 space-y-1 mb-3">
-                        <p><strong>1.</strong> Active l'API dans <a href="https://console.cloud.google.com/apis/library" target=\"_blank" rel="noopener noreferrer\" className="underline hover:text-orange-200">Google Cloud Console</a></p>
-                        <p><strong>2.</strong> Crée une clé API dans <a href="https://console.cloud.google.com/apis/credentials" target=\"_blank" rel="noopener noreferrer\" className="underline hover:text-orange-200">Credentials</a></p>
-                        <p><strong>3.</strong> Ajoute la clé dans Supabase Secrets :</p>
+                        <p>
+                          <strong>{'1.'}</strong>
+                          {' Active l\'API dans '}
+                          <a
+                            href={GSC_LIBRARY_URL}
+                            target={BLANK}
+                            rel={NOREFERRER}
+                            className="underline hover:text-orange-200"
+                          >
+                            Google Cloud Console
+                          </a>
+                        </p>
+                        <p>
+                          <strong>{'2.'}</strong>
+                          {' Crée une clé API dans '}
+                          <a
+                            href={GSC_CREDENTIALS_URL}
+                            target={BLANK}
+                            rel={NOREFERRER}
+                            className="underline hover:text-orange-200"
+                          >
+                            Credentials
+                          </a>
+                        </p>
+                        <p><strong>{'3.'}</strong>{' Ajoute la clé dans Supabase Secrets :'}</p>
                       </div>
                       <div className="bg-slate-900 p-2 rounded border border-orange-500 mb-3">
                         <code className="text-xs text-amber-300">
@@ -422,7 +446,12 @@ const SeoTools: React.FC = () => {
                         </code>
                       </div>
                       <p className="text-xs text-orange-200">
-                        <a href="/SOLUTION-GOOGLE-CSE-SANS-WEBHOOK.md" className="underline hover:text-orange-100 font-semibold" target="_blank" rel="noopener noreferrer">
+                        <a
+                          href="/SOLUTION-GOOGLE-CSE-SANS-WEBHOOK.md"
+                          target={BLANK}
+                          rel={NOREFERRER}
+                          className="underline hover:text-orange-100 font-semibold"
+                        >
                           Voir le guide complet étape par étape
                         </a>
                       </p>
@@ -450,7 +479,7 @@ const SeoTools: React.FC = () => {
                 {seoChecklist.map((item, index) => (
                   <div key={index} className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">
-                      <div className={`w-2 h-2 rounded-full ${item.status ? 'bg-green-400' : 'bg-red-400'}`}></div>
+                      <div className={`w-2 h-2 rounded-full ${item.status ? 'bg-green-400' : 'bg-red-400'}`} />
                       <span className="text-slate-300">{item.name}</span>
                       {item.count && (
                         <span className="text-xs bg-slate-700 px-2 py-1 rounded-full text-slate-300">
@@ -461,8 +490,8 @@ const SeoTools: React.FC = () => {
                     {item.url && (
                       <a
                         href={item.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                        target={BLANK}
+                        rel={NOREFERRER}
                         className="text-orange-400 hover:text-orange-300"
                       >
                         <ExternalLink size={14} />
@@ -474,7 +503,6 @@ const SeoTools: React.FC = () => {
             </Card>
           </div>
 
-          {/* Ping Results */}
           {pingResults.length > 0 && (
             <Card className="mb-8 bg-slate-800 border border-slate-700">
               <h3 className="text-lg font-semibold text-white mb-4">
@@ -500,7 +528,6 @@ const SeoTools: React.FC = () => {
             </Card>
           )}
 
-          {/* Statut des Automatisations */}
           {cronJobsStatus.length > 0 && (
             <Card className="bg-slate-800 border border-slate-700 mb-8">
               <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
@@ -540,13 +567,12 @@ const SeoTools: React.FC = () => {
                   <strong>Rafraîchissement automatique:</strong> Tous les jours à 2h du matin
                 </p>
                 <p className="text-xs text-orange-700 mt-1">
-                  Les métriques SEO sont mises à jour automatiquement chaque nuit avec les données réelles depuis Google Search Console.
+                  Les métriques SEO sont mises à jour automatiquement chaque nuit.
                 </p>
               </div>
             </Card>
           )}
 
-          {/* City Pages Overview */}
           <Card className="bg-white border border-slate-300">
             <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center">
               <Search className="mr-2 text-orange-600" size={20} />
@@ -557,8 +583,8 @@ const SeoTools: React.FC = () => {
                 <a
                   key={city.slug}
                   href={`/ville/${city.slug}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  target={BLANK}
+                  rel={NOREFERRER}
                   className="text-center p-3 bg-slate-50 rounded-lg hover:bg-orange-50 transition-colors group border border-slate-200"
                 >
                   <div className="text-sm font-medium text-slate-900 group-hover:text-orange-600">
@@ -570,8 +596,8 @@ const SeoTools: React.FC = () => {
               {cities.length > 12 && (
                 <a
                   href="/villes"
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  target={BLANK}
+                  rel={NOREFERRER}
                   className="text-center p-3 bg-orange-50 rounded-lg hover:bg-orange-100 transition-colors border border-orange-200"
                 >
                   <div className="text-sm font-medium text-orange-600">
@@ -589,23 +615,23 @@ const SeoTools: React.FC = () => {
           title="Tester Automatisations SEO"
           tests={[
             {
-              name: "Sync Google Search Console",
-              functionName: "sync-google-search-console",
-              method: "POST",
-              description: "Récupère les vraies métriques SEO depuis GSC"
+              name: 'Sync Google Search Console',
+              functionName: 'sync-google-search-console',
+              method: 'POST',
+              description: 'Récupère les vraies métriques SEO depuis GSC'
             },
             {
-              name: "Refresh SEO Daily",
-              functionName: "seo-daily-refresh",
-              method: "POST",
-              description: "Actualise les données SEO quotidiennes"
+              name: 'Refresh SEO Daily',
+              functionName: 'seo-daily-refresh',
+              method: 'POST',
+              description: 'Actualise les données SEO quotidiennes'
             },
             {
-              name: "IndexNow Ping",
-              functionName: "indexnow-ping",
-              method: "POST",
+              name: 'IndexNow Ping',
+              functionName: 'indexnow-ping',
+              method: 'POST',
               body: { urls: ['https://taxiassur.com'] },
-              description: "Notifie les moteurs de recherche des nouvelles URLs"
+              description: 'Notifie les moteurs de recherche des nouvelles URLs'
             }
           ]}
         />
