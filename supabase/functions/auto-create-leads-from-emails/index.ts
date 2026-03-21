@@ -7,7 +7,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
 };
 
-// Patterns locaux de pré-filtrage rapide (avant appel DB)
+// Domaines et patterns à ignorer immédiatement (avant appel DB)
 const LOCAL_BLACKLIST_DOMAINS = new Set([
   'taxiassur.com', 'hunter.io', 'snov.io', 'apollo.io', 'lusha.com',
   'zoominfo.com', 'clearbit.com', 'rocketreach.co', 'neverbounce.com',
@@ -17,28 +17,26 @@ const LOCAL_BLACKLIST_DOMAINS = new Set([
   'throwaway.email', 'fakeinbox.com', 'maildrop.cc', 'sharklasers.com',
   'dispostable.com', 'tempmail.com', 'spamgourmet.com',
   'instagram.com', 'facebook.com', 'linkedin.com', 'twitter.com',
-  'tiktok.com', 'pinterest.com', 'youtube.com',
+  'tiktok.com', 'pinterest.com', 'youtube.com', 'google.com',
   'mailchimp.com', 'sendgrid.net', 'brevo.com', 'sendinblue.com',
   'hubspot.com', 'salesforce.com', 'phantombuster.com', 'scrapingbee.com',
+  'ionos.com', 'ionos.fr', '1and1.com',
 ]);
 
 const LOCAL_BLACKLIST_PATTERNS = [
   'noreply', 'no-reply', 'donotreply', 'mailer-daemon', 'postmaster',
   'mailer@', 'notification@', 'notifications@', 'bounce', 'daemon',
   'automated', 'auto-confirm', 'autoconfirm', 'system@', 'robot@',
-  'bot@', 'crawler@', 'abuse@', 'alert@', 'alerts@',
+  'bot@', 'crawler@', 'abuse@', 'alert@', 'alerts@', 'webmaster@',
 ];
 
 function isLocallyBlacklisted(email: string): boolean {
   const lower = email.toLowerCase();
   const domain = lower.split('@')[1] ?? '';
-
   if (LOCAL_BLACKLIST_DOMAINS.has(domain)) return true;
-
   for (const pattern of LOCAL_BLACKLIST_PATTERNS) {
     if (lower.includes(pattern)) return true;
   }
-
   return false;
 }
 
@@ -58,13 +56,13 @@ function extractNameFromEmail(email: string, fromName?: string): { firstName: st
   if (parts.length >= 2) {
     return {
       firstName: parts[0].charAt(0).toUpperCase() + parts[0].slice(1).toLowerCase(),
-      lastName: parts.slice(1).join(' ').charAt(0).toUpperCase() + parts.slice(1).join(' ').slice(1).toLowerCase()
+      lastName: parts.slice(1).join(' ').charAt(0).toUpperCase() + parts.slice(1).join(' ').slice(1).toLowerCase(),
     };
   }
 
   return {
     firstName: cleaned.charAt(0).toUpperCase() + cleaned.slice(1).toLowerCase(),
-    lastName: ''
+    lastName: '',
   };
 }
 
@@ -73,14 +71,10 @@ function extractPhoneFromContent(content: string): string | null {
     /(?:^|\s)(\+?33|0)[1-9](?:[\s.-]?\d{2}){4}(?:\s|$)/g,
     /(?:^|\s)(0[1-9]\d{8})(?:\s|$)/g,
   ];
-
   for (const pattern of phonePatterns) {
     const matches = content.match(pattern);
-    if (matches) {
-      return matches[0].trim().replace(/[\s.-]/g, '');
-    }
+    if (matches) return matches[0].trim().replace(/[\s.-]/g, '');
   }
-
   return null;
 }
 
@@ -97,14 +91,15 @@ Deno.serve(async (req: Request) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Récupérer les emails inbound sans lead_id
+    // Emails inbound sans lead_id, pas des emails de formulaire (ceux-ci sont traités par parse-form-emails)
     const { data: emails, error: fetchError } = await supabase
       .from('email_messages')
       .select('*')
       .is('lead_id', null)
       .eq('direction', 'inbound')
+      .not('from_email', 'ilike', '%taxiassur.com%')
       .order('created_at', { ascending: false })
-      .limit(100);
+      .limit(50);
 
     if (fetchError) throw fetchError;
 
@@ -118,16 +113,14 @@ Deno.serve(async (req: Request) => {
 
     for (const email of emails || []) {
       try {
-        console.log(`[auto-create-leads] Analyse: ${email.from_email} — "${email.subject}"`);
-
         // 1. Pré-filtrage local rapide
         if (isLocallyBlacklisted(email.from_email)) {
-          console.log(`[auto-create-leads] Ignoré (liste noire locale): ${email.from_email}`);
           skipped++;
+          await markEmailProcessed(supabase, email.id, email.metadata, { action: 'blacklisted' });
           continue;
         }
 
-        // 2. Classification intelligente via DB (avec scoring complet)
+        // 2. Classification intelligente via DB
         const { data: classification, error: classifError } = await supabase
           .rpc('classify_email_lead', {
             p_email:      email.from_email,
@@ -138,84 +131,62 @@ Deno.serve(async (req: Request) => {
           });
 
         if (classifError) {
-          console.error(`[auto-create-leads] Erreur classification pour ${email.from_email}:`, classifError);
-          // En cas d'erreur DB, on tente quand même si pas dans liste noire locale
-        }
-
-        const isRealLead  = classification?.is_real_lead ?? true;
-        const confidence  = classification?.confidence ?? 'medium';
-        const score       = classification?.score ?? 0;
-        const reasons     = classification?.reasons ?? [];
-
-        if (!isRealLead) {
-          console.log(`[auto-create-leads] Rejeté (score ${score}, confidence: ${confidence}): ${email.from_email}`);
-          console.log(`[auto-create-leads] Raisons: ${reasons.join(', ')}`);
-          rejected++;
-
-          // Marquer l'email comme traité sans créer de lead
-          await supabase
-            .from('email_messages')
-            .update({
-              metadata: {
-                ...(email.metadata || {}),
-                classification_result: { is_real_lead: false, score, confidence, reasons },
-                classified_at: new Date().toISOString(),
-              }
-            })
-            .eq('id', email.id);
-
+          console.error(`[auto-create-leads] Erreur classification ${email.from_email}:`, classifError);
+          skipped++;
           continue;
         }
 
-        console.log(`[auto-create-leads] Validé (score ${score}, confidence: ${confidence}): ${email.from_email}`);
+        const action     = classification?.action ?? 'skip';
+        const isRealLead = classification?.is_real_lead ?? false;
+        const confidence = classification?.confidence ?? 'low';
+        const score      = classification?.score ?? 0;
+        const reasons    = classification?.reasons ?? [];
 
-        // 3. Upsert du lead
-        const { firstName, lastName } = extractNameFromEmail(email.from_email, email.from_name);
-        const phone = extractPhoneFromContent(email.body_text || '');
+        console.log(`[auto-create-leads] ${email.from_email} → score=${score} confidence=${confidence} action=${action}`);
 
-        const { data: upsertResult, error: upsertError } = await supabase
-          .rpc('upsert_lead', {
-            p_email:      email.from_email,
-            p_first_name: firstName || 'Prospect',
-            p_last_name:  lastName || 'Email',
-            p_phone:      phone || '0000000000',
-            p_city:       null,
-            p_source:     'email_inbound',
-            p_metadata: {
-              first_email_id:      email.id,
-              first_email_subject: email.subject,
-              first_email_date:    email.received_at,
-              auto_created:        true,
-              created_from:        'auto-create-leads-from-emails',
-              initial_message:     email.subject,
-              phone_missing:       !phone,
-              lead_confidence:     confidence,
-              classification_score: score,
-            }
-          });
+        // -------------------------------------------------------
+        // CAS 1 : HIGH confidence (score >= 50) → créer un lead
+        // -------------------------------------------------------
+        if (isRealLead && action === 'create_lead') {
+          const { firstName, lastName } = extractNameFromEmail(email.from_email, email.from_name);
+          const phone = extractPhoneFromContent(email.body_text || '');
 
-        if (upsertError) {
-          console.error(`[auto-create-leads] Erreur upsert pour ${email.from_email}:`, upsertError);
-          continue;
-        }
+          const { data: upsertResult, error: upsertError } = await supabase
+            .rpc('upsert_lead', {
+              p_email:      email.from_email,
+              p_first_name: firstName || 'Prospect',
+              p_last_name:  lastName || '',
+              p_phone:      phone || '0000000000',
+              p_city:       null,
+              p_source:     'email_inbound',
+              p_metadata: {
+                first_email_id:       email.id,
+                first_email_subject:  email.subject,
+                first_email_date:     email.received_at,
+                auto_created:         true,
+                created_from:         'auto-create-leads-from-emails',
+                initial_message:      email.subject,
+                phone_missing:        !phone,
+                lead_confidence:      confidence,
+                classification_score: score,
+              },
+            });
 
-        const leadId = upsertResult[0].lead_id;
-        const isNew  = upsertResult[0].is_new;
+          if (upsertError) {
+            console.error(`[auto-create-leads] Erreur upsert ${email.from_email}:`, upsertError);
+            continue;
+          }
 
-        // 4. Mettre à jour le score de confiance sur le lead
-        await supabase
-          .from('crm_leads')
-          .update({
-            lead_confidence: confidence,
-            spam_score: Math.max(0, -score),
-          })
-          .eq('id', leadId);
+          const leadId = upsertResult[0].lead_id;
+          const isNew  = upsertResult[0].is_new;
 
-        if (isNew) {
-          created++;
-          console.log(`[auto-create-leads] Nouveau lead: ${firstName} ${lastName} (${email.from_email}) — ID: ${leadId}`);
+          await supabase.from('crm_leads')
+            .update({ lead_confidence: confidence, spam_score: 0 })
+            .eq('id', leadId);
 
-          try {
+          if (isNew) {
+            created++;
+            console.log(`[auto-create-leads] NOUVEAU LEAD HIGH: ${firstName} ${lastName} (${email.from_email})`);
             await supabase.from('crm_event_notifications').insert({
               lead_id:    leadId,
               event_type: 'new_lead',
@@ -223,69 +194,64 @@ Deno.serve(async (req: Request) => {
               message:    `${firstName} ${lastName} a envoyé un email: "${email.subject}"`,
               priority:   1,
               read:       false,
-            });
-          } catch (notifError) {
-            console.error('[auto-create-leads] Erreur notification:', notifError);
+            }).catch(() => {});
+          } else {
+            linked++;
           }
+
+          await linkEmailToLead(supabase, email, leadId, confidence, score);
+          results.push({ email: email.from_email, lead_id: leadId, action: isNew ? 'created' : 'linked', confidence, score });
+
+        // -------------------------------------------------------
+        // CAS 2 : MEDIUM confidence (10-49) → lier seulement si le lead EXISTE DÉJÀ
+        // -------------------------------------------------------
+        } else if (action === 'link_existing_only') {
+          const { data: existingLead } = await supabase
+            .from('crm_leads')
+            .select('id')
+            .ilike('email', email.from_email)
+            .maybeSingle();
+
+          if (existingLead) {
+            linked++;
+            console.log(`[auto-create-leads] MEDIUM: lié au lead existant ${existingLead.id}`);
+            await linkEmailToLead(supabase, email, existingLead.id, confidence, score);
+            results.push({ email: email.from_email, lead_id: existingLead.id, action: 'linked_existing', confidence, score });
+          } else {
+            // Pas de lead existant + confiance insuffisante → on ne crée rien
+            skipped++;
+            console.log(`[auto-create-leads] MEDIUM ignoré (pas de lead existant): ${email.from_email}`);
+            await markEmailProcessed(supabase, email.id, email.metadata, { action: 'medium_no_existing', score, confidence, reasons });
+          }
+
+        // -------------------------------------------------------
+        // CAS 3 : LOW / REJECTED → ignorer
+        // -------------------------------------------------------
         } else {
-          linked++;
-          console.log(`[auto-create-leads] Lead existant mis à jour: ${email.from_email} → ${leadId}`);
+          rejected++;
+          console.log(`[auto-create-leads] IGNORÉ (${confidence}, score=${score}): ${email.from_email}`);
+          await markEmailProcessed(supabase, email.id, email.metadata, { action: 'rejected', score, confidence, reasons });
         }
-
-        // 5. Lier l'email au lead
-        await supabase
-          .from('email_messages')
-          .update({ lead_id: leadId })
-          .eq('id', email.id);
-
-        // 6. Créer une interaction CRM
-        try {
-          await supabase.from('crm_interactions').insert({
-            lead_id:   leadId,
-            type:      'email',
-            direction: 'inbound',
-            subject:   email.subject,
-            content:   email.body_text?.substring(0, 5000),
-            metadata: {
-              email_id:    email.id,
-              from:        email.from_email,
-              received_at: email.received_at,
-              confidence,
-              score,
-            }
-          });
-        } catch (interactionError) {
-          console.error('[auto-create-leads] Erreur interaction:', interactionError);
-        }
-
-        results.push({
-          email:      email.from_email,
-          lead_id:    leadId,
-          action:     isNew ? 'created' : 'linked',
-          confidence,
-          score,
-        });
 
       } catch (emailError: any) {
-        console.error(`[auto-create-leads] Erreur traitement ${email.from_email}:`, emailError?.message);
+        console.error(`[auto-create-leads] Erreur ${email.from_email}:`, emailError?.message);
       }
     }
 
-    const executionTime = Date.now() - startTime;
     const summary = {
       total_emails:  emails?.length || 0,
       leads_created: created,
       emails_linked: linked,
       rejected,
       skipped,
-      execution_time_ms: executionTime,
+      execution_time_ms: Date.now() - startTime,
       results: results.slice(0, 20),
     };
 
     console.log('[auto-create-leads] Résumé:', summary);
 
     return new Response(
-      JSON.stringify({ success: true, message: `${created} leads créés, ${linked} emails liés, ${rejected} rejetés (non-leads)`, summary }),
+      JSON.stringify({ success: true, summary }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
     );
 
@@ -297,3 +263,34 @@ Deno.serve(async (req: Request) => {
     );
   }
 });
+
+async function linkEmailToLead(supabase: any, email: any, leadId: string, confidence: string, score: number) {
+  await supabase.from('email_messages')
+    .update({ lead_id: leadId })
+    .eq('id', email.id);
+
+  await supabase.from('crm_interactions').insert({
+    lead_id:   leadId,
+    type:      'email',
+    direction: 'inbound',
+    subject:   email.subject,
+    content:   email.body_text?.substring(0, 5000),
+    metadata: {
+      email_id:    email.id,
+      from:        email.from_email,
+      received_at: email.received_at,
+      confidence,
+      score,
+    },
+  }).catch(() => {});
+}
+
+async function markEmailProcessed(supabase: any, emailId: string, currentMetadata: any, classificationResult: any) {
+  await supabase.from('email_messages').update({
+    metadata: {
+      ...(currentMetadata || {}),
+      classification_result: classificationResult,
+      classified_at: new Date().toISOString(),
+    },
+  }).eq('id', emailId);
+}
