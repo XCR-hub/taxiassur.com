@@ -8,7 +8,6 @@ import ErrorBoundary from './components/ErrorBoundary';
 import GlobalErrorBoundary from './components/GlobalErrorBoundary';
 
 const PerformanceOptimizer = lazy(() => import('./components/PerformanceOptimizer'));
-const MoneticoTestCard = lazy(() => import('./components/MoneticoTestCard').then(m => ({ default: m.MoneticoTestCard })));
 
 const SimpleFallback = () => (
   <div style={{
@@ -52,11 +51,6 @@ function App() {
               {showEnhancements && (
                 <Suspense fallback={null}>
                   <PerformanceOptimizer />
-                </Suspense>
-              )}
-              {showEnhancements && import.meta.env.DEV && (
-                <Suspense fallback={null}>
-                  <MoneticoTestCard />
                 </Suspense>
               )}
             </ModalProvider>
