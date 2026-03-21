@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { ArrowLeft, User, FileText, AlertCircle, DollarSign, CheckSquare, Clock, Phone, Mail, MapPin, CreditCard as Edit, Save, X, Plus, Trash2, Eye, Activity, Bell, AlertTriangle, CheckCircle2, Loader2, RefreshCw, FolderOpen, Link, Copy, Check, MessageSquare, Send, Calendar } from 'lucide-react';
 import DocumentsViewer from './DocumentsViewer';
+import { toast } from '@/lib/toast';
 
 interface ClientData {
   id: string;
@@ -400,7 +401,7 @@ export default function ClientInsuranceManager() {
       setShowTaskForm(false);
       await loadTasks();
     } catch (err: any) {
-      alert('Erreur: ' + err.message);
+      toast.error('Erreur: ' + err.message);
     } finally {
       setSavingTask(false);
     }
@@ -448,7 +449,7 @@ export default function ClientInsuranceManager() {
       await loadTaxiProfile();
       setEditingProfile(false);
     } catch (error: any) {
-      alert('Erreur lors de la sauvegarde: ' + error.message);
+      toast.error('Erreur lors de la sauvegarde: ' + error.message);
     }
   }
 

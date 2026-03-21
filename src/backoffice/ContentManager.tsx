@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { FileText, Mail, HelpCircle, Plus, CreditCard as Edit, Trash2, Send, Users, Calendar, Save, Eye, EyeOff, Home } from 'lucide-react';
 import TestAutomationButton from './TestAutomationButton';
 import { logger } from '@/lib/logger';
+import { toast } from '@/lib/toast';
 
 interface Article {
   id: string;
@@ -168,10 +169,10 @@ const ContentManager: React.FC = () => {
       setShowArticleForm(false);
       setEditingArticle(null);
 
-      alert('Article publié avec succès !');
+      toast.success('Article publié avec succès !');
     } catch (error) {
       logger.error('Erreur:', error);
-      alert('Erreur lors de la publication');
+      toast.error('Erreur lors de la publication');
     } finally {
       setLoading(false);
     }
@@ -228,10 +229,10 @@ const ContentManager: React.FC = () => {
       setShowFaqForm(false);
       setEditingFaq(null);
 
-      alert('FAQ ajoutée avec succès !');
+      toast.success('FAQ ajoutée avec succès !');
     } catch (error) {
       logger.error('Erreur:', error);
-      alert('Erreur lors de l\'ajout');
+      toast.error('Erreur lors de l\'ajout');
     } finally {
       setLoading(false);
     }
@@ -240,7 +241,7 @@ const ContentManager: React.FC = () => {
   const handleNewsletterSend = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newsletterForm.subject || !newsletterForm.content) {
-      alert('Veuillez remplir tous les champs obligatoires');
+      toast.warning('Veuillez remplir tous les champs obligatoires');
       return;
     }
 
@@ -265,7 +266,7 @@ const ContentManager: React.FC = () => {
         throw new Error('Erreur lors de l\'envoi');
       }
 
-      alert('Newsletter envoyée avec succès !');
+      toast.success('Newsletter envoyée avec succès !');
       
       // Reset form
       setNewsletterForm({
@@ -277,7 +278,7 @@ const ContentManager: React.FC = () => {
       });
     } catch (error) {
       logger.error('Erreur:', error);
-      alert('Erreur lors de l\'envoi');
+      toast.error('Erreur lors de l\'envoi');
     } finally {
       setLoading(false);
     }
@@ -323,10 +324,10 @@ setEditingArticle(article);
       });
 
       setArticles(prev => prev.filter(a => a.id !== id));
-      alert('Article supprimé');
+      toast.success('Article supprimé');
     } catch (error) {
       logger.error('Erreur:', error);
-      alert('Erreur lors de la suppression');
+      toast.error('Erreur lors de la suppression');
     }
   };
 
@@ -344,10 +345,10 @@ setEditingArticle(article);
       });
 
       setFaqs(prev => prev.filter(f => f.id !== id));
-      alert('FAQ supprimée');
+      toast.success('FAQ supprimée');
     } catch (error) {
       logger.error('Erreur:', error);
-      alert('Erreur lors de la suppression');
+      toast.error('Erreur lors de la suppression');
     }
   };
 

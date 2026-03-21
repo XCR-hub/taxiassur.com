@@ -14,6 +14,7 @@ import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { logger } from '@/lib/logger';
 import { supabase } from '@/lib/supabase';
 import { useTheme } from '@/contexts/ThemeContext';
+import { toast } from '@/lib/toast';
 
 // Cache système - 5 minutes
 const CACHE_DURATION = 5 * 60 * 1000;
@@ -456,12 +457,12 @@ const Dashboard: React.FC = () => {
     try {
       const success = await regenerateFeeds();
       if (success) {
-        alert('Feeds régénérés avec succès !');
+        toast.success('Feeds régénérés avec succès !');
       } else {
-        alert('Erreur lors de la régénération des feeds');
+        toast.error('Erreur lors de la régénération des feeds');
       }
     } catch (error) {
-      alert('Erreur de connexion');
+      toast.error('Erreur de connexion');
     }
   };
 
@@ -471,12 +472,12 @@ const Dashboard: React.FC = () => {
       const result = await pingSearchEngines(sitemapUrl);
 
       if (result.success) {
-        alert('Moteurs de recherche notifiés avec succès !');
+        toast.success('Moteurs de recherche notifiés avec succès !');
       } else {
-        alert(`Erreurs lors de la notification : ${result.results.filter(r => !r.success).map(r => r.engine).join(', ')}`);
+        toast.error(`Erreurs lors de la notification : ${result.results.filter(r => !r.success).map(r => r.engine).join(', ')}`);
       }
     } catch (error) {
-      alert('Erreur lors de la notification des moteurs');
+      toast.error('Erreur lors de la notification des moteurs');
     }
   };
 
@@ -504,10 +505,10 @@ const Dashboard: React.FC = () => {
 
       if (!error) {
         setAiMasterStatus(prev => ({ ...prev, is_active: newStatus }));
-        alert(newStatus ? 'IA Master ACTIVÉE ✅' : 'IA Master DÉSACTIVÉE ⚠️');
+        toast.success(newStatus ? 'IA Master ACTIVÉE ✅' : 'IA Master DÉSACTIVÉE ⚠️');
       }
     } catch (error) {
-      alert('Erreur lors du changement de statut IA');
+      toast.error('Erreur lors du changement de statut IA');
     }
   };
 
@@ -530,7 +531,7 @@ const Dashboard: React.FC = () => {
         );
       }
     } catch (error) {
-      alert('Erreur lors du changement de statut automation');
+      toast.error('Erreur lors du changement de statut automation');
     }
   };
 

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { logger } from '@/lib/logger';
+import { toast } from '@/lib/toast';
 import {
   Activity,
   Brain,
@@ -93,7 +94,7 @@ export default function AutonomousSystemDashboard() {
       });
 
       const result = await response.json();
-      alert(`Self-Healing exécuté: ${result.checks_performed} vérifications, ${result.auto_fixes_applied} corrections auto`);
+      toast.info(`Self-Healing exécuté: ${result.checks_performed} vérifications, ${result.auto_fixes_applied} corrections auto`);
       loadDashboardData();
     } catch (error) {
       logger.error('Error triggering self-healing:', error);
@@ -111,7 +112,7 @@ export default function AutonomousSystemDashboard() {
       });
 
       const result = await response.json();
-      alert(`Monitoring exécuté: ${result.anomalies?.length || 0} anomalies détectées`);
+      toast.info(`Monitoring exécuté: ${result.anomalies?.length || 0} anomalies détectées`);
       loadDashboardData();
     } catch (error) {
       logger.error('Error triggering monitoring:', error);

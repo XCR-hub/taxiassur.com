@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import Card from '../components/Card';
 import { logger } from '@/lib/logger';
+import { toast } from '@/lib/toast';
 
 interface Campaign {
   id: string;
@@ -132,7 +133,7 @@ const BacklinkAutomationDashboard: React.FC = () => {
 
   const startAutomation = async () => {
     if (!selectedCampaign) {
-      alert('⚠️ Veuillez sélectionner une campagne');
+      toast.warning('⚠️ Veuillez sélectionner une campagne');
       return;
     }
 
@@ -147,12 +148,12 @@ const BacklinkAutomationDashboard: React.FC = () => {
 
       if (oppError) {
         logger.error('Erreur opportunités:', oppError);
-        alert(`❌ Erreur: ${oppError.message}`);
+        toast.error(`❌ Erreur: ${oppError.message}`);
         return;
       }
 
       if (!opportunities || opportunities.length === 0) {
-        alert('❌ Aucune opportunité disponible.\n\nExécutez d\'abord le SQL de correction pour créer 5 opportunités.');
+        toast.error('❌ Aucune opportunité disponible.\n\nExécutez d\'abord le SQL de correction pour créer 5 opportunités.');
         return;
       }
 
@@ -192,7 +193,7 @@ const BacklinkAutomationDashboard: React.FC = () => {
         logger.error('Erreur campagne:', campError);
       }
 
-      alert(`✅ Automation lancée avec succès!\n\n` +
+      toast.success(`✅ Automation lancée avec succès!\n\n` +
         `${opportunities.length} opportunité(s) détectées\n` +
         `Emails simulés: ${opportunities.length}\n\n` +
         `Les opportunités sont maintenant marquées comme "contactées".`);
@@ -201,7 +202,7 @@ const BacklinkAutomationDashboard: React.FC = () => {
       loadData();
     } catch (error) {
       logger.error('Erreur automation:', error);
-      alert('❌ Erreur lors du lancement de l\'automation');
+      toast.error('❌ Erreur lors du lancement de l\'automation');
     }
   };
 

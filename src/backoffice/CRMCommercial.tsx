@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { logger } from '@/lib/logger';
+import { toast } from '@/lib/toast';
 import {
   Phone, Mail, MessageSquare, Calendar, FileText, CheckCircle,
   XCircle, Clock, TrendingUp, Users, Send, Sparkles, Upload,
@@ -433,7 +434,7 @@ setNotifications(prev => [payload.new, ...prev]);
 
   const sendEmail = async () => {
     if (!selectedLead || !emailForm.subject || !emailForm.content) {
-      alert('⚠️ Veuillez remplir tous les champs (sujet et contenu)');
+      toast.warning('⚠️ Veuillez remplir tous les champs (sujet et contenu)');
       return;
     }
 
@@ -498,7 +499,7 @@ setNotifications(prev => [payload.new, ...prev]);
       }
 
       // Succès !
-      alert('✅ Email envoyé avec succès à ' + selectedLead.email + ' !\n\nUn email de confirmation sera visible dans l\'onglet Interactions.');
+      toast.success('✅ Email envoyé avec succès à ' + selectedLead.email + ' !\n\nUn email de confirmation sera visible dans l\'onglet Interactions.');
       setEmailForm({ subject: '', content: '' });
 
       // Recharger les détails du lead
@@ -508,11 +509,11 @@ setNotifications(prev => [payload.new, ...prev]);
       logger.error('❌ Erreur envoi email:', error);
 
       if (error.name === 'AbortError') {
-        alert('⏱️ Timeout: L\'envoi a pris trop de temps (>30s).\n\nVérifiez votre connexion internet et réessayez.');
+        toast.info('⏱️ Timeout: L\'envoi a pris trop de temps (>30s).\n\nVérifiez votre connexion internet et réessayez.');
       } else if (error.message.includes('IONOS_EMAIL_PASSWORD')) {
-        alert('🔑 Configuration manquante: Les identifiants IONOS ne sont pas configurés.\n\nContactez l\'administrateur système.');
+        toast.warning('🔑 Configuration manquante: Les identifiants IONOS ne sont pas configurés.\n\nContactez l\'administrateur système.');
       } else {
-        alert('❌ Erreur lors de l\'envoi de l\'email:\n\n' + error.message + '\n\nVérifiez:\n- Que l\'adresse email est valide\n- Votre connexion internet\n- Les logs de la console (F12)');
+        toast.error('❌ Erreur lors de l\'envoi de l\'email:\n\n' + error.message + '\n\nVérifiez:\n- Que l\'adresse email est valide\n- Votre connexion internet\n- Les logs de la console (F12)');
       }
     } finally {
       setIsSendingEmail(false);
@@ -521,7 +522,7 @@ setNotifications(prev => [payload.new, ...prev]);
 
   const sendSMS = async () => {
     if (!selectedLead || !smsForm.content) {
-      alert('Veuillez saisir le SMS');
+      toast.warning('Veuillez saisir le SMS');
       return;
     }
 
@@ -534,7 +535,7 @@ setNotifications(prev => [payload.new, ...prev]);
     });
 
     if (!error) {
-      alert('SMS envoyé !');
+      toast.success('SMS envoyé !');
       setSmsForm({ content: '' });
       loadLeadDetails(selectedLead.id);
     }
@@ -542,7 +543,7 @@ setNotifications(prev => [payload.new, ...prev]);
 
   const logCall = async () => {
     if (!selectedLead || !callNote) {
-      alert('Veuillez saisir un compte-rendu');
+      toast.warning('Veuillez saisir un compte-rendu');
       return;
     }
 
@@ -554,7 +555,7 @@ setNotifications(prev => [payload.new, ...prev]);
     });
 
     if (!error) {
-      alert('Appel enregistré');
+      toast.success('Appel enregistré');
       setCallNote('');
       loadLeadDetails(selectedLead.id);
     }
@@ -594,7 +595,7 @@ setNotifications(prev => [payload.new, ...prev]);
       .upload(filePath, file);
 
     if (uploadError) {
-      alert('Erreur upload : ' + uploadError.message);
+      toast.error('Erreur upload : ' + uploadError.message);
       return;
     }
 
@@ -608,7 +609,7 @@ setNotifications(prev => [payload.new, ...prev]);
     });
 
     if (!dbError) {
-      alert('Document uploadé !');
+      toast.info('Document uploadé !');
       loadLeadDetails(selectedLead.id);
     }
   };

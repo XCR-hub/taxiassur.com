@@ -3,6 +3,7 @@ import { Activity, TrendingUp, Zap, Target, Brain, AlertTriangle, CheckCircle, C
 import { supabase } from '@/lib/supabase';
 import { useNavigate } from 'react-router-dom';
 import { logger } from '@/lib/logger';
+import { toast } from '@/lib/toast';
 
 interface AIDecision {
   id: string;
@@ -90,12 +91,12 @@ const AIMasterDashboard: React.FC = () => {
       const result = await response.json();
       logger.log('IA Master exécutée:', result);
 
-      alert(`✅ IA Master exécutée avec succès!\n\n${result.decisions_count} décisions prises\nTendance: ${result.performance_trend}\nLeads 24h: ${result.leads_24h}`);
+      toast.success(`✅ IA Master exécutée avec succès!\n\n${result.decisions_count} décisions prises\nTendance: ${result.performance_trend}\nLeads 24h: ${result.leads_24h}`);
 
       await loadData();
     } catch (error) {
       logger.error('Error executing AI Master:', error);
-      alert('❌ Erreur lors de l\'exécution de l\'IA Master');
+      toast.error('❌ Erreur lors de l\'exécution de l\'IA Master');
     } finally {
       setExecuting(false);
     }

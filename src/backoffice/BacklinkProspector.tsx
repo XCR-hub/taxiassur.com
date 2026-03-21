@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { toast } from '@/lib/toast';
 import {
   Link2, Search, Mail, CheckCircle, XCircle, Clock,
   TrendingUp, Filter, Download, Send, Eye, ExternalLink,
@@ -288,7 +289,7 @@ taxiassur.com
     setIsScanning(true);
     // Simulation d'un scan (en prod, appeler une API pour scraper)
     setTimeout(() => {
-      alert('Scan terminé ! 3 nouvelles opportunités détectées.');
+      toast.success('Scan terminé ! 3 nouvelles opportunités détectées.');
       setIsScanning(false);
     }, 3000);
   };
@@ -633,7 +634,7 @@ taxiassur.com
                   <button
                     onClick={() => {
                       navigator.clipboard.writeText(generateEmail(selectedOpportunity));
-                      alert('Email copié dans le presse-papier !');
+                      toast.success('Email copié dans le presse-papier !');
                     }}
                     className="flex items-center space-x-2 bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
                   >

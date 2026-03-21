@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { logger } from '@/lib/logger';
+import { toast } from '@/lib/toast';
 import {
   Zap, Play, Pause, RefreshCw, Settings, CheckCircle,
   AlertTriangle, TrendingUp, BarChart3, Target, Sparkles,
@@ -165,10 +166,10 @@ export default function AutoOptimizer() {
       setLastCheck(new Date());
 
       const status = newStatus ? '✅ activée' : '⏸️ désactivée';
-      alert(`L'automatisation "${AUTOMATION_DESCRIPTIONS[automation.name]?.title || automation.name}" est maintenant ${status}`);
+      toast.info(`L'automatisation "${AUTOMATION_DESCRIPTIONS[automation.name]?.title || automation.name}" est maintenant ${status}`);
     } catch (error) {
       logger.error('Error toggling automation:', error);
-      alert('❌ Erreur lors du changement de statut');
+      toast.error('❌ Erreur lors du changement de statut');
     }
   };
 
@@ -180,12 +181,12 @@ export default function AutoOptimizer() {
       await new Promise(resolve => setTimeout(resolve, 2000));
 
       const description = AUTOMATION_DESCRIPTIONS[automation.name];
-      alert(`✅ Test réussi !\n\n${description?.testDescription || 'Test exécuté avec succès'}`);
+      toast.success(`✅ Test réussi !\n\n${description?.testDescription || 'Test exécuté avec succès'}`);
 
       await loadData();
     } catch (error) {
       logger.error('Error testing automation:', error);
-      alert('❌ Erreur lors du test');
+      toast.error('❌ Erreur lors du test');
     } finally {
       setTesting(null);
     }
@@ -205,10 +206,10 @@ export default function AutoOptimizer() {
       if (error) throw error;
 
       await loadAutomations();
-      alert('✅ Toutes les automatisations sont maintenant actives !\n\nLes processus vont démarrer selon leur fréquence configurée.');
+      toast.success('✅ Toutes les automatisations sont maintenant actives !\n\nLes processus vont démarrer selon leur fréquence configurée.');
     } catch (error) {
       logger.error('Error enabling automations:', error);
-      alert('❌ Erreur lors de l\'activation des automatisations');
+      toast.error('❌ Erreur lors de l\'activation des automatisations');
     }
   };
 
@@ -226,10 +227,10 @@ export default function AutoOptimizer() {
       if (error) throw error;
 
       await loadAutomations();
-      alert('⏸️ Toutes les automatisations ont été désactivées');
+      toast.success('⏸️ Toutes les automatisations ont été désactivées');
     } catch (error) {
       logger.error('Error disabling automations:', error);
-      alert('❌ Erreur lors de la désactivation');
+      toast.error('❌ Erreur lors de la désactivation');
     }
   };
 

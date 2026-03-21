@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { logger } from '@/lib/logger';
+import { toast } from '@/lib/toast';
 import {
   BarChart3, TrendingUp, Globe, Mail, Clock, CheckCircle,
   XCircle, AlertCircle, ChevronDown, ChevronUp, Eye, Send,
@@ -251,10 +252,10 @@ const BacklinkReports: React.FC = () => {
                     }
 
                     const result = await response.json();
-                    alert(`✅ ${result.emailsSent || 0} emails envoyés !`);
+                    toast.success(`✅ ${result.emailsSent || 0} emails envoyés !`);
                     setTimeout(loadDetailedStats, 2000);
                   } catch (error: any) {
-                    alert(`❌ Erreur: ${error.message}`);
+                    toast.error(`❌ Erreur: ${error.message}`);
                   } finally {
                     setLoading(false);
                   }

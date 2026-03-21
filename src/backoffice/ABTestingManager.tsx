@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { Beaker, Play, Pause, CheckCircle, BarChart3, TrendingUp, Plus, Trash2 } from 'lucide-react';
+import { toast } from '@/lib/toast';
 
 interface ABTest {
   id: string;
@@ -124,7 +125,7 @@ export default function ABTestingManager() {
       .insert([{ ...formData, status: 'draft' }]);
 
     if (!error) {
-      alert('Test A/B créé ! Vous pouvez maintenant le lancer.');
+      toast.success('Test A/B créé ! Vous pouvez maintenant le lancer.');
       setFormData({
         name: '',
         description: '',
@@ -137,7 +138,7 @@ export default function ABTestingManager() {
       setShowCreateForm(false);
       loadTests();
     } else {
-      alert('Erreur : ' + error.message);
+      toast.error('Erreur : ' + error.message);
     }
   };
 
@@ -150,13 +151,13 @@ export default function ABTestingManager() {
       });
 
       if (response.data?.success) {
-        alert(`✅ Test lancé ! ${response.data.sent_a} variante A, ${response.data.sent_b} variante B envoyés.`);
+        toast.success(`✅ Test lancé ! ${response.data.sent_a} variante A, ${response.data.sent_b} variante B envoyés.`);
         loadTests();
       } else {
-        alert('Erreur lors du lancement : ' + (response.error?.message || 'Erreur inconnue'));
+        toast.error('Erreur lors du lancement : ' + (response.error?.message || 'Erreur inconnue'));
       }
     } catch (error) {
-      alert('Erreur : ' + error.message);
+      toast.error('Erreur : ' + error.message);
     }
   };
 
@@ -171,7 +172,7 @@ export default function ABTestingManager() {
       .eq('id', testId);
 
     if (!error) {
-      alert(`Test terminé ! Variante ${winner} déclarée gagnante.`);
+      toast.success(`Test terminé ! Variante ${winner} déclarée gagnante.`);
       loadTests();
     }
   };
@@ -185,7 +186,7 @@ export default function ABTestingManager() {
       .eq('id', testId);
 
     if (!error) {
-      alert('Test supprimé !');
+      toast.success('Test supprimé !');
       loadTests();
     }
   };

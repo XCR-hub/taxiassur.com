@@ -5,6 +5,7 @@ import { getBacklinks, addBacklink, type Backlink } from '../lib/backlinks';
 import { verifyBacklink } from '../lib/ping';
 import Card from '../components/Card';
 import { logger } from '@/lib/logger';
+import { toast } from '@/lib/toast';
 
 const BacklinkManager: React.FC = () => {
   const navigate = useNavigate();
@@ -60,12 +61,12 @@ const BacklinkManager: React.FC = () => {
           tags: ''
         });
         loadBacklinks();
-        alert('Backlink ajouté avec succès !');
+        toast.success('Backlink ajouté avec succès !');
       } else {
-        alert('Erreur lors de l\'ajout du backlink');
+        toast.error('Erreur lors de l\'ajout du backlink');
       }
     } catch (error) {
-      alert('Erreur de connexion');
+      toast.error('Erreur de connexion');
     }
   };
 
@@ -74,9 +75,9 @@ const BacklinkManager: React.FC = () => {
     try {
       const result = await verifyBacklink(backlink.url);
       // Ici on pourrait mettre à jour le statut du backlink
-      alert(result.exists ? 'Backlink vérifié ✓' : 'Backlink non trouvé ✗');
+      toast.info(result.exists ? 'Backlink vérifié ✓' : 'Backlink non trouvé ✗');
     } catch (error) {
-      alert('Erreur lors de la vérification');
+      toast.error('Erreur lors de la vérification');
     } finally {
       setVerifying(null);
     }

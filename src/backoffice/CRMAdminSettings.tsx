@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Settings, Users, Bell, Shield, Database, Zap, Mail, MessageSquare, Bot, Save, CheckCircle, X, UserPlus, Trash2, Lock, Eye, CreditCard as Edit, AlertTriangle, Send, Key } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { toast } from '@/lib/toast';
 
 interface CRMSettings {
   company_name: string;
@@ -190,7 +191,7 @@ const CRMAdminSettings: React.FC = () => {
       setTimeout(() => setSaveSuccess(false), 3000);
     } catch (error) {
       console.error('Erreur sauvegarde:', error);
-      alert('Erreur lors de la sauvegarde des paramètres');
+      toast.error('Erreur lors de la sauvegarde des paramètres');
     } finally {
       setSaving(false);
     }
@@ -339,11 +340,11 @@ const CRMAdminSettings: React.FC = () => {
 
       if (error) throw error;
 
-      alert(`Configuration ${integration} sauvegardée avec succès`);
+      toast.success(`Configuration ${integration} sauvegardée avec succès`);
       setShowIntegrationModal(null);
     } catch (error) {
       console.error('Erreur sauvegarde intégration:', error);
-      alert('Erreur lors de la sauvegarde');
+      toast.error('Erreur lors de la sauvegarde');
     }
   };
 
@@ -428,7 +429,7 @@ const CRMAdminSettings: React.FC = () => {
       loadUserPermissions(userId);
     } catch (error) {
       console.error('Erreur sauvegarde permission:', error);
-      alert('Erreur lors de la sauvegarde de la permission');
+      toast.error('Erreur lors de la sauvegarde de la permission');
     }
   };
 

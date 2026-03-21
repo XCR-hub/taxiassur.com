@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { toast } from '@/lib/toast';
 import {
   Brain,
   TrendingUp,
@@ -106,11 +107,11 @@ const AIInsightsDashboard: React.FC = () => {
 
       if (error) throw error;
 
-      alert(`✅ Analyse terminée !\n\n${data.patterns_detected} patterns détectés\n${data.suggestions_created} suggestions créées`);
+      toast.success(`✅ Analyse terminée !\n\n${data.patterns_detected} patterns détectés\n${data.suggestions_created} suggestions créées`);
       await loadData();
     } catch (error) {
       console.error('Error running analysis:', error);
-      alert('❌ Erreur lors de l\'analyse');
+      toast.error('❌ Erreur lors de l\'analyse');
     } finally {
       setAnalyzing(false);
     }
@@ -123,7 +124,7 @@ const AIInsightsDashboard: React.FC = () => {
         .update({ status: 'approved' })
         .eq('id', id);
 
-      alert('✅ Suggestion acceptée ! Vous pouvez maintenant l\'implémenter dans les automatisations.');
+      toast.success('✅ Suggestion acceptée ! Vous pouvez maintenant l\'implémenter dans les automatisations.');
       await loadData();
     } catch (error) {
       console.error('Error accepting suggestion:', error);
