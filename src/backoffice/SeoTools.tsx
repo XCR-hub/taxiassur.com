@@ -36,12 +36,10 @@ const SeoTools: React.FC = () => {
 
   const loadSeoData = async () => {
     try {
-      // Récupérer les vraies métriques depuis Supabase (UNIQUEMENT données réelles)
       const { data, error } = await supabase.rpc('get_current_seo_metrics');
 
       if (error) {
         logger.error('Error loading SEO metrics:', error);
-        // PAS de fallback - afficher qu'il n'y a pas de données
         setSeoData({
           lastSitemapUpdate: '',
           totalUrls: 0,
@@ -58,7 +56,6 @@ const SeoTools: React.FC = () => {
 
       if (data && data.length > 0) {
         const metrics = data[0];
-        // Vérifier si c'est vraiment des données réelles (pas juste des 0)
         const hasRealData = metrics.last_update !== null &&
                            (metrics.impressions_30d > 0 || metrics.total_urls > 0);
 
@@ -74,7 +71,6 @@ const SeoTools: React.FC = () => {
           isRealData: hasRealData
         });
       } else {
-        // Aucune donnée réelle - afficher 0 partout
         setSeoData({
           lastSitemapUpdate: '',
           totalUrls: 0,
@@ -89,7 +85,6 @@ const SeoTools: React.FC = () => {
       }
     } catch (error) {
       logger.error('Error in loadSeoData:', error);
-      // En cas d'erreur, tout à 0
       setSeoData({
         lastSitemapUpdate: '',
         totalUrls: 0,
@@ -120,13 +115,13 @@ const SeoTools: React.FC = () => {
     try {
       const success = await regenerateFeeds();
       if (success) {
-        toast.success('✅ Feeds régénérés avec succès !');
+        toast.success('Feeds régénérés avec succès !');
         loadSeoData();
       } else {
-        toast.error('❌ Erreur lors de la régénération');
+        toast.error('Erreur lors de la régénération');
       }
     } catch (error) {
-      toast.error('❌ Erreur de connexion');
+      toast.error('Erreur de connexion');
     } finally {
       setIsWorking(false);
     }
@@ -137,7 +132,6 @@ const SeoTools: React.FC = () => {
     try {
       const siteUrl = import.meta.env.VITE_SITE_URL || 'https://taxiassur.com';
 
-      // Appel à l'edge function IndexNow RÉELLE
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/indexnow-ping`,
         {
@@ -166,19 +160,7 @@ const SeoTools: React.FC = () => {
           status: response.status
         }]);
 
-        toast.success(`✅ IndexNow Ping Envoyé !
-
-${result.successful || 0}/${result.engines_pinged || 0} moteurs notifiés avec succès :
-${result.message || ''}
-• Bing
-• Yandex
-• Seznam
-
-Votre sitemap sera crawlé dans les prochaines heures.
-
-💡 Astuce : Soumettez aussi manuellement via :
-• Google Search Console : https://search.google.com/search-console
-• Bing Webmaster Tools : https://www.bing.com/webmasters`);
+        toast.success(`IndexNow Ping Envoyé ! ${result.successful || 0}/${result.engines_pinged || 0} moteurs notifiés.`);
       } else {
         setPingResults([{
           engine: 'IndexNow',
@@ -187,11 +169,7 @@ Votre sitemap sera crawlé dans les prochaines heures.
           error: result.error || 'Erreur inconnue'
         }]);
 
-        toast.error(`⚠️ Erreur IndexNow : ${result.error || 'Service temporairement indisponible'}
-
-Vous pouvez soumettre manuellement via :
-• Google Search Console : https://search.google.com/search-console
-• Bing Webmaster Tools : https://www.bing.com/webmasters`);
+        toast.error(`Erreur IndexNow : ${result.error || 'Service temporairement indisponible'}`);
       }
     } catch (error) {
       logger.error('IndexNow ping error:', error);
@@ -201,12 +179,7 @@ Vous pouvez soumettre manuellement via :
         error: error instanceof Error ? error.message : 'Network error'
       }]);
 
-      toast.error(`❌ Erreur réseau lors du ping IndexNow
-
-Vérifiez :
-1. Votre connexion internet
-2. Les paramètres Supabase (URL, Key)
-3. Ou soumettez manuellement via Google/Bing`);
+      toast.error('Erreur réseau lors du ping IndexNow');
     } finally {
       setIsWorking(false);
     }
@@ -235,22 +208,14 @@ Vérifiez :
       const result = await response.json();
 
       if (result.success) {
-        toast.success(`✅ Optimisation SERP terminée !
-
-Opportunités détectées: ${result.analyzed}
-Volume de recherche total: ${result.total_search_volume}
-Concurrence moyenne: ${result.avg_competition}
-
-Stratégie recommandée: ${result.strategy.focus}
-
-Consultez le détail dans la console (F12)`);
+        toast.success(`Optimisation SERP terminée ! Opportunités: ${result.analyzed}`);
         logger.log('SERP Optimization Results:', result);
       } else {
-        toast.error(`❌ Erreur: ${result.error}`);
+        toast.error(`Erreur: ${result.error}`);
       }
     } catch (error) {
       logger.error('SERP optimization error:', error);
-      toast.error('❌ Erreur lors de l\'optimisation SERP');
+      toast.error("Erreur lors de l'optimisation SERP");
     } finally {
       setIsWorking(false);
     }
@@ -303,13 +268,13 @@ Consultez le détail dans la console (F12)`);
                 <AlertCircle className="text-red-600 flex-shrink-0 mt-0.5" size={24} />
                 <div>
                   <p className="text-base font-bold text-red-900 mb-2">
-                    ⚠️ AUCUNE DONNÉE RÉELLE DISPONIBLE
+                    AUCUNE DONNEE REELLE DISPONIBLE
                   </p>
                   <p className="text-sm text-red-800 mb-2">
                     Les métriques affichées sont à <strong>zéro</strong> car Google Search Console n'a pas encore été synchronisé.
                   </p>
                   <p className="text-sm text-red-700 font-medium">
-                    🔧 Action requise : Cliquez sur le bouton <strong>"Sync Google Search Console"</strong> ci-dessous pour récupérer vos vraies données d'indexation.
+                    Action requise : Cliquez sur le bouton <strong>"Sync Google Search Console"</strong> ci-dessous pour récupérer vos vraies données d'indexation.
                   </p>
                 </div>
               </div>
@@ -322,7 +287,7 @@ Consultez le détail dans la console (F12)`);
                 <CheckCircle className="text-green-600 flex-shrink-0 mt-0.5" size={20} />
                 <div>
                   <p className="text-sm font-medium text-green-900">
-                    <strong>✅ Données réelles</strong> depuis Google Search Console
+                    <strong>Données réelles</strong> depuis Google Search Console
                   </p>
                   <p className="text-xs text-green-700 mt-1">
                     Dernière mise à jour : {new Date(seoData.lastUpdate).toLocaleString('fr-FR')} • Prochaine mise à jour automatique dans la nuit
@@ -345,7 +310,7 @@ Consultez le détail dans la console (F12)`);
               <div className="text-2xl font-bold text-white">{seoData.indexedPages}</div>
               <div className="text-sm text-slate-400">Pages indexées</div>
               {seoData.isRealData && (
-                <div className="text-xs text-green-600 mt-1">✅ Données réelles</div>
+                <div className="text-xs text-green-600 mt-1">Données réelles</div>
               )}
             </Card>
 
@@ -409,14 +374,13 @@ Consultez le détail dans la console (F12)`);
                   onClick={async () => {
                     setIsWorking(true);
                     try {
-                      // Rafraîchir les données directement depuis Supabase
                       await loadSeoData();
                       await loadCronJobsStatus();
 
-                      toast.success('✅ Données SEO actualisées depuis Supabase !');
+                      toast.success('Données SEO actualisées depuis Supabase !');
                     } catch (error) {
                       logger.error('GSC sync error:', error);
-                      toast.error(`❌ Erreur: ${error.message}`);
+                      toast.error(`Erreur: ${error.message}`);
                     } finally {
                       setIsWorking(false);
                     }
@@ -425,7 +389,7 @@ Consultez le détail dans la console (F12)`);
                   className="w-full flex items-center justify-center space-x-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 disabled:bg-gray-400 text-white font-medium py-3 px-4 rounded-lg transition-colors shadow-md"
                 >
                   <TrendingUp size={16} className={isWorking ? 'animate-spin' : ''} />
-                  <span>📊 Actualiser les données SEO</span>
+                  <span>Actualiser les données SEO</span>
                 </button>
 
                 <button
@@ -434,7 +398,7 @@ Consultez le détail dans la console (F12)`);
                   className="w-full flex items-center justify-center space-x-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 disabled:bg-gray-400 text-white font-medium py-3 px-4 rounded-lg transition-colors shadow-md"
                 >
                   <Globe size={16} className={isWorking ? 'animate-spin' : ''} />
-                  <span>🔔 Notifier les Moteurs de Recherche</span>
+                  <span>Notifier les Moteurs de Recherche</span>
                 </button>
 
                 <div className="w-full bg-orange-900/30 border-2 border-orange-500 rounded-lg p-4">
@@ -442,14 +406,14 @@ Consultez le détail dans la console (F12)`);
                     <Settings className="text-orange-400 flex-shrink-0 mt-0.5" size={20} />
                     <div>
                       <p className="text-sm font-bold text-orange-300 mb-2">
-                        🔧 Configuration API Google Search Console
+                        Configuration API Google Search Console
                       </p>
                       <p className="text-xs text-orange-200 mb-3">
                         Pour obtenir les vraies données Google (pages indexées, performances, etc.) :
                       </p>
                       <div className="text-xs text-orange-100 space-y-1 mb-3">
-                        <p><strong>1.</strong> Active l'API dans <a href="https://console.cloud.google.com/apis/library" target=\"_blank" className="underline hover:text-orange-200">Google Cloud Console</a></p>
-                        <p><strong>2.</strong> Crée une clé API dans <a href="https://console.cloud.google.com/apis/credentials" target=\"_blank" className="underline hover:text-orange-200">Credentials</a></p>
+                        <p><strong>1.</strong> Active l'API dans <a href="https://console.cloud.google.com/apis/library" target=\"_blank" rel="noopener noreferrer\" className="underline hover:text-orange-200">Google Cloud Console</a></p>
+                        <p><strong>2.</strong> Crée une clé API dans <a href="https://console.cloud.google.com/apis/credentials" target=\"_blank" rel="noopener noreferrer\" className="underline hover:text-orange-200">Credentials</a></p>
                         <p><strong>3.</strong> Ajoute la clé dans Supabase Secrets :</p>
                       </div>
                       <div className="bg-slate-900 p-2 rounded border border-orange-500 mb-3">
@@ -458,8 +422,8 @@ Consultez le détail dans la console (F12)`);
                         </code>
                       </div>
                       <p className="text-xs text-orange-200">
-                        📚 <a href="/SOLUTION-GOOGLE-CSE-SANS-WEBHOOK.md" className="underline hover:text-orange-100 font-semibold" target="_blank">
-                          → Voir le guide complet étape par étape
+                        <a href="/SOLUTION-GOOGLE-CSE-SANS-WEBHOOK.md" className="underline hover:text-orange-100 font-semibold" target="_blank" rel="noopener noreferrer">
+                          Voir le guide complet étape par étape
                         </a>
                       </p>
                     </div>
@@ -472,7 +436,7 @@ Consultez le détail dans la console (F12)`);
                   className="w-full flex items-center justify-center space-x-2 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 disabled:bg-gray-400 text-black font-bold py-3 px-4 rounded-lg transition-colors shadow-lg"
                 >
                   <TrendingUp size={16} />
-                  <span>🚀 Optimiser Leads (SerpAPI)</span>
+                  <span>Optimiser Leads (SerpAPI)</span>
                 </button>
               </div>
             </Card>
@@ -514,7 +478,7 @@ Consultez le détail dans la console (F12)`);
           {pingResults.length > 0 && (
             <Card className="mb-8 bg-slate-800 border border-slate-700">
               <h3 className="text-lg font-semibold text-white mb-4">
-                Résultats Ping Moteurs (Simulé)
+                Résultats Ping Moteurs
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {pingResults.map((result, index) => (
@@ -523,14 +487,14 @@ Consultez le détail dans la console (F12)`);
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                       result.success ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                     }`}>
-                      {result.success ? 'Simulé' : 'Erreur'}
+                      {result.success ? 'OK' : 'Erreur'}
                     </span>
                   </div>
                 ))}
               </div>
               <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
                 <p className="text-sm text-yellow-800">
-                  ⚠️ <strong>Note:</strong> Les pings sont simulés. Pour un indexation réelle, soumettez votre sitemap via Google Search Console et Bing Webmaster Tools.
+                  <strong>Note:</strong> Pour une indexation réelle, soumettez votre sitemap via Google Search Console et Bing Webmaster Tools.
                 </p>
               </div>
             </Card>
@@ -555,11 +519,11 @@ Consultez le détail dans la console (F12)`);
                     <div className="text-right">
                       {job.is_active ? (
                         <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
-                          ✅ Actif
+                          Actif
                         </span>
                       ) : (
                         <span className="px-2 py-1 bg-red-100 text-red-800 text-xs rounded-full">
-                          ❌ Inactif
+                          Inactif
                         </span>
                       )}
                       {job.next_run && (
@@ -573,7 +537,7 @@ Consultez le détail dans la console (F12)`);
               </div>
               <div className="mt-4 p-3 bg-orange-50 rounded-lg">
                 <p className="text-sm text-orange-900">
-                  <strong>📅 Rafraîchissement automatique:</strong> Tous les jours à 2h du matin
+                  <strong>Rafraîchissement automatique:</strong> Tous les jours à 2h du matin
                 </p>
                 <p className="text-xs text-orange-700 mt-1">
                   Les métriques SEO sont mises à jour automatiquement chaque nuit avec les données réelles depuis Google Search Console.
@@ -594,6 +558,7 @@ Consultez le détail dans la console (F12)`);
                   key={city.slug}
                   href={`/ville/${city.slug}`}
                   target="_blank"
+                  rel="noopener noreferrer"
                   className="text-center p-3 bg-slate-50 rounded-lg hover:bg-orange-50 transition-colors group border border-slate-200"
                 >
                   <div className="text-sm font-medium text-slate-900 group-hover:text-orange-600">
@@ -606,6 +571,7 @@ Consultez le détail dans la console (F12)`);
                 <a
                   href="/villes"
                   target="_blank"
+                  rel="noopener noreferrer"
                   className="text-center p-3 bg-orange-50 rounded-lg hover:bg-orange-100 transition-colors border border-orange-200"
                 >
                   <div className="text-sm font-medium text-orange-600">
