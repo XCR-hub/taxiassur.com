@@ -26,8 +26,10 @@ import {
   ClipboardList,
   ChevronDown,
   Layers,
+  FileCheck,
 } from 'lucide-react';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
+import { usePendingDocumentsCount } from '@/hooks/usePendingDocumentsCount';
 import { AdminSessionKeepAlive } from '@/components/AdminSessionKeepAlive';
 import { CRMPushNotifications } from '@/components/CRMPushNotifications';
 import AdminLogin from '@/components/AdminLogin';
@@ -44,6 +46,7 @@ const CRMLayout: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, signOut, isAuthenticated, loading } = useAdminAuth();
+  const { count: pendingDocsCount } = usePendingDocumentsCount();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [advancedOpen, setAdvancedOpen] = useState(false);
 
@@ -83,6 +86,7 @@ const CRMLayout: React.FC = () => {
     { id: 'insurance-companies', label: 'Compagnies',       icon: Building2,       path: '/backoffice/insurance-companies',     badge: null },
     { id: 'retention',           label: 'Rétention',        icon: Shield,          path: '/backoffice/crm-killer/retention',    badge: stats.at_risk_clients || null },
     { id: 'duplicates',          label: 'Doublons',         icon: Copy,            path: '/backoffice/doublons',                badge: null },
+    { id: 'pending-documents',   label: 'Docs à Valider',   icon: FileCheck,       path: '/backoffice/pending-documents',       badge: pendingDocsCount || null },
     { id: 'ia',                  label: 'IA Governance',    icon: Bot,             path: '/backoffice/crm-killer/ia',           badge: stats.ai_decisions_pending || null },
     { id: 'templates',           label: 'Templates',        icon: FileText,        path: '/backoffice/crm-killer/templates',    badge: null },
     { id: 'email-marketing',     label: 'Email Marketing',  icon: Mail,            path: '/backoffice/email-marketing',         badge: null },

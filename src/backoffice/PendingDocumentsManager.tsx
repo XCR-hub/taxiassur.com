@@ -1,11 +1,12 @@
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  FileCheck, CheckCircle, XCircle, Eye, ExternalLink,
-  User, Mail, Phone, Calendar, FileText, AlertCircle,
+  FileCheck, CheckCircle, XCircle, Eye,
+  ExternalLink, User, Clock, FileText, AlertCircle,
   Download, RefreshCw, Filter, ChevronDown, ChevronRight,
-  Image as ImageIcon, FileWarning, Clock, Layers,
-  ShieldCheck, ShieldX, Info, X, CheckSquare, Square,
+  FileWarning, ShieldCheck, ShieldX,
+  Info, X, CheckSquare, Square, Search, Inbox,
+  ChevronLeft,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
@@ -68,7 +69,6 @@ const SUSPECT_NAME_PATTERNS = [
   /checkmark/i, /arrow/i, /border/i, /badge/i, /stamp/i, /watermark/i,
   /pattern/i, /texture/i, /mail.*sign/i, /email.*sign/i,
 ];
-
 const SUSPECT_EXTENSIONS = ['.gif', '.ico', '.svg', '.bmp'];
 const SUSPECT_MIME = ['image/gif', 'image/svg+xml', 'image/x-icon', 'image/vnd.microsoft.icon'];
 
@@ -76,23 +76,13 @@ function isSuspectDocument(doc: PendingDocument): boolean {
   const name = (doc.file_name || '').toLowerCase();
   const mime = (doc.mime_type || '').toLowerCase();
   const ext = name.includes('.') ? '.' + name.split('.').pop() : '';
-
   if (SUSPECT_MIME.includes(mime)) return true;
   if (SUSPECT_EXTENSIONS.includes(ext)) return true;
   if (SUSPECT_NAME_PATTERNS.some(re => re.test(name))) return true;
-
   const isImage = mime.startsWith('image/');
   const isSmall = (doc.file_size ?? 0) > 0 && (doc.file_size ?? 0) < 30_000;
   if (isImage && isSmall) return true;
-
   return false;
-}
-
-function getFileIcon(mime: string | null) {
-  if (!mime) return FileText;
-  if (mime === 'application/pdf') return FileText;
-  if (mime.startsWith('image/')) return ImageIcon;
-  return FileText;
 }
 
 function formatSize(bytes: number | null): string {
@@ -114,11 +104,15 @@ function getPublicUrl(doc: PendingDocument): string {
 function timeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
   const h = Math.floor(diff / 3600000);
-  if (h < 1) return 'il y a < 1h';
-  if (h < 24) return `il y a ${h}h`;
+  if (h < 1) return '< 1h';
+  if (h < 24) return `${h}h`;
   const d = Math.floor(h / 24);
-  if (d < 7) return `il y a ${d}j`;
+  if (d < 7) return `${d}j`;
   return new Date(dateStr).toLocaleDateString('fr-FR');
+}
+
+function isUrgentDoc(doc: PendingDocument): boolean {
+  return (Date.now() - new Date(doc.uploaded_at).getTime()) / 3600000 > 24;
 }
 
 /* ─── Sub-components ─────────────────────────────────────── */
@@ -130,7 +124,7 @@ function PreviewThumb({ doc }: { doc: PendingDocument }) {
 
   if (mime.startsWith('image/') && !err) {
     return (
-      <div className="w-16 h-16 rounded-lg overflow-hidden bg-slate-700 flex-shrink-0 border border-slate-600">
+      <div className="w-14 h-14 rounded-xl overflow-hidden bg-slate-700 flex-shrink-0 border border-slate-600/60">
         <img
           src={url}
           alt={doc.file_name}
@@ -141,45 +135,33 @@ function PreviewThumb({ doc }: { doc: PendingDocument }) {
     );
   }
 
-  const Icon = mime === 'application/pdf' ? FileText : FileText;
-  const color = mime === 'application/pdf' ? 'text-red-400' : 'text-blue-400';
-
+  const isPdf = mime === 'application/pdf';
   return (
-    <div className={`w-16 h-16 rounded-lg bg-slate-700/60 border border-slate-600 flex items-center justify-center flex-shrink-0`}>
-      <Icon className={`w-7 h-7 ${color}`} />
+    <div className={`w-14 h-14 rounded-xl flex-shrink-0 border flex items-center justify-center ${isPdf ? 'bg-red-500/10 border-red-500/30' : 'bg-slate-700/60 border-slate-600/50'}`}>
+      {isPdf
+        ? <FileText className="w-6 h-6 text-red-400" />
+        : <FileText className="w-6 h-6 text-blue-400" />}
     </div>
   );
 }
 
-function SuspectBadge() {
-  return (
-    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-orange-500/15 text-orange-400 border border-orange-500/30">
-      <FileWarning className="w-3 h-3" />
-      Suspect (logo/signature?)
-    </span>
-  );
-}
-
-interface RejectModalProps {
+function RejectModal({ state, onClose, onConfirm }: {
   state: RejectModalState;
   onClose: () => void;
   onConfirm: (docId: string, reason: string) => void;
-}
-
-function RejectModal({ state, onClose, onConfirm }: RejectModalProps) {
+}) {
   const [reason, setReason] = useState(state.reason || REJECT_REASONS[0].value);
   const [custom, setCustom] = useState('');
 
   if (!state.open || !state.docId) return null;
 
-  const finalReason = reason === 'autre' ? (custom || 'Autre raison') : (REJECT_REASONS.find(r => r.value === reason)?.label || reason);
+  const finalReason = reason === 'autre'
+    ? (custom || 'Autre raison')
+    : (REJECT_REASONS.find(r => r.value === reason)?.label || reason);
 
   return (
     <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4" onClick={onClose}>
-      <div
-        className="bg-slate-800 border border-slate-700 rounded-2xl p-6 w-full max-w-md shadow-2xl"
-        onClick={e => e.stopPropagation()}
-      >
+      <div className="bg-slate-800 border border-slate-700 rounded-2xl p-6 w-full max-w-md shadow-2xl" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-5">
           <h3 className="text-lg font-bold text-white flex items-center gap-2">
             <ShieldX className="w-5 h-5 text-red-400" />
@@ -189,35 +171,24 @@ function RejectModal({ state, onClose, onConfirm }: RejectModalProps) {
             <X className="w-4 h-4" />
           </button>
         </div>
-
-        <p className="text-slate-400 text-sm mb-4">Choisissez la raison du rejet — le prospect sera notifié.</p>
-
+        <p className="text-slate-400 text-sm mb-4">Le prospect sera notifié de la raison du rejet.</p>
         <div className="space-y-2 mb-4">
           {REJECT_REASONS.map(r => (
             <label key={r.value} className={`flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-colors ${reason === r.value ? 'bg-red-500/15 border border-red-500/40' : 'hover:bg-slate-700/50 border border-transparent'}`}>
-              <input
-                type="radio"
-                name="reason"
-                value={r.value}
-                checked={reason === r.value}
-                onChange={() => setReason(r.value)}
-                className="accent-red-500"
-              />
+              <input type="radio" name="reason" value={r.value} checked={reason === r.value} onChange={() => setReason(r.value)} className="accent-red-500" />
               <span className="text-sm text-slate-300">{r.label}</span>
             </label>
           ))}
         </div>
-
         {reason === 'autre' && (
           <textarea
             value={custom}
             onChange={e => setCustom(e.target.value)}
-            placeholder="Décrivez la raison..."
+            placeholder="Précisez la raison..."
             rows={3}
             className="w-full bg-slate-700/50 border border-slate-600 rounded-xl px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-red-500/60 resize-none mb-4"
           />
         )}
-
         <div className="flex gap-3">
           <button onClick={onClose} className="flex-1 px-4 py-2.5 bg-slate-700 hover:bg-slate-600 text-slate-300 rounded-xl text-sm font-medium transition-colors">
             Annuler
@@ -246,6 +217,13 @@ export default function PendingDocumentsManager() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [expandedLeads, setExpandedLeads] = useState<Set<string>>(new Set());
   const [rejectModal, setRejectModal] = useState<RejectModalState>({ open: false, docId: null, reason: '', custom: '' });
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+  // Filters
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterLeadId, setFilterLeadId] = useState<string | null>(null);
+  const [filterTypes, setFilterTypes] = useState<Set<string>>(new Set());
+  const [filterUrgentOnly, setFilterUrgentOnly] = useState(false);
 
   const loadDocuments = useCallback(async () => {
     setLoading(true);
@@ -282,7 +260,6 @@ export default function PendingDocumentsManager() {
 
       setAllDocs(formatted);
 
-      // Auto-expand leads that have real documents
       const leadsWithReal = new Set(
         formatted.filter(d => !isSuspectDocument(d)).map(d => d.lead_id)
       );
@@ -301,11 +278,55 @@ export default function PendingDocumentsManager() {
     suspectDocs: allDocs.filter(d => isSuspectDocument(d)),
   }), [allDocs]);
 
-  const visibleDocs = showSuspects ? allDocs : realDocs;
+  const baseDocs = showSuspects ? allDocs : realDocs;
+
+  // Type counts for sidebar filters
+  const typeCounts = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const doc of baseDocs) {
+      map.set(doc.document_type, (map.get(doc.document_type) || 0) + 1);
+    }
+    return map;
+  }, [baseDocs]);
+
+  // Prospect counts for sidebar
+  const prospectList = useMemo(() => {
+    const map = new Map<string, { name: string; count: number; urgent: number }>();
+    for (const doc of baseDocs) {
+      if (!map.has(doc.lead_id)) {
+        map.set(doc.lead_id, {
+          name: [doc.lead_first_name, doc.lead_last_name].filter(Boolean).join(' ') || 'Prospect inconnu',
+          count: 0,
+          urgent: 0,
+        });
+      }
+      const entry = map.get(doc.lead_id)!;
+      entry.count++;
+      if (isUrgentDoc(doc)) entry.urgent++;
+    }
+    return Array.from(map.entries()).sort((a, b) => b[1].urgent - a[1].urgent || b[1].count - a[1].count);
+  }, [baseDocs]);
+
+  // Apply all filters
+  const filteredDocs = useMemo(() => {
+    return baseDocs.filter(doc => {
+      if (filterLeadId && doc.lead_id !== filterLeadId) return false;
+      if (filterTypes.size > 0 && !filterTypes.has(doc.document_type)) return false;
+      if (filterUrgentOnly && !isUrgentDoc(doc)) return false;
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        const name = [doc.lead_first_name, doc.lead_last_name].join(' ').toLowerCase();
+        const email = (doc.lead_email || '').toLowerCase();
+        const fname = (doc.file_name || '').toLowerCase();
+        if (!name.includes(q) && !email.includes(q) && !fname.includes(q)) return false;
+      }
+      return true;
+    });
+  }, [baseDocs, filterLeadId, filterTypes, filterUrgentOnly, searchQuery]);
 
   const groupedByLead = useMemo(() => {
     const map = new Map<string, { leadName: string; leadEmail: string; leadPhone: string; docs: PendingDocument[] }>();
-    for (const doc of visibleDocs) {
+    for (const doc of filteredDocs) {
       if (!map.has(doc.lead_id)) {
         map.set(doc.lead_id, {
           leadName: [doc.lead_first_name, doc.lead_last_name].filter(Boolean).join(' ') || 'Prospect inconnu',
@@ -317,7 +338,9 @@ export default function PendingDocumentsManager() {
       map.get(doc.lead_id)!.docs.push(doc);
     }
     return Array.from(map.entries());
-  }, [visibleDocs]);
+  }, [filteredDocs]);
+
+  const urgentCount = realDocs.filter(isUrgentDoc).length;
 
   const handleValidate = async (docId: string) => {
     setProcessing(prev => new Set(prev).add(docId));
@@ -355,112 +378,258 @@ export default function PendingDocumentsManager() {
   };
 
   const handleBatchValidate = async () => {
-    for (const id of selectedIds) await handleValidate(id);
+    const ids = Array.from(selectedIds);
+    for (const id of ids) await handleValidate(id);
     setSelectedIds(new Set());
   };
 
-  const toggleLeadExpand = (leadId: string) => {
-    setExpandedLeads(prev => {
-      const s = new Set(prev);
-      s.has(leadId) ? s.delete(leadId) : s.add(leadId);
-      return s;
-    });
+  const toggleLeadExpand = (leadId: string) =>
+    setExpandedLeads(prev => { const s = new Set(prev); s.has(leadId) ? s.delete(leadId) : s.add(leadId); return s; });
+
+  const toggleSelect = (id: string) =>
+    setSelectedIds(prev => { const s = new Set(prev); s.has(id) ? s.delete(id) : s.add(id); return s; });
+
+  const toggleTypeFilter = (type: string) =>
+    setFilterTypes(prev => { const s = new Set(prev); s.has(type) ? s.delete(type) : s.add(type); return s; });
+
+  const clearFilters = () => {
+    setFilterLeadId(null);
+    setFilterTypes(new Set());
+    setFilterUrgentOnly(false);
+    setSearchQuery('');
   };
 
-  const toggleSelect = (id: string) => {
-    setSelectedIds(prev => {
-      const s = new Set(prev);
-      s.has(id) ? s.delete(id) : s.add(id);
-      return s;
-    });
-  };
-
-  const urgentCount = realDocs.filter(d => {
-    const ageH = (Date.now() - new Date(d.uploaded_at).getTime()) / 3600000;
-    return ageH > 24;
-  }).length;
+  const hasActiveFilters = filterLeadId || filterTypes.size > 0 || filterUrgentOnly || searchQuery;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black">
-      <div className="max-w-5xl mx-auto px-4 py-8">
+    <div className="flex h-full bg-gray-900 overflow-hidden">
 
-        {/* ── Header ── */}
-        <div className="flex items-start justify-between mb-6 gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-white flex items-center gap-3 mb-1">
-              <div className="w-9 h-9 bg-amber-500/20 border border-amber-500/40 rounded-xl flex items-center justify-center">
-                <FileCheck className="w-5 h-5 text-amber-400" />
+      {/* ── LEFT FILTER SIDEBAR ── */}
+      <aside className={`flex-shrink-0 bg-black border-r border-gray-800 flex flex-col transition-all duration-300 ${sidebarCollapsed ? 'w-14' : 'w-72'}`}>
+
+        {/* Sidebar header */}
+        <div className="flex items-center justify-between px-4 py-4 border-b border-gray-800">
+          {!sidebarCollapsed && (
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 bg-amber-500/20 border border-amber-500/40 rounded-xl flex items-center justify-center">
+                <FileCheck className="w-4 h-4 text-amber-400" />
               </div>
-              Documents à Valider
-            </h1>
-            <p className="text-slate-400 text-sm">Seuls les vrais documents sont affichés — logos et images de signature exclus automatiquement.</p>
-          </div>
-          <button
-            onClick={loadDocuments}
-            disabled={loading}
-            className="flex items-center gap-2 px-3 py-2 bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white rounded-xl text-sm font-medium transition-colors flex-shrink-0"
-          >
-            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-            Actualiser
-          </button>
-        </div>
-
-        {/* ── Stats strip ── */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-          <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4">
-            <p className="text-amber-300 text-xs font-medium uppercase tracking-wide mb-1">À valider</p>
-            <p className="text-3xl font-bold text-white">{realDocs.length}</p>
-          </div>
-          <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4">
-            <p className="text-blue-300 text-xs font-medium uppercase tracking-wide mb-1">Prospects</p>
-            <p className="text-3xl font-bold text-white">{new Set(realDocs.map(d => d.lead_id)).size}</p>
-          </div>
-          {urgentCount > 0 ? (
-            <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4">
-              <p className="text-red-300 text-xs font-medium uppercase tracking-wide mb-1">+ 24h en attente</p>
-              <p className="text-3xl font-bold text-red-400">{urgentCount}</p>
-            </div>
-          ) : (
-            <div className="bg-green-500/10 border border-green-500/30 rounded-xl p-4">
-              <p className="text-green-300 text-xs font-medium uppercase tracking-wide mb-1">En retard</p>
-              <p className="text-3xl font-bold text-green-400">0</p>
+              <div>
+                <p className="text-white font-semibold text-sm leading-tight">Docs à Valider</p>
+                <p className="text-gray-500 text-xs">{realDocs.length} en attente</p>
+              </div>
             </div>
           )}
-          <div className="bg-slate-700/50 border border-slate-600/40 rounded-xl p-4">
-            <p className="text-slate-400 text-xs font-medium uppercase tracking-wide mb-1">Exclus (suspects)</p>
-            <p className="text-3xl font-bold text-slate-400">{suspectDocs.length}</p>
-          </div>
+          <button
+            onClick={() => setSidebarCollapsed(v => !v)}
+            className={`p-1.5 rounded-lg hover:bg-gray-800 text-gray-400 hover:text-white transition-colors ${sidebarCollapsed ? 'mx-auto' : ''}`}
+            title={sidebarCollapsed ? 'Ouvrir filtres' : 'Réduire'}
+          >
+            {sidebarCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+          </button>
         </div>
 
-        {/* ── Toolbar ── */}
-        <div className="flex items-center gap-3 mb-5">
-          {/* Show suspects toggle */}
-          <button
-            onClick={() => setShowSuspects(v => !v)}
-            className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-colors border ${
-              showSuspects
-                ? 'bg-orange-500/15 border-orange-500/40 text-orange-300'
-                : 'bg-slate-700/50 border-slate-600/40 text-slate-400 hover:text-slate-300'
-            }`}
-          >
-            <Filter className="w-3.5 h-3.5" />
-            {showSuspects ? 'Masquer suspects' : `Afficher suspects (${suspectDocs.length})`}
-          </button>
+        {sidebarCollapsed ? (
+          /* Collapsed icons */
+          <div className="flex-1 flex flex-col items-center gap-2 py-4">
+            {urgentCount > 0 && (
+              <div className="relative">
+                <div className="w-9 h-9 bg-red-500/15 border border-red-500/30 rounded-xl flex items-center justify-center">
+                  <AlertCircle className="w-4 h-4 text-red-400" />
+                </div>
+                <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-white text-xs flex items-center justify-center font-bold">{urgentCount}</span>
+              </div>
+            )}
+            <div className="w-9 h-9 bg-slate-800 border border-slate-700 rounded-xl flex items-center justify-center">
+              <Filter className="w-4 h-4 text-slate-400" />
+            </div>
+            <div className="w-9 h-9 bg-slate-800 border border-slate-700 rounded-xl flex items-center justify-center">
+              <User className="w-4 h-4 text-slate-400" />
+            </div>
+          </div>
+        ) : (
+          <div className="flex-1 overflow-y-auto py-3 space-y-1">
+
+            {/* ── Stats ── */}
+            <div className="px-3 pb-2">
+              <div className="grid grid-cols-2 gap-2">
+                <div className="bg-amber-500/10 border border-amber-500/25 rounded-xl p-3 text-center">
+                  <p className="text-2xl font-bold text-white">{realDocs.length}</p>
+                  <p className="text-amber-300 text-xs mt-0.5">À valider</p>
+                </div>
+                <div className={`border rounded-xl p-3 text-center ${urgentCount > 0 ? 'bg-red-500/10 border-red-500/25' : 'bg-slate-800/60 border-slate-700/40'}`}>
+                  <p className={`text-2xl font-bold ${urgentCount > 0 ? 'text-red-400' : 'text-slate-400'}`}>{urgentCount}</p>
+                  <p className={`text-xs mt-0.5 ${urgentCount > 0 ? 'text-red-300' : 'text-slate-500'}`}>En retard</p>
+                </div>
+              </div>
+              {suspectDocs.length > 0 && (
+                <div className="mt-2 bg-slate-800/60 border border-slate-700/40 rounded-xl p-3 text-center">
+                  <p className="text-lg font-bold text-slate-400">{suspectDocs.length}</p>
+                  <p className="text-slate-500 text-xs">Suspects exclus</p>
+                </div>
+              )}
+            </div>
+
+            <div className="border-t border-gray-800 mx-3" />
+
+            {/* ── Search ── */}
+            <div className="px-3 py-2">
+              <div className="relative">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-500" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  placeholder="Rechercher..."
+                  className="w-full bg-gray-800 border border-gray-700 rounded-lg pl-8 pr-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-amber-500/50"
+                />
+              </div>
+            </div>
+
+            {/* ── Quick filters ── */}
+            <div className="px-3">
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Filtres rapides</p>
+              <div className="space-y-1">
+                <button
+                  onClick={() => { clearFilters(); }}
+                  className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm transition-colors ${!hasActiveFilters ? 'bg-amber-500/15 text-amber-300 border border-amber-500/30' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}
+                >
+                  <Inbox className="w-3.5 h-3.5 flex-shrink-0" />
+                  Tous les documents
+                  <span className="ml-auto text-xs">{baseDocs.length}</span>
+                </button>
+                <button
+                  onClick={() => { setFilterUrgentOnly(v => !v); }}
+                  className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm transition-colors ${filterUrgentOnly ? 'bg-red-500/15 text-red-300 border border-red-500/30' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}
+                >
+                  <Clock className="w-3.5 h-3.5 flex-shrink-0" />
+                  En retard (&gt;24h)
+                  {urgentCount > 0 && <span className="ml-auto bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5 font-bold">{urgentCount}</span>}
+                </button>
+                <button
+                  onClick={() => setShowSuspects(v => !v)}
+                  className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm transition-colors ${showSuspects ? 'bg-orange-500/15 text-orange-300 border border-orange-500/30' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}
+                >
+                  <FileWarning className="w-3.5 h-3.5 flex-shrink-0" />
+                  {showSuspects ? 'Masquer suspects' : 'Voir suspects'}
+                  <span className="ml-auto text-xs">{suspectDocs.length}</span>
+                </button>
+              </div>
+            </div>
+
+            <div className="border-t border-gray-800 mx-3 my-2" />
+
+            {/* ── Filter by type ── */}
+            {typeCounts.size > 0 && (
+              <div className="px-3">
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Type de document</p>
+                <div className="space-y-1">
+                  {Array.from(typeCounts.entries()).map(([type, count]) => (
+                    <button
+                      key={type}
+                      onClick={() => toggleTypeFilter(type)}
+                      className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm transition-colors ${filterTypes.has(type) ? 'bg-blue-500/15 text-blue-300 border border-blue-500/30' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}
+                    >
+                      <FileText className="w-3.5 h-3.5 flex-shrink-0" />
+                      <span className="truncate flex-1 text-left">{DOC_TYPE_LABELS[type] || type}</span>
+                      <span className="ml-auto text-xs flex-shrink-0 bg-gray-700 rounded-full px-1.5 py-0.5">{count}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="border-t border-gray-800 mx-3 my-2" />
+
+            {/* ── Filter by prospect ── */}
+            {prospectList.length > 0 && (
+              <div className="px-3">
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Prospects</p>
+                <div className="space-y-1">
+                  {prospectList.map(([leadId, { name, count, urgent }]) => (
+                    <button
+                      key={leadId}
+                      onClick={() => setFilterLeadId(filterLeadId === leadId ? null : leadId)}
+                      className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm transition-colors ${filterLeadId === leadId ? 'bg-amber-500/15 text-amber-300 border border-amber-500/30' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}
+                    >
+                      <div className="w-6 h-6 bg-gray-700 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <User className="w-3 h-3" />
+                      </div>
+                      <span className="truncate flex-1 text-left text-xs">{name}</span>
+                      <div className="flex items-center gap-1 flex-shrink-0">
+                        {urgent > 0 && <span className="bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center font-bold">{urgent}</span>}
+                        <span className="bg-gray-700 text-gray-300 text-xs rounded-full px-1.5 py-0.5">{count}</span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Bottom padding */}
+            <div className="h-4" />
+          </div>
+        )}
+
+        {/* Refresh button */}
+        {!sidebarCollapsed && (
+          <div className="p-3 border-t border-gray-800">
+            <button
+              onClick={loadDocuments}
+              disabled={loading}
+              className="w-full flex items-center justify-center gap-2 py-2 bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white rounded-xl text-sm transition-colors"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+              Actualiser
+            </button>
+          </div>
+        )}
+      </aside>
+
+      {/* ── MAIN CONTENT ── */}
+      <div className="flex-1 flex flex-col overflow-hidden min-w-0">
+
+        {/* Top bar */}
+        <div className="bg-gray-900 border-b border-gray-800 px-6 py-4 flex items-center gap-4">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-3">
+              <h1 className="text-lg font-bold text-white">Documents à Valider</h1>
+              {urgentCount > 0 && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-red-500/15 border border-red-500/30 rounded-full text-xs text-red-400">
+                  <AlertCircle className="w-3 h-3" />
+                  {urgentCount} en retard
+                </span>
+              )}
+              {hasActiveFilters && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-500/15 border border-amber-500/30 rounded-full text-xs text-amber-400">
+                  <Filter className="w-3 h-3" />
+                  Filtres actifs
+                  <button onClick={clearFilters} className="ml-1 hover:text-amber-200 transition-colors">
+                    <X className="w-3 h-3" />
+                  </button>
+                </span>
+              )}
+            </div>
+            <p className="text-gray-500 text-xs mt-0.5">
+              {filteredDocs.length} document{filteredDocs.length !== 1 ? 's' : ''} affiché{filteredDocs.length !== 1 ? 's' : ''}
+              {suspectDocs.length > 0 && !showSuspects && ` · ${suspectDocs.length} suspects exclus`}
+            </p>
+          </div>
 
           {/* Batch actions */}
           {selectedIds.size > 0 && (
-            <div className="flex items-center gap-2 ml-auto">
-              <span className="text-slate-400 text-sm">{selectedIds.size} sélectionné(s)</span>
+            <div className="flex items-center gap-2">
+              <span className="text-gray-400 text-sm">{selectedIds.size} sélectionné(s)</span>
               <button
                 onClick={handleBatchValidate}
                 className="flex items-center gap-1.5 px-3 py-2 bg-green-600 hover:bg-green-500 text-white rounded-xl text-sm font-medium transition-colors"
               >
                 <CheckSquare className="w-4 h-4" />
-                Tout valider
+                Valider tout
               </button>
               <button
                 onClick={() => setSelectedIds(new Set())}
-                className="px-3 py-2 bg-slate-700 hover:bg-slate-600 text-slate-300 rounded-xl text-sm transition-colors"
+                className="p-2 bg-gray-700 hover:bg-gray-600 text-gray-300 rounded-xl transition-colors"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -468,195 +637,185 @@ export default function PendingDocumentsManager() {
           )}
         </div>
 
-        {/* ── Smart filter info banner ── */}
+        {/* Suspects info banner */}
         {suspectDocs.length > 0 && !showSuspects && (
-          <div className="flex items-start gap-3 bg-slate-800/60 border border-slate-700/50 rounded-xl px-4 py-3 mb-5">
-            <Info className="w-4 h-4 text-slate-400 flex-shrink-0 mt-0.5" />
-            <p className="text-slate-400 text-sm">
-              <span className="text-slate-300 font-medium">{suspectDocs.length} fichier{suspectDocs.length > 1 ? 's' : ''} exclus automatiquement</span>
-              {' '}— logos, icônes, images de signature et fichiers &lt; 30 Ko détectés et filtrés.
-              Cliquez "Afficher suspects\" pour les examiner.
+          <div className="mx-6 mt-4 flex items-center gap-3 bg-gray-800/70 border border-gray-700/50 rounded-xl px-4 py-2.5">
+            <Info className="w-4 h-4 text-gray-400 flex-shrink-0" />
+            <p className="text-gray-400 text-xs flex-1">
+              <span className="text-gray-300 font-medium">{suspectDocs.length} fichier{suspectDocs.length > 1 ? 's' : ''} suspect{suspectDocs.length > 1 ? 's' : ''} masqué{suspectDocs.length > 1 ? 's' : ''}</span>
+              {' '}— logos, icônes, signatures email filtrés automatiquement. Activez "Voir suspects\" dans le panneau de gauche.
             </p>
           </div>
         )}
 
-        {/* ── Content ── */}
-        {loading ? (
-          <div className="flex flex-col items-center py-20 gap-4">
-            <div className="w-10 h-10 border-2 border-amber-400 border-t-transparent rounded-full animate-spin" />
-            <p className="text-slate-400 text-sm">Chargement des documents...</p>
-          </div>
-        ) : visibleDocs.length === 0 ? (
-          <div className="bg-slate-800/40 border border-slate-700/50 rounded-2xl p-14 text-center">
-            <CheckCircle className="w-14 h-14 text-green-400 mx-auto mb-4" />
-            <h3 className="text-xl font-bold text-white mb-2">
-              {showSuspects ? 'Aucun document en attente' : 'Tous les vrais documents sont traités'}
-            </h3>
-            <p className="text-slate-500 text-sm">
-              {!showSuspects && suspectDocs.length > 0
-                ? `${suspectDocs.length} fichier(s) suspect(s) masqué(s).`
-                : 'File vide — aucun document à valider.'}
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {groupedByLead.map(([leadId, { leadName, leadEmail, leadPhone, docs }]) => {
-              const isExpanded = expandedLeads.has(leadId);
-              const urgentInGroup = docs.some(d => (Date.now() - new Date(d.uploaded_at).getTime()) / 3600000 > 24);
-              const selectedInGroup = docs.filter(d => selectedIds.has(d.id)).length;
+        {/* Document list */}
+        <div className="flex-1 overflow-y-auto px-6 py-4">
+          {loading ? (
+            <div className="flex flex-col items-center py-24 gap-4">
+              <div className="w-10 h-10 border-2 border-amber-400 border-t-transparent rounded-full animate-spin" />
+              <p className="text-gray-400 text-sm">Chargement des documents...</p>
+            </div>
+          ) : filteredDocs.length === 0 ? (
+            <div className="bg-gray-800/40 border border-gray-700/50 rounded-2xl p-16 text-center">
+              <CheckCircle className="w-14 h-14 text-green-400 mx-auto mb-4" />
+              <h3 className="text-xl font-bold text-white mb-2">
+                {hasActiveFilters ? 'Aucun résultat pour ces filtres' : 'File vide — tout est traité !'}
+              </h3>
+              <p className="text-gray-500 text-sm">
+                {hasActiveFilters
+                  ? <button onClick={clearFilters} className="text-amber-400 hover:underline">Effacer les filtres</button>
+                  : suspectDocs.length > 0 ? `${suspectDocs.length} fichier(s) suspect(s) masqué(s).` : 'Aucun document en attente.'}
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {groupedByLead.map(([leadId, { leadName, leadEmail, leadPhone, docs }]) => {
+                const isExpanded = expandedLeads.has(leadId);
+                const hasUrgent = docs.some(isUrgentDoc);
+                const selectedInGroup = docs.filter(d => selectedIds.has(d.id)).length;
 
-              return (
-                <div key={leadId} className="bg-slate-800/50 border border-slate-700/50 rounded-2xl overflow-hidden">
-                  {/* Lead header */}
-                  <button
-                    onClick={() => toggleLeadExpand(leadId)}
-                    className="w-full flex items-center gap-4 px-5 py-4 hover:bg-slate-700/30 transition-colors text-left"
-                  >
-                    <div className="w-9 h-9 bg-slate-700 rounded-xl flex items-center justify-center flex-shrink-0">
-                      <User className="w-4.5 h-4.5 text-slate-300" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-white font-semibold text-sm">{leadName}</span>
-                        {urgentInGroup && (
-                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-red-500/15 border border-red-500/30 rounded-full text-xs text-red-400">
-                            <Clock className="w-3 h-3" />
-                            + 24h
-                          </span>
-                        )}
-                        {selectedInGroup > 0 && (
-                          <span className="px-1.5 py-0.5 bg-blue-500/20 border border-blue-500/30 rounded-full text-xs text-blue-400">
-                            {selectedInGroup} sélectionné(s)
-                          </span>
-                        )}
+                return (
+                  <div key={leadId} className="bg-gray-800/60 border border-gray-700/50 rounded-2xl overflow-hidden">
+                    {/* Lead header */}
+                    <button
+                      onClick={() => toggleLeadExpand(leadId)}
+                      className="w-full flex items-center gap-4 px-5 py-3.5 hover:bg-gray-700/30 transition-colors text-left"
+                    >
+                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${hasUrgent ? 'bg-red-500/20 border border-red-500/30' : 'bg-gray-700 border border-gray-600'}`}>
+                        <User className={`w-4 h-4 ${hasUrgent ? 'text-red-400' : 'text-gray-300'}`} />
                       </div>
-                      <div className="flex items-center gap-3 mt-0.5 flex-wrap">
-                        <span className="text-slate-400 text-xs">{leadEmail}</span>
-                        {leadPhone && <span className="text-slate-500 text-xs">{leadPhone}</span>}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-white font-semibold text-sm">{leadName}</span>
+                          {hasUrgent && (
+                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-red-500/15 border border-red-500/30 rounded-full text-xs text-red-400">
+                              <Clock className="w-3 h-3" />
+                              En retard
+                            </span>
+                          )}
+                          {selectedInGroup > 0 && (
+                            <span className="px-1.5 py-0.5 bg-blue-500/20 border border-blue-500/30 rounded-full text-xs text-blue-400">
+                              {selectedInGroup} sélectionné(s)
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-3 mt-0.5 flex-wrap">
+                          <span className="text-gray-500 text-xs">{leadEmail}</span>
+                          {leadPhone && <span className="text-gray-600 text-xs">{leadPhone}</span>}
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex items-center gap-3 flex-shrink-0">
-                      <span className="px-2.5 py-1 bg-amber-500/15 border border-amber-500/30 rounded-full text-xs font-semibold text-amber-400">
-                        {docs.length} doc{docs.length > 1 ? 's' : ''}
-                      </span>
-                      <button
-                        onClick={e => { e.stopPropagation(); navigate(`/backoffice/crm-killer/lead/${leadId}`); }}
-                        className="p-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-400 hover:text-white transition-colors"
-                        title="Voir la fiche"
-                      >
-                        <ExternalLink className="w-3.5 h-3.5" />
-                      </button>
-                      {isExpanded
-                        ? <ChevronDown className="w-4 h-4 text-slate-400" />
-                        : <ChevronRight className="w-4 h-4 text-slate-400" />}
-                    </div>
-                  </button>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <span className="px-2.5 py-1 bg-amber-500/15 border border-amber-500/30 rounded-full text-xs font-semibold text-amber-400">
+                          {docs.length} doc{docs.length > 1 ? 's' : ''}
+                        </span>
+                        <button
+                          onClick={e => { e.stopPropagation(); navigate(`/backoffice/crm-killer/lead/${leadId}`); }}
+                          className="p-1.5 rounded-lg bg-gray-700 hover:bg-gray-600 text-gray-400 hover:text-white transition-colors"
+                          title="Voir la fiche"
+                        >
+                          <ExternalLink className="w-3.5 h-3.5" />
+                        </button>
+                        {isExpanded
+                          ? <ChevronDown className="w-4 h-4 text-gray-500" />
+                          : <ChevronRight className="w-4 h-4 text-gray-500" />}
+                      </div>
+                    </button>
 
-                  {/* Documents list */}
-                  {isExpanded && (
-                    <div className="border-t border-slate-700/50 divide-y divide-slate-700/30">
-                      {docs.map(doc => {
-                        const isSelected = selectedIds.has(doc.id);
-                        const isProc = processing.has(doc.id);
-                        const isSuspect = isSuspectDocument(doc);
-                        const url = getPublicUrl(doc);
-                        const ageH = (Date.now() - new Date(doc.uploaded_at).getTime()) / 3600000;
-                        const isUrgent = ageH > 24;
+                    {/* Documents list */}
+                    {isExpanded && (
+                      <div className="border-t border-gray-700/50 divide-y divide-gray-700/30">
+                        {docs.map(doc => {
+                          const isSelected = selectedIds.has(doc.id);
+                          const isProc = processing.has(doc.id);
+                          const isSuspect = isSuspectDocument(doc);
+                          const url = getPublicUrl(doc);
+                          const urgent = isUrgentDoc(doc);
 
-                        return (
-                          <div
-                            key={doc.id}
-                            className={`px-5 py-4 flex items-center gap-4 transition-colors ${isSelected ? 'bg-blue-500/5' : 'hover:bg-slate-700/20'}`}
-                          >
-                            {/* Select checkbox */}
-                            <button
-                              onClick={() => toggleSelect(doc.id)}
-                              className="flex-shrink-0 text-slate-500 hover:text-blue-400 transition-colors"
+                          return (
+                            <div
+                              key={doc.id}
+                              className={`px-5 py-3.5 flex items-center gap-4 transition-colors ${isSelected ? 'bg-blue-500/5 border-l-2 border-l-blue-500' : 'hover:bg-gray-700/20'}`}
                             >
-                              {isSelected
-                                ? <CheckSquare className="w-4.5 h-4.5 text-blue-400" />
-                                : <Square className="w-4.5 h-4.5" />}
-                            </button>
+                              {/* Checkbox */}
+                              <button onClick={() => toggleSelect(doc.id)} className="flex-shrink-0 text-gray-600 hover:text-blue-400 transition-colors">
+                                {isSelected
+                                  ? <CheckSquare className="w-4 h-4 text-blue-400" />
+                                  : <Square className="w-4 h-4" />}
+                              </button>
 
-                            {/* Thumbnail */}
-                            <PreviewThumb doc={doc} />
+                              {/* Thumbnail */}
+                              <PreviewThumb doc={doc} />
 
-                            {/* Info */}
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 flex-wrap mb-1">
-                                <span className="text-white text-sm font-medium truncate">
-                                  {DOC_TYPE_LABELS[doc.document_type] || doc.document_type}
-                                </span>
-                                {isSuspect && <SuspectBadge />}
-                                {isUrgent && (
-                                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-red-500/15 border border-red-500/30 rounded-full text-xs text-red-400">
-                                    <AlertCircle className="w-3 h-3" />
-                                    En retard
+                              {/* Info */}
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 flex-wrap mb-1">
+                                  <span className="text-white text-sm font-medium">
+                                    {DOC_TYPE_LABELS[doc.document_type] || doc.document_type}
                                   </span>
-                                )}
+                                  {isSuspect && (
+                                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-xs bg-orange-500/15 text-orange-400 border border-orange-500/30">
+                                      <FileWarning className="w-3 h-3" />
+                                      Suspect
+                                    </span>
+                                  )}
+                                  {urgent && (
+                                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-red-500/15 border border-red-500/30 rounded-full text-xs text-red-400">
+                                      <AlertCircle className="w-3 h-3" />
+                                      En retard
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-3 text-gray-500 text-xs flex-wrap">
+                                  <span className="truncate max-w-[160px]" title={doc.file_name}>{doc.file_name}</span>
+                                  {doc.file_size && <span>{formatSize(doc.file_size)}</span>}
+                                  {doc.mime_type && <span className="hidden lg:inline uppercase">{doc.mime_type.split('/')[1]}</span>}
+                                  <span className="flex items-center gap-1">
+                                    <Clock className="w-3 h-3" />
+                                    {timeAgo(doc.uploaded_at)}
+                                  </span>
+                                </div>
                               </div>
-                              <div className="flex items-center gap-3 text-slate-500 text-xs flex-wrap">
-                                <span className="truncate max-w-[180px]" title={doc.file_name}>{doc.file_name}</span>
-                                {doc.file_size && <span>{formatSize(doc.file_size)}</span>}
-                                {doc.mime_type && <span className="hidden md:inline">{doc.mime_type.split('/')[1]?.toUpperCase()}</span>}
-                                <span className="flex items-center gap-1">
-                                  <Clock className="w-3 h-3" />
-                                  {timeAgo(doc.uploaded_at)}
-                                </span>
-                              </div>
-                            </div>
 
-                            {/* Actions */}
-                            <div className="flex items-center gap-2 flex-shrink-0">
-                              <a
-                                href={url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                title="Voir le document"
-                                className="p-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white transition-colors"
-                              >
-                                <Eye className="w-4 h-4" />
-                              </a>
-                              <a
-                                href={url}
-                                download={doc.file_name}
-                                title="Télécharger"
-                                className="p-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white transition-colors"
-                              >
-                                <Download className="w-4 h-4" />
-                              </a>
-                              <button
-                                onClick={() => handleValidate(doc.id)}
-                                disabled={isProc}
-                                title="Valider"
-                                className="p-2 rounded-lg bg-green-600/80 hover:bg-green-500 text-white transition-colors disabled:opacity-40"
-                              >
-                                {isProc
-                                  ? <RefreshCw className="w-4 h-4 animate-spin" />
-                                  : <ShieldCheck className="w-4 h-4" />}
-                              </button>
-                              <button
-                                onClick={() => setRejectModal({ open: true, docId: doc.id, reason: REJECT_REASONS[0].value, custom: '' })}
-                                disabled={isProc}
-                                title="Rejeter"
-                                className="p-2 rounded-lg bg-red-600/80 hover:bg-red-500 text-white transition-colors disabled:opacity-40"
-                              >
-                                <ShieldX className="w-4 h-4" />
-                              </button>
+                              {/* Actions */}
+                              <div className="flex items-center gap-1.5 flex-shrink-0">
+                                <a href={url} target="_blank" rel="noopener noreferrer" title="Aperçu"
+                                  className="p-2 rounded-lg bg-gray-700 hover:bg-gray-600 text-gray-300 hover:text-white transition-colors">
+                                  <Eye className="w-4 h-4" />
+                                </a>
+                                <a href={url} download={doc.file_name} title="Télécharger"
+                                  className="p-2 rounded-lg bg-gray-700 hover:bg-gray-600 text-gray-300 hover:text-white transition-colors">
+                                  <Download className="w-4 h-4" />
+                                </a>
+                                <button
+                                  onClick={() => handleValidate(doc.id)}
+                                  disabled={isProc}
+                                  title="Valider"
+                                  className="p-2 rounded-lg bg-green-600/80 hover:bg-green-500 text-white transition-colors disabled:opacity-40"
+                                >
+                                  {isProc ? <RefreshCw className="w-4 h-4 animate-spin" /> : <ShieldCheck className="w-4 h-4" />}
+                                </button>
+                                <button
+                                  onClick={() => setRejectModal({ open: true, docId: doc.id, reason: REJECT_REASONS[0].value, custom: '' })}
+                                  disabled={isProc}
+                                  title="Rejeter"
+                                  className="p-2 rounded-lg bg-red-600/80 hover:bg-red-500 text-white transition-colors disabled:opacity-40"
+                                >
+                                  <ShieldX className="w-4 h-4" />
+                                </button>
+                              </div>
                             </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        )}
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Reject Modal */}
       <RejectModal
         state={rejectModal}
         onClose={() => setRejectModal({ open: false, docId: null, reason: '', custom: '' })}
