@@ -52,6 +52,16 @@ const DevisAssuranceTaxi: React.FC = () => {
       <JsonLd type="breadcrumb" data={breadcrumbs} />
       <JsonLd type="organization" />
       <JsonLd type="faq" data={faqItems} />
+      <JsonLd type="insurance-product" data={{
+        name: "Devis Assurance Taxi Gratuit en 2 Minutes",
+        description: "Obtenez votre devis assurance taxi gratuit en 2 minutes. Comparaison de 15 assureurs spécialisés, réponse sous 15 min, économies jusqu'à 35%. RC Pro incluse.",
+        url: "/devis-assurance-taxi",
+        lowPrice: 890,
+        highPrice: 1800,
+        ratingValue: "4.9",
+        reviewCount: 127,
+        offerCount: 15
+      }} />
 
       <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-black">
         <Header />

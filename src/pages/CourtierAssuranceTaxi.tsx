@@ -48,6 +48,16 @@ const CourtierAssuranceTaxi: React.FC = () => {
       <JsonLd type="breadcrumb" data={breadcrumbs} />
       <JsonLd type="organization" />
       <JsonLd type="faq" data={faqItems} />
+      <JsonLd type="insurance-product" data={{
+        name: "Courtier Assurance Taxi Spécialisé",
+        description: "Courtier spécialisé assurance taxi agréé ORIAS. Accès à 15 assureurs partenaires, tarifs négociés, économisez jusqu'à 35% sur votre prime annuelle. RC Pro incluse.",
+        url: "/courtier-assurance-taxi",
+        lowPrice: 890,
+        highPrice: 1800,
+        ratingValue: "4.9",
+        reviewCount: 127,
+        offerCount: 15
+      }} />
 
       <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-black">
         <Header />

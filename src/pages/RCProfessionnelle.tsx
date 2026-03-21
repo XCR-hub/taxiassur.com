@@ -24,6 +24,16 @@ const RCProfessionnelle: React.FC = () => {
       />
       <JsonLd type="breadcrumb" data={breadcrumbs} />
       <JsonLd type="organization" />
+      <JsonLd type="insurance-product" data={{
+        name: "RC Professionnelle Taxi Obligatoire",
+        description: "Responsabilité Civile Professionnelle taxi obligatoire. Couverture jusqu'à 10M€, protection juridique incluse, assistance 24h/24. Tarifs à partir de 300€/an.",
+        url: "/rc-professionnelle",
+        lowPrice: 300,
+        highPrice: 800,
+        ratingValue: "4.9",
+        reviewCount: 78,
+        offerCount: 12
+      }} />
 
     <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-black">
       <Header />

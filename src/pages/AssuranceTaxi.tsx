@@ -58,6 +58,16 @@ const AssuranceTaxi: React.FC = () => {
       />
       <JsonLd type="breadcrumb" data={breadcrumbs} />
       <JsonLd type="organization" />
+      <JsonLd type="insurance-product" data={{
+        name: "Assurance Taxi Professionnelle",
+        description: "Assurance taxi complète avec RC Pro obligatoire, dommages tous accidents, protection juridique et assistance 0km. Tarifs négociés jusqu'à 35% moins cher.",
+        url: "/assurance-taxi",
+        lowPrice: 890,
+        highPrice: 1800,
+        ratingValue: "4.9",
+        reviewCount: 127,
+        offerCount: 15
+      }} />
 
     <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-black">
       <Header />

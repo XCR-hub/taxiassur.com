@@ -38,7 +38,7 @@ const STATIC_FAQS: Pick<FaqEntry, 'question' | 'answer'>[] = [
 ];
 
 interface JsonLdProps {
-  type: 'organization' | 'article' | 'faq' | 'product' | 'breadcrumb';
+  type: 'organization' | 'article' | 'faq' | 'product' | 'breadcrumb' | 'insurance-product';
   data?: any;
 }
 
@@ -218,6 +218,42 @@ const JsonLd: React.FC<JsonLdProps> = ({ type, data }) => {
             "name": item.name,
             "item": `${siteUrl}${item.url}`
           }))
+        };
+
+      case 'insurance-product':
+        if (!data) return null;
+        return {
+          "@context": "https://schema.org",
+          "@type": "Product",
+          "name": data.name,
+          "description": data.description,
+          "image": `${siteUrl}/logo-600x300.png`,
+          "brand": {
+            "@type": "Brand",
+            "name": brandName,
+            "url": siteUrl
+          },
+          "url": `${siteUrl}${data.url}`,
+          "offers": {
+            "@type": "AggregateOffer",
+            "priceCurrency": "EUR",
+            "lowPrice": String(data.lowPrice),
+            "highPrice": String(data.highPrice),
+            "offerCount": String(data.offerCount || 15),
+            "availability": "https://schema.org/InStock",
+            "seller": {
+              "@type": "Organization",
+              "name": brandName,
+              "url": siteUrl
+            }
+          },
+          "aggregateRating": {
+            "@type": "AggregateRating",
+            "ratingValue": String(data.ratingValue || "4.9"),
+            "reviewCount": String(data.reviewCount || 127),
+            "bestRating": "5",
+            "worstRating": "1"
+          }
         };
 
       default:

@@ -5,6 +5,7 @@ import { Check, X, Shield, TrendingDown, FileText, Phone } from 'lucide-react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import EnhancedLeadForm from '../components/EnhancedLeadForm';
+import JsonLd from '../components/JsonLd';
 
 const AssuranceTaxiVTC: React.FC = () => {
   return (
@@ -61,6 +62,16 @@ const AssuranceTaxiVTC: React.FC = () => {
         <meta name="twitter:description" content="Assurance Taxi VTC complète dès 1,170€/an (-35%). Découvrez les différences Taxi vs VTC, obligations légales et devis gratuit en 2 min. RC Pro incluse." />
         <meta name="twitter:image" content="https://taxiassur.com/logo-600x300.png" />
       </Helmet>
+      <JsonLd type="insurance-product" data={{
+        name: "Assurance Taxi VTC Professionnelle",
+        description: "Assurance taxi et VTC complète à partir de 1170€/an (-35%). RC Pro incluse, garanties spécifiques, assistance 24/7. Comparatif obligations légales Taxi vs VTC.",
+        url: "/assurance-taxi-vtc",
+        lowPrice: 890,
+        highPrice: 2000,
+        ratingValue: "4.8",
+        reviewCount: 112,
+        offerCount: 15
+      }} />
 
       <Header />
 

@@ -5,6 +5,7 @@ import { Bike, Zap, Shield, Clock, Check, Phone } from 'lucide-react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import EnhancedLeadForm from '../components/EnhancedLeadForm';
+import JsonLd from '../components/JsonLd';
 
 const AssuranceMotoTaxi: React.FC = () => {
   return (
@@ -43,6 +44,16 @@ const AssuranceMotoTaxi: React.FC = () => {
           })}
         </script>
       </Helmet>
+      <JsonLd type="insurance-product" data={{
+        name: "Assurance Moto Taxi Professionnelle",
+        description: "Assurance moto taxi complète avec RC Pro incluse, garanties passagers, protection conducteur et assistance 0km. Tarifs spécifiques deux-roues taxi à partir de 700€/an.",
+        url: "/assurance-moto-taxi",
+        lowPrice: 700,
+        highPrice: 1400,
+        ratingValue: "4.9",
+        reviewCount: 64,
+        offerCount: 8
+      }} />
 
       <Header />
 

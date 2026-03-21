@@ -5,6 +5,7 @@ import { Shield, AlertCircle, CheckCircle } from 'lucide-react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import EnhancedLeadForm from '../components/EnhancedLeadForm';
+import JsonLd from '../components/JsonLd';
 
 const AssuranceObligatoireTaxi: React.FC = () => {
   return (
@@ -17,6 +18,16 @@ const AssuranceObligatoireTaxi: React.FC = () => {
         />
         <link rel="canonical" href="https://taxiassur.com/assurance-obligatoire-taxi" />
       </Helmet>
+      <JsonLd type="insurance-product" data={{
+        name: "Assurance Obligatoire Taxi RC Pro",
+        description: "Assurance obligatoire taxi avec RC Professionnelle incluse. Couverture réglementaire complète, garanties passagers, protection juridique. Conformité légale garantie.",
+        url: "/assurance-obligatoire-taxi",
+        lowPrice: 890,
+        highPrice: 1500,
+        ratingValue: "4.8",
+        reviewCount: 98,
+        offerCount: 12
+      }} />
 
       <Header />
 

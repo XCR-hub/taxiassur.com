@@ -24,6 +24,16 @@ const FlotteVehicules: React.FC = () => {
       />
       <JsonLd type="breadcrumb" data={breadcrumbs} />
       <JsonLd type="organization" />
+      <JsonLd type="insurance-product" data={{
+        name: "Assurance Flotte Taxi Multi-Véhicules",
+        description: "Assurance flotte taxi avec tarifs dégressifs pour 2 à 100+ véhicules. Gestion centralisée, conseiller dédié, économies importantes sur votre parc automobile professionnel.",
+        url: "/flotte-vehicules",
+        lowPrice: 2500,
+        highPrice: 8000,
+        ratingValue: "4.8",
+        reviewCount: 45,
+        offerCount: 8
+      }} />
 
     <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-black">
       <Header />

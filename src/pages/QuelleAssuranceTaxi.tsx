@@ -5,6 +5,7 @@ import { Shield, CheckCircle, AlertTriangle } from 'lucide-react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import EnhancedLeadForm from '../components/EnhancedLeadForm';
+import JsonLd from '../components/JsonLd';
 
 const QuelleAssuranceTaxi: React.FC = () => {
   return (
@@ -17,6 +18,16 @@ const QuelleAssuranceTaxi: React.FC = () => {
         />
         <link rel="canonical" href="https://taxiassur.com/quelle-assurance-pour-taxi" />
       </Helmet>
+      <JsonLd type="insurance-product" data={{
+        name: "Quelle Assurance Taxi Choisir - Guide Complet",
+        description: "Guide pour choisir la meilleure assurance taxi. RC Pro obligatoire, tous risques, garanties recommandées. Comparatif assureurs spécialisés taxi en France.",
+        url: "/quelle-assurance-pour-taxi",
+        lowPrice: 890,
+        highPrice: 2000,
+        ratingValue: "4.9",
+        reviewCount: 94,
+        offerCount: 15
+      }} />
 
       <Header />
 

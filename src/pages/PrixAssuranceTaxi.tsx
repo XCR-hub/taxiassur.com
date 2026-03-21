@@ -40,6 +40,16 @@ const PrixAssuranceTaxi: React.FC = () => {
           answer: "5 astuces : 1) Comparer 15+ devis (TaxiAssur le fait gratuitement), 2) Négocier avec un courtier spécialisé, 3) Augmenter la franchise, 4) Installer équipements sécurité (dashcam, alarme), 5) Regrouper plusieurs véhicules. Économie moyenne : 35%."
         }
       ]} />
+      <JsonLd type="insurance-product" data={{
+        name: "Assurance Taxi - Tarifs & Prix",
+        description: "Guide complet des prix d'assurance taxi en France. Tarifs de 890€ à 3500€/an selon profil. Économisez jusqu'à 35% avec TaxiAssur, courtier spécialisé.",
+        url: "/prix-assurance-taxi",
+        lowPrice: 890,
+        highPrice: 3500,
+        ratingValue: "4.9",
+        reviewCount: 127,
+        offerCount: 15
+      }} />
 
       <Header />
 
