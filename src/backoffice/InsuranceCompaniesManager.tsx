@@ -3,8 +3,9 @@ import {
   Building2, Plus, Save, Upload, Trash2, FileText, Phone, Mail,
   Globe, ExternalLink, Clock, CheckCircle, XCircle, AlertCircle,
   Download, Eye, X, ChevronRight, Shield, Loader2, ImagePlus,
-  Settings, Star, Zap
+  Settings, Star, Zap, ArrowLeft
 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import NavigationMenu from './NavigationMenu';
 
@@ -297,7 +298,23 @@ const InsuranceCompaniesManager: React.FC = () => {
 
   return (
     <div className="flex h-screen bg-gray-100 overflow-hidden">
-      <NavigationMenu />
+      {/* Sidebar navigation */}
+      <aside className="w-56 shrink-0 bg-slate-900 border-r border-slate-700/60 flex flex-col overflow-hidden">
+        <div className="flex-shrink-0 px-4 py-4 border-b border-slate-700/50">
+          <Link to="/backoffice/crm" className="flex items-center gap-2.5 group">
+            <div className="w-8 h-8 rounded-lg bg-sky-500 flex items-center justify-center flex-shrink-0 shadow-lg shadow-sky-500/30">
+              <Building2 className="w-4 h-4 text-white" />
+            </div>
+            <div>
+              <div className="text-white font-bold text-sm leading-tight">TaxiAssur</div>
+              <div className="text-slate-500 text-xs">Backoffice</div>
+            </div>
+          </Link>
+        </div>
+        <div className="flex-1 overflow-y-auto py-3 px-2">
+          <NavigationMenu />
+        </div>
+      </aside>
 
       {/* Toast */}
       {toast && (
