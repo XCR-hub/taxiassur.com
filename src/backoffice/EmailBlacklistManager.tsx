@@ -18,7 +18,7 @@ interface DeletionLog {
   lead_name: string;
   deletion_reason: string;
   deleted_at: string;
-  lead_data: any;
+  lead_data: Record<string, unknown>;
 }
 
 export default function EmailBlacklistManager() {
@@ -87,7 +87,7 @@ export default function EmailBlacklistManager() {
       setShowAddModal(false);
       setNewPattern({ email_pattern: '', pattern_type: 'domain', reason: '' });
       loadData();
-    } catch (error: any) {
+    } catch (error) {
       toast.error(`Erreur : ${error.message}`);
     }
   };
@@ -101,7 +101,7 @@ export default function EmailBlacklistManager() {
 
       if (error) throw error;
       loadData();
-    } catch (error: any) {
+    } catch (error) {
       toast.error(`Erreur : ${error.message}`);
     }
   };
@@ -117,7 +117,7 @@ export default function EmailBlacklistManager() {
 
       if (error) throw error;
       loadData();
-    } catch (error: any) {
+    } catch (error) {
       toast.error(`Erreur : ${error.message}`);
     }
   };

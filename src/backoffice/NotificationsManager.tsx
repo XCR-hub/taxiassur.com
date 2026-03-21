@@ -7,7 +7,7 @@ interface NotificationConfig {
   user_id: string;
   notification_type: 'vip_open' | 'first_open' | 'click' | 'reply' | 'engagement_drop';
   enabled: boolean;
-  conditions: any;
+  conditions: Record<string, unknown>;
   channels: string[];
 }
 

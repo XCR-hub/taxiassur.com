@@ -175,7 +175,7 @@ export const aiGovernanceService = {
     return data as AICouncilMeeting[];
   },
 
-  async requestAIAction(leadId: string, agent: AIAgent, action: string, context?: any) {
+  async requestAIAction(leadId: string, agent: AIAgent, action: string, context?: Record<string, unknown>) {
     const { data, error } = await supabase.functions.invoke('crm-ai-assistant', {
       body: {
         lead_id: leadId,
@@ -189,7 +189,7 @@ export const aiGovernanceService = {
     return data;
   },
 
-  async generateEmail(leadId: string, emailType: string, context?: any) {
+  async generateEmail(leadId: string, emailType: string, context?: Record<string, unknown>) {
     const { data, error } = await supabase.functions.invoke('crm-ai-assistant', {
       body: {
         lead_id: leadId,

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { FileText, Download, Eye, Calendar, Shield } from 'lucide-react';
+import { FileText, Download, Eye, Calendar, Shield, type LucideIcon } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 
 interface CompanyDocument {
@@ -26,7 +26,7 @@ interface Props {
   showAllCompanies?: boolean;
 }
 
-const DOCUMENT_TYPE_LABELS: Record<string, { label: string; icon: any; description: string }> = {
+const DOCUMENT_TYPE_LABELS: Record<string, { label: string; icon: LucideIcon; description: string }> = {
   'conditions_generales': {
     label: 'Conditions Générales',
     icon: FileText,

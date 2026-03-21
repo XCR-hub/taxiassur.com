@@ -39,7 +39,7 @@ interface TimelineEvent {
   to?: string;
   status?: string;
   attachments?: Attachment[];
-  metadata?: any;
+  metadata?: Record<string, unknown>;
 }
 
 interface CommunicationTimelineProps {
@@ -143,7 +143,7 @@ export const CommunicationTimeline: React.FC<CommunicationTimelineProps> = ({
             .replace(/䰀/g, 'é');
 
           // Mapper les attachments depuis le champ JSONB email_messages.attachments
-          const mappedAttachments = ((email.attachments as any[]) || []).map((att: any, idx: number) => ({
+          const mappedAttachments = ((email.attachments as Array<{ filename?: string; name?: string; contentType?: string; content_type?: string; size?: number; file_size?: number; url?: string; proposed_doc_type?: string }>) || []).map((att, idx: number) => ({
             id: `${email.id}-att-${idx}`,
             file_name: att.filename || att.name || 'Pièce jointe',
             file_type: att.contentType || att.content_type || 'application/octet-stream',

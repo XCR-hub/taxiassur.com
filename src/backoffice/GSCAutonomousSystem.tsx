@@ -21,15 +21,15 @@ import {
 } from 'lucide-react';
 
 interface SystemStatus {
-  last_strategy_session: any;
+  last_strategy_session: string | null;
   pending_decisions: number;
   approved_decisions: number;
   content_in_queue: number;
   content_published_today: number;
   content_published_week: number;
   total_clicks_gained: number;
-  top_performing_content: any[];
-  system_health: any;
+  top_performing_content: unknown[];
+  system_health: Record<string, unknown> | null;
 }
 
 interface StrategySession {

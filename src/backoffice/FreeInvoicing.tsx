@@ -290,7 +290,7 @@ export default function FreeInvoicing() {
         setForm(EMPTY_FORM);
         loadPayments();
       } else throw new Error(data?.error ?? 'Réponse inattendue');
-    } catch (err: any) {
+    } catch (err) {
       setFormError(err.message ?? 'Erreur lors de la création');
     } finally {
       setLoading(false);

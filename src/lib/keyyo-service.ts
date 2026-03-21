@@ -7,6 +7,8 @@
 import { supabase } from './supabase';
 import { logger } from './logger';
 
+type CallRow = { id: string; direction: string; from_number: string; to_number: string; status: string; initiated_at?: string; ended_at?: string; duration_seconds?: number; recording_url?: string; talk_time_seconds?: number };
+
 export interface KeyyoConfig {
   base_url: string;
   sip_login: string;
@@ -122,7 +124,7 @@ export class KeyyoService {
         success: true,
         callId: data.call_id,
       };
-    } catch (error: any) {
+    } catch (error) {
       logger.error('Failed to initiate Keyyo call:', error);
       return {
         success: false,
@@ -173,7 +175,7 @@ export class KeyyoService {
       }
 
       return { success: true };
-    } catch (error: any) {
+    } catch (error) {
       logger.error('Failed to send SMS:', error);
       return {
         success: false,
@@ -218,7 +220,7 @@ export class KeyyoService {
 
       if (error) throw error;
 
-      return (data || []).map((call: any) => ({
+      return (data || []).map((call: CallRow) => ({
         id: call.id,
         direction: call.direction,
         from: call.from_number,
@@ -295,7 +297,7 @@ export class KeyyoService {
       logger.info('Call saved successfully:', data.id);
 
       return { success: true, callId: data.id };
-    } catch (error: any) {
+    } catch (error) {
       logger.error('Failed to save call:', error);
       return { success: false, error: error.message };
     }
@@ -333,16 +335,16 @@ export class KeyyoService {
 
       if (error) throw error;
 
-      const calls = data || [];
+      const calls = (data || []) as CallRow[];
 
       const stats = {
         total_calls: calls.length,
-        outbound: calls.filter((c: any) => c.direction === 'outbound').length,
-        inbound: calls.filter((c: any) => c.direction === 'inbound').length,
-        answered: calls.filter((c: any) => c.status === 'answered' || c.status === 'completed').length,
-        missed: calls.filter((c: any) => c.status === 'missed' || c.status === 'no_answer').length,
+        outbound: calls.filter((c) => c.direction === 'outbound').length,
+        inbound: calls.filter((c) => c.direction === 'inbound').length,
+        answered: calls.filter((c) => c.status === 'answered' || c.status === 'completed').length,
+        missed: calls.filter((c) => c.status === 'missed' || c.status === 'no_answer').length,
         total_minutes: Math.round(
-          calls.reduce((sum: number, c: any) => sum + (c.talk_time_seconds || 0), 0) / 60
+          calls.reduce((sum: number, c) => sum + (c.talk_time_seconds || 0), 0) / 60
         ),
       };
 

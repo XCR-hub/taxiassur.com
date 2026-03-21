@@ -95,7 +95,7 @@ export const SecureDocumentLink: React.FC<SecureDocumentLinkProps> = ({
       window.open(data.signedUrl, '_blank', 'noopener,noreferrer');
 
       logger.info('Document opened successfully:', data.signedUrl);
-    } catch (err: any) {
+    } catch (err) {
       logger.error('Exception opening document:', err);
       toast.error(`Erreur : ${err.message || 'Impossible d\'ouvrir le document'}`);
     }

@@ -6,7 +6,8 @@ import {
   Facebook, Instagram, Twitter, Youtube, Linkedin, MessageSquare,
   Send, Hash, CheckCircle, Clock, AlertCircle, XCircle,
   Plus, Settings, BarChart3, Globe, Smartphone, Mail, Video,
-  Users, TrendingUp, Calendar, Award, Zap, Check, X
+  Users, TrendingUp, Calendar, Award, Zap, Check, X,
+  type LucideIcon
 } from 'lucide-react';
 import TestAutomationButton from './TestAutomationButton';
 import { LinkedInOAuthButton } from '@/components/LinkedInOAuthButton';
@@ -27,7 +28,7 @@ interface SocialNetwork {
 interface NetworkDefinition {
   id: string;
   name: string;
-  icon: any;
+  icon: LucideIcon;
   color: string;
   hasAPI: boolean;
   apiStatus: 'ready' | 'missing' | 'pending';
@@ -284,7 +285,7 @@ export default function SocialMediaManager() {
       } else {
         setAiResult('❌ Erreur: ' + (data.error || 'Aucun contenu généré'));
       }
-    } catch (error: any) {
+    } catch (error) {
       logger.error('Error generating AI content:', error);
       setAiResult(`❌ Erreur: ${error.message || 'Clé API OPENAI_API_KEY manquante ou service indisponible'}`);
     } finally {
@@ -330,7 +331,7 @@ export default function SocialMediaManager() {
     }
   };
 
-  const handlePublishToPinterest = async (post: any) => {
+  const handlePublishToPinterest = async (post: { id?: string; content: string; media_urls?: string[] }) => {
     try {
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
       const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;

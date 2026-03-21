@@ -61,7 +61,7 @@ export async function createSignatureRequest(
   signer: EDISignerData,
   contractPDF: File,
   title: string
-): Promise<{ success: boolean; data?: any; error?: string }> {
+): Promise<{ success: boolean; data?: unknown; error?: string }> {
   try {
     if (!isEDISignatureConfigured()) {
       throw new Error('EDI Signature n\'est pas configuré. Ajoutez vos clés API dans .env');
@@ -155,7 +155,7 @@ export async function createSignatureRequest(
  */
 export async function getSignatureRequestStatus(
   ediRequestId: string
-): Promise<{ success: boolean; data?: any; error?: string }> {
+): Promise<{ success: boolean; data?: unknown; error?: string }> {
   try {
     if (!isEDISignatureConfigured()) {
       throw new Error('EDI Signature n\'est pas configuré');
@@ -288,7 +288,8 @@ export async function getSignatureRequestsForLead(
       return [];
     }
 
-    return (data || []).map((row: any) => ({
+    type SignatureRow = { id: string; lead_id?: string; edi_request_id?: string; status?: string; title?: string; document_url?: string; signature_url?: string; signed_document_url?: string; viewed_at?: string; signed_at?: string; completed_at?: string; expired_at?: string; declined_at?: string; decline_reason?: string; created_at?: string; updated_at?: string };
+    return (data || []).map((row: SignatureRow) => ({
       id: row.id,
       leadId: row.lead_id,
       ediRequestId: row.edi_request_id,

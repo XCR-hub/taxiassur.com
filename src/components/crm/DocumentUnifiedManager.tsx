@@ -35,7 +35,7 @@ interface UnifiedDocument {
   download_url?: string;
   classification_status?: string;
   auto_detected_type?: string;
-  metadata?: any;
+  metadata?: Record<string, unknown>;
 }
 
 interface DocumentUnifiedManagerProps {

@@ -216,7 +216,7 @@ export default function ClientSubscriptionForm({ leadId, acceptedQuoteId, onSubm
 
       toast.success('Vos informations ont été enregistrées avec succès! Notre équipe va maintenant préparer votre contrat.');
       onSubmit?.();
-    } catch (error: any) {
+    } catch (error) {
       console.error('Erreur soumission:', error);
       toast.error(error.message || 'Erreur lors de l\'enregistrement');
     } finally {

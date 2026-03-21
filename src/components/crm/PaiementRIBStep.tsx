@@ -115,7 +115,7 @@ export default function PaiementRIBStep({
     setValidating(ribId);
 
     try {
-      const payload: any = {
+      const payload: Record<string, unknown> = {
         validation_status: validated ? 'validated' : 'rejected',
         validated_at: new Date().toISOString()
       };

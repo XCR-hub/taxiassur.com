@@ -73,7 +73,7 @@ export const ManualEmailSync: React.FC = () => {
         parseData,
         linkData: linkResult
       });
-    } catch (err: any) {
+    } catch (err) {
       console.error('❌ Erreur:', err);
       setError(err.message);
     } finally {

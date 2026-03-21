@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import {
   Bell, FileText, CreditCard, CheckCircle, Clock, AlertCircle,
-  RefreshCw, Package, Shield, MessageSquare, Info
+  RefreshCw, Package, Shield, MessageSquare, Info, type LucideIcon
 } from 'lucide-react';
 import ClientLayout from '../../components/client/ClientLayout';
 import SEOHead from '../../components/SEOHead';
@@ -19,7 +19,7 @@ interface Notification {
   read_at: string | null;
 }
 
-const TYPE_CONFIG: Record<string, { icon: any; bg: string; color: string }> = {
+const TYPE_CONFIG: Record<string, { icon: LucideIcon; bg: string; color: string }> = {
   document:      { icon: FileText,      bg: 'bg-yellow-100', color: 'text-yellow-600' },
   payment:       { icon: CreditCard,    bg: 'bg-green-100',  color: 'text-green-600'  },
   quote:         { icon: Package,       bg: 'bg-gray-100',   color: 'text-gray-600'   },

@@ -7,7 +7,8 @@ import {
   RefreshCw, Brain, Bot,
   Workflow, Timer, Database, Globe, Search,
   ChevronDown, ChevronUp, Shield,
-  Cpu, Server, GitBranch, Rocket
+  Cpu, Server, GitBranch, Rocket,
+  type LucideIcon
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
@@ -40,7 +41,7 @@ interface PipelineStage {
   stage_order: number;
   is_automated: boolean;
   requires_human: boolean;
-  auto_actions: any;
+  auto_actions: Record<string, unknown>;
 }
 
 interface AutomationTask {
@@ -50,7 +51,7 @@ interface AutomationTask {
   status: string;
   scheduled_at: string;
   executed_at?: string;
-  execution_result?: any;
+  execution_result?: Record<string, unknown>;
 }
 
 interface AutomationHistory {
@@ -60,7 +61,7 @@ interface AutomationHistory {
   executed_at: string;
   execution_time_ms: number;
   lead_id?: string;
-  details?: any;
+  details?: Record<string, unknown>;
 }
 
 interface ROIData {
@@ -308,7 +309,7 @@ const AutomationDashboard: React.FC = () => {
 
   const cronCategories = [...new Set(cronJobs.map(j => j.category || 'other'))];
 
-  const tabs: { key: TabType; label: string; icon: any }[] = [
+  const tabs: { key: TabType; label: string; icon: LucideIcon }[] = [
     { key: 'overview', label: 'Vue d\'ensemble', icon: BarChart3 },
     { key: 'crons', label: 'Cron Jobs', icon: Timer },
     { key: 'rules', label: 'Règles', icon: Settings },

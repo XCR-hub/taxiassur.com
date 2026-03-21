@@ -330,7 +330,7 @@ const AIInsightsDashboard: React.FC = () => {
                     <div className="bg-purple-50 rounded-lg p-4 mb-3">
                       <p className="text-sm font-semibold text-gray-700 mb-2">Actions automatiques suggérées :</p>
                       <ul className="space-y-2">
-                        {suggestion.suggested_actions.map((action: any, idx: number) => (
+                        {(suggestion.suggested_actions as Array<{ type: string; reason?: string }>).map((action, idx: number) => (
                           <li key={idx} className="flex items-start gap-2">
                             <Zap className="w-4 h-4 text-purple-600 mt-0.5" />
                             <span className="text-sm text-gray-700">

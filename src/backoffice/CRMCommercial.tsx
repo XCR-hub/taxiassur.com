@@ -51,7 +51,7 @@ interface AISuggestion {
   reasoning: string;
   priority_score: number;
   urgency: string;
-  suggested_content: any;
+  suggested_content: Record<string, unknown>;
 }
 
 interface Stats {
@@ -346,7 +346,7 @@ const CRMCommercial: React.FC = () => {
     if (data) setNotifications(data);
   };
 
-  const handleNewNotification = (payload: any) => {
+  const handleNewNotification = (payload: { new: { message?: string; [key: string]: unknown } }) => {
   const navigate = useNavigate();
 setNotifications(prev => [payload.new, ...prev]);
 
@@ -499,7 +499,7 @@ setNotifications(prev => [payload.new, ...prev]);
       // Recharger les détails du lead
       await loadLeadDetails(selectedLead.id);
 
-    } catch (error: any) {
+    } catch (error) {
       logger.error('❌ Erreur envoi email:', error);
 
       if (error.name === 'AbortError') {

@@ -177,13 +177,13 @@ const EspaceProspect: React.FC = () => {
         if (!paymentsError && payments) {
           console.log('Tous les paiements:', payments);
           setAllPayments(payments || []);
-          setPendingPayments(payments?.filter((p: any) => p.status === 'pending') || []);
+          setPendingPayments(payments?.filter((p: { status?: string }) => p.status === 'pending') || []);
         }
       } else {
         console.warn('No lead found for token');
         setError('Ce lien d\'acces n\'est plus valide. Il a peut-etre expire ou ete regenere. Contactez-nous au 01 80 85 57 86 ou par email a team@taxiassur.com pour obtenir un nouveau lien d\'acces a votre espace.');
       }
-    } catch (err: any) {
+    } catch (err) {
       console.error('Error loading lead:', err);
       setError(`Ce lien d'acces n'est plus valide. Contactez-nous au 01 80 85 57 86 ou par email a team@taxiassur.com pour obtenir un nouveau lien.`);
     } finally {
@@ -369,7 +369,7 @@ const EspaceProspect: React.FC = () => {
         loadLeadInfo();
       }, 500);
 
-    } catch (err: any) {
+    } catch (err) {
       console.error('❌ [UPLOAD] Global error:', err);
       const errorMessage = err.message || "Erreur inconnue lors de l'upload";
       setError(`❌ Upload échoué: ${errorMessage}`);
@@ -397,7 +397,7 @@ const EspaceProspect: React.FC = () => {
 
       setSuccess('Devis accepte ! Vous recevrez votre contrat par email.');
       await loadLeadInfo();
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || 'Erreur lors de la validation du devis');
     }
   };

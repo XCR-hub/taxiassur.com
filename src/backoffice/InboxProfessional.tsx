@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/lib/toast';
-import { Inbox, Star, Send, File as FileEdit, Archive, Trash2, HelpCircle, Handshake, Bell, Mail, Plus, FolderPlus, Search, Filter, RefreshCw, ChevronDown, ChevronRight, Circle, CheckCircle, AlertCircle, Reply, Forward, MoreHorizontal, User, Building2, Sparkles, X, Check, Clock, Tag, Folder, MessageSquare, ExternalLink } from 'lucide-react';
+import { Inbox, Star, Send, File as FileEdit, Archive, Trash2, HelpCircle, Handshake, Bell, Mail, Plus, FolderPlus, Search, Filter, RefreshCw, ChevronDown, ChevronRight, Circle, CheckCircle, AlertCircle, Reply, Forward, MoreHorizontal, User, Building2, Sparkles, X, Check, Clock, Tag, Folder, MessageSquare, ExternalLink, type LucideIcon } from 'lucide-react';
 
 interface EmailFolder {
   id: string;
@@ -50,11 +50,11 @@ interface EmailSuggestion {
   suggestion_type: string;
   reason: string;
   confidence: number;
-  suggested_data: any;
+  suggested_data: Record<string, unknown>;
   status: 'pending' | 'accepted' | 'rejected' | 'ignored';
 }
 
-const FOLDER_ICONS: Record<string, any> = {
+const FOLDER_ICONS: Record<string, LucideIcon> = {
   inbox: Inbox,
   star: Star,
   send: Send,
@@ -225,7 +225,7 @@ export default function InboxProfessional() {
       });
 
       // Mettre à jour l'email selon l'action
-      const updates: any = {};
+      const updates: Partial<Record<'is_starred' | 'is_archived' | 'is_deleted' | 'is_read', boolean>> = {};
       if (action === 'star') updates.is_starred = true;
       if (action === 'unstar') updates.is_starred = false;
       if (action === 'archive') updates.is_archived = true;

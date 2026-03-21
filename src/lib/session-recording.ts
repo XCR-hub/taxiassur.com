@@ -1,7 +1,7 @@
 interface RecordingEvent {
   type: string;
   timestamp: number;
-  data: any;
+  data: Record<string, unknown>;
 }
 
 class SessionRecorder {
@@ -127,7 +127,7 @@ class SessionRecorder {
     return path.join(' > ');
   }
 
-  private recordEvent(type: string, data: any) {
+  private recordEvent(type: string, data: Record<string, unknown>) {
     this.events.push({
       type,
       timestamp: Date.now(),

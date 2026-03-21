@@ -145,7 +145,7 @@ export const CallDialog: React.FC<CallDialogProps> = ({
         } else {
           throw new Error(result.error || 'Failed to initiate call');
         }
-      } catch (error: any) {
+      } catch (error) {
         logger.error('Failed to start Keyyo call:', error);
         toast.error('Erreur lors de l\'initiation de l\'appel Keyyo: ' + error.message);
         setCallStatus('idle');

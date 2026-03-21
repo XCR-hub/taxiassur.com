@@ -4,7 +4,7 @@ import {
   FileText, Download, Eye, Upload, CheckCircle, Clock, XCircle,
   AlertCircle, RefreshCw, Loader, FolderOpen, Layers, Shield, User,
   FileImage, FileArchive, File, UploadCloud, Filter, Receipt,
-  ScrollText, ChevronRight, Plus
+  ScrollText, ChevronRight, Plus, type LucideIcon
 } from 'lucide-react';
 import ClientLayout from '../../components/client/ClientLayout';
 import SEOHead from '../../components/SEOHead';
@@ -29,7 +29,7 @@ type Tab = 'contract' | 'primes' | 'mine';
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
-const STATUS_CONFIG: Record<string, { label: string; bg: string; text: string; border: string; icon: any }> = {
+const STATUS_CONFIG: Record<string, { label: string; bg: string; text: string; border: string; icon: LucideIcon }> = {
   verified:  { label: 'Validé',     bg: 'bg-emerald-50',  text: 'text-emerald-700', border: 'border-emerald-200', icon: CheckCircle },
   validated: { label: 'Validé',     bg: 'bg-emerald-50',  text: 'text-emerald-700', border: 'border-emerald-200', icon: CheckCircle },
   available: { label: 'Disponible', bg: 'bg-emerald-50',  text: 'text-emerald-700', border: 'border-emerald-200', icon: CheckCircle },
@@ -82,7 +82,7 @@ function StatusBadge({ status, validated }: { status: string; validated: boolean
   );
 }
 
-const TAB_META: Record<Tab, { label: string; icon: any; color: string; emptyMsg: string; emptyHint: string }> = {
+const TAB_META: Record<Tab, { label: string; icon: LucideIcon; color: string; emptyMsg: string; emptyHint: string }> = {
   contract: {
     label: 'Mon contrat',
     icon: ScrollText,
@@ -205,7 +205,7 @@ export default function ClientDocuments() {
       setActiveTab('mine');
       setTimeout(() => { setUploadSuccess(false); setUploadProgress(0); setShowUpload(false); }, 3000);
       await loadDocuments();
-    } catch (err: any) {
+    } catch (err) {
       setUploadError(err.message || "Erreur lors de l'envoi du fichier");
       setUploadProgress(0);
     } finally {

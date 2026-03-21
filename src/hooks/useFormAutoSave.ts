@@ -4,8 +4,8 @@ import { useDebounce } from './useDebounce';
 interface AutoSaveOptions {
   key: string;
   delay?: number;
-  onSave?: (data: any) => Promise<void>;
-  onRestore?: (data: any) => void;
+  onSave?: (data: Record<string, unknown>) => Promise<void>;
+  onRestore?: (data: Record<string, unknown>) => void;
 }
 
 export function useFormAutoSave<T extends Record<string, any>>(

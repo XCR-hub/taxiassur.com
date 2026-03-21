@@ -2,7 +2,7 @@ interface QueuedRequest {
   id: string;
   url: string;
   method: string;
-  body?: any;
+  body?: unknown;
   headers?: Record<string, string>;
   timestamp: number;
   retries: number;
@@ -56,7 +56,7 @@ class OfflineManager {
   async addToQueue(
     url: string,
     method: string,
-    body?: any,
+    body?: unknown,
     headers?: Record<string, string>
   ): Promise<string> {
     const id = `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -157,7 +157,7 @@ export function useOfflineQueue() {
   const enqueue = async (
     url: string,
     method: string,
-    body?: any,
+    body?: unknown,
     headers?: Record<string, string>
   ) => {
     return offlineManager.addToQueue(url, method, body, headers);

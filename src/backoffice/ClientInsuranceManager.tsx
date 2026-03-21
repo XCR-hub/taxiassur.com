@@ -33,7 +33,7 @@ interface TaxiProfile {
   first_registration_date?: string;
   vehicle_usage?: string;
   driver_status?: string;
-  documents_checklist?: any;
+  documents_checklist?: Record<string, unknown>;
 }
 
 interface Contract {
@@ -100,7 +100,7 @@ interface Interaction {
   subject?: string;
   content?: string;
   created_at: string;
-  metadata?: any;
+  metadata?: Record<string, unknown>;
 }
 
 interface HistoryEvent {
@@ -370,7 +370,7 @@ export default function ClientInsuranceManager() {
         direction: i.direction,
         created_at: i.created_at
       })),
-      ...(notificationsRes.data || []).map((n: any) => ({
+      ...(notificationsRes.data as Array<{ id: string; event_type?: string; title?: string; message?: string; created_at: string }> || []).map((n) => ({
         id: n.id,
         kind: 'notification' as const,
         type: n.event_type,
@@ -400,7 +400,7 @@ export default function ClientInsuranceManager() {
       setTaskForm(defaultTaskForm);
       setShowTaskForm(false);
       await loadTasks();
-    } catch (err: any) {
+    } catch (err) {
       toast.error('Erreur: ' + err.message);
     } finally {
       setSavingTask(false);
@@ -448,7 +448,7 @@ export default function ClientInsuranceManager() {
 
       await loadTaxiProfile();
       setEditingProfile(false);
-    } catch (error: any) {
+    } catch (error) {
       toast.error('Erreur lors de la sauvegarde: ' + error.message);
     }
   }
@@ -534,7 +534,7 @@ export default function ClientInsuranceManager() {
       setShowContractForm(false);
       setEditingContractId(null);
       setContractForm(defaultContractForm);
-    } catch (err: any) {
+    } catch (err) {
       setContractError("Erreur : " + err.message);
     } finally {
       setSavingContract(false);
@@ -616,7 +616,7 @@ export default function ClientInsuranceManager() {
       setShowClaimForm(false);
       setEditingClaimId(null);
       setClaimForm(defaultClaimForm);
-    } catch (err: any) {
+    } catch (err) {
       setClaimError("Erreur : " + err.message);
     } finally {
       setSavingClaim(false);

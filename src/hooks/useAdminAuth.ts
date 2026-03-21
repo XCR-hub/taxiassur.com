@@ -154,7 +154,7 @@ export function useAdminAuth() {
         console.warn('⚠️ Admin user not found or inactive');
         updateGlobalState({ user: null, loading: false, isAuthenticated: false });
       }
-    } catch (error: any) {
+    } catch (error) {
       const loadTime = Date.now() - startTime;
 
       if (error.name === 'AbortError' || error.message?.includes('timeout')) {

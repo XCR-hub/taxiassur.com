@@ -246,7 +246,7 @@ const CRMAdminSettings: React.FC = () => {
       setShowInviteModal(false);
       setInviteForm({ email: '', full_name: '', role: 'collaborator' });
       loadUsers();
-    } catch (error: any) {
+    } catch (error) {
       showToast('error', error.message || "Erreur lors de l'invitation");
     } finally {
       setInviting(false);
@@ -270,7 +270,7 @@ const CRMAdminSettings: React.FC = () => {
       } else {
         showToast('success', `Email d'invitation envoye a ${user.email}`);
       }
-    } catch (err: any) {
+    } catch (err) {
       showToast('error', err.message || "Erreur lors du renvoi");
     } finally {
       setActionUser(null);
@@ -293,7 +293,7 @@ const CRMAdminSettings: React.FC = () => {
       showToast('success', `${userToDelete.full_name || userToDelete.email} supprime`);
       setUserToDelete(null);
       loadUsers();
-    } catch (error: any) {
+    } catch (error) {
       showToast('error', error.message || 'Erreur lors de la suppression');
     } finally {
       setDeleting(false);

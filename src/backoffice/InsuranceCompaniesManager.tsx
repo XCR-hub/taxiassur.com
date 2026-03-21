@@ -249,7 +249,7 @@ const InsuranceCompaniesManager: React.FC = () => {
       }]);
       await loadDocuments(selectedCompany.id);
       showToast('success', `Document "${file.name}" ajouté`);
-    } catch (err: any) {
+    } catch (err) {
       showToast('error', err?.message || "Erreur lors de l'upload");
     } finally {
       setUploadingDoc(null);

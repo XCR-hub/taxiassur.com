@@ -3,7 +3,7 @@ interface Experiment {
   name: string;
   variants: string[];
   weights?: number[];
-  targeting?: (user: any) => boolean;
+  targeting?: (user: Record<string, unknown>) => boolean;
 }
 
 interface ExperimentResult {
@@ -46,7 +46,7 @@ class ABTestingFramework {
     this.experiments.set(experiment.id, experiment);
   }
 
-  getVariant(experimentId: string, user?: any): string {
+  getVariant(experimentId: string, user?: Record<string, unknown>): string {
     const experiment = this.experiments.get(experimentId);
     if (!experiment) {
       return 'control';

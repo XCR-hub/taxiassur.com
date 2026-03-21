@@ -330,7 +330,7 @@ const DocumentDragDropSimple: React.FC<DocumentDragDropSimpleProps> = ({ leadId,
       }
 
       setDraggedDoc(null);
-    } catch (error: any) {
+    } catch (error) {
       logger.error('Error classifying document:', error);
       const errorMsg = error.message || 'Erreur inconnue';
       toast.error(`❌ Erreur lors de la reclassification :\n\n${errorMsg}`);
@@ -459,7 +459,7 @@ const DocumentDragDropSimple: React.FC<DocumentDragDropSimpleProps> = ({ leadId,
 
       await loadAllDocuments();
       toast.success(`✅ Document "${doc.file_name}" validé avec succès !\n\n📧 Email de confirmation envoyé au prospect.`);
-    } catch (error: any) {
+    } catch (error) {
       logger.error('Error validating document:', error);
       const errorMsg = error.message || 'Erreur inconnue';
       toast.error(`❌ Erreur lors de la validation :\n\n${errorMsg}\n\nVeuillez réessayer ou contacter le support si le problème persiste.`);

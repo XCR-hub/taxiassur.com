@@ -17,7 +17,7 @@ interface SecurityLog {
   status_code: number;
   blocked: boolean;
   threat_type: string | null;
-  context: any;
+  context: Record<string, unknown>;
   created_at: string;
 }
 

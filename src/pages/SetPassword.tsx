@@ -104,7 +104,7 @@ const SetPassword: React.FC = () => {
 
       setSuccess(true);
       setTimeout(() => navigate('/backoffice/crm-killer'), 2000);
-    } catch (err: any) {
+    } catch (err) {
       let msg = 'Erreur lors de la creation du mot de passe';
       if (err.message?.includes('expired')) {
         msg = 'Le lien a expire. Demandez une nouvelle invitation.';
@@ -130,7 +130,7 @@ const SetPassword: React.FC = () => {
       });
       if (resetErr) throw resetErr;
       setResetSent(true);
-    } catch (err: any) {
+    } catch (err) {
       setResetError(err.message || 'Erreur lors de l\'envoi du lien');
     } finally {
       setResetLoading(false);

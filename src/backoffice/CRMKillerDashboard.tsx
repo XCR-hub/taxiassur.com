@@ -50,7 +50,7 @@ interface AIDecision {
   decision_type: string;
   confidence_score: number;
   recommendation?: string;
-  decision_data?: any;
+  decision_data?: Record<string, unknown>;
   created_at: string;
 }
 

@@ -12,7 +12,7 @@ interface QueueItem {
   lead_id: string;
   priority_score: number;
   estimated_value: number;
-  dossier_summary: any;
+  dossier_summary: Record<string, unknown>;
   recommended_companies: string[];
   documents_verified: boolean;
   added_at: string;

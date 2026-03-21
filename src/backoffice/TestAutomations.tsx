@@ -8,7 +8,7 @@ interface TestResult {
   status: 'idle' | 'running' | 'success' | 'error';
   message?: string;
   duration?: number;
-  data?: any;
+  data?: unknown;
 }
 
 export default function TestAutomations() {
@@ -106,7 +106,7 @@ export default function TestAutomations() {
     }
   ];
 
-  const testFunction = async (functionId: string, payload: any) => {
+  const testFunction = async (functionId: string, payload: Record<string, unknown>) => {
     const startTime = Date.now();
 
     setResults(prev => ({
@@ -153,7 +153,7 @@ export default function TestAutomations() {
           }
         }));
       }
-    } catch (error: any) {
+    } catch (error) {
       const duration = Date.now() - startTime;
       setResults(prev => ({
         ...prev,

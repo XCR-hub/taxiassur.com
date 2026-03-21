@@ -59,7 +59,7 @@ export default function Actualites() {
     }
   };
 
-  const getCleanExcerpt = (article: any): string => {
+  const getCleanExcerpt = (article: NewsArticle): string => {
     if (!article.excerpt) {
       return createSmartExcerpt(article.title, article.content || '');
     }

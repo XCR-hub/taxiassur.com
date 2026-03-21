@@ -1,23 +1,12 @@
 import { useState, useMemo } from 'react';
-import {
-  ChevronLeft,
-  ChevronRight,
-  ChevronsLeft,
-  ChevronsRight,
-  Search,
-  SortAsc,
-  SortDesc,
-  Download,
-  Filter,
-  X
-} from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Search, Import as SortAsc, Dessert as SortDesc, Download, Filter, X } from 'lucide-react';
 
 export interface Column<T> {
   key: string;
   label: string;
   sortable?: boolean;
   filterable?: boolean;
-  render?: (value: any, row: T) => React.ReactNode;
+  render?: (value: unknown, row: T) => React.ReactNode;
   width?: string;
 }
 

@@ -138,7 +138,8 @@ export const channelEngineService = {
 
     console.log('📤 Emails envoyés trouvés:', outboundData?.length || 0);
 
-    const inboundMessages: InboxMessage[] = (inboundData || []).map((inbox: any) => ({
+    type InboundRow = { id: string; lead_id?: string; from_name?: string; from_email?: string; body?: string; subject?: string; processed?: boolean; sentiment?: string; ai_summary?: string; ai_response?: string; received_at?: string };
+    const inboundMessages: InboxMessage[] = (inboundData as InboundRow[] || []).map((inbox) => ({
       id: `in-${inbox.id}`,
       lead_id: inbox.lead_id || '',
       lead_name: inbox.from_name || inbox.from_email || 'Inconnu',
@@ -153,7 +154,8 @@ export const channelEngineService = {
       received_at: inbox.received_at
     }));
 
-    const outboundMessages: InboxMessage[] = (outboundData || []).map((send: any) => ({
+    type OutboundRow = { id: string; lead_id?: string; email_to?: string; body_text?: string; body_html?: string; subject?: string; sent_at?: string };
+    const outboundMessages: InboxMessage[] = (outboundData as OutboundRow[] || []).map((send) => ({
       id: `out-${send.id}`,
       lead_id: send.lead_id || '',
       lead_name: send.email_to || 'Inconnu',
@@ -254,7 +256,7 @@ export const channelEngineService = {
     return data as ChannelTemplate[];
   },
 
-  async generateAIResponse(messageId: string, context?: any) {
+  async generateAIResponse(messageId: string, context?: Record<string, unknown>) {
     // Retirer le préfixe "in-" ou "out-" si présent
     const realId = messageId.replace(/^(in-|out-)/, '');
 

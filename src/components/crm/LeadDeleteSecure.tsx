@@ -43,7 +43,7 @@ export const LeadDeleteSecure: React.FC<Props> = ({ leadId, leadName, leadEmail 
 
       toast.success('Lead supprimé définitivement avec succès ✓\nL\'action a été enregistrée dans les logs d\'audit.');
       navigate('/backoffice/crm-killer');
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error deleting lead:', error);
       toast.error(`Erreur : ${error.message || 'Erreur lors de la suppression du lead'}`);
     } finally {

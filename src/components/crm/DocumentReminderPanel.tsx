@@ -192,7 +192,7 @@ export const DocumentReminderPanel: React.FC<DocumentReminderPanelProps> = ({
       toast.success(`✅ Relance envoyée avec succès via ${channel} !`);
       setSelectedChannel(null);
       setCustomMessage('');
-    } catch (error: any) {
+    } catch (error) {
       console.error('Erreur envoi relance:', error);
       toast.error(`❌ Erreur lors de l'envoi de la relance\n\n${error.message || 'Erreur inconnue'}`);
     } finally {

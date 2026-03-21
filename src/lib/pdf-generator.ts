@@ -7,8 +7,8 @@ interface PDFOptions {
 
 interface PDFSection {
   type: 'heading' | 'text' | 'table' | 'image' | 'spacer';
-  content: any;
-  style?: Record<string, any>;
+  content: unknown;
+  style?: Record<string, unknown>;
 }
 
 export class SimplePDFGenerator {
@@ -154,7 +154,7 @@ export class SimplePDFGenerator {
   }
 }
 
-export function createQuotePDF(quoteData: any) {
+export function createQuotePDF(quoteData: { reference?: string; name?: string; email?: string; phone?: string; vehicle?: { brand?: string; model?: string; year?: string }; pricing?: { rc?: number | string; allRisk?: number | string; legal?: number | string; total?: number | string } }) {
   const pdf = new SimplePDFGenerator({
     title: 'Devis Assurance Taxi',
     author: 'TaxiAssur',

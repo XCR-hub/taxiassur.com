@@ -132,7 +132,7 @@ export const retentionService = {
     return data as ChurnAlert[];
   },
 
-  async createChurnAlert(leadId: string, scoreData: any) {
+  async createChurnAlert(leadId: string, scoreData: { churn_probability: number; [key: string]: unknown }) {
     const severity = scoreData.churn_probability > 0.8 ? 'critical' :
                      scoreData.churn_probability > 0.6 ? 'high' :
                      scoreData.churn_probability > 0.4 ? 'medium' : 'low';
@@ -215,7 +215,7 @@ export const retentionService = {
     const { data: records, error: insertError } = await supabase
       .from('crm_cross_sell_opportunities')
       .insert(
-        opportunities.map((opp: any) => ({
+        (opportunities as Record<string, unknown>[]).map((opp) => ({
           lead_id: leadId,
           ...opp,
           status: 'suggested',

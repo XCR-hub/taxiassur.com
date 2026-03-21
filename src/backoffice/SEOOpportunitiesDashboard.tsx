@@ -124,7 +124,7 @@ export default function SEOOpportunitiesDashboard() {
     }
   };
 
-  const calculateOpportunityScore = (query: any): number => {
+  const calculateOpportunityScore = (query: { impressions: number; position: number; ctr: number }): number => {
     // Score basé sur : impressions élevées + position bonne + CTR faible = fort potentiel
     const impressionScore = Math.min(query.impressions / 10, 50);
     const positionScore = Math.max(0, 30 - query.position) * 1.5;
@@ -133,7 +133,7 @@ export default function SEOOpportunitiesDashboard() {
     return Math.min(100, Math.round(impressionScore + positionScore - ctrPenalty));
   };
 
-  const generateIdeas = (query: any): string[] => {
+  const generateIdeas = (query: { query: string; position: number; ctr: number; impressions: number }): string[] => {
     const ideas: string[] = [];
 
     if (query.position > 10) {

@@ -247,7 +247,7 @@ export default function PendingDocumentsManager() {
 
       if (error) throw error;
 
-      const formatted: PendingDocument[] = (data || []).map((d: any) => ({
+      const formatted: PendingDocument[] = (data as Array<{ id: string; lead_id: string; document_type: string; file_name: string; file_path: string; file_size?: number; [key: string]: unknown }> || []).map((d) => ({
         id: d.id,
         lead_id: d.lead_id,
         document_type: d.document_type,

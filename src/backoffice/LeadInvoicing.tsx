@@ -140,7 +140,7 @@ const LeadInvoicing: React.FC = () => {
         setSelectedLead(null);
         loadData();
       }
-    } catch (err: any) {
+    } catch (err) {
       console.error('Erreur:', err);
       toast.error('Erreur lors de la création du paiement');
     } finally {

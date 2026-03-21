@@ -23,7 +23,7 @@ interface UnifiedContact {
   conversion_score: number;
   last_contact_at: string;
   created_at: string;
-  ai_notes: any;
+  ai_notes: Record<string, unknown>;
 }
 
 interface Campaign {
@@ -43,7 +43,7 @@ interface AIDecision {
   id: string;
   decision_type: string;
   ai_agent: string;
-  decision_made: any;
+  decision_made: Record<string, unknown>;
   confidence_score: number;
   created_at: string;
   success: boolean;

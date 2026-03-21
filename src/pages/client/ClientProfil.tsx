@@ -8,7 +8,7 @@ import { logger } from '@/lib/logger';
 
 interface ModificationRequest {
   type: 'address' | 'rib' | 'vehicle';
-  data: any;
+  data: Record<string, unknown>;
   status: 'pending' | 'approved' | 'rejected';
   created_at: string;
 }
@@ -17,7 +17,7 @@ export default function ClientProfil() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const email = searchParams.get('email') || sessionStorage.getItem('client_email') || '';
-  const [userData, setUserData] = useState<any>(null);
+  const [userData, setUserData] = useState<Record<string, unknown> | null>(null);
   const [loading, setLoading] = useState(true);
 
   const [showAddressModal, setShowAddressModal] = useState(false);

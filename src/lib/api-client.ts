@@ -9,14 +9,14 @@ export interface ApiResponse<T = any> {
   success: boolean;
   data?: T;
   error?: string;
-  details?: any;
+  details?: unknown;
 }
 
 export class ApiError extends Error {
   constructor(
     message: string,
     public status?: number,
-    public details?: any
+    public details?: unknown
   ) {
     super(message);
     this.name = 'ApiError';
@@ -95,7 +95,7 @@ export async function apiCall<T = any>(
       return { success: true, data: undefined as T };
     }
 
-    let data: any;
+    let data: unknown;
     try {
       data = JSON.parse(text);
     } catch (parseError) {

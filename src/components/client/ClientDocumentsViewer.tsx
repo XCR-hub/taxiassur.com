@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FileText, Download, Eye, Trash2, CheckCircle, XCircle, Clock, File, Image, AlertCircle, Calendar, User, ZoomIn, Upload, Search, Filter, Grid2x2 as Grid, List, Star, RefreshCw, ExternalLink } from 'lucide-react';
+import { FileText, Download, Eye, Trash2, CheckCircle, XCircle, Clock, File, Image, AlertCircle, Calendar, User, ZoomIn, Upload, Search, Filter, Grid2x2 as Grid, List, Star, RefreshCw, ExternalLink, type LucideIcon } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/lib/toast';
 
@@ -107,7 +107,7 @@ const ClientDocumentsViewer: React.FC<ClientDocumentsViewerProps> = ({ leadId, c
   };
 
   const getStatusBadge = (status: string) => {
-    const statusConfig: Record<string, { icon: any; color: string; bg: string; text: string }> = {
+    const statusConfig: Record<string, { icon: LucideIcon; color: string; bg: string; text: string }> = {
       pending: { icon: Clock, color: 'text-yellow-700', bg: 'bg-yellow-50 border-yellow-200', text: 'En attente de vérification' },
       verified: { icon: CheckCircle, color: 'text-green-700', bg: 'bg-green-50 border-green-200', text: 'Vérifié ✓' },
       rejected: { icon: XCircle, color: 'text-red-700', bg: 'bg-red-50 border-red-200', text: 'À corriger' }

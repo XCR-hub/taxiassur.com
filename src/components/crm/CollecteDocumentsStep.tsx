@@ -201,7 +201,7 @@ export default function CollecteDocumentsStep({
       setNewCustomDoc('');
       setShowCustomDocInput(false);
       toast.success(`✅ Document "${newCustomDoc}" ajouté à la liste`);
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error adding custom document:', error);
       toast.error(`❌ Erreur: ${error.message}`);
     }
@@ -225,7 +225,7 @@ export default function CollecteDocumentsStep({
       await loadDocumentStats();
       await loadCustomDocuments();
       toast.success(`✅ Document "${docLabel}" supprimé`);
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error removing custom document:', error);
       toast.error(`❌ Erreur: ${error.message}`);
     }
@@ -363,7 +363,7 @@ export default function CollecteDocumentsStep({
       toast.success(`✅ ${template.channel.toUpperCase()} envoyé avec succès !`);
       setSelectedTemplate(null);
 
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error sending communication:', error);
       toast.error(`❌ Erreur lors de l'envoi\n\n${error.message || 'Erreur inconnue'}`);
     } finally {

@@ -101,7 +101,7 @@ export default function DocumentValidationManager({ leadId, onValidationChange }
       setActiveModal(null);
       loadDocuments();
       onValidationChange?.();
-    } catch (error: any) {
+    } catch (error) {
       console.error('Erreur validation document:', error);
       toast.error(error.message || 'Erreur lors de la validation');
     } finally {
@@ -154,7 +154,7 @@ export default function DocumentValidationManager({ leadId, onValidationChange }
       setRejectionForm({ reason: '', comment: '' });
       loadDocuments();
       onValidationChange?.();
-    } catch (error: any) {
+    } catch (error) {
       console.error('Erreur refus document:', error);
       toast.error(error.message || 'Erreur lors du refus');
     } finally {

@@ -131,7 +131,7 @@ export class GeolocationService {
       throw new Error('Nearby search failed');
     }
 
-    return data.results.map((place: any) => ({
+    return (data.results as Array<{ place_id: string; name: string; vicinity: string; geometry: { location: { lat: number; lng: number } } }>).map((place) => ({
       id: place.place_id,
       name: place.name,
       address: {
@@ -158,7 +158,7 @@ export class GeolocationService {
       return [];
     }
 
-    return data.predictions.map((prediction: any) => ({
+    return (data.predictions as Array<{ place_id: string; description: string }>).map((prediction) => ({
       id: prediction.place_id,
       name: prediction.description,
       address: {
@@ -188,7 +188,7 @@ export class GeolocationService {
     return (degrees * Math.PI) / 180;
   }
 
-  private getAddressComponent(components: any[], type: string): string | undefined {
+  private getAddressComponent(components: Array<{ types: string[]; long_name: string }>, type: string): string | undefined {
     const component = components.find((c) => c.types.includes(type));
     return component?.long_name;
   }

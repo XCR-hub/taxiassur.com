@@ -70,7 +70,7 @@ export default function ClientMoneticoPayment({
       } else {
         throw new Error(result.error || 'Formulaire de paiement non reçu');
       }
-    } catch (err: any) {
+    } catch (err) {
       console.error('Erreur paiement:', err);
       setError(err.message || 'Erreur lors de la création du paiement');
     } finally {

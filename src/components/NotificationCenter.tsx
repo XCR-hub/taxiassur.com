@@ -1,7 +1,7 @@
 import { Bell, Check, X, ExternalLink, RefreshCw } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useNotifications } from '../lib/realtime-notifications';
+import { useNotifications, type Notification as CRMNotification } from '../lib/realtime-notifications';
 import { supabase } from '../lib/supabase';
 
 export function NotificationCenter() {
@@ -40,7 +40,7 @@ export function NotificationCenter() {
     window.location.reload();
   };
 
-  const handleNotificationClick = (notification: any) => {
+  const handleNotificationClick = (notification: CRMNotification) => {
     if (notification.actionUrl) {
       markAsRead(notification.id);
       setIsOpen(false);

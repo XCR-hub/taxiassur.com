@@ -65,7 +65,7 @@ const ConversionAnalytics: React.FC = () => {
       const totalLeads = leadsData.length;
 
       // Calculate city performance from real data
-      const cityStats = leadsData.reduce((acc: any, lead: any) => {
+      const cityStats = leadsData.reduce((acc: Record<string, number>, lead: { city?: string }) => {
         const city = lead.city || 'Inconnu';
         if (!acc[city]) {
           acc[city] = 0;
@@ -84,7 +84,7 @@ const ConversionAnalytics: React.FC = () => {
         .slice(0, 10);
 
       // Calculate time analysis from real data
-      const hourStats = leadsData.reduce((acc: any, lead: any) => {
+      const hourStats = leadsData.reduce((acc: Record<number, number>, lead: { created_at?: string }) => {
         if (lead.created_at) {
           const hour = new Date(lead.created_at).getHours();
           if (!acc[hour]) acc[hour] = 0;
@@ -98,7 +98,7 @@ const ConversionAnalytics: React.FC = () => {
         conversions: hourStats[i] || 0
       }));
 
-      const sourceStats = leadsData.reduce((acc: any, lead: any) => {
+      const sourceStats = leadsData.reduce((acc: Record<string, { visitors: number; conversions: number }>, lead: { source?: string }) => {
         const source = lead.source || 'website_form';
         if (!acc[source]) {
           acc[source] = { visitors: 0, conversions: 0 };
@@ -109,7 +109,7 @@ const ConversionAnalytics: React.FC = () => {
       }, {});
 
       const topSources = Object.entries(sourceStats)
-        .map(([source, stats]: [string, any]) => ({
+        .map(([source, stats]: [string, { visitors: number; conversions: number }]) => ({
           source,
           visitors: stats.visitors,
           conversions: stats.conversions,

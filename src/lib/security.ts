@@ -87,10 +87,10 @@ export class BrowserFingerprint {
 
 // Anti-bot behavior analysis
 export class BehaviorAnalyzer {
-  private events: Array<{ type: string; timestamp: number; data?: any }> = [];
+  private events: Array<{ type: string; timestamp: number; data?: Record<string, unknown> }> = [];
   private startTime: number = Date.now();
 
-  trackEvent(type: string, data?: any) {
+  trackEvent(type: string, data?: Record<string, unknown>) {
     this.events.push({
       type,
       timestamp: Date.now(),

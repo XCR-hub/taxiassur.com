@@ -137,7 +137,7 @@ export const ManualLeadCreator: React.FC<ManualLeadCreatorProps> = ({
       setTimeout(() => {
         onSuccess?.(newLead.id);
       }, 1500);
-    } catch (err: any) {
+    } catch (err) {
       console.error('Error creating lead:', err);
       setError(err.message || 'Erreur lors de la création du lead');
     } finally {

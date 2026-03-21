@@ -61,7 +61,7 @@ const DownPaymentPage: React.FC = () => {
       } else {
         setError('Lien de paiement introuvable.');
       }
-    } catch (err: any) {
+    } catch (err) {
       console.error('Error validating payment link:', err);
       setError('Erreur lors de la validation du lien de paiement.');
     } finally {
@@ -107,7 +107,7 @@ const DownPaymentPage: React.FC = () => {
       }
 
       setPaymentSuccess(true);
-    } catch (err: any) {
+    } catch (err) {
       console.error('Payment error:', err);
       setError('Une erreur est survenue lors du paiement. Veuillez réessayer.');
     } finally {

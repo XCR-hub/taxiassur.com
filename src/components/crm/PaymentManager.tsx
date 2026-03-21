@@ -96,7 +96,7 @@ export const PaymentManager: React.FC<PaymentManagerProps> = ({ leadId, onUpdate
       setEditing(false);
       await loadPaymentData();
       onUpdate?.();
-    } catch (error: any) {
+    } catch (error) {
       console.error('Erreur confirmation paiement:', error);
       toast.error('❌ Erreur : ' + error.message);
     } finally {

@@ -64,7 +64,7 @@ export async function getDirectories(): Promise<Directory[]> {
   return data || [];
 }
 
-export async function submitToDirectory(directoryId: string, data: any): Promise<void> {
+export async function submitToDirectory(directoryId: string, data: Record<string, unknown>): Promise<void> {
   const { error } = await supabase
     .from('directory_submissions')
     .insert({

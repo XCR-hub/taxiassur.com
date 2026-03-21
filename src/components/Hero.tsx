@@ -69,7 +69,7 @@ const Hero: React.FC = () => {
       } else {
         setErrors([response.error || 'Erreur lors de l\'envoi. Veuillez réessayer.']);
       }
-    } catch (error: any) {
+    } catch (error) {
       setErrors([error.message || 'Une erreur est survenue']);
     } finally {
       setIsSubmitting(false);

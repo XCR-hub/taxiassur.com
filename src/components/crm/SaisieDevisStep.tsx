@@ -149,7 +149,7 @@ export default function SaisieDevisStep({
       toast.success(`✅ Devis ${company?.name} uploadé avec succès !`);
       loadQuotes();
 
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error uploading quote:', error);
       toast.error(`❌ Erreur lors de l'upload du devis\n\n${error.message || error}`);
     } finally {

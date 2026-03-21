@@ -39,7 +39,7 @@ const STATIC_FAQS: Pick<FaqEntry, 'question' | 'answer'>[] = [
 
 interface JsonLdProps {
   type: 'organization' | 'article' | 'faq' | 'product' | 'breadcrumb' | 'insurance-product';
-  data?: any;
+  data?: Record<string, unknown>;
 }
 
 const JsonLd: React.FC<JsonLdProps> = ({ type, data }) => {

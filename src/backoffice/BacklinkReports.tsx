@@ -254,7 +254,7 @@ const BacklinkReports: React.FC = () => {
                     const result = await response.json();
                     toast.success(`✅ ${result.emailsSent || 0} emails envoyés !`);
                     setTimeout(loadDetailedStats, 2000);
-                  } catch (error: any) {
+                  } catch (error) {
                     toast.error(`❌ Erreur: ${error.message}`);
                   } finally {
                     setLoading(false);

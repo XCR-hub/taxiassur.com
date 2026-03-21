@@ -341,7 +341,7 @@ const CRMLeadDetail: React.FC = () => {
 
       console.log('✅ Email sent successfully!');
       showToast(`Email d'acces envoye avec succes a ${lead.email}`, 'success');
-    } catch (err: any) {
+    } catch (err) {
       logger.error('Error sending email:', err);
       const errorMessage = err?.message || 'Erreur inconnue lors de l\'envoi de l\'email';
       console.error('Full error:', err);

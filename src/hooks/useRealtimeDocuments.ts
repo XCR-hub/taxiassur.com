@@ -6,8 +6,8 @@ import type { RealtimeChannel } from '@supabase/supabase-js';
 interface UseRealtimeDocumentsOptions {
   leadId?: string;
   onDocumentChange?: () => void;
-  onDocumentInsert?: (document: any) => void;
-  onDocumentUpdate?: (document: any) => void;
+  onDocumentInsert?: (document: Record<string, unknown>) => void;
+  onDocumentUpdate?: (document: Record<string, unknown>) => void;
   onDocumentDelete?: (documentId: string) => void;
   enabled?: boolean;
 }
@@ -32,7 +32,7 @@ export function useRealtimeDocuments(options: UseRealtimeDocumentsOptions = {}) 
     onDocumentChange?.();
   }, [onDocumentChange]);
 
-  const handleInsert = useCallback((payload: any) => {
+  const handleInsert = useCallback((payload: { new: Record<string, unknown> }) => {
     if (!isMountedRef.current) return;
 
     const newDocument = payload.new;
@@ -47,7 +47,7 @@ export function useRealtimeDocuments(options: UseRealtimeDocumentsOptions = {}) 
     handleDocumentChange();
   }, [leadId, onDocumentInsert, handleDocumentChange]);
 
-  const handleUpdate = useCallback((payload: any) => {
+  const handleUpdate = useCallback((payload: { new: Record<string, unknown> }) => {
     if (!isMountedRef.current) return;
 
     const updatedDocument = payload.new;
@@ -62,7 +62,7 @@ export function useRealtimeDocuments(options: UseRealtimeDocumentsOptions = {}) 
     handleDocumentChange();
   }, [leadId, onDocumentUpdate, handleDocumentChange]);
 
-  const handleDelete = useCallback((payload: any) => {
+  const handleDelete = useCallback((payload: { old: { id: string; lead_id?: string } }) => {
     if (!isMountedRef.current) return;
 
     const deletedDocument = payload.old;

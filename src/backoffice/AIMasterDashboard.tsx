@@ -9,7 +9,7 @@ interface AIDecision {
   id: string;
   decision_type: string;
   action_taken: string;
-  data_analyzed: any;
+  data_analyzed: Record<string, unknown>;
   confidence_score: number;
   status: string;
   created_at: string;

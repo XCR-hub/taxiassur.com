@@ -55,7 +55,7 @@ const TestAutomationButton: React.FC<TestAutomationButtonProps> = ({
       } else {
         throw new Error(data.error || 'Erreur inconnue');
       }
-    } catch (error: any) {
+    } catch (error) {
       setResults(prev => ({
         ...prev,
         [test.functionName]: {

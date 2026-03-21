@@ -49,7 +49,7 @@ export async function analyzeGoogleTrends(keyword: string): Promise<TrendData | 
       searchVolume: estimateSearchVolume(data),
       competition: analyzeCompetition(data),
       trend: analyzeTrend(data),
-      relatedQueries: data.related_queries?.top?.slice(0, 10).map((q: any) => q.query) || [],
+      relatedQueries: data.related_queries?.top?.slice(0, 10).map((q: { query: string }) => q.query) || [],
       timestamp: new Date().toISOString()
     };
   } catch (error) {
@@ -332,17 +332,17 @@ function getMockTrendData(keyword: string): TrendData {
   };
 }
 
-function estimateSearchVolume(data: any): number {
+function estimateSearchVolume(data: unknown): number {
   // Logique d'estimation basée sur les données trends
   return Math.floor(Math.random() * 5000) + 500;
 }
 
-function analyzeCompetition(data: any): 'low' | 'medium' | 'high' {
+function analyzeCompetition(data: unknown): 'low' | 'medium' | 'high' {
   // Analyse de la compétition
   return 'medium';
 }
 
-function analyzeTrend(data: any): 'rising' | 'stable' | 'falling' {
+function analyzeTrend(data: unknown): 'rising' | 'stable' | 'falling' {
   // Analyse de la tendance
   return 'rising';
 }

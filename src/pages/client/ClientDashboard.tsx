@@ -91,7 +91,7 @@ export default function ClientDashboard() {
       const { data } = await supabase
         .rpc('get_client_claims_by_email', { p_email: email.toLowerCase().trim() });
       if (data?.success) {
-        const active = (data.claims || []).filter((c: any) => c.claim_status !== 'closed' && c.claim_status !== 'rejected');
+        const active = (data.claims || []).filter((c: { claim_status?: string }) => c.claim_status !== 'closed' && c.claim_status !== 'rejected');
         setSinistresCount(active.length);
       }
     } catch {
@@ -124,7 +124,7 @@ export default function ClientDashboard() {
 
       const activities: RecentActivity[] = [];
 
-      (docsRes.data || []).forEach((doc: any) => {
+      (docsRes.data as Array<{ id: string; status?: string; file_name?: string; uploaded_at?: string }> || []).forEach((doc) => {
         activities.push({
           id: doc.id,
           label: doc.status === 'verified'
@@ -135,7 +135,7 @@ export default function ClientDashboard() {
         });
       });
 
-      (quotesRes.data || []).forEach((q: any) => {
+      (quotesRes.data as Array<{ id: string; status?: string; created_at?: string }> || []).forEach((q) => {
         activities.push({
           id: q.id,
           label: q.status === 'validated' ? 'Devis validé' : 'Nouveau devis disponible',
@@ -144,7 +144,7 @@ export default function ClientDashboard() {
         });
       });
 
-      (notifsRes.data || []).forEach((n: any) => {
+      (notifsRes.data as Array<{ id: string; title?: string; created_at?: string }> || []).forEach((n) => {
         activities.push({
           id: n.id,
           label: n.title || 'Nouvelle notification',

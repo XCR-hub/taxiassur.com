@@ -4,7 +4,7 @@ import {
   Calendar, MapPin, User, Phone, Mail, Car, Wrench,
   AlertCircle, CheckCircle, Clock, XCircle, DollarSign,
   Plus, Save, Loader, Eye, EyeOff, FileText, Building2,
-  RefreshCw, ChevronRight
+  RefreshCw, ChevronRight, type LucideIcon
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
@@ -64,7 +64,7 @@ interface Claim {
   events: ClaimEvent[];
 }
 
-const STATUS_CONFIG: Record<string, { label: string; bg: string; text: string; icon: any }> = {
+const STATUS_CONFIG: Record<string, { label: string; bg: string; text: string; icon: LucideIcon }> = {
   open:                    { label: 'Ouvert',                  bg: 'bg-blue-50',   text: 'text-blue-700',   icon: Clock },
   DECLARED:                { label: 'Déclaré',                 bg: 'bg-yellow-50', text: 'text-yellow-700', icon: FileText },
   DOCUMENTS_PENDING:       { label: 'Docs attendus',           bg: 'bg-amber-50',  text: 'text-amber-700',  icon: Clock },
@@ -241,7 +241,7 @@ export default function ClaimsManager() {
     }
   };
 
-  const updateField = (claimId: string, field: string, value: any) => {
+  const updateField = (claimId: string, field: string, value: string | number | boolean | null) => {
     setEditForms(prev => ({ ...prev, [claimId]: { ...prev[claimId], [field]: value } }));
   };
 

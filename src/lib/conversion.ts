@@ -137,9 +137,9 @@ export class FormOptimizer {
 
 // Conversion tracking
 export class ConversionTracker {
-  private static events: Array<{ event: string; timestamp: number; data?: any }> = [];
+  private static events: Array<{ event: string; timestamp: number; data?: Record<string, unknown> }> = [];
 
-  static track(event: string, data?: any) {
+  static track(event: string, data?: Record<string, unknown>) {
     this.events.push({
       event,
       timestamp: Date.now(),

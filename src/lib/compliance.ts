@@ -63,8 +63,8 @@ export class GDPRCompliance {
 
   static async exportPersonalData(email: string): Promise<{
     consents: Consent[];
-    outreaches: any[];
-    suppressions: any[];
+    outreaches: unknown[];
+    suppressions: unknown[];
   }> {
     const [consents, outreaches, suppressions] = await Promise.all([
       this.getConsentLedger(),
@@ -120,7 +120,7 @@ export class GDPRCompliance {
       }
 
       const data = await response.json();
-      return Object.values(data).filter((record: any) => record.email === email);
+      return (Object.values(data) as Array<{ email?: string }>).filter((record) => record.email === email);
     } catch {
       return [];
     }

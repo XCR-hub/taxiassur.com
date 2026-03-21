@@ -212,7 +212,7 @@ export default function InboxIntelligent() {
       if (selectedFolder) {
         loadEmailsForFolder(selectedFolder);
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error classifying email:', error);
       toast.error(`❌ Erreur: ${error.message}`);
     } finally {
@@ -238,7 +238,7 @@ export default function InboxIntelligent() {
       setShowNewFolderModal(false);
       loadFolders();
       toast.success('✅ Dossier créé avec succès');
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error creating folder:', error);
       toast.error(`❌ Erreur: ${error.message}`);
     }
@@ -257,7 +257,7 @@ export default function InboxIntelligent() {
 
       toast.success('✅ Email déplacé');
       loadEmails();
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error moving email:', error);
       toast.error(`❌ Erreur: ${error.message}`);
     }
@@ -306,7 +306,7 @@ export default function InboxIntelligent() {
       toast.success('✅ Lead créé avec succès !');
       loadEmails();
       loadFolders();
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error creating lead:', error);
       toast.error(`❌ Erreur: ${error.message}`);
     }
@@ -349,7 +349,7 @@ export default function InboxIntelligent() {
 
       toast.success('✅ Email lié au lead');
       loadEmails();
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error linking to lead:', error);
       toast.error(`❌ Erreur: ${error.message}`);
     }
@@ -388,7 +388,7 @@ export default function InboxIntelligent() {
       toast.success('✅ Réponse envoyée');
       setReplyingTo(null);
       setReplyContent('');
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error sending reply:', error);
       toast.error(`❌ Erreur: ${error.message}`);
     }

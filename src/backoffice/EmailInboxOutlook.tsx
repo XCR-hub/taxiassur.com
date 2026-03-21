@@ -672,7 +672,7 @@ const EmailInboxOutlook: React.FC = () => {
                       Pièces jointes ({selectedMessage.attachments.length})
                     </h3>
                     <div className="space-y-2">
-                      {selectedMessage.attachments.map((attachment: any, idx: number) => (
+                      {(selectedMessage.attachments as Array<{ filename: string; size: string }>).map((attachment, idx: number) => (
                         <div
                           key={idx}
                           className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200"

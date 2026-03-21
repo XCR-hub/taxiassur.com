@@ -227,7 +227,7 @@ const [isSeeding, setIsSeeding] = useState(false);
 
         await new Promise(resolve => setTimeout(resolve, 200));
 
-      } catch (err: any) {
+      } catch (err) {
         newResults.push({ company: prospect.company_name, success: false, error: err.message });
         errorCount++;
       }

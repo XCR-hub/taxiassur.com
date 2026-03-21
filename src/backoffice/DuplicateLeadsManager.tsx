@@ -23,7 +23,7 @@ interface Lead {
   status: string;
   source: string;
   created_at: string;
-  metadata: any;
+  metadata: Record<string, unknown>;
   _counts?: { interactions: number; documents: number; emails: number; quotes: number };
 }
 
@@ -183,7 +183,7 @@ export default function DuplicateLeadsManager() {
         setLeadsDetails(prev => ({ ...prev, [email]: prev[email]?.filter(l => l.id !== leadId) || [] }));
         await loadDuplicates();
       } else throw new Error(data?.error);
-    } catch (e: any) {
+    } catch (e) {
       showToast('Erreur : ' + (e.message || 'Impossible de supprimer'), 'error');
     } finally {
       setDeletingId(null);
@@ -211,7 +211,7 @@ export default function DuplicateLeadsManager() {
         setExpandedEmail(null);
         setLeadsDetails(prev => { const n = { ...prev }; delete n[email]; return n; });
       } else throw new Error(data?.message);
-    } catch (e: any) {
+    } catch (e) {
       showToast('Erreur : ' + (e.message || 'Impossible de fusionner'), 'error');
     } finally {
       setMerging(false);
@@ -238,7 +238,7 @@ export default function DuplicateLeadsManager() {
         await loadDuplicates();
         setExpandedEmail(null);
       } else throw new Error(data?.message);
-    } catch (e: any) {
+    } catch (e) {
       showToast('Erreur : ' + (e.message || 'Impossible de fusionner'), 'error');
     } finally {
       setMerging(false);

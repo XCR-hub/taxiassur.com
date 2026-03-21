@@ -91,7 +91,7 @@ export const useFormSecurity = () => {
 
   const loadHCaptcha = (siteKey: string) => {
     if (typeof hcaptcha !== 'undefined') {
-      hcaptcha.execute(siteKey, { async: true }).then((response: any) => {
+      hcaptcha.execute(siteKey, { async: true }).then((response: { response?: string }) => {
         setSecurityState(prev => ({ ...prev, captchaToken: response.response }));
       });
     }

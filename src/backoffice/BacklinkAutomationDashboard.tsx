@@ -115,7 +115,7 @@ const BacklinkAutomationDashboard: React.FC = () => {
       }
 
       if (logsData) {
-        setLogs(logsData.map((log: any) => ({
+        setLogs((logsData as Array<{ id?: string; status?: string; created_at?: string; backlink_opportunities?: { domain?: string; url?: string }; [key: string]: unknown }>).map((log) => ({
           ...log,
           opportunity: {
             domain: log.backlink_opportunities?.domain || 'Unknown',

@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, ReactNode } from 'react';
+import { useState, useRef, useEffect, ReactNode, type HTMLAttributes } from 'react';
 
 type TooltipPosition = 'top' | 'bottom' | 'left' | 'right';
 type TooltipTrigger = 'hover' | 'click' | 'focus';
@@ -111,7 +111,7 @@ export function TooltipAdvanced({
   }, []);
 
   const getTriggerProps = () => {
-    const props: any = {};
+    const props: Pick<HTMLAttributes<HTMLElement>, 'onMouseEnter' | 'onMouseLeave' | 'onClick' | 'onFocus' | 'onBlur'> = {};
 
     if (trigger === 'hover') {
       props.onMouseEnter = showTooltip;

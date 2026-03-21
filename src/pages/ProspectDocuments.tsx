@@ -154,7 +154,7 @@ const ProspectDocuments: React.FC = () => {
         console.log('⚠️ No lead found for this token');
         setError('Lien invalide ou expiré');
       }
-    } catch (err: any) {
+    } catch (err) {
       console.error('❌ Load lead error:', err);
       setError('Lien invalide ou expiré');
     } finally {
@@ -174,7 +174,7 @@ const ProspectDocuments: React.FC = () => {
 
       if (error) throw error;
       setUploadedDocuments(data || []);
-    } catch (err: any) {
+    } catch (err) {
       console.error('Error loading documents:', err);
     }
   };
@@ -215,7 +215,7 @@ const ProspectDocuments: React.FC = () => {
 
       setSuccess(`Document "${file.name}" uploadé avec succès !`);
       await loadDocuments();
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || 'Erreur lors de l\'upload');
     } finally {
       setUploading(null);

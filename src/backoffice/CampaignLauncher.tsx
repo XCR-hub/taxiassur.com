@@ -47,7 +47,7 @@ const [isGenerating, setIsGenerating] = useState(false);
         details: data.results
       });
 
-    } catch (err: any) {
+    } catch (err) {
       logger.error('Error:', err);
       setError(err.message);
     } finally {
@@ -86,7 +86,7 @@ const [isGenerating, setIsGenerating] = useState(false);
         details: data.results
       });
 
-    } catch (err: any) {
+    } catch (err) {
       logger.error('Error:', err);
       setError(err.message);
     } finally {

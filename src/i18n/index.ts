@@ -77,7 +77,7 @@ interface I18nContextType {
 
 const I18nContext = createContext<I18nContextType | undefined>(undefined);
 
-function getNestedTranslation(obj: any, path: string): string {
+function getNestedTranslation(obj: Record<string, unknown>, path: string): string {
   return path.split('.').reduce((current, key) => current?.[key], obj) || path;
 }
 

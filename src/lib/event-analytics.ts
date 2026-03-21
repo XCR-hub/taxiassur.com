@@ -20,7 +20,7 @@ interface UserProperties {
 }
 
 class EventAnalytics {
-  private queue: Array<{type: string; data: any}> = [];
+  private queue: Array<{type: string; data: Record<string, unknown>}> = [];
   private flushInterval: NodeJS.Timeout | null = null;
   private userProperties: UserProperties = {};
 

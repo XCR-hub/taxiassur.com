@@ -440,7 +440,7 @@ const CRMPipelineKanban: React.FC = () => {
       );
 
       setTimeout(() => setSyncMessage(null), 7000);
-    } catch (error: any) {
+    } catch (error) {
       console.error('❌ Erreur synchronisation:', error);
       const errorMsg = error.message || 'Erreur inconnue';
       setSyncMessage(`❌ ${errorMsg}`);

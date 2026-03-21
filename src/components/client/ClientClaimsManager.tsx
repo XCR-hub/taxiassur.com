@@ -27,8 +27,8 @@ interface Claim {
   status: 'declared' | 'investigating' | 'approved' | 'rejected' | 'paid';
   estimated_amount: number | null;
   paid_amount: number | null;
-  documents: any[];
-  notes: any[];
+  documents: Record<string, unknown>[];
+  notes: Record<string, unknown>[];
   created_at: string;
   updated_at: string;
 }
@@ -217,7 +217,7 @@ export const ClientClaimsManager: React.FC<ClientClaimsManagerProps> = ({
         constat_file: null,
         photos: []
       });
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error submitting claim:', error);
       toast.error(error.message || 'Erreur lors de la déclaration');
     } finally {
@@ -471,7 +471,7 @@ export const ClientClaimsManager: React.FC<ClientClaimsManagerProps> = ({
 
                 {claim.documents && claim.documents.length > 0 && (
                   <div className="mt-3 flex gap-2">
-                    {claim.documents.map((doc: any, idx: number) => (
+                    {(claim.documents as Array<{ url?: string; type?: string }>).map((doc, idx: number) => (
                       <a
                         key={idx}
                         href={doc.url}

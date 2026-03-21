@@ -96,7 +96,7 @@ export const templatesService = {
     if (error) throw error;
 
     // Adapter le format
-    return (data || []).map((t: any) => ({
+    return (data as Array<{ id: string; name: string; contact_type?: string; subject_template?: string; html_template?: string; variables?: Record<string, string> }> || []).map((t) => ({
       id: t.id,
       name: t.name,
       description: t.name,

@@ -25,7 +25,7 @@ interface EmailMessage {
   classification: string | null;
   confidence_score: number | null;
   lead_id: string | null;
-  attachments: any[];
+  attachments: Array<{ filename?: string; content_type?: string; size?: number; storage_path?: string; url?: string }>;
   auto_matched: boolean;
   email_status?: 'active' | 'archived' | 'deleted' | 'spam';
   folder_id?: string | null;
@@ -325,7 +325,7 @@ const CRMInboxMulticanal: React.FC = () => {
       created_at: e.received_at, metadata: { email_id: e.id, from: e.from_email, to: e.to_emails },
     }));
     const { data: existing } = await supabase.from('crm_interactions').select('metadata').eq('lead_id', leadId);
-    const existingIds = new Set(existing?.map((i: any) => i.metadata?.email_id).filter(Boolean) || []);
+    const existingIds = new Set(existing?.map((i: { metadata?: { email_id?: string } }) => i.metadata?.email_id).filter(Boolean) || []);
     const newOnes = interactions.filter(i => !existingIds.has(i.metadata.email_id));
     if (newOnes.length > 0) await supabase.from('crm_interactions').insert(newOnes);
     return { linkedCount: allSenderEmails.length, interactionsCreated: newOnes.length };
@@ -1009,7 +1009,7 @@ const CRMInboxMulticanal: React.FC = () => {
                       Pièces jointes ({selectedMessage.attachments.length})
                     </h3>
                     <div className="grid grid-cols-1 gap-2">
-                      {selectedMessage.attachments.map((att: any, idx: number) => (
+                      {selectedMessage.attachments.map((att, idx) => (
                         <div key={idx} className="flex items-center gap-3 p-3 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-xl transition-colors group">
                           <div className="w-9 h-9 flex items-center justify-center bg-white border border-gray-200 rounded-lg text-lg flex-shrink-0 shadow-sm">
                             {getFileIcon(att.content_type || '')}

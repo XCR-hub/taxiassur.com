@@ -20,7 +20,7 @@ interface GDPRConsent {
   opted_out_at: string | null;
   opt_out_url: string;
   ip_address: string | null;
-  metadata: any;
+  metadata: Record<string, unknown>;
 }
 
 interface DSRRequest {

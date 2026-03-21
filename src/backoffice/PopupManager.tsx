@@ -752,7 +752,7 @@ const PopupManagerBackoffice: React.FC = () => {
             <Card className="text-center bg-gradient-to-br from-orange-50 to-yellow-50">
               <Eye className="mx-auto mb-2 text-orange-600" size={24} />
               <div className="text-2xl font-bold text-gray-900">
-                {Object.values(analytics).reduce((sum, popup: any) => sum + (popup.view || 0), 0)}
+                {Object.values(analytics).reduce((sum, popup: { view?: number }) => sum + (popup.view || 0), 0)}
               </div>
               <div className="text-sm text-gray-600">Vues totales</div>
             </Card>
@@ -760,7 +760,7 @@ const PopupManagerBackoffice: React.FC = () => {
             <Card className="text-center bg-gradient-to-br from-green-50 to-emerald-50">
               <Monitor className="mx-auto mb-2 text-green-600" size={24} />
               <div className="text-2xl font-bold text-gray-900">
-                {Object.values(analytics).reduce((sum, popup: any) => sum + (popup.click || 0), 0)}
+                {Object.values(analytics).reduce((sum, popup: { click?: number }) => sum + (popup.click || 0), 0)}
               </div>
               <div className="text-sm text-gray-600">Clics totaux</div>
             </Card>
@@ -768,7 +768,7 @@ const PopupManagerBackoffice: React.FC = () => {
             <Card className="text-center bg-gradient-to-br from-orange-50 to-pink-50">
               <TrendingUp className="mx-auto mb-2 text-orange-600" size={24} />
               <div className="text-2xl font-bold text-gray-900">
-                {Object.values(analytics).reduce((sum, popup: any) => sum + (popup.convert || 0), 0)}
+                {Object.values(analytics).reduce((sum, popup: { convert?: number }) => sum + (popup.convert || 0), 0)}
               </div>
               <div className="text-sm text-gray-600">Conversions</div>
             </Card>

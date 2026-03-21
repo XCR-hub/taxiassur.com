@@ -1,5 +1,6 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
+import type { SupabaseClient } from '@supabase/supabase-js';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -121,7 +122,7 @@ export function throttle<T extends (...args: any[]) => any>(
 export function getDocumentPublicUrl(
   filePath: string,
   source: 'prospect_documents' | 'email_attachments' | 'crm_lead_documents' | string,
-  supabase: any
+  supabase: SupabaseClient
 ): string {
   // Nettoyer le path initial (enlever les slashes au début)
   let normalizedPath = filePath.replace(/^\/+/, '');

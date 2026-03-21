@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Mail, MessageSquare, Plus, Edit, Trash2, Copy, TrendingUp } from 'lucide-react';
+import { Mail, MessageSquare, Plus, CreditCard as Edit, Trash2, Copy, TrendingUp } from 'lucide-react';
 import { templatesService, SmartTemplate, CommunicationChannel } from '@/lib/crm-templates';
 
 const CRMTemplatesManager: React.FC = () => {
@@ -18,7 +18,7 @@ const CRMTemplatesManager: React.FC = () => {
   const loadTemplates = async () => {
     setLoading(true);
     try {
-      const filters: any = {};
+      const filters: Record<string, string> = {};
       if (channelFilter !== 'all') filters.channel = channelFilter;
       if (categoryFilter !== 'all') filters.category = categoryFilter;
 

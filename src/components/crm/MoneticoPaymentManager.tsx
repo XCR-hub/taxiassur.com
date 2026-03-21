@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { CreditCard, CheckCircle, XCircle, Loader, Euro, AlertCircle, ExternalLink, Mail, Send } from 'lucide-react';
+import { CreditCard, CheckCircle, XCircle, Loader, Euro, AlertCircle, ExternalLink, Mail, Send, type LucideIcon } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/lib/toast';
 
@@ -132,7 +132,7 @@ export function MoneticoPaymentManager({ leadId, onPaymentSuccess }: MoneticoPay
       } else if (result.error) {
         throw new Error(result.error);
       }
-    } catch (err: any) {
+    } catch (err) {
       console.error('❌ Erreur détaillée:', err);
       setError(err.message || 'Erreur inconnue lors de la création du paiement');
     } finally {
@@ -168,7 +168,7 @@ export function MoneticoPaymentManager({ leadId, onPaymentSuccess }: MoneticoPay
 
       // Effacer le message après 5 secondes
       setTimeout(() => setSuccessMessage(null), 5000);
-    } catch (err: any) {
+    } catch (err) {
       console.error('Erreur envoi email:', err);
       setError(err.message || 'Erreur lors de l\'envoi de l\'email');
     } finally {
@@ -177,7 +177,7 @@ export function MoneticoPaymentManager({ leadId, onPaymentSuccess }: MoneticoPay
   };
 
   const getStatusBadge = (status: string) => {
-    const styles: Record<string, { bg: string; text: string; icon: any }> = {
+    const styles: Record<string, { bg: string; text: string; icon: LucideIcon }> = {
       pending: { bg: 'bg-yellow-100', text: 'text-yellow-800', icon: Loader },
       processing: { bg: 'bg-blue-100', text: 'text-blue-800', icon: Loader },
       success: { bg: 'bg-green-100', text: 'text-green-800', icon: CheckCircle },
@@ -357,7 +357,7 @@ export function MoneticoPaymentManager({ leadId, onPaymentSuccess }: MoneticoPay
                       setDescription('');
                       await loadPayments();
                     }
-                  } catch (err: any) {
+                  } catch (err) {
                     console.error('❌ Erreur:', err);
                     setError(err.message || 'Erreur inconnue');
                   } finally {

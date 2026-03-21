@@ -24,7 +24,7 @@ export interface CityPage {
 logger.log('🔧 Content module using singleton Supabase instance');
 
 // Fonction utilitaire pour lire les fichiers JSON locaux
-async function fetchLocalContent<T>(type: string, schema: any): Promise<T[]> {
+async function fetchLocalContent<T extends { status?: string }>(type: string, schema: { parse: (data: unknown) => T }): Promise<T[]> {
   try {
     // Ne pas essayer de lister le répertoire (403 sur IONOS)
     // Lire directement les fichiers index-N.json
@@ -39,7 +39,7 @@ async function fetchLocalContent<T>(type: string, schema: any): Promise<T[]> {
           if (index === 0) {
             // Charger tous les fichiers JSON du répertoire (sans listing)
             const knownFiles = await loadKnownFiles(type);
-            return knownFiles.map(f => schema.parse(f)).filter((item: any) => item.status === 'published');
+            return knownFiles.map(f => schema.parse(f)).filter((item) => item.status === 'published');
           }
           break;
         }
@@ -49,7 +49,7 @@ async function fetchLocalContent<T>(type: string, schema: any): Promise<T[]> {
         if (!contentType || !contentType.includes('application/json')) {
           if (index === 0) {
             const knownFiles = await loadKnownFiles(type);
-            return knownFiles.map(f => schema.parse(f)).filter((item: any) => item.status === 'published');
+            return knownFiles.map(f => schema.parse(f)).filter((item) => item.status === 'published');
           }
           break;
         }
@@ -65,7 +65,7 @@ async function fetchLocalContent<T>(type: string, schema: any): Promise<T[]> {
         if (index === 0) {
           try {
             const knownFiles = await loadKnownFiles(type);
-            return knownFiles.map(f => schema.parse(f)).filter((item: any) => item.status === 'published');
+            return knownFiles.map(f => schema.parse(f)).filter((item) => item.status === 'published');
           } catch (e) {
             logger.error(`Failed to load known files for ${type}:`, e);
           }
@@ -135,7 +135,7 @@ async function loadKnownFiles(type: string): Promise<any[]> {
   };
 
   const files = knownFiles[type] || [];
-  const items: any[] = [];
+  const items: unknown[] = [];
 
   for (const file of files) {
     try {
@@ -157,7 +157,7 @@ async function loadKnownFiles(type: string): Promise<any[]> {
 }
 
 // Fonction pour lire un fichier spécifique
-async function fetchLocalItem<T>(type: string, id: string, schema: any): Promise<T | null> {
+async function fetchLocalItem<T>(type: string, id: string, schema: { parse: (data: unknown) => T }): Promise<T | null> {
   try {
     const response = await fetch(`/content/${type}/${id}.json`);
     if (!response.ok) return null;
@@ -267,7 +267,7 @@ export async function getFaqEntries(): Promise<FaqEntry[]> {
 
       if (!error && data && data.length > 0) {
         logger.log('✅ Loaded', data.length, 'FAQ from Supabase');
-        return data.map((item: any) => ({
+        return (data as Array<{ id?: string | number | null; question: string; answer: string; created_at?: string; category?: string }>).map((item) => ({
           id: item.id?.toString() || Math.random().toString(),
           question: item.question,
           answer: item.answer,
@@ -301,14 +301,14 @@ export async function getCityPages(): Promise<CityPage[]> {
 
       if (!error && data && data.length > 0) {
         logger.log('✅ Loaded', data.length, 'city pages from Supabase');
-        return data.map((item: any) => ({
+        return (data as Array<{ id: string; city: string; slug: string; dept?: string; region?: string; taxi_count?: number; title?: string; meta_description?: string; created_at?: string }>).map((item) => ({
           id: item.id,
-          name: item.city,              // ✅ CORRECTION: city → name
+          name: item.city,
           slug: item.slug,
-          department: item.dept || '',  // ✅ CORRECTION: dept → department
+          department: item.dept || '',
           region: item.region || '',
           url: `/ville/${item.slug}`,
-          taxis_insured: item.taxi_count || 0,  // ✅ CORRECTION: taxi_count → taxis_insured
+          taxis_insured: item.taxi_count || 0,
           average_savings: 35,
           satisfied_clients: Math.floor((item.taxi_count || 0) * 0.8),
           average_rating: 4.8,
@@ -324,12 +324,12 @@ export async function getCityPages(): Promise<CityPage[]> {
 
   // Fallback vers les villes statiques de ping.ts
   logger.log('📍 Using static city pages (safe mode)');
-  return generateCityPages().map((city: any) => ({
+  return (generateCityPages() as Array<{ city: string; slug: string; title: string; description: string; department?: string; region?: string }>).map((city) => ({
     id: city.slug,
     name: city.city,
     slug: city.slug,
-    department: city.department,
-    region: city.region,
+    department: city.department || '',
+    region: city.region || '',
     url: `/ville/${city.slug}`,
     taxis_insured: 0,
     average_savings: 35,

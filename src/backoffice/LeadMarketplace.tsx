@@ -67,7 +67,7 @@ const LeadMarketplace: React.FC = () => {
       }
 
       // Transform Supabase data to Lead format
-      const transformedLeads: Lead[] = data.map((lead: any) => ({
+      const transformedLeads: Lead[] = (data as Array<{ id: string; name: string; email: string; phone: string; city: string; status?: string; immatriculation?: string; created_at: string; marketplace_price?: number }>).map((lead) => ({
         id: lead.id,
         name: lead.name,
         email: lead.email,

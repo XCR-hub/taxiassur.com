@@ -1,5 +1,6 @@
 import React from 'react';
 import { supabase } from './supabase';
+import type { RealtimeChannel } from '@supabase/supabase-js';
 
 export type NotificationType = 'info' | 'success' | 'warning' | 'error';
 
@@ -19,7 +20,7 @@ type NotificationCallback = (notification: Notification) => void;
 class RealtimeNotificationManager {
   private subscribers: Set<NotificationCallback> = new Set();
   private notifications: Notification[] = [];
-  private channel: any = null;
+  private channel: RealtimeChannel | null = null;
 
   async initialize(userId?: string) {
     console.log('[NotificationManager] Initializing...');
@@ -81,7 +82,7 @@ class RealtimeNotificationManager {
     });
   }
 
-  private mapPayloadToNotification(payload: any): Notification {
+  private mapPayloadToNotification(payload: { id: string; event_type?: string; lead?: { first_name?: string; last_name?: string; email?: string }; message?: string; created_at: string; is_read?: boolean; lead_id?: string }): Notification {
     const eventTypeMap: Record<string, NotificationType> = {
       new_lead: 'success',
       document_uploaded: 'info',

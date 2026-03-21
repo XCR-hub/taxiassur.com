@@ -90,7 +90,7 @@ export const useAnalytics = () => {
     });
   };
 
-  const trackFormSubmit = (formData: any) => {
+  const trackFormSubmit = (formData: { city?: string; status?: string; [key: string]: unknown }) => {
     track('form_submit', {
       category: 'form',
       label: 'devis_form',

@@ -1,11 +1,11 @@
 export interface ExportColumn {
   key: string;
   label: string;
-  format?: (value: any) => string;
+  format?: (value: unknown) => string;
 }
 
 export class DataExporter {
-  static toCSV<T extends Record<string, any>>(
+  static toCSV<T extends Record<string, unknown>>(
     data: T[],
     columns: ExportColumn[],
     filename: string = 'export.csv'
@@ -34,7 +34,7 @@ export class DataExporter {
     this.downloadBlob(blob, filename);
   }
 
-  static toExcel<T extends Record<string, any>>(
+  static toExcel<T extends Record<string, unknown>>(
     data: T[],
     columns: ExportColumn[],
     filename: string = 'export.xlsx',
@@ -142,21 +142,21 @@ export class DataExporter {
     `;
   }
 
-  private static createWorksheet(data: any[][]): any {
+  private static createWorksheet(data: unknown[][]): { data: unknown[][]; cols: Array<{ wch: number }> } {
     return {
       data,
       cols: data[0]?.map(() => ({ wch: 15 })) ?? []
     };
   }
 
-  private static createWorkbook(sheets: Record<string, any>): any {
+  private static createWorkbook(sheets: Record<string, { data: unknown[][]; cols: Array<{ wch: number }> }>): { SheetNames: string[]; Sheets: typeof sheets } {
     return {
       SheetNames: Object.keys(sheets),
       Sheets: sheets
     };
   }
 
-  private static workbookToArrayBuffer(workbook: any): ArrayBuffer {
+  private static workbookToArrayBuffer(workbook: { SheetNames: string[]; Sheets: Record<string, { data: unknown[][] }> }): ArrayBuffer {
     const xmlHeader = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>';
 
     const workbookXML = `${xmlHeader}
@@ -170,8 +170,8 @@ export class DataExporter {
 
     const worksheetXMLs = workbook.SheetNames.map((name: string) => {
       const sheet = workbook.Sheets[name];
-      const rows = sheet.data.map((row: any[], rowIndex: number) => {
-        const cells = row.map((cell: any, colIndex: number) => {
+      const rows = sheet.data.map((row: unknown[], rowIndex: number) => {
+        const cells = row.map((cell: unknown, colIndex: number) => {
           const cellRef = this.getCellRef(rowIndex, colIndex);
           const value = String(cell ?? '').replace(/[<>&'"]/g, c => {
             const entities: Record<string, string> = { '<': '&lt;', '>': '&gt;', '&': '&amp;', "'": '&apos;', '"': '&quot;' };

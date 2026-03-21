@@ -61,7 +61,7 @@ const DragDropUploader: React.FC<DragDropUploaderProps> = ({
 
     try {
       await onFileSelect(file);
-    } catch (err: any) {
+    } catch (err) {
       setDragError(err.message || 'Erreur lors de l\'upload');
       setTimeout(() => setDragError(null), 5000);
     }

@@ -1,15 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { logger } from '@/lib/logger';
-import {
-  Users, Mail, Phone, MessageSquare, Calendar, FileText, CheckCircle,
-  XCircle, Clock, TrendingUp, Send, Sparkles, Upload, AlertCircle,
-  ChevronRight, Filter, Search, Plus, Edit, Trash2, Download, Target,
-  BarChart3, Activity, DollarSign, Zap, Eye, ArrowRight, Star, Tag,
-  ExternalLink, RefreshCw, TrendingDown, Home, Settings, Award,
-  Briefcase, Newspaper, Link2, Car, Building2, Globe, MousePointer,
-  Reply, Brain, Share2, Archive, UserPlus, MapPin
-} from 'lucide-react';
+import { Users, Mail, Phone, MessageSquare, Calendar, FileText, CheckCircle, XCircle, Clock, TrendingUp, Send, Sparkles, Upload, AlertCircle, ChevronRight, Filter, Search, Plus, CreditCard as Edit, Trash2, Download, Target, BarChart3, Activity, DollarSign, Zap, Eye, ArrowRight, Star, Tag, ExternalLink, RefreshCw, TrendingDown, Home, Settings, Award, Briefcase, Newspaper, Link2, Car, Building2, Globe, MousePointer, Reply, Brain, Share2, Archive, UserPlus, MapPin } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import DocumentsViewer from './DocumentsViewer';
 import EmailTrendline from './EmailTrendline';
@@ -42,7 +34,7 @@ interface Contact {
   last_contact_at?: string;
   next_followup_at?: string;
 
-  ai_notes?: any;
+  ai_notes?: Record<string, unknown>;
   assigned_to?: string;
   tags?: string[];
 }
@@ -86,7 +78,7 @@ interface AIDecision {
   contact_id?: string;
   decision_type: string;
   ai_agent: string;
-  decision_made: any;
+  decision_made: Record<string, unknown>;
   confidence_score: number;
   created_at: string;
   success: boolean;

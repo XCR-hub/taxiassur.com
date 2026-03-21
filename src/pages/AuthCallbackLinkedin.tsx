@@ -85,7 +85,7 @@ export default function AuthCallbackLinkedin() {
       } else {
         throw new Error('Aucun access_token reçu dans la réponse');
       }
-    } catch (err: any) {
+    } catch (err) {
       const errorMsg = err.message || 'Erreur inconnue lors de l\'échange du code OAuth';
       setError(errorMsg);
       setStatus('error');

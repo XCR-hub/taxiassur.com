@@ -13,7 +13,7 @@ interface PushNotification {
   metadata?: {
     lead_name?: string;
     document_type?: string;
-    [key: string]: any;
+    [key: string]: unknown;
   };
 }
 

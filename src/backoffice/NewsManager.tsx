@@ -39,7 +39,7 @@ const NewsManager: React.FC = () => {
 
       if (!supabaseError && supabaseNews && supabaseNews.length > 0) {
         // Convertir les données Supabase au format attendu
-        const formattedNews = supabaseNews.map((article: any) => ({
+        const formattedNews = (supabaseNews as Array<{ id: string; title: string; content: string; summary?: string; category?: string; tags?: string[]; published_at?: string; created_at: string; author?: string; status?: string }>).map((article) => ({
           id: article.id,
           originalTitle: article.title,
           synthesizedTitle: article.title,
@@ -101,7 +101,7 @@ const NewsManager: React.FC = () => {
       const result = await response.json();
       toast.success(`✅ ${result.articles?.length || 0} actualités récupérées et traitées !`);
       await loadProcessedNews();
-    } catch (error: any) {
+    } catch (error) {
       logger.error('Error refreshing news:', error);
       toast.error(`❌ Erreur : ${error.message}`);
     } finally {
@@ -123,7 +123,7 @@ const NewsManager: React.FC = () => {
 
       toast.success('✅ Actualité publiée avec succès !');
       await loadProcessedNews();
-    } catch (error: any) {
+    } catch (error) {
       logger.error('Error publishing news:', error);
       toast.error(`❌ Erreur : ${error.message}`);
     }
@@ -155,7 +155,7 @@ const NewsManager: React.FC = () => {
       } else {
         throw new Error(result.error || 'Erreur inconnue');
       }
-    } catch (error: any) {
+    } catch (error) {
       logger.error('Error cleaning excerpts:', error);
       toast.error(`❌ Erreur lors du nettoyage : ${error.message}`);
     } finally {

@@ -60,7 +60,7 @@ export default function AuthCallbackYoutube() {
       } else {
         throw new Error('Aucun refresh_token reçu. Révoquez l\'accès et réessayez.');
       }
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message);
       setStatus('error');
     }

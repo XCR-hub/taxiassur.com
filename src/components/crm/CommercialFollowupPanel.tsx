@@ -20,7 +20,7 @@ import { cn } from '@/lib/utils';
 interface CommercialFollowupPanelProps {
   leadId: string;
   currentStatus: PipelineStatus;
-  onAction: (action: QuickAction, additionalData?: any) => Promise<void>;
+  onAction: (action: QuickAction, additionalData?: Record<string, unknown>) => Promise<void>;
   disabled?: boolean;
 }
 

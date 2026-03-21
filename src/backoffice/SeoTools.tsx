@@ -24,9 +24,9 @@ const SeoTools: React.FC = () => {
     isRealData: false
   });
 
-  const [pingResults, setPingResults] = useState<any[]>([]);
+  const [pingResults, setPingResults] = useState<Record<string, unknown>[]>([]);
   const [isWorking, setIsWorking] = useState(false);
-  const [cronJobsStatus, setCronJobsStatus] = useState<any[]>([]);
+  const [cronJobsStatus, setCronJobsStatus] = useState<Record<string, unknown>[]>([]);
   const cities = generateCityPages();
 
   useEffect(() => {
@@ -414,7 +414,7 @@ Consultez le détail dans la console (F12)`);
                       await loadCronJobsStatus();
 
                       toast.success('✅ Données SEO actualisées depuis Supabase !');
-                    } catch (error: any) {
+                    } catch (error) {
                       logger.error('GSC sync error:', error);
                       toast.error(`❌ Erreur: ${error.message}`);
                     } finally {

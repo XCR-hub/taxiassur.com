@@ -140,7 +140,7 @@ const QuoteManager: React.FC<QuoteManagerProps> = ({ lead, onQuoteSent, onStatus
 
       if (error) throw error;
 
-      const filtered = (data || []).filter((t: any) =>
+      const filtered = (data as Array<{ applicable_status: string[]; channel: string; [key: string]: unknown }> || []).filter((t) =>
         t.applicable_status.includes(lead.status) &&
         (t.channel === selectedChannel || t.channel === 'all')
       );
@@ -252,7 +252,7 @@ const QuoteManager: React.FC<QuoteManagerProps> = ({ lead, onQuoteSent, onStatus
       }
       await loadLatestQuote();
       setActiveTab('send');
-    } catch (err: any) {
+    } catch (err) {
       console.error('Upload error:', err);
       toast.error(`Erreur : ${err.message}`);
     } finally {
@@ -308,7 +308,7 @@ const QuoteManager: React.FC<QuoteManagerProps> = ({ lead, onQuoteSent, onStatus
         whatsapp: 'send-whatsapp'
       }[selectedChannel];
 
-      const payload: any = {
+      const payload: Record<string, unknown> = {
         lead_id: lead.id,
         to: recipient,
         body: customBody
@@ -363,7 +363,7 @@ const QuoteManager: React.FC<QuoteManagerProps> = ({ lead, onQuoteSent, onStatus
       await loadHistory();
       if (onQuoteSent) onQuoteSent();
       setActiveTab('history');
-    } catch (err: any) {
+    } catch (err) {
       console.error('Send error:', err);
       toast.error(`Erreur : ${err.message}`);
     } finally {
@@ -404,7 +404,7 @@ const QuoteManager: React.FC<QuoteManagerProps> = ({ lead, onQuoteSent, onStatus
               </p>
               {blockingDocs.length > 0 && (
                 <ul className="mt-2 text-sm text-red-600 list-disc list-inside">
-                  {blockingDocs.map((doc: any, idx: number) => (
+                  {(blockingDocs as Array<{ titre: string }>).map((doc, idx: number) => (
                     <li key={idx}>{doc.titre}</li>
                   ))}
                 </ul>

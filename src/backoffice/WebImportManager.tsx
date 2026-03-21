@@ -168,7 +168,7 @@ const WebImportManager: React.FC = () => {
       setPortalUsername('');
       setPortalPassword('');
       loadCredentials();
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error adding credential:', error);
       toast.error('Erreur inattendue: ' + (error?.message || 'Erreur inconnue'));
     }

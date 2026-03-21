@@ -144,11 +144,11 @@ const EnhancedLeadForm: React.FC<EnhancedLeadFormProps> = ({
       SecureLeadSchema.parse(completeFormData);
       setErrors({});
       return true;
-    } catch (error: any) {
+    } catch (error) {
       const newErrors: Record<string, string> = {};
       
       if (error.errors) {
-        error.errors.forEach((err: any) => {
+        error.errors.forEach((err: { path: string[]; message: string }) => {
           const field = err.path[0];
           newErrors[field] = err.message;
         });

@@ -73,7 +73,7 @@ export async function getLeads(): Promise<Lead[]> {
     const leads = leadsData || [];
     logger.log(`✅ Found ${leads.length} leads from Supabase`);
 
-    return leads.map((lead: any) => {
+    return (leads as Array<Record<string, unknown>>).map((lead) => {
       const dbStatus = lead.lead_status || 'nouveau';
       const mappedStatus = statusFromDb[dbStatus] || 'nouveau';
 
@@ -133,7 +133,7 @@ export async function updateLeadStatus(
     }
 
     // Mise à jour via Supabase avec la valeur DB (français)
-    const updateData: any = {
+    const updateData: Record<string, unknown> = {
       lead_status: dbStatus, // Utiliser directement: nouveau, contacte, devis_envoye, client, perdu
       ...dateFields
     };
@@ -410,7 +410,7 @@ export async function resendAccess(email: string): Promise<{
       success: true,
       accessToken: data[0].access_token
     };
-  } catch (error: any) {
+  } catch (error) {
     console.error('[RESEND_ACCESS] Exception:', error);
     return { success: false, error: error.message };
   }
@@ -559,7 +559,7 @@ export async function createLead(input: CreateLeadInput, forceNew: boolean = fal
     console.log('📧 [FORM] Les emails sont envoyés automatiquement par la fonction upsert_lead');
 
     return { success: true, leadId: result.lead_id, accessToken: result.access_token };
-  } catch (error: any) {
+  } catch (error) {
     logger.error('Failed to create lead:', error);
     return { success: false, error: 'Une erreur est survenue. Veuillez réessayer.' };
   }

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { Upload, CheckCircle, Clock, AlertCircle, FileText, Loader2, X } from 'lucide-react';
 
 interface DocumentRequest {
@@ -18,7 +19,7 @@ interface DocumentRequest {
 
 interface ComplementaryDocumentsProps {
   leadId: string;
-  anonClient: any;
+  anonClient: SupabaseClient;
   onDocumentUploaded?: () => void;
 }
 
@@ -61,7 +62,7 @@ export const ComplementaryDocuments: React.FC<ComplementaryDocumentsProps> = ({
       if (error) throw error;
 
       setRequests(data || []);
-    } catch (err: any) {
+    } catch (err) {
       console.error('Erreur chargement demandes:', err);
       setError('Erreur lors du chargement des documents');
     } finally {
@@ -113,7 +114,7 @@ export const ComplementaryDocuments: React.FC<ComplementaryDocumentsProps> = ({
       onDocumentUploaded?.();
 
       setTimeout(() => setSuccess(null), 5000);
-    } catch (err: any) {
+    } catch (err) {
       console.error('Erreur upload:', err);
       setError(`Erreur lors de l'envoi: ${err.message}`);
     } finally {

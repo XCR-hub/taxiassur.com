@@ -3,7 +3,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import {
   Shield, Plus, CheckCircle, AlertCircle, Clock, X, ChevronRight,
   FileText, Loader, Phone, Calendar, User, MapPin, Car, Wrench,
-  DollarSign, ChevronDown, ChevronUp, Building2
+  DollarSign, ChevronDown, ChevronUp, Building2, type LucideIcon
 } from 'lucide-react';
 import ClientLayout from '../../components/client/ClientLayout';
 import SEOHead from '../../components/SEOHead';
@@ -66,7 +66,7 @@ const INCIDENT_TYPES = [
   { value: 'AUTRE',                   label: 'Autre incident' },
 ];
 
-const STATUS_CONFIG: Record<string, { label: string; bg: string; text: string; icon: any; step: number }> = {
+const STATUS_CONFIG: Record<string, { label: string; bg: string; text: string; icon: LucideIcon; step: number }> = {
   open:                   { label: 'Déclaré',                    bg: 'bg-yellow-50', text: 'text-yellow-700', icon: FileText,    step: 1 },
   DECLARED:               { label: 'Déclaré',                    bg: 'bg-yellow-50', text: 'text-yellow-700', icon: FileText,    step: 1 },
   DOCUMENTS_PENDING:      { label: 'Documents attendus',         bg: 'bg-amber-50',  text: 'text-amber-700',  icon: Clock,       step: 1 },
@@ -124,7 +124,7 @@ function fmtDateTime(d: string | null) {
   return new Date(d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 }
 
-function InfoRow({ icon: Icon, label, value }: { icon: any; label: string; value: string | null }) {
+function InfoRow({ icon: Icon, label, value }: { icon: LucideIcon; label: string; value: string | null }) {
   if (!value) return null;
   return (
     <div className="flex items-start gap-2">
@@ -207,7 +207,7 @@ export default function ClientSinistres() {
       setForm({ incident_type: '', incident_date: '', description: '', location: '', third_party_involved: false, third_party_info: '', police_report: false, police_report_number: '' });
       await loadData();
       setTimeout(() => setSubmitSuccess(false), 8000);
-    } catch (err: any) {
+    } catch (err) {
       setSubmitError(err.message || 'Erreur lors de la déclaration');
     } finally {
       setSubmitting(false);

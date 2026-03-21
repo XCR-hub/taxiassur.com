@@ -1,34 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import {
-  Bot,
-  Mail,
-  MessageSquare,
-  Phone,
-  Clock,
-  CheckCircle,
-  XCircle,
-  RefreshCw,
-  Send,
-  Sparkles,
-  Calendar,
-  AlertCircle,
-  Zap,
-  ExternalLink,
-  Copy,
-  ThumbsUp,
-  ThumbsDown,
-  Edit3,
-  Play,
-  Pause,
-  Settings,
-  TrendingUp,
-  Target,
-  UserPlus,
-  Loader2,
-  RotateCcw,
-  Activity,
-  List
-} from 'lucide-react';
+import { Bot, Mail, MessageSquare, Phone, Clock, CheckCircle, XCircle, RefreshCw, Send, Sparkles, Calendar, AlertCircle, Zap, ExternalLink, Copy, ThumbsUp, ThumbsDown, CreditCard as Edit3, Play, Pause, Settings, TrendingUp, Target, UserPlus, Loader2, RotateCcw, Activity, List } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { pipelineService, PendingAutomation, AutomationStats } from '@/lib/crm-pipeline';
 
@@ -675,7 +646,7 @@ L'equipe TaxiAssur`,
           <div className="border-t border-gray-200 bg-gray-50 p-4">
             <h4 className="text-sm font-medium text-gray-700 mb-3">Historique des actions recentes</h4>
             <div className="space-y-2 max-h-64 overflow-y-auto">
-              {automationHistory.map((log: any) => (
+              {(automationHistory as Array<{ id: string; status: string; action_type?: string; executed_at?: string; created_at?: string; execution_time_ms?: number; action_id?: string }>).map((log) => (
                 <div
                   key={log.id}
                   className={`flex items-center justify-between p-3 rounded-lg border ${

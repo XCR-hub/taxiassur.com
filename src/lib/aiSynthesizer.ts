@@ -291,7 +291,7 @@ export class NewsScheduler {
     }
   }
 
-  private static async publishBlogPost(blogPost: any): Promise<boolean> {
+  private static async publishBlogPost(blogPost: Record<string, unknown>): Promise<boolean> {
     try {
       const response = await fetch('/webhooks/make.php', {
         method: 'POST',

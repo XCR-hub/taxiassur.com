@@ -124,7 +124,7 @@ const InsuranceCompaniesStats: React.FC = () => {
 
     const statsByCompany: Record<string, CompanyStats> = {};
 
-    history?.forEach((item: any) => {
+    history?.forEach((item: { insurance_company_id: string; insurance_companies?: { name: string; logo_url?: string }; status?: string; premium_amount?: number; created_at: string }) => {
       const companyId = item.insurance_company_id;
       if (!companyId || !item.insurance_companies) return;
 

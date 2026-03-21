@@ -56,7 +56,7 @@ export default function NewsSection({ limit = 3, showTitle = true }: NewsSection
     }
   };
 
-  const getCleanExcerpt = (article: any): string => {
+  const getCleanExcerpt = (article: NewsArticle): string => {
     if (!article.excerpt) {
       return createSmartExcerpt(article.title, article.content || '');
     }

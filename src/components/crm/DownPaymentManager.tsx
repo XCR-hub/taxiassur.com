@@ -127,7 +127,7 @@ export const DownPaymentManager: React.FC<DownPaymentManagerProps> = ({
       } else {
         throw new Error(data.error || 'Échec de la création du paiement');
       }
-    } catch (err: any) {
+    } catch (err) {
       console.error('Error creating Monético payment:', err);
       setError(err.message);
     } finally {

@@ -50,24 +50,24 @@ export default function LeadCRM() {
     }
   };
 
-  const calculateStats = (leads: any[]) => {
+  const calculateStats = (leads: Array<{ created_at?: string; createdAt?: string; timestamp?: string }>) => {
     const now = new Date();
     const today = now.toDateString();
     const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
     const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
-    const leadsToday = leads.filter((lead: any) => {
-      const leadDate = new Date(lead.created_at || lead.createdAt || lead.timestamp);
+    const leadsToday = leads.filter((lead) => {
+      const leadDate = new Date(lead.created_at || lead.createdAt || lead.timestamp || '');
       return leadDate.toDateString() === today;
     }).length;
 
-    const leadsWeek = leads.filter((lead: any) => {
-      const leadDate = new Date(lead.created_at || lead.createdAt || lead.timestamp);
+    const leadsWeek = leads.filter((lead) => {
+      const leadDate = new Date(lead.created_at || lead.createdAt || lead.timestamp || '');
       return leadDate >= weekAgo;
     }).length;
 
-    const leadsMonth = leads.filter((lead: any) => {
-      const leadDate = new Date(lead.created_at || lead.createdAt || lead.timestamp);
+    const leadsMonth = leads.filter((lead) => {
+      const leadDate = new Date(lead.created_at || lead.createdAt || lead.timestamp || '');
       return leadDate >= monthAgo;
     }).length;
 

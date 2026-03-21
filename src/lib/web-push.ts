@@ -149,7 +149,7 @@ export async function sendPushNotification(
   userId: string,
   title: string,
   body: string,
-  data?: any
+  data?: Record<string, unknown>
 ): Promise<void> {
   await fetch('/api/send-push.php', {
     method: 'POST',

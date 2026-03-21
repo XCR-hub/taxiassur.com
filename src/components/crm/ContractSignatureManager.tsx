@@ -113,7 +113,7 @@ export const ContractSignatureManager: React.FC<ContractSignatureManagerProps> =
       setEditing(false);
       await loadSignatureData();
       onUpdate?.();
-    } catch (error: any) {
+    } catch (error) {
       console.error('Erreur confirmation signature:', error);
       toast.error('❌ Erreur : ' + error.message);
     } finally {

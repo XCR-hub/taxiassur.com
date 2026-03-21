@@ -12,7 +12,7 @@ import { toast } from '@/lib/toast';
 
 interface PipelineWorkflow7EtapesProps {
   leadId: string;
-  leadData: any;
+  leadData: Record<string, unknown>;
 }
 
 interface StepInfo {
@@ -143,7 +143,7 @@ export default function PipelineWorkflow7Etapes({ leadId, leadData }: PipelineWo
       }
 
       setCurrentStage(targetStage);
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error moving to stage:', error);
       toast.error(error.message || 'Erreur lors du changement d\'étape');
     } finally {

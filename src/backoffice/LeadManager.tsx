@@ -77,7 +77,7 @@ const LeadManager: React.FC = () => {
     if (!selectedLead) return;
 
     try {
-      const additionalData: any = {
+      const additionalData: Record<string, unknown> = {
         notes: statusUpdate.notes
       };
 

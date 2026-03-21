@@ -32,7 +32,7 @@ interface TimelineEvent {
   to?: string;
   status?: string;
   attachments?: Attachment[];
-  metadata?: any;
+  metadata?: Record<string, unknown>;
 }
 
 interface CompleteTimelineProps {
@@ -180,7 +180,7 @@ export const CompleteTimeline: React.FC<CompleteTimelineProps> = ({ leadId, lead
       let allLeadIds = [leadId];
       if (leadEmail) {
         const { data: siblings } = await supabase.from('crm_leads').select('id').ilike('email', leadEmail.trim());
-        if (siblings?.length) allLeadIds = [...new Set([leadId, ...siblings.map((l: any) => l.id)])];
+        if (siblings?.length) allLeadIds = [...new Set([leadId, ...siblings.map((l: { id: string }) => l.id)])];
       }
 
       const [emailsRes, interactionsRes, documentsRes, aiRes, notifRes] = await Promise.all([
@@ -191,7 +191,8 @@ export const CompleteTimeline: React.FC<CompleteTimelineProps> = ({ leadId, lead
         supabase.from('crm_event_notifications').select('*').in('lead_id', allLeadIds).order('created_at', { ascending: false }),
       ]);
 
-      (emailsRes.data || []).forEach((email: any) => {
+      type EmailRow = { id: string; direction?: string; received_at?: string; created_at?: string; subject?: string; body_text?: string; body_html?: string; from_email?: string; to_emails?: string[] | string; status?: string; attachments?: Array<{ filename?: string; name?: string; contentType?: string; content_type?: string; size?: number; file_size?: number; url?: string; path?: string; storage_path?: string; proposed_doc_type?: string }> };
+      (emailsRes.data as EmailRow[] || []).forEach((email) => {
         allEvents.push({
           id: `email-${email.id}`,
           type: 'email',
@@ -202,7 +203,7 @@ export const CompleteTimeline: React.FC<CompleteTimelineProps> = ({ leadId, lead
           from: email.from_email,
           to: Array.isArray(email.to_emails) ? email.to_emails.join(', ') : email.to_emails,
           status: email.status,
-          attachments: ((email.attachments as any[]) || []).map((a: any, idx: number) => ({
+          attachments: (email.attachments || []).map((a, idx: number) => ({
             id: `${email.id}-${idx}`,
             file_name: a.filename || a.name || 'Pièce jointe',
             file_type: a.contentType || a.content_type || 'application/octet-stream',
@@ -214,7 +215,8 @@ export const CompleteTimeline: React.FC<CompleteTimelineProps> = ({ leadId, lead
         });
       });
 
-      (interactionsRes.data || []).forEach((int: any) => {
+      type InteractionRow = { id: string; channel?: string; direction?: string; created_at?: string; content?: string; notes?: string; subject?: string; metadata?: Record<string, unknown> };
+      (interactionsRes.data as InteractionRow[] || []).forEach((int) => {
         const labelMap: Record<string, string> = {
           call: int.direction === 'inbound' ? 'Appel reçu' : 'Appel passé',
           sms: int.direction === 'inbound' ? 'SMS reçu' : 'SMS envoyé',
@@ -232,7 +234,8 @@ export const CompleteTimeline: React.FC<CompleteTimelineProps> = ({ leadId, lead
         });
       });
 
-      (documentsRes.data || []).forEach((doc: any) => {
+      type DocumentRow = { id: string; uploaded_at?: string; file_name?: string; document_type?: string; status?: string; mime_type?: string; file_size?: number; file_path?: string; validated_by?: string };
+      (documentsRes.data as DocumentRow[] || []).forEach((doc) => {
         allEvents.push({
           id: `document-${doc.id}`,
           type: 'document',
@@ -251,7 +254,8 @@ export const CompleteTimeline: React.FC<CompleteTimelineProps> = ({ leadId, lead
         });
       });
 
-      (aiRes.data || []).forEach((d: any) => {
+      type AiDecisionRow = { id: string; created_at?: string; decision_type?: string; reasoning?: string; suggestion?: string; status?: string; confidence_score?: number; applied_at?: string };
+      (aiRes.data as AiDecisionRow[] || []).forEach((d) => {
         allEvents.push({
           id: `ai-${d.id}`, type: 'ai_decision', timestamp: d.created_at,
           title: `IA : ${d.decision_type}`,
@@ -261,7 +265,8 @@ export const CompleteTimeline: React.FC<CompleteTimelineProps> = ({ leadId, lead
         });
       });
 
-      (notifRes.data || []).forEach((n: any) => {
+      type NotifRow = { id: string; created_at?: string; title?: string; message?: string; metadata?: Record<string, unknown> };
+      (notifRes.data as NotifRow[] || []).forEach((n) => {
         allEvents.push({
           id: `notification-${n.id}`, type: 'notification', timestamp: n.created_at,
           title: n.title || 'Notification système',

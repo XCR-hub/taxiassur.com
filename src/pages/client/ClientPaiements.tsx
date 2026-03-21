@@ -3,7 +3,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import {
   CreditCard, CheckCircle, Clock, XCircle, AlertCircle,
   Euro, ExternalLink, RefreshCw, TrendingUp, Receipt,
-  ArrowUpRight, Loader, Mail, Send, ShieldCheck
+  ArrowUpRight, Loader, Mail, Send, ShieldCheck, type LucideIcon
 } from 'lucide-react';
 import ClientLayout from '../../components/client/ClientLayout';
 import SEOHead from '../../components/SEOHead';
@@ -29,7 +29,7 @@ interface LeadData {
   last_name?: string;
 }
 
-const STATUS_CONFIG: Record<string, { label: string; bg: string; text: string; border: string; icon: any }> = {
+const STATUS_CONFIG: Record<string, { label: string; bg: string; text: string; border: string; icon: LucideIcon }> = {
   success: { label: 'Payé', bg: 'bg-green-50', text: 'text-green-700', border: 'border-green-200', icon: CheckCircle },
   pending: { label: 'En attente', bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200', icon: Clock },
   processing: { label: 'En cours', bg: 'bg-yellow-50', text: 'text-yellow-700', border: 'border-yellow-200', icon: Loader },
@@ -167,7 +167,7 @@ export default function ClientPaiements() {
       if (!response.ok) throw new Error(result.error || 'Erreur envoi email');
       setSentSuccess(paymentId);
       setTimeout(() => setSentSuccess(null), 5000);
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message);
     } finally {
       setSendingEmail(null);
