@@ -9,7 +9,6 @@ import {
   Phone, MapPin, Loader2, Eye, EyeOff
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
-import NavigationMenu from './NavigationMenu';
 
 interface EmailMessage {
   id: string;
@@ -520,8 +519,6 @@ const CRMInboxMulticanal: React.FC = () => {
 
   return (
     <div className="flex h-screen bg-gray-100 overflow-hidden">
-      <NavigationMenu excludeSections={['Administration']} />
-
       {/* Toast */}
       {toast && (
         <div className={`fixed top-5 right-5 z-[100] flex items-center gap-2.5 px-5 py-3 rounded-xl shadow-2xl text-white text-sm font-medium transition-all ${toastColors[toast.type]}`}>
