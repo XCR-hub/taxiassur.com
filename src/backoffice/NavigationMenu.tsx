@@ -189,6 +189,7 @@ export default function NavigationMenu({ excludeSections = [] }: NavigationMenuP
       permission: canViewAnalytics,
       links: [
         { to: '/backoffice/analytics', icon: PieChart, label: 'Analytics' },
+        { to: '/backoffice/ga4-seo', icon: BarChart3, label: 'GA4 SEO', highlight: true },
         { to: '/backoffice/old-dashboard', icon: LayoutDashboard, label: 'Dashboard Pro' },
         { to: '/backoffice/conversion', icon: TrendingUp, label: 'Conversions' },
       ],
