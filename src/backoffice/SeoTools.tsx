@@ -448,8 +448,8 @@ Consultez le détail dans la console (F12)`);
                         Pour obtenir les vraies données Google (pages indexées, performances, etc.) :
                       </p>
                       <div className="text-xs text-orange-100 space-y-1 mb-3">
-                        <p><strong>1.</strong> Active l'API dans <a href="https://console.cloud.google.com/apis/library" target="_blank" className="underline hover:text-orange-200">Google Cloud Console</a></p>
-                        <p><strong>2.</strong> Crée une clé API dans <a href="https://console.cloud.google.com/apis/credentials" target="_blank" className="underline hover:text-orange-200">Credentials</a></p>
+                        <p><strong>1.</strong> Active l'API dans <a href="https://console.cloud.google.com/apis/library" target=\"_blank" className="underline hover:text-orange-200">Google Cloud Console</a></p>
+                        <p><strong>2.</strong> Crée une clé API dans <a href="https://console.cloud.google.com/apis/credentials" target=\"_blank" className="underline hover:text-orange-200">Credentials</a></p>
                         <p><strong>3.</strong> Ajoute la clé dans Supabase Secrets :</p>
                       </div>
                       <div className="bg-slate-900 p-2 rounded border border-orange-500 mb-3">
