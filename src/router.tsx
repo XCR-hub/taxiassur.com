@@ -774,7 +774,8 @@ export const router = createBrowserRouter([
   },
   {
     path: '/backoffice/doublons',
-    element: <DuplicateLeadsManager />,
+    element: <CRMLayout />,
+    children: [{ index: true, element: <DuplicateLeadsManager /> }],
   },
   {
     path: '/backoffice/insurance-companies',
