@@ -56,6 +56,7 @@ const AssuranceTaxi: React.FC = () => {
         keywords="assurance taxi, assurance taxi professionnelle, assurance taxi pas cher, devis assurance taxi, courtier assurance taxi, rc pro taxi, assurance VTC, comparateur assurance taxi, assurance taxi en ligne, assurance flotte taxi"
       />
       <JsonLd type="breadcrumb" data={breadcrumbs} />
+      <JsonLd type="speakable" data={{ name: "Assurance Taxi Professionnelle | TaxiAssur", url: "/assurance-taxi" }} />
       <JsonLd type="organization" />
       <JsonLd type="faq" data={[
         {
@@ -88,6 +89,10 @@ const AssuranceTaxi: React.FC = () => {
         ratingValue: "4.9",
         reviewCount: 127,
         offerCount: 15
+      }} />
+      <JsonLd type="service" data={{
+        name: "Assurance Taxi Professionnelle",
+        description: "Courtier specialise assurance taxi. RC Pro, dommages tous accidents, protection juridique, assistance 0km. Devis gratuit en 2 minutes, reponse sous 15 min. Economies jusqu'a 35%."
       }} />
 
     <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-black">

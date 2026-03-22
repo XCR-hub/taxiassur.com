@@ -50,6 +50,7 @@ const DevisAssuranceTaxi: React.FC = () => {
         keywords="devis assurance taxi, devis assurance taxi gratuit, devis assurance taxi en ligne, tarif assurance taxi, simulation assurance taxi, comparatif devis taxi, demande devis taxi"
       />
       <JsonLd type="breadcrumb" data={breadcrumbs} />
+      <JsonLd type="speakable" data={{ name: "Devis Assurance Taxi Gratuit en 2 Minutes | TaxiAssur", url: "/devis-assurance-taxi" }} />
       <JsonLd type="organization" />
       <JsonLd type="how-to" />
       <JsonLd type="faq" data={faqItems} />

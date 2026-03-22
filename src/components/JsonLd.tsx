@@ -38,7 +38,7 @@ const STATIC_FAQS: Pick<FaqEntry, 'question' | 'answer'>[] = [
 ];
 
 interface JsonLdProps {
-  type: 'organization' | 'article' | 'faq' | 'product' | 'breadcrumb' | 'insurance-product' | 'reviews' | 'local-business' | 'service' | 'how-to';
+  type: 'organization' | 'article' | 'faq' | 'product' | 'breadcrumb' | 'insurance-product' | 'reviews' | 'local-business' | 'service' | 'how-to' | 'website' | 'speakable';
   data?: Record<string, unknown>;
 }
 
@@ -422,6 +422,46 @@ const JsonLd: React.FC<JsonLdProps> = ({ type, data }) => {
                 "availability": "https://schema.org/InStock"
               }
             ]
+          }
+        };
+
+      case 'speakable':
+        return {
+          "@context": "https://schema.org",
+          "@type": "WebPage",
+          "name": data?.name || "Assurance Taxi Professionnelle | TaxiAssur",
+          "url": data?.url ? `${siteUrl}${data.url}` : siteUrl,
+          "speakable": {
+            "@type": "SpeakableSpecification",
+            "cssSelector": [
+              "h1",
+              "h2",
+              ".speakable-faq",
+              "[data-speakable]"
+            ]
+          }
+        };
+
+      case 'website':
+        return {
+          "@context": "https://schema.org",
+          "@type": "WebSite",
+          "name": brandName,
+          "url": siteUrl,
+          "description": "Courtier specialiste assurance taxi et VTC. Devis gratuit en 2 minutes, tarifs negocies jusqu'a -35%, courtier ORIAS, couverture France entiere.",
+          "inLanguage": "fr-FR",
+          "publisher": {
+            "@type": "InsuranceAgency",
+            "name": brandName,
+            "url": siteUrl
+          },
+          "potentialAction": {
+            "@type": "SearchAction",
+            "target": {
+              "@type": "EntryPoint",
+              "urlTemplate": `${siteUrl}/devis-assurance-taxi?q={search_term_string}`
+            },
+            "query-input": "required name=search_term_string"
           }
         };
 

@@ -44,10 +44,11 @@ const Home: React.FC = () => {
     <>
       <SEOHead
         title="Assurance Taxi Pas Cher - Devis Gratuit 2 min | TaxiAssur Courtier ORIAS"
-        description="ASSURANCE TAXI PAS CHER : Devis GRATUIT 2 min. Economisez 35% - RC Pro incluse - Courtier ORIAS - Reponse 15min - Tarifs negocies - Service expert taxi"
+        description="Assurance taxi professionnelle pas chere : devis gratuit en 2 minutes, reponse en 15 min. Courtier ORIAS specialise, RC Pro incluse, tarifs negocies jusqu'a -35%. Couverture toute la France."
         keywords="assurance taxi, insurance for taxi, assurance taxi pas cher, taxi insurance cheap, courtier assurance taxi, devis assurance taxi gratuit, prix assurance taxi, taxi insurance cost, insurance for taxi drivers, rc professionnelle taxi, assurance taxi professionnel, insurance for taxi company, taxi insurance near me, how much is taxi insurance, assurance taxi france, assurance taxi paris, assurance taxi lyon, assurance taxi marseille"
         canonical="/"
       />
+      <JsonLd type="website" />
       <JsonLd type="organization" />
       <JsonLd type="local-business" />
       <JsonLd type="reviews" />
