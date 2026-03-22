@@ -8,7 +8,7 @@ const AssuranceTaxiBordeaux: React.FC = () => {
   return (
     <>
       <Helmet>
-        <title>Assurance Taxi Bordeaux : Tarifs 2024 | TaxiAssur</title>
+        <title>Assurance Taxi Bordeaux : Tarifs 2026 | TaxiAssur</title>
         <meta name="description" content="Assurance Taxi Bordeaux dès 1,590€/an. RC Pro incluse." />
         <link rel="canonical" href="https://taxiassur.com/assurance-taxi-bordeaux" />
               <meta property="og:type" content="website" />

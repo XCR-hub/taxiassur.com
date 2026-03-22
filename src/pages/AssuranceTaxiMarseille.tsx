@@ -9,7 +9,7 @@ const AssuranceTaxiMarseille: React.FC = () => {
   return (
     <>
       <Helmet>
-        <title>Assurance Taxi Marseille : Tarifs 2024 | TaxiAssur</title>
+        <title>Assurance Taxi Marseille : Tarifs 2026 | TaxiAssur</title>
         <meta name="description" content="Assurance Taxi Marseille dès 1,750€/an. Couverture complète pour chauffeurs marseillais, RC Pro incluse." />
         <link rel="canonical" href="https://taxiassur.com/assurance-taxi-marseille" />
               <meta property="og:type" content="website" />

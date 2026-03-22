@@ -8,7 +8,7 @@ const AssuranceTaxiTours: React.FC = () => {
   return (
     <>
       <Helmet>
-        <title>Assurance Taxi Tours : Tarifs 2024 | TaxiAssur</title>
+        <title>Assurance Taxi Tours : Tarifs 2026 | TaxiAssur</title>
         <meta name="description" content="Assurance Taxi Tours dès 1420€/an (-35%). RC Pro incluse." />
         <link rel="canonical" href="https://taxiassur.com/assurance-taxi-tours" />
               <meta property="og:type" content="website" />

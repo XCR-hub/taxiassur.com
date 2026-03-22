@@ -8,7 +8,7 @@ const AssuranceTaxiMetz: React.FC = () => {
   return (
     <>
       <Helmet>
-        <title>Assurance Taxi Metz : Tarifs 2024 | TaxiAssur</title>
+        <title>Assurance Taxi Metz : Tarifs 2026 | TaxiAssur</title>
         <meta name="description" content="Assurance Taxi Metz dès 1460€/an (-35%). RC Pro incluse." />
         <link rel="canonical" href="https://taxiassur.com/assurance-taxi-metz" />
               <meta property="og:type" content="website" />

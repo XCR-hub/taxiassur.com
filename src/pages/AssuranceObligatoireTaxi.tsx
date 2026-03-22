@@ -11,7 +11,7 @@ const AssuranceObligatoireTaxi: React.FC = () => {
   return (
     <>
       <Helmet>
-        <title>Assurance Obligatoire Taxi : Ce qu'il Faut Savoir 2024</title>
+        <title>Assurance Obligatoire Taxi : Ce qu'il Faut Savoir 2026</title>
         <meta
           name="description"
           content="Quelles sont les assurances obligatoires pour taxi ? RC Pro, assurance véhicule, garanties passagers. Guide complet réglementation + sanctions."

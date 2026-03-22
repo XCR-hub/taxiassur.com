@@ -38,7 +38,7 @@ const STATIC_FAQS: Pick<FaqEntry, 'question' | 'answer'>[] = [
 ];
 
 interface JsonLdProps {
-  type: 'organization' | 'article' | 'faq' | 'product' | 'breadcrumb' | 'insurance-product' | 'reviews' | 'local-business' | 'service';
+  type: 'organization' | 'article' | 'faq' | 'product' | 'breadcrumb' | 'insurance-product' | 'reviews' | 'local-business' | 'service' | 'how-to';
   data?: Record<string, unknown>;
 }
 
@@ -344,6 +344,50 @@ const JsonLd: React.FC<JsonLdProps> = ({ type, data }) => {
           "sameAs": [
             "https://www.linkedin.com/company/xcr",
             "https://www.facebook.com/taxiassur"
+          ]
+        };
+
+      case 'how-to':
+        return {
+          "@context": "https://schema.org",
+          "@type": "HowTo",
+          "name": data?.name || "Comment obtenir un devis assurance taxi en 3 etapes",
+          "description": data?.description || "Obtenez votre devis assurance taxi gratuit en 2 minutes en suivant ces 3 etapes simples. Comparez 15+ assureurs et economisez jusqu'a 35%.",
+          "totalTime": "PT2M",
+          "estimatedCost": {
+            "@type": "MonetaryAmount",
+            "currency": "EUR",
+            "value": "0"
+          },
+          "supply": [
+            { "@type": "HowToSupply", "name": "Carte grise du vehicule" },
+            { "@type": "HowToSupply", "name": "Permis de conduire" },
+            { "@type": "HowToSupply", "name": "Carte professionnelle taxi ou VTC" },
+            { "@type": "HowToSupply", "name": "Releve d'information assureur precedent (si applicable)" }
+          ],
+          "step": [
+            {
+              "@type": "HowToStep",
+              "position": "1",
+              "name": "Remplir le formulaire de devis en ligne",
+              "text": "Renseignez vos informations en 2 minutes : type de vehicule, zone d'activite, anciennete, bonus-malus. Le formulaire est 100% gratuit et sans engagement.",
+              "url": `${siteUrl}/devis-assurance-taxi`,
+              "image": `${siteUrl}/logo-600x300.png`
+            },
+            {
+              "@type": "HowToStep",
+              "position": "2",
+              "name": "Recevoir l'analyse experte sous 15 minutes",
+              "text": "Un courtier specialiste taxi vous rappelle sous 15 minutes pendant les heures ouvrables. Il compare pour vous 15+ assureurs et selectionne les meilleures offres adaptees a votre profil.",
+              "url": `${siteUrl}/devis-assurance-taxi`
+            },
+            {
+              "@type": "HowToStep",
+              "position": "3",
+              "name": "Souscrire et recevoir votre attestation immediatement",
+              "text": "Choisissez l'offre la mieux adaptee, signez electroniquement et recevez votre attestation d'assurance par email immediatement. Prise d'effet possible le jour meme.",
+              "url": `${siteUrl}/devis-assurance-taxi`
+            }
           ]
         };
 

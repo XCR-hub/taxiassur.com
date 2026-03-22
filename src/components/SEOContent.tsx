@@ -22,7 +22,7 @@ const SEOContent: React.FC = () => {
               </div>
             </div>
             <p className="text-sm sm:text-base md:text-lg lg:text-xl text-gray-200 max-w-3xl mx-auto leading-relaxed drop-shadow-md">
-              🎯 <strong className="text-yellow-500">Guide complet 2025</strong> pour choisir la meilleure 
+              🎯 <strong className="text-yellow-500">Guide complet 2026</strong> pour choisir la meilleure 
               <strong className="text-yellow-400">assurance taxi professionnelle</strong>. 
               <strong className="text-green-400">Conseils d'experts</strong> et comparatifs détaillés.
             </p>
@@ -34,7 +34,7 @@ const SEOContent: React.FC = () => {
             <div className="lg:col-span-2 space-y-8">
               <div className="ai-card p-4 sm:p-6 md:p-8 hover:shadow-amber-500/40 transition-all duration-300">
                 <h3 className="text-xl sm:text-2xl font-bold text-white mb-4 sm:mb-6 drop-shadow-lg leading-tight">
-                  Guide Complet 2025
+                  Guide Complet 2026
                 </h3>
                 <p className="text-sm sm:text-base md:text-lg text-gray-300 leading-relaxed mb-4 sm:mb-6 drop-shadow-md">
                   L'<strong className="text-yellow-500">assurance taxi</strong> est obligatoire pour exercer votre activité de chauffeur de taxi en France. 
@@ -254,7 +254,7 @@ const SEOContent: React.FC = () => {
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-gray-300">Spécialiste taxi depuis</span>
-                    <span className="font-bold text-yellow-500">septembre 2025</span>
+                    <span className="font-bold text-yellow-500">plus de 15 ans</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-gray-300">Économie moyenne</span>
@@ -280,7 +280,7 @@ const SEOContent: React.FC = () => {
                   </li>
                   <li className="flex items-center space-x-2">
                     <CheckCircle className="text-green-400" size={16} />
-                    <span>Spécialiste taxi depuis septembre 2025</span>
+                    <span>Spécialiste taxi depuis plus de 15 ans</span>
                   </li>
                   <li className="flex items-center space-x-2">
                     <CheckCircle className="text-green-400" size={16} />

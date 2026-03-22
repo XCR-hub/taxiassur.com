@@ -8,7 +8,7 @@ const AssuranceTaxiSaintEtienne: React.FC = () => {
   return (
     <>
       <Helmet>
-        <title>Assurance Taxi Saint-Etienne : Tarifs 2024 | TaxiAssur</title>
+        <title>Assurance Taxi Saint-Etienne : Tarifs 2026 | TaxiAssur</title>
         <meta name="description" content="Assurance Taxi Saint-Etienne dès 1380€/an. RC Pro incluse, assistance 24/7. Devis gratuit 2 min." />
         <link rel="canonical" href="https://taxiassur.com/assurance-taxi-saint-etienne" />
               <meta property="og:type" content="website" />

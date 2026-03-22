@@ -51,6 +51,7 @@ const DevisAssuranceTaxi: React.FC = () => {
       />
       <JsonLd type="breadcrumb" data={breadcrumbs} />
       <JsonLd type="organization" />
+      <JsonLd type="how-to" />
       <JsonLd type="faq" data={faqItems} />
       <JsonLd type="insurance-product" data={{
         name: "Devis Assurance Taxi Gratuit en 2 Minutes",

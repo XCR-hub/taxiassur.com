@@ -8,7 +8,7 @@ const AssuranceTaxiBesancon: React.FC = () => {
   return (
     <>
       <Helmet>
-        <title>Assurance Taxi Besancon : Tarifs 2024 | TaxiAssur</title>
+        <title>Assurance Taxi Besancon : Tarifs 2026 | TaxiAssur</title>
         <meta name="description" content="Assurance Taxi Besancon dès 1430€/an (-35%). RC Pro incluse." />
         <link rel="canonical" href="https://taxiassur.com/assurance-taxi-besancon" />
               <meta property="og:type" content="website" />

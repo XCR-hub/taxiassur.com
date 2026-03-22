@@ -8,7 +8,7 @@ const AssuranceTaxiAngers: React.FC = () => {
   return (
     <>
       <Helmet>
-        <title>Assurance Taxi Angers : Tarifs 2024 | TaxiAssur</title>
+        <title>Assurance Taxi Angers : Tarifs 2026 | TaxiAssur</title>
         <meta name="description" content="Assurance Taxi Angers dès 1440€/an (-35%). RC Pro incluse." />
         <link rel="canonical" href="https://taxiassur.com/assurance-taxi-angers" />
               <meta property="og:type" content="website" />

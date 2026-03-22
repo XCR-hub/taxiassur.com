@@ -11,7 +11,7 @@ const AssuranceTaxiVTC: React.FC = () => {
   return (
     <>
       <Helmet>
-        <title>Assurance Taxi VTC : Comparatif & Tarifs 2024 | TaxiAssur</title>
+        <title>Assurance Taxi VTC : Comparatif & Tarifs 2026 | TaxiAssur</title>
         <meta
           name="description"
           content="Assurance Taxi VTC complète dès 1,170€/an (-35%). Découvrez les différences Taxi vs VTC, obligations légales et devis gratuit en 2 min. RC Pro incluse."

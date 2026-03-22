@@ -11,7 +11,7 @@ const AssuranceMotoTaxi: React.FC = () => {
   return (
     <>
       <Helmet>
-        <title>Assurance Moto Taxi : Tarifs & Devis 2024 | TaxiAssur</title>
+        <title>Assurance Moto Taxi : Tarifs & Devis 2026 | TaxiAssur</title>
         <meta
           name="description"
           content="Assurance Moto Taxi dès 1,300€/an. Couverture complète transport passagers moto, RC Pro incluse, garanties spécifiques deux-roues. Devis gratuit 2 min."

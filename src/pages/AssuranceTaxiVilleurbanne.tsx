@@ -8,7 +8,7 @@ const AssuranceTaxiVilleurbanne: React.FC = () => {
   return (
     <>
       <Helmet>
-        <title>Assurance Taxi Villeurbanne : Tarifs 2024 | TaxiAssur</title>
+        <title>Assurance Taxi Villeurbanne : Tarifs 2026 | TaxiAssur</title>
         <meta name="description" content="Assurance Taxi Villeurbanne dès 1490€/an (-35%). RC Pro incluse." />
         <link rel="canonical" href="https://taxiassur.com/assurance-taxi-villeurbanne" />
               <meta property="og:type" content="website" />

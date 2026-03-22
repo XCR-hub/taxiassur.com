@@ -8,7 +8,7 @@ const AssuranceTaxiToulouse: React.FC = () => {
   return (
     <>
       <Helmet>
-        <title>Assurance Taxi Toulouse : Tarifs 2024 | TaxiAssur</title>
+        <title>Assurance Taxi Toulouse : Tarifs 2026 | TaxiAssur</title>
         <meta name="description" content="Assurance Taxi Toulouse dès 1,540€/an. RC Pro incluse, assistance 24/7." />
         <link rel="canonical" href="https://taxiassur.com/assurance-taxi-toulouse" />
               <meta property="og:type" content="website" />

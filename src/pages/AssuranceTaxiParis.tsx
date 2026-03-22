@@ -10,7 +10,7 @@ const AssuranceTaxiParis: React.FC = () => {
   return (
     <>
       <Helmet>
-        <title>Assurance Taxi Paris : Tarifs Parisien 2024 | TaxiAssur</title>
+        <title>Assurance Taxi Paris 2026 : Tarifs & Devis Gratuit | TaxiAssur</title>
         <meta
           name="description"
           content="Assurance Taxi Paris dès 2,080€/an (-35%). Tarifs par arrondissement, couverture G7, Alpha, taxis parisiens. Devis gratuit en 2 min spécial Paris."
@@ -33,7 +33,16 @@ const AssuranceTaxiParis: React.FC = () => {
             "areaServed": {
               "@type": "City",
               "name": "Paris"
-            }
+            },
+            "aggregateRating": {
+              "@type": "AggregateRating",
+              "ratingValue": "4.9",
+              "reviewCount": "127",
+              "bestRating": "5"
+            },
+            "telephone": "+33180855786",
+            "url": "https://taxiassur.com/assurance-taxi-paris",
+            "priceRange": "€€"
           })}
         </script>
 

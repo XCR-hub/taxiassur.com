@@ -11,7 +11,7 @@ const QuelleAssuranceTaxi: React.FC = () => {
   return (
     <>
       <Helmet>
-        <title>Quelle Assurance pour Taxi ? Guide Complet 2024</title>
+        <title>Quelle Assurance pour Taxi ? Guide Complet 2026</title>
         <meta
           name="description"
           content="Quelle assurance choisir pour taxi ? RC Pro obligatoire, garanties recommandées, comparatif assureurs. Guide complet + devis gratuit 2 min."
