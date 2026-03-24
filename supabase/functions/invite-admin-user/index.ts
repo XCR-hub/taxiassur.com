@@ -330,7 +330,7 @@ Deno.serve(async (req: Request) => {
       if (!user_id) {
         return new Response(
           JSON.stringify({ success: false, error: 'user_id requis pour la suppression' }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
       await supabaseAdmin.from('user_permissions').delete().eq('user_id', user_id);
@@ -345,7 +345,7 @@ Deno.serve(async (req: Request) => {
     if (!email || !full_name) {
       return new Response(
         JSON.stringify({ success: false, error: 'Email et nom complet requis' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -353,7 +353,7 @@ Deno.serve(async (req: Request) => {
     if (!emailRegex.test(email)) {
       return new Response(
         JSON.stringify({ success: false, error: "Format d'email invalide" }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -362,7 +362,7 @@ Deno.serve(async (req: Request) => {
     if (!validRoles.includes(userRole)) {
       return new Response(
         JSON.stringify({ success: false, error: `Role invalide. Roles valides: ${validRoles.join(', ')}` }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -500,7 +500,7 @@ Deno.serve(async (req: Request) => {
 
       return new Response(
         JSON.stringify({ success: false, error: linkError.message }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -510,7 +510,7 @@ Deno.serve(async (req: Request) => {
     if (!userId) {
       return new Response(
         JSON.stringify({ success: false, error: 'Aucun utilisateur cree' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -528,7 +528,7 @@ Deno.serve(async (req: Request) => {
       else if (dbError.message.includes('duplicate key') || dbError.message.includes('unique')) errorMessage = 'Email deja utilise';
       return new Response(
         JSON.stringify({ success: false, error: errorMessage }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -572,7 +572,7 @@ Deno.serve(async (req: Request) => {
     console.error('Error in invite-admin-user:', error);
     return new Response(
       JSON.stringify({ success: false, error: error.message || 'Erreur serveur' }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });
