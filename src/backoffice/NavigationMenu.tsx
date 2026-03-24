@@ -16,6 +16,7 @@ interface NavSection {
   title: string;
   icon: React.ElementType;
   color: string;
+  accent: string;
   links: NavLink[];
   permission?: boolean;
 }
@@ -24,89 +25,106 @@ interface NavigationMenuProps {
   excludeSections?: string[];
 }
 
-const SECTION_ACCENT: Record<string, string> = {
-  slate:   'text-slate-400',
-  blue:    'text-blue-400',
-  green:   'text-green-400',
-  amber:   'text-amber-400',
-  sky:     'text-sky-400',
-  cyan:    'text-cyan-400',
-  orange:  'text-orange-400',
-  emerald: 'text-emerald-400',
-  rose:    'text-rose-400',
-  pink:    'text-pink-400',
-  teal:    'text-teal-400',
-};
-
-const ACTIVE_DOT: Record<string, string> = {
-  slate:   'bg-slate-400',
-  blue:    'bg-blue-400',
-  green:   'bg-green-400',
-  amber:   'bg-amber-400',
-  sky:     'bg-sky-400',
-  cyan:    'bg-cyan-400',
-  orange:  'bg-orange-400',
-  emerald: 'bg-emerald-400',
-  rose:    'bg-rose-400',
-  pink:    'bg-pink-400',
-  teal:    'bg-teal-400',
-};
-
-const ACTIVE_BG: Record<string, string> = {
-  slate:   'bg-slate-500/20',
-  blue:    'bg-blue-500/20',
-  green:   'bg-green-500/20',
-  amber:   'bg-amber-500/20',
-  sky:     'bg-sky-500/20',
-  cyan:    'bg-cyan-500/20',
-  orange:  'bg-orange-500/20',
-  emerald: 'bg-emerald-500/20',
-  rose:    'bg-rose-500/20',
-  pink:    'bg-pink-500/20',
-  teal:    'bg-teal-500/20',
-};
-
 function NavSection({ section, currentPath }: { section: NavSection; currentPath: string }) {
   const [open, setOpen] = useState(true);
-  const accentColor = SECTION_ACCENT[section.color] || 'text-slate-400';
-  const activeDot = ACTIVE_DOT[section.color] || 'bg-slate-400';
-  const activeBg = ACTIVE_BG[section.color] || 'bg-slate-500/20';
-
   const hasActive = section.links.some(l => currentPath === l.to || currentPath.startsWith(l.to + '/'));
 
   return (
     <div>
       <button
         onClick={() => setOpen(v => !v)}
-        className={`w-full flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors group ${hasActive ? 'text-white' : 'text-slate-400 hover:text-slate-300'}`}
+        className="w-full flex items-center transition-all"
+        style={{
+          gap: 8,
+          padding: '5px 8px',
+          borderRadius: 7,
+          background: hasActive ? `${section.accent}14` : 'transparent',
+        }}
       >
-        <section.icon className={`w-3.5 h-3.5 flex-shrink-0 ${accentColor}`} />
-        <span className="flex-1 text-left text-xs font-semibold uppercase tracking-wider">{section.title}</span>
-        {hasActive && <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${activeDot}`} />}
-        <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 flex-shrink-0 ${open ? '' : '-rotate-90'}`} />
+        <section.icon
+          size={12}
+          className="flex-shrink-0"
+          style={{ color: section.accent }}
+        />
+        <span
+          className="flex-1 text-left uppercase tracking-wider"
+          style={{
+            fontSize: 10,
+            fontWeight: 600,
+            color: hasActive ? section.accent : 'rgba(255,255,255,0.3)',
+            letterSpacing: '0.07em',
+          }}
+        >
+          {section.title}
+        </span>
+        {hasActive && (
+          <span
+            className="flex-shrink-0"
+            style={{
+              width: 5,
+              height: 5,
+              borderRadius: '50%',
+              background: section.accent,
+              boxShadow: `0 0 5px ${section.accent}`,
+            }}
+          />
+        )}
+        <ChevronDown
+          size={11}
+          className="flex-shrink-0 transition-transform duration-200"
+          style={{
+            color: 'rgba(255,255,255,0.2)',
+            transform: open ? 'rotate(0deg)' : 'rotate(-90deg)',
+          }}
+        />
       </button>
 
       {open && (
-        <div className="mt-0.5 ml-2 space-y-0.5">
+        <div className="mt-0.5 ml-2 space-y-px">
           {section.links.map(link => {
             const isActive = currentPath === link.to || currentPath.startsWith(link.to + '/');
             return (
               <Link
                 key={link.to}
                 to={link.to}
-                className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-all group ${
-                  isActive
-                    ? `${activeBg} text-white`
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
-                }`}
+                className="flex items-center transition-all"
+                style={{
+                  gap: 8,
+                  padding: '6px 8px',
+                  borderRadius: 7,
+                  background: isActive ? `${section.accent}15` : 'transparent',
+                  boxShadow: isActive ? `inset 2px 0 0 ${section.accent}` : 'none',
+                  textDecoration: 'none',
+                }}
               >
-                {isActive && <span className={`w-1 h-5 rounded-full flex-shrink-0 ${activeDot}`} />}
-                <link.icon className={`w-3.5 h-3.5 flex-shrink-0 ${isActive ? 'text-white' : `group-hover:${accentColor}`}`} />
-                <span className="flex-1 truncate">{link.label}</span>
+                <link.icon
+                  size={13}
+                  className="flex-shrink-0"
+                  style={{ color: isActive ? section.accent : 'rgba(255,255,255,0.3)' }}
+                />
+                <span
+                  className="flex-1 truncate"
+                  style={{
+                    fontSize: 11,
+                    fontWeight: isActive ? 500 : 400,
+                    color: isActive ? '#fff' : 'rgba(255,255,255,0.45)',
+                  }}
+                >
+                  {link.label}
+                </span>
                 {link.badge && (
-                  <span className={`text-xs px-1.5 py-0.5 rounded-full font-bold flex-shrink-0 ${
-                    isActive ? 'bg-white/20 text-white' : 'bg-rose-500/80 text-white'
-                  }`}>
+                  <span
+                    className="flex-shrink-0 flex items-center justify-center font-bold"
+                    style={{
+                      minWidth: 16,
+                      height: 16,
+                      borderRadius: 8,
+                      padding: '0 4px',
+                      fontSize: 9,
+                      background: isActive ? `${section.accent}30` : 'rgba(239,68,68,0.7)',
+                      color: isActive ? section.accent : '#fff',
+                    }}
+                  >
                     {link.badge}
                   </span>
                 )}
@@ -139,6 +157,7 @@ export default function NavigationMenu({ excludeSections = [] }: NavigationMenuP
       title: 'Administration',
       icon: UserCog,
       color: 'slate',
+      accent: '#94a3b8',
       permission: isMaster,
       links: [
         { to: '/backoffice/users', icon: Users, label: 'Utilisateurs' },
@@ -152,6 +171,7 @@ export default function NavigationMenu({ excludeSections = [] }: NavigationMenuP
       title: 'Facturation',
       icon: CreditCard,
       color: 'emerald',
+      accent: '#10b981',
       permission: true,
       links: [
         { to: '/backoffice/lead-invoicing', icon: CreditCard, label: 'Facturation Leads' },
@@ -163,6 +183,7 @@ export default function NavigationMenu({ excludeSections = [] }: NavigationMenuP
       title: 'Clients',
       icon: Users,
       color: 'teal',
+      accent: '#14b8a6',
       permission: canViewCRM,
       links: [
         { to: '/backoffice/clients', icon: Users, label: 'Gestion Clients' },
@@ -172,6 +193,7 @@ export default function NavigationMenu({ excludeSections = [] }: NavigationMenuP
       title: 'CRM & Pipeline',
       icon: Target,
       color: 'blue',
+      accent: '#3b82f6',
       permission: canViewCRM,
       links: [
         { to: '/backoffice/crm', icon: Sparkles, label: 'CRM Dashboard' },
@@ -189,6 +211,7 @@ export default function NavigationMenu({ excludeSections = [] }: NavigationMenuP
       title: 'Communication',
       icon: MessageSquare,
       color: 'green',
+      accent: '#22c55e',
       permission: canViewCRM,
       links: [
         { to: '/backoffice/whatsapp', icon: MessageSquare, label: 'WhatsApp' },
@@ -201,6 +224,7 @@ export default function NavigationMenu({ excludeSections = [] }: NavigationMenuP
       title: 'Marketplace',
       icon: DollarSign,
       color: 'amber',
+      accent: '#f59e0b',
       permission: canViewMarketplace,
       links: [
         { to: '/backoffice/lead-marketplace', icon: DollarSign, label: 'Marketplace' },
@@ -212,6 +236,7 @@ export default function NavigationMenu({ excludeSections = [] }: NavigationMenuP
       title: 'Production & Compagnies',
       icon: Building2,
       color: 'sky',
+      accent: '#0ea5e9',
       permission: canViewCRM,
       links: [
         { to: '/backoffice/insurance-companies', icon: Building2, label: 'Compagnies' },
@@ -227,6 +252,7 @@ export default function NavigationMenu({ excludeSections = [] }: NavigationMenuP
       title: 'IA & Automatisation',
       icon: Brain,
       color: 'cyan',
+      accent: '#06b6d4',
       permission: canViewContentIA || canViewSettings,
       links: [
         { to: '/backoffice/ultron', icon: Sparkles, label: 'ULTRON' },
@@ -243,6 +269,7 @@ export default function NavigationMenu({ excludeSections = [] }: NavigationMenuP
       title: 'Contenu',
       icon: FileEdit,
       color: 'orange',
+      accent: '#f97316',
       permission: canViewContentIA,
       links: [
         { to: '/backoffice/ai-generator', icon: Zap, label: 'Generateur IA' },
@@ -257,6 +284,7 @@ export default function NavigationMenu({ excludeSections = [] }: NavigationMenuP
       title: 'SEO & Backlinks',
       icon: Search,
       color: 'emerald',
+      accent: '#34d399',
       permission: canViewSEO || canViewBacklinks,
       links: [
         { to: '/backoffice/seo', icon: Search, label: 'SEO Tools' },
@@ -271,6 +299,7 @@ export default function NavigationMenu({ excludeSections = [] }: NavigationMenuP
       title: 'Reseaux Sociaux',
       icon: Megaphone,
       color: 'rose',
+      accent: '#f43f5e',
       permission: canViewSocialMedia,
       links: [
         { to: '/backoffice/social-media', icon: Megaphone, label: 'Social Media' },
@@ -282,6 +311,7 @@ export default function NavigationMenu({ excludeSections = [] }: NavigationMenuP
       title: 'Analytics',
       icon: PieChart,
       color: 'pink',
+      accent: '#ec4899',
       permission: canViewAnalytics,
       links: [
         { to: '/backoffice/analytics', icon: PieChart, label: 'Analytics' },
@@ -293,7 +323,7 @@ export default function NavigationMenu({ excludeSections = [] }: NavigationMenuP
   ];
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-1">
       {sections.map(section => {
         if (section.permission === false) return null;
         if (excludeSections.includes(section.title)) return null;
