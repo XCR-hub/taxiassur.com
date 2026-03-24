@@ -30,7 +30,10 @@ import {
   Hash,
   User,
   Phone,
-  Shield
+  Shield,
+  Trash2,
+  Ban,
+  AlertTriangle
 } from 'lucide-react';
 
 interface MoneticoPayment {
@@ -93,6 +96,8 @@ export default function MoneticoAccountingDashboard() {
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
   const [activePeriod, setActivePeriod] = useState<number | null>(30);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [confirmModal, setConfirmModal] = useState<{ type: 'cancel' | 'delete'; payment: MoneticoPayment } | null>(null);
+  const [actionLoading, setActionLoading] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -120,6 +125,46 @@ export default function MoneticoAccountingDashboard() {
       toast.error('Erreur de chargement');
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function cancelPayment(payment: MoneticoPayment) {
+    try {
+      setActionLoading(true);
+      const { error } = await supabase
+        .from('monetico_payments')
+        .update({ status: 'cancelled', updated_at: new Date().toISOString() })
+        .eq('id', payment.id);
+      if (error) throw error;
+      toast.success('Demande de paiement annulée');
+      setConfirmModal(null);
+      setExpandedRow(null);
+      await loadData();
+    } catch (err) {
+      console.error('Erreur annulation:', err);
+      toast.error("Erreur lors de l'annulation");
+    } finally {
+      setActionLoading(false);
+    }
+  }
+
+  async function deletePayment(payment: MoneticoPayment) {
+    try {
+      setActionLoading(true);
+      const { error } = await supabase
+        .from('monetico_payments')
+        .delete()
+        .eq('id', payment.id);
+      if (error) throw error;
+      toast.success('Paiement supprimé définitivement');
+      setConfirmModal(null);
+      setExpandedRow(null);
+      await loadData();
+    } catch (err) {
+      console.error('Erreur suppression:', err);
+      toast.error('Erreur lors de la suppression');
+    } finally {
+      setActionLoading(false);
     }
   }
 
@@ -809,6 +854,27 @@ export default function MoneticoAccountingDashboard() {
                                   </div>
                                 ))}
                               </div>
+                              {(payment.status === 'pending' || payment.status === 'failed') && (
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 14, paddingTop: 12, borderTop: `1px solid ${border}` }}>
+                                  {payment.status === 'pending' && (
+                                    <button
+                                      onClick={e => { e.stopPropagation(); setConfirmModal({ type: 'cancel', payment }); }}
+                                      style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 14px', background: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.3)', borderRadius: 8, color: '#f59e0b', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
+                                    >
+                                      <Ban size={13} />
+                                      Annuler le paiement
+                                    </button>
+                                  )}
+                                  <button
+                                    onClick={e => { e.stopPropagation(); setConfirmModal({ type: 'delete', payment }); }}
+                                    style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 14px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: 8, color: '#ef4444', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
+                                  >
+                                    <Trash2 size={13} />
+                                    Supprimer
+                                  </button>
+                                  <span style={{ fontSize: 10, color: textMuted }}>Les paiements encaissés ne peuvent pas être supprimés.</span>
+                                </div>
+                              )}
                             </td>
                           </tr>
                         )}
@@ -868,6 +934,56 @@ export default function MoneticoAccountingDashboard() {
 
         </div>
       </div>
+
+      {confirmModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}
+          onClick={() => !actionLoading && setConfirmModal(null)}>
+          <div style={{ background: '#1a1a2e', border: `1px solid ${border}`, borderRadius: 16, padding: 28, maxWidth: 420, width: '90%', boxShadow: '0 24px 80px rgba(0,0,0,0.6)' }}
+            onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+              <div style={{ width: 40, height: 40, borderRadius: 10, background: confirmModal.type === 'delete' ? 'rgba(239,68,68,0.15)' : 'rgba(245,158,11,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <AlertTriangle size={20} color={confirmModal.type === 'delete' ? '#ef4444' : '#f59e0b'} />
+              </div>
+              <div>
+                <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: '#f1f5f9' }}>
+                  {confirmModal.type === 'delete' ? 'Supprimer ce paiement ?' : 'Annuler ce paiement ?'}
+                </h3>
+                <p style={{ margin: '2px 0 0 0', fontSize: 12, color: '#64748b' }}>Cette action est irréversible.</p>
+              </div>
+            </div>
+            <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 10, padding: '10px 14px', marginBottom: 18 }}>
+              <p style={{ margin: 0, fontSize: 12, color: '#94a3b8' }}>
+                <span style={{ fontWeight: 600, color: '#f1f5f9' }}>{confirmModal.payment.customer_name || confirmModal.payment.reference}</span>
+                {' — '}
+                <span style={{ color: '#f59e0b', fontWeight: 700 }}>{parseFloat(confirmModal.payment.amount.toString()).toFixed(2)} {confirmModal.payment.currency}</span>
+              </p>
+              <p style={{ margin: '4px 0 0 0', fontSize: 11, color: '#64748b', fontFamily: 'monospace' }}>{confirmModal.payment.reference}</p>
+            </div>
+            {confirmModal.type === 'delete' && (
+              <p style={{ margin: '0 0 18px 0', fontSize: 12, color: '#ef4444', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, padding: '8px 12px' }}>
+                La suppression est definitive. Utilisez "Annuler" si vous souhaitez conserver une trace avec le statut "Annule".
+              </p>
+            )}
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => setConfirmModal(null)}
+                disabled={actionLoading}
+                style={{ padding: '8px 18px', background: 'rgba(255,255,255,0.06)', border: `1px solid ${border}`, borderRadius: 8, color: '#94a3b8', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
+              >
+                Retour
+              </button>
+              <button
+                onClick={() => confirmModal.type === 'delete' ? deletePayment(confirmModal.payment) : cancelPayment(confirmModal.payment)}
+                disabled={actionLoading}
+                style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 18px', background: confirmModal.type === 'delete' ? '#ef4444' : '#f59e0b', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 700, cursor: actionLoading ? 'not-allowed' : 'pointer', opacity: actionLoading ? 0.7 : 1 }}
+              >
+                {actionLoading ? <RefreshCw size={13} className="animate-spin" /> : confirmModal.type === 'delete' ? <Trash2 size={13} /> : <Ban size={13} />}
+                {actionLoading ? 'En cours...' : confirmModal.type === 'delete' ? 'Supprimer definitivement' : 'Confirmer l\'annulation'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
