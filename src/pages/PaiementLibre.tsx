@@ -53,19 +53,18 @@ const PaiementLibre: React.FC = () => {
   const loadPayment = async (ref: string) => {
     try {
       const { data, error: dbError } = await supabase
-        .from('monetico_payments')
-        .select('*')
-        .eq('reference', ref)
-        .maybeSingle();
+        .rpc('get_payment_by_reference', { p_reference: ref });
 
       if (dbError) throw dbError;
 
-      if (!data) {
+      const row = Array.isArray(data) ? data[0] : data;
+
+      if (!row) {
         setError('Lien de paiement introuvable. Vérifiez l\'URL ou contactez-nous.');
         return;
       }
 
-      setPayment(data as PaymentRecord);
+      setPayment(row as PaymentRecord);
     } catch (err: any) {
       console.error('Erreur chargement paiement:', err);
       setError('Erreur lors du chargement. Veuillez réessayer.');
