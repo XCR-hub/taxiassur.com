@@ -269,7 +269,7 @@ const UserManagement: React.FC = () => {
     : 0;
 
   return (
-    <div className="flex flex-col h-full" style={{ minHeight: 'calc(100vh - 80px)' }}>
+    <div className="flex flex-col" style={{ height: '100%', minHeight: '600px' }}>
 
       {/* TOASTS */}
       <div className="fixed top-4 right-4 z-[100] flex flex-col gap-2 pointer-events-none">

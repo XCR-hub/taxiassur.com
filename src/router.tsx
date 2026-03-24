@@ -1004,7 +1004,8 @@ export const router = createBrowserRouter([
   },
   {
     path: '/backoffice/users',
-    element: <UserManagement />,
+    element: <CRMLayout />,
+    children: [{ index: true, element: <UserManagement /> }],
   },
   {
     path: '/backoffice/security',
