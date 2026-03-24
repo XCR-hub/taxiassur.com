@@ -339,19 +339,24 @@ export const PipelineCard: React.FC<PipelineCardProps> = ({
             )}
           </div>
 
-          {/* Age badge */}
-          <div
-            className={cn(
-              'shrink-0 flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded-md',
-              indicators.daysInPipeline > 14
-                ? 'bg-red-100 text-red-700'
-                : indicators.daysInPipeline > 7
-                  ? 'bg-amber-100 text-amber-700'
-                  : 'text-gray-500'
-            )}
-          >
-            <Clock size={8} />
-            {indicators.daysInPipeline === 0 ? 'Auj.' : `${indicators.daysInPipeline}j`}
+          {/* Age badge + date */}
+          <div className="shrink-0 flex flex-col items-end gap-0.5">
+            <div
+              className={cn(
+                'flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded-md',
+                indicators.daysInPipeline > 14
+                  ? 'bg-red-100 text-red-700'
+                  : indicators.daysInPipeline > 7
+                    ? 'bg-amber-100 text-amber-700'
+                    : 'text-gray-500'
+              )}
+            >
+              <Clock size={8} />
+              {indicators.daysInPipeline === 0 ? 'Auj.' : `${indicators.daysInPipeline}j`}
+            </div>
+            <span className="text-[9px] text-gray-400 leading-none">
+              {new Date(lead.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })}
+            </span>
           </div>
         </div>
 
