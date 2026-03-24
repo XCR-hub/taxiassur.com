@@ -808,7 +808,8 @@ export const router = createBrowserRouter([
   },
   {
     path: '/backoffice/quote-queue',
-    element: <QuoteQueueDashboard />,
+    element: <CRMLayout />,
+    children: [{ index: true, element: <QuoteQueueDashboard /> }],
   },
   {
     path: '/backoffice/newsletter',
