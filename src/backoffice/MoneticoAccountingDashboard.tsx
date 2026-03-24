@@ -48,9 +48,9 @@ interface MoneticoPayment {
   payment_date?: string;
   created_at: string;
   lead?: {
-    nom: string;
-    prenom: string;
-    telephone: string;
+    first_name: string;
+    last_name: string;
+    phone: string;
   };
 }
 
@@ -103,7 +103,7 @@ export default function MoneticoAccountingDashboard() {
       setLoading(true);
       let query = supabase
         .from('monetico_payments')
-        .select(`*, lead:crm_leads(nom, prenom, telephone)`)
+        .select(`*, lead:crm_leads(first_name, last_name, phone)`)
         .order('created_at', { ascending: false });
 
       if (filterStatus !== 'all') query = query.eq('status', filterStatus);
@@ -219,9 +219,9 @@ export default function MoneticoAccountingDashboard() {
     const rows = fp.map(p => [
       new Date(p.created_at).toLocaleDateString('fr-FR'),
       p.reference,
-      p.customer_name || `${p.lead?.prenom || ''} ${p.lead?.nom || ''}`,
+      p.customer_name || `${p.lead?.first_name || ''} ${p.lead?.last_name || ''}`,
       p.customer_email,
-      p.lead?.telephone || '',
+      p.lead?.phone || '',
       p.amount, p.currency, p.status,
       p.card_type || '', p.card_last4 || '',
       p.authorization_number || '',
@@ -240,7 +240,7 @@ export default function MoneticoAccountingDashboard() {
     let html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="UTF-8"></head><body><table border="1"><thead><tr style="background-color:#1d4ed8;color:white;font-weight:bold;"><th>Date</th><th>Référence</th><th>Client</th><th>Email</th><th>Téléphone</th><th>Montant</th><th>Devise</th><th>Statut</th><th>Type Carte</th><th>4 derniers chiffres</th><th>N° Autorisation</th><th>Date Paiement</th></tr></thead><tbody>`;
     fp.forEach(p => {
       const sc = p.status === 'paid' ? '#059669' : p.status === 'pending' ? '#d97706' : '#dc2626';
-      html += `<tr><td>${new Date(p.created_at).toLocaleDateString('fr-FR')}</td><td>${p.reference}</td><td>${p.customer_name || `${p.lead?.prenom || ''} ${p.lead?.nom || ''}`}</td><td>${p.customer_email}</td><td>${p.lead?.telephone || ''}</td><td style="text-align:right;">${p.amount}</td><td>${p.currency}</td><td style="background-color:${sc};color:white;">${p.status}</td><td>${p.card_type || ''}</td><td>${p.card_last4 || ''}</td><td>${p.authorization_number || ''}</td><td>${p.payment_date ? new Date(p.payment_date).toLocaleDateString('fr-FR') : ''}</td></tr>`;
+      html += `<tr><td>${new Date(p.created_at).toLocaleDateString('fr-FR')}</td><td>${p.reference}</td><td>${p.customer_name || `${p.lead?.first_name || ''} ${p.lead?.last_name || ''}`}</td><td>${p.customer_email}</td><td>${p.lead?.phone || ''}</td><td style="text-align:right;">${p.amount}</td><td>${p.currency}</td><td style="background-color:${sc};color:white;">${p.status}</td><td>${p.card_type || ''}</td><td>${p.card_last4 || ''}</td><td>${p.authorization_number || ''}</td><td>${p.payment_date ? new Date(p.payment_date).toLocaleDateString('fr-FR') : ''}</td></tr>`;
     });
     html += '</tbody></table></body></html>';
     const blob = new Blob([html], { type: 'application/vnd.ms-excel' });
@@ -730,7 +730,7 @@ export default function MoneticoAccountingDashboard() {
                       cancelled: { bg: 'rgba(239,68,68,0.12)', text: '#ef4444', dot: '#ef4444' },
                     };
                     const sc = statusColors[payment.status] || { bg: 'rgba(255,255,255,0.06)', text: textSecondary, dot: textMuted };
-                    const displayName = payment.customer_name || `${payment.lead?.prenom || ''} ${payment.lead?.nom || ''}`.trim() || '—';
+                    const displayName = payment.customer_name || `${payment.lead?.first_name || ''} ${payment.lead?.last_name || ''}`.trim() || '—';
 
                     return (
                       <>
@@ -793,12 +793,12 @@ export default function MoneticoAccountingDashboard() {
                                 {[
                                   { icon: <User size={12} />, label: 'Client complet', value: `${payment.customer_name || '—'}` },
                                   { icon: <Mail size={12} />, label: 'Email', value: payment.customer_email || '—' },
-                                  { icon: <Phone size={12} />, label: 'Téléphone', value: payment.lead?.telephone || '—' },
+                                  { icon: <Phone size={12} />, label: 'Téléphone', value: payment.lead?.phone || '—' },
                                   { icon: <Calendar size={12} />, label: 'Date paiement', value: payment.payment_date ? new Date(payment.payment_date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' }) : '—' },
                                   { icon: <Hash size={12} />, label: 'ID transaction', value: payment.id.split('-')[0] + '...' },
                                   { icon: <Shield size={12} />, label: 'N° autorisation', value: payment.authorization_number || '—' },
                                   { icon: <CreditCard size={12} />, label: 'Carte', value: payment.card_type && payment.card_last4 ? `${payment.card_type} **** **** **** ${payment.card_last4}` : '—' },
-                                  { icon: <Building2 size={12} />, label: 'Lead associé', value: payment.lead_id ? `${payment.lead?.prenom || ''} ${payment.lead?.nom || ''}`.trim() || 'Lié' : 'Paiement libre' },
+                                  { icon: <Building2 size={12} />, label: 'Lead associé', value: payment.lead_id ? `${payment.lead?.first_name || ''} ${payment.lead?.last_name || ''}`.trim() || 'Lié' : 'Paiement libre' },
                                 ].map((detail, i) => (
                                   <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: 5, color: textMuted }}>
