@@ -6,151 +6,56 @@ import {
   FileText,
   BarChart3,
   Bell,
-  RefreshCw,
   Settings,
   ChevronLeft,
-  Menu,
-  X,
-  Home,
-  LogOut,
   TrendingUp,
   Clock,
   AlertTriangle,
   Building2,
   CreditCard,
-  Activity
+  Activity,
+  Menu,
+  X,
 } from 'lucide-react';
-import { useAdminAuth } from '@/hooks/useAdminAuth';
-import AdminLogin from '@/components/AdminLogin';
 
 const ClientsLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, signOut, isAuthenticated, loading } = useAdminAuth();
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [mobileOpen, setMobileOpen] = useState(false);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <RefreshCw className="animate-spin mx-auto mb-4 text-yellow-500" size={48} />
-          <p className="text-gray-700 font-medium">Chargement...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!isAuthenticated) {
-    return <AdminLogin onSuccess={() => window.location.reload()} />;
-  }
+  const [open, setOpen] = useState(true);
 
   const menuGroups = [
     {
       label: 'Portefeuille',
       items: [
-        {
-          id: 'clients-list',
-          label: 'Tous les Clients',
-          icon: Users,
-          path: '/backoffice/clients',
-          exact: true,
-          description: 'Vue d\'ensemble'
-        },
-        {
-          id: 'renewals',
-          label: 'Renouvellements',
-          icon: Clock,
-          path: '/backoffice/clients?tab=renewals',
-          description: 'Prochains 30 jours'
-        },
-        {
-          id: 'at-risk',
-          label: 'Clients à Risque',
-          icon: AlertTriangle,
-          path: '/backoffice/clients?tab=at_risk',
-          description: 'Attention requise'
-        },
-        {
-          id: 'activity',
-          label: 'Activité Récente',
-          icon: Activity,
-          path: '/backoffice/clients?tab=activity',
-          description: 'Dernières interactions'
-        }
-      ]
+        { id: 'clients-list', label: 'Tous les Clients',   icon: Users,         path: '/backoffice/clients',             exact: true,  description: "Vue d'ensemble" },
+        { id: 'renewals',     label: 'Renouvellements',    icon: Clock,         path: '/backoffice/clients?tab=renewals',              description: 'Prochains 30 jours' },
+        { id: 'at-risk',      label: 'Clients à Risque',   icon: AlertTriangle, path: '/backoffice/clients?tab=at_risk',               description: 'Attention requise' },
+        { id: 'activity',     label: 'Activité Récente',   icon: Activity,      path: '/backoffice/clients?tab=activity',              description: 'Dernières interactions' },
+      ],
     },
     {
       label: 'Contrats & Finances',
       items: [
-        {
-          id: 'contracts',
-          label: 'Contrats',
-          icon: FileText,
-          path: '/backoffice/clients?tab=contracts',
-          description: 'Gestion contrats'
-        },
-        {
-          id: 'premiums',
-          label: 'Primes & Paiements',
-          icon: CreditCard,
-          path: '/backoffice/clients?tab=premiums',
-          description: 'Suivi financier'
-        },
-        {
-          id: 'companies',
-          label: 'Compagnies',
-          icon: Building2,
-          path: '/backoffice/production',
-          description: 'Assureurs partenaires'
-        }
-      ]
+        { id: 'contracts', label: 'Contrats',          icon: FileText,  path: '/backoffice/clients?tab=contracts', description: 'Gestion contrats' },
+        { id: 'premiums',  label: 'Primes & Paiements', icon: CreditCard, path: '/backoffice/clients?tab=premiums', description: 'Suivi financier' },
+        { id: 'companies', label: 'Compagnies',         icon: Building2, path: '/backoffice/production',           description: 'Assureurs partenaires' },
+      ],
     },
     {
       label: 'Suivi & Reporting',
       items: [
-        {
-          id: 'analytics',
-          label: 'Statistiques',
-          icon: BarChart3,
-          path: '/backoffice/clients?tab=stats',
-          description: 'KPIs portefeuille'
-        },
-        {
-          id: 'trends',
-          label: 'Tendances',
-          icon: TrendingUp,
-          path: '/backoffice/clients?tab=trends',
-          description: 'Évolution'
-        },
-        {
-          id: 'notifications',
-          label: 'Alertes Clients',
-          icon: Bell,
-          path: '/backoffice/clients?tab=alerts',
-          description: 'Notifications'
-        }
-      ]
+        { id: 'analytics',     label: 'Statistiques',   icon: BarChart3,  path: '/backoffice/clients?tab=stats',  description: 'KPIs portefeuille' },
+        { id: 'trends',        label: 'Tendances',       icon: TrendingUp, path: '/backoffice/clients?tab=trends', description: 'Évolution' },
+        { id: 'notifications', label: 'Alertes Clients', icon: Bell,       path: '/backoffice/clients?tab=alerts', description: 'Notifications' },
+      ],
     },
     {
       label: 'Administration',
       items: [
-        {
-          id: 'retention',
-          label: 'Rétention',
-          icon: Shield,
-          path: '/backoffice/crm-killer/retention',
-          description: 'Anti-churn'
-        },
-        {
-          id: 'settings',
-          label: 'Paramètres',
-          icon: Settings,
-          path: '/backoffice/crm-killer/settings',
-          description: 'Configuration'
-        }
-      ]
-    }
+        { id: 'retention', label: 'Rétention',   icon: Shield,   path: '/backoffice/crm-killer/retention', description: 'Anti-churn' },
+        { id: 'settings',  label: 'Paramètres',  icon: Settings, path: '/backoffice/crm-killer/settings',  description: 'Configuration' },
+      ],
+    },
   ];
 
   const isActive = (path: string, exact?: boolean) => {
@@ -159,62 +64,110 @@ const ClientsLayout = () => {
     return location.pathname.startsWith(basePath);
   };
 
-  const handleLogout = async () => {
-    await signOut();
-    navigate('/backoffice');
-  };
+  return (
+    <div className="flex h-full overflow-hidden" style={{ background: '#0f1117' }}>
 
-  const SidebarContent = () => (
-    <div className="flex flex-col h-full">
-      {/* Logo / Titre section */}
-      <div className="px-4 py-5 border-b border-gray-800">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-xl flex items-center justify-center shadow-md shadow-yellow-500/20 flex-shrink-0">
-            <Users size={20} className="text-black" />
-          </div>
-          {sidebarOpen && (
-            <div className="min-w-0">
-              <div className="font-bold text-white text-sm leading-tight">Gestion Clients</div>
-              <div className="text-xs text-yellow-400 font-medium mt-0.5">Portefeuille actif</div>
-            </div>
+      {/* Secondary sidebar */}
+      <aside
+        className="flex flex-col flex-shrink-0 transition-all duration-300"
+        style={{
+          width: open ? 220 : 52,
+          background: '#0a0d14',
+          borderRight: '1px solid rgba(255,255,255,0.055)',
+        }}
+      >
+        {/* Header */}
+        <div
+          className="flex items-center flex-shrink-0"
+          style={{
+            height: 52,
+            padding: '0 10px',
+            borderBottom: '1px solid rgba(255,255,255,0.055)',
+            justifyContent: open ? 'space-between' : 'center',
+          }}
+        >
+          {open ? (
+            <>
+              <div className="flex items-center gap-2">
+                <div
+                  className="flex items-center justify-center flex-shrink-0"
+                  style={{
+                    width: 26, height: 26, borderRadius: 7,
+                    background: 'rgba(245,158,11,0.15)',
+                    color: '#f59e0b',
+                  }}
+                >
+                  <Users size={13} />
+                </div>
+                <span style={{ fontSize: 12, fontWeight: 600, color: '#fff' }}>Clients</span>
+              </div>
+              <button
+                onClick={() => setOpen(false)}
+                style={{ color: 'rgba(255,255,255,0.3)', background: 'none', border: 'none', cursor: 'pointer', padding: 2 }}
+              >
+                <X size={13} />
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={() => setOpen(true)}
+              style={{ color: 'rgba(255,255,255,0.3)', background: 'none', border: 'none', cursor: 'pointer' }}
+              title="Ouvrir"
+            >
+              <Menu size={14} />
+            </button>
           )}
         </div>
-      </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-4">
-        {menuGroups.map((group) => (
-          <div key={group.label}>
-            {sidebarOpen && (
-              <div className="px-3 mb-1.5 text-[10px] font-bold text-gray-600 uppercase tracking-widest">
-                {group.label}
-              </div>
-            )}
-            <div className="space-y-0.5">
+        {/* Navigation */}
+        <nav className="flex-1 overflow-y-auto" style={{ padding: '8px 6px' }}>
+          {menuGroups.map((group) => (
+            <div key={group.label} style={{ marginBottom: 12 }}>
+              {open && (
+                <div style={{ padding: '0 6px 4px', fontSize: 9, fontWeight: 700, color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                  {group.label}
+                </div>
+              )}
               {group.items.map((item) => {
                 const Icon = item.icon;
                 const active = isActive(item.path, item.exact);
                 return (
                   <button
                     key={item.id}
-                    onClick={() => {
-                      navigate(item.path);
-                      setMobileOpen(false);
+                    onClick={() => navigate(item.path)}
+                    title={!open ? item.label : undefined}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: open ? 8 : 0,
+                      width: '100%',
+                      padding: open ? '6px 8px' : '9px 0',
+                      justifyContent: open ? 'flex-start' : 'center',
+                      borderRadius: 7,
+                      background: active ? 'rgba(245,158,11,0.12)' : 'transparent',
+                      boxShadow: active ? 'inset 2px 0 0 #f59e0b' : 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      marginBottom: 1,
+                      transition: 'all 0.12s',
                     }}
-                    title={!sidebarOpen ? item.label : undefined}
-                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-left group relative ${
-                      active
-                        ? 'bg-gradient-to-r from-yellow-500 to-yellow-600 text-black shadow-md shadow-yellow-500/20'
-                        : 'text-gray-400 hover:bg-gray-800 hover:text-white'
-                    }`}
                   >
-                    <Icon size={18} className={`flex-shrink-0 ${active ? 'text-black' : 'text-gray-500 group-hover:text-yellow-400'}`} />
-                    {sidebarOpen && (
-                      <div className="min-w-0 flex-1">
-                        <div className={`text-sm font-medium leading-tight ${active ? 'text-black' : 'text-gray-300'}`}>
+                    <div
+                      style={{
+                        width: 22, height: 22, borderRadius: 5, flexShrink: 0,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        background: active ? 'rgba(245,158,11,0.2)' : 'rgba(255,255,255,0.04)',
+                        color: active ? '#f59e0b' : 'rgba(255,255,255,0.28)',
+                      }}
+                    >
+                      <Icon size={12} />
+                    </div>
+                    {open && (
+                      <div style={{ minWidth: 0, textAlign: 'left' }}>
+                        <div style={{ fontSize: 11.5, fontWeight: active ? 600 : 500, color: active ? '#fff' : 'rgba(255,255,255,0.55)', lineHeight: 1.2 }}>
                           {item.label}
                         </div>
-                        <div className={`text-[11px] mt-0.5 ${active ? 'text-black/70' : 'text-gray-600'}`}>
+                        <div style={{ fontSize: 9.5, color: 'rgba(255,255,255,0.22)', marginTop: 1 }}>
                           {item.description}
                         </div>
                       </div>
@@ -223,142 +176,32 @@ const ClientsLayout = () => {
                 );
               })}
             </div>
-          </div>
-        ))}
-      </nav>
+          ))}
+        </nav>
 
-      {/* Footer sidebar */}
-      <div className="border-t border-gray-800 p-3 space-y-1">
-        {/* Retour menu principal */}
-        <button
-          onClick={() => navigate('/backoffice/crm')}
-          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-600 hover:bg-orange-50 hover:text-orange-700 transition-all group ${!sidebarOpen && 'justify-center'}`}
-          title={!sidebarOpen ? 'Menu Principal CRM' : undefined}
-        >
-          <ChevronLeft size={18} className="flex-shrink-0 group-hover:text-orange-600" />
-          {sidebarOpen && <span className="text-sm font-semibold">Menu Principal CRM</span>}
-        </button>
-
-        <button
-          onClick={() => navigate('/')}
-          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-600 hover:bg-gray-100 transition-all ${!sidebarOpen && 'justify-center'}`}
-          title={!sidebarOpen ? 'Site public' : undefined}
-        >
-          <Home size={18} className="flex-shrink-0" />
-          {sidebarOpen && <span className="text-sm font-medium">Site public</span>}
-        </button>
-
-        {/* Utilisateur */}
-        {sidebarOpen && user && (
-          <div className="mt-2 px-3 py-3 bg-gray-900 rounded-xl border border-gray-800">
-            <div className="flex items-center gap-2.5 mb-2">
-              <div className="w-8 h-8 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-full flex items-center justify-center text-black font-bold text-sm flex-shrink-0">
-                {user.full_name?.[0]?.toUpperCase() || 'A'}
-              </div>
-              <div className="min-w-0">
-                <div className="text-sm font-semibold text-white truncate">{user.full_name || 'Admin'}</div>
-                <div className="text-xs text-gray-500 truncate">{user.email}</div>
-              </div>
-            </div>
-            <button
-              onClick={handleLogout}
-              className="w-full flex items-center gap-2 px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg transition-colors text-xs font-medium"
-            >
-              <LogOut size={14} />
-              Déconnexion
-            </button>
-          </div>
-        )}
-
-        {!sidebarOpen && (
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center justify-center px-3 py-2.5 rounded-xl text-red-500 hover:bg-red-50 transition-colors"
-            title="Déconnexion"
-          >
-            <LogOut size={18} />
-          </button>
-        )}
-      </div>
-    </div>
-  );
-
-  return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden">
-
-      {/* Sidebar desktop */}
-      <aside
-        className={`hidden lg:flex flex-col bg-black border-r border-gray-800 shadow-sm transition-all duration-300 flex-shrink-0 ${
-          sidebarOpen ? 'w-64' : 'w-[68px]'
-        }`}
-      >
-        {/* Toggle collapse */}
-        <div className={`flex items-center border-b border-gray-800 px-3 py-3 ${sidebarOpen ? 'justify-end' : 'justify-center'}`}>
-          <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-1.5 hover:bg-gray-800 rounded-lg transition-colors text-gray-500 hover:text-yellow-400"
-            title={sidebarOpen ? 'Réduire' : 'Agrandir'}
-          >
-            <Menu size={18} />
-          </button>
-        </div>
-        <SidebarContent />
-      </aside>
-
-      {/* Mobile overlay */}
-      {mobileOpen && (
-        <div
-          className="fixed inset-0 bg-black/40 z-40 lg:hidden"
-          onClick={() => setMobileOpen(false)}
-        />
-      )}
-
-      {/* Sidebar mobile */}
-      <aside
-        className={`fixed left-0 top-0 h-full w-72 bg-black border-r border-gray-800 shadow-xl z-50 lg:hidden transition-transform duration-300 ${
-          mobileOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}
-      >
-        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-800">
-          <span className="font-bold text-white text-sm">Gestion Clients</span>
-          <button
-            onClick={() => setMobileOpen(false)}
-            className="p-1.5 hover:bg-gray-800 rounded-lg transition-colors text-gray-400"
-          >
-            <X size={18} />
-          </button>
-        </div>
-        <SidebarContent />
-      </aside>
-
-      {/* Main content */}
-      <main className="flex-1 flex flex-col overflow-hidden min-w-0">
-        {/* Top bar mobile */}
-        <header className="lg:hidden bg-white border-b border-gray-200 px-4 py-3 flex items-center gap-3 flex-shrink-0">
-          <button
-            onClick={() => setMobileOpen(true)}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-600"
-          >
-            <Menu size={20} />
-          </button>
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-lg flex items-center justify-center">
-              <Users size={14} className="text-black" />
-            </div>
-            <span className="font-bold text-gray-900 text-sm">Gestion Clients</span>
-          </div>
+        {/* Back to CRM */}
+        <div style={{ padding: '8px 6px', borderTop: '1px solid rgba(255,255,255,0.055)' }}>
           <button
             onClick={() => navigate('/backoffice/crm')}
-            className="ml-auto flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-orange-600 bg-orange-50 hover:bg-orange-100 rounded-lg transition-colors"
+            title={!open ? 'Retour CRM' : undefined}
+            style={{
+              display: 'flex', alignItems: 'center', gap: open ? 8 : 0,
+              justifyContent: open ? 'flex-start' : 'center',
+              width: '100%', padding: open ? '6px 8px' : '9px 0',
+              borderRadius: 7, background: 'none', border: 'none',
+              cursor: 'pointer', color: 'rgba(255,255,255,0.3)',
+              transition: 'all 0.12s',
+            }}
           >
-            <ChevronLeft size={14} />
-            CRM
+            <ChevronLeft size={13} />
+            {open && <span style={{ fontSize: 11 }}>Menu Principal</span>}
           </button>
-        </header>
-
-        <div className="flex-1 overflow-auto min-h-0">
-          <Outlet />
         </div>
+      </aside>
+
+      {/* Content */}
+      <main className="flex-1 overflow-auto min-h-0 min-w-0">
+        <Outlet />
       </main>
     </div>
   );

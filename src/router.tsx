@@ -1,7 +1,6 @@
 import { createBrowserRouter } from 'react-router-dom';
 import { lazy } from 'react';
 import RouteErrorFallback from './components/RouteErrorFallback';
-import GlobalErrorBoundary from './components/GlobalErrorBoundary';
 import NotFound from './pages/NotFound';
 
 const Home = lazy(() => import('./pages/Home'));
@@ -98,7 +97,6 @@ const ClientProfil = lazy(() => import('./pages/client/ClientProfil'));
 const ClientSinistres = lazy(() => import('./pages/client/ClientSinistres'));
 const ClientInsuranceSpace = lazy(() => import('./pages/client/ClientInsuranceSpace'));
 
-const BackofficeDashboard = lazy(() => import('./backoffice/Dashboard'));
 const CRMLayout = lazy(() => import('./backoffice/CRMLayout'));
 const CRMKillerDashboard = lazy(() => import('./backoffice/CRMKillerDashboard'));
 const CRMLeadDetail = lazy(() => import('./backoffice/CRMLeadDetail'));
@@ -185,16 +183,6 @@ export const router = createBrowserRouter([
     path: '/',
     element: <Home />,
     errorElement: <RouteErrorFallback />,
-  },
-  {
-    path: '/admin',
-    element: <CRMLayout />,
-    children: [
-      {
-        index: true,
-        element: <BackofficeDashboard />,
-      },
-    ],
   },
   {
     path: '/old-admin',
@@ -571,451 +559,211 @@ export const router = createBrowserRouter([
     path: '/client/sinistres',
     element: <ClientSinistres />,
   },
+
+  /* ─────────────────────────────────────────────────────────────────────
+     BACKOFFICE — single CRMLayout parent, all routes as children.
+     This ensures the sidebar mounts once and persists across navigation.
+  ───────────────────────────────────────────────────────────────────── */
   {
     path: '/backoffice',
     element: <CRMLayout />,
+    errorElement: <RouteErrorFallback />,
     children: [
+      /* ── Dashboard ── */
+      { index: true, element: <CRMKillerDashboard /> },
+      { path: 'dashboard', element: <CRMKillerDashboard /> },
+      { path: 'crm', element: <CRMKillerDashboard /> },
+
+      /* ── CRM Killer sub-section ── */
       {
-        index: true,
-        element: <CRMKillerDashboard />,
+        path: 'crm-killer',
+        children: [
+          { index: true, element: <CRMKillerDashboard /> },
+          { path: 'pipeline', element: <CRMPipelineKanban /> },
+          { path: 'inbox', element: <CRMInboxMulticanal /> },
+          { path: 'inbox-intelligent', element: <InboxIntelligent /> },
+          { path: 'retention', element: <CRMRetentionCenter /> },
+          { path: 'ia', element: <CRMAIGovernance /> },
+          { path: 'templates', element: <CRMTemplatesManager /> },
+          { path: 'settings', element: <CRMAdminSettings /> },
+          { path: 'email-blacklist', element: <EmailBlacklistManager /> },
+          { path: 'lead/:leadId', element: <CRMLeadDetail /> },
+        ],
       },
-    ],
-  },
-  {
-    path: '/backoffice/claims',
-    element: <CRMLayout />,
-    children: [
+
+      /* ── Leads & Clients ── */
+      { path: 'claims', element: <ClaimsManager /> },
+      { path: 'crm-commercial', element: <CRMCommercial /> },
+      { path: 'lead-manager', element: <LeadManager /> },
+      { path: 'doublons', element: <DuplicateLeadsManager /> },
+      { path: 'quote-queue', element: <QuoteQueueDashboard /> },
+      { path: 'quotes', element: <QuotesManager /> },
+      { path: 'pending-documents', element: <PendingDocumentsManager /> },
+      { path: 'documents', element: <AllDocumentsViewer /> },
+
+      /* ── Clients section — secondary inner sidebar ── */
       {
-        index: true,
-        element: <ClaimsManager />,
+        path: 'clients',
+        element: <ClientsLayout />,
+        children: [
+          { index: true, element: <ClientsManager /> },
+          { path: ':leadId', element: <ClientInsuranceManager /> },
+        ],
       },
-    ],
-  },
-  {
-    path: '/backoffice/dashboard',
-    element: <CRMLayout />,
-    children: [
+
+      /* ── Insurance & Production ── */
+      { path: 'insurance-companies', element: <InsuranceCompaniesManager /> },
+      { path: 'insurance-companies-stats', element: <InsuranceCompaniesStats /> },
+      { path: 'production', element: <CRMProductionManager /> },
+      { path: 'web-import', element: <WebImportManager /> },
+
+      /* ── Finance ── */
+      { path: 'monetico-accounting', element: <MoneticoAccountingDashboard /> },
+      { path: 'invoicing', element: <FreeInvoicing /> },
+      { path: 'free-invoicing', element: <FreeInvoicing /> },
+      { path: 'lead-invoicing', element: <LeadInvoicing /> },
+
+      /* ── Partners ── */
+      { path: 'partner-portal', element: <PartnerPortal /> },
+      { path: 'partner-auth', element: <PartnerAuth /> },
+      { path: 'partners', element: <PartnerManager /> },
+      { path: 'lead-marketplace', element: <LeadMarketplace /> },
+
+      /* ── Social ── */
+      { path: 'social-media', element: <SocialMediaManager /> },
+      { path: 'social-connections', element: <SocialMediaManager /> },
+
+      /* ── Email Marketing — secondary inner sidebar ── */
       {
-        index: true,
-        element: <CRMKillerDashboard />,
-      },
-    ],
-  },
-  {
-    path: '/backoffice/clients',
-    element: <ClientsLayout />,
-    children: [
-      {
-        index: true,
-        element: <ClientsManager />,
-      },
-      {
-        path: ':leadId',
-        element: <ClientInsuranceManager />,
-      },
-    ],
-  },
-  {
-    path: '/backoffice/monetico-accounting',
-    element: <MoneticoAccountingDashboard />,
-  },
-  {
-    path: '/backoffice/invoicing',
-    element: <FreeInvoicing />,
-  },
-  {
-    path: '/backoffice/free-invoicing',
-    element: <FreeInvoicing />,
-  },
-  {
-    path: '/backoffice/lead-invoicing',
-    element: <LeadInvoicing />,
-  },
-  {
-    path: '/backoffice/production',
-    element: <CRMLayout />,
-    children: [{ index: true, element: <CRMProductionManager /> }],
-  },
-  {
-    path: '/backoffice/web-import',
-    element: <WebImportManager />,
-  },
-  {
-    path: '/backoffice/crm',
-    element: <CRMLayout />,
-    children: [
-      {
-        index: true,
-        element: <CRMKillerDashboard />,
-      },
-    ],
-  },
-  {
-    path: '/backoffice/crm-killer',
-    element: <CRMLayout />,
-    children: [
-      {
-        index: true,
-        element: <CRMKillerDashboard />,
-      },
-      {
-        path: 'pipeline',
-        element: <CRMPipelineKanban />,
-      },
-      {
-        path: 'inbox',
-        element: <CRMInboxMulticanal />,
-      },
-      {
-        path: 'inbox-intelligent',
-        element: <InboxIntelligent />,
-      },
-      {
-        path: 'retention',
-        element: <CRMRetentionCenter />,
-      },
-      {
-        path: 'ia',
-        element: <CRMAIGovernance />,
-      },
-      {
-        path: 'templates',
-        element: <CRMTemplatesManager />,
-      },
-      {
-        path: 'settings',
-        element: <CRMAdminSettings />,
-      },
-      {
-        path: 'email-blacklist',
-        element: <EmailBlacklistManager />,
-      },
-      {
-        path: 'lead/:leadId',
-        element: <CRMLeadDetail />,
-      },
-    ],
-  },
-  {
-    path: '/backoffice/crm-commercial',
-    element: <CRMCommercial />,
-  },
-  {
-    path: '/backoffice/lead-manager',
-    element: <LeadManager />,
-  },
-  {
-    path: '/backoffice/partner-portal',
-    element: <PartnerPortal />,
-  },
-  {
-    path: '/backoffice/partner-auth',
-    element: <PartnerAuth />,
-  },
-  {
-    path: '/backoffice/social-media',
-    element: <SocialMediaManager />,
-  },
-  {
-    path: '/backoffice/social-connections',
-    element: <SocialMediaManager />,
-  },
-  {
-    path: '/backoffice/automations',
-    element: <CRMLayout />,
-    children: [
-      {
-        element: <AutomationLayout />,
-        children: [{ index: true, element: <AutomationDashboard /> }],
-      },
-    ],
-  },
-  {
-    path: '/backoffice/test-automations',
-    element: <CRMLayout />,
-    children: [
-      {
-        element: <AutomationLayout />,
-        children: [{ index: true, element: <TestAutomations /> }],
-      },
-    ],
-  },
-  {
-    path: '/backoffice/analytics',
-    element: <CRMLayout />,
-    children: [
-      {
-        element: <AnalyticsLayout />,
-        children: [{ index: true, element: <AnalyticsDashboard /> }],
-      },
-    ],
-  },
-  {
-    path: '/backoffice/whatsapp',
-    element: <CRMLayout />,
-    children: [
-      {
-        element: <WhatsAppLayout />,
-        children: [{ index: true, element: <WhatsAppManager /> }],
-      },
-    ],
-  },
-  {
-    path: '/backoffice/whatsapp-settings',
-    element: <CRMLayout />,
-    children: [
-      {
-        element: <WhatsAppLayout />,
-        children: [{ index: true, element: <WhatsAppSettings /> }],
-      },
-    ],
-  },
-  {
-    path: '/backoffice/email-marketing',
-    element: <CRMLayout />,
-    children: [
-      {
+        path: 'email-marketing',
         element: <EmailMarketingLayout />,
         children: [{ index: true, element: <EmailMarketingHub /> }],
       },
-    ],
-  },
-  {
-    path: '/backoffice/doublons',
-    element: <CRMLayout />,
-    children: [{ index: true, element: <DuplicateLeadsManager /> }],
-  },
-  {
-    path: '/backoffice/insurance-companies',
-    element: <InsuranceCompaniesManager />,
-  },
-  {
-    path: '/backoffice/insurance-companies-stats',
-    element: <InsuranceCompaniesStats />,
-  },
-  {
-    path: '/backoffice/quotes',
-    element: <QuotesManager />,
-  },
-  {
-    path: '/backoffice/pending-documents',
-    element: <CRMLayout />,
-    children: [{ index: true, element: <PendingDocumentsManager /> }],
-  },
-  {
-    path: '/backoffice/documents',
-    element: <AllDocumentsViewer />,
-  },
-  {
-    path: '/backoffice/quote-queue',
-    element: <CRMLayout />,
-    children: [{ index: true, element: <QuoteQueueDashboard /> }],
-  },
-  {
-    path: '/backoffice/newsletter',
-    element: <CRMLayout />,
-    children: [
       {
+        path: 'newsletter',
         element: <EmailMarketingLayout />,
         children: [{ index: true, element: <NewsletterDashboard /> }],
       },
-    ],
-  },
-  {
-    path: '/backoffice/email-subscribers',
-    element: <CRMLayout />,
-    children: [
       {
+        path: 'email-subscribers',
         element: <EmailMarketingLayout />,
         children: [{ index: true, element: <EmailSubscribersManager /> }],
       },
-    ],
-  },
-  {
-    path: '/backoffice/notifications',
-    element: <CRMLayout />,
-    children: [
       {
+        path: 'notifications',
         element: <EmailMarketingLayout />,
         children: [{ index: true, element: <NotificationsManager /> }],
       },
-    ],
-  },
-  {
-    path: '/backoffice/smart-templates',
-    element: <CRMLayout />,
-    children: [
       {
+        path: 'smart-templates',
         element: <EmailMarketingLayout />,
         children: [{ index: true, element: <SmartTemplatesManager /> }],
       },
-    ],
-  },
-  {
-    path: '/backoffice/ab-testing',
-    element: <CRMLayout />,
-    children: [
       {
+        path: 'ab-testing',
         element: <EmailMarketingLayout />,
         children: [{ index: true, element: <ABTestingManager /> }],
       },
-    ],
-  },
-  {
-    path: '/backoffice/email-analytics',
-    element: <CRMLayout />,
-    children: [
       {
+        path: 'email-analytics',
         element: <EmailMarketingLayout />,
         children: [{ index: true, element: <EmailAdvancedAnalytics /> }],
       },
-    ],
-  },
-  {
-    path: '/backoffice/partners',
-    element: <PartnerManager />,
-  },
-  {
-    path: '/backoffice/llm-dashboard',
-    element: <LLMDashboard />,
-  },
-  {
-    path: '/backoffice/llm-council',
-    element: <LLMCouncilDashboard />,
-  },
-  {
-    path: '/backoffice/ai-autonomous',
-    element: <AIAutonomousDashboard />,
-  },
-  {
-    path: '/backoffice/master-ai',
-    element: <MasterAI />,
-  },
-  {
-    path: '/backoffice/ultron',
-    element: <UltronCommandCenter />,
-  },
-  {
-    path: '/backoffice/automation-scheduler',
-    element: <CRMLayout />,
-    children: [
+
+      /* ── Analytics — secondary inner sidebar ── */
       {
-        element: <AutomationLayout />,
-        children: [{ index: true, element: <AutomationScheduler /> }],
+        path: 'analytics',
+        element: <AnalyticsLayout />,
+        children: [{ index: true, element: <AnalyticsDashboard /> }],
       },
-    ],
-  },
-  {
-    path: '/backoffice/auto-optimizer',
-    element: <AutoOptimizer />,
-  },
-  {
-    path: '/backoffice/ai-generator',
-    element: <AIContentGeneratorUnified />,
-  },
-  {
-    path: '/backoffice/content',
-    element: <ContentManager />,
-  },
-  {
-    path: '/backoffice/news',
-    element: <NewsManager />,
-  },
-  {
-    path: '/backoffice/popups',
-    element: <PopupManager />,
-  },
-  {
-    path: '/backoffice/generate-cities',
-    element: <CityPageGenerator />,
-  },
-  {
-    path: '/backoffice/trend-analyzer',
-    element: <TrendAnalyzer />,
-  },
-  {
-    path: '/backoffice/seo',
-    element: <SeoTools />,
-  },
-  {
-    path: '/backoffice/seo-strategy',
-    element: <SEOStrategyDashboard />,
-  },
-  {
-    path: '/backoffice/gsc-optimization',
-    element: <GSCOptimizationDashboard />,
-  },
-  {
-    path: '/backoffice/gsc-autonomous',
-    element: <CRMLayout />,
-    children: [{ index: true, element: <GSCAutonomousDashboard /> }],
-  },
-  {
-    path: '/backoffice/ga4-seo',
-    element: <CRMLayout />,
-    children: [{ index: true, element: <GA4SEODashboard /> }],
-  },
-  {
-    path: '/backoffice/backlinks',
-    element: <BacklinkManager />,
-  },
-  {
-    path: '/backoffice/backlink-prospector',
-    element: <BacklinkProspector />,
-  },
-  {
-    path: '/backoffice/backlink-automation',
-    element: <CRMLayout />,
-    children: [
       {
-        element: <AutomationLayout />,
-        children: [{ index: true, element: <BacklinkAutomationDashboard /> }],
-      },
-    ],
-  },
-  {
-    path: '/backoffice/outreach',
-    element: <OutreachComposer />,
-  },
-  {
-    path: '/backoffice/marketing-templates',
-    element: <MarketingTemplates />,
-  },
-  {
-    path: '/backoffice/qr-codes',
-    element: <QRCodeGenerator />,
-  },
-  {
-    path: '/backoffice/old-dashboard',
-    element: <Dashboard />,
-  },
-  {
-    path: '/backoffice/conversion',
-    element: <CRMLayout />,
-    children: [
-      {
+        path: 'conversion',
         element: <AnalyticsLayout />,
         children: [{ index: true, element: <ConversionAnalytics /> }],
       },
+
+      /* ── WhatsApp — secondary inner sidebar ── */
+      {
+        path: 'whatsapp',
+        element: <WhatsAppLayout />,
+        children: [{ index: true, element: <WhatsAppManager /> }],
+      },
+      {
+        path: 'whatsapp-settings',
+        element: <WhatsAppLayout />,
+        children: [{ index: true, element: <WhatsAppSettings /> }],
+      },
+
+      /* ── Automations — secondary inner sidebar ── */
+      {
+        path: 'automations',
+        element: <AutomationLayout />,
+        children: [{ index: true, element: <AutomationDashboard /> }],
+      },
+      {
+        path: 'test-automations',
+        element: <AutomationLayout />,
+        children: [{ index: true, element: <TestAutomations /> }],
+      },
+      {
+        path: 'automation-scheduler',
+        element: <AutomationLayout />,
+        children: [{ index: true, element: <AutomationScheduler /> }],
+      },
+      {
+        path: 'backlink-automation',
+        element: <AutomationLayout />,
+        children: [{ index: true, element: <BacklinkAutomationDashboard /> }],
+      },
+
+      /* ── AI ── */
+      { path: 'llm-dashboard', element: <LLMDashboard /> },
+      { path: 'llm-council', element: <LLMCouncilDashboard /> },
+      { path: 'ai-autonomous', element: <AIAutonomousDashboard /> },
+      { path: 'master-ai', element: <MasterAI /> },
+      { path: 'ultron', element: <UltronCommandCenter /> },
+      { path: 'auto-optimizer', element: <AutoOptimizer /> },
+      { path: 'ai-generator', element: <AIContentGeneratorUnified /> },
+
+      /* ── Content ── */
+      { path: 'content', element: <ContentManager /> },
+      { path: 'news', element: <NewsManager /> },
+      { path: 'popups', element: <PopupManager /> },
+      { path: 'generate-cities', element: <CityPageGenerator /> },
+      { path: 'trend-analyzer', element: <TrendAnalyzer /> },
+
+      /* ── SEO ── */
+      { path: 'seo', element: <SeoTools /> },
+      { path: 'seo-strategy', element: <SEOStrategyDashboard /> },
+      { path: 'gsc-optimization', element: <GSCOptimizationDashboard /> },
+      { path: 'gsc-autonomous', element: <GSCAutonomousDashboard /> },
+      { path: 'ga4-seo', element: <GA4SEODashboard /> },
+      { path: 'seo-opportunities', element: <SEOOpportunitiesDashboard /> },
+      { path: 'backlinks', element: <BacklinkManager /> },
+      { path: 'backlink-prospector', element: <BacklinkProspector /> },
+      { path: 'outreach', element: <OutreachComposer /> },
+
+      /* ── Marketing ── */
+      { path: 'marketing-templates', element: <MarketingTemplates /> },
+      { path: 'qr-codes', element: <QRCodeGenerator /> },
+
+      /* ── Admin ── */
+      { path: 'users', element: <UserManagement /> },
+      { path: 'security', element: <SecurityDashboard /> },
+      { path: 'compliance', element: <ComplianceCenter /> },
+
+      /* ── Legacy ── */
+      { path: 'old-dashboard', element: <Dashboard /> },
     ],
   },
+
+  /* Legacy /admin alias */
   {
-    path: '/backoffice/lead-marketplace',
-    element: <LeadMarketplace />,
-  },
-  {
-    path: '/backoffice/users',
+    path: '/admin',
     element: <CRMLayout />,
-    children: [{ index: true, element: <UserManagement /> }],
+    children: [{ index: true, element: <CRMKillerDashboard /> }],
   },
-  {
-    path: '/backoffice/security',
-    element: <SecurityDashboard />,
-  },
-  {
-    path: '/backoffice/compliance',
-    element: <ComplianceCenter />,
-  },
+
   {
     path: '*',
     element: <NotFound />,
