@@ -648,7 +648,8 @@ const CRMPipelineKanban: React.FC = () => {
                 placeholder="Rechercher par nom, email, téléphone..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-9 pr-3 py-1.5 bg-white/[0.07] border border-white/[0.12] text-white placeholder-gray-500 rounded-lg focus:outline-none focus:ring-1 focus:ring-yellow-500 focus:border-yellow-500 text-sm"
+                className="w-full pl-9 pr-3 py-1.5 bg-white/[0.07] border border-white/[0.12] rounded-lg focus:outline-none focus:ring-1 focus:ring-yellow-500 focus:border-yellow-500 text-sm"
+                style={{ color: '#ffffff', colorScheme: 'dark' }}
               />
             </div>
 

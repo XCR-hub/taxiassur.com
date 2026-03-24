@@ -47,6 +47,7 @@ const CityIndex = lazy(() => import('./pages/CityIndex'));
 const CityPage = lazy(() => import('./pages/CityPage'));
 const MirrorPage = lazy(() => import('./pages/MirrorPage'));
 const DownPaymentPage = lazy(() => import('./pages/DownPaymentPage'));
+const PaiementLibre = lazy(() => import('./pages/PaiementLibre'));
 const TestNotifications = lazy(() => import('./pages/TestNotifications'));
 const PaiementSuccess = lazy(() => import('./pages/PaiementSuccess'));
 const PaiementError = lazy(() => import('./pages/PaiementError'));
@@ -392,6 +393,11 @@ export const router = createBrowserRouter([
   {
     path: '/down-payment',
     element: <DownPaymentPage />,
+  },
+  {
+    path: '/paiement/:reference',
+    element: <PaiementLibre />,
+    errorElement: <RouteErrorFallback />,
   },
   {
     path: '/test-notifications',
