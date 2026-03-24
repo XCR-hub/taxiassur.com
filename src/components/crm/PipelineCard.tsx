@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { Mail, Phone, MapPin, FileCheck, CreditCard, Clock, Building2, PenTool, AlertTriangle, Euro, Loader2, User } from 'lucide-react';
-import { CRMLead, PIPELINE_STATUSES } from '@/lib/crm-pipeline';
+import { Mail, Phone, MapPin, FileCheck, CreditCard, Clock, Building2, PenTool, AlertTriangle, Euro, Loader2, User, CalendarCheck, ArrowRight, Calendar } from 'lucide-react';
+import { CRMLead, PIPELINE_STATUSES, PipelineStatus } from '@/lib/crm-pipeline';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/lib/supabase';
 
@@ -12,6 +12,7 @@ interface PipelineCardProps {
   isDragging?: boolean;
   className?: string;
   assigneeName?: string;
+  onStatusChange?: (leadId: string, newStatus: PipelineStatus) => void;
 }
 
 interface LeadIndicators {
@@ -51,7 +52,8 @@ export const PipelineCard: React.FC<PipelineCardProps> = ({
   onDragEnd,
   isDragging,
   className,
-  assigneeName
+  assigneeName,
+  onStatusChange,
 }) => {
   const statusInfo = PIPELINE_STATUSES[lead.status];
   const accentColor = STATUS_ACCENT[lead.status] || '#6b7280';
@@ -172,6 +174,34 @@ export const PipelineCard: React.FC<PipelineCardProps> = ({
 
   const docPct = Math.round((indicators.documentsValidated / indicators.documentsTotal) * 100);
 
+  const isRecontactProgramme = lead.status === 'RECONTACT_PROGRAMME';
+  const recontactDate = lead.recontact_scheduled_date ? new Date(lead.recontact_scheduled_date) : null;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const isReadyToRecontact = isRecontactProgramme && recontactDate !== null && recontactDate <= today;
+  const daysUntilRecontact = recontactDate
+    ? Math.ceil((recontactDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+    : null;
+
+  const [movingToNew, setMovingToNew] = useState(false);
+
+  const handleMoveToNew = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (movingToNew) return;
+    setMovingToNew(true);
+    try {
+      await supabase
+        .from('crm_leads')
+        .update({ status: 'NOUVEAU_LEAD', updated_at: new Date().toISOString() })
+        .eq('id', lead.id);
+      onStatusChange?.(lead.id, 'NOUVEAU_LEAD');
+    } catch (err) {
+      console.error('Erreur passage nouveau lead:', err);
+    } finally {
+      setMovingToNew(false);
+    }
+  };
+
   return (
     <div
       draggable={true}
@@ -254,8 +284,49 @@ export const PipelineCard: React.FC<PipelineCardProps> = ({
           )}
         </div>
 
+        {/* Recontact — date + badge */}
+        {isRecontactProgramme && (
+          <div className="mb-2.5">
+            {isReadyToRecontact ? (
+              <div
+                className="flex items-center gap-2 px-2.5 py-2 rounded-lg animate-pulse"
+                style={{ background: 'rgba(22,163,74,0.1)', border: '1px solid rgba(22,163,74,0.35)' }}
+              >
+                <CalendarCheck size={12} className="text-green-600 shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-[11px] font-bold text-green-700 leading-tight">Pret a recontacter !</p>
+                  <p className="text-[10px] text-green-600 leading-tight">
+                    {recontactDate!.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })}
+                  </p>
+                </div>
+              </div>
+            ) : recontactDate ? (
+              <div
+                className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg"
+                style={{ background: 'rgba(251,191,36,0.08)', border: '1px solid rgba(251,191,36,0.25)' }}
+              >
+                <Calendar size={10} className="text-amber-500 shrink-0" />
+                <span className="text-[11px] text-amber-700 font-medium">
+                  {daysUntilRecontact !== null && daysUntilRecontact > 0
+                    ? `Recontact dans ${daysUntilRecontact}j — ${recontactDate.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })}`
+                    : `Recontact le ${recontactDate.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })}`
+                  }
+                </span>
+              </div>
+            ) : (
+              <div
+                className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg"
+                style={{ background: 'rgba(107,114,128,0.08)', border: '1px solid rgba(107,114,128,0.2)' }}
+              >
+                <Calendar size={10} className="text-gray-400 shrink-0" />
+                <span className="text-[11px] text-gray-500">Date de recontact non definie</span>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Relance alert */}
-        {indicators.needsRelance && (
+        {indicators.needsRelance && !isRecontactProgramme && (
           <div
             className="flex items-center gap-1.5 mb-2.5 px-2 py-1.5 rounded-lg"
             style={{ background: 'rgba(220,38,38,0.07)', border: '1px solid rgba(220,38,38,0.2)' }}
@@ -371,6 +442,27 @@ export const PipelineCard: React.FC<PipelineCardProps> = ({
               <span className="text-[10px] text-gray-400">+{lead.tags.length - 2}</span>
             )}
           </div>
+        )}
+
+        {/* Quick recontact action */}
+        {isReadyToRecontact && (
+          <button
+            onClick={handleMoveToNew}
+            disabled={movingToNew}
+            className="w-full mt-2 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-[11px] font-bold transition-all disabled:opacity-60"
+            style={{
+              background: 'linear-gradient(135deg, #16a34a, #15803d)',
+              color: '#fff',
+              boxShadow: '0 2px 6px rgba(22,163,74,0.25)'
+            }}
+          >
+            {movingToNew ? (
+              <Loader2 size={11} className="animate-spin" />
+            ) : (
+              <ArrowRight size={11} />
+            )}
+            {movingToNew ? 'Déplacement...' : 'Remettre en Nouveau Lead'}
+          </button>
         )}
 
         {/* Assignee footer */}

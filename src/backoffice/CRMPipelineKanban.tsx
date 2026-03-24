@@ -997,6 +997,7 @@ const CRMPipelineKanban: React.FC = () => {
                         onDragEnd={handleDragEnd}
                         isDragging={draggedLead?.id === lead.id}
                         assigneeName={lead.assigned_to ? adminUsersMap[lead.assigned_to] : undefined}
+                        onStatusChange={(_leadId, _newStatus) => loadKanbanData(false)}
                       />
                     ))
                   )}

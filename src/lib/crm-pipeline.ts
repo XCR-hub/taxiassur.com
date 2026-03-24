@@ -189,6 +189,9 @@ export interface CRMLead {
   next_followup?: string;
   notes?: string;
   tags?: string[];
+  recontact_scheduled_date?: string | null;
+  lost_reason?: string | null;
+  recontact_attempts?: number;
   created_at: string;
   updated_at: string;
 }
