@@ -108,7 +108,6 @@ export default function MoneticoAccountingDashboard() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [confirmModal, setConfirmModal] = useState<{ type: 'cancel' | 'delete'; payment: MoneticoPayment } | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
-  const [navExpanded, setNavExpanded] = useState(false);
   const { pathname } = useLocation();
 
   useEffect(() => {
@@ -373,105 +372,102 @@ export default function MoneticoAccountingDashboard() {
         {!sidebarCollapsed && (
           <>
             {/* Main Navigation */}
-            <div style={{ borderBottom: `1px solid ${border}` }}>
-              <button
-                onClick={() => setNavExpanded(v => !v)}
-                style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', background: 'none', border: 'none', cursor: 'pointer' }}
-              >
-                <Home size={11} color={navExpanded ? '#f59e0b' : 'rgba(255,255,255,0.3)'} />
-                <span style={{ flex: 1, textAlign: 'left', fontSize: 10, fontWeight: 600, color: navExpanded ? '#f59e0b' : 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Navigation</span>
-                <ChevronDown size={11} style={{ color: 'rgba(255,255,255,0.2)', transform: navExpanded ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform 0.2s' }} />
-              </button>
+            <div style={{ borderBottom: `1px solid ${border}`, padding: '8px 8px 10px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 8px 4px' }}>
+                <Home size={10} color="rgba(255,255,255,0.25)" />
+                <span style={{ fontSize: 9, fontWeight: 700, color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Menu principal</span>
+              </div>
 
-              {navExpanded && (
-                <div style={{ padding: '0 8px 10px', display: 'flex', flexDirection: 'column', gap: 1 }}>
-                  {/* Accueil */}
-                  <Link to="/backoffice" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 8px', borderRadius: 7, background: pathname === '/backoffice' ? 'rgba(148,163,184,0.1)' : 'transparent', boxShadow: pathname === '/backoffice' ? 'inset 2px 0 0 #94a3b8' : 'none', textDecoration: 'none' }}>
-                    <LayoutDashboard size={13} style={{ color: pathname === '/backoffice' ? '#94a3b8' : 'rgba(255,255,255,0.3)', flexShrink: 0 }} />
-                    <span style={{ fontSize: 11, fontWeight: pathname === '/backoffice' ? 500 : 400, color: pathname === '/backoffice' ? '#fff' : 'rgba(255,255,255,0.45)' }}>Dashboard</span>
+              {/* Dashboard */}
+              {(() => {
+                const active = pathname === '/backoffice';
+                return (
+                  <Link to="/backoffice" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 8px', borderRadius: 7, background: active ? 'rgba(148,163,184,0.12)' : 'transparent', boxShadow: active ? 'inset 2px 0 0 #94a3b8' : 'none', textDecoration: 'none', marginBottom: 2 }}>
+                    <LayoutDashboard size={13} style={{ color: active ? '#94a3b8' : 'rgba(255,255,255,0.3)', flexShrink: 0 }} />
+                    <span style={{ fontSize: 11, fontWeight: active ? 600 : 400, color: active ? '#fff' : 'rgba(255,255,255,0.5)' }}>Dashboard</span>
                   </Link>
+                );
+              })()}
 
-                  {/* CRM */}
-                  <p style={{ fontSize: 9, fontWeight: 600, color: 'rgba(59,130,246,0.6)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '8px 8px 2px', paddingLeft: 8, borderLeft: '2px solid rgba(59,130,246,0.3)' }}>CRM & Pipeline</p>
-                  {[
-                    { to: '/backoffice/crm', icon: <Target size={13} />, label: 'CRM Dashboard', accent: '#3b82f6' },
-                    { to: '/backoffice/crm-killer/pipeline', icon: <BarChart3 size={13} />, label: 'Pipeline Kanban', accent: '#3b82f6' },
-                    { to: '/backoffice/crm-killer/inbox', icon: <Inbox size={13} />, label: 'Inbox', accent: '#3b82f6' },
-                    { to: '/backoffice/quote-queue', icon: <FileText size={13} />, label: 'File Devis', accent: '#3b82f6' },
-                  ].map(item => {
-                    const active = pathname === item.to || pathname.startsWith(item.to + '/');
-                    return (
-                      <Link key={item.to} to={item.to} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 8px', borderRadius: 7, background: active ? `${item.accent}15` : 'transparent', boxShadow: active ? `inset 2px 0 0 ${item.accent}` : 'none', textDecoration: 'none' }}>
-                        <span style={{ color: active ? item.accent : 'rgba(255,255,255,0.3)', flexShrink: 0, display: 'flex' }}>{item.icon}</span>
-                        <span style={{ fontSize: 11, fontWeight: active ? 500 : 400, color: active ? '#fff' : 'rgba(255,255,255,0.45)' }}>{item.label}</span>
-                      </Link>
-                    );
-                  })}
+              {/* CRM */}
+              <p style={{ fontSize: 9, fontWeight: 700, color: 'rgba(59,130,246,0.5)', textTransform: 'uppercase', letterSpacing: '0.09em', margin: '8px 8px 3px', paddingLeft: 8, borderLeft: '2px solid rgba(59,130,246,0.3)' }}>CRM & Pipeline</p>
+              {[
+                { to: '/backoffice/crm', icon: <Target size={13} />, label: 'CRM Dashboard', accent: '#3b82f6' },
+                { to: '/backoffice/crm-killer/pipeline', icon: <BarChart3 size={13} />, label: 'Pipeline Kanban', accent: '#3b82f6' },
+                { to: '/backoffice/crm-killer/inbox', icon: <Inbox size={13} />, label: 'Inbox', accent: '#3b82f6' },
+                { to: '/backoffice/quote-queue', icon: <FileText size={13} />, label: 'File Devis', accent: '#3b82f6' },
+              ].map(item => {
+                const active = pathname === item.to || pathname.startsWith(item.to + '/');
+                return (
+                  <Link key={item.to} to={item.to} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 8px', borderRadius: 7, background: active ? `${item.accent}15` : 'transparent', boxShadow: active ? `inset 2px 0 0 ${item.accent}` : 'none', textDecoration: 'none' }}>
+                    <span style={{ color: active ? item.accent : 'rgba(255,255,255,0.3)', flexShrink: 0, display: 'flex' }}>{item.icon}</span>
+                    <span style={{ fontSize: 11, fontWeight: active ? 600 : 400, color: active ? '#fff' : 'rgba(255,255,255,0.5)' }}>{item.label}</span>
+                  </Link>
+                );
+              })}
 
-                  {/* Facturation */}
-                  <p style={{ fontSize: 9, fontWeight: 600, color: 'rgba(16,185,129,0.6)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '8px 8px 2px', paddingLeft: 8, borderLeft: '2px solid rgba(16,185,129,0.3)' }}>Facturation</p>
-                  {[
-                    { to: '/backoffice/lead-invoicing', icon: <CreditCard size={13} />, label: 'Leads', accent: '#10b981' },
-                    { to: '/backoffice/free-invoicing', icon: <DollarSign size={13} />, label: 'Libre', accent: '#10b981' },
-                    { to: '/backoffice/monetico-accounting', icon: <DollarSign size={13} />, label: 'Monetico', accent: '#f59e0b' },
-                  ].map(item => {
-                    const active = pathname === item.to || pathname.startsWith(item.to + '/');
-                    return (
-                      <Link key={item.to} to={item.to} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 8px', borderRadius: 7, background: active ? `${item.accent}15` : 'transparent', boxShadow: active ? `inset 2px 0 0 ${item.accent}` : 'none', textDecoration: 'none' }}>
-                        <span style={{ color: active ? item.accent : 'rgba(255,255,255,0.3)', flexShrink: 0, display: 'flex' }}>{item.icon}</span>
-                        <span style={{ fontSize: 11, fontWeight: active ? 500 : 400, color: active ? '#fff' : 'rgba(255,255,255,0.45)' }}>{item.label}</span>
-                      </Link>
-                    );
-                  })}
+              {/* Facturation */}
+              <p style={{ fontSize: 9, fontWeight: 700, color: 'rgba(16,185,129,0.5)', textTransform: 'uppercase', letterSpacing: '0.09em', margin: '8px 8px 3px', paddingLeft: 8, borderLeft: '2px solid rgba(16,185,129,0.3)' }}>Facturation</p>
+              {[
+                { to: '/backoffice/lead-invoicing', icon: <CreditCard size={13} />, label: 'Leads', accent: '#10b981' },
+                { to: '/backoffice/free-invoicing', icon: <DollarSign size={13} />, label: 'Libre', accent: '#10b981' },
+                { to: '/backoffice/monetico-accounting', icon: <DollarSign size={13} />, label: 'Monetico', accent: '#f59e0b' },
+              ].map(item => {
+                const active = pathname === item.to || pathname.startsWith(item.to + '/');
+                return (
+                  <Link key={item.to} to={item.to} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 8px', borderRadius: 7, background: active ? `${item.accent}15` : 'transparent', boxShadow: active ? `inset 2px 0 0 ${item.accent}` : 'none', textDecoration: 'none' }}>
+                    <span style={{ color: active ? item.accent : 'rgba(255,255,255,0.3)', flexShrink: 0, display: 'flex' }}>{item.icon}</span>
+                    <span style={{ fontSize: 11, fontWeight: active ? 600 : 400, color: active ? '#fff' : 'rgba(255,255,255,0.5)' }}>{item.label}</span>
+                  </Link>
+                );
+              })}
 
-                  {/* Production */}
-                  <p style={{ fontSize: 9, fontWeight: 600, color: 'rgba(14,165,233,0.6)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '8px 8px 2px', paddingLeft: 8, borderLeft: '2px solid rgba(14,165,233,0.3)' }}>Production</p>
-                  {[
-                    { to: '/backoffice/insurance-companies', icon: <Building2 size={13} />, label: 'Compagnies', accent: '#0ea5e9' },
-                    { to: '/backoffice/pending-documents', icon: <FileCheck size={13} />, label: 'Docs a valider', accent: '#0ea5e9' },
-                    { to: '/backoffice/quotes', icon: <FileText size={13} />, label: 'Devis', accent: '#0ea5e9' },
-                  ].map(item => {
-                    const active = pathname === item.to || pathname.startsWith(item.to + '/');
-                    return (
-                      <Link key={item.to} to={item.to} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 8px', borderRadius: 7, background: active ? `${item.accent}15` : 'transparent', boxShadow: active ? `inset 2px 0 0 ${item.accent}` : 'none', textDecoration: 'none' }}>
-                        <span style={{ color: active ? item.accent : 'rgba(255,255,255,0.3)', flexShrink: 0, display: 'flex' }}>{item.icon}</span>
-                        <span style={{ fontSize: 11, fontWeight: active ? 500 : 400, color: active ? '#fff' : 'rgba(255,255,255,0.45)' }}>{item.label}</span>
-                      </Link>
-                    );
-                  })}
+              {/* Production */}
+              <p style={{ fontSize: 9, fontWeight: 700, color: 'rgba(14,165,233,0.5)', textTransform: 'uppercase', letterSpacing: '0.09em', margin: '8px 8px 3px', paddingLeft: 8, borderLeft: '2px solid rgba(14,165,233,0.3)' }}>Production</p>
+              {[
+                { to: '/backoffice/insurance-companies', icon: <Building2 size={13} />, label: 'Compagnies', accent: '#0ea5e9' },
+                { to: '/backoffice/pending-documents', icon: <FileCheck size={13} />, label: 'Docs a valider', accent: '#0ea5e9' },
+                { to: '/backoffice/quotes', icon: <FileText size={13} />, label: 'Devis', accent: '#0ea5e9' },
+              ].map(item => {
+                const active = pathname === item.to || pathname.startsWith(item.to + '/');
+                return (
+                  <Link key={item.to} to={item.to} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 8px', borderRadius: 7, background: active ? `${item.accent}15` : 'transparent', boxShadow: active ? `inset 2px 0 0 ${item.accent}` : 'none', textDecoration: 'none' }}>
+                    <span style={{ color: active ? item.accent : 'rgba(255,255,255,0.3)', flexShrink: 0, display: 'flex' }}>{item.icon}</span>
+                    <span style={{ fontSize: 11, fontWeight: active ? 600 : 400, color: active ? '#fff' : 'rgba(255,255,255,0.5)' }}>{item.label}</span>
+                  </Link>
+                );
+              })}
 
-                  {/* Communication */}
-                  <p style={{ fontSize: 9, fontWeight: 600, color: 'rgba(34,197,94,0.6)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '8px 8px 2px', paddingLeft: 8, borderLeft: '2px solid rgba(34,197,94,0.3)' }}>Communication</p>
-                  {[
-                    { to: '/backoffice/email-marketing', icon: <Mail size={13} />, label: 'Email Marketing', accent: '#22c55e' },
-                    { to: '/backoffice/newsletter', icon: <Newspaper size={13} />, label: 'Newsletter', accent: '#22c55e' },
-                  ].map(item => {
-                    const active = pathname === item.to || pathname.startsWith(item.to + '/');
-                    return (
-                      <Link key={item.to} to={item.to} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 8px', borderRadius: 7, background: active ? `${item.accent}15` : 'transparent', boxShadow: active ? `inset 2px 0 0 ${item.accent}` : 'none', textDecoration: 'none' }}>
-                        <span style={{ color: active ? item.accent : 'rgba(255,255,255,0.3)', flexShrink: 0, display: 'flex' }}>{item.icon}</span>
-                        <span style={{ fontSize: 11, fontWeight: active ? 500 : 400, color: active ? '#fff' : 'rgba(255,255,255,0.45)' }}>{item.label}</span>
-                      </Link>
-                    );
-                  })}
+              {/* Communication */}
+              <p style={{ fontSize: 9, fontWeight: 700, color: 'rgba(34,197,94,0.5)', textTransform: 'uppercase', letterSpacing: '0.09em', margin: '8px 8px 3px', paddingLeft: 8, borderLeft: '2px solid rgba(34,197,94,0.3)' }}>Communication</p>
+              {[
+                { to: '/backoffice/email-marketing', icon: <Mail size={13} />, label: 'Email Marketing', accent: '#22c55e' },
+                { to: '/backoffice/newsletter', icon: <Newspaper size={13} />, label: 'Newsletter', accent: '#22c55e' },
+              ].map(item => {
+                const active = pathname === item.to || pathname.startsWith(item.to + '/');
+                return (
+                  <Link key={item.to} to={item.to} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 8px', borderRadius: 7, background: active ? `${item.accent}15` : 'transparent', boxShadow: active ? `inset 2px 0 0 ${item.accent}` : 'none', textDecoration: 'none' }}>
+                    <span style={{ color: active ? item.accent : 'rgba(255,255,255,0.3)', flexShrink: 0, display: 'flex' }}>{item.icon}</span>
+                    <span style={{ fontSize: 11, fontWeight: active ? 600 : 400, color: active ? '#fff' : 'rgba(255,255,255,0.5)' }}>{item.label}</span>
+                  </Link>
+                );
+              })}
 
-                  {/* IA */}
-                  <p style={{ fontSize: 9, fontWeight: 600, color: 'rgba(6,182,212,0.6)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '8px 8px 2px', paddingLeft: 8, borderLeft: '2px solid rgba(6,182,212,0.3)' }}>IA & Contenu</p>
-                  {[
-                    { to: '/backoffice/ultron', icon: <Sparkles size={13} />, label: 'ULTRON', accent: '#06b6d4' },
-                    { to: '/backoffice/ai-generator', icon: <Brain size={13} />, label: 'Generateur IA', accent: '#06b6d4' },
-                    { to: '/backoffice/news', icon: <Newspaper size={13} />, label: 'Actualites', accent: '#06b6d4' },
-                  ].map(item => {
-                    const active = pathname === item.to || pathname.startsWith(item.to + '/');
-                    return (
-                      <Link key={item.to} to={item.to} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 8px', borderRadius: 7, background: active ? `${item.accent}15` : 'transparent', boxShadow: active ? `inset 2px 0 0 ${item.accent}` : 'none', textDecoration: 'none' }}>
-                        <span style={{ color: active ? item.accent : 'rgba(255,255,255,0.3)', flexShrink: 0, display: 'flex' }}>{item.icon}</span>
-                        <span style={{ fontSize: 11, fontWeight: active ? 500 : 400, color: active ? '#fff' : 'rgba(255,255,255,0.45)' }}>{item.label}</span>
-                      </Link>
-                    );
-                  })}
-                </div>
-              )}
+              {/* IA */}
+              <p style={{ fontSize: 9, fontWeight: 700, color: 'rgba(6,182,212,0.5)', textTransform: 'uppercase', letterSpacing: '0.09em', margin: '8px 8px 3px', paddingLeft: 8, borderLeft: '2px solid rgba(6,182,212,0.3)' }}>IA & Contenu</p>
+              {[
+                { to: '/backoffice/ultron', icon: <Sparkles size={13} />, label: 'ULTRON', accent: '#06b6d4' },
+                { to: '/backoffice/ai-generator', icon: <Brain size={13} />, label: 'Generateur IA', accent: '#06b6d4' },
+                { to: '/backoffice/news', icon: <Newspaper size={13} />, label: 'Actualites', accent: '#06b6d4' },
+              ].map(item => {
+                const active = pathname === item.to || pathname.startsWith(item.to + '/');
+                return (
+                  <Link key={item.to} to={item.to} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 8px', borderRadius: 7, background: active ? `${item.accent}15` : 'transparent', boxShadow: active ? `inset 2px 0 0 ${item.accent}` : 'none', textDecoration: 'none' }}>
+                    <span style={{ color: active ? item.accent : 'rgba(255,255,255,0.3)', flexShrink: 0, display: 'flex' }}>{item.icon}</span>
+                    <span style={{ fontSize: 11, fontWeight: active ? 600 : 400, color: active ? '#fff' : 'rgba(255,255,255,0.5)' }}>{item.label}</span>
+                  </Link>
+                );
+              })}
             </div>
 
             {/* Quick stats */}
