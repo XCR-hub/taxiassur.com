@@ -370,245 +370,184 @@ export default function MoneticoAccountingDashboard() {
         </div>
 
         {!sidebarCollapsed && (
-          <>
-            {/* Main Navigation */}
-            <div style={{ borderBottom: `1px solid ${border}`, padding: '8px 8px 10px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 8px 4px' }}>
-                <Home size={10} color="rgba(255,255,255,0.25)" />
-                <span style={{ fontSize: 9, fontWeight: 700, color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Menu principal</span>
-              </div>
+          <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
 
-              {/* Dashboard */}
-              {(() => {
-                const active = pathname === '/backoffice';
-                return (
-                  <Link to="/backoffice" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 8px', borderRadius: 7, background: active ? 'rgba(148,163,184,0.12)' : 'transparent', boxShadow: active ? 'inset 2px 0 0 #94a3b8' : 'none', textDecoration: 'none', marginBottom: 2 }}>
-                    <LayoutDashboard size={13} style={{ color: active ? '#94a3b8' : 'rgba(255,255,255,0.3)', flexShrink: 0 }} />
-                    <span style={{ fontSize: 11, fontWeight: active ? 600 : 400, color: active ? '#fff' : 'rgba(255,255,255,0.5)' }}>Dashboard</span>
-                  </Link>
-                );
-              })()}
+            {/* ── NAVIGATION PRINCIPALE ── */}
+            <div style={{ padding: '10px 10px 12px', borderBottom: `1px solid ${border}` }}>
+              <p style={{ fontSize: 9, fontWeight: 700, color: 'rgba(255,255,255,0.2)', textTransform: 'uppercase', letterSpacing: '0.12em', margin: '0 4px 6px', display: 'flex', alignItems: 'center', gap: 5 }}>
+                <Home size={9} /> Menu principal
+              </p>
 
-              {/* CRM */}
-              <p style={{ fontSize: 9, fontWeight: 700, color: 'rgba(59,130,246,0.5)', textTransform: 'uppercase', letterSpacing: '0.09em', margin: '8px 8px 3px', paddingLeft: 8, borderLeft: '2px solid rgba(59,130,246,0.3)' }}>CRM & Pipeline</p>
-              {[
-                { to: '/backoffice/crm', icon: <Target size={13} />, label: 'CRM Dashboard', accent: '#3b82f6' },
-                { to: '/backoffice/crm-killer/pipeline', icon: <BarChart3 size={13} />, label: 'Pipeline Kanban', accent: '#3b82f6' },
-                { to: '/backoffice/crm-killer/inbox', icon: <Inbox size={13} />, label: 'Inbox', accent: '#3b82f6' },
-                { to: '/backoffice/quote-queue', icon: <FileText size={13} />, label: 'File Devis', accent: '#3b82f6' },
-              ].map(item => {
-                const active = pathname === item.to || pathname.startsWith(item.to + '/');
+              {/* Accueil */}
+              {[{ to: '/backoffice', icon: <LayoutDashboard size={13} />, label: 'Dashboard', accent: '#94a3b8' }].map(item => {
+                const a = pathname === item.to;
                 return (
-                  <Link key={item.to} to={item.to} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 8px', borderRadius: 7, background: active ? `${item.accent}15` : 'transparent', boxShadow: active ? `inset 2px 0 0 ${item.accent}` : 'none', textDecoration: 'none' }}>
-                    <span style={{ color: active ? item.accent : 'rgba(255,255,255,0.3)', flexShrink: 0, display: 'flex' }}>{item.icon}</span>
-                    <span style={{ fontSize: 11, fontWeight: active ? 600 : 400, color: active ? '#fff' : 'rgba(255,255,255,0.5)' }}>{item.label}</span>
+                  <Link key={item.to} to={item.to} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 10px', borderRadius: 7, background: a ? `${item.accent}18` : 'transparent', boxShadow: a ? `inset 2px 0 0 ${item.accent}` : 'none', textDecoration: 'none', marginBottom: 1 }}>
+                    <span style={{ color: a ? item.accent : 'rgba(255,255,255,0.28)', display: 'flex', flexShrink: 0 }}>{item.icon}</span>
+                    <span style={{ fontSize: 12, fontWeight: a ? 600 : 400, color: a ? '#fff' : 'rgba(255,255,255,0.5)' }}>{item.label}</span>
                   </Link>
                 );
               })}
 
-              {/* Facturation */}
-              <p style={{ fontSize: 9, fontWeight: 700, color: 'rgba(16,185,129,0.5)', textTransform: 'uppercase', letterSpacing: '0.09em', margin: '8px 8px 3px', paddingLeft: 8, borderLeft: '2px solid rgba(16,185,129,0.3)' }}>Facturation</p>
+              {/* Groups */}
               {[
-                { to: '/backoffice/lead-invoicing', icon: <CreditCard size={13} />, label: 'Leads', accent: '#10b981' },
-                { to: '/backoffice/free-invoicing', icon: <DollarSign size={13} />, label: 'Libre', accent: '#10b981' },
-                { to: '/backoffice/monetico-accounting', icon: <DollarSign size={13} />, label: 'Monetico', accent: '#f59e0b' },
-              ].map(item => {
-                const active = pathname === item.to || pathname.startsWith(item.to + '/');
-                return (
-                  <Link key={item.to} to={item.to} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 8px', borderRadius: 7, background: active ? `${item.accent}15` : 'transparent', boxShadow: active ? `inset 2px 0 0 ${item.accent}` : 'none', textDecoration: 'none' }}>
-                    <span style={{ color: active ? item.accent : 'rgba(255,255,255,0.3)', flexShrink: 0, display: 'flex' }}>{item.icon}</span>
-                    <span style={{ fontSize: 11, fontWeight: active ? 600 : 400, color: active ? '#fff' : 'rgba(255,255,255,0.5)' }}>{item.label}</span>
-                  </Link>
-                );
-              })}
-
-              {/* Production */}
-              <p style={{ fontSize: 9, fontWeight: 700, color: 'rgba(14,165,233,0.5)', textTransform: 'uppercase', letterSpacing: '0.09em', margin: '8px 8px 3px', paddingLeft: 8, borderLeft: '2px solid rgba(14,165,233,0.3)' }}>Production</p>
-              {[
-                { to: '/backoffice/insurance-companies', icon: <Building2 size={13} />, label: 'Compagnies', accent: '#0ea5e9' },
-                { to: '/backoffice/pending-documents', icon: <FileCheck size={13} />, label: 'Docs a valider', accent: '#0ea5e9' },
-                { to: '/backoffice/quotes', icon: <FileText size={13} />, label: 'Devis', accent: '#0ea5e9' },
-              ].map(item => {
-                const active = pathname === item.to || pathname.startsWith(item.to + '/');
-                return (
-                  <Link key={item.to} to={item.to} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 8px', borderRadius: 7, background: active ? `${item.accent}15` : 'transparent', boxShadow: active ? `inset 2px 0 0 ${item.accent}` : 'none', textDecoration: 'none' }}>
-                    <span style={{ color: active ? item.accent : 'rgba(255,255,255,0.3)', flexShrink: 0, display: 'flex' }}>{item.icon}</span>
-                    <span style={{ fontSize: 11, fontWeight: active ? 600 : 400, color: active ? '#fff' : 'rgba(255,255,255,0.5)' }}>{item.label}</span>
-                  </Link>
-                );
-              })}
-
-              {/* Communication */}
-              <p style={{ fontSize: 9, fontWeight: 700, color: 'rgba(34,197,94,0.5)', textTransform: 'uppercase', letterSpacing: '0.09em', margin: '8px 8px 3px', paddingLeft: 8, borderLeft: '2px solid rgba(34,197,94,0.3)' }}>Communication</p>
-              {[
-                { to: '/backoffice/email-marketing', icon: <Mail size={13} />, label: 'Email Marketing', accent: '#22c55e' },
-                { to: '/backoffice/newsletter', icon: <Newspaper size={13} />, label: 'Newsletter', accent: '#22c55e' },
-              ].map(item => {
-                const active = pathname === item.to || pathname.startsWith(item.to + '/');
-                return (
-                  <Link key={item.to} to={item.to} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 8px', borderRadius: 7, background: active ? `${item.accent}15` : 'transparent', boxShadow: active ? `inset 2px 0 0 ${item.accent}` : 'none', textDecoration: 'none' }}>
-                    <span style={{ color: active ? item.accent : 'rgba(255,255,255,0.3)', flexShrink: 0, display: 'flex' }}>{item.icon}</span>
-                    <span style={{ fontSize: 11, fontWeight: active ? 600 : 400, color: active ? '#fff' : 'rgba(255,255,255,0.5)' }}>{item.label}</span>
-                  </Link>
-                );
-              })}
-
-              {/* IA */}
-              <p style={{ fontSize: 9, fontWeight: 700, color: 'rgba(6,182,212,0.5)', textTransform: 'uppercase', letterSpacing: '0.09em', margin: '8px 8px 3px', paddingLeft: 8, borderLeft: '2px solid rgba(6,182,212,0.3)' }}>IA & Contenu</p>
-              {[
-                { to: '/backoffice/ultron', icon: <Sparkles size={13} />, label: 'ULTRON', accent: '#06b6d4' },
-                { to: '/backoffice/ai-generator', icon: <Brain size={13} />, label: 'Generateur IA', accent: '#06b6d4' },
-                { to: '/backoffice/news', icon: <Newspaper size={13} />, label: 'Actualites', accent: '#06b6d4' },
-              ].map(item => {
-                const active = pathname === item.to || pathname.startsWith(item.to + '/');
-                return (
-                  <Link key={item.to} to={item.to} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 8px', borderRadius: 7, background: active ? `${item.accent}15` : 'transparent', boxShadow: active ? `inset 2px 0 0 ${item.accent}` : 'none', textDecoration: 'none' }}>
-                    <span style={{ color: active ? item.accent : 'rgba(255,255,255,0.3)', flexShrink: 0, display: 'flex' }}>{item.icon}</span>
-                    <span style={{ fontSize: 11, fontWeight: active ? 600 : 400, color: active ? '#fff' : 'rgba(255,255,255,0.5)' }}>{item.label}</span>
-                  </Link>
-                );
-              })}
-            </div>
-
-            {/* Quick stats */}
-            <div style={{ padding: '16px 14px', borderBottom: `1px solid ${border}` }}>
-              <p style={{ fontSize: 10, fontWeight: 600, color: textMuted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>Vue rapide</p>
-              {stats && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  <div style={{ background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.15)', borderRadius: 8, padding: '10px 12px' }}>
-                    <p style={{ fontSize: 10, color: '#6ee7b7', marginBottom: 2 }}>CA Encaissé</p>
-                    <p style={{ fontSize: 18, fontWeight: 700, color: '#10b981', margin: 0 }}>{stats.total_paid.toFixed(0)} €</p>
-                    <p style={{ fontSize: 10, color: '#6ee7b7', margin: '2px 0 0 0' }}>{stats.count_paid} transactions</p>
-                  </div>
-                  <div style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.15)', borderRadius: 8, padding: '10px 12px' }}>
-                    <p style={{ fontSize: 10, color: '#fcd34d', marginBottom: 2 }}>En attente</p>
-                    <p style={{ fontSize: 18, fontWeight: 700, color: amber, margin: 0 }}>{stats.total_pending.toFixed(0)} €</p>
-                    <p style={{ fontSize: 10, color: '#fcd34d', margin: '2px 0 0 0' }}>{stats.count_pending} transactions</p>
-                  </div>
-                  {stats.count_failed > 0 && (
-                    <div style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.15)', borderRadius: 8, padding: '10px 12px' }}>
-                      <p style={{ fontSize: 10, color: '#fca5a5', marginBottom: 2 }}>Échoués</p>
-                      <p style={{ fontSize: 18, fontWeight: 700, color: '#ef4444', margin: 0 }}>{stats.total_failed.toFixed(0)} €</p>
-                      <p style={{ fontSize: 10, color: '#fca5a5', margin: '2px 0 0 0' }}>{stats.count_failed} transactions</p>
-                    </div>
-                  )}
+                {
+                  label: 'CRM & Pipeline', color: '#3b82f6',
+                  links: [
+                    { to: '/backoffice/crm', icon: <Target size={12} />, label: 'CRM' },
+                    { to: '/backoffice/crm-killer/pipeline', icon: <BarChart3 size={12} />, label: 'Pipeline' },
+                    { to: '/backoffice/crm-killer/inbox', icon: <Inbox size={12} />, label: 'Inbox' },
+                    { to: '/backoffice/quote-queue', icon: <FileText size={12} />, label: 'File Devis' },
+                  ]
+                },
+                {
+                  label: 'Facturation', color: '#10b981',
+                  links: [
+                    { to: '/backoffice/lead-invoicing', icon: <CreditCard size={12} />, label: 'Leads' },
+                    { to: '/backoffice/free-invoicing', icon: <DollarSign size={12} />, label: 'Libre' },
+                    { to: '/backoffice/monetico-accounting', icon: <DollarSign size={12} />, label: 'Monético', specialAccent: amber },
+                  ]
+                },
+                {
+                  label: 'Production', color: '#0ea5e9',
+                  links: [
+                    { to: '/backoffice/insurance-companies', icon: <Building2 size={12} />, label: 'Compagnies' },
+                    { to: '/backoffice/pending-documents', icon: <FileCheck size={12} />, label: 'Docs à valider' },
+                    { to: '/backoffice/quotes', icon: <FileText size={12} />, label: 'Devis' },
+                  ]
+                },
+                {
+                  label: 'Communication', color: '#22c55e',
+                  links: [
+                    { to: '/backoffice/email-marketing', icon: <Mail size={12} />, label: 'Email Marketing' },
+                    { to: '/backoffice/newsletter', icon: <Newspaper size={12} />, label: 'Newsletter' },
+                  ]
+                },
+                {
+                  label: 'IA & Contenu', color: '#06b6d4',
+                  links: [
+                    { to: '/backoffice/ultron', icon: <Sparkles size={12} />, label: 'ULTRON' },
+                    { to: '/backoffice/ai-generator', icon: <Brain size={12} />, label: 'Générateur IA' },
+                    { to: '/backoffice/news', icon: <Newspaper size={12} />, label: 'Actualités' },
+                  ]
+                },
+              ].map(group => (
+                <div key={group.label} style={{ marginTop: 8 }}>
+                  <p style={{ fontSize: 9, fontWeight: 700, color: `${group.color}80`, textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 10px 3px', paddingLeft: 6, borderLeft: `2px solid ${group.color}40` }}>
+                    {group.label}
+                  </p>
+                  {group.links.map((item: { to: string; icon: React.ReactNode; label: string; specialAccent?: string }) => {
+                    const a = pathname === item.to || pathname.startsWith(item.to + '/');
+                    const accent = item.specialAccent || group.color;
+                    return (
+                      <Link key={item.to} to={item.to} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 10px', borderRadius: 6, background: a ? `${accent}18` : 'transparent', boxShadow: a ? `inset 2px 0 0 ${accent}` : 'none', textDecoration: 'none' }}>
+                        <span style={{ color: a ? accent : 'rgba(255,255,255,0.25)', display: 'flex', flexShrink: 0 }}>{item.icon}</span>
+                        <span style={{ fontSize: 11.5, fontWeight: a ? 600 : 400, color: a ? '#fff' : 'rgba(255,255,255,0.48)' }}>{item.label}</span>
+                      </Link>
+                    );
+                  })}
                 </div>
-              )}
+              ))}
             </div>
 
-            {/* Period presets */}
-            <div style={{ padding: '16px 14px', borderBottom: `1px solid ${border}` }}>
-              <p style={{ fontSize: 10, fontWeight: 600, color: textMuted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>Période</p>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            {/* ── FILTRES (spécifique à cette page) ── */}
+            <div style={{ padding: '12px 10px', borderBottom: `1px solid ${border}` }}>
+              <p style={{ fontSize: 9, fontWeight: 700, color: `${amber}70`, textTransform: 'uppercase', letterSpacing: '0.12em', margin: '0 4px 8px', display: 'flex', alignItems: 'center', gap: 5 }}>
+                <Filter size={9} /> Filtres
+              </p>
+
+              {/* Period — compact pills */}
+              <p style={{ fontSize: 9, color: 'rgba(255,255,255,0.22)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.07em', margin: '0 0 5px 2px' }}>Période</p>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginBottom: 10 }}>
                 {PERIOD_PRESETS.map(preset => (
                   <button
                     key={preset.days}
                     onClick={() => applyPeriodPreset(preset.days)}
                     style={{
-                      background: activePeriod === preset.days ? amberDim : 'transparent',
-                      border: 'none',
-                      borderLeft: activePeriod === preset.days ? `2px solid ${amber}` : '2px solid transparent',
-                      color: activePeriod === preset.days ? amber : textSecondary,
-                      fontSize: 12,
-                      fontWeight: activePeriod === preset.days ? 600 : 400,
-                      padding: '7px 10px',
-                      borderRadius: '0 6px 6px 0',
+                      padding: '4px 9px',
+                      borderRadius: 20,
+                      border: activePeriod === preset.days ? `1px solid ${amber}60` : '1px solid rgba(255,255,255,0.08)',
+                      background: activePeriod === preset.days ? `${amber}18` : 'rgba(255,255,255,0.03)',
+                      color: activePeriod === preset.days ? amber : 'rgba(255,255,255,0.38)',
+                      fontSize: 10.5,
+                      fontWeight: activePeriod === preset.days ? 700 : 400,
                       cursor: 'pointer',
-                      textAlign: 'left',
-                      transition: 'all 0.15s'
+                      transition: 'all 0.12s',
+                      whiteSpace: 'nowrap',
                     }}
                   >
                     {preset.label}
                   </button>
                 ))}
               </div>
-            </div>
 
-            {/* Status filter */}
-            <div style={{ padding: '16px 14px', borderBottom: `1px solid ${border}` }}>
-              <p style={{ fontSize: 10, fontWeight: 600, color: textMuted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>Statut</p>
+              {/* Status filter — inline rows */}
+              <p style={{ fontSize: 9, color: 'rgba(255,255,255,0.22)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.07em', margin: '0 0 5px 2px' }}>Statut</p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 {[
-                  { value: 'all', label: 'Tous', color: textSecondary },
-                  { value: 'paid', label: 'Payés', color: '#10b981' },
-                  { value: 'pending', label: 'En attente', color: amber },
-                  { value: 'failed', label: 'Échoués', color: '#ef4444' },
-                ].map(opt => (
-                  <button
-                    key={opt.value}
-                    onClick={() => setFilterStatus(opt.value)}
-                    style={{
-                      background: filterStatus === opt.value ? `${opt.color}15` : 'transparent',
-                      border: 'none',
-                      borderLeft: filterStatus === opt.value ? `2px solid ${opt.color}` : '2px solid transparent',
-                      color: filterStatus === opt.value ? opt.color : textSecondary,
-                      fontSize: 12,
-                      fontWeight: filterStatus === opt.value ? 600 : 400,
-                      padding: '7px 10px',
-                      borderRadius: '0 6px 6px 0',
-                      cursor: 'pointer',
-                      textAlign: 'left',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 8,
-                      transition: 'all 0.15s'
-                    }}
-                  >
-                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: opt.color, flexShrink: 0 }} />
-                    {opt.label}
-                    {stats && (
-                      <span style={{ marginLeft: 'auto', fontSize: 10, opacity: 0.7 }}>
-                        {opt.value === 'all' ? stats.count_paid + stats.count_pending + stats.count_failed :
-                          opt.value === 'paid' ? stats.count_paid :
-                          opt.value === 'pending' ? stats.count_pending : stats.count_failed}
-                      </span>
-                    )}
-                  </button>
-                ))}
+                  { value: 'all', label: 'Tous', color: 'rgba(255,255,255,0.55)', dot: 'rgba(255,255,255,0.4)' },
+                  { value: 'paid', label: 'Payés', color: '#10b981', dot: '#10b981' },
+                  { value: 'pending', label: 'En attente', color: amber, dot: amber },
+                  { value: 'failed', label: 'Échoués', color: '#ef4444', dot: '#ef4444' },
+                ].map(opt => {
+                  const on = filterStatus === opt.value;
+                  const count = stats ? (
+                    opt.value === 'all' ? stats.count_paid + stats.count_pending + stats.count_failed :
+                    opt.value === 'paid' ? stats.count_paid :
+                    opt.value === 'pending' ? stats.count_pending : stats.count_failed
+                  ) : null;
+                  return (
+                    <button
+                      key={opt.value}
+                      onClick={() => setFilterStatus(opt.value)}
+                      style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 10px', borderRadius: 6, background: on ? `${opt.dot}14` : 'transparent', border: 'none', boxShadow: on ? `inset 2px 0 0 ${opt.dot}` : 'none', cursor: 'pointer', transition: 'all 0.12s' }}
+                    >
+                      <span style={{ width: 6, height: 6, borderRadius: '50%', background: on ? opt.dot : 'rgba(255,255,255,0.2)', flexShrink: 0, boxShadow: on ? `0 0 6px ${opt.dot}80` : 'none' }} />
+                      <span style={{ flex: 1, fontSize: 12, fontWeight: on ? 600 : 400, color: on ? opt.color : 'rgba(255,255,255,0.45)', textAlign: 'left' }}>{opt.label}</span>
+                      {count !== null && (
+                        <span style={{ fontSize: 10, fontWeight: 600, color: on ? opt.color : 'rgba(255,255,255,0.22)', background: on ? `${opt.dot}20` : 'rgba(255,255,255,0.06)', padding: '1px 6px', borderRadius: 10 }}>{count}</span>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
-            {/* Success rate ring */}
+            {/* ── SYNTHÈSE COMPACTE ── */}
             {stats && (
-              <div style={{ padding: '16px 14px', borderBottom: `1px solid ${border}` }}>
-                <p style={{ fontSize: 10, fontWeight: 600, color: textMuted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>Taux de succès</p>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <div style={{ position: 'relative', width: 52, height: 52, flexShrink: 0 }}>
-                    <svg width="52" height="52" viewBox="0 0 52 52">
-                      <circle cx="26" cy="26" r="20" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="5" />
-                      <circle
-                        cx="26" cy="26" r="20"
-                        fill="none"
-                        stroke={stats.success_rate >= 80 ? '#10b981' : stats.success_rate >= 50 ? amber : '#ef4444'}
-                        strokeWidth="5"
-                        strokeDasharray={`${(stats.success_rate / 100) * 125.6} 125.6`}
-                        strokeLinecap="round"
-                        transform="rotate(-90 26 26)"
-                      />
-                    </svg>
-                    <span style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', fontSize: 11, fontWeight: 700, color: textPrimary }}>{stats.success_rate}%</span>
-                  </div>
-                  <div>
-                    <p style={{ fontSize: 12, color: textPrimary, fontWeight: 600, margin: 0 }}>Succès</p>
-                    <p style={{ fontSize: 10, color: textMuted, margin: '2px 0 0 0' }}>Ticket moy.</p>
-                    <p style={{ fontSize: 13, color: amber, fontWeight: 700, margin: '2px 0 0 0' }}>{stats.avg_transaction.toFixed(0)} €</p>
-                  </div>
+              <div style={{ padding: '12px 10px', borderBottom: `1px solid ${border}` }}>
+                <p style={{ fontSize: 9, fontWeight: 700, color: 'rgba(255,255,255,0.2)', textTransform: 'uppercase', letterSpacing: '0.12em', margin: '0 4px 8px', display: 'flex', alignItems: 'center', gap: 5 }}>
+                  <Activity size={9} /> Synthèse
+                </p>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+                  {[
+                    { label: 'Encaissé', value: `${stats.total_paid.toFixed(0)} €`, sub: `${stats.count_paid} tx`, color: '#10b981', bg: 'rgba(16,185,129,0.08)', border2: 'rgba(16,185,129,0.18)' },
+                    { label: 'Attente', value: `${stats.total_pending.toFixed(0)} €`, sub: `${stats.count_pending} tx`, color: amber, bg: `rgba(245,158,11,0.08)`, border2: `rgba(245,158,11,0.18)` },
+                    { label: 'Échoués', value: `${stats.total_failed.toFixed(0)} €`, sub: `${stats.count_failed} tx`, color: '#ef4444', bg: 'rgba(239,68,68,0.08)', border2: 'rgba(239,68,68,0.18)' },
+                    { label: 'Ticket moy.', value: `${stats.avg_transaction.toFixed(0)} €`, sub: `${stats.success_rate}% succès`, color: '#60a5fa', bg: 'rgba(59,130,246,0.08)', border2: 'rgba(59,130,246,0.18)' },
+                  ].map(card => (
+                    <div key={card.label} style={{ background: card.bg, border: `1px solid ${card.border2}`, borderRadius: 8, padding: '8px 10px' }}>
+                      <p style={{ fontSize: 9, color: card.color, opacity: 0.8, margin: '0 0 2px', fontWeight: 500 }}>{card.label}</p>
+                      <p style={{ fontSize: 14, fontWeight: 700, color: card.color, margin: 0, lineHeight: 1 }}>{card.value}</p>
+                      <p style={{ fontSize: 9, color: card.color, opacity: 0.55, margin: '3px 0 0' }}>{card.sub}</p>
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
 
-            {/* TPE Info */}
-            <div style={{ padding: '14px', marginTop: 'auto' }}>
-              <div style={{ background: 'rgba(255,255,255,0.03)', border: `1px solid ${border}`, borderRadius: 8, padding: '10px 12px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
-                  <Shield size={12} color={amber} />
-                  <span style={{ fontSize: 10, color: amber, fontWeight: 600 }}>TPE Monético</span>
+            {/* ── TPE INFO ── */}
+            <div style={{ padding: '10px', marginTop: 'auto' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', background: 'rgba(255,255,255,0.025)', border: `1px solid ${border}`, borderRadius: 8 }}>
+                <Shield size={12} color={amber} style={{ flexShrink: 0 }} />
+                <div style={{ minWidth: 0 }}>
+                  <p style={{ fontSize: 10, color: amber, fontWeight: 600, margin: 0 }}>TPE <span style={{ color: textPrimary }}>7374133</span></p>
+                  <p style={{ fontSize: 9.5, color: textMuted, margin: 0 }}>taxiassur · Monético</p>
                 </div>
-                <p style={{ fontSize: 11, color: textSecondary, margin: 0 }}>N° <span style={{ color: textPrimary, fontWeight: 600 }}>7374133</span></p>
-                <p style={{ fontSize: 10, color: textMuted, margin: '2px 0 0 0' }}>Société : taxiassur</p>
               </div>
             </div>
-          </>
+
+          </div>
         )}
 
         {/* Collapsed icons */}
