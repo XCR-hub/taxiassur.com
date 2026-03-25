@@ -7,7 +7,8 @@ import {
   LogOut,
   RefreshCw,
   Sparkles,
-  X,
+  PanelLeftClose,
+  PanelLeftOpen,
   Target,
   Inbox,
   Users,
@@ -17,6 +18,7 @@ import {
   BarChart3,
   Brain,
   Search,
+  ChevronRight,
 } from 'lucide-react';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { usePendingDocumentsCount } from '@/hooks/usePendingDocumentsCount';
@@ -38,10 +40,10 @@ const CRMLayout: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: '#0f1117' }}>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: '#0b0e14' }}>
         <div className="text-center">
           <RefreshCw className="animate-spin mx-auto mb-4" size={40} style={{ color: '#f59e0b' }} />
-          <p className="text-sm font-medium" style={{ color: 'rgba(255,255,255,0.5)' }}>Vérification de la session...</p>
+          <p className="text-sm font-medium" style={{ color: 'rgba(255,255,255,0.5)' }}>Chargement...</p>
         </div>
       </div>
     );
@@ -58,183 +60,207 @@ const CRMLayout: React.FC = () => {
 
   const currentPath = location.pathname;
   const userInitial = user?.full_name?.[0]?.toUpperCase() || 'A';
+  const userName = user?.full_name || 'Admin';
 
-  /* icons shown in collapsed rail mode */
   const railIcons = [
-    { path: '/backoffice/crm',                   icon: <LayoutDashboard size={16} />, label: 'Dashboard',      color: '#f59e0b' },
-    { path: '/backoffice/crm-killer/pipeline',   icon: <Target size={16} />,          label: 'Pipeline',       color: '#3b82f6' },
-    { path: '/backoffice/crm-killer/inbox',      icon: <Inbox size={16} />,           label: 'Inbox',          color: '#10b981' },
-    { path: '/backoffice/clients',               icon: <Users size={16} />,           label: 'Clients',        color: '#14b8a6' },
-    { path: '/backoffice/pending-documents',     icon: <FileCheck size={16} />,       label: 'Documents',      color: '#f59e0b', badge: pendingDocsCount },
-    { path: '/backoffice/insurance-companies',   icon: <Building2 size={16} />,       label: 'Compagnies',     color: '#0ea5e9' },
-    { path: '/backoffice/email-marketing',       icon: <Mail size={16} />,            label: 'Email',          color: '#22c55e' },
-    { path: '/backoffice/analytics',             icon: <BarChart3 size={16} />,       label: 'Analytics',      color: '#ec4899' },
-    { path: '/backoffice/ultron',                icon: <Brain size={16} />,           label: 'IA',             color: '#06b6d4' },
-    { path: '/backoffice/seo',                   icon: <Search size={16} />,          label: 'SEO',            color: '#34d399' },
+    { path: '/backoffice/crm',                 icon: LayoutDashboard, label: 'Dashboard',  color: '#f59e0b' },
+    { path: '/backoffice/crm-killer/pipeline', icon: Target,          label: 'Pipeline',   color: '#3b82f6' },
+    { path: '/backoffice/crm-killer/inbox',    icon: Inbox,           label: 'Inbox',      color: '#10b981' },
+    { path: '/backoffice/clients',             icon: Users,           label: 'Clients',    color: '#14b8a6' },
+    { path: '/backoffice/pending-documents',   icon: FileCheck,       label: 'Documents',  color: '#f59e0b', badge: pendingDocsCount },
+    { path: '/backoffice/insurance-companies', icon: Building2,       label: 'Compagnies', color: '#0ea5e9' },
+    { path: '/backoffice/email-marketing',     icon: Mail,            label: 'Email',      color: '#22c55e' },
+    { path: '/backoffice/analytics',           icon: BarChart3,       label: 'Analytics',  color: '#ec4899' },
+    { path: '/backoffice/ultron',              icon: Brain,           label: 'IA',         color: '#06b6d4' },
+    { path: '/backoffice/seo',                 icon: Search,          label: 'SEO',        color: '#34d399' },
   ];
 
-  return (
-    <div className="flex h-screen overflow-hidden" style={{ background: '#0f1117' }}>
+  const isDashboard = currentPath === '/backoffice/crm' || currentPath === '/backoffice' || currentPath === '/backoffice/dashboard';
 
-      {/* ── SIDEBAR ── */}
+  return (
+    <div className="flex h-screen overflow-hidden" style={{ background: '#0b0e14' }}>
       <aside
-        className="flex flex-col flex-shrink-0 transition-all duration-300"
+        className="crm-sidebar flex flex-col flex-shrink-0"
         style={{
-          width: sidebarOpen ? 256 : 64,
-          background: '#0a0d14',
-          borderRight: '1px solid rgba(255,255,255,0.055)',
+          width: sidebarOpen ? 260 : 68,
+          background: 'linear-gradient(180deg, #0d1018 0%, #080b12 100%)',
+          borderRight: '1px solid rgba(255,255,255,0.06)',
+          transition: 'width 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
           position: 'relative',
+          zIndex: 20,
         }}
       >
-        {/* ── Logo / Header ── */}
+        <div style={{ position: 'absolute', top: 0, right: 0, bottom: 0, width: 1, background: 'linear-gradient(180deg, rgba(245,158,11,0.15) 0%, transparent 40%, transparent 60%, rgba(245,158,11,0.08) 100%)' }} />
+
         <div
           className="flex items-center flex-shrink-0"
           style={{
-            height: 60,
-            padding: sidebarOpen ? '0 14px' : '0 14px',
-            borderBottom: '1px solid rgba(255,255,255,0.055)',
+            height: 64,
+            padding: sidebarOpen ? '0 16px' : '0 10px',
+            borderBottom: '1px solid rgba(255,255,255,0.05)',
             justifyContent: sidebarOpen ? 'space-between' : 'center',
           }}
         >
           {sidebarOpen ? (
             <>
-              <div className="flex items-center gap-2.5 min-w-0">
+              <div className="flex items-center gap-3 min-w-0">
                 <div
                   className="flex items-center justify-center flex-shrink-0"
                   style={{
-                    width: 32,
-                    height: 32,
-                    background: 'linear-gradient(135deg, #f59e0b, #d97706)',
-                    borderRadius: 9,
-                    boxShadow: '0 0 16px rgba(245,158,11,0.3)',
+                    width: 36,
+                    height: 36,
+                    background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                    borderRadius: 10,
+                    boxShadow: '0 4px 16px rgba(245,158,11,0.25), inset 0 1px 0 rgba(255,255,255,0.2)',
                   }}
                 >
-                  <Sparkles size={16} style={{ color: '#000' }} />
+                  <Sparkles size={17} style={{ color: '#000' }} />
                 </div>
                 <div className="min-w-0">
-                  <div className="font-bold text-sm leading-tight" style={{ color: '#fff' }}>TaxiAssur</div>
-                  <div className="text-xs" style={{ color: 'rgba(245,158,11,0.7)', letterSpacing: '0.04em' }}>CRM Admin</div>
+                  <div style={{ fontWeight: 700, fontSize: 14, color: '#fff', lineHeight: 1.2, letterSpacing: '-0.01em' }}>TaxiAssur</div>
+                  <div style={{ fontSize: 10, color: '#f59e0b', letterSpacing: '0.08em', fontWeight: 500, opacity: 0.8 }}>CRM ADMIN</div>
                 </div>
               </div>
               <button
                 onClick={() => setSidebarOpen(false)}
-                className="flex items-center justify-center flex-shrink-0 transition-all"
+                className="crm-sidebar-toggle"
                 style={{
-                  width: 26,
-                  height: 26,
-                  borderRadius: 6,
+                  width: 28,
+                  height: 28,
+                  borderRadius: 7,
                   background: 'rgba(255,255,255,0.04)',
-                  border: '1px solid rgba(255,255,255,0.07)',
+                  border: '1px solid rgba(255,255,255,0.06)',
                   color: 'rgba(255,255,255,0.3)',
                   cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'all 0.2s',
                 }}
               >
-                <X size={13} />
+                <PanelLeftClose size={14} />
               </button>
             </>
           ) : (
             <button
               onClick={() => setSidebarOpen(true)}
-              className="flex items-center justify-center transition-all"
               style={{
-                width: 34,
-                height: 34,
-                borderRadius: 9,
-                background: 'linear-gradient(135deg, #f59e0b, #d97706)',
-                boxShadow: '0 0 16px rgba(245,158,11,0.3)',
+                width: 40,
+                height: 40,
+                borderRadius: 10,
+                background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                boxShadow: '0 4px 16px rgba(245,158,11,0.25), inset 0 1px 0 rgba(255,255,255,0.2)',
                 color: '#000',
                 cursor: 'pointer',
                 border: 'none',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'all 0.2s',
               }}
             >
-              <Sparkles size={16} />
+              <PanelLeftOpen size={17} />
             </button>
           )}
         </div>
 
-        {/* ── Navigation area ── */}
-        <div className="flex-1 overflow-y-auto" style={{ padding: sidebarOpen ? '8px 8px' : '8px 6px' }}>
-
-          {/* EXPANDED: unified NavigationMenu */}
+        <div
+          className="flex-1 overflow-y-auto crm-sidebar-scroll"
+          style={{ padding: sidebarOpen ? '10px 10px' : '10px 8px' }}
+        >
           {sidebarOpen && (
             <>
-              {/* Dashboard — standalone top link */}
-              {(() => {
-                const a = currentPath === '/backoffice/crm' || currentPath === '/backoffice';
-                return (
-                  <Link
-                    to="/backoffice/crm"
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 9,
-                      padding: '7px 10px',
-                      borderRadius: 8,
-                      background: a ? 'rgba(245,158,11,0.12)' : 'transparent',
-                      boxShadow: a ? 'inset 3px 0 0 #f59e0b' : 'none',
-                      textDecoration: 'none',
-                      marginBottom: 6,
-                      transition: 'all 0.15s',
-                    }}
-                  >
-                    <div
-                      style={{
-                        width: 28,
-                        height: 28,
-                        borderRadius: 7,
-                        background: a ? 'rgba(245,158,11,0.2)' : 'rgba(255,255,255,0.04)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        flexShrink: 0,
-                        color: a ? '#f59e0b' : 'rgba(255,255,255,0.3)',
-                      }}
-                    >
-                      <LayoutDashboard size={14} />
-                    </div>
-                    <span style={{ fontSize: 12.5, fontWeight: a ? 600 : 500, color: a ? '#fff' : 'rgba(255,255,255,0.55)' }}>
-                      Vue d'ensemble
-                    </span>
-                  </Link>
-                );
-              })()}
+              <Link
+                to="/backoffice/crm"
+                className="crm-nav-link"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 10,
+                  padding: '9px 12px',
+                  borderRadius: 10,
+                  background: isDashboard ? 'rgba(245,158,11,0.1)' : 'transparent',
+                  textDecoration: 'none',
+                  marginBottom: 8,
+                  transition: 'all 0.2s',
+                  position: 'relative',
+                  overflow: 'hidden',
+                }}
+              >
+                {isDashboard && (
+                  <div style={{ position: 'absolute', left: 0, top: '20%', bottom: '20%', width: 3, borderRadius: '0 3px 3px 0', background: '#f59e0b', boxShadow: '0 0 8px rgba(245,158,11,0.5)' }} />
+                )}
+                <div
+                  style={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: 8,
+                    background: isDashboard ? 'rgba(245,158,11,0.15)' : 'rgba(255,255,255,0.04)',
+                    border: isDashboard ? '1px solid rgba(245,158,11,0.2)' : '1px solid rgba(255,255,255,0.04)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                    transition: 'all 0.2s',
+                  }}
+                >
+                  <LayoutDashboard size={15} style={{ color: isDashboard ? '#f59e0b' : 'rgba(255,255,255,0.35)' }} />
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 13, fontWeight: isDashboard ? 600 : 500, color: isDashboard ? '#fff' : 'rgba(255,255,255,0.6)', lineHeight: 1.2 }}>
+                    Vue d'ensemble
+                  </div>
+                  <div style={{ fontSize: 10, color: isDashboard ? 'rgba(245,158,11,0.7)' : 'rgba(255,255,255,0.2)', marginTop: 1 }}>
+                    Tableau de bord
+                  </div>
+                </div>
+                {isDashboard && (
+                  <ChevronRight size={13} style={{ color: 'rgba(245,158,11,0.5)', flexShrink: 0 }} />
+                )}
+              </Link>
 
-              {/* All grouped sections */}
+              <div style={{ height: 1, background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent)', margin: '0 8px 8px' }} />
+
               <NavigationMenu />
             </>
           )}
 
-          {/* COLLAPSED: icon rail */}
           {!sidebarOpen && (
-            <div className="flex flex-col items-center gap-1">
+            <div className="flex flex-col items-center gap-1.5">
               {railIcons.map((item, i) => {
                 const active = currentPath === item.path || currentPath.startsWith(item.path + '/');
+                const Icon = item.icon;
                 return (
                   <button
                     key={i}
                     onClick={() => navigate(item.path)}
                     title={item.label}
-                    className="relative flex items-center justify-center transition-all"
+                    className="crm-rail-icon"
                     style={{
-                      width: 40,
-                      height: 40,
+                      width: 42,
+                      height: 42,
                       borderRadius: 10,
-                      background: active ? `${item.color}20` : 'transparent',
+                      background: active ? `${item.color}15` : 'transparent',
+                      border: active ? `1px solid ${item.color}25` : '1px solid transparent',
                       color: active ? item.color : 'rgba(255,255,255,0.28)',
-                      border: 'none',
                       cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      position: 'relative',
+                      transition: 'all 0.2s',
                     }}
                   >
-                    {item.icon}
+                    <Icon size={17} />
                     {item.badge && Number(item.badge) > 0 && (
                       <span
-                        className="absolute"
                         style={{
-                          top: 4,
-                          right: 4,
-                          width: 14,
-                          height: 14,
-                          borderRadius: 7,
+                          position: 'absolute',
+                          top: 3,
+                          right: 3,
+                          width: 16,
+                          height: 16,
+                          borderRadius: 8,
                           background: '#ef4444',
                           color: '#fff',
                           fontSize: 8,
@@ -242,10 +268,14 @@ const CRMLayout: React.FC = () => {
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
+                          boxShadow: '0 2px 6px rgba(239,68,68,0.4)',
                         }}
                       >
                         {Number(item.badge) > 9 ? '9+' : item.badge}
                       </span>
+                    )}
+                    {active && (
+                      <div style={{ position: 'absolute', left: -8, top: '25%', bottom: '25%', width: 3, borderRadius: '0 3px 3px 0', background: item.color, boxShadow: `0 0 8px ${item.color}80` }} />
                     )}
                   </button>
                 );
@@ -254,78 +284,135 @@ const CRMLayout: React.FC = () => {
           )}
         </div>
 
-        {/* ── User / Bottom ── */}
-        <div style={{ borderTop: '1px solid rgba(255,255,255,0.055)', padding: sidebarOpen ? '10px 8px' : '10px 6px' }}>
-
-          {/* User card */}
-          {sidebarOpen && (
-            <div
-              className="flex items-center gap-2.5 mb-2"
-              style={{
-                padding: '8px 10px',
-                borderRadius: 9,
-                background: 'rgba(255,255,255,0.03)',
-                border: '1px solid rgba(255,255,255,0.055)',
-              }}
-            >
+        <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', padding: sidebarOpen ? '12px 10px' : '12px 8px' }}>
+          {sidebarOpen ? (
+            <>
               <div
-                className="flex items-center justify-center flex-shrink-0 font-bold text-sm"
                 style={{
-                  width: 30,
-                  height: 30,
-                  borderRadius: 7,
-                  background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 10,
+                  padding: '10px 12px',
+                  borderRadius: 12,
+                  background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)',
+                  border: '1px solid rgba(255,255,255,0.06)',
+                  marginBottom: 10,
+                }}
+              >
+                <div
+                  style={{
+                    width: 34,
+                    height: 34,
+                    borderRadius: 9,
+                    background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                    color: '#000',
+                    fontWeight: 700,
+                    fontSize: 14,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                    boxShadow: '0 2px 10px rgba(245,158,11,0.25)',
+                  }}
+                >
+                  {userInitial}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div style={{ fontSize: 12, fontWeight: 600, color: '#fff', lineHeight: 1.3 }} className="truncate">
+                    {userName}
+                  </div>
+                  <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', lineHeight: 1.3 }} className="truncate">
+                    {user?.email}
+                  </div>
+                </div>
+                <div style={{ padding: '2px 7px', borderRadius: 5, background: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.15)', fontSize: 9, fontWeight: 600, color: '#f59e0b', letterSpacing: '0.04em', flexShrink: 0 }}>
+                  {user?.role === 'master' ? 'ADMIN' : 'USER'}
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                {[
+                  { label: 'Parametres',         icon: Settings, onClick: () => navigate('/backoffice/crm-killer/settings'), color: 'rgba(255,255,255,0.4)' },
+                  { label: 'Voir le site',        icon: Home,     onClick: () => navigate('/'),                               color: 'rgba(255,255,255,0.4)' },
+                  { label: 'Deconnexion',         icon: LogOut,   onClick: handleLogout,                                      color: '#ef4444'               },
+                ].map(btn => (
+                  <button
+                    key={btn.label}
+                    onClick={btn.onClick}
+                    className="crm-nav-link"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 10,
+                      padding: '7px 12px',
+                      borderRadius: 8,
+                      color: btn.color,
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      width: '100%',
+                      transition: 'all 0.15s',
+                      fontSize: 12,
+                    }}
+                  >
+                    <btn.icon size={14} />
+                    <span>{btn.label}</span>
+                  </button>
+                ))}
+              </div>
+            </>
+          ) : (
+            <div className="flex flex-col items-center gap-1">
+              <div
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 9,
+                  background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
                   color: '#000',
-                  boxShadow: '0 0 8px rgba(245,158,11,0.25)',
+                  fontWeight: 700,
+                  fontSize: 13,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: 6,
+                  boxShadow: '0 2px 10px rgba(245,158,11,0.25)',
                 }}
               >
                 {userInitial}
               </div>
-              <div className="flex-1 min-w-0">
-                <div className="text-xs font-semibold truncate" style={{ color: '#fff' }}>
-                  {user?.full_name || 'Admin'}
-                </div>
-                <div className="truncate" style={{ color: 'rgba(255,255,255,0.3)', fontSize: 10 }}>
-                  {user?.email}
-                </div>
-              </div>
+              {[
+                { icon: Settings, onClick: () => navigate('/backoffice/crm-killer/settings'), color: 'rgba(255,255,255,0.3)', label: 'Parametres' },
+                { icon: LogOut, onClick: handleLogout, color: 'rgba(239,68,68,0.5)', label: 'Deconnexion' },
+              ].map(btn => (
+                <button
+                  key={btn.label}
+                  onClick={btn.onClick}
+                  title={btn.label}
+                  className="crm-rail-icon"
+                  style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: 8,
+                    color: btn.color,
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    transition: 'all 0.15s',
+                  }}
+                >
+                  <btn.icon size={15} />
+                </button>
+              ))}
             </div>
           )}
-
-          {/* Action buttons */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-            {[
-              { label: 'Paramètres',          icon: <Settings size={14} />,  onClick: () => navigate('/backoffice/crm-killer/settings'), color: 'rgba(255,255,255,0.35)' },
-              { label: 'Dashboard Principal', icon: <Home size={14} />,      onClick: () => navigate('/backoffice'),                     color: 'rgba(255,255,255,0.35)' },
-              { label: 'Déconnexion',         icon: <LogOut size={14} />,    onClick: handleLogout,                                      color: 'rgba(239,68,68,0.55)'   },
-            ].map(btn => (
-              <button
-                key={btn.label}
-                onClick={btn.onClick}
-                title={!sidebarOpen ? btn.label : undefined}
-                className="flex items-center transition-all"
-                style={{
-                  gap: sidebarOpen ? 9 : 0,
-                  padding: sidebarOpen ? '6px 10px' : '9px 0',
-                  borderRadius: 7,
-                  justifyContent: sidebarOpen ? 'flex-start' : 'center',
-                  color: btn.color,
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  width: '100%',
-                }}
-              >
-                {btn.icon}
-                {sidebarOpen && <span style={{ fontSize: 11.5 }}>{btn.label}</span>}
-              </button>
-            ))}
-          </div>
         </div>
       </aside>
 
-      {/* ── MAIN CONTENT ── */}
-      <main className="flex-1 flex flex-col overflow-hidden min-w-0" style={{ background: '#0f1117' }}>
+      <main className="flex-1 flex flex-col overflow-hidden min-w-0" style={{ background: '#0b0e14' }}>
         <CRMPushNotifications />
         <div className="flex-1 overflow-auto min-h-0">
           <Outlet />
@@ -333,6 +420,18 @@ const CRMLayout: React.FC = () => {
       </main>
 
       <AdminSessionKeepAlive />
+
+      <style>{`
+        .crm-sidebar-scroll::-webkit-scrollbar { width: 4px; }
+        .crm-sidebar-scroll::-webkit-scrollbar-track { background: transparent; }
+        .crm-sidebar-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.06); border-radius: 4px; }
+        .crm-sidebar-scroll::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.12); }
+        .crm-sidebar-toggle:hover { background: rgba(255,255,255,0.08) !important; color: rgba(255,255,255,0.6) !important; }
+        .crm-nav-link:hover { background: rgba(255,255,255,0.04) !important; }
+        .crm-rail-icon:hover { background: rgba(255,255,255,0.06) !important; color: rgba(255,255,255,0.6) !important; }
+        .crm-section-header:hover { background: rgba(255,255,255,0.03) !important; }
+        .crm-menu-link:hover { background: rgba(255,255,255,0.04) !important; }
+      `}</style>
     </div>
   );
 };
