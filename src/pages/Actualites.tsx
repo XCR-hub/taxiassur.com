@@ -114,6 +114,15 @@ export default function Actualites() {
         <title>Actualités Assurance Taxi | TaxiAssur.com</title>
         <meta name="description" content="Toute l'actualité de l'assurance taxi : réglementation, nouveautés, conseils pratiques et innovations pour les professionnels du transport." />
         <link rel="canonical" href="https://taxiassur.com/actualites" />
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content="Actualités Assurance Taxi | TaxiAssur.com" />
+        <meta property="og:description" content="Toute l'actualité de l'assurance taxi : réglementation, nouveautés, conseils pratiques et innovations pour les professionnels du transport." />
+        <meta property="og:url" content="https://taxiassur.com/actualites" />
+        <meta property="og:image" content="https://taxiassur.com/logo-600x300.png" />
+        <meta property="og:site_name" content="TaxiAssur" />
+        <meta property="og:locale" content="fr_FR" />
+        <meta property="og:image:width" content="600" />
+        <meta property="og:image:height" content="300" />
       </Helmet>
 
       <Header />

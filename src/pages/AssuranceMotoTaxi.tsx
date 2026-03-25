@@ -18,6 +18,15 @@ const AssuranceMotoTaxi: React.FC = () => {
         />
         <meta name="keywords" content="assurance moto taxi, assurance taxi moto, moto taxi assurance, prix assurance moto taxi" />
         <link rel="canonical" href="https://taxiassur.com/assurance-moto-taxi" />
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content="Assurance Moto Taxi : Tarifs & Devis 2026 | TaxiAssur" />
+        <meta property="og:description" content="Assurance Moto Taxi dès 1,300€/an. Couverture complète transport passagers moto, RC Pro incluse. Devis gratuit 2 min." />
+        <meta property="og:url" content="https://taxiassur.com/assurance-moto-taxi" />
+        <meta property="og:image" content="https://taxiassur.com/logo-600x300.png" />
+        <meta property="og:site_name" content="TaxiAssur" />
+        <meta property="og:locale" content="fr_FR" />
+        <meta property="og:image:width" content="600" />
+        <meta property="og:image:height" content="300" />
 
         <script type="application/ld+json">
           {JSON.stringify({

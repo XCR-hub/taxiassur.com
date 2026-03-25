@@ -294,7 +294,7 @@ const JsonLd: React.FC<JsonLdProps> = ({ type, data }) => {
       case 'local-business':
         return {
           "@context": "https://schema.org",
-          "@type": ["LocalBusiness", "InsuranceAgency"],
+          "@type": "InsuranceAgency",
           "name": brandName,
           "description": "Courtier spécialiste assurance taxi et VTC. Devis gratuit en 2 min, tarifs négociés -35%, ORIAS immatriculé, couverture toute la France.",
           "url": siteUrl,
@@ -368,7 +368,7 @@ const JsonLd: React.FC<JsonLdProps> = ({ type, data }) => {
           "step": [
             {
               "@type": "HowToStep",
-              "position": "1",
+              "position": 1,
               "name": "Remplir le formulaire de devis en ligne",
               "text": "Renseignez vos informations en 2 minutes : type de vehicule, zone d'activite, anciennete, bonus-malus. Le formulaire est 100% gratuit et sans engagement.",
               "url": `${siteUrl}/devis-assurance-taxi`,
@@ -376,14 +376,14 @@ const JsonLd: React.FC<JsonLdProps> = ({ type, data }) => {
             },
             {
               "@type": "HowToStep",
-              "position": "2",
+              "position": 2,
               "name": "Recevoir l'analyse experte sous 15 minutes",
               "text": "Un courtier specialiste taxi vous rappelle sous 15 minutes pendant les heures ouvrables. Il compare pour vous 15+ assureurs et selectionne les meilleures offres adaptees a votre profil.",
               "url": `${siteUrl}/devis-assurance-taxi`
             },
             {
               "@type": "HowToStep",
-              "position": "3",
+              "position": 3,
               "name": "Souscrire et recevoir votre attestation immediatement",
               "text": "Choisissez l'offre la mieux adaptee, signez electroniquement et recevez votre attestation d'assurance par email immediatement. Prise d'effet possible le jour meme.",
               "url": `${siteUrl}/devis-assurance-taxi`

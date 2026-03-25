@@ -21,14 +21,17 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const staticPages = [
   { url: '/', priority: '1.0', changefreq: 'daily' },
   { url: '/assurance-taxi', priority: '0.9', changefreq: 'weekly' },
+  { url: '/devis-assurance-taxi', priority: '0.9', changefreq: 'weekly' },
   { url: '/assurance-moto-taxi', priority: '0.8', changefreq: 'weekly' },
   { url: '/assurance-taxi-vtc', priority: '0.8', changefreq: 'weekly' },
   { url: '/assurance-obligatoire-taxi', priority: '0.8', changefreq: 'weekly' },
   { url: '/prix-assurance-taxi', priority: '0.8', changefreq: 'weekly' },
   { url: '/quelle-assurance-taxi', priority: '0.8', changefreq: 'weekly' },
+  { url: '/courtier-assurance-taxi', priority: '0.8', changefreq: 'weekly' },
   { url: '/rc-professionnelle', priority: '0.7', changefreq: 'monthly' },
   { url: '/flotte-vehicules', priority: '0.7', changefreq: 'monthly' },
   { url: '/gestion-sinistres', priority: '0.7', changefreq: 'monthly' },
+  { url: '/taxis-sinistres', priority: '0.7', changefreq: 'monthly' },
   { url: '/confiance-et-certifications', priority: '0.6', changefreq: 'monthly' },
   { url: '/conseil-personnalise', priority: '0.6', changefreq: 'monthly' },
   { url: '/faq', priority: '0.7', changefreq: 'weekly' },
@@ -37,6 +40,10 @@ const staticPages = [
   { url: '/actualites', priority: '0.7', changefreq: 'daily' },
   { url: '/reviews', priority: '0.6', changefreq: 'weekly' },
   { url: '/partners', priority: '0.5', changefreq: 'monthly' },
+  { url: '/programme-partenaires', priority: '0.5', changefreq: 'monthly' },
+  { url: '/offres', priority: '0.6', changefreq: 'monthly' },
+  { url: '/villes', priority: '0.6', changefreq: 'monthly' },
+  { url: '/sitemap', priority: '0.3', changefreq: 'weekly' },
   { url: '/legal', priority: '0.3', changefreq: 'yearly' },
   { url: '/policy', priority: '0.3', changefreq: 'yearly' },
   { url: '/conditions', priority: '0.3', changefreq: 'yearly' },
@@ -50,7 +57,7 @@ const cities = [
   'grenoble', 'dijon', 'angers', 'nimes', 'villeurbanne',
   'le-havre', 'saint-etienne', 'toulon', 'orleans',
   'besancon', 'amiens', 'tours', 'limoges', 'metz',
-  'brest', 'perpignan'
+  'brest', 'perpignan', 'vaux-le-penil'
 ];
 
 async function generateSitemap() {

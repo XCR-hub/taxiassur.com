@@ -5,6 +5,7 @@ import { MapPin, TrendingDown } from 'lucide-react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import EnhancedLeadForm from '../components/EnhancedLeadForm';
+import JsonLd from '../components/JsonLd';
 
 const AssuranceTaxiLyon: React.FC = () => {
   return (
@@ -14,16 +15,20 @@ const AssuranceTaxiLyon: React.FC = () => {
         <meta name="description" content="Assurance Taxi Lyon dès 1,690€/an (-35%). Tarifs négociés pour chauffeurs lyonnais, RC Pro incluse. Devis gratuit 2 min." />
         <link rel="canonical" href="https://taxiassur.com/assurance-taxi-lyon" />
               <meta property="og:type" content="website" />
-        <meta property="og:title" content="Assurance Taxi Lyon : Tarifs 2024 | TaxiAssur" />
+        <meta property="og:title" content="Assurance Taxi Lyon : Tarifs 2026 | TaxiAssur" />
         <meta property="og:description" content="Assurance Taxi Lyon dès 1,690€/an (-35%). Tarifs négociés pour chauffeurs lyonnais, RC Pro incluse. Devis gratuit 2 min." />
         <meta property="og:url" content="https://taxiassur.com/assurance-taxi-lyon" />
         <meta property="og:image" content="https://taxiassur.com/logo-600x300.png" />
+        <meta property="og:image:width" content="600" />
+        <meta property="og:image:height" content="300" />
+        <meta property="og:locale" content="fr_FR" />
         <meta property="og:site_name" content="TaxiAssur" />
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="Assurance Taxi Lyon : Tarifs 2024 | TaxiAssur" />
+        <meta name="twitter:title" content="Assurance Taxi Lyon : Tarifs 2026 | TaxiAssur" />
         <meta name="twitter:description" content="Assurance Taxi Lyon dès 1,690€/an (-35%). Tarifs négociés pour chauffeurs lyonnais, RC Pro incluse. Devis gratuit 2 min." />
         <meta name="twitter:image" content="https://taxiassur.com/logo-600x300.png" />
       </Helmet>
+      <JsonLd type="organization" />
       <Header />
       <main className="min-h-screen bg-white">
         <section className="bg-gradient-to-br from-orange-900 to-orange-800 text-white py-20">

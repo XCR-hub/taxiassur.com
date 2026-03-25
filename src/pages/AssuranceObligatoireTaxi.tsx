@@ -17,6 +17,15 @@ const AssuranceObligatoireTaxi: React.FC = () => {
           content="Quelles sont les assurances obligatoires pour taxi ? RC Pro, assurance véhicule, garanties passagers. Guide complet réglementation + sanctions."
         />
         <link rel="canonical" href="https://taxiassur.com/assurance-obligatoire-taxi" />
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content="Assurance Obligatoire Taxi : Ce qu'il Faut Savoir 2026" />
+        <meta property="og:description" content="Quelles sont les assurances obligatoires pour taxi ? RC Pro, assurance véhicule, garanties passagers. Guide complet réglementation + sanctions." />
+        <meta property="og:url" content="https://taxiassur.com/assurance-obligatoire-taxi" />
+        <meta property="og:image" content="https://taxiassur.com/logo-600x300.png" />
+        <meta property="og:site_name" content="TaxiAssur" />
+        <meta property="og:locale" content="fr_FR" />
+        <meta property="og:image:width" content="600" />
+        <meta property="og:image:height" content="300" />
       </Helmet>
       <JsonLd type="insurance-product" data={{
         name: "Assurance Obligatoire Taxi RC Pro",
