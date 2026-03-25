@@ -284,7 +284,7 @@ const CRMLayout: React.FC = () => {
           )}
         </div>
 
-        <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', padding: sidebarOpen ? '10px 10px' : '10px 8px', flexShrink: 0 }}>
+        <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', padding: sidebarOpen ? '8px 10px' : '8px 8px', flexShrink: 0 }}>
           {sidebarOpen ? (
             <>
               <div
@@ -292,73 +292,65 @@ const CRMLayout: React.FC = () => {
                   display: 'flex',
                   alignItems: 'center',
                   gap: 10,
-                  padding: '10px 12px',
-                  borderRadius: 12,
+                  padding: '8px 10px',
+                  borderRadius: 10,
                   background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)',
                   border: '1px solid rgba(255,255,255,0.06)',
-                  marginBottom: 10,
+                  marginBottom: 6,
                 }}
               >
                 <div
                   style={{
-                    width: 34,
-                    height: 34,
-                    borderRadius: 9,
+                    width: 30,
+                    height: 30,
+                    borderRadius: 8,
                     background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
                     color: '#000',
                     fontWeight: 700,
-                    fontSize: 14,
+                    fontSize: 12,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     flexShrink: 0,
-                    boxShadow: '0 2px 10px rgba(245,158,11,0.25)',
+                    boxShadow: '0 2px 8px rgba(245,158,11,0.2)',
                   }}
                 >
                   {userInitial}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div style={{ fontSize: 12, fontWeight: 600, color: '#fff', lineHeight: 1.3 }} className="truncate">
+                  <div style={{ fontSize: 11, fontWeight: 600, color: '#fff', lineHeight: 1.2 }} className="truncate">
                     {userName}
                   </div>
-                  <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', lineHeight: 1.3 }} className="truncate">
+                  <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', lineHeight: 1.2 }} className="truncate">
                     {user?.email}
                   </div>
                 </div>
-                <div style={{ padding: '2px 7px', borderRadius: 5, background: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.15)', fontSize: 9, fontWeight: 600, color: '#f59e0b', letterSpacing: '0.04em', flexShrink: 0 }}>
+                <div style={{ padding: '2px 6px', borderRadius: 4, background: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.15)', fontSize: 8, fontWeight: 600, color: '#f59e0b', letterSpacing: '0.04em', flexShrink: 0 }}>
                   {user?.role === 'master' ? 'ADMIN' : 'USER'}
                 </div>
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                {[
-                  { label: 'Voir le site',        icon: Home,     onClick: () => navigate('/'),                               color: 'rgba(255,255,255,0.4)' },
-                  { label: 'Deconnexion',         icon: LogOut,   onClick: handleLogout,                                      color: '#ef4444'               },
-                ].map(btn => (
-                  <button
-                    key={btn.label}
-                    onClick={btn.onClick}
-                    className="crm-nav-link"
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 10,
-                      padding: '7px 12px',
-                      borderRadius: 8,
-                      color: btn.color,
-                      background: 'none',
-                      border: 'none',
-                      cursor: 'pointer',
-                      width: '100%',
-                      transition: 'all 0.15s',
-                      fontSize: 12,
-                    }}
-                  >
-                    <btn.icon size={14} />
-                    <span>{btn.label}</span>
-                  </button>
-                ))}
-              </div>
+              <button
+                onClick={handleLogout}
+                className="crm-nav-link"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 10,
+                  padding: '7px 12px',
+                  borderRadius: 8,
+                  color: '#ef4444',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  width: '100%',
+                  transition: 'all 0.15s',
+                  fontSize: 12,
+                }}
+              >
+                <LogOut size={14} />
+                <span>Deconnexion</span>
+              </button>
             </>
           ) : (
             <div className="flex flex-col items-center gap-1">
