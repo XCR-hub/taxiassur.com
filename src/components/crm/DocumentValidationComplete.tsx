@@ -168,65 +168,46 @@ export default function DocumentValidationComplete({
   }
 
   async function importEmailAttachment(att: UnimportedAttachment, docType: string) {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.pdf,.jpg,.jpeg,.png,.gif,.webp,.doc,.docx';
-    input.onchange = async (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0];
-      if (!file) return;
+    try {
+      setImportingFile(att.attachment_filename);
 
-      try {
-        setImportingFile(att.attachment_filename);
-
-        if (!ALLOWED_MIME_TYPES.includes(file.type)) {
-          toast.error(`Format non accepte. Formats autorises : PDF, images (JPG, PNG), Word (DOC, DOCX)`);
-          return;
-        }
-
-        let finalDocType = docType;
-        let customLabel: string | undefined;
-        if (docType.startsWith('custom_')) {
-          finalDocType = 'custom';
-          customLabel = docType.replace('custom_', '');
-        }
-
-        const filePath = `${caseId}/${finalDocType}/${Date.now()}_${att.attachment_filename}`;
-
-        const { data: uploadData, error: uploadError } = await supabase
-          .storage
-          .from('crm-documents')
-          .upload(filePath, file);
-
-        if (uploadError) throw uploadError;
-
-        const { error: insertError } = await supabase
-          .from('crm_lead_documents')
-          .insert({
-            lead_id: caseId,
-            document_type: finalDocType,
-            file_name: att.attachment_filename,
-            file_path: uploadData.path,
-            bucket: 'crm-documents',
-            file_size: file.size,
-            mime_type: file.type,
-            status: 'pending',
-            custom_label: customLabel || null
-          });
-
-        if (insertError) throw insertError;
-
-        toast.success(`"${att.attachment_filename}" importe dans ${categories.find(c => c.id === docType)?.label || docType}`);
-        await loadAll();
-        onDocumentClassified?.();
-      } catch (error) {
-        console.error('Error importing attachment:', error);
-        toast.error('Erreur lors de l\'import du document');
-      } finally {
-        setImportingFile(null);
-        setImportMenuOpen(null);
+      let finalDocType = docType;
+      let customLabel: string | undefined;
+      if (docType.startsWith('custom_')) {
+        finalDocType = 'custom';
+        customLabel = docType.replace('custom_', '');
       }
-    };
-    input.click();
+
+      const mimeType = att.attachment_content_type === 'application/octet-stream'
+        ? (att.attachment_filename.toLowerCase().endsWith('.pdf') ? 'application/pdf' : att.attachment_content_type)
+        : att.attachment_content_type;
+
+      const { error: insertError } = await supabase
+        .from('crm_lead_documents')
+        .insert({
+          lead_id: caseId,
+          document_type: finalDocType,
+          file_name: att.attachment_filename,
+          file_path: `email_ref/${att.email_id}/${att.attachment_filename}`,
+          bucket: 'email-attachments',
+          file_size: att.attachment_size,
+          mime_type: mimeType,
+          status: 'pending',
+          custom_label: customLabel || null
+        });
+
+      if (insertError) throw insertError;
+
+      toast.success(`"${att.attachment_filename}" classe dans ${categories.find(c => c.id === docType)?.label || docType}`);
+      await loadAll();
+      onDocumentClassified?.();
+    } catch (error) {
+      console.error('Error importing attachment:', error);
+      toast.error('Erreur lors du classement du document');
+    } finally {
+      setImportingFile(null);
+      setImportMenuOpen(null);
+    }
   }
 
   async function loadClassifiedDocuments() {
@@ -811,7 +792,7 @@ export default function DocumentValidationComplete({
                 Pieces jointes email non importees
               </h4>
               <p className="text-xs text-amber-700 mb-3">
-                Ces fichiers sont dans l'email mais n'ont pas ete importes. Telechargez-les depuis l'email puis importez-les ici.
+                Ces fichiers sont dans l'email mais pas encore classes dans le dossier.
               </p>
               <div className="space-y-2.5">
                 {unimportedAttachments.map((att) => {
@@ -845,12 +826,12 @@ export default function DocumentValidationComplete({
                           {isImporting ? (
                             <>
                               <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                              Import en cours...
+                              Classement...
                             </>
                           ) : (
                             <>
-                              <Upload className="h-3.5 w-3.5" />
-                              Importer et classer
+                              <MoveHorizontal className="h-3.5 w-3.5" />
+                              Classer dans une categorie
                               <ChevronDown className={`h-3 w-3 transition-transform ${isMenuVisible ? 'rotate-180' : ''}`} />
                             </>
                           )}
