@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { openDocument } from '../../lib/document-utils';
-import { FileText, Download, X, CheckCircle2, AlertCircle, Loader2, XCircle, Check, MoveHorizontal, Upload } from 'lucide-react';
+import { FileText, Download, X, CheckCircle2, AlertCircle, Loader2, XCircle, Check, MoveHorizontal, Upload, GripVertical } from 'lucide-react';
 import { toast } from '@/lib/toast';
 
 interface DocumentValidationCompleteProps {
@@ -77,6 +77,7 @@ export default function DocumentValidationComplete({
   const [categories, setCategories] = useState<DocumentCategory[]>(DOCUMENT_CATEGORIES);
   const [uploading, setUploading] = useState<string | null>(null);
   const [dragOverCategory, setDragOverCategory] = useState<string | null>(null);
+  const [isDraggingExternal, setIsDraggingExternal] = useState(false);
 
   useEffect(() => {
     loadAll();
@@ -490,15 +491,42 @@ export default function DocumentValidationComplete({
 
   function handleDragEnd() {
     setDraggedItem(null);
+    setDragOverCategory(null);
+    setIsDraggingExternal(false);
   }
 
   function handleDragOver(e: React.DragEvent) {
     e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
+  }
+
+  function handleContainerDragEnter(e: React.DragEvent) {
+    e.preventDefault();
+    if (e.dataTransfer.types.includes('Files')) {
+      setIsDraggingExternal(true);
+    }
+  }
+
+  function handleContainerDragLeave(e: React.DragEvent) {
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    const { clientX, clientY } = e;
+    if (clientX <= rect.left || clientX >= rect.right || clientY <= rect.top || clientY >= rect.bottom) {
+      setIsDraggingExternal(false);
+      setDragOverCategory(null);
+    }
+  }
+
+  function handleCategoryDragEnter(e: React.DragEvent, categoryId: string) {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOverCategory(categoryId);
   }
 
   function handleDrop(e: React.DragEvent, docType: string) {
     e.preventDefault();
+    e.stopPropagation();
     setDragOverCategory(null);
+    setIsDraggingExternal(false);
 
     const files = e.dataTransfer?.files;
     if (files && files.length > 0) {
@@ -515,6 +543,8 @@ export default function DocumentValidationComplete({
       moveDocument(draggedItem.id, docType);
     }
   }
+
+  const isAnyDragActive = !!draggedItem || isDraggingExternal;
 
   function formatFileSize(bytes: number): string {
     if (bytes < 1024) return `${bytes} B`;
@@ -569,7 +599,12 @@ export default function DocumentValidationComplete({
         </button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div
+        className="grid grid-cols-1 lg:grid-cols-3 gap-6"
+        onDragEnter={handleContainerDragEnter}
+        onDragLeave={handleContainerDragLeave}
+        onDragOver={handleDragOver}
+      >
         {/* Colonne gauche : Documents non classés */}
         <div className="lg:col-span-1 space-y-4">
           <div className="bg-gray-50 rounded-lg p-4">
@@ -585,51 +620,59 @@ export default function DocumentValidationComplete({
               </div>
             ) : (
               <div className="space-y-3">
-                {attachments.map((attachment) => (
-                  <div
-                    key={attachment.attachment_id}
-                    draggable
-                    onDragStart={() => handleDragStart(attachment.attachment_id, 'attachment')}
-                    onDragEnd={handleDragEnd}
-                    className={`bg-white rounded-lg p-4 border-2 border-gray-200 cursor-move hover:border-blue-400 hover:shadow-md transition-all ${
-                      draggedItem?.id === attachment.attachment_id ? 'opacity-50 scale-95' : ''
-                    } ${classifying === attachment.attachment_id ? 'pointer-events-none opacity-60' : ''}`}
-                  >
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900 truncate">
-                          {attachment.filename}
-                        </p>
-                        <p className="text-xs text-gray-500 mt-1">
-                          {formatFileSize(attachment.file_size)} • {new Date(attachment.received_at).toLocaleDateString()}
-                        </p>
+                {attachments.map((attachment) => {
+                  const isBeingDragged = draggedItem?.id === attachment.attachment_id;
+                  return (
+                    <div
+                      key={attachment.attachment_id}
+                      draggable
+                      onDragStart={(e) => {
+                        handleDragStart(attachment.attachment_id, 'attachment');
+                        e.dataTransfer.effectAllowed = 'move';
+                      }}
+                      onDragEnd={handleDragEnd}
+                      className={`group bg-white rounded-lg p-4 border-2 cursor-grab active:cursor-grabbing transition-all duration-200 ${
+                        isBeingDragged
+                          ? 'opacity-30 scale-95 border-blue-300 shadow-none'
+                          : 'border-gray-200 hover:border-blue-400 hover:shadow-md'
+                      } ${classifying === attachment.attachment_id ? 'pointer-events-none opacity-60' : ''}`}
+                    >
+                      <div className="flex items-start gap-2 mb-2">
+                        <GripVertical className="h-5 w-5 text-gray-300 group-hover:text-blue-400 flex-shrink-0 mt-0.5 transition-colors" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-900 truncate">
+                            {attachment.filename}
+                          </p>
+                          <p className="text-xs text-gray-500 mt-1">
+                            {formatFileSize(attachment.file_size)} • {new Date(attachment.received_at).toLocaleDateString()}
+                          </p>
+                        </div>
                       </div>
-                      <MoveHorizontal className="h-5 w-5 text-gray-400 flex-shrink-0 ml-2" />
-                    </div>
 
-                    <div className="flex items-center gap-2 mt-3">
-                      <button
-                        onClick={() => {
-                          const isProspectDoc = attachment.storage_path.includes('/') && !attachment.storage_path.startsWith('attachments/');
-                          const bucket = isProspectDoc ? 'prospect-documents' : 'email-attachments';
-                          const url = `${supabase.supabaseUrl}/storage/v1/object/public/${bucket}/${attachment.storage_path}`;
-                          window.open(url, '_blank');
-                        }}
-                        className="flex-1 text-xs py-1.5 px-2 bg-blue-50 text-blue-600 rounded hover:bg-blue-100 font-medium"
-                      >
-                        <Download className="h-3 w-3 inline mr-1" />
-                        Voir
-                      </button>
-                    </div>
-
-                    {classifying === attachment.attachment_id && (
-                      <div className="mt-2 flex items-center justify-center">
-                        <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
-                        <span className="ml-2 text-xs text-gray-600">Classification...</span>
+                      <div className="flex items-center gap-2 mt-3">
+                        <button
+                          onClick={() => {
+                            const isProspectDoc = attachment.storage_path.includes('/') && !attachment.storage_path.startsWith('attachments/');
+                            const bucket = isProspectDoc ? 'prospect-documents' : 'email-attachments';
+                            const url = `${supabase.supabaseUrl}/storage/v1/object/public/${bucket}/${attachment.storage_path}`;
+                            window.open(url, '_blank');
+                          }}
+                          className="flex-1 text-xs py-1.5 px-2 bg-blue-50 text-blue-600 rounded hover:bg-blue-100 font-medium"
+                        >
+                          <Download className="h-3 w-3 inline mr-1" />
+                          Voir
+                        </button>
                       </div>
-                    )}
-                  </div>
-                ))}
+
+                      {classifying === attachment.attachment_id && (
+                        <div className="mt-2 flex items-center justify-center">
+                          <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
+                          <span className="ml-2 text-xs text-gray-600">Classification...</span>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>
@@ -637,26 +680,47 @@ export default function DocumentValidationComplete({
 
         {/* Colonnes droites : Catégories de documents */}
         <div className="lg:col-span-2">
+          {isAnyDragActive && (
+            <div className="mb-3 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg flex items-center gap-2 animate-pulse">
+              <Upload className="h-4 w-4 text-blue-600" />
+              <span className="text-sm font-medium text-blue-700">
+                Deposez le fichier dans la categorie souhaitee
+              </span>
+            </div>
+          )}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {categories.map((category) => {
               const docsInCategory = classifiedDocs.filter(d => d.document_type === category.id);
+              const isHovered = dragOverCategory === category.id;
+              const isDropTarget = isAnyDragActive;
+
+              let cardClasses = 'bg-white rounded-lg p-4 border-2 transition-all duration-200 relative';
+              if (isHovered) {
+                cardClasses += ' border-emerald-500 bg-emerald-50 scale-[1.02] shadow-lg shadow-emerald-200/50 ring-2 ring-emerald-300 ring-offset-1';
+              } else if (isDropTarget) {
+                cardClasses += ' border-dashed border-blue-300 bg-blue-50/30';
+              } else {
+                cardClasses += ' border-gray-200 hover:border-gray-300';
+              }
 
               return (
                 <div
                   key={category.id}
-                  onDragOver={(e) => { handleDragOver(e); setDragOverCategory(category.id); }}
-                  onDragLeave={() => setDragOverCategory(null)}
+                  onDragOver={handleDragOver}
+                  onDragEnter={(e) => handleCategoryDragEnter(e, category.id)}
                   onDrop={(e) => handleDrop(e, category.id)}
-                  className={`bg-white rounded-lg p-4 border-2 transition-all ${
-                    draggedItem || dragOverCategory === category.id
-                      ? 'border-blue-400 bg-blue-50 border-dashed'
-                      : 'border-gray-300'
-                  }`}
+                  className={cardClasses}
                 >
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="text-2xl">{category.icon}</span>
+                  {isHovered && (
+                    <div className="absolute inset-0 rounded-lg bg-emerald-400/5 pointer-events-none" />
+                  )}
+
+                  <div className="flex items-center gap-2 mb-3 relative">
+                    <span className={`text-2xl transition-transform duration-200 ${isHovered ? 'scale-110' : ''}`}>
+                      {category.icon}
+                    </span>
                     <div className="flex-1">
-                      <h5 className="font-medium text-gray-900 text-sm">
+                      <h5 className={`font-medium text-sm transition-colors duration-200 ${isHovered ? 'text-emerald-800' : 'text-gray-900'}`}>
                         {category.label}
                         {category.required && (
                           <span className="ml-1 text-red-500">*</span>
@@ -682,17 +746,21 @@ export default function DocumentValidationComplete({
                     </button>
                   </div>
 
-                  {/* Documents in category */}
                   {docsInCategory.length > 0 ? (
-                    <div className="space-y-2 mb-3">
+                    <div className="space-y-2 mb-3 relative">
                       {docsInCategory.map((doc) => (
                         <div
                           key={doc.id}
                           draggable={doc.status === 'pending'}
-                          onDragStart={() => doc.status === 'pending' && handleDragStart(doc.id, 'document')}
+                          onDragStart={(e) => {
+                            if (doc.status === 'pending') {
+                              handleDragStart(doc.id, 'document');
+                              e.dataTransfer.effectAllowed = 'move';
+                            }
+                          }}
                           onDragEnd={handleDragEnd}
                           className={`bg-gray-50 rounded p-3 border border-gray-200 ${
-                            doc.status === 'pending' ? 'cursor-move hover:border-blue-400' : ''
+                            doc.status === 'pending' ? 'cursor-grab active:cursor-grabbing hover:border-blue-400' : ''
                           } ${processing === doc.id ? 'opacity-60 pointer-events-none' : ''}`}
                         >
                           <div className="flex items-start justify-between mb-2">
@@ -757,21 +825,44 @@ export default function DocumentValidationComplete({
                           </div>
                         </div>
                       ))}
+
+                      {isHovered && (
+                        <div className="text-center py-2 border-2 border-dashed border-emerald-400 rounded-lg bg-emerald-50">
+                          <span className="text-xs font-medium text-emerald-700 flex items-center justify-center gap-1">
+                            <Download className="h-3.5 w-3.5" />
+                            Deposer ici
+                          </span>
+                        </div>
+                      )}
                     </div>
                   ) : (
                     <div
-                      onClick={() => !uploading && handleFileSelect(category.id)}
-                      className="text-center py-4 text-xs text-gray-400 border-2 border-dashed border-gray-200 rounded cursor-pointer hover:border-blue-300 hover:text-blue-500 hover:bg-blue-50/50 transition-colors"
+                      onClick={() => !uploading && !isAnyDragActive && handleFileSelect(category.id)}
+                      className={`text-center py-5 border-2 border-dashed rounded-lg transition-all duration-200 ${
+                        isHovered
+                          ? 'border-emerald-400 bg-emerald-50 text-emerald-700'
+                          : isDropTarget
+                            ? 'border-blue-300 bg-blue-50/50 text-blue-500'
+                            : 'border-gray-200 text-gray-400 cursor-pointer hover:border-blue-300 hover:text-blue-500 hover:bg-blue-50/50'
+                      }`}
                     >
                       {uploading === category.id ? (
-                        <span className="flex items-center justify-center gap-1.5">
+                        <span className="flex items-center justify-center gap-1.5 text-xs">
                           <Loader2 className="h-3.5 w-3.5 animate-spin" />
                           Upload en cours...
                         </span>
-                      ) : draggedItem || dragOverCategory === category.id ? (
-                        'Deposer ici'
+                      ) : isHovered ? (
+                        <span className="flex flex-col items-center gap-1">
+                          <Download className="h-5 w-5 text-emerald-600 animate-bounce" />
+                          <span className="text-sm font-semibold text-emerald-700">Deposer ici</span>
+                        </span>
+                      ) : isDropTarget ? (
+                        <span className="flex flex-col items-center gap-1">
+                          <Upload className="h-4 w-4 text-blue-400" />
+                          <span className="text-xs text-blue-500">{category.label}</span>
+                        </span>
                       ) : (
-                        <span className="flex items-center justify-center gap-1.5">
+                        <span className="flex items-center justify-center gap-1.5 text-xs">
                           <Upload className="h-3.5 w-3.5" />
                           Glissez ou cliquez pour importer
                         </span>
