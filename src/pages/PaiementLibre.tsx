@@ -152,6 +152,7 @@ const PaiementLibre: React.FC = () => {
         <SEOHead
           title="Lien invalide - TaxiAssur"
           description="Ce lien de paiement est invalide ou expiré"
+          noindex={true}
         />
         <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center p-4">
           <div className="max-w-md w-full">
@@ -195,6 +196,7 @@ const PaiementLibre: React.FC = () => {
         <SEOHead
           title="Paiement effectue - TaxiAssur"
           description="Votre paiement a ete effectue avec succes"
+          noindex={true}
         />
         <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center p-4">
           <div className="max-w-md w-full">
@@ -242,6 +244,7 @@ const PaiementLibre: React.FC = () => {
         <SEOHead
           title="Paiement annule - TaxiAssur"
           description="Ce lien de paiement est annule"
+          noindex={true}
         />
         <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center p-4">
           <div className="max-w-md w-full">
@@ -280,6 +283,7 @@ const PaiementLibre: React.FC = () => {
       <SEOHead
         title={`Paiement ${payment?.reference || ''} - TaxiAssur`}
         description="Reglez votre facture en ligne de maniere securisee"
+        noindex={true}
       />
       <div className="min-h-screen bg-[#0a0a0a] flex flex-col">
         <header className="border-b border-white/[0.06] px-4 py-4">

@@ -58,7 +58,7 @@ export default function EspaceClient() {
       <SEOHead
         title="Espace Client TaxiAssur - Gestion 100% En Ligne"
         description="Accédez à votre espace client TaxiAssur : gestion contrat, documents, sinistres, paiements. Disponible 24/7 sur ordinateur et mobile. Service client primé."
-        canonical="https://taxiassur.com/espace-client"
+        canonical="/espace-client"
       />
 
       <Header />

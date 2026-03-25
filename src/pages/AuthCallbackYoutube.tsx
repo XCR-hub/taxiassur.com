@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from '@/lib/toast';
 
@@ -73,6 +74,7 @@ export default function AuthCallbackYoutube() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-red-500 to-pink-600 flex items-center justify-center p-4">
+      <Helmet><meta name="robots" content="noindex, nofollow" /></Helmet>
       <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-2xl w-full">
         <div className="text-center mb-6">
           <div className="text-6xl mb-4">🎥</div>

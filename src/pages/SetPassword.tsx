@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { useSearchParams, useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { Lock, CheckCircle, AlertCircle, Eye, EyeOff, Mail, RefreshCw } from 'lucide-react';
@@ -137,9 +138,17 @@ const SetPassword: React.FC = () => {
     }
   };
 
+  const noindexHelmet = (
+    <Helmet>
+      <meta name="robots" content="noindex, nofollow" />
+      <title>Configuration du mot de passe | TaxiAssur</title>
+    </Helmet>
+  );
+
   if (error && !hasValidEntry) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 flex items-center justify-center p-4">
+        {noindexHelmet}
         <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
           <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <AlertCircle className="w-8 h-8 text-red-600" />
@@ -251,6 +260,7 @@ const SetPassword: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 flex items-center justify-center p-4">
+      {noindexHelmet}
       <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
         <div className="text-center mb-8">
           <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">

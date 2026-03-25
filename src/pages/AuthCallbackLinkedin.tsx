@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { toast } from '@/lib/toast';
@@ -128,6 +129,7 @@ export default function AuthCallbackLinkedin() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center p-4">
+      <Helmet><meta name="robots" content="noindex, nofollow" /></Helmet>
       <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-2xl w-full">
         <div className="text-center mb-6">
           <div className="text-6xl mb-4">💼</div>

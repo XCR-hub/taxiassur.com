@@ -1,5 +1,6 @@
 import React from 'react';
 import { Helmet } from 'react-helmet-async';
+import { useLocation } from 'react-router-dom';
 import { getNoIndex } from '../lib/env';
 
 interface SEOHeadProps {
@@ -25,24 +26,25 @@ const SEOHead: React.FC<SEOHeadProps> = ({
   city,
   children
 }) => {
+  const location = useLocation();
   const siteUrl = import.meta.env.VITE_SITE_URL || 'https://taxiassur.com';
   const brandName = 'TaxiAssur';
   const globalNoIndex = getNoIndex();
-  
-  // Enhanced title with power words
-  const enhancedTitle = title 
+
+  const enhancedTitle = title
     ? `${title} | ${brandName}`
     : `${brandName} - Assurance Taxi Professionnelle | Devis Gratuit`;
 
-  // Enhanced description with CTAs
-  const enhancedDescription = description || 
+  const enhancedDescription = description ||
     'Devis d\'assurance taxi gratuit en 2 min. RC Pro, flotte, tarifs compétitifs. Courtier spécialisé. Réponse rapide garantie.';
 
-  // Enhanced keywords
-  const enhancedKeywords = keywords || 
+  const enhancedKeywords = keywords ||
     'assurance taxi, devis gratuit, RC professionnelle, flotte taxi, courtier spécialisé';
 
-  const canonicalUrl = canonical ? `${siteUrl}${canonical}` : siteUrl;
+  const pathname = location.pathname.replace(/\/$/, '');
+  const canonicalUrl = canonical
+    ? `${siteUrl}${canonical}`
+    : `${siteUrl}${pathname || ''}`;
   const defaultImage = `${siteUrl}/og-image.jpg`;
   const metaImage = ogImage || defaultImage;
 
@@ -63,16 +65,19 @@ const SEOHead: React.FC<SEOHeadProps> = ({
       <meta property="og:description" content={enhancedDescription} />
       <meta property="og:url" content={canonicalUrl} />
       <meta property="og:image" content={metaImage} />
+      <meta property="og:image:alt" content={`${title || 'TaxiAssur'} - Courtier assurance taxi`} />
       <meta property="og:image:width" content="1200" />
       <meta property="og:image:height" content="630" />
       <meta property="og:site_name" content={brandName} />
       <meta property="og:locale" content="fr_FR" />
-      
+
       {/* Twitter Card */}
       <meta name="twitter:card" content="summary_large_image" />
+      <meta name="twitter:site" content="@taxiassur" />
       <meta name="twitter:title" content={enhancedTitle} />
       <meta name="twitter:description" content={enhancedDescription} />
       <meta name="twitter:image" content={metaImage} />
+      <meta name="twitter:image:alt" content={`${title || 'TaxiAssur'} - Courtier assurance taxi`} />
       
       {/* Additional Meta */}
       <meta name="author" content={brandName} />

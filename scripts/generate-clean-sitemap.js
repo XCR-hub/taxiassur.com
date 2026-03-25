@@ -41,7 +41,6 @@ const staticPages = [
   { url: '/reviews', priority: '0.6', changefreq: 'weekly' },
   { url: '/partners', priority: '0.5', changefreq: 'monthly' },
   { url: '/programme-partenaires', priority: '0.5', changefreq: 'monthly' },
-  { url: '/offres', priority: '0.6', changefreq: 'monthly' },
   { url: '/villes', priority: '0.6', changefreq: 'monthly' },
   { url: '/sitemap', priority: '0.3', changefreq: 'weekly' },
   { url: '/legal', priority: '0.3', changefreq: 'yearly' },
@@ -171,7 +170,8 @@ async function generateSitemap() {
 }
 
 function escapeXml(unsafe) {
-  return unsafe
+  const encoded = unsafe.replace(/[^\x00-\x7F]/g, (char) => encodeURIComponent(char));
+  return encoded
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')

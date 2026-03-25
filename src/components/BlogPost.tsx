@@ -109,6 +109,7 @@ const BlogPost: React.FC = () => {
         <meta property="og:type" content="article" />
         <meta property="og:url" content={`https://taxiassur.com/blog/${post.id}`} />
         {post.coverImage && <meta property="og:image" content={post.coverImage} />}
+        <meta property="og:image:alt" content={`${post.title} - TaxiAssur Blog`} />
         <meta property="article:published_time" content={post.createdAt} />
         <meta property="article:author" content={post.author} />
         {post.tags?.map(tag => (
@@ -120,6 +121,7 @@ const BlogPost: React.FC = () => {
         <meta name="twitter:title" content={post.title} />
         <meta name="twitter:description" content={post.excerpt} />
         {post.coverImage && <meta name="twitter:image" content={post.coverImage} />}
+        <meta name="twitter:image:alt" content={`${post.title} - TaxiAssur Blog`} />
 
         {/* JSON-LD Structured Data */}
         <script type="application/ld+json">

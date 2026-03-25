@@ -138,16 +138,18 @@ const JsonLd: React.FC<JsonLdProps> = ({ type, data }) => {
       case 'article':
         if (!data) return null;
         const post = data as BlogPost;
+        const articleImage = post.coverImage || `${siteUrl}/logo-600x300.png`;
         return {
           "@context": "https://schema.org",
-          "@type": "Article",
-          "headline": post.title,
+          "@type": "BlogPosting",
+          "headline": (post.title || '').substring(0, 110),
           "description": post.excerpt,
-          "image": post.coverImage || `${siteUrl}/logo-600x300.png`,
+          "image": [articleImage],
           "author": {
             "@type": "Organization",
             "name": post.author || brandName,
-            "url": siteUrl
+            "url": siteUrl,
+            "logo": `${siteUrl}/logo-600x300.png`
           },
           "publisher": {
             "@type": "Organization",
@@ -160,13 +162,13 @@ const JsonLd: React.FC<JsonLdProps> = ({ type, data }) => {
               "height": 300
             }
           },
-          "datePublished": post.createdAt,
-          "dateModified": post.updatedAt || post.createdAt,
+          "datePublished": post.createdAt || new Date().toISOString(),
+          "dateModified": post.updatedAt || post.createdAt || new Date().toISOString(),
           "mainEntityOfPage": {
             "@type": "WebPage",
             "@id": `${siteUrl}/blog/${post.id}`
           },
-          "keywords": post.tags.join(', '),
+          "keywords": post.tags?.join(', ') || '',
           "wordCount": post.content?.replace(/<[^>]*>/g, '').split(/\s+/).length || 0,
           "articleSection": "Assurance Taxi",
           "inLanguage": "fr-FR",
@@ -262,31 +264,40 @@ const JsonLd: React.FC<JsonLdProps> = ({ type, data }) => {
           "@type": "ItemList",
           "itemListElement": [
             {
-              "@type": "Review",
+              "@type": "ListItem",
               "position": 1,
-              "reviewRating": { "@type": "Rating", "ratingValue": "5", "bestRating": "5" },
-              "author": { "@type": "Person", "name": "Jean-Pierre M." },
-              "reviewBody": "TaxiAssur m'a fait économiser 620€ sur mon assurance taxi annuelle. Service rapide, courtier disponible et attestation reçue en 2 heures.",
-              "datePublished": "2026-01-15",
-              "itemReviewed": { "@type": "InsuranceAgency", "name": "TaxiAssur" }
+              "item": {
+                "@type": "Review",
+                "reviewRating": { "@type": "Rating", "ratingValue": "5", "bestRating": "5", "worstRating": "1" },
+                "author": { "@type": "Person", "name": "Jean-Pierre M." },
+                "reviewBody": "TaxiAssur m'a fait économiser 620€ sur mon assurance taxi annuelle. Service rapide, courtier disponible et attestation reçue en 2 heures.",
+                "datePublished": "2026-01-15",
+                "itemReviewed": { "@type": "InsuranceAgency", "name": "TaxiAssur", "url": siteUrl }
+              }
             },
             {
-              "@type": "Review",
+              "@type": "ListItem",
               "position": 2,
-              "reviewRating": { "@type": "Rating", "ratingValue": "5", "bestRating": "5" },
-              "author": { "@type": "Person", "name": "Mohammed B." },
-              "reviewBody": "Excellent courtier spécialisé taxi. J'ai obtenu mon devis en ligne rapidement et le tarif est bien meilleur que mon ancien assureur.",
-              "datePublished": "2026-02-03",
-              "itemReviewed": { "@type": "InsuranceAgency", "name": "TaxiAssur" }
+              "item": {
+                "@type": "Review",
+                "reviewRating": { "@type": "Rating", "ratingValue": "5", "bestRating": "5", "worstRating": "1" },
+                "author": { "@type": "Person", "name": "Mohammed B." },
+                "reviewBody": "Excellent courtier spécialisé taxi. J'ai obtenu mon devis en ligne rapidement et le tarif est bien meilleur que mon ancien assureur.",
+                "datePublished": "2026-02-03",
+                "itemReviewed": { "@type": "InsuranceAgency", "name": "TaxiAssur", "url": siteUrl }
+              }
             },
             {
-              "@type": "Review",
+              "@type": "ListItem",
               "position": 3,
-              "reviewRating": { "@type": "Rating", "ratingValue": "5", "bestRating": "5" },
-              "author": { "@type": "Person", "name": "Marie L." },
-              "reviewBody": "Je recommande TaxiAssur à tous les chauffeurs. Accompagnement professionnel du début à la fin, prix très compétitifs.",
-              "datePublished": "2026-02-20",
-              "itemReviewed": { "@type": "InsuranceAgency", "name": "TaxiAssur" }
+              "item": {
+                "@type": "Review",
+                "reviewRating": { "@type": "Rating", "ratingValue": "5", "bestRating": "5", "worstRating": "1" },
+                "author": { "@type": "Person", "name": "Marie L." },
+                "reviewBody": "Je recommande TaxiAssur à tous les chauffeurs. Accompagnement professionnel du début à la fin, prix très compétitifs.",
+                "datePublished": "2026-02-20",
+                "itemReviewed": { "@type": "InsuranceAgency", "name": "TaxiAssur", "url": siteUrl }
+              }
             }
           ]
         };

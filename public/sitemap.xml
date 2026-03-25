@@ -133,12 +133,6 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://taxiassur.com/offres</loc>
-    <lastmod>2026-03-25</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
     <loc>https://taxiassur.com/villes</loc>
     <lastmod>2026-03-25</lastmod>
     <changefreq>monthly</changefreq>
@@ -391,7 +385,7 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://taxiassur.com/blog/assurance-taxi-resilié</loc>
+    <loc>https://taxiassur.com/blog/assurance-taxi-resili%C3%A9</loc>
     <lastmod>2026-03-25</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>

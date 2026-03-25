@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { CheckCircle, XCircle, Loader2 } from 'lucide-react';
@@ -102,6 +103,7 @@ export default function AuthCallbackPinterest() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
+      <Helmet><meta name="robots" content="noindex, nofollow" /></Helmet>
       <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-xl p-8 max-w-md w-full">
         <div className="text-center">
           {status === 'loading' && (

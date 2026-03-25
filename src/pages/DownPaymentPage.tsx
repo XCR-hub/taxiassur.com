@@ -132,6 +132,7 @@ const DownPaymentPage: React.FC = () => {
         <SEOHead
           title="Paiement confirmé - TaxiAssur"
           description="Votre paiement a été confirmé avec succès"
+          noindex={true}
         />
         <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100 flex items-center justify-center p-4">
           <div className="max-w-md w-full">
@@ -172,6 +173,7 @@ const DownPaymentPage: React.FC = () => {
         <SEOHead
           title="Erreur - Paiement non disponible - TaxiAssur"
           description="Ce lien de paiement n'est pas valide"
+          noindex={true}
         />
         <div className="min-h-screen bg-gradient-to-br from-red-50 to-pink-100 flex items-center justify-center p-4">
           <div className="max-w-md w-full">
@@ -205,6 +207,7 @@ const DownPaymentPage: React.FC = () => {
       <SEOHead
         title="Paiement comptant - TaxiAssur"
         description="Réglez votre comptant pour finaliser votre contrat d'assurance taxi"
+        noindex={true}
       />
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
         <div className="container mx-auto px-4 py-8">

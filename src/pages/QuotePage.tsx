@@ -1,5 +1,6 @@
 import { useState, FormEvent } from 'react';
 import { supabase } from '../lib/supabase';
+import Seo from '../components/Seo';
 
 interface FormData {
   companyName: string;
@@ -99,6 +100,11 @@ function QuotePage() {
 
   return (
     <div className="py-12 bg-gray-50">
+      <Seo
+        title="Demande de Devis RC Décennale"
+        description="Demandez votre devis RC Décennale en ligne. Formulaire rapide et gratuit pour obtenir une couverture adaptée à votre activité professionnelle."
+        canonical="/devis-rc-decennale"
+      />
       <div className="container mx-auto px-4">
         <div className="max-w-3xl mx-auto">
           <div className="text-center mb-8">

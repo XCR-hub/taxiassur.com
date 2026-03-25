@@ -68,6 +68,7 @@ const Seo: React.FC<SeoProps> = ({
       <meta property="og:description" content={metaDescription} />
       <meta property="og:url" content={canonicalUrl} />
       <meta property="og:image" content={metaImage} />
+      <meta property="og:image:alt" content={`${title || 'TaxiAssur'} - Courtier assurance taxi`} />
       <meta property="og:image:width" content="600" />
       <meta property="og:image:height" content="300" />
       <meta property="og:site_name" content={brandName} />
@@ -78,6 +79,7 @@ const Seo: React.FC<SeoProps> = ({
       <meta name="twitter:title" content={fullTitle} />
       <meta name="twitter:description" content={metaDescription} />
       <meta name="twitter:image" content={metaImage} />
+      <meta name="twitter:image:alt" content={`${title || 'TaxiAssur'} - Courtier assurance taxi`} />
 
       {/* Additional Meta */}
       <meta name="author" content={brandName} />
