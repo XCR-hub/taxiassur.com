@@ -28,7 +28,6 @@ export function useAdminAuth() {
       return globalAuthState;
     }
 
-    // Sinon, essayer le localStorage
     try {
       const userStr = localStorage.getItem('taxiassur_user');
       if (userStr) {
@@ -38,17 +37,21 @@ export function useAdminAuth() {
           const sevenDays = 7 * 24 * 60 * 60 * 1000;
 
           if (cacheAge < sevenDays) {
-            console.log('⚡ Fast init from localStorage');
-            return {
-              user: user,
-              loading: false,
-              isAuthenticated: true,
-            };
+            if (user.role === 'master') {
+              return { user, loading: false, isAuthenticated: true };
+            }
+            const permsStr = localStorage.getItem('taxiassur_permissions');
+            try {
+              const perms = permsStr ? JSON.parse(permsStr) : [];
+              if (Array.isArray(perms) && perms.length > 0) {
+                return { user, loading: false, isAuthenticated: true };
+              }
+            } catch {}
           }
         }
       }
     } catch (e) {
-      console.warn('⚠️ Error reading cached user:', e);
+      console.warn('Error reading cached user:', e);
     }
 
     return {
@@ -99,20 +102,22 @@ export function useAdminAuth() {
       const adminUser = Array.isArray(rows) && rows.length > 0 ? rows[0] : null;
 
       if (adminUser) {
-        const userCache = { ...adminUser, cachedAt: Date.now() };
-        localStorage.setItem('taxiassur_user', JSON.stringify(userCache));
-
+        let perms: any[] = [];
         try {
           const permsRes = await fetch(`${baseUrl}/rest/v1/user_permissions?select=id,user_id,permission_type,can_view,can_edit,can_delete&user_id=eq.${adminUser.id}`, {
             headers: { 'apikey': anonKey, 'Authorization': `Bearer ${anonKey}` }
           });
-          const perms = await permsRes.json();
-          if (Array.isArray(perms)) {
-            localStorage.setItem('taxiassur_permissions', JSON.stringify(perms));
+          const permsData = await permsRes.json();
+          if (Array.isArray(permsData)) {
+            perms = permsData;
           }
         } catch {
-          localStorage.setItem('taxiassur_permissions', '[]');
+          perms = [];
         }
+
+        localStorage.setItem('taxiassur_permissions', JSON.stringify(perms));
+        const userCache = { ...adminUser, cachedAt: Date.now() };
+        localStorage.setItem('taxiassur_user', JSON.stringify(userCache));
 
         fetch(`${baseUrl}/rest/v1/admin_users?id=eq.${adminUser.id}`, {
           method: 'PATCH',
@@ -135,10 +140,13 @@ export function useAdminAuth() {
   useEffect(() => {
     let mounted = true;
 
-    // Si déjà authentifié via le cache global, ne rien faire
     if (globalAuthInitialized && globalAuthState?.isAuthenticated) {
-      console.log('✅ Already authenticated via global cache');
-      return;
+      if (globalAuthState.user?.role === 'master') return;
+      const permsStr = localStorage.getItem('taxiassur_permissions');
+      try {
+        const perms = permsStr ? JSON.parse(permsStr) : [];
+        if (Array.isArray(perms) && perms.length > 0) return;
+      } catch {}
     }
 
     const getCachedUser = () => {
@@ -208,15 +216,19 @@ export function useAdminAuth() {
         const cachedUser = getCachedUser();
         const cachedSession = validateCachedSession();
 
-        // FAST PATH : Si on a un utilisateur en cache ET une session, utiliser directement
         if (cachedUser && cachedSession) {
-          console.log('⚡ Using cached user (ULTRA fast path)');
-          updateGlobalState({
-            user: cachedUser,
-            loading: false,
-            isAuthenticated: true,
-          });
-          return; // STOP ICI - pas de vérification Supabase
+          if (cachedUser.role === 'master') {
+            updateGlobalState({ user: cachedUser, loading: false, isAuthenticated: true });
+            return;
+          }
+          const permsStr = localStorage.getItem('taxiassur_permissions');
+          try {
+            const perms = permsStr ? JSON.parse(permsStr) : [];
+            if (Array.isArray(perms) && perms.length > 0) {
+              updateGlobalState({ user: cachedUser, loading: false, isAuthenticated: true });
+              return;
+            }
+          } catch {}
         }
 
         // Seulement si pas de cache : vérifier avec Supabase
