@@ -24,6 +24,7 @@ interface Attachment {
   received_at: string;
   email_subject: string;
   from_email: string;
+  source?: string;
 }
 
 interface ClassifiedDocument {
@@ -78,6 +79,7 @@ export default function DocumentValidationComplete({
   const [uploading, setUploading] = useState<string | null>(null);
   const [dragOverCategory, setDragOverCategory] = useState<string | null>(null);
   const [isDraggingExternal, setIsDraggingExternal] = useState(false);
+  const [classifyMenuOpen, setClassifyMenuOpen] = useState<string | null>(null);
 
   useEffect(() => {
     loadAll();
@@ -622,6 +624,9 @@ export default function DocumentValidationComplete({
               <div className="space-y-3">
                 {attachments.map((attachment) => {
                   const isBeingDragged = draggedItem?.id === attachment.attachment_id;
+                  const isMenuOpen = classifyMenuOpen === attachment.attachment_id;
+                  const attachmentBucket = attachment.source === 'prospect_documents' ? 'prospect-documents' : 'email-attachments';
+
                   return (
                     <div
                       key={attachment.attachment_id}
@@ -631,43 +636,77 @@ export default function DocumentValidationComplete({
                         e.dataTransfer.effectAllowed = 'move';
                       }}
                       onDragEnd={handleDragEnd}
-                      className={`group bg-white rounded-lg p-4 border-2 cursor-grab active:cursor-grabbing transition-all duration-200 ${
+                      className={`group bg-white rounded-lg p-3 border-2 cursor-grab active:cursor-grabbing transition-all duration-200 ${
                         isBeingDragged
                           ? 'opacity-30 scale-95 border-blue-300 shadow-none'
                           : 'border-gray-200 hover:border-blue-400 hover:shadow-md'
                       } ${classifying === attachment.attachment_id ? 'pointer-events-none opacity-60' : ''}`}
                     >
-                      <div className="flex items-start gap-2 mb-2">
-                        <GripVertical className="h-5 w-5 text-gray-300 group-hover:text-blue-400 flex-shrink-0 mt-0.5 transition-colors" />
+                      <div className="flex items-start gap-2">
+                        <GripVertical className="h-4 w-4 text-gray-300 group-hover:text-blue-400 flex-shrink-0 mt-1 transition-colors" />
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-900 truncate">
+                          <p className="text-sm font-medium text-gray-900 truncate" title={attachment.filename}>
                             {attachment.filename}
                           </p>
-                          <p className="text-xs text-gray-500 mt-1">
+                          <p className="text-xs text-gray-500 mt-0.5">
                             {formatFileSize(attachment.file_size)} • {new Date(attachment.received_at).toLocaleDateString()}
                           </p>
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-2 mt-3">
+                      <div className="flex items-center gap-1.5 mt-2.5">
                         <button
                           onClick={() => {
-                            const isProspectDoc = attachment.storage_path.includes('/') && !attachment.storage_path.startsWith('attachments/');
-                            const bucket = isProspectDoc ? 'prospect-documents' : 'email-attachments';
-                            const url = `${supabase.supabaseUrl}/storage/v1/object/public/${bucket}/${attachment.storage_path}`;
+                            const baseUrl = import.meta.env.VITE_SUPABASE_URL;
+                            const url = `${baseUrl}/storage/v1/object/public/${attachmentBucket}/${attachment.storage_path}`;
                             window.open(url, '_blank');
                           }}
-                          className="flex-1 text-xs py-1.5 px-2 bg-blue-50 text-blue-600 rounded hover:bg-blue-100 font-medium"
+                          className="text-xs py-1.5 px-2.5 bg-blue-50 text-blue-600 rounded hover:bg-blue-100 font-medium flex items-center gap-1"
                         >
-                          <Download className="h-3 w-3 inline mr-1" />
-                          Voir
+                          <Download className="h-3 w-3" />
+                          Telecharger
                         </button>
+
+                        <div className="relative flex-1">
+                          <button
+                            onClick={() => setClassifyMenuOpen(isMenuOpen ? null : attachment.attachment_id)}
+                            className="w-full text-xs py-1.5 px-2.5 bg-emerald-50 text-emerald-700 rounded hover:bg-emerald-100 font-medium flex items-center justify-center gap-1"
+                          >
+                            <FileText className="h-3 w-3" />
+                            Classer
+                            <svg className={`h-3 w-3 transition-transform ${isMenuOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                          </button>
+
+                          {isMenuOpen && (
+                            <>
+                              <div className="fixed inset-0 z-10" onClick={() => setClassifyMenuOpen(null)} />
+                              <div className="absolute left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-xl z-20 max-h-64 overflow-y-auto">
+                                {categories.map((cat) => (
+                                  <button
+                                    key={cat.id}
+                                    onClick={() => {
+                                      setClassifyMenuOpen(null);
+                                      classifyAttachment(attachment.attachment_id, cat.id);
+                                    }}
+                                    className="w-full text-left px-3 py-2 text-xs hover:bg-emerald-50 flex items-center gap-2 transition-colors border-b border-gray-50 last:border-0"
+                                  >
+                                    <span className="text-base">{cat.icon}</span>
+                                    <span className="font-medium text-gray-800">{cat.label}</span>
+                                    {cat.required && <span className="text-red-400 text-[10px]">requis</span>}
+                                  </button>
+                                ))}
+                              </div>
+                            </>
+                          )}
+                        </div>
                       </div>
 
                       {classifying === attachment.attachment_id && (
-                        <div className="mt-2 flex items-center justify-center">
-                          <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
-                          <span className="ml-2 text-xs text-gray-600">Classification...</span>
+                        <div className="mt-2 flex items-center justify-center py-1 bg-blue-50 rounded">
+                          <Loader2 className="h-3.5 w-3.5 animate-spin text-blue-600" />
+                          <span className="ml-2 text-xs text-blue-700 font-medium">Classification...</span>
                         </div>
                       )}
                     </div>
