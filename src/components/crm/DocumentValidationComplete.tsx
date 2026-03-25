@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { openDocument } from '../../lib/document-utils';
-import { FileText, Download, X, CheckCircle2, AlertCircle, Loader2, XCircle, Check, MoveHorizontal } from 'lucide-react';
+import { FileText, Download, X, CheckCircle2, AlertCircle, Loader2, XCircle, Check, MoveHorizontal, Upload } from 'lucide-react';
 import { toast } from '@/lib/toast';
 
 interface DocumentValidationCompleteProps {
@@ -75,6 +75,8 @@ export default function DocumentValidationComplete({
   const [rejectionReason, setRejectionReason] = useState('');
   const [processing, setProcessing] = useState<string | null>(null);
   const [categories, setCategories] = useState<DocumentCategory[]>(DOCUMENT_CATEGORIES);
+  const [uploading, setUploading] = useState<string | null>(null);
+  const [dragOverCategory, setDragOverCategory] = useState<string | null>(null);
 
   useEffect(() => {
     loadAll();
@@ -407,6 +409,64 @@ export default function DocumentValidationComplete({
     }
   }
 
+  async function uploadFileToCategory(file: File, docType: string) {
+    try {
+      setUploading(docType);
+
+      let finalDocType = docType;
+      let customLabel: string | undefined;
+      if (docType.startsWith('custom_')) {
+        finalDocType = 'custom';
+        customLabel = docType.replace('custom_', '');
+      }
+
+      const filePath = `${caseId}/${finalDocType}/${Date.now()}_${file.name}`;
+
+      const { data: uploadData, error: uploadError } = await supabase
+        .storage
+        .from('crm-documents')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { error: insertError } = await supabase
+        .from('crm_lead_documents')
+        .insert({
+          lead_id: caseId,
+          document_type: finalDocType,
+          file_name: file.name,
+          file_path: uploadData.path,
+          bucket: 'crm-documents',
+          file_size: file.size,
+          mime_type: file.type,
+          status: 'pending',
+          custom_label: customLabel || null
+        });
+
+      if (insertError) throw insertError;
+
+      toast.success(`Document "${file.name}" ajouté dans ${categories.find(c => c.id === docType)?.label || docType}`);
+      await loadAll();
+      onDocumentClassified?.();
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      toast.error('Erreur lors de l\'upload du document');
+    } finally {
+      setUploading(null);
+    }
+  }
+
+  function handleFileSelect(docType: string) {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.pdf,.jpg,.jpeg,.png,.gif,.doc,.docx,.xls,.xlsx';
+    input.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (file) uploadFileToCategory(file, docType);
+    };
+    input.click();
+  }
+
   function handleDragStart(id: string, type: 'attachment' | 'document') {
     setDraggedItem({ id, type });
   }
@@ -421,6 +481,14 @@ export default function DocumentValidationComplete({
 
   function handleDrop(e: React.DragEvent, docType: string) {
     e.preventDefault();
+    setDragOverCategory(null);
+
+    const files = e.dataTransfer?.files;
+    if (files && files.length > 0) {
+      const file = files[0];
+      uploadFileToCategory(file, docType);
+      return;
+    }
 
     if (!draggedItem) return;
 
@@ -559,10 +627,11 @@ export default function DocumentValidationComplete({
               return (
                 <div
                   key={category.id}
-                  onDragOver={handleDragOver}
+                  onDragOver={(e) => { handleDragOver(e); setDragOverCategory(category.id); }}
+                  onDragLeave={() => setDragOverCategory(null)}
                   onDrop={(e) => handleDrop(e, category.id)}
                   className={`bg-white rounded-lg p-4 border-2 transition-all ${
-                    draggedItem
+                    draggedItem || dragOverCategory === category.id
                       ? 'border-blue-400 bg-blue-50 border-dashed'
                       : 'border-gray-300'
                   }`}
@@ -582,6 +651,18 @@ export default function DocumentValidationComplete({
                         </span>
                       )}
                     </div>
+                    <button
+                      onClick={() => handleFileSelect(category.id)}
+                      disabled={uploading === category.id}
+                      className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-50"
+                      title={`Importer un fichier dans ${category.label}`}
+                    >
+                      {uploading === category.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Upload className="h-4 w-4" />
+                      )}
+                    </button>
                   </div>
 
                   {/* Documents in category */}
@@ -661,8 +742,23 @@ export default function DocumentValidationComplete({
                       ))}
                     </div>
                   ) : (
-                    <div className="text-center py-4 text-xs text-gray-400 border-2 border-dashed border-gray-200 rounded">
-                      {draggedItem ? 'Déposer ici →' : 'Glissez un document ici'}
+                    <div
+                      onClick={() => !uploading && handleFileSelect(category.id)}
+                      className="text-center py-4 text-xs text-gray-400 border-2 border-dashed border-gray-200 rounded cursor-pointer hover:border-blue-300 hover:text-blue-500 hover:bg-blue-50/50 transition-colors"
+                    >
+                      {uploading === category.id ? (
+                        <span className="flex items-center justify-center gap-1.5">
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          Upload en cours...
+                        </span>
+                      ) : draggedItem || dragOverCategory === category.id ? (
+                        'Deposer ici'
+                      ) : (
+                        <span className="flex items-center justify-center gap-1.5">
+                          <Upload className="h-3.5 w-3.5" />
+                          Glissez ou cliquez pour importer
+                        </span>
+                      )}
                     </div>
                   )}
                 </div>
@@ -721,11 +817,11 @@ export default function DocumentValidationComplete({
           <div className="text-sm text-blue-900">
             <p className="font-medium mb-1">Comment ça marche ?</p>
             <ol className="list-decimal list-inside space-y-1 text-blue-800">
-              <li>Glissez un document non classé vers une catégorie</li>
-              <li>Le document apparaît dans la catégorie</li>
-              <li>Validez le document (email automatique envoyé au prospect)</li>
+              <li>Importez un fichier depuis votre ordinateur en cliquant sur une categorie ou sur l'icone <Upload className="h-3 w-3 inline" /></li>
+              <li>Ou glissez un fichier depuis votre bureau directement dans une categorie</li>
+              <li>Vous pouvez aussi glisser un document non classe vers une categorie</li>
+              <li>Validez le document (email automatique envoye au prospect)</li>
               <li>Ou refusez-le avec un motif (email automatique avec le motif)</li>
-              <li>Vous pouvez déplacer un document entre catégories</li>
             </ol>
           </div>
         </div>
