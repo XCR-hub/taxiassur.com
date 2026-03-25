@@ -17,6 +17,7 @@ import {
   BarChart3,
   Brain,
   Search,
+  Settings,
   ChevronRight,
 } from 'lucide-react';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
@@ -283,7 +284,7 @@ const CRMLayout: React.FC = () => {
           )}
         </div>
 
-        <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', padding: sidebarOpen ? '12px 10px' : '12px 8px' }}>
+        <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', padding: sidebarOpen ? '10px 10px' : '10px 8px', flexShrink: 0 }}>
           {sidebarOpen ? (
             <>
               <div
