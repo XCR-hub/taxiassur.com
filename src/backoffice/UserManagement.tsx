@@ -128,25 +128,40 @@ const UserManagement: React.FC = () => {
     setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 4000);
   };
 
-  const fetchUsersDirect = async (): Promise<AdminUser[]> => {
-    const url = import.meta.env.VITE_SUPABASE_URL || 'https://drohhxrkoequjphvabvq.supabase.co';
-    const key = import.meta.env.VITE_SUPABASE_ANON_KEY;
-    const res = await fetch(`${url}/rest/v1/admin_users?select=*&order=created_at.desc`, {
-      headers: { 'apikey': key, 'Authorization': `Bearer ${key}` }
-    });
+  const restBase = import.meta.env.VITE_SUPABASE_URL || 'https://drohhxrkoequjphvabvq.supabase.co';
+  const restKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+  const restHeaders = { 'apikey': restKey, 'Authorization': `Bearer ${restKey}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' };
+
+  const restGet = async (table: string, query = '') => {
+    const res = await fetch(`${restBase}/rest/v1/${table}?${query}`, { headers: restHeaders });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return res.json();
   };
 
-  const fetchPermissionsDirect = async (userIds: string[]): Promise<UserPermission[]> => {
-    const url = import.meta.env.VITE_SUPABASE_URL || 'https://drohhxrkoequjphvabvq.supabase.co';
-    const key = import.meta.env.VITE_SUPABASE_ANON_KEY;
-    const ids = userIds.map(id => `"${id}"`).join(',');
-    const res = await fetch(`${url}/rest/v1/user_permissions?select=*&user_id=in.(${ids})`, {
-      headers: { 'apikey': key, 'Authorization': `Bearer ${key}` }
-    });
-    if (!res.ok) return [];
+  const restPost = async (table: string, body: any) => {
+    const res = await fetch(`${restBase}/rest/v1/${table}`, { method: 'POST', headers: restHeaders, body: JSON.stringify(body) });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return res.json();
+  };
+
+  const restPatch = async (table: string, query: string, body: any) => {
+    const res = await fetch(`${restBase}/rest/v1/${table}?${query}`, { method: 'PATCH', headers: restHeaders, body: JSON.stringify(body) });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return res.json();
+  };
+
+  const restDelete = async (table: string, query: string) => {
+    const res = await fetch(`${restBase}/rest/v1/${table}?${query}`, { method: 'DELETE', headers: restHeaders });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  };
+
+  const fetchUsersDirect = async (): Promise<AdminUser[]> => {
+    return restGet('admin_users', 'select=*&order=created_at.desc');
+  };
+
+  const fetchPermissionsDirect = async (userIds: string[]): Promise<UserPermission[]> => {
+    const ids = userIds.map(id => `"${id}"`).join(',');
+    try { return await restGet('user_permissions', `select=*&user_id=in.(${ids})`); } catch { return []; }
   };
 
   const loadUsers = async () => {
@@ -193,14 +208,15 @@ const UserManagement: React.FC = () => {
     if (!selectedUser) return;
     try {
       setSavingPerms(true);
-      await supabase.from('user_permissions').delete().eq('user_id', selectedUser.id);
-      for (const [permType, perms] of Object.entries(userPermissions)) {
-        if (perms.view || perms.edit || perms.delete) {
-          await supabase.from('user_permissions').insert([{
-            user_id: selectedUser.id, permission_type: permType,
-            can_view: perms.view, can_edit: perms.edit, can_delete: perms.delete
-          }]);
-        }
+      await restDelete('user_permissions', `user_id=eq.${selectedUser.id}`);
+      const toInsert = Object.entries(userPermissions)
+        .filter(([, perms]) => perms.view || perms.edit || perms.delete)
+        .map(([permType, perms]) => ({
+          user_id: selectedUser.id, permission_type: permType,
+          can_view: perms.view, can_edit: perms.edit, can_delete: perms.delete
+        }));
+      if (toInsert.length > 0) {
+        await restPost('user_permissions', toInsert);
       }
       showToast('success', 'Permissions enregistrees');
       await loadUsers();
@@ -211,19 +227,32 @@ const UserManagement: React.FC = () => {
   };
 
   const handleToggleActive = async (userId: string, current: boolean) => {
-    const { error } = await supabase.from('admin_users').update({ is_active: !current }).eq('id', userId);
-    if (error) { showToast('error', 'Erreur changement statut'); return; }
-    showToast('success', current ? 'Utilisateur desactive' : 'Utilisateur active');
-    await loadUsers();
+    try {
+      await restPatch('admin_users', `id=eq.${userId}`, { is_active: !current });
+      showToast('success', current ? 'Utilisateur desactive' : 'Utilisateur active');
+      await loadUsers();
+    } catch {
+      showToast('error', 'Erreur changement statut');
+    }
+  };
+
+  const invokeEdgeFunction = async (name: string, body: any) => {
+    const res = await fetch(`${restBase}/functions/v1/${name}`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${restKey}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return res.json();
   };
 
   const handleResendInvite = async (user: AdminUser) => {
     try {
       setSending(true);
-      const { data, error } = await supabase.functions.invoke('invite-admin-user', {
-        body: { email: user.email, full_name: user.full_name, role: user.role, permissions: [], force_resend: true }
+      const data = await invokeEdgeFunction('invite-admin-user', {
+        email: user.email, full_name: user.full_name, role: user.role, permissions: [], force_resend: true
       });
-      if (error || !data?.success) { showToast('error', error?.message || data?.error || 'Erreur'); return; }
+      if (!data?.success) { showToast('error', data?.error || 'Erreur'); return; }
       if (!data.email_sent && data.action_link) { setManualLinkData({ email: user.email, link: data.action_link }); return; }
       showToast('success', `Invitation renvoyee a ${user.email}`);
     } catch (err) {
@@ -234,10 +263,12 @@ const UserManagement: React.FC = () => {
   const handleResetPassword = async (user: AdminUser) => {
     try {
       setSending(true);
-      const { error } = await supabase.auth.resetPasswordForEmail(user.email, {
-        redirectTo: `${window.location.origin}/auth/reset-password`
+      const res = await fetch(`${restBase}/auth/v1/recover`, {
+        method: 'POST',
+        headers: { 'apikey': restKey, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: user.email })
       });
-      if (error) { showToast('error', error.message); return; }
+      if (!res.ok) { showToast('error', 'Erreur envoi email'); return; }
       showToast('success', `Email de reinitialisation envoye`);
     } catch (err) {
       showToast('error', "Erreur lors de la reinitialisation");
@@ -248,10 +279,10 @@ const UserManagement: React.FC = () => {
     if (!selectedUser) return;
     try {
       setDeleting(true);
-      const { data, error } = await supabase.functions.invoke('invite-admin-user', {
-        body: { action: 'delete', user_id: selectedUser.id, email: selectedUser.email }
+      const data = await invokeEdgeFunction('invite-admin-user', {
+        action: 'delete', user_id: selectedUser.id, email: selectedUser.email
       });
-      if (error || !data?.success) { showToast('error', error?.message || data?.error || 'Erreur suppression'); return; }
+      if (!data?.success) { showToast('error', data?.error || 'Erreur suppression'); return; }
       showToast('success', `${selectedUser.full_name} supprime`);
       setShowDeleteModal(false);
       setSelectedUser(null);
@@ -268,10 +299,10 @@ const UserManagement: React.FC = () => {
       const perms = Object.entries(newUserPermissions)
         .filter(([, p]) => p.view || p.edit || p.delete)
         .map(([type, p]) => ({ type, view: p.view, edit: p.edit, delete: p.delete }));
-      const { data, error } = await supabase.functions.invoke('invite-admin-user', {
-        body: { email: newUser.email, full_name: newUser.full_name, role: newUser.role, permissions: perms }
+      const data = await invokeEdgeFunction('invite-admin-user', {
+        email: newUser.email, full_name: newUser.full_name, role: newUser.role, permissions: perms
       });
-      if (error || !data?.success) { showToast('error', error?.message || data?.error || 'Erreur inconnue'); return; }
+      if (!data?.success) { showToast('error', data?.error || 'Erreur inconnue'); return; }
       showToast('success', `Invitation envoyee a ${newUser.email}`);
       setShowAddModal(false);
       setNewUser({ email: '', full_name: '', role: 'collaborator' });
