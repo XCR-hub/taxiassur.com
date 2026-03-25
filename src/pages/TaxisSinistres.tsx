@@ -290,7 +290,7 @@ export default function TaxisSinistres() {
                   <span className="text-2xl group-open:rotate-45 transition-transform">+</span>
                 </summary>
                 <p className="mt-4 text-gray-700">
-                  Cela dépend de votre responsabilité. En cas de sinistre <strong>responsable</strong>, votre coefficient bonus-malus augmentera de 25% (malus). Pour un sinistre <strong>non responsable</strong>, aucun impact sur votre bonus. Certains contrats offrent une "protection bonus" qui limite l'impact du premier sinistre.
+                  Cela dépend de votre responsabilité. En cas de sinistre <strong>responsable</strong>, votre coefficient bonus-malus augmentera de 25% (malus). Pour un sinistre <strong>non responsable</strong>, aucun impact sur votre bonus. Certains contrats offrent une "protection bonus\" qui limite l'impact du premier sinistre.
                 </p>
               </details>
             </div>
