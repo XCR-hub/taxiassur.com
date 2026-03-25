@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { openDocument } from '../../lib/document-utils';
-import { FileText, Download, X, CheckCircle2, AlertCircle, Loader2, XCircle, Check, MoveHorizontal, Upload, GripVertical } from 'lucide-react';
+import { FileText, Download, X, CheckCircle2, AlertCircle, Loader2, XCircle, Check, MoveHorizontal, Upload, GripVertical, Mail, ChevronDown } from 'lucide-react';
 import { toast } from '@/lib/toast';
 
 interface DocumentValidationCompleteProps {
@@ -49,6 +49,16 @@ interface DocumentCategory {
   required: boolean;
 }
 
+interface UnimportedAttachment {
+  email_id: string;
+  email_subject: string;
+  from_email: string;
+  received_at: string;
+  attachment_filename: string;
+  attachment_size: number;
+  attachment_content_type: string;
+}
+
 const DOCUMENT_CATEGORIES: DocumentCategory[] = [
   { id: 'licence_taxi', label: 'Licence Taxi', icon: '🚕', required: true },
   { id: 'rib', label: 'RIB', icon: '💳', required: true },
@@ -80,6 +90,9 @@ export default function DocumentValidationComplete({
   const [dragOverCategory, setDragOverCategory] = useState<string | null>(null);
   const [isDraggingExternal, setIsDraggingExternal] = useState(false);
   const [classifyMenuOpen, setClassifyMenuOpen] = useState<string | null>(null);
+  const [unimportedAttachments, setUnimportedAttachments] = useState<UnimportedAttachment[]>([]);
+  const [importMenuOpen, setImportMenuOpen] = useState<string | null>(null);
+  const [importingFile, setImportingFile] = useState<string | null>(null);
 
   useEffect(() => {
     loadAll();
@@ -91,7 +104,8 @@ export default function DocumentValidationComplete({
       await Promise.all([
         loadBasket(),
         loadClassifiedDocuments(),
-        loadCustomCategories()
+        loadCustomCategories(),
+        loadUnimportedAttachments()
       ]);
     } catch (error) {
       console.error('Error loading documents:', error);
@@ -139,6 +153,80 @@ export default function DocumentValidationComplete({
     } catch (error) {
       console.error('Error loading basket:', error);
     }
+  }
+
+  async function loadUnimportedAttachments() {
+    try {
+      const { data, error } = await supabase
+        .rpc('get_unimported_email_attachments', { p_lead_id: caseId });
+
+      if (error) throw error;
+      setUnimportedAttachments(data || []);
+    } catch (error) {
+      console.error('Error loading unimported attachments:', error);
+    }
+  }
+
+  async function importEmailAttachment(att: UnimportedAttachment, docType: string) {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.pdf,.jpg,.jpeg,.png,.gif,.webp,.doc,.docx';
+    input.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+
+      try {
+        setImportingFile(att.attachment_filename);
+
+        if (!ALLOWED_MIME_TYPES.includes(file.type)) {
+          toast.error(`Format non accepte. Formats autorises : PDF, images (JPG, PNG), Word (DOC, DOCX)`);
+          return;
+        }
+
+        let finalDocType = docType;
+        let customLabel: string | undefined;
+        if (docType.startsWith('custom_')) {
+          finalDocType = 'custom';
+          customLabel = docType.replace('custom_', '');
+        }
+
+        const filePath = `${caseId}/${finalDocType}/${Date.now()}_${att.attachment_filename}`;
+
+        const { data: uploadData, error: uploadError } = await supabase
+          .storage
+          .from('crm-documents')
+          .upload(filePath, file);
+
+        if (uploadError) throw uploadError;
+
+        const { error: insertError } = await supabase
+          .from('crm_lead_documents')
+          .insert({
+            lead_id: caseId,
+            document_type: finalDocType,
+            file_name: att.attachment_filename,
+            file_path: uploadData.path,
+            bucket: 'crm-documents',
+            file_size: file.size,
+            mime_type: file.type,
+            status: 'pending',
+            custom_label: customLabel || null
+          });
+
+        if (insertError) throw insertError;
+
+        toast.success(`"${att.attachment_filename}" importe dans ${categories.find(c => c.id === docType)?.label || docType}`);
+        await loadAll();
+        onDocumentClassified?.();
+      } catch (error) {
+        console.error('Error importing attachment:', error);
+        toast.error('Erreur lors de l\'import du document');
+      } finally {
+        setImportingFile(null);
+        setImportMenuOpen(null);
+      }
+    };
+    input.click();
   }
 
   async function loadClassifiedDocuments() {
@@ -586,10 +674,10 @@ export default function DocumentValidationComplete({
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold text-gray-900">
-          📦 Gestion des Documents
-          {attachments.length > 0 && (
+          Gestion des Documents
+          {(attachments.length > 0 || unimportedAttachments.length > 0) && (
             <span className="ml-2 text-sm font-normal text-gray-600">
-              ({attachments.length} non classés)
+              ({attachments.length + unimportedAttachments.length} en attente)
             </span>
           )}
         </h3>
@@ -715,6 +803,84 @@ export default function DocumentValidationComplete({
               </div>
             )}
           </div>
+
+          {unimportedAttachments.length > 0 && (
+            <div className="bg-amber-50 rounded-lg p-4 border border-amber-200">
+              <h4 className="font-medium text-amber-900 mb-1 flex items-center gap-2">
+                <Mail className="h-5 w-5 text-amber-600" />
+                Pieces jointes email non importees
+              </h4>
+              <p className="text-xs text-amber-700 mb-3">
+                Ces fichiers sont dans l'email mais n'ont pas ete importes. Telechargez-les depuis l'email puis importez-les ici.
+              </p>
+              <div className="space-y-2.5">
+                {unimportedAttachments.map((att) => {
+                  const key = `${att.email_id}_${att.attachment_filename}`;
+                  const isImporting = importingFile === att.attachment_filename;
+                  const isMenuVisible = importMenuOpen === key;
+
+                  return (
+                    <div
+                      key={key}
+                      className={`bg-white rounded-lg p-3 border border-amber-200 transition-all ${isImporting ? 'opacity-60 pointer-events-none' : ''}`}
+                    >
+                      <div className="flex items-start gap-2">
+                        <FileText className="h-4 w-4 text-amber-500 flex-shrink-0 mt-0.5" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-900 truncate" title={att.attachment_filename}>
+                            {att.attachment_filename}
+                          </p>
+                          <p className="text-xs text-gray-500 mt-0.5">
+                            {formatFileSize(att.attachment_size)} - {att.from_email}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="mt-2.5 relative">
+                        <button
+                          onClick={() => setImportMenuOpen(isMenuVisible ? null : key)}
+                          disabled={isImporting}
+                          className="w-full text-xs py-2 px-3 bg-amber-100 text-amber-800 rounded-lg hover:bg-amber-200 font-medium flex items-center justify-center gap-1.5 transition-colors"
+                        >
+                          {isImporting ? (
+                            <>
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                              Import en cours...
+                            </>
+                          ) : (
+                            <>
+                              <Upload className="h-3.5 w-3.5" />
+                              Importer et classer
+                              <ChevronDown className={`h-3 w-3 transition-transform ${isMenuVisible ? 'rotate-180' : ''}`} />
+                            </>
+                          )}
+                        </button>
+
+                        {isMenuVisible && (
+                          <>
+                            <div className="fixed inset-0 z-10" onClick={() => setImportMenuOpen(null)} />
+                            <div className="absolute left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-xl z-20 max-h-64 overflow-y-auto">
+                              {categories.map((cat) => (
+                                <button
+                                  key={cat.id}
+                                  onClick={() => importEmailAttachment(att, cat.id)}
+                                  className="w-full text-left px-3 py-2.5 text-xs hover:bg-amber-50 flex items-center gap-2 transition-colors border-b border-gray-50 last:border-0"
+                                >
+                                  <span className="text-base">{cat.icon}</span>
+                                  <span className="font-medium text-gray-800">{cat.label}</span>
+                                  {cat.required && <span className="text-red-400 text-[10px]">requis</span>}
+                                </button>
+                              ))}
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Colonnes droites : Catégories de documents */}
