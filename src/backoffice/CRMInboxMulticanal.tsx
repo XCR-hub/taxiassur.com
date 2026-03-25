@@ -416,6 +416,20 @@ const CRMInboxMulticanal: React.FC = () => {
     showToast('Emails marqués comme lus', 'success');
   };
 
+  const bulkDelete = async () => {
+    if (!confirm(`Supprimer ${selectedIds.size} email(s) ?`)) return;
+    try {
+      const count = selectedIds.size;
+      for (const id of selectedIds) {
+        await supabase.rpc('delete_email', { p_email_id: id });
+      }
+      if (selectedMessage && selectedIds.has(selectedMessage.id)) setSelectedMessage(null);
+      setSelectedIds(new Set());
+      await loadMessages(); await loadStats();
+      showToast(`${count} email(s) supprimé(s)`, 'success');
+    } catch { showToast('Erreur suppression', 'error'); }
+  };
+
   useEffect(() => {
     const findLead = async () => {
       setFoundLeadId(null); setExtractedInfo(null);
@@ -662,6 +676,10 @@ const CRMInboxMulticanal: React.FC = () => {
               <div className="flex items-center gap-1 ml-auto">
                 <button onClick={bulkMarkRead} className="px-2.5 py-1 text-xs bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-700 font-medium">Lu</button>
                 <button onClick={bulkArchive} className="px-2.5 py-1 text-xs bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-700 font-medium">Archiver</button>
+                <button onClick={bulkDelete} className="px-2.5 py-1 text-xs bg-white border border-red-200 rounded-lg hover:bg-red-50 text-red-600 font-medium flex items-center gap-1">
+                  <Trash2 size={12} />
+                  Supprimer
+                </button>
                 <button onClick={() => setSelectedIds(new Set())} className="p-1 hover:bg-amber-100 rounded">
                   <X size={13} className="text-amber-700" />
                 </button>
