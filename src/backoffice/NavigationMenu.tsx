@@ -16,6 +16,7 @@ interface NavLink {
   icon: React.ElementType;
   label: string;
   badge?: string | number;
+  featured?: boolean;
 }
 
 interface SectionDef {
@@ -132,6 +133,7 @@ function SectionGroup({
         <div style={{ paddingTop: 2, paddingLeft: 8, display: 'flex', flexDirection: 'column', gap: 1 }}>
           {section.links.map(link => {
             const isActive = currentPath === link.to || currentPath.startsWith(link.to + '/');
+            const isFeatured = link.featured && !isActive;
             return (
               <Link
                 key={link.to}
@@ -141,9 +143,14 @@ function SectionGroup({
                   display: 'flex',
                   alignItems: 'center',
                   gap: 9,
-                  padding: '7px 10px',
+                  padding: isFeatured ? '8px 10px' : '7px 10px',
                   borderRadius: 8,
-                  background: isActive ? `${section.accent}10` : 'transparent',
+                  background: isActive
+                    ? `${section.accent}10`
+                    : isFeatured
+                      ? `${section.accent}08`
+                      : 'transparent',
+                  border: isFeatured ? `1px solid ${section.accent}18` : '1px solid transparent',
                   textDecoration: 'none',
                   transition: 'all 0.15s ease',
                   position: 'relative',
@@ -164,20 +171,38 @@ function SectionGroup({
                     }}
                   />
                 )}
-                <link.icon
-                  size={14}
-                  style={{
-                    color: isActive ? section.accent : 'rgba(255,255,255,0.25)',
-                    flexShrink: 0,
-                    transition: 'color 0.15s',
-                  }}
-                />
+                {isFeatured ? (
+                  <div
+                    style={{
+                      width: 24,
+                      height: 24,
+                      borderRadius: 6,
+                      background: `${section.accent}15`,
+                      border: `1px solid ${section.accent}20`,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                    }}
+                  >
+                    <link.icon size={13} style={{ color: section.accent }} />
+                  </div>
+                ) : (
+                  <link.icon
+                    size={14}
+                    style={{
+                      color: isActive ? section.accent : 'rgba(255,255,255,0.25)',
+                      flexShrink: 0,
+                      transition: 'color 0.15s',
+                    }}
+                  />
+                )}
                 <span
                   style={{
                     flex: 1,
                     fontSize: 12.5,
-                    fontWeight: isActive ? 550 : 400,
-                    color: isActive ? '#fff' : 'rgba(255,255,255,0.45)',
+                    fontWeight: isActive ? 550 : isFeatured ? 550 : 400,
+                    color: isActive ? '#fff' : isFeatured ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.45)',
                     letterSpacing: '-0.005em',
                     transition: 'all 0.15s',
                     lineHeight: 1.3,
@@ -185,6 +210,21 @@ function SectionGroup({
                 >
                   {link.label}
                 </span>
+                {isFeatured && (
+                  <div
+                    style={{
+                      fontSize: 8,
+                      fontWeight: 700,
+                      letterSpacing: '0.06em',
+                      padding: '2px 5px',
+                      borderRadius: 4,
+                      background: `${section.accent}15`,
+                      color: section.accent,
+                    }}
+                  >
+                    CLE
+                  </div>
+                )}
                 {link.badge && Number(link.badge) > 0 && (
                   <span
                     style={{
@@ -238,7 +278,7 @@ export default function NavigationMenu({ excludeSections = [] }: NavigationMenuP
       permission: canViewCRM,
       links: [
         { to: '/backoffice/clients',                      icon: Users,         label: 'Clients' },
-        { to: '/backoffice/crm-killer/pipeline',          icon: BarChart3,     label: 'Pipeline' },
+        { to: '/backoffice/crm-killer/pipeline',          icon: BarChart3,     label: 'Pipeline', featured: true },
         { to: '/backoffice/crm-killer/inbox',             icon: Inbox,         label: 'Inbox' },
         { to: '/backoffice/quote-queue',                  icon: ClipboardList, label: 'File Devis' },
         { to: '/backoffice/crm-killer/retention',         icon: Shield,        label: 'Retention' },
