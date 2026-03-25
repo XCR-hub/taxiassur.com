@@ -39,7 +39,7 @@ export default function AdminLogin({ onSuccess }: AdminLoginProps) {
     setLoading(true);
 
     try {
-      const { data, error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({ email: email.trim().toLowerCase(), password });
       if (signInError) throw signInError;
       if (!data.user) throw new Error('Échec de la connexion');
 
