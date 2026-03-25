@@ -1035,8 +1035,8 @@ const UserManagement: React.FC = () => {
                     type="text"
                     value={newUser.full_name}
                     onChange={e => setNewUser({ ...newUser, full_name: e.target.value })}
-                    className="w-full px-3.5 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none transition-all"
-                    style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12 }}
+                    className="w-full px-3.5 py-2.5 text-sm text-white placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-amber-500/40 transition-all"
+                    style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 12 }}
                     placeholder="Jean Dupont"
                   />
                 </div>
@@ -1046,8 +1046,8 @@ const UserManagement: React.FC = () => {
                     type="email"
                     value={newUser.email}
                     onChange={e => setNewUser({ ...newUser, email: e.target.value })}
-                    className="w-full px-3.5 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none transition-all"
-                    style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12 }}
+                    className="w-full px-3.5 py-2.5 text-sm text-white placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-amber-500/40 transition-all"
+                    style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 12 }}
                     placeholder="jean@example.com"
                   />
                 </div>
