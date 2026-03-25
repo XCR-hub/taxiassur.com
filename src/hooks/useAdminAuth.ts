@@ -69,15 +69,11 @@ export function useAdminAuth() {
   };
 
   const loadAdminUser = React.useCallback(async (email: string) => {
-    const startTime = Date.now();
-
-    // Éviter les appels dupliqués dans les 60 secondes
     const now = Date.now();
     if (
       isLoadingUserRef.current ||
       (lastLoadEmailRef.current === email && now - loadTimestampRef.current < 60000)
     ) {
-      console.log('⏳ Skipping duplicate load request');
       return;
     }
 
@@ -85,89 +81,42 @@ export function useAdminAuth() {
     lastLoadEmailRef.current = email;
     loadTimestampRef.current = now;
 
-    const abortController = new AbortController();
-
     try {
-      console.log('📧 Loading admin user for email:', email);
+      const baseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://drohhxrkoequjphvabvq.supabase.co';
+      const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+      const normalizedEmail = email.toLowerCase();
 
-      const timeoutId = setTimeout(() => {
-        console.error('⏱️ Admin load timeout after 10s, aborting...');
-        abortController.abort();
-      }, 10000);
-
-      const { data: adminUser, error } = await Promise.race([
-        supabase
-          .from('admin_users')
-          .select('id, email, full_name, role, is_active')
-          .eq('email', email)
-          .eq('is_active', true)
-          .abortSignal(abortController.signal)
-          .maybeSingle(),
+      const res = await Promise.race([
+        fetch(`${baseUrl}/rest/v1/admin_users?select=id,email,full_name,role,is_active&email=ilike.${encodeURIComponent(normalizedEmail)}&is_active=eq.true&limit=1`, {
+          headers: { 'apikey': anonKey, 'Authorization': `Bearer ${anonKey}` }
+        }),
         new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error('Admin user load timeout')), 10000)
+          setTimeout(() => reject(new Error('Admin user load timeout')), 8000)
         )
       ]);
 
-      clearTimeout(timeoutId);
-
-      const loadTime = Date.now() - startTime;
-      if (loadTime > 5000) {
-        console.warn(`⚠️ Slow auth: ${loadTime}ms`);
-      }
-
-      if (error) {
-        if (error.message === 'AbortError' || error.message.includes('abort')) {
-          console.error('❌ Request aborted due to timeout');
-          updateGlobalState({ user: null, loading: false, isAuthenticated: false });
-          return;
-        }
-        console.error('❌ Error loading admin user:', error);
-        updateGlobalState({ user: null, loading: false, isAuthenticated: false });
-        return;
-      }
-
-      console.log('👤 Admin user data:', adminUser ? 'Found' : 'Not found');
+      const rows = await res.json();
+      const adminUser = Array.isArray(rows) && rows.length > 0 ? rows[0] : null;
 
       if (adminUser) {
-        console.log('✅ Admin authenticated:', adminUser.full_name);
-
-        const userCache = {
-          ...adminUser,
-          cachedAt: Date.now()
-        };
+        const userCache = { ...adminUser, cachedAt: Date.now() };
         localStorage.setItem('taxiassur_user', JSON.stringify(userCache));
 
-        // Update last_login async (ne pas bloquer)
-        supabase
-          .from('admin_users')
-          .update({ last_login: new Date().toISOString() })
-          .eq('id', adminUser.id)
-          .then(() => console.log('📝 Last login updated'))
-          .catch(err => console.warn('⚠️ Could not update last_login:', err));
+        fetch(`${baseUrl}/rest/v1/admin_users?id=eq.${adminUser.id}`, {
+          method: 'PATCH',
+          headers: { 'apikey': anonKey, 'Authorization': `Bearer ${anonKey}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ last_login: new Date().toISOString() })
+        }).catch(() => {});
 
-        updateGlobalState({
-          user: adminUser as AdminUser,
-          loading: false,
-          isAuthenticated: true,
-        });
+        updateGlobalState({ user: adminUser as AdminUser, loading: false, isAuthenticated: true });
       } else {
-        console.warn('⚠️ Admin user not found or inactive');
         updateGlobalState({ user: null, loading: false, isAuthenticated: false });
       }
-    } catch (error) {
-      const loadTime = Date.now() - startTime;
-
-      if (error.name === 'AbortError' || error.message?.includes('timeout')) {
-        console.error(`❌ Timeout after ${loadTime}ms, stopping request`);
-      } else {
-        console.error('❌ Error in loadAdminUser:', error);
-        logger.error('Erreur lors du chargement admin:', error);
-      }
-
+    } catch (err: any) {
+      logger.error('Erreur loadAdminUser:', err);
       updateGlobalState({ user: null, loading: false, isAuthenticated: false });
     } finally {
       isLoadingUserRef.current = false;
-      abortController.abort();
     }
   }, []);
 
