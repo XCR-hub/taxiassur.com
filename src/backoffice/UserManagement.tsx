@@ -130,11 +130,22 @@ const UserManagement: React.FC = () => {
 
   const fetchUsersDirect = async (): Promise<AdminUser[]> => {
     const url = import.meta.env.VITE_SUPABASE_URL || 'https://drohhxrkoequjphvabvq.supabase.co';
-    const key = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+    const key = import.meta.env.VITE_SUPABASE_ANON_KEY;
     const res = await fetch(`${url}/rest/v1/admin_users?select=*&order=created_at.desc`, {
-      headers: { 'apikey': key, 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' }
+      headers: { 'apikey': key, 'Authorization': `Bearer ${key}` }
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return res.json();
+  };
+
+  const fetchPermissionsDirect = async (userIds: string[]): Promise<UserPermission[]> => {
+    const url = import.meta.env.VITE_SUPABASE_URL || 'https://drohhxrkoequjphvabvq.supabase.co';
+    const key = import.meta.env.VITE_SUPABASE_ANON_KEY;
+    const ids = userIds.map(id => `"${id}"`).join(',');
+    const res = await fetch(`${url}/rest/v1/user_permissions?select=*&user_id=in.(${ids})`, {
+      headers: { 'apikey': key, 'Authorization': `Bearer ${key}` }
+    });
+    if (!res.ok) return [];
     return res.json();
   };
 
@@ -142,35 +153,14 @@ const UserManagement: React.FC = () => {
     try {
       setLoading(true);
 
-      let usersData: AdminUser[] | null = null;
-
-      try {
-        const result = await Promise.race([
-          supabase.from('admin_users').select('*').order('created_at', { ascending: false }),
-          new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Timeout')), 6000))
-        ]);
-        if (result.error) throw result.error;
-        usersData = result.data;
-      } catch (clientErr) {
-        console.warn('Supabase client failed, using direct REST:', clientErr);
-        usersData = await fetchUsersDirect();
-      }
-
+      const usersData = await fetchUsersDirect();
       setUsers(usersData || []);
 
       const permissionsMap: { [userId: string]: UserPermission[] } = {};
       if (usersData && usersData.length > 0) {
-        try {
-          const allPermsResult = await Promise.race([
-            supabase.from('user_permissions').select('*').in('user_id', usersData.map(u => u.id)),
-            new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Timeout')), 6000))
-          ]);
-          const allPerms = allPermsResult.data || [];
-          for (const user of usersData) {
-            permissionsMap[user.id] = allPerms.filter(p => p.user_id === user.id);
-          }
-        } catch {
-          console.warn('Permissions load failed, skipping');
+        const allPerms = await fetchPermissionsDirect(usersData.map(u => u.id));
+        for (const user of usersData) {
+          permissionsMap[user.id] = allPerms.filter(p => p.user_id === user.id);
         }
       }
 
