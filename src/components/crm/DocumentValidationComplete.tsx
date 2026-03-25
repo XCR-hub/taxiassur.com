@@ -409,8 +409,25 @@ export default function DocumentValidationComplete({
     }
   }
 
+  const ALLOWED_MIME_TYPES = [
+    'image/jpeg', 'image/png', 'image/gif', 'image/webp',
+    'application/pdf',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+  ];
+
   async function uploadFileToCategory(file: File, docType: string) {
     try {
+      if (!ALLOWED_MIME_TYPES.includes(file.type)) {
+        toast.error(`Format non accepte (${file.name}). Formats autorises : PDF, images (JPG, PNG), Word (DOC, DOCX)`);
+        return;
+      }
+
+      if (file.size > 50 * 1024 * 1024) {
+        toast.error(`Fichier trop volumineux (${(file.size / 1024 / 1024).toFixed(1)} MB). Maximum : 50 MB`);
+        return;
+      }
+
       setUploading(docType);
 
       let finalDocType = docType;
@@ -459,7 +476,7 @@ export default function DocumentValidationComplete({
   function handleFileSelect(docType: string) {
     const input = document.createElement('input');
     input.type = 'file';
-    input.accept = '.pdf,.jpg,.jpeg,.png,.gif,.doc,.docx,.xls,.xlsx';
+    input.accept = '.pdf,.jpg,.jpeg,.png,.gif,.webp,.doc,.docx';
     input.onchange = (e) => {
       const file = (e.target as HTMLInputElement).files?.[0];
       if (file) uploadFileToCategory(file, docType);
