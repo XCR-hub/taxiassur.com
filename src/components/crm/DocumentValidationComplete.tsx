@@ -139,15 +139,11 @@ export default function DocumentValidationComplete({
   async function loadClassifiedDocuments() {
     try {
       const { data, error } = await supabase
-        .from('crm_lead_documents')
-        .select('*')
-        .eq('lead_id', caseId)
-        .order('created_at', { ascending: false });
+        .rpc('get_classified_documents_for_lead', { p_lead_id: caseId });
 
       if (error) throw error;
 
-      // Mapper les documents personnalisés pour utiliser l'ID composite
-      const mappedDocs = (data || []).map(doc => ({
+      const mappedDocs = (data || []).map((doc: any) => ({
         ...doc,
         document_type: doc.document_type === 'custom' && doc.custom_label
           ? `custom_${doc.custom_label}`
