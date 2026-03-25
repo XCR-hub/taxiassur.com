@@ -131,23 +131,45 @@ const UserManagement: React.FC = () => {
   const loadUsers = async () => {
     try {
       setLoading(true);
-      const { data: usersData, error } = await supabase
+
+      const usersPromise = supabase
         .from('admin_users').select('*').order('created_at', { ascending: false });
-      if (error) throw error;
-      setUsers(usersData || []);
-      const permissionsMap: { [userId: string]: UserPermission[] } = {};
-      for (const user of usersData || []) {
-        const { data: permsData } = await supabase.from('user_permissions').select('*').eq('user_id', user.id);
-        permissionsMap[user.id] = permsData || [];
+
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('Timeout')), 8000)
+      );
+
+      const { data: usersData, error } = await Promise.race([usersPromise, timeoutPromise]);
+      if (error) {
+        console.error('admin_users query error:', error);
+        throw error;
       }
+
+      console.log('admin_users loaded:', usersData?.length || 0);
+      setUsers(usersData || []);
+
+      const permissionsMap: { [userId: string]: UserPermission[] } = {};
+      if (usersData && usersData.length > 0) {
+        const allPermsResult = await supabase
+          .from('user_permissions')
+          .select('*')
+          .in('user_id', usersData.map(u => u.id));
+
+        const allPerms = allPermsResult.data || [];
+        for (const user of usersData) {
+          permissionsMap[user.id] = allPerms.filter(p => p.user_id === user.id);
+        }
+      }
+
       setPermissions(permissionsMap);
       if (selectedUser) {
         const updated = (usersData || []).find(u => u.id === selectedUser.id);
         if (updated) setSelectedUser(updated);
       }
-    } catch (error) {
+    } catch (error: any) {
+      console.error('loadUsers error:', error);
       logger.error('Error loading users:', error);
-      showToast('error', 'Erreur lors du chargement');
+      showToast('error', error?.message === 'Timeout' ? 'Chargement trop long, reessayez' : 'Erreur lors du chargement');
     } finally {
       setLoading(false);
     }
