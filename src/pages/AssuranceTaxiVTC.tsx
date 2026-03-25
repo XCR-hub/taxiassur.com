@@ -52,13 +52,16 @@ const AssuranceTaxiVTC: React.FC = () => {
           })}
         </script>
               <meta property="og:type" content="website" />
-        <meta property="og:title" content="Assurance Taxi VTC : Comparatif & Tarifs 2024 | TaxiAssur" />
+        <meta property="og:title" content="Assurance Taxi VTC : Comparatif & Tarifs 2026 | TaxiAssur" />
         <meta property="og:description" content="Assurance Taxi VTC complète dès 1,170€/an (-35%). Découvrez les différences Taxi vs VTC, obligations légales et devis gratuit en 2 min. RC Pro incluse." />
         <meta property="og:url" content="https://taxiassur.com/assurance-taxi-vtc" />
         <meta property="og:image" content="https://taxiassur.com/logo-600x300.png" />
+        <meta property="og:image:width" content="600" />
+        <meta property="og:image:height" content="300" />
+        <meta property="og:locale" content="fr_FR" />
         <meta property="og:site_name" content="TaxiAssur" />
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="Assurance Taxi VTC : Comparatif & Tarifs 2024 | TaxiAssur" />
+        <meta name="twitter:title" content="Assurance Taxi VTC : Comparatif & Tarifs 2026 | TaxiAssur" />
         <meta name="twitter:description" content="Assurance Taxi VTC complète dès 1,170€/an (-35%). Découvrez les différences Taxi vs VTC, obligations légales et devis gratuit en 2 min. RC Pro incluse." />
         <meta name="twitter:image" content="https://taxiassur.com/logo-600x300.png" />
       </Helmet>

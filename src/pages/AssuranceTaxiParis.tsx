@@ -71,13 +71,16 @@ const AssuranceTaxiParis: React.FC = () => {
           })}
         </script>
               <meta property="og:type" content="website" />
-        <meta property="og:title" content="Assurance Taxi Paris : Tarifs Parisien 2024 | TaxiAssur" />
+        <meta property="og:title" content="Assurance Taxi Paris : Tarifs Parisien 2026 | TaxiAssur" />
         <meta property="og:description" content="Assurance Taxi Paris dès 2,080€/an (-35%). Tarifs par arrondissement, couverture G7, Alpha, taxis parisiens. Devis gratuit en 2 min spécial Paris." />
         <meta property="og:url" content="https://taxiassur.com/assurance-taxi-paris" />
         <meta property="og:image" content="https://taxiassur.com/logo-600x300.png" />
+        <meta property="og:image:width" content="600" />
+        <meta property="og:image:height" content="300" />
+        <meta property="og:locale" content="fr_FR" />
         <meta property="og:site_name" content="TaxiAssur" />
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="Assurance Taxi Paris : Tarifs Parisien 2024 | TaxiAssur" />
+        <meta name="twitter:title" content="Assurance Taxi Paris : Tarifs Parisien 2026 | TaxiAssur" />
         <meta name="twitter:description" content="Assurance Taxi Paris dès 2,080€/an (-35%). Tarifs par arrondissement, couverture G7, Alpha, taxis parisiens. Devis gratuit en 2 min spécial Paris." />
         <meta name="twitter:image" content="https://taxiassur.com/logo-600x300.png" />
       </Helmet>

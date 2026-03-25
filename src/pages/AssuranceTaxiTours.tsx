@@ -3,6 +3,7 @@ import { Helmet } from 'react-helmet-async';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import EnhancedLeadForm from '../components/EnhancedLeadForm';
+import JsonLd from '../components/JsonLd';
 
 const AssuranceTaxiTours: React.FC = () => {
   return (
@@ -12,16 +13,20 @@ const AssuranceTaxiTours: React.FC = () => {
         <meta name="description" content="Assurance Taxi Tours dès 1420€/an (-35%). RC Pro incluse." />
         <link rel="canonical" href="https://taxiassur.com/assurance-taxi-tours" />
               <meta property="og:type" content="website" />
-        <meta property="og:title" content="Assurance Taxi Tours : Tarifs 2024 | TaxiAssur" />
+        <meta property="og:title" content="Assurance Taxi Tours : Tarifs 2026 | TaxiAssur" />
         <meta property="og:description" content="Assurance Taxi Tours dès 1420€/an (-35%). RC Pro incluse." />
         <meta property="og:url" content="https://taxiassur.com/assurance-taxi-tours" />
         <meta property="og:image" content="https://taxiassur.com/logo-600x300.png" />
+        <meta property="og:image:width" content="600" />
+        <meta property="og:image:height" content="300" />
+        <meta property="og:locale" content="fr_FR" />
         <meta property="og:site_name" content="TaxiAssur" />
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="Assurance Taxi Tours : Tarifs 2024 | TaxiAssur" />
+        <meta name="twitter:title" content="Assurance Taxi Tours : Tarifs 2026 | TaxiAssur" />
         <meta name="twitter:description" content="Assurance Taxi Tours dès 1420€/an (-35%). RC Pro incluse." />
         <meta name="twitter:image" content="https://taxiassur.com/logo-600x300.png" />
       </Helmet>
+      <JsonLd type="organization" />
       <Header />
       <main>
         <section className="bg-gradient-to-r from-yellow-900 to-orange-900 text-white py-20 text-center">

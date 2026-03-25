@@ -1,14 +1,16 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import Seo from '../components/Seo';
 
 const Policy: React.FC = () => {
-  useEffect(() => {
-    document.title = 'Politique de Confidentialité | TaxiAssur.com';
-  }, []);
-
   return (
     <div className="min-h-screen bg-black">
+      <Seo
+        title="Politique de Confidentialité"
+        description="Politique de confidentialité de TaxiAssur.com - Traitement des données personnelles, droits RGPD, cookies et protection de vos informations."
+        canonical="/policy"
+      />
       <Header />
       <main className="section-padding">
         <div className="container-max">

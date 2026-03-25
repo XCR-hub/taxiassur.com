@@ -12,6 +12,15 @@ export default function NewsletterSubscribe() {
           content="Inscrivez-vous à la newsletter TaxiAssur et recevez gratuitement nos actualités, conseils et offres exclusives sur l'assurance taxi."
         />
         <meta name="robots" content="index, follow" />
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content="Newsletter TaxiAssur - Restez Informé" />
+        <meta property="og:description" content="Inscrivez-vous à la newsletter TaxiAssur et recevez gratuitement nos actualités, conseils et offres exclusives sur l'assurance taxi." />
+        <meta property="og:url" content="https://taxiassur.com/newsletter" />
+        <meta property="og:image" content="https://taxiassur.com/logo-600x300.png" />
+        <meta property="og:site_name" content="TaxiAssur" />
+        <meta property="og:locale" content="fr_FR" />
+        <meta property="og:image:width" content="600" />
+        <meta property="og:image:height" content="300" />
       </Helmet>
 
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 py-16">

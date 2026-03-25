@@ -1,14 +1,16 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import Seo from '../components/Seo';
 
 const Legal: React.FC = () => {
-  useEffect(() => {
-    document.title = 'Mentions Légales | TaxiAssur.com';
-  }, []);
-
   return (
     <div className="min-h-screen bg-black">
+      <Seo
+        title="Mentions Légales"
+        description="Mentions légales du site TaxiAssur.com - Courtier en assurance taxi. Informations sur l'éditeur, l'hébergement et les conditions d'utilisation."
+        canonical="/legal"
+      />
       <Header />
       <main className="section-padding">
         <div className="container-max">

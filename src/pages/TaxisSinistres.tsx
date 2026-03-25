@@ -12,6 +12,15 @@ export default function TaxisSinistres() {
         <meta name="description" content="Taxi sinistré ? Découvrez la procédure complète de déclaration de sinistre, les délais et comment obtenir rapidement une indemnisation. Assistance 24/7." />
         <meta name="keywords" content="taxis sinistrés, sinistre taxi, déclaration sinistre taxi, indemnisation taxi, accident taxi" />
         <link rel="canonical" href="https://taxiassur.com/taxis-sinistres" />
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content="Taxis Sinistrés : Comment Gérer un Sinistre | TaxiAssur" />
+        <meta property="og:description" content="Taxi sinistré ? Découvrez la procédure complète de déclaration de sinistre, les délais et comment obtenir rapidement une indemnisation. Assistance 24/7." />
+        <meta property="og:url" content="https://taxiassur.com/taxis-sinistres" />
+        <meta property="og:image" content="https://taxiassur.com/logo-600x300.png" />
+        <meta property="og:site_name" content="TaxiAssur" />
+        <meta property="og:locale" content="fr_FR" />
+        <meta property="og:image:width" content="600" />
+        <meta property="og:image:height" content="300" />
       </Helmet>
 
       <Header />

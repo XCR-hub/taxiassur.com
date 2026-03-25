@@ -27,6 +27,9 @@ const AssuranceTaxiToulon: React.FC = () => {
         <meta property="og:url" content="https://taxiassur.com/assurance-taxi-toulon" />
         <meta property="og:image" content="https://taxiassur.com/logo-600x300.png" />
         <meta property="og:site_name" content="TaxiAssur" />
+        <meta property="og:locale" content="fr_FR" />
+        <meta property="og:image:width" content="600" />
+        <meta property="og:image:height" content="300" />
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="Assurance Taxi Toulon &amp; RC Pro Toulon | TaxiAssur" />
         <meta name="twitter:description" content="Assurance taxi Toulon dès 1 620€/an. RC Pro incluse. Devis gratuit." />

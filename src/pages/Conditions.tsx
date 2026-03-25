@@ -1,14 +1,16 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import Seo from '../components/Seo';
 
 const Conditions: React.FC = () => {
-  useEffect(() => {
-    document.title = 'Conditions Générales | TaxiAssur.com';
-  }, []);
-
   return (
     <div className="min-h-screen bg-black">
+      <Seo
+        title="Conditions Générales"
+        description="Conditions générales d'utilisation de TaxiAssur.com - Services de courtage en assurance taxi, obligations, responsabilité et droit applicable."
+        canonical="/conditions"
+      />
       <Header />
       <main className="section-padding">
         <div className="container-max">

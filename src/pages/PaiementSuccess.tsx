@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { CheckCircle, Loader, ArrowRight } from 'lucide-react';
+import Seo from '../components/Seo';
 
 export function PaiementSuccess() {
   const [searchParams] = useSearchParams();
@@ -47,6 +48,7 @@ export function PaiementSuccess() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center p-4">
+      <Seo title="Paiement réussi" noindex={true} />
       <div className="max-w-md w-full">
         <div className="bg-white rounded-2xl shadow-xl p-8 text-center">
           <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">

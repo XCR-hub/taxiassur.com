@@ -1,5 +1,6 @@
 import { useState, FormEvent } from 'react';
 import { supabase } from '../lib/supabase';
+import Seo from '../components/Seo';
 
 interface ContactFormData {
   name: string;
@@ -65,6 +66,7 @@ function ContactPage() {
 
   return (
     <div className="py-12 bg-gray-50">
+      <Seo title="Contact" description="Contactez TaxiAssur pour vos questions d'assurance taxi. Notre équipe est disponible par téléphone, email ou formulaire." canonical="/contact-page" noindex={true} />
       <div className="container mx-auto px-4">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-12">

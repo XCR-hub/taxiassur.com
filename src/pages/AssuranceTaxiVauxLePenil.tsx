@@ -65,9 +65,19 @@ export default function AssuranceTaxiVauxLePenil() {
         <meta name="description" content="Assurance taxi Vaux-le-Pénil et Seine-et-Marne (77). TaxiAssur, votre courtier local basé à Dammarie-les-Lys. RC Pro obligatoire, devis gratuit en 2 min, économisez jusqu'à 35%." />
         <link rel="canonical" href="https://taxiassur.com/assurance-taxi-vaux-le-penil" />
         <meta name="keywords" content="assurance taxi Vaux-le-Pénil, assurance vaux le penil, assurance taxi Seine-et-Marne, assurance taxi 77, assurance taxi Melun, RC pro taxi 77, courtier assurance taxi 77" />
+        <meta property="og:type" content="website" />
         <meta property="og:title" content="Assurance Taxi Vaux-le-Pénil & Seine-et-Marne — TaxiAssur" />
         <meta property="og:description" content="Courtier local assurance taxi en Seine-et-Marne. Bureau à Dammarie-les-Lys, à 5 min de Vaux-le-Pénil. Devis gratuit, économisez 35%." />
-        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://taxiassur.com/assurance-taxi-vaux-le-penil" />
+        <meta property="og:image" content="https://taxiassur.com/logo-600x300.png" />
+        <meta property="og:image:width" content="600" />
+        <meta property="og:image:height" content="300" />
+        <meta property="og:site_name" content="TaxiAssur" />
+        <meta property="og:locale" content="fr_FR" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Assurance Taxi Vaux-le-Pénil & Seine-et-Marne — TaxiAssur" />
+        <meta name="twitter:description" content="Courtier local assurance taxi en Seine-et-Marne. Bureau à Dammarie-les-Lys, à 5 min de Vaux-le-Pénil. Devis gratuit, économisez 35%." />
+        <meta name="twitter:image" content="https://taxiassur.com/logo-600x300.png" />
         <meta name="geo.region" content="FR-77" />
         <meta name="geo.placename" content="Vaux-le-Pénil, Seine-et-Marne" />
       </Helmet>
