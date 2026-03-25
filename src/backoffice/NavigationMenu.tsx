@@ -7,10 +7,9 @@ import {
   ClipboardList, Target, Activity, Bell, CreditCard, ChevronDown,
   Package,
 } from 'lucide-react';
-import { hasPermission } from '../lib/auth';
 import { useAdminAuth } from '../hooks/useAdminAuth';
 import { usePendingDocumentsCount } from '../hooks/usePendingDocumentsCount';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 interface NavLink {
   to: string;
@@ -256,20 +255,62 @@ function SectionGroup({
   );
 }
 
+function useUserPermissions(userId: string | undefined, isMaster: boolean) {
+  const [permissions, setPermissions] = useState<any[]>(() => {
+    try {
+      const cached = localStorage.getItem('taxiassur_permissions');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch {}
+    return [];
+  });
+
+  useEffect(() => {
+    if (!userId || isMaster) return;
+    if (permissions.length > 0) return;
+
+    const baseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+    if (!baseUrl || !anonKey) return;
+
+    fetch(`${baseUrl}/rest/v1/user_permissions?select=id,user_id,permission_type,can_view,can_edit,can_delete&user_id=eq.${userId}`, {
+      headers: { 'apikey': anonKey, 'Authorization': `Bearer ${anonKey}` }
+    })
+      .then(r => r.json())
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) {
+          setPermissions(data);
+          localStorage.setItem('taxiassur_permissions', JSON.stringify(data));
+        }
+      })
+      .catch(() => {});
+  }, [userId, isMaster, permissions.length]);
+
+  const check = useCallback((permType: string) => {
+    if (isMaster) return true;
+    return permissions.some((p: any) => p.permission_type === permType && p.can_view);
+  }, [isMaster, permissions]);
+
+  return check;
+}
+
 export default function NavigationMenu({ excludeSections = [] }: NavigationMenuProps) {
   const { user: currentUser } = useAdminAuth();
   const isMaster = currentUser?.role === 'master';
   const { pathname } = useLocation();
   const { count: pendingDocsCount } = usePendingDocumentsCount();
+  const checkPerm = useUserPermissions(currentUser?.id, !!isMaster);
 
-  const canViewCRM        = isMaster || hasPermission('crm_leads', 'view');
-  const canViewMarket     = isMaster || hasPermission('marketplace', 'view');
-  const canViewContentIA  = isMaster || hasPermission('content_ia', 'view');
-  const canViewSEO        = isMaster || hasPermission('seo', 'view');
-  const canViewBacklinks  = isMaster || hasPermission('backlinks', 'view');
-  const canViewAnalytics  = isMaster || hasPermission('analytics', 'view');
-  const canViewSocial     = isMaster || hasPermission('social_media', 'view');
-  const canViewSettings   = isMaster || hasPermission('settings', 'view');
+  const canViewCRM        = isMaster || checkPerm('crm_leads');
+  const canViewMarket     = isMaster || checkPerm('marketplace');
+  const canViewContentIA  = isMaster || checkPerm('content_ia');
+  const canViewSEO        = isMaster || checkPerm('seo');
+  const canViewBacklinks  = isMaster || checkPerm('backlinks');
+  const canViewAnalytics  = isMaster || checkPerm('analytics');
+  const canViewSocial     = isMaster || checkPerm('social_media');
+  const canViewSettings   = isMaster || checkPerm('settings');
 
   const sections: SectionDef[] = [
     {
