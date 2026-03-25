@@ -236,7 +236,7 @@ const Hero: React.FC = () => {
                         onChange={handleChange}
                         required
                         autoComplete="name"
-                        className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base bg-gray-800/70 border border-gray-600 rounded-lg focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-white placeholder-gray-400 transition-all duration-300"
+                        className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base bg-gray-700/80 border border-gray-500 rounded-lg focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-white placeholder-gray-300 transition-all duration-300"
                         placeholder="Jean Dupont"
                       />
                     </div>
@@ -253,7 +253,7 @@ const Hero: React.FC = () => {
                         onChange={handleChange}
                         required
                         autoComplete="tel"
-                        className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base bg-gray-800/70 border border-gray-600 rounded-lg focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-white placeholder-gray-400 transition-all duration-300"
+                        className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base bg-gray-700/80 border border-gray-500 rounded-lg focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-white placeholder-gray-300 transition-all duration-300"
                         placeholder="06 12 34 56 78"
                       />
                     </div>
@@ -272,7 +272,7 @@ const Hero: React.FC = () => {
                         onChange={handleChange}
                         required
                         autoComplete="email"
-                        className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base bg-gray-800/70 border border-gray-600 rounded-lg focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-white placeholder-gray-400 transition-all duration-300"
+                        className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base bg-gray-700/80 border border-gray-500 rounded-lg focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-white placeholder-gray-300 transition-all duration-300"
                         placeholder="jean@email.com"
                       />
                     </div>
@@ -289,7 +289,7 @@ const Hero: React.FC = () => {
                         onChange={handleChange}
                         required
                         autoComplete="address-level2"
-                        className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base bg-gray-800/70 border border-gray-600 rounded-lg focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-white placeholder-gray-400 transition-all duration-300"
+                        className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base bg-gray-700/80 border border-gray-500 rounded-lg focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-white placeholder-gray-300 transition-all duration-300"
                         placeholder="Paris"
                       />
                     </div>
@@ -306,7 +306,7 @@ const Hero: React.FC = () => {
                         value={formData.status}
                         onChange={handleChange}
                         required
-                        className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base bg-gray-800/70 border border-gray-600 rounded-lg focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-white transition-all duration-300"
+                        className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base bg-gray-700/80 border border-gray-500 rounded-lg focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-white transition-all duration-300"
                       >
                         <option value="taxi">Taxi</option>
                         <option value="vtc">VTC</option>
@@ -324,15 +324,15 @@ const Hero: React.FC = () => {
                         name="immatriculation"
                         value={formData.immatriculation}
                         onChange={handleChange}
-                        className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base bg-gray-800/70 border border-gray-600 rounded-lg focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-white placeholder-gray-400 transition-all duration-300"
+                        className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base bg-gray-700/80 border border-gray-500 rounded-lg focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-white placeholder-gray-300 transition-all duration-300"
                         placeholder="AB-123-CD"
                       />
                     </div>
                   </div>
 
                   {/* Legal consent */}
-                  <div className="bg-gray-800/50 p-3 sm:p-4 rounded-lg border border-gray-700">
-                    <p className="text-xs text-gray-400">
+                  <div className="bg-gray-800/50 p-3 sm:p-4 rounded-lg border border-gray-600">
+                    <p className="text-xs text-gray-300">
                       En soumettant ce formulaire, j'accepte d'être recontacté par TaxiAssur.com 
                       pour recevoir mon devis personnalisé. Données sécurisées selon notre 
                       <a href="/politique-confidentialite" className="text-amber-600 hover:underline"> politique de confidentialité</a>.
