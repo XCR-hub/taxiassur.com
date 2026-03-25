@@ -102,6 +102,18 @@ export function useAdminAuth() {
         const userCache = { ...adminUser, cachedAt: Date.now() };
         localStorage.setItem('taxiassur_user', JSON.stringify(userCache));
 
+        try {
+          const permsRes = await fetch(`${baseUrl}/rest/v1/user_permissions?select=id,user_id,permission_type,can_view,can_edit,can_delete&user_id=eq.${adminUser.id}`, {
+            headers: { 'apikey': anonKey, 'Authorization': `Bearer ${anonKey}` }
+          });
+          const perms = await permsRes.json();
+          if (Array.isArray(perms)) {
+            localStorage.setItem('taxiassur_permissions', JSON.stringify(perms));
+          }
+        } catch {
+          localStorage.setItem('taxiassur_permissions', '[]');
+        }
+
         fetch(`${baseUrl}/rest/v1/admin_users?id=eq.${adminUser.id}`, {
           method: 'PATCH',
           headers: { 'apikey': anonKey, 'Authorization': `Bearer ${anonKey}`, 'Content-Type': 'application/json' },

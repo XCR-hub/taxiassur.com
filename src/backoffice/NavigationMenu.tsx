@@ -7,7 +7,8 @@ import {
   ClipboardList, Target, Activity, Bell, CreditCard, ChevronDown,
   Package,
 } from 'lucide-react';
-import { getCurrentUser, hasPermission } from '../lib/auth';
+import { hasPermission } from '../lib/auth';
+import { useAdminAuth } from '../hooks/useAdminAuth';
 import { usePendingDocumentsCount } from '../hooks/usePendingDocumentsCount';
 import { useState, useEffect } from 'react';
 
@@ -256,7 +257,7 @@ function SectionGroup({
 }
 
 export default function NavigationMenu({ excludeSections = [] }: NavigationMenuProps) {
-  const currentUser = getCurrentUser();
+  const { user: currentUser } = useAdminAuth();
   const isMaster = currentUser?.role === 'master';
   const { pathname } = useLocation();
   const { count: pendingDocsCount } = usePendingDocumentsCount();
