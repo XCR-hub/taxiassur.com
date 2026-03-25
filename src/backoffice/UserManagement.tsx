@@ -128,36 +128,49 @@ const UserManagement: React.FC = () => {
     setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 4000);
   };
 
+  const fetchUsersDirect = async (): Promise<AdminUser[]> => {
+    const url = import.meta.env.VITE_SUPABASE_URL || 'https://drohhxrkoequjphvabvq.supabase.co';
+    const key = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+    const res = await fetch(`${url}/rest/v1/admin_users?select=*&order=created_at.desc`, {
+      headers: { 'apikey': key, 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' }
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return res.json();
+  };
+
   const loadUsers = async () => {
     try {
       setLoading(true);
 
-      const usersPromise = supabase
-        .from('admin_users').select('*').order('created_at', { ascending: false });
+      let usersData: AdminUser[] | null = null;
 
-      const timeoutPromise = new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error('Timeout')), 8000)
-      );
-
-      const { data: usersData, error } = await Promise.race([usersPromise, timeoutPromise]);
-      if (error) {
-        console.error('admin_users query error:', error);
-        throw error;
+      try {
+        const result = await Promise.race([
+          supabase.from('admin_users').select('*').order('created_at', { ascending: false }),
+          new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Timeout')), 6000))
+        ]);
+        if (result.error) throw result.error;
+        usersData = result.data;
+      } catch (clientErr) {
+        console.warn('Supabase client failed, using direct REST:', clientErr);
+        usersData = await fetchUsersDirect();
       }
 
-      console.log('admin_users loaded:', usersData?.length || 0);
       setUsers(usersData || []);
 
       const permissionsMap: { [userId: string]: UserPermission[] } = {};
       if (usersData && usersData.length > 0) {
-        const allPermsResult = await supabase
-          .from('user_permissions')
-          .select('*')
-          .in('user_id', usersData.map(u => u.id));
-
-        const allPerms = allPermsResult.data || [];
-        for (const user of usersData) {
-          permissionsMap[user.id] = allPerms.filter(p => p.user_id === user.id);
+        try {
+          const allPermsResult = await Promise.race([
+            supabase.from('user_permissions').select('*').in('user_id', usersData.map(u => u.id)),
+            new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Timeout')), 6000))
+          ]);
+          const allPerms = allPermsResult.data || [];
+          for (const user of usersData) {
+            permissionsMap[user.id] = allPerms.filter(p => p.user_id === user.id);
+          }
+        } catch {
+          console.warn('Permissions load failed, skipping');
         }
       }
 
@@ -169,7 +182,7 @@ const UserManagement: React.FC = () => {
     } catch (error: any) {
       console.error('loadUsers error:', error);
       logger.error('Error loading users:', error);
-      showToast('error', error?.message === 'Timeout' ? 'Chargement trop long, reessayez' : 'Erreur lors du chargement');
+      showToast('error', 'Erreur lors du chargement');
     } finally {
       setLoading(false);
     }

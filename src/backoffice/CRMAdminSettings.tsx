@@ -200,15 +200,33 @@ const CRMAdminSettings: React.FC = () => {
   const loadUsers = async () => {
     setLoadingUsers(true);
     try {
-      const { data, error } = await supabase
-        .from('admin_users')
-        .select('*')
-        .order('created_at', { ascending: false });
+      const result = await Promise.race([
+        supabase
+          .from('admin_users')
+          .select('*')
+          .order('created_at', { ascending: false }),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('Timeout')), 6000)
+        )
+      ]);
 
-      if (error) throw error;
-      setUsers(data || []);
+      if (result.error) throw result.error;
+      setUsers(result.data || []);
     } catch (error) {
-      console.error('Erreur chargement utilisateurs:', error);
+      console.error('Supabase client failed, trying direct REST:', error);
+      try {
+        const url = import.meta.env.VITE_SUPABASE_URL || 'https://drohhxrkoequjphvabvq.supabase.co';
+        const key = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+        const res = await fetch(`${url}/rest/v1/admin_users?select=*&order=created_at.desc`, {
+          headers: { 'apikey': key, 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setUsers(data || []);
+        }
+      } catch (fallbackErr) {
+        console.error('Fallback also failed:', fallbackErr);
+      }
     } finally {
       setLoadingUsers(false);
     }
