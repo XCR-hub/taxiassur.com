@@ -95,8 +95,8 @@ const CRMLeadDetail: React.FC = () => {
         .eq('lead_id', leadId);
 
       const totalDocs = documents?.length || 0;
-      const validatedDocs = documents?.filter(d => d.validation_status === 'validated').length || 0;
-      const pendingDocs = documents?.filter(d => d.validation_status === 'pending').length || 0;
+      const validatedDocs = documents?.filter(d => d.status === 'validated').length || 0;
+      const pendingDocs = documents?.filter(d => d.status === 'pending').length || 0;
 
       // Devis
       const { data: quotes } = await supabase
@@ -139,9 +139,12 @@ const CRMLeadDetail: React.FC = () => {
         (aiDecisions?.length || 0) +
         (notifications?.length || 0);
 
+      const REQUIRED_CATEGORIES = 4;
+      const missingCount = Math.max(0, REQUIRED_CATEGORIES - totalDocs);
+
       setStats({
-        documentsComplete: totalDocs > 0 && validatedDocs === totalDocs,
-        documentsMissing: totalDocs > 0 ? (totalDocs - validatedDocs) : 5,
+        documentsComplete: totalDocs >= REQUIRED_CATEGORIES && validatedDocs === totalDocs,
+        documentsMissing: missingCount,
         basketCount: pendingDocs,
         quotesCount: quotes?.length || 0,
         hasContract: (contracts?.length || 0) > 0,
@@ -512,8 +515,8 @@ const CRMLeadDetail: React.FC = () => {
             <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/[0.05] border border-white/[0.08]">
               <FileText className="h-3.5 w-3.5 text-amber-400" />
               <span className="text-xs text-gray-400">Docs</span>
-              <span className={`text-xs font-bold ${stats.documentsComplete ? 'text-green-400' : stats.documentsMissing > 0 ? 'text-amber-400' : 'text-gray-500'}`}>
-                {stats.documentsComplete ? '✓ Complets' : stats.documentsMissing > 0 ? `${stats.documentsMissing} manquants` : 'En attente'}
+              <span className={`text-xs font-bold ${stats.documentsComplete ? 'text-green-400' : stats.documentsMissing > 0 ? 'text-amber-400' : 'text-sky-400'}`}>
+                {stats.documentsComplete ? 'Complets' : stats.documentsMissing > 0 ? `${stats.documentsMissing} manquants` : `${stats.basketCount} en attente`}
               </span>
             </div>
             <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/[0.05] border border-white/[0.08]">

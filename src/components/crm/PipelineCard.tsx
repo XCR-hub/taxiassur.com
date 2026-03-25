@@ -90,6 +90,7 @@ export const PipelineCard: React.FC<PipelineCardProps> = ({
 
         const docs = (docsResult.status === 'fulfilled' ? docsResult.value.data : null) || [];
         const validatedDocs = docs.filter(d => d.status === 'validated').length;
+        const totalUploadedDocs = docs.length;
 
         const companyQuotes = (companyQuotesResult.status === 'fulfilled' ? companyQuotesResult.value.data : null) || [];
         const quotedCompanies = companyQuotes.filter(q => q.status === 'quote_submitted' || q.status === 'validated').length;
@@ -115,8 +116,8 @@ export const PipelineCard: React.FC<PipelineCardProps> = ({
         }
 
         setIndicators({
-          documentsValidated: validatedDocs,
-          documentsTotal: 7,
+          documentsValidated: totalUploadedDocs,
+          documentsTotal: 4,
           companiesQuoted: quotedCompanies,
           companiesRefused: refusedCompanies,
           companiesTotal: 5,
@@ -345,7 +346,7 @@ export const PipelineCard: React.FC<PipelineCardProps> = ({
             </div>
             <span className={cn(
               'text-[10px] font-semibold',
-              indicators.documentsValidated >= 7 ? 'text-green-600' : indicators.documentsValidated >= 4 ? 'text-amber-600' : 'text-orange-500'
+              indicators.documentsValidated >= indicators.documentsTotal ? 'text-green-600' : indicators.documentsValidated >= 2 ? 'text-amber-600' : 'text-orange-500'
             )}>
               {indicators.documentsValidated}/{indicators.documentsTotal}
             </span>
@@ -354,8 +355,8 @@ export const PipelineCard: React.FC<PipelineCardProps> = ({
             <div
               className="h-full rounded-full transition-all duration-500"
               style={{
-                width: `${docPct}%`,
-                background: indicators.documentsValidated >= 7 ? '#16a34a' : indicators.documentsValidated >= 4 ? '#d97706' : '#ea580c'
+                width: `${Math.min(docPct, 100)}%`,
+                background: indicators.documentsValidated >= indicators.documentsTotal ? '#16a34a' : indicators.documentsValidated >= 2 ? '#d97706' : '#ea580c'
               }}
             />
           </div>
