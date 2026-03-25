@@ -410,11 +410,12 @@ export default function NavigationMenu({ excludeSections = [] }: NavigationMenuP
       accent: '#94a3b8',
       permission: isMaster,
       links: [
-        { to: '/backoffice/users',            icon: Users,     label: 'Utilisateurs' },
-        { to: '/backoffice/security',         icon: Shield,    label: 'Securite' },
-        { to: '/backoffice/compliance',       icon: FileCheck, label: 'Conformite' },
-        { to: '/backoffice/test-automations', icon: Zap,       label: 'Tests Auto' },
-        { to: '/',                            icon: Globe,     label: 'Voir le site' },
+        { to: '/backoffice/crm-killer/settings', icon: Settings,  label: 'Parametres' },
+        { to: '/backoffice/users',               icon: Users,     label: 'Utilisateurs' },
+        { to: '/backoffice/security',            icon: Shield,    label: 'Securite' },
+        { to: '/backoffice/compliance',          icon: FileCheck, label: 'Conformite' },
+        { to: '/backoffice/test-automations',    icon: Zap,       label: 'Tests Auto' },
+        { to: '/',                               icon: Globe,     label: 'Voir le site' },
       ],
     },
   ];

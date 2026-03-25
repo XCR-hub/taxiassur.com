@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Outlet, Link } from 'react-router-dom';
 import {
   LayoutDashboard,
-  Settings,
   Home,
   LogOut,
   RefreshCw,
@@ -332,7 +331,6 @@ const CRMLayout: React.FC = () => {
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                 {[
-                  { label: 'Parametres',         icon: Settings, onClick: () => navigate('/backoffice/crm-killer/settings'), color: 'rgba(255,255,255,0.4)' },
                   { label: 'Voir le site',        icon: Home,     onClick: () => navigate('/'),                               color: 'rgba(255,255,255,0.4)' },
                   { label: 'Deconnexion',         icon: LogOut,   onClick: handleLogout,                                      color: '#ef4444'               },
                 ].map(btn => (
