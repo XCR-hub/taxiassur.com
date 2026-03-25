@@ -2,8 +2,9 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
   Users, UserPlus, Shield, Mail, CheckCircle, XCircle, Trash2, Search,
   RefreshCw, Key, Send, AlertTriangle, X, Copy, Link, Eye,
-  CreditCard as Edit3, Clock, Crown, User, Lock, ChevronRight,
-  Activity, Zap, BarChart2, Globe, Settings2, Share2, TrendingUp, Database
+  CreditCard, CreditCard as Edit3, Clock, Crown, User, Lock, ChevronRight,
+  Activity, Zap, BarChart2, Globe, Settings2, Share2, TrendingUp, Database,
+  Building2, MessageSquare, Brain
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
@@ -45,13 +46,17 @@ interface Toast {
 
 const PERMISSION_TEMPLATES: PermissionTemplate[] = [
   { type: 'crm_leads', label: 'CRM & Leads', description: 'Prospects et clients', color: '#3b82f6', gradient: 'from-blue-600 to-blue-400', Icon: Users },
-  { type: 'marketplace', label: 'Marketplace', description: 'Transactions', color: '#f59e0b', gradient: 'from-amber-600 to-amber-400', Icon: Database },
-  { type: 'content_ia', label: 'Contenu & IA', description: 'Generation de contenu', color: '#ec4899', gradient: 'from-pink-600 to-pink-400', Icon: Zap },
-  { type: 'seo', label: 'SEO', description: 'Referencement', color: '#10b981', gradient: 'from-emerald-600 to-emerald-400', Icon: TrendingUp },
-  { type: 'analytics', label: 'Analytics', description: 'Statistiques', color: '#06b6d4', gradient: 'from-cyan-600 to-cyan-400', Icon: BarChart2 },
-  { type: 'backlinks', label: 'Backlinks', description: 'Gestion backlinks', color: '#a855f7', gradient: 'from-purple-600 to-purple-400', Icon: Globe },
-  { type: 'social_media', label: 'Reseaux Sociaux', description: 'Social media', color: '#f97316', gradient: 'from-orange-600 to-orange-400', Icon: Share2 },
-  { type: 'settings', label: 'Parametres', description: 'Configuration', color: '#64748b', gradient: 'from-slate-600 to-slate-400', Icon: Settings2 },
+  { type: 'facturation', label: 'Facturation', description: 'Facturation et paiements', color: '#10b981', gradient: 'from-emerald-600 to-emerald-400', Icon: CreditCard },
+  { type: 'production', label: 'Production', description: 'Compagnies et documents', color: '#0ea5e9', gradient: 'from-sky-600 to-sky-400', Icon: Building2 },
+  { type: 'communication', label: 'Communication', description: 'WhatsApp, emails, newsletters', color: '#22c55e', gradient: 'from-green-600 to-green-400', Icon: MessageSquare },
+  { type: 'marketplace', label: 'Marketplace', description: 'Transactions et partenaires', color: '#f59e0b', gradient: 'from-amber-600 to-amber-400', Icon: Database },
+  { type: 'ia_automation', label: 'IA & Automatisation', description: 'ULTRON, LLM, automations', color: '#06b6d4', gradient: 'from-cyan-600 to-cyan-400', Icon: Brain },
+  { type: 'content_ia', label: 'Contenu', description: 'Generation et gestion contenu', color: '#f97316', gradient: 'from-orange-600 to-orange-400', Icon: Zap },
+  { type: 'seo', label: 'SEO', description: 'Referencement', color: '#34d399', gradient: 'from-emerald-600 to-emerald-400', Icon: TrendingUp },
+  { type: 'backlinks', label: 'Backlinks', description: 'Gestion backlinks', color: '#34d399', gradient: 'from-teal-600 to-teal-400', Icon: Globe },
+  { type: 'social_media', label: 'Reseaux Sociaux', description: 'Social media', color: '#f43f5e', gradient: 'from-rose-600 to-rose-400', Icon: Share2 },
+  { type: 'analytics', label: 'Analytics', description: 'Statistiques et rapports', color: '#ec4899', gradient: 'from-pink-600 to-pink-400', Icon: BarChart2 },
+  { type: 'settings', label: 'Parametres', description: 'Configuration systeme', color: '#64748b', gradient: 'from-slate-600 to-slate-400', Icon: Settings2 },
 ];
 
 type PermMap = { [key: string]: { view: boolean; edit: boolean; delete: boolean } };

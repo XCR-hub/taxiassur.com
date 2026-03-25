@@ -303,14 +303,18 @@ export default function NavigationMenu({ excludeSections = [] }: NavigationMenuP
   const { count: pendingDocsCount } = usePendingDocumentsCount();
   const checkPerm = useUserPermissions(currentUser?.id, !!isMaster);
 
-  const canViewCRM        = isMaster || checkPerm('crm_leads');
-  const canViewMarket     = isMaster || checkPerm('marketplace');
-  const canViewContentIA  = isMaster || checkPerm('content_ia');
-  const canViewSEO        = isMaster || checkPerm('seo');
-  const canViewBacklinks  = isMaster || checkPerm('backlinks');
-  const canViewAnalytics  = isMaster || checkPerm('analytics');
-  const canViewSocial     = isMaster || checkPerm('social_media');
-  const canViewSettings   = isMaster || checkPerm('settings');
+  const canViewCRM           = isMaster || checkPerm('crm_leads');
+  const canViewFacturation   = isMaster || checkPerm('facturation');
+  const canViewProduction    = isMaster || checkPerm('production');
+  const canViewCommunication = isMaster || checkPerm('communication');
+  const canViewMarket        = isMaster || checkPerm('marketplace');
+  const canViewIAAutomation  = isMaster || checkPerm('ia_automation');
+  const canViewContentIA     = isMaster || checkPerm('content_ia');
+  const canViewSEO           = isMaster || checkPerm('seo');
+  const canViewBacklinks     = isMaster || checkPerm('backlinks');
+  const canViewAnalytics     = isMaster || checkPerm('analytics');
+  const canViewSocial        = isMaster || checkPerm('social_media');
+  const canViewSettings      = isMaster || checkPerm('settings');
 
   const sections: SectionDef[] = [
     {
@@ -333,7 +337,7 @@ export default function NavigationMenu({ excludeSections = [] }: NavigationMenuP
       title: 'Facturation',
       icon: CreditCard,
       accent: '#10b981',
-      permission: true,
+      permission: canViewFacturation,
       links: [
         { to: '/backoffice/lead-invoicing',       icon: CreditCard,  label: 'Leads' },
         { to: '/backoffice/free-invoicing',       icon: DollarSign,  label: 'Libre' },
@@ -344,7 +348,7 @@ export default function NavigationMenu({ excludeSections = [] }: NavigationMenuP
       title: 'Production',
       icon: Building2,
       accent: '#0ea5e9',
-      permission: canViewCRM,
+      permission: canViewProduction,
       links: [
         { to: '/backoffice/insurance-companies',       icon: Building2,     label: 'Compagnies' },
         { to: '/backoffice/insurance-companies-stats', icon: BarChart3,     label: 'Stats Compagnies' },
@@ -359,7 +363,7 @@ export default function NavigationMenu({ excludeSections = [] }: NavigationMenuP
       title: 'Communication',
       icon: MessageSquare,
       accent: '#22c55e',
-      permission: canViewCRM,
+      permission: canViewCommunication,
       links: [
         { to: '/backoffice/whatsapp',        icon: MessageSquare, label: 'WhatsApp' },
         { to: '/backoffice/email-marketing', icon: Mail,          label: 'Email Marketing' },
@@ -382,7 +386,7 @@ export default function NavigationMenu({ excludeSections = [] }: NavigationMenuP
       title: 'IA & Automatisation',
       icon: Brain,
       accent: '#06b6d4',
-      permission: canViewContentIA || canViewSettings,
+      permission: canViewIAAutomation,
       links: [
         { to: '/backoffice/ultron',               icon: Sparkles,     label: 'ULTRON' },
         { to: '/backoffice/llm-dashboard',        icon: Brain,        label: 'LLM Agents' },
