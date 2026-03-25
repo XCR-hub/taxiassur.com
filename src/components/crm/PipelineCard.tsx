@@ -101,7 +101,8 @@ export const PipelineCard: React.FC<PipelineCardProps> = ({
         const pendingAutomations = (automationsResult.status === 'fulfilled' ? automationsResult.value.data?.length : null) || 0;
         const leadData = leadDataResult.status === 'fulfilled' ? leadDataResult.value.data : null;
 
-        const daysInPipeline = Math.floor((Date.now() - new Date(lead.created_at).getTime()) / (1000 * 60 * 60 * 24));
+        const referenceDate = lead.first_request_at || lead.created_at;
+        const daysInPipeline = Math.floor((Date.now() - new Date(referenceDate).getTime()) / (1000 * 60 * 60 * 24));
         const lastInteractionDays = lastInteraction
           ? Math.floor((Date.now() - new Date(lastInteraction.created_at).getTime()) / (1000 * 60 * 60 * 24))
           : daysInPipeline;
@@ -427,7 +428,7 @@ export const PipelineCard: React.FC<PipelineCardProps> = ({
               {indicators.daysInPipeline === 0 ? 'Auj.' : `${indicators.daysInPipeline}j`}
             </div>
             <span className="text-[9px] text-gray-400 leading-none">
-              {new Date(lead.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })}
+              {new Date(lead.first_request_at || lead.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })}
             </span>
           </div>
         </div>

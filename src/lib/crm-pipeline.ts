@@ -194,6 +194,7 @@ export interface CRMLead {
   recontact_attempts?: number;
   created_at: string;
   updated_at: string;
+  first_request_at?: string;
 }
 
 export interface AdminUser {

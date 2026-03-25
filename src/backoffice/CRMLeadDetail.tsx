@@ -548,7 +548,7 @@ const CRMLeadDetail: React.FC = () => {
               </div>
             )}
             <div className="ml-auto text-xs text-gray-600">
-              Créé le {new Date(lead.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })}
+              Demande du {new Date(lead.first_request_at || lead.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })}
             </div>
           </div>
         </div>
