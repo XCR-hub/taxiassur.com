@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { openDocument } from '../../lib/document-utils';
-import { FileText, Download, X, CheckCircle2, AlertCircle, Loader2, XCircle, Check, MoveHorizontal, Upload, GripVertical, Mail, ChevronDown } from 'lucide-react';
+import { FileText, Download, X, CheckCircle2, AlertCircle, Loader2, XCircle, Check, MoveHorizontal, Upload, GripVertical, Mail, ChevronDown, Eye } from 'lucide-react';
 import { toast } from '@/lib/toast';
 
 interface DocumentValidationCompleteProps {
@@ -57,6 +57,8 @@ interface UnimportedAttachment {
   attachment_filename: string;
   attachment_size: number;
   attachment_content_type: string;
+  prospect_file_path: string | null;
+  prospect_bucket: string | null;
 }
 
 const DOCUMENT_CATEGORIES: DocumentCategory[] = [
@@ -725,10 +727,20 @@ export default function DocumentValidationComplete({
 
                       <div className="flex items-center gap-1.5 mt-2.5">
                         <button
+                          onClick={() => openDocument(attachment.storage_path, attachmentBucket)}
+                          className="text-xs py-1.5 px-2.5 bg-gray-50 text-gray-700 rounded hover:bg-gray-100 font-medium flex items-center gap-1"
+                        >
+                          <Eye className="h-3 w-3" />
+                          Consulter
+                        </button>
+                        <button
                           onClick={() => {
                             const baseUrl = import.meta.env.VITE_SUPABASE_URL;
                             const url = `${baseUrl}/storage/v1/object/public/${attachmentBucket}/${attachment.storage_path}`;
-                            window.open(url, '_blank');
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = attachment.filename;
+                            a.click();
                           }}
                           className="text-xs py-1.5 px-2.5 bg-blue-50 text-blue-600 rounded hover:bg-blue-100 font-medium flex items-center gap-1"
                         >
@@ -817,44 +829,82 @@ export default function DocumentValidationComplete({
                         </div>
                       </div>
 
-                      <div className="mt-2.5 relative">
-                        <button
-                          onClick={() => setImportMenuOpen(isMenuVisible ? null : key)}
-                          disabled={isImporting}
-                          className="w-full text-xs py-2 px-3 bg-amber-100 text-amber-800 rounded-lg hover:bg-amber-200 font-medium flex items-center justify-center gap-1.5 transition-colors"
-                        >
-                          {isImporting ? (
+                      <div className="flex items-center gap-1.5 mt-2.5">
+                        {att.prospect_file_path ? (
+                          <>
+                            <button
+                              onClick={() => openDocument(att.prospect_file_path!, att.prospect_bucket || 'prospect-documents')}
+                              className="text-xs py-1.5 px-2.5 bg-gray-50 text-gray-700 rounded hover:bg-gray-100 font-medium flex items-center gap-1"
+                            >
+                              <Eye className="h-3 w-3" />
+                              Consulter
+                            </button>
+                            <button
+                              onClick={() => {
+                                const baseUrl = import.meta.env.VITE_SUPABASE_URL;
+                                const bucket = att.prospect_bucket || 'prospect-documents';
+                                const url = `${baseUrl}/storage/v1/object/public/${bucket}/${att.prospect_file_path}`;
+                                const a = document.createElement('a');
+                                a.href = url;
+                                a.download = att.attachment_filename;
+                                a.click();
+                              }}
+                              className="text-xs py-1.5 px-2.5 bg-blue-50 text-blue-600 rounded hover:bg-blue-100 font-medium flex items-center gap-1"
+                            >
+                              <Download className="h-3 w-3" />
+                              Telecharger
+                            </button>
+                          </>
+                        ) : (
+                          <button
+                            disabled
+                            title="Fichier non encore extrait de l'email"
+                            className="text-xs py-1.5 px-2.5 bg-gray-100 text-gray-400 rounded font-medium flex items-center gap-1 cursor-not-allowed"
+                          >
+                            <Eye className="h-3 w-3" />
+                            Consulter
+                          </button>
+                        )}
+
+                        <div className="relative flex-1">
+                          <button
+                            onClick={() => setImportMenuOpen(isMenuVisible ? null : key)}
+                            disabled={isImporting}
+                            className="w-full text-xs py-1.5 px-2.5 bg-emerald-50 text-emerald-700 rounded hover:bg-emerald-100 font-medium flex items-center justify-center gap-1"
+                          >
+                            {isImporting ? (
+                              <>
+                                <Loader2 className="h-3 w-3 animate-spin" />
+                                Classement...
+                              </>
+                            ) : (
+                              <>
+                                <FileText className="h-3 w-3" />
+                                Classer
+                                <ChevronDown className={`h-3 w-3 transition-transform ${isMenuVisible ? 'rotate-180' : ''}`} />
+                              </>
+                            )}
+                          </button>
+
+                          {isMenuVisible && (
                             <>
-                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                              Classement...
-                            </>
-                          ) : (
-                            <>
-                              <MoveHorizontal className="h-3.5 w-3.5" />
-                              Classer dans une categorie
-                              <ChevronDown className={`h-3 w-3 transition-transform ${isMenuVisible ? 'rotate-180' : ''}`} />
+                              <div className="fixed inset-0 z-10" onClick={() => setImportMenuOpen(null)} />
+                              <div className="absolute left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-xl z-20 max-h-64 overflow-y-auto">
+                                {categories.map((cat) => (
+                                  <button
+                                    key={cat.id}
+                                    onClick={() => importEmailAttachment(att, cat.id)}
+                                    className="w-full text-left px-3 py-2 text-xs hover:bg-emerald-50 flex items-center gap-2 transition-colors border-b border-gray-50 last:border-0"
+                                  >
+                                    <span className="text-base">{cat.icon}</span>
+                                    <span className="font-medium text-gray-800">{cat.label}</span>
+                                    {cat.required && <span className="text-red-400 text-[10px]">requis</span>}
+                                  </button>
+                                ))}
+                              </div>
                             </>
                           )}
-                        </button>
-
-                        {isMenuVisible && (
-                          <>
-                            <div className="fixed inset-0 z-10" onClick={() => setImportMenuOpen(null)} />
-                            <div className="absolute left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-xl z-20 max-h-64 overflow-y-auto">
-                              {categories.map((cat) => (
-                                <button
-                                  key={cat.id}
-                                  onClick={() => importEmailAttachment(att, cat.id)}
-                                  className="w-full text-left px-3 py-2.5 text-xs hover:bg-amber-50 flex items-center gap-2 transition-colors border-b border-gray-50 last:border-0"
-                                >
-                                  <span className="text-base">{cat.icon}</span>
-                                  <span className="font-medium text-gray-800">{cat.label}</span>
-                                  {cat.required && <span className="text-red-400 text-[10px]">requis</span>}
-                                </button>
-                              ))}
-                            </div>
-                          </>
-                        )}
+                        </div>
                       </div>
                     </div>
                   );
