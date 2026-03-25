@@ -182,7 +182,16 @@ const UserManagement: React.FC = () => {
       setPermissions(permissionsMap);
       if (selectedUser) {
         const updated = (usersData || []).find(u => u.id === selectedUser.id);
-        if (updated) setSelectedUser(updated);
+        if (updated) {
+          setSelectedUser(updated);
+          const perms = permissionsMap[updated.id] || [];
+          const map: PermMap = {};
+          PERMISSION_TEMPLATES.forEach(t => {
+            const p = perms.find(x => x.permission_type === t.type);
+            map[t.type] = { view: p?.can_view || false, edit: p?.can_edit || false, delete: p?.can_delete || false };
+          });
+          setUserPermissions(map);
+        }
       }
     } catch (error: any) {
       console.error('loadUsers error:', error);
