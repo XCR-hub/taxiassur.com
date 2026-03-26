@@ -29,10 +29,23 @@ export const VTC_DOCUMENTS: RequiredDocument[] = [
   { type: 'controle_technique', label: 'Controle technique', required: true, icon: '🔧' },
 ];
 
+export const MOTO_TAXI_DOCUMENTS: RequiredDocument[] = [
+  { type: 'licence_taxi', label: 'Licence de taxi / ADS', required: true, icon: '🏍️' },
+  { type: 'permis_conduire', label: 'Permis de conduire (A + B)', required: true, icon: '🪪' },
+  { type: 'carte_grise', label: 'Carte grise du vehicule', required: true, icon: '🏍️' },
+  { type: 'carte_identite', label: "Carte d'identite", required: true, icon: '🆔' },
+  { type: 'rib', label: 'RIB', required: true, icon: '🏦' },
+  { type: 'releve_information', label: "Releve d'information", required: true, icon: '📋' },
+  { type: 'carte_professionnelle', label: 'Carte professionnelle', required: true, icon: '💳' },
+  { type: 'kbis', label: 'Extrait Kbis / Statuts', required: true, icon: '🏢' },
+  { type: 'controle_technique', label: 'Controle technique', required: true, icon: '🔧' },
+];
+
 export function getRequiredDocuments(vehicleType?: string | null): RequiredDocument[] {
   if (!vehicleType) return TAXI_DOCUMENTS;
   const normalized = vehicleType.toLowerCase().trim();
   if (normalized === 'vtc') return VTC_DOCUMENTS;
+  if (normalized === 'moto-taxi') return MOTO_TAXI_DOCUMENTS;
   return TAXI_DOCUMENTS;
 }
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useSearchParams, useParams, Link } from 'react-router-dom';
 import { Upload, CheckCircle, AlertCircle, FileText, Loader2, X, Download, User, Phone, Mail, MapPin, Car, Shield, CreditCard, Ligature as FileSignature, Clock, CheckCircle2, XCircle, Eye, ChevronRight, Lock, RefreshCw, Building, Calendar, Euro, FileCheck, Send, AlertTriangle } from 'lucide-react';
 import { createClient } from '@supabase/supabase-js';
@@ -56,6 +56,7 @@ interface LeadInfo {
   client_since?: string;
   current_stage_key?: string;
   selected_company_id?: string;
+  vehicle_type?: string;
 }
 
 interface UploadedDocument {
@@ -71,8 +72,8 @@ interface UploadedDocument {
   notes?: string;
 }
 
-const DOCUMENT_TYPES = [
-  { id: 'licence_taxi', label: 'Licence de taxi professionnelle', description: 'En cours de validite', required: true, icon: Car },
+const TAXI_DOCUMENT_TYPES = [
+  { id: 'licence_taxi', label: 'Licence de taxi / ADS', description: 'En cours de validite', required: true, icon: Car },
   { id: 'permis_conduire', label: 'Permis de conduire', description: 'Recto-verso, lisible', required: true, icon: FileText },
   { id: 'piece_identite', label: "Piece d'identite", description: 'CNI ou passeport valide', required: true, icon: User },
   { id: 'carte_grise', label: 'Carte grise du vehicule', description: "Certificat d'immatriculation", required: true, icon: Car },
@@ -80,6 +81,35 @@ const DOCUMENT_TYPES = [
   { id: 'autorisation_stationnement', label: 'Autorisation de stationnement', description: 'Autorisation prefectorale', required: true, icon: MapPin },
   { id: 'rib', label: 'RIB - Releve d\'Identite Bancaire', description: 'Coordonnees bancaires completes', required: true, icon: CreditCard }
 ];
+
+const VTC_DOCUMENT_TYPES = [
+  { id: 'carte_pro_vtc', label: 'Carte professionnelle VTC', description: 'En cours de validite', required: true, icon: Car },
+  { id: 'inscription_registre_vtc', label: 'Inscription registre VTC', description: 'Justificatif d\'inscription', required: true, icon: FileText },
+  { id: 'permis_conduire', label: 'Permis de conduire', description: 'Recto-verso, lisible', required: true, icon: FileText },
+  { id: 'piece_identite', label: "Piece d'identite", description: 'CNI ou passeport valide', required: true, icon: User },
+  { id: 'carte_grise', label: 'Carte grise du vehicule', description: "Certificat d'immatriculation", required: true, icon: Car },
+  { id: 'releve_information', label: "Releve d'information", description: 'De votre assureur precedent', required: false, icon: FileText },
+  { id: 'rib', label: 'RIB - Releve d\'Identite Bancaire', description: 'Coordonnees bancaires completes', required: true, icon: CreditCard },
+  { id: 'controle_technique', label: 'Controle technique', description: 'Moins de 6 mois', required: true, icon: FileCheck }
+];
+
+const MOTO_TAXI_DOCUMENT_TYPES = [
+  { id: 'licence_taxi', label: 'Licence de taxi / ADS', description: 'En cours de validite', required: true, icon: Car },
+  { id: 'permis_conduire', label: 'Permis de conduire (A + B)', description: 'Recto-verso, lisible', required: true, icon: FileText },
+  { id: 'piece_identite', label: "Piece d'identite", description: 'CNI ou passeport valide', required: true, icon: User },
+  { id: 'carte_grise', label: 'Carte grise du vehicule', description: "Certificat d'immatriculation", required: true, icon: Car },
+  { id: 'releve_information', label: "Releve d'information", description: 'De votre assureur precedent', required: false, icon: FileText },
+  { id: 'rib', label: 'RIB - Releve d\'Identite Bancaire', description: 'Coordonnees bancaires completes', required: true, icon: CreditCard },
+  { id: 'controle_technique', label: 'Controle technique', description: 'Moins de 6 mois', required: true, icon: FileCheck }
+];
+
+function getProspectDocumentTypes(vehicleType?: string) {
+  if (!vehicleType) return TAXI_DOCUMENT_TYPES;
+  const n = vehicleType.toLowerCase().trim();
+  if (n === 'vtc') return VTC_DOCUMENT_TYPES;
+  if (n === 'moto-taxi') return MOTO_TAXI_DOCUMENT_TYPES;
+  return TAXI_DOCUMENT_TYPES;
+}
 
 type TabType = 'documents' | 'devis' | 'paiement' | 'contrat';
 
@@ -107,6 +137,19 @@ const EspaceProspect: React.FC = () => {
   const [pendingPayments, setPendingPayments] = useState<any[]>([]);
   const [allPayments, setAllPayments] = useState<any[]>([]);
   const [finalDocuments, setFinalDocuments] = useState<any[]>([]);
+
+  const documentTypes = useMemo(
+    () => getProspectDocumentTypes(leadInfo?.vehicle_type),
+    [leadInfo?.vehicle_type]
+  );
+
+  const vehicleLabel = useMemo(() => {
+    if (!leadInfo?.vehicle_type) return 'taxi';
+    const n = leadInfo.vehicle_type.toLowerCase().trim();
+    if (n === 'vtc') return 'VTC';
+    if (n === 'moto-taxi') return 'moto-taxi';
+    return 'taxi';
+  }, [leadInfo?.vehicle_type]);
 
   // Mettre à jour l'onglet actif si le paramètre URL change
   useEffect(() => {
@@ -447,7 +490,7 @@ const EspaceProspect: React.FC = () => {
     }
     // Fallback si l'ancien système est encore utilisé
     if (!leadInfo?.document_checklist) return 0;
-    const requiredDocs = DOCUMENT_TYPES.filter(d => d.required);
+    const requiredDocs = documentTypes.filter(d => d.required);
     const validatedCount = requiredDocs.filter(d => {
       const status = leadInfo.document_checklist?.[d.id];
       return status?.validated || status?.status === 'uploaded';
@@ -527,9 +570,22 @@ const EspaceProspect: React.FC = () => {
           <div className="bg-gray-900 rounded-xl p-6">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div>
-                <h1 className="text-3xl font-black text-white">
-                  {isClient ? 'Espace Client' : 'Espace Prospect'}
-                </h1>
+                <div className="flex items-center gap-3">
+                  <h1 className="text-3xl font-black text-white">
+                    {isClient ? 'Espace Client' : 'Espace Prospect'}
+                  </h1>
+                  {leadInfo.vehicle_type && (
+                    <span className={`px-3 py-1 rounded-full text-xs font-bold border ${
+                      vehicleLabel === 'VTC'
+                        ? 'bg-blue-400/20 text-blue-400 border-blue-400/50'
+                        : vehicleLabel === 'moto-taxi'
+                        ? 'bg-green-400/20 text-green-400 border-green-400/50'
+                        : 'bg-yellow-400/20 text-yellow-400 border-yellow-400/50'
+                    }`}>
+                      {vehicleLabel.toUpperCase()}
+                    </span>
+                  )}
+                </div>
                 <p className="text-amber-400 font-bold text-lg">
                   Bonjour {leadInfo.first_name} {leadInfo.last_name}
                 </p>
@@ -743,7 +799,7 @@ const EspaceProspect: React.FC = () => {
               </div>
             </div>
 
-            {DOCUMENT_TYPES.map((docType) => {
+            {documentTypes.map((docType) => {
               const status = getDocumentStatus(docType.id);
               const uploaded = getUploadedDoc(docType.id);
               const isUploading = uploading === docType.id;
@@ -879,7 +935,7 @@ const EspaceProspect: React.FC = () => {
                   <div key={payment.id} className="bg-gradient-to-br from-blue-900/40 to-blue-800/20 border border-blue-500/30 rounded-xl p-6">
                     <div className="flex items-start justify-between mb-4">
                       <div>
-                        <h4 className="text-lg font-bold text-white mb-2">{payment.description || 'Paiement comptant assurance taxi'}</h4>
+                        <h4 className="text-lg font-bold text-white mb-2">{payment.description || `Paiement comptant assurance ${vehicleLabel}`}</h4>
                         <div className="space-y-1 text-sm">
                           <p className="text-gray-400">
                             <span className="text-gray-500">Montant :</span>{' '}
@@ -937,7 +993,7 @@ const EspaceProspect: React.FC = () => {
                   <div key={payment.id} className="bg-gradient-to-br from-green-900/40 to-emerald-800/20 border border-green-500/30 rounded-xl p-6">
                     <div className="flex items-start justify-between mb-4">
                       <div>
-                        <h4 className="text-lg font-bold text-white mb-2">{payment.description || 'Paiement comptant assurance taxi'}</h4>
+                        <h4 className="text-lg font-bold text-white mb-2">{payment.description || `Paiement comptant assurance ${vehicleLabel}`}</h4>
                         <div className="space-y-1 text-sm">
                           <p className="text-gray-400">
                             <span className="text-gray-500">Montant :</span>{' '}

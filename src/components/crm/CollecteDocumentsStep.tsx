@@ -255,6 +255,14 @@ export default function CollecteDocumentsStep({
     ? `${window.location.origin}/espace-prospect?token=${leadAccessToken}`
     : `${window.location.origin}/espace-prospect`;
 
+  const vehicleLabel = useMemo(() => {
+    if (!vehicleType) return 'taxi';
+    const n = vehicleType.toLowerCase().trim();
+    if (n === 'vtc') return 'VTC';
+    if (n === 'moto-taxi') return 'moto-taxi';
+    return 'taxi';
+  }, [vehicleType]);
+
   const missingDocLabels = useMemo(() => {
     const validatedTypes = new Set(
       documents.filter(d => d.status === 'validated').map(d => d.type)
@@ -285,11 +293,17 @@ export default function CollecteDocumentsStep({
       body = body.replace(/- Licence de taxi[\s\S]*?- Carte professionnelle/g, docList);
     }
 
+    body = body.replace(/\bassurance taxi\b/gi, `assurance ${vehicleLabel}`);
+    body = body.replace(/\btaxi\b/gi, vehicleLabel);
+
     setEditableBody(body);
-    setEditableSubject(
-      selectedTemplate.subject?.replace(/\{\{first_name\}\}/g, firstName) || 'Documents necessaires - TaxiAssur'
-    );
-  }, [selectedTemplate, missingDocLabels, actualFirstName, prospectSpaceUrl]);
+
+    let subject = selectedTemplate.subject?.replace(/\{\{first_name\}\}/g, firstName)
+      || `Documents necessaires - TaxiAssur`;
+    subject = subject.replace(/\bassurance taxi\b/gi, `assurance ${vehicleLabel}`);
+    subject = subject.replace(/\btaxi\b/gi, vehicleLabel);
+    setEditableSubject(subject);
+  }, [selectedTemplate, missingDocLabels, actualFirstName, prospectSpaceUrl, vehicleLabel]);
 
   async function sendCommunication(template: CommunicationTemplate) {
     if (!leadEmail && template.channel === 'email') {
