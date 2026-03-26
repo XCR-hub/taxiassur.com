@@ -232,7 +232,7 @@ const InsuranceCompaniesManager: React.FC = () => {
       const { error: uploadError } = await supabase.storage.from('company-documents').upload(path, file, { upsert: false });
       if (uploadError) throw uploadError;
       const { data: urlData } = supabase.storage.from('company-documents').getPublicUrl(path);
-      await supabase.from('company_documents').insert([{
+      const { error: insertError } = await supabase.from('company_documents').insert([{
         company_id: selectedCompany.id,
         document_name: file.name.replace(/\.[^.]+$/, ''),
         document_type: section.key,
@@ -247,6 +247,7 @@ const InsuranceCompaniesManager: React.FC = () => {
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       }]);
+      if (insertError) throw insertError;
       await loadDocuments(selectedCompany.id);
       showToast('success', `Document "${file.name}" ajouté`);
     } catch (err) {
