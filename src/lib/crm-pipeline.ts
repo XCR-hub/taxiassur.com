@@ -189,6 +189,7 @@ export interface CRMLead {
   next_followup?: string;
   notes?: string;
   tags?: string[];
+  vehicle_type?: string;
   recontact_scheduled_date?: string | null;
   lost_reason?: string | null;
   recontact_attempts?: number;

@@ -14,6 +14,7 @@ import {
   Trash2
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { getRequiredDocuments } from '@/lib/document-requirements';
 
 interface Document {
   id: string;
@@ -28,22 +29,18 @@ interface Document {
 
 interface DocumentChecklistPanelProps {
   leadId: string;
+  vehicleType?: string | null;
   onDocumentUpload?: () => void;
   onRequestDocuments?: (missingDocs: string[]) => void;
 }
 
-const REQUIRED_DOCUMENTS = [
-  { type: 'carte_grise', label: 'Carte Grise', required: true, priority: 1 },
-  { type: 'permis_conduire', label: 'Permis de Conduire', required: true, priority: 2 },
-  { type: 'licence_taxi', label: 'Licence Taxi / ADS', required: true, priority: 3 },
-  { type: 'carte_identite', label: 'Carte d\'Identité', required: true, priority: 4 },
-  { type: 'rib', label: 'RIB', required: true, priority: 5 },
-  { type: 'autorisation_stationnement', label: 'Autorisation Stationnement', required: true, priority: 6 },
-  { type: 'kbis', label: 'Extrait Kbis', required: true, priority: 7 },
-  { type: 'attestation_assurance', label: 'Attestation Assurance Actuelle', required: true, priority: 8 },
-];
-
-export function DocumentChecklistPanel({ leadId, onDocumentUpload, onRequestDocuments }: DocumentChecklistPanelProps) {
+export function DocumentChecklistPanel({ leadId, vehicleType, onDocumentUpload, onRequestDocuments }: DocumentChecklistPanelProps) {
+  const REQUIRED_DOCUMENTS = getRequiredDocuments(vehicleType).map((d, i) => ({
+    type: d.type,
+    label: d.label,
+    required: d.required,
+    priority: i + 1
+  }));
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
   const [showUploadModal, setShowUploadModal] = useState(false);

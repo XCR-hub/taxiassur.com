@@ -3,18 +3,7 @@ import { supabase } from '@/lib/supabase';
 import { Mail, MessageSquare, Phone, Send, CheckCircle2, AlertCircle, Loader2, FileText, Download, Plus, X, CreditCard as Edit3 } from 'lucide-react';
 import DocumentValidationComplete from './DocumentValidationComplete';
 import { toast } from '@/lib/toast';
-
-const ALL_REQUIRED_DOCUMENTS = [
-  { type: 'carte_grise', label: 'Carte grise du vehicule' },
-  { type: 'permis_conduire', label: 'Permis de conduire' },
-  { type: 'licence_taxi', label: 'Licence de taxi / ADS' },
-  { type: 'carte_identite', label: "Carte d'identite" },
-  { type: 'rib', label: 'RIB' },
-  { type: 'releve_information', label: "Releve d'information" },
-  { type: 'carte_professionnelle', label: 'Carte professionnelle' },
-  { type: 'autorisation_stationnement', label: 'Autorisation de stationnement' },
-  { type: 'kbis', label: 'Extrait Kbis / Statuts' },
-];
+import { getRequiredDocuments } from '@/lib/document-requirements';
 
 interface CollecteDocumentsStepProps {
   leadId: string;
@@ -22,6 +11,7 @@ interface CollecteDocumentsStepProps {
   leadPhone?: string;
   leadFirstName?: string;
   leadAccessToken?: string;
+  vehicleType?: string;
   onComplete?: () => void;
 }
 
@@ -54,8 +44,10 @@ export default function CollecteDocumentsStep({
   leadPhone,
   leadFirstName,
   leadAccessToken,
+  vehicleType,
   onComplete
 }: CollecteDocumentsStepProps) {
+  const requiredDocs = useMemo(() => getRequiredDocuments(vehicleType), [vehicleType]);
   const [templates, setTemplates] = useState<CommunicationTemplate[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<CommunicationTemplate | null>(null);
   const [sending, setSending] = useState(false);
@@ -63,7 +55,7 @@ export default function CollecteDocumentsStep({
     total: 0,
     validated: 0,
     pending: 0,
-    required: 9
+    required: 0
   });
   const [documents, setDocuments] = useState<DocumentInfo[]>([]);
   const [actualFirstName, setActualFirstName] = useState<string>(leadFirstName || '');
@@ -138,7 +130,7 @@ export default function CollecteDocumentsStep({
       if (error) throw error;
 
       const documentLabels: Record<string, string> = {};
-      ALL_REQUIRED_DOCUMENTS.forEach(d => { documentLabels[d.type] = d.label; });
+      requiredDocs.forEach(d => { documentLabels[d.type] = d.label; });
 
       const documentsList: DocumentInfo[] = data?.map(d => ({
         type: d.document_type,
@@ -156,7 +148,7 @@ export default function CollecteDocumentsStep({
         total,
         validated,
         pending,
-        required: 9
+        required: requiredDocs.length
       });
     } catch (error) {
       console.error('Error loading document stats:', error);
@@ -243,12 +235,12 @@ export default function CollecteDocumentsStep({
     const validatedTypes = new Set(
       documents.filter(d => d.status === 'validated').map(d => d.type)
     );
-    const missing = ALL_REQUIRED_DOCUMENTS.filter(d => !validatedTypes.has(d.type));
+    const missing = requiredDocs.filter(d => !validatedTypes.has(d.type));
     const customMissing = documents
       .filter(d => d.type === 'custom' && d.status !== 'validated')
       .map(d => d.label);
     return [...missing.map(d => d.label), ...customMissing];
-  }, [documents]);
+  }, [documents, requiredDocs]);
 
   useEffect(() => {
     if (!selectedTemplate) return;

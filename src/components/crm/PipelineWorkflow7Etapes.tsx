@@ -325,6 +325,7 @@ export default function PipelineWorkflow7Etapes({ leadId, leadData }: PipelineWo
               leadPhone={leadData.phone}
               leadFirstName={firstName}
               leadAccessToken={leadData.access_token}
+              vehicleType={leadData.vehicle_type as string | undefined}
               onComplete={() => {
                 // Auto-advance handled by trigger
               }}

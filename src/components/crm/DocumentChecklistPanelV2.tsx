@@ -5,6 +5,7 @@ import {
   Eye, Download, RefreshCw, Send, RotateCcw, ExternalLink
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { getRequiredDocuments } from '@/lib/document-requirements';
 
 interface DocumentStatus {
   status: 'missing' | 'uploaded' | 'validated' | 'rejected';
@@ -57,30 +58,27 @@ interface DocumentChecklistPanelV2Props {
   leadId: string;
   leadEmail: string;
   leadFirstName: string;
+  vehicleType?: string | null;
   accessToken?: string;
   onDocumentsComplete?: () => void;
   onRequestDocuments?: (missingDocs: string[]) => void;
 }
 
-const DOCUMENT_TYPES = [
-  { id: 'licence_taxi', label: 'Licence de taxi professionnelle', required: true, icon: '🚕' },
-  { id: 'permis_conduire', label: 'Permis de conduire', required: true, icon: '🪪' },
-  { id: 'piece_identite', label: "Piece d'identite", required: true, icon: '🆔' },
-  { id: 'carte_grise', label: 'Carte grise du vehicule', required: true, icon: '🚗' },
-  { id: 'releve_information', label: "Releve d'information", required: true, icon: '📋' },
-  { id: 'autorisation_stationnement', label: 'Autorisation de stationnement', required: true, icon: '🅿️' },
-  { id: 'rib', label: 'RIB', required: true, icon: '🏦' },
-  { id: 'kbis', label: 'KBIS / SIRENE', required: true, icon: '🏢' }
-];
-
 export function DocumentChecklistPanelV2({
   leadId,
   leadEmail,
   leadFirstName,
+  vehicleType,
   accessToken,
   onDocumentsComplete,
   onRequestDocuments
 }: DocumentChecklistPanelV2Props) {
+  const DOCUMENT_TYPES = getRequiredDocuments(vehicleType).map(d => ({
+    id: d.type,
+    label: d.label,
+    required: d.required,
+    icon: d.icon || '📄'
+  }));
   const [checklist, setChecklist] = useState<DocumentChecklist>({});
   const [prospectDocuments, setProspectDocuments] = useState<ProspectDocument[]>([]);
   const [emailAttachments, setEmailAttachments] = useState<EmailAttachment[]>([]);
