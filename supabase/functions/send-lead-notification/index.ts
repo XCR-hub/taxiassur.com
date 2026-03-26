@@ -16,6 +16,48 @@ interface LeadNotificationRequest {
   status: string;
   immatriculation?: string;
   access_token?: string;
+  vehicle_type?: string;
+}
+
+function getVehicleLabel(vehicleType?: string): string {
+  if (!vehicleType) return 'taxi';
+  const n = vehicleType.toLowerCase().trim();
+  if (n === 'vtc') return 'VTC';
+  if (n === 'moto-taxi') return 'moto-taxi';
+  return 'taxi';
+}
+
+function getDocumentListHtml(vehicleType?: string): string {
+  const vt = (vehicleType || '').toLowerCase().trim();
+  if (vt === 'vtc') {
+    return `
+      <div><strong>1.</strong> Carte professionnelle VTC</div>
+      <div><strong>2.</strong> Inscription au registre VTC</div>
+      <div><strong>3.</strong> Permis de conduire (recto et verso)</div>
+      <div><strong>4.</strong> Piece d'identite (carte d'identite ou passeport)</div>
+      <div><strong>5.</strong> Carte grise du vehicule</div>
+      <div><strong>6.</strong> Releve d'information de votre assureur actuel</div>
+      <div><strong>7.</strong> RIB - Releve d'Identite Bancaire</div>
+      <div><strong>8.</strong> Controle technique</div>`;
+  }
+  if (vt === 'moto-taxi') {
+    return `
+      <div><strong>1.</strong> Licence de taxi / ADS</div>
+      <div><strong>2.</strong> Permis de conduire A + B (recto et verso)</div>
+      <div><strong>3.</strong> Piece d'identite (carte d'identite ou passeport)</div>
+      <div><strong>4.</strong> Carte grise du vehicule</div>
+      <div><strong>5.</strong> Releve d'information de votre assureur actuel</div>
+      <div><strong>6.</strong> RIB - Releve d'Identite Bancaire</div>
+      <div><strong>7.</strong> Controle technique</div>`;
+  }
+  return `
+      <div><strong>1.</strong> Licence de taxi professionnelle</div>
+      <div><strong>2.</strong> Permis de conduire (recto et verso)</div>
+      <div><strong>3.</strong> Piece d'identite (carte d'identite ou passeport)</div>
+      <div><strong>4.</strong> Carte grise du vehicule</div>
+      <div><strong>5.</strong> Releve d'information de votre assureur actuel</div>
+      <div><strong>6.</strong> Autorisation de stationnement (si applicable)</div>
+      <div><strong>7.</strong> RIB - Releve d'Identite Bancaire</div>`;
 }
 
 async function sendEmailSMTP(
@@ -108,6 +150,11 @@ Deno.serve(async (req: Request) => {
       ? `https://taxiassur.com/espace-prospect?token=${lead.access_token}`
       : "https://taxiassur.com/espace-documents";
 
+    const vLabel = getVehicleLabel(lead.vehicle_type);
+    const docListHtml = getDocumentListHtml(lead.vehicle_type);
+    const docCount = (lead.vehicle_type || '').toLowerCase().trim() === 'vtc' ? 8
+      : (lead.vehicle_type || '').toLowerCase().trim() === 'moto-taxi' ? 7 : 7;
+
     // Email Commercial & Team - Amélioré
     const teamEmailHtml = `<!DOCTYPE html>
 <html>
@@ -150,7 +197,7 @@ Deno.serve(async (req: Request) => {
 <body>
   <div class="container">
     <div class="header">
-      <h1>🚕 NOUVEAU LEAD</h1>
+      <h1>${vLabel === 'VTC' ? '🚘' : vLabel === 'moto-taxi' ? '🏍️' : '🚕'} NOUVEAU LEAD ${vLabel.toUpperCase()}</h1>
       <p>Action immédiate requise</p>
     </div>
     <div class="content">
@@ -261,7 +308,7 @@ Deno.serve(async (req: Request) => {
         <td class="content">
           <div class="success-message">
             <strong>Votre demande a été enregistrée avec succès</strong>
-            Nous avons bien reçu votre demande de devis d'assurance taxi.
+            Nous avons bien reçu votre demande de devis d'assurance ${vLabel}.
           </div>
 
           <h2>Ce qui va se passer maintenant</h2>
@@ -273,15 +320,9 @@ Deno.serve(async (req: Request) => {
           </ul>
 
           <div class="docs-box">
-            <h3>Documents nécessaires (7 au total)</h3>
+            <h3>Documents nécessaires (${docCount} au total)</h3>
             <div class="doc-list">
-              <div><strong>1.</strong> Licence de taxi professionnelle</div>
-              <div><strong>2.</strong> Permis de conduire (recto et verso)</div>
-              <div><strong>3.</strong> Pièce d'identité (carte d'identité ou passeport)</div>
-              <div><strong>4.</strong> Carte grise du véhicule</div>
-              <div><strong>5.</strong> Relevé d'information de votre assureur actuel</div>
-              <div><strong>6.</strong> Autorisation de stationnement (si applicable)</div>
-              <div><strong>7.</strong> RIB - Relevé d'Identité Bancaire</div>
+              ${docListHtml}
             </div>
           </div>
 
@@ -346,7 +387,7 @@ Deno.serve(async (req: Request) => {
       await sendEmailSMTP(
         lead.email,
         lead.name,
-        "Demande confirmée ! Votre expert TaxiAssur vous recontacte rapidement",
+        `Demande confirmée ! Votre expert assurance ${vLabel} vous recontacte rapidement`,
         clientEmailHtml
       );
       sent++;

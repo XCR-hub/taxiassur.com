@@ -101,7 +101,15 @@ export default function DocumentValidationComplete({
 
   useEffect(() => {
     loadAll();
-  }, [caseId]);
+  }, [caseId, vehicleType]);
+
+  useEffect(() => {
+    const newCats = buildDocumentCategories(vehicleType);
+    setCategories(prev => {
+      const customCats = prev.filter(c => c.id.startsWith('custom_'));
+      return [...newCats, ...customCats];
+    });
+  }, [vehicleType]);
 
   async function loadAll() {
     try {

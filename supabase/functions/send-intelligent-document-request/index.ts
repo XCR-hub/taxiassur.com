@@ -7,15 +7,55 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
 };
 
-const DOCUMENT_TYPES: Record<string, { label: string; required: boolean }> = {
-  licence_taxi: { label: "Licence de taxi professionnelle", required: true },
+const TAXI_DOC_TYPES: Record<string, { label: string; required: boolean }> = {
+  licence_taxi: { label: "Licence de taxi / ADS", required: true },
   permis_conduire: { label: "Permis de conduire", required: true },
-  piece_identite: { label: "Pièce d'identité", required: true },
-  carte_grise: { label: "Carte grise du véhicule", required: true },
-  releve_information: { label: "Relevé d'information", required: false },
+  piece_identite: { label: "Piece d'identite", required: true },
+  carte_grise: { label: "Carte grise du vehicule", required: true },
+  releve_information: { label: "Releve d'information", required: false },
   autorisation_stationnement: { label: "Autorisation de stationnement", required: true },
-  rib: { label: "RIB - Relevé d'Identité Bancaire", required: true },
+  carte_professionnelle: { label: "Carte professionnelle", required: true },
+  rib: { label: "RIB", required: true },
+  kbis: { label: "Extrait Kbis / Statuts", required: true },
 };
+
+const VTC_DOC_TYPES: Record<string, { label: string; required: boolean }> = {
+  carte_pro_vtc: { label: "Carte professionnelle VTC", required: true },
+  inscription_registre_vtc: { label: "Inscription registre VTC", required: true },
+  permis_conduire: { label: "Permis de conduire", required: true },
+  piece_identite: { label: "Piece d'identite", required: true },
+  carte_grise: { label: "Carte grise du vehicule", required: true },
+  releve_information: { label: "Releve d'information", required: false },
+  rib: { label: "RIB", required: true },
+  kbis: { label: "Extrait Kbis / Statuts", required: true },
+  controle_technique: { label: "Controle technique", required: true },
+};
+
+const MOTO_TAXI_DOC_TYPES: Record<string, { label: string; required: boolean }> = {
+  licence_taxi: { label: "Licence de taxi / ADS", required: true },
+  permis_conduire: { label: "Permis de conduire (A + B)", required: true },
+  piece_identite: { label: "Piece d'identite", required: true },
+  carte_grise: { label: "Carte grise du vehicule", required: true },
+  releve_information: { label: "Releve d'information", required: false },
+  carte_professionnelle: { label: "Carte professionnelle", required: true },
+  rib: { label: "RIB", required: true },
+  kbis: { label: "Extrait Kbis / Statuts", required: true },
+  controle_technique: { label: "Controle technique", required: true },
+};
+
+function getDocTypes(vehicleType?: string): Record<string, { label: string; required: boolean }> {
+  const vt = (vehicleType || '').toLowerCase().trim();
+  if (vt === 'vtc') return VTC_DOC_TYPES;
+  if (vt === 'moto-taxi') return MOTO_TAXI_DOC_TYPES;
+  return TAXI_DOC_TYPES;
+}
+
+function getVLabel(vehicleType?: string): string {
+  const vt = (vehicleType || '').toLowerCase().trim();
+  if (vt === 'vtc') return 'VTC';
+  if (vt === 'moto-taxi') return 'moto-taxi';
+  return 'taxi';
+}
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
@@ -51,7 +91,7 @@ Deno.serve(async (req: Request) => {
     // Get lead info with document checklist
     const { data: lead, error: leadError } = await supabase
       .from('crm_leads')
-      .select('id, first_name, last_name, email, phone, access_token, document_checklist')
+      .select('id, first_name, last_name, email, phone, access_token, document_checklist, vehicle_type')
       .eq('id', lead_id)
       .maybeSingle();
 
@@ -112,9 +152,11 @@ Deno.serve(async (req: Request) => {
     // Build portal URL
     const portalUrl = `https://taxiassur.com/espace-prospect?token=${accessToken}`;
 
-    // Build document list HTML
+    const vLabel = getVLabel(lead.vehicle_type);
+    const docTypesMap = getDocTypes(lead.vehicle_type);
+
     const documentListHtml = documentsToRequest.map(docType => {
-      const docInfo = DOCUMENT_TYPES[docType] || { label: docType, required: false };
+      const docInfo = docTypesMap[docType] || { label: docType, required: false };
       const icon = docInfo.required ? '⚠️' : '📄';
       return `<li style="padding: 8px 0; border-bottom: 1px solid #e5e7eb;">${icon} <strong>${docInfo.label}</strong>${docInfo.required ? ' (obligatoire)' : ''}</li>`;
     }).join('');
@@ -135,14 +177,14 @@ Deno.serve(async (req: Request) => {
 
     <div style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); padding: 30px; text-align: center;">
       <h1 style="color: white; margin: 0; font-size: 24px;">Completez votre dossier</h1>
-      <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0;">TaxiAssur - Votre assurance taxi</p>
+      <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0;">TaxiAssur - Votre assurance ${vLabel}</p>
     </div>
 
     <div style="padding: 30px;">
       <p style="font-size: 16px; color: #374151;">Bonjour <strong>${firstName}</strong>,</p>
 
       <p style="color: #4b5563; line-height: 1.6;">
-        Pour finaliser votre demande d'assurance taxi, nous avons besoin des documents suivants :
+        Pour finaliser votre demande d'assurance ${vLabel}, nous avons besoin des documents suivants :
       </p>
 
       <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; margin: 20px 0; border-radius: 0 8px 8px 0;">
@@ -175,7 +217,7 @@ Deno.serve(async (req: Request) => {
 
     <div style="background: #1f2937; padding: 20px; text-align: center;">
       <p style="color: #9ca3af; margin: 0; font-size: 12px;">
-        TaxiAssur - Votre specialiste assurance taxi<br>
+        TaxiAssur - Votre specialiste assurance ${vLabel}<br>
         <a href="https://taxiassur.com" style="color: #f59e0b;">taxiassur.com</a>
       </p>
     </div>
@@ -206,7 +248,7 @@ Deno.serve(async (req: Request) => {
             name: fullName,
           },
         ],
-        subject: `TaxiAssur - ${documentsToRequest.length} document(s) manquant(s) pour votre dossier`,
+        subject: `TaxiAssur - ${documentsToRequest.length} document(s) manquant(s) pour votre dossier ${vLabel}`,
         htmlContent: emailHtml,
       }),
     });
@@ -227,7 +269,7 @@ Deno.serve(async (req: Request) => {
         lead_id: lead_id,
         email_to: lead.email,
         email_from: 'team@taxiassur.com',
-        subject: `TaxiAssur - ${documentsToRequest.length} document(s) manquant(s) pour votre dossier`,
+        subject: `TaxiAssur - ${documentsToRequest.length} document(s) manquant(s) pour votre dossier ${vLabel}`,
         body_html: emailHtml,
         status: 'sent',
         template_name: 'intelligent_document_request'

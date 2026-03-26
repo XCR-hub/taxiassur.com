@@ -74,7 +74,7 @@ export default function CollecteDocumentsStep({
     if (!leadFirstName) {
       loadLeadName();
     }
-  }, [leadId]);
+  }, [leadId, vehicleType]);
 
   async function loadLeadName() {
     try {
