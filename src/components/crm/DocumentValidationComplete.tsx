@@ -1125,77 +1125,82 @@ export default function DocumentValidationComplete({
                             </div>
                           )}
 
-                          <div className="flex items-center gap-2">
-                            <button
-                              onClick={() => openDocument(doc.file_path, doc.bucket)}
-                              className="flex-1 text-xs py-1 px-2 bg-blue-50 text-blue-600 rounded hover:bg-blue-100"
-                            >
-                              <Download className="h-3 w-3 inline mr-1" />
-                              Voir
-                            </button>
+                          <div className="space-y-1.5">
+                            <div className="flex items-center gap-1.5">
+                              <button
+                                onClick={() => openDocument(doc.file_path, doc.bucket)}
+                                className="flex-1 text-xs py-1 px-2 bg-blue-50 text-blue-600 rounded hover:bg-blue-100"
+                              >
+                                <Download className="h-3 w-3 inline mr-1" />
+                                Voir
+                              </button>
 
-                            {doc.status === 'pending' && (
-                              <>
+                              {doc.status === 'pending' && (
+                                <>
+                                  <button
+                                    onClick={() => validateDocument(doc)}
+                                    disabled={processing === doc.id}
+                                    className="flex-1 text-xs py-1 px-2 bg-green-50 text-green-600 rounded hover:bg-green-100 disabled:opacity-50 font-medium"
+                                  >
+                                    <Check className="h-3 w-3 inline mr-1" />
+                                    Valider
+                                  </button>
+                                  <button
+                                    onClick={() => setRejectingDoc(doc.id)}
+                                    disabled={processing === doc.id}
+                                    className="flex-1 text-xs py-1 px-2 bg-red-50 text-red-600 rounded hover:bg-red-100 disabled:opacity-50 font-medium"
+                                  >
+                                    <X className="h-3 w-3 inline mr-1" />
+                                    Refuser
+                                  </button>
+                                </>
+                              )}
+
+                              {doc.status === 'rejected' && (
                                 <button
-                                  onClick={() => validateDocument(doc)}
-                                  disabled={processing === doc.id}
-                                  className="flex-1 text-xs py-1 px-2 bg-green-50 text-green-600 rounded hover:bg-green-100 disabled:opacity-50 font-medium"
-                                >
-                                  <Check className="h-3 w-3 inline mr-1" />
-                                  Valider
-                                </button>
-                                <button
-                                  onClick={() => setRejectingDoc(doc.id)}
-                                  disabled={processing === doc.id}
-                                  className="flex-1 text-xs py-1 px-2 bg-red-50 text-red-600 rounded hover:bg-red-100 disabled:opacity-50 font-medium"
+                                  onClick={() => removeRejectedDocument(doc.id)}
+                                  className="flex-1 text-xs py-1 px-2 bg-gray-100 text-gray-600 rounded hover:bg-gray-200"
                                 >
                                   <X className="h-3 w-3 inline mr-1" />
-                                  Refuser
+                                  Supprimer
                                 </button>
-                                <div className="relative">
-                                  <button
-                                    onClick={() => setMoveMenuOpen(moveMenuOpen === doc.id ? null : doc.id)}
-                                    disabled={processing === doc.id}
-                                    className="text-xs py-1 px-2 bg-orange-50 text-orange-600 rounded hover:bg-orange-100 disabled:opacity-50 font-medium"
-                                    title="Deplacer vers une autre categorie"
-                                  >
-                                    <ArrowRightLeft className="h-3 w-3" />
-                                  </button>
-                                  {moveMenuOpen === doc.id && (
-                                    <>
-                                      <div className="fixed inset-0 z-10" onClick={() => setMoveMenuOpen(null)} />
-                                      <div className="absolute right-0 bottom-full mb-1 bg-white border border-gray-200 rounded-lg shadow-xl z-20 w-56 max-h-64 overflow-y-auto">
-                                        <div className="px-3 py-2 border-b border-gray-100">
-                                          <p className="text-xs font-semibold text-gray-700">Deplacer vers :</p>
-                                        </div>
-                                        {categories.filter(c => c.id !== doc.document_type).map((cat) => (
-                                          <button
-                                            key={cat.id}
-                                            onClick={() => {
-                                              setMoveMenuOpen(null);
-                                              moveDocument(doc.id, cat.id);
-                                            }}
-                                            className="w-full text-left px-3 py-2 text-xs hover:bg-orange-50 flex items-center gap-2 transition-colors border-b border-gray-50 last:border-0"
-                                          >
-                                            <span className="text-base">{cat.icon}</span>
-                                            <span className="font-medium text-gray-800">{cat.label}</span>
-                                          </button>
-                                        ))}
-                                      </div>
-                                    </>
-                                  )}
-                                </div>
-                              </>
-                            )}
+                              )}
+                            </div>
 
-                            {doc.status === 'rejected' && (
-                              <button
-                                onClick={() => removeRejectedDocument(doc.id)}
-                                className="flex-1 text-xs py-1 px-2 bg-gray-100 text-gray-600 rounded hover:bg-gray-200"
-                              >
-                                <X className="h-3 w-3 inline mr-1" />
-                                Supprimer
-                              </button>
+                            {doc.status === 'pending' && (
+                              <div className="relative">
+                                <button
+                                  onClick={() => setMoveMenuOpen(moveMenuOpen === doc.id ? null : doc.id)}
+                                  disabled={processing === doc.id}
+                                  className="w-full text-xs py-1.5 px-2 bg-orange-50 text-orange-700 border border-orange-200 rounded hover:bg-orange-100 disabled:opacity-50 font-medium flex items-center justify-center gap-1.5 transition-colors"
+                                >
+                                  <ArrowRightLeft className="h-3.5 w-3.5" />
+                                  Deplacer vers une autre categorie
+                                </button>
+                                {moveMenuOpen === doc.id && (
+                                  <>
+                                    <div className="fixed inset-0 z-10" onClick={() => setMoveMenuOpen(null)} />
+                                    <div className="absolute left-0 bottom-full mb-1 bg-white border border-gray-200 rounded-lg shadow-xl z-20 w-64 max-h-64 overflow-y-auto">
+                                      <div className="px-3 py-2 border-b border-gray-100 bg-gray-50 rounded-t-lg">
+                                        <p className="text-xs font-semibold text-gray-700">Deplacer vers :</p>
+                                      </div>
+                                      {categories.filter(c => c.id !== doc.document_type).map((cat) => (
+                                        <button
+                                          key={cat.id}
+                                          onClick={() => {
+                                            setMoveMenuOpen(null);
+                                            moveDocument(doc.id, cat.id);
+                                          }}
+                                          className="w-full text-left px-3 py-2.5 text-xs hover:bg-orange-50 flex items-center gap-2 transition-colors border-b border-gray-50 last:border-0"
+                                        >
+                                          <span className="text-base">{cat.icon}</span>
+                                          <span className="font-medium text-gray-800">{cat.label}</span>
+                                        </button>
+                                      ))}
+                                    </div>
+                                  </>
+                                )}
+                              </div>
                             )}
                           </div>
                         </div>
