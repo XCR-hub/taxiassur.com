@@ -1,8 +1,20 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Mail, MessageSquare, Phone, Send, CheckCircle2, AlertCircle, Loader2, FileText, Download, Plus, X } from 'lucide-react';
+import { Mail, MessageSquare, Phone, Send, CheckCircle2, AlertCircle, Loader2, FileText, Download, Plus, X, CreditCard as Edit3 } from 'lucide-react';
 import DocumentValidationComplete from './DocumentValidationComplete';
 import { toast } from '@/lib/toast';
+
+const ALL_REQUIRED_DOCUMENTS = [
+  { type: 'carte_grise', label: 'Carte grise du vehicule' },
+  { type: 'permis_conduire', label: 'Permis de conduire' },
+  { type: 'licence_taxi', label: 'Licence de taxi / ADS' },
+  { type: 'carte_identite', label: "Carte d'identite" },
+  { type: 'rib', label: 'RIB' },
+  { type: 'releve_information', label: "Releve d'information" },
+  { type: 'carte_professionnelle', label: 'Carte professionnelle' },
+  { type: 'autorisation_stationnement', label: 'Autorisation de stationnement' },
+  { type: 'kbis', label: 'Extrait Kbis / Statuts' },
+];
 
 interface CollecteDocumentsStepProps {
   leadId: string;
@@ -58,6 +70,8 @@ export default function CollecteDocumentsStep({
   const [customDocuments, setCustomDocuments] = useState<string[]>([]);
   const [newCustomDoc, setNewCustomDoc] = useState<string>('');
   const [showCustomDocInput, setShowCustomDocInput] = useState(false);
+  const [editableSubject, setEditableSubject] = useState('');
+  const [editableBody, setEditableBody] = useState('');
 
   useEffect(() => {
     loadTemplates();
@@ -123,15 +137,8 @@ export default function CollecteDocumentsStep({
 
       if (error) throw error;
 
-      // Mapping des types de documents vers leurs labels français
-      const documentLabels: Record<string, string> = {
-        'licence_taxi': 'Licence de taxi',
-        'permis_conduire': 'Permis de conduire',
-        'carte_grise': 'Carte grise du véhicule',
-        'releve_information': 'Relevé d\'information',
-        'rib': 'RIB',
-        'carte_professionnelle': 'Carte professionnelle'
-      };
+      const documentLabels: Record<string, string> = {};
+      ALL_REQUIRED_DOCUMENTS.forEach(d => { documentLabels[d.type] = d.label; });
 
       const documentsList: DocumentInfo[] = data?.map(d => ({
         type: d.document_type,
@@ -232,6 +239,42 @@ export default function CollecteDocumentsStep({
   }
 
 
+  const missingDocLabels = useMemo(() => {
+    const validatedTypes = new Set(
+      documents.filter(d => d.status === 'validated').map(d => d.type)
+    );
+    const missing = ALL_REQUIRED_DOCUMENTS.filter(d => !validatedTypes.has(d.type));
+    const customMissing = documents
+      .filter(d => d.type === 'custom' && d.status !== 'validated')
+      .map(d => d.label);
+    return [...missing.map(d => d.label), ...customMissing];
+  }, [documents]);
+
+  useEffect(() => {
+    if (!selectedTemplate) return;
+    const firstName = actualFirstName || 'Madame, Monsieur';
+    const docList = missingDocLabels.length > 0
+      ? missingDocLabels.map(l => `- ${l}`).join('\n')
+      : '- Tous les documents sont valides';
+
+    const defaultDocList = '- Licence de taxi\n- Permis de conduire\n- Carte grise du véhicule\n- Releve d\'information\n- RIB\n- Carte professionnelle';
+
+    let body = selectedTemplate.body_text
+      .replace(/\{\{first_name\}\}/g, firstName)
+      .replace(/\{\{prospect_space_url\}\}/g, prospectSpaceUrl || 'https://taxiassur.fr/espace-prospect');
+
+    if (body.includes(defaultDocList)) {
+      body = body.replace(defaultDocList, docList);
+    } else {
+      body = body.replace(/- Licence de taxi[\s\S]*?- Carte professionnelle/g, docList);
+    }
+
+    setEditableBody(body);
+    setEditableSubject(
+      selectedTemplate.subject?.replace(/\{\{first_name\}\}/g, firstName) || 'Documents necessaires - TaxiAssur'
+    );
+  }, [selectedTemplate, missingDocLabels, actualFirstName, prospectSpaceUrl]);
+
   async function sendCommunication(template: CommunicationTemplate) {
     if (!leadEmail && template.channel === 'email') {
       toast.warning('Aucun email disponible pour ce lead');
@@ -246,40 +289,17 @@ export default function CollecteDocumentsStep({
     setSending(true);
 
     try {
-      // Replace variables in template
-      const prospectSpaceUrl = leadAccessToken
-        ? `${window.location.origin}/espace-prospect?token=${leadAccessToken}`
-        : `${window.location.origin}/espace-prospect`;
-
-      // Générer la liste des documents non validés
-      const missingDocs = documents.filter(d => d.status !== 'validated');
-      const documentsList = missingDocs.length > 0
-        ? missingDocs.map(d => `- ${d.label}`).join('\n')
-        : '- Licence de taxi\n- Permis de conduire\n- Carte grise du véhicule\n- Relevé d\'information\n- RIB\n- Carte professionnelle';
-
-      // Utiliser le prénom chargé depuis la base ou fourni en prop
-      const firstName = actualFirstName || 'Madame, Monsieur';
-
-      let messageContent = template.body_text
-        .replace(/\{\{first_name\}\}/g, firstName)
-        .replace(/\{\{prospect_space_url\}\}/g, prospectSpaceUrl)
-        // Remplacer la liste fixe par la liste dynamique
-        .replace(/- Licence de taxi\n- Permis de conduire\n- Carte grise du véhicule\n- Relevé d'information\n- RIB\n- Carte professionnelle/g, documentsList);
-
-      let subject = template.subject
-        ?.replace(/\{\{first_name\}\}/g, firstName);
+      const messageContent = editableBody;
+      const subject = editableSubject;
 
       if (template.channel === 'email') {
-        // Send email via edge function
         const htmlContent = messageContent.replace(/\n/g, '<br>');
-
-        console.log('📧 Envoi email:', { to: leadEmail, subject, contentLength: htmlContent.length });
 
         const { data: emailResult, error } = await supabase.functions.invoke('send-crm-email', {
           body: {
             to: leadEmail,
             to_email: leadEmail,
-            subject: subject || 'Documents nécessaires - TaxiAssur',
+            subject: subject || 'Documents necessaires - TaxiAssur',
             content: htmlContent,
             body: htmlContent,
             lead_id: leadId
@@ -534,30 +554,52 @@ export default function CollecteDocumentsStep({
 
         {selectedTemplate && (
           <div className="border-t pt-4">
-            <div className="bg-gray-50 rounded-lg p-4 mb-4">
-              {selectedTemplate.subject && (
-                <div className="mb-2">
-                  <span className="text-xs font-semibold text-gray-600 uppercase">Sujet:</span>
-                  <p className="text-sm text-gray-900 mt-1">
-                    {selectedTemplate.subject.replace(/\{\{first_name\}\}/g, leadFirstName || 'Madame, Monsieur')}
+            <div className="flex items-center gap-2 mb-3">
+              <Edit3 className="h-4 w-4 text-blue-600" />
+              <span className="text-sm font-medium text-gray-700">Modifiez le message avant envoi</span>
+            </div>
+
+            {missingDocLabels.length > 0 && (
+              <div className="mb-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                <p className="text-xs font-semibold text-amber-800 mb-1.5">
+                  Documents demandes ({missingDocLabels.length}) :
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {missingDocLabels.map((label, i) => (
+                    <span key={i} className="inline-flex items-center gap-1 px-2 py-0.5 text-xs bg-white border border-amber-300 rounded-md text-amber-800">
+                      <FileText className="h-3 w-3" />
+                      {label}
+                    </span>
+                  ))}
+                </div>
+                {documents.some(d => d.status === 'validated') && (
+                  <p className="text-[10px] text-green-700 mt-2">
+                    {documents.filter(d => d.status === 'validated').length} document(s) deja valide(s) exclus de la demande
                   </p>
+                )}
+              </div>
+            )}
+
+            <div className="space-y-3 mb-4">
+              {selectedTemplate.channel === 'email' && (
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 uppercase mb-1">Sujet :</label>
+                  <input
+                    type="text"
+                    value={editableSubject}
+                    onChange={(e) => setEditableSubject(e.target.value)}
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
                 </div>
               )}
               <div>
-                <span className="text-xs font-semibold text-gray-600 uppercase">Message:</span>
-                <p className="text-sm text-gray-900 whitespace-pre-line mt-1">
-                  {(() => {
-                    const missingDocs = documents.filter(d => d.status !== 'validated');
-                    const documentsList = missingDocs.length > 0
-                      ? missingDocs.map(d => `- ${d.label}`).join('\n')
-                      : '- Licence de taxi\n- Permis de conduire\n- Carte grise du véhicule\n- Relevé d\'information\n- RIB\n- Carte professionnelle';
-
-                    return selectedTemplate.body_text
-                      .replace(/\{\{first_name\}\}/g, leadFirstName || 'Madame, Monsieur')
-                      .replace(/\{\{prospect_space_url\}\}/g, prospectSpaceUrl || 'https://taxiassur.fr/espace-prospect')
-                      .replace(/- Licence de taxi\n- Permis de conduire\n- Carte grise du véhicule\n- Relevé d'information\n- RIB\n- Carte professionnelle/g, documentsList);
-                  })()}
-                </p>
+                <label className="block text-xs font-semibold text-gray-600 uppercase mb-1">Message :</label>
+                <textarea
+                  value={editableBody}
+                  onChange={(e) => setEditableBody(e.target.value)}
+                  rows={12}
+                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-mono leading-relaxed resize-y"
+                />
               </div>
             </div>
 
@@ -565,7 +607,7 @@ export default function CollecteDocumentsStep({
               <button
                 onClick={() => sendCommunication(selectedTemplate)}
                 disabled={sending}
-                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-colors"
               >
                 {sending ? (
                   <>
@@ -581,7 +623,7 @@ export default function CollecteDocumentsStep({
               </button>
               <button
                 onClick={() => setSelectedTemplate(null)}
-                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                className="px-4 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
               >
                 Annuler
               </button>
