@@ -231,6 +231,10 @@ export default function CollecteDocumentsStep({
   }
 
 
+  const prospectSpaceUrl = leadAccessToken
+    ? `${window.location.origin}/espace-prospect?token=${leadAccessToken}`
+    : `${window.location.origin}/espace-prospect`;
+
   const missingDocLabels = useMemo(() => {
     const validatedTypes = new Set(
       documents.filter(d => d.status === 'validated').map(d => d.type)
@@ -386,10 +390,6 @@ export default function CollecteDocumentsStep({
   const progressPercent = stats.required > 0
     ? Math.round((stats.validated / stats.required) * 100)
     : 0;
-
-  const prospectSpaceUrl = leadAccessToken
-    ? `${window.location.origin}/espace-prospect?token=${leadAccessToken}`
-    : `${window.location.origin}/espace-prospect`;
 
   return (
     <div className="space-y-6">
