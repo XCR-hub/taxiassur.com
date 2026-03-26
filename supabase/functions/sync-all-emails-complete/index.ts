@@ -392,7 +392,7 @@ Deno.serve(async (req) => {
                   proposed_doc_type: proposedDocType,
                   classification_method: proposedDocType ? 'filename_pattern' : null,
                   classification_confidence: proposedDocType ? 0.7 : null,
-                  status: 'unclassified'
+                  status: 'pending'
                 });
 
                 attachmentMeta.push({
