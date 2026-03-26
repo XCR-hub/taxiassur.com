@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   CreditCard, Send, User, Mail, Phone, FileText,
-  Check, Loader2, ArrowLeft, Home, Copy,
+  Check, Loader2, ArrowLeft, Copy,
   RefreshCw, TrendingUp, Clock, CheckCircle2, XCircle,
   Search, ReceiptText, ChevronRight, AlertCircle,
   Banknote, Hash, Layers, Zap, ChevronDown, ChevronUp,
@@ -9,7 +9,6 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { Link } from 'react-router-dom';
-import NavigationMenu from './NavigationMenu';
 
 /* ─────────────── Types ─────────────────────────────────────── */
 interface InvoiceForm {
@@ -344,26 +343,8 @@ export default function FreeInvoicing() {
   const labelCls = 'block text-xs font-semibold text-gray-600 mb-1 uppercase tracking-wide';
 
   return (
-    <div className="flex h-screen bg-slate-950 overflow-hidden">
-
-      {/* ── Sidebar ─────────────────────────────────────────────── */}
-      <aside className="w-72 shrink-0 bg-gradient-to-b from-slate-900 to-slate-800 border-r border-slate-700/60 flex flex-col overflow-hidden">
-        <div className="p-4 border-b border-slate-700/60">
-          <Link
-            to="/backoffice"
-            className="flex items-center gap-2.5 px-3.5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium text-sm transition-colors shadow-md"
-          >
-            <Home className="w-4 h-4 shrink-0" />
-            Retour au Dashboard
-          </Link>
-        </div>
-        <div className="flex-1 overflow-y-auto py-2 px-3">
-          <NavigationMenu />
-        </div>
-      </aside>
-
-      {/* ── Main ────────────────────────────────────────────────── */}
-      <main className="flex-1 bg-slate-100 overflow-y-auto">
+    <div className="h-full overflow-hidden">
+      <main className="h-full bg-slate-100 overflow-y-auto">
 
         {/* Header */}
         <div className="bg-white border-b border-gray-200 px-8 py-5 flex items-center gap-4 sticky top-0 z-10">
