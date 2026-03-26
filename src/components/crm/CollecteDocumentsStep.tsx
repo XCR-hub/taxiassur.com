@@ -51,7 +51,7 @@ export default function CollecteDocumentsStep({
     total: 0,
     validated: 0,
     pending: 0,
-    required: 6
+    required: 9
   });
   const [documents, setDocuments] = useState<DocumentInfo[]>([]);
   const [actualFirstName, setActualFirstName] = useState<string>(leadFirstName || '');
@@ -149,7 +149,7 @@ export default function CollecteDocumentsStep({
         total,
         validated,
         pending,
-        required: 6
+        required: 9
       });
     } catch (error) {
       console.error('Error loading document stats:', error);

@@ -61,7 +61,7 @@ export const PipelineCard: React.FC<PipelineCardProps> = ({
   const mouseDownPos = useRef<{ x: number; y: number } | null>(null);
   const [indicators, setIndicators] = useState<LeadIndicators>({
     documentsValidated: 0,
-    documentsTotal: 7,
+    documentsTotal: 9,
     companiesQuoted: 0,
     companiesRefused: 0,
     companiesTotal: 5,
@@ -118,7 +118,7 @@ export const PipelineCard: React.FC<PipelineCardProps> = ({
 
         setIndicators({
           documentsValidated: totalUploadedDocs,
-          documentsTotal: 4,
+          documentsTotal: 9,
           companiesQuoted: quotedCompanies,
           companiesRefused: refusedCompanies,
           companiesTotal: 5,
