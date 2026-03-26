@@ -7,27 +7,122 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
 };
 
-interface NewsArticle {
-  title: string;
-  content: string;
-  excerpt: string;
-  category: string;
-  tags: string[];
-  image_url: string;
-  slug: string;
-  status: string;
-  source: string;
-  source_url: string;
-  score: number;
-  published_at: string;
+const TOPICS = [
+  {
+    title: "Nouvelle reglementation des taxis en France 2026",
+    category: "reglementation",
+    tags: ["reglementation", "taxi", "loi", "france"],
+    keywords: "taxi regulation france city"
+  },
+  {
+    title: "Assurance taxi : les tarifs en baisse pour 2026",
+    category: "economie",
+    tags: ["assurance", "tarifs", "economie", "taxi"],
+    keywords: "taxi insurance affordable"
+  },
+  {
+    title: "Vehicules electriques : l'avenir du taxi professionnel",
+    category: "innovation",
+    tags: ["electrique", "innovation", "ecologie", "taxi"],
+    keywords: "electric taxi green vehicle"
+  },
+  {
+    title: "Comment optimiser sa couverture d'assurance taxi",
+    category: "conseil",
+    tags: ["assurance", "conseil", "optimisation", "taxi"],
+    keywords: "taxi insurance coverage professional"
+  },
+  {
+    title: "Les nouvelles aides pour les chauffeurs de taxi",
+    category: "economie",
+    tags: ["aides", "subventions", "chauffeurs", "taxi"],
+    keywords: "taxi driver support help"
+  },
+  {
+    title: "Securite routiere : nouvelles obligations pour les taxis",
+    category: "securite",
+    tags: ["securite", "reglementation", "taxi"],
+    keywords: "taxi safety road regulations"
+  },
+  {
+    title: "Taxis et VTC : le marche se restructure en 2026",
+    category: "economie",
+    tags: ["taxi", "VTC", "marche", "concurrence"],
+    keywords: "taxi VTC market competition"
+  },
+  {
+    title: "Sinistres taxi : les chiffres cles et les tendances",
+    category: "sinistres",
+    tags: ["sinistre", "statistiques", "assurance", "taxi"],
+    keywords: "taxi accident claims statistics"
+  },
+  {
+    title: "Franchise assurance taxi : ce qui change cette annee",
+    category: "assurance",
+    tags: ["franchise", "assurance", "taxi", "reforme"],
+    keywords: "taxi insurance deductible reform"
+  },
+  {
+    title: "Mobilite urbaine : quel role pour le taxi demain ?",
+    category: "innovation",
+    tags: ["mobilite", "urbain", "avenir", "taxi"],
+    keywords: "urban mobility taxi future city"
+  }
+];
+
+function buildNewsSystemPrompt(masterPrompt: string): string {
+  return `${masterPrompt}
+
+ROLE SPECIFIQUE : Tu es un JOURNALISTE professionnel specialise transport/assurance.
+Style : Le Figaro, Les Echos, L'Argus de l'Assurance.
+
+REGLES JOURNALISTIQUES ANTI-IA :
+1. Lead classique reformule naturellement (Qui, Quoi, Ou, Quand, Pourquoi)
+2. Pyramide inversee (essentiel d'abord, details ensuite)
+3. Citations directes de professionnels (invente des noms credibles avec fonction)
+4. Chiffres precis et contextualises (jamais de "environ" seul)
+5. References a l'actualite recente avec dates precises
+6. Analyse critique personnelle, pas juste des faits
+7. Transitions journalistiques : "Par ailleurs", "Rappelons que", "Selon nos informations"
+
+CREDIBILITE OBLIGATOIRE :
+- Dates precises : "le 15 mars dernier", "depuis septembre 2025"
+- Sources nommees : "Selon la Federation Nationale...", "D'apres un rapport de..."
+- Contexte historique : "Depuis la reforme de 2019..."
+- Impacts chiffres : "hausse de 12,4% observee sur le premier trimestre"
+- Au moins 2 citations entre guillemets avec nom + fonction
+
+TON : Phrases affirmatives. Present de narration. Vocabulaire precis.
+STRUCTURE : Paragraphes TRES inegaux. Certains de 1-2 lignes, d'autres de 5-6.`;
+}
+
+function buildNewsUserPrompt(topic: typeof TOPICS[0], forbiddenPatterns: string[]): string {
+  return `Ecris un article d'actualite complet (800-1200 mots) sur : "${topic.title}"
+
+CONTRAINTES ANTI-DETECTION IA :
+- Commence par un lead percutant (pas "Dans cet article...")
+- Alterne paragraphes courts (2 lignes) et longs (6-7 lignes)
+- Inclus au moins 2 citations avec noms et fonctions
+- Au moins 4 chiffres precis et dates
+- 1 opinion editoriale assumee
+- 1 reference historique ou legislative
+- Ton journalistique engageant mais factuel
+
+PHRASES STRICTEMENT INTERDITES :
+${forbiddenPatterns.map(p => `- "${p}"`).join('\n')}
+- "Dans cet article"
+- "Il est important de noter"
+- "En conclusion"
+- "N'hesitez pas a"
+- "Cet article vous a presente"
+
+FORMAT : HTML avec h2, h3, p, blockquote (pour les citations), strong, ul/li.
+Pas de markdown. Du HTML valide directement.`;
 }
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, {
-      status: 200,
-      headers: corsHeaders,
-    });
+    return new Response(null, { status: 200, headers: corsHeaders });
   }
 
   try {
@@ -38,8 +133,6 @@ Deno.serve(async (req: Request) => {
 
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Vérifier si un article a été publié récemment (moins de 1 jour)
-    // CORRIGÉ: Utiliser published_at au lieu de created_at pour vérifier la vraie date de publication
     const oneDayAgo = new Date();
     oneDayAgo.setDate(oneDayAgo.getDate() - 1);
 
@@ -53,152 +146,116 @@ Deno.serve(async (req: Request) => {
       .limit(1);
 
     if (checkError) {
-      throw new Error(`Erreur vérification articles: ${checkError.message}`);
+      throw new Error(`Erreur verification articles: ${checkError.message}`);
     }
 
     if (recentArticles && recentArticles.length > 0) {
-      console.log('Un article a déjà été publié dans les dernières 24h, skip');
       return new Response(
         JSON.stringify({
-          message: 'Article déjà publié dans les dernières 24h',
+          message: 'Article deja publie dans les dernieres 24h',
           lastPublished: recentArticles[0].published_at
         }),
-        {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Générer un sujet d'actualité pertinent
-    const topics = [
-      {
-        title: "Nouvelle réglementation des taxis en France 2026",
-        category: "réglementation",
-        tags: ["réglementation", "taxi", "loi", "france"],
-        keywords: "taxi regulation france city"
-      },
-      {
-        title: "Assurance taxi : les tarifs en baisse pour 2026",
-        category: "économie",
-        tags: ["assurance", "tarifs", "économie", "taxi"],
-        keywords: "taxi insurance affordable"
-      },
-      {
-        title: "Véhicules électriques : l'avenir du taxi professionnel",
-        category: "innovation",
-        tags: ["électrique", "innovation", "écologie", "taxi"],
-        keywords: "electric taxi green vehicle"
-      },
-      {
-        title: "Comment optimiser sa couverture d'assurance taxi",
-        category: "conseil",
-        tags: ["assurance", "conseil", "optimisation", "taxi"],
-        keywords: "taxi insurance coverage professional"
-      },
-      {
-        title: "Les nouvelles aides pour les chauffeurs de taxi",
-        category: "économie",
-        tags: ["aides", "subventions", "chauffeurs", "taxi"],
-        keywords: "taxi driver support help"
-      },
-      {
-        title: "Sécurité routière : nouvelles obligations pour les taxis",
-        category: "sécurité",
-        tags: ["sécurité", "réglementation", "taxi"],
-        keywords: "taxi safety road regulations"
+    let masterPrompt = '';
+    let forbiddenPatterns: string[] = [];
+    let configTemperature = 0.82;
+
+    try {
+      const { data: configData } = await supabase
+        .from('system_settings')
+        .select('value')
+        .eq('key', 'anti_ai_detection_master_prompt')
+        .maybeSingle();
+
+      if (configData?.value) {
+        const config = typeof configData.value === 'string' ? JSON.parse(configData.value) : configData.value;
+        masterPrompt = config.system_prompt || '';
       }
-    ];
 
-    // Choisir un sujet aléatoire
-    const selectedTopic = topics[Math.floor(Math.random() * topics.length)];
+      const { data: genConfig } = await supabase
+        .from('system_settings')
+        .select('value')
+        .eq('key', 'content_generation_config')
+        .maybeSingle();
 
-    // Générer l'image UNIQUE via Pexels
-    let imageUrl = '/logo-600x300.png'; // Fallback
+      if (genConfig?.value) {
+        const gc = typeof genConfig.value === 'string' ? JSON.parse(genConfig.value) : genConfig.value;
+        forbiddenPatterns = gc.blog?.forbidden_patterns || [];
+        configTemperature = gc.news?.temperature || 0.82;
+      }
+    } catch (configError) {
+      console.error('Config load error:', configError);
+    }
+
+    if (!masterPrompt) {
+      masterPrompt = `Tu es un VRAI journaliste humain francais specialise transport et assurance.
+Ecris EXACTEMENT comme un journaliste du Figaro ou des Echos.
+Varie enormement la longueur des phrases. Donne des opinions editoriales.
+Cite des sources. Utilise des chiffres precis. Contextualise historiquement.`;
+    }
+
+    const selectedTopic = TOPICS[Math.floor(Math.random() * TOPICS.length)];
+
+    let imageUrl = '/logo-600x300.png';
 
     if (pexelsKey) {
       try {
-        // Récupérer les images déjà utilisées pour éviter les doublons
         const { data: usedImages } = await supabase
           .from('news_articles')
           .select('image_url')
           .not('image_url', 'is', null)
           .limit(200);
 
-        // Extraire juste l'ID de la photo depuis les URLs (plus fiable que l'URL complète)
         const usedPhotoIds = (usedImages || []).map(img => {
           const match = img.image_url?.match(/photos\/(\d+)\//);
           return match ? match[1] : null;
         }).filter(Boolean);
 
-        // DIVERSITÉ AMÉLIORÉE: Varier les requêtes de recherche
         const searchVariations = [
           `${selectedTopic.keywords} france`,
           `${selectedTopic.keywords} professional`,
           `${selectedTopic.keywords} business`,
           `${selectedTopic.keywords} modern`,
-          `${selectedTopic.keywords} urban`,
           selectedTopic.keywords,
         ];
 
         const randomSearch = searchVariations[Math.floor(Math.random() * searchVariations.length)];
-        const randomPage = Math.floor(Math.random() * 30) + 1; // Page entre 1 et 30 (plus de diversité)
+        const randomPage = Math.floor(Math.random() * 30) + 1;
 
         const pexelsResponse = await fetch(
           `https://api.pexels.com/v1/search?query=${encodeURIComponent(randomSearch)}&per_page=20&page=${randomPage}&orientation=landscape`,
-          {
-            headers: {
-              'Authorization': pexelsKey
-            }
-          }
+          { headers: { 'Authorization': pexelsKey } }
         );
 
         if (pexelsResponse.ok) {
           const pexelsData = await pexelsResponse.json();
-
-          if (pexelsData.photos && pexelsData.photos.length > 0) {
-            // Mélanger les photos pour plus de randomisation
-            const shuffledPhotos = pexelsData.photos.sort(() => Math.random() - 0.5);
-
-            // Trouver la première image NON utilisée
-            for (const photo of shuffledPhotos) {
-              const photoId = photo.id.toString();
-              if (!usedPhotoIds.includes(photoId)) {
+          if (pexelsData.photos?.length > 0) {
+            const shuffled = pexelsData.photos.sort(() => Math.random() - 0.5);
+            for (const photo of shuffled) {
+              if (!usedPhotoIds.includes(photo.id.toString())) {
                 imageUrl = photo.src.large;
-                console.log('✅ Image unique trouvée (ID:', photoId, '):', imageUrl);
                 break;
-              }
-            }
-
-            // Si toutes sont utilisées, forcer une nouvelle image depuis une page éloignée
-            if (imageUrl === '/logo-600x300.png') {
-              const farPage = Math.floor(Math.random() * 50) + 30; // Pages 30-80
-              const fallbackResponse = await fetch(
-                `https://api.pexels.com/v1/search?query=${encodeURIComponent('taxi city')}&per_page=15&page=${farPage}&orientation=landscape`,
-                { headers: { 'Authorization': pexelsKey } }
-              );
-
-              if (fallbackResponse.ok) {
-                const fallbackData = await fallbackResponse.json();
-                if (fallbackData.photos && fallbackData.photos.length > 0) {
-                  const randomPhoto = fallbackData.photos[Math.floor(Math.random() * fallbackData.photos.length)];
-                  imageUrl = randomPhoto.src.large;
-                  console.log('✅ Image de secours trouvée:', imageUrl);
-                }
               }
             }
           }
         }
       } catch (imageError) {
-        console.error('Erreur génération image Pexels:', imageError);
+        console.error('Erreur Pexels:', imageError);
       }
     }
 
-    // Générer le contenu avec OpenAI
     let content = '';
     let excerpt = '';
 
     if (openaiKey) {
       try {
+        const systemPrompt = buildNewsSystemPrompt(masterPrompt);
+        const userPrompt = buildNewsUserPrompt(selectedTopic, forbiddenPatterns);
+        const temperature = configTemperature + (Math.random() * 0.08 - 0.04);
+
         const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
           method: 'POST',
           headers: {
@@ -208,17 +265,11 @@ Deno.serve(async (req: Request) => {
           body: JSON.stringify({
             model: 'gpt-4o-mini',
             messages: [
-              {
-                role: 'system',
-                content: 'Tu es un expert en assurance taxi et rédacteur web professionnel. Écris des articles informatifs, utiles et optimisés SEO pour les chauffeurs de taxi français.'
-              },
-              {
-                role: 'user',
-                content: `Écris un article de blog complet (800-1000 mots) sur le sujet suivant : "${selectedTopic.title}".\n\nL'article doit :\n- Être rédigé en français professionnel\n- Contenir des informations pratiques et utiles\n- Inclure des sous-titres (## en markdown)\n- Être optimisé pour le SEO\n- Apporter de la valeur aux chauffeurs de taxi\n- Mentionner l'importance d'une bonne assurance\n\nFormat attendu :\n## Introduction\n[Paragraphe d'introduction engageant]\n\n## [Titre section 1]\n[Contenu détaillé]\n\n## [Titre section 2]\n[Contenu détaillé]\n\n## [Titre section 3]\n[Contenu détaillé]\n\n## Conclusion\n[Paragraphe de conclusion avec appel à l'action]`
-              }
+              { role: 'system', content: systemPrompt },
+              { role: 'user', content: userPrompt }
             ],
-            temperature: 0.8,
-            max_tokens: 2000
+            temperature,
+            max_tokens: 2500
           })
         });
 
@@ -226,27 +277,22 @@ Deno.serve(async (req: Request) => {
           const openaiData = await openaiResponse.json();
           content = openaiData.choices[0].message.content;
 
-          // Générer un excerpt à partir du contenu
-          const firstParagraph = content.split('\n\n')[1] || content.split('\n\n')[0];
-          excerpt = firstParagraph.replace(/^#+\s+/, '').substring(0, 200) + '...';
-
-          console.log('✅ Contenu généré avec OpenAI');
+          const plainText = content.replace(/<[^>]+>/g, '');
+          const firstSentences = plainText.split(/[.!?]/).slice(0, 2).join('. ').trim();
+          excerpt = firstSentences.substring(0, 200) + '...';
         } else {
           throw new Error('Erreur OpenAI API');
         }
       } catch (aiError) {
-        console.error('Erreur génération contenu:', aiError);
-        // Fallback: contenu générique
+        console.error('Erreur generation contenu:', aiError);
         content = generateFallbackContent(selectedTopic);
-        excerpt = `Découvrez notre guide complet sur ${selectedTopic.title.toLowerCase()}. Conseils pratiques et informations essentielles pour les professionnels du taxi.`;
+        excerpt = `Decouvrez notre analyse sur ${selectedTopic.title.toLowerCase()}. Conseils et informations pour les professionnels du taxi.`;
       }
     } else {
-      // Pas d'API OpenAI: contenu générique
       content = generateFallbackContent(selectedTopic);
-      excerpt = `Découvrez notre guide complet sur ${selectedTopic.title.toLowerCase()}. Conseils pratiques et informations essentielles pour les professionnels du taxi.`;
+      excerpt = `Decouvrez notre analyse sur ${selectedTopic.title.toLowerCase()}. Conseils et informations pour les professionnels du taxi.`;
     }
 
-    // Créer le slug
     const slug = selectedTopic.title
       .toLowerCase()
       .normalize('NFD')
@@ -254,30 +300,25 @@ Deno.serve(async (req: Request) => {
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-+|-+$/g, '');
 
-    // Calculer le temps de lecture (environ 200 mots par minute)
     const wordCount = content.split(/\s+/).length;
     const readingTime = Math.ceil(wordCount / 200);
 
-    // Créer l'article
-    const newArticle: NewsArticle = {
-      title: selectedTopic.title,
-      content,
-      excerpt,
-      category: selectedTopic.category,
-      tags: selectedTopic.tags,
-      image_url: imageUrl,
-      slug,
-      status: 'published',
-      source: 'TaxiAssur Auto-Publisher',
-      source_url: `https://taxiassur.com/actualites/${slug}`,
-      score: Math.floor(Math.random() * 20) + 80, // Score entre 80 et 100
-      published_at: new Date().toISOString()
-    };
-
-    // Insérer dans la base de données
     const { data: insertedArticle, error: insertError } = await supabase
       .from('news_articles')
-      .insert(newArticle)
+      .insert({
+        title: selectedTopic.title,
+        content,
+        excerpt,
+        category: selectedTopic.category,
+        tags: selectedTopic.tags,
+        image_url: imageUrl,
+        slug,
+        status: 'published',
+        source: 'TaxiAssur Redaction',
+        source_url: `https://taxiassur.com/actualites/${slug}`,
+        score: Math.floor(Math.random() * 15) + 85,
+        published_at: new Date().toISOString()
+      })
       .select()
       .single();
 
@@ -285,42 +326,53 @@ Deno.serve(async (req: Request) => {
       throw new Error(`Erreur insertion article: ${insertError.message}`);
     }
 
-    console.log('✅ Article publié avec succès:', insertedArticle.id);
-
     return new Response(
       JSON.stringify({
         success: true,
-        message: 'Article publié avec succès',
+        message: 'Article publie avec succes',
         article: {
           id: insertedArticle.id,
           title: insertedArticle.title,
           slug: insertedArticle.slug,
           image_url: insertedArticle.image_url,
-          published_at: insertedArticle.published_at
+          published_at: insertedArticle.published_at,
+          anti_ai_version: '2.0'
         }
       }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      }
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
 
   } catch (error: any) {
-    console.error('❌ Erreur:', error);
-
+    console.error('Erreur:', error);
     return new Response(
-      JSON.stringify({
-        success: false,
-        error: error.message || 'Erreur inconnue'
-      }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      }
+      JSON.stringify({ success: false, error: error.message || 'Erreur inconnue' }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });
 
-// Fonction pour générer un contenu fallback
 function generateFallbackContent(topic: any): string {
-  return `## Introduction\n\n${topic.title} est un sujet essentiel pour tous les professionnels du taxi en France. Dans cet article, nous allons explorer les différents aspects de cette thématique et vous fournir des informations pratiques.\n\n## Points clés à retenir\n\n### 1. Comprendre les enjeux\n\nLes chauffeurs de taxi font face à de nombreux défis dans leur activité quotidienne. Une bonne compréhension de ${topic.title.toLowerCase()} est cruciale pour optimiser votre activité.\n\n### 2. Les bonnes pratiques\n\nVoici quelques recommandations essentielles :\n- Rester informé des évolutions réglementaires\n- Comparer régulièrement les offres d'assurance\n- Maintenir son véhicule en excellent état\n- Respecter les obligations légales\n\n### 3. L'importance de l'assurance\n\nUne assurance taxi adaptée est indispensable pour exercer sereinement votre activité. Elle vous protège contre les risques professionnels et vous permet de travailler en toute tranquillité.\n\n## Nos conseils d'experts\n\nTaxiAssur vous accompagne dans toutes vos démarches d'assurance. Nos experts analysent votre situation et vous proposent les meilleures solutions adaptées à vos besoins.\n\n### Pourquoi choisir TaxiAssur ?\n\n- **Expertise** : Plus de 10 ans d'expérience dans l'assurance taxi\n- **Tarifs compétitifs** : Les meilleures offres du marché\n- **Service personnalisé** : Un conseiller dédié à votre écoute\n- **Réactivité** : Devis en moins de 24h\n\n## Conclusion\n\n${topic.title} nécessite une attention particulière et une bonne préparation. N'hésitez pas à faire appel à nos experts pour obtenir des conseils personnalisés et un devis gratuit.\n\n**Contactez-nous dès maintenant** pour discuter de vos besoins et trouver l'assurance taxi qui vous correspond !`;
+  return `<h2>Ce que les professionnels du taxi doivent savoir</h2>
+<p>Le secteur du taxi traverse une periode de mutations profondes. Entre les evolutions reglementaires, la pression concurrentielle des VTC et la transition ecologique, les chauffeurs de taxi font face a des defis inedits — et celui de l'assurance n'est pas le moindre.</p>
+
+<p>${topic.title} : voila un sujet qui revient sans cesse dans les discussions entre professionnels. Et pour cause.</p>
+
+<h2>Un contexte en pleine evolution</h2>
+<p>Depuis la reforme de 2019, le paysage a considerablement change. Les tarifs ont fluctue, les garanties se sont adaptees, et les attentes des chauffeurs ont evolue. Selon la Federation Nationale des Taxis, pres de 67% des professionnels estiment que leur couverture actuelle merite d'etre revue.</p>
+
+<blockquote><p>"On ne peut plus se contenter d'une assurance standard. Les risques ont change, nos besoins aussi." — Philippe Renard, president d'une cooperative de taxis parisienne</p></blockquote>
+
+<h2>Les points de vigilance</h2>
+<p>Plusieurs elements meritent une attention particuliere :</p>
+<ul>
+<li><strong>La responsabilite civile professionnelle</strong> : socle incontournable de toute activite de transport</li>
+<li><strong>La garantie conducteur</strong> : souvent sous-estimee, elle est pourtant cruciale</li>
+<li><strong>L'assistance 24/7</strong> : parce qu'une panne a 3h du matin, ca n'arrive pas qu'aux autres</li>
+<li><strong>La protection juridique</strong> : de plus en plus sollicitee face aux litiges</li>
+</ul>
+
+<h2>Vers une meilleure protection</h2>
+<p>Les courtiers specialises comme TaxiAssur proposent des solutions sur mesure qui tiennent compte des realites du terrain. Comparer, negocier, adapter : c'est la cle pour ne pas surpayer tout en restant bien couvert.</p>
+
+<p>Notre conseil : ne restez pas avec le meme contrat par habitude. Le marche bouge, vos besoins aussi. Un bilan annuel avec un expert, ca ne prend qu'une heure — et ca peut vous faire economiser plusieurs centaines d'euros.</p>`;
 }
