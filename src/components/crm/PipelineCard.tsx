@@ -186,6 +186,44 @@ export const PipelineCard: React.FC<PipelineCardProps> = ({
     : null;
 
   const [movingToNew, setMovingToNew] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [savingDate, setSavingDate] = useState(false);
+  const datePickerRef = useRef<HTMLDivElement>(null);
+
+  const handleSetRecontactDate = async (date: string) => {
+    setSavingDate(true);
+    try {
+      await supabase
+        .from('crm_leads')
+        .update({ recontact_scheduled_date: date, updated_at: new Date().toISOString() })
+        .eq('id', lead.id);
+      lead.recontact_scheduled_date = date;
+      setShowDatePicker(false);
+    } catch (err) {
+      console.error('Erreur sauvegarde date recontact:', err);
+    } finally {
+      setSavingDate(false);
+    }
+  };
+
+  const handleQuickDate = (months: number) => {
+    const d = new Date();
+    d.setMonth(d.getMonth() + months);
+    handleSetRecontactDate(d.toISOString().split('T')[0]);
+  };
+
+  useEffect(() => {
+    if (!showDatePicker) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (datePickerRef.current && !datePickerRef.current.contains(e.target as Node)) {
+        setShowDatePicker(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showDatePicker]);
+
+  const isReactivatedFromRecontact = !isRecontactProgramme && (lead.recontact_attempts || 0) > 0;
 
   const handleMoveToNew = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -288,7 +326,7 @@ export const PipelineCard: React.FC<PipelineCardProps> = ({
 
         {/* Recontact — date + badge */}
         {isRecontactProgramme && (
-          <div className="mb-2.5">
+          <div className="mb-2.5 relative">
             {isReadyToRecontact ? (
               <div
                 className="flex items-center gap-2 px-2.5 py-2 rounded-lg animate-pulse"
@@ -304,8 +342,9 @@ export const PipelineCard: React.FC<PipelineCardProps> = ({
               </div>
             ) : recontactDate ? (
               <div
-                className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg"
+                className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg cursor-pointer hover:opacity-80 transition-opacity"
                 style={{ background: 'rgba(251,191,36,0.08)', border: '1px solid rgba(251,191,36,0.25)' }}
+                onClick={(e) => { e.stopPropagation(); setShowDatePicker(!showDatePicker); }}
               >
                 <Calendar size={10} className="text-amber-500 shrink-0" />
                 <span className="text-[11px] text-amber-700 font-medium">
@@ -317,13 +356,66 @@ export const PipelineCard: React.FC<PipelineCardProps> = ({
               </div>
             ) : (
               <div
-                className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg"
+                className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors"
                 style={{ background: 'rgba(107,114,128,0.08)', border: '1px solid rgba(107,114,128,0.2)' }}
+                onClick={(e) => { e.stopPropagation(); setShowDatePicker(!showDatePicker); }}
               >
                 <Calendar size={10} className="text-gray-400 shrink-0" />
                 <span className="text-[11px] text-gray-500">Date de recontact non definie</span>
               </div>
             )}
+
+            {showDatePicker && (
+              <div
+                ref={datePickerRef}
+                className="absolute left-0 right-0 top-full mt-1 z-50 bg-white rounded-lg shadow-xl border border-gray-200 p-3"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <p className="text-[11px] font-semibold text-gray-700 mb-2">Programmer le recontact</p>
+                <div className="flex flex-wrap gap-1.5 mb-2.5">
+                  {[
+                    { label: '1 mois', months: 1 },
+                    { label: '3 mois', months: 3 },
+                    { label: '6 mois', months: 6 },
+                    { label: '1 an', months: 12 },
+                  ].map(opt => (
+                    <button
+                      key={opt.months}
+                      onClick={() => handleQuickDate(opt.months)}
+                      disabled={savingDate}
+                      className="px-2 py-1 text-[10px] font-medium rounded-md bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 transition-colors disabled:opacity-50"
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+                <input
+                  type="date"
+                  min={new Date(Date.now() + 86400000).toISOString().split('T')[0]}
+                  className="w-full text-[11px] px-2 py-1.5 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-amber-400 focus:border-amber-400"
+                  onChange={(e) => {
+                    if (e.target.value) handleSetRecontactDate(e.target.value);
+                  }}
+                />
+                {savingDate && (
+                  <div className="flex items-center gap-1 mt-1.5">
+                    <Loader2 size={10} className="animate-spin text-amber-500" />
+                    <span className="text-[10px] text-gray-500">Enregistrement...</span>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Badge recontact programme for reactivated leads */}
+        {isReactivatedFromRecontact && (
+          <div
+            className="flex items-center gap-1.5 mb-2.5 px-2.5 py-1.5 rounded-lg"
+            style={{ background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.25)' }}
+          >
+            <CalendarCheck size={10} className="text-blue-600 shrink-0" />
+            <span className="text-[11px] text-blue-700 font-medium">Contact programme</span>
           </div>
         )}
 
