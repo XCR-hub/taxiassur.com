@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { Mail, Phone, MapPin, FileCheck, CreditCard, Clock, Building2, PenTool, AlertTriangle, Euro, Loader2, User, CalendarCheck, ArrowRight, Calendar } from 'lucide-react';
+import { Mail, Phone, MapPin, FileCheck, CreditCard, Clock, Building2, PenTool, AlertTriangle, Euro, Loader2, User, CalendarCheck, ArrowRight, Calendar, Car } from 'lucide-react';
 import { CRMLead, PIPELINE_STATUSES, PipelineStatus } from '@/lib/crm-pipeline';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/lib/supabase';
@@ -283,9 +283,24 @@ export const PipelineCard: React.FC<PipelineCardProps> = ({
         {/* Name + score */}
         <div className="flex items-start justify-between gap-2 mb-2">
           <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-gray-900 text-sm leading-tight truncate">
-              {lead.full_name}
-            </h3>
+            <div className="flex items-center gap-1.5">
+              <h3 className="font-semibold text-gray-900 text-sm leading-tight truncate">
+                {lead.full_name}
+              </h3>
+              {lead.vehicle_type && (
+                <span
+                  className={cn(
+                    'shrink-0 inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wide leading-none',
+                    lead.vehicle_type.toLowerCase() === 'vtc'
+                      ? 'bg-sky-100 text-sky-700 border border-sky-200'
+                      : 'bg-amber-100 text-amber-800 border border-amber-200'
+                  )}
+                >
+                  <Car size={8} />
+                  {lead.vehicle_type}
+                </span>
+              )}
+            </div>
             {lead.company_name && (
               <p className="text-[11px] text-gray-500 truncate mt-0.5 leading-tight">{lead.company_name}</p>
             )}

@@ -250,7 +250,8 @@ export const pipelineService = {
 
     return (data || []).map(lead => ({
       ...lead,
-      full_name: `${lead.first_name || ''} ${lead.last_name || ''}`.trim() || lead.email
+      full_name: `${lead.first_name || ''} ${lead.last_name || ''}`.trim() || lead.email,
+      vehicle_type: lead.metadata?.vehicle_type || null
     })) as CRMLead[];
   },
 
@@ -266,7 +267,8 @@ export const pipelineService = {
 
     return {
       ...data,
-      full_name: `${data.first_name || ''} ${data.last_name || ''}`.trim() || data.email
+      full_name: `${data.first_name || ''} ${data.last_name || ''}`.trim() || data.email,
+      vehicle_type: data.metadata?.vehicle_type || null
     } as CRMLead;
   },
 

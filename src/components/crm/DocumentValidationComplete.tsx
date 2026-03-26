@@ -637,7 +637,7 @@ export default function DocumentValidationComplete({
 
   function handleDragOver(e: React.DragEvent) {
     e.preventDefault();
-    e.dataTransfer.dropEffect = 'copy';
+    e.dataTransfer.dropEffect = draggedItem ? 'move' : 'copy';
   }
 
   function handleContainerDragEnter(e: React.DragEvent) {
@@ -781,8 +781,9 @@ export default function DocumentValidationComplete({
                       key={attachment.attachment_id}
                       draggable
                       onDragStart={(e) => {
-                        handleDragStart(attachment.attachment_id, 'attachment');
+                        e.dataTransfer.setData('application/x-attachment-id', attachment.attachment_id);
                         e.dataTransfer.effectAllowed = 'move';
+                        handleDragStart(attachment.attachment_id, 'attachment');
                       }}
                       onDragEnd={handleDragEnd}
                       className={`group bg-white rounded-lg p-3 border-2 cursor-grab active:cursor-grabbing transition-all duration-200 ${
@@ -1072,8 +1073,10 @@ export default function DocumentValidationComplete({
                           draggable={isPending}
                           onDragStart={(e) => {
                             if (isPending) {
-                              handleDragStart(doc.id, 'document');
+                              e.stopPropagation();
+                              e.dataTransfer.setData('application/x-doc-id', doc.id);
                               e.dataTransfer.effectAllowed = 'move';
+                              handleDragStart(doc.id, 'document');
                             }
                           }}
                           onDragEnd={handleDragEnd}
