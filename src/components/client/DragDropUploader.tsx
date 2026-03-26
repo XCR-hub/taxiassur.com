@@ -26,27 +26,30 @@ const DragDropUploader: React.FC<DragDropUploaderProps> = ({
   const [dragError, setDragError] = useState<string | null>(null);
 
   const validateFile = (file: File): string | null => {
-    // Vérifier la taille
     const maxSizeBytes = maxSize * 1024 * 1024;
     if (file.size > maxSizeBytes) {
       return `Le fichier est trop volumineux (max ${maxSize}MB)`;
     }
 
-    // Vérifier le type
     const acceptedTypes = accept.split(',').map(t => t.trim());
-    const fileExtension = '.' + file.name.split('.').pop()?.toLowerCase();
-    const isValidType = acceptedTypes.some(type => {
-      if (type.startsWith('.')) {
-        return fileExtension === type;
-      }
-      return file.type.includes(type);
+    const dotIndex = file.name.lastIndexOf('.');
+    const fileExtension = dotIndex >= 0 ? file.name.substring(dotIndex).toLowerCase() : '';
+
+    const isValidByExtension = acceptedTypes.some(type => {
+      if (type.startsWith('.')) return fileExtension === type;
+      return false;
     });
 
-    if (!isValidType) {
-      return `Type de fichier non accepté. Formats acceptés: ${acceptedTypes.join(', ')}`;
-    }
+    if (isValidByExtension) return null;
 
-    return null;
+    const isValidByMime = file.type && file.type !== 'application/octet-stream' && acceptedTypes.some(type => {
+      if (!type.startsWith('.')) return file.type.includes(type);
+      return false;
+    });
+
+    if (isValidByMime) return null;
+
+    return `Type de fichier non accepte. Formats acceptes: ${acceptedTypes.join(', ')}`;
   };
 
   const handleFile = useCallback(async (file: File) => {
@@ -89,7 +92,15 @@ const DragDropUploader: React.FC<DragDropUploaderProps> = ({
     e.stopPropagation();
     setIsDragging(false);
 
-    const files = Array.from(e.dataTransfer.files);
+    let files = Array.from(e.dataTransfer.files);
+    if (files.length === 0 && e.dataTransfer.items) {
+      for (let i = 0; i < e.dataTransfer.items.length; i++) {
+        if (e.dataTransfer.items[i].kind === 'file') {
+          const f = e.dataTransfer.items[i].getAsFile();
+          if (f) { files.push(f); break; }
+        }
+      }
+    }
     if (files.length > 0) {
       await handleFile(files[0]);
     }

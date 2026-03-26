@@ -490,9 +490,61 @@ export default function DocumentValidationComplete({
     'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
   ];
 
+  const ALLOWED_EXTENSIONS = ['.pdf', '.jpg', '.jpeg', '.png', '.gif', '.webp', '.doc', '.docx'];
+
+  const EXTENSION_TO_MIME: Record<string, string> = {
+    '.pdf': 'application/pdf',
+    '.jpg': 'image/jpeg',
+    '.jpeg': 'image/jpeg',
+    '.png': 'image/png',
+    '.gif': 'image/gif',
+    '.webp': 'image/webp',
+    '.doc': 'application/msword',
+    '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  };
+
+  function getFileExtension(filename: string): string {
+    const dotIndex = filename.lastIndexOf('.');
+    return dotIndex >= 0 ? filename.substring(dotIndex).toLowerCase() : '';
+  }
+
+  function isFileAllowed(file: File): { allowed: boolean; resolvedMime: string } {
+    const ext = getFileExtension(file.name);
+    if (ALLOWED_MIME_TYPES.includes(file.type)) {
+      return { allowed: true, resolvedMime: file.type };
+    }
+    if ((!file.type || file.type === 'application/octet-stream') && ALLOWED_EXTENSIONS.includes(ext)) {
+      return { allowed: true, resolvedMime: EXTENSION_TO_MIME[ext] || 'application/octet-stream' };
+    }
+    if (ALLOWED_EXTENSIONS.includes(ext)) {
+      return { allowed: true, resolvedMime: EXTENSION_TO_MIME[ext] || file.type };
+    }
+    return { allowed: false, resolvedMime: file.type };
+  }
+
+  function extractFilesFromDragEvent(e: React.DragEvent): File[] {
+    const files = e.dataTransfer?.files;
+    if (files && files.length > 0) {
+      return Array.from(files);
+    }
+    const items = e.dataTransfer?.items;
+    if (items && items.length > 0) {
+      const extracted: File[] = [];
+      for (let i = 0; i < items.length; i++) {
+        if (items[i].kind === 'file') {
+          const f = items[i].getAsFile();
+          if (f) extracted.push(f);
+        }
+      }
+      return extracted;
+    }
+    return [];
+  }
+
   async function uploadFileToCategory(file: File, docType: string) {
     try {
-      if (!ALLOWED_MIME_TYPES.includes(file.type)) {
+      const { allowed, resolvedMime } = isFileAllowed(file);
+      if (!allowed) {
         toast.error(`Format non accepte (${file.name}). Formats autorises : PDF, images (JPG, PNG), Word (DOC, DOCX)`);
         return;
       }
@@ -529,7 +581,7 @@ export default function DocumentValidationComplete({
           file_path: uploadData.path,
           bucket: 'crm-documents',
           file_size: file.size,
-          mime_type: file.type,
+          mime_type: resolvedMime || file.type,
           status: 'pending',
           custom_label: customLabel || null
         });
@@ -575,7 +627,7 @@ export default function DocumentValidationComplete({
 
   function handleContainerDragEnter(e: React.DragEvent) {
     e.preventDefault();
-    if (e.dataTransfer.types.includes('Files')) {
+    if (e.dataTransfer.types.includes('Files') || e.dataTransfer.types.includes('application/x-moz-file')) {
       setIsDraggingExternal(true);
     }
   }
@@ -601,10 +653,9 @@ export default function DocumentValidationComplete({
     setDragOverCategory(null);
     setIsDraggingExternal(false);
 
-    const files = e.dataTransfer?.files;
-    if (files && files.length > 0) {
-      const file = files[0];
-      uploadFileToCategory(file, docType);
+    const extractedFiles = extractFilesFromDragEvent(e);
+    if (extractedFiles.length > 0) {
+      uploadFileToCategory(extractedFiles[0], docType);
       return;
     }
 
