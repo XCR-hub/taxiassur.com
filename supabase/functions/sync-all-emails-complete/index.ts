@@ -165,16 +165,39 @@ class IMAPClient {
       const structResponse = await this.sendCommand(`FETCH ${seq} BODYSTRUCTURE`);
       const parts: Array<{ section: string; filename: string; contentType: string; size: number }> = [];
 
-      const fileMatch = structResponse.matchAll(/"attachment"[^)]*"filename"\s+"([^"]+)"/gi);
+      const seenFilenames = new Set<string>();
+      const attachPattern = /"(?:attachment|inline)"[^)]*?"(?:filename|name)"\s*"([^"]+)"/gi;
       let partNum = 2;
-      for (const match of fileMatch) {
+      for (const match of structResponse.matchAll(attachPattern)) {
+        const fname = decodeMimeHeader(match[1]);
+        if (seenFilenames.has(fname)) continue;
+        seenFilenames.add(fname);
+        const ext = fname.split('.').pop()?.toLowerCase() || '';
+        const isSmallImage = ['gif', 'bmp'].includes(ext);
+        if (isSmallImage) continue;
         parts.push({
           section: partNum.toString(),
-          filename: match[1],
-          contentType: 'application/octet-stream',
+          filename: fname,
+          contentType: ext === 'pdf' ? 'application/pdf' : ext === 'doc' ? 'application/msword' : ext === 'docx' ? 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' : ext === 'jpg' || ext === 'jpeg' ? 'image/jpeg' : ext === 'png' ? 'image/png' : 'application/octet-stream',
           size: 0
         });
         partNum++;
+      }
+      if (parts.length === 0) {
+        const namePattern = /"(?:name)"\s*"([^"]+)"/gi;
+        for (const match of structResponse.matchAll(namePattern)) {
+          const fname = decodeMimeHeader(match[1]);
+          const ext = fname.split('.').pop()?.toLowerCase() || '';
+          if (['gif', 'bmp'].includes(ext) || seenFilenames.has(fname)) continue;
+          seenFilenames.add(fname);
+          parts.push({
+            section: partNum.toString(),
+            filename: fname,
+            contentType: ext === 'pdf' ? 'application/pdf' : 'application/octet-stream',
+            size: 0
+          });
+          partNum++;
+        }
       }
 
       for (const part of parts) {
@@ -319,18 +342,80 @@ Deno.serve(async (req) => {
           console.log('Successfully inserted email:', email.subject);
           stats.inserted++;
 
-          // Désactiver le traitement des pièces jointes pour réduire la charge
-          // Les pièces jointes seront traitées par le cron auto-process-email-attachments
           if (attachments.length > 0) {
-            console.log(`${attachments.length} pièce(s) jointe(s) détectée(s), traitement différé`);
-            // Stocker juste les métadonnées dans l'email pour traitement ultérieur
-            await supabase.from('email_messages').update({
-              attachments: attachments.map(a => ({
-                filename: a.filename,
-                size: a.size,
-                contentType: a.contentType
-              }))
-            }).eq('id', insertedEmail.id);
+            console.log(`${attachments.length} pièce(s) jointe(s) détectée(s), upload en cours...`);
+            const attachmentMeta: Array<Record<string, unknown>> = [];
+
+            for (const att of attachments) {
+              if (!att.data || att.data.length === 0) continue;
+              if (att.data.length > 20 * 1024 * 1024) {
+                console.log(`Pièce jointe trop volumineuse (${(att.data.length / 1024 / 1024).toFixed(1)}MB), ignorée: ${att.filename}`);
+                continue;
+              }
+
+              try {
+                const safeName = att.filename.replace(/[^a-zA-Z0-9._-]/g, '_');
+                const storagePath = `${account.id}/${insertedEmail.id}/${Date.now()}_${safeName}`;
+
+                const { error: uploadErr } = await supabase.storage
+                  .from('email-attachments')
+                  .upload(storagePath, att.data, {
+                    contentType: att.contentType || 'application/octet-stream',
+                    upsert: false
+                  });
+
+                if (uploadErr) {
+                  console.error('Upload PJ error:', att.filename, uploadErr.message);
+                  continue;
+                }
+
+                const { data: urlData } = supabase.storage.from('email-attachments').getPublicUrl(storagePath);
+                const downloadUrl = urlData?.publicUrl || '';
+
+                const fn = att.filename.toLowerCase();
+                let proposedDocType: string | null = null;
+                if (/permis/.test(fn)) proposedDocType = 'permis_conduire';
+                else if (/carte.*grise|certificat.*immatriculation/.test(fn)) proposedDocType = 'carte_grise';
+                else if (/\brib\b|relev/.test(fn)) proposedDocType = 'rib';
+                else if (/kbis|k-bis|sirene/.test(fn)) proposedDocType = 'kbis';
+                else if (/identit|cni|passeport|carte.*nationale/.test(fn)) proposedDocType = 'piece_identite';
+                else if (/licence|autorisation.*stationnement/.test(fn)) proposedDocType = 'licence_taxi';
+                else if (/attestation/.test(fn)) proposedDocType = 'attestation';
+                else if (/carte.*pro/.test(fn)) proposedDocType = 'carte_professionnelle';
+
+                await supabase.from('email_attachments').insert({
+                  email_message_id: insertedEmail.id,
+                  filename: att.filename,
+                  content_type: att.contentType || 'application/octet-stream',
+                  file_size: att.data.length,
+                  storage_path: storagePath,
+                  proposed_doc_type: proposedDocType,
+                  classification_method: proposedDocType ? 'filename_pattern' : null,
+                  classification_confidence: proposedDocType ? 0.7 : null,
+                  status: 'unclassified'
+                });
+
+                attachmentMeta.push({
+                  filename: att.filename,
+                  size: att.data.length,
+                  contentType: att.contentType,
+                  path: storagePath,
+                  url: downloadUrl,
+                  bucket: 'email-attachments',
+                  proposedDocType
+                });
+
+                console.log(`PJ uploadée: ${att.filename} (${(att.data.length / 1024).toFixed(0)}KB)`);
+              } catch (attErr: any) {
+                console.error('Erreur traitement PJ:', att.filename, attErr.message);
+              }
+            }
+
+            if (attachmentMeta.length > 0) {
+              await supabase.from('email_messages').update({
+                attachments: attachmentMeta
+              }).eq('id', insertedEmail.id);
+            }
           }
         }
       }
