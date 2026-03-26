@@ -139,11 +139,14 @@ const CRMLeadDetail: React.FC = () => {
         (aiDecisions?.length || 0) +
         (notifications?.length || 0);
 
-      const REQUIRED_CATEGORIES = 4;
-      const missingCount = Math.max(0, REQUIRED_CATEGORIES - totalDocs);
+      const REQUIRED_CATEGORIES = 9;
+      const uniqueValidatedTypes = new Set(
+        documents?.filter(d => d.status === 'validated').map(d => d.document_type) || []
+      );
+      const missingCount = Math.max(0, REQUIRED_CATEGORIES - uniqueValidatedTypes.size);
 
       setStats({
-        documentsComplete: totalDocs >= REQUIRED_CATEGORIES && validatedDocs === totalDocs,
+        documentsComplete: uniqueValidatedTypes.size >= REQUIRED_CATEGORIES,
         documentsMissing: missingCount,
         basketCount: pendingDocs,
         quotesCount: quotes?.length || 0,

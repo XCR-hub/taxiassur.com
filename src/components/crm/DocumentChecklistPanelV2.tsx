@@ -67,10 +67,10 @@ const DOCUMENT_TYPES = [
   { id: 'permis_conduire', label: 'Permis de conduire', required: true, icon: '🪪' },
   { id: 'piece_identite', label: "Piece d'identite", required: true, icon: '🆔' },
   { id: 'carte_grise', label: 'Carte grise du vehicule', required: true, icon: '🚗' },
-  { id: 'releve_information', label: "Releve d'information", required: false, icon: '📋' },
+  { id: 'releve_information', label: "Releve d'information", required: true, icon: '📋' },
   { id: 'autorisation_stationnement', label: 'Autorisation de stationnement', required: true, icon: '🅿️' },
   { id: 'rib', label: 'RIB', required: true, icon: '🏦' },
-  { id: 'kbis', label: 'KBIS / SIRENE', required: false, icon: '🏢' }
+  { id: 'kbis', label: 'KBIS / SIRENE', required: true, icon: '🏢' }
 ];
 
 export function DocumentChecklistPanelV2({

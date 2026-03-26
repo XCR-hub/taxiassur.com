@@ -38,9 +38,9 @@ const REQUIRED_DOCUMENTS = [
   { type: 'licence_taxi', label: 'Licence Taxi / ADS', required: true, priority: 3 },
   { type: 'carte_identite', label: 'Carte d\'Identité', required: true, priority: 4 },
   { type: 'rib', label: 'RIB', required: true, priority: 5 },
-  { type: 'autorisation_stationnement', label: 'Autorisation Stationnement', required: false, priority: 6 },
-  { type: 'kbis', label: 'Extrait Kbis', required: false, priority: 7 },
-  { type: 'attestation_assurance', label: 'Attestation Assurance Actuelle', required: false, priority: 8 },
+  { type: 'autorisation_stationnement', label: 'Autorisation Stationnement', required: true, priority: 6 },
+  { type: 'kbis', label: 'Extrait Kbis', required: true, priority: 7 },
+  { type: 'attestation_assurance', label: 'Attestation Assurance Actuelle', required: true, priority: 8 },
 ];
 
 export function DocumentChecklistPanel({ leadId, onDocumentUpload, onRequestDocuments }: DocumentChecklistPanelProps) {

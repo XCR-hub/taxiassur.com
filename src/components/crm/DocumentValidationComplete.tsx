@@ -66,11 +66,11 @@ const DOCUMENT_CATEGORIES: DocumentCategory[] = [
   { id: 'rib', label: 'RIB', icon: '💳', required: true },
   { id: 'permis_conduire', label: 'Permis de conduire', icon: '🪪', required: true },
   { id: 'carte_grise', label: 'Carte grise', icon: '🚗', required: true },
-  { id: 'releve_information', label: 'Relevé d\'information', icon: '📋', required: false },
-  { id: 'carte_professionnelle', label: 'Carte professionnelle', icon: '🎫', required: false },
-  { id: 'kbis', label: 'Kbis / SIRENE', icon: '🏢', required: false },
-  { id: 'carte_identite', label: 'Pièce d\'identité', icon: '🆔', required: false },
-  { id: 'autorisation_stationnement', label: 'Autorisation de stationnement', icon: '🅿️', required: false },
+  { id: 'releve_information', label: 'Relevé d\'information', icon: '📋', required: true },
+  { id: 'carte_professionnelle', label: 'Carte professionnelle', icon: '🎫', required: true },
+  { id: 'kbis', label: 'Kbis / SIRENE', icon: '🏢', required: true },
+  { id: 'carte_identite', label: 'Pièce d\'identité', icon: '🆔', required: true },
+  { id: 'autorisation_stationnement', label: 'Autorisation de stationnement', icon: '🅿️', required: true },
 ];
 
 export default function DocumentValidationComplete({
