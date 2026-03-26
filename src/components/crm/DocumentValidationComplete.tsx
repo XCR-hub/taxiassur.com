@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../lib/supabase';
 import { openDocument } from '../../lib/document-utils';
 import { FileText, Download, X, CheckCircle2, AlertCircle, Loader2, XCircle, Check, MoveHorizontal, Upload, GripVertical, Mail, ChevronDown, Eye, ArrowRightLeft } from 'lucide-react';
@@ -84,6 +84,7 @@ export default function DocumentValidationComplete({
   const [classifiedDocs, setClassifiedDocs] = useState<ClassifiedDocument[]>([]);
   const [loading, setLoading] = useState(true);
   const [draggedItem, setDraggedItem] = useState<{ id: string; type: 'attachment' | 'document' } | null>(null);
+  const draggedItemRef = useRef<{ id: string; type: 'attachment' | 'document' } | null>(null);
   const [classifying, setClassifying] = useState<string | null>(null);
   const [rejectingDoc, setRejectingDoc] = useState<string | null>(null);
   const [rejectionReason, setRejectionReason] = useState('');
@@ -96,6 +97,7 @@ export default function DocumentValidationComplete({
   const [unimportedAttachments, setUnimportedAttachments] = useState<UnimportedAttachment[]>([]);
   const [importMenuOpen, setImportMenuOpen] = useState<string | null>(null);
   const [importingFile, setImportingFile] = useState<string | null>(null);
+  const [moveMenuOpen, setMoveMenuOpen] = useState<string | null>(null);
 
   useEffect(() => {
     loadAll();
@@ -626,10 +628,13 @@ export default function DocumentValidationComplete({
   }
 
   function handleDragStart(id: string, type: 'attachment' | 'document') {
-    setDraggedItem({ id, type });
+    const item = { id, type };
+    draggedItemRef.current = item;
+    setDraggedItem(item);
   }
 
   function handleDragEnd() {
+    draggedItemRef.current = null;
     setDraggedItem(null);
     setDragOverCategory(null);
     setIsDraggingExternal(false);
@@ -637,7 +642,7 @@ export default function DocumentValidationComplete({
 
   function handleDragOver(e: React.DragEvent) {
     e.preventDefault();
-    e.dataTransfer.dropEffect = draggedItem ? 'move' : 'copy';
+    e.dataTransfer.dropEffect = draggedItemRef.current ? 'move' : 'copy';
   }
 
   function handleContainerDragEnter(e: React.DragEvent) {
@@ -659,8 +664,9 @@ export default function DocumentValidationComplete({
   function handleCategoryDragEnter(e: React.DragEvent, categoryId: string) {
     e.preventDefault();
     e.stopPropagation();
-    if (draggedItem?.type === 'document') {
-      const doc = classifiedDocs.find(d => d.id === draggedItem.id);
+    const current = draggedItemRef.current;
+    if (current?.type === 'document') {
+      const doc = classifiedDocs.find(d => d.id === current.id);
       if (doc?.document_type === categoryId) {
         setDragOverCategory(null);
         return;
@@ -675,24 +681,30 @@ export default function DocumentValidationComplete({
     setDragOverCategory(null);
     setIsDraggingExternal(false);
 
+    const current = draggedItemRef.current;
+
     const extractedFiles = extractFilesFromDragEvent(e);
-    if (extractedFiles.length > 0) {
+    if (extractedFiles.length > 0 && !current) {
       uploadFileToCategory(extractedFiles[0], docType);
       return;
     }
 
-    if (!draggedItem) return;
+    if (!current) return;
 
-    if (draggedItem.type === 'attachment') {
-      classifyAttachment(draggedItem.id, docType);
+    if (current.type === 'attachment') {
+      classifyAttachment(current.id, docType);
     } else {
-      const doc = classifiedDocs.find(d => d.id === draggedItem.id);
+      const doc = classifiedDocs.find(d => d.id === current.id);
       if (doc?.document_type === docType) {
+        draggedItemRef.current = null;
         setDraggedItem(null);
         return;
       }
-      moveDocument(draggedItem.id, docType);
+      moveDocument(current.id, docType);
     }
+
+    draggedItemRef.current = null;
+    setDraggedItem(null);
   }
 
   const isAnyDragActive = !!draggedItem || isDraggingExternal;
@@ -1140,6 +1152,39 @@ export default function DocumentValidationComplete({
                                   <X className="h-3 w-3 inline mr-1" />
                                   Refuser
                                 </button>
+                                <div className="relative">
+                                  <button
+                                    onClick={() => setMoveMenuOpen(moveMenuOpen === doc.id ? null : doc.id)}
+                                    disabled={processing === doc.id}
+                                    className="text-xs py-1 px-2 bg-orange-50 text-orange-600 rounded hover:bg-orange-100 disabled:opacity-50 font-medium"
+                                    title="Deplacer vers une autre categorie"
+                                  >
+                                    <ArrowRightLeft className="h-3 w-3" />
+                                  </button>
+                                  {moveMenuOpen === doc.id && (
+                                    <>
+                                      <div className="fixed inset-0 z-10" onClick={() => setMoveMenuOpen(null)} />
+                                      <div className="absolute right-0 bottom-full mb-1 bg-white border border-gray-200 rounded-lg shadow-xl z-20 w-56 max-h-64 overflow-y-auto">
+                                        <div className="px-3 py-2 border-b border-gray-100">
+                                          <p className="text-xs font-semibold text-gray-700">Deplacer vers :</p>
+                                        </div>
+                                        {categories.filter(c => c.id !== doc.document_type).map((cat) => (
+                                          <button
+                                            key={cat.id}
+                                            onClick={() => {
+                                              setMoveMenuOpen(null);
+                                              moveDocument(doc.id, cat.id);
+                                            }}
+                                            className="w-full text-left px-3 py-2 text-xs hover:bg-orange-50 flex items-center gap-2 transition-colors border-b border-gray-50 last:border-0"
+                                          >
+                                            <span className="text-base">{cat.icon}</span>
+                                            <span className="font-medium text-gray-800">{cat.label}</span>
+                                          </button>
+                                        ))}
+                                      </div>
+                                    </>
+                                  )}
+                                </div>
                               </>
                             )}
 
