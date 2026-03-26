@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Mail, Phone, AlertCircle, Copy, CheckCircle, User, Building2, MapPin, Car, FileText, Calculator, ClipboardCheck, MessageSquare, Star, TrendingUp } from 'lucide-react';
+import { ArrowLeft, Mail, Phone, AlertCircle, Copy, CheckCircle, User, Building2, MapPin, Car, FileText, Calculator, ClipboardCheck, MessageSquare, Star, TrendingUp, X } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
 import { useRealtimeDocuments } from '@/hooks/useRealtimeDocuments';
@@ -47,6 +47,7 @@ const CRMLeadDetail: React.FC = () => {
   const [assigneeName, setAssigneeName] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<WorkflowTab>('overview');
   const [linkCopied, setLinkCopied] = useState(false);
+  const [editingVehicleType, setEditingVehicleType] = useState(false);
   const [stats, setStats] = useState({
     documentsComplete: false,
     documentsMissing: 0,
@@ -82,6 +83,18 @@ const CRMLeadDetail: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const updateVehicleType = async (type: string) => {
+    if (!leadId) return;
+    const { error } = await supabase
+      .from('crm_leads')
+      .update({ vehicle_type: type, updated_at: new Date().toISOString() })
+      .eq('id', leadId);
+    if (!error && lead) {
+      setLead({ ...lead, vehicle_type: type });
+    }
+    setEditingVehicleType(false);
   };
 
   const loadStats = async () => {
@@ -438,7 +451,50 @@ const CRMLeadDetail: React.FC = () => {
 
             {/* Name + info */}
             <div className="flex-1 min-w-0">
-              <h1 className="text-xl font-bold text-white leading-tight mb-1.5">{leadName}</h1>
+              <div className="flex items-center gap-3 mb-1.5">
+                <h1 className="text-xl font-bold text-white leading-tight">{leadName}</h1>
+                <div className="relative">
+                  {editingVehicleType ? (
+                    <div className="flex items-center gap-1">
+                      {['Taxi', 'VTC', 'Moto-taxi'].map((type) => (
+                        <button
+                          key={type}
+                          onClick={() => updateVehicleType(type)}
+                          className={`px-2.5 py-1 rounded-full text-xs font-bold border transition-all ${
+                            lead.vehicle_type?.toLowerCase() === type.toLowerCase()
+                              ? 'bg-yellow-400 text-gray-900 border-yellow-400'
+                              : 'bg-gray-700 text-gray-300 border-gray-600 hover:border-yellow-400 hover:text-yellow-400'
+                          }`}
+                        >
+                          {type}
+                        </button>
+                      ))}
+                      <button
+                        onClick={() => setEditingVehicleType(false)}
+                        className="ml-1 text-gray-500 hover:text-gray-300"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setEditingVehicleType(true)}
+                      className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border transition-all ${
+                        lead.vehicle_type
+                          ? lead.vehicle_type.toLowerCase() === 'taxi'
+                            ? 'bg-yellow-400/20 text-yellow-400 border-yellow-400/50 hover:bg-yellow-400/30'
+                            : lead.vehicle_type.toLowerCase() === 'vtc'
+                            ? 'bg-blue-400/20 text-blue-400 border-blue-400/50 hover:bg-blue-400/30'
+                            : 'bg-green-400/20 text-green-400 border-green-400/50 hover:bg-green-400/30'
+                          : 'bg-gray-700/50 text-gray-400 border-gray-600 hover:border-gray-400'
+                      }`}
+                    >
+                      <Car className="h-3.5 w-3.5" />
+                      {lead.vehicle_type || 'Type ?'}
+                    </button>
+                  )}
+                </div>
+              </div>
               <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-400">
                 {lead.email && (
                   <a href={`mailto:${lead.email}`} className="flex items-center gap-1.5 hover:text-yellow-400 transition-colors">
@@ -464,18 +520,12 @@ const CRMLeadDetail: React.FC = () => {
                     {lead.company_name}
                   </span>
                 )}
-                {lead.vehicle_type && (
-                  <span className="flex items-center gap-1.5">
-                    <Car className="h-3.5 w-3.5" />
-                    {lead.vehicle_type}
-                  </span>
-                )}
                 <span className="flex items-center gap-1.5">
                   <User className="h-3.5 w-3.5" />
                   {assigneeName ? (
                     <span className="text-gray-300">{assigneeName}</span>
                   ) : (
-                    <span className="italic text-gray-500">Non attribué</span>
+                    <span className="italic text-gray-500">Non attribue</span>
                   )}
                 </span>
               </div>
