@@ -6,11 +6,12 @@ import {
   Facebook, Instagram, Twitter, Youtube, Linkedin, MessageSquare,
   Send, Hash, CheckCircle, Clock, AlertCircle, XCircle,
   Plus, Settings, BarChart3, Globe, Smartphone, Mail, Video,
-  Users, TrendingUp, Calendar, Award, Zap, Check, X,
+  Users, TrendingUp, Calendar, Award, Zap, Check, X, Wrench,
   type LucideIcon
 } from 'lucide-react';
 import TestAutomationButton from './TestAutomationButton';
 import { LinkedInOAuthButton } from '@/components/LinkedInOAuthButton';
+import SocialNetworkConfigModal from './SocialNetworkConfigModal';
 
 interface SocialNetwork {
   id: string;
@@ -191,10 +192,19 @@ export default function SocialMediaManager() {
     hashtags: '',
     scheduled_at: ''
   });
+  const [configModal, setConfigModal] = useState<{
+    platform: string;
+    name: string;
+    icon: LucideIcon;
+    color: string;
+    dbNetworkId?: string;
+  } | null>(null);
+  const [networkConfigs, setNetworkConfigs] = useState<Record<string, Record<string, string>>>({});
 
   useEffect(() => {
     loadNetworks();
     loadRealStats();
+    loadNetworkConfigs();
   }, []);
 
   const loadNetworks = async () => {
@@ -236,6 +246,45 @@ export default function SocialMediaManager() {
     } catch (error) {
       logger.error('Error loading stats:', error);
     }
+  };
+
+  const loadNetworkConfigs = async () => {
+    try {
+      const { data } = await supabase
+        .from('social_networks')
+        .select('platform, config');
+
+      if (data) {
+        const configs: Record<string, Record<string, string>> = {};
+        data.forEach(n => {
+          if (n.config && typeof n.config === 'object' && Object.keys(n.config).length > 0) {
+            configs[n.platform] = n.config as Record<string, string>;
+          }
+        });
+        setNetworkConfigs(configs);
+      }
+    } catch (error) {
+      logger.error('Error loading network configs:', error);
+    }
+  };
+
+  const getConfigStatus = (platform: string): 'configured' | 'partial' | 'empty' => {
+    const cfg = networkConfigs[platform];
+    if (!cfg || Object.keys(cfg).length === 0) return 'empty';
+    const values = Object.values(cfg).filter(v => v?.trim());
+    if (values.length === Object.keys(cfg).length) return 'configured';
+    return 'partial';
+  };
+
+  const openConfigModal = (networkDef: { id: string; name: string; icon: LucideIcon; color: string }) => {
+    const dbNetwork = networks.find(n => n.platform === networkDef.id);
+    setConfigModal({
+      platform: networkDef.id,
+      name: networkDef.name,
+      icon: networkDef.icon,
+      color: networkDef.color,
+      dbNetworkId: dbNetwork?.id,
+    });
   };
 
   const handleGenerateAI = async () => {
@@ -507,17 +556,37 @@ export default function SocialMediaManager() {
 
                   {!dbNetwork && (
                     <div className="pt-2 text-xs text-yellow-500">
-                      ⚠️ Réseau non configuré - Cliquez pour voir le guide
+                      Reseau non configure dans la base
                     </div>
                   )}
 
-                  {networkDef.apiStatus === 'missing' && (
-                    <div className="pt-2 border-t border-slate-600">
-                      <p className="text-xs text-red-300">
-                        🔴 Configuration requise: {networkDef.setupGuide}
-                      </p>
-                    </div>
-                  )}
+                  {(() => {
+                    const cfgStatus = getConfigStatus(networkDef.id);
+                    return (
+                      <div className="pt-2 border-t border-slate-600">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-xs text-slate-400">API Config:</span>
+                          {cfgStatus === 'configured' ? (
+                            <span className="px-2 py-0.5 bg-green-600/30 text-green-300 text-xs rounded-full border border-green-600/50">Configure</span>
+                          ) : cfgStatus === 'partial' ? (
+                            <span className="px-2 py-0.5 bg-amber-600/30 text-amber-300 text-xs rounded-full border border-amber-600/50">Partiel</span>
+                          ) : (
+                            <span className="px-2 py-0.5 bg-slate-600/50 text-slate-400 text-xs rounded-full border border-slate-600">Non configure</span>
+                          )}
+                        </div>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openConfigModal(networkDef);
+                          }}
+                          className="w-full flex items-center justify-center gap-1.5 py-1.5 bg-slate-600 hover:bg-slate-500 text-white text-xs rounded-lg transition-colors"
+                        >
+                          <Wrench className="w-3.5 h-3.5" />
+                          Configurer les API
+                        </button>
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
             );
@@ -1101,6 +1170,23 @@ export default function SocialMediaManager() {
           {activeTab === 'automation' && renderAutomationTab()}
         </div>
       </div>
+
+      {configModal && (
+        <SocialNetworkConfigModal
+          networkId={configModal.platform}
+          platform={configModal.platform}
+          networkName={configModal.name}
+          icon={configModal.icon}
+          iconColor={configModal.color}
+          dbNetworkId={configModal.dbNetworkId}
+          onClose={() => setConfigModal(null)}
+          onSaved={() => {
+            setConfigModal(null);
+            loadNetworks();
+            loadNetworkConfigs();
+          }}
+        />
+      )}
 
       <TestAutomationButton
         title="Tester Automatisations Social Media"
