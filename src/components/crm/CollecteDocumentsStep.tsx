@@ -26,10 +26,11 @@ interface CommunicationTemplate {
 }
 
 interface DocumentStats {
-  total: number;
-  validated: number;
-  pending: number;
-  required: number;
+  categoriesValidated: number;
+  categoriesPending: number;
+  categoriesMissing: number;
+  totalRequired: number;
+  pendingDocsCount: number;
 }
 
 interface DocumentInfo {
@@ -52,10 +53,11 @@ export default function CollecteDocumentsStep({
   const [selectedTemplate, setSelectedTemplate] = useState<CommunicationTemplate | null>(null);
   const [sending, setSending] = useState(false);
   const [stats, setStats] = useState<DocumentStats>({
-    total: 0,
-    validated: 0,
-    pending: 0,
-    required: 0
+    categoriesValidated: 0,
+    categoriesPending: 0,
+    categoriesMissing: 0,
+    totalRequired: 0,
+    pendingDocsCount: 0
   });
   const [documents, setDocuments] = useState<DocumentInfo[]>([]);
   const [actualFirstName, setActualFirstName] = useState<string>(leadFirstName || '');
@@ -98,8 +100,7 @@ export default function CollecteDocumentsStep({
   }
 
   useEffect(() => {
-    // Check if complete
-    if (stats.validated >= stats.required && stats.validated > 0) {
+    if (stats.categoriesValidated >= stats.totalRequired && stats.categoriesValidated > 0) {
       onComplete?.();
     }
   }, [stats]);
@@ -140,15 +141,34 @@ export default function CollecteDocumentsStep({
 
       setDocuments(documentsList);
 
-      const total = data?.length || 0;
-      const validated = data?.filter(d => d.status === 'validated').length || 0;
-      const pending = data?.filter(d => d.status === 'pending').length || 0;
+      const categoryStatus = new Map<string, Set<string>>();
+      data?.forEach(d => {
+        const key = d.document_type === 'custom' ? `custom_${d.custom_label}` : d.document_type;
+        if (!categoryStatus.has(key)) categoryStatus.set(key, new Set());
+        categoryStatus.get(key)!.add(d.status);
+      });
+
+      let categoriesValidated = 0;
+      let categoriesPending = 0;
+      const pendingDocsCount = data?.filter(d => d.status === 'pending').length || 0;
+
+      requiredDocs.forEach(reqDoc => {
+        const statuses = categoryStatus.get(reqDoc.type);
+        if (statuses?.has('validated')) {
+          categoriesValidated++;
+        } else if (statuses && statuses.size > 0) {
+          categoriesPending++;
+        }
+      });
+
+      const categoriesMissing = requiredDocs.length - categoriesValidated - categoriesPending;
 
       setStats({
-        total,
-        validated,
-        pending,
-        required: requiredDocs.length
+        categoriesValidated,
+        categoriesPending,
+        categoriesMissing,
+        totalRequired: requiredDocs.length,
+        pendingDocsCount
       });
     } catch (error) {
       console.error('Error loading document stats:', error);
@@ -387,8 +407,8 @@ export default function CollecteDocumentsStep({
     }
   }
 
-  const progressPercent = stats.required > 0
-    ? Math.round((stats.validated / stats.required) * 100)
+  const progressPercent = stats.totalRequired > 0
+    ? Math.round((stats.categoriesValidated / stats.totalRequired) * 100)
     : 0;
 
   return (
@@ -421,17 +441,28 @@ export default function CollecteDocumentsStep({
         </div>
 
         <div className="grid grid-cols-3 gap-4 text-center">
-          <div>
-            <div className="text-2xl font-bold text-gray-900">{stats.validated}</div>
-            <div className="text-sm text-gray-600">Validés</div>
+          <div className="py-3 bg-green-50 rounded-lg border border-green-100">
+            <div className="text-2xl font-bold text-green-700">{stats.categoriesValidated}</div>
+            <div className="text-xs font-medium text-green-600 mt-0.5">
+              {stats.categoriesValidated === 1 ? 'Categorie validee' : 'Categories validees'}
+            </div>
+            <div className="text-[10px] text-green-500 mt-0.5">sur {stats.totalRequired} requises</div>
           </div>
-          <div>
-            <div className="text-2xl font-bold text-orange-600">{stats.pending}</div>
-            <div className="text-sm text-gray-600">En attente</div>
+          <div className="py-3 bg-orange-50 rounded-lg border border-orange-100">
+            <div className="text-2xl font-bold text-orange-600">{stats.pendingDocsCount}</div>
+            <div className="text-xs font-medium text-orange-600 mt-0.5">
+              {stats.pendingDocsCount === 1 ? 'Document en attente' : 'Documents en attente'}
+            </div>
+            <div className="text-[10px] text-orange-400 mt-0.5">
+              {stats.categoriesPending} {stats.categoriesPending === 1 ? 'categorie concernee' : 'categories concernees'}
+            </div>
           </div>
-          <div>
-            <div className="text-2xl font-bold text-gray-400">{stats.required - stats.validated}</div>
-            <div className="text-sm text-gray-600">Manquants</div>
+          <div className="py-3 bg-red-50 rounded-lg border border-red-100">
+            <div className="text-2xl font-bold text-red-500">{stats.categoriesMissing}</div>
+            <div className="text-xs font-medium text-red-500 mt-0.5">
+              {stats.categoriesMissing === 1 ? 'Categorie manquante' : 'Categories manquantes'}
+            </div>
+            <div className="text-[10px] text-red-400 mt-0.5">aucun document recu</div>
           </div>
         </div>
       </div>
