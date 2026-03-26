@@ -581,6 +581,7 @@ const CRMLeadDetail: React.FC = () => {
               caseId={leadId!}
               leadEmail={lead.email}
               leadFirstName={lead.first_name}
+              vehicleType={lead.vehicle_type}
               onDocumentClassified={() => loadStats()}
             />
           </div>

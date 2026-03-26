@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { openDocument } from '../../lib/document-utils';
-import { FileText, Download, X, CheckCircle2, AlertCircle, Loader2, XCircle, Check, MoveHorizontal, Upload, GripVertical, Mail, ChevronDown, Eye } from 'lucide-react';
+import { FileText, Download, X, CheckCircle2, AlertCircle, Loader2, XCircle, Check, MoveHorizontal, Upload, GripVertical, Mail, ChevronDown, Eye, ArrowRightLeft } from 'lucide-react';
 import { toast } from '@/lib/toast';
+import { getRequiredDocuments } from '@/lib/document-requirements';
 
 interface DocumentValidationCompleteProps {
   caseId: string;
   leadEmail?: string;
   leadFirstName?: string;
+  vehicleType?: string | null;
   onDocumentClassified?: () => void;
 }
 
@@ -61,24 +63,23 @@ interface UnimportedAttachment {
   prospect_bucket: string | null;
 }
 
-const DOCUMENT_CATEGORIES: DocumentCategory[] = [
-  { id: 'licence_taxi', label: 'Licence Taxi', icon: '🚕', required: true },
-  { id: 'rib', label: 'RIB', icon: '💳', required: true },
-  { id: 'permis_conduire', label: 'Permis de conduire', icon: '🪪', required: true },
-  { id: 'carte_grise', label: 'Carte grise', icon: '🚗', required: true },
-  { id: 'releve_information', label: 'Relevé d\'information', icon: '📋', required: true },
-  { id: 'carte_professionnelle', label: 'Carte professionnelle', icon: '🎫', required: true },
-  { id: 'kbis', label: 'Kbis / SIRENE', icon: '🏢', required: true },
-  { id: 'carte_identite', label: 'Pièce d\'identité', icon: '🆔', required: true },
-  { id: 'autorisation_stationnement', label: 'Autorisation de stationnement', icon: '🅿️', required: true },
-];
+function buildDocumentCategories(vehicleType?: string | null): DocumentCategory[] {
+  return getRequiredDocuments(vehicleType).map(d => ({
+    id: d.type,
+    label: d.label,
+    icon: d.icon || '📄',
+    required: d.required
+  }));
+}
 
 export default function DocumentValidationComplete({
   caseId,
   leadEmail,
   leadFirstName,
+  vehicleType,
   onDocumentClassified
 }: DocumentValidationCompleteProps) {
+  const DOCUMENT_CATEGORIES = buildDocumentCategories(vehicleType);
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [classifiedDocs, setClassifiedDocs] = useState<ClassifiedDocument[]>([]);
   const [loading, setLoading] = useState(true);
@@ -268,24 +269,38 @@ export default function DocumentValidationComplete({
   }
 
   async function moveDocument(docId: string, newDocType: string) {
+    const doc = classifiedDocs.find(d => d.id === docId);
+    if (doc?.document_type === newDocType) return;
+
     try {
       setProcessing(docId);
+
+      let finalDocType = newDocType;
+      let customLabel: string | null = null;
+      if (newDocType.startsWith('custom_')) {
+        finalDocType = 'custom';
+        customLabel = newDocType.replace('custom_', '');
+      }
 
       const { error } = await supabase
         .from('crm_lead_documents')
         .update({
-          document_type: newDocType,
+          document_type: finalDocType,
+          custom_label: customLabel,
           updated_at: new Date().toISOString()
         })
         .eq('id', docId);
 
       if (error) throw error;
 
-      await loadClassifiedDocuments();
+      const targetLabel = categories.find(c => c.id === newDocType)?.label || newDocType;
+      toast.success(`Document deplace vers "${targetLabel}"`);
+
+      await loadAll();
       onDocumentClassified?.();
     } catch (error) {
       console.error('Error moving document:', error);
-      toast.error('Erreur lors du déplacement du document');
+      toast.error('Erreur lors du deplacement du document');
     } finally {
       setProcessing(null);
     }
@@ -644,6 +659,13 @@ export default function DocumentValidationComplete({
   function handleCategoryDragEnter(e: React.DragEvent, categoryId: string) {
     e.preventDefault();
     e.stopPropagation();
+    if (draggedItem?.type === 'document') {
+      const doc = classifiedDocs.find(d => d.id === draggedItem.id);
+      if (doc?.document_type === categoryId) {
+        setDragOverCategory(null);
+        return;
+      }
+    }
     setDragOverCategory(categoryId);
   }
 
@@ -664,6 +686,11 @@ export default function DocumentValidationComplete({
     if (draggedItem.type === 'attachment') {
       classifyAttachment(draggedItem.id, docType);
     } else {
+      const doc = classifiedDocs.find(d => d.id === draggedItem.id);
+      if (doc?.document_type === docType) {
+        setDraggedItem(null);
+        return;
+      }
       moveDocument(draggedItem.id, docType);
     }
   }
@@ -1035,29 +1062,42 @@ export default function DocumentValidationComplete({
 
                   {docsInCategory.length > 0 ? (
                     <div className="space-y-2 mb-3 relative">
-                      {docsInCategory.map((doc) => (
+                      {docsInCategory.map((doc) => {
+                        const isDragging = draggedItem?.id === doc.id && draggedItem?.type === 'document';
+                        const isPending = doc.status === 'pending';
+
+                        return (
                         <div
                           key={doc.id}
-                          draggable={doc.status === 'pending'}
+                          draggable={isPending}
                           onDragStart={(e) => {
-                            if (doc.status === 'pending') {
+                            if (isPending) {
                               handleDragStart(doc.id, 'document');
                               e.dataTransfer.effectAllowed = 'move';
                             }
                           }}
                           onDragEnd={handleDragEnd}
-                          className={`bg-gray-50 rounded p-3 border border-gray-200 ${
-                            doc.status === 'pending' ? 'cursor-grab active:cursor-grabbing hover:border-blue-400' : ''
+                          className={`rounded p-3 border transition-all duration-200 ${
+                            isDragging
+                              ? 'opacity-30 scale-95 border-blue-300 bg-blue-50 shadow-none'
+                              : isPending
+                              ? 'bg-gray-50 border-gray-200 cursor-grab active:cursor-grabbing hover:border-blue-400 hover:shadow-sm group/doc'
+                              : 'bg-gray-50 border-gray-200'
                           } ${processing === doc.id ? 'opacity-60 pointer-events-none' : ''}`}
                         >
                           <div className="flex items-start justify-between mb-2">
-                            <div className="flex-1 min-w-0">
-                              <p className="text-xs font-medium text-gray-900 truncate">
-                                {doc.file_name}
-                              </p>
-                              <p className="text-xs text-gray-500 mt-0.5">
-                                {doc.file_size && formatFileSize(doc.file_size)}
-                              </p>
+                            <div className="flex items-start gap-2 flex-1 min-w-0">
+                              {isPending && (
+                                <GripVertical className="h-4 w-4 text-gray-300 group-hover/doc:text-blue-400 flex-shrink-0 mt-0.5 transition-colors" />
+                              )}
+                              <div className="flex-1 min-w-0">
+                                <p className="text-xs font-medium text-gray-900 truncate">
+                                  {doc.file_name}
+                                </p>
+                                <p className="text-xs text-gray-500 mt-0.5">
+                                  {doc.file_size && formatFileSize(doc.file_size)}
+                                </p>
+                              </div>
                             </div>
                             {getStatusBadge(doc.status)}
                           </div>
@@ -1111,7 +1151,8 @@ export default function DocumentValidationComplete({
                             )}
                           </div>
                         </div>
-                      ))}
+                        );
+                      })}
 
                       {isHovered && (
                         <div className="text-center py-2 border-2 border-dashed border-emerald-400 rounded-lg bg-emerald-50">
@@ -1215,6 +1256,7 @@ export default function DocumentValidationComplete({
               <li>Importez un fichier depuis votre ordinateur en cliquant sur une categorie ou sur l'icone <Upload className="h-3 w-3 inline" /></li>
               <li>Ou glissez un fichier depuis votre bureau directement dans une categorie</li>
               <li>Vous pouvez aussi glisser un document non classe vers une categorie</li>
+              <li>Les documents "En attente" peuvent etre deplaces d'une categorie a une autre par glisser-deposer</li>
               <li>Validez le document (email automatique envoye au prospect)</li>
               <li>Ou refusez-le avec un motif (email automatique avec le motif)</li>
             </ol>
