@@ -1,6 +1,6 @@
 import React from 'react';
 import { Helmet } from 'react-helmet-async';
-import { BlogPost, FaqEntry, Offer } from '../lib/schema';
+import type { BlogPost, FaqEntry, Offer } from '../lib/schema';
 
 const STATIC_FAQS: Pick<FaqEntry, 'question' | 'answer'>[] = [
   {

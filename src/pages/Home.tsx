@@ -1,11 +1,12 @@
 import React, { lazy, Suspense } from 'react';
 import Header from '../components/Header';
-import Footer from '../components/Footer';
 import Hero from '../components/Hero';
-import StickyCTA from '../components/StickyCTA';
 import SEOHead from '../components/SEOHead';
 import JsonLd from '../components/JsonLd';
 import { usePageTracking } from '../hooks/usePageTracking';
+
+const Footer = lazy(() => import('../components/Footer'));
+const StickyCTA = lazy(() => import('../components/StickyCTA'));
 
 const SocialProof = lazy(() => import('../components/SocialProof'));
 const Avantages = lazy(() => import('../components/Avantages'));
@@ -201,8 +202,12 @@ const Home: React.FC = () => {
             </Suspense>
           </div>
         </main>
-        <Footer />
-        <StickyCTA />
+        <Suspense fallback={null}>
+          <Footer />
+        </Suspense>
+        <Suspense fallback={null}>
+          <StickyCTA />
+        </Suspense>
       </div>
     </>
   );

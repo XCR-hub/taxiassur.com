@@ -168,6 +168,7 @@ export default defineConfig(({ mode }) => ({
               id.includes('leads') ||
               id.includes('auth') ||
               id.includes('supabase-instance') ||
+              id.includes('supabase.ts') ||
               id.includes('commercial-workflow') ||
               id.includes('crm-pipeline')
             ) {
