@@ -99,7 +99,6 @@ export const ManualLeadCreator: React.FC<ManualLeadCreatorProps> = ({
         source: formData.source,
         status: 'NOUVEAU_LEAD',
         vehicle_type: formData.vehicle_type,
-        lead_quality: 'medium',
         assigned_to: userData?.user?.id || null,
         internal_notes: formData.notes.trim() || null,
         metadata: {
