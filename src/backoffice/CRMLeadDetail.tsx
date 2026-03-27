@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Mail, Phone, AlertCircle, Copy, CheckCircle, User, Building2, MapPin, Car, FileText, Calculator, ClipboardCheck, MessageSquare, Star, TrendingUp, X } from 'lucide-react';
+import { ArrowLeft, Mail, Phone, AlertCircle, Copy, CheckCircle, User, Building2, MapPin, Car, FileText, Calculator, ClipboardCheck, MessageSquare, Star, StickyNote, X } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
 import { useRealtimeDocuments } from '@/hooks/useRealtimeDocuments';
@@ -56,6 +56,7 @@ const CRMLeadDetail: React.FC = () => {
     hasContract: false,
     unreadMessages: 0,
     totalInteractions: 0,
+    notesCount: 0,
   });
 
   // Toast pour les notifications
@@ -145,6 +146,12 @@ const CRMLeadDetail: React.FC = () => {
         .select('id')
         .eq('lead_id', leadId);
 
+      const { data: notes } = await supabase
+        .from('crm_interactions')
+        .select('id')
+        .eq('lead_id', leadId)
+        .eq('channel', 'note');
+
       const totalEvents =
         (emails?.length || 0) +
         (interactions?.length || 0) +
@@ -166,6 +173,7 @@ const CRMLeadDetail: React.FC = () => {
         hasContract: (contracts?.length || 0) > 0,
         unreadMessages: 0,
         totalInteractions: totalEvents,
+        notesCount: notes?.length || 0,
       });
     } catch (err) {
       logger.error('Error loading stats:', err);
@@ -600,6 +608,17 @@ const CRMLeadDetail: React.FC = () => {
                 </span>
               </div>
             )}
+            <button
+              onClick={() => setActiveTab('history')}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/[0.05] border border-white/[0.08] hover:bg-white/[0.1] hover:border-white/[0.18] transition-all cursor-pointer"
+              title="Voir les notes dans Historique & Communication"
+            >
+              <StickyNote className="h-3.5 w-3.5 text-teal-400" />
+              <span className="text-xs text-gray-400">Notes</span>
+              <span className={`text-xs font-bold ${stats.notesCount > 0 ? 'text-teal-400' : 'text-gray-500'}`}>
+                {stats.notesCount}
+              </span>
+            </button>
             <div className="ml-auto text-xs text-gray-600">
               Demande du {new Date(lead.first_request_at || lead.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })}
             </div>

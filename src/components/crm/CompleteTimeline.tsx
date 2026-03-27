@@ -291,7 +291,7 @@ export const CompleteTimeline: React.FC<CompleteTimelineProps> = ({ leadId, lead
     setSavingNote(true);
     try {
       await supabase.from('crm_interactions').insert([{
-        lead_id: leadId, channel: 'note', direction: 'outbound',
+        lead_id: leadId, type: 'note', channel: 'note', direction: 'outbound',
         content: newNote.trim(), created_at: new Date().toISOString(),
       }]);
       setNewNote('');
