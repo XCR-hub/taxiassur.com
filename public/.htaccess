@@ -117,7 +117,7 @@
     # ===================================================================
     RewriteRule ^blog/double-activit$ /blog/double-activite-taxi-vtc-assurance [R=301,L]
     RewriteRule ^blog/sinistre-taxi-procedure$ /blog/sinistre-taxi-procedure-complete-2025 [R=301,L]
-    RewriteRule ^blog/assurance-taxi-bordeaux$ /blog/assurance-taxi-bordeaux-2025 [R=301,L]
+    RewriteRule ^blog/assurance-taxi-bordeaux$ /blog [R=301,L]
 
     # Rediriger les anciens blogs ville/guide non existants vers le blog
     RewriteRule ^blog/assurance-taxi-rouen-2025$ /blog [R=301,L]
@@ -148,6 +148,7 @@
     RewriteRule ^blog/assurance-taxi-bordeaux-2025$ /blog [R=301,L]
     RewriteRule ^blog/assurance-taxi-asni-res-sur-seine-2025$ /blog [R=301,L]
     RewriteRule ^blog/assurance-taxi-senior-guide-complet-2025$ /blog [R=301,L]
+    RewriteRule ^blog/assurance-taxi-courbevoie-2025$ /blog [R=301,L]
 
     # Exclure les fichiers assets (CSS, JS, images, fonts)
     RewriteCond %{REQUEST_URI} !^/api/
@@ -237,12 +238,8 @@
     </FilesMatch>
 </IfModule>
 
-# Pages d'erreurs personnalisées
+# Page d'erreur 404 → SPA (React Router gère le 404)
 ErrorDocument 404 /index.html
-ErrorDocument 500 /index.html
-ErrorDocument 502 /index.html
-ErrorDocument 503 /index.html
-ErrorDocument 504 /index.html
 
 # Protection des fichiers sensibles
 <Files ".env*">
@@ -256,15 +253,3 @@ ErrorDocument 504 /index.html
 # Limiter la taille des requêtes pour éviter les 500
 LimitRequestBody 52428800
 
-# PHP settings optimisés (si PHP est utilisé pour API)
-<IfModule mod_php.c>
-    php_value memory_limit 512M
-    php_value max_execution_time 600
-    php_value post_max_size 100M
-    php_value upload_max_filesize 100M
-    php_value max_input_time 600
-    php_value max_input_vars 3000
-    php_flag display_errors Off
-    php_flag log_errors On
-    php_value error_reporting 0
-</IfModule>

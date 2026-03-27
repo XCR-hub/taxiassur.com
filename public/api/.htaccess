@@ -1,12 +1,6 @@
 # Configuration Apache pour API PHP TaxiAssur.com
 # Force le traitement des fichiers PHP
 
-# Activer PHP
-<IfModule mod_php.c>
-    php_flag display_errors Off
-    php_flag log_errors On
-</IfModule>
-
 # Headers CORS pour API
 <IfModule mod_headers.c>
     Header always set Access-Control-Allow-Origin "*"

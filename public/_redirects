@@ -69,10 +69,40 @@ http://taxiassur.com/* https://taxiassur.com/:splat 301!
 /merci.html /merci 301
 
 # ============================================================
-# 7. REDIRECTIONS BLOG DUPLIQUÉS
+# 7. REDIRECTIONS BLOG DUPLIQUÉS/OBSOLÈTES
 # ============================================================
 /blog/sinistre-taxi-procedure /blog/sinistre-taxi-procedure-complete-2025 301
 /blog/double-activit /blog/double-activite-taxi-vtc-assurance 301
+/blog/assurance-taxi-bordeaux /blog 301
+/blog/assurance-taxi-rouen-2025 /blog 301
+/blog/assurance-taxi-grenoble-2025 /blog 301
+/blog/carte-professionnelle-taxi-guide-complet-2025 /blog 301
+/blog/assurance-taxi-toulouse-2025 /blog 301
+/blog/assurance-taxi-beauvais-2025 /blog 301
+/blog/assurance-taxi-colombes-2025 /blog 301
+/blog/assurance-taxi-villejuif-2025 /blog 301
+/blog/assurance-taxi-clichy-2025 /blog 301
+/blog/assurance-taxi-cr-teil-2025 /blog 301
+/blog/assurance-taxi-le-mans-2025 /blog 301
+/blog/assurance-taxi-toulon-2025 /blog 301
+/blog/assurance-taxi-calais-2025 /blog 301
+/blog/assurance-taxi-v-nissieux-2025 /blog 301
+/blog/assurance-taxi-independant-guide-complet-2025 /blog 301
+/blog/assurance-taxi-hy-res-2025 /blog 301
+/blog/assurance-taxi-clamart-2025 /blog 301
+/blog/assurance-taxi-b-ziers-2025 /blog 301
+/blog/assurance-taxi-saint-maur-des-foss-s-2025 /blog 301
+/blog/assurance-taxi-colmar-2025 /blog 301
+/blog/assurance-taxi-n-mes-2025 /blog 301
+/blog/franchise-assurance-taxi-guide-complet-2025 /blog 301
+/blog/assurance-taxi-champigny-sur-marne-2025 /blog 301
+/blog/assurance-taxi-cholet-2025 /blog 301
+/blog/assurance-taxi-mercedes-guide-complet-2025 /blog 301
+/blog/assurance-taxi-le-havre-2025 /blog 301
+/blog/assurance-taxi-bordeaux-2025 /blog 301
+/blog/assurance-taxi-asni-res-sur-seine-2025 /blog 301
+/blog/assurance-taxi-senior-guide-complet-2025 /blog 301
+/blog/assurance-taxi-courbevoie-2025 /blog 301
 
 # ============================================================
 # 8. SPA ROUTING (TOUJOURS EN DERNIER)
