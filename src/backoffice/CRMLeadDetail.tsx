@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Mail, Phone, AlertCircle, Copy, CheckCircle, User, Building2, MapPin, Car, FileText, Calculator, ClipboardCheck, MessageSquare, Star, StickyNote, X } from 'lucide-react';
+import { ArrowLeft, Mail, Phone, AlertCircle, Copy, CheckCircle, User, Building2, MapPin, Car, FileText, Calculator, ClipboardCheck, MessageSquare, Star, StickyNote, Pencil, Save, X } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
 import { useRealtimeDocuments } from '@/hooks/useRealtimeDocuments';
@@ -48,6 +48,17 @@ const CRMLeadDetail: React.FC = () => {
   const [activeTab, setActiveTab] = useState<WorkflowTab>('overview');
   const [linkCopied, setLinkCopied] = useState(false);
   const [editingVehicleType, setEditingVehicleType] = useState(false);
+  const [editingContact, setEditingContact] = useState(false);
+  const [savingContact, setSavingContact] = useState(false);
+  const [editForm, setEditForm] = useState({
+    first_name: '',
+    last_name: '',
+    email: '',
+    phone: '',
+    city: '',
+    company_name: '',
+    immatriculation: '',
+  });
   const [stats, setStats] = useState({
     documentsComplete: false,
     documentsMissing: 0,
@@ -96,6 +107,67 @@ const CRMLeadDetail: React.FC = () => {
       setLead({ ...lead, vehicle_type: type });
     }
     setEditingVehicleType(false);
+  };
+
+  const startEditingContact = () => {
+    if (!lead) return;
+    setEditForm({
+      first_name: lead.first_name || '',
+      last_name: lead.last_name || '',
+      email: lead.email || '',
+      phone: lead.phone || '',
+      city: lead.city || '',
+      company_name: lead.company_name || '',
+      immatriculation: lead.immatriculation || '',
+    });
+    setEditingContact(true);
+  };
+
+  const cancelEditingContact = () => {
+    setEditingContact(false);
+  };
+
+  const saveContactInfo = async () => {
+    if (!leadId || !lead) return;
+    setSavingContact(true);
+    try {
+      const updates: Record<string, string> = { updated_at: new Date().toISOString() };
+      if (editForm.first_name !== (lead.first_name || '')) updates.first_name = editForm.first_name;
+      if (editForm.last_name !== (lead.last_name || '')) updates.last_name = editForm.last_name;
+      if (editForm.email !== (lead.email || '')) updates.email = editForm.email;
+      if (editForm.phone !== (lead.phone || '')) updates.phone = editForm.phone;
+      if (editForm.city !== (lead.city || '')) updates.city = editForm.city;
+      if (editForm.company_name !== (lead.company_name || '')) updates.company_name = editForm.company_name;
+      if (editForm.immatriculation !== (lead.immatriculation || '')) updates.immatriculation = editForm.immatriculation;
+
+      const { error: updateError } = await supabase
+        .from('crm_leads')
+        .update(updates)
+        .eq('id', leadId);
+
+      if (updateError) {
+        showToast('Erreur lors de la sauvegarde', 'error');
+        return;
+      }
+
+      setLead({
+        ...lead,
+        first_name: editForm.first_name,
+        last_name: editForm.last_name,
+        email: editForm.email,
+        phone: editForm.phone,
+        city: editForm.city,
+        company_name: editForm.company_name,
+        immatriculation: editForm.immatriculation,
+      });
+      setEditingContact(false);
+      showToast('Coordonnees mises a jour', 'success');
+    } catch (err) {
+      logger.error('Error saving contact:', err);
+      showToast('Erreur lors de la sauvegarde', 'error');
+    } finally {
+      setSavingContact(false);
+    }
   };
 
   const loadStats = async () => {
@@ -459,84 +531,189 @@ const CRMLeadDetail: React.FC = () => {
 
             {/* Name + info */}
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-3 mb-1.5">
-                <h1 className="text-xl font-bold text-white leading-tight">{leadName}</h1>
-                <div className="relative">
-                  {editingVehicleType ? (
-                    <div className="flex items-center gap-1">
-                      {['Taxi', 'VTC', 'Moto-taxi'].map((type) => (
+              {editingContact ? (
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-1">
+                      <input
+                        type="text"
+                        value={editForm.first_name}
+                        onChange={(e) => setEditForm(f => ({ ...f, first_name: e.target.value }))}
+                        placeholder="Prenom"
+                        className="bg-white/[0.08] border border-white/[0.15] rounded-lg px-3 py-1.5 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-yellow-400/60 w-36"
+                      />
+                      <input
+                        type="text"
+                        value={editForm.last_name}
+                        onChange={(e) => setEditForm(f => ({ ...f, last_name: e.target.value }))}
+                        placeholder="Nom"
+                        className="bg-white/[0.08] border border-white/[0.15] rounded-lg px-3 py-1.5 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-yellow-400/60 w-40"
+                      />
+                    </div>
+                    <button
+                      onClick={saveContactInfo}
+                      disabled={savingContact}
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-green-500/20 text-green-400 border border-green-500/40 rounded-lg text-xs font-bold hover:bg-green-500/30 transition-all disabled:opacity-50"
+                    >
+                      <Save className="h-3.5 w-3.5" />
+                      {savingContact ? 'Sauvegarde...' : 'Enregistrer'}
+                    </button>
+                    <button
+                      onClick={cancelEditingContact}
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-white/[0.06] text-gray-400 border border-white/[0.12] rounded-lg text-xs font-medium hover:text-white hover:bg-white/[0.1] transition-all"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                      Annuler
+                    </button>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <div className="flex items-center gap-1.5">
+                      <Mail className="h-3.5 w-3.5 text-gray-500" />
+                      <input
+                        type="email"
+                        value={editForm.email}
+                        onChange={(e) => setEditForm(f => ({ ...f, email: e.target.value }))}
+                        placeholder="Email"
+                        className="bg-white/[0.08] border border-white/[0.15] rounded-lg px-3 py-1 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-yellow-400/60 w-52"
+                      />
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <Phone className="h-3.5 w-3.5 text-gray-500" />
+                      <input
+                        type="tel"
+                        value={editForm.phone}
+                        onChange={(e) => setEditForm(f => ({ ...f, phone: e.target.value }))}
+                        placeholder="Telephone"
+                        className="bg-white/[0.08] border border-white/[0.15] rounded-lg px-3 py-1 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-yellow-400/60 w-36"
+                      />
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <MapPin className="h-3.5 w-3.5 text-gray-500" />
+                      <input
+                        type="text"
+                        value={editForm.city}
+                        onChange={(e) => setEditForm(f => ({ ...f, city: e.target.value }))}
+                        placeholder="Ville"
+                        className="bg-white/[0.08] border border-white/[0.15] rounded-lg px-3 py-1 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-yellow-400/60 w-36"
+                      />
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <Building2 className="h-3.5 w-3.5 text-gray-500" />
+                      <input
+                        type="text"
+                        value={editForm.company_name}
+                        onChange={(e) => setEditForm(f => ({ ...f, company_name: e.target.value }))}
+                        placeholder="Societe"
+                        className="bg-white/[0.08] border border-white/[0.15] rounded-lg px-3 py-1 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-yellow-400/60 w-36"
+                      />
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <Car className="h-3.5 w-3.5 text-gray-500" />
+                      <input
+                        type="text"
+                        value={editForm.immatriculation}
+                        onChange={(e) => setEditForm(f => ({ ...f, immatriculation: e.target.value }))}
+                        placeholder="Immatriculation"
+                        className="bg-white/[0.08] border border-white/[0.15] rounded-lg px-3 py-1 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-yellow-400/60 w-36"
+                      />
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div className="flex items-center gap-3 mb-1.5">
+                    <h1 className="text-xl font-bold text-white leading-tight">{leadName}</h1>
+                    <button
+                      onClick={startEditingContact}
+                      className="p-1.5 rounded-lg bg-white/[0.06] border border-white/[0.1] text-gray-400 hover:text-yellow-400 hover:border-yellow-400/40 hover:bg-yellow-400/10 transition-all"
+                      title="Modifier les coordonnees"
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                    </button>
+                    <div className="relative">
+                      {editingVehicleType ? (
+                        <div className="flex items-center gap-1">
+                          {['Taxi', 'VTC', 'Moto-taxi'].map((type) => (
+                            <button
+                              key={type}
+                              onClick={() => updateVehicleType(type)}
+                              className={`px-2.5 py-1 rounded-full text-xs font-bold border transition-all ${
+                                lead.vehicle_type?.toLowerCase() === type.toLowerCase()
+                                  ? 'bg-yellow-400 text-gray-900 border-yellow-400'
+                                  : 'bg-gray-700 text-gray-300 border-gray-600 hover:border-yellow-400 hover:text-yellow-400'
+                              }`}
+                            >
+                              {type}
+                            </button>
+                          ))}
+                          <button
+                            onClick={() => setEditingVehicleType(false)}
+                            className="ml-1 text-gray-500 hover:text-gray-300"
+                          >
+                            <X className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      ) : (
                         <button
-                          key={type}
-                          onClick={() => updateVehicleType(type)}
-                          className={`px-2.5 py-1 rounded-full text-xs font-bold border transition-all ${
-                            lead.vehicle_type?.toLowerCase() === type.toLowerCase()
-                              ? 'bg-yellow-400 text-gray-900 border-yellow-400'
-                              : 'bg-gray-700 text-gray-300 border-gray-600 hover:border-yellow-400 hover:text-yellow-400'
+                          onClick={() => setEditingVehicleType(true)}
+                          className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border transition-all ${
+                            lead.vehicle_type
+                              ? lead.vehicle_type.toLowerCase() === 'taxi'
+                                ? 'bg-yellow-400/20 text-yellow-400 border-yellow-400/50 hover:bg-yellow-400/30'
+                                : lead.vehicle_type.toLowerCase() === 'vtc'
+                                ? 'bg-blue-400/20 text-blue-400 border-blue-400/50 hover:bg-blue-400/30'
+                                : 'bg-green-400/20 text-green-400 border-green-400/50 hover:bg-green-400/30'
+                              : 'bg-gray-700/50 text-gray-400 border-gray-600 hover:border-gray-400'
                           }`}
                         >
-                          {type}
+                          <Car className="h-3.5 w-3.5" />
+                          {lead.vehicle_type || 'Type ?'}
                         </button>
-                      ))}
-                      <button
-                        onClick={() => setEditingVehicleType(false)}
-                        className="ml-1 text-gray-500 hover:text-gray-300"
-                      >
-                        <X className="h-3.5 w-3.5" />
-                      </button>
+                      )}
                     </div>
-                  ) : (
-                    <button
-                      onClick={() => setEditingVehicleType(true)}
-                      className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border transition-all ${
-                        lead.vehicle_type
-                          ? lead.vehicle_type.toLowerCase() === 'taxi'
-                            ? 'bg-yellow-400/20 text-yellow-400 border-yellow-400/50 hover:bg-yellow-400/30'
-                            : lead.vehicle_type.toLowerCase() === 'vtc'
-                            ? 'bg-blue-400/20 text-blue-400 border-blue-400/50 hover:bg-blue-400/30'
-                            : 'bg-green-400/20 text-green-400 border-green-400/50 hover:bg-green-400/30'
-                          : 'bg-gray-700/50 text-gray-400 border-gray-600 hover:border-gray-400'
-                      }`}
-                    >
-                      <Car className="h-3.5 w-3.5" />
-                      {lead.vehicle_type || 'Type ?'}
-                    </button>
-                  )}
-                </div>
-              </div>
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-400">
-                {lead.email && (
-                  <a href={`mailto:${lead.email}`} className="flex items-center gap-1.5 hover:text-yellow-400 transition-colors">
-                    <Mail className="h-3.5 w-3.5" />
-                    {lead.email}
-                  </a>
-                )}
-                {lead.phone && (
-                  <a href={`tel:${lead.phone}`} className="flex items-center gap-1.5 hover:text-yellow-400 transition-colors">
-                    <Phone className="h-3.5 w-3.5" />
-                    {lead.phone}
-                  </a>
-                )}
-                {lead.city && (
-                  <span className="flex items-center gap-1.5">
-                    <MapPin className="h-3.5 w-3.5" />
-                    {lead.city}
-                  </span>
-                )}
-                {lead.company_name && (
-                  <span className="flex items-center gap-1.5">
-                    <Building2 className="h-3.5 w-3.5" />
-                    {lead.company_name}
-                  </span>
-                )}
-                <span className="flex items-center gap-1.5">
-                  <User className="h-3.5 w-3.5" />
-                  {assigneeName ? (
-                    <span className="text-gray-300">{assigneeName}</span>
-                  ) : (
-                    <span className="italic text-gray-500">Non attribue</span>
-                  )}
-                </span>
-              </div>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-400">
+                    {lead.email && (
+                      <a href={`mailto:${lead.email}`} className="flex items-center gap-1.5 hover:text-yellow-400 transition-colors">
+                        <Mail className="h-3.5 w-3.5" />
+                        {lead.email}
+                      </a>
+                    )}
+                    {lead.phone && (
+                      <a href={`tel:${lead.phone}`} className="flex items-center gap-1.5 hover:text-yellow-400 transition-colors">
+                        <Phone className="h-3.5 w-3.5" />
+                        {lead.phone}
+                      </a>
+                    )}
+                    {lead.city && (
+                      <span className="flex items-center gap-1.5">
+                        <MapPin className="h-3.5 w-3.5" />
+                        {lead.city}
+                      </span>
+                    )}
+                    {lead.company_name && (
+                      <span className="flex items-center gap-1.5">
+                        <Building2 className="h-3.5 w-3.5" />
+                        {lead.company_name}
+                      </span>
+                    )}
+                    {lead.immatriculation && (
+                      <span className="flex items-center gap-1.5">
+                        <Car className="h-3.5 w-3.5" />
+                        {lead.immatriculation}
+                      </span>
+                    )}
+                    <span className="flex items-center gap-1.5">
+                      <User className="h-3.5 w-3.5" />
+                      {assigneeName ? (
+                        <span className="text-gray-300">{assigneeName}</span>
+                      ) : (
+                        <span className="italic text-gray-500">Non attribue</span>
+                      )}
+                    </span>
+                  </div>
+                </>
+              )}
             </div>
 
             {/* Action buttons */}
