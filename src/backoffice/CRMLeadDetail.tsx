@@ -540,14 +540,14 @@ const CRMLeadDetail: React.FC = () => {
                         value={editForm.first_name}
                         onChange={(e) => setEditForm(f => ({ ...f, first_name: e.target.value }))}
                         placeholder="Prenom"
-                        className="bg-white/[0.08] border border-white/[0.15] rounded-lg px-3 py-1.5 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-yellow-400/60 w-36"
+                        className="bg-gray-700 border border-gray-500 rounded-lg px-3 py-1.5 text-white text-sm placeholder-gray-400 focus:outline-none focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400/30 w-36"
                       />
                       <input
                         type="text"
                         value={editForm.last_name}
                         onChange={(e) => setEditForm(f => ({ ...f, last_name: e.target.value }))}
                         placeholder="Nom"
-                        className="bg-white/[0.08] border border-white/[0.15] rounded-lg px-3 py-1.5 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-yellow-400/60 w-40"
+                        className="bg-gray-700 border border-gray-500 rounded-lg px-3 py-1.5 text-white text-sm placeholder-gray-400 focus:outline-none focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400/30 w-40"
                       />
                     </div>
                     <button
@@ -574,7 +574,7 @@ const CRMLeadDetail: React.FC = () => {
                         value={editForm.email}
                         onChange={(e) => setEditForm(f => ({ ...f, email: e.target.value }))}
                         placeholder="Email"
-                        className="bg-white/[0.08] border border-white/[0.15] rounded-lg px-3 py-1 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-yellow-400/60 w-52"
+                        className="bg-gray-700 border border-gray-500 rounded-lg px-3 py-1 text-white text-sm placeholder-gray-400 focus:outline-none focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400/30 w-52"
                       />
                     </div>
                     <div className="flex items-center gap-1.5">
@@ -584,7 +584,7 @@ const CRMLeadDetail: React.FC = () => {
                         value={editForm.phone}
                         onChange={(e) => setEditForm(f => ({ ...f, phone: e.target.value }))}
                         placeholder="Telephone"
-                        className="bg-white/[0.08] border border-white/[0.15] rounded-lg px-3 py-1 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-yellow-400/60 w-36"
+                        className="bg-gray-700 border border-gray-500 rounded-lg px-3 py-1 text-white text-sm placeholder-gray-400 focus:outline-none focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400/30 w-36"
                       />
                     </div>
                     <div className="flex items-center gap-1.5">
@@ -594,7 +594,7 @@ const CRMLeadDetail: React.FC = () => {
                         value={editForm.city}
                         onChange={(e) => setEditForm(f => ({ ...f, city: e.target.value }))}
                         placeholder="Ville"
-                        className="bg-white/[0.08] border border-white/[0.15] rounded-lg px-3 py-1 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-yellow-400/60 w-36"
+                        className="bg-gray-700 border border-gray-500 rounded-lg px-3 py-1 text-white text-sm placeholder-gray-400 focus:outline-none focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400/30 w-36"
                       />
                     </div>
                     <div className="flex items-center gap-1.5">
@@ -604,7 +604,7 @@ const CRMLeadDetail: React.FC = () => {
                         value={editForm.company_name}
                         onChange={(e) => setEditForm(f => ({ ...f, company_name: e.target.value }))}
                         placeholder="Societe"
-                        className="bg-white/[0.08] border border-white/[0.15] rounded-lg px-3 py-1 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-yellow-400/60 w-36"
+                        className="bg-gray-700 border border-gray-500 rounded-lg px-3 py-1 text-white text-sm placeholder-gray-400 focus:outline-none focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400/30 w-36"
                       />
                     </div>
                     <div className="flex items-center gap-1.5">
@@ -614,7 +614,7 @@ const CRMLeadDetail: React.FC = () => {
                         value={editForm.immatriculation}
                         onChange={(e) => setEditForm(f => ({ ...f, immatriculation: e.target.value }))}
                         placeholder="Immatriculation"
-                        className="bg-white/[0.08] border border-white/[0.15] rounded-lg px-3 py-1 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-yellow-400/60 w-36"
+                        className="bg-gray-700 border border-gray-500 rounded-lg px-3 py-1 text-white text-sm placeholder-gray-400 focus:outline-none focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400/30 w-36"
                       />
                     </div>
                   </div>
