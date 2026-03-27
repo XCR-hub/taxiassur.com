@@ -15,18 +15,19 @@ const Footer: React.FC = () => {
   const pages = [
     { name: 'Blog', href: '/blog' },
     { name: 'FAQ', href: '/faq' },
-    { name: 'Avis Clients', href: '/avis' },
+    { name: 'Avis Clients', href: '/reviews' },
+    { name: 'Actualités', href: '/actualites' },
     { name: 'Nos Offres', href: '/assurance-taxi' },
     { name: 'Partenaires', href: '/programme-partenaires' },
     { name: 'Villes', href: '/villes' },
     { name: 'Newsletter', href: '/newsletter' },
-    { name: 'Plan du Site', href: '/plan-du-site' }
+    { name: 'Plan du Site', href: '/sitemap' }
   ];
 
   const legal = [
-    { name: 'Mentions Légales', href: '/mentions-legales' },
-    { name: 'Politique de Confidentialité', href: '/politique-confidentialite' },
-    { name: 'Conditions Générales', href: '/conditions-generales' },
+    { name: 'Mentions Légales', href: '/legal' },
+    { name: 'Politique de Confidentialité', href: '/policy' },
+    { name: 'Conditions Générales', href: '/conditions' },
     { name: 'Confiance & Certifications', href: '/confiance-et-certifications' }
   ];
 
@@ -300,7 +301,7 @@ const Footer: React.FC = () => {
               <a href="/feeds/rss.xml" className="text-gray-600 hover:text-orange-300 transition-colors" target="_blank" rel="noopener noreferrer">
                 Flux RSS
               </a>
-              <Link to="/plan-du-site" className="text-gray-600 hover:text-orange-300 transition-colors">
+              <Link to="/sitemap" className="text-gray-600 hover:text-orange-300 transition-colors">
                 Plan du Site
               </Link>
               <Link to="/contact" className="text-gray-600 hover:text-orange-300 transition-colors">

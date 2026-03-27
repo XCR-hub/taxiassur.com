@@ -31,10 +31,11 @@ export async function generateSitemap(): Promise<string> {
     { path: '/actualites', priority: 0.7, changefreq: 'daily' as const },
     { path: '/faq', priority: 0.6, changefreq: 'weekly' as const },
     { path: '/contact', priority: 0.6, changefreq: 'monthly' as const },
-    { path: '/partenaires', priority: 0.5, changefreq: 'monthly' as const },
-    { path: '/mentions-legales', priority: 0.3, changefreq: 'yearly' as const },
-    { path: '/politique-confidentialite', priority: 0.3, changefreq: 'yearly' as const },
-    { path: '/conditions-generales', priority: 0.3, changefreq: 'yearly' as const },
+    { path: '/reviews', priority: 0.6, changefreq: 'weekly' as const },
+    { path: '/programme-partenaires', priority: 0.5, changefreq: 'monthly' as const },
+    { path: '/legal', priority: 0.3, changefreq: 'yearly' as const },
+    { path: '/policy', priority: 0.3, changefreq: 'yearly' as const },
+    { path: '/conditions', priority: 0.3, changefreq: 'yearly' as const },
   ];
 
   staticPages.forEach(page => {

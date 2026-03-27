@@ -89,7 +89,7 @@ const JsonLd: React.FC<JsonLdProps> = ({ type, data }) => {
           "sameAs": [
             "https://www.linkedin.com/company/xcr",
             "https://www.facebook.com/taxiassur",
-            `${siteUrl}/mentions-legales`
+            `${siteUrl}/legal`
           ],
           "hasOfferCatalog": {
             "@type": "OfferCatalog",

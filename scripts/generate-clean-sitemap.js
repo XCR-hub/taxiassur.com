@@ -38,13 +38,13 @@ const staticPages = [
   { url: '/contact', priority: '0.7', changefreq: 'monthly' },
   { url: '/blog', priority: '0.8', changefreq: 'daily' },
   { url: '/actualites', priority: '0.7', changefreq: 'daily' },
-  { url: '/avis', priority: '0.6', changefreq: 'weekly' },
+  { url: '/reviews', priority: '0.6', changefreq: 'weekly' },
   { url: '/programme-partenaires', priority: '0.5', changefreq: 'monthly' },
   { url: '/villes', priority: '0.6', changefreq: 'monthly' },
-  { url: '/plan-du-site', priority: '0.3', changefreq: 'weekly' },
-  { url: '/mentions-legales', priority: '0.3', changefreq: 'yearly' },
-  { url: '/politique-confidentialite', priority: '0.3', changefreq: 'yearly' },
-  { url: '/conditions-generales', priority: '0.3', changefreq: 'yearly' },
+  { url: '/sitemap', priority: '0.3', changefreq: 'weekly' },
+  { url: '/legal', priority: '0.3', changefreq: 'yearly' },
+  { url: '/policy', priority: '0.3', changefreq: 'yearly' },
+  { url: '/conditions', priority: '0.3', changefreq: 'yearly' },
 ];
 
 // Pages des villes (principales)

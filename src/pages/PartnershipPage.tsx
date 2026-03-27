@@ -637,7 +637,7 @@ const PartnershipPage: React.FC = () => {
                         <p className="text-xs text-gray-600">
                           En soumettant ce formulaire, j'accepte d'être recontacté par TaxiAssur.com 
                           pour discuter d'un partenariat commercial. Données sécurisées selon notre 
-                          <a href="/politique-confidentialite" className="text-amber-600 hover:underline"> politique de confidentialité</a>.
+                          <a href="/policy" className="text-amber-600 hover:underline"> politique de confidentialité</a>.
                         </p>
                       </div>
 

@@ -115,7 +115,7 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://taxiassur.com/avis</loc>
+    <loc>https://taxiassur.com/reviews</loc>
     <lastmod>2026-03-27</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
@@ -133,25 +133,25 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://taxiassur.com/plan-du-site</loc>
+    <loc>https://taxiassur.com/sitemap</loc>
     <lastmod>2026-03-27</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.3</priority>
   </url>
   <url>
-    <loc>https://taxiassur.com/mentions-legales</loc>
+    <loc>https://taxiassur.com/legal</loc>
     <lastmod>2026-03-27</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
   <url>
-    <loc>https://taxiassur.com/politique-confidentialite</loc>
+    <loc>https://taxiassur.com/policy</loc>
     <lastmod>2026-03-27</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
   <url>
-    <loc>https://taxiassur.com/conditions-generales</loc>
+    <loc>https://taxiassur.com/conditions</loc>
     <lastmod>2026-03-27</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>

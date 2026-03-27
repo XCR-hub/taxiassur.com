@@ -629,7 +629,7 @@ const EnhancedLeadForm: React.FC<EnhancedLeadFormProps> = ({
                   <p className="text-xs text-gray-600">
                     En soumettant ce formulaire, j'accepte d'être recontacté par TaxiAssur.com 
                     pour recevoir mon devis personnalisé. Données sécurisées selon notre 
-                    <a href="/politique-confidentialite" className="text-amber-600 hover:underline"> politique de confidentialité</a>.
+                    <a href="/policy" className="text-amber-600 hover:underline"> politique de confidentialité</a>.
                     Aucun spam, désinscription facile.
                   </p>
                 </div>

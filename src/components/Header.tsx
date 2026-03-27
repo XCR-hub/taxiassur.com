@@ -9,7 +9,7 @@ const mainNavigation = [
   { name: 'Actualités', href: '/actualites' },
   { name: 'FAQ', href: '/faq' },
   { name: 'Villes', href: '/villes' },
-  { name: 'Avis', href: '/avis' },
+  { name: 'Avis', href: '/reviews' },
   { name: 'Contact', href: '/contact' }
 ];
 

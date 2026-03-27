@@ -414,7 +414,7 @@ const EnhancedFormLead: React.FC = () => {
         <div className="mt-4 text-xs text-gray-300 text-center">
           En soumettant ce formulaire, j'accepte d'être recontacté pour mon devis.
           <br />
-          <a href="/politique-confidentialite" className="text-amber-600 hover:underline">
+          <a href="/policy" className="text-amber-600 hover:underline">
             Politique de confidentialité
           </a>
         </div>

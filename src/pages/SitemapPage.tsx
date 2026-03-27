@@ -29,7 +29,7 @@ const SitemapPage: React.FC = () => {
     {
       icon: Star,
       title: 'Avis Clients',
-      path: '/avis',
+      path: '/reviews',
       description: 'Témoignages de nos clients satisfaits'
     },
     {
@@ -49,17 +49,17 @@ const SitemapPage: React.FC = () => {
   const legalPages = [
     {
       title: 'Mentions Légales',
-      path: '/mentions-legales',
+      path: '/legal',
       description: 'Informations légales et réglementaires'
     },
     {
       title: 'Politique de Confidentialité',
-      path: '/politique-confidentialite',
+      path: '/policy',
       description: 'Protection des données personnelles'
     },
     {
       title: 'Conditions Générales',
-      path: '/conditions-generales',
+      path: '/conditions',
       description: 'Conditions d\'utilisation des services'
     }
   ];
@@ -69,7 +69,7 @@ const SitemapPage: React.FC = () => {
       <Seo
         title="Plan du Site - TaxiAssur"
         description="Retrouvez facilement toutes les pages de TaxiAssur.com : blog, FAQ, avis clients, offres d'assurance et informations légales."
-        canonical="/plan-du-site"
+        canonical="/sitemap"
         keywords="plan du site, navigation, pages taxiassur"
       />
 
