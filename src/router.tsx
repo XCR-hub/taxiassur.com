@@ -111,6 +111,7 @@ const CRMTemplatesManager = lazy(() => import('./backoffice/CRMTemplatesManager'
 const CRMCommercial = lazy(() => import('./backoffice/CRMCommercial'));
 const InboxIntelligent = lazy(() => import('./backoffice/InboxIntelligent'));
 const LeadManager = lazy(() => import('./backoffice/LeadManager'));
+const ManualLeadCreation = lazy(() => import('./backoffice/ManualLeadCreation'));
 const PartnerPortal = lazy(() => import('./backoffice/PartnerPortal'));
 const PartnerAuth = lazy(() => import('./backoffice/PartnerAuth'));
 const SocialMediaManager = lazy(() => import('./backoffice/SocialMediaManager'));
@@ -590,6 +591,10 @@ export const router = createBrowserRouter([
           { path: 'lead/:leadId', element: <CRMLeadDetail /> },
         ],
       },
+
+      /* ── CRM direct routes ── */
+      { path: 'crm/create-lead', element: <ManualLeadCreation /> },
+      { path: 'crm/lead/:leadId', element: <CRMLeadDetail /> },
 
       /* ── Leads & Clients ── */
       { path: 'claims', element: <ClaimsManager /> },
