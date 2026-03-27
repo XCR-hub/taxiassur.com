@@ -111,6 +111,44 @@
     RewriteRule ^partenaires$ /programme-partenaires [R=301,L]
     RewriteRule ^merci\.html$ /merci [R=301,L]
 
+    # ===================================================================
+    # REDIRECTIONS BLOG SLUGS TRONQUÉS/OBSOLÈTES
+    # Fix GSC "Page en double sans URL canonique"
+    # ===================================================================
+    RewriteRule ^blog/double-activit$ /blog/double-activite-taxi-vtc-assurance [R=301,L]
+    RewriteRule ^blog/sinistre-taxi-procedure$ /blog/sinistre-taxi-procedure-complete-2025 [R=301,L]
+    RewriteRule ^blog/assurance-taxi-bordeaux$ /blog/assurance-taxi-bordeaux-2025 [R=301,L]
+
+    # Rediriger les anciens blogs ville/guide non existants vers le blog
+    RewriteRule ^blog/assurance-taxi-rouen-2025$ /blog [R=301,L]
+    RewriteRule ^blog/assurance-taxi-grenoble-2025$ /blog [R=301,L]
+    RewriteRule ^blog/carte-professionnelle-taxi-guide-complet-2025$ /blog [R=301,L]
+    RewriteRule ^blog/assurance-taxi-toulouse-2025$ /blog [R=301,L]
+    RewriteRule ^blog/assurance-taxi-beauvais-2025$ /blog [R=301,L]
+    RewriteRule ^blog/assurance-taxi-colombes-2025$ /blog [R=301,L]
+    RewriteRule ^blog/assurance-taxi-villejuif-2025$ /blog [R=301,L]
+    RewriteRule ^blog/assurance-taxi-clichy-2025$ /blog [R=301,L]
+    RewriteRule ^blog/assurance-taxi-cr-teil-2025$ /blog [R=301,L]
+    RewriteRule ^blog/assurance-taxi-le-mans-2025$ /blog [R=301,L]
+    RewriteRule ^blog/assurance-taxi-toulon-2025$ /blog [R=301,L]
+    RewriteRule ^blog/assurance-taxi-calais-2025$ /blog [R=301,L]
+    RewriteRule ^blog/assurance-taxi-v-nissieux-2025$ /blog [R=301,L]
+    RewriteRule ^blog/assurance-taxi-independant-guide-complet-2025$ /blog [R=301,L]
+    RewriteRule ^blog/assurance-taxi-hy-res-2025$ /blog [R=301,L]
+    RewriteRule ^blog/assurance-taxi-clamart-2025$ /blog [R=301,L]
+    RewriteRule ^blog/assurance-taxi-b-ziers-2025$ /blog [R=301,L]
+    RewriteRule ^blog/assurance-taxi-saint-maur-des-foss-s-2025$ /blog [R=301,L]
+    RewriteRule ^blog/assurance-taxi-colmar-2025$ /blog [R=301,L]
+    RewriteRule ^blog/assurance-taxi-n-mes-2025$ /blog [R=301,L]
+    RewriteRule ^blog/franchise-assurance-taxi-guide-complet-2025$ /blog [R=301,L]
+    RewriteRule ^blog/assurance-taxi-champigny-sur-marne-2025$ /blog [R=301,L]
+    RewriteRule ^blog/assurance-taxi-cholet-2025$ /blog [R=301,L]
+    RewriteRule ^blog/assurance-taxi-mercedes-guide-complet-2025$ /blog [R=301,L]
+    RewriteRule ^blog/assurance-taxi-le-havre-2025$ /blog [R=301,L]
+    RewriteRule ^blog/assurance-taxi-bordeaux-2025$ /blog [R=301,L]
+    RewriteRule ^blog/assurance-taxi-asni-res-sur-seine-2025$ /blog [R=301,L]
+    RewriteRule ^blog/assurance-taxi-senior-guide-complet-2025$ /blog [R=301,L]
+
     # Exclure les fichiers assets (CSS, JS, images, fonts)
     RewriteCond %{REQUEST_URI} !^/api/
     RewriteCond %{REQUEST_URI} !^/webhooks/

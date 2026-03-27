@@ -74,25 +74,33 @@ const BlogPost: React.FC = () => {
 
   if (error || !post) {
     return (
-      <div className="min-h-screen bg-white">
-        <div className="container mx-auto px-4 py-12">
-          <div className="max-w-4xl mx-auto text-center">
-            <h1 className="text-3xl font-bold text-gray-900 mb-4">
-              {error || 'Article non trouvé'}
-            </h1>
-            <p className="text-gray-600 mb-8">
-              L'article que vous recherchez n'existe pas ou a été supprimé.
-            </p>
-            <Link
-              to="/blog"
-              className="inline-flex items-center space-x-2 bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-3 px-6 rounded-lg transition-colors"
-            >
-              <ArrowLeft size={20} />
-              <span>Retour au blog</span>
-            </Link>
+      <>
+        <Helmet>
+          <title>Article non trouvé | TaxiAssur Blog</title>
+          <meta name="robots" content="noindex, nofollow" />
+          <meta name="description" content="Cet article n'existe pas ou a été supprimé." />
+          <link rel="canonical" href="https://taxiassur.com/blog" />
+        </Helmet>
+        <div className="min-h-screen bg-white">
+          <div className="container mx-auto px-4 py-12">
+            <div className="max-w-4xl mx-auto text-center">
+              <h1 className="text-3xl font-bold text-gray-900 mb-4">
+                {error || 'Article non trouvé'}
+              </h1>
+              <p className="text-gray-600 mb-8">
+                L'article que vous recherchez n'existe pas ou a été supprimé.
+              </p>
+              <Link
+                to="/blog"
+                className="inline-flex items-center space-x-2 bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-3 px-6 rounded-lg transition-colors"
+              >
+                <ArrowLeft size={20} />
+                <span>Retour au blog</span>
+              </Link>
+            </div>
           </div>
         </div>
-      </div>
+      </>
     );
   }
 

@@ -146,6 +146,12 @@ const CityPage: React.FC = () => {
   if (!cityPageData && !cityData) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-black">
+        <Seo
+          title="Ville non trouvée"
+          description="Cette page ville n'existe pas."
+          canonical="/villes"
+          noindex={true}
+        />
         <Header />
         <main className="section-padding">
           <div className="container-max text-center">

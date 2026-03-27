@@ -1,4 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import { Car, Home, ArrowLeft, Search } from 'lucide-react';
 
 export default function NotFound() {
@@ -6,6 +7,11 @@ export default function NotFound() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950 flex items-center justify-center p-6">
+      <Helmet>
+        <title>Page introuvable | TaxiAssur</title>
+        <meta name="robots" content="noindex, nofollow" />
+        <meta name="description" content="Cette page n'existe pas ou a été déplacée." />
+      </Helmet>
       <div className="max-w-lg w-full text-center">
 
         {/* Animated taxi icon */}
