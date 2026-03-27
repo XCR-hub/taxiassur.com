@@ -152,6 +152,7 @@ const CRMPipelineKanban: React.FC = () => {
   const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(true);
   const [adminUsers, setAdminUsers] = useState<AdminUser[]>([]);
   const [viewFilter, setViewFilter] = useState<'all' | 'mine' | 'unassigned'>('all');
+  const [selectedCollaborator, setSelectedCollaborator] = useState<string | null>(null);
   const autoRefreshInterval = useRef<NodeJS.Timeout | null>(null);
   const realtimeChannel = useRef<any>(null);
   const previousLeadCount = useRef<number>(0);
@@ -553,7 +554,9 @@ const CRMPipelineKanban: React.FC = () => {
         );
       }
 
-      if (viewFilter === 'mine' && user?.id) {
+      if (selectedCollaborator) {
+        result = result.filter(lead => lead.assigned_to === selectedCollaborator);
+      } else if (viewFilter === 'mine' && user?.id) {
         result = result.filter(lead => lead.assigned_to === user.id);
       } else if (viewFilter === 'unassigned') {
         result = result.filter(lead => !lead.assigned_to);
@@ -564,7 +567,7 @@ const CRMPipelineKanban: React.FC = () => {
       );
     });
     return filtered;
-  }, [kanbanData, debouncedSearch, viewFilter, user?.id]);
+  }, [kanbanData, debouncedSearch, viewFilter, user?.id, selectedCollaborator]);
 
   // 🎯 PIPELINE TAXIASSUR SIMPLIFIÉ - 7 ÉTAPES
   const visibleStatuses: PipelineStatus[] = [
@@ -722,10 +725,10 @@ const CRMPipelineKanban: React.FC = () => {
           {/* Row 2: Assignment filter tabs */}
           <div className="mt-2 flex items-center gap-1">
             <button
-              onClick={() => setViewFilter('all')}
+              onClick={() => { setViewFilter('all'); setSelectedCollaborator(null); }}
               className={cn(
                 'flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium transition-all',
-                viewFilter === 'all'
+                viewFilter === 'all' && !selectedCollaborator
                   ? 'bg-yellow-500 text-black shadow-sm'
                   : 'bg-white/[0.06] text-gray-400 border border-white/[0.08] hover:text-white hover:bg-white/[0.1]'
               )}
@@ -734,10 +737,10 @@ const CRMPipelineKanban: React.FC = () => {
               Tous les leads
             </button>
             <button
-              onClick={() => setViewFilter('mine')}
+              onClick={() => { setViewFilter('mine'); setSelectedCollaborator(null); }}
               className={cn(
                 'flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium transition-all',
-                viewFilter === 'mine'
+                viewFilter === 'mine' && !selectedCollaborator
                   ? 'bg-yellow-500 text-black shadow-sm'
                   : 'bg-white/[0.06] text-gray-400 border border-white/[0.08] hover:text-white hover:bg-white/[0.1]'
               )}
@@ -746,10 +749,10 @@ const CRMPipelineKanban: React.FC = () => {
               Mes leads
             </button>
             <button
-              onClick={() => setViewFilter('unassigned')}
+              onClick={() => { setViewFilter('unassigned'); setSelectedCollaborator(null); }}
               className={cn(
                 'flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium transition-all',
-                viewFilter === 'unassigned'
+                viewFilter === 'unassigned' && !selectedCollaborator
                   ? 'bg-yellow-500 text-black shadow-sm'
                   : 'bg-white/[0.06] text-gray-400 border border-white/[0.08] hover:text-white hover:bg-white/[0.1]'
               )}
@@ -763,9 +766,17 @@ const CRMPipelineKanban: React.FC = () => {
                 {adminUsers.map(u => (
                   <button
                     key={u.id}
-                    onClick={() => {}}
+                    onClick={() => {
+                      setSelectedCollaborator(prev => prev === u.id ? null : u.id);
+                      setViewFilter('all');
+                    }}
                     title={u.full_name}
-                    className="w-5 h-5 rounded-full bg-white/[0.12] border border-white/[0.18] flex items-center justify-center text-white font-bold text-[9px] hover:border-yellow-500 transition-colors"
+                    className={cn(
+                      "w-5 h-5 rounded-full flex items-center justify-center font-bold text-[9px] transition-all",
+                      selectedCollaborator === u.id
+                        ? "bg-yellow-500 text-black border-2 border-yellow-400 ring-1 ring-yellow-400/50"
+                        : "bg-white/[0.12] border border-white/[0.18] text-white hover:border-yellow-500"
+                    )}
                   >
                     {u.full_name.charAt(0)}
                   </button>
