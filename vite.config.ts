@@ -28,6 +28,7 @@ export default defineConfig(({ mode }) => ({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
+      injectRegister: 'script-defer',
       includeAssets: ['favicon.svg', 'logo.svg', 'logo-512x512.svg'],
       manifest: {
         name: 'TaxiAssur - Assurance Taxi Professionnelle',
@@ -101,19 +102,9 @@ export default defineConfig(({ mode }) => ({
     chunkSizeWarningLimit: 500,
     modulePreload: {
       polyfill: false,
-      resolveDependencies: (filename, deps) => {
-        // For the main entry, only preload the minimal critical chain
-        if (filename.includes('index') || filename.includes('main')) {
-          return deps.filter(dep =>
-            dep.includes('vendor-react') ||
-            dep.includes('vendor-router') ||
-            dep.includes('lib-core')
-          );
-        }
-        // For page chunks, preload react + router only (supabase deferred)
+      resolveDependencies: (_filename, deps) => {
         return deps.filter(dep =>
-          dep.includes('vendor-react') ||
-          dep.includes('vendor-router')
+          dep.includes('vendor-react')
         );
       }
     },
@@ -182,10 +173,15 @@ export default defineConfig(({ mode }) => ({
             return 'charts';
           }
 
+          // CRM sub-components (loaded inside CRM pages)
+          if (id.includes('/components/crm/')) {
+            return 'crm-components';
+          }
+
           // Backoffice chunks - order matters to prevent circular deps
           if (id.includes('/backoffice/')) {
             // CRM first as it's most used
-            if (id.includes('CRM') || id.includes('Lead') || id.includes('Pipeline')) {
+            if (id.includes('CRM') || id.includes('Lead') || id.includes('Pipeline') || id.includes('Kanban') || id.includes('Duplicate')) {
               return 'backoffice-crm';
             }
             // AI after CRM
@@ -203,6 +199,18 @@ export default defineConfig(({ mode }) => ({
             // Analytics
             if (id.includes('Analytics') || (id.includes('Dashboard') && !id.includes('Master'))) {
               return 'backoffice-analytics';
+            }
+            // Documents, Quotes, Insurance, Claims
+            if (id.includes('Document') || id.includes('Quote') || id.includes('Insurance') || id.includes('Claims') || id.includes('Invoice') || id.includes('Invoicing')) {
+              return 'backoffice-documents';
+            }
+            // Automation, Cron, Compliance
+            if (id.includes('Automation') || id.includes('Cron') || id.includes('Compliance') || id.includes('Security') || id.includes('User') || id.includes('Notification')) {
+              return 'backoffice-admin';
+            }
+            // GSC, GA4, LLM
+            if (id.includes('GSC') || id.includes('GA4') || id.includes('LLM') || id.includes('Ultron') || id.includes('Trend')) {
+              return 'backoffice-ai';
             }
             // Core last as fallback
             return 'backoffice-core';

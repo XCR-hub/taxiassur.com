@@ -19,71 +19,99 @@ interface RealStats {
   error: string | null;
 }
 
+type StatsData = Omit<RealStats, 'loading' | 'error'>;
+
+let cachedStats: StatsData | null = null;
+let fetchPromise: Promise<StatsData> | null = null;
+let listeners: Set<() => void> = new Set();
+
+function notifyListeners() {
+  listeners.forEach(fn => fn());
+}
+
+async function fetchStatsOnce(): Promise<StatsData> {
+  if (cachedStats) return cachedStats;
+  if (fetchPromise) return fetchPromise;
+
+  fetchPromise = (async () => {
+    try {
+      const [articlesRes, faqsRes, citiesRes] = await Promise.allSettled([
+        supabase
+          .from('blog_posts')
+          .select('*', { count: 'exact', head: true })
+          .eq('published', true),
+        supabase
+          .from('faq_entries')
+          .select('*', { count: 'exact', head: true }),
+        supabase
+          .from('city_pages')
+          .select('*', { count: 'exact', head: true })
+          .eq('status', 'published'),
+      ]);
+
+      const result: StatsData = {
+        totalArticles: articlesRes.status === 'fulfilled' && !articlesRes.value.error && articlesRes.value.count !== null
+          ? articlesRes.value.count
+          : STATIC_DEFAULTS.totalArticles,
+        totalFaqs: faqsRes.status === 'fulfilled' && !faqsRes.value.error && faqsRes.value.count !== null
+          ? faqsRes.value.count
+          : STATIC_DEFAULTS.totalFaqs,
+        totalCities: citiesRes.status === 'fulfilled' && !citiesRes.value.error && citiesRes.value.count !== null
+          ? citiesRes.value.count
+          : STATIC_DEFAULTS.totalCities,
+        totalLeads: STATIC_DEFAULTS.totalLeads,
+        totalReviews: STATIC_DEFAULTS.totalReviews,
+      };
+
+      cachedStats = result;
+      notifyListeners();
+      return result;
+    } catch {
+      return STATIC_DEFAULTS;
+    } finally {
+      fetchPromise = null;
+    }
+  })();
+
+  return fetchPromise;
+}
+
 export function useRealStats(): RealStats {
   const [stats, setStats] = useState<RealStats>({
-    ...STATIC_DEFAULTS,
-    loading: false,
+    ...(cachedStats || STATIC_DEFAULTS),
+    loading: !cachedStats,
     error: null,
   });
 
   useEffect(() => {
     let mounted = true;
 
-    const fetchStats = async () => {
-      try {
-        const [articlesRes, faqsRes, citiesRes] = await Promise.allSettled([
-          supabase
-            .from('blog_posts')
-            .select('*', { count: 'exact', head: true })
-            .eq('published', true),
-          supabase
-            .from('faq_entries')
-            .select('*', { count: 'exact', head: true }),
-          supabase
-            .from('city_pages')
-            .select('*', { count: 'exact', head: true })
-            .eq('status', 'published'),
-        ]);
+    if (cachedStats) {
+      setStats({ ...cachedStats, loading: false, error: null });
+      return;
+    }
 
-        if (!mounted) return;
-
-        setStats({
-          totalArticles: articlesRes.status === 'fulfilled' && !articlesRes.value.error && articlesRes.value.count !== null
-            ? articlesRes.value.count
-            : STATIC_DEFAULTS.totalArticles,
-          totalFaqs: faqsRes.status === 'fulfilled' && !faqsRes.value.error && faqsRes.value.count !== null
-            ? faqsRes.value.count
-            : STATIC_DEFAULTS.totalFaqs,
-          totalCities: citiesRes.status === 'fulfilled' && !citiesRes.value.error && citiesRes.value.count !== null
-            ? citiesRes.value.count
-            : STATIC_DEFAULTS.totalCities,
-          totalLeads: STATIC_DEFAULTS.totalLeads,
-          totalReviews: STATIC_DEFAULTS.totalReviews,
-          loading: false,
-          error: null,
-        });
-      } catch {
-        if (mounted) {
-          setStats(prev => ({ ...prev, loading: false, error: null }));
-        }
+    const onUpdate = () => {
+      if (mounted && cachedStats) {
+        setStats({ ...cachedStats, loading: false, error: null });
       }
     };
+    listeners.add(onUpdate);
 
-    // Defer stats fetching until after LCP — use idle callback or 2s delay
-    // This prevents Supabase queries from competing with initial page paint
     let timerId: ReturnType<typeof setTimeout>;
     if ('requestIdleCallback' in window) {
       (window as any).requestIdleCallback(() => {
-        if (mounted) fetchStats();
+        if (mounted) fetchStatsOnce();
       }, { timeout: 3000 });
     } else {
       timerId = setTimeout(() => {
-        if (mounted) fetchStats();
+        if (mounted) fetchStatsOnce();
       }, 2000);
     }
 
     return () => {
       mounted = false;
+      listeners.delete(onUpdate);
       if (timerId) clearTimeout(timerId);
     };
   }, []);

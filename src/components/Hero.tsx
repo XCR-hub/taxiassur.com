@@ -155,20 +155,20 @@ const Hero: React.FC = () => {
 
             {/* Stats Row */}
             <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-4 sm:mb-6">
-              <div className="text-center bg-green-600 hover:bg-green-700 rounded-lg sm:rounded-xl p-2 sm:p-4 border-2 border-green-500 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer">
+              <div className="text-center bg-green-700 hover:bg-green-800 rounded-lg sm:rounded-xl p-2 sm:p-4 border-2 border-green-500 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer">
                 <TrendingDown className="mx-auto mb-1 sm:mb-2 text-white drop-shadow-lg" size={16} />
-                <div className="text-lg sm:text-2xl font-bold text-green-400 drop-shadow-lg">-35%</div>
-                <div className="text-xs text-white font-medium drop-shadow-md hidden sm:block">Économies</div>
+                <div className="text-lg sm:text-2xl font-bold text-white drop-shadow-lg">-35%</div>
+                <div className="text-xs text-green-200 font-medium drop-shadow-md hidden sm:block">Économies</div>
               </div>
-              <div className="text-center bg-amber-600 hover:bg-amber-700 rounded-lg sm:rounded-xl p-2 sm:p-4 border-2 border-amber-500 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer">
+              <div className="text-center bg-amber-700 hover:bg-amber-800 rounded-lg sm:rounded-xl p-2 sm:p-4 border-2 border-amber-500 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer">
                 <Star className="mx-auto mb-1 sm:mb-2 text-white fill-current drop-shadow-lg" size={16} />
-                <div className="text-lg sm:text-2xl font-bold text-yellow-500 drop-shadow-lg">100+</div>
-                <div className="text-xs text-white font-medium drop-shadow-md hidden sm:block">Clients</div>
+                <div className="text-lg sm:text-2xl font-bold text-white drop-shadow-lg">100+</div>
+                <div className="text-xs text-amber-200 font-medium drop-shadow-md hidden sm:block">Clients</div>
               </div>
-              <div className="text-center bg-yellow-500 hover:bg-yellow-600 rounded-lg sm:rounded-xl p-2 sm:p-4 border-2 border-yellow-500 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer">
+              <div className="text-center bg-yellow-600 hover:bg-yellow-700 rounded-lg sm:rounded-xl p-2 sm:p-4 border-2 border-yellow-400 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer">
                 <Zap className="mx-auto mb-1 sm:mb-2 text-white drop-shadow-lg" size={16} />
-                <div className="text-lg sm:text-2xl font-bold text-yellow-400 drop-shadow-lg">15min</div>
-                <div className="text-xs text-white font-medium drop-shadow-md hidden sm:block">Réponse</div>
+                <div className="text-lg sm:text-2xl font-bold text-white drop-shadow-lg">15min</div>
+                <div className="text-xs text-yellow-100 font-medium drop-shadow-md hidden sm:block">Réponse</div>
               </div>
             </div>
 
@@ -334,7 +334,7 @@ const Hero: React.FC = () => {
                     <p className="text-xs text-gray-300">
                       En soumettant ce formulaire, j'accepte d'être recontacté par TaxiAssur.com 
                       pour recevoir mon devis personnalisé. Données sécurisées selon notre 
-                      <a href="/policy" className="text-amber-400 hover:underline"> politique de confidentialité</a>.
+                      <a href="/policy" className="text-yellow-300 hover:text-yellow-200 underline"> politique de confidentialité</a>.
                     </p>
                   </div>
 

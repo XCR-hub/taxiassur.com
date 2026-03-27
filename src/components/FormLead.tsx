@@ -306,7 +306,7 @@ const FormLead: React.FC = () => {
                 <p className="text-xs text-gray-300">
                   En soumettant ce formulaire, j'accepte d'être recontacté par TaxiAssur.com
                   pour recevoir mon devis personnalisé. Données sécurisées selon notre
-                  <a href="/policy" className="text-amber-400 hover:text-amber-300 hover:underline"> politique de confidentialité</a>.
+                  <a href="/policy" className="text-yellow-300 hover:text-yellow-200 underline"> politique de confidentialité</a>.
                 </p>
               </div>
 
