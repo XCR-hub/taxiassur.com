@@ -41,6 +41,9 @@ http://taxiassur.com/* https://taxiassur.com/:splat 301!
 /taxi-hy-res /assurance-taxi 301
 /taxi--vry /assurance-taxi 301
 /taxi-m-rignac /assurance-taxi 301
+/taxi-reims /assurance-taxi-reims 301
+/taxi-annecy /assurance-taxi 301
+/taxi-strasbourg /assurance-taxi-strasbourg 301
 
 # ============================================================
 # 4. REDIRECTIONS ANCIENNES URLs
@@ -49,6 +52,11 @@ http://taxiassur.com/* https://taxiassur.com/:splat 301!
 /comparateur-axa-taxi /assurance-taxi 301
 /devis-instantane /contact 301
 /devis /contact 301
+/offres/flotte-vehicules /flotte-vehicules 301
+/offres/rc-professionnelle /rc-professionnelle 301
+/mentions-legales /legal 301
+/conditions-generales /conditions 301
+/politique-confidentialite /policy 301
 
 # ============================================================
 # 5. REDIRECTIONS /ville/ URLs MAL FORMÉES

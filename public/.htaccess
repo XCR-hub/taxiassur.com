@@ -56,8 +56,15 @@
     # REDIRECTIONS SPÉCIFIQUES - Fix Soft 404 et erreurs
     # ===================================================================
 
-    # Fix Soft 404: /offres
+    # Fix Soft 404: /offres et sous-pages
     RewriteRule ^offres$ /assurance-taxi [R=301,L]
+    RewriteRule ^offres/flotte-vehicules$ /flotte-vehicules [R=301,L]
+    RewriteRule ^offres/rc-professionnelle$ /rc-professionnelle [R=301,L]
+
+    # Fix Soft 404: pages legales alias → canonical
+    RewriteRule ^mentions-legales$ /legal [R=301,L]
+    RewriteRule ^conditions-generales$ /conditions [R=301,L]
+    RewriteRule ^politique-confidentialite$ /policy [R=301,L]
 
     # Fix erreur redirection
     RewriteRule ^comparateur-axa-taxi$ /assurance-taxi [R=301,L]
@@ -95,6 +102,9 @@
     RewriteRule ^taxi-hy-res$ /assurance-taxi [R=301,L]
     RewriteRule ^taxi--vry$ /assurance-taxi [R=301,L]
     RewriteRule ^taxi-m-rignac$ /assurance-taxi [R=301,L]
+    RewriteRule ^taxi-reims$ /assurance-taxi-reims [R=301,L]
+    RewriteRule ^taxi-annecy$ /assurance-taxi [R=301,L]
+    RewriteRule ^taxi-strasbourg$ /assurance-taxi-strasbourg [R=301,L]
 
     # Fix /plan-du-site ancien lien
     RewriteRule ^plan-du-site$ /sitemap [R=301,L]
