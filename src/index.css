@@ -37,10 +37,21 @@
     color-scheme: light;
   }
 
-  input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
-  select,
-  textarea {
-    color: #111827 !important;
+  :not(.lead-form) > input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+  :not(.lead-form) > select,
+  :not(.lead-form) > textarea {
+    color: #111827;
+  }
+
+  .lead-form input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+  .lead-form select,
+  .lead-form textarea {
+    color: #ffffff;
+  }
+
+  .lead-form select option {
+    color: #111827;
+    background-color: #ffffff;
   }
 
   input::placeholder,
@@ -53,13 +64,13 @@
   input[type="time"],
   input[type="month"],
   input[type="week"] {
-    color: #111827 !important;
+    color: #111827;
     color-scheme: light;
   }
 
   select option {
-    color: #111827 !important;
-    background-color: #ffffff !important;
+    color: #111827;
+    background-color: #ffffff;
   }
 
   :root {

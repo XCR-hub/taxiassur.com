@@ -2,8 +2,7 @@ import { createBrowserRouter } from 'react-router-dom';
 import { lazy } from 'react';
 import RouteErrorFallback from './components/RouteErrorFallback';
 import NotFound from './pages/NotFound';
-
-const Home = lazy(() => import('./pages/Home'));
+import Home from './pages/Home';
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
 const EspaceClient = lazy(() => import('./pages/EspaceClient'));
 const ClientAccessByToken = lazy(() => import('./pages/ClientAccessByToken'));

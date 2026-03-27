@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { CheckCircle, Phone, Send, Shield, Clock, Award, TrendingDown, Zap, Target, Star, FileText, MapPin, Users, User, Mail } from 'lucide-react';
-import { useRealStats } from '../hooks/useRealStats';
+import { Link } from 'react-router-dom';
+import { CheckCircle, Phone, Send, Shield, Clock, TrendingDown, Zap, Star, FileText, MapPin, Users } from 'lucide-react';
 
 const Hero: React.FC = () => {
-  const navigate = useNavigate();
-  const { totalArticles, totalFaqs, totalCities } = useRealStats();
+  const totalArticles = 25;
+  const totalCities = 80;
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -335,7 +334,7 @@ const Hero: React.FC = () => {
                     <p className="text-xs text-gray-300">
                       En soumettant ce formulaire, j'accepte d'être recontacté par TaxiAssur.com 
                       pour recevoir mon devis personnalisé. Données sécurisées selon notre 
-                      <a href="/policy" className="text-amber-600 hover:underline"> politique de confidentialité</a>.
+                      <a href="/policy" className="text-amber-400 hover:underline"> politique de confidentialité</a>.
                     </p>
                   </div>
 
@@ -365,7 +364,7 @@ const Hero: React.FC = () => {
 
                 {/* Trust indicators */}
                 <div className="mt-6 pt-4 border-t border-gray-700">
-                  <div className="flex justify-center space-x-6 text-xs text-gray-600">
+                  <div className="flex justify-center space-x-6 text-xs text-gray-400">
                     <div className="flex items-center space-x-1">
                       <CheckCircle className="text-green-400" size={12} />
                       <span>100% Gratuit</span>
