@@ -25,7 +25,30 @@ export interface AIDecision {
   applied_at?: string;
   approved_by?: string;
   created_at: string;
+  model_used?: string;
+  model_provider?: string;
 }
+
+export type AIProvider = 'openai' | 'anthropic' | 'gemini' | 'huggingface' | 'openrouter';
+
+export const AI_PROVIDERS: Record<AIProvider, { name: string; color: string; icon: string }> = {
+  openai: { name: 'OpenAI', color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/25', icon: 'O' },
+  anthropic: { name: 'Anthropic', color: 'text-orange-300 bg-orange-500/10 border-orange-500/25', icon: 'A' },
+  gemini: { name: 'Google', color: 'text-blue-400 bg-blue-500/10 border-blue-500/25', icon: 'G' },
+  huggingface: { name: 'HuggingFace', color: 'text-yellow-400 bg-yellow-500/10 border-yellow-500/25', icon: 'H' },
+  openrouter: { name: 'OpenRouter', color: 'text-rose-400 bg-rose-500/10 border-rose-500/25', icon: 'R' },
+};
+
+export const AI_AGENT_MODELS: Record<AIAgent, { provider: AIProvider; model: string; label: string }> = {
+  lead_scorer: { provider: 'anthropic', model: 'claude-sonnet-4', label: 'Claude Sonnet' },
+  email_composer: { provider: 'openai', model: 'gpt-4o', label: 'GPT-4o' },
+  negotiation_assistant: { provider: 'anthropic', model: 'claude-sonnet-4', label: 'Claude Sonnet' },
+  risk_analyzer: { provider: 'gemini', model: 'gemini-2.0-flash', label: 'Gemini 2.0 Flash' },
+  churn_predictor: { provider: 'gemini', model: 'gemini-1.5-flash', label: 'Gemini 1.5 Flash' },
+  cross_sell_recommender: { provider: 'openai', model: 'gpt-4o-mini', label: 'GPT-4o Mini' },
+  sentiment_analyzer: { provider: 'huggingface', model: 'mistral-7b', label: 'Mistral 7B' },
+  response_generator: { provider: 'anthropic', model: 'claude-3.5-haiku', label: 'Claude Haiku' },
+};
 
 export interface AICouncilMeeting {
   id: string;

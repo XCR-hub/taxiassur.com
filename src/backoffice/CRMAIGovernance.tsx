@@ -6,7 +6,7 @@ import {
   Play, RefreshCw, Filter, Zap, Shield, BarChart2, Users,
   CheckSquare, X, Wand2, Timer, Cpu
 } from 'lucide-react';
-import { aiGovernanceService, AIDecision, AI_AGENTS, AIAgent, AICouncilMeeting } from '@/lib/crm-ai-governance';
+import { aiGovernanceService, AIDecision, AI_AGENTS, AIAgent, AICouncilMeeting, AI_AGENT_MODELS, AI_PROVIDERS } from '@/lib/crm-ai-governance';
 import { AIDecisionCard } from '@/components/crm/AIDecisionCard';
 import AIGovernanceAgents from './AIGovernanceAgents';
 import AIGovernanceSettings from './AIGovernanceSettings';
@@ -104,7 +104,7 @@ const CRMAIGovernance: React.FC = () => {
 
   // Generation state
   const [generating, setGenerating] = useState(false);
-  const [generateResult, setGenerateResult] = useState<{ generated: number; leads: number } | null>(null);
+  const [generateResult, setGenerateResult] = useState<{ generated: number; leads: number; providers_used?: Record<string, number> } | null>(null);
   const [generateError, setGenerateError] = useState<string | null>(null);
 
   // Approve action feedback
@@ -181,7 +181,7 @@ const CRMAIGovernance: React.FC = () => {
         body: { limit: 5 },
       });
       if (error) throw error;
-      setGenerateResult({ generated: data.generated, leads: data.leads_analyzed });
+      setGenerateResult({ generated: data.generated, leads: data.leads_analyzed, providers_used: data.providers_used });
       await loadAllDecisions();
       setTimeout(() => setGenerateResult(null), 6000);
     } catch (e: unknown) {
@@ -344,9 +344,23 @@ const CRMAIGovernance: React.FC = () => {
 
           {/* Generation feedback banners */}
           {generateResult && (
-            <div className="flex items-center gap-2 bg-green-500/10 border border-green-500/25 rounded-xl px-4 py-2.5 mb-3 text-sm text-green-400">
+            <div className="flex items-center gap-2 flex-wrap bg-green-500/10 border border-green-500/25 rounded-xl px-4 py-2.5 mb-3 text-sm text-green-400">
               <Sparkles size={14} />
-              <strong>{generateResult.generated} décisions</strong> générées avec l'IA pour {generateResult.leads} leads — consultez l'onglet Décisions IA.
+              <span><strong>{generateResult.generated} décisions</strong> générées pour {generateResult.leads} leads</span>
+              {generateResult.providers_used && Object.keys(generateResult.providers_used).length > 0 && (
+                <span className="flex items-center gap-1.5 ml-1">
+                  <span className="text-green-500/60">via</span>
+                  {Object.entries(generateResult.providers_used).map(([provider, count]) => {
+                    const info = AI_PROVIDERS[provider as keyof typeof AI_PROVIDERS];
+                    return info ? (
+                      <span key={provider} className="inline-flex items-center gap-0.5 text-xs bg-gray-800/80 border border-gray-700 rounded-full px-2 py-0.5 text-gray-300">
+                        <span className="font-bold text-[10px]">{info.icon}</span>
+                        {info.name} ({count})
+                      </span>
+                    ) : null;
+                  })}
+                </span>
+              )}
             </div>
           )}
           {generateError && (
@@ -605,19 +619,31 @@ const CRMAIGovernance: React.FC = () => {
                   <div className="w-16 h-16 bg-blue-500/15 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-blue-500/25">
                     <Brain size={28} className="text-blue-400 animate-pulse" />
                   </div>
-                  <h3 className="text-white font-semibold mb-2">Analyse IA en cours...</h3>
-                  <p className="text-gray-500 text-sm mb-4">Les 8 agents analysent vos leads récents avec GPT-4o mini</p>
-                  <div className="flex flex-wrap justify-center gap-2 max-w-sm mx-auto">
-                    {(Object.entries(AI_AGENTS) as [AIAgent, typeof AI_AGENTS[AIAgent]][]).map(([key, a], i) => (
-                      <span
-                        key={key}
-                        className="flex items-center gap-1 text-xs bg-gray-800 border border-gray-700 rounded-full px-2.5 py-1 text-gray-400"
-                        style={{ animationDelay: `${i * 0.15}s` }}
-                      >
-                        <span className="animate-pulse">{a.icon}</span>
-                        {a.name}
+                  <h3 className="text-white font-semibold mb-2">Analyse multi-IA en cours...</h3>
+                  <p className="text-gray-500 text-sm mb-3">8 agents specialises via OpenAI, Anthropic, Gemini et HuggingFace</p>
+                  <div className="flex justify-center gap-2 mb-4">
+                    {Object.entries(AI_PROVIDERS).filter(([k]) => k !== 'openrouter').map(([key, p]) => (
+                      <span key={key} className={`inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-1 rounded-full border ${p.color}`}>
+                        <span className="font-bold text-[10px] animate-pulse">{p.icon}</span>
+                        {p.name}
                       </span>
                     ))}
+                  </div>
+                  <div className="flex flex-wrap justify-center gap-2 max-w-lg mx-auto">
+                    {(Object.entries(AI_AGENTS) as [AIAgent, typeof AI_AGENTS[AIAgent]][]).map(([key, a], i) => {
+                      const model = AI_AGENT_MODELS[key as AIAgent];
+                      return (
+                        <span
+                          key={key}
+                          className="flex items-center gap-1 text-xs bg-gray-800 border border-gray-700 rounded-full px-2.5 py-1 text-gray-400"
+                          style={{ animationDelay: `${i * 0.15}s` }}
+                        >
+                          <span className="animate-pulse">{a.icon}</span>
+                          {a.name}
+                          {model && <span className="text-gray-600 text-[10px]">({model.label})</span>}
+                        </span>
+                      );
+                    })}
                   </div>
                 </div>
               ) : filteredDecisions.length === 0 ? (

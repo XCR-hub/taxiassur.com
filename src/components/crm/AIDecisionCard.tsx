@@ -4,7 +4,7 @@ import {
   Lightbulb, Clock, Zap, Database, ChevronDown, ChevronUp,
   Sparkles, ArrowRight
 } from 'lucide-react';
-import { AIDecision, AI_AGENTS } from '@/lib/crm-ai-governance';
+import { AIDecision, AI_AGENTS, AI_PROVIDERS, AI_AGENT_MODELS, AIProvider } from '@/lib/crm-ai-governance';
 import { cn } from '@/lib/utils';
 
 interface AIDecisionCardProps {
@@ -179,6 +179,20 @@ export const AIDecisionCard: React.FC<AIDecisionCardProps> = ({
                 <TypeIcon size={9} />
                 {typeConfig.label}
               </span>
+              {(() => {
+                const provider = (decision.model_provider as AIProvider) || AI_AGENT_MODELS[decision.agent]?.provider;
+                const providerInfo = provider ? AI_PROVIDERS[provider] : null;
+                const modelLabel = decision.model_used || AI_AGENT_MODELS[decision.agent]?.label;
+                if (providerInfo && modelLabel) {
+                  return (
+                    <span className={cn('inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full border', providerInfo.color)}>
+                      <span className="text-[10px] font-bold leading-none">{providerInfo.icon}</span>
+                      {modelLabel}
+                    </span>
+                  );
+                }
+                return null;
+              })()}
               <span className="inline-flex items-center gap-1 text-[11px] text-gray-600 px-1">
                 <Clock size={9} />
                 {new Date(decision.created_at).toLocaleString('fr-FR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}

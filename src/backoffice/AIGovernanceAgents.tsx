@@ -4,7 +4,7 @@ import {
   MessageSquare, TrendingUp, CheckCircle, Clock, Activity,
   Zap, Award, Flame, Star
 } from 'lucide-react';
-import { AIAgent, AI_AGENTS, AIDecision } from '@/lib/crm-ai-governance';
+import { AIAgent, AI_AGENTS, AIDecision, AI_AGENT_MODELS, AI_PROVIDERS } from '@/lib/crm-ai-governance';
 
 interface AgentStats {
   agent: AIAgent;
@@ -172,6 +172,31 @@ const AIGovernanceAgents: React.FC<AIGovernanceAgentsProps> = ({ decisions }) =>
         ))}
       </div>
 
+      {/* ── Multi-provider summary ── */}
+      <div className="bg-gray-900 border border-gray-800 rounded-2xl p-5">
+        <h3 className="text-sm font-semibold text-white mb-3">Providers IA</h3>
+        <div className="grid grid-cols-4 gap-3">
+          {(Object.entries(AI_PROVIDERS) as [string, typeof AI_PROVIDERS[keyof typeof AI_PROVIDERS]][])
+            .filter(([k]) => k !== 'openrouter')
+            .map(([key, provider]) => {
+              const agentCount = (Object.entries(AI_AGENT_MODELS) as [AIAgent, typeof AI_AGENT_MODELS[AIAgent]][])
+                .filter(([, m]) => m.provider === key).length;
+              const providerDecisions = decisions.filter(d => d.model_provider === key).length;
+              return (
+                <div key={key} className={`border rounded-xl p-3 ${provider.color}`}>
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-lg font-bold">{provider.icon}</span>
+                    <span className="text-sm font-semibold">{provider.name}</span>
+                  </div>
+                  <div className="text-[11px] opacity-70">
+                    {agentCount} agent{agentCount > 1 ? 's' : ''} · {providerDecisions} decision{providerDecisions !== 1 ? 's' : ''}
+                  </div>
+                </div>
+              );
+          })}
+        </div>
+      </div>
+
       {/* ── Activity heatmap bar (7 days) ── */}
       <div className="bg-gray-900 border border-gray-800 rounded-2xl p-5">
         <div className="flex items-center justify-between mb-4">
@@ -258,6 +283,17 @@ const AIGovernanceAgents: React.FC<AIGovernanceAgentsProps> = ({ decisions }) =>
                       {tier.icon}
                       {tier.label}
                     </span>
+                    {(() => {
+                      const model = AI_AGENT_MODELS[agent];
+                      if (!model) return null;
+                      const providerInfo = AI_PROVIDERS[model.provider];
+                      return (
+                        <span className={`inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full border ${providerInfo.color}`}>
+                          <span className="font-bold text-[9px]">{providerInfo.icon}</span>
+                          {model.label}
+                        </span>
+                      );
+                    })()}
                     {pending > 0 && (
                       <span className="text-[10px] font-bold bg-amber-500/15 border border-amber-500/30 text-amber-400 px-2 py-0.5 rounded-full">
                         {pending} en attente
