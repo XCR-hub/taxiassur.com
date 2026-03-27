@@ -35,7 +35,7 @@ const SitemapPage: React.FC = () => {
     {
       icon: Shield,
       title: 'Nos Offres',
-      path: '/offres',
+      path: '/assurance-taxi',
       description: 'Solutions d\'assurance pour professionnels'
     },
     {

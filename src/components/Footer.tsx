@@ -16,7 +16,7 @@ const Footer: React.FC = () => {
     { name: 'Blog', href: '/blog' },
     { name: 'FAQ', href: '/faq' },
     { name: 'Avis Clients', href: '/avis' },
-    { name: 'Nos Offres', href: '/offres' },
+    { name: 'Nos Offres', href: '/assurance-taxi' },
     { name: 'Partenaires', href: '/programme-partenaires' },
     { name: 'Villes', href: '/villes' },
     { name: 'Newsletter', href: '/newsletter' },
@@ -27,7 +27,7 @@ const Footer: React.FC = () => {
     { name: 'Mentions Légales', href: '/mentions-legales' },
     { name: 'Politique de Confidentialité', href: '/politique-confidentialite' },
     { name: 'Conditions Générales', href: '/conditions-generales' },
-    { name: 'Confiance & Certifications', href: '/confiance-certifications' }
+    { name: 'Confiance & Certifications', href: '/confiance-et-certifications' }
   ];
 
   return (

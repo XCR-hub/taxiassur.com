@@ -64,6 +64,52 @@
 
     # Fix anciennes URLs
     RewriteRule ^devis-instantane$ /contact [R=301,L]
+    RewriteRule ^devis$ /contact [R=301,L]
+
+    # ===================================================================
+    # REDIRECTIONS ANCIENNES URLs /taxi-* → /assurance-taxi-*
+    # Fix 45 erreurs GSC "Page avec redirection"
+    # ===================================================================
+    RewriteRule ^taxi-villeurbanne$ /assurance-taxi-villeurbanne [R=301,L]
+    RewriteRule ^taxi-toulon$ /assurance-taxi-toulon [R=301,L]
+    RewriteRule ^taxi-perpignan$ /assurance-taxi-perpignan [R=301,L]
+    RewriteRule ^taxi-nice$ /assurance-taxi-nice [R=301,L]
+    RewriteRule ^taxi-angers$ /assurance-taxi-angers [R=301,L]
+    RewriteRule ^taxi-lyon$ /assurance-taxi-lyon [R=301,L]
+    RewriteRule ^taxi-valence$ /assurance-taxi [R=301,L]
+    RewriteRule ^taxi-caen$ /assurance-taxi [R=301,L]
+    RewriteRule ^taxi-nancy$ /assurance-taxi [R=301,L]
+    RewriteRule ^taxi-cholet$ /assurance-taxi [R=301,L]
+    RewriteRule ^taxi-poitiers$ /assurance-taxi [R=301,L]
+    RewriteRule ^taxi-mulhouse$ /assurance-taxi [R=301,L]
+    RewriteRule ^taxi-antibes$ /assurance-taxi [R=301,L]
+    RewriteRule ^taxi-beauvais$ /assurance-taxi [R=301,L]
+    RewriteRule ^taxi-montreuil$ /assurance-taxi [R=301,L]
+    RewriteRule ^taxi-cayenne$ /assurance-taxi [R=301,L]
+    RewriteRule ^taxi-sarcelles$ /assurance-taxi [R=301,L]
+    RewriteRule ^taxi-boulogne-billancourt$ /assurance-taxi [R=301,L]
+    RewriteRule ^taxi-clichy$ /assurance-taxi [R=301,L]
+    RewriteRule ^taxi-noisy-le-grand$ /assurance-taxi [R=301,L]
+    RewriteRule ^taxi-asni-res-sur-seine$ /assurance-taxi [R=301,L]
+    RewriteRule ^taxi-cr-teil$ /assurance-taxi [R=301,L]
+    RewriteRule ^taxi-hy-res$ /assurance-taxi [R=301,L]
+    RewriteRule ^taxi--vry$ /assurance-taxi [R=301,L]
+    RewriteRule ^taxi-m-rignac$ /assurance-taxi [R=301,L]
+
+    # Fix /plan-du-site ancien lien
+    RewriteRule ^plan-du-site$ /sitemap [R=301,L]
+
+    # Fix /ville/ URLs mal formées
+    RewriteRule ^ville/n-mes$ /ville/nimes [R=301,L]
+    RewriteRule ^ville/assurance-taxi-bruges$ /assurance-taxi [R=301,L]
+    RewriteRule ^ville/assurance-taxi-romans-sur-isere$ /assurance-taxi [R=301,L]
+    RewriteRule ^ville/assurance-taxi-pas-cher-sens$ /assurance-taxi [R=301,L]
+    RewriteRule ^ville/assurance-taxi-rosny-sous-bois$ /assurance-taxi [R=301,L]
+    RewriteRule ^ville/assurance-taxi-tarbes$ /assurance-taxi [R=301,L]
+
+    # Fix pages dupliquées
+    RewriteRule ^partenaires$ /programme-partenaires [R=301,L]
+    RewriteRule ^merci\.html$ /merci [R=301,L]
 
     # Exclure les fichiers assets (CSS, JS, images, fonts)
     RewriteCond %{REQUEST_URI} !^/api/

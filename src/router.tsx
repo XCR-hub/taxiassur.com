@@ -300,11 +300,23 @@ export const router = createBrowserRouter([
     element: <Legal />,
   },
   {
+    path: '/mentions-legales',
+    element: <Legal />,
+  },
+  {
     path: '/policy',
     element: <Policy />,
   },
   {
+    path: '/politique-confidentialite',
+    element: <Policy />,
+  },
+  {
     path: '/conditions',
+    element: <Conditions />,
+  },
+  {
+    path: '/conditions-generales',
     element: <Conditions />,
   },
   {
@@ -361,6 +373,10 @@ export const router = createBrowserRouter([
   },
   {
     path: '/sitemap',
+    element: <SitemapPage />,
+  },
+  {
+    path: '/plan-du-site',
     element: <SitemapPage />,
   },
   {
