@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   Users, UserPlus, Shield, Mail, CheckCircle, XCircle, Trash2, Search,
-  RefreshCw, Key, Send, AlertTriangle, X, Copy, Link, Eye,
+  RefreshCw, Key, Send, AlertTriangle, X, Copy, Link, Eye, Pencil,
   CreditCard, CreditCard as Edit3, Clock, Crown, User, Lock, ChevronRight,
   Activity, Zap, BarChart2, Globe, Settings2, Share2, TrendingUp, Database,
   Building2, MessageSquare, Brain
@@ -124,6 +124,9 @@ const UserManagement: React.FC = () => {
   const [linkCopied, setLinkCopied] = useState(false);
   const [newUser, setNewUser] = useState({ email: '', full_name: '', role: 'collaborator' as 'master' | 'collaborator' });
   const [newUserPermissions, setNewUserPermissions] = useState<PermMap>({});
+  const [editingName, setEditingName] = useState(false);
+  const [editNameValue, setEditNameValue] = useState('');
+  const [savingName, setSavingName] = useState(false);
 
   useEffect(() => { loadUsers(); }, []);
 
@@ -325,6 +328,19 @@ const UserManagement: React.FC = () => {
     } catch (err) {
       showToast('error', "Erreur lors de l'invitation");
     } finally { setSending(false); }
+  };
+
+  const handleSaveName = async () => {
+    if (!selectedUser || !editNameValue.trim()) return;
+    try {
+      setSavingName(true);
+      await restPatch('admin_users', `id=eq.${selectedUser.id}`, { full_name: editNameValue.trim() });
+      showToast('success', 'Nom mis a jour');
+      setEditingName(false);
+      await loadUsers();
+    } catch {
+      showToast('error', 'Erreur lors de la modification du nom');
+    } finally { setSavingName(false); }
   };
 
   const filteredUsers = users.filter(u => {
@@ -731,7 +747,49 @@ const UserManagement: React.FC = () => {
                   <div className="flex items-start gap-3 flex-wrap mb-3">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2.5 flex-wrap">
-                        <h2 className="text-xl font-bold text-white">{selectedUser.full_name}</h2>
+                        {editingName ? (
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="text"
+                              value={editNameValue}
+                              onChange={e => setEditNameValue(e.target.value)}
+                              onKeyDown={e => { if (e.key === 'Enter') handleSaveName(); if (e.key === 'Escape') setEditingName(false); }}
+                              autoFocus
+                              className="text-xl font-bold text-white bg-transparent focus:outline-none px-2 py-0.5"
+                              style={{
+                                border: '1px solid rgba(245,158,11,0.4)',
+                                borderRadius: 8,
+                                background: 'rgba(245,158,11,0.06)',
+                                caretColor: '#f59e0b',
+                                minWidth: 150
+                              }}
+                            />
+                            <button
+                              onClick={handleSaveName}
+                              disabled={savingName || !editNameValue.trim()}
+                              className="w-7 h-7 flex items-center justify-center rounded-lg transition-all disabled:opacity-50"
+                              style={{ background: 'rgba(16,185,129,0.15)', color: '#34d399', border: '1px solid rgba(16,185,129,0.3)' }}
+                            >
+                              <CheckCircle size={13} />
+                            </button>
+                            <button
+                              onClick={() => setEditingName(false)}
+                              className="w-7 h-7 flex items-center justify-center rounded-lg transition-all"
+                              style={{ background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.4)', border: '1px solid rgba(255,255,255,0.08)' }}
+                            >
+                              <X size={13} />
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => { setEditNameValue(selectedUser.full_name); setEditingName(true); }}
+                            className="flex items-center gap-2 group/name"
+                            title="Cliquer pour modifier le nom"
+                          >
+                            <h2 className="text-xl font-bold text-white">{selectedUser.full_name}</h2>
+                            <Pencil size={13} className="opacity-0 group-hover/name:opacity-60 transition-opacity" style={{ color: '#f59e0b' }} />
+                          </button>
+                        )}
                         <span
                           className="px-2.5 py-0.5 rounded-lg text-xs font-bold flex items-center gap-1.5"
                           style={selectedUser.role === 'master' ? {
