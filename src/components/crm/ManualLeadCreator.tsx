@@ -56,12 +56,12 @@ export const ManualLeadCreator: React.FC<ManualLeadCreatorProps> = ({
       return false;
     }
 
-    if (!formData.phone.trim() && !formData.email.trim()) {
-      setError('Téléphone ou email requis');
+    if (!formData.email.trim()) {
+      setError('Email requis');
       return false;
     }
 
-    if (formData.email && !formData.email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+    if (!formData.email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
       setError('Email invalide');
       return false;
     }
@@ -90,7 +90,7 @@ export const ManualLeadCreator: React.FC<ManualLeadCreatorProps> = ({
       const leadData = {
         first_name: formData.first_name.trim(),
         last_name: formData.last_name.trim(),
-        email: formData.email.trim() || null,
+        email: formData.email.trim(),
         phone: formData.phone.trim() || null,
         company_name: formData.company_name.trim() || null,
         city: formData.city.trim() || null,
@@ -236,7 +236,7 @@ export const ManualLeadCreator: React.FC<ManualLeadCreatorProps> = ({
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Email
+              Email <span className="text-red-500">*</span>
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
@@ -247,6 +247,7 @@ export const ManualLeadCreator: React.FC<ManualLeadCreatorProps> = ({
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
+                required
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="jean.dupont@email.com"
               />
