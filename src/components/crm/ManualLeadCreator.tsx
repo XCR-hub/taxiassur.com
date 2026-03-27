@@ -90,7 +90,6 @@ export const ManualLeadCreator: React.FC<ManualLeadCreatorProps> = ({
       const leadData = {
         first_name: formData.first_name.trim(),
         last_name: formData.last_name.trim(),
-        full_name: `${formData.first_name.trim()} ${formData.last_name.trim()}`,
         email: formData.email.trim() || null,
         phone: formData.phone.trim() || null,
         company_name: formData.company_name.trim() || null,
