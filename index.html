@@ -1,91 +1,23 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fr">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-
-  <!-- DNS prefetch for third-party origins used after initial paint -->
-  <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
-  <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
-  <link rel="dns-prefetch" href="https://drohhxrkoequjphvabvq.supabase.co" />
-  <link rel="dns-prefetch" href="https://images.pexels.com" />
-
-  <!-- Sitemap declaration for crawlers -->
-  <link rel="sitemap" type="application/xml" href="/sitemap.xml" />
-
-  <!-- Inline critical CSS for instant paint — no external CSS blocking -->
-  <style>
-    *{box-sizing:border-box;margin:0;padding:0}
-    html{overflow-x:hidden;max-width:100vw;scroll-behavior:smooth}
-    body{font-family:'Inter',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased;background:#0a0a0a;color:#fff;overflow-x:hidden;max-width:100vw}
-    #root{min-height:100vh;display:flex;flex-direction:column;overflow-x:hidden}
-    /* Loading screen: shown until React mounts */
-    .loading-screen{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#0a0a0a;z-index:9999;flex-direction:column;gap:16px}
-    .loading-spinner{width:40px;height:40px;border:3px solid rgba(212,175,55,0.2);border-top:3px solid #D4AF37;border-radius:50%;animation:spin 0.8s linear infinite}
-    .loading-text{color:#D4AF37;font-size:14px;font-weight:600;letter-spacing:.05em}
-    @keyframes spin{to{transform:rotate(360deg)}}
-    /* Header CLS prevention */
-    header{min-height:80px;contain:layout style}
-    @media(max-width:640px){header{min-height:64px}}
-    /* Hero section placeholder — prevents layout shift on mobile */
-    #devis{min-height:100svh;min-height:100vh;background:#030712}
-    @media(max-width:1023px){#devis{min-height:auto}}
-    /* No backdrop-filter on mobile — extremely expensive on low-end devices */
-    @media(max-width:1023px){
-      .backdrop-header{background:#000 !important;backdrop-filter:none !important;-webkit-backdrop-filter:none !important}
-      .backdrop-blur-lg{backdrop-filter:none !important;-webkit-backdrop-filter:none !important}
-      .backdrop-blur-sm{backdrop-filter:none !important;-webkit-backdrop-filter:none !important}
-    }
-    /* Font display: use system font until Inter loads — zero layout shift */
-    @font-face{font-family:'Inter';font-style:normal;font-weight:400 700;font-display:optional;src:local('Inter'),local('Inter-Regular')}
-  </style>
-
-  <title>Assurance Taxi Pas Cher - Devis Gratuit 2 min | TaxiAssur Courtier ORIAS</title>
-
-  <!-- Fonts: load after page paint with font-display:swap — non-blocking -->
-  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" onload="this.onload=null;this.rel='stylesheet'" />
-  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" /></noscript>
-
-  <!-- env-config loaded async to avoid render blocking -->
-  <script src="/env-config.js" async></script>
-
-  <!-- GTM + GA4: deferred until after page load to not compete with LCP -->
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    window.addEventListener('load', function() {
-      setTimeout(function() {
-        // GTM
-        var f=document.getElementsByTagName('script')[0],
-        j=document.createElement('script');j.async=true;j.src=
-        'https://www.googletagmanager.com/gtm.js?id=GTM-52JDP8VB';
-        f.parentNode.insertBefore(j,f);
-        dataLayer.push({'gtm.start':new Date().getTime(),event:'gtm.js'});
-        // GA4
-        var g=document.createElement('script');g.async=true;g.src=
-        'https://www.googletagmanager.com/gtag/js?id=G-EF69PNJBZE';
-        document.head.appendChild(g);
-        gtag('js', new Date());
-        gtag('config', 'G-EF69PNJBZE');
-      }, 1500);
-    });
-  </script>
-</head>
-<body>
-  <!-- Google Tag Manager (noscript) -->
-  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-52JDP8VB"
-  height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
-  <!-- End Google Tag Manager (noscript) -->
-
-  <div id="root">
-    <div class="loading-screen" id="loading-screen">
-      <div class="loading-spinner"></div>
-      <span class="loading-text">TaxiAssur</span>
-    </div>
-  </div>
-
-  <script type="module" src="/src/main.tsx" fetchpriority="high"></script>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0a0a0a" />
+    <title>Assurance Taxi Pas Cher - Devis Gratuit 2 min | TaxiAssur Courtier ORIAS</title>
+    <meta name="description" content="Comparez les meilleures assurances taxi. Devis gratuit en 2 minutes. TaxiAssur, courtier ORIAS specialise en assurance taxi professionnelle." />
+    <!-- Google Tag Manager -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-EF69PNJBZE"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-EF69PNJBZE');
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
 </html>
