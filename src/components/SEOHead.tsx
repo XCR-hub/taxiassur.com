@@ -4,13 +4,16 @@ import { canonicalUrl } from '@/lib/seo'
 interface SEOHeadProps {
   title: string
   description: string
-  canonical: string
+  canonical?: string
   keywords?: string
   ogImage?: string
   type?: string
+  noIndex?: boolean
+  noindex?: boolean
 }
 
-export function SEOHead({ title, description, canonical, keywords, ogImage, type = 'website' }: SEOHeadProps) {
+function SEOHead({ title, description, canonical = '/', keywords, ogImage, type = 'website', noIndex, noindex }: SEOHeadProps) {
+  const shouldNoIndex = noIndex || noindex
   const fullCanonical = canonicalUrl(canonical)
 
   return (
@@ -28,7 +31,10 @@ export function SEOHead({ title, description, canonical, keywords, ogImage, type
       <meta name="twitter:card" content="summary_large_image" />
       <meta name="twitter:title" content={title} />
       <meta name="twitter:description" content={description} />
-      <meta name="robots" content="index, follow" />
+      <meta name="robots" content={shouldNoIndex ? 'noindex, nofollow' : 'index, follow'} />
     </Helmet>
   )
 }
+
+export { SEOHead }
+export default SEOHead

@@ -191,7 +191,7 @@ function generateRelatedLinks(
     {
       title: 'Gestion des Sinistres',
       url: '/gestion-sinistres',
-      description: 'Assistance 24/7 en cas d'accident',
+      description: "Assistance 24/7 en cas d'accident",
       category: 'service'
     },
 
@@ -199,7 +199,7 @@ function generateRelatedLinks(
     {
       title: 'Questions Fréquentes',
       url: '/faq',
-      description: 'Toutes les réponses à vos questions sur l'assurance taxi',
+      description: "Toutes les réponses à vos questions sur l'assurance taxi",
       category: 'faq'
     }
   ];

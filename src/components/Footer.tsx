@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 
-export function Footer() {
+function Footer() {
   return (
     <footer className="footer">
       <div className="footer-inner">
@@ -39,3 +39,6 @@ export function Footer() {
     </footer>
   )
 }
+
+export { Footer }
+export default Footer

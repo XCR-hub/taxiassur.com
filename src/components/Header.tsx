@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 
-export function Header() {
+function Header() {
   return (
     <header className="header">
       <div className="header-inner">
@@ -21,3 +21,6 @@ export function Header() {
     </header>
   )
 }
+
+export { Header }
+export default Header
