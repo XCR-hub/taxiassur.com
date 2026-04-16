@@ -1,41 +1,285 @@
-# Force HTTPS and non-www with a SINGLE redirect (avoid chains)
-RewriteEngine On
+# Configuration Apache OPTIMISÉE pour SEO - TaxiAssur.com
+# Résout 106 problèmes d'indexation GSC
 
-# If already on https://taxiassur.com, skip all redirect rules
-RewriteCond %{HTTPS} on
-RewriteCond %{HTTP_HOST} ^taxiassur\.com$ [NC]
-RewriteRule ^ - [L]
-
-# Redirect http://www or https://www or http://non-www to https://non-www in ONE step
-RewriteCond %{HTTPS} off [OR]
-RewriteCond %{HTTP_HOST} ^www\. [NC]
-RewriteRule ^(.*)$ https://taxiassur.com/$1 [R=301,L]
-
-# SPA fallback: serve index.html for all non-file routes
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^ /index.html [L]
-
-# Cache static assets
-<IfModule mod_expires.c>
-  ExpiresActive On
-  ExpiresByType text/css "access plus 1 year"
-  ExpiresByType application/javascript "access plus 1 year"
-  ExpiresByType image/svg+xml "access plus 1 year"
-  ExpiresByType image/png "access plus 1 year"
-  ExpiresByType image/jpeg "access plus 1 year"
-  ExpiresByType image/webp "access plus 1 year"
-  ExpiresByType font/woff2 "access plus 1 year"
-</IfModule>
-
-# Security headers
+# Security Headers
 <IfModule mod_headers.c>
-  Header set X-Content-Type-Options "nosniff"
-  Header set X-Frame-Options "SAMEORIGIN"
-  Header set Referrer-Policy "strict-origin-when-cross-origin"
+    Header set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com https://js.hcaptcha.com https://www.google.com/recaptcha/; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https: blob:; connect-src 'self' https://drohhxrkoequjphvabvq.supabase.co https://www.google-analytics.com https://www.googletagmanager.com https://stats.g.doubleclick.net https://hcaptcha.com https://*.google.com; frame-src 'self' https://www.googletagmanager.com https://www.google.com/recaptcha/ https://hcaptcha.com; object-src 'none'; base-uri 'self'; form-action 'self';"
+    Header always set X-Frame-Options "DENY"
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-XSS-Protection "1; mode=block"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set Permissions-Policy "accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()"
+    Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+    Header unset X-Powered-By
 </IfModule>
 
-# Compression
-<IfModule mod_deflate.c>
-  AddOutputFilterByType DEFLATE text/html text/css application/javascript application/json image/svg+xml
+# Types MIME essentiels
+<IfModule mod_mime.c>
+    AddType text/css .css
+    AddType text/javascript .js
+    AddType application/json .json
+    AddType image/x-icon .ico
+    AddType image/png .png
+    AddType image/jpeg .jpg .jpeg
+    AddType image/webp .webp
+    AddType image/avif .avif
+    AddType application/xml .xml
+    AddType text/xml .xml
+    AddType font/woff2 .woff2
+    AddType font/woff .woff
 </IfModule>
+
+# Activation du module de réécriture
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
+
+    # ===================================================================
+    # REDIRECTIONS CANONIQUES - CRITIQUE POUR GSC
+    # Résout les 106 erreurs de "Page avec redirection"
+    # ===================================================================
+
+    # 1. FORCER HTTPS (301 permanent)
+    RewriteCond %{HTTPS} off
+    RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+    # 2. FORCER NON-WWW (301 permanent) - VERSION CANONIQUE
+    RewriteCond %{HTTP_HOST} ^www\.taxiassur\.com [NC]
+    RewriteRule ^(.*)$ https://taxiassur.com/$1 [L,R=301]
+
+    # 3. SUPPRIMER LES TRAILING SLASHES (sauf root)
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_URI} (.+)/$
+    RewriteRule ^ %1 [L,R=301]
+
+    # ===================================================================
+    # REDIRECTIONS SPÉCIFIQUES - Fix Soft 404 et erreurs
+    # ===================================================================
+
+    # Fix Soft 404: /offres et sous-pages
+    RewriteRule ^offres$ /assurance-taxi [R=301,L]
+    RewriteRule ^offres/flotte-vehicules$ /flotte-vehicules [R=301,L]
+    RewriteRule ^offres/rc-professionnelle$ /rc-professionnelle [R=301,L]
+
+    # Fix Soft 404: pages legales alias → canonical
+    RewriteRule ^mentions-legales$ /legal [R=301,L]
+    RewriteRule ^conditions-generales$ /conditions [R=301,L]
+    RewriteRule ^politique-confidentialite$ /policy [R=301,L]
+
+    # Fix erreur redirection
+    RewriteRule ^comparateur-axa-taxi$ /assurance-taxi [R=301,L]
+
+    # Fix anciennes URLs
+    RewriteRule ^devis-instantane$ /contact [R=301,L]
+    RewriteRule ^devis$ /contact [R=301,L]
+
+    # ===================================================================
+    # REDIRECTIONS /taxi-* → /assurance-taxi-* (villes avec page dediee)
+    # ===================================================================
+    RewriteRule ^taxi-paris$ /assurance-taxi-paris [R=301,L]
+    RewriteRule ^taxi-marseille$ /assurance-taxi-marseille [R=301,L]
+    RewriteRule ^taxi-lyon$ /assurance-taxi-lyon [R=301,L]
+    RewriteRule ^taxi-toulouse$ /assurance-taxi-toulouse [R=301,L]
+    RewriteRule ^taxi-nice$ /assurance-taxi-nice [R=301,L]
+    RewriteRule ^taxi-nantes$ /assurance-taxi-nantes [R=301,L]
+    RewriteRule ^taxi-strasbourg$ /assurance-taxi-strasbourg [R=301,L]
+    RewriteRule ^taxi-montpellier$ /assurance-taxi-montpellier [R=301,L]
+    RewriteRule ^taxi-bordeaux$ /assurance-taxi-bordeaux [R=301,L]
+    RewriteRule ^taxi-rennes$ /assurance-taxi-rennes [R=301,L]
+    RewriteRule ^taxi-reims$ /assurance-taxi-reims [R=301,L]
+    RewriteRule ^taxi-le-mans$ /assurance-taxi-le-mans [R=301,L]
+    RewriteRule ^taxi-aix-en-provence$ /assurance-taxi-aix-en-provence [R=301,L]
+    RewriteRule ^taxi-clermont-ferrand$ /assurance-taxi-clermont-ferrand [R=301,L]
+    RewriteRule ^taxi-grenoble$ /assurance-taxi-grenoble [R=301,L]
+    RewriteRule ^taxi-dijon$ /assurance-taxi-dijon [R=301,L]
+    RewriteRule ^taxi-angers$ /assurance-taxi-angers [R=301,L]
+    RewriteRule ^taxi-nimes$ /assurance-taxi-nimes [R=301,L]
+    RewriteRule ^taxi-villeurbanne$ /assurance-taxi-villeurbanne [R=301,L]
+    RewriteRule ^taxi-le-havre$ /assurance-taxi-le-havre [R=301,L]
+    RewriteRule ^taxi-saint-etienne$ /assurance-taxi-saint-etienne [R=301,L]
+    RewriteRule ^taxi-toulon$ /assurance-taxi-toulon [R=301,L]
+    RewriteRule ^taxi-orleans$ /assurance-taxi-orleans [R=301,L]
+    RewriteRule ^taxi-besancon$ /assurance-taxi-besancon [R=301,L]
+    RewriteRule ^taxi-amiens$ /assurance-taxi-amiens [R=301,L]
+    RewriteRule ^taxi-tours$ /assurance-taxi-tours [R=301,L]
+    RewriteRule ^taxi-limoges$ /assurance-taxi-limoges [R=301,L]
+    RewriteRule ^taxi-metz$ /assurance-taxi-metz [R=301,L]
+    RewriteRule ^taxi-brest$ /assurance-taxi-brest [R=301,L]
+    RewriteRule ^taxi-perpignan$ /assurance-taxi-perpignan [R=301,L]
+    RewriteRule ^taxi-vaux-le-penil$ /assurance-taxi-vaux-le-penil [R=301,L]
+
+    # Fix URLs encodees/malformees
+    RewriteRule ^taxi-n-mes$ /assurance-taxi-nimes [R=301,L]
+    RewriteRule ^taxi-orl-ans$ /assurance-taxi-orleans [R=301,L]
+    RewriteRule ^taxi-besan-on$ /assurance-taxi-besancon [R=301,L]
+    RewriteRule ^taxi-saint--tienne$ /assurance-taxi-saint-etienne [R=301,L]
+    RewriteRule ^taxi-v-nissieux$ /assurance-taxi [R=301,L]
+    RewriteRule ^taxi-ch-teauroux$ /assurance-taxi [R=301,L]
+    RewriteRule ^taxi-saint-maur-des-foss-s$ /assurance-taxi [R=301,L]
+
+    # Catch-all: toute autre URL /taxi-* → /assurance-taxi
+    RewriteRule ^taxi-(.+)$ /assurance-taxi [R=301,L]
+
+    # Fix pages /assurance-taxi-* qui n'existent pas
+    RewriteRule ^assurance-taxi-vtc-combine$ /assurance-taxi-vtc [R=301,L]
+    RewriteRule ^assurance-taxi-tesla$ /assurance-taxi [R=301,L]
+    RewriteRule ^assurance-taxi-urgence$ /assurance-taxi [R=301,L]
+    RewriteRule ^quelle-assurance-pour-taxi$ /quelle-assurance-taxi [R=301,L]
+
+    # Fix /plan-du-site ancien lien
+    RewriteRule ^plan-du-site$ /sitemap [R=301,L]
+
+    # Fix /ville/ URLs mal formées
+    RewriteRule ^ville/n-mes$ /ville/nimes [R=301,L]
+    RewriteRule ^ville/assurance-taxi-bruges$ /assurance-taxi [R=301,L]
+    RewriteRule ^ville/assurance-taxi-romans-sur-isere$ /assurance-taxi [R=301,L]
+    RewriteRule ^ville/assurance-taxi-pas-cher-sens$ /assurance-taxi [R=301,L]
+    RewriteRule ^ville/assurance-taxi-rosny-sous-bois$ /assurance-taxi [R=301,L]
+    RewriteRule ^ville/assurance-taxi-tarbes$ /assurance-taxi [R=301,L]
+
+    # Fix pages dupliquées
+    RewriteRule ^partenaires$ /programme-partenaires [R=301,L]
+    RewriteRule ^merci\.html$ /merci [R=301,L]
+
+    # ===================================================================
+    # REDIRECTIONS BLOG SLUGS TRONQUÉS/OBSOLÈTES
+    # Fix GSC "Page en double sans URL canonique"
+    # ===================================================================
+    RewriteRule ^blog/double-activit$ /blog/double-activite-taxi-vtc-assurance [R=301,L]
+    RewriteRule ^blog/sinistre-taxi-procedure$ /blog/sinistre-taxi-procedure-complete-2025 [R=301,L]
+    RewriteRule ^blog/assurance-taxi-bordeaux$ /blog [R=301,L]
+
+    # Rediriger les anciens blogs ville/guide non existants vers le blog
+    RewriteRule ^blog/assurance-taxi-rouen-2025$ /blog [R=301,L]
+    RewriteRule ^blog/assurance-taxi-grenoble-2025$ /blog [R=301,L]
+    RewriteRule ^blog/carte-professionnelle-taxi-guide-complet-2025$ /blog [R=301,L]
+    RewriteRule ^blog/assurance-taxi-toulouse-2025$ /blog [R=301,L]
+    RewriteRule ^blog/assurance-taxi-beauvais-2025$ /blog [R=301,L]
+    RewriteRule ^blog/assurance-taxi-colombes-2025$ /blog [R=301,L]
+    RewriteRule ^blog/assurance-taxi-villejuif-2025$ /blog [R=301,L]
+    RewriteRule ^blog/assurance-taxi-clichy-2025$ /blog [R=301,L]
+    RewriteRule ^blog/assurance-taxi-cr-teil-2025$ /blog [R=301,L]
+    RewriteRule ^blog/assurance-taxi-le-mans-2025$ /blog [R=301,L]
+    RewriteRule ^blog/assurance-taxi-toulon-2025$ /blog [R=301,L]
+    RewriteRule ^blog/assurance-taxi-calais-2025$ /blog [R=301,L]
+    RewriteRule ^blog/assurance-taxi-v-nissieux-2025$ /blog [R=301,L]
+    RewriteRule ^blog/assurance-taxi-independant-guide-complet-2025$ /blog [R=301,L]
+    RewriteRule ^blog/assurance-taxi-hy-res-2025$ /blog [R=301,L]
+    RewriteRule ^blog/assurance-taxi-clamart-2025$ /blog [R=301,L]
+    RewriteRule ^blog/assurance-taxi-b-ziers-2025$ /blog [R=301,L]
+    RewriteRule ^blog/assurance-taxi-saint-maur-des-foss-s-2025$ /blog [R=301,L]
+    RewriteRule ^blog/assurance-taxi-colmar-2025$ /blog [R=301,L]
+    RewriteRule ^blog/assurance-taxi-n-mes-2025$ /blog [R=301,L]
+    RewriteRule ^blog/franchise-assurance-taxi-guide-complet-2025$ /blog [R=301,L]
+    RewriteRule ^blog/assurance-taxi-champigny-sur-marne-2025$ /blog [R=301,L]
+    RewriteRule ^blog/assurance-taxi-cholet-2025$ /blog [R=301,L]
+    RewriteRule ^blog/assurance-taxi-mercedes-guide-complet-2025$ /blog [R=301,L]
+    RewriteRule ^blog/assurance-taxi-le-havre-2025$ /blog [R=301,L]
+    RewriteRule ^blog/assurance-taxi-bordeaux-2025$ /blog [R=301,L]
+    RewriteRule ^blog/assurance-taxi-asni-res-sur-seine-2025$ /blog [R=301,L]
+    RewriteRule ^blog/assurance-taxi-senior-guide-complet-2025$ /blog [R=301,L]
+    RewriteRule ^blog/assurance-taxi-courbevoie-2025$ /blog [R=301,L]
+
+    # Exclure les fichiers assets (CSS, JS, images, fonts)
+    RewriteCond %{REQUEST_URI} !^/api/
+    RewriteCond %{REQUEST_URI} !^/webhooks/
+    RewriteCond %{REQUEST_URI} !^/assets/
+    RewriteCond %{REQUEST_URI} !^/content/
+    RewriteCond %{REQUEST_URI} !^/feeds/
+    RewriteCond %{REQUEST_URI} !\.css$
+    RewriteCond %{REQUEST_URI} !\.js$
+    RewriteCond %{REQUEST_URI} !\.json$
+    RewriteCond %{REQUEST_URI} !\.xml$
+    RewriteCond %{REQUEST_URI} !\.txt$
+    RewriteCond %{REQUEST_URI} !\.ico$
+    RewriteCond %{REQUEST_URI} !\.png$
+    RewriteCond %{REQUEST_URI} !\.jpg$
+    RewriteCond %{REQUEST_URI} !\.jpeg$
+    RewriteCond %{REQUEST_URI} !\.svg$
+    RewriteCond %{REQUEST_URI} !\.woff$
+    RewriteCond %{REQUEST_URI} !\.woff2$
+    RewriteCond %{REQUEST_URI} !\.php$
+
+    # Redirection pour React Router (SPA) seulement si pas un fichier
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^(.*)$ /index.html [L,QSA]
+</IfModule>
+
+# Cache optimisé pour SEO
+<IfModule mod_expires.c>
+    ExpiresActive On
+    # No cache pour index.html pour éviter les problèmes de hash
+    <FilesMatch "index\.html$">
+        ExpiresDefault "access plus 0 seconds"
+        Header set Cache-Control "no-store, no-cache, must-revalidate, max-age=0"
+        Header set Pragma "no-cache"
+    </FilesMatch>
+    ExpiresByType text/html "access plus 1 hour"
+    ExpiresByType text/css "access plus 1 year"
+    ExpiresByType application/javascript "access plus 1 year"
+    ExpiresByType image/png "access plus 1 year"
+    ExpiresByType image/jpeg "access plus 1 year"
+    ExpiresByType image/webp "access plus 1 year"
+    ExpiresByType image/avif "access plus 1 year"
+    ExpiresByType image/svg+xml "access plus 1 year"
+    ExpiresByType font/woff2 "access plus 1 year"
+    ExpiresByType font/woff "access plus 1 year"
+    ExpiresByType application/json "access plus 1 hour"
+    ExpiresByType application/xml "access plus 1 hour"
+    ExpiresByType text/xml "access plus 1 hour"
+</IfModule>
+
+# Immutable cache for Vite hashed assets (content hash in filename = safe forever)
+<IfModule mod_headers.c>
+    <FilesMatch "\-[0-9a-zA-Z_]{8,}\.(js|css|woff2|woff|png|jpg|jpeg|svg|webp|avif)$">
+        Header set Cache-Control "public, max-age=31536000, immutable"
+        Header unset ETag
+    </FilesMatch>
+    # Fonts always immutable
+    <FilesMatch "\.(woff2|woff|ttf|otf)$">
+        Header set Cache-Control "public, max-age=31536000, immutable"
+    </FilesMatch>
+</IfModule>
+
+# Disable ETag for hashed assets (redundant with immutable Cache-Control)
+<IfModule mod_headers.c>
+    <FilesMatch "\-[0-9a-zA-Z_]{8,}\.(js|css)$">
+        FileETag None
+    </FilesMatch>
+</IfModule>
+
+# Compression Brotli (prioritaire sur GZIP)
+<IfModule mod_brotli.c>
+    AddOutputFilterByType BROTLI_COMPRESS text/html text/css application/javascript application/json application/xml text/xml text/plain image/svg+xml
+    BrotliCompressionQuality 6
+</IfModule>
+
+# Compression GZIP (fallback si pas de Brotli)
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/css application/javascript application/json application/xml text/xml text/plain image/svg+xml
+    DeflateCompressionLevel 6
+</IfModule>
+
+# Vary header for compression negotiation
+<IfModule mod_headers.c>
+    <FilesMatch "\.(js|css|html|json|xml|svg)$">
+        Header append Vary Accept-Encoding
+    </FilesMatch>
+</IfModule>
+
+# Page d'erreur 404 → SPA (React Router gère le 404)
+ErrorDocument 404 /index.html
+
+# Protection des fichiers sensibles
+<Files ".env*">
+    Require all denied
+</Files>
+
+<Files "*.log">
+    Require all denied
+</Files>
+
+# Limiter la taille des requêtes pour éviter les 500
+LimitRequestBody 52428800
+
