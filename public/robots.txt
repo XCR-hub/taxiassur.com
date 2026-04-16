@@ -1,19 +1,50 @@
 # Robots.txt - TaxiAssur.com
 User-agent: *
 Allow: /
+
+# Private / utility areas
 Disallow: /backoffice/
 Disallow: /api/
 Disallow: /webhooks/
 Disallow: /admin/
+Disallow: /old-admin
 Disallow: /espace-prospect
 Disallow: /espace-client
+Disallow: /client/
 Disallow: /set-password
+Disallow: /auth/
+Disallow: /prospect/
+
+# Transactional pages (no search value)
+Disallow: /merci
 Disallow: /paiement-success
 Disallow: /paiement-error
 Disallow: /paiement-libre
+Disallow: /paiement/
+Disallow: /down-payment
+Disallow: /test-notifications
+
+# Duplicate content: /ville/ duplicates /assurance-taxi-* pages
+Disallow: /ville/
+Disallow: /villes/
+
+# Newsletter utility pages
+Disallow: /newsletter/subscribe
+Disallow: /newsletter/unsubscribe
+
+# Mirror pages
+Disallow: /m/
+
+# Feed files (not HTML pages)
+Disallow: /feeds/
+Disallow: /content/
 
 User-agent: Googlebot
-Allow: /
+Allow: /assurance-taxi
+Allow: /blog/
+Allow: /actualites/
+Allow: /faq
+Allow: /contact
 
 User-agent: Bingbot
 Allow: /

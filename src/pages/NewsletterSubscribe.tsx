@@ -11,7 +11,7 @@ export default function NewsletterSubscribe() {
           name="description"
           content="Inscrivez-vous à la newsletter TaxiAssur et recevez gratuitement nos actualités, conseils et offres exclusives sur l'assurance taxi."
         />
-        <meta name="robots" content="index, follow" />
+        <meta name="robots" content="noindex, nofollow" />
         <meta property="og:type" content="website" />
         <meta property="og:title" content="Newsletter TaxiAssur - Restez Informé" />
         <meta property="og:description" content="Inscrivez-vous à la newsletter TaxiAssur et recevez gratuitement nos actualités, conseils et offres exclusives sur l'assurance taxi." />

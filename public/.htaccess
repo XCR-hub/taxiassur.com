@@ -129,13 +129,58 @@
     # Fix /plan-du-site ancien lien
     RewriteRule ^plan-du-site$ /sitemap [R=301,L]
 
+    # ===================================================================
+    # REDIRECTIONS /ville/* → /assurance-taxi-* (villes avec page dediee)
+    # Eliminates duplicate content between /ville/ and /assurance-taxi-
+    # ===================================================================
+    RewriteRule ^ville/paris$ /assurance-taxi-paris [R=301,L]
+    RewriteRule ^ville/marseille$ /assurance-taxi-marseille [R=301,L]
+    RewriteRule ^ville/lyon$ /assurance-taxi-lyon [R=301,L]
+    RewriteRule ^ville/toulouse$ /assurance-taxi-toulouse [R=301,L]
+    RewriteRule ^ville/nice$ /assurance-taxi-nice [R=301,L]
+    RewriteRule ^ville/nantes$ /assurance-taxi-nantes [R=301,L]
+    RewriteRule ^ville/strasbourg$ /assurance-taxi-strasbourg [R=301,L]
+    RewriteRule ^ville/montpellier$ /assurance-taxi-montpellier [R=301,L]
+    RewriteRule ^ville/bordeaux$ /assurance-taxi-bordeaux [R=301,L]
+    RewriteRule ^ville/rennes$ /assurance-taxi-rennes [R=301,L]
+    RewriteRule ^ville/reims$ /assurance-taxi-reims [R=301,L]
+    RewriteRule ^ville/le-mans$ /assurance-taxi-le-mans [R=301,L]
+    RewriteRule ^ville/aix-en-provence$ /assurance-taxi-aix-en-provence [R=301,L]
+    RewriteRule ^ville/clermont-ferrand$ /assurance-taxi-clermont-ferrand [R=301,L]
+    RewriteRule ^ville/grenoble$ /assurance-taxi-grenoble [R=301,L]
+    RewriteRule ^ville/dijon$ /assurance-taxi-dijon [R=301,L]
+    RewriteRule ^ville/angers$ /assurance-taxi-angers [R=301,L]
+    RewriteRule ^ville/nimes$ /assurance-taxi-nimes [R=301,L]
+    RewriteRule ^ville/villeurbanne$ /assurance-taxi-villeurbanne [R=301,L]
+    RewriteRule ^ville/le-havre$ /assurance-taxi-le-havre [R=301,L]
+    RewriteRule ^ville/saint-etienne$ /assurance-taxi-saint-etienne [R=301,L]
+    RewriteRule ^ville/toulon$ /assurance-taxi-toulon [R=301,L]
+    RewriteRule ^ville/orleans$ /assurance-taxi-orleans [R=301,L]
+    RewriteRule ^ville/besancon$ /assurance-taxi-besancon [R=301,L]
+    RewriteRule ^ville/amiens$ /assurance-taxi-amiens [R=301,L]
+    RewriteRule ^ville/tours$ /assurance-taxi-tours [R=301,L]
+    RewriteRule ^ville/limoges$ /assurance-taxi-limoges [R=301,L]
+    RewriteRule ^ville/metz$ /assurance-taxi-metz [R=301,L]
+    RewriteRule ^ville/brest$ /assurance-taxi-brest [R=301,L]
+    RewriteRule ^ville/perpignan$ /assurance-taxi-perpignan [R=301,L]
+
     # Fix /ville/ URLs mal formées
-    RewriteRule ^ville/n-mes$ /ville/nimes [R=301,L]
+    RewriteRule ^ville/n-mes$ /assurance-taxi-nimes [R=301,L]
     RewriteRule ^ville/assurance-taxi-bruges$ /assurance-taxi [R=301,L]
     RewriteRule ^ville/assurance-taxi-romans-sur-isere$ /assurance-taxi [R=301,L]
     RewriteRule ^ville/assurance-taxi-pas-cher-sens$ /assurance-taxi [R=301,L]
     RewriteRule ^ville/assurance-taxi-rosny-sous-bois$ /assurance-taxi [R=301,L]
     RewriteRule ^ville/assurance-taxi-tarbes$ /assurance-taxi [R=301,L]
+    RewriteRule ^ville/assurance-taxi-bagnols-sur-ceze$ /assurance-taxi [R=301,L]
+    RewriteRule ^ville/assurance-taxi-moissac$ /assurance-taxi [R=301,L]
+    RewriteRule ^ville/annecy$ /assurance-taxi [R=301,L]
+    RewriteRule ^ville/caen$ /assurance-taxi [R=301,L]
+    RewriteRule ^ville/boulogne-billancourt$ /assurance-taxi [R=301,L]
+    RewriteRule ^ville/lille$ /assurance-taxi [R=301,L]
+
+    # Catch-all: toute autre URL /ville/* → /assurance-taxi
+    RewriteRule ^ville/(.+)$ /assurance-taxi [R=301,L]
+    RewriteRule ^villes/(.+)$ /assurance-taxi [R=301,L]
 
     # Fix pages dupliquées
     RewriteRule ^partenaires$ /programme-partenaires [R=301,L]
@@ -148,6 +193,13 @@
     RewriteRule ^blog/double-activit$ /blog/double-activite-taxi-vtc-assurance [R=301,L]
     RewriteRule ^blog/sinistre-taxi-procedure$ /blog/sinistre-taxi-procedure-complete-2025 [R=301,L]
     RewriteRule ^blog/assurance-taxi-bordeaux$ /blog [R=301,L]
+
+    # Blog articles GSC: redirect non-existent blog URLs to blog index
+    RewriteRule ^blog/assurance-taxi-lyon$ /assurance-taxi-lyon [R=301,L]
+    RewriteRule ^blog/comparatif-assurances-taxi$ /blog/comparatif-assurances-taxi-2024 [R=301,L]
+    RewriteRule ^blog/assurance-taxi-mulhouse-2025$ /blog [R=301,L]
+    RewriteRule ^blog/accident-taxi-responsabilit.*$ /blog [R=301,L]
+    RewriteRule ^blog/assurance-taxi-nantes-2025$ /assurance-taxi-nantes [R=301,L]
 
     # Rediriger les anciens blogs ville/guide non existants vers le blog
     RewriteRule ^blog/assurance-taxi-rouen-2025$ /blog [R=301,L]

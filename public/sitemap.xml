@@ -127,16 +127,10 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://taxiassur.com/villes</loc>
+    <loc>https://taxiassur.com/newsletter</loc>
     <lastmod>2026-04-16</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://taxiassur.com/sitemap</loc>
-    <lastmod>2026-04-16</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.3</priority>
+    <priority>0.4</priority>
   </url>
   <url>
     <loc>https://taxiassur.com/legal</loc>

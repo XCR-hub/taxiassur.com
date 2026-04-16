@@ -54,6 +54,7 @@ const MirrorPage: React.FC = () => {
         description={page.metaDescription}
         keywords={page.keywords.join(', ')}
         canonical={page.url}
+        noindex={true}
       />
       <JsonLd type="breadcrumb" data={breadcrumbs} />
       <JsonLd type="organization" />
