@@ -31,28 +31,22 @@ export default function AuthCallbackYoutube() {
 
   async function exchangeCodeForToken(code: string) {
     try {
-      const CLIENT_ID = '99189284491-ddokaugpdm678de7amea7qr5pege34ic.apps.googleusercontent.com';
-      const CLIENT_SECRET = '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';
-      const REDIRECT_URI = 'https://www.taxiassur.com/auth/callback/youtube';
+      const REDIRECT_URI = `${window.location.origin}/auth/callback/youtube`;
+      const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/youtube-oauth-exchange`;
 
-      const response = await fetch('https://oauth2.googleapis.com/token', {
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
         },
-        body: new URLSearchParams({
-          code: code,
-          client_id: CLIENT_ID,
-          client_secret: CLIENT_SECRET,
-          redirect_uri: REDIRECT_URI,
-          grant_type: 'authorization_code'
-        })
+        body: JSON.stringify({ code, redirectUri: REDIRECT_URI }),
       });
 
       const data = await response.json();
 
-      if (data.error) {
-        throw new Error(data.error_description || data.error);
+      if (!data.success) {
+        throw new Error(data.error || 'OAuth exchange failed');
       }
 
       if (data.refresh_token) {
@@ -62,7 +56,7 @@ export default function AuthCallbackYoutube() {
         throw new Error('Aucun refresh_token reçu. Révoquez l\'accès et réessayez.');
       }
     } catch (err) {
-      setError(err.message);
+      setError((err as Error).message);
       setStatus('error');
     }
   }
