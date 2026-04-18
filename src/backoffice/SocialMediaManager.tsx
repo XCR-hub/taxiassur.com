@@ -271,7 +271,10 @@ export default function SocialMediaManager() {
   const getConfigStatus = (platform: string): 'configured' | 'partial' | 'empty' => {
     const cfg = networkConfigs[platform];
     if (!cfg || Object.keys(cfg).length === 0) return 'empty';
-    const values = Object.values(cfg).filter(v => v?.trim());
+    const values = Object.values(cfg).filter(v => {
+      if (typeof v === 'string') return v.trim().length > 0;
+      return v !== null && v !== undefined && v !== '';
+    });
     if (values.length === Object.keys(cfg).length) return 'configured';
     return 'partial';
   };
