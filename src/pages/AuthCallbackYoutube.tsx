@@ -31,9 +31,9 @@ export default function AuthCallbackYoutube() {
 
   async function exchangeCodeForToken(code: string) {
     try {
-      const CLIENT_ID = '99189284491-ddokaugpdm678de7amea7qr5pege34ic.apps.googleusercontent.com';
-      const CLIENT_SECRET = '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';
-      const REDIRECT_URI = 'https://taxiassur.com/auth/youtube/callback';
+      const CLIENT_ID = '99189284491-trog606nhubrt4su0bskpacc388420gm.apps.googleusercontent.com';
+      const CLIENT_SECRET = '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';
+      const REDIRECT_URI = 'https://www.taxiassur.com/auth/callback/youtube';
 
       const response = await fetch('https://oauth2.googleapis.com/token', {
         method: 'POST',
