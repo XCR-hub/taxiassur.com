@@ -31,7 +31,7 @@ export default function AuthCallbackYoutube() {
 
   async function exchangeCodeForToken(code: string) {
     try {
-      const REDIRECT_URI = `${window.location.origin}/auth/callback/youtube`;
+      const REDIRECT_URI = import.meta.env.VITE_GOOGLE_REDIRECT_URI || `${window.location.origin}/auth/callback/youtube`;
       const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/youtube-oauth-exchange`;
 
       const response = await fetch(apiUrl, {
