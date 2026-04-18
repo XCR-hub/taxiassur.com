@@ -348,14 +348,61 @@ export default function SocialNetworkConfigModal({
         return;
       }
 
-      await new Promise(r => setTimeout(r, 1500));
-
-      const hasToken = config.access_token || config.page_access_token || config.bot_token || config.bearer_token;
-      if (hasToken) {
-        setTestResult({ ok: true, message: 'Configuration validee - Connexion possible' });
-      } else {
-        setTestResult({ ok: false, message: 'Token d\'acces manquant - Completez l\'authentification OAuth' });
+      let storedToken: string | null = null;
+      let storedExpiresAt: string | null = null;
+      if (dbNetworkId) {
+        const { data } = await supabase
+          .from('social_networks')
+          .select('access_token, token_expires_at')
+          .eq('id', dbNetworkId)
+          .maybeSingle();
+        storedToken = data?.access_token ?? null;
+        storedExpiresAt = data?.token_expires_at ?? null;
       }
+
+      const hasToken =
+        storedToken ||
+        config.access_token ||
+        config.page_access_token ||
+        config.bot_token ||
+        config.bearer_token;
+
+      if (!hasToken) {
+        setTestResult({
+          ok: false,
+          message: 'Token d\'acces manquant - Completez l\'authentification OAuth',
+        });
+        return;
+      }
+
+      if (storedExpiresAt && new Date(storedExpiresAt) < new Date()) {
+        setTestResult({
+          ok: false,
+          message: 'Token expire - Relancez l\'authentification OAuth',
+        });
+        return;
+      }
+
+      if (platform === 'pinterest' && storedToken) {
+        const res = await fetch('https://api.pinterest.com/v5/user_account', {
+          headers: { Authorization: `Bearer ${storedToken}` },
+        });
+        if (res.ok) {
+          const info = await res.json();
+          setTestResult({
+            ok: true,
+            message: `Connexion Pinterest validee (@${info.username || 'compte'})`,
+          });
+        } else {
+          setTestResult({
+            ok: false,
+            message: `Token Pinterest invalide (HTTP ${res.status}) - Relancez l'authentification`,
+          });
+        }
+        return;
+      }
+
+      setTestResult({ ok: true, message: 'Configuration validee - Connexion possible' });
     } catch (error) {
       setTestResult({ ok: false, message: 'Erreur de test: ' + (error as Error).message });
     } finally {
