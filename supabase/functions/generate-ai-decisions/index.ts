@@ -434,6 +434,8 @@ Genere une decision par agent en JSON avec ce schema exact:
             const types = DECISION_TYPES[agentId] ?? ["suggestion"];
             const validType = types.includes(d.decision_type) ? d.decision_type : types[0];
 
+            const conf = Math.min(0.99, Math.max(0.5, parseFloat(d.confidence_score) || 0.8));
+            const actionText = String(d.suggested_action ?? "");
             allDecisions.push({
               lead_id: lead.id,
               agent: agentId,
@@ -441,8 +443,10 @@ Genere une decision par agent en JSON avec ce schema exact:
               title: String(d.title ?? `Analyse ${agentId}`).slice(0, 255),
               description: String(d.description ?? ""),
               rationale: String(d.rationale ?? ""),
-              confidence_score: Math.min(0.99, Math.max(0.5, parseFloat(d.confidence_score) || 0.8)),
-              suggested_action: String(d.suggested_action ?? ""),
+              confidence: conf,
+              confidence_score: conf,
+              actions: actionText ? [{ type: validType, action: actionText }] : [],
+              suggested_action: actionText,
               data_sources: Array.isArray(d.data_sources) ? d.data_sources : ["crm_leads"],
               status: "pending",
               model_used: provider.label,
@@ -530,7 +534,8 @@ Genere une decision par agent en JSON avec ce schema exact:
     );
   } catch (err) {
     console.error("generate-ai-decisions error:", err);
-    return new Response(JSON.stringify({ success: false, error: String(err) }), {
+    const errMsg = err instanceof Error ? err.message : (typeof err === "object" && err !== null ? JSON.stringify(err) : String(err));
+    return new Response(JSON.stringify({ success: false, error: errMsg }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
