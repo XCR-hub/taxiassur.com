@@ -31,6 +31,13 @@ interface CompanyQuote {
   company_id: string;
   status: 'pending' | 'quote_submitted' | 'refused' | 'validated';
   quote_amount: number | null;
+  monthly_price: number | null;
+  coverage_type: 'tiers' | 'tiers_plus' | 'tous_risques' | null;
+  includes_immobilisation: boolean | null;
+  includes_assistance_0km: boolean | null;
+  includes_rc_pro: boolean | null;
+  includes_depannage_remorquage: boolean | null;
+  coverage_details: string | null;
   quote_file_url: string | null;
   refusal_reason: string | null;
   refusal_screenshot_url: string | null;
@@ -69,7 +76,14 @@ export default function LeadCompanyQuotes({ leadId }: Props) {
 
   const [quoteFormData, setQuoteFormData] = useState({
     quote_amount: '',
+    monthly_price: '',
     quote_file_url: '',
+    coverage_type: '' as '' | 'tiers' | 'tiers_plus' | 'tous_risques',
+    includes_immobilisation: false,
+    includes_assistance_0km: true,
+    includes_rc_pro: true,
+    includes_depannage_remorquage: true,
+    coverage_details: '',
     notes: ''
   });
 
@@ -154,9 +168,27 @@ export default function LeadCompanyQuotes({ leadId }: Props) {
   const handleSubmitQuote = (quote: CompanyQuote) => {
     setSelectedQuote(quote);
     loadCompanyDocuments(quote.company_id);
+    const q = quote as CompanyQuote & {
+      monthly_price?: number | null;
+      coverage_type?: string | null;
+      includes_immobilisation?: boolean | null;
+      includes_assistance_0km?: boolean | null;
+      includes_rc_pro?: boolean | null;
+      includes_depannage_remorquage?: boolean | null;
+      coverage_details?: string | null;
+    };
+    const companyNameLower = quote.company?.name?.toLowerCase() || '';
+    const isGenerali = companyNameLower.includes('generali');
     setQuoteFormData({
       quote_amount: quote.quote_amount?.toString() || '',
+      monthly_price: q.monthly_price?.toString() || '',
       quote_file_url: quote.quote_file_url || '',
+      coverage_type: (q.coverage_type as 'tiers' | 'tiers_plus' | 'tous_risques') || '',
+      includes_immobilisation: q.includes_immobilisation ?? false,
+      includes_assistance_0km: q.includes_assistance_0km ?? true,
+      includes_rc_pro: q.includes_rc_pro ?? !isGenerali,
+      includes_depannage_remorquage: q.includes_depannage_remorquage ?? true,
+      coverage_details: q.coverage_details || '',
       notes: quote.notes || ''
     });
     setIsQuoteModalOpen(true);
@@ -178,17 +210,38 @@ export default function LeadCompanyQuotes({ leadId }: Props) {
       toast.warning('Veuillez uploader le devis');
       return;
     }
+    if (!quoteFormData.coverage_type) {
+      toast.warning('Veuillez sélectionner le type de couverture');
+      return;
+    }
+    if (!quoteFormData.quote_amount) {
+      toast.warning('Veuillez indiquer le prix annuel');
+      return;
+    }
 
     setSaving(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
 
+      const annualPrice = parseFloat(quoteFormData.quote_amount) || null;
+      const monthlyPriceParsed = parseFloat(quoteFormData.monthly_price);
+      const monthlyPrice = !isNaN(monthlyPriceParsed) && monthlyPriceParsed > 0
+        ? monthlyPriceParsed
+        : (annualPrice ? Math.round((annualPrice / 12) * 100) / 100 : null);
+
       const { error } = await supabase
         .from('lead_company_quotes')
         .update({
           status: 'quote_submitted',
-          quote_amount: parseFloat(quoteFormData.quote_amount) || null,
+          quote_amount: annualPrice,
+          monthly_price: monthlyPrice,
           quote_file_url: quoteFormData.quote_file_url,
+          coverage_type: quoteFormData.coverage_type,
+          includes_immobilisation: quoteFormData.includes_immobilisation,
+          includes_assistance_0km: quoteFormData.includes_assistance_0km,
+          includes_rc_pro: quoteFormData.includes_rc_pro,
+          includes_depannage_remorquage: quoteFormData.includes_depannage_remorquage,
+          coverage_details: quoteFormData.coverage_details || null,
           notes: quoteFormData.notes,
           submitted_by: user?.id,
           submitted_at: new Date().toISOString()
@@ -621,14 +674,102 @@ export default function LeadCompanyQuotes({ leadId }: Props) {
           )}
 
           <div>
-            <label className="block text-gray-400 text-sm mb-2">Montant du devis (€)</label>
-            <input
-              type="number"
-              step="0.01"
-              value={quoteFormData.quote_amount}
-              onChange={(e) => setQuoteFormData({ ...quoteFormData, quote_amount: e.target.value })}
+            <label className="block text-gray-400 text-sm mb-2">Type de couverture *</label>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              {[
+                { value: 'tiers', label: 'Tiers', desc: 'Responsabilité civile' },
+                { value: 'tiers_plus', label: 'Tiers + BDG', desc: 'Bris de glace, incendie, vol' },
+                { value: 'tous_risques', label: 'Tous risques', desc: 'Couverture complète' }
+              ].map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setQuoteFormData({ ...quoteFormData, coverage_type: opt.value as 'tiers' | 'tiers_plus' | 'tous_risques' })}
+                  className={`p-3 rounded-lg border-2 text-left transition-all ${
+                    quoteFormData.coverage_type === opt.value
+                      ? 'border-blue-500 bg-blue-950/30'
+                      : 'border-gray-700 bg-gray-800 hover:border-gray-600'
+                  }`}
+                >
+                  <p className="font-semibold text-white text-sm">{opt.label}</p>
+                  <p className="text-xs text-gray-400 mt-1">{opt.desc}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-gray-400 text-sm mb-2">Prix annuel (€) *</label>
+              <input
+                type="number"
+                step="0.01"
+                value={quoteFormData.quote_amount}
+                onChange={(e) => {
+                  const annual = e.target.value;
+                  const annualNum = parseFloat(annual);
+                  setQuoteFormData({
+                    ...quoteFormData,
+                    quote_amount: annual,
+                    monthly_price: !isNaN(annualNum) && annualNum > 0
+                      ? (Math.round((annualNum / 12) * 100) / 100).toString()
+                      : quoteFormData.monthly_price
+                  });
+                }}
+                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white"
+                placeholder="1250.00"
+              />
+            </div>
+            <div>
+              <label className="block text-gray-400 text-sm mb-2">Prix mensuel (€)</label>
+              <input
+                type="number"
+                step="0.01"
+                value={quoteFormData.monthly_price}
+                onChange={(e) => setQuoteFormData({ ...quoteFormData, monthly_price: e.target.value })}
+                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white"
+                placeholder="Auto-calculé"
+              />
+              <p className="text-gray-500 text-xs mt-1">Calculé automatiquement si vide</p>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-gray-400 text-sm mb-2">Garanties incluses</label>
+            <div className="bg-gray-950 rounded-lg p-4 border border-gray-800 space-y-2">
+              {[
+                { key: 'includes_immobilisation' as const, label: 'Indemnisation suite à immobilisation du véhicule' },
+                { key: 'includes_assistance_0km' as const, label: 'Assistance 0 km' },
+                { key: 'includes_rc_pro' as const, label: 'Responsabilité Civile Professionnelle (RC Pro)' },
+                { key: 'includes_depannage_remorquage' as const, label: 'Dépannage et remorquage' }
+              ].map((g) => (
+                <label key={g.key} className="flex items-center gap-3 cursor-pointer hover:bg-gray-900 p-2 rounded">
+                  <input
+                    type="checkbox"
+                    checked={quoteFormData[g.key]}
+                    onChange={(e) => setQuoteFormData({ ...quoteFormData, [g.key]: e.target.checked })}
+                    className="w-4 h-4 rounded border-gray-600 bg-gray-800 text-blue-600 focus:ring-blue-500"
+                  />
+                  <span className="text-sm text-gray-200">{g.label}</span>
+                </label>
+              ))}
+            </div>
+            {selectedQuote?.company?.name?.toLowerCase().includes('generali') && (
+              <p className="text-yellow-400 text-xs mt-2 flex items-center gap-1">
+                <AlertTriangle className="w-3 h-3" />
+                Generali n'inclut pas la RC Pro par défaut
+              </p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-gray-400 text-sm mb-2">Détails complémentaires sur les garanties</label>
+            <textarea
+              value={quoteFormData.coverage_details}
+              onChange={(e) => setQuoteFormData({ ...quoteFormData, coverage_details: e.target.value })}
               className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white"
-              placeholder="1250.00"
+              rows={2}
+              placeholder="Franchise, plafonds, exclusions particulières... (visible par le prospect)"
             />
           </div>
 
