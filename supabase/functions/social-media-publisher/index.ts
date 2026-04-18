@@ -159,7 +159,7 @@ Deno.serve(async (req: Request) => {
       .insert({
         platform,
         content,
-        status: "pending",
+        status: "scheduled",
         scheduled_at: new Date().toISOString(),
       })
       .select()
