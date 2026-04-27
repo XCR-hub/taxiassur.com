@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../lib/supabase';
 import { openDocument } from '../../lib/document-utils';
-import { FileText, Download, X, CheckCircle2, AlertCircle, Loader2, XCircle, Check, MoveHorizontal, Upload, GripVertical, Mail, ChevronDown, Eye, ArrowRightLeft } from 'lucide-react';
+import { FileText, Download, X, CheckCircle2, AlertCircle, Loader2, XCircle, Check, MoveHorizontal, Upload, GripVertical, Mail, ChevronDown, Eye, ArrowRightLeft, Trash2 } from 'lucide-react';
 import { toast } from '@/lib/toast';
 import { getRequiredDocuments } from '@/lib/document-requirements';
 
@@ -519,6 +519,40 @@ export default function DocumentValidationComplete({
     } catch (error) {
       console.error('Error removing document:', error);
       toast.error('Erreur lors de la suppression du document');
+    }
+  }
+
+  async function deleteDocument(doc: ClassifiedDocument) {
+    if (!confirm(`Supprimer definitivement le document "${doc.file_name}" ?\n\nCette action est irreversible.`)) return;
+
+    try {
+      setProcessing(doc.id);
+
+      const bucket = doc.bucket || 'crm-documents';
+      if (doc.file_path && bucket !== 'email-attachments' && !doc.file_path.startsWith('email_ref/')) {
+        const { error: storageError } = await supabase.storage
+          .from(bucket)
+          .remove([doc.file_path]);
+        if (storageError) {
+          console.warn('Storage delete failed (continuing with DB delete):', storageError);
+        }
+      }
+
+      const { error } = await supabase
+        .from('crm_lead_documents')
+        .delete()
+        .eq('id', doc.id);
+
+      if (error) throw error;
+
+      toast.success(`Document "${doc.file_name}" supprime`);
+      await loadAll();
+      onDocumentClassified?.();
+    } catch (error) {
+      console.error('Error deleting document:', error);
+      toast.error('Erreur lors de la suppression du document');
+    } finally {
+      setProcessing(null);
     }
   }
 
@@ -1185,6 +1219,17 @@ export default function DocumentValidationComplete({
                                 >
                                   <X className="h-3 w-3 inline mr-1" />
                                   Supprimer
+                                </button>
+                              )}
+
+                              {doc.status !== 'rejected' && (
+                                <button
+                                  onClick={() => deleteDocument(doc)}
+                                  disabled={processing === doc.id}
+                                  className="text-xs py-1 px-2 bg-red-50 text-red-600 rounded hover:bg-red-100 disabled:opacity-50 font-medium"
+                                  title="Supprimer definitivement le document"
+                                >
+                                  <Trash2 className="h-3 w-3" />
                                 </button>
                               )}
                             </div>
