@@ -123,7 +123,7 @@ export default function NewsArticle() {
         <Header />
         <main className="min-h-screen bg-white flex items-center justify-center">
           <div className="text-center">
-            <h1 className="text-2xl font-bold text-gray-900 font-semibold mb-4">Article non trouvé</h1>
+            <h2 className="text-2xl font-bold text-gray-900 font-semibold mb-4">Article non trouvé</h2>
             <p className="text-gray-600 mb-6">Cet article n'existe pas ou a été supprimé.</p>
             <Link
               to="/actualites"

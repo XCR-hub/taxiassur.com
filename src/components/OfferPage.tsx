@@ -65,9 +65,9 @@ const OfferPage: React.FC = () => {
       <div className="min-h-screen bg-white">
         <div className="container-max section-padding">
           <div className="max-w-4xl mx-auto text-center">
-            <h1 className="text-3xl font-bold text-gray-900 mb-4">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">
               {error || 'Offre non trouvée'}
-            </h1>
+            </h2>
             <p className="text-gray-600 mb-8">
               L'offre que vous recherchez n'existe pas ou a été supprimée.
             </p>

@@ -155,9 +155,9 @@ const CityPage: React.FC = () => {
         <Header />
         <main className="section-padding">
           <div className="container-max text-center">
-            <h1 className="text-3xl font-bold text-white mb-4 drop-shadow-lg">
+            <h2 className="text-3xl font-bold text-white mb-4 drop-shadow-lg">
               Ville non trouvée
-            </h1>
+            </h2>
             <p className="text-gray-300">
               La page que vous recherchez n'existe pas.
             </p>
