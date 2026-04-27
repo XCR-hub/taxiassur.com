@@ -98,6 +98,9 @@ export default function DocumentValidationComplete({
   const [importMenuOpen, setImportMenuOpen] = useState<string | null>(null);
   const [importingFile, setImportingFile] = useState<string | null>(null);
   const [moveMenuOpen, setMoveMenuOpen] = useState<string | null>(null);
+  const [isUnclassifiedDragOver, setIsUnclassifiedDragOver] = useState(false);
+  const [uploadingUnclassified, setUploadingUnclassified] = useState(false);
+  const unclassifiedDragCounter = useRef(0);
 
   useEffect(() => {
     loadAll();
@@ -769,6 +772,127 @@ export default function DocumentValidationComplete({
 
   const isAnyDragActive = !!draggedItem || isDraggingExternal;
 
+  async function uploadUnclassifiedFiles(files: File[]) {
+    const valid: File[] = [];
+    for (const f of files) {
+      const { allowed } = isFileAllowed(f);
+      if (!allowed) {
+        toast.error(`Format non accepte (${f.name})`);
+        continue;
+      }
+      if (f.size > 50 * 1024 * 1024) {
+        toast.error(`Fichier trop volumineux (${f.name})`);
+        continue;
+      }
+      valid.push(f);
+    }
+    if (valid.length === 0) return;
+
+    setUploadingUnclassified(true);
+    let successCount = 0;
+    try {
+      for (let i = 0; i < valid.length; i++) {
+        const file = valid[i];
+        const safeName = file.name
+          .normalize('NFC')
+          .replace(/[^\w.\-]+/g, '_')
+          .replace(/_+/g, '_');
+        const filePath = `${caseId}/unclassified/${Date.now()}_${i}_${safeName}`;
+
+        const { error: uploadError } = await supabase
+          .storage
+          .from('prospect-documents')
+          .upload(filePath, file);
+
+        if (uploadError) {
+          console.error('Upload error:', uploadError);
+          toast.error(`Echec upload : ${file.name}`);
+          continue;
+        }
+
+        const { error: insertError } = await supabase
+          .from('prospect_documents')
+          .insert({
+            lead_id: caseId,
+            document_type: 'autre',
+            file_name: file.name,
+            file_path: filePath,
+            file_size: file.size,
+            mime_type: file.type || 'application/octet-stream',
+            status: 'pending',
+            uploaded_by: 'commercial',
+            validated: false
+          });
+
+        if (insertError) {
+          console.error('Insert error:', insertError);
+          toast.error(`Echec enregistrement : ${file.name}`);
+          continue;
+        }
+        successCount++;
+      }
+
+      if (successCount > 0) {
+        toast.success(`${successCount} document(s) ajoute(s) a classer`);
+        await loadAll();
+      }
+    } finally {
+      setUploadingUnclassified(false);
+    }
+  }
+
+  function handleUnclassifiedDragEnter(e: React.DragEvent) {
+    if (!Array.from(e.dataTransfer.types || []).includes('Files')) return;
+    e.preventDefault();
+    e.stopPropagation();
+    unclassifiedDragCounter.current += 1;
+    setIsUnclassifiedDragOver(true);
+  }
+
+  function handleUnclassifiedDragOver(e: React.DragEvent) {
+    if (!Array.from(e.dataTransfer.types || []).includes('Files')) return;
+    e.preventDefault();
+    e.stopPropagation();
+    e.dataTransfer.dropEffect = 'copy';
+  }
+
+  function handleUnclassifiedDragLeave(e: React.DragEvent) {
+    if (!Array.from(e.dataTransfer.types || []).includes('Files')) return;
+    e.preventDefault();
+    e.stopPropagation();
+    unclassifiedDragCounter.current = Math.max(0, unclassifiedDragCounter.current - 1);
+    if (unclassifiedDragCounter.current === 0) {
+      setIsUnclassifiedDragOver(false);
+    }
+  }
+
+  function handleUnclassifiedDrop(e: React.DragEvent) {
+    if (!Array.from(e.dataTransfer.types || []).includes('Files')) return;
+    e.preventDefault();
+    e.stopPropagation();
+    unclassifiedDragCounter.current = 0;
+    setIsUnclassifiedDragOver(false);
+
+    const files = extractFilesFromDragEvent(e);
+    if (files.length > 0) {
+      uploadUnclassifiedFiles(files);
+    }
+  }
+
+  function handleUnclassifiedFilePicker() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.multiple = true;
+    input.accept = '.pdf,.jpg,.jpeg,.png,.gif,.webp,.doc,.docx';
+    input.onchange = (e) => {
+      const files = (e.target as HTMLInputElement).files;
+      if (files && files.length > 0) {
+        uploadUnclassifiedFiles(Array.from(files));
+      }
+    };
+    input.click();
+  }
+
   function formatFileSize(bytes: number): string {
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
@@ -830,16 +954,53 @@ export default function DocumentValidationComplete({
       >
         {/* Colonne gauche : Documents non classés */}
         <div className="lg:col-span-1 space-y-4">
-          <div className="bg-gray-50 rounded-lg p-4">
-            <h4 className="font-medium text-gray-900 mb-4 flex items-center gap-2">
-              <FileText className="h-5 w-5" />
-              Non classés
-            </h4>
+          <div
+            className={`relative bg-gray-50 rounded-lg p-4 transition-all ${
+              isUnclassifiedDragOver ? 'ring-2 ring-sky-400 bg-sky-50' : ''
+            }`}
+            onDragEnter={handleUnclassifiedDragEnter}
+            onDragOver={handleUnclassifiedDragOver}
+            onDragLeave={handleUnclassifiedDragLeave}
+            onDrop={handleUnclassifiedDrop}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h4 className="font-medium text-gray-900 flex items-center gap-2">
+                <FileText className="h-5 w-5" />
+                Non classés
+              </h4>
+              <button
+                onClick={handleUnclassifiedFilePicker}
+                disabled={uploadingUnclassified}
+                className="text-xs py-1 px-2 bg-sky-50 text-sky-700 rounded hover:bg-sky-100 font-medium flex items-center gap-1 disabled:opacity-50"
+                title="Ajouter des documents a classer"
+              >
+                <Upload className="h-3 w-3" />
+                Ajouter
+              </button>
+            </div>
+
+            {isUnclassifiedDragOver && (
+              <div className="absolute inset-0 z-30 flex items-center justify-center bg-sky-50/95 border-2 border-dashed border-sky-400 rounded-lg pointer-events-none">
+                <div className="text-center">
+                  <Upload className="h-10 w-10 mx-auto mb-2 text-sky-600" />
+                  <p className="text-sm font-semibold text-sky-700">Deposer les documents</p>
+                  <p className="text-xs text-sky-600 mt-1">Ils apparaitront en "Non classes"</p>
+                </div>
+              </div>
+            )}
+
+            {uploadingUnclassified && (
+              <div className="mb-3 flex items-center justify-center py-2 bg-sky-50 rounded">
+                <Loader2 className="h-4 w-4 animate-spin text-sky-600" />
+                <span className="ml-2 text-xs text-sky-700 font-medium">Upload en cours...</span>
+              </div>
+            )}
 
             {attachments.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
                 <FileText className="h-12 w-12 mx-auto mb-2 opacity-30" />
                 <p className="text-sm">Aucun document en attente</p>
+                <p className="text-xs mt-2 text-gray-400">Glissez-deposez vos fichiers ici</p>
               </div>
             ) : (
               <div className="space-y-3">
