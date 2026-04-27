@@ -79,7 +79,7 @@ export default function PaiementRIBStep({
 
     try {
       // Upload to storage
-      const safeName = file.name.normalize('NFC').replace(/[^\w.\-]+/g, '_').replace(/_+/g, '_');
+      const safeName = file.name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\w.\-]+/g, '_').replace(/_+/g, '_');
       const fileName = `${leadId}/${Date.now()}_${safeName}`;
       const { data: uploadData, error: uploadError } = await supabase
         .storage

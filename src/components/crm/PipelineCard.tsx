@@ -301,7 +301,8 @@ export const PipelineCard: React.FC<PipelineCardProps> = ({
     setUploadingQuote(true);
     try {
       const safeName = pendingQuoteFile.name
-        .normalize('NFC')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
         .replace(/[^\w.\-]+/g, '_')
         .replace(/_+/g, '_');
       const filePath = `${lead.id}/${companyId}/${Date.now()}_${safeName}`;

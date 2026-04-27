@@ -640,7 +640,8 @@ export default function DocumentValidationComplete({
       }
 
       const safeName = file.name
-        .normalize('NFC')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
         .replace(/[^\w.\-]+/g, '_')
         .replace(/_+/g, '_');
       const filePath = `${caseId}/${finalDocType}/${Date.now()}_${safeName}`;
@@ -794,7 +795,8 @@ export default function DocumentValidationComplete({
       for (let i = 0; i < valid.length; i++) {
         const file = valid[i];
         const safeName = file.name
-          .normalize('NFC')
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
           .replace(/[^\w.\-]+/g, '_')
           .replace(/_+/g, '_');
         const filePath = `${caseId}/unclassified/${Date.now()}_${i}_${safeName}`;
