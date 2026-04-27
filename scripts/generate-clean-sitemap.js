@@ -44,6 +44,7 @@ const staticPages = [
   { url: '/prix-assurance-taxi', priority: '0.8', changefreq: 'weekly' },
   { url: '/quelle-assurance-taxi', priority: '0.8', changefreq: 'weekly' },
   { url: '/courtier-assurance-taxi', priority: '0.8', changefreq: 'weekly' },
+  { url: '/assurance-taxi-solly-azar', priority: '0.8', changefreq: 'weekly' },
   { url: '/rc-professionnelle', priority: '0.7', changefreq: 'monthly' },
   { url: '/flotte-vehicules', priority: '0.7', changefreq: 'monthly' },
   { url: '/gestion-sinistres', priority: '0.7', changefreq: 'monthly' },

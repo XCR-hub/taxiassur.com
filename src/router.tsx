@@ -81,6 +81,7 @@ const AssuranceTaxiMetz = lazy(() => import('./pages/AssuranceTaxiMetz'));
 const AssuranceTaxiBrest = lazy(() => import('./pages/AssuranceTaxiBrest'));
 const AssuranceTaxiPerpignan = lazy(() => import('./pages/AssuranceTaxiPerpignan'));
 const AssuranceTaxiVauxLePenil = lazy(() => import('./pages/AssuranceTaxiVauxLePenil'));
+const AssuranceTaxiSollyAzar = lazy(() => import('./pages/AssuranceTaxiSollyAzar'));
 
 const AuthCallbackLinkedin = lazy(() => import('./pages/AuthCallbackLinkedin'));
 const AuthCallbackTwitter = lazy(() => import('./pages/AuthCallbackTwitter'));
@@ -519,6 +520,10 @@ export const router = createBrowserRouter([
   {
     path: '/assurance-taxi-vaux-le-penil',
     element: <AssuranceTaxiVauxLePenil />,
+  },
+  {
+    path: '/assurance-taxi-solly-azar',
+    element: <AssuranceTaxiSollyAzar />,
   },
   {
     path: '/auth/callback/linkedin',
