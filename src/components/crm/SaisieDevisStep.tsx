@@ -132,31 +132,57 @@ export default function SaisieDevisStep({
 
       // Get company details
       const company = companies.find(c => c.id === companyId);
+      const now = new Date().toISOString();
 
-      console.log('Creating new quote record with:', {
-        lead_id: leadId,
-        company_id: companyId,
-        quote_pdf_url: publicUrl
-      });
-
-      // Always create a new quote (never replace existing ones)
-      const { data: quoteData, error: insertError } = await supabase
+      // If a pending row already exists for this company without a file, update it
+      // (auto-seeded by Validation Compagnies). Otherwise insert a new submitted row.
+      const { data: pendingRow } = await supabase
         .from('lead_company_quotes')
-        .insert({
-          lead_id: leadId,
-          insurance_company_id: companyId,
-          quote_pdf_url: publicUrl,
-          quote_status: 'pending',
-          sent_at: new Date().toISOString()
-        })
-        .select()
-        .single();
+        .select('id')
+        .eq('lead_id', leadId)
+        .eq('company_id', companyId)
+        .eq('status', 'pending')
+        .is('quote_file_url', null)
+        .limit(1)
+        .maybeSingle();
 
-      if (insertError) {
-        console.error('Database insert error:', insertError);
-        throw new Error(`Erreur base de données: ${insertError.message}`);
+      if (pendingRow) {
+        const { error: updateError } = await supabase
+          .from('lead_company_quotes')
+          .update({
+            quote_file_url: publicUrl,
+            quote_pdf_url: publicUrl,
+            status: 'quote_submitted',
+            quote_status: 'quote_submitted',
+            submitted_at: now,
+            sent_at: now
+          })
+          .eq('id', pendingRow.id);
+
+        if (updateError) {
+          console.error('Database update error:', updateError);
+          throw new Error(`Erreur base de données: ${updateError.message}`);
+        }
+      } else {
+        const { error: insertError } = await supabase
+          .from('lead_company_quotes')
+          .insert({
+            lead_id: leadId,
+            company_id: companyId,
+            insurance_company_id: companyId,
+            quote_file_url: publicUrl,
+            quote_pdf_url: publicUrl,
+            status: 'quote_submitted',
+            quote_status: 'quote_submitted',
+            submitted_at: now,
+            sent_at: now
+          });
+
+        if (insertError) {
+          console.error('Database insert error:', insertError);
+          throw new Error(`Erreur base de données: ${insertError.message}`);
+        }
       }
-      console.log('Quote created successfully:', quoteData);
 
       // Send automatic email to prospect
       await sendQuoteEmail(companyId, company?.name || 'Compagnie', file.name);
