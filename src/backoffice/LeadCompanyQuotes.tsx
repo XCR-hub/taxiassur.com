@@ -645,26 +645,26 @@ export default function LeadCompanyQuotes({ leadId }: Props) {
         title={`Soumettre un devis - ${selectedQuote?.company.name}`}
         size="lg"
       >
-        <div className="space-y-4">
-          <div className="bg-blue-950/20 rounded-lg p-4 border border-blue-800/30">
+        <div className="space-y-5">
+          <div className="bg-blue-500/10 rounded-lg p-4 border border-blue-400/40">
             <div className="flex items-start gap-3">
-              <AlertTriangle className="w-5 h-5 text-blue-500 flex-shrink-0 mt-1" />
-              <div className="text-sm text-gray-300">
-                <strong>Important:</strong> Vous devez uploader le devis de la compagnie.
+              <AlertTriangle className="w-5 h-5 text-blue-300 flex-shrink-0 mt-0.5" />
+              <div className="text-sm text-blue-50 leading-relaxed">
+                <strong className="text-white">Important :</strong> Vous devez uploader le devis de la compagnie.
                 Les documents obligatoires seront automatiquement joints lors de l'envoi au client.
               </div>
             </div>
           </div>
 
           {documents.length > 0 && (
-            <div className="bg-gray-950 rounded-lg p-4 border border-gray-800">
-              <h4 className="text-white font-semibold mb-3">
+            <div className="bg-gray-800/70 rounded-lg p-4 border border-gray-600">
+              <h4 className="text-white font-semibold mb-3 text-sm">
                 Documents qui seront envoyés avec le devis ({documents.length})
               </h4>
               <div className="space-y-2">
                 {documents.map((doc) => (
-                  <div key={doc.id} className="flex items-center gap-2 text-sm text-gray-400">
-                    <FileText className="w-4 h-4 text-blue-500" />
+                  <div key={doc.id} className="flex items-center gap-2 text-sm text-gray-100">
+                    <FileText className="w-4 h-4 text-blue-300 flex-shrink-0" />
                     <span>{doc.document_name}</span>
                     {doc.is_mandatory && <Badge variant="warning" size="sm">Obligatoire</Badge>}
                   </div>
@@ -674,33 +674,36 @@ export default function LeadCompanyQuotes({ leadId }: Props) {
           )}
 
           <div>
-            <label className="block text-gray-400 text-sm mb-2">Type de couverture *</label>
+            <label className="block text-gray-100 text-sm font-semibold mb-2">Type de couverture *</label>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
               {[
                 { value: 'tiers', label: 'Tiers', desc: 'Responsabilité civile' },
                 { value: 'tiers_plus', label: 'Tiers + BDG', desc: 'Bris de glace, incendie, vol' },
                 { value: 'tous_risques', label: 'Tous risques', desc: 'Couverture complète' }
-              ].map((opt) => (
-                <button
-                  key={opt.value}
-                  type="button"
-                  onClick={() => setQuoteFormData({ ...quoteFormData, coverage_type: opt.value as 'tiers' | 'tiers_plus' | 'tous_risques' })}
-                  className={`p-3 rounded-lg border-2 text-left transition-all ${
-                    quoteFormData.coverage_type === opt.value
-                      ? 'border-blue-500 bg-blue-950/30'
-                      : 'border-gray-700 bg-gray-800 hover:border-gray-600'
-                  }`}
-                >
-                  <p className="font-semibold text-white text-sm">{opt.label}</p>
-                  <p className="text-xs text-gray-400 mt-1">{opt.desc}</p>
-                </button>
-              ))}
+              ].map((opt) => {
+                const active = quoteFormData.coverage_type === opt.value;
+                return (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => setQuoteFormData({ ...quoteFormData, coverage_type: opt.value as 'tiers' | 'tiers_plus' | 'tous_risques' })}
+                    className={`p-3 rounded-lg border-2 text-left transition-all ${
+                      active
+                        ? 'border-blue-400 bg-blue-500/20 shadow-md shadow-blue-500/10'
+                        : 'border-gray-600 bg-gray-700/60 hover:border-blue-400/60 hover:bg-gray-700'
+                    }`}
+                  >
+                    <p className={`font-semibold text-sm ${active ? 'text-white' : 'text-gray-50'}`}>{opt.label}</p>
+                    <p className={`text-xs mt-1 ${active ? 'text-blue-100' : 'text-gray-300'}`}>{opt.desc}</p>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-gray-400 text-sm mb-2">Prix annuel (€) *</label>
+              <label className="block text-gray-100 text-sm font-semibold mb-2">Prix annuel (€) *</label>
               <input
                 type="number"
                 step="0.01"
@@ -716,84 +719,92 @@ export default function LeadCompanyQuotes({ leadId }: Props) {
                       : quoteFormData.monthly_price
                   });
                 }}
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white"
+                className="w-full bg-gray-700/80 border border-gray-500 rounded-lg px-4 py-2.5 text-white placeholder-gray-400 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/30 transition-all"
                 placeholder="1250.00"
               />
             </div>
             <div>
-              <label className="block text-gray-400 text-sm mb-2">Prix mensuel (€)</label>
+              <label className="block text-gray-100 text-sm font-semibold mb-2">Prix mensuel (€)</label>
               <input
                 type="number"
                 step="0.01"
                 value={quoteFormData.monthly_price}
                 onChange={(e) => setQuoteFormData({ ...quoteFormData, monthly_price: e.target.value })}
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white"
+                className="w-full bg-gray-700/80 border border-gray-500 rounded-lg px-4 py-2.5 text-white placeholder-gray-400 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/30 transition-all"
                 placeholder="Auto-calculé"
               />
-              <p className="text-gray-500 text-xs mt-1">Calculé automatiquement si vide</p>
+              <p className="text-gray-300 text-xs mt-1.5">Calculé automatiquement si vide</p>
             </div>
           </div>
 
           <div>
-            <label className="block text-gray-400 text-sm mb-2">Garanties incluses</label>
-            <div className="bg-gray-950 rounded-lg p-4 border border-gray-800 space-y-2">
+            <label className="block text-gray-100 text-sm font-semibold mb-2">Garanties incluses</label>
+            <div className="bg-gray-800/70 rounded-lg p-3 border border-gray-600 space-y-1">
               {[
                 { key: 'includes_immobilisation' as const, label: 'Indemnisation suite à immobilisation du véhicule' },
                 { key: 'includes_assistance_0km' as const, label: 'Assistance 0 km' },
                 { key: 'includes_rc_pro' as const, label: 'Responsabilité Civile Professionnelle (RC Pro)' },
                 { key: 'includes_depannage_remorquage' as const, label: 'Dépannage et remorquage' }
-              ].map((g) => (
-                <label key={g.key} className="flex items-center gap-3 cursor-pointer hover:bg-gray-900 p-2 rounded">
-                  <input
-                    type="checkbox"
-                    checked={quoteFormData[g.key]}
-                    onChange={(e) => setQuoteFormData({ ...quoteFormData, [g.key]: e.target.checked })}
-                    className="w-4 h-4 rounded border-gray-600 bg-gray-800 text-blue-600 focus:ring-blue-500"
-                  />
-                  <span className="text-sm text-gray-200">{g.label}</span>
-                </label>
-              ))}
+              ].map((g) => {
+                const checked = quoteFormData[g.key];
+                return (
+                  <label
+                    key={g.key}
+                    className={`flex items-center gap-3 cursor-pointer p-2.5 rounded-md transition-colors ${
+                      checked ? 'bg-blue-500/15 hover:bg-blue-500/20' : 'hover:bg-gray-700/60'
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={(e) => setQuoteFormData({ ...quoteFormData, [g.key]: e.target.checked })}
+                      className="w-4 h-4 rounded border-gray-400 bg-gray-700 text-blue-500 focus:ring-blue-400 focus:ring-offset-gray-900"
+                    />
+                    <span className={`text-sm ${checked ? 'text-white font-medium' : 'text-gray-100'}`}>{g.label}</span>
+                  </label>
+                );
+              })}
             </div>
             {selectedQuote?.company?.name?.toLowerCase().includes('generali') && (
-              <p className="text-yellow-400 text-xs mt-2 flex items-center gap-1">
-                <AlertTriangle className="w-3 h-3" />
+              <p className="text-amber-300 text-xs mt-2 flex items-center gap-1.5 font-medium">
+                <AlertTriangle className="w-3.5 h-3.5" />
                 Generali n'inclut pas la RC Pro par défaut
               </p>
             )}
           </div>
 
           <div>
-            <label className="block text-gray-400 text-sm mb-2">Détails complémentaires sur les garanties</label>
+            <label className="block text-gray-100 text-sm font-semibold mb-2">Détails complémentaires sur les garanties</label>
             <textarea
               value={quoteFormData.coverage_details}
               onChange={(e) => setQuoteFormData({ ...quoteFormData, coverage_details: e.target.value })}
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white"
+              className="w-full bg-gray-700/80 border border-gray-500 rounded-lg px-4 py-2.5 text-white placeholder-gray-400 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/30 transition-all"
               rows={2}
               placeholder="Franchise, plafonds, exclusions particulières... (visible par le prospect)"
             />
           </div>
 
           <div>
-            <label className="block text-gray-400 text-sm mb-2">URL du devis *</label>
+            <label className="block text-gray-100 text-sm font-semibold mb-2">URL du devis *</label>
             <input
               type="url"
               value={quoteFormData.quote_file_url}
               onChange={(e) => setQuoteFormData({ ...quoteFormData, quote_file_url: e.target.value })}
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white"
+              className="w-full bg-gray-700/80 border border-gray-500 rounded-lg px-4 py-2.5 text-white placeholder-gray-400 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/30 transition-all"
               placeholder="https://..."
               required
             />
-            <p className="text-gray-500 text-xs mt-1">
+            <p className="text-gray-300 text-xs mt-1.5">
               Uploadez le devis sur votre stockage et collez l'URL ici
             </p>
           </div>
 
           <div>
-            <label className="block text-gray-400 text-sm mb-2">Notes internes</label>
+            <label className="block text-gray-100 text-sm font-semibold mb-2">Notes internes</label>
             <textarea
               value={quoteFormData.notes}
               onChange={(e) => setQuoteFormData({ ...quoteFormData, notes: e.target.value })}
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white"
+              className="w-full bg-gray-700/80 border border-gray-500 rounded-lg px-4 py-2.5 text-white placeholder-gray-400 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/30 transition-all"
               rows={3}
               placeholder="Notes pour l'équipe..."
             />
@@ -825,10 +836,10 @@ export default function LeadCompanyQuotes({ leadId }: Props) {
         size="lg"
       >
         <div className="space-y-4">
-          <div className="bg-red-950/20 rounded-lg p-4 border border-red-800/30">
+          <div className="bg-red-500/10 rounded-lg p-4 border border-red-400/40">
             <div className="flex items-start gap-3">
-              <AlertTriangle className="w-5 h-5 text-red-500 flex-shrink-0 mt-1" />
-              <div className="text-sm text-gray-300">
+              <AlertTriangle className="w-5 h-5 text-red-300 flex-shrink-0 mt-1" />
+              <div className="text-sm text-red-50">
                 Selectionnez le motif de refus de la compagnie.
                 Une capture d'ecran du refus est recommandee pour la tracabilite.
               </div>
@@ -836,11 +847,11 @@ export default function LeadCompanyQuotes({ leadId }: Props) {
           </div>
 
           <div>
-            <label className="block text-gray-400 text-sm mb-2">Motif du refus *</label>
+            <label className="block text-gray-100 text-sm font-semibold mb-2">Motif du refus *</label>
             <select
               value={refusalFormData.refusal_reason_code}
               onChange={(e) => setRefusalFormData({ ...refusalFormData, refusal_reason_code: e.target.value })}
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white"
+              className="w-full bg-gray-700/80 border border-gray-500 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-red-400 focus:ring-2 focus:ring-red-400/30"
               required
             >
               <option value="">-- Selectionnez un motif --</option>
@@ -851,32 +862,32 @@ export default function LeadCompanyQuotes({ leadId }: Props) {
               ))}
             </select>
             {refusalFormData.refusal_reason_code && (
-              <p className="text-gray-500 text-sm mt-2">
+              <p className="text-gray-300 text-sm mt-2">
                 {refusalReasons.find(r => r.code === refusalFormData.refusal_reason_code)?.description}
               </p>
             )}
           </div>
 
           <div>
-            <label className="block text-gray-400 text-sm mb-2">Capture d'ecran du refus (recommande)</label>
+            <label className="block text-gray-100 text-sm font-semibold mb-2">Capture d'ecran du refus (recommande)</label>
             <input
               type="url"
               value={refusalFormData.refusal_screenshot_url}
               onChange={(e) => setRefusalFormData({ ...refusalFormData, refusal_screenshot_url: e.target.value })}
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white"
+              className="w-full bg-gray-700/80 border border-gray-500 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-red-400 focus:ring-2 focus:ring-red-400/30"
               placeholder="https://..."
             />
-            <p className="text-gray-500 text-xs mt-1">
+            <p className="text-gray-300 text-xs mt-1">
               Uploadez la capture d'ecran et collez l'URL ici
             </p>
           </div>
 
           <div>
-            <label className="block text-gray-400 text-sm mb-2">Details complementaires</label>
+            <label className="block text-gray-100 text-sm font-semibold mb-2">Details complementaires</label>
             <textarea
               value={refusalFormData.notes}
               onChange={(e) => setRefusalFormData({ ...refusalFormData, notes: e.target.value })}
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white"
+              className="w-full bg-gray-700/80 border border-gray-500 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-red-400 focus:ring-2 focus:ring-red-400/30"
               rows={2}
               placeholder="Informations supplementaires sur le refus..."
             />
@@ -886,14 +897,14 @@ export default function LeadCompanyQuotes({ leadId }: Props) {
         <ModalFooter>
           <button
             onClick={() => setIsRefusalModalOpen(false)}
-            className="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg"
+            className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white font-medium rounded-lg border border-gray-500"
           >
             Annuler
           </button>
           <button
             onClick={saveRefusal}
             disabled={saving || !refusalFormData.refusal_reason_code}
-            className="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white rounded-lg flex items-center gap-2"
+            className="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white font-medium rounded-lg flex items-center gap-2 shadow-md"
           >
             <XCircle className="w-4 h-4" />
             {saving ? 'Enregistrement...' : 'Enregistrer le refus'}
