@@ -23,6 +23,9 @@ interface InsuranceCompany {
   code: string;
   description: string | null;
   logo_url?: string | null;
+  is_mandatory?: boolean;
+  is_active?: boolean;
+  priority_order?: number;
 }
 
 interface CompanyQuote {
@@ -101,7 +104,7 @@ export default function LeadCompanyQuotes({ leadId }: Props) {
 
   const loadData = async () => {
     try {
-      const [leadRes, quotesRes, mandatoryCheckRes] = await Promise.all([
+      const [leadRes, quotesRes, companiesRes] = await Promise.all([
         supabase.from('crm_leads').select('*').eq('id', leadId).maybeSingle(),
         supabase
           .from('lead_company_quotes')
@@ -111,11 +114,17 @@ export default function LeadCompanyQuotes({ leadId }: Props) {
           `)
           .eq('lead_id', leadId)
           .order('created_at', { ascending: true }),
-        supabase.rpc('check_all_mandatory_companies_processed', { p_lead_id: leadId })
+        supabase
+          .from('insurance_companies')
+          .select('*')
+          .eq('is_mandatory', true)
+          .eq('is_active', true)
+          .order('priority_order', { ascending: true })
       ]);
 
       if (leadRes.error && leadRes.error.code !== 'PGRST116') throw leadRes.error;
       if (quotesRes.error) throw quotesRes.error;
+      if (companiesRes.error) throw companiesRes.error;
 
       if (leadRes.data) {
         setLead({
@@ -126,7 +135,36 @@ export default function LeadCompanyQuotes({ leadId }: Props) {
           city: leadRes.data.city || ''
         });
       }
-      setQuotes(quotesRes.data || []);
+
+      let currentQuotes = quotesRes.data || [];
+      const mandatoryCompanies = companiesRes.data || [];
+      const existingCompanyIds = new Set(currentQuotes.map((q: CompanyQuote) => q.company_id));
+      const missingCompanies = mandatoryCompanies.filter((c) => !existingCompanyIds.has(c.id));
+
+      if (missingCompanies.length > 0) {
+        const rowsToInsert = missingCompanies.map((c) => ({
+          lead_id: leadId,
+          company_id: c.id,
+          status: 'pending'
+        }));
+        const { error: insertError } = await supabase
+          .from('lead_company_quotes')
+          .insert(rowsToInsert);
+        if (insertError) {
+          console.error('Erreur création lignes compagnies obligatoires:', insertError);
+        } else {
+          const { data: refreshed, error: refreshError } = await supabase
+            .from('lead_company_quotes')
+            .select(`*, company:insurance_companies(*)`)
+            .eq('lead_id', leadId)
+            .order('created_at', { ascending: true });
+          if (!refreshError && refreshed) currentQuotes = refreshed;
+        }
+      }
+
+      setQuotes(currentQuotes);
+
+      const mandatoryCheckRes = await supabase.rpc('check_all_mandatory_companies_processed', { p_lead_id: leadId });
       setAllMandatoryProcessed(mandatoryCheckRes.data || false);
     } catch (error) {
       console.error('Erreur chargement:', error);
@@ -317,8 +355,9 @@ export default function LeadCompanyQuotes({ leadId }: Props) {
   };
 
   const calculateProgress = () => {
-    const total = quotes.length;
-    const processed = quotes.filter(q => q.status !== 'pending').length;
+    const mandatoryQuotes = quotes.filter(q => q.company?.is_mandatory);
+    const total = mandatoryQuotes.length;
+    const processed = mandatoryQuotes.filter(q => q.status !== 'pending').length;
     return total > 0 ? (processed / total) * 100 : 0;
   };
 
@@ -380,7 +419,9 @@ export default function LeadCompanyQuotes({ leadId }: Props) {
   }
 
   const progress = calculateProgress();
-  const allProcessed = quotes.every(q => q.status !== 'pending');
+  const mandatoryQuotesList = quotes.filter(q => q.company?.is_mandatory);
+  const mandatoryProcessedCount = mandatoryQuotesList.filter(q => q.status !== 'pending').length;
+  const allProcessed = allMandatoryProcessed && mandatoryQuotesList.length > 0 && mandatoryProcessedCount === mandatoryQuotesList.length;
 
   return (
     <div className="space-y-6">
@@ -460,7 +501,7 @@ export default function LeadCompanyQuotes({ leadId }: Props) {
         <div className="mb-2">
           <div className="flex items-center justify-between text-sm text-gray-400 mb-2">
             <span>Progression</span>
-            <span>{quotes.filter(q => q.status !== 'pending').length} / {quotes.length}</span>
+            <span>{mandatoryProcessedCount} / {mandatoryQuotesList.length}</span>
           </div>
           <Progress
             value={progress}
