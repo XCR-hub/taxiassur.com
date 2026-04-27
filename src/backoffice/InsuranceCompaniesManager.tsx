@@ -226,7 +226,8 @@ const InsuranceCompaniesManager: React.FC = () => {
     if (!file || !selectedCompany) return;
     setUploadingDoc(section.key);
     try {
-      const path = `${selectedCompany.id}/${section.key}/${Date.now()}-${file.name}`;
+      const safeName = file.name.normalize('NFC').replace(/[^\w.\-]+/g, '_').replace(/_+/g, '_');
+      const path = `${selectedCompany.id}/${section.key}/${Date.now()}-${safeName}`;
       const { error: uploadError } = await supabase.storage.from('company-documents').upload(path, file, { upsert: false });
       if (uploadError) throw uploadError;
       const { data: urlData } = supabase.storage.from('company-documents').getPublicUrl(path);

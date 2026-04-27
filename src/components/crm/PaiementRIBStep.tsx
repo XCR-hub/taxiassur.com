@@ -79,7 +79,8 @@ export default function PaiementRIBStep({
 
     try {
       // Upload to storage
-      const fileName = `${leadId}/${Date.now()}_${file.name}`;
+      const safeName = file.name.normalize('NFC').replace(/[^\w.\-]+/g, '_').replace(/_+/g, '_');
+      const fileName = `${leadId}/${Date.now()}_${safeName}`;
       const { data: uploadData, error: uploadError } = await supabase
         .storage
         .from('lead-rib')
