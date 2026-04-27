@@ -42,6 +42,20 @@ export default function SaisieDevisStep({
   const [uploading, setUploading] = useState<string | null>(null);
   const [sending, setSending] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [dragOverCompanyId, setDragOverCompanyId] = useState<string | null>(null);
+
+  const handleFileSelected = (companyId: string, file: File | undefined | null) => {
+    if (!file) return;
+    if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
+      toast.error('Seuls les fichiers PDF sont acceptés');
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('Le fichier dépasse 10 MB');
+      return;
+    }
+    uploadQuote(companyId, file);
+  };
 
   useEffect(() => {
     loadCompanies();
@@ -483,9 +497,22 @@ export default function SaisieDevisStep({
               <div>
                 <label className="block">
                   <div
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      if (!isUploading) setDragOverCompanyId(company.id);
+                    }}
+                    onDragLeave={() => setDragOverCompanyId(null)}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      setDragOverCompanyId(null);
+                      if (isUploading) return;
+                      handleFileSelected(company.id, e.dataTransfer.files?.[0]);
+                    }}
                     className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-all ${
                       isUploading
                         ? 'border-blue-400 bg-blue-50'
+                        : dragOverCompanyId === company.id
+                        ? 'border-blue-500 bg-blue-100 ring-2 ring-blue-300 scale-[1.01]'
                         : 'border-gray-300 hover:border-blue-400 hover:bg-blue-50'
                     }`}
                   >
@@ -502,9 +529,13 @@ export default function SaisieDevisStep({
                         </div>
                         <div>
                           <span className="text-sm font-medium text-blue-600">
-                            {companyQuotes.length > 0 ? 'Ajouter un autre devis' : 'Cliquez pour uploader un devis'}
+                            {dragOverCompanyId === company.id
+                              ? 'Déposez le PDF ici'
+                              : companyQuotes.length > 0
+                              ? 'Ajouter un autre devis'
+                              : 'Cliquez ou glissez-déposez un devis'}
                           </span>
-                          <p className="text-xs text-gray-500 mt-1">PDF jusqu'à 10MB</p>
+                          <p className="text-xs text-gray-500 mt-1">PDF jusqu'à 10 MB</p>
                         </div>
                       </div>
                     )}
@@ -515,11 +546,7 @@ export default function SaisieDevisStep({
                     className="hidden"
                     disabled={isUploading}
                     onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) {
-                        uploadQuote(company.id, file);
-                      }
-                      // Reset input
+                      handleFileSelected(company.id, e.target.files?.[0]);
                       e.target.value = '';
                     }}
                   />
