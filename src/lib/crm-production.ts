@@ -93,7 +93,8 @@ export const productionService = {
   },
 
   async uploadDocument(file: File, leadId: string, documentType: DocumentType) {
-    const fileName = `${leadId}/${documentType}/${Date.now()}_${file.name}`;
+    const safeName = file.name.normalize('NFC').replace(/[^\w.\-]+/g, '_').replace(/_+/g, '_');
+    const fileName = `${leadId}/${documentType}/${Date.now()}_${safeName}`;
 
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from('crm-documents')

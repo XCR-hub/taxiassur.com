@@ -582,7 +582,8 @@ setNotifications(prev => [payload.new, ...prev]);
     if (!selectedLead || !event.target.files || event.target.files.length === 0) return;
 
     const file = event.target.files[0];
-    const filePath = `leads/${selectedLead.id}/${Date.now()}_${file.name}`;
+    const safeName = file.name.normalize('NFC').replace(/[^\w.\-]+/g, '_').replace(/_+/g, '_');
+    const filePath = `leads/${selectedLead.id}/${Date.now()}_${safeName}`;
 
     const { error: uploadError } = await supabase.storage
       .from('crm-documents')
