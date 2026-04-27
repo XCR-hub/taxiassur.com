@@ -122,6 +122,7 @@ const WhatsAppLayout = lazy(() => import('./backoffice/WhatsAppLayout'));
 const WhatsAppSettings = lazy(() => import('./backoffice/WhatsAppSettings'));
 const EmailMarketingHub = lazy(() => import('./backoffice/EmailMarketingHub'));
 const DuplicateLeadsManager = lazy(() => import('./backoffice/DuplicateLeadsManager'));
+const MergeLeadsManager = lazy(() => import('./backoffice/MergeLeadsManager'));
 const TestAutomations = lazy(() => import('./backoffice/TestAutomations'));
 const ClientsManager = lazy(() => import('./backoffice/ClientsManager'));
 const ClientInsuranceManager = lazy(() => import('./backoffice/ClientInsuranceManager'));
@@ -604,6 +605,7 @@ export const router = createBrowserRouter([
       { path: 'crm-commercial', element: <CRMCommercial /> },
       { path: 'lead-manager', element: <LeadManager /> },
       { path: 'doublons', element: <DuplicateLeadsManager /> },
+      { path: 'fusion-leads', element: <MergeLeadsManager /> },
       { path: 'quote-queue', element: <QuoteQueueDashboard /> },
       { path: 'quotes', element: <QuotesManager /> },
       { path: 'pending-documents', element: <PendingDocumentsManager /> },
