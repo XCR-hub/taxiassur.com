@@ -3,12 +3,29 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import {
   Shield, Plus, CheckCircle, AlertCircle, Clock, X, ChevronRight,
   FileText, Loader, Phone, Calendar, User, MapPin, Car, Wrench,
-  DollarSign, ChevronDown, ChevronUp, Building2, type LucideIcon
+  DollarSign, ChevronDown, ChevronUp, Building2, Download, ExternalLink,
+  type LucideIcon
 } from 'lucide-react';
 import ClientLayout from '../../components/client/ClientLayout';
 import SEOHead from '../../components/SEOHead';
 import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
+
+interface InsuranceCompanyLink {
+  label: string;
+  url: string;
+  type?: string;
+  description?: string;
+}
+
+interface InsuranceCompany {
+  id: string;
+  name: string;
+  code: string | null;
+  logo_url: string | null;
+  contract_number: string | null;
+  useful_links: InsuranceCompanyLink[];
+}
 
 interface ClaimEvent {
   id: string;
@@ -144,6 +161,7 @@ export default function ClientSinistres() {
 
   const [claims, setClaims] = useState<Claim[]>([]);
   const [leadId, setLeadId] = useState<string | null>(null);
+  const [company, setCompany] = useState<InsuranceCompany | null>(null);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -171,11 +189,28 @@ export default function ClientSinistres() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.rpc('get_client_claims_by_email', { p_email: email.toLowerCase().trim() });
+      const normalized = email.toLowerCase().trim();
+      const [{ data, error }, { data: companyData }] = await Promise.all([
+        supabase.rpc('get_client_claims_by_email', { p_email: normalized }),
+        supabase.rpc('get_client_insurance_company_by_email', { p_email: normalized }),
+      ]);
       if (error) throw error;
       if (data?.success) {
         setLeadId(data.lead_id || null);
         setClaims((data.claims || []) as Claim[]);
+      }
+      if (companyData?.success && companyData.company) {
+        const c = companyData.company;
+        setCompany({
+          id: c.id,
+          name: c.name,
+          code: c.code,
+          logo_url: c.logo_url,
+          contract_number: c.contract_number,
+          useful_links: Array.isArray(c.useful_links) ? c.useful_links : [],
+        });
+      } else {
+        setCompany(null);
       }
     } catch (err) {
       logger.error('Error loading claims:', err);
@@ -598,6 +633,70 @@ export default function ClientSinistres() {
                 </div>
               )}
             </>
+          )}
+
+          {company && claims.length > 0 && company.useful_links.length > 0 && (
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+              <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-white">
+                {company.logo_url ? (
+                  <img src={company.logo_url} alt={company.name} className="h-9 w-auto object-contain" />
+                ) : (
+                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <Building2 size={18} className="text-blue-600" />
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <h2 className="font-bold text-gray-900 text-sm">Documents de votre assureur — {company.name}</h2>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    {company.contract_number
+                      ? <>Contrat n° <span className="font-medium text-gray-700">{company.contract_number}</span></>
+                      : 'Documents officiels mis à votre disposition'}
+                  </p>
+                </div>
+              </div>
+              <div className="p-5 grid sm:grid-cols-2 gap-3">
+                {company.useful_links.map((link, idx) => {
+                  const isClaimForm = link.type === 'claim_form';
+                  const Icon = isClaimForm ? FileText : ExternalLink;
+                  const isExternal = /^https?:\/\//i.test(link.url);
+                  return (
+                    <a
+                      key={idx}
+                      href={link.url}
+                      target={isExternal ? '_blank' : undefined}
+                      rel={isExternal ? 'noopener noreferrer' : undefined}
+                      download={!isExternal && /\.pdf($|\?)/i.test(link.url) ? '' : undefined}
+                      className={`group flex items-start gap-3 p-4 rounded-xl border transition-all ${
+                        isClaimForm
+                          ? 'border-yellow-200 bg-yellow-50 hover:bg-yellow-100 hover:border-yellow-300'
+                          : 'border-gray-200 bg-white hover:bg-gray-50 hover:border-gray-300'
+                      }`}
+                    >
+                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                        isClaimForm ? 'bg-yellow-200 text-yellow-800' : 'bg-blue-100 text-blue-700'
+                      }`}>
+                        <Icon size={18} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className={`text-sm font-semibold ${isClaimForm ? 'text-yellow-900' : 'text-gray-900'}`}>
+                          {link.label}
+                        </p>
+                        {link.description && (
+                          <p className={`text-xs mt-0.5 leading-relaxed ${isClaimForm ? 'text-yellow-800' : 'text-gray-500'}`}>
+                            {link.description}
+                          </p>
+                        )}
+                        <span className={`inline-flex items-center gap-1 text-xs font-medium mt-2 ${
+                          isClaimForm ? 'text-yellow-800' : 'text-blue-600'
+                        } group-hover:gap-1.5 transition-all`}>
+                          {isExternal ? <>Consulter <ExternalLink size={11} /></> : <>Télécharger <Download size={11} /></>}
+                        </span>
+                      </div>
+                    </a>
+                  );
+                })}
+              </div>
+            </div>
           )}
 
           <div className="bg-red-50 border border-red-200 rounded-xl p-5">
