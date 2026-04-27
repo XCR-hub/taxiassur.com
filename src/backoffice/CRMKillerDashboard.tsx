@@ -10,6 +10,7 @@ import {
   UserPlus, Search, Star
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { ThemeToggle } from '../components/ThemeToggle';
 
 interface DashboardStats {
   total_leads: number;
@@ -213,7 +214,7 @@ const CRMKillerDashboard: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#f0f2f5] flex items-center justify-center">
+      <div className="min-h-screen bg-[#f0f2f5] dark:bg-[#0b0d12] flex items-center justify-center">
         <div className="text-center">
           <div className="relative w-14 h-14 mx-auto mb-4">
             <div className="w-14 h-14 border-4 border-yellow-100 rounded-full" />
@@ -228,7 +229,7 @@ const CRMKillerDashboard: React.FC = () => {
   const hasPriorityAlerts = stats.pending_documents > 0 || stats.pending_payments > 0 || stats.at_risk_clients > 0 || stats.ready_for_quote > 0;
 
   return (
-    <div className="min-h-screen bg-[#f0f2f5]">
+    <div className="min-h-screen bg-[#f0f2f5] dark:bg-[#0b0d12] transition-colors">
       <div className="max-w-[1700px] mx-auto p-5 md:p-6 space-y-4">
 
         {/* ─── HEADER ──────────────────────────────────────────────── */}
@@ -275,27 +276,30 @@ const CRMKillerDashboard: React.FC = () => {
               <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
               <span className="hidden md:inline">Actualiser</span>
             </button>
+            <div className="pl-1 border-l border-white/[0.12] ml-1">
+              <ThemeToggle />
+            </div>
           </div>
         </div>
 
         {/* ─── QUICK ACTIONS ───────────────────────────────────────── */}
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4">
-          <div className="grid grid-cols-5 md:grid-cols-10 gap-1.5">
+        <div className="bg-white dark:bg-[#161b22] rounded-2xl border border-gray-200 dark:border-white/[0.08] shadow-sm p-5">
+          <div className="grid grid-cols-5 md:grid-cols-10 gap-2">
             {quickActions.map((action) => (
               <button
                 key={action.label}
                 onClick={() => navigate(action.path)}
-                className="relative flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-gray-50 transition-all group"
+                className="relative flex flex-col items-center gap-2.5 p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-white/[0.04] transition-all group"
               >
                 <div
-                  className="w-10 h-10 rounded-xl flex items-center justify-center transition-all group-hover:scale-110 shadow-sm border border-black/[0.04]"
+                  className="w-14 h-14 rounded-2xl flex items-center justify-center transition-all group-hover:scale-110 shadow-sm border border-black/[0.04] dark:border-white/[0.06]"
                   style={{ background: action.iconBg }}
                 >
-                  <action.icon size={17} style={{ color: action.iconColor }} />
+                  <action.icon size={26} style={{ color: action.iconColor }} />
                 </div>
-                <span className="text-[11px] font-medium text-gray-600 group-hover:text-gray-900 text-center leading-tight">{action.label}</span>
+                <span className="text-xs font-medium text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white text-center leading-tight">{action.label}</span>
                 {action.badge !== undefined && action.badge > 0 && (
-                  <span className="absolute -top-0.5 right-1.5 bg-red-500 text-white text-[10px] font-bold min-w-[18px] h-[18px] px-1 rounded-full flex items-center justify-center shadow-sm">
+                  <span className="absolute top-1 right-2 bg-red-500 text-white text-[10px] font-bold min-w-[20px] h-[20px] px-1 rounded-full flex items-center justify-center shadow-sm ring-2 ring-white dark:ring-[#161b22]">
                     {action.badge > 9 ? '9+' : action.badge}
                   </span>
                 )}
