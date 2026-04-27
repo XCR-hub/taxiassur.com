@@ -17,6 +17,22 @@ const SITE_URL = 'https://taxiassur.com';
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+const BROKEN_URLS = new Set([
+  '/actualites/theo-le-taxi-france-tv-1766881140212',
+  '/assurance-taxi-grenoble',
+  '/assurance-taxi-orleans',
+  '/actualites/franchise-assurance-taxi-ce-qui-change-cette-annee',
+  '/blog/double-activite-taxi-vtc-assurance',
+  '/actualites/tesla-model-3-nouvelle-star-taxis-parisiens',
+  '/blog/comparatif-assurances-taxi-2025-axa-generali-covea',
+  '/assurance-taxi-angers',
+]);
+
+function isBlocked(loc) {
+  const path = loc.replace(SITE_URL, '');
+  return BROKEN_URLS.has(path);
+}
+
 // Pages statiques (routes React)
 const staticPages = [
   { url: '/', priority: '1.0', changefreq: 'daily' },
@@ -133,12 +149,17 @@ async function generateSitemap() {
     console.log('⚠️  Erreur lors de la récupération des actualités:', error.message);
   }
 
-  // Générer le XML
-  console.log('🔨 Génération du fichier XML...');
+  const filteredUrls = urls.filter((u) => !isBlocked(u.loc));
+  const removedCount = urls.length - filteredUrls.length;
+  if (removedCount > 0) {
+    console.log(`Filtré ${removedCount} URL(s) cassée(s) (504/5XX) du sitemap`);
+  }
+
+  console.log('Génération du fichier XML...');
   let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
   xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
 
-  for (const url of urls) {
+  for (const url of filteredUrls) {
     xml += '  <url>\n';
     xml += `    <loc>${escapeXml(url.loc)}</loc>\n`;
     xml += `    <lastmod>${url.lastmod}</lastmod>\n`;

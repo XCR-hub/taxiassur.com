@@ -29,6 +29,18 @@ const Seo: React.FC<SeoProps> = ({
   const brandName = 'TaxiAssur';
   const globalNoIndex = getNoIndex();
 
+  const BROKEN_NOINDEX_PATHS = new Set([
+    '/actualites/theo-le-taxi-france-tv-1766881140212',
+    '/assurance-taxi-grenoble',
+    '/assurance-taxi-orleans',
+    '/actualites/franchise-assurance-taxi-ce-qui-change-cette-annee',
+    '/blog/double-activite-taxi-vtc-assurance',
+    '/actualites/tesla-model-3-nouvelle-star-taxis-parisiens',
+    '/blog/comparatif-assurances-taxi-2025-axa-generali-covea',
+    '/assurance-taxi-angers',
+  ]);
+  const pathNoIndex = BROKEN_NOINDEX_PATHS.has(location.pathname.replace(/\/$/, ''));
+
   const fullTitle = title ? `${title} | ${brandName}` : `${brandName} - Assurance Taxi Professionnelle`;
   const defaultDescription = 'Devis d\'assurance taxi gratuit et personnalisé. Courtier spécialiste avec tarifs négociés. Service professionnel et réponse rapide.';
   const metaDescription = description || defaultDescription;
@@ -56,7 +68,7 @@ const Seo: React.FC<SeoProps> = ({
       <link rel="alternate" href={canonicalUrl} hrefLang="x-default" />
 
       {/* Robots */}
-      {(noindex || globalNoIndex) ? (
+      {(noindex || globalNoIndex || pathNoIndex) ? (
         <meta name="robots" content="noindex, nofollow" />
       ) : (
         <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
