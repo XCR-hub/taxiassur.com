@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Download, FileText, AlertCircle, CheckCircle2, Printer, Eye, Building2, Check, Loader2, X } from 'lucide-react';
+import { Download, FileText, AlertCircle, CheckCircle2, Printer, Eye, Building2, Check, Loader2, X, Clock, ThumbsUp, ThumbsDown } from 'lucide-react';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { toast } from '@/lib/toast';
 
@@ -244,12 +244,51 @@ export default function ClientQuotesViewer({ leadId, token, supabaseClient }: Pr
           const companyQuotes = quotesByCompany[company.id] || [];
           if (companyQuotes.length === 0) return null;
 
+          // Statut global de la compagnie : prend le statut du dernier devis (priorité validated > refused > pending)
+          const hasValidated = companyQuotes.some((q) => q.status === 'validated');
+          const hasRefused = companyQuotes.some((q) => q.status === 'refused');
+          const companyStatus: 'validated' | 'refused' | 'pending' = hasValidated
+            ? 'validated'
+            : hasRefused
+            ? 'refused'
+            : 'pending';
+
+          const statusStyles = {
+            pending: {
+              border: 'border-amber-400/60 hover:border-amber-300',
+              bg: 'bg-gradient-to-br from-amber-500/5 via-gray-800/40 to-gray-800/40',
+              ring: 'ring-1 ring-amber-400/30',
+              badgeBg: 'bg-amber-500/15 border-amber-400/50 text-amber-200',
+              badgeIcon: <Clock className="w-4 h-4" />,
+              badgeLabel: 'En attente de votre décision',
+            },
+            validated: {
+              border: 'border-green-400/60 hover:border-green-300',
+              bg: 'bg-gradient-to-br from-green-500/5 via-gray-800/40 to-gray-800/40',
+              ring: 'ring-1 ring-green-400/30',
+              badgeBg: 'bg-green-500/15 border-green-400/50 text-green-200',
+              badgeIcon: <ThumbsUp className="w-4 h-4" />,
+              badgeLabel: 'Devis validé par vos soins',
+            },
+            refused: {
+              border: 'border-red-400/60 hover:border-red-300',
+              bg: 'bg-gradient-to-br from-red-500/5 via-gray-800/40 to-gray-800/40',
+              ring: 'ring-1 ring-red-400/30',
+              badgeBg: 'bg-red-500/15 border-red-400/50 text-red-200',
+              badgeIcon: <ThumbsDown className="w-4 h-4" />,
+              badgeLabel: 'Devis refusé',
+            },
+          }[companyStatus];
+
           return (
-            <div key={company.id} className="bg-gray-800/50 border border-gray-700 rounded-xl p-6 hover:border-amber-500/50 transition-all">
-              <div className="flex items-start justify-between mb-6">
+            <div
+              key={company.id}
+              className={`${statusStyles.bg} border ${statusStyles.border} ${statusStyles.ring} rounded-xl p-6 transition-all shadow-lg`}
+            >
+              <div className="flex items-start justify-between gap-4 mb-6 flex-wrap">
                 <div className="flex items-center gap-4">
                   {company.logo_url ? (
-                    <div className="w-16 h-16 bg-white rounded-lg p-2 flex items-center justify-center flex-shrink-0">
+                    <div className="w-16 h-16 bg-white rounded-lg p-2 flex items-center justify-center flex-shrink-0 shadow-md">
                       <img
                         src={company.logo_url}
                         alt={`Logo ${company.name}`}
@@ -257,7 +296,7 @@ export default function ClientQuotesViewer({ leadId, token, supabaseClient }: Pr
                       />
                     </div>
                   ) : company.name.toLowerCase().includes('simple') || company.code === 'PLUS_SIMPLE' ? (
-                    <div className="w-16 h-16 bg-white rounded-lg p-2 flex items-center justify-center flex-shrink-0">
+                    <div className="w-16 h-16 bg-white rounded-lg p-2 flex items-center justify-center flex-shrink-0 shadow-md">
                       <img
                         src="/logo_plu_simple.png"
                         alt="Logo +Simple"
@@ -269,10 +308,14 @@ export default function ClientQuotesViewer({ leadId, token, supabaseClient }: Pr
                   )}
                   <div>
                     <h4 className="font-bold text-2xl text-white">{company.name}</h4>
-                    <p className="text-sm text-gray-400 mt-1">
+                    <p className="text-sm text-gray-300 mt-1">
                       {companyQuotes.length} devis disponible{companyQuotes.length > 1 ? 's' : ''}
                     </p>
                   </div>
+                </div>
+                <div className={`inline-flex items-center gap-2 px-3 py-2 rounded-full border text-xs font-semibold ${statusStyles.badgeBg}`}>
+                  {statusStyles.badgeIcon}
+                  {statusStyles.badgeLabel}
                 </div>
               </div>
 
@@ -316,11 +359,14 @@ export default function ClientQuotesViewer({ leadId, token, supabaseClient }: Pr
                           </div>
                         </div>
                         {quote.quote_amount && (
-                          <div className="text-right ml-4">
-                            <div className="text-2xl font-bold text-amber-500">
-                              {quote.quote_amount.toFixed(2)} €
+                          <div className="text-right ml-4 bg-amber-500/10 border border-amber-400/40 rounded-lg px-4 py-2">
+                            <div className="text-3xl font-bold text-amber-300 leading-tight">
+                              {(quote.quote_amount / 12).toFixed(2)} €
+                              <span className="text-base font-semibold text-amber-200 ml-1">/mois</span>
                             </div>
-                            <div className="text-xs text-gray-400">par an</div>
+                            <div className="text-xs text-gray-300 mt-1">
+                              soit {quote.quote_amount.toFixed(2)} € par an
+                            </div>
                           </div>
                         )}
                       </div>
@@ -394,27 +440,31 @@ export default function ClientQuotesViewer({ leadId, token, supabaseClient }: Pr
                 })}
               </div>
 
-              {/* Coordonnées TaxiAssur pour tous les devis */}
-              <div className="mt-6 pt-6 border-t border-gray-700">
-                <p className="text-sm text-gray-400 mb-3">Pour souscrire à cette offre, contactez-nous :</p>
-                <div className="flex flex-wrap items-center gap-3">
-                  <a
-                    href="tel:0180855786"
-                    className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm font-semibold"
-                  >
-                    <span className="text-lg">📞</span>
-                    01 80 85 57 86
-                  </a>
-                  <span className="text-gray-500">ou</span>
-                  <a
-                    href="mailto:team@taxiassur.com"
-                    className="flex items-center gap-2 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg transition-colors text-sm font-semibold"
-                  >
-                    <span className="text-lg">✉️</span>
-                    team@taxiassur.com
-                  </a>
+              {companyStatus === 'pending' && (
+                <div className="mt-6 pt-5 border-t border-white/10">
+                  <p className="text-sm text-gray-200 leading-relaxed">
+                    Pour souscrire à cette offre,{' '}
+                    <span className="font-semibold text-green-300">validez ce devis</span>{' '}
+                    grâce au bouton vert ci-dessus, ou{' '}
+                    <span className="font-semibold text-red-300">refusez-le</span>{' '}
+                    si l'offre ne vous convient pas.
+                  </p>
                 </div>
-              </div>
+              )}
+              {companyStatus === 'validated' && (
+                <div className="mt-6 pt-5 border-t border-white/10">
+                  <p className="text-sm text-green-200 leading-relaxed">
+                    Merci ! Vous avez validé ce devis. Notre équipe vous recontactera très prochainement pour finaliser votre souscription.
+                  </p>
+                </div>
+              )}
+              {companyStatus === 'refused' && (
+                <div className="mt-6 pt-5 border-t border-white/10">
+                  <p className="text-sm text-red-200 leading-relaxed">
+                    Vous avez refusé ce devis. Vous pouvez consulter les autres offres disponibles ou contacter notre équipe pour étudier d'autres solutions.
+                  </p>
+                </div>
+              )}
             </div>
           );
         })}
