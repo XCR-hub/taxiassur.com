@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Upload, CheckCircle2, X, FileText, Send, Loader2, Building2, AlertCircle, Plus } from 'lucide-react';
 import { toast } from '@/lib/toast';
+import { generateAdviceSheetHtml } from '@/lib/advice-sheet-generator';
 
 interface SaisieDevisStepProps {
   leadId: string;
@@ -185,6 +186,9 @@ export default function SaisieDevisStep({
         }
       }
 
+      // Auto-generate fiche de conseil (advice sheet) for this company
+      await generateAdviceSheet(companyId, company?.name || 'Compagnie');
+
       // Send automatic email to prospect
       await sendQuoteEmail(companyId, company?.name || 'Compagnie', file.name);
 
@@ -196,6 +200,67 @@ export default function SaisieDevisStep({
       toast.error(`❌ Erreur lors de l'upload du devis\n\n${error.message || error}`);
     } finally {
       setUploading(null);
+    }
+  }
+
+  async function generateAdviceSheet(companyId: string, companyName: string) {
+    try {
+      const { data: leadData } = await supabase
+        .from('crm_leads')
+        .select('first_name, last_name, email, phone, address, postal_code, city, immatriculation, vehicle_type')
+        .eq('id', leadId)
+        .maybeSingle();
+
+      const { data: companyData } = await supabase
+        .from('insurance_companies')
+        .select('id, name, logo_url, advice_template')
+        .eq('id', companyId)
+        .maybeSingle();
+
+      if (!companyData) return;
+
+      const html = generateAdviceSheetHtml(
+        leadData || {},
+        companyData as any,
+        { generatedDate: new Date() }
+      );
+
+      const safeCompany = companyName.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\w]+/g, '_');
+      const ts = Date.now();
+      const filePath = `${leadId}/${companyId}/fiche_conseil_${safeCompany}_${ts}.html`;
+      const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+
+      const { error: uploadError } = await supabase
+        .storage
+        .from('contract-documents')
+        .upload(filePath, blob, { contentType: 'text/html;charset=utf-8', upsert: true });
+
+      if (uploadError) {
+        console.error('Fiche conseil upload error:', uploadError);
+        return;
+      }
+
+      const { data: { publicUrl } } = supabase
+        .storage
+        .from('contract-documents')
+        .getPublicUrl(filePath);
+
+      await supabase
+        .from('crm_lead_documents')
+        .insert({
+          lead_id: leadId,
+          document_type: 'fiche_conseil',
+          file_name: `Fiche de conseil - ${companyName}.html`,
+          file_path: filePath,
+          file_url: publicUrl,
+          mime_type: 'text/html',
+          bucket: 'contract-documents',
+          custom_label: `Fiche de conseil ${companyName}`,
+          status: 'validated',
+          metadata: { company_id: companyId, company_name: companyName, auto_generated: true }
+        });
+    } catch (error) {
+      console.error('Error generating advice sheet:', error);
     }
   }
 
