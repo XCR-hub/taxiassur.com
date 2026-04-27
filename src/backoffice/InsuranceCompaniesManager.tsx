@@ -3,9 +3,16 @@ import {
   Building2, Plus, Save, Upload, Trash2, FileText, Phone, Mail,
   Globe, ExternalLink, Clock, CheckCircle, XCircle, AlertCircle,
   Download, Eye, X, ChevronRight, Shield, Loader2, ImagePlus,
-  Settings, Star, Zap
+  Settings, Star, Zap, Link as LinkIcon
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+
+interface UsefulLink {
+  label: string;
+  url: string;
+  type?: string;
+  description?: string;
+}
 
 interface Company {
   id: string;
@@ -24,7 +31,17 @@ interface Company {
   is_mandatory: boolean;
   workflow_type: string | null;
   priority_order: number;
+  useful_links: UsefulLink[];
 }
+
+const LINK_TYPES = [
+  { value: 'claim_form', label: 'Formulaire sinistre', color: 'amber' },
+  { value: 'claim_doc', label: 'Document sinistre', color: 'amber' },
+  { value: 'contract', label: 'Contrat', color: 'emerald' },
+  { value: 'quote', label: 'Devis', color: 'sky' },
+  { value: 'extranet', label: 'Extranet', color: 'sky' },
+  { value: 'general', label: 'Général', color: 'gray' },
+];
 
 interface CompanyDocument {
   id: string;
@@ -113,7 +130,10 @@ const InsuranceCompaniesManager: React.FC = () => {
         .order('priority_order', { ascending: true })
         .order('name');
       if (error) throw error;
-      const list = data || [];
+      const list = (data || []).map((c: any) => ({
+        ...c,
+        useful_links: Array.isArray(c.useful_links) ? c.useful_links : [],
+      })) as Company[];
       setCompanies(list);
       if (list.length > 0 && !selectedCompany) setSelectedCompany(list[0]);
     } catch {
@@ -283,7 +303,7 @@ const InsuranceCompaniesManager: React.FC = () => {
     setIsNewCompany(true);
     setSelectedCompany(null);
     setDocuments([]);
-    setEditForm({ name: '', code: '', is_active: true, is_mandatory: false, workflow_type: 'grossiste', priority_order: companies.length + 1 });
+    setEditForm({ name: '', code: '', is_active: true, is_mandatory: false, workflow_type: 'grossiste', priority_order: companies.length + 1, useful_links: [] });
     setActiveTab('settings');
   };
 
@@ -705,6 +725,163 @@ const SettingsPanel: React.FC<{
           </FormField>
         </div>
       </SectionCard>
+
+      {/* Section Liens utiles & docs externes */}
+      <UsefulLinksSection
+        links={Array.isArray(editForm.useful_links) ? editForm.useful_links : []}
+        onChange={links => setEditForm(prev => ({ ...prev, useful_links: links }))}
+      />
+    </div>
+  );
+};
+
+/* ── Useful Links Section ── */
+const UsefulLinksSection: React.FC<{
+  links: UsefulLink[];
+  onChange: (links: UsefulLink[]) => void;
+}> = ({ links, onChange }) => {
+  const addLink = (type: string = 'general') => {
+    onChange([...links, { label: '', url: '', type, description: '' }]);
+  };
+  const updateLink = (idx: number, patch: Partial<UsefulLink>) => {
+    onChange(links.map((l, i) => (i === idx ? { ...l, ...patch } : l)));
+  };
+  const removeLink = (idx: number) => {
+    onChange(links.filter((_, i) => i !== idx));
+  };
+
+  return (
+    <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
+      <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between gap-3 bg-gray-50/60">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-xl flex items-center justify-center bg-amber-100">
+            <LinkIcon className="w-4 h-4 text-amber-600" />
+          </div>
+          <div>
+            <h3 className="text-gray-900 font-bold text-sm">Liens & documents pour sinistres</h3>
+            <p className="text-gray-500 text-xs">Liens visibles côté client (déclaration sinistre, formulaires, ressources externes)</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => addLink('claim_form')}
+            className="flex items-center gap-1.5 px-3 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold transition-colors shadow-sm"
+          >
+            <AlertCircle className="w-3.5 h-3.5" />
+            Formulaire sinistre
+          </button>
+          <button
+            type="button"
+            onClick={() => addLink('general')}
+            className="flex items-center gap-1.5 px-3 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-xl text-xs font-bold transition-colors shadow-sm"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            Lien
+          </button>
+        </div>
+      </div>
+
+      <div className="p-6 space-y-3">
+        {links.length === 0 ? (
+          <div className="px-6 py-10 text-center bg-gray-50 border border-dashed border-gray-200 rounded-xl">
+            <div className="w-12 h-12 rounded-2xl bg-white border border-gray-200 flex items-center justify-center mx-auto mb-3">
+              <LinkIcon className="w-5 h-5 text-gray-400" />
+            </div>
+            <p className="text-gray-600 text-sm font-medium">Aucun lien externe pour le moment</p>
+            <p className="text-gray-400 text-xs mt-1">
+              Ajoutez par exemple le formulaire de déclaration sinistre Zephir
+            </p>
+          </div>
+        ) : (
+          links.map((link, idx) => {
+            const linkType = LINK_TYPES.find(t => t.value === link.type) || LINK_TYPES[5];
+            return (
+              <div key={idx} className="border border-gray-200 rounded-xl p-4 bg-gray-50/40 space-y-3">
+                <div className="flex items-start gap-3">
+                  <div className="grid grid-cols-12 gap-3 flex-1">
+                    <div className="col-span-4">
+                      <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">Type</label>
+                      <select
+                        value={link.type ?? 'general'}
+                        onChange={e => updateLink(idx, { type: e.target.value })}
+                        className={selectCls}
+                      >
+                        {LINK_TYPES.map(t => (
+                          <option key={t.value} value={t.value}>{t.label}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="col-span-8">
+                      <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">Libellé</label>
+                      <input
+                        type="text"
+                        value={link.label}
+                        onChange={e => updateLink(idx, { label: e.target.value })}
+                        placeholder="Ex: Déclaration de sinistre Zephir"
+                        className={inputCls}
+                      />
+                    </div>
+                    <div className="col-span-12">
+                      <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">URL</label>
+                      <div className="relative">
+                        <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                          <ExternalLink className="w-4 h-4 text-gray-400" />
+                        </div>
+                        <input
+                          type="url"
+                          value={link.url}
+                          onChange={e => updateLink(idx, { url: e.target.value })}
+                          placeholder="https://..."
+                          className={`${inputCls} pl-9`}
+                        />
+                      </div>
+                    </div>
+                    <div className="col-span-12">
+                      <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">Description (optionnel)</label>
+                      <input
+                        type="text"
+                        value={link.description ?? ''}
+                        onChange={e => updateLink(idx, { description: e.target.value })}
+                        placeholder="Affichée sous le libellé pour le client"
+                        className={inputCls}
+                      />
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => removeLink(idx)}
+                    className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors flex-shrink-0"
+                    title="Supprimer ce lien"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+                <div className="flex items-center gap-2 text-xs">
+                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border font-semibold ${
+                    linkType.color === 'amber' ? 'bg-amber-50 text-amber-700 border-amber-200'
+                    : linkType.color === 'emerald' ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                    : linkType.color === 'sky' ? 'bg-sky-50 text-sky-700 border-sky-200'
+                    : 'bg-gray-100 text-gray-600 border-gray-200'
+                  }`}>
+                    {linkType.label}
+                  </span>
+                  {link.url && (
+                    <a
+                      href={link.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1 text-sky-600 hover:text-sky-700 font-medium"
+                    >
+                      <Eye className="w-3 h-3" /> Tester le lien
+                    </a>
+                  )}
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
     </div>
   );
 };
