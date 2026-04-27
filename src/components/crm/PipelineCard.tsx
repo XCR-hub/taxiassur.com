@@ -1,8 +1,16 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { Mail, Phone, MapPin, FileCheck, CreditCard, Clock, Building2, PenTool, AlertTriangle, Euro, Loader2, User, CalendarCheck, ArrowRight, Calendar, Car } from 'lucide-react';
+import { Mail, Phone, MapPin, FileCheck, CreditCard, Clock, Building2, PenTool, AlertTriangle, Euro, Loader2, User, CalendarCheck, ArrowRight, Calendar, Car, Upload, FileText, X } from 'lucide-react';
 import { CRMLead, PIPELINE_STATUSES, PipelineStatus } from '@/lib/crm-pipeline';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/lib/supabase';
+import { toast } from '@/lib/toast';
+
+interface InsuranceCompanyOption {
+  id: string;
+  name: string;
+  code: string;
+  logo_url?: string;
+}
 
 interface PipelineCardProps {
   lead: CRMLead;
@@ -190,6 +198,12 @@ export const PipelineCard: React.FC<PipelineCardProps> = ({
   const [savingDate, setSavingDate] = useState(false);
   const datePickerRef = useRef<HTMLDivElement>(null);
 
+  const [isFileDragOver, setIsFileDragOver] = useState(false);
+  const [pendingQuoteFile, setPendingQuoteFile] = useState<File | null>(null);
+  const [companyOptions, setCompanyOptions] = useState<InsuranceCompanyOption[]>([]);
+  const [uploadingQuote, setUploadingQuote] = useState(false);
+  const dragCounterRef = useRef(0);
+
   const handleSetRecontactDate = async (date: string) => {
     setSavingDate(true);
     try {
@@ -225,6 +239,106 @@ export const PipelineCard: React.FC<PipelineCardProps> = ({
 
   const isReactivatedFromRecontact = !isRecontactProgramme && (lead.recontact_attempts || 0) > 0;
 
+  const isFileDrag = (e: React.DragEvent) =>
+    Array.from(e.dataTransfer.types || []).includes('Files');
+
+  const handleCardDragEnter = (e: React.DragEvent) => {
+    if (!isFileDrag(e)) return;
+    e.preventDefault();
+    dragCounterRef.current += 1;
+    setIsFileDragOver(true);
+  };
+
+  const handleCardDragOver = (e: React.DragEvent) => {
+    if (!isFileDrag(e)) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
+  };
+
+  const handleCardDragLeave = (e: React.DragEvent) => {
+    if (!isFileDrag(e)) return;
+    dragCounterRef.current -= 1;
+    if (dragCounterRef.current <= 0) {
+      dragCounterRef.current = 0;
+      setIsFileDragOver(false);
+    }
+  };
+
+  const handleCardDrop = async (e: React.DragEvent) => {
+    if (!isFileDrag(e)) return;
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounterRef.current = 0;
+    setIsFileDragOver(false);
+
+    const file = e.dataTransfer.files?.[0];
+    if (!file) return;
+
+    if (companyOptions.length === 0) {
+      const { data, error } = await supabase
+        .from('insurance_companies')
+        .select('id, name, code, logo_url')
+        .eq('is_active', true)
+        .order('priority_order', { ascending: true });
+      if (error) {
+        console.error('Erreur chargement compagnies:', error);
+        toast.error('Impossible de charger les compagnies');
+        return;
+      }
+      setCompanyOptions(data || []);
+    }
+
+    setPendingQuoteFile(file);
+  };
+
+  const closeQuoteModal = () => {
+    if (uploadingQuote) return;
+    setPendingQuoteFile(null);
+  };
+
+  const handleUploadQuote = async (companyId: string) => {
+    if (!pendingQuoteFile) return;
+    setUploadingQuote(true);
+    try {
+      const safeName = pendingQuoteFile.name
+        .normalize('NFC')
+        .replace(/[^\w.\-]+/g, '_')
+        .replace(/_+/g, '_');
+      const filePath = `${lead.id}/${companyId}/${Date.now()}_${safeName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('contract-documents')
+        .upload(filePath, pendingQuoteFile);
+
+      if (uploadError) throw new Error(uploadError.message);
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('contract-documents')
+        .getPublicUrl(filePath);
+
+      const { error: insertError } = await supabase
+        .from('lead_company_quotes')
+        .insert({
+          lead_id: lead.id,
+          insurance_company_id: companyId,
+          quote_pdf_url: publicUrl,
+          quote_status: 'pending',
+          sent_at: new Date().toISOString()
+        });
+
+      if (insertError) throw new Error(insertError.message);
+
+      const company = companyOptions.find(c => c.id === companyId);
+      toast.success(`Devis ${company?.name || ''} ajouté`);
+      setPendingQuoteFile(null);
+    } catch (err: any) {
+      console.error('Erreur upload devis:', err);
+      toast.error(`Erreur: ${err.message || err}`);
+    } finally {
+      setUploadingQuote(false);
+    }
+  };
+
   const handleMoveToNew = async (e: React.MouseEvent) => {
     e.stopPropagation();
     if (movingToNew) return;
@@ -247,6 +361,10 @@ export const PipelineCard: React.FC<PipelineCardProps> = ({
       draggable={true}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
+      onDragEnter={handleCardDragEnter}
+      onDragOver={handleCardDragOver}
+      onDragLeave={handleCardDragLeave}
+      onDrop={handleCardDrop}
       onMouseDown={handleMouseDown}
       onClick={handleClick}
       role="button"
@@ -597,6 +715,82 @@ export const PipelineCard: React.FC<PipelineCardProps> = ({
         </div>
 
       </div>
+
+      {isFileDragOver && (
+        <div
+          className="absolute inset-0 z-30 flex items-center justify-center rounded-xl pointer-events-none"
+          style={{
+            background: 'rgba(56,189,248,0.12)',
+            border: '2px dashed #38bdf8',
+          }}
+        >
+          <div className="flex flex-col items-center gap-1.5 text-sky-700">
+            <Upload size={20} />
+            <span className="text-[11px] font-bold">Déposer le devis</span>
+          </div>
+        </div>
+      )}
+
+      {pendingQuoteFile && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 p-4"
+          onClick={closeQuoteModal}
+          onMouseDown={(e) => e.stopPropagation()}
+        >
+          <div
+            className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+              <div className="flex items-center gap-2 min-w-0">
+                <FileText size={16} className="text-sky-600 shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-gray-900 truncate">{pendingQuoteFile.name}</p>
+                  <p className="text-[11px] text-gray-500">Pour {lead.full_name}</p>
+                </div>
+              </div>
+              <button
+                onClick={closeQuoteModal}
+                disabled={uploadingQuote}
+                className="text-gray-400 hover:text-gray-600 disabled:opacity-50"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <div className="p-4">
+              <p className="text-[12px] font-medium text-gray-700 mb-2">Choisir la compagnie d'assurance :</p>
+              <div className="grid grid-cols-1 gap-1.5 max-h-72 overflow-y-auto">
+                {companyOptions.length === 0 ? (
+                  <div className="flex items-center justify-center py-6 text-gray-400 text-sm">
+                    <Loader2 size={14} className="animate-spin mr-2" />
+                    Chargement...
+                  </div>
+                ) : companyOptions.map(c => (
+                  <button
+                    key={c.id}
+                    disabled={uploadingQuote}
+                    onClick={() => handleUploadQuote(c.id)}
+                    className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 hover:border-sky-400 hover:bg-sky-50 text-left transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {c.logo_url ? (
+                      <img src={c.logo_url} alt={c.name} className="w-7 h-7 object-contain shrink-0" />
+                    ) : (
+                      <div className="w-7 h-7 rounded bg-gray-100 flex items-center justify-center shrink-0">
+                        <Building2 size={14} className="text-gray-400" />
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-900 truncate">{c.name}</p>
+                      <p className="text-[10px] text-gray-500 uppercase">{c.code}</p>
+                    </div>
+                    {uploadingQuote && <Loader2 size={14} className="animate-spin text-sky-500" />}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
