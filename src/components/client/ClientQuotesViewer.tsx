@@ -29,9 +29,19 @@ interface Props {
   supabaseClient?: SupabaseClient;
 }
 
+interface CompanyDocument {
+  id: string;
+  company_id: string;
+  document_name: string;
+  document_type: string | null;
+  file_url: string;
+  description: string | null;
+}
+
 export default function ClientQuotesViewer({ leadId, token, supabaseClient }: Props) {
   const [companies, setCompanies] = useState<InsuranceCompany[]>([]);
   const [quotes, setQuotes] = useState<Quote[]>([]);
+  const [companyDocs, setCompanyDocs] = useState<CompanyDocument[]>([]);
   const [loading, setLoading] = useState(true);
   const [validating, setValidating] = useState<string | null>(null);
   const [refusing, setRefusing] = useState<string | null>(null);
@@ -161,6 +171,15 @@ export default function ClientQuotesViewer({ leadId, token, supabaseClient }: Pr
             setCompanies(companiesData || []);
           }
         }
+
+        // Charger les documents contractuels (send_with_quote=true) via RPC token
+        const { data: docsData, error: docsError } = await supabaseClient.rpc('get_company_documents_by_token', {
+          p_token: token,
+          p_filter: 'quote'
+        });
+        if (!docsError) {
+          setCompanyDocs(docsData || []);
+        }
       }
       // Sinon, utiliser le lead_id directement (mode authentifié)
       else if (leadId) {
@@ -187,6 +206,18 @@ export default function ClientQuotesViewer({ leadId, token, supabaseClient }: Pr
         if (companiesError) throw companiesError;
 
         setCompanies(companiesData || []);
+
+        // Charger les documents contractuels (send_with_quote=true)
+        const companyIds = (companiesData || []).map((c: any) => c.id);
+        if (companyIds.length > 0) {
+          const { data: docsData } = await supabaseClient
+            .from('company_documents')
+            .select('id, company_id, document_name, document_type, file_url, description')
+            .in('company_id', companyIds)
+            .eq('send_with_quote', true)
+            .order('display_order', { nullsFirst: false });
+          setCompanyDocs(docsData || []);
+        }
       }
 
       setQuotes(quotesData);
@@ -279,6 +310,8 @@ export default function ClientQuotesViewer({ leadId, token, supabaseClient }: Pr
               badgeLabel: 'Devis refusé',
             },
           }[companyStatus];
+
+          const companyAttachedDocs = companyDocs.filter((d) => d.company_id === company.id);
 
           return (
             <div
@@ -439,6 +472,37 @@ export default function ClientQuotesViewer({ leadId, token, supabaseClient }: Pr
                   );
                 })}
               </div>
+
+              {companyAttachedDocs.length > 0 && (
+                <div className="mt-6 pt-5 border-t border-white/10">
+                  <h5 className="text-sm font-bold text-amber-200 mb-3 flex items-center gap-2">
+                    <FileText className="w-4 h-4" />
+                    Documents contractuels {company.name}
+                  </h5>
+                  <div className="grid sm:grid-cols-2 gap-2">
+                    {companyAttachedDocs.map((doc) => (
+                      <a
+                        key={doc.id}
+                        href={doc.file_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-3 px-4 py-3 bg-gray-900/60 border border-gray-700 hover:border-amber-400/60 rounded-lg transition-colors group"
+                      >
+                        <FileText className="w-5 h-5 text-amber-400 flex-shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-white truncate group-hover:text-amber-200">
+                            {doc.document_name}
+                          </p>
+                          {doc.description && (
+                            <p className="text-xs text-gray-400 truncate">{doc.description}</p>
+                          )}
+                        </div>
+                        <Download className="w-4 h-4 text-gray-400 group-hover:text-amber-300 flex-shrink-0" />
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {companyStatus === 'pending' && (
                 <div className="mt-6 pt-5 border-t border-white/10">

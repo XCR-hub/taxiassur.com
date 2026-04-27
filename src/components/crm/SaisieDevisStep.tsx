@@ -98,10 +98,11 @@ export default function SaisieDevisStep({
           company:insurance_companies(*)
         `)
         .eq('lead_id', leadId)
+        .not('quote_file_url', 'is', null)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setQuotes(data || []);
+      setQuotes((data || []).filter((q: any) => q.quote_file_url && String(q.quote_file_url).trim() !== ''));
     } catch (error) {
       console.error('Error loading quotes:', error);
     }
@@ -209,7 +210,27 @@ export default function SaisieDevisStep({
         ? `${window.location.origin}/espace-prospect?token=${leadAccessToken}&tab=devis`
         : `${window.location.origin}/espace-prospect?tab=devis`;
 
-      const subject = `✅ Nouveau devis ${companyName} disponible - TaxiAssur`;
+      // Récupérer les documents contractuels de la compagnie à joindre au devis
+      const { data: companyDocs } = await supabase
+        .from('company_documents')
+        .select('document_name, file_url, document_type, description')
+        .eq('company_id', companyId)
+        .eq('send_with_quote', true)
+        .order('display_order', { nullsFirst: false });
+
+      const docsListHtml = (companyDocs && companyDocs.length > 0)
+        ? `
+            <div style="background-color: #fffbeb; border-left: 4px solid #f59e0b; padding: 15px; margin: 25px 0; border-radius: 6px;">
+              <p style="color: #92400e; font-weight: bold; margin: 0 0 10px 0;">Documents contractuels ${companyName} :</p>
+              <ul style="color: #78350f; margin: 0; padding-left: 20px;">
+                ${companyDocs.map(d => `<li style="margin: 6px 0;"><a href="${d.file_url}" style="color: #b45309; text-decoration: underline;" target="_blank" rel="noopener">${d.document_name}</a>${d.description ? ` <span style="color: #92400e; font-size: 12px;">- ${d.description}</span>` : ''}</li>`).join('')}
+              </ul>
+              <p style="color: #92400e; font-size: 12px; margin: 10px 0 0 0;">Ces documents sont également disponibles dans votre espace prospect.</p>
+            </div>
+          `
+        : '';
+
+      const subject = `Nouveau devis ${companyName} disponible - TaxiAssur`;
       const html = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #f9fafb; padding: 20px; border-radius: 10px;">
           <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
@@ -229,6 +250,8 @@ export default function SaisieDevisStep({
                 📋 Voir mon devis maintenant
               </a>
             </div>
+
+            ${docsListHtml}
 
             <div style="background-color: #eff6ff; border-left: 4px solid #2563eb; padding: 15px; margin: 25px 0; border-radius: 6px;">
               <p style="color: #1e40af; font-weight: bold; margin: 0 0 10px 0;">Dans votre espace sécurisé :</p>
