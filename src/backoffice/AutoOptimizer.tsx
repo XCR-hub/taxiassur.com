@@ -139,7 +139,7 @@ export default function AutoOptimizer() {
       if (!error && data) {
         setLogs(data.map(log => ({
           id: log.id,
-          automation_name: log.job_name,
+          automation_name: log.automation_name || log.job_name,
           status: log.status,
           message: log.message || 'Exécution terminée',
           created_at: log.created_at
@@ -177,16 +177,27 @@ export default function AutoOptimizer() {
     setTesting(automation.id);
 
     try {
-      // Simuler un test
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      const { data, error } = await supabase.rpc('run_cron_job_now', {
+        p_name: automation.name,
+      });
 
-      const description = AUTOMATION_DESCRIPTIONS[automation.name];
-      toast.success(`✅ Test réussi !\n\n${description?.testDescription || 'Test exécuté avec succès'}`);
+      if (error) throw error;
+
+      const result = (data || {}) as { success?: boolean; error?: string; duration_ms?: number };
+
+      if (result.success) {
+        toast.success(
+          `✅ Test réussi (${result.duration_ms ?? 0} ms)\n\n${automation.name} a bien été exécutée.`
+        );
+      } else {
+        toast.error(`❌ Test échoué\n\n${result.error || 'Erreur inconnue lors de l\'exécution'}`);
+      }
 
       await loadData();
     } catch (error) {
       logger.error('Error testing automation:', error);
-      toast.error('❌ Erreur lors du test');
+      const message = error instanceof Error ? error.message : 'Erreur inconnue';
+      toast.error(`❌ Erreur lors du test\n\n${message}`);
     } finally {
       setTesting(null);
     }
