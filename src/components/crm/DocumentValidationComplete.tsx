@@ -292,19 +292,33 @@ export default function DocumentValidationComplete({
         customLabel = newDocType.replace('custom_', '');
       }
 
+      const wasValidated = doc?.status === 'validated';
+
+      const updatePayload: Record<string, unknown> = {
+        document_type: finalDocType,
+        custom_label: customLabel,
+        updated_at: new Date().toISOString()
+      };
+
+      if (wasValidated) {
+        updatePayload.status = 'pending';
+        updatePayload.validated_at = null;
+        updatePayload.validated_by = null;
+      }
+
       const { error } = await supabase
         .from('crm_lead_documents')
-        .update({
-          document_type: finalDocType,
-          custom_label: customLabel,
-          updated_at: new Date().toISOString()
-        })
+        .update(updatePayload)
         .eq('id', docId);
 
       if (error) throw error;
 
       const targetLabel = categories.find(c => c.id === newDocType)?.label || newDocType;
-      toast.success(`Document deplace vers "${targetLabel}"`);
+      if (wasValidated) {
+        toast.success(`Document deplace vers "${targetLabel}". La validation a ete reinitialisee, il faudra revalider.`);
+      } else {
+        toast.success(`Document deplace vers "${targetLabel}"`);
+      }
 
       await loadAll();
       onDocumentClassified?.();
@@ -1085,14 +1099,14 @@ export default function DocumentValidationComplete({
                     <div className="space-y-2 mb-3 relative">
                       {docsInCategory.map((doc) => {
                         const isDragging = draggedItem?.id === doc.id && draggedItem?.type === 'document';
-                        const isPending = doc.status === 'pending';
+                        const canMove = doc.status !== 'rejected';
 
                         return (
                         <div
                           key={doc.id}
-                          draggable={isPending}
+                          draggable={canMove}
                           onDragStart={(e) => {
-                            if (isPending) {
+                            if (canMove) {
                               e.stopPropagation();
                               e.dataTransfer.setData('application/x-doc-id', doc.id);
                               e.dataTransfer.effectAllowed = 'move';
@@ -1103,14 +1117,14 @@ export default function DocumentValidationComplete({
                           className={`rounded p-3 border transition-all duration-200 ${
                             isDragging
                               ? 'opacity-30 scale-95 border-blue-300 bg-blue-50 shadow-none'
-                              : isPending
+                              : canMove
                               ? 'bg-gray-50 border-gray-200 cursor-grab active:cursor-grabbing hover:border-blue-400 hover:shadow-sm group/doc'
                               : 'bg-gray-50 border-gray-200'
                           } ${processing === doc.id ? 'opacity-60 pointer-events-none' : ''}`}
                         >
                           <div className="flex items-start justify-between mb-2">
                             <div className="flex items-start gap-2 flex-1 min-w-0">
-                              {isPending && (
+                              {canMove && (
                                 <GripVertical className="h-4 w-4 text-gray-300 group-hover/doc:text-blue-400 flex-shrink-0 mt-0.5 transition-colors" />
                               )}
                               <div className="flex-1 min-w-0">
@@ -1175,7 +1189,7 @@ export default function DocumentValidationComplete({
                               )}
                             </div>
 
-                            {doc.status === 'pending' && (
+                            {canMove && (
                               <div className="relative">
                                 <button
                                   onClick={() => setMoveMenuOpen(moveMenuOpen === doc.id ? null : doc.id)}
