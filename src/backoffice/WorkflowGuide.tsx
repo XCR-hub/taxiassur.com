@@ -66,12 +66,12 @@ interface AutoTask {
 const AUTOMATIONS: AutoTask[] = [
   {
     icon: Bot, title: 'Document collector IA',
-    detail: "Scanne les pièces manquantes et relance le prospect avec la liste précise.",
-    frequency: 'Toutes les 15 min', audience: 'prospect',
+    detail: "Scanne les pièces manquantes toutes les 15 min, mais n'envoie qu'un seul email de relance par jour au prospect avec la liste précise.",
+    frequency: 'Scan 15 min · Email 1×/jour', audience: 'prospect',
   },
   {
     icon: Mail, title: 'Relance documents quotidienne',
-    detail: "Email de rappel tant que des pièces sont manquantes (max 5 envois).",
+    detail: "Email de rappel tant que des pièces sont manquantes (max 5 envois, 1 par jour).",
     frequency: 'Tous les jours à 10h', audience: 'prospect',
   },
   {
