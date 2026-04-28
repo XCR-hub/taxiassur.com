@@ -1,10 +1,10 @@
 import React from 'react';
-import { Helmet } from 'react-helmet-async';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import EnhancedLeadForm from '../components/EnhancedLeadForm';
 import StickyCTA from '../components/StickyCTA';
 import JsonLd from '../components/JsonLd';
+import CityPageSEO from '../components/CityPageSEO';
 import { Shield, CheckCircle, Phone, Clock, Star, MapPin, TrendingDown, Plane, Car, AlertCircle } from 'lucide-react';
 
 const AssuranceTaxiNice: React.FC = () => {
@@ -39,25 +39,7 @@ const AssuranceTaxiNice: React.FC = () => {
 
   return (
     <>
-      <Helmet>
-        <title>Assurance Taxi Nice &amp; Assurance VTC Nice — Dès 1 820€/an | TaxiAssur</title>
-        <meta name="description" content="Assurance taxi Nice et assurance VTC Nice dès 1 820€/an. Courtier spécialisé Côte d'Azur (06). Couverture aéroport, RC Pro incluse. Devis gratuit 2 min, réponse 15 min." />
-        <meta name="keywords" content="assurance taxi Nice, assurance VTC Nice, assurance taxi Côte d'Azur, courtier assurance taxi Nice, RC pro taxi Nice, assurance VTC 06, taxi Nice assurance, assurance chauffeur VTC Nice" />
-        <link rel="canonical" href="https://taxiassur.com/assurance-taxi-nice" />
-        <meta property="og:type" content="website" />
-        <meta property="og:title" content="Assurance Taxi Nice &amp; Assurance VTC Nice — Dès 1 820€/an | TaxiAssur" />
-        <meta property="og:description" content="Assurance taxi &amp; VTC Nice dès 1 820€/an. Devis gratuit 2 min, réponse 15 min." />
-        <meta property="og:url" content="https://taxiassur.com/assurance-taxi-nice" />
-        <meta property="og:image" content="https://taxiassur.com/logo-600x300.png" />
-        <meta property="og:site_name" content="TaxiAssur" />
-        <meta property="og:locale" content="fr_FR" />
-        <meta property="og:image:width" content="600" />
-        <meta property="og:image:height" content="300" />
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="Assurance Taxi Nice &amp; VTC Nice | TaxiAssur" />
-        <meta name="twitter:description" content="Assurance taxi &amp; VTC Nice dès 1 820€/an. Devis gratuit." />
-        <meta name="twitter:image" content="https://taxiassur.com/logo-600x300.png" />
-      </Helmet>
+      <CityPageSEO citySlug="nice" />
       <JsonLd type="breadcrumb" data={breadcrumbs} />
       <JsonLd type="organization" />
       <JsonLd type="faq" data={faqItems} />

@@ -1,10 +1,10 @@
 import React from 'react';
-import { Helmet } from 'react-helmet-async';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import EnhancedLeadForm from '../components/EnhancedLeadForm';
 import StickyCTA from '../components/StickyCTA';
 import JsonLd from '../components/JsonLd';
+import CityPageSEO from '../components/CityPageSEO';
 import { Shield, CheckCircle, Phone, Clock, Star, AlertCircle, MapPin, TrendingDown } from 'lucide-react';
 
 const AssuranceTaxiToulon: React.FC = () => {
@@ -16,25 +16,7 @@ const AssuranceTaxiToulon: React.FC = () => {
 
   return (
     <>
-      <Helmet>
-        <title>Assurance Taxi Toulon &amp; RC Pro Toulon — Dès 1 620€/an | TaxiAssur</title>
-        <meta name="description" content="Assurance taxi Toulon et RC Pro taxi Toulon dès 1 620€/an. Courtier spécialisé taxi Var (83). RC professionnelle obligatoire incluse. Devis gratuit 2 min, réponse 15 min." />
-        <meta name="keywords" content="assurance taxi Toulon, rc pro Toulon, rc pro taxi Toulon, assurance taxi Var, courtier assurance taxi Toulon, responsabilité civile taxi Toulon, assurance professionnelle taxi 83" />
-        <link rel="canonical" href="https://taxiassur.com/assurance-taxi-toulon" />
-        <meta property="og:type" content="website" />
-        <meta property="og:title" content="Assurance Taxi Toulon &amp; RC Pro Toulon — Dès 1 620€/an | TaxiAssur" />
-        <meta property="og:description" content="Assurance taxi Toulon et RC Pro taxi Toulon dès 1 620€/an. Devis gratuit 2 min." />
-        <meta property="og:url" content="https://taxiassur.com/assurance-taxi-toulon" />
-        <meta property="og:image" content="https://taxiassur.com/logo-600x300.png" />
-        <meta property="og:site_name" content="TaxiAssur" />
-        <meta property="og:locale" content="fr_FR" />
-        <meta property="og:image:width" content="600" />
-        <meta property="og:image:height" content="300" />
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="Assurance Taxi Toulon &amp; RC Pro Toulon | TaxiAssur" />
-        <meta name="twitter:description" content="Assurance taxi Toulon dès 1 620€/an. RC Pro incluse. Devis gratuit." />
-        <meta name="twitter:image" content="https://taxiassur.com/logo-600x300.png" />
-      </Helmet>
+      <CityPageSEO citySlug="toulon" />
       <JsonLd type="breadcrumb" data={breadcrumbs} />
       <JsonLd type="organization" />
 
