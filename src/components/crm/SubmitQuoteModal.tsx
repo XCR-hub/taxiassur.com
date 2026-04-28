@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { AlertTriangle, FileText, Send, Upload, Loader2, CheckCircle } from 'lucide-react';
+import { AlertTriangle, FileText, Send, Upload, Loader2, CheckCircle, Info } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/lib/toast';
 import { Modal, ModalFooter } from '../Modal';
@@ -24,6 +24,49 @@ interface ExistingQuote {
   includes_depannage_remorquage?: boolean | null;
   coverage_details?: string | null;
   notes?: string | null;
+  enrollment_fee?: number | null;
+  quote_options?: Record<string, unknown> | null;
+}
+
+interface SollyAzarOptions {
+  amenagements: boolean;
+  assistance_sans_franchise: boolean;
+  bagages_marchandises: boolean;
+  effets_personnels: boolean;
+  equipements_pro: boolean;
+  equipements_pro_niveau: 1 | 2 | 3;
+  indemnisation_valeur_achat: boolean;
+  indemnites_journalieres: boolean;
+  indemnites_journalieres_niveau: 1 | 2;
+  protection_juridique: boolean;
+  protection_conducteur_niveau2: boolean;
+}
+
+const SOLLY_AZAR_INFO: Record<string, string> = {
+  amenagements:
+    "Les garanties dommages sont étendues aux aménagements et équipements intérieurs fixes nécessaires à l'exercice de l'activité assurée et/ou permettant le transport d'une personne à mobilité réduite.",
+  bagages_marchandises:
+    "Les garanties dommages sont étendues aux bagages et marchandises transportés dans le véhicule garanti et appartenant aux passagers.",
+  equipements_pro:
+    "Cette garantie couvre les équipements et matériels réglementaires obligatoires et/ou nécessaires pour l'exercice de l'activité TAXI, notamment le taximètre, les terminaux informatiques de paiement, les matériels de navigation, la radio et le lumineux.\nNIVEAU 1 : jusqu'à 10 % du montant des dommages subis au véhicule avec un maximum de 600 €\nNIVEAU 2 : jusqu'à 25 % du montant des dommages subis au véhicule avec un maximum de 1 000 €\nNIVEAU 3 : jusqu'à 50 % du montant des dommages subis au véhicule avec un maximum de 1 500 €",
+  indemnites_journalieres:
+    "En cas d'immobilisation le professionnel peut bénéficier d'une indemnité journalière ou la mise à disposition d'un véhicule relais avec franchise.\nNiveau 1 : 75 € par jour\nNiveau 2 : 150 € par jour",
+};
+
+function defaultSollyAzarOptions(): SollyAzarOptions {
+  return {
+    amenagements: false,
+    assistance_sans_franchise: false,
+    bagages_marchandises: false,
+    effets_personnels: false,
+    equipements_pro: false,
+    equipements_pro_niveau: 1,
+    indemnisation_valeur_achat: false,
+    indemnites_journalieres: false,
+    indemnites_journalieres_niveau: 1,
+    protection_juridique: false,
+    protection_conducteur_niveau2: false,
+  };
 }
 
 interface CompanyDoc {
@@ -58,10 +101,12 @@ export function SubmitQuoteModal({
   onSubmitted,
 }: SubmitQuoteModalProps) {
   const isGenerali = (company.name || '').toLowerCase().includes('generali');
+  const isSollyAzar = (company.name || '').toLowerCase().includes('solly');
 
   const [documents, setDocuments] = useState<CompanyDoc[]>([]);
   const [uploading, setUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [openInfoKey, setOpenInfoKey] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     quote_amount: '',
     monthly_price: '',
@@ -73,7 +118,9 @@ export function SubmitQuoteModal({
     includes_depannage_remorquage: true,
     coverage_details: '',
     notes: '',
+    enrollment_fee: '0',
   });
+  const [sollyOptions, setSollyOptions] = useState<SollyAzarOptions>(defaultSollyAzarOptions());
 
   useEffect(() => {
     if (!isOpen) return;
@@ -89,7 +136,11 @@ export function SubmitQuoteModal({
       includes_depannage_remorquage: existingQuote?.includes_depannage_remorquage ?? true,
       coverage_details: existingQuote?.coverage_details || '',
       notes: existingQuote?.notes || '',
+      enrollment_fee: existingQuote?.enrollment_fee != null ? String(existingQuote.enrollment_fee) : '0',
     });
+    const existingOpts = (existingQuote?.quote_options as Partial<SollyAzarOptions> | null | undefined) || null;
+    setSollyOptions({ ...defaultSollyAzarOptions(), ...(existingOpts || {}) });
+    setOpenInfoKey(null);
   }, [isOpen, existingQuote?.id, company.id]);
 
   async function loadCompanyDocuments() {
@@ -279,6 +330,8 @@ export function SubmitQuoteModal({
         includes_depannage_remorquage: formData.includes_depannage_remorquage,
         coverage_details: formData.coverage_details || null,
         notes: formData.notes || null,
+        enrollment_fee: parseFloat(formData.enrollment_fee) || 0,
+        quote_options: isSollyAzar ? sollyOptions : (existingQuote?.quote_options || {}),
         submitted_by: user?.id,
         submitted_at: now,
         sent_to_client_at: now,
@@ -448,6 +501,122 @@ export function SubmitQuoteModal({
               Generali n'inclut pas la RC Pro par défaut
             </p>
           )}
+        </div>
+
+        {isSollyAzar && (
+          <div>
+            <label className="block text-gray-100 text-sm font-semibold mb-2">
+              Options spécifiques Solly Azar
+            </label>
+            <div className="bg-gray-800/70 rounded-lg p-3 border border-gray-600 space-y-1">
+              {[
+                { key: 'amenagements' as const, label: 'Aménagements du véhicule', infoKey: 'amenagements' },
+                { key: 'assistance_sans_franchise' as const, label: "Assistance sans franchise kilométrique avec véhicule de remplacement à usage privé" },
+                { key: 'bagages_marchandises' as const, label: 'Bagages et marchandises transportées jusqu\'à 5 000 €', infoKey: 'bagages_marchandises' },
+                { key: 'effets_personnels' as const, label: 'Effets et objets personnels du conducteur' },
+                { key: 'equipements_pro' as const, label: 'Equipements professionnels', infoKey: 'equipements_pro', hasLevel: 3 as const },
+                { key: 'indemnisation_valeur_achat' as const, label: "Indemnisation en valeur d'achat et/ou en valeur majorée" },
+                { key: 'indemnites_journalieres' as const, label: "Indemnités journalières en cas d'immobilisation ou véhicule relais", infoKey: 'indemnites_journalieres', hasLevel: 2 as const },
+                { key: 'protection_juridique' as const, label: 'Protection juridique' },
+                { key: 'protection_conducteur_niveau2' as const, label: 'Protection du conducteur de niveau 2 jusqu\'à 500 000 €' },
+              ].map((opt) => {
+                const checked = sollyOptions[opt.key];
+                const infoOpen = opt.infoKey ? openInfoKey === opt.infoKey : false;
+                return (
+                  <div key={opt.key}>
+                    <label
+                      className={`flex items-center gap-3 cursor-pointer p-2.5 rounded-md transition-colors ${
+                        checked ? 'bg-blue-500/15 hover:bg-blue-500/20' : 'hover:bg-gray-700/60'
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={(e) => setSollyOptions({ ...sollyOptions, [opt.key]: e.target.checked })}
+                        className="w-4 h-4 rounded border-gray-400 bg-gray-700 text-blue-500 focus:ring-blue-400"
+                      />
+                      <span className={`text-sm flex-1 ${checked ? 'text-white font-medium' : 'text-gray-100'}`}>
+                        {opt.label}
+                      </span>
+                      {opt.infoKey && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setOpenInfoKey(infoOpen ? null : opt.infoKey!);
+                          }}
+                          className="text-blue-300 hover:text-blue-200 flex-shrink-0"
+                          title="Plus d'informations"
+                        >
+                          <Info className="w-4 h-4" />
+                        </button>
+                      )}
+                    </label>
+
+                    {infoOpen && opt.infoKey && (
+                      <div className="mx-2.5 mb-2 p-3 rounded-md bg-blue-500/10 border border-blue-400/40 text-xs text-blue-50 whitespace-pre-line leading-relaxed">
+                        {SOLLY_AZAR_INFO[opt.infoKey]}
+                      </div>
+                    )}
+
+                    {checked && opt.hasLevel === 3 && (
+                      <div className="ml-9 mb-2 flex items-center gap-2 text-xs text-gray-200">
+                        <span>Niveau :</span>
+                        {[1, 2, 3].map((n) => (
+                          <button
+                            key={n}
+                            type="button"
+                            onClick={() => setSollyOptions({ ...sollyOptions, equipements_pro_niveau: n as 1 | 2 | 3 })}
+                            className={`px-2.5 py-1 rounded-md border text-xs font-semibold ${
+                              sollyOptions.equipements_pro_niveau === n
+                                ? 'bg-blue-500/30 border-blue-400 text-white'
+                                : 'bg-gray-700/60 border-gray-600 text-gray-200 hover:bg-gray-700'
+                            }`}
+                          >
+                            Niveau {n}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
+                    {checked && opt.hasLevel === 2 && (
+                      <div className="ml-9 mb-2 flex items-center gap-2 text-xs text-gray-200">
+                        <span>Niveau :</span>
+                        {[1, 2].map((n) => (
+                          <button
+                            key={n}
+                            type="button"
+                            onClick={() => setSollyOptions({ ...sollyOptions, indemnites_journalieres_niveau: n as 1 | 2 })}
+                            className={`px-2.5 py-1 rounded-md border text-xs font-semibold ${
+                              sollyOptions.indemnites_journalieres_niveau === n
+                                ? 'bg-blue-500/30 border-blue-400 text-white'
+                                : 'bg-gray-700/60 border-gray-600 text-gray-200 hover:bg-gray-700'
+                            }`}
+                          >
+                            Niveau {n} ({n === 1 ? '75' : '150'} €/jour)
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        <div>
+          <label className="block text-gray-100 text-sm font-semibold mb-2">Frais d'adhésion (€)</label>
+          <input
+            type="number"
+            step="0.01"
+            min="0"
+            value={formData.enrollment_fee}
+            onChange={(e) => setFormData({ ...formData, enrollment_fee: e.target.value })}
+            className="w-full bg-gray-700/80 border border-gray-500 rounded-lg px-4 py-2.5 text-white placeholder-gray-400 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/30"
+            placeholder="0"
+          />
+          <p className="text-gray-300 text-xs mt-1.5">Valeur par défaut 0 € — modifiable par le commercial</p>
         </div>
 
         <div>
