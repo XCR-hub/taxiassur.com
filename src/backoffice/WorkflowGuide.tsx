@@ -76,8 +76,8 @@ const AUTOMATIONS: AutoTask[] = [
   },
   {
     icon: Send, title: 'Relance "accepter ou refuser"',
-    detail: "Email avec bouton direct vers l'onglet Devis à J+3, J+7 puis J+14.",
-    frequency: 'Toutes les 2h', audience: 'prospect',
+    detail: "Le système vérifie toutes les 2h, mais n'envoie qu'un seul email par jour au prospect avec un bouton direct vers l'onglet Devis (J+3, J+7, J+14).",
+    frequency: 'Vérif 2h · Email 1×/jour', audience: 'prospect',
   },
   {
     icon: AlertTriangle, title: 'Escalade documents bloqués',
