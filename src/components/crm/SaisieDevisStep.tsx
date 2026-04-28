@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Upload, CheckCircle2, X, FileText, Send, Loader2, Building2, AlertCircle, Plus } from 'lucide-react';
+import { Upload, CheckCircle2, X, FileText, Send, Loader2, Building2, AlertCircle, Plus, CheckCheck } from 'lucide-react';
 import { toast } from '@/lib/toast';
 import { generateAdviceSheetHtml } from '@/lib/advice-sheet-generator';
 
@@ -27,6 +27,7 @@ interface Quote {
   quote_amount?: number;
   last_sent_at?: string;
   submitted_at?: string;
+  sent_to_client_at?: string | null;
   status: string;
   company?: InsuranceCompany;
 }
@@ -42,6 +43,7 @@ export default function SaisieDevisStep({
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [uploading, setUploading] = useState<string | null>(null);
   const [sending, setSending] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [dragOverCompanyId, setDragOverCompanyId] = useState<string | null>(null);
 
@@ -377,6 +379,47 @@ export default function SaisieDevisStep({
     }
   }
 
+  async function submitQuote(quote: Quote) {
+    const company = companies.find(c => c.id === quote.company_id);
+    if (!company) return;
+
+    setSubmitting(quote.id);
+    try {
+      await generateAdviceSheet(company.id, company.name);
+
+      const fileName = quote.quote_pdf_url.split('/').pop() || 'devis.pdf';
+      await sendQuoteEmail(company.id, company.name, fileName);
+
+      const now = new Date().toISOString();
+      const { error } = await supabase
+        .from('lead_company_quotes')
+        .update({ sent_to_client_at: now, last_sent_at: now })
+        .eq('id', quote.id);
+
+      if (error) throw error;
+
+      await supabase
+        .from('crm_interactions')
+        .insert({
+          lead_id: leadId,
+          type: 'quote_submission',
+          channel: 'email',
+          subject: `Devis ${company.name} soumis au prospect`,
+          body: `Le devis ${company.name} a été formellement soumis au prospect avec la fiche de conseil et les documents contractuels.`,
+          status: 'sent',
+          metadata: { company_id: company.id, company_name: company.name, quote_id: quote.id }
+        });
+
+      toast.success(`Devis ${company.name} soumis au prospect`);
+      loadQuotes();
+    } catch (error: any) {
+      console.error('Error submitting quote:', error);
+      toast.error(`Erreur lors de la soumission : ${error?.message || error}`);
+    } finally {
+      setSubmitting(null);
+    }
+  }
+
   async function resendQuoteEmail(quote: Quote) {
     const company = companies.find(c => c.id === quote.company_id);
     if (company) {
@@ -562,33 +605,63 @@ export default function SaisieDevisStep({
                         </div>
 
                         {hasFile && (
-                          <div className="flex gap-2 mt-3">
-                            <button
-                              onClick={() => window.open(quote.quote_pdf_url, '_blank')}
-                              className="flex-1 text-sm py-2 px-3 bg-blue-50 text-blue-600 rounded hover:bg-blue-100 flex items-center justify-center gap-2 font-medium"
-                            >
-                              <FileText className="h-4 w-4" />
-                              Voir
-                            </button>
-                            <button
-                              onClick={() => resendQuoteEmail(quote)}
-                              disabled={isSending}
-                              className="flex-1 text-sm py-2 px-3 bg-green-50 text-green-600 rounded hover:bg-green-100 flex items-center justify-center gap-2 disabled:opacity-50 font-medium"
-                            >
-                              {isSending ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                              ) : (
-                                <Send className="h-4 w-4" />
-                              )}
-                              {isSending ? 'Envoi...' : 'Renvoyer'}
-                            </button>
-                            <button
-                              onClick={() => deleteQuote(quote.id, quote.quote_pdf_url)}
-                              className="text-sm py-2 px-3 bg-red-50 text-red-600 rounded hover:bg-red-100 flex items-center justify-center gap-2"
-                            >
-                              <X className="h-4 w-4" />
-                            </button>
-                          </div>
+                          <>
+                            <div className="mt-3">
+                              <button
+                                onClick={() => submitQuote(quote)}
+                                disabled={submitting === quote.id}
+                                className={`w-full text-sm py-2.5 px-3 rounded-lg flex items-center justify-center gap-2 font-semibold transition-all disabled:opacity-60 ${
+                                  quote.sent_to_client_at
+                                    ? 'bg-emerald-600 text-white hover:bg-emerald-700'
+                                    : 'bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800 shadow-sm'
+                                }`}
+                              >
+                                {submitting === quote.id ? (
+                                  <>
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                    Soumission en cours...
+                                  </>
+                                ) : quote.sent_to_client_at ? (
+                                  <>
+                                    <CheckCheck className="h-4 w-4" />
+                                    Devis soumis le {new Date(quote.sent_to_client_at).toLocaleDateString('fr-FR')} - Re-soumettre
+                                  </>
+                                ) : (
+                                  <>
+                                    <Send className="h-4 w-4" />
+                                    Soumettre le devis au prospect
+                                  </>
+                                )}
+                              </button>
+                            </div>
+                            <div className="flex gap-2 mt-2">
+                              <button
+                                onClick={() => window.open(quote.quote_pdf_url, '_blank')}
+                                className="flex-1 text-sm py-2 px-3 bg-blue-50 text-blue-600 rounded hover:bg-blue-100 flex items-center justify-center gap-2 font-medium"
+                              >
+                                <FileText className="h-4 w-4" />
+                                Voir
+                              </button>
+                              <button
+                                onClick={() => resendQuoteEmail(quote)}
+                                disabled={isSending}
+                                className="flex-1 text-sm py-2 px-3 bg-green-50 text-green-600 rounded hover:bg-green-100 flex items-center justify-center gap-2 disabled:opacity-50 font-medium"
+                              >
+                                {isSending ? (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                  <Send className="h-4 w-4" />
+                                )}
+                                {isSending ? 'Envoi...' : 'Renvoyer'}
+                              </button>
+                              <button
+                                onClick={() => deleteQuote(quote.id, quote.quote_pdf_url)}
+                                className="text-sm py-2 px-3 bg-red-50 text-red-600 rounded hover:bg-red-100 flex items-center justify-center gap-2"
+                              >
+                                <X className="h-4 w-4" />
+                              </button>
+                            </div>
+                          </>
                         )}
                         {!hasFile && (
                           <div className="mt-3">
