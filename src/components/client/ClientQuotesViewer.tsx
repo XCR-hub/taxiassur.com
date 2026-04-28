@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Download, FileText, AlertCircle, CheckCircle2, Printer, Eye, Building2, Check, Loader2, X, Clock, ThumbsUp, ThumbsDown } from 'lucide-react';
+import { Download, FileText, AlertCircle, CheckCircle2, Printer, Eye, Building2, Check, Loader2, X, Clock, ThumbsUp, ThumbsDown, Info, CreditCard as Edit3, Send } from 'lucide-react';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { toast } from '@/lib/toast';
 
@@ -12,11 +12,61 @@ interface InsuranceCompany {
   contact_email: string | null;
 }
 
+interface SollyAzarOptions {
+  amenagements: boolean;
+  assistance_sans_franchise: boolean;
+  bagages_marchandises: boolean;
+  effets_personnels: boolean;
+  equipements_pro: boolean;
+  equipements_pro_niveau: 1 | 2 | 3;
+  indemnisation_valeur_achat: boolean;
+  indemnites_journalieres: boolean;
+  indemnites_journalieres_niveau: 1 | 2;
+  protection_juridique: boolean;
+  protection_conducteur_niveau2: boolean;
+}
+
+const DEFAULT_SOLLY_OPTIONS: SollyAzarOptions = {
+  amenagements: false,
+  assistance_sans_franchise: false,
+  bagages_marchandises: false,
+  effets_personnels: false,
+  equipements_pro: false,
+  equipements_pro_niveau: 1,
+  indemnisation_valeur_achat: false,
+  indemnites_journalieres: false,
+  indemnites_journalieres_niveau: 1,
+  protection_juridique: false,
+  protection_conducteur_niveau2: false,
+};
+
+const SOLLY_OPTION_LABELS: { key: keyof SollyAzarOptions; label: string; hasLevel?: 2 | 3; info?: string }[] = [
+  { key: 'amenagements', label: 'Aménagements du véhicule', info: "Étend les garanties dommages aux aménagements et équipements intérieurs fixes nécessaires à l'activité." },
+  { key: 'assistance_sans_franchise', label: "Assistance sans franchise kilométrique avec véhicule de remplacement à usage privé" },
+  { key: 'bagages_marchandises', label: 'Bagages et marchandises transportées jusqu\'à 5 000 €', info: "Étend les garanties dommages aux bagages et marchandises transportés appartenant aux passagers." },
+  { key: 'effets_personnels', label: 'Effets et objets personnels du conducteur' },
+  { key: 'equipements_pro', label: 'Equipements professionnels', hasLevel: 3, info: "Couvre les équipements obligatoires (taximètre, TPE, navigation, radio, lumineux).\nNiveau 1 : jusqu'à 600 €\nNiveau 2 : jusqu'à 1 000 €\nNiveau 3 : jusqu'à 1 500 €" },
+  { key: 'indemnisation_valeur_achat', label: "Indemnisation en valeur d'achat et/ou en valeur majorée" },
+  { key: 'indemnites_journalieres', label: "Indemnités journalières en cas d'immobilisation ou véhicule relais", hasLevel: 2, info: "Niveau 1 : 75 € / jour\nNiveau 2 : 150 € / jour" },
+  { key: 'protection_juridique', label: 'Protection juridique' },
+  { key: 'protection_conducteur_niveau2', label: 'Protection du conducteur de niveau 2 jusqu\'à 500 000 €' },
+];
+
 interface Quote {
   id: string;
   company_id: string;
+  company_code?: string;
   quote_file_url: string;
   quote_amount?: number;
+  monthly_price?: number;
+  coverage_type?: string;
+  includes_immobilisation?: boolean;
+  includes_assistance_0km?: boolean;
+  includes_rc_pro?: boolean;
+  includes_depannage_remorquage?: boolean;
+  coverage_details?: string;
+  enrollment_fee?: number;
+  quote_options?: Record<string, unknown> | null;
   status: string;
   submitted_at?: string;
   last_sent_at?: string;
@@ -48,10 +98,50 @@ export default function ClientQuotesViewer({ leadId, token, supabaseClient }: Pr
   const [showConfirmModal, setShowConfirmModal] = useState<string | null>(null);
   const [showRefuseModal, setShowRefuseModal] = useState<string | null>(null);
   const [refusalReason, setRefusalReason] = useState('');
+  const [modifyingQuoteId, setModifyingQuoteId] = useState<string | null>(null);
+  const [modifyOptions, setModifyOptions] = useState<SollyAzarOptions>(DEFAULT_SOLLY_OPTIONS);
+  const [modifyMessage, setModifyMessage] = useState('');
+  const [submittingModification, setSubmittingModification] = useState(false);
+  const [openInfoKey, setOpenInfoKey] = useState<string | null>(null);
 
   useEffect(() => {
     loadData();
   }, [leadId, token]);
+
+  const openModificationModal = (quote: Quote) => {
+    const current = (quote.quote_options as Partial<SollyAzarOptions> | null | undefined) || null;
+    setModifyOptions({ ...DEFAULT_SOLLY_OPTIONS, ...(current || {}) });
+    setModifyMessage('');
+    setOpenInfoKey(null);
+    setModifyingQuoteId(quote.id);
+  };
+
+  const submitModificationRequest = async () => {
+    if (!supabaseClient || !token || !modifyingQuoteId) {
+      toast.error('Erreur de configuration. Veuillez recharger la page.');
+      return;
+    }
+    setSubmittingModification(true);
+    try {
+      const { data, error } = await supabaseClient.rpc('request_quote_modification_by_token', {
+        p_token: token,
+        p_quote_id: modifyingQuoteId,
+        p_requested_options: modifyOptions,
+        p_message: modifyMessage,
+      });
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.error || 'Erreur lors de la soumission');
+      toast.success(`Votre demande de modification a été envoyée à notre équipe${data.company_name ? ` pour ${data.company_name}` : ''}. Un commercial vous recontactera très prochainement.`);
+      setModifyingQuoteId(null);
+      setModifyMessage('');
+    } catch (err) {
+      console.error('Error submitting modification request:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Erreur inconnue';
+      toast.error(`Erreur lors de l'envoi de votre demande: ${errorMessage}`);
+    } finally {
+      setSubmittingModification(false);
+    }
+  };
 
   const handleValidateQuote = async (quoteId: string, companyName: string) => {
     if (!supabaseClient || !token) {
@@ -404,6 +494,74 @@ export default function ClientQuotesViewer({ leadId, token, supabaseClient }: Pr
                         )}
                       </div>
 
+                      {(() => {
+                        const isSollyAzar = (company.name || '').toLowerCase().includes('solly') || company.code === 'SOLLY_AZAR';
+                        const opts = (quote.quote_options as Partial<SollyAzarOptions> | null | undefined) || null;
+                        const hasGenericGuarantees = quote.includes_immobilisation || quote.includes_assistance_0km || quote.includes_rc_pro || quote.includes_depannage_remorquage;
+                        const hasEnrollmentFee = quote.enrollment_fee != null && Number(quote.enrollment_fee) > 0;
+                        const hasOptions = isSollyAzar && opts && Object.keys(opts).length > 0;
+                        if (!hasGenericGuarantees && !hasOptions && !hasEnrollmentFee && !quote.coverage_details) return null;
+                        return (
+                          <div className="mb-4 bg-gray-800/60 border border-gray-700 rounded-lg p-4 space-y-3">
+                            {quote.coverage_type && (
+                              <div className="text-sm">
+                                <span className="text-gray-400">Formule : </span>
+                                <span className="font-semibold text-amber-200 capitalize">
+                                  {quote.coverage_type === 'tiers' ? 'Tiers' : quote.coverage_type === 'tiers_plus' ? 'Tiers Plus' : 'Tous Risques'}
+                                </span>
+                              </div>
+                            )}
+                            {hasGenericGuarantees && (
+                              <div>
+                                <p className="text-xs uppercase tracking-wide text-gray-400 font-semibold mb-2">Garanties incluses</p>
+                                <ul className="grid sm:grid-cols-2 gap-1.5 text-sm text-gray-200">
+                                  {quote.includes_immobilisation && <li className="flex items-center gap-2"><Check className="w-4 h-4 text-green-400" /> Indemnisation immobilisation</li>}
+                                  {quote.includes_assistance_0km && <li className="flex items-center gap-2"><Check className="w-4 h-4 text-green-400" /> Assistance 0 km</li>}
+                                  {quote.includes_rc_pro && <li className="flex items-center gap-2"><Check className="w-4 h-4 text-green-400" /> Responsabilité Civile Pro</li>}
+                                  {quote.includes_depannage_remorquage && <li className="flex items-center gap-2"><Check className="w-4 h-4 text-green-400" /> Dépannage et remorquage</li>}
+                                </ul>
+                              </div>
+                            )}
+                            {hasOptions && (
+                              <div>
+                                <p className="text-xs uppercase tracking-wide text-gray-400 font-semibold mb-2">Options Solly Azar</p>
+                                <ul className="space-y-1 text-sm text-gray-200">
+                                  {SOLLY_OPTION_LABELS.filter((o) => opts && opts[o.key]).map((o) => (
+                                    <li key={o.key} className="flex items-start gap-2">
+                                      <Check className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
+                                      <span>
+                                        {o.label}
+                                        {o.hasLevel === 3 && opts?.equipements_pro_niveau != null && o.key === 'equipements_pro' && (
+                                          <span className="ml-2 text-xs text-amber-200">(Niveau {opts.equipements_pro_niveau as number})</span>
+                                        )}
+                                        {o.hasLevel === 2 && opts?.indemnites_journalieres_niveau != null && o.key === 'indemnites_journalieres' && (
+                                          <span className="ml-2 text-xs text-amber-200">(Niveau {opts.indemnites_journalieres_niveau as number} - {(opts.indemnites_journalieres_niveau as number) === 1 ? '75' : '150'} €/jour)</span>
+                                        )}
+                                      </span>
+                                    </li>
+                                  ))}
+                                  {SOLLY_OPTION_LABELS.every((o) => !opts || !opts[o.key]) && (
+                                    <li className="text-gray-400 italic">Aucune option additionnelle</li>
+                                  )}
+                                </ul>
+                              </div>
+                            )}
+                            {hasEnrollmentFee && (
+                              <div className="text-sm">
+                                <span className="text-gray-400">Frais d'adhésion : </span>
+                                <span className="font-semibold text-white">{Number(quote.enrollment_fee).toFixed(2)} €</span>
+                              </div>
+                            )}
+                            {quote.coverage_details && (
+                              <div className="text-sm">
+                                <p className="text-xs uppercase tracking-wide text-gray-400 font-semibold mb-1">Détails complémentaires</p>
+                                <p className="text-gray-200 whitespace-pre-line">{quote.coverage_details}</p>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })()}
+
                       <div className="flex flex-wrap items-center gap-3">
                         <a
                           href={fileUrl}
@@ -432,13 +590,24 @@ export default function ClientQuotesViewer({ leadId, token, supabaseClient }: Pr
                           Imprimer
                         </button>
 
+                        {quote.status !== 'validated' && quote.status !== 'refused' && ((company.name || '').toLowerCase().includes('solly') || company.code === 'SOLLY_AZAR') && (
+                          <button
+                            onClick={() => openModificationModal(quote)}
+                            disabled={refusing !== null || validating !== null}
+                            className="flex items-center gap-2 px-5 py-2.5 bg-amber-600/20 border border-amber-500 hover:bg-amber-600/30 text-amber-200 font-semibold rounded-lg transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed ml-auto"
+                          >
+                            <Edit3 className="w-4 h-4" />
+                            Demander une modification
+                          </button>
+                        )}
+
                         {/* Boutons Valider et Refuser */}
                         {quote.status !== 'validated' && quote.status !== 'refused' && (
                           <>
                             <button
                               onClick={() => setShowRefuseModal(quote.id)}
                               disabled={refusing !== null || validating !== null}
-                              className="flex items-center gap-2 px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed ml-auto"
+                              className={`flex items-center gap-2 px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed ${((company.name || '').toLowerCase().includes('solly') || company.code === 'SOLLY_AZAR') ? '' : 'ml-auto'}`}
                             >
                               <X className="w-4 h-4" />
                               Refuser
@@ -607,6 +776,156 @@ export default function ClientQuotesViewer({ leadId, token, supabaseClient }: Pr
           </div>
         </div>
       )}
+
+      {/* Modal de demande de modification (Solly Azar) */}
+      {modifyingQuoteId && (() => {
+        const quote = quotes.find((q) => q.id === modifyingQuoteId);
+        const company = quote ? companies.find((c) => c.id === quote.company_id) : null;
+        return (
+          <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 overflow-y-auto">
+            <div className="bg-gray-900 border border-gray-700 rounded-2xl p-6 max-w-2xl w-full my-8">
+              <div className="flex items-start justify-between mb-5">
+                <div>
+                  <h3 className="text-xl font-bold text-white mb-1">Demander une modification</h3>
+                  <p className="text-sm text-gray-400">
+                    {company?.name || 'Devis'} — Cochez ou décochez les options souhaitées. Notre équipe recevra votre demande et vous proposera un devis ajusté.
+                  </p>
+                </div>
+                <button
+                  onClick={() => setModifyingQuoteId(null)}
+                  disabled={submittingModification}
+                  className="text-gray-400 hover:text-white p-1 rounded transition-colors disabled:opacity-50"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="bg-gray-800/70 rounded-lg p-3 border border-gray-600 space-y-1 mb-4">
+                {SOLLY_OPTION_LABELS.map((opt) => {
+                  const checked = modifyOptions[opt.key] as boolean;
+                  const infoOpen = openInfoKey === opt.key;
+                  return (
+                    <div key={opt.key}>
+                      <label
+                        className={`flex items-center gap-3 cursor-pointer p-2.5 rounded-md transition-colors ${
+                          checked ? 'bg-amber-500/15 hover:bg-amber-500/20' : 'hover:bg-gray-700/60'
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={(e) => setModifyOptions({ ...modifyOptions, [opt.key]: e.target.checked })}
+                          className="w-4 h-4 rounded border-gray-400 bg-gray-700 text-amber-500 focus:ring-amber-400"
+                        />
+                        <span className={`text-sm flex-1 ${checked ? 'text-white font-medium' : 'text-gray-100'}`}>
+                          {opt.label}
+                        </span>
+                        {opt.info && (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              setOpenInfoKey(infoOpen ? null : (opt.key as string));
+                            }}
+                            className="text-amber-300 hover:text-amber-200 flex-shrink-0"
+                            title="Plus d'informations"
+                          >
+                            <Info className="w-4 h-4" />
+                          </button>
+                        )}
+                      </label>
+
+                      {infoOpen && opt.info && (
+                        <div className="mx-2.5 mb-2 p-3 rounded-md bg-amber-500/10 border border-amber-400/40 text-xs text-amber-50 whitespace-pre-line leading-relaxed">
+                          {opt.info}
+                        </div>
+                      )}
+
+                      {checked && opt.hasLevel === 3 && (
+                        <div className="ml-9 mb-2 flex items-center gap-2 text-xs text-gray-200">
+                          <span>Niveau souhaité :</span>
+                          {[1, 2, 3].map((n) => (
+                            <button
+                              key={n}
+                              type="button"
+                              onClick={() => setModifyOptions({ ...modifyOptions, equipements_pro_niveau: n as 1 | 2 | 3 })}
+                              className={`px-2.5 py-1 rounded-md border text-xs font-semibold ${
+                                modifyOptions.equipements_pro_niveau === n
+                                  ? 'bg-amber-500/30 border-amber-400 text-white'
+                                  : 'bg-gray-700/60 border-gray-600 text-gray-200 hover:bg-gray-700'
+                              }`}
+                            >
+                              Niveau {n}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+
+                      {checked && opt.hasLevel === 2 && (
+                        <div className="ml-9 mb-2 flex items-center gap-2 text-xs text-gray-200">
+                          <span>Niveau souhaité :</span>
+                          {[1, 2].map((n) => (
+                            <button
+                              key={n}
+                              type="button"
+                              onClick={() => setModifyOptions({ ...modifyOptions, indemnites_journalieres_niveau: n as 1 | 2 })}
+                              className={`px-2.5 py-1 rounded-md border text-xs font-semibold ${
+                                modifyOptions.indemnites_journalieres_niveau === n
+                                  ? 'bg-amber-500/30 border-amber-400 text-white'
+                                  : 'bg-gray-700/60 border-gray-600 text-gray-200 hover:bg-gray-700'
+                              }`}
+                            >
+                              Niveau {n} ({n === 1 ? '75' : '150'} €/jour)
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="mb-5">
+                <label className="block text-gray-100 text-sm font-semibold mb-2">Message complémentaire (optionnel)</label>
+                <textarea
+                  value={modifyMessage}
+                  onChange={(e) => setModifyMessage(e.target.value)}
+                  placeholder="Précisez ici toute autre demande (budget, franchise, garanties spécifiques...)"
+                  rows={3}
+                  className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:border-amber-500 focus:outline-none resize-none"
+                />
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-3">
+                <button
+                  onClick={submitModificationRequest}
+                  disabled={submittingModification}
+                  className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {submittingModification ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      Envoi en cours...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-5 h-5" />
+                      Envoyer la demande
+                    </>
+                  )}
+                </button>
+                <button
+                  onClick={() => setModifyingQuoteId(null)}
+                  disabled={submittingModification}
+                  className="px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white font-semibold rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Annuler
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Modal de refus */}
       {showRefuseModal && (
