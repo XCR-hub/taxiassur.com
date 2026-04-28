@@ -99,6 +99,7 @@ const ClientInsuranceSpace = lazy(() => import('./pages/client/ClientInsuranceSp
 
 const CRMLayout = lazy(() => import('./backoffice/CRMLayout'));
 const CRMKillerDashboard = lazy(() => import('./backoffice/CRMKillerDashboard'));
+const WorkflowGuide = lazy(() => import('./backoffice/WorkflowGuide'));
 const CRMLeadDetail = lazy(() => import('./backoffice/CRMLeadDetail'));
 const CRMPipelineKanban = lazy(() => import('./backoffice/CRMPipelineKanban'));
 const CRMInboxMulticanal = lazy(() => import('./backoffice/CRMInboxMulticanal'));
@@ -612,6 +613,7 @@ export const router = createBrowserRouter([
       { path: 'doublons', element: <DuplicateLeadsManager /> },
       { path: 'fusion-leads', element: <MergeLeadsManager /> },
       { path: 'quote-queue', element: <QuoteQueueDashboard /> },
+      { path: 'workflow-guide', element: <WorkflowGuide /> },
       { path: 'quotes', element: <QuotesManager /> },
       { path: 'pending-documents', element: <PendingDocumentsManager /> },
       { path: 'documents', element: <AllDocumentsViewer /> },

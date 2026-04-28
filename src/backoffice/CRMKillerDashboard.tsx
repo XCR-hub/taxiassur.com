@@ -308,6 +308,28 @@ const CRMKillerDashboard: React.FC = () => {
           </div>
         </div>
 
+        {/* ─── WORKFLOW GUIDE BANNER ───────────────────────────────── */}
+        <button
+          onClick={() => navigate('/backoffice/workflow-guide')}
+          className="group w-full text-left rounded-2xl border border-yellow-200/70 dark:border-yellow-500/[0.18] bg-gradient-to-r from-yellow-50 via-amber-50 to-yellow-50 dark:from-yellow-500/[0.06] dark:via-amber-500/[0.05] dark:to-yellow-500/[0.06] p-5 shadow-sm hover:shadow-md transition-all flex items-center gap-5"
+        >
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-yellow-400 to-amber-500 flex items-center justify-center shadow-md shadow-yellow-900/20 shrink-0">
+            <Sparkles className="w-6 h-6 text-black" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+              <h3 className="text-base font-bold text-gray-900 dark:text-white">Guide du workflow commercial</h3>
+              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300">
+                Nouveau
+              </span>
+            </div>
+            <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+              Pipeline en 7 étapes, automatisations actives, points d'intervention et bonnes pratiques pour vos commerciaux.
+            </p>
+          </div>
+          <ArrowRight className="w-5 h-5 text-amber-600 group-hover:translate-x-1 transition-transform shrink-0" />
+        </button>
+
         {/* ─── KPI STATS ───────────────────────────────────────────── */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
           {[
