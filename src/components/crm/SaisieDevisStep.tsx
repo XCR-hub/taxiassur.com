@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase';
 import { Upload, CheckCircle2, X, FileText, Send, Loader2, Building2, AlertCircle, Plus, CheckCheck } from 'lucide-react';
 import { toast } from '@/lib/toast';
 import { generateAdviceSheetHtml } from '@/lib/advice-sheet-generator';
+import SubmitQuoteModal from './SubmitQuoteModal';
 
 interface SaisieDevisStepProps {
   leadId: string;
@@ -43,9 +44,9 @@ export default function SaisieDevisStep({
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [uploading, setUploading] = useState<string | null>(null);
   const [sending, setSending] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [dragOverCompanyId, setDragOverCompanyId] = useState<string | null>(null);
+  const [openModalQuote, setOpenModalQuote] = useState<Quote | null>(null);
 
   const handleFileSelected = (companyId: string, file: File | undefined | null) => {
     if (!file) return;
@@ -379,47 +380,6 @@ export default function SaisieDevisStep({
     }
   }
 
-  async function submitQuote(quote: Quote) {
-    const company = companies.find(c => c.id === quote.company_id);
-    if (!company) return;
-
-    setSubmitting(quote.id);
-    try {
-      await generateAdviceSheet(company.id, company.name);
-
-      const fileName = quote.quote_pdf_url.split('/').pop() || 'devis.pdf';
-      await sendQuoteEmail(company.id, company.name, fileName);
-
-      const now = new Date().toISOString();
-      const { error } = await supabase
-        .from('lead_company_quotes')
-        .update({ sent_to_client_at: now, last_sent_at: now })
-        .eq('id', quote.id);
-
-      if (error) throw error;
-
-      await supabase
-        .from('crm_interactions')
-        .insert({
-          lead_id: leadId,
-          type: 'quote_submission',
-          channel: 'email',
-          subject: `Devis ${company.name} soumis au prospect`,
-          body: `Le devis ${company.name} a été formellement soumis au prospect avec la fiche de conseil et les documents contractuels.`,
-          status: 'sent',
-          metadata: { company_id: company.id, company_name: company.name, quote_id: quote.id }
-        });
-
-      toast.success(`Devis ${company.name} soumis au prospect`);
-      loadQuotes();
-    } catch (error: any) {
-      console.error('Error submitting quote:', error);
-      toast.error(`Erreur lors de la soumission : ${error?.message || error}`);
-    } finally {
-      setSubmitting(null);
-    }
-  }
-
   async function resendQuoteEmail(quote: Quote) {
     const company = companies.find(c => c.id === quote.company_id);
     if (company) {
@@ -608,20 +568,14 @@ export default function SaisieDevisStep({
                           <>
                             <div className="mt-3">
                               <button
-                                onClick={() => submitQuote(quote)}
-                                disabled={submitting === quote.id}
-                                className={`w-full text-sm py-2.5 px-3 rounded-lg flex items-center justify-center gap-2 font-semibold transition-all disabled:opacity-60 ${
+                                onClick={() => setOpenModalQuote(quote)}
+                                className={`w-full text-sm py-2.5 px-3 rounded-lg flex items-center justify-center gap-2 font-semibold transition-all ${
                                   quote.sent_to_client_at
                                     ? 'bg-emerald-600 text-white hover:bg-emerald-700'
                                     : 'bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800 shadow-sm'
                                 }`}
                               >
-                                {submitting === quote.id ? (
-                                  <>
-                                    <Loader2 className="h-4 w-4 animate-spin" />
-                                    Soumission en cours...
-                                  </>
-                                ) : quote.sent_to_client_at ? (
+                                {quote.sent_to_client_at ? (
                                   <>
                                     <CheckCheck className="h-4 w-4" />
                                     Devis soumis le {new Date(quote.sent_to_client_at).toLocaleDateString('fr-FR')} - Re-soumettre
@@ -759,6 +713,33 @@ export default function SaisieDevisStep({
           </div>
         </div>
       </div>
+
+      {/* Modal de soumission complète du devis */}
+      {openModalQuote && (
+        <SubmitQuoteModal
+          isOpen={!!openModalQuote}
+          onClose={() => setOpenModalQuote(null)}
+          leadId={leadId}
+          leadEmail={leadEmail}
+          leadFirstName={leadFirstName}
+          leadAccessToken={leadAccessToken}
+          company={(() => {
+            const c = companies.find((c) => c.id === openModalQuote.company_id);
+            return c
+              ? { id: c.id, name: c.name, logo_url: c.logo_url }
+              : { id: openModalQuote.company_id, name: 'Compagnie' };
+          })()}
+          existingQuote={{
+            id: openModalQuote.id,
+            quote_amount: openModalQuote.quote_amount ?? null,
+            quote_file_url: openModalQuote.quote_pdf_url ?? null,
+          }}
+          onSubmitted={() => {
+            setOpenModalQuote(null);
+            loadQuotes();
+          }}
+        />
+      )}
 
       {/* Lien Espace Prospect */}
       {leadAccessToken && (
