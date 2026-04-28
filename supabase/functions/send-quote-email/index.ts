@@ -166,7 +166,7 @@ Deno.serve(async (req: Request) => {
     // Get lead info
     const { data: lead, error: leadError } = await supabase
       .from('crm_leads')
-      .select('first_name, last_name, email, phone, company_name')
+      .select('first_name, last_name, email, phone, company_name, access_token')
       .eq('id', lead_id)
       .single();
 
@@ -181,6 +181,10 @@ Deno.serve(async (req: Request) => {
 
     // Construire le nom complet
     const fullName = [lead.first_name, lead.last_name].filter(Boolean).join(' ') || lead.company_name || 'Client';
+
+    const prospectSpaceUrl = lead.access_token
+      ? `https://taxiassur.com/espace-prospect/${lead.access_token}?tab=devis`
+      : null;
 
     // Download PDF file
     console.log("📥 Téléchargement du devis depuis:", quote_file_url);
@@ -369,13 +373,25 @@ Deno.serve(async (req: Request) => {
       </div>
       ` : ''}
 
+      ${prospectSpaceUrl ? `
+      <div style="text-align: center; margin: 30px 0;">
+        <p style="color: #4b5563 !important; font-size: 16px; margin-bottom: 15px;">
+          <strong>Consultez votre devis en ligne</strong><br>
+          Visualisez le détail des garanties, comparez et validez votre devis directement depuis votre espace personnel.
+        </p>
+        <a href="${prospectSpaceUrl}" class="cta-button" style="background:#10b981;">
+          Voir mon devis dans mon espace
+        </a>
+      </div>
+      ` : ''}
+
       <div style="text-align: center; margin: 30px 0;">
         <p style="color: #4b5563 !important; font-size: 16px; margin-bottom: 15px;">
           <strong>Des questions sur ce devis ?</strong><br>
           Nous sommes à votre disposition pour vous conseiller.
         </p>
-        <a href="mailto:team@taxiassur.com" class="cta-button">
-          💬 Contactez-nous
+        <a href="mailto:team@taxiassur.com" class="cta-button" style="background:#0ea5e9;">
+          Contactez-nous
         </a>
       </div>
 
