@@ -53,6 +53,19 @@ const Home: React.FC = () => {
       <JsonLd type="organization" />
       <JsonLd type="local-business" />
       <JsonLd type="reviews" />
+      <JsonLd type="service" />
+      <JsonLd type="how-to" />
+      <JsonLd type="speakable" data={{ name: 'Assurance Taxi Pas Cher | TaxiAssur', url: '/' }} />
+      <JsonLd type="insurance-product" data={{
+        name: 'Assurance Taxi Professionnelle',
+        description: 'Assurance taxi complète avec RC Pro, dommages tous accidents, assistance 0km. Devis gratuit en 2 min.',
+        url: '/devis-assurance-taxi',
+        lowPrice: 890,
+        highPrice: 2400,
+        offerCount: 15,
+        ratingValue: '4.9',
+        reviewCount: 247
+      }} />
       <JsonLd type="breadcrumb" data={[
         { name: 'Accueil', url: '/' }
       ]} />
@@ -85,7 +98,7 @@ const Home: React.FC = () => {
 
       <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-black">
         <Header />
-        <main>
+        <main id="main-content" tabIndex={-1}>
           <Hero />
 
           <div className="section-below-fold">

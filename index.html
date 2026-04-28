@@ -97,6 +97,11 @@
     }
     /* Font display: use system font until Inter loads — zero layout shift */
     @font-face{font-family:'Inter';font-style:normal;font-weight:400 700;font-display:optional;src:local('Inter'),local('Inter-Regular')}
+    /* Skip-to-content link: a11y + SEO bonus, hidden until focused */
+    .skip-link{position:absolute;left:-9999px;top:8px;z-index:10000;padding:10px 16px;background:#D4AF37;color:#000;font-weight:700;border-radius:6px;text-decoration:none}
+    .skip-link:focus{left:8px;outline:3px solid #fff;outline-offset:2px}
+    /* Reduce motion respect */
+    @media (prefers-reduced-motion: reduce){*{animation-duration:0.01ms !important;animation-iteration-count:1 !important;transition-duration:0.01ms !important;scroll-behavior:auto !important}}
   </style>
 
   <title>Assurance Taxi Pas Cher - Devis Gratuit 2 min | TaxiAssur Courtier ORIAS</title>
@@ -135,6 +140,8 @@
   <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-52JDP8VB"
   height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   <!-- End Google Tag Manager (noscript) -->
+
+  <a href="#main-content" class="skip-link">Aller au contenu principal</a>
 
   <div id="root">
     <div class="loading-screen" id="loading-screen">

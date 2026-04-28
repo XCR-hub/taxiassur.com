@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+  <url>
+    <loc>https://taxiassur.com/</loc>
+    <image:image>
+      <image:loc>https://taxiassur.com/logo-600x300.png</image:loc>
+      <image:title>TaxiAssur - Courtier Assurance Taxi ORIAS</image:title>
+      <image:caption>Logo officiel TaxiAssur, courtier specialiste assurance taxi en France</image:caption>
+    </image:image>
+    <image:image>
+      <image:loc>https://taxiassur.com/logo-taxiassur.svg</image:loc>
+      <image:title>TaxiAssur Logo SVG</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://taxiassur.com/assurance-taxi</loc>
+    <image:image>
+      <image:loc>https://taxiassur.com/logo-600x300.png</image:loc>
+      <image:title>Assurance Taxi Professionnelle - TaxiAssur</image:title>
+      <image:caption>Solutions d'assurance taxi complètes avec RC Pro et garanties dédiées</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://taxiassur.com/devis-assurance-taxi</loc>
+    <image:image>
+      <image:loc>https://taxiassur.com/logo-600x300.png</image:loc>
+      <image:title>Devis Assurance Taxi Gratuit en 2 minutes</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://taxiassur.com/assurance-taxi-paris</loc>
+    <image:image>
+      <image:loc>https://taxiassur.com/logo-600x300.png</image:loc>
+      <image:title>Assurance Taxi Paris - Tarifs negocies</image:title>
+      <image:caption>Couverture assurance taxi pour chauffeurs parisiens</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://taxiassur.com/partenaires</loc>
+    <image:image>
+      <image:loc>https://taxiassur.com/logo_generali.png</image:loc>
+      <image:title>Generali - Partenaire TaxiAssur</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://taxiassur.com/logo_mfa.png</image:loc>
+      <image:title>MFA - Partenaire TaxiAssur</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://taxiassur.com/logo_zephir.png</image:loc>
+      <image:title>Zephir - Partenaire TaxiAssur</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://taxiassur.com/logo-officiel-solly-azar_0.png</image:loc>
+      <image:title>Solly Azar - Partenaire TaxiAssur</image:title>
+    </image:image>
+  </url>
+</urlset>

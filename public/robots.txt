@@ -1,4 +1,6 @@
 # Robots.txt - TaxiAssur.com
+# Last updated: 2026-04-28
+
 User-agent: *
 Allow: /
 
@@ -39,14 +41,99 @@ Disallow: /m/
 Disallow: /feeds/
 Disallow: /content/
 
+# URL parameters that create duplicate content
+Disallow: /*?utm_*
+Disallow: /*?fbclid=*
+Disallow: /*?gclid=*
+Disallow: /*?ref=*
+Disallow: /*?source=*
+
+# Allow CSS, JS, images for all bots (critical for mobile-first indexing)
+Allow: /*.css$
+Allow: /*.js$
+Allow: /*.png$
+Allow: /*.jpg$
+Allow: /*.jpeg$
+Allow: /*.svg$
+Allow: /*.webp$
+
+# Major search engines
 User-agent: Googlebot
-Allow: /assurance-taxi
-Allow: /blog/
-Allow: /actualites/
-Allow: /faq
-Allow: /contact
+Allow: /
+Disallow: /backoffice/
+Disallow: /api/
+Disallow: /espace-prospect
+Disallow: /espace-client
+
+User-agent: Googlebot-Image
+Allow: /
+
+User-agent: Googlebot-Mobile
+Allow: /
 
 User-agent: Bingbot
 Allow: /
+Disallow: /backoffice/
+Disallow: /api/
 
+User-agent: DuckDuckBot
+Allow: /
+
+User-agent: Slurp
+Allow: /
+
+User-agent: YandexBot
+Allow: /
+
+User-agent: Baiduspider
+Allow: /
+
+# AI training crawlers — allow brand discovery in AI answers (ChatGPT, Perplexity, Claude)
+User-agent: GPTBot
+Allow: /
+Disallow: /backoffice/
+Disallow: /api/
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Applebot
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+# Block aggressive scrapers / SEO tools that don't drive traffic
+User-agent: AhrefsBot
+Crawl-delay: 10
+
+User-agent: SemrushBot
+Crawl-delay: 10
+
+User-agent: MJ12bot
+Disallow: /
+
+User-agent: DotBot
+Disallow: /
+
+# Sitemaps
 Sitemap: https://taxiassur.com/sitemap.xml
+Sitemap: https://taxiassur.com/sitemap-images.xml
+
+# Canonical host
+Host: https://taxiassur.com
