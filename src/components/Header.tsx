@@ -72,22 +72,28 @@ const Header: React.FC = () => {
   return (
     <header className="bg-black border-b border-gray-800 sticky top-0 z-50 shadow-lg lg:bg-black/95 backdrop-header" style={{willChange:'auto'}}>
       {/* Top bar */}
-      <div className="bg-gradient-to-r from-yellow-500 to-amber-500 text-gray-900 py-1.5 sm:py-2">
+      <div className="bg-gradient-to-r from-yellow-500 to-amber-500 text-gray-900 py-2 sm:py-2.5">
         <div className="container-max">
-          <div className="flex items-center justify-between text-xs sm:text-sm font-bold">
+          <div className="flex items-center justify-between text-xs sm:text-sm font-bold min-h-[36px]">
             <div className="flex items-center gap-3 sm:gap-6">
               <a
                 href="tel:0180855786"
-                className="flex items-center gap-1.5 hover:text-gray-700 transition-colors font-bold"
-                aria-label="Téléphone TaxiAssur"
+                className="flex items-center gap-1.5 hover:text-gray-700 transition-colors font-bold py-1 -my-1"
+                aria-label="Appeler TaxiAssur au 01 80 85 57 86"
               >
-                <Phone size={13} aria-hidden="true" />
+                <Phone size={16} aria-hidden="true" />
                 <span>01 80 85 57 86</span>
               </a>
-              <span className="hidden md:block text-gray-800">team@taxiassur.com</span>
+              <a
+                href="mailto:team@taxiassur.com"
+                className="hidden md:flex items-center text-gray-800 hover:text-gray-600 py-1 -my-1"
+                aria-label="Envoyer un email à TaxiAssur"
+              >
+                team@taxiassur.com
+              </a>
             </div>
             <div className="flex items-center gap-1.5 text-gray-800">
-              <Shield size={13} aria-hidden="true" />
+              <Shield size={16} aria-hidden="true" />
               <span className="hidden sm:inline font-semibold">ORIAS 11 061 425 — Courtier Agréé</span>
               <span className="sm:hidden font-semibold">ORIAS Agréé</span>
             </div>
@@ -185,13 +191,13 @@ const Header: React.FC = () => {
 
           {/* Mobile menu button */}
           <button
-            className="lg:hidden p-2 text-gray-200 hover:text-yellow-300 transition-colors rounded-lg hover:bg-gray-800/50"
+            className="lg:hidden inline-flex items-center justify-center min-w-[44px] min-h-[44px] p-3 text-gray-200 hover:text-yellow-300 transition-colors rounded-lg hover:bg-gray-800/50"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
             aria-label={isMenuOpen ? 'Fermer le menu' : 'Ouvrir le menu'}
             aria-expanded={isMenuOpen}
             aria-controls="mobile-nav"
           >
-            {isMenuOpen ? <X size={22} /> : <Menu size={22} />}
+            {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
         </div>
 
@@ -208,7 +214,7 @@ const Header: React.FC = () => {
                   {item.separator && <div className="my-1 border-t border-gray-700/50" />}
                   <Link
                     to={item.href}
-                    className={`text-sm font-medium transition-colors duration-200 px-3 py-2.5 rounded-lg ${
+                    className={`text-sm font-medium transition-colors duration-200 px-3 py-3 min-h-[44px] flex items-center rounded-lg ${
                       item.highlight
                         ? 'text-yellow-400 font-bold hover:bg-yellow-500/15'
                         : location.pathname === item.href

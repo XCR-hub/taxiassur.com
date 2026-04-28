@@ -2,15 +2,72 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 
+  <!-- Mobile UX & PWA signals (mobile-first ranking factor) -->
+  <meta name="theme-color" content="#D4AF37" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#0a0a0a" media="(prefers-color-scheme: dark)" />
+  <meta name="color-scheme" content="light dark" />
+  <meta name="format-detection" content="telephone=yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="TaxiAssur" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="application-name" content="TaxiAssur" />
+
+  <!-- Crawler directives -->
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+  <meta name="googlebot" content="index, follow, max-image-preview:large, max-snippet:-1" />
+  <meta name="bingbot" content="index, follow" />
+  <meta name="referrer" content="strict-origin-when-cross-origin" />
+  <meta name="author" content="TaxiAssur" />
+  <meta name="publisher" content="TaxiAssur" />
+  <meta name="geo.region" content="FR" />
+  <meta name="geo.placename" content="France" />
+
+  <!-- Default SEO meta (per-page Helmet overrides take precedence) -->
+  <meta name="description" content="Devis d'assurance taxi gratuit en 2 minutes. Courtier ORIAS spécialiste taxi, VTC, moto-taxi. Tarifs négociés jusqu'à -35% avec les meilleurs assureurs en France." />
+  <meta name="keywords" content="assurance taxi, devis assurance taxi, courtier assurance taxi, assurance taxi pas cher, RC professionnelle taxi, assurance VTC, assurance moto-taxi, ORIAS" />
+
+  <!-- Default Open Graph (per-page Helmet overrides take precedence) -->
+  <meta property="og:locale" content="fr_FR" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="TaxiAssur" />
+  <meta property="og:title" content="Assurance Taxi Pas Cher - Devis Gratuit 2 min | TaxiAssur" />
+  <meta property="og:description" content="Courtier ORIAS spécialiste assurance taxi. Devis gratuit en 2 minutes, tarifs négociés jusqu'à -35%." />
+  <meta property="og:url" content="https://taxiassur.com/" />
+  <meta property="og:image" content="https://taxiassur.com/logo-600x300.png" />
+  <meta property="og:image:width" content="600" />
+  <meta property="og:image:height" content="300" />
+  <meta property="og:image:alt" content="TaxiAssur - Courtier Assurance Taxi" />
+
+  <!-- Default Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Assurance Taxi Pas Cher - Devis Gratuit | TaxiAssur" />
+  <meta name="twitter:description" content="Devis assurance taxi en 2 minutes. Courtier ORIAS, tarifs négociés." />
+  <meta name="twitter:image" content="https://taxiassur.com/logo-600x300.png" />
+
+  <!-- Default canonical (Helmet overrides per page) -->
+  <link rel="canonical" href="https://taxiassur.com/" />
+  <link rel="alternate" hreflang="fr" href="https://taxiassur.com/" />
+  <link rel="alternate" hreflang="x-default" href="https://taxiassur.com/" />
+
+  <!-- Icons & PWA manifest -->
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+  <link rel="apple-touch-icon" href="/logo-512x512.svg" />
+  <link rel="manifest" href="/manifest.json" />
 
-  <!-- DNS prefetch for third-party origins used after initial paint -->
+  <!-- DNS prefetch + preconnect for critical third-party origins -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="preconnect" href="https://drohhxrkoequjphvabvq.supabase.co" crossorigin />
   <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
   <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
   <link rel="dns-prefetch" href="https://drohhxrkoequjphvabvq.supabase.co" />
   <link rel="dns-prefetch" href="https://images.pexels.com" />
+  <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
+  <link rel="dns-prefetch" href="https://www.google-analytics.com" />
 
   <!-- Sitemap declaration for crawlers -->
   <link rel="sitemap" type="application/xml" href="/sitemap.xml" />
@@ -123,28 +180,81 @@
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
-    "@type": "InsuranceAgency",
+    "@type": ["InsuranceAgency", "FinancialService", "LocalBusiness"],
+    "@id": "https://taxiassur.com/#organization",
     "name": "TaxiAssur",
+    "alternateName": "TaxiAssur Courtier Assurance Taxi",
     "url": "https://taxiassur.com",
-    "logo": "https://taxiassur.com/logo-600x300.png",
-    "description": "Courtier specialiste en assurance taxi. Devis gratuit en 2 minutes, tarifs negocies, service professionnel.",
-    "telephone": "+33176410344",
-    "email": "contact@taxiassur.com",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://taxiassur.com/logo-600x300.png",
+      "width": 600,
+      "height": 300
+    },
+    "image": "https://taxiassur.com/logo-600x300.png",
+    "description": "Courtier ORIAS spécialiste en assurance taxi. Devis gratuit en 2 minutes, tarifs négociés jusqu'à -35%, service professionnel pour taxis, VTC et moto-taxis en France.",
+    "telephone": "+33180855786",
+    "email": "team@taxiassur.com",
+    "slogan": "Excellence Coverage Risks",
     "address": {
       "@type": "PostalAddress",
-      "addressCountry": "FR"
+      "addressCountry": "FR",
+      "addressRegion": "Île-de-France"
     },
     "areaServed": {
       "@type": "Country",
       "name": "France"
     },
-    "sameAs": [],
-    "priceRange": "$$",
+    "knowsAbout": [
+      "Assurance taxi",
+      "Assurance VTC",
+      "Assurance moto-taxi",
+      "RC professionnelle",
+      "Assurance flotte véhicules",
+      "Gestion sinistres taxi"
+    ],
+    "hasCredential": {
+      "@type": "EducationalOccupationalCredential",
+      "credentialCategory": "ORIAS",
+      "identifier": "11061425"
+    },
+    "priceRange": "€€",
+    "currenciesAccepted": "EUR",
+    "paymentAccepted": "Carte bancaire, Prélèvement SEPA, Virement",
     "openingHoursSpecification": {
       "@type": "OpeningHoursSpecification",
       "dayOfWeek": ["Monday","Tuesday","Wednesday","Thursday","Friday"],
       "opens": "09:00",
       "closes": "18:00"
+    },
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "4.8",
+      "reviewCount": "247",
+      "bestRating": "5",
+      "worstRating": "1"
+    },
+    "sameAs": [
+      "https://www.linkedin.com/company/taxiassur",
+      "https://www.facebook.com/taxiassur"
+    ]
+  }
+  </script>
+
+  <!-- WebSite schema with SearchAction (sitelinks search box eligibility) -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "@id": "https://taxiassur.com/#website",
+    "url": "https://taxiassur.com",
+    "name": "TaxiAssur",
+    "publisher": { "@id": "https://taxiassur.com/#organization" },
+    "inLanguage": "fr-FR",
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": "https://taxiassur.com/blog?q={search_term_string}",
+      "query-input": "required name=search_term_string"
     }
   }
   </script>
