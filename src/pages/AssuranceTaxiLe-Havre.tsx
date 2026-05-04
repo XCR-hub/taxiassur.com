@@ -1,14 +1,31 @@
 import React from 'react';
+import { Helmet } from 'react-helmet-async';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import EnhancedLeadForm from '../components/EnhancedLeadForm';
 import JsonLd from '../components/JsonLd';
-import CityPageSEO from '../components/CityPageSEO';
 
 const AssuranceTaxiLeHavre: React.FC = () => {
   return (
     <>
-      <CityPageSEO citySlug="le-havre" />
+      <Helmet>
+        <title>Assurance Taxi Le-Havre : Tarifs 2026 | TaxiAssur</title>
+        <meta name="description" content="Assurance Taxi Le-Havre dès 1490€/an. RC Pro incluse, assistance 24/7. Devis gratuit 2 min." />
+        <link rel="canonical" href="https://taxiassur.com/assurance-taxi-le-havre" />
+              <meta property="og:type" content="website" />
+        <meta property="og:title" content="Assurance Taxi Le-Havre : Tarifs 2026 | TaxiAssur" />
+        <meta property="og:description" content="Assurance Taxi Le-Havre dès 1490€/an. RC Pro incluse, assistance 24/7. Devis gratuit 2 min." />
+        <meta property="og:url" content="https://taxiassur.com/assurance-taxi-le-havre" />
+        <meta property="og:image" content="https://taxiassur.com/logo-600x300.png" />
+        <meta property="og:image:width" content="600" />
+        <meta property="og:image:height" content="300" />
+        <meta property="og:locale" content="fr_FR" />
+        <meta property="og:site_name" content="TaxiAssur" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Assurance Taxi Le-Havre : Tarifs 2026 | TaxiAssur" />
+        <meta name="twitter:description" content="Assurance Taxi Le-Havre dès 1490€/an. RC Pro incluse, assistance 24/7. Devis gratuit 2 min." />
+        <meta name="twitter:image" content="https://taxiassur.com/logo-600x300.png" />
+      </Helmet>
       <JsonLd type="organization" />
       <Header />
       <main>
