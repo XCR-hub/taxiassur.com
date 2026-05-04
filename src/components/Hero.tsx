@@ -98,6 +98,14 @@ const Hero: React.FC = () => {
               <span className="text-yellow-500">Devis Gratuit 2 min</span>
             </h1>
 
+            {/* Punchline offer */}
+            <div className="mb-4 sm:mb-6 inline-flex items-center gap-2 sm:gap-3 bg-gradient-to-r from-yellow-500 to-amber-500 text-black font-black px-3 sm:px-5 py-2 sm:py-3 rounded-xl shadow-2xl border-2 border-yellow-300 animate-pulse">
+              <Zap size={18} className="flex-shrink-0" aria-hidden="true" />
+              <span className="text-sm sm:text-base md:text-lg tracking-tight">
+                RC PRO TAXI-VTC à partir de 8,34&nbsp;€/mois&nbsp;!
+              </span>
+            </div>
+
             {/* Subtitle with benefits */}
             <p className="text-xs sm:text-sm md:text-base text-amber-300 font-bold mb-3 sm:mb-4 lg:mb-6 drop-shadow-md">
               ORIAS • -35% • RC Pro • 15min
