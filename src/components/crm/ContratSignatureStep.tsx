@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Upload, CheckCircle2, X, FileText, Loader2, Ligature as FileSignature, AlertCircle, PartyPopper, Mail, Send } from 'lucide-react';
 import { toast } from '@/lib/toast';
@@ -38,6 +38,7 @@ export default function ContratSignatureStep({ leadId, onComplete }: ContratSign
   const [transforming, setTransforming] = useState(false);
   const [sendingEmail, setSendingEmail] = useState(false);
   const [dragOverType, setDragOverType] = useState<string | null>(null);
+  const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
   useEffect(() => {
     loadDocuments();
@@ -537,12 +538,29 @@ export default function ContratSignatureStep({ leadId, onComplete }: ContratSign
                     </div>
                   </div>
                 ) : (
-                  <label className="block cursor-pointer">
+                  <>
                     <div
-                      onDragOver={(e) => {
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => {
+                        if (!isUploading) fileInputRefs.current[req.type]?.click();
+                      }}
+                      onKeyDown={(e) => {
+                        if ((e.key === 'Enter' || e.key === ' ') && !isUploading) {
+                          e.preventDefault();
+                          fileInputRefs.current[req.type]?.click();
+                        }
+                      }}
+                      onDragEnter={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
                         if (!isUploading) setDragOverType(req.type);
+                      }}
+                      onDragOver={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        e.dataTransfer.dropEffect = 'copy';
+                        if (!isUploading && dragOverType !== req.type) setDragOverType(req.type);
                       }}
                       onDragLeave={(e) => {
                         e.preventDefault();
@@ -560,21 +578,21 @@ export default function ContratSignatureStep({ leadId, onComplete }: ContratSign
                           file.type === 'application/pdf' ||
                           file.name.toLowerCase().endsWith('.pdf');
                         if (!isPdf) {
-                          alert('Seuls les fichiers PDF sont acceptés');
+                          toast.error('Seuls les fichiers PDF sont acceptés');
                           return;
                         }
                         uploadDocument(req.type, file);
                       }}
-                      className={`border-2 border-dashed rounded-lg p-4 text-center transition-all ${
+                      className={`border-2 border-dashed rounded-lg p-4 text-center transition-all cursor-pointer select-none ${
                         isUploading || dragOverType === req.type
                           ? 'border-blue-500 bg-blue-50 scale-[1.02]'
                           : 'border-gray-300 hover:border-blue-400 hover:bg-gray-50'
                       }`}
                     >
                       {isUploading ? (
-                        <Loader2 className="h-6 w-6 animate-spin text-blue-600 mx-auto" />
+                        <Loader2 className="h-6 w-6 animate-spin text-blue-600 mx-auto pointer-events-none" />
                       ) : (
-                        <>
+                        <div className="pointer-events-none">
                           <Upload
                             className={`h-6 w-6 mx-auto mb-2 ${
                               dragOverType === req.type ? 'text-blue-600' : 'text-gray-400'
@@ -586,12 +604,15 @@ export default function ContratSignatureStep({ leadId, onComplete }: ContratSign
                               : 'Glissez ou cliquez pour uploader'}
                           </p>
                           <p className="text-[10px] text-gray-400 mt-1">PDF uniquement</p>
-                        </>
+                        </div>
                       )}
                     </div>
                     <input
+                      ref={(el) => {
+                        fileInputRefs.current[req.type] = el;
+                      }}
                       type="file"
-                      accept=".pdf"
+                      accept=".pdf,application/pdf"
                       className="hidden"
                       disabled={isUploading}
                       onChange={(e) => {
@@ -599,9 +620,10 @@ export default function ContratSignatureStep({ leadId, onComplete }: ContratSign
                         if (file) {
                           uploadDocument(req.type, file);
                         }
+                        e.target.value = '';
                       }}
                     />
-                  </label>
+                  </>
                 )}
               </div>
             );
