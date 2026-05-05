@@ -122,9 +122,9 @@ export default function LeadCompanyQuotes({ leadId }: Props) {
           .order('priority_order', { ascending: true })
       ]);
 
-      if (leadRes.error && leadRes.error.code !== 'PGRST116') throw leadRes.error;
-      if (quotesRes.error) throw quotesRes.error;
-      if (companiesRes.error) throw companiesRes.error;
+      if (leadRes.error && leadRes.error.code !== 'PGRST116') {
+        console.error('Erreur chargement lead:', leadRes.error);
+      }
 
       if (leadRes.data) {
         setLead({
@@ -135,6 +135,9 @@ export default function LeadCompanyQuotes({ leadId }: Props) {
           city: leadRes.data.city || ''
         });
       }
+
+      if (quotesRes.error) throw quotesRes.error;
+      if (companiesRes.error) throw companiesRes.error;
 
       let currentQuotes = quotesRes.data || [];
       const mandatoryCompanies = companiesRes.data || [];
