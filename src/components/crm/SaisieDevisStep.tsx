@@ -67,20 +67,21 @@ export default function SaisieDevisStep({
   }, [leadId]);
 
   useEffect(() => {
-    // Check if all 5 companies have at least 1 quote with a file
+    // Check if all mandatory companies have at least 1 quote with a file (Swisslife RC Pro is optional)
+    const mandatoryIds = new Set(companies.filter(c => c.code !== 'SWISSLIFE_RCPRO').map(c => c.id));
     const quotesWithFiles = quotes.filter(q => q.quote_pdf_url && q.quote_pdf_url.trim() !== '');
-    const companiesWithQuotes = new Set(quotesWithFiles.map(q => q.company_id));
-    if (companiesWithQuotes.size >= 5) {
+    const companiesWithQuotes = new Set(quotesWithFiles.map(q => q.company_id).filter(id => mandatoryIds.has(id)));
+    if (mandatoryIds.size > 0 && companiesWithQuotes.size >= mandatoryIds.size) {
       onComplete?.();
     }
-  }, [quotes]);
+  }, [quotes, companies]);
 
   async function loadCompanies() {
     try {
       const { data, error } = await supabase
         .from('insurance_companies')
         .select('*')
-        .eq('is_mandatory', true)
+        .or('is_mandatory.eq.true,code.eq.SWISSLIFE_RCPRO')
         .eq('is_active', true)
         .order('priority_order');
 
@@ -435,11 +436,13 @@ export default function SaisieDevisStep({
     return quotes.filter(q => q.company_id === companyId);
   };
 
-  // Only count companies with uploaded files
+  // Only count mandatory companies with uploaded files (Swisslife RC Pro is optional)
+  const mandatoryCompanies = companies.filter(c => c.code !== 'SWISSLIFE_RCPRO');
+  const mandatoryIds = new Set(mandatoryCompanies.map(c => c.id));
   const quotesWithFiles = quotes.filter(q => q.quote_pdf_url && q.quote_pdf_url.trim() !== '');
-  const companiesWithQuotes = new Set(quotesWithFiles.map(q => q.company_id));
-  const progressPercent = companies.length > 0
-    ? Math.round((companiesWithQuotes.size / companies.length) * 100)
+  const companiesWithQuotes = new Set(quotesWithFiles.map(q => q.company_id).filter(id => mandatoryIds.has(id)));
+  const progressPercent = mandatoryCompanies.length > 0
+    ? Math.round((companiesWithQuotes.size / mandatoryCompanies.length) * 100)
     : 0;
 
   if (loading) {
@@ -465,7 +468,7 @@ export default function SaisieDevisStep({
               <AlertCircle className="h-6 w-6 text-orange-600" />
             )}
             <span className="text-2xl font-bold text-gray-900">
-              {companiesWithQuotes.size}/{companies.length}
+              {companiesWithQuotes.size}/{mandatoryCompanies.length}
             </span>
           </div>
         </div>
@@ -518,8 +521,13 @@ export default function SaisieDevisStep({
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h4 className="text-lg font-semibold text-gray-900 mb-1">
+                  <h4 className="text-lg font-semibold text-gray-900 mb-1 flex items-center gap-2">
                     {company.name}
+                    {company.code === 'SWISSLIFE_RCPRO' && (
+                      <span className="px-2 py-0.5 bg-amber-100 text-amber-800 text-xs font-medium rounded-full border border-amber-300">
+                        Optionnel - RC Pro seule
+                      </span>
+                    )}
                   </h4>
                   <p className="text-sm text-gray-600">{company.code}</p>
                 </div>

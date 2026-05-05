@@ -111,6 +111,7 @@ export function SubmitQuoteModal({
 }: SubmitQuoteModalProps) {
   const isGenerali = (company.name || '').toLowerCase().includes('generali');
   const isSollyAzar = (company.name || '').toLowerCase().includes('solly');
+  const isSwisslifeRcPro = (company.name || '').toLowerCase().includes('swisslife');
 
   const [documents, setDocuments] = useState<CompanyDoc[]>([]);
   const [uploading, setUploading] = useState(false);
@@ -416,7 +417,7 @@ export function SubmitQuoteModal({
       toast.warning('Veuillez uploader le devis');
       return;
     }
-    if (!formData.coverage_type) {
+    if (!isSwisslifeRcPro && !formData.coverage_type) {
       toast.warning('Veuillez sélectionner le type de couverture');
       return;
     }
@@ -467,11 +468,11 @@ export function SubmitQuoteModal({
         monthly_price: monthly,
         quote_file_url: formData.quote_file_url,
         quote_pdf_url: formData.quote_file_url,
-        coverage_type: formData.coverage_type,
-        includes_immobilisation: formData.includes_immobilisation,
-        includes_assistance_0km: formData.includes_assistance_0km,
-        includes_rc_pro: formData.includes_rc_pro,
-        includes_depannage_remorquage: formData.includes_depannage_remorquage,
+        coverage_type: isSwisslifeRcPro ? null : formData.coverage_type,
+        includes_immobilisation: isSwisslifeRcPro ? false : formData.includes_immobilisation,
+        includes_assistance_0km: isSwisslifeRcPro ? false : formData.includes_assistance_0km,
+        includes_rc_pro: isSwisslifeRcPro ? true : formData.includes_rc_pro,
+        includes_depannage_remorquage: isSwisslifeRcPro ? false : formData.includes_depannage_remorquage,
         coverage_details: formData.coverage_details || null,
         notes: formData.notes || null,
         enrollment_fee: parseFloat(formData.enrollment_fee) || 0,
@@ -569,6 +570,18 @@ export function SubmitQuoteModal({
           </div>
         )}
 
+        {isSwisslifeRcPro && (
+          <div className="bg-emerald-500/10 rounded-lg p-4 border border-emerald-400/40">
+            <div className="flex items-start gap-3">
+              <Info className="w-5 h-5 text-emerald-300 flex-shrink-0 mt-0.5" />
+              <div className="text-sm text-emerald-50 leading-relaxed">
+                <strong className="text-white">Souscription RC Pro seule :</strong> renseignez uniquement la prime annuelle et uploadez le devis PDF Swisslife RC Professionnelle.
+              </div>
+            </div>
+          </div>
+        )}
+
+        {!isSwisslifeRcPro && (
         <div>
           <label className="block text-gray-100 text-sm font-semibold mb-2">Type de couverture *</label>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
@@ -596,6 +609,7 @@ export function SubmitQuoteModal({
             })}
           </div>
         </div>
+        )}
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
@@ -633,6 +647,7 @@ export function SubmitQuoteModal({
           </div>
         </div>
 
+        {!isSwisslifeRcPro && (
         <div>
           <label className="block text-gray-100 text-sm font-semibold mb-2">Garanties incluses</label>
           <div className="bg-gray-800/70 rounded-lg p-3 border border-gray-600 space-y-1">
@@ -668,6 +683,7 @@ export function SubmitQuoteModal({
             </p>
           )}
         </div>
+        )}
 
         {isGenerali && (
           <div className="rounded-lg p-4 border-2 border-amber-400/60 bg-amber-500/10">
