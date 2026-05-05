@@ -89,6 +89,14 @@ interface SubmitQuoteModalProps {
   onSubmitted?: () => void;
 }
 
+interface ExistingQuoteExt extends ExistingQuote {
+  rc_pro_addon?: boolean | null;
+  rc_pro_addon_annual?: number | null;
+  rc_pro_addon_monthly?: number | null;
+  rc_pro_addon_file_url?: string | null;
+  rc_pro_addon_company_id?: string | null;
+}
+
 export function SubmitQuoteModal({
   isOpen,
   onClose,
@@ -121,6 +129,13 @@ export function SubmitQuoteModal({
     enrollment_fee: '0',
   });
   const [sollyOptions, setSollyOptions] = useState<SollyAzarOptions>(defaultSollyAzarOptions());
+  const [rcProAddon, setRcProAddon] = useState({
+    enabled: false,
+    annual: '',
+    monthly: '',
+    file_url: '',
+  });
+  const [uploadingRcPro, setUploadingRcPro] = useState(false);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -141,6 +156,13 @@ export function SubmitQuoteModal({
     const existingOpts = (existingQuote?.quote_options as Partial<SollyAzarOptions> | null | undefined) || null;
     setSollyOptions({ ...defaultSollyAzarOptions(), ...(existingOpts || {}) });
     setOpenInfoKey(null);
+    const ext = existingQuote as ExistingQuoteExt | null | undefined;
+    setRcProAddon({
+      enabled: !!ext?.rc_pro_addon,
+      annual: ext?.rc_pro_addon_annual != null ? String(ext.rc_pro_addon_annual) : '',
+      monthly: ext?.rc_pro_addon_monthly != null ? String(ext.rc_pro_addon_monthly) : '',
+      file_url: ext?.rc_pro_addon_file_url || '',
+    });
   }, [isOpen, existingQuote?.id, company.id]);
 
   async function loadCompanyDocuments() {
@@ -183,6 +205,40 @@ export function SubmitQuoteModal({
       toast.error(`Erreur upload: ${err?.message || err}`);
     } finally {
       setUploading(false);
+    }
+  }
+
+  async function handleRcProFileUpload(file: File) {
+    if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
+      toast.error('Seuls les fichiers PDF sont acceptés');
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('Le fichier dépasse 10 MB');
+      return;
+    }
+    setUploadingRcPro(true);
+    try {
+      const safeName = file.name
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^\w.\-]+/g, '_')
+        .replace(/_+/g, '_');
+      const filePath = `${leadId}/${company.id}/rcpro_${Date.now()}_${safeName}`;
+      const { error: upErr } = await supabase.storage
+        .from('contract-documents')
+        .upload(filePath, file, { upsert: true });
+      if (upErr) throw upErr;
+      const { data: { publicUrl } } = supabase.storage
+        .from('contract-documents')
+        .getPublicUrl(filePath);
+      setRcProAddon((prev) => ({ ...prev, file_url: publicUrl }));
+      toast.success('Devis RC Pro uploadé');
+    } catch (err: any) {
+      console.error('RC Pro upload error:', err);
+      toast.error(`Erreur upload RC Pro: ${err?.message || err}`);
+    } finally {
+      setUploadingRcPro(false);
     }
   }
 
@@ -312,6 +368,28 @@ export function SubmitQuoteModal({
         ? monthlyParsed
         : annual ? Math.round((annual / 12) * 100) / 100 : null;
 
+      let rcProAddonCompanyId: string | null = null;
+      let rcProAnnualVal: number | null = null;
+      let rcProMonthlyVal: number | null = null;
+      if (rcProAddon.enabled) {
+        if (!rcProAddon.annual || !rcProAddon.file_url) {
+          toast.warning('Veuillez renseigner le prix annuel et uploader le devis RC Pro');
+          setSubmitting(false);
+          return;
+        }
+        const { data: swisslife } = await supabase
+          .from('insurance_companies')
+          .select('id')
+          .eq('code', 'SWISSLIFE_RCPRO')
+          .maybeSingle();
+        rcProAddonCompanyId = swisslife?.id || null;
+        rcProAnnualVal = parseFloat(rcProAddon.annual) || null;
+        const rcMonthParsed = parseFloat(rcProAddon.monthly);
+        rcProMonthlyVal = !isNaN(rcMonthParsed) && rcMonthParsed > 0
+          ? rcMonthParsed
+          : rcProAnnualVal ? Math.round((rcProAnnualVal / 12) * 100) / 100 : null;
+      }
+
       const now = new Date().toISOString();
       const payload: Record<string, unknown> = {
         lead_id: leadId,
@@ -332,6 +410,11 @@ export function SubmitQuoteModal({
         notes: formData.notes || null,
         enrollment_fee: parseFloat(formData.enrollment_fee) || 0,
         quote_options: isSollyAzar ? sollyOptions : (existingQuote?.quote_options || {}),
+        rc_pro_addon: rcProAddon.enabled,
+        rc_pro_addon_annual: rcProAnnualVal,
+        rc_pro_addon_monthly: rcProMonthlyVal,
+        rc_pro_addon_file_url: rcProAddon.enabled ? rcProAddon.file_url : null,
+        rc_pro_addon_company_id: rcProAddonCompanyId,
         submitted_by: user?.id,
         submitted_at: now,
         sent_to_client_at: now,
@@ -502,6 +585,116 @@ export function SubmitQuoteModal({
             </p>
           )}
         </div>
+
+        {isGenerali && (
+          <div className="rounded-lg p-4 border-2 border-amber-400/60 bg-amber-500/10">
+            <label className="flex items-start gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={rcProAddon.enabled}
+                onChange={(e) => setRcProAddon({ ...rcProAddon, enabled: e.target.checked })}
+                className="w-5 h-5 mt-0.5 rounded border-gray-400 bg-gray-700 text-amber-500 focus:ring-amber-400"
+              />
+              <div className="flex-1">
+                <p className="text-white font-semibold text-sm">
+                  Ajouter l'option RC Pro Swisslife
+                </p>
+                <p className="text-amber-100 text-xs mt-1 leading-relaxed">
+                  Complément RC Professionnelle Swisslife à joindre au devis Generali (devis + contrat séparés).
+                </p>
+              </div>
+            </label>
+
+            {rcProAddon.enabled && (
+              <div className="mt-4 space-y-3 pl-8">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-gray-100 text-xs font-semibold mb-1.5">
+                      Prime RC Pro annuelle (€) *
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={rcProAddon.annual}
+                      onChange={(e) => {
+                        const annual = e.target.value;
+                        const annualNum = parseFloat(annual);
+                        setRcProAddon({
+                          ...rcProAddon,
+                          annual,
+                          monthly: !isNaN(annualNum) && annualNum > 0
+                            ? (Math.round((annualNum / 12) * 100) / 100).toString()
+                            : rcProAddon.monthly,
+                        });
+                      }}
+                      className="w-full bg-gray-700/80 border border-gray-500 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-400/30 text-sm"
+                      placeholder="250.00"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-gray-100 text-xs font-semibold mb-1.5">
+                      Prime RC Pro mensuelle (€)
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={rcProAddon.monthly}
+                      onChange={(e) => setRcProAddon({ ...rcProAddon, monthly: e.target.value })}
+                      className="w-full bg-gray-700/80 border border-gray-500 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-400/30 text-sm"
+                      placeholder="Auto-calculé"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-gray-100 text-xs font-semibold mb-1.5">
+                    Devis RC Pro Swisslife (PDF) *
+                  </label>
+                  <div className="flex items-center gap-3">
+                    <label className={`flex-1 cursor-pointer rounded-lg border-2 border-dashed px-4 py-2.5 text-center transition-colors ${
+                      rcProAddon.file_url ? 'border-emerald-500/60 bg-emerald-500/10' : 'border-gray-500 bg-gray-700/60 hover:border-amber-400'
+                    }`}>
+                      <input
+                        type="file"
+                        accept=".pdf"
+                        className="hidden"
+                        disabled={uploadingRcPro}
+                        onChange={(e) => {
+                          const f = e.target.files?.[0];
+                          if (f) handleRcProFileUpload(f);
+                          e.target.value = '';
+                        }}
+                      />
+                      {uploadingRcPro ? (
+                        <span className="inline-flex items-center gap-2 text-xs text-amber-200">
+                          <Loader2 className="w-4 h-4 animate-spin" /> Upload en cours...
+                        </span>
+                      ) : rcProAddon.file_url ? (
+                        <span className="inline-flex items-center gap-2 text-xs text-emerald-200 font-semibold">
+                          <CheckCircle className="w-4 h-4" /> PDF RC Pro prêt - cliquer pour remplacer
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-2 text-xs text-gray-100 font-medium">
+                          <Upload className="w-4 h-4" /> Uploader le devis RC Pro Swisslife (PDF)
+                        </span>
+                      )}
+                    </label>
+                    {rcProAddon.file_url && (
+                      <a
+                        href={rcProAddon.file_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-amber-300 hover:text-amber-200 text-xs font-medium"
+                      >
+                        Voir
+                      </a>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {isSollyAzar && (
           <div>

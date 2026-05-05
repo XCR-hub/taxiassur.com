@@ -71,6 +71,11 @@ interface Quote {
   submitted_at?: string;
   last_sent_at?: string;
   created_at: string;
+  rc_pro_addon?: boolean;
+  rc_pro_addon_annual?: number | null;
+  rc_pro_addon_monthly?: number | null;
+  rc_pro_addon_file_url?: string | null;
+  rc_pro_addon_company_name?: string | null;
 }
 
 interface Props {
@@ -561,6 +566,60 @@ export default function ClientQuotesViewer({ leadId, token, supabaseClient }: Pr
                           </div>
                         );
                       })()}
+
+                      {quote.rc_pro_addon && (
+                        <div className="mb-4 rounded-lg border-2 border-amber-400/60 bg-amber-500/10 p-4">
+                          <div className="flex items-start justify-between gap-4 flex-wrap">
+                            <div className="flex items-start gap-3">
+                              <div className="w-10 h-10 rounded-lg bg-amber-500/20 border border-amber-400/50 flex items-center justify-center flex-shrink-0">
+                                <FileText className="w-5 h-5 text-amber-300" />
+                              </div>
+                              <div>
+                                <p className="text-white font-bold text-sm">
+                                  Option complémentaire : RC Pro {quote.rc_pro_addon_company_name || 'Swisslife'}
+                                </p>
+                                <p className="text-amber-100 text-xs mt-1 leading-relaxed max-w-md">
+                                  La Responsabilité Civile Professionnelle n'est pas incluse dans ce contrat. Nous vous proposons en complément cette couverture indispensable.
+                                </p>
+                              </div>
+                            </div>
+                            {quote.rc_pro_addon_annual != null && (
+                              <div className="bg-amber-500/15 border border-amber-400/50 rounded-lg px-3 py-2 text-right">
+                                <div className="text-xl font-bold text-amber-200 leading-tight">
+                                  {quote.rc_pro_addon_monthly != null
+                                    ? Number(quote.rc_pro_addon_monthly).toFixed(2)
+                                    : (Number(quote.rc_pro_addon_annual) / 12).toFixed(2)} €
+                                  <span className="text-xs font-semibold text-amber-100 ml-1">/mois</span>
+                                </div>
+                                <div className="text-[10px] text-amber-100 mt-0.5">
+                                  soit {Number(quote.rc_pro_addon_annual).toFixed(2)} € / an
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                          {quote.rc_pro_addon_file_url && (
+                            <div className="mt-3 flex flex-wrap gap-2">
+                              <a
+                                href={quote.rc_pro_addon_file_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-2 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white font-semibold rounded-lg text-xs transition-colors"
+                              >
+                                <Eye className="w-3.5 h-3.5" />
+                                Consulter le devis RC Pro
+                              </a>
+                              <a
+                                href={quote.rc_pro_addon_file_url}
+                                download
+                                className="inline-flex items-center gap-2 px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white font-semibold rounded-lg text-xs transition-colors"
+                              >
+                                <Download className="w-3.5 h-3.5" />
+                                Télécharger
+                              </a>
+                            </div>
+                          )}
+                        </div>
+                      )}
 
                       <div className="flex flex-wrap items-center gap-3">
                         <a
