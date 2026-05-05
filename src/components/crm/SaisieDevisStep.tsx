@@ -97,18 +97,21 @@ export default function SaisieDevisStep({
     try {
       const { data, error } = await supabase
         .from('lead_company_quotes')
-        .select(`
-          *,
-          company:insurance_companies(*)
-        `)
+        .select('*')
         .eq('lead_id', leadId)
-        .not('quote_file_url', 'is', null)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setQuotes((data || []).filter((q: any) => q.quote_file_url && String(q.quote_file_url).trim() !== ''));
+      const rows = (data || []).map((q: any) => {
+        const url = (q.quote_pdf_url && String(q.quote_pdf_url).trim())
+          || (q.quote_file_url && String(q.quote_file_url).trim())
+          || '';
+        return { ...q, quote_pdf_url: url };
+      }).filter((q: any) => q.quote_pdf_url !== '');
+      setQuotes(rows);
     } catch (error) {
       console.error('Error loading quotes:', error);
+      toast.error('Erreur chargement des devis: ' + ((error as any)?.message || ''));
     }
   }
 
