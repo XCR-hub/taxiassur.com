@@ -37,6 +37,7 @@ export default function PaiementRIBStep({
   const [loading, setLoading] = useState(true);
   const [validating, setValidating] = useState<string | null>(null);
   const [sendingEmail, setSendingEmail] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
 
   // Form fields for validation
   const [selectedRib, setSelectedRib] = useState<string | null>(null);
@@ -73,6 +74,45 @@ export default function PaiementRIBStep({
     }
   }
 
+
+  function validateRibFile(file: File): string | null {
+    const allowed = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
+    const maxSize = 5 * 1024 * 1024;
+    if (!allowed.includes(file.type) && !/\.(pdf|jpe?g|png)$/i.test(file.name)) {
+      return 'Format non supporté. Utilisez PDF, JPG ou PNG.';
+    }
+    if (file.size > maxSize) {
+      return 'Fichier trop volumineux (max 5MB).';
+    }
+    return null;
+  }
+
+  function handleDragOver(e: React.DragEvent<HTMLDivElement>) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!uploading) setIsDragging(true);
+  }
+
+  function handleDragLeave(e: React.DragEvent<HTMLDivElement>) {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  }
+
+  function handleDrop(e: React.DragEvent<HTMLDivElement>) {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    if (uploading) return;
+    const file = e.dataTransfer.files?.[0];
+    if (!file) return;
+    const err = validateRibFile(file);
+    if (err) {
+      toast.error(err);
+      return;
+    }
+    uploadRIB(file);
+  }
 
   async function uploadRIB(file: File) {
     setUploading(true);
@@ -321,9 +361,15 @@ export default function PaiementRIBStep({
           <h4 className="font-medium text-gray-900 mb-4">Uploader un RIB</h4>
           <label className="block">
             <div
+              onDragOver={handleDragOver}
+              onDragEnter={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
               className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-all ${
                 uploading
                   ? 'border-blue-400 bg-blue-50'
+                  : isDragging
+                  ? 'border-blue-500 bg-blue-100 scale-[1.01] ring-2 ring-blue-300'
                   : 'border-gray-300 hover:border-blue-400 hover:bg-blue-50'
               }`}
             >
@@ -333,11 +379,11 @@ export default function PaiementRIBStep({
                   <span className="text-sm text-gray-600">Upload en cours...</span>
                 </div>
               ) : (
-                <div className="flex flex-col items-center gap-3">
-                  <Upload className="h-10 w-10 text-gray-400" />
+                <div className="flex flex-col items-center gap-3 pointer-events-none">
+                  <Upload className={`h-10 w-10 ${isDragging ? 'text-blue-600' : 'text-gray-400'}`} />
                   <div>
                     <span className="text-base font-medium text-blue-600">
-                      Cliquez pour uploader le RIB
+                      {isDragging ? 'Déposez le RIB ici' : 'Cliquez ou glissez-déposez le RIB'}
                     </span>
                     <p className="text-sm text-gray-500 mt-1">PDF, JPG ou PNG jusqu'à 5MB</p>
                   </div>
@@ -351,9 +397,13 @@ export default function PaiementRIBStep({
               disabled={uploading}
               onChange={(e) => {
                 const file = e.target.files?.[0];
-                if (file) {
-                  uploadRIB(file);
+                if (!file) return;
+                const err = validateRibFile(file);
+                if (err) {
+                  toast.error(err);
+                  return;
                 }
+                uploadRIB(file);
               }}
             />
           </label>
