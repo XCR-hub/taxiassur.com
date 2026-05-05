@@ -5,6 +5,7 @@ import { toast } from '@/lib/toast';
 import { Modal, ModalFooter } from '../Modal';
 import { Badge } from '../Badge';
 import { generateAdviceSheetHtml } from '@/lib/advice-sheet-generator';
+import { generateNeedsAssessmentHtml, type NeedsAssessmentQuote } from '@/lib/needs-assessment-generator';
 
 interface CompanyLite {
   id: string;
@@ -292,6 +293,71 @@ export function SubmitQuoteModal({
     }
   }
 
+  async function generateNeedsAssessment(quoteData: NeedsAssessmentQuote) {
+    try {
+      const { data: leadData } = await supabase
+        .from('crm_leads')
+        .select('first_name, last_name, email, phone, address, postal_code, city, immatriculation, vehicle_type, date_of_birth, license_number, siret, company_name, profession, notes')
+        .eq('id', leadId)
+        .maybeSingle();
+
+      const { data: { user } } = await supabase.auth.getUser();
+      let commercialName: string | null = null;
+      if (user?.id) {
+        const { data: admin } = await supabase
+          .from('admin_users')
+          .select('first_name, last_name, email')
+          .eq('id', user.id)
+          .maybeSingle();
+        if (admin) {
+          commercialName = [admin.first_name, admin.last_name].filter(Boolean).join(' ').trim() || admin.email || null;
+        }
+      }
+
+      const html = generateNeedsAssessmentHtml(leadData || {}, quoteData, {
+        generatedDate: new Date(),
+        commercialName,
+      });
+      const safeCompany = company.name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\w]+/g, '_');
+      const filePath = `${leadId}/${company.id}/recueil_besoins_${safeCompany}_${Date.now()}.html`;
+      const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+
+      const { error: upErr } = await supabase.storage
+        .from('contract-documents')
+        .upload(filePath, blob, { contentType: 'text/html;charset=utf-8', upsert: true });
+      if (upErr) {
+        console.error('Recueil besoins upload error:', upErr);
+        return;
+      }
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('contract-documents')
+        .getPublicUrl(filePath);
+
+      await supabase.from('crm_lead_documents').insert({
+        lead_id: leadId,
+        document_type: 'recueil_besoins',
+        file_name: `Recueil des besoins - ${company.name}.html`,
+        file_path: filePath,
+        file_url: publicUrl,
+        mime_type: 'text/html',
+        bucket: 'contract-documents',
+        custom_label: `Recueil des besoins ${company.name}`,
+        status: 'validated',
+        metadata: {
+          company_id: company.id,
+          company_name: company.name,
+          auto_generated: true,
+          internal_document: true,
+          quote_amount: quoteData.quote_amount,
+          coverage_type: quoteData.coverage_type,
+        },
+      });
+    } catch (err) {
+      console.error('Error generating needs assessment:', err);
+    }
+  }
+
   async function sendQuoteEmail() {
     if (!leadEmail) return;
     const prospectSpaceUrl = leadAccessToken
@@ -436,6 +502,23 @@ export function SubmitQuoteModal({
       }
 
       await generateAdviceSheet();
+      await generateNeedsAssessment({
+        company_name: company.name,
+        coverage_type: formData.coverage_type || null,
+        quote_amount: annual,
+        monthly_price: monthly,
+        enrollment_fee: parseFloat(formData.enrollment_fee) || 0,
+        includes_immobilisation: formData.includes_immobilisation,
+        includes_assistance_0km: formData.includes_assistance_0km,
+        includes_rc_pro: formData.includes_rc_pro,
+        includes_depannage_remorquage: formData.includes_depannage_remorquage,
+        coverage_details: formData.coverage_details || null,
+        notes: formData.notes || null,
+        quote_options: isSollyAzar ? (sollyOptions as unknown as Record<string, unknown>) : (existingQuote?.quote_options || null),
+        rc_pro_addon: rcProAddon.enabled,
+        rc_pro_addon_annual: rcProAnnualVal,
+        rc_pro_addon_monthly: rcProMonthlyVal,
+      });
       await sendQuoteEmail();
 
       toast.success(`Devis ${company.name} soumis au prospect`);
