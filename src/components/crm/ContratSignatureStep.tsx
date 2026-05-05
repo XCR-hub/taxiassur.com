@@ -37,6 +37,7 @@ export default function ContratSignatureStep({ leadId, onComplete }: ContratSign
   const [externalUrl, setExternalUrl] = useState('');
   const [transforming, setTransforming] = useState(false);
   const [sendingEmail, setSendingEmail] = useState(false);
+  const [dragOverType, setDragOverType] = useState<string | null>(null);
 
   useEffect(() => {
     loadDocuments();
@@ -538,18 +539,53 @@ export default function ContratSignatureStep({ leadId, onComplete }: ContratSign
                 ) : (
                   <label className="block cursor-pointer">
                     <div
+                      onDragOver={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        if (!isUploading) setDragOverType(req.type);
+                      }}
+                      onDragLeave={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setDragOverType(null);
+                      }}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setDragOverType(null);
+                        if (isUploading) return;
+                        const file = e.dataTransfer.files?.[0];
+                        if (!file) return;
+                        const isPdf =
+                          file.type === 'application/pdf' ||
+                          file.name.toLowerCase().endsWith('.pdf');
+                        if (!isPdf) {
+                          alert('Seuls les fichiers PDF sont acceptés');
+                          return;
+                        }
+                        uploadDocument(req.type, file);
+                      }}
                       className={`border-2 border-dashed rounded-lg p-4 text-center transition-all ${
-                        isUploading
-                          ? 'border-blue-400 bg-blue-50'
-                          : 'border-gray-300 hover:border-blue-400'
+                        isUploading || dragOverType === req.type
+                          ? 'border-blue-500 bg-blue-50 scale-[1.02]'
+                          : 'border-gray-300 hover:border-blue-400 hover:bg-gray-50'
                       }`}
                     >
                       {isUploading ? (
                         <Loader2 className="h-6 w-6 animate-spin text-blue-600 mx-auto" />
                       ) : (
                         <>
-                          <Upload className="h-6 w-6 text-gray-400 mx-auto mb-2" />
-                          <p className="text-xs text-gray-600">Cliquez pour uploader</p>
+                          <Upload
+                            className={`h-6 w-6 mx-auto mb-2 ${
+                              dragOverType === req.type ? 'text-blue-600' : 'text-gray-400'
+                            }`}
+                          />
+                          <p className="text-xs text-gray-600">
+                            {dragOverType === req.type
+                              ? 'Déposez le fichier ici'
+                              : 'Glissez ou cliquez pour uploader'}
+                          </p>
+                          <p className="text-[10px] text-gray-400 mt-1">PDF uniquement</p>
                         </>
                       )}
                     </div>
