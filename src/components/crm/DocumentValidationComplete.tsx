@@ -198,14 +198,42 @@ export default function DocumentValidationComplete({
         ? (att.attachment_filename.toLowerCase().endsWith('.pdf') ? 'application/pdf' : att.attachment_content_type)
         : att.attachment_content_type;
 
+      let resolvedPath: string | null = null;
+      let resolvedBucket: string | null = null;
+
+      if (att.prospect_file_path && att.prospect_bucket) {
+        resolvedPath = att.prospect_file_path;
+        resolvedBucket = att.prospect_bucket;
+      } else {
+        const { data: ea } = await supabase
+          .from('email_attachments')
+          .select('storage_path')
+          .eq('email_message_id', att.email_id)
+          .ilike('filename', att.attachment_filename)
+          .not('storage_path', 'is', null)
+          .maybeSingle();
+
+        if (ea?.storage_path) {
+          resolvedPath = ea.storage_path;
+          resolvedBucket = 'email-attachments';
+        }
+      }
+
+      if (!resolvedPath || !resolvedBucket) {
+        toast.error(
+          `Le fichier "${att.attachment_filename}" n'est plus disponible en stockage. Demandez au prospect de le renvoyer ou uploadez-le manuellement.`
+        );
+        return;
+      }
+
       const { error: insertError } = await supabase
         .from('crm_lead_documents')
         .insert({
           lead_id: caseId,
           document_type: finalDocType,
           file_name: att.attachment_filename,
-          file_path: `email_ref/${att.email_id}/${att.attachment_filename}`,
-          bucket: 'email-attachments',
+          file_path: resolvedPath,
+          bucket: resolvedBucket,
           file_size: att.attachment_size,
           mime_type: mimeType,
           status: 'pending',
