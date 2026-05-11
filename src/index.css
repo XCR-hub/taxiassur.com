@@ -392,6 +392,160 @@ header[class*="sticky"] {
   transform: translateZ(0);
 }
 
+/* ======================================
+   CRM Hacker / Terminal Mode
+   ====================================== */
+html.crm-hacker {
+  --hk-bg: #000000;
+  --hk-bg-alt: #020604;
+  --hk-panel: #040a06;
+  --hk-border: rgba(0, 255, 156, 0.18);
+  --hk-border-strong: rgba(0, 255, 156, 0.35);
+  --hk-text: #b6ffcb;
+  --hk-text-dim: rgba(0, 255, 156, 0.55);
+  --hk-accent: #00ff9c;
+  --hk-accent-warn: #ffb454;
+  --hk-accent-danger: #ff5577;
+}
+
+html.crm-hacker body,
+html.crm-hacker #root {
+  background: var(--hk-bg) !important;
+  color: var(--hk-text) !important;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', 'Menlo', ui-monospace, monospace !important;
+}
+
+html.crm-hacker .crm-sidebar,
+html.crm-hacker main {
+  background: var(--hk-bg) !important;
+  background-image:
+    linear-gradient(rgba(0, 255, 156, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 255, 156, 0.025) 1px, transparent 1px) !important;
+  background-size: 32px 32px !important;
+}
+
+html.crm-hacker aside.crm-sidebar {
+  border-right: 1px solid var(--hk-border) !important;
+}
+
+html.crm-hacker * {
+  font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', 'Menlo', ui-monospace, monospace !important;
+  letter-spacing: 0.01em;
+}
+
+html.crm-hacker .bg-white,
+html.crm-hacker [class*="bg-white"] {
+  background: var(--hk-panel) !important;
+  color: var(--hk-text) !important;
+}
+
+html.crm-hacker .text-gray-900,
+html.crm-hacker .text-gray-800,
+html.crm-hacker .text-gray-700,
+html.crm-hacker .text-slate-900,
+html.crm-hacker .text-slate-800 {
+  color: var(--hk-text) !important;
+}
+
+html.crm-hacker .text-gray-600,
+html.crm-hacker .text-gray-500,
+html.crm-hacker .text-slate-600,
+html.crm-hacker .text-slate-500 {
+  color: var(--hk-text-dim) !important;
+}
+
+html.crm-hacker .border,
+html.crm-hacker [class*="border-gray-"],
+html.crm-hacker [class*="border-slate-"] {
+  border-color: var(--hk-border) !important;
+}
+
+html.crm-hacker .shadow,
+html.crm-hacker .shadow-sm,
+html.crm-hacker .shadow-md,
+html.crm-hacker .shadow-lg,
+html.crm-hacker .shadow-xl {
+  box-shadow: 0 0 0 1px var(--hk-border), 0 0 24px rgba(0, 255, 156, 0.06) !important;
+}
+
+html.crm-hacker input,
+html.crm-hacker textarea,
+html.crm-hacker select {
+  background: #010603 !important;
+  color: var(--hk-text) !important;
+  border-color: var(--hk-border) !important;
+  caret-color: var(--hk-accent) !important;
+}
+
+html.crm-hacker input::placeholder,
+html.crm-hacker textarea::placeholder {
+  color: rgba(0, 255, 156, 0.3) !important;
+}
+
+html.crm-hacker input:focus,
+html.crm-hacker textarea:focus,
+html.crm-hacker select:focus {
+  border-color: var(--hk-accent) !important;
+  box-shadow: 0 0 0 2px rgba(0, 255, 156, 0.25), inset 0 0 12px rgba(0, 255, 156, 0.08) !important;
+  outline: none !important;
+}
+
+html.crm-hacker button:not(:disabled):hover {
+  filter: brightness(1.1) drop-shadow(0 0 4px rgba(0, 255, 156, 0.35));
+}
+
+html.crm-hacker [class*="bg-blue-"],
+html.crm-hacker [class*="bg-indigo-"],
+html.crm-hacker [class*="bg-amber-"],
+html.crm-hacker [class*="bg-orange-"],
+html.crm-hacker [class*="bg-green-"],
+html.crm-hacker [class*="bg-emerald-"],
+html.crm-hacker [class*="bg-teal-"],
+html.crm-hacker [class*="bg-cyan-"] {
+  background: rgba(0, 255, 156, 0.08) !important;
+  color: var(--hk-accent) !important;
+  border: 1px solid var(--hk-border) !important;
+}
+
+html.crm-hacker [class*="bg-red-"],
+html.crm-hacker [class*="bg-rose-"] {
+  background: rgba(255, 85, 119, 0.1) !important;
+  color: var(--hk-accent-danger) !important;
+  border-color: rgba(255, 85, 119, 0.35) !important;
+}
+
+html.crm-hacker [class*="bg-yellow-"] {
+  background: rgba(255, 180, 84, 0.1) !important;
+  color: var(--hk-accent-warn) !important;
+  border-color: rgba(255, 180, 84, 0.3) !important;
+}
+
+html.crm-hacker [class*="text-blue-"],
+html.crm-hacker [class*="text-indigo-"],
+html.crm-hacker [class*="text-amber-"],
+html.crm-hacker [class*="text-green-"],
+html.crm-hacker [class*="text-emerald-"],
+html.crm-hacker [class*="text-cyan-"] {
+  color: var(--hk-accent) !important;
+}
+
+html.crm-hacker a {
+  color: var(--hk-accent) !important;
+  text-decoration: underline dotted rgba(0, 255, 156, 0.35);
+}
+
+html.crm-hacker ::selection {
+  background: rgba(0, 255, 156, 0.35);
+  color: #000;
+}
+
+html.crm-hacker ::-webkit-scrollbar-thumb {
+  background: rgba(0, 255, 156, 0.25) !important;
+}
+html.crm-hacker ::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 255, 156, 0.45) !important;
+}
+
 /* Prefers reduced motion */
 @media (prefers-reduced-motion: reduce) {
   *,

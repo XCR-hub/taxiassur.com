@@ -19,6 +19,7 @@ import {
   Search,
   Settings,
   ChevronRight,
+  Terminal,
 } from 'lucide-react';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { usePendingDocumentsCount } from '@/hooks/usePendingDocumentsCount';
@@ -33,10 +34,26 @@ const CRMLayout: React.FC = () => {
   const { user, signOut, isAuthenticated, loading } = useAdminAuth();
   const { count: pendingDocsCount } = usePendingDocumentsCount();
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [hackerMode, setHackerMode] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    return localStorage.getItem('crm-hacker-mode') === '1';
+  });
 
   useEffect(() => {
     console.log('CRM Layout v2026.03');
   }, []);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    if (hackerMode) {
+      root.classList.add('crm-hacker');
+      localStorage.setItem('crm-hacker-mode', '1');
+    } else {
+      root.classList.remove('crm-hacker');
+      localStorage.setItem('crm-hacker-mode', '0');
+    }
+    return () => { root.classList.remove('crm-hacker'); };
+  }, [hackerMode]);
 
   if (loading) {
     return (
@@ -331,6 +348,44 @@ const CRMLayout: React.FC = () => {
               </div>
 
               <button
+                onClick={() => setHackerMode(v => !v)}
+                className="crm-nav-link"
+                title={hackerMode ? 'Désactiver le mode Terminal' : 'Activer le mode Terminal'}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 10,
+                  padding: '7px 12px',
+                  borderRadius: 8,
+                  color: hackerMode ? '#00ff9c' : 'rgba(255,255,255,0.55)',
+                  background: hackerMode ? 'rgba(0,255,156,0.08)' : 'none',
+                  border: hackerMode ? '1px solid rgba(0,255,156,0.25)' : '1px solid transparent',
+                  cursor: 'pointer',
+                  width: '100%',
+                  transition: 'all 0.15s',
+                  fontSize: 12,
+                  marginBottom: 4,
+                }}
+              >
+                <Terminal size={14} />
+                <span>Mode Terminal</span>
+                <span
+                  style={{
+                    marginLeft: 'auto',
+                    fontSize: 9,
+                    fontWeight: 700,
+                    letterSpacing: '0.05em',
+                    padding: '2px 6px',
+                    borderRadius: 4,
+                    background: hackerMode ? 'rgba(0,255,156,0.15)' : 'rgba(255,255,255,0.06)',
+                    color: hackerMode ? '#00ff9c' : 'rgba(255,255,255,0.4)',
+                  }}
+                >
+                  {hackerMode ? 'ON' : 'OFF'}
+                </span>
+              </button>
+
+              <button
                 onClick={handleLogout}
                 className="crm-nav-link"
                 style={{
@@ -373,6 +428,7 @@ const CRMLayout: React.FC = () => {
                 {userInitial}
               </div>
               {[
+                { icon: Terminal, onClick: () => setHackerMode(v => !v), color: hackerMode ? '#00ff9c' : 'rgba(255,255,255,0.3)', label: hackerMode ? 'Terminal ON' : 'Terminal OFF' },
                 { icon: Settings, onClick: () => navigate('/backoffice/crm-killer/settings'), color: 'rgba(255,255,255,0.3)', label: 'Parametres' },
                 { icon: LogOut, onClick: handleLogout, color: 'rgba(239,68,68,0.5)', label: 'Deconnexion' },
               ].map(btn => (
