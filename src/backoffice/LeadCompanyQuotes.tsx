@@ -110,7 +110,7 @@ export default function LeadCompanyQuotes({ leadId }: Props) {
           .from('lead_company_quotes')
           .select(`
             *,
-            company:insurance_companies(*)
+            company:insurance_companies!lead_company_quotes_company_id_fkey(*)
           `)
           .eq('lead_id', leadId)
           .order('created_at', { ascending: true }),
@@ -158,7 +158,7 @@ export default function LeadCompanyQuotes({ leadId }: Props) {
         } else {
           const { data: refreshed, error: refreshError } = await supabase
             .from('lead_company_quotes')
-            .select(`*, company:insurance_companies(*)`)
+            .select(`*, company:insurance_companies!lead_company_quotes_company_id_fkey(*)`)
             .eq('lead_id', leadId)
             .order('created_at', { ascending: true });
           if (!refreshError && refreshed) currentQuotes = refreshed;

@@ -122,7 +122,7 @@ export default function ValidationDevisStep({
         .from('lead_company_quotes')
         .select(`
           *,
-          company:insurance_companies(*)
+          company:insurance_companies!lead_company_quotes_company_id_fkey(*)
         `)
         .eq('lead_id', leadId)
         .order('created_at', { ascending: true });
