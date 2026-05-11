@@ -93,9 +93,11 @@ const CRMLayout: React.FC = () => {
   ];
 
   const isDashboard = currentPath === '/backoffice/crm' || currentPath === '/backoffice' || currentPath === '/backoffice/dashboard';
+  const isClientsSection = currentPath === '/backoffice/clients' || currentPath.startsWith('/backoffice/clients/');
 
   return (
     <div className="flex h-screen overflow-hidden" style={{ background: '#0b0e14' }}>
+      {!isClientsSection && (
       <aside
         className="crm-sidebar flex flex-col flex-shrink-0"
         style={{
@@ -458,6 +460,7 @@ const CRMLayout: React.FC = () => {
           )}
         </div>
       </aside>
+      )}
 
       <main className="flex-1 flex flex-col overflow-hidden min-w-0" style={{ background: '#0b0e14' }}>
         <CRMPushNotifications />
