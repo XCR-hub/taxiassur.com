@@ -61,6 +61,9 @@ interface UnimportedAttachment {
   attachment_content_type: string;
   prospect_file_path: string | null;
   prospect_bucket: string | null;
+  email_attachment_id: string | null;
+  storage_path: string | null;
+  storage_bucket: string | null;
 }
 
 function buildDocumentCategories(vehicleType?: string | null): DocumentCategory[] {
@@ -201,22 +204,12 @@ export default function DocumentValidationComplete({
       let resolvedPath: string | null = null;
       let resolvedBucket: string | null = null;
 
-      if (att.prospect_file_path && att.prospect_bucket) {
+      if (att.storage_path && att.storage_bucket) {
+        resolvedPath = att.storage_path;
+        resolvedBucket = att.storage_bucket;
+      } else if (att.prospect_file_path && att.prospect_bucket) {
         resolvedPath = att.prospect_file_path;
         resolvedBucket = att.prospect_bucket;
-      } else {
-        const { data: ea } = await supabase
-          .from('email_attachments')
-          .select('storage_path')
-          .eq('email_message_id', att.email_id)
-          .ilike('filename', att.attachment_filename)
-          .not('storage_path', 'is', null)
-          .maybeSingle();
-
-        if (ea?.storage_path) {
-          resolvedPath = ea.storage_path;
-          resolvedBucket = 'email-attachments';
-        }
       }
 
       if (!resolvedPath || !resolvedBucket) {
@@ -226,7 +219,7 @@ export default function DocumentValidationComplete({
         return;
       }
 
-      const { error: insertError } = await supabase
+      const { data: insertedDoc, error: insertError } = await supabase
         .from('crm_lead_documents')
         .insert({
           lead_id: caseId,
@@ -238,9 +231,23 @@ export default function DocumentValidationComplete({
           mime_type: mimeType,
           status: 'pending',
           custom_label: customLabel || null
-        });
+        })
+        .select('id')
+        .maybeSingle();
 
       if (insertError) throw insertError;
+
+      if (att.email_attachment_id && insertedDoc?.id) {
+        await supabase
+          .from('email_attachments')
+          .update({
+            assigned_document_id: insertedDoc.id,
+            status: 'assigned',
+            proposed_doc_type: finalDocType,
+            classification_method: 'manual',
+          })
+          .eq('id', att.email_attachment_id);
+      }
 
       toast.success(`"${att.attachment_filename}" classe dans ${categories.find(c => c.id === docType)?.label || docType}`);
       await loadAll();
@@ -1171,11 +1178,15 @@ export default function DocumentValidationComplete({
                         </div>
                       </div>
 
+                      {(() => {
+                        const viewPath = att.storage_path || att.prospect_file_path;
+                        const viewBucket = att.storage_bucket || att.prospect_bucket || 'prospect-documents';
+                        return (
                       <div className="flex items-center gap-1.5 mt-2.5">
-                        {att.prospect_file_path ? (
+                        {viewPath ? (
                           <>
                             <button
-                              onClick={() => openDocument(att.prospect_file_path!, att.prospect_bucket || 'prospect-documents')}
+                              onClick={() => openDocument(viewPath, viewBucket)}
                               className="text-xs py-1.5 px-2.5 bg-gray-50 text-gray-700 rounded hover:bg-gray-100 font-medium flex items-center gap-1"
                             >
                               <Eye className="h-3 w-3" />
@@ -1184,8 +1195,7 @@ export default function DocumentValidationComplete({
                             <button
                               onClick={() => {
                                 const baseUrl = import.meta.env.VITE_SUPABASE_URL;
-                                const bucket = att.prospect_bucket || 'prospect-documents';
-                                const url = `${baseUrl}/storage/v1/object/public/${bucket}/${att.prospect_file_path}`;
+                                const url = `${baseUrl}/storage/v1/object/public/${viewBucket}/${viewPath}`;
                                 const a = document.createElement('a');
                                 a.href = url;
                                 a.download = att.attachment_filename;
@@ -1248,6 +1258,8 @@ export default function DocumentValidationComplete({
                           )}
                         </div>
                       </div>
+                        );
+                      })()}
                     </div>
                   );
                 })}
