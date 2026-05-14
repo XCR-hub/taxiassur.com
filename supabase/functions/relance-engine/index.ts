@@ -17,6 +17,7 @@ const BREVO_API_KEY = Deno.env.get("BREVO_API_KEY");
 interface RelanceResult {
   type: string;
   sent: number;
+  sent_sms: number;
   skipped: number;
   errors: number;
 }
@@ -48,6 +49,59 @@ async function sendEmail(
   }
 }
 
+async function sendSMS(phone: string, content: string, leadId?: string): Promise<boolean> {
+  if (!BREVO_API_KEY || !phone) return false;
+
+  try {
+    let phoneNumber = phone.replace(/[\s\-\.]/g, "");
+    if (phoneNumber.startsWith("0")) {
+      phoneNumber = "33" + phoneNumber.substring(1);
+    }
+    if (!phoneNumber.startsWith("+")) {
+      phoneNumber = "+" + phoneNumber;
+    }
+
+    const response = await fetch("https://api.brevo.com/v3/transactionalSMS/sms", {
+      method: "POST",
+      headers: {
+        "api-key": BREVO_API_KEY,
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify({
+        type: "transactional",
+        unicodeEnabled: true,
+        sender: "TaxiAssur",
+        recipient: phoneNumber,
+        content,
+        tag: "relance-sms",
+      }),
+    });
+
+    if (response.ok && leadId) {
+      const data = await response.json();
+      await supabase.from("crm_interactions").insert({
+        lead_id: leadId,
+        type: "sms",
+        direction: "outbound",
+        subject: "SMS relance automatique",
+        content,
+        metadata: {
+          message_id: data.messageId,
+          reference: data.reference,
+          phone: phoneNumber,
+          provider: "brevo",
+          automated: true,
+        },
+      });
+    }
+
+    return response.ok;
+  } catch {
+    return false;
+  }
+}
+
 async function logInteraction(leadId: string, subject: string, content: string): Promise<void> {
   const { error } = await supabase.from("crm_interactions").insert({
     lead_id: leadId,
@@ -62,7 +116,7 @@ async function logInteraction(leadId: string, subject: string, content: string):
 }
 
 async function processQuoteReminders(): Promise<RelanceResult> {
-  const result: RelanceResult = { type: "quote", sent: 0, skipped: 0, errors: 0 };
+  const result: RelanceResult = { type: "quote", sent: 0, sent_sms: 0, skipped: 0, errors: 0 };
 
   const { data: pendingQuotes } = await supabase
     .from("crm_quotes_sent")
@@ -78,6 +132,7 @@ async function processQuoteReminders(): Promise<RelanceResult> {
       crm_leads!inner(
         id,
         email,
+        phone,
         first_name,
         last_name,
         access_token,
@@ -108,6 +163,7 @@ async function processQuoteReminders(): Promise<RelanceResult> {
 
     const lead = quote.crm_leads;
     const name = `${lead.first_name || ""} ${lead.last_name || ""}`.trim();
+    const prospectLink = `https://taxiassur.com/espace-prospect?token=${lead.access_token || lead.id}`;
 
     const htmlContent = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -120,13 +176,13 @@ async function processQuoteReminders(): Promise<RelanceResult> {
         </div>
         <p>N'hesitez pas a consulter votre espace prospect pour accepter le devis ou nous poser vos questions.</p>
         <p style="margin-top: 20px;">
-          <a href="https://taxiassur.com/espace-prospect?token=${lead.access_token || lead.id}"
+          <a href="${prospectLink}"
              style="background: #2563eb; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: bold;">
             CONSULTER MON DEVIS
           </a>
         </p>
         <p style="color: #6b7280; font-size: 14px; margin-top: 20px;">
-          Des questions ? Appelez-nous au 01 76 39 00 60 ou repondez a cet email.
+          Des questions ? Appelez-nous au 01 80 85 57 86 ou repondez a cet email.
         </p>
       </div>
     `;
@@ -149,6 +205,17 @@ async function processQuoteReminders(): Promise<RelanceResult> {
         `Rappel #${(quote.reminder_count || 0) + 1} envoye pour le devis`
       );
       result.sent++;
+
+      // SMS relance devis
+      if (lead.phone) {
+        const priceInfo = quote.monthly_premium ? ` a ${Number(quote.monthly_premium).toFixed(0)}EUR/mois` : "";
+        const smsSent = await sendSMS(
+          lead.phone,
+          `TaxiAssur - ${lead.first_name || "Bonjour"}, votre devis${priceInfo} vous attend ! Consultez-le et acceptez-le ici : ${prospectLink} - Tel: 01 80 85 57 86`,
+          lead.id
+        );
+        if (smsSent) result.sent_sms++;
+      }
     } else {
       result.errors++;
     }
@@ -158,7 +225,7 @@ async function processQuoteReminders(): Promise<RelanceResult> {
 }
 
 async function processPaymentReminders(): Promise<RelanceResult> {
-  const result: RelanceResult = { type: "payment", sent: 0, skipped: 0, errors: 0 };
+  const result: RelanceResult = { type: "payment", sent: 0, sent_sms: 0, skipped: 0, errors: 0 };
 
   const { data: pendingPayments } = await supabase
     .from("lead_contracts")
@@ -172,6 +239,7 @@ async function processPaymentReminders(): Promise<RelanceResult> {
       crm_leads!inner(
         id,
         email,
+        phone,
         first_name,
         last_name,
         access_token
@@ -196,6 +264,8 @@ async function processPaymentReminders(): Promise<RelanceResult> {
 
     const lead = contract.crm_leads;
     const name = `${lead.first_name || ""} ${lead.last_name || ""}`.trim();
+    const paymentLink = `https://taxiassur.com/paiement/${contract.down_payment_link}`;
+    const amount = Number(contract.down_payment_amount || 0).toFixed(2);
 
     const htmlContent = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -203,24 +273,24 @@ async function processPaymentReminders(): Promise<RelanceResult> {
         <p>Bonjour ${name || "cher client"},</p>
         <p>Nous vous rappelons que le paiement du comptant est necessaire pour finaliser votre contrat d'assurance taxi.</p>
         <div style="background: #fef3c7; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #f59e0b;">
-          <p><strong>Montant a regler :</strong> ${Number(contract.down_payment_amount || 0).toFixed(2)} EUR</p>
+          <p><strong>Montant a regler :</strong> ${amount} EUR</p>
         </div>
         <p>Une fois le paiement valide, vous pourrez signer electroniquement votre contrat.</p>
         <p style="margin-top: 20px;">
-          <a href="https://taxiassur.com/paiement/${contract.down_payment_link}"
+          <a href="${paymentLink}"
              style="background: #059669; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: bold;">
             PAYER MAINTENANT
           </a>
         </p>
         <p style="color: #6b7280; font-size: 14px; margin-top: 20px;">
-          Besoin d'aide ? Appelez-nous au 01 76 39 00 60
+          Besoin d'aide ? Appelez-nous au 01 80 85 57 86
         </p>
       </div>
     `;
 
     const sent = await sendEmail(
       { email: lead.email, name },
-      `Rappel: Comptant en attente - ${Number(contract.down_payment_amount || 0).toFixed(2)} EUR`,
+      `Rappel: Comptant en attente - ${amount} EUR`,
       htmlContent
     );
 
@@ -228,9 +298,19 @@ async function processPaymentReminders(): Promise<RelanceResult> {
       await logInteraction(
         lead.id,
         "Rappel paiement comptant",
-        `Rappel envoye pour le paiement de ${Number(contract.down_payment_amount || 0).toFixed(2)} EUR`
+        `Rappel envoye pour le paiement de ${amount} EUR`
       );
       result.sent++;
+
+      // SMS relance paiement
+      if (lead.phone) {
+        const smsSent = await sendSMS(
+          lead.phone,
+          `TaxiAssur - ${lead.first_name || "Bonjour"}, votre paiement de ${amount}EUR est en attente. Reglez-le pour activer votre assurance : ${paymentLink} - Tel: 01 80 85 57 86`,
+          lead.id
+        );
+        if (smsSent) result.sent_sms++;
+      }
     } else {
       result.errors++;
     }
@@ -240,7 +320,7 @@ async function processPaymentReminders(): Promise<RelanceResult> {
 }
 
 async function processSignatureReminders(): Promise<RelanceResult> {
-  const result: RelanceResult = { type: "signature", sent: 0, skipped: 0, errors: 0 };
+  const result: RelanceResult = { type: "signature", sent: 0, sent_sms: 0, skipped: 0, errors: 0 };
 
   const { data: pendingSignatures } = await supabase
     .from("lead_contracts")
@@ -254,6 +334,7 @@ async function processSignatureReminders(): Promise<RelanceResult> {
       crm_leads!inner(
         id,
         email,
+        phone,
         first_name,
         last_name,
         access_token
@@ -279,6 +360,7 @@ async function processSignatureReminders(): Promise<RelanceResult> {
 
     const lead = contract.crm_leads;
     const name = `${lead.first_name || ""} ${lead.last_name || ""}`.trim();
+    const signatureLink = `https://taxiassur.com/prospect/signature?token=${lead.access_token || lead.id}`;
 
     const htmlContent = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -289,13 +371,13 @@ async function processSignatureReminders(): Promise<RelanceResult> {
           <p>Une fois signe, vous recevrez immediatement votre attestation d'assurance.</p>
         </div>
         <p style="margin-top: 20px;">
-          <a href="https://taxiassur.com/prospect/signature?token=${lead.access_token || lead.id}"
+          <a href="${signatureLink}"
              style="background: #2563eb; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: bold;">
             SIGNER MON CONTRAT
           </a>
         </p>
         <p style="color: #6b7280; font-size: 14px; margin-top: 20px;">
-          Besoin d'aide ? Appelez-nous au 01 76 39 00 60
+          Besoin d'aide ? Appelez-nous au 01 80 85 57 86
         </p>
       </div>
     `;
@@ -313,6 +395,16 @@ async function processSignatureReminders(): Promise<RelanceResult> {
         "Rappel automatique envoye pour la signature du contrat"
       );
       result.sent++;
+
+      // SMS relance signature
+      if (lead.phone) {
+        const smsSent = await sendSMS(
+          lead.phone,
+          `TaxiAssur - ${lead.first_name || "Bonjour"}, votre contrat est pret ! Signez-le en 2 min et recevez votre attestation : ${signatureLink} - Tel: 01 80 85 57 86`,
+          lead.id
+        );
+        if (smsSent) result.sent_sms++;
+      }
     } else {
       result.errors++;
     }
@@ -322,7 +414,7 @@ async function processSignatureReminders(): Promise<RelanceResult> {
 }
 
 async function processInactiveLeadReminders(): Promise<RelanceResult> {
-  const result: RelanceResult = { type: "inactive", sent: 0, skipped: 0, errors: 0 };
+  const result: RelanceResult = { type: "inactive", sent: 0, sent_sms: 0, skipped: 0, errors: 0 };
 
   const threeDaysAgo = new Date();
   threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
@@ -332,6 +424,7 @@ async function processInactiveLeadReminders(): Promise<RelanceResult> {
     .select(`
       id,
       email,
+      phone,
       first_name,
       last_name,
       access_token,
@@ -348,6 +441,7 @@ async function processInactiveLeadReminders(): Promise<RelanceResult> {
 
   for (const lead of inactiveLeads) {
     const name = `${lead.first_name || ""} ${lead.last_name || ""}`.trim();
+    const prospectLink = `https://taxiassur.com/espace-prospect?token=${lead.access_token || lead.id}`;
 
     const htmlContent = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -365,13 +459,13 @@ async function processInactiveLeadReminders(): Promise<RelanceResult> {
           </ul>
         </div>
         <p style="margin-top: 20px;">
-          <a href="https://taxiassur.com/prospect/espace?token=${lead.access_token || lead.id}"
+          <a href="${prospectLink}"
              style="background: #2563eb; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: bold;">
             REPRENDRE MA DEMANDE
           </a>
         </p>
         <p style="color: #6b7280; font-size: 14px; margin-top: 20px;">
-          Ou appelez-nous directement au 01 76 39 00 60
+          Ou appelez-nous directement au 01 80 85 57 86
         </p>
       </div>
     `;
@@ -393,6 +487,130 @@ async function processInactiveLeadReminders(): Promise<RelanceResult> {
         "Email de relance automatique pour lead inactif depuis 3 jours"
       );
       result.sent++;
+
+      // SMS relance lead inactif
+      if (lead.phone) {
+        const smsSent = await sendSMS(
+          lead.phone,
+          `TaxiAssur - ${lead.first_name || "Bonjour"}, votre demande de devis est toujours en cours ! Reprenez-la ici : ${prospectLink} - Devis gratuit, 5 compagnies comparees. Tel: 01 80 85 57 86`,
+          lead.id
+        );
+        if (smsSent) result.sent_sms++;
+      }
+    } else {
+      result.errors++;
+    }
+  }
+
+  return result;
+}
+
+async function processReactivatedLeadReminders(): Promise<RelanceResult> {
+  const result: RelanceResult = { type: "reactivated", sent: 0, sent_sms: 0, skipped: 0, errors: 0 };
+
+  // Find leads that were recently reactivated (status changed back to nouveau_lead from recontact)
+  const twoDaysAgo = new Date();
+  twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
+
+  const { data: reactivatedLeads } = await supabase
+    .from("crm_leads")
+    .select(`
+      id,
+      email,
+      phone,
+      first_name,
+      last_name,
+      name,
+      access_token,
+      status,
+      recontact_attempts,
+      last_recontact_date,
+      lost_reason,
+      created_at
+    `)
+    .gte("last_recontact_date", twoDaysAgo.toISOString())
+    .not("email", "is", null)
+    .limit(30);
+
+  if (!reactivatedLeads?.length) return result;
+
+  for (const lead of reactivatedLeads) {
+    const firstName = lead.first_name || lead.name?.split(" ")[0] || "";
+    const name = `${lead.first_name || ""} ${lead.last_name || ""}`.trim() || lead.name || "";
+    const prospectLink = `https://taxiassur.com/espace-prospect?token=${lead.access_token || lead.id}`;
+    const attempts = lead.recontact_attempts || 1;
+
+    // Don't re-send if we already sent a reactivation for this cycle
+    const { data: recentSms } = await supabase
+      .from("crm_interactions")
+      .select("id")
+      .eq("lead_id", lead.id)
+      .eq("type", "sms")
+      .gte("created_at", twoDaysAgo.toISOString())
+      .ilike("subject", "%reactivation%")
+      .limit(1);
+
+    if (recentSms && recentSms.length > 0) {
+      result.skipped++;
+      continue;
+    }
+
+    const htmlContent = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #059669;">On reprend contact !</h2>
+        <p>Bonjour ${name || "cher prospect"},</p>
+        <p>Nous revenons vers vous concernant votre projet d'assurance taxi.</p>
+        <p>Depuis votre derniere demande, nous avons negocie de <strong>nouvelles offres exclusives</strong> avec nos partenaires assureurs.</p>
+        <div style="background: #f0fdf4; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #22c55e;">
+          <p style="margin: 0;"><strong>Ce qui a change pour vous :</strong></p>
+          <ul style="margin: 10px 0;">
+            <li>Nouvelles grilles tarifaires 2026 plus competitives</li>
+            <li>Offre de bienvenue exclusive pour les anciens prospects</li>
+            <li>Accompagnement prioritaire par un expert dedie</li>
+            <li>Attestation provisoire immediate</li>
+          </ul>
+        </div>
+        <p>Votre dossier est toujours actif. Reprenez votre demande en un clic :</p>
+        <p style="margin-top: 20px; text-align: center;">
+          <a href="${prospectLink}"
+             style="background: #059669; color: white; padding: 16px 32px; text-decoration: none; border-radius: 8px; display: inline-block; font-weight: bold; font-size: 16px;">
+            REPRENDRE MON DOSSIER
+          </a>
+        </p>
+        <p style="color: #6b7280; font-size: 14px; margin-top: 20px; text-align: center;">
+          Ou appelez-nous au <strong>01 80 85 57 86</strong> - Un conseiller vous est dedie
+        </p>
+      </div>
+    `;
+
+    const sent = await sendEmail(
+      { email: lead.email, name },
+      `${firstName ? firstName + ", n" : "N"}ouvelles offres assurance taxi pour vous`,
+      htmlContent
+    );
+
+    if (sent) {
+      await logInteraction(
+        lead.id,
+        "Relance reactivation lead",
+        `Email de reactivation envoye (tentative #${attempts})`
+      );
+      result.sent++;
+
+      // SMS reactivation - message adapte selon le nombre de tentatives
+      if (lead.phone) {
+        let smsContent: string;
+        if (attempts <= 1) {
+          smsContent = `TaxiAssur - ${firstName || "Bonjour"}, on reprend contact ! Nouvelles offres exclusives pour votre assurance taxi. Reprenez votre dossier : ${prospectLink} - Tel: 01 80 85 57 86`;
+        } else if (attempts === 2) {
+          smsContent = `TaxiAssur - ${firstName || "Bonjour"}, nos tarifs 2026 ont baisse ! Profitez-en pour votre assurance taxi. Votre dossier est toujours actif : ${prospectLink}`;
+        } else {
+          smsContent = `TaxiAssur - ${firstName || "Bonjour"}, derniere chance ! Offre speciale anciens prospects sur votre assurance taxi : ${prospectLink} - Tel: 01 80 85 57 86`;
+        }
+
+        const smsSent = await sendSMS(lead.phone, smsContent, lead.id);
+        if (smsSent) result.sent_sms++;
+      }
     } else {
       result.errors++;
     }
@@ -428,12 +646,17 @@ Deno.serve(async (req: Request) => {
       results.push(await processInactiveLeadReminders());
     }
 
+    if (action === "all" || action === "reactivated") {
+      results.push(await processReactivatedLeadReminders());
+    }
+
     const summary = {
       timestamp: new Date().toISOString(),
       action,
       results,
       totals: {
-        sent: results.reduce((acc, r) => acc + r.sent, 0),
+        sent_emails: results.reduce((acc, r) => acc + r.sent, 0),
+        sent_sms: results.reduce((acc, r) => acc + r.sent_sms, 0),
         skipped: results.reduce((acc, r) => acc + r.skipped, 0),
         errors: results.reduce((acc, r) => acc + r.errors, 0),
       },

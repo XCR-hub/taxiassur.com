@@ -56,6 +56,22 @@ const SMS_TEMPLATES: Record<string, (vars: any) => string> = {
 
   client_actif: (vars) =>
     `TaxiAssur - Felicitations ${vars.first_name || ""} ! Votre assurance est active. Espace client : https://taxiassur.com/espace-client`,
+
+  // Reactivation / recontact templates
+  reactivation_premier_contact: (vars) =>
+    `TaxiAssur - ${vars.first_name || "Bonjour"}, on reprend contact ! Nouvelles offres exclusives pour votre assurance taxi. Reprenez votre dossier : ${vars.upload_link || vars.prospect_link || "https://taxiassur.com"} - Tel: 01 80 85 57 86`,
+
+  reactivation_tarifs: (vars) =>
+    `TaxiAssur - ${vars.first_name || "Bonjour"}, nos tarifs 2026 ont baisse ! Profitez-en pour votre assurance taxi. Votre dossier est actif : ${vars.upload_link || vars.prospect_link || "https://taxiassur.com"}`,
+
+  reactivation_derniere_chance: (vars) =>
+    `TaxiAssur - ${vars.first_name || "Bonjour"}, derniere chance ! Offre speciale anciens prospects sur votre assurance taxi : ${vars.upload_link || vars.prospect_link || "https://taxiassur.com"} - Tel: 01 80 85 57 86`,
+
+  relance_inactive: (vars) =>
+    `TaxiAssur - ${vars.first_name || "Bonjour"}, votre demande de devis est toujours en cours ! Reprenez-la : ${vars.upload_link || vars.prospect_link || "https://taxiassur.com"} - Devis gratuit. Tel: 01 80 85 57 86`,
+
+  recontact_programme: (vars) =>
+    `TaxiAssur - ${vars.first_name || "Bonjour"}, votre dossier a ete reactive. De nouvelles offres sont disponibles ! Consultez : ${vars.upload_link || vars.prospect_link || "https://taxiassur.com"}`,
 };
 
 async function sendSMS(
