@@ -39,3 +39,4 @@ export { DocumentValidationWithReasons } from './DocumentValidationWithReasons';
 export { default as DocumentViewer } from './DocumentViewer';
 export { default as CompleteTimeline } from './CompleteTimeline';
 export { MoneticoPaymentManager } from './MoneticoPaymentManager';
+export { default as SMSSendModal } from './SMSSendModal';

@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Mail, Phone, AlertCircle, Copy, CheckCircle, User, Building2, MapPin, Car, FileText, Calculator, ClipboardCheck, MessageSquare, Star, StickyNote, Pencil, Save, X } from 'lucide-react';
+import { ArrowLeft, Mail, Phone, AlertCircle, Copy, CheckCircle, User, Building2, MapPin, Car, FileText, Calculator, ClipboardCheck, MessageSquare, Star, StickyNote, Pencil, Save, X, MessageCircle, Send } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
 import { useRealtimeDocuments } from '@/hooks/useRealtimeDocuments';
@@ -14,6 +14,7 @@ import LeadCompanyQuotes from '@/backoffice/LeadCompanyQuotes';
 import ContractSignatureManager from '@/components/crm/ContractSignatureManager';
 import CompleteTimeline from '@/components/crm/CompleteTimeline';
 import LeadDeleteSecure from '@/components/crm/LeadDeleteSecure';
+import SMSSendModal from '@/components/crm/SMSSendModal';
 
 interface Lead {
   id: string;
@@ -59,6 +60,7 @@ const CRMLeadDetail: React.FC = () => {
     company_name: '',
     immatriculation: '',
   });
+  const [showSMSModal, setShowSMSModal] = useState(false);
   const [stats, setStats] = useState({
     documentsComplete: false,
     documentsMissing: 0,
@@ -740,6 +742,17 @@ const CRMLeadDetail: React.FC = () => {
                 Envoyer accès
               </button>
 
+              {lead.phone && (
+                <button
+                  onClick={() => setShowSMSModal(true)}
+                  className="flex items-center gap-2 px-3 py-2 bg-emerald-600/90 hover:bg-emerald-500 text-white rounded-lg text-sm font-bold transition-all"
+                  title="Envoyer un SMS au prospect"
+                >
+                  <MessageCircle className="h-4 w-4" />
+                  SMS
+                </button>
+              )}
+
               <LeadDeleteSecure
                 leadId={lead.id}
                 leadName={leadName}
@@ -855,6 +868,21 @@ const CRMLeadDetail: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* SMS Modal */}
+      {showSMSModal && lead.phone && (
+        <SMSSendModal
+          isOpen={showSMSModal}
+          onClose={() => setShowSMSModal(false)}
+          leadId={leadId!}
+          leadName={leadName}
+          leadPhone={lead.phone}
+          onSent={() => {
+            loadStats();
+            showToast('SMS envoye avec succes', 'success');
+          }}
+        />
+      )}
     </div>
   );
 };
