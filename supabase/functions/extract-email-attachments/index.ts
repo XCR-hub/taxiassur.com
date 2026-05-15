@@ -18,12 +18,23 @@ interface ProcessEmailPayload {
   attachments: EmailAttachment[];
 }
 
+function detectDocType(filename: string): { type: string | null; confidence: number | null } {
+  const lower = filename.toLowerCase();
+  if (lower.includes('carte') && lower.includes('grise')) return { type: 'carte_grise', confidence: 0.85 };
+  if (lower.includes('permis') || lower.includes('conduire')) return { type: 'permis_conduire', confidence: 0.8 };
+  if (lower.includes('identite') || lower.includes('cni') || lower.includes('passeport')) return { type: 'piece_identite', confidence: 0.7 };
+  if (lower.includes('releve') || lower.includes('information') || lower.includes('sinistre')) return { type: 'releve_information', confidence: 0.65 };
+  if (lower.includes('licence') || lower.includes('taxi')) return { type: 'licence_taxi', confidence: 0.75 };
+  if (lower.includes('autorisation') || lower.includes('stationnement')) return { type: 'autorisation_stationnement', confidence: 0.7 };
+  if (lower.includes('rib') || lower.includes('bank') || lower.includes('iban')) return { type: 'rib', confidence: 0.8 };
+  if (lower.includes('kbis') || lower.includes('inpi') || lower.includes('siret')) return { type: 'kbis', confidence: 0.75 };
+  if (lower.includes('carte') && lower.includes('pro')) return { type: 'carte_professionnelle', confidence: 0.75 };
+  return { type: null, confidence: null };
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, {
-      status: 200,
-      headers: corsHeaders,
-    });
+    return new Response(null, { status: 200, headers: corsHeaders });
   }
 
   try {
@@ -48,108 +59,57 @@ Deno.serve(async (req: Request) => {
 
     for (const attachment of attachments) {
       try {
-        const fileExt = attachment.filename.split('.').pop() || 'bin';
-        const fileName = `${email_id}/${Date.now()}_${attachment.filename}`;
         const binaryData = Uint8Array.from(atob(attachment.content), c => c.charCodeAt(0));
+        const safeFilename = (attachment.filename || 'document.bin').replace(/[^a-zA-Z0-9._-]/g, '_');
+        const storagePath = `00000000-0000-0000-0000-000000000001/${email_id}/${Date.now()}_${safeFilename}`;
 
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from('attachments')
-          .upload(fileName, binaryData, {
-            contentType: attachment.contentType,
+        const { error: uploadError } = await supabase.storage
+          .from('email-attachments')
+          .upload(storagePath, binaryData, {
+            contentType: attachment.contentType || 'application/octet-stream',
             upsert: false
           });
 
         if (uploadError) {
           console.error('Upload error:', uploadError);
+          results.push({ success: false, filename: attachment.filename, error: uploadError.message });
           continue;
         }
 
-        const { data: urlData } = supabase.storage
-          .from('attachments')
-          .getPublicUrl(fileName);
-
-        let autoDetectedType: string | null = null;
-        let confidenceScore: number | null = null;
-        const lowerFilename = attachment.filename.toLowerCase();
-        
-        if (lowerFilename.includes('licence') || lowerFilename.includes('taxi')) {
-          autoDetectedType = 'licence_taxi';
-          confidenceScore = 75;
-        } else if (lowerFilename.includes('permis') || lowerFilename.includes('conduire')) {
-          autoDetectedType = 'permis_conduire';
-          confidenceScore = 80;
-        } else if (lowerFilename.includes('identite') || lowerFilename.includes('carte') || lowerFilename.includes('cni')) {
-          autoDetectedType = 'piece_identite';
-          confidenceScore = 70;
-        } else if (lowerFilename.includes('carte') && lowerFilename.includes('grise')) {
-          autoDetectedType = 'carte_grise';
-          confidenceScore = 85;
-        } else if (lowerFilename.includes('releve') || lowerFilename.includes('information')) {
-          autoDetectedType = 'releve_information';
-          confidenceScore = 65;
-        } else if (lowerFilename.includes('autorisation') || lowerFilename.includes('stationnement')) {
-          autoDetectedType = 'autorisation_stationnement';
-          confidenceScore = 70;
-        } else if (lowerFilename.includes('rib') || lowerFilename.includes('bank') || lowerFilename.includes('iban')) {
-          autoDetectedType = 'rib';
-          confidenceScore = 80;
-        }
+        const { type: proposedType, confidence } = detectDocType(attachment.filename);
 
         const { data: attachmentData, error: insertError } = await supabase
           .from('email_attachments')
           .insert({
             email_message_id: email_id,
-            lead_id: emailData.lead_id,
-            file_name: attachment.filename,
-            file_type: fileExt,
-            file_size: attachment.size,
-            mime_type: attachment.contentType,
-            storage_path: fileName,
-            storage_bucket: 'attachments',
-            download_url: urlData.publicUrl,
-            classification_status: 'pending',
-            auto_detected_type: autoDetectedType,
-            confidence_score: confidenceScore,
-            metadata: {
-              email_subject: emailData.subject,
-              email_from: emailData.from_email,
-              processed_at: new Date().toISOString()
-            }
+            filename: attachment.filename,
+            content_type: attachment.contentType || 'application/octet-stream',
+            file_size: binaryData.byteLength || attachment.size || 0,
+            storage_path: storagePath,
+            proposed_doc_type: proposedType,
+            classification_confidence: confidence,
+            status: 'pending',
           })
-          .select()
-          .single();
+          .select('id')
+          .maybeSingle();
 
         if (insertError) {
           console.error('Insert error:', insertError);
+          results.push({ success: false, filename: attachment.filename, error: insertError.message });
           continue;
         }
 
         results.push({
           success: true,
           filename: attachment.filename,
-          attachment_id: attachmentData.id,
-          auto_detected_type: autoDetectedType
+          attachment_id: attachmentData?.id,
+          proposed_doc_type: proposedType,
         });
 
       } catch (err) {
         console.error(`Error processing attachment ${attachment.filename}:`, err);
-        results.push({
-          success: false,
-          filename: attachment.filename,
-          error: err.message
-        });
+        results.push({ success: false, filename: attachment.filename, error: err.message });
       }
-    }
-
-    if (emailData.lead_id && results.some(r => r.success)) {
-      await supabase.from('crm_notifications').insert({
-        lead_id: emailData.lead_id,
-        type: 'attachment_received',
-        title: 'Nouvelles pièces jointes reçues',
-        message: `${results.filter(r => r.success).length} pièce(s) jointe(s) reçue(s) par email en attente de classification`,
-        priority: 'medium',
-        status: 'unread'
-      });
     }
 
     return new Response(
@@ -160,28 +120,14 @@ Deno.serve(async (req: Request) => {
         failed: results.filter(r => !r.success).length,
         results
       }),
-      {
-        headers: {
-          ...corsHeaders,
-          'Content-Type': 'application/json',
-        },
-      }
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error) {
     console.error('Error processing email attachments:', error);
     return new Response(
-      JSON.stringify({
-        success: false,
-        error: error.message
-      }),
-      {
-        status: 500,
-        headers: {
-          ...corsHeaders,
-          'Content-Type': 'application/json',
-        },
-      }
+      JSON.stringify({ success: false, error: error.message }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });

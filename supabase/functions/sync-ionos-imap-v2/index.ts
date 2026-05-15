@@ -330,20 +330,20 @@ Deno.serve(async (req) => {
                 try {
                   if (!attachment.content) continue;
 
-                  // Convertir le contenu en Buffer puis en base64
                   const buffer = attachment.content;
-                  const base64Content = typeof buffer === 'string'
+                  const binaryData = (buffer instanceof Uint8Array)
                     ? buffer
-                    : btoa(String.fromCharCode(...new Uint8Array(buffer)));
+                    : typeof buffer === 'string'
+                      ? Uint8Array.from(atob(buffer), c => c.charCodeAt(0))
+                      : new Uint8Array(buffer);
 
-                  // Upload vers Storage
-                  const fileExt = attachment.filename?.split('.').pop() || 'bin';
-                  const fileName = `emails/${insertedEmail.id}/${Date.now()}_${attachment.filename}`;
-                  const binaryData = Uint8Array.from(atob(base64Content), c => c.charCodeAt(0));
+                  const safeFilename = (attachment.filename || 'document.bin')
+                    .replace(/[^a-zA-Z0-9._-]/g, '_');
+                  const storagePath = `00000000-0000-0000-0000-000000000001/${insertedEmail.id}/${Date.now()}_${safeFilename}`;
 
                   const { error: uploadError } = await supabase.storage
-                    .from('attachments')
-                    .upload(fileName, binaryData, {
+                    .from('email-attachments')
+                    .upload(storagePath, binaryData, {
                       contentType: attachment.contentType || 'application/octet-stream',
                       upsert: false
                     });
@@ -353,29 +353,20 @@ Deno.serve(async (req) => {
                     continue;
                   }
 
-                  const { data: urlData } = supabase.storage
-                    .from('attachments')
-                    .getPublicUrl(fileName);
-
-                  // Créer l'entrée dans email_attachments
-                  await supabase.from('email_attachments').insert({
+                  const { error: insertAttErr } = await supabase.from('email_attachments').insert({
                     email_message_id: insertedEmail.id,
-                    file_name: attachment.filename,
-                    file_type: fileExt,
-                    file_size: attachment.size,
-                    mime_type: attachment.contentType,
-                    storage_path: fileName,
-                    storage_bucket: 'attachments',
-                    download_url: urlData.publicUrl,
-                    classification_status: 'pending',
-                    metadata: {
-                      email_subject: email.subject,
-                      email_from: fromAddress,
-                      processed_at: new Date().toISOString()
-                    }
+                    filename: attachment.filename || safeFilename,
+                    content_type: attachment.contentType || 'application/octet-stream',
+                    file_size: binaryData.byteLength || attachment.size || 0,
+                    storage_path: storagePath,
+                    status: 'pending',
                   });
 
-                  console.log(`Uploaded attachment: ${attachment.filename}`);
+                  if (insertAttErr) {
+                    console.error('Insert email_attachments error:', insertAttErr);
+                  } else {
+                    console.log(`Uploaded attachment: ${attachment.filename} -> ${storagePath}`);
+                  }
                 } catch (attError) {
                   console.error(`Error processing attachment ${attachment.filename}:`, attError);
                 }
