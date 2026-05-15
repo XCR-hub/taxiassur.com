@@ -178,7 +178,9 @@ serve(async (req: Request) => {
       phone = customerPhone || null;
     }
 
-    const reference = customReference || generateReference();
+    const reference = customReference
+      ? customReference.trim().replace(/[^a-zA-Z0-9_-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '').substring(0, 50)
+      : generateReference();
     const dateTime = formatMoneticoDate(new Date());
     const montant = `${parseFloat(amount).toFixed(2)}EUR`;
     const customerName = `${firstName} ${lastName}`.trim();
