@@ -149,10 +149,12 @@ export const DocumentReminderPanel: React.FC<DocumentReminderPanelProps> = ({
         }
         sendResult = data;
       } else if (channel === 'sms' && leadPhone) {
-        const { data, error } = await supabase.functions.invoke('send-sms', {
+        const { data, error } = await supabase.functions.invoke('send-sms-brevo', {
           body: {
             to: leadPhone,
-            message: message
+            content: message,
+            lead_id: leadId,
+            tag: 'document-reminder'
           }
         });
         if (error || !data?.success) {

@@ -328,10 +328,10 @@ L'equipe TaxiAssur`,
           lead_id: leadId
         };
       } else if (suggestion.type === 'sms') {
-        endpoint = 'send-sms';
+        endpoint = 'send-sms-brevo';
         payload = {
           to: leadPhone,
-          message: editingSuggestion === suggestion.id ? editedContent : suggestion.content,
+          content: editingSuggestion === suggestion.id ? editedContent : suggestion.content,
           lead_id: leadId
         };
       } else if (suggestion.type === 'whatsapp') {

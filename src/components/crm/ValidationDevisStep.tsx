@@ -452,15 +452,15 @@ L'équipe TaxiAssur`;
 
       const message = `${leadFirstName || 'Bonjour'}, vos 5 devis d'assurance taxi sont prêts ! Consultez-les : ${prospectUrl} - TaxiAssur`;
 
-      const { error } = await supabase.functions.invoke('send-sms', {
+      const { data, error } = await supabase.functions.invoke('send-sms-brevo', {
         body: {
           to: leadPhone,
-          message: message,
-          lead_id: leadId
+          content: message,
+          lead_id: leadId,
+          tag: 'devis-notification'
         }
       });
-
-      if (error) throw error;
+      if (error || !data?.success) throw new Error(error?.message || data?.error);
 
       toast.success('✅ SMS envoyé avec succès !');
     } catch (error) {

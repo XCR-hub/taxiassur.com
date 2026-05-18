@@ -63,7 +63,7 @@ export const channelEngineService = {
   }) {
     const functionMap = {
       email: 'send-crm-email',
-      sms: 'send-sms',
+      sms: 'send-sms-brevo',
       whatsapp: 'send-whatsapp'
     };
 

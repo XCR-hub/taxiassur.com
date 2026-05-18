@@ -356,31 +356,19 @@ export default function CollecteDocumentsStep({
           });
 
       } else if (template.channel === 'sms') {
-        // Send SMS
-        const { data: smsResult, error } = await supabase.functions.invoke('send-sms', {
+        const { data: smsResult, error } = await supabase.functions.invoke('send-sms-brevo', {
           body: {
             to: leadPhone,
-            message: messageContent,
-            leadId: leadId
+            content: messageContent,
+            lead_id: leadId,
+            tag: 'documents-request'
           }
         });
 
-        // Vérifier l'erreur ET le résultat
         if (error || !smsResult?.success) {
           const errorMsg = error?.message || smsResult?.error || 'Erreur inconnue';
           throw new Error(`SMS non envoyé: ${errorMsg}`);
         }
-
-        await supabase
-          .from('crm_interactions')
-          .insert({
-            lead_id: leadId,
-            type: 'sms',
-            channel: 'sms',
-            body: messageContent,
-            status: 'sent',
-            metadata: { template_key: template.template_key }
-          });
 
       } else if (template.channel === 'whatsapp') {
         // Send WhatsApp

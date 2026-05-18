@@ -1,4 +1,5 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { createClient } from "npm:@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -6,113 +7,101 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
 };
 
-interface SMSRequest {
-  to: string;
-  body: string;
-}
-
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, {
-      status: 200,
-      headers: corsHeaders,
-    });
+    return new Response(null, { status: 200, headers: corsHeaders });
   }
 
   try {
-    const { to, body } = await req.json() as SMSRequest;
+    const payload = await req.json();
+    const to = payload.to;
+    const content = payload.body || payload.message || payload.content;
+    const lead_id = payload.lead_id || payload.leadId;
 
-    if (!to || !body) {
+    if (!to || !content) {
       return new Response(
-        JSON.stringify({
-          success: false,
-          error: "Missing required fields: to, body"
-        }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
+        JSON.stringify({ success: false, error: "Missing required fields: to and body/message/content" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const TWILIO_ACCOUNT_SID = Deno.env.get("TWILIO_ACCOUNT_SID");
-    const TWILIO_AUTH_TOKEN = Deno.env.get("TWILIO_AUTH_TOKEN");
-    const TWILIO_MESSAGING_SERVICE_SID = Deno.env.get("TWILIO_MESSAGING_SERVICE_SID");
-
-    if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN || !TWILIO_MESSAGING_SERVICE_SID) {
-      console.error("Twilio credentials not configured");
+    const brevoApiKey = Deno.env.get("BREVO_API_KEY");
+    if (!brevoApiKey) {
       return new Response(
-        JSON.stringify({
-          success: false,
-          error: "SMS service not configured"
-        }),
-        {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
+        JSON.stringify({ success: false, error: "SMS service not configured (BREVO_API_KEY missing)" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`;
-    
-    const authHeader = `Basic ${btoa(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`)}`;
+    let phoneNumber = to.replace(/[\s\-\.]/g, "");
+    if (phoneNumber.startsWith("0")) {
+      phoneNumber = "33" + phoneNumber.substring(1);
+    }
+    if (!phoneNumber.startsWith("+")) {
+      phoneNumber = "+" + phoneNumber;
+    }
 
-    const formData = new URLSearchParams();
-    formData.append('To', to);
-    formData.append('MessagingServiceSid', TWILIO_MESSAGING_SERVICE_SID);
-    formData.append('Body', body);
-
-    const twilioResponse = await fetch(twilioUrl, {
+    const brevoResponse = await fetch("https://api.brevo.com/v3/transactionalSMS/sms", {
       method: "POST",
       headers: {
-        "Authorization": authHeader,
-        "Content-Type": "application/x-www-form-urlencoded"
+        "api-key": brevoApiKey,
+        "Content-Type": "application/json",
+        Accept: "application/json",
       },
-      body: formData.toString()
+      body: JSON.stringify({
+        type: "transactional",
+        unicodeEnabled: true,
+        sender: "TaxiAssur",
+        recipient: phoneNumber,
+        content: content,
+        tag: payload.tag || "crm-sms",
+      }),
     });
 
-    if (!twilioResponse.ok) {
-      const errorText = await twilioResponse.text();
-      console.error("Twilio API error:", errorText);
+    const brevoData = await brevoResponse.json();
+
+    if (!brevoResponse.ok) {
+      console.error("Brevo SMS error:", brevoData);
       return new Response(
-        JSON.stringify({
-          success: false,
-          error: `SMS service error: ${twilioResponse.status}`,
-          details: errorText
-        }),
-        {
-          status: twilioResponse.status,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
+        JSON.stringify({ success: false, error: "Failed to send SMS", details: brevoData }),
+        { status: brevoResponse.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const result = await twilioResponse.json();
+    if (lead_id) {
+      const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+      const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+      const supabase = createClient(supabaseUrl, supabaseKey);
+
+      await supabase.from("crm_interactions").insert({
+        lead_id,
+        type: "sms",
+        direction: "outbound",
+        subject: `SMS envoye au ${to}`,
+        content: content,
+        metadata: {
+          message_id: brevoData.messageId,
+          reference: brevoData.reference,
+          phone: phoneNumber,
+          provider: "brevo",
+        },
+      });
+    }
 
     return new Response(
       JSON.stringify({
         success: true,
-        messageSid: result.sid,
-        status: result.status,
-        message: "SMS sent successfully via Twilio"
+        messageId: brevoData.messageId,
+        reference: brevoData.reference,
+        smsCount: brevoData.smsCount || 1,
       }),
-      {
-        status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      }
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-
   } catch (error) {
     console.error("Send SMS error:", error);
     return new Response(
-      JSON.stringify({
-        success: false,
-        error: error instanceof Error ? error.message : "Unknown error"
-      }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      }
+      JSON.stringify({ success: false, error: error instanceof Error ? error.message : "Unknown error" }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });

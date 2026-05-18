@@ -304,19 +304,21 @@ const QuoteManager: React.FC<QuoteManagerProps> = ({ lead, onQuoteSent, onStatus
 
       const functionName = {
         email: 'send-crm-email',
-        sms: 'send-sms',
+        sms: 'send-sms-brevo',
         whatsapp: 'send-whatsapp'
       }[selectedChannel];
 
       const payload: Record<string, unknown> = {
         lead_id: lead.id,
         to: recipient,
-        body: customBody
       };
 
       if (selectedChannel === 'email') {
         payload.subject = customSubject;
+        payload.body = customBody;
         payload.attachment_url = uploadedQuote.file_path;
+      } else {
+        payload.content = customBody;
       }
 
       const { error: sendError } = await supabase.functions.invoke(functionName, {
