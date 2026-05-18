@@ -15,6 +15,7 @@ import ContractSignatureManager from '@/components/crm/ContractSignatureManager'
 import CompleteTimeline from '@/components/crm/CompleteTimeline';
 import LeadDeleteSecure from '@/components/crm/LeadDeleteSecure';
 import SMSSendModal from '@/components/crm/SMSSendModal';
+import SMSConversationPanel from '@/components/crm/SMSConversationPanel';
 
 interface Lead {
   id: string;
@@ -859,11 +860,16 @@ const CRMLeadDetail: React.FC = () => {
         </div>
 
         <div style={{ display: activeTab === 'history' ? 'block' : 'none' }}>
-          <div className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <CompleteTimeline
               leadId={leadId!}
               leadEmail={lead.email}
               leadPhone={lead.phone}
+            />
+            <SMSConversationPanel
+              leadId={leadId!}
+              leadPhone={lead.phone || null}
+              leadFirstName={lead.first_name || 'Prospect'}
             />
           </div>
         </div>

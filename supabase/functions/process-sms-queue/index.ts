@@ -4,128 +4,70 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-  "Access-Control-Allow-Headers":
-    "Content-Type, Authorization, X-Client-Info, Apikey",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
 };
+
+const OUR_NUMBER = "+33744410598";
 
 const SMS_TEMPLATES: Record<string, (vars: any) => string> = {
   new_lead_prospect: (vars) =>
-    `TaxiAssur - Bonjour ${vars.first_name || vars.lead_name || ""}, votre demande de devis est confirmee ! Un expert vous rappelle sous 15 min. Deposez vos documents ici : ${vars.upload_link || vars.prospect_link || "https://taxiassur.com"}`,
-
+    `TaxiAssur - Bonjour ${vars.first_name || ""}, votre demande de devis est confirmee ! Un expert vous rappelle sous 15 min. Deposez vos documents : ${vars.upload_link || vars.prospect_link || "https://taxiassur.com"}`,
   new_lead_team: (vars) =>
-    `[TAXIASSUR] Nouveau lead : ${vars.lead_name || "Prospect"} - Tel: ${vars.lead_phone || "N/A"} - ${vars.lead_city || ""} - A rappeler sous 15 min !`,
-
+    `[TAXIASSUR] Nouveau lead : ${vars.lead_name || "Prospect"} - Tel: ${vars.lead_phone || "N/A"} - ${vars.lead_city || ""} - A rappeler !`,
   new_lead_commercial: (vars) =>
-    `[TAXIASSUR] Nouveau lead : ${vars.lead_name || "Prospect"} - Tel: ${vars.lead_phone || "N/A"} - ${vars.lead_city || ""} - A rappeler sous 15 min !`,
-
+    `[TAXIASSUR] Nouveau lead : ${vars.lead_name || "Prospect"} - Tel: ${vars.lead_phone || "N/A"} - A rappeler sous 15 min !`,
   new_lead_confirmation: (vars) =>
-    `TaxiAssur - Bonjour ${vars.first_name || vars.lead_name || ""}, votre demande est confirmee ! Expert dispo sous 15 min. Deposez vos pieces : ${vars.upload_link || "https://taxiassur.com"}`,
-
+    `TaxiAssur - Bonjour ${vars.first_name || ""}, demande confirmee ! Expert dispo sous 15 min. Deposez vos pieces : ${vars.upload_link || "https://taxiassur.com"}`,
   relance_documents: (vars) =>
-    `TaxiAssur - ${vars.first_name || "Bonjour"}, vos documents sont en attente pour finaliser votre devis. Deposez-les ici : ${vars.upload_link || "https://taxiassur.com"} - Tel: 01 80 85 57 86`,
-
+    `TaxiAssur - ${vars.first_name || "Bonjour"}, vos documents sont en attente pour finaliser votre devis. Deposez-les : ${vars.upload_link || "https://taxiassur.com"}`,
   document_reminder: (vars) =>
-    `TaxiAssur - ${vars.first_name || "Bonjour"}, vos documents sont en attente pour votre devis. Deposez-les maintenant : ${vars.upload_link || "https://taxiassur.com"}`,
-
+    `TaxiAssur - ${vars.first_name || "Bonjour"}, documents en attente pour votre devis. Deposez-les : ${vars.upload_link || "https://taxiassur.com"}`,
   quote_ready: (vars) =>
-    `TaxiAssur - ${vars.first_name || "Bonjour"}, votre devis est pret ! Consultez-le et choisissez votre offre : ${vars.upload_link || "https://taxiassur.com"} - Tel: 01 80 85 57 86`,
-
+    `TaxiAssur - ${vars.first_name || "Bonjour"}, votre devis est pret ! Consultez-le : ${vars.upload_link || "https://taxiassur.com"}`,
   devis_envoye: (vars) =>
-    `TaxiAssur - ${vars.first_name || "Bonjour"}, votre devis est disponible ! Consultez-le ici : ${vars.upload_link || "https://taxiassur.com"}`,
-
+    `TaxiAssur - ${vars.first_name || "Bonjour"}, votre devis est disponible ! Consultez-le : ${vars.upload_link || "https://taxiassur.com"}`,
   relance_devis: (vars) =>
-    `TaxiAssur - ${vars.first_name || "Bonjour"}, votre devis vous attend ! Offre limitee. Consultez-le : ${vars.upload_link || "https://taxiassur.com"} - Tel: 01 80 85 57 86`,
-
-  quote_reminder: (vars) =>
-    `TaxiAssur - ${vars.first_name || "Bonjour"}, n'oubliez pas votre devis ! Consultez-le ici : ${vars.upload_link || "https://taxiassur.com"}`,
-
+    `TaxiAssur - ${vars.first_name || "Bonjour"}, votre devis expire bientot ! Consultez-le : ${vars.upload_link || "https://taxiassur.com"}`,
   relance_paiement: (vars) =>
-    `TaxiAssur - ${vars.first_name || "Bonjour"}, votre devis est accepte ! Finalisez le paiement pour activer votre assurance : ${vars.upload_link || "https://taxiassur.com"}`,
-
+    `TaxiAssur - ${vars.first_name || "Bonjour"}, finalisez le paiement pour activer votre assurance : ${vars.upload_link || "https://taxiassur.com"}`,
   payment_reminder: (vars) =>
-    `TaxiAssur - ${vars.first_name || "Bonjour"}, finalisez votre paiement pour activer votre couverture : ${vars.upload_link || "https://taxiassur.com"}`,
-
+    `TaxiAssur - ${vars.first_name || "Bonjour"}, finalisez votre paiement : ${vars.upload_link || "https://taxiassur.com"}`,
   relance_signature: (vars) =>
-    `TaxiAssur - ${vars.first_name || "Bonjour"}, signez votre contrat en 2 min : ${vars.upload_link || "https://taxiassur.com"} - Votre couverture demarre des la signature !`,
-
-  signature_reminder: (vars) =>
-    `TaxiAssur - ${vars.first_name || "Bonjour"}, votre contrat attend votre signature. C'est rapide et securise : ${vars.upload_link || "https://taxiassur.com"}`,
-
+    `TaxiAssur - ${vars.first_name || "Bonjour"}, signez votre contrat en 2 min : ${vars.upload_link || "https://taxiassur.com"}`,
   welcome_client: (vars) =>
-    `TaxiAssur - Bienvenue ${vars.first_name || ""} ! Votre contrat est actif. Accedez a votre espace client : https://taxiassur.com/espace-client - Tel: 01 80 85 57 86`,
-
+    `TaxiAssur - Bienvenue ${vars.first_name || ""} ! Contrat actif. Espace client : https://taxiassur.com/espace-client`,
   client_actif: (vars) =>
-    `TaxiAssur - Felicitations ${vars.first_name || ""} ! Votre assurance est active. Espace client : https://taxiassur.com/espace-client`,
+    `TaxiAssur - Felicitations ${vars.first_name || ""} ! Assurance active. Espace client : https://taxiassur.com/espace-client`,
 };
 
-async function sendSMS(
-  phone: string,
-  content: string,
-  leadId?: string
-): Promise<{ success: boolean; messageId?: string }> {
+async function sendSMSViaBrevo(phone: string, content: string, tag?: string): Promise<{ success: boolean; messageId?: string }> {
   const brevoApiKey = Deno.env.get("BREVO_API_KEY");
-  if (!brevoApiKey) {
-    throw new Error("BREVO_API_KEY not configured");
-  }
+  if (!brevoApiKey) throw new Error("BREVO_API_KEY not configured");
 
   let phoneNumber = phone.replace(/[\s\-\.]/g, "");
-  if (phoneNumber.startsWith("0")) {
-    phoneNumber = "33" + phoneNumber.substring(1);
-  }
-  if (!phoneNumber.startsWith("+")) {
-    phoneNumber = "+" + phoneNumber;
-  }
+  if (phoneNumber.startsWith("0")) phoneNumber = "33" + phoneNumber.substring(1);
+  if (!phoneNumber.startsWith("+")) phoneNumber = "+" + phoneNumber;
 
-  const response = await fetch(
-    "https://api.brevo.com/v3/transactionalSMS/sms",
-    {
-      method: "POST",
-      headers: {
-        "api-key": brevoApiKey,
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-      body: JSON.stringify({
-        type: "transactional",
-        unicodeEnabled: true,
-        sender: "TaxiAssur",
-        recipient: phoneNumber,
-        content: content,
-        tag: "workflow-sms",
-      }),
-    }
-  );
+  const response = await fetch("https://api.brevo.com/v3/transactionalSMS/sms", {
+    method: "POST",
+    headers: {
+      "api-key": brevoApiKey,
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+    body: JSON.stringify({
+      type: "transactional",
+      unicodeEnabled: true,
+      sender: "TaxiAssur",
+      recipient: phoneNumber,
+      content,
+      tag: tag || "workflow-sms",
+    }),
+  });
 
   const data = await response.json();
-
-  if (!response.ok) {
-    console.error("Brevo SMS error:", data);
-    throw new Error(data.message || "SMS send failed");
-  }
-
-  // Log CRM interaction
-  if (leadId) {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
-    await supabase.from("crm_interactions").insert({
-      lead_id: leadId,
-      type: "sms",
-      direction: "outbound",
-      subject: `SMS workflow envoye`,
-      content: content,
-      metadata: {
-        message_id: data.messageId,
-        reference: data.reference,
-        phone: phoneNumber,
-        provider: "brevo",
-        automated: true,
-      },
-    });
-  }
-
-  return { success: true, messageId: data.messageId };
+  if (!response.ok) throw new Error(data.message || `SMS failed: ${response.status}`);
+  return { success: true, messageId: data.messageId?.toString() };
 }
 
 Deno.serve(async (req: Request) => {
@@ -138,9 +80,64 @@ Deno.serve(async (req: Request) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    console.log("Processing SMS queue...");
+    let totalSent = 0;
+    let totalFailed = 0;
 
-    const { data: pending, error: fetchError } = await supabase
+    // 1. Process sms_messages with pending status (new conversation system)
+    const { data: pendingMessages } = await supabase
+      .from("sms_messages")
+      .select("*")
+      .eq("status", "pending")
+      .eq("direction", "outbound")
+      .order("created_at", { ascending: true })
+      .limit(20);
+
+    for (const msg of pendingMessages || []) {
+      try {
+        const result = await sendSMSViaBrevo(msg.to_number, msg.content, msg.workflow_trigger || "crm-conversation");
+
+        await supabase.from("sms_messages").update({
+          status: "sent",
+          provider_message_id: result.messageId,
+          delivered_at: new Date().toISOString(),
+        }).eq("id", msg.id);
+
+        if (msg.conversation_id) {
+          await supabase.from("sms_conversations").update({
+            last_message_at: new Date().toISOString(),
+          }).eq("id", msg.conversation_id);
+        }
+
+        if (msg.lead_id) {
+          await supabase.from("crm_interactions").insert({
+            lead_id: msg.lead_id,
+            type: "sms",
+            direction: "outbound",
+            subject: msg.is_automated ? "SMS automatique envoye" : "SMS envoye",
+            content: msg.content,
+            metadata: {
+              conversation_id: msg.conversation_id,
+              message_id: msg.id,
+              workflow: msg.workflow_trigger,
+              provider_message_id: result.messageId,
+              is_automated: msg.is_automated,
+            },
+          });
+        }
+
+        totalSent++;
+      } catch (err) {
+        console.error(`Failed msg ${msg.id}:`, err);
+        await supabase.from("sms_messages").update({
+          status: "failed",
+          metadata: { ...((msg.metadata as any) || {}), error: String(err) },
+        }).eq("id", msg.id);
+        totalFailed++;
+      }
+    }
+
+    // 2. Process legacy sms_queue table
+    const { data: pending } = await supabase
       .from("sms_queue")
       .select("*")
       .eq("status", "pending")
@@ -148,90 +145,160 @@ Deno.serve(async (req: Request) => {
       .order("priority", { ascending: false })
       .limit(20);
 
-    if (fetchError) throw fetchError;
-
-    if (!pending || pending.length === 0) {
-      return new Response(
-        JSON.stringify({
-          success: true,
-          processed: 0,
-          message: "No pending SMS",
-        }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    console.log(`Found ${pending.length} pending SMS`);
-
-    let sent = 0;
-    let failed = 0;
-
-    for (const sms of pending) {
+    for (const sms of pending || []) {
       try {
-        await supabase
-          .from("sms_queue")
-          .update({ status: "processing" })
-          .eq("id", sms.id);
+        await supabase.from("sms_queue").update({ status: "processing" }).eq("id", sms.id);
 
         const vars = sms.variables || {};
         const templateFn = SMS_TEMPLATES[sms.template_key];
+        const content = templateFn ? templateFn(vars) : (sms.content || "");
 
-        let content: string;
-        if (templateFn) {
-          content = templateFn(vars);
-        } else if (sms.content) {
-          content = sms.content;
-        } else {
-          throw new Error(`Unknown SMS template: ${sms.template_key}`);
+        if (!content) throw new Error(`No content for template: ${sms.template_key}`);
+
+        const result = await sendSMSViaBrevo(sms.recipient, content, sms.template_key);
+
+        await supabase.from("sms_queue").update({
+          status: "sent",
+          sent_at: new Date().toISOString(),
+          attempts: (sms.attempts || 0) + 1,
+          metadata: { ...(sms.metadata || {}), message_id: result.messageId },
+        }).eq("id", sms.id);
+
+        // Also insert into sms_messages for conversation tracking
+        if (sms.lead_id) {
+          const { data: convId } = await supabase.rpc("get_or_create_sms_conversation", {
+            p_phone_number: sms.recipient,
+            p_lead_id: sms.lead_id,
+          });
+
+          await supabase.from("sms_messages").insert({
+            conversation_id: convId,
+            lead_id: sms.lead_id,
+            direction: "outbound",
+            from_number: OUR_NUMBER,
+            to_number: sms.recipient,
+            content,
+            status: "sent",
+            provider_message_id: result.messageId,
+            is_automated: true,
+            workflow_trigger: sms.template_key,
+            delivered_at: new Date().toISOString(),
+          });
+
+          await supabase.from("crm_interactions").insert({
+            lead_id: sms.lead_id,
+            type: "sms",
+            direction: "outbound",
+            subject: "SMS workflow envoye",
+            content,
+            metadata: { provider: "brevo", message_id: result.messageId, template: sms.template_key, automated: true },
+          });
         }
 
-        const result = await sendSMS(sms.recipient, content, sms.lead_id);
-
-        await supabase
-          .from("sms_queue")
-          .update({
-            status: "sent",
-            sent_at: new Date().toISOString(),
-            attempts: (sms.attempts || 0) + 1,
-            metadata: { ...(sms.metadata || {}), message_id: result.messageId },
-          })
-          .eq("id", sms.id);
-
-        sent++;
-        console.log(
-          `SMS sent to ${sms.recipient} (template: ${sms.template_key})`
-        );
+        totalSent++;
       } catch (err) {
-        console.error(`Failed to send SMS ${sms.id}:`, err);
-
-        await supabase
-          .from("sms_queue")
-          .update({
-            status: "failed",
-            error_message:
-              err instanceof Error ? err.message : "Unknown error",
-            attempts: (sms.attempts || 0) + 1,
-          })
-          .eq("id", sms.id);
-
-        failed++;
+        console.error(`Failed sms_queue ${sms.id}:`, err);
+        await supabase.from("sms_queue").update({
+          status: "failed",
+          error_message: err instanceof Error ? err.message : "Unknown error",
+          attempts: (sms.attempts || 0) + 1,
+        }).eq("id", sms.id);
+        totalFailed++;
       }
     }
 
-    console.log(`SMS processed: ${pending.length}, Sent: ${sent}, Failed: ${failed}`);
+    // 3. Process automated workflow rules (no_response triggers)
+    await processNoResponseWorkflows(supabase);
 
     return new Response(
-      JSON.stringify({ success: true, processed: pending.length, sent, failed }),
+      JSON.stringify({ success: true, sent: totalSent, failed: totalFailed }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
-    console.error("SMS queue processor error:", error);
+    console.error("SMS queue error:", error);
     return new Response(
-      JSON.stringify({
-        success: false,
-        error: error instanceof Error ? error.message : "Unknown error",
-      }),
+      JSON.stringify({ success: false, error: error instanceof Error ? error.message : "Unknown error" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });
+
+async function processNoResponseWorkflows(supabase: any) {
+  const now = new Date();
+  const currentHour = now.getHours();
+
+  const { data: rules } = await supabase
+    .from("sms_workflow_rules")
+    .select("*")
+    .eq("is_active", true)
+    .eq("trigger_type", "no_response")
+    .order("priority", { ascending: false });
+
+  if (!rules?.length) return;
+
+  for (const rule of rules) {
+    if (currentHour < (rule.send_window_start || 8) || currentHour >= (rule.send_window_end || 20)) continue;
+
+    const config = rule.trigger_config;
+    const hoursSince = config.hours_since_last_contact || 24;
+    const cutoff = new Date(now.getTime() - hoursSince * 3600000).toISOString();
+
+    let query = supabase
+      .from("crm_leads")
+      .select("id, first_name, last_name, phone, email, access_token, pipeline_stage")
+      .not("phone", "is", null)
+      .lt("updated_at", cutoff)
+      .limit(5);
+
+    if (config.condition === "missing_documents") query = query.eq("pipeline_stage", "collecte_documents");
+    else if (config.condition === "quotes_not_viewed") query = query.in("pipeline_stage", ["saisie_devis", "validation_devis"]);
+    else if (config.condition === "no_activity") query = query.in("pipeline_stage", ["nouveau_lead", "collecte_documents"]);
+    else continue;
+
+    const { data: leads } = await query;
+    if (!leads?.length) continue;
+
+    for (const lead of leads) {
+      const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
+      const { count } = await supabase.from("sms_messages")
+        .select("id", { count: "exact", head: true })
+        .eq("lead_id", lead.id).eq("direction", "outbound")
+        .gte("created_at", todayStart.toISOString());
+
+      if ((count || 0) >= (rule.max_per_lead_per_day || 3)) continue;
+
+      const { count: alreadySent } = await supabase.from("sms_messages")
+        .select("id", { count: "exact", head: true })
+        .eq("lead_id", lead.id).eq("workflow_trigger", rule.name)
+        .gte("created_at", cutoff);
+
+      if ((alreadySent || 0) > 0) continue;
+
+      const prospectUrl = lead.access_token
+        ? `https://taxiassur.com/espace-prospect?token=${lead.access_token}`
+        : "https://taxiassur.com";
+
+      const message = rule.message_template
+        .replace(/\{\{first_name\}\}/g, lead.first_name || "")
+        .replace(/\{\{last_name\}\}/g, lead.last_name || "")
+        .replace(/\{\{prospect_url\}\}/g, prospectUrl)
+        .replace(/\{\{email\}\}/g, lead.email || "");
+
+      const { data: convId } = await supabase.rpc("get_or_create_sms_conversation", {
+        p_phone_number: lead.phone, p_lead_id: lead.id,
+      });
+
+      await supabase.from("sms_messages").insert({
+        conversation_id: convId,
+        lead_id: lead.id,
+        direction: "outbound",
+        from_number: OUR_NUMBER,
+        to_number: lead.phone,
+        content: message,
+        status: "pending",
+        is_automated: true,
+        workflow_trigger: rule.name,
+      });
+    }
+  }
+}
