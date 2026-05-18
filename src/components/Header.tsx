@@ -105,14 +105,14 @@ const Header: React.FC = () => {
       <div className="container-max py-3 sm:py-4">
         <div className="flex justify-between items-center">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2 sm:gap-3 flex-shrink-0 min-h-[44px] py-1" aria-label="TaxiAssur — Accueil">
-            <div className="w-9 h-9 sm:w-11 sm:h-11 bg-gradient-to-br from-yellow-500 to-amber-500 rounded-xl flex items-center justify-center shadow-lg flex-shrink-0">
-              <span className="text-black font-black text-sm sm:text-base" aria-hidden="true">TA</span>
-            </div>
-            <div>
-              <span className="text-xl sm:text-2xl lg:text-3xl font-black text-white tracking-tight">TaxiAssur</span>
-              <span className="hidden sm:block text-[10px] text-yellow-400 tracking-widest font-bold uppercase">Excellence Coverage Risks</span>
-            </div>
+          <Link to="/" className="flex items-center flex-shrink-0 min-h-[44px] py-1" aria-label="TaxiAssur — Accueil">
+            <img
+              src="/logo_TaxiAssu.png"
+              alt="TaxiAssur"
+              className="h-10 sm:h-12 lg:h-14 w-auto"
+              width={180}
+              height={56}
+            />
           </Link>
 
           {/* Desktop Navigation */}
