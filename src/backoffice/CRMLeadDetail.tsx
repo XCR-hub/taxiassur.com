@@ -883,6 +883,7 @@ const CRMLeadDetail: React.FC = () => {
           leadId={leadId!}
           leadName={leadName}
           leadPhone={lead.phone}
+          accessToken={lead.access_token}
           onSent={() => {
             loadStats();
             showToast('SMS envoye avec succes', 'success');

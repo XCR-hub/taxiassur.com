@@ -9,6 +9,7 @@ interface SMSSendModalProps {
   leadId: string;
   leadName: string;
   leadPhone: string;
+  accessToken?: string;
   onSent?: () => void;
 }
 
@@ -16,22 +17,22 @@ const SMS_TEMPLATES = [
   {
     id: 'rappel_documents',
     label: 'Rappel documents',
-    content: 'Bonjour {{prenom}}, vos documents sont incomplets pour votre dossier assurance taxi. Merci de les envoyer rapidement. - TaxiAssur',
+    content: 'Bonjour {{prenom}}, vos documents sont incomplets pour votre dossier assurance taxi. Deposez-les ici : {{lien}} - TaxiAssur',
   },
   {
     id: 'devis_disponible',
     label: 'Devis disponible',
-    content: 'Bonjour {{prenom}}, votre devis assurance taxi est pret ! Consultez-le sur votre espace : {{lien}}. - TaxiAssur',
+    content: 'Bonjour {{prenom}}, votre devis assurance taxi est pret ! Consultez-le sur votre espace : {{lien}} - TaxiAssur',
   },
   {
     id: 'relance_signature',
     label: 'Relance signature',
-    content: 'Bonjour {{prenom}}, votre contrat attend votre signature. Connectez-vous a votre espace pour finaliser. - TaxiAssur',
+    content: 'Bonjour {{prenom}}, votre contrat attend votre signature. Finalisez ici : {{lien}} - TaxiAssur',
   },
   {
     id: 'confirmation_paiement',
     label: 'Confirmation paiement',
-    content: 'Bonjour {{prenom}}, votre paiement a bien ete recu. Votre attestation sera disponible sous 24h. - TaxiAssur',
+    content: 'Bonjour {{prenom}}, votre paiement a bien ete recu. Votre attestation sera disponible sous 24h sur votre espace : {{lien}} - TaxiAssur',
   },
   {
     id: 'rdv_rappel',
@@ -46,6 +47,7 @@ const SMSSendModal: React.FC<SMSSendModalProps> = ({
   leadId,
   leadName,
   leadPhone,
+  accessToken,
   onSent,
 }) => {
   const [message, setMessage] = useState('');
@@ -56,11 +58,14 @@ const SMSSendModal: React.FC<SMSSendModalProps> = ({
   if (!isOpen) return null;
 
   const firstName = leadName.split(' ')[0] || 'Client';
+  const prospectLink = accessToken
+    ? `https://taxiassur.com/espace-prospect/${accessToken}`
+    : 'https://taxiassur.com';
 
   const applyTemplate = (template: typeof SMS_TEMPLATES[0]) => {
     const filled = template.content
       .replace('{{prenom}}', firstName)
-      .replace('{{lien}}', 'taxiassur.com/espace');
+      .replace('{{lien}}', prospectLink);
     setMessage(filled);
     setCharCount(filled.length);
   };
