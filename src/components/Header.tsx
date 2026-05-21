@@ -107,7 +107,7 @@ const Header: React.FC = () => {
           {/* Logo */}
           <Link to="/" className="flex items-center flex-shrink-0 min-h-[44px] py-1" aria-label="TaxiAssur — Accueil">
             <img
-              src="/logo_TaxiAssu.png"
+              src="/photo_profil_noir_facebook_TaxiAssur.png"
               alt="TaxiAssur"
               className="h-10 sm:h-12 lg:h-14 w-auto"
               width={180}
