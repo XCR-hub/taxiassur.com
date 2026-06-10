@@ -68,7 +68,8 @@ function searchPexelsImage($query, $orientation = 'landscape') {
             "Authorization: {$apiKey}",
             "Accept: application/json"
         ],
-        CURLOPT_TIMEOUT => 10
+        CURLOPT_CONNECTTIMEOUT => 10,
+        CURLOPT_TIMEOUT => 30
     ]);
 
     $response = curl_exec($ch);

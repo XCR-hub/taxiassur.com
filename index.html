@@ -108,8 +108,8 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" media="print" onload="this.media='all';this.onload=null;" />
   <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" /></noscript>
 
-  <!-- env-config loaded async to avoid render blocking -->
-  <script src="/env-config.js" async></script>
+  <!-- env-config loaded before app to ensure variables are available -->
+  <script src="/env-config.js"></script>
 
   <!-- GTM + GA4: deferred until after page load to not compete with LCP -->
   <script>

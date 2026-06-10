@@ -17,16 +17,7 @@ const SITE_URL = 'https://taxiassur.com';
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-const BROKEN_URLS = new Set([
-  '/actualites/theo-le-taxi-france-tv-1766881140212',
-  '/assurance-taxi-grenoble',
-  '/assurance-taxi-orleans',
-  '/actualites/franchise-assurance-taxi-ce-qui-change-cette-annee',
-  '/blog/double-activite-taxi-vtc-assurance',
-  '/actualites/tesla-model-3-nouvelle-star-taxis-parisiens',
-  '/blog/comparatif-assurances-taxi-2025-axa-generali-covea',
-  '/assurance-taxi-angers',
-]);
+const BROKEN_URLS = new Set([]);
 
 function isBlocked(loc) {
   const path = loc.replace(SITE_URL, '');
@@ -129,7 +120,7 @@ async function generateSitemap() {
   console.log('📰 Récupération des actualités...');
   try {
     const { data: news, error } = await supabase
-      .from('news')
+      .from('news_articles')
       .select('slug, published_at')
       .eq('status', 'published')
       .order('published_at', { ascending: false })

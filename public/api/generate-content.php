@@ -181,6 +181,9 @@ curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode([
     'max_tokens' => 4000
 ]));
 
+curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
+curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+
 $response = curl_exec($ch);
 $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 $curlError = curl_error($ch);
