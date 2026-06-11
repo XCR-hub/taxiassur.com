@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Upload, CheckCircle2, X, FileText, Send, Loader2, Building2, AlertCircle, Plus, CheckCheck } from 'lucide-react';
+import { Upload, CheckCircle2, X, FileText, Send, Loader2, Building2, AlertCircle, Plus, CheckCheck, Mail } from 'lucide-react';
 import { toast } from '@/lib/toast';
 import { generateAdviceSheetHtml } from '@/lib/advice-sheet-generator';
 import SubmitQuoteModal from './SubmitQuoteModal';
+import SendToInsurerModal from './SendToInsurerModal';
 
 interface SaisieDevisStepProps {
   leadId: string;
@@ -47,6 +48,9 @@ export default function SaisieDevisStep({
   const [loading, setLoading] = useState(true);
   const [dragOverCompanyId, setDragOverCompanyId] = useState<string | null>(null);
   const [openModalQuote, setOpenModalQuote] = useState<Quote | null>(null);
+  const [showSendToInsurer, setShowSendToInsurer] = useState(false);
+  const [leadFullName, setLeadFullName] = useState('');
+  const [leadPhone, setLeadPhone] = useState<string | undefined>();
 
   const handleFileSelected = (companyId: string, file: File | undefined | null) => {
     if (!file) return;
@@ -64,6 +68,21 @@ export default function SaisieDevisStep({
   useEffect(() => {
     loadCompanies();
     loadQuotes();
+  }, [leadId]);
+
+  useEffect(() => {
+    async function fetchLeadInfo() {
+      const { data } = await supabase
+        .from('crm_leads')
+        .select('first_name, last_name, phone')
+        .eq('id', leadId)
+        .maybeSingle();
+      if (data) {
+        setLeadFullName([data.first_name, data.last_name].filter(Boolean).join(' '));
+        setLeadPhone(data.phone || undefined);
+      }
+    }
+    fetchLeadInfo();
   }, [leadId]);
 
   useEffect(() => {
@@ -492,6 +511,28 @@ export default function SaisieDevisStep({
         </div>
       </div>
 
+      {/* Transmettre le dossier a l'assureur */}
+      <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-lg p-5">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-amber-100 rounded-lg">
+              <Mail className="h-5 w-5 text-amber-700" />
+            </div>
+            <div>
+              <h4 className="font-semibold text-gray-900">Transmettre le dossier a l'assureur</h4>
+              <p className="text-sm text-gray-600">Envoyer les pieces du prospect a AXA ou autre assureur pour saisie du devis</p>
+            </div>
+          </div>
+          <button
+            onClick={() => setShowSendToInsurer(true)}
+            className="px-5 py-2.5 bg-gradient-to-r from-amber-600 to-orange-600 text-white rounded-lg hover:from-amber-700 hover:to-orange-700 font-semibold text-sm shadow-sm transition-all flex items-center gap-2"
+          >
+            <Send className="h-4 w-4" />
+            Transmettre
+          </button>
+        </div>
+      </div>
+
       {/* Companies & Quotes */}
       <div className="grid grid-cols-1 gap-6">
         {companies.map((company) => {
@@ -751,6 +792,15 @@ export default function SaisieDevisStep({
           }}
         />
       )}
+
+      <SendToInsurerModal
+        isOpen={showSendToInsurer}
+        onClose={() => setShowSendToInsurer(false)}
+        leadId={leadId}
+        leadName={leadFullName || leadFirstName || ''}
+        leadEmail={leadEmail}
+        leadPhone={leadPhone}
+      />
 
       {/* Lien Espace Prospect */}
       {leadAccessToken && (
