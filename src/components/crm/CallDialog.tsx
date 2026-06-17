@@ -11,14 +11,11 @@ import {
   Mail,
   FileText,
   Save,
-  Play,
-  Pause,
   Circle,
-  Headphones
+  PhoneOutgoing
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
-import { keyyoService } from '@/lib/keyyo-service';
 
 interface CallDialogProps {
   isOpen: boolean;
@@ -31,7 +28,7 @@ interface CallDialogProps {
 }
 
 const CALLER_PHONE_NUMBER = '0744410598';
-const CALLER_PHONE_INTERNATIONAL = '33744410598';
+const CALLER_PHONE_DISPLAY = '07 44 41 05 98';
 
 export const CallDialog: React.FC<CallDialogProps> = ({
   isOpen,
@@ -42,24 +39,18 @@ export const CallDialog: React.FC<CallDialogProps> = ({
   leadEmail,
   onCallCompleted
 }) => {
-  // CRITICAL: Guard must come BEFORE all hooks to prevent React Error #300
   if (!isOpen) return null;
 
-  const [callStatus, setCallStatus] = useState<'idle' | 'ringing' | 'active' | 'ended'>('idle');
+  const [callStatus, setCallStatus] = useState<'idle' | 'active' | 'ended'>('idle');
   const [isRecording, setIsRecording] = useState(false);
   const [callDuration, setCallDuration] = useState(0);
   const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
-  const [recordingStartTime, setRecordingStartTime] = useState<Date | null>(null);
-  const [keyyoEnabled, setKeyyoEnabled] = useState(false);
-  const [keyyoCallId, setKeyyoCallId] = useState<string | null>(null);
-  const [userExtension, setUserExtension] = useState<string | null>(null);
-  const [userPhoneNumber, setUserPhoneNumber] = useState<string>(CALLER_PHONE_NUMBER);
-  const [callMode, setCallMode] = useState<'manual' | 'keyyo'>('manual');
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
+  const callStartRef = useRef<Date | null>(null);
 
   const cleanup = useCallback(() => {
     if (timerRef.current) {
@@ -73,41 +64,15 @@ export const CallDialog: React.FC<CallDialogProps> = ({
     setCallDuration(0);
     setIsRecording(false);
     setNotes('');
-    setRecordingStartTime(null);
-    setKeyyoCallId(null);
+    callStartRef.current = null;
     audioChunksRef.current = [];
-  }, []);
-
-  const initializeKeyyo = useCallback(async () => {
-    try {
-      const isConfigured = await keyyoService.isConfigured();
-      setKeyyoEnabled(isConfigured);
-
-      if (isConfigured) {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          const extension = await keyyoService.getUserExtension(user.id);
-          const phoneNumber = await keyyoService.getUserAccount(user.id);
-          setUserExtension(extension);
-          if (phoneNumber) {
-            setUserPhoneNumber(phoneNumber);
-          }
-          setCallMode('keyyo');
-        }
-      }
-    } catch (error) {
-      logger.error('Failed to initialize Keyyo:', error);
-    }
   }, []);
 
   useEffect(() => {
     if (!isOpen) {
       cleanup();
-    } else {
-      // Initialize Keyyo on open
-      initializeKeyyo();
     }
-  }, [isOpen, cleanup, initializeKeyyo]);
+  }, [isOpen, cleanup]);
 
   useEffect(() => {
     if (callStatus === 'active') {
@@ -128,38 +93,16 @@ export const CallDialog: React.FC<CallDialogProps> = ({
     };
   }, [callStatus]);
 
-  const startCall = async () => {
-    setCallStatus('ringing');
+  const formatPhoneForTel = (phone: string): string => {
+    return phone.replace(/\s/g, '').replace(/^0/, '+33');
+  };
 
-    if (callMode === 'keyyo' && keyyoEnabled && leadPhone) {
-      try {
-        const result = await keyyoService.initiateCall({
-          account: CALLER_PHONE_INTERNATIONAL,
-          callee: leadPhone.replace('+', '').replace(/^0/, '33'),
-          calleeName: leadName,
-          record: true,
-          leadId: leadId,
-        });
-
-        if (result.success && result.callId) {
-          setKeyyoCallId(result.callId);
-          setTimeout(() => {
-            setCallStatus('active');
-          }, 3000);
-        } else {
-          throw new Error(result.error || 'Failed to initiate call');
-        }
-      } catch (error: any) {
-        logger.error('Failed to start Keyyo call:', error);
-        toast.error('Erreur lors de l\'initiation de l\'appel Keyyo: ' + error.message);
-        setCallStatus('idle');
-        return;
-      }
-    } else {
-      setTimeout(() => {
-        setCallStatus('active');
-      }, 2000);
+  const startCall = () => {
+    if (leadPhone) {
+      window.open(`tel:${formatPhoneForTel(leadPhone)}`, '_self');
     }
+    callStartRef.current = new Date();
+    setCallStatus('active');
   };
 
   const endCall = () => {
@@ -189,7 +132,6 @@ export const CallDialog: React.FC<CallDialogProps> = ({
 
       mediaRecorder.start();
       setIsRecording(true);
-      setRecordingStartTime(new Date());
     } catch (err) {
       logger.error('Error starting recording:', err);
       toast.error('Impossible de démarrer l\'enregistrement. Vérifiez les permissions du microphone.');
@@ -213,45 +155,37 @@ export const CallDialog: React.FC<CallDialogProps> = ({
         throw new Error('User not authenticated');
       }
 
-      // If Keyyo call with active call ID, update notes
-      if (callMode === 'keyyo' && keyyoCallId) {
-        await keyyoService.updateCallNotes(keyyoCallId, notes);
-      } else {
-        // Save call as CRM interaction (works whether Keyyo is configured or not)
-        const { error: interactionError } = await supabase.from('crm_interactions').insert({
-          lead_id: leadId,
-          type: 'call_outgoing',
-          channel: 'phone',
-          direction: 'outbound',
-          subject: 'Appel sortant',
-          content: notes || `Durée: ${Math.floor(callDuration / 60)} min ${callDuration % 60} sec`,
-          status: 'completed',
-          metadata: {
-            from: CALLER_PHONE_NUMBER,
-            to: leadPhone || 'unknown',
-            duration: callDuration,
-            talk_time: callDuration,
-            call_mode: callMode,
-            recorded: audioChunksRef.current.length > 0,
-          },
-        });
+      const { error: interactionError } = await supabase.from('crm_interactions').insert({
+        lead_id: leadId,
+        type: 'call_outgoing',
+        channel: 'phone',
+        direction: 'outbound',
+        subject: 'Appel sortant',
+        content: notes || `Durée: ${Math.floor(callDuration / 60)} min ${callDuration % 60} sec`,
+        status: 'completed',
+        metadata: {
+          from: CALLER_PHONE_NUMBER,
+          to: leadPhone || 'unknown',
+          duration: callDuration,
+          talk_time: callDuration,
+          recorded: audioChunksRef.current.length > 0,
+        },
+      });
 
-        if (interactionError) {
-          throw interactionError;
-        }
+      if (interactionError) {
+        throw interactionError;
+      }
 
-        // If we have audio data, save it
-        if (audioChunksRef.current.length > 0) {
-          const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-          const fileName = `call_${leadId}_${Date.now()}.webm`;
+      if (audioChunksRef.current.length > 0) {
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        const fileName = `call_${leadId}_${Date.now()}.webm`;
 
-          const { error: uploadError } = await supabase.storage
-            .from('telephony-recordings')
-            .upload(fileName, audioBlob);
+        const { error: uploadError } = await supabase.storage
+          .from('telephony-recordings')
+          .upload(fileName, audioBlob);
 
-          if (uploadError) {
-            logger.error('Error uploading recording:', uploadError);
-          }
+        if (uploadError) {
+          logger.error('Error uploading recording:', uploadError);
         }
       }
 
@@ -299,21 +233,19 @@ export const CallDialog: React.FC<CallDialogProps> = ({
             </div>
             <h2 className="text-xl font-bold text-white mb-1">
               {callStatus === 'idle' && 'Appeler le client'}
-              {callStatus === 'ringing' && 'Appel en cours...'}
               {callStatus === 'active' && 'Appel en cours'}
               {callStatus === 'ended' && 'Appel terminé'}
             </h2>
             <p className="text-blue-100 text-sm">
-              {callStatus === 'idle' && 'Démarrer un appel téléphonique'}
-              {callStatus === 'ringing' && 'Sonnerie...'}
-              {callStatus === 'active' && 'Communication établie'}
-              {callStatus === 'ended' && 'Ajouter vos notes'}
+              {callStatus === 'idle' && 'Lancer l\'appel depuis votre téléphone'}
+              {callStatus === 'active' && 'Communication en cours'}
+              {callStatus === 'ended' && 'Ajoutez vos notes avant de sauvegarder'}
             </p>
           </div>
         </div>
 
         {/* Content */}
-        <div className="p-6 space-y-6">
+        <div className="p-6 space-y-5">
           {/* Lead Info */}
           <div className="bg-gray-800 rounded-lg p-4 space-y-2">
             <div className="flex items-center gap-2 text-gray-200">
@@ -334,6 +266,22 @@ export const CallDialog: React.FC<CallDialogProps> = ({
             )}
           </div>
 
+          {/* Caller Info */}
+          {callStatus === 'idle' && (
+            <div className="bg-blue-900/20 border border-blue-700/30 rounded-lg p-4">
+              <div className="flex items-center gap-3">
+                <PhoneOutgoing className="w-5 h-5 text-blue-400" />
+                <div>
+                  <p className="text-white font-medium text-sm">Vous appelez depuis le</p>
+                  <p className="text-blue-300 font-mono text-lg">{CALLER_PHONE_DISPLAY}</p>
+                </div>
+              </div>
+              <p className="text-blue-200/70 text-xs mt-3">
+                L'appel sera lancé depuis votre téléphone. Vous pouvez activer l'enregistrement micro pour capturer la conversation.
+              </p>
+            </div>
+          )}
+
           {/* Timer */}
           {(callStatus === 'active' || callStatus === 'ended') && (
             <div className="text-center">
@@ -346,17 +294,16 @@ export const CallDialog: React.FC<CallDialogProps> = ({
             </div>
           )}
 
-          {/* Recording Status */}
+          {/* Recording Controls */}
           {callStatus === 'active' && (
             <div className="flex items-center justify-center gap-3">
               <button
                 onClick={isRecording ? stopRecording : startRecording}
                 className={`
                   flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all
-                  ${
-                    isRecording
-                      ? 'bg-red-600 hover:bg-red-700 text-white'
-                      : 'bg-gray-700 hover:bg-gray-600 text-white'
+                  ${isRecording
+                    ? 'bg-red-600 hover:bg-red-700 text-white'
+                    : 'bg-gray-700 hover:bg-gray-600 text-white'
                   }
                 `}
               >
@@ -393,70 +340,12 @@ export const CallDialog: React.FC<CallDialogProps> = ({
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="Ajoutez des notes sur cet appel..."
-                rows={6}
+                rows={5}
                 className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
               />
-              <p className="text-xs text-gray-300 mt-1">
+              <p className="text-xs text-gray-400 mt-1">
                 {notes.length} caractères
               </p>
-            </div>
-          )}
-
-          {/* Call Mode Selection */}
-          {callStatus === 'idle' && (
-            <div className="bg-blue-900/20 border border-blue-700/30 rounded-lg p-4">
-              <div className="flex items-center gap-3 mb-3">
-                <Headphones className="w-5 h-5 text-blue-400" />
-                <span className="font-medium text-white">Mode d'appel</span>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                {keyyoEnabled && (
-                  <button
-                    onClick={() => setCallMode('keyyo')}
-                    className={`
-                      flex flex-col items-center gap-2 p-3 rounded-lg border-2 transition-all
-                      ${callMode === 'keyyo'
-                        ? 'border-blue-500 bg-blue-600/20 text-white'
-                        : 'border-gray-600 bg-gray-800 text-gray-400 hover:border-gray-500'
-                      }
-                    `}
-                  >
-                    <Headphones className="w-6 h-6" />
-                    <div className="text-center">
-                      <div className="font-medium text-sm">Keyyo</div>
-                      <div className="text-xs opacity-75">Click-to-Call</div>
-                    </div>
-                  </button>
-                )}
-                <button
-                  onClick={() => setCallMode('manual')}
-                  className={`
-                    flex flex-col items-center gap-2 p-3 rounded-lg border-2 transition-all
-                    ${callMode === 'manual'
-                      ? 'border-blue-500 bg-blue-600/20 text-white'
-                      : 'border-gray-600 bg-gray-800 text-gray-400 hover:border-gray-500'
-                    }
-                  `}
-                >
-                  <Phone className="w-6 h-6" />
-                  <div className="text-center">
-                    <div className="font-medium text-sm">Manuel</div>
-                    <div className="text-xs opacity-75">Enregistrement</div>
-                  </div>
-                </button>
-              </div>
-              <div className="mt-3 space-y-1">
-                <div className="flex items-center gap-2 text-sm text-blue-300">
-                  <Phone className="w-3.5 h-3.5" />
-                  <span>Ligne sortante : {CALLER_PHONE_NUMBER}</span>
-                </div>
-                {callMode === 'keyyo' && (
-                  <div className="flex items-center gap-2 text-xs text-blue-200 mt-2">
-                    <Circle className="w-2.5 h-2.5 fill-green-400 text-green-400" />
-                    <span>Enregistrement automatique actif</span>
-                  </div>
-                )}
-              </div>
             </div>
           )}
 
@@ -465,20 +354,12 @@ export const CallDialog: React.FC<CallDialogProps> = ({
             {callStatus === 'idle' && (
               <button
                 onClick={startCall}
-                className="w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white font-semibold py-4 rounded-lg transition-all shadow-lg shadow-green-500/30"
+                disabled={!leadPhone}
+                className="w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white font-semibold py-4 rounded-lg transition-all shadow-lg shadow-green-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {callMode === 'keyyo' ? <Headphones className="w-5 h-5" /> : <Phone className="w-5 h-5" />}
-                {callMode === 'keyyo' ? 'Appeler via Keyyo' : 'Démarrer l\'appel'}
+                <Phone className="w-5 h-5" />
+                Appeler {leadPhone || '(pas de numéro)'}
               </button>
-            )}
-
-            {callStatus === 'ringing' && (
-              <div className="text-center">
-                <div className="inline-flex items-center gap-3 text-blue-400">
-                  <div className="w-3 h-3 bg-blue-400 rounded-full animate-ping"></div>
-                  <span className="font-medium">Sonnerie en cours...</span>
-                </div>
-              </div>
             )}
 
             {callStatus === 'active' && (
@@ -487,7 +368,7 @@ export const CallDialog: React.FC<CallDialogProps> = ({
                 className="w-full flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white font-semibold py-4 rounded-lg transition-all shadow-lg shadow-red-500/30"
               >
                 <PhoneOff className="w-5 h-5" />
-                Raccrocher
+                Terminer l'appel
               </button>
             )}
 
