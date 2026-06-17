@@ -14,8 +14,7 @@ import {
   Play,
   Pause,
   Circle,
-  Headphones,
-  AlertCircle
+  Headphones
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
@@ -30,6 +29,9 @@ interface CallDialogProps {
   leadEmail?: string;
   onCallCompleted?: () => void;
 }
+
+const CALLER_PHONE_NUMBER = '0744410598';
+const CALLER_PHONE_INTERNATIONAL = '33744410598';
 
 export const CallDialog: React.FC<CallDialogProps> = ({
   isOpen,
@@ -52,7 +54,7 @@ export const CallDialog: React.FC<CallDialogProps> = ({
   const [keyyoEnabled, setKeyyoEnabled] = useState(false);
   const [keyyoCallId, setKeyyoCallId] = useState<string | null>(null);
   const [userExtension, setUserExtension] = useState<string | null>(null);
-  const [userPhoneNumber, setUserPhoneNumber] = useState<string | null>(null);
+  const [userPhoneNumber, setUserPhoneNumber] = useState<string>(CALLER_PHONE_NUMBER);
   const [callMode, setCallMode] = useState<'manual' | 'keyyo'>('manual');
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -87,10 +89,10 @@ export const CallDialog: React.FC<CallDialogProps> = ({
           const extension = await keyyoService.getUserExtension(user.id);
           const phoneNumber = await keyyoService.getUserAccount(user.id);
           setUserExtension(extension);
-          setUserPhoneNumber(phoneNumber);
-          if (phoneNumber || extension) {
-            setCallMode('keyyo');
+          if (phoneNumber) {
+            setUserPhoneNumber(phoneNumber);
           }
+          setCallMode('keyyo');
         }
       }
     } catch (error) {
@@ -129,11 +131,10 @@ export const CallDialog: React.FC<CallDialogProps> = ({
   const startCall = async () => {
     setCallStatus('ringing');
 
-    if (callMode === 'keyyo' && keyyoEnabled && (userPhoneNumber || userExtension) && leadPhone) {
+    if (callMode === 'keyyo' && keyyoEnabled && leadPhone) {
       try {
-        const account = userPhoneNumber || userExtension || '';
         const result = await keyyoService.initiateCall({
-          account: account.replace('+', ''),
+          account: CALLER_PHONE_INTERNATIONAL,
           callee: leadPhone.replace('+', '').replace(/^0/, '33'),
           calleeName: leadName,
           record: true,
@@ -226,7 +227,7 @@ export const CallDialog: React.FC<CallDialogProps> = ({
           content: notes || `Durée: ${Math.floor(callDuration / 60)} min ${callDuration % 60} sec`,
           status: 'completed',
           metadata: {
-            from: userPhoneNumber || userExtension || 'manual',
+            from: CALLER_PHONE_NUMBER,
             to: leadPhone || 'unknown',
             duration: callDuration,
             talk_time: callDuration,
@@ -402,29 +403,31 @@ export const CallDialog: React.FC<CallDialogProps> = ({
           )}
 
           {/* Call Mode Selection */}
-          {callStatus === 'idle' && keyyoEnabled && (userPhoneNumber || userExtension) && (
+          {callStatus === 'idle' && (
             <div className="bg-blue-900/20 border border-blue-700/30 rounded-lg p-4">
               <div className="flex items-center gap-3 mb-3">
                 <Headphones className="w-5 h-5 text-blue-400" />
                 <span className="font-medium text-white">Mode d'appel</span>
               </div>
               <div className="grid grid-cols-2 gap-3">
-                <button
-                  onClick={() => setCallMode('keyyo')}
-                  className={`
-                    flex flex-col items-center gap-2 p-3 rounded-lg border-2 transition-all
-                    ${callMode === 'keyyo'
-                      ? 'border-blue-500 bg-blue-600/20 text-white'
-                      : 'border-gray-600 bg-gray-800 text-gray-400 hover:border-gray-500'
-                    }
-                  `}
-                >
-                  <Headphones className="w-6 h-6" />
-                  <div className="text-center">
-                    <div className="font-medium text-sm">Keyyo</div>
-                    <div className="text-xs opacity-75">Click-to-Call</div>
-                  </div>
-                </button>
+                {keyyoEnabled && (
+                  <button
+                    onClick={() => setCallMode('keyyo')}
+                    className={`
+                      flex flex-col items-center gap-2 p-3 rounded-lg border-2 transition-all
+                      ${callMode === 'keyyo'
+                        ? 'border-blue-500 bg-blue-600/20 text-white'
+                        : 'border-gray-600 bg-gray-800 text-gray-400 hover:border-gray-500'
+                      }
+                    `}
+                  >
+                    <Headphones className="w-6 h-6" />
+                    <div className="text-center">
+                      <div className="font-medium text-sm">Keyyo</div>
+                      <div className="text-xs opacity-75">Click-to-Call</div>
+                    </div>
+                  </button>
+                )}
                 <button
                   onClick={() => setCallMode('manual')}
                   className={`
@@ -442,26 +445,18 @@ export const CallDialog: React.FC<CallDialogProps> = ({
                   </div>
                 </button>
               </div>
-              {callMode === 'keyyo' && (
-                <div className="mt-3 space-y-1">
-                  {userPhoneNumber && (
-                    <div className="flex items-center gap-2 text-sm text-blue-300">
-                      <Phone className="w-3.5 h-3.5" />
-                      <span>Ligne : {userPhoneNumber}</span>
-                    </div>
-                  )}
-                  {userExtension && (
-                    <div className="flex items-center gap-2 text-sm text-blue-300">
-                      <AlertCircle className="w-3.5 h-3.5" />
-                      <span>Extension : {userExtension}</span>
-                    </div>
-                  )}
+              <div className="mt-3 space-y-1">
+                <div className="flex items-center gap-2 text-sm text-blue-300">
+                  <Phone className="w-3.5 h-3.5" />
+                  <span>Ligne sortante : {CALLER_PHONE_NUMBER}</span>
+                </div>
+                {callMode === 'keyyo' && (
                   <div className="flex items-center gap-2 text-xs text-blue-200 mt-2">
                     <Circle className="w-2.5 h-2.5 fill-green-400 text-green-400" />
                     <span>Enregistrement automatique actif</span>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           )}
 
