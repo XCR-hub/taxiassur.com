@@ -315,19 +315,19 @@ export const CallDialog: React.FC<CallDialogProps> = ({
         <div className="p-6 space-y-6">
           {/* Lead Info */}
           <div className="bg-gray-800 rounded-lg p-4 space-y-2">
-            <div className="flex items-center gap-2 text-gray-300">
-              <User className="w-4 h-4 text-gray-500" />
+            <div className="flex items-center gap-2 text-gray-200">
+              <User className="w-4 h-4 text-gray-400" />
               <span className="font-medium">{leadName}</span>
             </div>
             {leadPhone && (
-              <div className="flex items-center gap-2 text-gray-400 text-sm">
-                <Phone className="w-4 h-4 text-gray-500" />
+              <div className="flex items-center gap-2 text-gray-200 text-sm">
+                <Phone className="w-4 h-4 text-gray-400" />
                 <span>{leadPhone}</span>
               </div>
             )}
             {leadEmail && (
-              <div className="flex items-center gap-2 text-gray-400 text-sm">
-                <Mail className="w-4 h-4 text-gray-500" />
+              <div className="flex items-center gap-2 text-gray-200 text-sm">
+                <Mail className="w-4 h-4 text-gray-400" />
                 <span>{leadEmail}</span>
               </div>
             )}
@@ -395,7 +395,7 @@ export const CallDialog: React.FC<CallDialogProps> = ({
                 rows={6}
                 className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
               />
-              <p className="text-xs text-gray-400 mt-1">
+              <p className="text-xs text-gray-300 mt-1">
                 {notes.length} caractères
               </p>
             </div>
@@ -456,7 +456,7 @@ export const CallDialog: React.FC<CallDialogProps> = ({
                       <span>Extension : {userExtension}</span>
                     </div>
                   )}
-                  <div className="flex items-center gap-2 text-xs text-blue-200/60 mt-2">
+                  <div className="flex items-center gap-2 text-xs text-blue-200 mt-2">
                     <Circle className="w-2.5 h-2.5 fill-green-400 text-green-400" />
                     <span>Enregistrement automatique actif</span>
                   </div>
