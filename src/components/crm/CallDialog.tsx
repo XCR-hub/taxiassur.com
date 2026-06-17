@@ -52,6 +52,7 @@ export const CallDialog: React.FC<CallDialogProps> = ({
   const [keyyoEnabled, setKeyyoEnabled] = useState(false);
   const [keyyoCallId, setKeyyoCallId] = useState<string | null>(null);
   const [userExtension, setUserExtension] = useState<string | null>(null);
+  const [userPhoneNumber, setUserPhoneNumber] = useState<string | null>(null);
   const [callMode, setCallMode] = useState<'manual' | 'keyyo'>('manual');
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -84,8 +85,10 @@ export const CallDialog: React.FC<CallDialogProps> = ({
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
           const extension = await keyyoService.getUserExtension(user.id);
+          const phoneNumber = await keyyoService.getUserAccount(user.id);
           setUserExtension(extension);
-          if (extension) {
+          setUserPhoneNumber(phoneNumber);
+          if (phoneNumber || extension) {
             setCallMode('keyyo');
           }
         }
@@ -126,33 +129,32 @@ export const CallDialog: React.FC<CallDialogProps> = ({
   const startCall = async () => {
     setCallStatus('ringing');
 
-    if (callMode === 'keyyo' && keyyoEnabled && userExtension && leadPhone) {
-      // Real call via Keyyo
+    if (callMode === 'keyyo' && keyyoEnabled && (userPhoneNumber || userExtension) && leadPhone) {
       try {
+        const account = userPhoneNumber || userExtension || '';
         const result = await keyyoService.initiateCall({
-          fromExtension: userExtension,
-          toNumber: leadPhone,
+          account: account.replace('+', ''),
+          callee: leadPhone.replace('+', '').replace(/^0/, '33'),
+          calleeName: leadName,
+          record: true,
           leadId: leadId,
         });
 
         if (result.success && result.callId) {
           setKeyyoCallId(result.callId);
-          // Keyyo will handle the actual call
-          // Simulate transition to active state
           setTimeout(() => {
             setCallStatus('active');
           }, 3000);
         } else {
           throw new Error(result.error || 'Failed to initiate call');
         }
-      } catch (error) {
+      } catch (error: any) {
         logger.error('Failed to start Keyyo call:', error);
         toast.error('Erreur lors de l\'initiation de l\'appel Keyyo: ' + error.message);
         setCallStatus('idle');
         return;
       }
     } else {
-      // Manual mode - simulate ringing
       setTimeout(() => {
         setCallStatus('active');
       }, 2000);
@@ -210,25 +212,31 @@ export const CallDialog: React.FC<CallDialogProps> = ({
         throw new Error('User not authenticated');
       }
 
-      // If Keyyo call, save to telephony_calls
+      // If Keyyo call with active call ID, update notes
       if (callMode === 'keyyo' && keyyoCallId) {
         await keyyoService.updateCallNotes(keyyoCallId, notes);
       } else {
-        // Manual call - save to telephony_calls
-        const result = await keyyoService.saveCall({
-          leadId: leadId,
-          userId: user.id,
+        // Save call as CRM interaction (works whether Keyyo is configured or not)
+        const { error: interactionError } = await supabase.from('crm_interactions').insert({
+          lead_id: leadId,
+          type: 'call_outgoing',
+          channel: 'phone',
           direction: 'outbound',
-          fromNumber: userExtension || 'unknown',
-          toNumber: leadPhone || 'unknown',
+          subject: 'Appel sortant',
+          content: notes || `Durée: ${Math.floor(callDuration / 60)} min ${callDuration % 60} sec`,
           status: 'completed',
-          duration: callDuration,
-          talkTime: callDuration,
-          notes: notes,
+          metadata: {
+            from: userPhoneNumber || userExtension || 'manual',
+            to: leadPhone || 'unknown',
+            duration: callDuration,
+            talk_time: callDuration,
+            call_mode: callMode,
+            recorded: audioChunksRef.current.length > 0,
+          },
         });
 
-        if (!result.success) {
-          throw new Error(result.error || 'Failed to save call');
+        if (interactionError) {
+          throw interactionError;
         }
 
         // If we have audio data, save it
@@ -246,12 +254,13 @@ export const CallDialog: React.FC<CallDialogProps> = ({
         }
       }
 
+      toast.success('Appel enregistré avec succès');
       onCallCompleted?.();
       onClose();
       cleanup();
-    } catch (err) {
+    } catch (err: any) {
       logger.error('Error saving call:', err);
-      toast.error('Erreur lors de l\'enregistrement de l\'appel');
+      toast.error('Erreur lors de l\'enregistrement de l\'appel: ' + (err.message || ''));
     } finally {
       setSaving(false);
     }
@@ -386,14 +395,14 @@ export const CallDialog: React.FC<CallDialogProps> = ({
                 rows={6}
                 className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
               />
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-gray-400 mt-1">
                 {notes.length} caractères
               </p>
             </div>
           )}
 
           {/* Call Mode Selection */}
-          {callStatus === 'idle' && keyyoEnabled && userExtension && (
+          {callStatus === 'idle' && keyyoEnabled && (userPhoneNumber || userExtension) && (
             <div className="bg-blue-900/20 border border-blue-700/30 rounded-lg p-4">
               <div className="flex items-center gap-3 mb-3">
                 <Headphones className="w-5 h-5 text-blue-400" />
@@ -434,9 +443,23 @@ export const CallDialog: React.FC<CallDialogProps> = ({
                 </button>
               </div>
               {callMode === 'keyyo' && (
-                <div className="mt-3 flex items-center gap-2 text-sm text-blue-300">
-                  <AlertCircle className="w-4 h-4" />
-                  <span>Extension: {userExtension}</span>
+                <div className="mt-3 space-y-1">
+                  {userPhoneNumber && (
+                    <div className="flex items-center gap-2 text-sm text-blue-300">
+                      <Phone className="w-3.5 h-3.5" />
+                      <span>Ligne : {userPhoneNumber}</span>
+                    </div>
+                  )}
+                  {userExtension && (
+                    <div className="flex items-center gap-2 text-sm text-blue-300">
+                      <AlertCircle className="w-3.5 h-3.5" />
+                      <span>Extension : {userExtension}</span>
+                    </div>
+                  )}
+                  <div className="flex items-center gap-2 text-xs text-blue-200/60 mt-2">
+                    <Circle className="w-2.5 h-2.5 fill-green-400 text-green-400" />
+                    <span>Enregistrement automatique actif</span>
+                  </div>
                 </div>
               )}
             </div>
