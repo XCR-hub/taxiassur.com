@@ -25,6 +25,7 @@ import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { usePendingDocumentsCount } from '@/hooks/usePendingDocumentsCount';
 import { AdminSessionKeepAlive } from '@/components/AdminSessionKeepAlive';
 import { CRMPushNotifications } from '@/components/CRMPushNotifications';
+import { IncomingCallNotification } from '@/components/crm/IncomingCallNotification';
 import AdminLogin from '@/components/AdminLogin';
 import NavigationMenu from './NavigationMenu';
 
@@ -464,6 +465,7 @@ const CRMLayout: React.FC = () => {
 
       <main className="flex-1 flex flex-col overflow-hidden min-w-0" style={{ background: '#0b0e14' }}>
         <CRMPushNotifications />
+        <IncomingCallNotification onNavigateToLead={(id) => navigate(`/backoffice/crm/lead/${id}`)} />
         <div className="flex-1 overflow-auto min-h-0">
           <Outlet />
         </div>

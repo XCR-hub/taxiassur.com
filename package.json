@@ -48,6 +48,7 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4",
+    "@twilio/voice-sdk": "^2.18.3",
     "clsx": "^2.1.1",
     "dotenv": "^17.2.3",
     "lucide-react": "^0.344.0",

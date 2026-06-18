@@ -11,11 +11,12 @@ import {
   Mail,
   FileText,
   Save,
-  Circle,
-  PhoneOutgoing
+  PhoneOutgoing,
+  Loader2
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
+import { telephonyService, TelephonyStatus } from '@/lib/telephony-service';
 
 interface CallDialogProps {
   isOpen: boolean;
@@ -27,7 +28,6 @@ interface CallDialogProps {
   onCallCompleted?: () => void;
 }
 
-const CALLER_PHONE_NUMBER = '0744410598';
 const CALLER_PHONE_DISPLAY = '07 44 41 05 98';
 
 export const CallDialog: React.FC<CallDialogProps> = ({
@@ -41,15 +41,15 @@ export const CallDialog: React.FC<CallDialogProps> = ({
 }) => {
   if (!isOpen) return null;
 
-  const [callStatus, setCallStatus] = useState<'idle' | 'active' | 'ended'>('idle');
-  const [isRecording, setIsRecording] = useState(false);
+  const [callStatus, setCallStatus] = useState<'idle' | 'connecting' | 'active' | 'ended'>('idle');
+  const [deviceStatus, setDeviceStatus] = useState<TelephonyStatus>('disconnected');
+  const [isMuted, setIsMuted] = useState(false);
   const [callDuration, setCallDuration] = useState(0);
   const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
+  const [initializing, setInitializing] = useState(false);
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
   const callStartRef = useRef<Date | null>(null);
 
   const cleanup = useCallback(() => {
@@ -57,25 +57,51 @@ export const CallDialog: React.FC<CallDialogProps> = ({
       clearInterval(timerRef.current);
       timerRef.current = null;
     }
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-      mediaRecorderRef.current.stop();
-    }
     setCallStatus('idle');
     setCallDuration(0);
-    setIsRecording(false);
+    setIsMuted(false);
     setNotes('');
     callStartRef.current = null;
-    audioChunksRef.current = [];
   }, []);
 
   useEffect(() => {
     if (!isOpen) {
       cleanup();
+      return;
     }
-  }, [isOpen, cleanup]);
+
+    // Initialize Twilio device when dialog opens
+    const initDevice = async () => {
+      if (telephonyService.getStatus() === 'disconnected') {
+        setInitializing(true);
+        try {
+          await telephonyService.initialize();
+        } catch (err) {
+          logger.error('Failed to initialize telephony:', err);
+          toast.error('Impossible de se connecter au service telephonique. Verifiez votre connexion.');
+        } finally {
+          setInitializing(false);
+        }
+      }
+    };
+
+    initDevice();
+
+    const unsubscribe = telephonyService.onStatusChange((status) => {
+      setDeviceStatus(status);
+      if (status === 'on-call') {
+        setCallStatus('active');
+      } else if (status === 'ready' && callStatus === 'active') {
+        setCallStatus('ended');
+      }
+    });
+
+    return unsubscribe;
+  }, [isOpen]);
 
   useEffect(() => {
     if (callStatus === 'active') {
+      callStartRef.current = new Date();
       timerRef.current = setInterval(() => {
         setCallDuration(prev => prev + 1);
       }, 1000);
@@ -93,56 +119,27 @@ export const CallDialog: React.FC<CallDialogProps> = ({
     };
   }, [callStatus]);
 
-  const formatPhoneForTel = (phone: string): string => {
-    return phone.replace(/\s/g, '').replace(/^0/, '+33');
-  };
+  const startCall = async () => {
+    if (!leadPhone) return;
 
-  const startCall = () => {
-    if (leadPhone) {
-      window.open(`tel:${formatPhoneForTel(leadPhone)}`, '_self');
+    setCallStatus('connecting');
+    try {
+      await telephonyService.makeCall(leadPhone);
+    } catch (err: any) {
+      logger.error('Error starting call:', err);
+      toast.error('Impossible de lancer l\'appel: ' + (err.message || 'Erreur inconnue'));
+      setCallStatus('idle');
     }
-    callStartRef.current = new Date();
-    setCallStatus('active');
   };
 
   const endCall = () => {
-    if (isRecording) {
-      stopRecording();
-    }
+    telephonyService.hangUp();
     setCallStatus('ended');
   };
 
-  const startRecording = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
-
-      mediaRecorderRef.current = mediaRecorder;
-      audioChunksRef.current = [];
-
-      mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          audioChunksRef.current.push(event.data);
-        }
-      };
-
-      mediaRecorder.onstop = () => {
-        stream.getTracks().forEach(track => track.stop());
-      };
-
-      mediaRecorder.start();
-      setIsRecording(true);
-    } catch (err) {
-      logger.error('Error starting recording:', err);
-      toast.error('Impossible de démarrer l\'enregistrement. Vérifiez les permissions du microphone.');
-    }
-  };
-
-  const stopRecording = () => {
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-      mediaRecorderRef.current.stop();
-      setIsRecording(false);
-    }
+  const toggleMute = () => {
+    const muted = telephonyService.toggleMute();
+    setIsMuted(muted);
   };
 
   const saveCall = async () => {
@@ -150,10 +147,7 @@ export const CallDialog: React.FC<CallDialogProps> = ({
       setSaving(true);
 
       const { data: { user } } = await supabase.auth.getUser();
-
-      if (!user) {
-        throw new Error('User not authenticated');
-      }
+      if (!user) throw new Error('User not authenticated');
 
       const { error: interactionError } = await supabase.from('crm_interactions').insert({
         lead_id: leadId,
@@ -161,41 +155,26 @@ export const CallDialog: React.FC<CallDialogProps> = ({
         channel: 'phone',
         direction: 'outbound',
         subject: 'Appel sortant',
-        content: notes || `Durée: ${Math.floor(callDuration / 60)} min ${callDuration % 60} sec`,
+        content: notes || `Duree: ${Math.floor(callDuration / 60)} min ${callDuration % 60} sec`,
         status: 'completed',
         metadata: {
-          from: CALLER_PHONE_NUMBER,
+          from: '+33744410598',
           to: leadPhone || 'unknown',
           duration: callDuration,
           talk_time: callDuration,
-          recorded: audioChunksRef.current.length > 0,
+          via: 'webrtc',
         },
       });
 
-      if (interactionError) {
-        throw interactionError;
-      }
+      if (interactionError) throw interactionError;
 
-      if (audioChunksRef.current.length > 0) {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-        const fileName = `call_${leadId}_${Date.now()}.webm`;
-
-        const { error: uploadError } = await supabase.storage
-          .from('telephony-recordings')
-          .upload(fileName, audioBlob);
-
-        if (uploadError) {
-          logger.error('Error uploading recording:', uploadError);
-        }
-      }
-
-      toast.success('Appel enregistré avec succès');
+      toast.success('Appel enregistre avec succes');
       onCallCompleted?.();
       onClose();
       cleanup();
     } catch (err: any) {
       logger.error('Error saving call:', err);
-      toast.error('Erreur lors de l\'enregistrement de l\'appel: ' + (err.message || ''));
+      toast.error('Erreur lors de l\'enregistrement: ' + (err.message || ''));
     } finally {
       setSaving(false);
     }
@@ -206,6 +185,8 @@ export const CallDialog: React.FC<CallDialogProps> = ({
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
+
+  const isDeviceReady = deviceStatus === 'ready' || deviceStatus === 'on-call';
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
@@ -218,6 +199,7 @@ export const CallDialog: React.FC<CallDialogProps> = ({
                 if (!confirm('Voulez-vous vraiment fermer sans sauvegarder l\'appel en cours ?')) {
                   return;
                 }
+                telephonyService.hangUp();
               }
               onClose();
               cleanup();
@@ -233,12 +215,14 @@ export const CallDialog: React.FC<CallDialogProps> = ({
             </div>
             <h2 className="text-xl font-bold text-white mb-1">
               {callStatus === 'idle' && 'Appeler le client'}
+              {callStatus === 'connecting' && 'Connexion...'}
               {callStatus === 'active' && 'Appel en cours'}
-              {callStatus === 'ended' && 'Appel terminé'}
+              {callStatus === 'ended' && 'Appel termine'}
             </h2>
             <p className="text-blue-100 text-sm">
-              {callStatus === 'idle' && 'Lancer l\'appel depuis votre téléphone'}
-              {callStatus === 'active' && 'Communication en cours'}
+              {callStatus === 'idle' && 'Appel via casque WebRTC'}
+              {callStatus === 'connecting' && 'Etablissement de la connexion'}
+              {callStatus === 'active' && 'Communication en cours via casque'}
               {callStatus === 'ended' && 'Ajoutez vos notes avant de sauvegarder'}
             </p>
           </div>
@@ -272,13 +256,24 @@ export const CallDialog: React.FC<CallDialogProps> = ({
               <div className="flex items-center gap-3">
                 <PhoneOutgoing className="w-5 h-5 text-blue-400" />
                 <div>
-                  <p className="text-white font-medium text-sm">Vous appelez depuis le</p>
+                  <p className="text-white font-medium text-sm">Appel depuis votre casque</p>
                   <p className="text-blue-300 font-mono text-lg">{CALLER_PHONE_DISPLAY}</p>
                 </div>
               </div>
               <p className="text-blue-200/70 text-xs mt-3">
-                L'appel sera lancé depuis votre téléphone. Vous pouvez activer l'enregistrement micro pour capturer la conversation.
+                L'appel passera directement via votre casque en WebRTC. Assurez-vous que votre casque est connecte.
               </p>
+              {initializing && (
+                <div className="flex items-center gap-2 mt-3 text-blue-300 text-xs">
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                  Connexion au service telephonique...
+                </div>
+              )}
+              {!initializing && !isDeviceReady && deviceStatus !== 'disconnected' && (
+                <div className="text-yellow-300 text-xs mt-3">
+                  Statut: {deviceStatus}
+                </div>
+              )}
             </div>
           )}
 
@@ -294,38 +289,39 @@ export const CallDialog: React.FC<CallDialogProps> = ({
             </div>
           )}
 
-          {/* Recording Controls */}
+          {/* Connecting animation */}
+          {callStatus === 'connecting' && (
+            <div className="text-center py-4">
+              <Loader2 className="w-8 h-8 text-blue-400 animate-spin mx-auto mb-2" />
+              <p className="text-gray-400 text-sm">Connexion en cours...</p>
+            </div>
+          )}
+
+          {/* Mute Control */}
           {callStatus === 'active' && (
             <div className="flex items-center justify-center gap-3">
               <button
-                onClick={isRecording ? stopRecording : startRecording}
+                onClick={toggleMute}
                 className={`
                   flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all
-                  ${isRecording
+                  ${isMuted
                     ? 'bg-red-600 hover:bg-red-700 text-white'
                     : 'bg-gray-700 hover:bg-gray-600 text-white'
                   }
                 `}
               >
-                {isRecording ? (
+                {isMuted ? (
                   <>
                     <MicOff className="w-4 h-4" />
-                    Arrêter l'enregistrement
+                    Micro coupe
                   </>
                 ) : (
                   <>
                     <Mic className="w-4 h-4" />
-                    Enregistrer
+                    Micro actif
                   </>
                 )}
               </button>
-
-              {isRecording && (
-                <div className="flex items-center gap-2 text-red-500">
-                  <Circle className="w-3 h-3 fill-current animate-pulse" />
-                  <span className="text-sm font-medium">REC</span>
-                </div>
-              )}
             </div>
           )}
 
@@ -344,7 +340,7 @@ export const CallDialog: React.FC<CallDialogProps> = ({
                 className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
               />
               <p className="text-xs text-gray-400 mt-1">
-                {notes.length} caractères
+                {notes.length} caracteres
               </p>
             </div>
           )}
@@ -354,21 +350,21 @@ export const CallDialog: React.FC<CallDialogProps> = ({
             {callStatus === 'idle' && (
               <button
                 onClick={startCall}
-                disabled={!leadPhone}
+                disabled={!leadPhone || initializing || (!isDeviceReady && deviceStatus !== 'disconnected')}
                 className="w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white font-semibold py-4 rounded-lg transition-all shadow-lg shadow-green-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Phone className="w-5 h-5" />
-                Appeler {leadPhone || '(pas de numéro)'}
+                Appeler {leadPhone || '(pas de numero)'}
               </button>
             )}
 
-            {callStatus === 'active' && (
+            {(callStatus === 'connecting' || callStatus === 'active') && (
               <button
                 onClick={endCall}
                 className="w-full flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white font-semibold py-4 rounded-lg transition-all shadow-lg shadow-red-500/30"
               >
                 <PhoneOff className="w-5 h-5" />
-                Terminer l'appel
+                Raccrocher
               </button>
             )}
 
@@ -390,7 +386,7 @@ export const CallDialog: React.FC<CallDialogProps> = ({
                 >
                   {saving ? (
                     <>
-                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                      <Loader2 className="w-4 h-4 animate-spin" />
                       Enregistrement...
                     </>
                   ) : (
@@ -407,7 +403,7 @@ export const CallDialog: React.FC<CallDialogProps> = ({
           {/* Info Message */}
           <div className="bg-yellow-900/20 border border-yellow-700/30 rounded-lg p-3">
             <p className="text-yellow-200 text-xs">
-              <strong>Rappel :</strong> Contactez le nouveau lead dans les 15 minutes pour maximiser vos chances de conversion (x7 de taux de réussite).
+              <strong>Rappel :</strong> Contactez le nouveau lead dans les 15 minutes pour maximiser vos chances de conversion (x7 de taux de reussite).
             </p>
           </div>
         </div>
