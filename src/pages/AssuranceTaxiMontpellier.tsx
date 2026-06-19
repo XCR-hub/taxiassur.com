@@ -10,8 +10,10 @@ const AssuranceTaxiMontpellier: React.FC = () => {
     <>
       <Helmet>
         <title>Assurance Taxi Montpellier : Tarifs 2026 | TaxiAssur</title>
-        <meta name="description" content="Assurance Taxi Montpellier dès 1560€/an. RC Pro incluse, assistance 24/7. Devis gratuit 2 min." />
+        <meta name="description" content="Assurance Taxi Montpellier dès 1560€/an (-35%). RC Pro incluse, assistance 24/7. Courtier spécialisé Hérault, devis gratuit en 2 min pour chauffeurs montpelliérains." />
         <link rel="canonical" href="https://taxiassur.com/assurance-taxi-montpellier" />
+        <link rel="alternate" href="https://taxiassur.com/assurance-taxi-montpellier" hrefLang="fr" />
+        <link rel="alternate" href="https://taxiassur.com/assurance-taxi-montpellier" hrefLang="x-default" />
               <meta property="og:type" content="website" />
         <meta property="og:title" content="Assurance Taxi Montpellier : Tarifs 2026 | TaxiAssur" />
         <meta property="og:description" content="Assurance Taxi Montpellier dès 1560€/an. RC Pro incluse, assistance 24/7. Devis gratuit 2 min." />

@@ -10,8 +10,10 @@ const AssuranceTaxiLeHavre: React.FC = () => {
     <>
       <Helmet>
         <title>Assurance Taxi Le-Havre : Tarifs 2026 | TaxiAssur</title>
-        <meta name="description" content="Assurance Taxi Le-Havre dès 1490€/an. RC Pro incluse, assistance 24/7. Devis gratuit 2 min." />
+        <meta name="description" content="Assurance Taxi Le Havre dès 1490€/an (-35%). RC Pro incluse, assistance 24/7. Courtier spécialisé Seine-Maritime, devis gratuit en 2 min pour chauffeurs havrais." />
         <link rel="canonical" href="https://taxiassur.com/assurance-taxi-le-havre" />
+        <link rel="alternate" href="https://taxiassur.com/assurance-taxi-le-havre" hrefLang="fr" />
+        <link rel="alternate" href="https://taxiassur.com/assurance-taxi-le-havre" hrefLang="x-default" />
               <meta property="og:type" content="website" />
         <meta property="og:title" content="Assurance Taxi Le-Havre : Tarifs 2026 | TaxiAssur" />
         <meta property="og:description" content="Assurance Taxi Le-Havre dès 1490€/an. RC Pro incluse, assistance 24/7. Devis gratuit 2 min." />

@@ -6,10 +6,15 @@ import NewsletterFooterWidget from './NewsletterFooterWidget';
 const Footer: React.FC = () => {
   const services = [
     { name: 'Assurance Taxi', href: '/assurance-taxi' },
+    { name: 'Assurance Moto Taxi', href: '/assurance-moto-taxi' },
+    { name: 'Assurance Taxi VTC', href: '/assurance-taxi-vtc' },
     { name: 'RC Professionnelle', href: '/rc-professionnelle' },
     { name: 'Flotte Véhicules', href: '/flotte-vehicules' },
+    { name: 'Prix Assurance Taxi', href: '/prix-assurance-taxi' },
+    { name: 'Assurance Obligatoire', href: '/assurance-obligatoire-taxi' },
     { name: 'Conseil Personnalisé', href: '/conseil-personnalise' },
-    { name: 'Gestion Sinistres', href: '/gestion-sinistres' }
+    { name: 'Gestion Sinistres', href: '/gestion-sinistres' },
+    { name: 'Courtier Assurance Taxi', href: '/courtier-assurance-taxi' }
   ];
 
   const pages = [
@@ -17,7 +22,8 @@ const Footer: React.FC = () => {
     { name: 'FAQ', href: '/faq' },
     { name: 'Avis Clients', href: '/reviews' },
     { name: 'Actualités', href: '/actualites' },
-    { name: 'Nos Offres', href: '/assurance-taxi' },
+    { name: 'Devis Gratuit', href: '/devis-assurance-taxi' },
+    { name: 'Quelle Assurance ?', href: '/quelle-assurance-taxi' },
     { name: 'Partenaires', href: '/programme-partenaires' },
     { name: 'Villes', href: '/villes' },
     { name: 'Newsletter', href: '/newsletter' },
@@ -239,6 +245,49 @@ const Footer: React.FC = () => {
           {/* Newsletter */}
           <div>
             <NewsletterFooterWidget />
+          </div>
+        </div>
+
+        <div className="border-t border-gray-800 mt-8 pt-6">
+          <h4 className="text-sm font-bold text-white mb-4">Assurance Taxi par Ville</h4>
+          <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs">
+            {[
+              { name: 'Paris', href: '/assurance-taxi-paris' },
+              { name: 'Lyon', href: '/assurance-taxi-lyon' },
+              { name: 'Marseille', href: '/assurance-taxi-marseille' },
+              { name: 'Toulouse', href: '/assurance-taxi-toulouse' },
+              { name: 'Nice', href: '/assurance-taxi-nice' },
+              { name: 'Nantes', href: '/assurance-taxi-nantes' },
+              { name: 'Strasbourg', href: '/assurance-taxi-strasbourg' },
+              { name: 'Montpellier', href: '/assurance-taxi-montpellier' },
+              { name: 'Bordeaux', href: '/assurance-taxi-bordeaux' },
+              { name: 'Rennes', href: '/assurance-taxi-rennes' },
+              { name: 'Grenoble', href: '/assurance-taxi-grenoble' },
+              { name: 'Toulon', href: '/assurance-taxi-toulon' },
+              { name: 'Dijon', href: '/assurance-taxi-dijon' },
+              { name: 'Reims', href: '/assurance-taxi-reims' },
+              { name: 'Angers', href: '/assurance-taxi-angers' },
+              { name: 'Le Mans', href: '/assurance-taxi-le-mans' },
+              { name: 'Amiens', href: '/assurance-taxi-amiens' },
+              { name: 'Tours', href: '/assurance-taxi-tours' },
+              { name: 'Limoges', href: '/assurance-taxi-limoges' },
+              { name: 'Clermont-Ferrand', href: '/assurance-taxi-clermont-ferrand' },
+              { name: 'Besancon', href: '/assurance-taxi-besancon' },
+              { name: 'Orleans', href: '/assurance-taxi-orleans' },
+              { name: 'Metz', href: '/assurance-taxi-metz' },
+              { name: 'Brest', href: '/assurance-taxi-brest' },
+              { name: 'Perpignan', href: '/assurance-taxi-perpignan' },
+              { name: 'Le Havre', href: '/assurance-taxi-le-havre' },
+              { name: 'Nimes', href: '/assurance-taxi-nimes' },
+              { name: 'Saint-Etienne', href: '/assurance-taxi-saint-etienne' },
+              { name: 'Villeurbanne', href: '/assurance-taxi-villeurbanne' },
+              { name: 'Aix-en-Provence', href: '/assurance-taxi-aix-en-provence' },
+              { name: 'Vaux-le-Penil', href: '/assurance-taxi-vaux-le-penil' },
+            ].map((city) => (
+              <Link key={city.href} to={city.href} className="text-gray-400 hover:text-orange-300 transition-colors">
+                {city.name}
+              </Link>
+            ))}
           </div>
         </div>
 

@@ -18,6 +18,8 @@ const AssuranceTaxiVTC: React.FC = () => {
         />
         <meta name="keywords" content="assurance taxi vtc, assurance vtc et taxi, assurance pour vtc, assurance chauffeur vtc, prix assurance vtc taxi" />
         <link rel="canonical" href="https://taxiassur.com/assurance-taxi-vtc" />
+        <link rel="alternate" href="https://taxiassur.com/assurance-taxi-vtc" hrefLang="fr" />
+        <link rel="alternate" href="https://taxiassur.com/assurance-taxi-vtc" hrefLang="x-default" />
 
         <script type="application/ld+json">
           {JSON.stringify({

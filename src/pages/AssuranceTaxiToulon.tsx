@@ -21,6 +21,8 @@ const AssuranceTaxiToulon: React.FC = () => {
         <meta name="description" content="Assurance taxi Toulon et RC Pro taxi Toulon dès 1 620€/an. Courtier spécialisé taxi Var (83). RC professionnelle obligatoire incluse. Devis gratuit 2 min, réponse 15 min." />
         <meta name="keywords" content="assurance taxi Toulon, rc pro Toulon, rc pro taxi Toulon, assurance taxi Var, courtier assurance taxi Toulon, responsabilité civile taxi Toulon, assurance professionnelle taxi 83" />
         <link rel="canonical" href="https://taxiassur.com/assurance-taxi-toulon" />
+        <link rel="alternate" href="https://taxiassur.com/assurance-taxi-toulon" hrefLang="fr" />
+        <link rel="alternate" href="https://taxiassur.com/assurance-taxi-toulon" hrefLang="x-default" />
         <meta property="og:type" content="website" />
         <meta property="og:title" content="Assurance Taxi Toulon &amp; RC Pro Toulon — Dès 1 620€/an | TaxiAssur" />
         <meta property="og:description" content="Assurance taxi Toulon et RC Pro taxi Toulon dès 1 620€/an. Devis gratuit 2 min." />

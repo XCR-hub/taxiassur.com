@@ -10,8 +10,10 @@ const AssuranceTaxiReims: React.FC = () => {
     <>
       <Helmet>
         <title>Assurance Taxi Reims : Tarifs 2026 | TaxiAssur</title>
-        <meta name="description" content="Assurance Taxi Reims dès 1420€/an. RC Pro incluse, assistance 24/7. Devis gratuit 2 min." />
+        <meta name="description" content="Assurance Taxi Reims dès 1420€/an (-35%). RC Pro incluse, assistance 24/7. Courtier spécialisé Marne, devis gratuit en 2 min pour chauffeurs rémois." />
         <link rel="canonical" href="https://taxiassur.com/assurance-taxi-reims" />
+        <link rel="alternate" href="https://taxiassur.com/assurance-taxi-reims" hrefLang="fr" />
+        <link rel="alternate" href="https://taxiassur.com/assurance-taxi-reims" hrefLang="x-default" />
               <meta property="og:type" content="website" />
         <meta property="og:title" content="Assurance Taxi Reims : Tarifs 2026 | TaxiAssur" />
         <meta property="og:description" content="Assurance Taxi Reims dès 1420€/an. RC Pro incluse, assistance 24/7. Devis gratuit 2 min." />

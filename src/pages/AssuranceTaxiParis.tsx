@@ -17,6 +17,8 @@ const AssuranceTaxiParis: React.FC = () => {
         />
         <meta name="keywords" content="assurance taxi paris, assurance taxi parisien, assurance g7 taxi, prix assurance taxi paris, taxi paris assurance" />
         <link rel="canonical" href="https://taxiassur.com/assurance-taxi-paris" />
+        <link rel="alternate" href="https://taxiassur.com/assurance-taxi-paris" hrefLang="fr" />
+        <link rel="alternate" href="https://taxiassur.com/assurance-taxi-paris" hrefLang="x-default" />
 
         <script type="application/ld+json">
           {JSON.stringify({

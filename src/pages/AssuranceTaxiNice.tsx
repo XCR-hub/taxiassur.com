@@ -44,6 +44,8 @@ const AssuranceTaxiNice: React.FC = () => {
         <meta name="description" content="Assurance taxi Nice et assurance VTC Nice dès 1 820€/an. Courtier spécialisé Côte d'Azur (06). Couverture aéroport, RC Pro incluse. Devis gratuit 2 min, réponse 15 min." />
         <meta name="keywords" content="assurance taxi Nice, assurance VTC Nice, assurance taxi Côte d'Azur, courtier assurance taxi Nice, RC pro taxi Nice, assurance VTC 06, taxi Nice assurance, assurance chauffeur VTC Nice" />
         <link rel="canonical" href="https://taxiassur.com/assurance-taxi-nice" />
+        <link rel="alternate" href="https://taxiassur.com/assurance-taxi-nice" hrefLang="fr" />
+        <link rel="alternate" href="https://taxiassur.com/assurance-taxi-nice" hrefLang="x-default" />
         <meta property="og:type" content="website" />
         <meta property="og:title" content="Assurance Taxi Nice &amp; Assurance VTC Nice — Dès 1 820€/an | TaxiAssur" />
         <meta property="og:description" content="Assurance taxi &amp; VTC Nice dès 1 820€/an. Devis gratuit 2 min, réponse 15 min." />

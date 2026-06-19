@@ -10,8 +10,10 @@ const AssuranceTaxiBrest: React.FC = () => {
     <>
       <Helmet>
         <title>Assurance Taxi Brest : Tarifs 2026 | TaxiAssur</title>
-        <meta name="description" content="Assurance Taxi Brest dès 1470€/an (-35%). RC Pro incluse." />
+        <meta name="description" content="Assurance Taxi Brest dès 1470€/an (-35%). RC Pro incluse, assistance 24/7. Courtier spécialisé Finistère, devis gratuit en 2 min pour chauffeurs brestois." />
         <link rel="canonical" href="https://taxiassur.com/assurance-taxi-brest" />
+        <link rel="alternate" href="https://taxiassur.com/assurance-taxi-brest" hrefLang="fr" />
+        <link rel="alternate" href="https://taxiassur.com/assurance-taxi-brest" hrefLang="x-default" />
               <meta property="og:type" content="website" />
         <meta property="og:title" content="Assurance Taxi Brest : Tarifs 2026 | TaxiAssur" />
         <meta property="og:description" content="Assurance Taxi Brest dès 1470€/an (-35%). RC Pro incluse." />

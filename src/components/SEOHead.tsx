@@ -79,15 +79,18 @@ const SEOHead: React.FC<SEOHeadProps> = ({
       <meta name="twitter:image" content={metaImage} />
       <meta name="twitter:image:alt" content={`${title || 'TaxiAssur'} - Courtier assurance taxi`} />
       
+      {/* Hreflang */}
+      <link rel="alternate" href={canonicalUrl} hrefLang="fr" />
+      <link rel="alternate" href={canonicalUrl} hrefLang="x-default" />
+
       {/* Additional Meta */}
       <meta name="author" content={brandName} />
       <meta name="geo.region" content="FR" />
       <meta name="geo.placename" content={city || "France"} />
-      
-      
+
       {/* Theme */}
       <meta name="theme-color" content="#f59e0b" />
-      
+
       {children}
     </Helmet>
   );

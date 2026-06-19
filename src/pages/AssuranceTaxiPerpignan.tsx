@@ -10,11 +10,13 @@ const AssuranceTaxiPerpignan: React.FC = () => {
     <>
       <Helmet>
         <title>Assurance Taxi Perpignan : Tarifs 2026 | TaxiAssur</title>
-        <meta name="description" content="Assurance Taxi Perpignan dès 1510€/an (-35%). RC Pro incluse." />
+        <meta name="description" content="Assurance Taxi Perpignan dès 1510€/an (-35%). RC Pro incluse, assistance 24/7. Courtier spécialisé Pyrénées-Orientales, devis gratuit en 2 min pour chauffeurs perpignanais." />
         <link rel="canonical" href="https://taxiassur.com/assurance-taxi-perpignan" />
+        <link rel="alternate" href="https://taxiassur.com/assurance-taxi-perpignan" hrefLang="fr" />
+        <link rel="alternate" href="https://taxiassur.com/assurance-taxi-perpignan" hrefLang="x-default" />
               <meta property="og:type" content="website" />
         <meta property="og:title" content="Assurance Taxi Perpignan : Tarifs 2026 | TaxiAssur" />
-        <meta property="og:description" content="Assurance Taxi Perpignan dès 1510€/an (-35%). RC Pro incluse." />
+        <meta property="og:description" content="Assurance Taxi Perpignan dès 1510€/an (-35%). RC Pro incluse, assistance 24/7. Courtier Pyrénées-Orientales, devis gratuit." />
         <meta property="og:url" content="https://taxiassur.com/assurance-taxi-perpignan" />
         <meta property="og:image" content="https://taxiassur.com/logo-600x300.png" />
         <meta property="og:image:width" content="600" />

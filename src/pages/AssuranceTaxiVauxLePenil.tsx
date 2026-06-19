@@ -64,6 +64,8 @@ export default function AssuranceTaxiVauxLePenil() {
         <title>Assurance Taxi Vaux-le-Pénil & Seine-et-Marne 77 — Dès 1 100€/an | TaxiAssur</title>
         <meta name="description" content="Assurance taxi Vaux-le-Pénil et Seine-et-Marne (77). TaxiAssur, votre courtier local basé à Dammarie-les-Lys. RC Pro obligatoire, devis gratuit en 2 min, économisez jusqu'à 35%." />
         <link rel="canonical" href="https://taxiassur.com/assurance-taxi-vaux-le-penil" />
+        <link rel="alternate" href="https://taxiassur.com/assurance-taxi-vaux-le-penil" hrefLang="fr" />
+        <link rel="alternate" href="https://taxiassur.com/assurance-taxi-vaux-le-penil" hrefLang="x-default" />
         <meta name="keywords" content="assurance taxi Vaux-le-Pénil, assurance vaux le penil, assurance taxi Seine-et-Marne, assurance taxi 77, assurance taxi Melun, RC pro taxi 77, courtier assurance taxi 77" />
         <meta property="og:type" content="website" />
         <meta property="og:title" content="Assurance Taxi Vaux-le-Pénil & Seine-et-Marne — TaxiAssur" />

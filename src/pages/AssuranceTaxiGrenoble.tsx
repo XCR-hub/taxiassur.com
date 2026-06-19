@@ -10,8 +10,10 @@ const AssuranceTaxiGrenoble: React.FC = () => {
     <>
       <Helmet>
         <title>Assurance Taxi Grenoble : Tarifs 2026 | TaxiAssur</title>
-        <meta name="description" content="Assurance Taxi Grenoble dès 1510€/an. RC Pro incluse, assistance 24/7. Devis gratuit 2 min." />
+        <meta name="description" content="Assurance Taxi Grenoble dès 1510€/an (-35%). RC Pro incluse, assistance 24/7. Courtier spécialisé Isère, devis gratuit en 2 min pour chauffeurs grenoblois." />
         <link rel="canonical" href="https://taxiassur.com/assurance-taxi-grenoble" />
+        <link rel="alternate" href="https://taxiassur.com/assurance-taxi-grenoble" hrefLang="fr" />
+        <link rel="alternate" href="https://taxiassur.com/assurance-taxi-grenoble" hrefLang="x-default" />
               <meta property="og:type" content="website" />
         <meta property="og:title" content="Assurance Taxi Grenoble : Tarifs 2026 | TaxiAssur" />
         <meta property="og:description" content="Assurance Taxi Grenoble dès 1510€/an. RC Pro incluse, assistance 24/7. Devis gratuit 2 min." />

@@ -10,11 +10,13 @@ const AssuranceTaxiClermontFerrand: React.FC = () => {
     <>
       <Helmet>
         <title>Assurance Taxi Clermont-Ferrand : Tarifs 2026 | TaxiAssur</title>
-        <meta name="description" content="Assurance Taxi Clermont-Ferrand dès 1410€/an (-35%). RC Pro incluse." />
+        <meta name="description" content="Assurance Taxi Clermont-Ferrand dès 1410€/an (-35%). RC Pro incluse, assistance 24/7. Courtier spécialisé Puy-de-Dôme, devis gratuit en 2 min pour chauffeurs clermontois." />
         <link rel="canonical" href="https://taxiassur.com/assurance-taxi-clermont-ferrand" />
+        <link rel="alternate" href="https://taxiassur.com/assurance-taxi-clermont-ferrand" hrefLang="fr" />
+        <link rel="alternate" href="https://taxiassur.com/assurance-taxi-clermont-ferrand" hrefLang="x-default" />
               <meta property="og:type" content="website" />
         <meta property="og:title" content="Assurance Taxi Clermont-Ferrand : Tarifs 2026 | TaxiAssur" />
-        <meta property="og:description" content="Assurance Taxi Clermont-Ferrand dès 1410€/an (-35%). RC Pro incluse." />
+        <meta property="og:description" content="Assurance Taxi Clermont-Ferrand dès 1410€/an (-35%). RC Pro incluse, assistance 24/7. Courtier Puy-de-Dôme, devis gratuit." />
         <meta property="og:url" content="https://taxiassur.com/assurance-taxi-clermont-ferrand" />
         <meta property="og:image" content="https://taxiassur.com/logo-600x300.png" />
         <meta property="og:image:width" content="600" />

@@ -10,8 +10,10 @@ const AssuranceTaxiRennes: React.FC = () => {
     <>
       <Helmet>
         <title>Assurance Taxi Rennes : Tarifs 2026 | TaxiAssur</title>
-        <meta name="description" content="Assurance Taxi Rennes dès 1450€/an. RC Pro incluse, assistance 24/7. Devis gratuit 2 min." />
+        <meta name="description" content="Assurance Taxi Rennes dès 1450€/an (-35%). RC Pro incluse, assistance 24/7. Courtier spécialisé Ille-et-Vilaine, devis gratuit en 2 min pour chauffeurs rennais." />
         <link rel="canonical" href="https://taxiassur.com/assurance-taxi-rennes" />
+        <link rel="alternate" href="https://taxiassur.com/assurance-taxi-rennes" hrefLang="fr" />
+        <link rel="alternate" href="https://taxiassur.com/assurance-taxi-rennes" hrefLang="x-default" />
               <meta property="og:type" content="website" />
         <meta property="og:title" content="Assurance Taxi Rennes : Tarifs 2026 | TaxiAssur" />
         <meta property="og:description" content="Assurance Taxi Rennes dès 1450€/an. RC Pro incluse, assistance 24/7. Devis gratuit 2 min." />

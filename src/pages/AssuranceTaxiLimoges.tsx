@@ -10,11 +10,13 @@ const AssuranceTaxiLimoges: React.FC = () => {
     <>
       <Helmet>
         <title>Assurance Taxi Limoges : Tarifs 2026 | TaxiAssur</title>
-        <meta name="description" content="Assurance Taxi Limoges dès 1360€/an (-35%). RC Pro incluse." />
+        <meta name="description" content="Assurance Taxi Limoges dès 1360€/an (-35%). RC Pro incluse, assistance 24/7. Courtier spécialisé Haute-Vienne, devis gratuit en 2 min pour chauffeurs limougeauds." />
         <link rel="canonical" href="https://taxiassur.com/assurance-taxi-limoges" />
+        <link rel="alternate" href="https://taxiassur.com/assurance-taxi-limoges" hrefLang="fr" />
+        <link rel="alternate" href="https://taxiassur.com/assurance-taxi-limoges" hrefLang="x-default" />
               <meta property="og:type" content="website" />
         <meta property="og:title" content="Assurance Taxi Limoges : Tarifs 2026 | TaxiAssur" />
-        <meta property="og:description" content="Assurance Taxi Limoges dès 1360€/an (-35%). RC Pro incluse." />
+        <meta property="og:description" content="Assurance Taxi Limoges dès 1360€/an (-35%). RC Pro incluse, assistance 24/7. Courtier spécialisé Haute-Vienne, devis gratuit." />
         <meta property="og:url" content="https://taxiassur.com/assurance-taxi-limoges" />
         <meta property="og:image" content="https://taxiassur.com/logo-600x300.png" />
         <meta property="og:image:width" content="600" />

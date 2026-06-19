@@ -70,6 +70,8 @@ export function UnifiedSEO({
       <meta name="description" content={enhancedDescription} />
       {keywords && <meta name="keywords" content={enhancedKeywords} />}
       <link rel="canonical" href={cleanCanonical} />
+      <link rel="alternate" href={cleanCanonical} hrefLang="fr" />
+      <link rel="alternate" href={cleanCanonical} hrefLang="x-default" />
 
       <meta name="robots" content={robotsContent} />
       <meta name="googlebot" content={robotsContent} />
