@@ -21,14 +21,14 @@ Deno.serve(async (req: Request) => {
       .from('city_pages')
       .select('city');
 
-    const existingCityNames = existingCities?.map(c => c.city.toLowerCase()) || [];
+    const existingCityNames = existingCities?.map(c => c.city?.toLowerCase()).filter(Boolean) || [];
 
     const { data: cities } = await supabase
       .from('french_cities')
       .select('*')
-      .gt('population', 30000)
+      .gt('population', 10000)
       .order('population', { ascending: false })
-      .limit(200);
+      .limit(500);
 
     if (!cities || cities.length === 0) {
       throw new Error('Aucune ville trouvée');

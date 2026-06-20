@@ -33,6 +33,75 @@ const KEYWORDS = [
   'attestation assurance taxi',
   'contrat assurance taxi',
   'tarif assurance taxi',
+  'couverture taxi bris de glace',
+  'assurance taxi vol incendie',
+  'taxi indemnisation accident',
+  'assurance taxi panne',
+  'protection juridique taxi',
+  'assurance taxi après sinistre',
+  'bonus malus chauffeur taxi',
+  'taxi assurance tiers étendu',
+  'assurance taxi hybride',
+  'taxi couverture passagers',
+  'assurance taxi véhicule neuf',
+  'assurance taxi véhicule occasion',
+  'taxi courtier assurance',
+  'taxi mutuelle santé',
+  'taxi prévoyance invalidité',
+  'assurance taxi multirisque',
+  'responsabilité civile taxi',
+  'taxi dommages corporels',
+  'assurance taxi catastrophe naturelle',
+  'taxi assistance dépannage',
+  'assurance taxi perte exploitation',
+  'réglementation assurance taxi 2026',
+  'loi assurance taxi',
+  'obligation légale assurance taxi',
+  'carte verte taxi',
+  'taxi assurance temporaire',
+  'taxi conducteur secondaire',
+  'taxi kilomètres illimités',
+  'taxi assurance au kilomètre',
+  'location taxi assurance',
+  'taxi véhicule de remplacement',
+  'assurance taxi nuit',
+  'taxi zone urbaine assurance',
+  'taxi longue distance assurance',
+  'assurance taxi aéroport',
+  'taxi conventionné CPAM assurance',
+  'taxi PMR assurance',
+  'assurance taxi luxe',
+  'assurance taxi écologique',
+  'taxi covoiturage assurance',
+  'taxi licence assurance',
+  'transmission licence taxi assurance',
+  'retraite chauffeur taxi',
+  'taxi formation continue assurance',
+  'assurance taxi sans franchise',
+  'taxi paiement mensuel assurance',
+  'taxi assurance immédiate',
+  'taxi résiliation loi Hamon',
+  'taxi déclaration sinistre en ligne',
+  'taxi expertise véhicule',
+  'taxi indemnisation rapide',
+];
+
+const ANGLES = [
+  'guide complet',
+  'conseils pratiques',
+  'ce qu\'il faut savoir',
+  'erreurs à éviter',
+  'comparatif détaillé',
+  'témoignage chauffeur',
+  'avis expert',
+  'économiser',
+  'tout comprendre',
+  'astuces méconnues',
+  'nouveautés 2026',
+  'analyse complète',
+  'retour d\'expérience',
+  'points clés',
+  'solutions adaptées',
 ];
 
 const AUTHORS = [
@@ -86,6 +155,17 @@ function selectSmartCity(cities: any[]): any {
   return cities[0];
 }
 
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .trim();
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { status: 200, headers: corsHeaders });
@@ -99,29 +179,44 @@ Deno.serve(async (req: Request) => {
     const { data: cities } = await supabase
       .from('french_cities')
       .select('*')
-      .gt('population', 50000)
+      .gt('population', 30000)
       .order('population', { ascending: false })
-      .limit(150);
+      .limit(200);
 
     if (!cities || cities.length === 0) {
-      throw new Error('Aucune ville trouvée');
+      throw new Error('Aucune ville trouvee');
     }
 
     const randomCity = selectSmartCity(cities);
     const randomKeyword = KEYWORDS[Math.floor(Math.random() * KEYWORDS.length)];
+    const randomAngle = ANGLES[Math.floor(Math.random() * ANGLES.length)];
     const randomAuthor = AUTHORS[Math.floor(Math.random() * AUTHORS.length)];
+
+    const candidateSlug = slugify(`${randomKeyword} ${randomCity.name} ${randomAngle}`);
 
     const { data: existingPost } = await supabase
       .from('blog_posts')
       .select('id')
-      .ilike('title', `%${randomKeyword}%${randomCity.name}%`)
+      .eq('slug', candidateSlug)
       .maybeSingle();
 
     if (existingPost) {
-      return new Response(
-        JSON.stringify({ success: false, message: 'Article similaire existe déjà', skipped: true }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      const altKeyword = KEYWORDS[Math.floor(Math.random() * KEYWORDS.length)];
+      const altAngle = ANGLES[Math.floor(Math.random() * ANGLES.length)];
+      const altSlug = slugify(`${altKeyword} ${randomCity.name} ${altAngle} ${Date.now() % 10000}`);
+
+      const { data: existingAlt } = await supabase
+        .from('blog_posts')
+        .select('id')
+        .eq('slug', altSlug)
+        .maybeSingle();
+
+      if (existingAlt) {
+        return new Response(
+          JSON.stringify({ success: false, message: 'Article similaire existe deja', skipped: true }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
     }
 
     const generateUrl = `${supabaseUrl}/functions/v1/generate-seo-content`;
@@ -134,21 +229,33 @@ Deno.serve(async (req: Request) => {
       body: JSON.stringify({
         keyword: randomKeyword,
         city: randomCity.name,
-        secondaryKeywords: ['taxi', 'assurance', randomCity.name, randomCity.region],
+        angle: randomAngle,
+        secondaryKeywords: ['taxi', 'assurance', randomCity.name, randomCity.region || ''],
         imagePrompt: `taxi ${randomCity.name} professionnel`,
       }),
     });
 
     if (!generateResponse.ok) {
-      throw new Error(`Erreur génération: ${generateResponse.status}`);
+      const errText = await generateResponse.text();
+      throw new Error(`Erreur generation: ${generateResponse.status} - ${errText.slice(0, 200)}`);
     }
 
     const generated = await generateResponse.json();
     const blogPost = generated.content?.blogPost;
 
     if (!blogPost) {
-      throw new Error('Contenu blog non généré');
+      throw new Error('Contenu blog non genere - response: ' + JSON.stringify(generated).slice(0, 300));
     }
+
+    const finalSlug = blogPost.slug || candidateSlug;
+
+    const { data: slugExists } = await supabase
+      .from('blog_posts')
+      .select('id')
+      .eq('slug', finalSlug)
+      .maybeSingle();
+
+    const uniqueSlug = slugExists ? `${finalSlug}-${Date.now() % 100000}` : finalSlug;
 
     const publishTime = generateNaturalPublishTime();
 
@@ -156,7 +263,7 @@ Deno.serve(async (req: Request) => {
       .from('blog_posts')
       .insert({
         title: blogPost.title,
-        slug: blogPost.slug,
+        slug: uniqueSlug,
         excerpt: blogPost.excerpt,
         content: blogPost.content,
         meta_description: blogPost.metaDescription,
@@ -169,7 +276,7 @@ Deno.serve(async (req: Request) => {
         naturalness_score: blogPost.naturalness_score || 70,
         writing_style: blogPost.writing_style || 'professionnel',
         published_at: publishTime.toISOString(),
-        status: 'published',
+        published: true,
       })
       .select()
       .single();
