@@ -125,3 +125,29 @@ Safe publication commands:
 - Do not run a live-domain migration until the existing Bolt/Netlify production
   project is controllable or the custom domain transfer is intentionally
   performed after validation.
+
+## 2026-07-02 continuation: independent Vercel publishing
+
+- Vercel account/scope: `xcr-hubs-projects`
+- Vercel project: `taxiassur.com`
+- Vercel project id: `prj_4u3um01qL8VRl5mOJSh8E7Cq6RaO`
+- Public Vercel validation URL:
+  `https://taxiassurcom-xcr-hubs-projects.vercel.app`
+- Custom domains added to the Vercel project:
+  - `taxiassur.com`
+  - `www.taxiassur.com`
+
+The local publish script now skips Bolt by default. Vercel publishing is
+available with:
+
+- Independent publish with Vercel:
+  `npm.cmd run publish:independent -- "Your commit message"`
+- Vercel only:
+  `npm.cmd run publish:vercel -- "Your commit message"`
+- Vercel validation without custom-domain promotion:
+  `npm.cmd run publish:vercel:validate`
+
+The live domain still needs a deliberate Cloudflare DNS switch before Vercel
+becomes the visible host for `taxiassur.com`. See
+`INDEPENDENT_PUBLISHING_2026-07-02.md` for the exact DNS records and rollback
+records.

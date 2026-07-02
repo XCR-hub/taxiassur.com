@@ -41,9 +41,13 @@ const flags = new Set(args.filter((arg) => arg.startsWith("--")));
 const commitMessage = args.find((arg) => !arg.startsWith("--")) || process.env.PUBLISH_COMMIT_MESSAGE || "";
 
 const skipGit = flags.has("--skip-git");
-const skipBolt = flags.has("--skip-bolt");
+const withBolt = flags.has("--with-bolt") || process.env.PUBLISH_WITH_BOLT === "1";
+const skipBolt = flags.has("--skip-bolt") || !withBolt;
 const skipNetlify = flags.has("--skip-netlify");
 const skipSupabase = flags.has("--skip-supabase");
+const withVercel = flags.has("--vercel") || process.env.PUBLISH_WITH_VERCEL === "1";
+const skipVercel = flags.has("--skip-vercel") || !withVercel;
+const vercelSkipDomain = flags.has("--vercel-skip-domain") || process.env.VERCEL_SKIP_DOMAIN === "1";
 const dryRun = flags.has("--dry-run");
 
 function log(message) {
@@ -84,6 +88,10 @@ function npmCmd() {
 
 function npxCmd() {
   return process.platform === "win32" ? "npx.cmd" : "npx";
+}
+
+function vercelCmd() {
+  return process.platform === "win32" ? "vercel.cmd" : "vercel";
 }
 
 function git(args, options) {
@@ -155,7 +163,7 @@ function writeSupabaseEnvFile() {
     "IONOS_IMAP_PORT=993",
     "IONOS_IMAP_USER=tcerda@xcr.fr",
     imapPass ? `IONOS_IMAP_PASSWORD=${imapPass}` : "",
-    `BOLT_REBUILD_WEBHOOK_URL=${boltWebhook}`,
+    withBolt ? `BOLT_REBUILD_WEBHOOK_URL=${boltWebhook}` : "",
   ].filter(Boolean);
 
   const dir = join(tmpdir(), "taxiassur-publish");
@@ -223,6 +231,9 @@ function publishSupabase() {
 async function triggerBolt() {
   if (skipBolt) {
     log("\n== Bolt skipped ==");
+    if (!flags.has("--skip-bolt")) {
+      log("Independent publish mode is enabled by default. Pass --with-bolt only for the legacy Bolt workflow.");
+    }
     return;
   }
 
@@ -297,6 +308,21 @@ async function triggerNetlify() {
   }
 }
 
+function publishVercel() {
+  if (skipVercel) {
+    log("\n== Vercel skipped ==");
+    if (!flags.has("--skip-vercel")) {
+      log("Pass --vercel to publish the current project to the linked Vercel project.");
+    }
+    return;
+  }
+
+  log("\n== Vercel ==");
+  const args = ["deploy", "--prod", "--yes"];
+  if (vercelSkipDomain) args.push("--skip-domain");
+  run(vercelCmd(), args);
+}
+
 async function verifyPublicSite() {
   log("\n== Public site ==");
   try {
@@ -316,6 +342,7 @@ async function main() {
   buildAndVerify();
   publishGit();
   await triggerNetlify();
+  publishVercel();
   await triggerBolt();
   publishSupabase();
   await verifyPublicSite();
