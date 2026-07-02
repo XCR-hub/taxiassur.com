@@ -55,3 +55,70 @@ To publish changes directly on `taxiassur.com`, one of these must happen first:
    has been validated against the current production base.
 
 Until then, keep `taxiassur.com` untouched.
+
+## 2026-07-02 continuation: Bolt recovery and safe publish check
+
+- Bolt project recovered and confirmed:
+  - Title: `TAXI ASSUR PRINCIPAL`
+  - Project URL: `https://bolt.new/~/github-mcmcpmfr`
+  - Project id: `61788020`
+  - Latest selected snapshot: `Publish application`
+  - Snapshot created at: `2026-06-23T08:55:03.217Z`
+- Local recovered source:
+  `C:\Users\TCERD\Documents\GitHub\taxiassur-bolt-recovery\projects\TAXI_ASSUR_PRINCIPAL_2026-06-23_publish_application`
+- Local working repo:
+  `C:\Users\TCERD\Documents\GitHub\taxiassur.com`
+
+Comparison summary between the recovered Bolt project and the local working
+repo, excluding generated folders:
+
+- Common files: 1812
+- Identical raw files: 47
+- Identical after line-ending normalization: 1745
+- Real differences after normalization: 20
+- Files only in local working repo: 27
+- Files only in recovered Bolt project: 4
+
+The large raw diff count is therefore mostly line-ending noise. The local
+working repo is the practical publishing base because it contains the recovered
+Bolt source plus the hMail/Supabase and Netlify publication changes.
+
+Latest controlled publish validation:
+
+- Command used:
+  `npm.cmd run publish -- --skip-git --skip-supabase --skip-bolt`
+- Result: successful build and deploy to the controlled Netlify site.
+- Controlled production URL:
+  `https://taxiassur-com-xcr.netlify.app`
+- Unique deploy URL:
+  `https://6a46cf5dcc193e1c93be0616--taxiassur-com-xcr.netlify.app`
+- Verified online deploy info:
+  - Commit: `bb92712f65fd1ba14d7be673b1af1f9743ffe464`
+  - Short commit: `bb92712f`
+  - Repository: `https://github.com/XCR-hub/taxiassur.com.git`
+
+Live `taxiassur.com` status after this operation:
+
+- `taxiassur.com` still responds from Netlify.
+- Root HTML still reports the existing live size/hash profile and the old live
+  assets, including `/assets/index-BhxZQDh0.js`.
+- The public domain was not replaced by the controlled Netlify site.
+
+Bolt direct publish status:
+
+- The local publish script attempted the Bolt step with:
+  `npm.cmd run publish -- --skip-git --skip-supabase --skip-netlify`
+- Result: build succeeded, but the Bolt webhook failed because
+  `api.bolt.new` does not resolve from this machine.
+- The Bolt editor was opened through the authenticated browser session, but the
+  `Publish` button remained disabled while the project view was loaded.
+
+Safe publication commands:
+
+- Publish to controlled staging only:
+  `npm.cmd run publish -- --skip-git --skip-supabase --skip-bolt`
+- Build only:
+  `npm.cmd run build`
+- Do not run a live-domain migration until the existing Bolt/Netlify production
+  project is controllable or the custom domain transfer is intentionally
+  performed after validation.
