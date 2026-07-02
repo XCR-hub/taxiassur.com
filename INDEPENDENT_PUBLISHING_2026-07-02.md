@@ -12,12 +12,13 @@
   `xcr-hubs-projects/taxiassur.com`
 - Public Vercel validation URL:
   `https://taxiassurcom-xcr-hubs-projects.vercel.app`
-- Current live public domain:
+- Live public domain:
   `https://taxiassur.com`
 
-The live public domain has not been moved yet. On 2026-07-02, it still points
-to the existing Bolt/Netlify production base, which must be preserved until the
-DNS switch is deliberate.
+The live public domain was moved from the previous Bolt/Netlify DNS target to
+Vercel on 2026-07-03 at about 00:10 Europe/Paris time. The previous production
+base remains backed up locally and on the snapshot Netlify site documented in
+`PRODUCTION_PUBLISHING_STATUS_2026-07-02.md`.
 
 ## Publishing commands
 
@@ -51,35 +52,36 @@ Custom domains added to the Vercel project:
 - `taxiassur.com`
 - `www.taxiassur.com`
 
-## DNS switch still required
+## DNS switch completed
 
 The DNS zone is currently on Cloudflare:
 
 - `arely.ns.cloudflare.com`
 - `rocky.ns.cloudflare.com`
 
-Current observed records on 2026-07-02:
+Previous observed records on 2026-07-02:
 
 - `taxiassur.com A 75.2.60.5`
 - `www.taxiassur.com CNAME site-dns.bolt.host`
 - `taxiassur.com MX 10 mail.xcr.fr`
 
-To move the live domain to Vercel while keeping mail intact, change only the web
-records in Cloudflare and keep MX/TXT records unchanged:
+The live domain was moved to Vercel by changing only the web records in
+Cloudflare. MX/TXT records were kept unchanged:
 
-- Change apex:
+- Apex:
   `taxiassur.com A 76.76.21.21`
-- Change `www` according to Vercel verification output. The Vercel CLI currently
-  recommends:
+- `www`:
   `www.taxiassur.com A 76.76.21.21`
 
-After the DNS change:
+Verification completed after the DNS change:
 
-1. Run `vercel.cmd domains verify taxiassur.com`.
-2. Run `vercel.cmd domains verify www.taxiassur.com`.
-3. Check `https://taxiassur.com`.
-4. Check `https://www.taxiassur.com`.
-5. Confirm the site responds from Vercel and the app routes work.
+- `taxiassur.com` resolves to `76.76.21.21`.
+- `www.taxiassur.com` resolves to `76.76.21.21`.
+- `https://taxiassur.com` returns HTTP 200 from Vercel.
+- `https://www.taxiassur.com` returns HTTP 200 from Vercel.
+- `https://taxiassur.com/backoffice/login` returns HTTP 200 from Vercel.
+- Vercel production deployment `dpl_2dEkZPJCqUELDdFLWaBCETsHwddp` is ready and
+  has aliases for both `taxiassur.com` and `www.taxiassur.com`.
 
 ## Rollback
 

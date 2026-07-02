@@ -147,7 +147,32 @@ available with:
 - Vercel validation without custom-domain promotion:
   `npm.cmd run publish:vercel:validate`
 
-The live domain still needs a deliberate Cloudflare DNS switch before Vercel
-becomes the visible host for `taxiassur.com`. See
-`INDEPENDENT_PUBLISHING_2026-07-02.md` for the exact DNS records and rollback
-records.
+## 2026-07-03 continuation: live domain moved to Vercel
+
+The Cloudflare DNS switch has been completed for the web records only:
+
+- `taxiassur.com A 76.76.21.21`
+- `www.taxiassur.com A 76.76.21.21`
+
+Mail records were not changed.
+
+Current verified production host:
+
+- `https://taxiassur.com`
+- `https://www.taxiassur.com`
+- Vercel deployment: `dpl_2dEkZPJCqUELDdFLWaBCETsHwddp`
+
+Post-switch checks:
+
+- `taxiassur.com` resolves to `76.76.21.21`.
+- `www.taxiassur.com` resolves to `76.76.21.21`.
+- `https://taxiassur.com` returns HTTP 200 from Vercel.
+- `https://www.taxiassur.com` returns HTTP 200 from Vercel.
+- `https://taxiassur.com/backoffice/login` returns HTTP 200 from Vercel.
+
+Rollback records, if needed:
+
+- `taxiassur.com A 75.2.60.5`
+- `www.taxiassur.com CNAME site-dns.bolt.host`
+
+See `INDEPENDENT_PUBLISHING_2026-07-02.md` for the operational commands.
