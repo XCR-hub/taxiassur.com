@@ -13,6 +13,10 @@ const projectRef = process.env.SUPABASE_PROJECT_REF || "drohhxrkoequjphvabvq";
 const boltWebhook =
   process.env.BOLT_REBUILD_WEBHOOK_URL ||
   "https://api.bolt.new/v1/deploy/github-mcmcpmfr";
+const netlifyBuildHook =
+  process.env.NETLIFY_BUILD_HOOK_URL ||
+  process.env.NETLIFY_DEPLOY_HOOK_URL ||
+  "";
 
 const supabaseFunctions = [
   "send-email-ionos",
@@ -37,6 +41,7 @@ const commitMessage = args.find((arg) => !arg.startsWith("--")) || process.env.P
 
 const skipGit = flags.has("--skip-git");
 const skipBolt = flags.has("--skip-bolt");
+const skipNetlify = flags.has("--skip-netlify");
 const skipSupabase = flags.has("--skip-supabase");
 const dryRun = flags.has("--dry-run");
 
@@ -82,15 +87,7 @@ function git(args, options) {
 
 function buildAndVerify() {
   log("\n== Build ==");
-  const sitemap = run("node", ["scripts/generate-clean-sitemap.js"], {
-    allowFailure: true,
-    capture: true,
-  });
-  if (sitemap.status !== 0) {
-    log("Sitemap generation skipped: Supabase environment is not configured locally.");
-  }
-  run(npmCmd(), ["exec", "vite", "--", "build"]);
-  run("node", ["scripts/verify-build.js"]);
+  run(npmCmd(), ["run", "build"]);
 }
 
 function publishGit() {
@@ -248,6 +245,41 @@ async function triggerBolt() {
   }
 }
 
+async function triggerNetlify() {
+  if (skipNetlify) {
+    log("\n== Netlify skipped ==");
+    return;
+  }
+
+  log("\n== Netlify ==");
+  if (!netlifyBuildHook) {
+    log("No NETLIFY_BUILD_HOOK_URL set. Relying on Netlify Git deploy from origin/main.");
+    return;
+  }
+
+  try {
+    const response = await fetch(netlifyBuildHook, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        source: "taxiassur-local-publish",
+        trigger: "manual",
+        timestamp: new Date().toISOString(),
+      }),
+    });
+
+    if (!response.ok) {
+      const body = await response.text();
+      log(`Netlify build hook failed: HTTP ${response.status} ${body}`);
+      return;
+    }
+
+    log("Netlify build hook triggered.");
+  } catch (error) {
+    log(`Netlify build hook unavailable: ${error.message}`);
+  }
+}
+
 async function verifyPublicSite() {
   log("\n== Public site ==");
   try {
@@ -266,6 +298,7 @@ async function main() {
 
   buildAndVerify();
   publishGit();
+  await triggerNetlify();
   await triggerBolt();
   publishSupabase();
   await verifyPublicSite();
