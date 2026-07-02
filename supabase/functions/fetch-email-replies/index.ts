@@ -19,14 +19,14 @@ Deno.serve(async (req: Request) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Configuration IMAP IONOS
+    // Configuration IMAP hMail
     const imapConfig = {
-      host: Deno.env.get('IONOS_IMAP_HOST') || 'imap.ionos.fr',
-      port: parseInt(Deno.env.get('IONOS_IMAP_PORT') || '993'),
+      host: Deno.env.get('IMAP_HOST') || Deno.env.get('HMAIL_IMAP_HOST') || Deno.env.get('IONOS_IMAP_HOST') || 'mail.xcr.fr',
+      port: parseInt(Deno.env.get('IMAP_PORT') || Deno.env.get('HMAIL_IMAP_PORT') || Deno.env.get('IONOS_IMAP_PORT') || '993'),
       secure: true,
       auth: {
-        user: Deno.env.get('IONOS_EMAIL_USER') || 'team@taxiassur.com',
-        pass: Deno.env.get('IONOS_EMAIL_PASSWORD') || ''
+        user: Deno.env.get('IMAP_USER') || Deno.env.get('SMTP_USER') || Deno.env.get('HMAIL_IMAP_USER') || Deno.env.get('IONOS_EMAIL_USER') || 'tcerda@xcr.fr',
+        pass: Deno.env.get('IMAP_PASS') || Deno.env.get('SMTP_PASS') || Deno.env.get('HMAIL_IMAP_PASS') || Deno.env.get('IONOS_EMAIL_PASSWORD') || ''
       },
       logger: false
     };

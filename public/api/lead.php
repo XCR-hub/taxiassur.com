@@ -1,5 +1,5 @@
 <?php
-// API Lead TaxiAssur.com - IONOS 2024 Compliant - Adresse expéditeur conforme
+// API Lead TaxiAssur.com - hMail XCR SMTP
 declare(strict_types=1);
 
 // Configuration d'erreurs ULTRA-SÉCURISÉE
@@ -21,20 +21,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit(0);
 }
 
-// Configuration email IONOS 2024 - CONFORME
-define('SMTP_HOST', 'smtp.ionos.fr');
-define('SMTP_PORT', 465);
-define('SMTP_USER', 'noreply@taxiassur.com');
-define('SMTP_PASS', 'Team2025!,&');
-define('SMTP_SECURITY', 'ssl');
+require_once __DIR__ . '/load-env.php';
+require_once __DIR__ . '/smtp-mailer.php';
+
+// Configuration email hMail XCR
+define('SMTP_HOST', env('SMTP_HOST', 'mail.xcr.fr'));
+define('SMTP_PORT', (int)env('SMTP_PORT', '587'));
+define('SMTP_USER', env('SMTP_USER', 'tcerda@xcr.fr'));
+define('SMTP_PASS', env('SMTP_PASS', ''));
+define('SMTP_SECURITY', strtolower((string)env('SMTP_SECURITY', 'starttls')));
 
 // IMPORTANT : Adresse expéditeur DOIT être du domaine taxiassur.com (règle IONOS 2024)
-define('FROM_EMAIL', 'noreply@taxiassur.com'); // ✅ Conforme IONOS
-define('FROM_NAME', 'TaxiAssur.com');
-define('REPLY_TO_EMAIL', 'team@taxiassur.com'); // Peut être différent
+define('FROM_EMAIL', env('FROM_EMAIL', SMTP_USER));
+define('FROM_NAME', env('FROM_NAME', 'TaxiAssur.com'));
+define('REPLY_TO_EMAIL', env('REPLY_TO_EMAIL', env('CONTACT_EMAIL', 'team@taxiassur.com')));
 
 // Emails destinataires
-define('ADMIN_EMAILS', ['commercial@xcr.fr', 'tcerda@xcr.fr']);
+define('ADMIN_EMAILS', array_values(array_filter([
+    env('ADMIN_EMAIL_1', 'commercial@xcr.fr'),
+    env('ADMIN_EMAIL_2', 'tcerda@xcr.fr')
+])));
 
 // Fonction de log ULTRA-SÉCURISÉE
 function logEmail(string $message, array $context = []): void {
@@ -55,8 +61,8 @@ function logEmail(string $message, array $context = []): void {
     }
 }
 
-// Fonction d'envoi email IONOS 2024 CONFORME
-function sendEmailIONOS(string $to, string $subject, string $message, string $fromName = 'TaxiAssur'): bool {
+// Fonction d'envoi email hMail XCR
+function sendEmailSMTP(string $to, string $subject, string $message, string $fromName = 'TaxiAssur'): bool {
     try {
         // Validation email stricte
         if (!filter_var($to, FILTER_VALIDATE_EMAIL)) {
@@ -66,16 +72,16 @@ function sendEmailIONOS(string $to, string $subject, string $message, string $fr
         
         // Sanitisation complète
         $to = filter_var($to, FILTER_SANITIZE_EMAIL);
-        $subject = mb_encode_mimeheader($subject, 'UTF-8');
-        $fromName = mb_encode_mimeheader($fromName, 'UTF-8');
+        $subject = str_replace(["\r", "\n"], '', $subject);
+        $fromName = str_replace(['<', '>', '"', "'", "\r", "\n"], '', $fromName);
         
         // Headers IONOS 2024 CONFORMES - Expéditeur OBLIGATOIREMENT du domaine
-        $headers = "From: $fromName <" . FROM_EMAIL . ">\r\n"; // ✅ noreply@taxiassur.com
+        $headers = "From: $fromName <" . FROM_EMAIL . ">\r\n";
         $headers .= "Reply-To: " . REPLY_TO_EMAIL . "\r\n"; // ✅ team@taxiassur.com
         $headers .= "Return-Path: " . FROM_EMAIL . "\r\n";
         $headers .= "Content-Type: text/plain; charset=UTF-8\r\n";
         $headers .= "Content-Transfer-Encoding: 8bit\r\n";
-        $headers .= "X-Mailer: TaxiAssur-IONOS-2024\r\n";
+        $headers .= "X-Mailer: TaxiAssur-hMail\r\n";
         $headers .= "X-Priority: 1\r\n";
         $headers .= "Message-ID: <" . uniqid() . "@taxiassur.com>\r\n";
         $headers .= "Date: " . date('r') . "\r\n";
@@ -83,18 +89,30 @@ function sendEmailIONOS(string $to, string $subject, string $message, string $fr
         // Configuration SMTP pour IONOS
         ini_set('SMTP', SMTP_HOST);
         ini_set('smtp_port', (string)SMTP_PORT);
-        ini_set('sendmail_from', FROM_EMAIL); // ✅ Obligatoire IONOS
+        ini_set('sendmail_from', FROM_EMAIL);
         
         // Tentative d'envoi
-        $success = @mail($to, $subject, $message, $headers);
+        $success = sendSmtpTextEmail(
+            $to,
+            $subject,
+            $message,
+            FROM_EMAIL,
+            $fromName,
+            REPLY_TO_EMAIL,
+            [
+                'X-Mailer' => 'TaxiAssur-hMail',
+                'X-Priority' => '1'
+            ]
+        );
         
-        logEmail('IONOS 2024 email attempt', [
+        logEmail('hMail email attempt', [
             'to' => $to,
             'from' => FROM_EMAIL,
             'success' => $success,
             'smtp_host' => SMTP_HOST,
             'smtp_port' => SMTP_PORT,
-            'smtp_security' => SMTP_SECURITY
+            'smtp_security' => SMTP_SECURITY,
+            'smtp_error' => $success ? null : getSmtpLastError()
         ]);
         
         return $success;
@@ -154,7 +172,7 @@ function validateLeadData(array $data): array {
 try {
     $clientIP = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
     
-    logEmail('API called - IONOS 2024', [
+    logEmail('API called - hMail XCR', [
         'method' => $_SERVER['REQUEST_METHOD'],
         'ip' => $clientIP,
         'from_email' => FROM_EMAIL,
@@ -235,7 +253,7 @@ try {
     $adminMessage .= "Excellence Coverage Risks - ORIAS 11 061 425";
 
     // Envoi commercial@xcr.fr
-    $commercialSent = sendEmailIONOS('commercial@xcr.fr', $adminSubject, $adminMessage, FROM_NAME);
+    $commercialSent = sendEmailSMTP('commercial@xcr.fr', $adminSubject, $adminMessage, FROM_NAME);
     
     // === EMAIL ADMIN 2 : tcerda@xcr.fr ===
     $tcerdaSubject = "[TAXIASSUR] 🚖 Copie lead - $name - $city";
@@ -261,7 +279,7 @@ try {
     $tcerdaMessage .= "Excellence Coverage Risks";
 
     // Envoi tcerda@xcr.fr
-    $tcerdaSent = sendEmailIONOS('tcerda@xcr.fr', $tcerdaSubject, $tcerdaMessage, FROM_NAME);
+    $tcerdaSent = sendEmailSMTP('tcerda@xcr.fr', $tcerdaSubject, $tcerdaMessage, FROM_NAME);
 
     // === EMAIL CLIENT ===
     $clientSubject = "✅ Demande confirmée ! Votre expert TaxiAssur vous recontacte rapidement";
@@ -296,25 +314,16 @@ try {
     $clientMessage .= "--\n";
     $clientMessage .= "TaxiAssur.com - Spécialiste Assurance Taxi\n";
     $clientMessage .= "https://taxiassur.com\n\n";
-    $clientMessage .= "Cet email a été envoyé depuis noreply@taxiassur.com\n";
+    $clientMessage .= "Cet email a été envoyé depuis " . FROM_EMAIL . "\n";
     $clientMessage .= "Pour nous contacter : team@taxiassur.com";
 
     // Envoi au client avec validation stricte
     $clientSent = false;
     if (filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        $clientSent = sendEmailIONOS($email, $clientSubject, $clientMessage, FROM_NAME);
+        $clientSent = sendEmailSMTP($email, $clientSubject, $clientMessage, FROM_NAME);
         
-        // Si échec, essayer avec une méthode alternative
         if (!$clientSent) {
-            logEmail('Client email failed, trying alternative method', ['email' => $email]);
-            
-            // Méthode alternative avec headers simplifiés
-            $simpleHeaders = "From: TaxiAssur <" . FROM_EMAIL . ">\r\n";
-            $simpleHeaders .= "Reply-To: " . REPLY_TO_EMAIL . "\r\n";
-            $simpleHeaders .= "Content-Type: text/plain; charset=UTF-8\r\n";
-            
-            $clientSent = @mail($email, $clientSubject, $clientMessage, $simpleHeaders);
-            logEmail('Alternative client email attempt', ['email' => $email, 'success' => $clientSent]);
+            logEmail('Client email failed over hMail', ['email' => $email, 'smtp_error' => getSmtpLastError()]);
         }
     } else {
         logEmail('Invalid client email', ['email' => $email]);
@@ -402,7 +411,7 @@ try {
     echo json_encode([
         'success' => true,
         'ok' => true,
-        'message' => 'Demande traitée avec succès - IONOS 2024',
+        'message' => 'Demande traitée avec succès - hMail XCR',
         'supabase_inserted' => $supabaseInserted,
         'email_status' => [
             'commercial_sent' => $commercialSent,
@@ -414,7 +423,7 @@ try {
                 'port' => SMTP_PORT,
                 'user' => SMTP_USER,
                 'security' => SMTP_SECURITY,
-                'ionos_2024_compliant' => true
+                'hmail_xcr' => true
             ]
         ],
         'debug_info' => [
@@ -425,14 +434,14 @@ try {
         ]
     ], JSON_PRETTY_PRINT);
 
-    logEmail('Lead processing completed - IONOS 2024', [
+    logEmail('Lead processing completed - hMail XCR', [
         'client_email' => $email,
         'commercial_sent' => $commercialSent,
         'tcerda_sent' => $tcerdaSent,
         'client_sent' => $clientSent,
         'supabase_inserted' => $supabaseInserted,
         'from_email_used' => FROM_EMAIL,
-        'ionos_compliant' => true
+        'smtp_host' => SMTP_HOST
     ]);
 
 } catch (Throwable $e) {
@@ -448,7 +457,7 @@ try {
         'success' => false,
         'debug' => [
             'php_version' => PHP_VERSION,
-            'ionos_compliant' => true,
+            'hmail_xcr' => true,
             'from_email' => FROM_EMAIL
         ]
     ]);

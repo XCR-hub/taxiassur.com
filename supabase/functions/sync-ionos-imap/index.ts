@@ -290,16 +290,24 @@ Deno.serve(async (req) => {
     const supabase = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
     const stats = { mailbox_total: 0, retrieved: 0, inserted: 0, skipped: 0, errors: 0 };
 
-    const { data: account } = await supabase.from('email_accounts').select('*').eq('email', 'team@taxiassur.com').single();
-    if (!account?.imap_password_encrypted) {
+    const mailboxUser = Deno.env.get('IMAP_USER') || Deno.env.get('SMTP_USER') || Deno.env.get('HMAIL_IMAP_USER') || 'tcerda@xcr.fr';
+    const mailboxHost = Deno.env.get('IMAP_HOST') || Deno.env.get('HMAIL_IMAP_HOST') || Deno.env.get('IONOS_IMAP_HOST') || 'mail.xcr.fr';
+    const mailboxPort = parseInt(Deno.env.get('IMAP_PORT') || Deno.env.get('HMAIL_IMAP_PORT') || Deno.env.get('IONOS_IMAP_PORT') || '993');
+    const mailboxPassword = Deno.env.get('IMAP_PASS') || Deno.env.get('SMTP_PASS') || Deno.env.get('HMAIL_IMAP_PASS') || Deno.env.get('IONOS_EMAIL_PASSWORD') || '';
+
+    const { data: account } = await supabase.from('email_accounts').select('*').eq('email', mailboxUser).maybeSingle();
+    if (!account?.id) {
       return new Response(JSON.stringify({ success: false, error: 'Compte email non configure' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+    if (!account.imap_password_encrypted && !mailboxPassword) {
+      return new Response(JSON.stringify({ success: false, error: 'Mot de passe IMAP non configure' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
     const imap = new IMAPClient();
-    if (!await imap.connect(account.imap_host || 'imap.ionos.fr', account.imap_port || 993)) {
+    if (!await imap.connect(account.imap_host || mailboxHost, account.imap_port || mailboxPort)) {
       return new Response(JSON.stringify({ success: false, error: 'Connexion IMAP echouee' }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
-    if (!await imap.login(account.imap_username || 'team@taxiassur.com', account.imap_password_encrypted)) {
+    if (!await imap.login(account.imap_username || mailboxUser, account.imap_password_encrypted || mailboxPassword)) {
       await imap.close();
       return new Response(JSON.stringify({ success: false, error: 'Auth IMAP echouee' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
@@ -359,14 +367,14 @@ Deno.serve(async (req) => {
           message_id: email.uid,
           from_email: fromMatch?.[2]?.trim() || email.from,
           from_name: fromMatch?.[1]?.trim() || '',
-          to_emails: [account.imap_username || 'team@taxiassur.com'],
+          to_emails: [account.imap_username || mailboxUser],
           subject: email.subject,
           body_text: text.substring(0, 50000),
           body_html: html.substring(0, 200000),
           received_at: receivedAt,
           direction: 'inbound',
           status: 'received',
-          provider: 'ionos-imap',
+          provider: 'hmail-imap',
           is_read: false,
           attachments: attachmentsMetadata
         }).select().single();

@@ -39,12 +39,12 @@ async function sendEmailSMTP(
   fromEmail: string = "contact@taxiassur.com",
   fromName: string = "TaxiAssur"
 ): Promise<void> {
-  const SMTP_HOST = "smtp.ionos.fr";
-  const SMTP_PORT = parseInt(Deno.env.get("IONOS_SMTP_PORT") || "587");
-  const SMTP_USER = Deno.env.get("IONOS_EMAIL_USER") || "team@taxiassur.com";
-  const SMTP_PASS = Deno.env.get("IONOS_EMAIL_PASSWORD");
+  const SMTP_HOST = Deno.env.get("SMTP_HOST") || Deno.env.get("HMAIL_SMTP_HOST") || Deno.env.get("IONOS_SMTP_HOST") || "mail.xcr.fr";
+  const SMTP_PORT = parseInt(Deno.env.get("SMTP_PORT") || Deno.env.get("HMAIL_SMTP_PORT") || Deno.env.get("IONOS_SMTP_PORT") || "587");
+  const SMTP_USER = Deno.env.get("SMTP_USER") || Deno.env.get("HMAIL_SMTP_USER") || Deno.env.get("IONOS_EMAIL_USER") || "tcerda@xcr.fr";
+  const SMTP_PASS = Deno.env.get("SMTP_PASS") || Deno.env.get("HMAIL_SMTP_PASS") || Deno.env.get("IONOS_EMAIL_PASSWORD") || Deno.env.get("IONOS_SMTP_PASSWORD");
 
-  if (!SMTP_PASS) throw new Error("IONOS_EMAIL_PASSWORD not configured");
+  if (!SMTP_PASS) throw new Error("SMTP_PASS not configured");
 
   const conn = await Deno.connect({ hostname: SMTP_HOST, port: SMTP_PORT });
   const encoder = new TextEncoder();
@@ -163,7 +163,7 @@ Deno.serve(async (req: Request) => {
       .from('newsletter_campaigns')
       .update({
         status: 'sending',
-        provider_used: 'ionos',
+        provider_used: 'hmail',
         sent_at: new Date().toISOString()
       })
       .eq('id', campaign_id);

@@ -19,10 +19,11 @@ async function sendEmailSMTP(
   fromEmail: string = "team@taxiassur.com",
   fromName: string = "TaxiAssur"
 ): Promise<void> {
-  const SMTP_HOST = Deno.env.get("IONOS_SMTP_HOST") || "smtp.ionos.fr";
-  const SMTP_PORT = parseInt(Deno.env.get("IONOS_SMTP_PORT") || "465");
-  const SMTP_USER = Deno.env.get("IONOS_EMAIL_USER") || "team@taxiassur.com";
-  const SMTP_PASS = Deno.env.get("IONOS_EMAIL_PASSWORD");
+  const SMTP_HOST = Deno.env.get("SMTP_HOST") || Deno.env.get("HMAIL_SMTP_HOST") || Deno.env.get("IONOS_SMTP_HOST") || "mail.xcr.fr";
+  const SMTP_PORT = parseInt(Deno.env.get("SMTP_PORT") || Deno.env.get("HMAIL_SMTP_PORT") || Deno.env.get("IONOS_SMTP_PORT") || "587");
+  const SMTP_USER = Deno.env.get("SMTP_USER") || Deno.env.get("HMAIL_SMTP_USER") || Deno.env.get("IONOS_EMAIL_USER") || "tcerda@xcr.fr";
+  const SMTP_PASS = Deno.env.get("SMTP_PASS") || Deno.env.get("HMAIL_SMTP_PASS") || Deno.env.get("IONOS_EMAIL_PASSWORD") || Deno.env.get("IONOS_SMTP_PASSWORD");
+  const SMTP_SECURITY = (Deno.env.get("SMTP_SECURITY") || Deno.env.get("HMAIL_SMTP_SECURITY") || Deno.env.get("IONOS_SMTP_SECURITY") || (SMTP_PORT === 465 ? "ssl" : "starttls")).toLowerCase();
 
   if (!SMTP_PASS) {
     console.error("⚠️ IONOS_EMAIL_PASSWORD not configured in Supabase secrets");
@@ -31,10 +32,9 @@ async function sendEmailSMTP(
 
   console.log(`📧 Tentative envoi email SMTP vers ${to} via ${SMTP_HOST}:${SMTP_PORT}`);
 
-  const conn = await Deno.connectTls({
-    hostname: SMTP_HOST,
-    port: SMTP_PORT,
-  });
+  let conn: any = SMTP_SECURITY === "ssl"
+    ? await Deno.connectTls({ hostname: SMTP_HOST, port: SMTP_PORT })
+    : await Deno.connect({ hostname: SMTP_HOST, port: SMTP_PORT });
 
   const encoder = new TextEncoder();
   const decoder = new TextDecoder();
@@ -54,6 +54,12 @@ async function sendEmailSMTP(
   try {
     await readResponse();
     await sendCommand(`EHLO ${SMTP_HOST}`);
+    if (SMTP_SECURITY === "starttls" || SMTP_SECURITY === "tls") {
+      const startTlsResponse = await sendCommand("STARTTLS");
+      if (!startTlsResponse.startsWith("220")) throw new Error("SMTP STARTTLS failed");
+      conn = await Deno.startTls(conn, { hostname: SMTP_HOST });
+      await sendCommand(`EHLO ${SMTP_HOST}`);
+    }
     await sendCommand(`AUTH LOGIN`);
     await sendCommand(base64Encode(SMTP_USER));
     await sendCommand(base64Encode(SMTP_PASS));

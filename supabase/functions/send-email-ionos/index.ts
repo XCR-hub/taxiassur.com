@@ -116,16 +116,20 @@ async function sendEmailSMTP(
   fromName = "TaxiAssur",
   attachments: AttachmentResolved[] = []
 ): Promise<void> {
-  const SMTP_HOST = Deno.env.get("IONOS_SMTP_HOST") || "smtp.ionos.fr";
-  const SMTP_PORT = parseInt(Deno.env.get("IONOS_SMTP_PORT") || "465");
-  const SMTP_USER = Deno.env.get("IONOS_EMAIL_USER") || "team@taxiassur.com";
-  const SMTP_PASS = Deno.env.get("IONOS_EMAIL_PASSWORD");
+  const SMTP_HOST = Deno.env.get("SMTP_HOST") || Deno.env.get("HMAIL_SMTP_HOST") || Deno.env.get("IONOS_SMTP_HOST") || "mail.xcr.fr";
+  const SMTP_PORT = parseInt(Deno.env.get("SMTP_PORT") || Deno.env.get("HMAIL_SMTP_PORT") || Deno.env.get("IONOS_SMTP_PORT") || "587");
+  const SMTP_USER = Deno.env.get("SMTP_USER") || Deno.env.get("HMAIL_SMTP_USER") || Deno.env.get("IONOS_EMAIL_USER") || "tcerda@xcr.fr";
+  const SMTP_PASS = Deno.env.get("SMTP_PASS") || Deno.env.get("HMAIL_SMTP_PASS") || Deno.env.get("IONOS_EMAIL_PASSWORD") || Deno.env.get("IONOS_SMTP_PASSWORD");
+  const SMTP_SECURITY = (Deno.env.get("SMTP_SECURITY") || Deno.env.get("HMAIL_SMTP_SECURITY") || Deno.env.get("IONOS_SMTP_SECURITY") || (SMTP_PORT === 465 ? "ssl" : "starttls")).toLowerCase();
+  const SENDER_EMAIL = Deno.env.get("FROM_EMAIL") || Deno.env.get("HMAIL_FROM_EMAIL") || SMTP_USER;
 
-  console.log(`[IONOS] SMTP ${SMTP_HOST}:${SMTP_PORT} user=${SMTP_USER} attachments=${attachments.length}`);
+  console.log(`[hMail] SMTP ${SMTP_HOST}:${SMTP_PORT} security=${SMTP_SECURITY} user=${SMTP_USER} attachments=${attachments.length}`);
 
-  if (!SMTP_PASS) throw new Error("IONOS_EMAIL_PASSWORD not configured");
+  if (!SMTP_PASS) throw new Error("SMTP_PASS not configured");
 
-  const conn = await Deno.connectTls({ hostname: SMTP_HOST, port: SMTP_PORT });
+  let conn: any = SMTP_SECURITY === "ssl"
+    ? await Deno.connectTls({ hostname: SMTP_HOST, port: SMTP_PORT })
+    : await Deno.connect({ hostname: SMTP_HOST, port: SMTP_PORT });
   const encoder = new TextEncoder();
   const decoder = new TextDecoder();
 
@@ -147,16 +151,22 @@ async function sendEmailSMTP(
   try {
     await readResponse();
     await sendCommand(`EHLO taxiassur.com`);
+    if (SMTP_SECURITY === "starttls" || SMTP_SECURITY === "tls") {
+      const startTlsResponse = await sendCommand("STARTTLS");
+      if (!startTlsResponse.startsWith("220")) throw new Error("SMTP STARTTLS failed");
+      conn = await Deno.startTls(conn, { hostname: SMTP_HOST });
+      await sendCommand(`EHLO taxiassur.com`);
+    }
     await sendCommand("AUTH LOGIN");
     await sendCommand(btoa(SMTP_USER), false);
     const authResponse = await sendCommand(btoa(SMTP_PASS), false);
     if (authResponse.includes("535")) throw new Error("SMTP auth failed");
 
-    await sendCommand(`MAIL FROM:<${fromEmail}>`);
+    await sendCommand(`MAIL FROM:<${SENDER_EMAIL}>`);
     await sendCommand(`RCPT TO:<${to}>`);
     await sendCommand("DATA");
 
-    const mime = buildMimeMessage(fromName, fromEmail, toName, to, subject, htmlBody, attachments);
+    const mime = buildMimeMessage(fromName, SENDER_EMAIL, toName, to, subject, htmlBody, attachments);
     // Dot-stuffing: any line starting with "." must be escaped
     const safe = mime.replace(/\r\n\./g, "\r\n..");
     await sendCommand(safe + "\r\n.", false);
@@ -207,7 +217,7 @@ Deno.serve(async (req: Request) => {
     return new Response(
       JSON.stringify({
         success: true,
-        message: "Email sent via IONOS SMTP",
+        message: "Email sent via hMail SMTP",
         recipient: to,
         attachments: resolvedAttachments.length,
       }),

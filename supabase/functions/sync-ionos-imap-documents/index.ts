@@ -27,12 +27,12 @@ interface EmailMessage {
 
 async function connectIMAP() {
   const imapConfig = {
-    host: Deno.env.get('IONOS_IMAP_HOST') || 'imap.ionos.com',
-    port: parseInt(Deno.env.get('IONOS_IMAP_PORT') || '993'),
+    host: Deno.env.get('IMAP_HOST') || Deno.env.get('HMAIL_IMAP_HOST') || Deno.env.get('IONOS_IMAP_HOST') || 'mail.xcr.fr',
+    port: parseInt(Deno.env.get('IMAP_PORT') || Deno.env.get('HMAIL_IMAP_PORT') || Deno.env.get('IONOS_IMAP_PORT') || '993'),
     secure: true,
     auth: {
-      user: Deno.env.get('IONOS_IMAP_USER') || '',
-      pass: Deno.env.get('IONOS_IMAP_PASSWORD') || '',
+      user: Deno.env.get('IMAP_USER') || Deno.env.get('SMTP_USER') || Deno.env.get('HMAIL_IMAP_USER') || Deno.env.get('IONOS_IMAP_USER') || Deno.env.get('IONOS_EMAIL_USER') || 'tcerda@xcr.fr',
+      pass: Deno.env.get('IMAP_PASS') || Deno.env.get('SMTP_PASS') || Deno.env.get('HMAIL_IMAP_PASS') || Deno.env.get('IONOS_IMAP_PASSWORD') || Deno.env.get('IONOS_EMAIL_PASSWORD') || '',
     },
   };
 

@@ -8,6 +8,12 @@ header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: POST, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, X-Requested-With');
 
+require_once __DIR__ . '/load-env.php';
+require_once __DIR__ . '/smtp-mailer.php';
+
+define('NEWSLETTER_FROM_EMAIL', env('NEWSLETTER_FROM_EMAIL', env('FROM_EMAIL', env('SMTP_USER', 'tcerda@xcr.fr'))));
+define('NEWSLETTER_REPLY_TO', env('REPLY_TO_EMAIL', env('CONTACT_EMAIL', 'team@taxiassur.com')));
+
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit(0);
@@ -145,14 +151,23 @@ function sendEmailRobust(string $to, string $subject, string $message, string $f
     $fromName = str_replace(['<', '>', '"', "'"], '', $fromName);
     
     try {
-        $headers = "From: $fromName <newsletter@taxiassur.com>\r\n";
-        $headers .= "Reply-To: team@taxiassur.com\r\n";
-        $headers .= "Content-Type: text/plain; charset=UTF-8\r\n";
-        $headers .= "X-Mailer: TaxiAssur Newsletter\r\n";
-        $headers .= "X-Priority: 1\r\n";
-        
-        $success = @mail($to, $subject, $message, $headers);
-        logNewsletter('Email sent', ['to' => $to, 'success' => $success]);
+        $success = sendSmtpTextEmail(
+            $to,
+            $subject,
+            $message,
+            NEWSLETTER_FROM_EMAIL,
+            $fromName,
+            NEWSLETTER_REPLY_TO,
+            [
+                'X-Mailer' => 'TaxiAssur-Newsletter-hMail',
+                'X-Priority' => '1'
+            ]
+        );
+        logNewsletter('Email sent via hMail', [
+            'to' => $to,
+            'success' => $success,
+            'smtp_error' => $success ? null : getSmtpLastError()
+        ]);
         return $success;
     } catch (Throwable $e) {
         logNewsletter('Email error', ['error' => $e->getMessage()]);
@@ -190,12 +205,7 @@ function sendWelcomeEmailOld($email) {
         $message .= "https://taxiassur.com/newsletter\n\n";
         $message .= "Pour vous désinscrire : https://taxiassur.com/newsletter/unsubscribe?email=" . urlencode($email);
 
-        $headers = "From: Newsletter TaxiAssur <newsletter@taxiassur.com>\r\n";
-        $headers .= "Reply-To: team@taxiassur.com\r\n";
-        $headers .= "Content-Type: text/plain; charset=UTF-8\r\n";
-        $headers .= "X-Mailer: TaxiAssur Newsletter\r\n";
-
-        return @mail($email, $subject, $message, $headers);
+        return sendEmailRobust($email, $subject, $message, 'TaxiAssur Newsletter');
     } catch (Throwable $e) {
         logNewsletter('Welcome email error', ['error' => $e->getMessage()]);
         return false;
@@ -283,7 +293,7 @@ try {
 
     // Notifier les deux adresses admin
     foreach ($adminEmails as $adminEmail) {
-        @mail($adminEmail, $adminSubject, $adminMessage, "From: Newsletter <newsletter@taxiassur.com>");
+        sendEmailRobust($adminEmail, $adminSubject, $adminMessage, 'TaxiAssur Newsletter');
     }
 
     echo json_encode([

@@ -19,10 +19,11 @@ async function sendEmailSMTP(
   fromEmail: string = "team@taxiassur.com",
   fromName: string = "TaxiAssur"
 ): Promise<void> {
-  const SMTP_HOST = Deno.env.get("IONOS_SMTP_HOST") || "smtp.ionos.fr";
-  const SMTP_PORT = parseInt(Deno.env.get("IONOS_SMTP_PORT") || "465");
-  const SMTP_USER = Deno.env.get("IONOS_EMAIL_USER") || "team@taxiassur.com";
-  const SMTP_PASS = Deno.env.get("IONOS_EMAIL_PASSWORD") || Deno.env.get("IONOS_SMTP_PASSWORD");
+  const SMTP_HOST = Deno.env.get("SMTP_HOST") || Deno.env.get("HMAIL_SMTP_HOST") || Deno.env.get("IONOS_SMTP_HOST") || "mail.xcr.fr";
+  const SMTP_PORT = parseInt(Deno.env.get("SMTP_PORT") || Deno.env.get("HMAIL_SMTP_PORT") || Deno.env.get("IONOS_SMTP_PORT") || "587");
+  const SMTP_USER = Deno.env.get("SMTP_USER") || Deno.env.get("HMAIL_SMTP_USER") || Deno.env.get("IONOS_EMAIL_USER") || "tcerda@xcr.fr";
+  const SMTP_PASS = Deno.env.get("SMTP_PASS") || Deno.env.get("HMAIL_SMTP_PASS") || Deno.env.get("IONOS_EMAIL_PASSWORD") || Deno.env.get("IONOS_SMTP_PASSWORD");
+  const SMTP_SECURITY = (Deno.env.get("SMTP_SECURITY") || Deno.env.get("HMAIL_SMTP_SECURITY") || Deno.env.get("IONOS_SMTP_SECURITY") || (SMTP_PORT === 465 ? "ssl" : "starttls")).toLowerCase();
 
   console.log("🔧 Configuration SMTP:", {
     host: SMTP_HOST,
@@ -36,7 +37,7 @@ async function sendEmailSMTP(
   }
 
   // Port 465 = SSL direct, Port 587 = STARTTLS
-  const useSSL = SMTP_PORT === 465;
+  const useSSL = SMTP_SECURITY === "ssl";
 
   let conn;
 
@@ -78,6 +79,12 @@ async function sendEmailSMTP(
 
     // EHLO
     await sendCommand(`EHLO ${SMTP_HOST}`);
+    if (SMTP_SECURITY === "starttls" || SMTP_SECURITY === "tls") {
+      const startTlsResponse = await sendCommand("STARTTLS");
+      if (!startTlsResponse.startsWith("220")) throw new Error("SMTP STARTTLS failed");
+      conn = await Deno.startTls(conn, { hostname: SMTP_HOST });
+      await sendCommand(`EHLO ${SMTP_HOST}`);
+    }
 
     // AUTH LOGIN
     await sendCommand(`AUTH LOGIN`);

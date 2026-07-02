@@ -222,13 +222,13 @@ Deno.serve(async (req) => {
 
   try {
     // Vérifier d'abord que les credentials sont configurés
-    const imapPassword = Deno.env.get('IONOS_EMAIL_PASSWORD');
+    const imapPassword = Deno.env.get('IMAP_PASS') || Deno.env.get('SMTP_PASS') || Deno.env.get('HMAIL_IMAP_PASS') || Deno.env.get('IONOS_EMAIL_PASSWORD');
     if (!imapPassword) {
       return new Response(
         JSON.stringify({
           success: false,
-          error: 'IONOS credentials not configured',
-          message: 'Please configure IONOS_EMAIL_PASSWORD in Supabase Edge Function secrets',
+          error: 'hMail credentials not configured',
+          message: 'Please configure SMTP_PASS or IMAP_PASS in Supabase Edge Function secrets',
           instructions: 'Go to Supabase Dashboard > Project Settings > Edge Functions > Secrets',
           stats: { inserted: 0, skipped: 0, errors: 0, total_retrieved: 0 }
         }),
@@ -243,12 +243,12 @@ Deno.serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    console.log('Starting IONOS IMAP sync (v2 with timeout)...');
+    console.log('Starting hMail IMAP sync (v2 with timeout)...');
 
     // Paramètres IMAP depuis env ou defaults
-    const imapHost = Deno.env.get('IONOS_IMAP_HOST') || 'imap.ionos.fr';
-    const imapPort = parseInt(Deno.env.get('IONOS_IMAP_PORT') || '993');
-    const imapUser = Deno.env.get('IONOS_EMAIL_USER') || 'team@taxiassur.com';
+    const imapHost = Deno.env.get('IMAP_HOST') || Deno.env.get('HMAIL_IMAP_HOST') || Deno.env.get('IONOS_IMAP_HOST') || 'mail.xcr.fr';
+    const imapPort = parseInt(Deno.env.get('IMAP_PORT') || Deno.env.get('HMAIL_IMAP_PORT') || Deno.env.get('IONOS_IMAP_PORT') || '993');
+    const imapUser = Deno.env.get('IMAP_USER') || Deno.env.get('SMTP_USER') || Deno.env.get('HMAIL_IMAP_USER') || Deno.env.get('IONOS_EMAIL_USER') || 'tcerda@xcr.fr';
 
     console.log(`Connecting to IMAP: ${imapHost}:${imapPort} as ${imapUser}`);
 

@@ -1,5 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
+import { sendSmtpHtmlEmail } from "../_shared/smtp.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -68,73 +69,20 @@ async function sendEmailSMTP(
   fromEmail: string = "team@taxiassur.com",
   fromName: string = "TaxiAssur"
 ): Promise<void> {
-  const SMTP_HOST = Deno.env.get("IONOS_SMTP_HOST") || "smtp.ionos.fr";
-  const SMTP_PORT = parseInt(Deno.env.get("IONOS_SMTP_PORT") || "587");
-  const SMTP_USER = Deno.env.get("IONOS_EMAIL_USER") || "team@taxiassur.com";
-  const SMTP_PASS = Deno.env.get("IONOS_EMAIL_PASSWORD");
-
-  if (!SMTP_PASS) {
-    throw new Error("IONOS_EMAIL_PASSWORD not configured");
-  }
-
-  const conn = await Deno.connect({
-    hostname: SMTP_HOST,
-    port: SMTP_PORT,
+  await sendSmtpHtmlEmail({
+    to,
+    toName,
+    subject,
+    htmlBody,
+    fromEmail,
+    fromName,
+    headers: {
+      "X-Mailer": "TaxiAssur-hMail",
+      "X-Priority": "3",
+      "Importance": "Normal",
+      "List-Unsubscribe": "<mailto:team@taxiassur.com?subject=unsubscribe>",
+    },
   });
-
-  const encoder = new TextEncoder();
-  const decoder = new TextDecoder();
-
-  async function readResponse(): Promise<string> {
-    const buffer = new Uint8Array(1024);
-    const n = await conn.read(buffer);
-    if (n === null) return "";
-    return decoder.decode(buffer.subarray(0, n));
-  }
-
-  async function sendCommand(cmd: string): Promise<string> {
-    await conn.write(encoder.encode(cmd + "\r\n"));
-    return await readResponse();
-  }
-
-  try {
-    await readResponse();
-    await sendCommand(`EHLO ${SMTP_HOST}`);
-    await sendCommand(`AUTH LOGIN`);
-    await sendCommand(btoa(SMTP_USER));
-    await sendCommand(btoa(SMTP_PASS));
-    await sendCommand(`MAIL FROM:<${fromEmail}>`);
-    await sendCommand(`RCPT TO:<${to}>`);
-    await sendCommand("DATA");
-
-    const messageId = `<${Date.now()}.${Math.random().toString(36).substring(7)}@taxiassur.com>`;
-    const date = new Date().toUTCString();
-
-    const emailContent = [
-      `From: "${fromName}" <${fromEmail}>`,
-      `To: "${toName}" <${to}>`,
-      `Subject: ${subject}`,
-      `Date: ${date}`,
-      `Message-ID: ${messageId}`,
-      "MIME-Version: 1.0",
-      "Content-Type: text/html; charset=UTF-8",
-      "Content-Transfer-Encoding: 8bit",
-      "X-Mailer: TaxiAssur Mail System",
-      "X-Priority: 3",
-      "Importance: Normal",
-      "List-Unsubscribe: <mailto:team@taxiassur.com?subject=unsubscribe>",
-      "Reply-To: team@taxiassur.com",
-      "",
-      htmlBody,
-      ".",
-    ].join("\r\n");
-
-    await conn.write(encoder.encode(emailContent + "\r\n"));
-    await readResponse();
-    await sendCommand("QUIT");
-  } finally {
-    conn.close();
-  }
 }
 
 Deno.serve(async (req: Request) => {
@@ -144,7 +92,7 @@ Deno.serve(async (req: Request) => {
 
   try {
     const lead: LeadNotificationRequest = await req.json();
-    console.log("Sending notification for lead via IONOS SMTP:", lead.lead_id);
+    console.log("Sending notification for lead via hMail SMTP:", lead.lead_id);
 
     const prospectSpaceUrl = lead.access_token
       ? `https://taxiassur.com/espace-prospect?token=${lead.access_token}`
