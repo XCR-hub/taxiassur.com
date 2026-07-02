@@ -24,6 +24,8 @@
     "build-storybook": "storybook build",
     "prepare": "husky install",
     "deploy": "npm run build && node scripts/deploy-sftp.js",
+    "publish": "node scripts/publish.js",
+    "publish:site": "node scripts/publish.js",
     "deploy:manual": "npm run build && echo 'Build terminé ! Uploadez le dossier /dist sur votre serveur IONOS'",
     "auto-deploy": "node scripts/auto-deploy.js",
     "setup": "node scripts/setup.js",
