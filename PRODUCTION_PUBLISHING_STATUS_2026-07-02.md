@@ -83,19 +83,22 @@ The large raw diff count is therefore mostly line-ending noise. The local
 working repo is the practical publishing base because it contains the recovered
 Bolt source plus the hMail/Supabase and Netlify publication changes.
 
-Latest controlled publish validation:
+Controlled publish validation:
 
 - Command used:
   `npm.cmd run publish -- --skip-git --skip-supabase --skip-bolt`
 - Result: successful build and deploy to the controlled Netlify site.
 - Controlled production URL:
   `https://taxiassur-com-xcr.netlify.app`
-- Unique deploy URL:
-  `https://6a46cf5dcc193e1c93be0616--taxiassur-com-xcr.netlify.app`
-- Verified online deploy info:
-  - Commit: `bb92712f65fd1ba14d7be673b1af1f9743ffe464`
-  - Short commit: `bb92712f`
-  - Repository: `https://github.com/XCR-hub/taxiassur.com.git`
+- Verification endpoint:
+  `https://taxiassur-com-xcr.netlify.app/deploy-info.json`
+- Observed successful deploys during this run:
+  - `https://6a46cf5dcc193e1c93be0616--taxiassur-com-xcr.netlify.app`
+  - `https://6a46d17e2fb3672972489c7c--taxiassur-com-xcr.netlify.app`
+
+Use `deploy-info.json` as the source of truth for the currently active
+controlled Netlify commit. Do not use this documentation file as the active
+deployment state.
 
 Live `taxiassur.com` status after this operation:
 
