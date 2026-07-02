@@ -1,10 +1,19 @@
-name: Publish TaxiAssur
+name: Validate TaxiAssur
 
 on:
   push:
     branches:
       - main
   workflow_dispatch:
+    inputs:
+      deploy_netlify:
+        description: Deploy the build to the legacy controlled Netlify site
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
 
 jobs:
   build:
@@ -34,8 +43,18 @@ jobs:
   deploy-netlify:
     needs: build
     runs-on: ubuntu-latest
-    if: ${{ secrets.NETLIFY_AUTH_TOKEN != '' && secrets.NETLIFY_SITE_ID != '' }}
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.deploy_netlify }}
+    env:
+      NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+      NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
     steps:
+      - name: Check Netlify secrets
+        run: |
+          if [ -z "$NETLIFY_AUTH_TOKEN" ] || [ -z "$NETLIFY_SITE_ID" ]; then
+            echo "NETLIFY_AUTH_TOKEN and NETLIFY_SITE_ID are required for the legacy Netlify deploy."
+            exit 1
+          fi
+
       - name: Download build artifact
         uses: actions/download-artifact@v4
         with:
@@ -44,7 +63,3 @@ jobs:
 
       - name: Deploy to Netlify production
         run: npx --yes netlify-cli deploy --prod --dir dist --site "$NETLIFY_SITE_ID" --auth "$NETLIFY_AUTH_TOKEN"
-        env:
-          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
-
