@@ -17,6 +17,7 @@ const netlifyBuildHook =
   process.env.NETLIFY_BUILD_HOOK_URL ||
   process.env.NETLIFY_DEPLOY_HOOK_URL ||
   "";
+const netlifySiteId = process.env.NETLIFY_SITE_ID || "9719283a-c221-4e19-8a78-72e75e0f7393";
 
 const supabaseFunctions = [
   "send-email-ionos",
@@ -79,6 +80,10 @@ function run(command, commandArgs, options = {}) {
 
 function npmCmd() {
   return process.platform === "win32" ? "npm.cmd" : "npm";
+}
+
+function npxCmd() {
+  return process.platform === "win32" ? "npx.cmd" : "npx";
 }
 
 function git(args, options) {
@@ -253,7 +258,19 @@ async function triggerNetlify() {
 
   log("\n== Netlify ==");
   if (!netlifyBuildHook) {
-    log("No NETLIFY_BUILD_HOOK_URL set. Relying on Netlify Git deploy from origin/main.");
+    run(npxCmd(), [
+      "--yes",
+      "netlify-cli",
+      "deploy",
+      "--prod",
+      "--no-build",
+      "--dir",
+      "dist",
+      "--site",
+      netlifySiteId,
+      "--message",
+      `TaxiAssur publish ${new Date().toISOString()}`,
+    ]);
     return;
   }
 
