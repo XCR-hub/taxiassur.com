@@ -165,6 +165,62 @@ function slugify(text: string): string {
     .replace(/-+/g, '-')
     .trim();
 }
+function toTitleCase(text: string): string {
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+function clampText(text: string, maxLength: number): string {
+  if (text.length <= maxLength) return text;
+  return text.slice(0, maxLength - 1).replace(/\s+\S*$/, '') + '...';
+}
+
+function buildFallbackBlogPost(keyword: string, city: any, angle: string): any {
+  const cityName = city?.name || 'votre ville';
+  const region = city?.region || 'France';
+  const title = clampText(`${toTitleCase(keyword)} a ${cityName} : ${angle}`, 95);
+  const slug = slugify(`${keyword} ${cityName} ${angle}`);
+  const excerpt = `Les points a verifier pour adapter une assurance taxi a ${cityName}, comparer les garanties utiles et obtenir un devis coherent avec votre activite.`;
+  const metaDescription = clampText(`Guide assurance taxi a ${cityName} : garanties, documents, franchises et conseils pour obtenir un devis professionnel adapte.`, 158);
+  const keywords = [
+    keyword,
+    'assurance taxi',
+    `assurance taxi ${cityName}`,
+    `devis assurance taxi ${cityName}`,
+    `taxi ${region}`,
+  ].filter(Boolean);
+
+  const content = `Pour un chauffeur de taxi a ${cityName}, l'assurance ne se resume pas a une cotisation annuelle. Le contrat doit tenir compte du rythme de circulation, des horaires, de la valeur du vehicule, de l'equipement professionnel et des attentes des clients transportes. Un devis solide part toujours de ces elements concrets.
+
+## Les garanties a verifier en priorite
+
+La responsabilite civile professionnelle reste la base, mais elle ne couvre pas tous les problemes rencontres sur le terrain. Selon votre activite, il faut aussi regarder les dommages au vehicule, le bris de glace, le vol, l'incendie, la protection du conducteur, l'assistance et les conditions de vehicule de remplacement. Pour un taxi utilise tous les jours, une immobilisation trop longue peut couter plus cher que l'ecart de prime entre deux formules.
+
+## Les documents utiles pour obtenir un devis fiable
+
+Avant de comparer les offres, preparez la carte grise, la licence taxi, le permis, le releve d'information, les informations sur le stationnement et le kilometrage annuel estime. Ces pieces permettent d'eviter un tarif approximatif et de verifier rapidement si le contrat correspond bien a un usage professionnel a ${cityName}.
+
+## Comment comparer deux propositions
+
+Le prix seul ne suffit pas. Comparez aussi le montant des franchises, les exclusions, les plafonds d'indemnisation, les delais d'assistance et les conditions en cas de conducteur secondaire. Deux devis proches peuvent donner des resultats tres differents apres un sinistre.
+
+## Quand demander l'avis d'un courtier specialise
+
+Un courtier specialise taxi peut rapprocher votre profil des assureurs les plus adaptes, notamment si vous avez un historique de sinistres, un vehicule recent, une activite de nuit ou une forte part de trajets longue distance. L'objectif est d'obtenir une couverture robuste sans payer des options inutiles.`;
+
+  return {
+    title,
+    slug,
+    excerpt,
+    content,
+    metaDescription,
+    keywords,
+    featuredImage: 'https://taxiassur.com/logo-600x300.png',
+    imageAlt: `Taxi professionnel a ${cityName}`,
+    readingTime: 5,
+    naturalness_score: 62,
+    writing_style: 'fallback-seo',
+  };
+}
 
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
@@ -219,34 +275,65 @@ Deno.serve(async (req: Request) => {
       }
     }
 
+    let blogPost: any = null;
+    let usedFallback = false;
+    let fallbackReason: string | null = null;
+
     const generateUrl = `${supabaseUrl}/functions/v1/generate-seo-content`;
-    const generateResponse = await fetch(generateUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${supabaseServiceKey}`,
-      },
-      body: JSON.stringify({
-        keyword: randomKeyword,
-        city: randomCity.name,
-        angle: randomAngle,
-        secondaryKeywords: ['taxi', 'assurance', randomCity.name, randomCity.region || ''],
-        imagePrompt: `taxi ${randomCity.name} professionnel`,
-      }),
-    });
+    try {
+      const generateResponse = await fetch(generateUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabaseServiceKey}`,
+        },
+        body: JSON.stringify({
+          keyword: randomKeyword,
+          city: randomCity.name,
+          angle: randomAngle,
+          secondaryKeywords: ['taxi', 'assurance', randomCity.name, randomCity.region || ''],
+          imagePrompt: `taxi ${randomCity.name} professionnel`,
+        }),
+      });
 
-    if (!generateResponse.ok) {
-      const errText = await generateResponse.text();
-      throw new Error(`Erreur generation: ${generateResponse.status} - ${errText.slice(0, 200)}`);
+      if (generateResponse.ok) {
+        const generated = await generateResponse.json();
+        blogPost = generated.content?.blogPost || null;
+        if (!blogPost) {
+          fallbackReason = 'empty_generated_content';
+        }
+      } else {
+        fallbackReason = `generation_${generateResponse.status}`;
+      }
+    } catch (_error) {
+      fallbackReason = 'generation_unavailable';
     }
-
-    const generated = await generateResponse.json();
-    const blogPost = generated.content?.blogPost;
 
     if (!blogPost) {
-      throw new Error('Contenu blog non genere - response: ' + JSON.stringify(generated).slice(0, 300));
-    }
+      const recentFallbackCutoff = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+      const { data: recentFallbackPost, error: recentFallbackError } = await supabase
+        .from('blog_posts')
+        .select('id, created_at')
+        .eq('writing_style', 'fallback-seo')
+        .gte('created_at', recentFallbackCutoff)
+        .limit(1);
 
+      if (!recentFallbackError && recentFallbackPost && recentFallbackPost.length > 0) {
+        return new Response(
+          JSON.stringify({
+            success: true,
+            skipped: true,
+            fallback: true,
+            reason: fallbackReason || 'fallback_rate_limited',
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      blogPost = buildFallbackBlogPost(randomKeyword, randomCity, randomAngle);
+      usedFallback = true;
+      fallbackReason = fallbackReason || 'fallback_content';
+    }
     const finalSlug = blogPost.slug || candidateSlug;
 
     const { data: slugExists } = await supabase
@@ -275,7 +362,6 @@ Deno.serve(async (req: Request) => {
         author_bio: randomAuthor.bio,
         naturalness_score: blogPost.naturalness_score || 70,
         writing_style: blogPost.writing_style || 'professionnel',
-        published_at: publishTime.toISOString(),
         published: true,
       })
       .select()
@@ -294,7 +380,9 @@ Deno.serve(async (req: Request) => {
           slug: insertedPost.slug,
           author: randomAuthor.name,
           naturalness_score: insertedPost.naturalness_score,
-          publish_time: publishTime.toISOString(),
+          publish_time: insertedPost.created_at || publishTime.toISOString(),
+          fallback: usedFallback,
+          fallback_reason: usedFallback ? fallbackReason : null,
         },
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

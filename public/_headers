@@ -1,0 +1,20 @@
+# Cloudflare Pages headers - TaxiAssur
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=(self)
+  X-Frame-Options: DENY
+
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/sitemap.xml
+  Cache-Control: public, max-age=300, must-revalidate
+
+/robots.txt
+  Cache-Control: public, max-age=300, must-revalidate
+
+/api/*
+  Content-Type: application/json; charset=utf-8
+  X-Robots-Tag: noindex, nofollow, noarchive
+  Cache-Control: no-store

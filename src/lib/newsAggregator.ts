@@ -300,7 +300,7 @@ export class NewsAggregator {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-MAKE-SECRET': import.meta.env.VITE_MAKE_SECRET || 'change_me_secure_token_2024'
+          'X-MAKE-SECRET': ''
         },
         body: JSON.stringify({
           type: 'raw_news',

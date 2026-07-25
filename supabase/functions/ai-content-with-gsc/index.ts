@@ -21,9 +21,174 @@ interface ContentRequest {
  * 1. Récupère le prompt template selon la catégorie
  * 2. Identifie les top requêtes GSC liées au sujet
  * 3. Enrichit le prompt avec ces requêtes
- * 4. Génère le contenu via OpenAI
+ * 4. Genere le contenu via le premier fournisseur IA disponible
  * 5. Enregistre la performance pour tracking
  */
+const SEO_SYSTEM_PROMPT = "Tu es un expert en redaction SEO pour l'assurance taxi/VTC en France. Tu ecris du contenu professionnel, informatif et optimise pour le referencement naturel.";
+
+async function callOpenAIContent(apiKey: string, systemPrompt: string, prompt: string): Promise<string> {
+  const response = await fetch("https://api.openai.com/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${apiKey}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      model: "gpt-4o-mini",
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: prompt }
+      ],
+      temperature: 0.7,
+      max_tokens: 2000
+    })
+  });
+
+  if (!response.ok) {
+    const body = await response.text().catch(() => "");
+    throw new Error(`OpenAI API error: ${response.status} ${body.slice(0, 180)}`);
+  }
+
+  const data = await response.json();
+  return data.choices?.[0]?.message?.content || "";
+}
+
+async function callOpenRouterContent(apiKey: string, systemPrompt: string, prompt: string): Promise<string> {
+  const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+      "HTTP-Referer": "https://taxiassur.com",
+      "X-Title": "TaxiAssur"
+    },
+    body: JSON.stringify({
+      model: "openai/gpt-4o-mini",
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: prompt }
+      ],
+      temperature: 0.7,
+      max_tokens: 2000
+    })
+  });
+
+  if (!response.ok) {
+    const body = await response.text().catch(() => "");
+    throw new Error(`OpenRouter API error: ${response.status} ${body.slice(0, 180)}`);
+  }
+
+  const data = await response.json();
+  return data.choices?.[0]?.message?.content || "";
+}
+
+async function callGeminiContent(apiKey: string, systemPrompt: string, prompt: string): Promise<string> {
+  const model = "gemini-2.0-flash";
+  const response = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{
+          parts: [{ text: `${systemPrompt}\n\n${prompt}` }]
+        }],
+        generationConfig: {
+          temperature: 0.7,
+          maxOutputTokens: 2500
+        }
+      })
+    }
+  );
+
+  if (!response.ok) {
+    const body = await response.text().catch(() => "");
+    throw new Error(`Gemini API error: ${response.status} ${body.slice(0, 180)}`);
+  }
+
+  const data = await response.json();
+  return data.candidates?.[0]?.content?.parts?.map((part: any) => part.text || "").join("") || "";
+}
+
+async function callAnthropicContent(apiKey: string, systemPrompt: string, prompt: string): Promise<string> {
+  const response = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": apiKey,
+      "anthropic-version": "2023-06-01"
+    },
+    body: JSON.stringify({
+      model: "claude-3-5-haiku-20241022",
+      max_tokens: 2500,
+      temperature: 0.7,
+      system: systemPrompt,
+      messages: [{ role: "user", content: prompt }]
+    })
+  });
+
+  if (!response.ok) {
+    const body = await response.text().catch(() => "");
+    throw new Error(`Anthropic API error: ${response.status} ${body.slice(0, 180)}`);
+  }
+
+  const data = await response.json();
+  return data.content?.map((block: any) => block.text || "").join("") || "";
+}
+
+async function generateContentWithFallback(
+  keys: { openai: string; openrouter: string; gemini: string; anthropic: string },
+  systemPrompt: string,
+  prompt: string
+): Promise<{ content: string | null; provider: string; model: string; errors: string[] }> {
+  const errors: string[] = [];
+  const providers = [
+    {
+      id: "openai",
+      model: "gpt-4o-mini",
+      enabled: Boolean(keys.openai),
+      call: () => callOpenAIContent(keys.openai, systemPrompt, prompt)
+    },
+    {
+      id: "openrouter",
+      model: "openai/gpt-4o-mini",
+      enabled: Boolean(keys.openrouter),
+      call: () => callOpenRouterContent(keys.openrouter, systemPrompt, prompt)
+    },
+    {
+      id: "gemini",
+      model: "gemini-2.0-flash",
+      enabled: Boolean(keys.gemini),
+      call: () => callGeminiContent(keys.gemini, systemPrompt, prompt)
+    },
+    {
+      id: "anthropic",
+      model: "claude-3-5-haiku-20241022",
+      enabled: Boolean(keys.anthropic),
+      call: () => callAnthropicContent(keys.anthropic, systemPrompt, prompt)
+    }
+  ];
+
+  for (const provider of providers) {
+    if (!provider.enabled) {
+      continue;
+    }
+
+    try {
+      const content = await provider.call();
+      if (content.trim().length < 100) {
+        throw new Error("reponse trop courte");
+      }
+      return { content, provider: provider.id, model: provider.model, errors };
+    } catch (error: any) {
+      const message = error?.message || String(error);
+      console.warn(`Provider ${provider.id} failed:`, message);
+      errors.push(`${provider.id}: ${message.slice(0, 220)}`);
+    }
+  }
+
+  return { content: null, provider: "template", model: "template", errors };
+}
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 200, headers: corsHeaders });
@@ -83,54 +248,19 @@ Deno.serve(async (req: Request) => {
 
     console.log(`📝 Prompt final: ${fullPrompt.substring(0, 200)}...`);
 
-    // 4. Générer le contenu avec OpenAI
-    const openaiApiKey = Deno.env.get("OPENAI_API_KEY");
-
-    if (!openaiApiKey) {
-      console.warn("⚠️ OPENAI_API_KEY non configuré - retour de contenu template");
-
-      return new Response(
-        JSON.stringify({
-          success: true,
-          content: generateTemplateContent(topic, topQueries),
-          metadata: {
-            target_queries: topQueries.map(q => q.query),
-            template_mode: true
-          }
-        }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    const openaiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${openaiApiKey}`,
-        "Content-Type": "application/json"
+    // 4. Generer le contenu avec le premier fournisseur IA disponible
+    const aiResult = await generateContentWithFallback(
+      {
+        openai: Deno.env.get("OPENAI_API_KEY") || "",
+        openrouter: Deno.env.get("OPENROUTER_API_KEY") || "",
+        gemini: Deno.env.get("GEMINI_API_KEY") || "",
+        anthropic: Deno.env.get("ANTHROPIC_API_KEY") || ""
       },
-      body: JSON.stringify({
-        model: "gpt-4",
-        messages: [
-          {
-            role: "system",
-            content: "Tu es un expert en rédaction SEO pour l'assurance taxi/VTC en France. Tu écris du contenu professionnel, informatif et optimisé pour le référencement naturel."
-          },
-          {
-            role: "user",
-            content: fullPrompt
-          }
-        ],
-        temperature: 0.7,
-        max_tokens: 2000
-      })
-    });
+      SEO_SYSTEM_PROMPT,
+      fullPrompt
+    );
 
-    if (!openaiResponse.ok) {
-      throw new Error(`OpenAI API error: ${openaiResponse.status}`);
-    }
-
-    const openaiData = await openaiResponse.json();
-    const generatedContent = openaiData.choices[0].message.content;
+    const generatedContent = aiResult.content || generateTemplateContent(topic, topQueries);
 
     // 5. Incrémenter le compteur d'utilisation du prompt
     await supabase
@@ -147,14 +277,17 @@ Deno.serve(async (req: Request) => {
       improvement_type: category === 'blog' ? 'new_page' : 'optimize_existing',
       suggested_content: generatedContent,
       ai_prompt_used: fullPrompt,
-      ai_model: 'gpt-4',
+      ai_model: `${aiResult.provider}:${aiResult.model}`,
       status: 'draft',
       metadata: {
         target_queries: topQueries.map(q => ({
           query: q.query,
           impressions: q.impressions,
           position: q.position
-        }))
+        })),
+        ai_provider: aiResult.provider,
+        ai_model: aiResult.model,
+        provider_errors: aiResult.errors
       }
     });
 
@@ -167,7 +300,11 @@ Deno.serve(async (req: Request) => {
         metadata: {
           prompt_template: promptTemplate.name,
           target_queries: topQueries.map(q => q.query),
-          total_impressions: topQueries.reduce((sum, q) => sum + q.impressions, 0)
+          total_impressions: topQueries.reduce((sum, q) => sum + q.impressions, 0),
+          ai_provider: aiResult.provider,
+          ai_model: aiResult.model,
+          provider_errors: aiResult.errors,
+          template_mode: aiResult.provider === 'template'
         }
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -249,7 +386,7 @@ async function findRelevantQueries(
 }
 
 /**
- * Génère un contenu template si OpenAI n'est pas disponible
+ * Genere un contenu template si les fournisseurs IA ne sont pas disponibles
  */
 function generateTemplateContent(topic: string, queries: any[]): string {
   const queriesList = queries.length > 0
@@ -260,13 +397,13 @@ function generateTemplateContent(topic: string, queries: any[]): string {
 
 ## Contenu optimisé SEO
 
-Ce contenu a été généré en mode template car l'API OpenAI n'est pas configurée.
+Ce contenu a ete genere en mode template car aucun fournisseur IA n'a repondu correctement.
 
 ### Requêtes SEO ciblées :
 ${queriesList}
 
 ### Instructions de génération :
-1. Configurez OPENAI_API_KEY dans les secrets Supabase
+1. Verifiez les credits et secrets IA dans Supabase
 2. Le contenu sera généré automatiquement selon les requêtes GSC
 3. Le système intégrera naturellement ces requêtes dans le contenu
 

@@ -7,24 +7,21 @@ import dotenv from 'dotenv';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Load environment variables
 dotenv.config({ path: path.join(__dirname, '../.env') });
 
-// Configuration
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL;
-const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY;
+const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
 const SITE_URL = 'https://taxiassur.com';
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-const BROKEN_URLS = new Set([]);
-
-function isBlocked(loc) {
-  const path = loc.replace(SITE_URL, '');
-  return BROKEN_URLS.has(path);
+if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+  console.log('Sitemap generation skipped: Supabase environment is not configured locally.');
+  process.exit(0);
 }
 
-// Pages statiques (routes React)
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  auth: { persistSession: false },
+});
+
 const staticPages = [
   { url: '/', priority: '1.0', changefreq: 'daily' },
   { url: '/assurance-taxi', priority: '0.9', changefreq: 'weekly' },
@@ -49,109 +46,120 @@ const staticPages = [
   { url: '/reviews', priority: '0.6', changefreq: 'weekly' },
   { url: '/programme-partenaires', priority: '0.5', changefreq: 'monthly' },
   { url: '/newsletter', priority: '0.4', changefreq: 'monthly' },
+  { url: '/sitemap', priority: '0.4', changefreq: 'monthly' },
   { url: '/legal', priority: '0.3', changefreq: 'yearly' },
   { url: '/policy', priority: '0.3', changefreq: 'yearly' },
   { url: '/conditions', priority: '0.3', changefreq: 'yearly' },
 ];
 
-// Pages des villes (principales)
-const cities = [
-  'paris', 'marseille', 'lyon', 'toulouse', 'nice',
-  'nantes', 'strasbourg', 'montpellier', 'bordeaux', 'rennes',
-  'reims', 'le-mans', 'aix-en-provence', 'clermont-ferrand',
-  'grenoble', 'dijon', 'angers', 'nimes', 'villeurbanne',
-  'le-havre', 'saint-etienne', 'toulon', 'orleans',
-  'besancon', 'amiens', 'tours', 'limoges', 'metz',
-  'brest', 'perpignan', 'vaux-le-penil'
-];
+function toIsoDate(value) {
+  if (!value) return new Date().toISOString().split('T')[0];
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return new Date().toISOString().split('T')[0];
+  return date.toISOString().split('T')[0];
+}
+
+const UUID_PATTERN = '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}';
+const CITY_UUID_SLUG_RE = new RegExp(`^(assurance-taxi-)?ville-${UUID_PATTERN}$`, 'i');
+
+function isIndexableCitySlug(slug) {
+  const value = String(slug || '').trim();
+  if (!value) return false;
+  if (CITY_UUID_SLUG_RE.test(value)) return false;
+  return true;
+}
+
+function toCityPath(slug) {
+  return slug.startsWith('assurance-taxi-') ? `/${slug}` : `/assurance-taxi-${slug}`;
+}
+
+function escapeXml(value) {
+  return encodeURI(value)
+    .replace(/[^\x00-\x7F]/g, (char) => encodeURIComponent(char))
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
+}
+
+function addUrl(urls, seen, pathOrUrl, lastmod, changefreq, priority) {
+  const loc = pathOrUrl.startsWith('http') ? pathOrUrl : `${SITE_URL}${pathOrUrl}`;
+  if (seen.has(loc)) return;
+  seen.add(loc);
+  urls.push({ loc, lastmod: toIsoDate(lastmod), changefreq, priority });
+}
+
+async function fetchRows(label, query) {
+  const { data, error } = await query;
+  if (error) {
+    console.log(`Warning: ${label} skipped: ${error.message}`);
+    return [];
+  }
+  return data || [];
+}
 
 async function generateSitemap() {
-  console.log('🚀 Génération du sitemap propre...\n');
+  console.log('Generating sitemap...');
 
   const urls = [];
-  const now = new Date().toISOString().split('T')[0];
+  const seen = new Set();
+  const today = new Date().toISOString();
 
-  // Ajouter les pages statiques
-  console.log('📄 Ajout des pages statiques...');
   for (const page of staticPages) {
-    urls.push({
-      loc: `${SITE_URL}${page.url}`,
-      lastmod: now,
-      changefreq: page.changefreq,
-      priority: page.priority,
-    });
-  }
-  console.log(`✅ ${staticPages.length} pages statiques ajoutées\n`);
-
-  // Ajouter les pages de villes
-  console.log('🏙️  Ajout des pages de villes...');
-  for (const city of cities) {
-    urls.push({
-      loc: `${SITE_URL}/assurance-taxi-${city}`,
-      lastmod: now,
-      changefreq: 'weekly',
-      priority: '0.7',
-    });
-  }
-  console.log(`✅ ${cities.length} pages de villes ajoutées\n`);
-
-  // Ajouter les articles de blog
-  console.log('📝 Récupération des articles de blog...');
-  try {
-    const blogFiles = fs.readdirSync(path.join(__dirname, '../public/content/blog'));
-    const blogArticles = blogFiles
-      .filter(file => file.endsWith('.json'))
-      .map(file => file.replace('.json', ''));
-
-    for (const slug of blogArticles) {
-      urls.push({
-        loc: `${SITE_URL}/blog/${slug}`,
-        lastmod: now,
-        changefreq: 'monthly',
-        priority: '0.6',
-      });
-    }
-    console.log(`✅ ${blogArticles.length} articles de blog ajoutés\n`);
-  } catch (error) {
-    console.log('⚠️  Erreur lors de la lecture des articles:', error.message);
+    addUrl(urls, seen, page.url, today, page.changefreq, page.priority);
   }
 
-  // Ajouter les actualités
-  console.log('📰 Récupération des actualités...');
-  try {
-    const { data: news, error } = await supabase
+  const cityPages = await fetchRows(
+    'city pages',
+    supabase
+      .from('city_pages')
+      .select('slug, updated_at, created_at, published_at')
+      .or('status.eq.published,published.eq.true,is_published.eq.true')
+      .order('updated_at', { ascending: false })
+      .limit(5000)
+  );
+
+  for (const page of cityPages) {
+    if (!isIndexableCitySlug(page.slug)) continue;
+    addUrl(urls, seen, toCityPath(page.slug), page.updated_at || page.published_at || page.created_at, 'weekly', '0.7');
+  }
+
+  const blogPosts = await fetchRows(
+    'blog posts',
+    supabase
+      .from('blog_posts')
+      .select('slug, updated_at, created_at')
+      .eq('published', true)
+      .order('updated_at', { ascending: false })
+      .limit(5000)
+  );
+
+  for (const post of blogPosts) {
+    if (!post.slug) continue;
+    addUrl(urls, seen, `/blog/${post.slug}`, post.updated_at || post.created_at, 'monthly', '0.6');
+  }
+
+  const newsArticles = await fetchRows(
+    'news articles',
+    supabase
       .from('news_articles')
-      .select('slug, published_at')
+      .select('slug, updated_at, published_at, created_at')
       .eq('status', 'published')
+      .not('published_at', 'is', null)
       .order('published_at', { ascending: false })
-      .limit(100);
+      .limit(5000)
+  );
 
-    if (!error && news) {
-      for (const article of news) {
-        urls.push({
-          loc: `${SITE_URL}/actualites/${article.slug}`,
-          lastmod: article.published_at?.split('T')[0] || now,
-          changefreq: 'monthly',
-          priority: '0.5',
-        });
-      }
-      console.log(`✅ ${news.length} actualités ajoutées\n`);
-    }
-  } catch (error) {
-    console.log('⚠️  Erreur lors de la récupération des actualités:', error.message);
+  for (const article of newsArticles) {
+    if (!article.slug) continue;
+    addUrl(urls, seen, `/actualites/${article.slug}`, article.updated_at || article.published_at || article.created_at, 'monthly', '0.5');
   }
 
-  const filteredUrls = urls.filter((u) => !isBlocked(u.loc));
-  const removedCount = urls.length - filteredUrls.length;
-  if (removedCount > 0) {
-    console.log(`Filtré ${removedCount} URL(s) cassée(s) (504/5XX) du sitemap`);
-  }
-
-  console.log('Génération du fichier XML...');
   let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
   xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
 
-  for (const url of filteredUrls) {
+  for (const url of urls) {
     xml += '  <url>\n';
     xml += `    <loc>${escapeXml(url.loc)}</loc>\n`;
     xml += `    <lastmod>${url.lastmod}</lastmod>\n`;
@@ -160,43 +168,24 @@ async function generateSitemap() {
     xml += '  </url>\n';
   }
 
-  xml += '</urlset>';
+  xml += '</urlset>\n';
 
-  // Sauvegarder le fichier
   const sitemapPath = path.join(__dirname, '../public/sitemap.xml');
-  fs.writeFileSync(sitemapPath, xml);
+  fs.writeFileSync(sitemapPath, xml, 'utf8');
 
-  console.log(`✅ Sitemap généré avec succès: ${sitemapPath}`);
-  console.log(`📊 Total: ${urls.length} URLs\n`);
-
-  // Statistiques
-  console.log('📈 Statistiques:');
-  console.log(`   - Pages statiques: ${staticPages.length}`);
-  console.log(`   - Pages de villes: ${cities.length}`);
-  console.log(`   - Total: ${urls.length} URLs\n`);
-
-  console.log('✅ Sitemap propre généré sans erreurs 5XX ou redirections!\n');
+  console.log(`Sitemap generated: ${sitemapPath}`);
+  console.log(`Total URLs: ${urls.length}`);
+  console.log(`Static pages: ${staticPages.length}`);
+  console.log(`City pages: ${cityPages.length}`);
+  console.log(`Blog posts: ${blogPosts.length}`);
+  console.log(`News articles: ${newsArticles.length}`);
 
   return urls;
 }
 
-function escapeXml(unsafe) {
-  const encoded = unsafe.replace(/[^\x00-\x7F]/g, (char) => encodeURIComponent(char));
-  return encoded
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&apos;');
-}
-
-// Exécuter
 generateSitemap()
-  .then(() => {
-    console.log('🎉 Terminé avec succès!');
-    process.exit(0);
-  })
+  .then(() => process.exit(0))
   .catch((error) => {
-    console.error('❌ Erreur:', error);
+    console.error('Sitemap generation failed:', error);
     process.exit(1);
   });

@@ -16,11 +16,11 @@ const QuelleAssuranceTaxi: React.FC = () => {
           name="description"
           content="Quelle assurance choisir pour taxi ? RC Pro obligatoire, garanties recommandées, comparatif assureurs. Guide complet + devis gratuit 2 min."
         />
-        <link rel="canonical" href="https://taxiassur.com/quelle-assurance-pour-taxi" />
+        <link rel="canonical" href="https://taxiassur.com/quelle-assurance-taxi" />
         <meta property="og:type" content="website" />
         <meta property="og:title" content="Quelle Assurance pour Taxi ? Guide Complet 2026" />
         <meta property="og:description" content="Quelle assurance choisir pour taxi ? RC Pro obligatoire, garanties recommandées, comparatif assureurs. Guide complet + devis gratuit 2 min." />
-        <meta property="og:url" content="https://taxiassur.com/quelle-assurance-pour-taxi" />
+        <meta property="og:url" content="https://taxiassur.com/quelle-assurance-taxi" />
         <meta property="og:image" content="https://taxiassur.com/logo-600x300.png" />
         <meta property="og:site_name" content="TaxiAssur" />
         <meta property="og:locale" content="fr_FR" />
@@ -30,7 +30,7 @@ const QuelleAssuranceTaxi: React.FC = () => {
       <JsonLd type="insurance-product" data={{
         name: "Quelle Assurance Taxi Choisir - Guide Complet",
         description: "Guide pour choisir la meilleure assurance taxi. RC Pro obligatoire, tous risques, garanties recommandées. Comparatif assureurs spécialisés taxi en France.",
-        url: "/quelle-assurance-pour-taxi",
+        url: "/quelle-assurance-taxi",
         lowPrice: 890,
         highPrice: 2000,
         ratingValue: "4.9",

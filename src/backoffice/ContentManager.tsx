@@ -136,7 +136,7 @@ const ContentManager: React.FC = () => {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
-          'X-MAKE-SECRET': import.meta.env.VITE_MAKE_SECRET || 'change_me_secure_token_2024',
+          'X-MAKE-SECRET': '',
           'X-Requested-With': 'XMLHttpRequest'
         },
         body: JSON.stringify({
@@ -197,7 +197,7 @@ const ContentManager: React.FC = () => {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
-          'X-MAKE-SECRET': import.meta.env.VITE_MAKE_SECRET || 'change_me_secure_token_2024',
+          'X-MAKE-SECRET': '',
           'X-Requested-With': 'XMLHttpRequest'
         },
         body: JSON.stringify({
@@ -252,7 +252,7 @@ const ContentManager: React.FC = () => {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
-          'X-MAKE-SECRET': import.meta.env.VITE_MAKE_SECRET || 'change_me_secure_token_2024',
+          'X-MAKE-SECRET': '',
           'X-Requested-With': 'XMLHttpRequest'
         },
         body: JSON.stringify({

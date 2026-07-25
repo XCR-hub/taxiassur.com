@@ -1,12 +1,89 @@
 {
-  "framework": "vite",
-  "installCommand": "npm ci",
-  "buildCommand": "npm run build",
-  "outputDirectory": "dist",
-  "rewrites": [
-    {
-      "source": "/(.*)",
-      "destination": "/index.html"
-    }
-  ]
+    "framework":  "vite",
+    "installCommand":  "npm ci",
+    "buildCommand":  "npm run build",
+    "outputDirectory":  "dist",
+    "redirects":  [
+                      {
+                          "source":  "/:path*",
+                          "has":  [
+                                      {
+                                          "type":  "host",
+                                          "value":  "www.taxiassur.com"
+                                      }
+                                  ],
+                          "destination":  "https://taxiassur.com/:path*",
+                          "permanent":  true
+                      },
+                      {
+                          "source":  "/assurance-taxi-ville-:id",
+                          "destination":  "/villes",
+                          "permanent":  true
+                      },
+                      {
+                          "source":  "/ville-:id",
+                          "destination":  "/villes",
+                          "permanent":  true
+                      },
+                      {
+                          "source":  "/ville/assurance-taxi-:slug",
+                          "destination":  "/assurance-taxi-:slug",
+                          "permanent":  true
+                      },
+                      {
+                          "source":  "/villes/assurance-taxi-:slug",
+                          "destination":  "/assurance-taxi-:slug",
+                          "permanent":  true
+                      },
+                      {
+                          "source":  "/ville/:slug",
+                          "destination":  "/assurance-taxi-:slug",
+                          "permanent":  true
+                      },
+                      {
+                          "source":  "/villes/:slug",
+                          "destination":  "/assurance-taxi-:slug",
+                          "permanent":  true
+                      },
+                      {
+                          "source":  "/taxi-:slug",
+                          "destination":  "/assurance-taxi-:slug",
+                          "permanent":  true
+                      },
+                      {
+                          "source":  "/offres/flotte-vehicules",
+                          "destination":  "/flotte-vehicules",
+                          "permanent":  true
+                      },
+                      {
+                          "source":  "/offres/rc-professionnelle",
+                          "destination":  "/rc-professionnelle",
+                          "permanent":  true
+                      },
+                      {
+                          "source":  "/offres",
+                          "destination":  "/assurance-taxi",
+                          "permanent":  true
+                      },
+                      {
+                          "source":  "/quelle-assurance-pour-taxi",
+                          "destination":  "/quelle-assurance-taxi",
+                          "permanent":  true
+                      },
+                      {
+                          "source":  "/plan-du-site",
+                          "destination":  "/sitemap",
+                          "permanent":  true
+                      }
+                  ],
+    "rewrites":  [
+                     {
+                         "source":  "/api/:path*",
+                         "destination":  "/api-disabled.json"
+                     },
+                     {
+                         "source":  "/(.*)",
+                         "destination":  "/index.html"
+                     }
+                 ]
 }

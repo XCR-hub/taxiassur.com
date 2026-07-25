@@ -7,6 +7,20 @@ export interface SitemapUrl {
   priority?: number;
 }
 
+const UUID_PATTERN = '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}';
+const CITY_UUID_SLUG_RE = new RegExp(`^(assurance-taxi-)?ville-${UUID_PATTERN}$`, 'i');
+
+function isIndexableCitySlug(slug: string): boolean {
+  const value = String(slug || '').trim();
+  if (!value) return false;
+  if (CITY_UUID_SLUG_RE.test(value)) return false;
+  return true;
+}
+
+function getCityPublicPath(slug: string): string {
+  return slug.startsWith('assurance-taxi-') ? `/${slug}` : `/assurance-taxi-${slug}`;
+}
+
 export async function generateSitemap(): Promise<string> {
   const baseUrl = 'https://taxiassur.com';
   const urls: SitemapUrl[] = [];
@@ -51,13 +65,13 @@ export async function generateSitemap(): Promise<string> {
     const { data: cityPages } = await supabase
       .from('city_pages')
       .select('slug, updated_at')
-      .eq('published', true)
+      .or('status.eq.published,published.eq.true,is_published.eq.true')
       .order('updated_at', { ascending: false });
 
     if (cityPages) {
-      cityPages.forEach(page => {
+      cityPages.filter(page => isIndexableCitySlug(page.slug)).forEach(page => {
         urls.push({
-          loc: `${baseUrl}/assurance-taxi/${page.slug}`,
+          loc: `${baseUrl}${getCityPublicPath(page.slug)}`,
           lastmod: page.updated_at || new Date().toISOString(),
           changefreq: 'monthly',
           priority: 0.7,
@@ -72,7 +86,7 @@ export async function generateSitemap(): Promise<string> {
     const { data: blogPosts } = await supabase
       .from('blog_posts')
       .select('slug, updated_at, created_at')
-      .eq('status', 'published')
+      .eq('published', true)
       .order('updated_at', { ascending: false });
 
     if (blogPosts) {
@@ -132,7 +146,7 @@ ${urls.map(url => `  <url>
 }
 
 function escapeXml(unsafe: string): string {
-  return unsafe
+  return encodeURI(unsafe)
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')

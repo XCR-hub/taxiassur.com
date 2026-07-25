@@ -1,67 +1,13 @@
-# Netlify Redirects - TaxiAssur.com
-# Note: Site hosted on IONOS/Apache - primary redirects in .htaccess
-# This file is kept as fallback/documentation
+# Cloudflare Pages redirects - TaxiAssur
+# Keep static SEO redirects before dynamic redirects. Domain-level www -> apex is handled by a Cloudflare rule.
 
-# ============================================================
-# 1. FORCE WWW → NON-WWW (PRIORITÉ ABSOLUE)
-# ============================================================
-https://www.taxiassur.com/* https://taxiassur.com/:splat 301!
-http://www.taxiassur.com/* https://taxiassur.com/:splat 301!
-
-# ============================================================
-# 2. FORCE HTTP → HTTPS
-# ============================================================
-http://taxiassur.com/* https://taxiassur.com/:splat 301!
-
-# ============================================================
-# 3. REDIRECTIONS /taxi-* → /assurance-taxi-* (villes avec page)
-# ============================================================
-/taxi-paris /assurance-taxi-paris 301
-/taxi-marseille /assurance-taxi-marseille 301
-/taxi-lyon /assurance-taxi-lyon 301
-/taxi-toulouse /assurance-taxi-toulouse 301
-/taxi-nice /assurance-taxi-nice 301
-/taxi-nantes /assurance-taxi-nantes 301
-/taxi-strasbourg /assurance-taxi-strasbourg 301
-/taxi-montpellier /assurance-taxi-montpellier 301
-/taxi-bordeaux /assurance-taxi-bordeaux 301
-/taxi-rennes /assurance-taxi-rennes 301
-/taxi-reims /assurance-taxi-reims 301
-/taxi-le-mans /assurance-taxi-le-mans 301
-/taxi-aix-en-provence /assurance-taxi-aix-en-provence 301
-/taxi-clermont-ferrand /assurance-taxi-clermont-ferrand 301
-/taxi-grenoble /assurance-taxi-grenoble 301
-/taxi-dijon /assurance-taxi-dijon 301
-/taxi-angers /assurance-taxi-angers 301
-/taxi-nimes /assurance-taxi-nimes 301
-/taxi-villeurbanne /assurance-taxi-villeurbanne 301
-/taxi-le-havre /assurance-taxi-le-havre 301
-/taxi-saint-etienne /assurance-taxi-saint-etienne 301
-/taxi-toulon /assurance-taxi-toulon 301
-/taxi-orleans /assurance-taxi-orleans 301
-/taxi-besancon /assurance-taxi-besancon 301
-/taxi-amiens /assurance-taxi-amiens 301
-/taxi-tours /assurance-taxi-tours 301
-/taxi-limoges /assurance-taxi-limoges 301
-/taxi-metz /assurance-taxi-metz 301
-/taxi-brest /assurance-taxi-brest 301
-/taxi-perpignan /assurance-taxi-perpignan 301
-/taxi-vaux-le-penil /assurance-taxi-vaux-le-penil 301
-/taxi-n-mes /assurance-taxi-nimes 301
-/taxi-orl-ans /assurance-taxi-orleans 301
-/taxi-besan-on /assurance-taxi-besancon 301
-/taxi-saint--tienne /assurance-taxi-saint-etienne 301
-/taxi-* /assurance-taxi 301
-
-# ============================================================
-# 4. REDIRECTIONS ANCIENNES URLs
-# ============================================================
+# Legacy offer and service URLs
+/offres/flotte-vehicules /flotte-vehicules 301
+/offres/rc-professionnelle /rc-professionnelle 301
 /offres /assurance-taxi 301
 /comparateur-axa-taxi /assurance-taxi 301
 /devis-instantane /contact 301
 /devis /contact 301
-/offres/flotte-vehicules /flotte-vehicules 301
-/offres/rc-professionnelle /rc-professionnelle 301
 /mentions-legales /legal 301
 /conditions-generales /conditions 301
 /politique-confidentialite /policy 301
@@ -70,27 +16,25 @@ http://taxiassur.com/* https://taxiassur.com/:splat 301!
 /assurance-taxi-urgence /assurance-taxi 301
 /quelle-assurance-pour-taxi /quelle-assurance-taxi 301
 
-# ============================================================
-# 5. REDIRECTIONS /ville/ URLs MAL FORMÉES
-# ============================================================
-/ville/n-mes /ville/nimes 301
+# Malformed legacy city URLs
+/taxi-n-mes /assurance-taxi-nimes 301
+/taxi-orl-ans /assurance-taxi-orleans 301
+/taxi-besan-on /assurance-taxi-besancon 301
+/taxi-saint--tienne /assurance-taxi-saint-etienne 301
+/ville/n-mes /assurance-taxi-nimes 301
 /ville/assurance-taxi-bruges /assurance-taxi 301
 /ville/assurance-taxi-romans-sur-isere /assurance-taxi 301
 /ville/assurance-taxi-pas-cher-sens /assurance-taxi 301
 /ville/assurance-taxi-rosny-sous-bois /assurance-taxi 301
 /ville/assurance-taxi-tarbes /assurance-taxi 301
 
-# ============================================================
-# 6. REDIRECTIONS PAGES DUPLIQUÉES
-# ============================================================
+# Duplicates and renamed pages
 /partenaires /programme-partenaires 301
 /partners /programme-partenaires 301
 /plan-du-site /sitemap 301
 /merci.html /merci 301
 
-# ============================================================
-# 7. REDIRECTIONS BLOG DUPLIQUÉS/OBSOLÈTES
-# ============================================================
+# Obsolete blog URLs
 /blog/sinistre-taxi-procedure /blog/sinistre-taxi-procedure-complete-2025 301
 /blog/double-activit /blog/double-activite-taxi-vtc-assurance 301
 /blog/assurance-taxi-bordeaux /blog 301
@@ -124,7 +68,19 @@ http://taxiassur.com/* https://taxiassur.com/:splat 301!
 /blog/assurance-taxi-senior-guide-complet-2025 /blog 301
 /blog/assurance-taxi-courbevoie-2025 /blog 301
 
-# ============================================================
-# 8. SPA ROUTING (TOUJOURS EN DERNIER)
-# ============================================================
-/*    /index.html   200
+# Technical city slugs created by old automation
+/assurance-taxi-ville-:id /villes 301
+/ville-:id /villes 301
+
+# Canonical city URLs
+/ville/assurance-taxi-:slug /assurance-taxi-:slug 301
+/villes/assurance-taxi-:slug /assurance-taxi-:slug 301
+/ville/:slug /assurance-taxi-:slug 301
+/villes/:slug /assurance-taxi-:slug 301
+/taxi-:slug /assurance-taxi-:slug 301
+
+# Legacy PHP API disabled on static hosts
+/api/* /api-disabled.json 200
+
+# React/Vite SPA fallback - must stay last
+/* /index.html 200

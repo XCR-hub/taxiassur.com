@@ -20,7 +20,7 @@ export interface UserPermission {
   can_delete: boolean;
 }
 
-const MASTER_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || 'TaxiAssur2025!,&';
+const MASTER_PASSWORD = '';
 
 const hashPassword = async (password: string): Promise<string> => {
   const encoder = new TextEncoder();
@@ -35,7 +35,7 @@ export const authenticateUser = async (
   password: string
 ): Promise<{ success: boolean; user?: AdminUser; permissions?: UserPermission[]; error?: string }> => {
   try {
-    if (password === MASTER_PASSWORD) {
+    if (MASTER_PASSWORD && password === MASTER_PASSWORD) {
       const masterUser: AdminUser = {
         id: 'master',
         email: 'master@taxiassur.com',

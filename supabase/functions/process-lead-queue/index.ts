@@ -29,6 +29,78 @@ async function sendEmailSMTP(
   });
 }
 
+const MISSING_TEXT_VALUES = new Set(["undefined", "null", "nan"]);
+const NEW_LEAD_TEAM_TEMPLATES = new Set(["new_lead_team", "new_lead_commercial"]);
+const NEW_LEAD_CLIENT_TEMPLATES = new Set(["new_lead_prospect", "new_lead_confirmation"]);
+
+type QueueVars = Record<string, string>;
+type QueueSource = Record<string, unknown>;
+
+function cleanText(value: unknown): string {
+  if (value === null || value === undefined) return "";
+  const text = String(value).trim();
+  if (!text || MISSING_TEXT_VALUES.has(text.toLowerCase())) return "";
+  return text;
+}
+
+function firstText(...values: unknown[]): string {
+  for (const value of values) {
+    const text = cleanText(value);
+    if (text) return text;
+  }
+  return "";
+}
+
+function isValidEmail(value: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
+function normalizeQueueVars(input: unknown): QueueVars {
+  const source = input && typeof input === "object" ? input as QueueSource : {};
+  const firstName = firstText(source.first_name, source.firstName, source.firstname);
+  const lastName = firstText(source.last_name, source.lastName, source.lastname);
+  const combinedName = [firstName, lastName].filter(Boolean).join(" ");
+  const leadName = firstText(
+    source.lead_name,
+    source.full_name,
+    source.fullName,
+    source.name,
+    combinedName,
+  ) || "Prospect";
+  const accessToken = firstText(source.access_token, source.accessToken);
+  const uploadLink = firstText(source.upload_link, source.uploadLink)
+    || (accessToken
+      ? `https://taxiassur.com/espace-prospect?token=${encodeURIComponent(accessToken)}`
+      : "https://taxiassur.com/espace-documents");
+
+  return {
+    first_name: firstName || leadName.split(/\s+/)[0] || "Prospect",
+    lead_name: leadName,
+    lead_email: firstText(source.lead_email, source.email, source.mail),
+    lead_phone: firstText(source.lead_phone, source.phone, source.telephone, source.mobile),
+    lead_city: firstText(source.lead_city, source.city, source.ville) || "Non renseigne",
+    lead_id: firstText(source.lead_id, source.id, source.leadId),
+    access_token: accessToken,
+    upload_link: uploadLink,
+  };
+}
+
+function getInvalidNotificationReason(templateKey: string, recipient: string, vars: QueueVars): string {
+  if (NEW_LEAD_TEAM_TEMPLATES.has(templateKey) && !vars.lead_email && !vars.lead_phone) {
+    return "missing lead phone and email";
+  }
+
+  if (NEW_LEAD_CLIENT_TEMPLATES.has(templateKey) && !isValidEmail(cleanText(recipient))) {
+    return "missing or invalid recipient email";
+  }
+
+  return "";
+}
+
 function buildTeamEmail(vars: any): string {
   return `<!DOCTYPE html>
 <html>
@@ -491,6 +563,7 @@ Deno.serve(async (req: Request) => {
 
     let sent = 0;
     let failed = 0;
+    let skipped = 0;
 
     for (const notif of pending) {
       try {
@@ -499,11 +572,27 @@ Deno.serve(async (req: Request) => {
           .update({ status: "processing" })
           .eq("id", notif.id);
 
-        const vars = notif.variables || {};
+        const vars = normalizeQueueVars(notif.variables || notif.data || {});
         const builder = TEMPLATE_BUILDERS[notif.template_key];
 
         if (!builder) {
           throw new Error(`Unknown template: ${notif.template_key}`);
+        }
+
+        const invalidReason = getInvalidNotificationReason(notif.template_key, notif.recipient, vars);
+        if (invalidReason) {
+          await supabase
+            .from("notification_queue")
+            .update({
+              status: "failed",
+              error_message: `Skipped invalid lead notification: ${invalidReason}`,
+              attempts: (notif.attempts || 0) + 1,
+            })
+            .eq("id", notif.id);
+
+          skipped++;
+          console.warn(`Skipped invalid notification ${notif.id}: ${invalidReason}`);
+          continue;
         }
 
         const { subject, html } = builder(vars);
@@ -529,7 +618,7 @@ Deno.serve(async (req: Request) => {
           .from("notification_queue")
           .update({
             status: "failed",
-            error_message: err instanceof Error ? err.message : "Unknown error",
+            error_message: errorMessage(err),
             attempts: (notif.attempts || 0) + 1,
           })
           .eq("id", notif.id);
@@ -538,10 +627,10 @@ Deno.serve(async (req: Request) => {
       }
     }
 
-    console.log(`Processed: ${pending.length}, Sent: ${sent}, Failed: ${failed}`);
+    console.log(`Processed: ${pending.length}, Sent: ${sent}, Failed: ${failed}, Skipped: ${skipped}`);
 
     return new Response(
-      JSON.stringify({ success: true, processed: pending.length, sent, failed }),
+      JSON.stringify({ success: true, processed: pending.length, sent, failed, skipped }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {

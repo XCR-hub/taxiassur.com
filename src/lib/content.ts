@@ -22,6 +22,16 @@ export interface CityPage {
 
 // Use singleton Supabase instance - NEVER create new instances
 logger.log('🔧 Content module using singleton Supabase instance');
+const UUID_PATTERN = '[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}';
+const CITY_UUID_SLUG_RE = new RegExp(`^(assurance-taxi-)?ville-${UUID_PATTERN}$`, 'i');
+
+export function isIndexableCitySlug(slug?: string | null): boolean {
+  const normalized = (slug || '').trim();
+  return normalized.length > 0 && !CITY_UUID_SLUG_RE.test(normalized);
+}
+function getCityPublicUrl(slug: string): string {
+  return slug.startsWith('assurance-taxi-') ? `/${slug}` : `/assurance-taxi-${slug}`;
+}
 
 // Fonction utilitaire pour lire les fichiers JSON locaux
 async function fetchLocalContent<T extends { status?: string }>(type: string, schema: { parse: (data: unknown) => T }): Promise<T[]> {
@@ -296,18 +306,20 @@ export async function getCityPages(): Promise<CityPage[]> {
       const { data, error } = await supabase
         .from('city_pages')
         .select('*')
-        .eq('status', 'published')
+        .or('status.eq.published,published.eq.true,is_published.eq.true')
         .order('taxi_count', { ascending: false });
 
       if (!error && data && data.length > 0) {
         logger.log('✅ Loaded', data.length, 'city pages from Supabase');
-        return (data as Array<{ id: string; city: string; slug: string; dept?: string; region?: string; taxi_count?: number; title?: string; meta_description?: string; created_at?: string }>).map((item) => ({
+        return (data as Array<{ id: string; city: string; slug: string; dept?: string; region?: string; taxi_count?: number; title?: string; meta_description?: string; created_at?: string }>)
+          .filter((item) => isIndexableCitySlug(item.slug))
+          .map((item) => ({
           id: item.id,
           name: item.city,
           slug: item.slug,
           department: item.dept || '',
           region: item.region || '',
-          url: `/ville/${item.slug}`,
+          url: getCityPublicUrl(item.slug),
           taxis_insured: item.taxi_count || 0,
           average_savings: 35,
           satisfied_clients: Math.floor((item.taxi_count || 0) * 0.8),
@@ -330,7 +342,7 @@ export async function getCityPages(): Promise<CityPage[]> {
     slug: city.slug,
     department: city.department || '',
     region: city.region || '',
-    url: `/ville/${city.slug}`,
+    url: getCityPublicUrl(city.slug),
     taxis_insured: 0,
     average_savings: 35,
     satisfied_clients: 0,
@@ -342,6 +354,8 @@ export async function getCityPages(): Promise<CityPage[]> {
 
 // Obtenir une ville spécifique par son slug
 export async function getCityBySlug(slug: string): Promise<CityPage | null> {
+  if (!isIndexableCitySlug(slug)) return null;
+
   // Mode hybride : Essayer Supabase, sinon fallback vers villes statiques
   const USE_STATIC_CITIES = false;  // ✅ Supabase activé
 
@@ -351,7 +365,7 @@ export async function getCityBySlug(slug: string): Promise<CityPage | null> {
         .from('city_pages')
         .select('*')
         .eq('slug', slug)
-        .eq('status', 'published')
+        .or('status.eq.published,published.eq.true,is_published.eq.true')
         .single();
 
       if (!error && data) {
@@ -361,7 +375,7 @@ export async function getCityBySlug(slug: string): Promise<CityPage | null> {
           slug: data.slug,
           department: data.dept || '',  // ✅ CORRECTION: dept → department
           region: data.region || '',
-          url: `/ville/${data.slug}`,
+          url: getCityPublicUrl(data.slug),
           taxis_insured: data.taxi_count || 0,  // ✅ CORRECTION: taxi_count → taxis_insured
           average_savings: 35,
           satisfied_clients: Math.floor((data.taxi_count || 0) * 0.8),

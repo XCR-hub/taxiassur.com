@@ -19,7 +19,6 @@ const FALLBACK_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 declare global {
   interface Window {
     __TAXIASSUR_SUPABASE__?: ReturnType<typeof createClient>;
-    __TAXIASSUR_SUPABASE_ADMIN__?: ReturnType<typeof createClient>;
   }
 }
 
@@ -116,38 +115,3 @@ const lazyProxy = new Proxy({} as ReturnType<typeof createClient>, {
 
 export const supabaseInstance = lazyProxy;
 
-// Admin client
-let _adminInstance: ReturnType<typeof createClient> | null = null;
-
-export function getAdminInstance() {
-  if (typeof window !== 'undefined' && window.__TAXIASSUR_SUPABASE_ADMIN__) {
-    return window.__TAXIASSUR_SUPABASE_ADMIN__;
-  }
-
-  if (_adminInstance) {
-    return _adminInstance;
-  }
-
-  const url = getEnvVar('VITE_SUPABASE_URL') || FALLBACK_URL;
-  const serviceKey = getEnvVar('VITE_SUPABASE_SERVICE_ROLE_KEY');
-
-  if (!serviceKey) {
-    throw new Error('Service Role Key not configured');
-  }
-
-  const instance = createClient(url, serviceKey, {
-    auth: {
-      persistSession: false,
-      autoRefreshToken: false,
-      detectSessionInUrl: false,
-      storageKey: 'taxiassur-admin-auth'
-    }
-  });
-
-  _adminInstance = instance;
-  if (typeof window !== 'undefined') {
-    window.__TAXIASSUR_SUPABASE_ADMIN__ = instance;
-  }
-
-  return instance;
-}

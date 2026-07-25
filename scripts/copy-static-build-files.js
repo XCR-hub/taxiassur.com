@@ -8,10 +8,8 @@ const __filename = fileURLToPath(import.meta.url);
 const rootDir = dirname(dirname(__filename));
 
 const copies = [
-  ["public/api", "dist/api"],
   ["public/content", "dist/content"],
   ["public/feeds", "dist/feeds"],
-  ["public/webhooks", "dist/webhooks"],
 ];
 
 for (const [src, dest] of copies) {

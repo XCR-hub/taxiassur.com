@@ -8,18 +8,96 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
 };
 
-interface LeadNotificationRequest {
+interface NormalizedLead {
   lead_id: string;
   name: string;
   email: string;
   phone: string;
   city: string;
   status: string;
-  immatriculation?: string;
-  access_token?: string;
-  vehicle_type?: string;
+  immatriculation: string;
+  access_token: string;
+  vehicle_type: string;
 }
 
+const MISSING_TEXT_VALUES = new Set(["undefined", "null", "nan"]);
+
+type LeadRecord = Record<string, unknown>;
+
+function cleanText(value: unknown): string {
+  if (value === null || value === undefined) return "";
+  const text = String(value).trim();
+  if (!text || MISSING_TEXT_VALUES.has(text.toLowerCase())) return "";
+  return text;
+}
+
+function firstText(...values: unknown[]): string {
+  for (const value of values) {
+    const text = cleanText(value);
+    if (text) return text;
+  }
+  return "";
+}
+
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function isValidEmail(value: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
+function asLeadRecord(value: unknown): LeadRecord {
+  return value && typeof value === "object" ? value as LeadRecord : {};
+}
+
+function normalizeLeadPayload(payload: unknown): NormalizedLead {
+  const wrapper = asLeadRecord(payload);
+  const record = asLeadRecord(wrapper.record || payload);
+  const firstName = firstText(record.first_name, record.firstName, record.firstname);
+  const lastName = firstText(record.last_name, record.lastName, record.lastname);
+  const combinedName = [firstName, lastName].filter(Boolean).join(" ");
+
+  const name = firstText(
+    record.name,
+    record.full_name,
+    record.fullName,
+    record.lead_name,
+    combinedName,
+  );
+
+  return {
+    lead_id: firstText(record.lead_id, record.id, record.leadId),
+    name: name || "Prospect",
+    email: firstText(record.email, record.lead_email, record.mail),
+    phone: firstText(record.phone, record.lead_phone, record.telephone, record.mobile),
+    city: firstText(record.city, record.lead_city, record.ville) || "Non renseignee",
+    status: firstText(record.status, record.professional_status, record.statut) || "NOUVEAU_LEAD",
+    immatriculation: firstText(record.immatriculation, record.vehicle_registration),
+    access_token: firstText(record.access_token, record.accessToken),
+    vehicle_type: firstText(record.vehicle_type, record.vehicleType),
+  };
+}
+
+function buildContactLink(kind: "phone" | "email", value: string): string {
+  if (kind === "email" && !isValidEmail(value)) {
+    return escapeHtml(value || "Non renseigne");
+  }
+
+  if (!value) return "Non renseigne";
+
+  const href = kind === "phone" ? `tel:${value}` : `mailto:${value}`;
+  return `<a href="${escapeHtml(href)}">${escapeHtml(value)}</a>`;
+}
 function getVehicleLabel(vehicleType?: string): string {
   if (!vehicleType) return 'taxi';
   const n = vehicleType.toLowerCase().trim();
@@ -91,18 +169,40 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    const lead: LeadNotificationRequest = await req.json();
-    console.log("Sending notification for lead via hMail SMTP:", lead.lead_id);
+    const payload = await req.json().catch(() => ({}));
+    const lead = normalizeLeadPayload(payload);
+    console.log("Sending notification for lead via hMail SMTP:", lead.lead_id || "missing-id");
+
+    if (!lead.email && !lead.phone) {
+      console.warn("Skipping empty lead notification payload", {
+        lead_id: lead.lead_id || null,
+        keys: payload && typeof payload === "object" ? Object.keys(payload as Record<string, unknown>) : [],
+      });
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          skipped: true,
+          reason: "missing lead contact fields",
+          lead_id: lead.lead_id || null,
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     const prospectSpaceUrl = lead.access_token
-      ? `https://taxiassur.com/espace-prospect?token=${lead.access_token}`
+      ? `https://taxiassur.com/espace-prospect?token=${encodeURIComponent(lead.access_token)}`
       : "https://taxiassur.com/espace-documents";
 
     const vLabel = getVehicleLabel(lead.vehicle_type);
     const docListHtml = getDocumentListHtml(lead.vehicle_type);
     const docCount = (lead.vehicle_type || '').toLowerCase().trim() === 'vtc' ? 8
       : (lead.vehicle_type || '').toLowerCase().trim() === 'moto-taxi' ? 7 : 7;
-
+    const leadNameHtml = escapeHtml(lead.name);
+    const leadCityHtml = escapeHtml(lead.city);
+    const leadPhoneHtml = buildContactLink("phone", lead.phone);
+    const leadEmailHtml = buildContactLink("email", lead.email);
+    const leadPhoneText = escapeHtml(lead.phone || "Non renseigne");
     // Email Commercial & Team - Amélioré
     const teamEmailHtml = `<!DOCTYPE html>
 <html>
@@ -156,25 +256,25 @@ Deno.serve(async (req: Request) => {
       <div class="info-grid">
         <div class="info-item">
           <div class="info-label">👤 Nom complet</div>
-          <div class="info-value">${lead.name}</div>
+          <div class="info-value">${leadNameHtml}</div>
         </div>
         <div class="info-item">
           <div class="info-label">📞 Téléphone</div>
-          <div class="info-value"><a href="tel:${lead.phone}">${lead.phone}</a></div>
+          <div class="info-value">${leadPhoneHtml}</div>
         </div>
         <div class="info-item">
           <div class="info-label">📧 Email</div>
-          <div class="info-value"><a href="mailto:${lead.email}">${lead.email}</a></div>
+          <div class="info-value">${leadEmailHtml}</div>
         </div>
         <div class="info-item">
           <div class="info-label">📍 Ville</div>
-          <div class="info-value">${lead.city}</div>
+          <div class="info-value">${leadCityHtml}</div>
         </div>
-        ${lead.immatriculation ? `<div class="info-item"><div class="info-label">🚗 Immatriculation</div><div class="info-value">${lead.immatriculation}</div></div>` : ""}
+        ${lead.immatriculation ? `<div class="info-item"><div class="info-label">🚗 Immatriculation</div><div class="info-value">${escapeHtml(lead.immatriculation)}</div></div>` : ""}
       </div>
       <h3>✅ Actions à réaliser immédiatement</h3>
       <ol>
-        <li>Appeler le prospect au <strong>${lead.phone}</strong></li>
+        <li>Appeler le prospect au <strong>${leadPhoneText}</strong></li>
         <li>Qualifier le besoin et confirmer les informations</li>
         <li>Demander les 7 documents obligatoires</li>
         <li>Préparer et envoyer le devis sous 24h</li>
@@ -249,7 +349,7 @@ Deno.serve(async (req: Request) => {
       <tr>
         <td class="header">
           <h1>Demande confirmée</h1>
-          <p>Bonjour ${lead.name}</p>
+          <p>Bonjour ${leadNameHtml}</p>
         </td>
       </tr>
       <tr>
@@ -301,7 +401,9 @@ Deno.serve(async (req: Request) => {
 </html>`;
 
     let sent = 0;
+    let clientSent = false;
     const errors: string[] = [];
+    const skipped: string[] = [];
 
     try {
       await sendEmailSMTP(
@@ -314,7 +416,7 @@ Deno.serve(async (req: Request) => {
       console.log("✅ Email sent to team@taxiassur.com");
     } catch (err) {
       console.error("❌ Failed to send to team:", err);
-      errors.push(`team: ${err.message}`);
+      errors.push(`team: ${errorMessage(err)}`);
     }
 
     try {
@@ -328,58 +430,68 @@ Deno.serve(async (req: Request) => {
       console.log("✅ Email sent to commercial@xcr.fr");
     } catch (err) {
       console.error("❌ Failed to send to commercial:", err);
-      errors.push(`commercial: ${err.message}`);
+      errors.push(`commercial: ${errorMessage(err)}`);
     }
 
-    try {
-      await sendEmailSMTP(
-        lead.email,
-        lead.name,
-        `Demande confirmée ! Votre expert assurance ${vLabel} vous recontacte rapidement`,
-        clientEmailHtml
-      );
-      sent++;
-      console.log(`✅ Email sent to client: ${lead.email}`);
-    } catch (err) {
-      console.error("❌ Failed to send to client:", err);
-      errors.push(`client: ${err.message}`);
+    if (isValidEmail(lead.email)) {
+      try {
+        await sendEmailSMTP(
+          lead.email,
+          lead.name,
+          `Demande confirm\u00e9e ! Votre expert assurance ${vLabel} vous recontacte rapidement`,
+          clientEmailHtml
+        );
+        sent++;
+        clientSent = true;
+        console.log(`Client email sent for lead ${lead.lead_id || "missing-id"}`);
+      } catch (err) {
+        console.error("Failed to send to client:", err);
+        errors.push(`client: ${errorMessage(err)}`);
+      }
+    } else {
+      skipped.push("client: missing or invalid email");
+      console.warn("Skipping client confirmation email: missing or invalid email", { lead_id: lead.lead_id || null });
     }
-
     console.log(`📧 Emails sent via IONOS SMTP: ${sent}/3`);
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    if (sent > 0) {
-      await supabase.from("crm_interactions").insert([
+    if (sent > 0 && lead.lead_id) {
+      const interactions = [
         {
           lead_id: lead.lead_id,
           type: "email",
           direction: "outbound",
           subject: `[TAXIASSUR] Nouveau Lead - ${lead.name}`,
-          content: "Email de notification interne envoyé à l'équipe via IONOS SMTP",
+          content: "Email de notification interne envoye a l'equipe via IONOS SMTP",
           to_email: "team@taxiassur.com",
           from_email: "team@taxiassur.com"
-        },
-        {
+        }
+      ];
+
+      if (clientSent) {
+        interactions.push({
           lead_id: lead.lead_id,
           type: "email",
           direction: "outbound",
-          subject: "Demande confirmée ! Votre expert TaxiAssur vous recontacte rapidement",
-          content: "Email de confirmation envoyé au prospect via IONOS SMTP",
+          subject: "Demande confirmee ! Votre expert TaxiAssur vous recontacte rapidement",
+          content: "Email de confirmation envoye au prospect via IONOS SMTP",
           to_email: lead.email,
           from_email: "team@taxiassur.com"
-        }
-      ]);
-    }
+        });
+      }
 
+      await supabase.from("crm_interactions").insert(interactions);
+    }
     return new Response(
       JSON.stringify({
         success: sent > 0,
         message: `${sent} emails sent successfully via IONOS SMTP`,
         emails_sent: sent,
-        emails_failed: 3 - sent,
+        emails_failed: errors.length,
+        emails_skipped: skipped.length > 0 ? skipped : undefined,
         errors: errors.length > 0 ? errors : undefined
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }

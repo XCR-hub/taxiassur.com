@@ -1,11 +1,8 @@
-import { createClient } from '@supabase/supabase-js';
-import { supabaseInstance, getAdminInstance } from './supabase-instance';
+import { supabaseInstance } from './supabase-instance';
 
 // Re-export the singleton instance
 export const supabase = supabaseInstance;
 
-// Export getter for admin client
-export const getSupabaseAdmin = getAdminInstance;
 
 // Helper to check if Supabase is properly configured
 export const isSupabaseConfigured = () => {

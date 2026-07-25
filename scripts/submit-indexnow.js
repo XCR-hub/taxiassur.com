@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -7,76 +8,128 @@ import dotenv from 'dotenv';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Load environment variables
 dotenv.config({ path: path.join(__dirname, '../.env') });
 
-// Configuration
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL;
 const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY;
 const SITE_URL = 'https://taxiassur.com';
-const INDEXNOW_KEY = process.env.INDEXNOW_KEY || 'e2f4b8a1c9d3e5f7g8h9i0j1k2l3m4n5';
+const HOST = new URL(SITE_URL).host;
+const SITEMAP_PATH = path.join(__dirname, '../public/sitemap.xml');
+const INDEXNOW_KEY_PATH = path.join(__dirname, '../public/indexnow-key.txt');
+const DRY_RUN = process.argv.includes('--dry-run');
+const BATCH_SIZE = 1000;
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const supabase = SUPABASE_URL && SUPABASE_ANON_KEY
+  ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+  : null;
 
-async function submitToIndexNow(urls) {
-  console.log(`\n🚀 Soumission de ${urls.length} URLs à IndexNow...\n`);
+function unescapeXml(value) {
+  return value
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'");
+}
 
-  // IndexNow accepte maximum 10 000 URLs par requête
-  const BATCH_SIZE = 100;
-  const batches = [];
-
-  for (let i = 0; i < urls.length; i += BATCH_SIZE) {
-    batches.push(urls.slice(i, i + BATCH_SIZE));
+function readUrlsFromSitemap() {
+  if (!fs.existsSync(SITEMAP_PATH)) {
+    throw new Error(`Sitemap not found: ${SITEMAP_PATH}`);
   }
 
-  console.log(`📦 ${batches.length} lots de ${BATCH_SIZE} URLs max\n`);
+  const xml = fs.readFileSync(SITEMAP_PATH, 'utf8');
+  const urls = [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)]
+    .map(match => unescapeXml(match[1].trim()))
+    .filter(url => url.startsWith(`${SITE_URL}/`) || url === SITE_URL)
+    .filter(url => !url.includes('/backoffice/') && !url.includes('/api/'));
+
+  return [...new Set(urls)];
+}
+
+function resolveIndexNowKey() {
+  const configuredKey = process.env.INDEXNOW_KEY?.trim();
+  if (configuredKey) {
+    return configuredKey;
+  }
+
+  if (fs.existsSync(INDEXNOW_KEY_PATH)) {
+    const fileKey = fs.readFileSync(INDEXNOW_KEY_PATH, 'utf8').trim();
+    if (fileKey) {
+      return fileKey;
+    }
+  }
+
+  return crypto.randomUUID().replace(/-/g, '');
+}
+
+function ensureIndexNowKey(key) {
+  const existingKey = fs.existsSync(INDEXNOW_KEY_PATH)
+    ? fs.readFileSync(INDEXNOW_KEY_PATH, 'utf8').trim()
+    : '';
+
+  if (existingKey !== key) {
+    fs.writeFileSync(INDEXNOW_KEY_PATH, `${key}\n`, 'utf8');
+    console.log(`IndexNow key written to ${INDEXNOW_KEY_PATH}`);
+  } else {
+    console.log('IndexNow key already present');
+  }
+}
+
+async function submitToIndexNow(urls, key) {
+  console.log(`Submitting ${urls.length} URLs to IndexNow`);
+
+  if (DRY_RUN) {
+    console.log('Dry run enabled: no remote submission performed');
+    return { successCount: urls.length, errorCount: 0 };
+  }
 
   let successCount = 0;
   let errorCount = 0;
 
-  for (let i = 0; i < batches.length; i++) {
-    const batch = batches[i];
-    console.log(`📤 Lot ${i + 1}/${batches.length}: ${batch.length} URLs...`);
+  for (let i = 0; i < urls.length; i += BATCH_SIZE) {
+    const batch = urls.slice(i, i + BATCH_SIZE);
+    const batchNumber = Math.floor(i / BATCH_SIZE) + 1;
 
     try {
-      // Soumettre à Bing via IndexNow
       const response = await fetch('https://api.indexnow.org/indexnow', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json; charset=utf-8',
         },
         body: JSON.stringify({
-          host: 'taxiassur.com',
-          key: INDEXNOW_KEY,
+          host: HOST,
+          key,
           keyLocation: `${SITE_URL}/indexnow-key.txt`,
           urlList: batch,
         }),
       });
 
       if (response.ok || response.status === 202) {
-        console.log(`   ✅ Soumis avec succès (${response.status})`);
+        console.log(`Batch ${batchNumber}: accepted (${response.status}) - ${batch.length} URLs`);
         successCount += batch.length;
       } else {
         const errorText = await response.text();
-        console.log(`   ⚠️  Erreur ${response.status}: ${errorText}`);
+        console.log(`Batch ${batchNumber}: failed (${response.status}) ${errorText.slice(0, 240)}`);
         errorCount += batch.length;
       }
-
-      // Attendre un peu entre les lots pour ne pas surcharger
-      if (i < batches.length - 1) {
-        await new Promise(resolve => setTimeout(resolve, 1000));
-      }
     } catch (error) {
-      console.log(`   ❌ Erreur réseau: ${error.message}`);
+      console.log(`Batch ${batchNumber}: network error ${error.message}`);
       errorCount += batch.length;
+    }
+
+    if (i + BATCH_SIZE < urls.length) {
+      await new Promise(resolve => setTimeout(resolve, 500));
     }
   }
 
-  console.log('\n📊 Résumé:');
-  console.log(`   ✅ Succès: ${successCount} URLs`);
-  console.log(`   ❌ Erreurs: ${errorCount} URLs`);
+  return { successCount, errorCount };
+}
 
-  // Enregistrer dans la base de données
+async function recordSubmission(successCount, errorCount) {
+  if (!supabase || DRY_RUN) {
+    return;
+  }
+
   try {
     await supabase.from('seo_indexation_tracking').insert({
       submitted_count: successCount,
@@ -85,107 +138,35 @@ async function submitToIndexNow(urls) {
       provider: 'indexnow',
     });
   } catch (error) {
-    console.log('⚠️  Impossible d\'enregistrer dans la base:', error.message);
-  }
-
-  return { successCount, errorCount };
-}
-
-async function getUrlsToSubmit() {
-  console.log('📋 Récupération des URLs à soumettre...\n');
-
-  const urls = [];
-
-  // Pages statiques importantes
-  const priorityPages = [
-    '/',
-    '/assurance-taxi',
-    '/assurance-moto-taxi',
-    '/prix-assurance-taxi',
-    '/contact',
-    '/blog',
-    '/faq',
-  ];
-
-  for (const page of priorityPages) {
-    urls.push(`${SITE_URL}${page}`);
-  }
-
-  // Pages de blog récentes
-  try {
-    const blogFiles = fs.readdirSync(path.join(__dirname, '../public/content/blog'));
-    const blogSlugs = blogFiles
-      .filter(file => file.endsWith('.json'))
-      .map(file => file.replace('.json', ''))
-      .slice(0, 50); // Limiter aux 50 plus récents
-
-    for (const slug of blogSlugs) {
-      urls.push(`${SITE_URL}/blog/${slug}`);
-    }
-  } catch (error) {
-    console.log('⚠️  Erreur lecture blog:', error.message);
-  }
-
-  // Actualités récentes
-  try {
-    const { data: news } = await supabase
-      .from('news')
-      .select('slug')
-      .eq('status', 'published')
-      .order('published_at', { ascending: false })
-      .limit(50);
-
-    if (news) {
-      for (const article of news) {
-        urls.push(`${SITE_URL}/actualites/${article.slug}`);
-      }
-    }
-  } catch (error) {
-    console.log('⚠️  Erreur récupération actualités:', error.message);
-  }
-
-  console.log(`✅ ${urls.length} URLs à soumettre\n`);
-
-  return urls;
-}
-
-// Créer le fichier de clé IndexNow si il n'existe pas
-function ensureIndexNowKey() {
-  const keyPath = path.join(__dirname, '../public/indexnow-key.txt');
-
-  if (!fs.existsSync(keyPath)) {
-    console.log('🔑 Création du fichier indexnow-key.txt...');
-    fs.writeFileSync(keyPath, INDEXNOW_KEY);
-    console.log('✅ Clé IndexNow créée\n');
-  } else {
-    console.log('✅ Clé IndexNow déjà présente\n');
+    console.log(`Tracking insert skipped: ${error.message}`);
   }
 }
 
-// Exécuter
 async function main() {
-  console.log('🔍 IndexNow Submission Tool\n');
-  console.log('═'.repeat(50));
+  const key = resolveIndexNowKey();
+  ensureIndexNowKey(key);
 
-  ensureIndexNowKey();
-
-  const urls = await getUrlsToSubmit();
-
+  const urls = readUrlsFromSitemap();
   if (urls.length === 0) {
-    console.log('⚠️  Aucune URL à soumettre');
-    return;
+    throw new Error('No URLs found in sitemap');
   }
 
-  await submitToIndexNow(urls);
+  console.log(`Loaded ${urls.length} unique sitemap URLs`);
+  console.log(`First URL: ${urls[0]}`);
+  console.log(`Last URL: ${urls[urls.length - 1]}`);
 
-  console.log('\n✅ Processus terminé!');
-  console.log('\n💡 Astuce: Les URLs seront indexées par Bing et d\'autres moteurs');
-  console.log('    supportant IndexNow dans les prochaines heures.\n');
+  const { successCount, errorCount } = await submitToIndexNow(urls, key);
+  await recordSubmission(successCount, errorCount);
+
+  console.log(`IndexNow success: ${successCount}`);
+  console.log(`IndexNow failed: ${errorCount}`);
+
+  if (errorCount > 0) {
+    process.exitCode = 1;
+  }
 }
 
-main()
-  .then(() => process.exit(0))
-  .catch((error) => {
-    console.error('❌ Erreur fatale:', error);
-    process.exit(1);
-  });
+main().catch(error => {
+  console.error(`IndexNow submission failed: ${error.message}`);
+  process.exit(1);
+});

@@ -27,7 +27,7 @@ export function renderTemplate(template: Template, variables: Record<string, str
 }
 
 export function generateUnsubscribeToken(email: string): string {
-  const secret = import.meta.env.VITE_MAKE_SECRET || 'change_me_secure_token_2024';
+  const secret = '';
   const data = `${email}::${secret}::${Date.now()}`;
   
   // Simple hash for demo - use crypto.subtle.digest in production
@@ -108,7 +108,7 @@ export async function sendEmail(outreach: Outreach): Promise<{
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-MAKE-SECRET': import.meta.env.VITE_MAKE_SECRET || 'change_me_secure_token_2024'
+        'X-MAKE-SECRET': ''
       },
       body: JSON.stringify({
         to: outreach.recipientEmail,

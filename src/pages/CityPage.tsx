@@ -58,9 +58,24 @@ interface NewsArticle {
   created_at: string;
 }
 
+
+function getCityPublicPath(slug: string): string {
+  return slug.startsWith('assurance-taxi-') ? `/${slug}` : `/assurance-taxi-${slug}`;
+}
+
+const UUID_PATTERN = '[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}';
+const CITY_UUID_SLUG_RE = new RegExp(`^(assurance-taxi-)?ville-${UUID_PATTERN}$`, 'i');
+
+function isIndexableCitySlug(slug?: string | null): boolean {
+  const normalized = (slug || '').trim();
+  return normalized.length > 0 && !CITY_UUID_SLUG_RE.test(normalized);
+}
 const CityPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
   const city = slug;
+  const lookupSlug = slug || "";
+  const invalidCitySlug = !isIndexableCitySlug(lookupSlug);
+  const lookupSlugs = Array.from(new Set([lookupSlug, lookupSlug.replace(/^assurance-taxi-/, ""), lookupSlug.startsWith("assurance-taxi-") ? lookupSlug : `assurance-taxi-${lookupSlug}`].filter(Boolean)));
   const [cityPageData, setCityPageData] = useState<CityPageData | null>(null);
   const [faqs, setFaqs] = useState<FAQ[]>([]);
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
@@ -70,7 +85,9 @@ const CityPage: React.FC = () => {
 
   useEffect(() => {
     const loadCityPage = async () => {
-      if (!slug) {
+      if (!slug || invalidCitySlug) {
+        setCityPageData(null);
+        setUseTemplate(false);
         setLoading(false);
         return;
       }
@@ -80,8 +97,8 @@ const CityPage: React.FC = () => {
         const { data, error } = await supabase
           .from('city_pages')
           .select('*')
-          .eq('slug', slug)
-          .or('status.eq.published,published.eq.true')
+          .in('slug', lookupSlugs)
+          .or('status.eq.published,published.eq.true,is_published.eq.true')
           .maybeSingle();
 
         if (error) {
@@ -127,10 +144,10 @@ const CityPage: React.FC = () => {
     };
 
     loadCityPage();
-  }, [slug]);
+  }, [slug, invalidCitySlug]);
 
   const cities = generateCityPages();
-  const cityData = cities.find(c => c.slug === city);
+  const cityData = invalidCitySlug ? undefined : cities.find(c => c.slug === city || getCityPublicPath(c.slug) === `/${city}`);
 
   if (loading) {
     return (
@@ -172,7 +189,7 @@ const CityPage: React.FC = () => {
     const breadcrumbs = [
       { name: 'Accueil', url: '/' },
       { name: 'Villes', url: '/villes' },
-      { name: cityPageData.title, url: `/ville/${cityPageData.slug}` }
+      { name: cityPageData.title, url: getCityPublicPath(cityPageData.slug) }
     ];
 
     return (
@@ -180,7 +197,7 @@ const CityPage: React.FC = () => {
         <Seo
           title={cityPageData.title}
           description={cityPageData.meta_description || `Assurance taxi ${cityPageData.city} - Devis gratuit et immédiat`}
-          canonical={`/ville/${cityPageData.slug}`}
+          canonical={getCityPublicPath(cityPageData.slug)}
           keywords={(cityPageData.keywords || []).join(', ')}
         />
         <JsonLd type="breadcrumb" data={breadcrumbs} />
@@ -512,7 +529,7 @@ const CityPage: React.FC = () => {
   const breadcrumbs = [
     { name: 'Accueil', url: '/' },
     { name: 'Villes', url: '/villes' },
-    { name: `Assurance Taxi ${cityData.city}`, url: `/ville/${cityData.slug}` }
+    { name: `Assurance Taxi ${cityData.city}`, url: getCityPublicPath(cityData.slug) }
   ];
 
   const localBenefits = [
@@ -563,7 +580,7 @@ const CityPage: React.FC = () => {
       <Seo
         title={`Assurance Taxi ${cityData.city} - Meilleure Assurance Taxi Pas Chere | Devis Gratuit`}
         description={`Meilleure assurance taxi pas chere a ${cityData.city}. Comparatif prix conseils. Best cheap taxi insurance ${cityData.city}. Devis gratuit 2min. Economisez 35%.`}
-        canonical={`/ville/${cityData.slug}`}
+        canonical={getCityPublicPath(cityData.slug)}
         keywords={`meilleure assurance taxi pas chere France, assurance taxi comparatif prix conseils, best cheap taxi insurance France, taxi insurance tips pricing France, assurance taxi ${cityData.city}, assurance chauffeur taxi ${cityData.city}, devis assurance taxi ${cityData.city}, cheap taxi insurance ${cityData.city}`}
       />
       <JsonLd type="breadcrumb" data={breadcrumbs} />

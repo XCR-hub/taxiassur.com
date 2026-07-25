@@ -55,9 +55,6 @@ export function getGoogleCseCx(): string {
   return cx;
 }
 
-export function getAdminPassword(): string {
-  return getEnv('VITE_ADMIN_PASSWORD') || 'taxiassur2024';
-}
 
 export function getSiteUrl(): string {
   return getEnv('VITE_SITE_URL') || 'https://taxiassur.com';
@@ -68,11 +65,3 @@ export function getNoIndex(): boolean {
   return noindex === 'true';
 }
 
-export function getSupabaseServiceRoleKey(): string {
-  const key = getEnv('VITE_SUPABASE_SERVICE_ROLE_KEY');
-  if (!key) {
-    warn('WARNING: VITE_SUPABASE_SERVICE_ROLE_KEY is not configured. Admin operations will fail.');
-    return '';
-  }
-  return key;
-}

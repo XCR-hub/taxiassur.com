@@ -44,7 +44,7 @@ export async function pingWebhook(): Promise<{ ok: boolean; message?: string; er
       ? '/api/webhook.php?action=ping'
       : '/webhooks/make.php?action=ping';
 
-    const makeSecret = getEnv('VITE_MAKE_SECRET') || 'taxiassur_webhook_secret_2024';
+    const makeSecret = '';
 
     const response = await fetch(endpoint, {
       method: 'GET',

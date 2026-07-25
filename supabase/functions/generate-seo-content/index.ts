@@ -193,6 +193,215 @@ function cleanJsonString(str: string): string {
     .trim();
 }
 
+function extractJsonObject(str: string): string {
+  const cleaned = cleanJsonString(str);
+  try {
+    JSON.parse(cleaned);
+    return cleaned;
+  } catch (_) {
+    const match = cleaned.match(/\{[\s\S]*\}/);
+    if (!match) {
+      throw new Error('Aucun objet JSON valide trouve dans la reponse IA');
+    }
+    return match[0];
+  }
+}
+
+async function callOpenAISeo(
+  apiKey: string,
+  systemPrompt: string,
+  userPrompt: string,
+  temperature: number
+): Promise<string> {
+  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model: 'gpt-4o-mini',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt },
+      ],
+      temperature,
+      max_tokens: 4000,
+      response_format: { type: 'json_object' },
+    }),
+  });
+
+  if (!response.ok) {
+    const body = await response.text().catch(() => '');
+    throw new Error(`OpenAI API error: ${response.status} ${body.slice(0, 180)}`);
+  }
+
+  const data = await response.json();
+  return data.choices?.[0]?.message?.content || '{}';
+}
+
+async function callOpenRouterSeo(
+  apiKey: string,
+  systemPrompt: string,
+  userPrompt: string,
+  temperature: number
+): Promise<string> {
+  const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${apiKey}`,
+      'HTTP-Referer': 'https://taxiassur.com',
+      'X-Title': 'TaxiAssur',
+    },
+    body: JSON.stringify({
+      model: 'openai/gpt-4o-mini',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt },
+      ],
+      temperature,
+      max_tokens: 4000,
+      response_format: { type: 'json_object' },
+    }),
+  });
+
+  if (!response.ok) {
+    const body = await response.text().catch(() => '');
+    throw new Error(`OpenRouter API error: ${response.status} ${body.slice(0, 180)}`);
+  }
+
+  const data = await response.json();
+  return data.choices?.[0]?.message?.content || '{}';
+}
+
+async function callGeminiSeo(
+  apiKey: string,
+  systemPrompt: string,
+  userPrompt: string,
+  temperature: number
+): Promise<string> {
+  const model = 'gemini-2.0-flash';
+  const response = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{
+          parts: [{
+            text: `${systemPrompt}\n\n${userPrompt}\n\nReponds uniquement avec un objet JSON valide, sans markdown ni texte autour.`,
+          }],
+        }],
+        generationConfig: {
+          temperature,
+          maxOutputTokens: 6000,
+          responseMimeType: 'application/json',
+        },
+      }),
+    }
+  );
+
+  if (!response.ok) {
+    const body = await response.text().catch(() => '');
+    throw new Error(`Gemini API error: ${response.status} ${body.slice(0, 180)}`);
+  }
+
+  const data = await response.json();
+  return data.candidates?.[0]?.content?.parts?.map((part: any) => part.text || '').join('') || '{}';
+}
+
+async function callAnthropicSeo(
+  apiKey: string,
+  systemPrompt: string,
+  userPrompt: string,
+  temperature: number
+): Promise<string> {
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+    },
+    body: JSON.stringify({
+      model: 'claude-3-5-haiku-20241022',
+      max_tokens: 4000,
+      temperature,
+      system: systemPrompt,
+      messages: [{
+        role: 'user',
+        content: `${userPrompt}\n\nReponds uniquement avec un objet JSON valide, sans markdown ni texte autour.`,
+      }],
+    }),
+  });
+
+  if (!response.ok) {
+    const body = await response.text().catch(() => '');
+    throw new Error(`Anthropic API error: ${response.status} ${body.slice(0, 180)}`);
+  }
+
+  const data = await response.json();
+  return data.content?.map((block: any) => block.text || '').join('') || '{}';
+}
+
+async function generateSeoJsonWithFallback(
+  keys: {
+    openai: string;
+    openrouter: string;
+    gemini: string;
+    anthropic: string;
+  },
+  systemPrompt: string,
+  userPrompt: string,
+  temperature: number
+): Promise<{ text: string | null; provider: string; model: string; errors: string[] }> {
+  const errors: string[] = [];
+  const providers = [
+    {
+      id: 'openai',
+      model: 'gpt-4o-mini',
+      enabled: Boolean(keys.openai),
+      call: () => callOpenAISeo(keys.openai, systemPrompt, userPrompt, temperature),
+    },
+    {
+      id: 'openrouter',
+      model: 'openai/gpt-4o-mini',
+      enabled: Boolean(keys.openrouter),
+      call: () => callOpenRouterSeo(keys.openrouter, systemPrompt, userPrompt, temperature),
+    },
+    {
+      id: 'gemini',
+      model: 'gemini-2.0-flash',
+      enabled: Boolean(keys.gemini),
+      call: () => callGeminiSeo(keys.gemini, systemPrompt, userPrompt, temperature),
+    },
+    {
+      id: 'anthropic',
+      model: 'claude-3-5-haiku-20241022',
+      enabled: Boolean(keys.anthropic),
+      call: () => callAnthropicSeo(keys.anthropic, systemPrompt, userPrompt, temperature),
+    },
+  ];
+
+  for (const provider of providers) {
+    if (!provider.enabled) {
+      continue;
+    }
+
+    try {
+      const text = await provider.call();
+      extractJsonObject(text);
+      return { text, provider: provider.id, model: provider.model, errors };
+    } catch (error: any) {
+      const message = error?.message || String(error);
+      console.warn(`Provider ${provider.id} failed:`, message);
+      errors.push(`${provider.id}: ${message.slice(0, 220)}`);
+    }
+  }
+
+  return { text: null, provider: 'template', model: 'template', errors };
+}
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { status: 200, headers: corsHeaders });
@@ -202,6 +411,9 @@ Deno.serve(async (req: Request) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const openaiApiKey = Deno.env.get('OPENAI_API_KEY') || '';
+    const openrouterApiKey = Deno.env.get('OPENROUTER_API_KEY') || '';
+    const geminiApiKey = Deno.env.get('GEMINI_API_KEY') || '';
+    const anthropicApiKey = Deno.env.get('ANTHROPIC_API_KEY') || '';
     const pexelsApiKey = Deno.env.get('PEXELS_API_KEY') || '';
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
@@ -299,7 +511,19 @@ Ajoute des anecdotes credibles. Pose des questions au lecteur.`;
       introHook, structurePattern, forbiddenPatterns
     );
 
-    if (!openaiApiKey) {
+    const aiResult = await generateSeoJsonWithFallback(
+      {
+        openai: openaiApiKey,
+        openrouter: openrouterApiKey,
+        gemini: geminiApiKey,
+        anthropic: anthropicApiKey,
+      },
+      systemPrompt,
+      userPrompt,
+      temperature
+    );
+
+    if (!aiResult.text) {
       const fallbackContent = {
         blogPost: {
           title: `${keyword} a ${city} : Guide Complet 2026`,
@@ -338,6 +562,9 @@ Ajoute des anecdotes credibles. Pose des questions au lecteur.`;
           generated_at: new Date().toISOString(),
           totalWords: 100,
           seoScore: 50,
+          ai_provider: aiResult.provider,
+          ai_model: aiResult.model,
+          provider_errors: aiResult.errors,
         },
       };
 
@@ -347,38 +574,15 @@ Ajoute des anecdotes credibles. Pose des questions au lecteur.`;
       );
     }
 
-    const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${openaiApiKey}`,
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt },
-        ],
-        temperature,
-        max_tokens: 4000,
-        response_format: { type: 'json_object' },
-      }),
-    });
-
-    if (!openaiResponse.ok) {
-      throw new Error(`OpenAI API error: ${openaiResponse.status}`);
-    }
-
-    const openaiData = await openaiResponse.json();
-    const generatedText = openaiData.choices[0]?.message?.content || '{}';
+    const generatedText = aiResult.text;
 
     let parsedContent;
     try {
-      const cleanedJson = cleanJsonString(generatedText);
+      const cleanedJson = extractJsonObject(generatedText);
       parsedContent = JSON.parse(cleanedJson);
     } catch (jsonError) {
       console.error('JSON Parse Error:', jsonError);
-      throw new Error('Erreur de parsing JSON: contenu invalide genere par OpenAI');
+      throw new Error('Erreur de parsing JSON: contenu IA invalide');
     }
 
     const blogContent = parsedContent.blogPost?.content || '';
@@ -433,6 +637,9 @@ Ajoute des anecdotes credibles. Pose des questions au lecteur.`;
         totalWords,
         seoScore: Math.min(100, 70 + Math.floor(Math.random() * 20)),
         anti_ai_version: '2.0',
+        ai_provider: aiResult.provider,
+        ai_model: aiResult.model,
+        provider_errors: aiResult.errors,
       },
     };
 

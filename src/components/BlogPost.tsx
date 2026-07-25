@@ -22,7 +22,7 @@ const BlogPost: React.FC = () => {
     return [
       { name: 'Accueil', url: '/' },
       { name: 'Blog', url: '/blog' },
-      { name: post.title, url: `/blog/${post.id}` }
+      { name: post.title, url: `/blog/${post.slug || post.id}` }
     ];
   }, [post]);
 
@@ -104,18 +104,21 @@ const BlogPost: React.FC = () => {
     );
   }
 
+  const canonicalSlug = post.slug || slug || post.id;
+  const canonicalUrl = `https://taxiassur.com/blog/${canonicalSlug}`;
+
   return (
     <>
       <Helmet>
         <title>{post.title} | TaxiAssur Blog</title>
         <meta name="description" content={post.excerpt} />
-        <link rel="canonical" href={`https://taxiassur.com/blog/${post.id}`} />
+        <link rel="canonical" href={canonicalUrl} />
 
         {/* Open Graph */}
         <meta property="og:title" content={post.title} />
         <meta property="og:description" content={post.excerpt} />
         <meta property="og:type" content="article" />
-        <meta property="og:url" content={`https://taxiassur.com/blog/${post.id}`} />
+        <meta property="og:url" content={canonicalUrl} />
         {post.coverImage && <meta property="og:image" content={post.coverImage} />}
         <meta property="og:image:alt" content={`${post.title} - TaxiAssur Blog`} />
         <meta property="article:published_time" content={post.createdAt} />
@@ -155,7 +158,7 @@ const BlogPost: React.FC = () => {
             },
             "mainEntityOfPage": {
               "@type": "WebPage",
-              "@id": `https://taxiassur.com/blog/${post.id}`
+              "@id": canonicalUrl
             },
             "keywords": post.tags?.join(', ') || ''
           })}

@@ -782,6 +782,11 @@ export const router = createBrowserRouter([
   },
 
   {
+    path: '/:slug',
+    element: <CityPage />,
+  },
+
+  {
     path: '*',
     element: <NotFound />,
   },

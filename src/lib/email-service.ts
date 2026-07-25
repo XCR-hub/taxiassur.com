@@ -28,7 +28,7 @@ const DEFAULT_FROM = 'TaxiAssur <noreply@taxiassur.com>';
 const REPLY_TO = 'contact@taxiassur.com';
 
 export async function sendEmail(options: EmailOptions): Promise<EmailResponse> {
-  const resendApiKey = import.meta.env.VITE_RESEND_API_KEY;
+  const resendApiKey = '';
 
   if (!resendApiKey) {
     logger.error('Resend API key not configured');
@@ -123,7 +123,7 @@ export async function sendBulkEmails(
 }
 
 export async function verifyEmailDomain(domain: string): Promise<boolean> {
-  const resendApiKey = import.meta.env.VITE_RESEND_API_KEY;
+  const resendApiKey = '';
 
   if (!resendApiKey) {
     logger.error('Resend API key not configured');
