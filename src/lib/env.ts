@@ -64,4 +64,12 @@ export function getNoIndex(): boolean {
   const noindex = getEnv('VITE_NOINDEX');
   return noindex === 'true';
 }
+export function isNonCanonicalHost(): boolean {
+  if (typeof window === 'undefined') return false;
+  const hostname = window.location.hostname.toLowerCase();
+  return hostname.endsWith('.pages.dev') || hostname === 'cf.taxiassur.com';
+}
 
+export function shouldNoIndex(): boolean {
+  return getNoIndex() || isNonCanonicalHost();
+}

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useLocation } from 'react-router-dom';
-import { getNoIndex } from '../lib/env';
+import { shouldNoIndex } from '../lib/env';
 
 interface SeoProps {
   title?: string;
@@ -27,7 +27,7 @@ const Seo: React.FC<SeoProps> = ({
   const location = useLocation();
   const siteUrl = 'https://taxiassur.com';
   const brandName = 'TaxiAssur';
-  const globalNoIndex = getNoIndex();
+  const globalNoIndex = shouldNoIndex();
 
   const BROKEN_NOINDEX_PATHS = new Set([
     '/actualites/theo-le-taxi-france-tv-1766881140212',

@@ -1,5 +1,5 @@
 import { Helmet } from 'react-helmet-async';
-import { getNoIndex } from '../lib/env';
+import { shouldNoIndex } from '../lib/env';
 
 interface UnifiedSEOProps {
   title?: string;
@@ -36,7 +36,7 @@ export function UnifiedSEO({
 }: UnifiedSEOProps) {
   const siteUrl = import.meta.env.VITE_SITE_URL || 'https://taxiassur.com';
   const brandName = 'TaxiAssur';
-  const globalNoIndex = getNoIndex();
+  const globalNoIndex = shouldNoIndex();
 
   const enhancedTitle = title
     ? `${title} | ${brandName}`
@@ -59,8 +59,8 @@ export function UnifiedSEO({
   const defaultImage = `${siteUrl}/logo-600x300.png`;
   const metaImage = ogImage || defaultImage;
 
-  const shouldNoIndex = noindex || globalNoIndex;
-  const robotsContent = shouldNoIndex
+  const pageNoIndex = noindex || globalNoIndex;
+  const robotsContent = pageNoIndex
     ? "noindex, nofollow"
     : "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1";
 

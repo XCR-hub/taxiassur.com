@@ -1,7 +1,7 @@
 import React from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useLocation } from 'react-router-dom';
-import { getNoIndex } from '../lib/env';
+import { shouldNoIndex } from '../lib/env';
 
 interface SEOHeadProps {
   title?: string;
@@ -29,7 +29,7 @@ const SEOHead: React.FC<SEOHeadProps> = ({
   const location = useLocation();
   const siteUrl = import.meta.env.VITE_SITE_URL || 'https://taxiassur.com';
   const brandName = 'TaxiAssur';
-  const globalNoIndex = getNoIndex();
+  const globalNoIndex = shouldNoIndex();
 
   const enhancedTitle = title
     ? `${title} | ${brandName}`

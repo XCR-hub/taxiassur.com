@@ -1,4 +1,5 @@
 import { Helmet } from 'react-helmet-async';
+import { shouldNoIndex } from '../lib/env';
 
 export interface SEOMetaTagsProps {
   title: string;
@@ -37,7 +38,7 @@ export function SEOMetaTags({
   const twitterHandle = '@taxiassur';
 
   const robots = [];
-  if (noindex) robots.push('noindex');
+  if (noindex || shouldNoIndex()) robots.push('noindex');
   if (nofollow) robots.push('nofollow');
   const robotsContent = robots.length > 0 ? robots.join(', ') : 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1';
 
