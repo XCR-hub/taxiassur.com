@@ -35,6 +35,33 @@ Set the same production values currently used by the site. Do not commit secret 
 
 Server-side secrets stay in Supabase Edge Function secrets, not Cloudflare Pages. Never expose server secrets through `VITE_*` variables: service role keys, SMTP passwords, AI provider keys, SERP keys, Make tokens, admin passwords, hCaptcha secret keys and payment secrets must remain server-side only.
 
+
+## Current Cloudflare Pages deployment
+
+- Production preview URL: `https://taxiassur.pages.dev`.
+- Dedicated preview alias: `https://cloudflare-preview.taxiassur.pages.dev`.
+- Project name: `taxiassur`.
+- Production branch: `main`.
+
+Cloudflare technical hostnames are blocked from search indexing through `public/_headers`:
+
+- `https://:project.pages.dev/*`
+- `https://:version.:project.pages.dev/*`
+- `https://cf.taxiassur.com/*`
+
+The canonical production domain remains `https://taxiassur.com` until DNS is deliberately switched from Vercel to Cloudflare Pages.
+
+## GitHub Actions deployment
+
+The workflow `.github/workflows/deploy-cloudflare-pages.yml` builds with `npm run build:cloudflare` on every push to `main`.
+
+It deploys to Cloudflare Pages only when these GitHub repository secrets exist:
+
+- `CLOUDFLARE_ACCOUNT_ID`
+- `CLOUDFLARE_API_TOKEN`
+
+Recommended token permissions for deployment: Cloudflare Pages edit access on the account/project. DNS changes require a separate token or expanded token with `Zone:DNS:Edit` and `Zone:Zone:Read` for `taxiassur.com`.
+
 ## Redirects
 
 Cloudflare Pages uses `public/_redirects`, copied into `dist/_redirects` by Vite.
@@ -70,3 +97,22 @@ npm run build:cloudflare
 ```
 
 This builds the site and validates Cloudflare `_redirects` and `_headers` compatibility.
+## DNS cutover blocker
+
+`cf.taxiassur.com` is configured as a Cloudflare Pages custom domain candidate, but it does not resolve until the DNS record exists in Cloudflare.
+
+Staging DNS record needed:
+
+- Type: `CNAME`
+- Name: `cf`
+- Target: `taxiassur.pages.dev`
+- Proxy status: proxied
+
+Final cutover, only after staging tests pass:
+
+- Attach `taxiassur.com` and `www.taxiassur.com` as Cloudflare Pages custom domains.
+- Point apex `@` to `taxiassur.pages.dev` with Cloudflare CNAME flattening/proxying.
+- Point `www` to `taxiassur.pages.dev` or keep `www` as a Cloudflare redirect to apex.
+- Keep Vercel active as rollback until Search Console confirms stable crawling.
+
+The current local Wrangler login can deploy Pages but cannot edit DNS records. To complete the DNS work programmatically, provide a Cloudflare API token with `Zone:DNS:Edit` and `Zone:Zone:Read` scoped to `taxiassur.com`.
