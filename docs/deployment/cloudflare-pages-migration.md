@@ -40,6 +40,7 @@ Server-side secrets stay in Supabase Edge Function secrets, not Cloudflare Pages
 
 - Production preview URL: `https://taxiassur.pages.dev`.
 - Dedicated preview alias: `https://cloudflare-preview.taxiassur.pages.dev`.
+- Staging custom domain: `https://cf.taxiassur.com`.
 - Project name: `taxiassur`.
 - Production branch: `main`.
 
@@ -97,11 +98,11 @@ npm run build:cloudflare
 ```
 
 This builds the site and validates Cloudflare `_redirects` and `_headers` compatibility.
-## DNS cutover blocker
+## DNS cutover status
 
-`cf.taxiassur.com` is configured as a Cloudflare Pages custom domain candidate, but it does not resolve until the DNS record exists in Cloudflare.
+`cf.taxiassur.com` is active as a Cloudflare Pages staging custom domain.
 
-Staging DNS record needed:
+Staging DNS record:
 
 - Type: `CNAME`
 - Name: `cf`
@@ -115,4 +116,4 @@ Final cutover, only after staging tests pass:
 - Point `www` to `taxiassur.pages.dev` or keep `www` as a Cloudflare redirect to apex.
 - Keep Vercel active as rollback until Search Console confirms stable crawling.
 
-The current local Wrangler login can deploy Pages but cannot edit DNS records. To complete the DNS work programmatically, provide a Cloudflare API token with `Zone:DNS:Edit` and `Zone:Zone:Read` scoped to `taxiassur.com`.
+The current local Wrangler login can deploy Pages and manage Pages custom domains. The provided DNS API token can edit DNS records for `taxiassur.com`, but does not include Pages permissions. For GitHub Actions deployment, add a separate Cloudflare token with Pages Write access as `CLOUDFLARE_API_TOKEN`.
