@@ -1,11 +1,11 @@
 # Cloudflare Pages migration - TaxiAssur
 
-Goal: keep Vercel active while preparing a Cloudflare Pages deployment that can replace it later.
+Goal: run production on Cloudflare Pages while keeping Vercel available temporarily as rollback.
 
 ## Current production
 
 - DNS authority: Cloudflare.
-- Current host: Vercel.
+- Current host: Cloudflare Pages.
 - Production domain: https://taxiassur.com.
 - Supabase remains the backend for CRM, emails, GSC, content generation and Edge Functions.
 
@@ -50,7 +50,7 @@ Cloudflare technical hostnames are blocked from search indexing through `public/
 - `https://:version.:project.pages.dev/*`
 - `https://cf.taxiassur.com/*`
 
-The canonical production domain remains `https://taxiassur.com` until DNS is deliberately switched from Vercel to Cloudflare Pages.
+The canonical production domain `https://taxiassur.com` is now served by Cloudflare Pages. Vercel should be kept available temporarily only as rollback.
 
 ## GitHub Actions deployment
 
@@ -85,7 +85,7 @@ The old PHP API files have been moved to `legacy/php-api` and are not deployed b
 3. Attach a staging custom domain, for example `cf.taxiassur.com`.
 4. Test: homepage, forms, backoffice login, prospect portal, blog, FAQ, city pages, `/sitemap.xml`, `/robots.txt`, and redirects.
 5. Submit staging only for manual tests, not Google indexing.
-6. When staging is validated, switch the apex DNS/custom domain from Vercel to Cloudflare Pages.
+6. Production DNS now points apex and `www` to Cloudflare Pages.
 7. Keep Vercel for rollback until Google Search Console shows stable crawling on Cloudflare.
 8. Remove Vercel only after at least one clean GSC crawl cycle.
 
@@ -98,22 +98,28 @@ npm run build:cloudflare
 ```
 
 This builds the site and validates Cloudflare `_redirects` and `_headers` compatibility.
+
 ## DNS cutover status
 
-`cf.taxiassur.com` is active as a Cloudflare Pages staging custom domain.
+Production cutover completed on 2026-07-27.
 
-Staging DNS record:
+Active Cloudflare Pages custom domains:
 
-- Type: `CNAME`
-- Name: `cf`
-- Target: `taxiassur.pages.dev`
-- Proxy status: proxied
+- `taxiassur.com`
+- `www.taxiassur.com`
+- `cf.taxiassur.com`
 
-Final cutover, only after staging tests pass:
+Active web DNS records:
 
-- Attach `taxiassur.com` and `www.taxiassur.com` as Cloudflare Pages custom domains.
-- Point apex `@` to `taxiassur.pages.dev` with Cloudflare CNAME flattening/proxying.
-- Point `www` to `taxiassur.pages.dev` or keep `www` as a Cloudflare redirect to apex.
-- Keep Vercel active as rollback until Search Console confirms stable crawling.
+- `taxiassur.com` CNAME -> `taxiassur.pages.dev`, proxied
+- `www.taxiassur.com` CNAME -> `taxiassur.pages.dev`, proxied
+- `cf.taxiassur.com` CNAME -> `taxiassur.pages.dev`, proxied, noindex staging
 
-The current local Wrangler login can deploy Pages and manage Pages custom domains. The provided DNS API token can edit DNS records for `taxiassur.com`, but does not include Pages permissions. For GitHub Actions deployment, add a separate Cloudflare token with Pages Write access as `CLOUDFLARE_API_TOKEN`.
+Mail DNS records (`MX`/`TXT`) remain unchanged.
+
+Rollback DNS target if Cloudflare Pages must be backed out quickly:
+
+- `taxiassur.com` A -> `76.76.21.21`, DNS only
+- `www.taxiassur.com` A -> `76.76.21.21`, DNS only
+
+Keep Vercel active as rollback until Search Console confirms stable crawling on Cloudflare. The GitHub Actions workflow deploys Cloudflare Pages when `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_API_TOKEN` are present as repository secrets.
