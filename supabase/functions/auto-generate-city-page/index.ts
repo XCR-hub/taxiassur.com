@@ -87,6 +87,7 @@ Deno.serve(async (req: Request) => {
         region: cityPage.region,
         population: cityPage.population,
         taxi_count: cityPage.taxi_count,
+        status: 'published',
         naturalness_score: cityPage.naturalness_score || 70,
         writing_style: cityPage.writing_style || 'professionnel',
         published_at: new Date().toISOString(),

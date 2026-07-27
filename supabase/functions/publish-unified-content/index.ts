@@ -125,6 +125,7 @@ serve(async (req: Request) => {
           question: faq?.question ?? 'Question',
           answer: faq?.answer ?? 'Réponse',
           category: faq?.category ?? 'Général',
+          status: 'published',
           order_index: index
         }));
 

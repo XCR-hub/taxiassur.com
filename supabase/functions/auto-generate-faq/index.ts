@@ -200,6 +200,7 @@ Deno.serve(async (req: Request) => {
         question: faqData.question,
         answer: faqData.answer,
         category: faqData.category,
+        status: 'published',
         order_index: Math.floor(Math.random() * 1000),
       })
       .select()
