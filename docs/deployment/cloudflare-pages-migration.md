@@ -67,12 +67,7 @@ Recommended token permissions for deployment: Cloudflare Pages edit access on th
 
 Cloudflare Pages uses `public/_redirects`, copied into `dist/_redirects` by Vite.
 
-The `www.taxiassur.com` to `taxiassur.com` redirect is not stored in `_redirects`; Cloudflare Pages `_redirects` does not support domain-level redirects. Create a Cloudflare Bulk Redirect or Redirect Rule:
-
-- If: `http.host eq "www.taxiassur.com"`
-- Then: redirect to `https://taxiassur.com${http.request.uri.path}`
-- Preserve query string: enabled
-- Status: 301 or 308
+The `www.taxiassur.com` to `taxiassur.com` canonical redirect is handled by `functions/_middleware.js`, because Cloudflare Pages `_redirects` does not support domain-level redirects. The middleware preserves the path and query string and returns a 301 redirect.
 
 ## Legacy PHP API
 
@@ -114,6 +109,8 @@ Active web DNS records:
 - `taxiassur.com` CNAME -> `taxiassur.pages.dev`, proxied
 - `www.taxiassur.com` CNAME -> `taxiassur.pages.dev`, proxied
 - `cf.taxiassur.com` CNAME -> `taxiassur.pages.dev`, proxied, noindex staging
+
+`www.taxiassur.com` redirects to the canonical apex domain through `functions/_middleware.js`.
 
 Mail DNS records (`MX`/`TXT`) remain unchanged.
 

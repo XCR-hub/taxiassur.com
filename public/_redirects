@@ -1,5 +1,5 @@
 # Cloudflare Pages redirects - TaxiAssur
-# Keep static SEO redirects before dynamic redirects. Domain-level www -> apex is handled by a Cloudflare rule.
+# Keep static SEO redirects before dynamic redirects. Domain-level www -> apex is handled by the Pages middleware in functions/_middleware.js.
 
 # Legacy offer and service URLs
 /offres/flotte-vehicules /flotte-vehicules 301
