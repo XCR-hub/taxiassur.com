@@ -166,6 +166,16 @@ function sqlNumber(input) {
   return Number.isFinite(number) ? String(number) : 'NULL';
 }
 
+function statusValue(row, config) {
+  const directStatus = value(row, config.status);
+  if (directStatus !== undefined && directStatus !== null && directStatus !== '') {
+    return directStatus;
+  }
+  if (row.published === true) return 'published';
+  if (row.published === false) return 'draft';
+  return null;
+}
+
 function payloadText(row) {
   return JSON.stringify(row).replace(/\u0000/g, '');
 }
@@ -208,7 +218,7 @@ async function importContentTable(stream, backupRoot, config) {
       sqlText(value(row, config.slug)),
       sqlText(config.url ? config.url(row) : null),
       sqlText(value(row, config.title)),
-      sqlText(value(row, config.status)),
+      sqlText(statusValue(row, config)),
       sqlText(value(row, config.category)),
       sqlText(value(row, config.city)),
       sqlText(value(row, config.publishedAt)),
