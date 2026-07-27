@@ -1,0 +1,63 @@
+# TaxiAssur Supabase Exit Plan
+
+## Objectif
+
+Reduire progressivement la dependance a Supabase tout en gardant le site, les leads, les emails, les workflows et le contenu SEO operationnels.
+
+## Etat verifie le 2026-07-27
+
+- Le site public `taxiassur.com` est servi par Cloudflare Pages.
+- Vercel reste uniquement une option de rollback.
+- Les sauvegardes REST Supabase peuvent etre exportees vers `D:\Nextcloud\Developpement TAXIASSUR\backups`.
+- Une sauvegarde logique a deja ete creee dans `D:\Nextcloud\Developpement TAXIASSUR\backups\supabase-rest-node-20260727-191255`.
+- Le serveur `192.168.1.70` repond au ping, mais les ports testes `22`, `445` et `5432` ne repondent pas.
+- `pg_dump` et `psql` ne sont pas installes localement.
+- Docker CLI est installe, mais Docker Engine n'etait pas demarre pendant la verification.
+
+## Sauvegarde disponible
+
+Le script `scripts/backup-supabase-rest.cjs` exporte les tables accessibles par l'API REST Supabase avec une cle service role, en JSONL, et copie aussi les migrations, fonctions Supabase et workflows GitHub.
+
+Variables requises :
+
+```powershell
+$env:SUPABASE_URL = "https://<project>.supabase.co"
+$env:SUPABASE_SERVICE_ROLE_KEY = "<service-role-key>"
+npm run backup:supabase-rest
+```
+
+Destination par defaut :
+
+```text
+D:\Nextcloud\Developpement TAXIASSUR\backups
+```
+
+Ce format est utile comme sauvegarde logique et comme pont de migration, mais ce n'est pas un `pg_dump` complet. Il ne preserve pas integralement les schemas internes Supabase, `auth`, `storage`, les roles PostgreSQL, politiques RLS, extensions, triggers, publications realtime et metadata plateforme.
+
+## Chemin recommande
+
+1. Continuer les sauvegardes REST regulieres pour disposer d'une copie exploitable des donnees metier.
+2. Recuperer le mot de passe PostgreSQL Supabase ou une chaine de connexion directe.
+3. Installer `pg_dump` et `psql`, ou demarrer Docker Desktop pour utiliser les outils PostgreSQL dans un conteneur.
+4. Faire un dump PostgreSQL complet hors Nextcloud.
+5. Preparer une instance cible sur `192.168.1.70` ou un dossier local dedie hors synchronisation cloud.
+6. Restaurer le dump complet, puis tester les Edge Functions, le CRM, les emails, les SMS, les paiements, les crons SEO et les workflows de publication.
+7. Basculer progressivement les variables d'environnement du site et des workflows.
+
+## Options d'independance
+
+### Option A - Supabase self-hosted
+
+Avantage : migration plus proche de l'existant, Edge Functions et APIs PostgREST similaires.
+
+Prerequis principaux : Docker Engine actif, stockage persistant hors dossier synchronise, sauvegardes automatiques, supervision, rotation des secrets, configuration SMTP/SMS/paiement, et exposition reseau securisee si le site doit y acceder.
+
+### Option B - Backend sur mesure
+
+Avantage : controle maximal et moins de dependance au modele Supabase.
+
+Inconvenient : il faut remplacer l'authentification, le stockage, les API REST, les crons, les fonctions, les policies RLS et les integrations. C'est plus long et plus risque que le self-hosting Supabase.
+
+## Point important stockage
+
+Les exports de sauvegarde peuvent etre stockes dans Nextcloud. En revanche, les fichiers actifs d'une base PostgreSQL ne doivent pas etre places dans un dossier synchronise Nextcloud. Pour une base active, utiliser un dossier dedie local ou serveur, par exemple `D:\TaxiAssurPostgresData` avec droits adaptes et sauvegardes planifiees.

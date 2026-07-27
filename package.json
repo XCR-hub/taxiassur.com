@@ -43,6 +43,7 @@
     "populate-cities": "node scripts/populate-city-pages.js",
     "backup:full": "node scripts/backup-system.js full",
     "backup:critical": "node scripts/backup-system.js critical",
+    "backup:supabase-rest": "node scripts/backup-supabase-rest.cjs",
     "recovery:list": "node scripts/disaster-recovery.js list",
     "recovery:verify": "node scripts/disaster-recovery.js verify",
     "recovery:restore": "node scripts/disaster-recovery.js restore",
