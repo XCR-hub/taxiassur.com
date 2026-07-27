@@ -29,3 +29,6 @@ supabase/.temp/
 .netlify
 
 .vercel
+
+# Generated Cloudflare D1 import files
+cloudflare/d1/generated/

@@ -1,2 +1,9 @@
 name = "taxiassur"
 pages_build_output_dir = "dist"
+
+compatibility_date = "2026-07-27"
+
+[[d1_databases]]
+binding = "TAXIASSUR_DB"
+database_name = "taxiassur-prod"
+database_id = "ced89fdb-d3b3-4a3b-aef1-04c827ef339d"

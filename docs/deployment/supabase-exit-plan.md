@@ -58,6 +58,15 @@ Avantage : controle maximal et moins de dependance au modele Supabase.
 
 Inconvenient : il faut remplacer l'authentification, le stockage, les API REST, les crons, les fonctions, les policies RLS et les integrations. C'est plus long et plus risque que le self-hosting Supabase.
 
+
+### Option C - Cloudflare D1 pour le cache public
+
+Avantage : tres bon alignement avec Cloudflare Pages, lecture rapide depuis le reseau Cloudflare, sauvegardes Time Travel D1, et reduction immediate de la dependance Supabase pour les contenus SEO publics.
+
+Perimetre conseille au depart : `blog_posts`, `city_pages`, `faq_entries`, `news_articles`, `gsc_pages`, `gsc_queries`.
+
+Limite : D1 est base sur SQLite, pas PostgreSQL. Il ne remplace pas directement Supabase Auth, Storage, Realtime, les Edge Functions et les policies RLS. Le CRM doit etre migre plus tard avec une phase de double ecriture.
+
 ## Point important stockage
 
 Les exports de sauvegarde peuvent etre stockes dans Nextcloud. En revanche, les fichiers actifs d'une base PostgreSQL ne doivent pas etre places dans un dossier synchronise Nextcloud. Pour une base active, utiliser un dossier dedie local ou serveur, par exemple `D:\TaxiAssurPostgresData` avec droits adaptes et sauvegardes planifiees.
