@@ -42,6 +42,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Security secret scan
+        run: npm run security:scan-secrets
+
       - name: Check required secrets
         shell: bash
         run: |
