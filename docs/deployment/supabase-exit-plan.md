@@ -13,6 +13,7 @@ Reduire progressivement la dependance a Supabase tout en gardant le site, les le
 - Le workflow GitHub `Refresh Cloudflare D1 Cache` fonctionne avec le secret dedie `CLOUDFLARE_D1_API_TOKEN`.
 - Le serveur `192.168.1.70` heberge un miroir PostgreSQL local sous `F:\TaxiAssur`.
 - Dernier etat fonctionnel du miroir serveur : 444 tables OK, 0 table en echec, 7072 lignes importees.
+- Une API Node de lecture seule est prete dans `server/postgres-read-api.mjs` et installable via `scripts/install-server-postgres-read-api.ps1`.
 - Supabase reste la base primaire pour le CRM, les leads, les emails, les SMS, les paiements, les documents, Auth, Realtime, Edge Functions et crons.
 - Le depot GitHub bloque maintenant les fuites de secrets via `npm run security:scan-secrets` dans les workflows de validation, de deploiement Cloudflare et de refresh D1.
 - Vercel reste uniquement une option historique/rollback, non indispensable au flux Cloudflare actuel.
@@ -99,7 +100,7 @@ Les exports de sauvegarde peuvent etre stockes dans Nextcloud. En revanche, les 
 ### Phase 2 - Prochaine etape sure
 
 - Verifier regulierement le miroir avec `scripts/verify-server-postgres-mirror.ps1`.
-- Ajouter une API interne en lecture seule devant PostgreSQL local.
+- Installer et tester l'API interne en lecture seule devant PostgreSQL local.
 - Exposer cette API uniquement via un tunnel/reverse proxy securise, jamais directement via l'IP LAN.
 - Brancher un endpoint non critique du backoffice en double lecture pour comparer Supabase et PostgreSQL local.
 

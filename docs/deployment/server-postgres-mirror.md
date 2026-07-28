@@ -57,9 +57,11 @@ Sans cette couche, le serveur est utile comme miroir, sauvegarde et environnemen
 1. Garder Supabase en base primaire tant que les workflows CRM, emails, paiements, documents, auth et crons y ecrivent encore.
 2. Continuer la synchronisation Supabase -> PostgreSQL local.
 3. Utiliser Cloudflare D1 pour les lectures publiques SEO deja migrables.
-4. Ajouter une API interne devant PostgreSQL local, d'abord en lecture seule.
+4. Installer l'API interne en lecture seule avec `scripts\install-server-postgres-read-api.ps1`.
 5. Tester une double lecture sur quelques endpoints non critiques.
 6. Ensuite seulement, envisager la double ecriture puis la bascule progressive des modules metier.
+
+Voir aussi : `docs/deployment/postgres-read-api.md`.
 
 ## Limites restantes
 
