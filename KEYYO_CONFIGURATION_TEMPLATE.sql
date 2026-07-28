@@ -157,7 +157,7 @@ Via le Dashboard Supabase :
    - KEYYO_BASE_URL = https://api.keyyo.com/v1
 
 OU via la CLI Supabase :
-supabase secrets set KEYYO_API_KEY="<VOTRE_CLE_API>"
+supabase secrets set KEYYO_API_KEY=REDACTED
 supabase secrets set KEYYO_ACCOUNT_ID="<VOTRE_ACCOUNT_ID>"
 supabase secrets set KEYYO_BASE_URL="https://api.keyyo.com/v1"
 */
@@ -188,7 +188,7 @@ Secret du webhook (optionnel mais recommandé) :
   - Dans Supabase : Ajoutez le secret KEYYO_WEBHOOK_SECRET
 
   Ex:
-  supabase secrets set KEYYO_WEBHOOK_SECRET="votre_secret_tres_long_et_aleatoire"
+  supabase secrets set KEYYO_WEBHOOK_SECRET=REDACTED
 */
 
 

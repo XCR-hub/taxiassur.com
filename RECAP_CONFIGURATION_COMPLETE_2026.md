@@ -99,7 +99,7 @@ npm run secrets:list
 ```bash
 supabase secrets set MONETICO_MODE="production"
 supabase secrets set MONETICO_TPE="VOTRE_TPE_PROD"
-supabase secrets set MONETICO_MAC_KEY="VOTRE_CLE_MAC_PROD"
+supabase secrets set MONETICO_MAC_KEY=REDACTED
 ```
 
 ---
@@ -255,8 +255,7 @@ npm run secrets:configure
 npm run secrets:list
 
 # Configurer un secret individuel
-supabase secrets set NOM_SECRET="valeur"
-
+supabase secrets set NOM_SECRET=REDACTED
 # Supprimer un secret
 supabase secrets unset NOM_SECRET
 ```
@@ -336,7 +335,7 @@ npm run test:e2e
    ```bash
    supabase secrets set MONETICO_MODE="production"
    supabase secrets set MONETICO_TPE="VOTRE_TPE"
-   supabase secrets set MONETICO_MAC_KEY="VOTRE_CLE_MAC"
+   supabase secrets set MONETICO_MAC_KEY=REDACTED
    ```
 
 3. **Tester le paiement en PRODUCTION**

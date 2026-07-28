@@ -62,13 +62,13 @@ Vous devez mettre à jour les secrets des Edge Functions Supabase avec ces valeu
 
 # Ou via CLI :
 supabase secrets set IONOS_EMAIL_USER=team@taxiassur.com
-supabase secrets set IONOS_EMAIL_PASSWORD="TAXIassur!,"
+supabase secrets set IONOS_EMAIL_PASSWORD=REDACTED
 supabase secrets set IONOS_SMTP_HOST=smtp.ionos.fr
 supabase secrets set IONOS_SMTP_PORT=465
 supabase secrets set IONOS_IMAP_HOST=imap.ionos.fr
 supabase secrets set IONOS_IMAP_PORT=993
 supabase secrets set IONOS_IMAP_USER=team@taxiassur.com
-supabase secrets set IONOS_IMAP_PASSWORD="TAXIassur!,"
+supabase secrets set IONOS_IMAP_PASSWORD=REDACTED
 supabase secrets set IONOS_IMAP_TLS=true
 ```
 

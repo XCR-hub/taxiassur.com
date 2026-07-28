@@ -124,7 +124,7 @@ Score = Impressions (max 40 pts)
    ```bash
    # Dans votre terminal
    supabase secrets set GOOGLE_SERVICE_ACCOUNT_EMAIL="votre-service-account@projet.iam.gserviceaccount.com"
-   supabase secrets set GOOGLE_SERVICE_ACCOUNT_KEY="contenu-de-la-cle-privee"
+   supabase secrets set GOOGLE_SERVICE_ACCOUNT_KEY=REDACTED
    ```
 
 > **Note** : Sans cette configuration, le système fonctionne en mode test (pas de vraies données GSC)

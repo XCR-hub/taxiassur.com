@@ -422,12 +422,12 @@ Score = Impressions (max 40 pts)
 **Google Service Account** :
 ```bash
 supabase secrets set GOOGLE_SERVICE_ACCOUNT_EMAIL="service-account@projet.iam.gserviceaccount.com"
-supabase secrets set GOOGLE_SERVICE_ACCOUNT_KEY="clé-privée-json"
+supabase secrets set GOOGLE_SERVICE_ACCOUNT_KEY=REDACTED
 ```
 
 **OpenAI (optionnel)** :
 ```bash
-supabase secrets set OPENAI_API_KEY="sk-..."
+supabase secrets set OPENAI_API_KEY=REDACTED
 ```
 
 > Sans la config Google, le système fonctionne en mode test (pas de vraies données)
@@ -580,7 +580,7 @@ npm run build
    - Configurer secrets Supabase :
      ```bash
      supabase secrets set GOOGLE_SERVICE_ACCOUNT_EMAIL="..."
-     supabase secrets set GOOGLE_SERVICE_ACCOUNT_KEY="..."
+     supabase secrets set GOOGLE_SERVICE_ACCOUNT_KEY=REDACTED
      supabase secrets set OPENAI_API_KEY="sk-..." # Optionnel
      ```
 

@@ -54,7 +54,7 @@ ghp_REDACTED
 
 ```bash
 # Si vous avez Supabase CLI installé
-supabase secrets set GITHUB_TOKEN=ghp_REDACTED
+supabase secrets set GITHUB_TOKEN=REDACTED
 ```
 
 ---

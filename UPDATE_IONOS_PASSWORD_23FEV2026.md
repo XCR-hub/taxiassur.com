@@ -17,8 +17,7 @@ supabase secrets list
 **Option A : Via Terminal (RECOMMANDÉ)**
 ```bash
 # Définir le nouveau mot de passe
-supabase secrets set IONOS_EMAIL_PASSWORD="TAXIassur!,"
-
+supabase secrets set IONOS_EMAIL_PASSWORD=REDACTED
 # Vérifier que c'est bien configuré
 supabase secrets list | grep IONOS
 ```

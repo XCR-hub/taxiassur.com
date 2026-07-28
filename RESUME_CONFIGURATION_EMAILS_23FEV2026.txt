@@ -32,9 +32,7 @@ OPTION 1 : Script Automatique (Recommandé)
 OPTION 2 : Commande Manuelle
 ───────────────────────────────────────────
 
-  supabase secrets set IONOS_EMAIL_PASSWORD="TAXIassur!,"
-
-
+  supabase secrets set IONOS_EMAIL_PASSWORD=REDACTED
 OPTION 3 : Via Dashboard Supabase
 ───────────────────────────────────────────
 

@@ -129,7 +129,7 @@ supabase link --project-ref YOUR_PROJECT_REF
 
 # Configurer les secrets
 supabase secrets set MONETICO_TPE="1234567"
-supabase secrets set MONETICO_KEY="AB12CD34EF56GH78IJ90KL12MN34OP56QR78ST"
+supabase secrets set MONETICO_KEY=REDACTED
 supabase secrets set MONETICO_COMPANY_CODE="companyABC"
 supabase secrets set MONETICO_MODE="production"
 

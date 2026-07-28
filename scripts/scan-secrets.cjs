@@ -28,6 +28,8 @@ const secretPatterns = [
   { name: 'Make API token assignment', regex: /^\s*MAKE_API_TOKEN\s*[:=]\s*["']?[0-9a-fA-F-]{24,}["']?\s*$/gm, ignore: placeholder },
   { name: 'IONOS password assignment', regex: /^\s*IONOS_[A-Z0-9_]*PASSWORD\s*[:=]\s*["']?[^"'\s]{8,}["']?\s*$/gm, ignore: placeholder },
   { name: 'FTP password assignment', regex: /^\s*FTP_PASSWORD\s*[:=]\s*["']?[^"'\s]{8,}["']?\s*$/gm, ignore: placeholder },
+  { name: 'Sensitive Supabase inline secret command', regex: /^\s*supabase\s+secrets\s+set\s+[A-Z0-9_]*(?:PASSWORD|TOKEN|SECRET|API_KEY|KEY)\s*=\s*["']?(?!REDACTED|YOUR_|PLACEHOLDER|\$)[^"'\s]{8,}["']?\s*$/gm },
+  { name: 'Sensitive Supabase piped secret command', regex: /^\s*echo\s+["'](?!REDACTED|YOUR_|PLACEHOLDER|\$)[^"']{8,}["']\s*\|\s*supabase\s+secrets\s+set\s+[A-Z0-9_]*(?:PASSWORD|TOKEN|SECRET|API_KEY|KEY)\b/gm },
 ];
 
 const ignoredExtensions = new Set([

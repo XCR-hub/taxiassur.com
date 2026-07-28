@@ -255,8 +255,7 @@ supabase login
 supabase link --project-ref qiavtxpaznxpttkdaevy
 
 # Ajouter un secret
-supabase secrets set IONOS_EMAIL_PASSWORD="votre_mot_de_passe"
-
+supabase secrets set IONOS_EMAIL_PASSWORD=REDACTED
 # Ajouter plusieurs secrets
 supabase secrets set \
   IONOS_EMAIL_PASSWORD="votre_mot_de_passe" \

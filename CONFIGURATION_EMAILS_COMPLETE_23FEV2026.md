@@ -17,7 +17,7 @@ IONOS_EMAIL_PASSWORD=REDACTED
 
 ### Via Terminal (Recommandé)
 ```bash
-supabase secrets set IONOS_EMAIL_PASSWORD="TAXIassur!,"
+supabase secrets set IONOS_EMAIL_PASSWORD=REDACTED
 ```
 
 ### Via Dashboard Supabase

@@ -57,7 +57,7 @@ supabase secrets set MONETICO_TPE="7374133"
 supabase secrets set MONETICO_SOCIETE="taxiassur"
 
 # ⚠️ IMPORTANT : Remplacer par votre vraie clé MAC de production
-supabase secrets set MONETICO_MAC_KEY="VOTRE_CLE_MAC_PRODUCTION"
+supabase secrets set MONETICO_MAC_KEY=REDACTED
 ```
 
 ### Option 3 : Via Dashboard Supabase

@@ -341,7 +341,7 @@ mcp__supabase__deploy_edge_function(slug="send-lead-email-brevo", verify_jwt=fal
 ### 3. Reconfigurer BREVO_API_KEY
 
 ```bash
-supabase secrets set BREVO_API_KEY=<votre_cle>
+supabase secrets set BREVO_API_KEY=REDACTED
 ```
 
 ---

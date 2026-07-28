@@ -84,7 +84,7 @@ Pour que les Edge Functions fonctionnent en production, vous **DEVEZ** configure
 
 ```bash
 supabase secrets set IONOS_EMAIL_USER="team@taxiassur.com"
-supabase secrets set IONOS_EMAIL_PASSWORD="TAXIassur!,"
+supabase secrets set IONOS_EMAIL_PASSWORD=REDACTED
 supabase secrets set IONOS_SMTP_HOST="smtp.ionos.fr"
 supabase secrets set IONOS_SMTP_PORT="587"
 supabase secrets set IONOS_IMAP_HOST="imap.ionos.fr"

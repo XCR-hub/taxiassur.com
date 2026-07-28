@@ -4,6 +4,21 @@
 
 Reduire progressivement la dependance a Supabase tout en gardant le site, les leads, les emails, les workflows et le contenu SEO operationnels.
 
+## Etat verifie le 2026-07-28
+
+- Le site public `taxiassur.com` est servi par Cloudflare Pages.
+- Le dernier deploiement verifie en production est `1e1a9593`.
+- Cloudflare D1 `taxiassur-prod` est operationnel pour le cache public SEO.
+- D1 contient actuellement : 748 articles blog, 376 pages villes, 151 FAQ, 2963 actualites, 882 pages GSC et 1391 requetes GSC.
+- Le workflow GitHub `Refresh Cloudflare D1 Cache` fonctionne avec le secret dedie `CLOUDFLARE_D1_API_TOKEN`.
+- Le serveur `192.168.1.70` heberge un miroir PostgreSQL local sous `F:\TaxiAssur`.
+- Dernier etat fonctionnel du miroir serveur : 444 tables OK, 0 table en echec, 7072 lignes importees.
+- Supabase reste la base primaire pour le CRM, les leads, les emails, les SMS, les paiements, les documents, Auth, Realtime, Edge Functions et crons.
+- Le depot GitHub bloque maintenant les fuites de secrets via `npm run security:scan-secrets` dans les workflows de validation, de deploiement Cloudflare et de refresh D1.
+- Vercel reste uniquement une option historique/rollback, non indispensable au flux Cloudflare actuel.
+
+Voir aussi : `docs/deployment/server-postgres-mirror.md`.
+
 ## Etat verifie le 2026-07-27
 
 - Le site public `taxiassur.com` est servi par Cloudflare Pages.
@@ -70,3 +85,27 @@ Limite : D1 est base sur SQLite, pas PostgreSQL. Il ne remplace pas directement 
 ## Point important stockage
 
 Les exports de sauvegarde peuvent etre stockes dans Nextcloud. En revanche, les fichiers actifs d'une base PostgreSQL ne doivent pas etre places dans un dossier synchronise Nextcloud. Pour une base active, utiliser un dossier dedie local ou serveur, par exemple `D:\TaxiAssurPostgresData` avec droits adaptes et sauvegardes planifiees.
+
+## Feuille de route depuis l'etat actuel
+
+### Phase 1 - Deja fait
+
+- Site public sur Cloudflare Pages.
+- Cache public Cloudflare D1 pour contenus SEO et donnees GSC.
+- Miroir PostgreSQL local sur `192.168.1.70`.
+- Sync D1 automatisee par GitHub Actions.
+- Scan anti-secrets dans les workflows CI/deploiement.
+
+### Phase 2 - Prochaine etape sure
+
+- Verifier regulierement le miroir avec `scripts/verify-server-postgres-mirror.ps1`.
+- Ajouter une API interne en lecture seule devant PostgreSQL local.
+- Exposer cette API uniquement via un tunnel/reverse proxy securise, jamais directement via l'IP LAN.
+- Brancher un endpoint non critique du backoffice en double lecture pour comparer Supabase et PostgreSQL local.
+
+### Phase 3 - Avant toute bascule metier
+
+- Migrer ou remplacer Auth, Storage, Edge Functions, crons, RLS et webhooks.
+- Mettre en place une double ecriture controlee pour les leads/CRM.
+- Comparer les donnees sur plusieurs jours avant de changer la source primaire.
+- Prevoir un rollback documente vers Supabase.

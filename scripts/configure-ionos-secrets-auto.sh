@@ -23,6 +23,13 @@ echo "✅ Supabase CLI détecté"
 
 # Configuration des secrets IONOS
 echo ""
+read -s -p "Mot de passe IONOS email : " IONOS_EMAIL_PASSWORD
+echo ""
+if [ -z "$IONOS_EMAIL_PASSWORD" ]; then
+    echo "Mot de passe IONOS vide"
+    exit 1
+fi
+IONOS_EMAIL_PASSWORD_PROMPTED=1
 echo "📧 Configuration des secrets IONOS SMTP..."
 
 # IONOS_SMTP_HOST
@@ -39,7 +46,7 @@ echo "team@taxiassur.com" | supabase secrets set IONOS_EMAIL_USER --env-file /de
 
 # IONOS_EMAIL_PASSWORD
 echo "🔧 Configuration de IONOS_EMAIL_PASSWORD..."
-echo "TAXIassur!," | supabase secrets set IONOS_EMAIL_PASSWORD --env-file /dev/stdin 2>&1 | grep -v "^$"
+printf '%s\n' "$IONOS_EMAIL_PASSWORD" | supabase secrets set IONOS_EMAIL_PASSWORD --env-file /dev/stdin 2>&1 | grep -v "^$"
 
 echo ""
 echo "✅ Tous les secrets IONOS ont été configurés avec succès !"

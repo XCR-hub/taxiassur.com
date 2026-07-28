@@ -42,7 +42,7 @@ IONOS_SMTP_PASSWORD=REDACTED
 
 ```bash
 # Via CLI Supabase
-supabase secrets set IONOS_EMAIL_PASSWORD="TAXIassur!"
+supabase secrets set IONOS_EMAIL_PASSWORD=REDACTED
 supabase secrets set IONOS_SMTP_HOST="smtp.ionos.fr"
 supabase secrets set IONOS_SMTP_PORT="465"
 supabase secrets set IONOS_EMAIL_USER="team@taxiassur.com"
@@ -132,7 +132,7 @@ node scripts/test-email-prospect-access.js --check-secrets
 
 **Solution** :
 ```bash
-supabase secrets set IONOS_EMAIL_PASSWORD="TAXIassur!"
+supabase secrets set IONOS_EMAIL_PASSWORD=REDACTED
 ```
 
 Ou via Dashboard : Settings → Edge Functions → Secrets

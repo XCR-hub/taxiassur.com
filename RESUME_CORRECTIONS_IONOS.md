@@ -76,8 +76,8 @@ supabase login
 supabase link --project-ref drohhxrkoequjphvabvq
 supabase secrets set IONOS_SMTP_PORT=465
 supabase secrets set IONOS_IMAP_HOST=imap.ionos.fr
-supabase secrets set IONOS_EMAIL_PASSWORD="TAXIassur!,"
-supabase secrets set IONOS_IMAP_PASSWORD="TAXIassur!,"
+supabase secrets set IONOS_EMAIL_PASSWORD=REDACTED
+supabase secrets set IONOS_IMAP_PASSWORD=REDACTED
 ```
 
 ## 🚀 Déploiement des Edge Functions

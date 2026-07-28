@@ -120,7 +120,7 @@ Puis :
 ```bash
 supabase secrets set MONETICO_MODE="production"
 supabase secrets set MONETICO_TPE="VOTRE_TPE"
-supabase secrets set MONETICO_MAC_KEY="VOTRE_CLE"
+supabase secrets set MONETICO_MAC_KEY=REDACTED
 ```
 
 ---

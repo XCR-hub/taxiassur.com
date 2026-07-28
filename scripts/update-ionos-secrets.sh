@@ -3,6 +3,13 @@
 # Script de mise à jour des secrets IONOS dans Supabase
 # Date: 15 Janvier 2026
 
+read -s -p "Mot de passe IONOS email : " IONOS_EMAIL_PASSWORD
+echo ""
+if [ -z "$IONOS_EMAIL_PASSWORD" ]; then
+    echo "Mot de passe IONOS vide"
+    exit 1
+fi
+IONOS_EMAIL_PASSWORD_PROMPTED=1
 echo "🔧 Mise à jour des secrets IONOS pour Supabase Edge Functions"
 echo "=============================================================="
 echo ""
@@ -42,7 +49,7 @@ echo "1/9 IONOS_EMAIL_USER..."
 supabase secrets set IONOS_EMAIL_USER=team@taxiassur.com
 
 echo "2/9 IONOS_EMAIL_PASSWORD..."
-supabase secrets set IONOS_EMAIL_PASSWORD="TAXIassur!,"
+supabase secrets set IONOS_EMAIL_PASSWORD="$IONOS_EMAIL_PASSWORD"
 
 echo "3/9 IONOS_SMTP_HOST..."
 supabase secrets set IONOS_SMTP_HOST=smtp.ionos.fr
@@ -60,7 +67,7 @@ echo "7/9 IONOS_IMAP_USER..."
 supabase secrets set IONOS_IMAP_USER=team@taxiassur.com
 
 echo "8/9 IONOS_IMAP_PASSWORD..."
-supabase secrets set IONOS_IMAP_PASSWORD="TAXIassur!,"
+supabase secrets set IONOS_IMAP_PASSWORD="$IONOS_EMAIL_PASSWORD"
 
 echo "9/9 IONOS_IMAP_TLS..."
 supabase secrets set IONOS_IMAP_TLS=true

@@ -38,20 +38,16 @@ supabase link --project-ref qiavtxpaznxpttkdaevy
 
 ```bash
 # Secrets CRITIQUES
-supabase secrets set IONOS_EMAIL_PASSWORD="TAXIassur!"
-supabase secrets set OPENAI_API_KEY="sk-proj_REDACTED"
-
+supabase secrets set IONOS_EMAIL_PASSWORD=REDACTED
+supabase secrets set OPENAI_API_KEY=REDACTED
 # Emails alternatifs
-supabase secrets set BREVO_API_KEY="xkeysib_REDACTED"
-supabase secrets set SENDGRID_API_KEY="SG.REDACTED"
-
+supabase secrets set BREVO_API_KEY=REDACTED
+supabase secrets set SENDGRID_API_KEY=REDACTED
 # Réseaux sociaux
-supabase secrets set LINKEDIN_ACCESS_TOKEN="AQV7bN8vSwlvNLg2SDGoh7eX_zRtP5bvF_J_KbPm_nPV7CkTy7v5C6j1i4z1ULbARfxQ6VU1uh8bPrnlcTKhG5AttZz6qHLK_m1BcpL4l_dgRIliaW_JkNF6XrXPPLNMXQciIHvETKAqTyHI9pFycw7k1FOqZG98KZeiWy-_lmofY7kdwFsxpRXkbcOL7YNEmzMHgquk82IJg35G3TBKpZgFoDJ4RA6YGzqOjEdNm1kL6lMhrJIFeMz-tCHj0ARTAysBuZ1s6HrsdwCmFuY8DGBQDTMKaCEcRC_BHmbztQM5qQg3sk2oYzazzxAcwDFOkGtmwHaXizpsmHUKNYeOpGPxPajX5Q"
-supabase secrets set PINTEREST_ACCESS_TOKEN="pina_REDACTED"
-
+supabase secrets set LINKEDIN_ACCESS_TOKEN=REDACTED
+supabase secrets set PINTEREST_ACCESS_TOKEN=REDACTED
 # Images
-supabase secrets set PEXELS_API_KEY="mwktI0rV88p2CHnMP6jliUIPDPBEniubiF7cneG1uFRQ0Yxsu8XmNyG3"
-
+supabase secrets set PEXELS_API_KEY=REDACTED
 # IONOS supplémentaires
 supabase secrets set IONOS_SMTP_HOST="smtp.ionos.fr"
 supabase secrets set IONOS_SMTP_PORT="465"
@@ -125,7 +121,7 @@ Pour passer en PRODUCTION, demandez à Ingineco :
 ```bash
 supabase secrets set MONETICO_MODE="production"
 supabase secrets set MONETICO_TPE="VOTRE_TPE_PRODUCTION"
-supabase secrets set MONETICO_MAC_KEY="VOTRE_CLE_MAC_PRODUCTION"
+supabase secrets set MONETICO_MAC_KEY=REDACTED
 ```
 
 ### ⚠️ Optionnels (si besoin)
@@ -133,16 +129,15 @@ supabase secrets set MONETICO_MAC_KEY="VOTRE_CLE_MAC_PRODUCTION"
 ```bash
 # Twilio (SMS/WhatsApp)
 supabase secrets set TWILIO_ACCOUNT_SID="votre_sid"
-supabase secrets set TWILIO_AUTH_TOKEN="votre_token"
+supabase secrets set TWILIO_AUTH_TOKEN=REDACTED
 supabase secrets set TWILIO_MESSAGING_SERVICE_SID="votre_service_sid"
 
 # Twitter/X
-supabase secrets set TWITTER_API_KEY="votre_cle"
-supabase secrets set TWITTER_API_SECRET="votre_secret"
-
+supabase secrets set TWITTER_API_KEY=REDACTED
+supabase secrets set TWITTER_API_SECRET=REDACTED
 # YouTube
 supabase secrets set YOUTUBE_CLIENT_ID="votre_client_id"
-supabase secrets set YOUTUBE_CLIENT_SECRET="votre_secret"
+supabase secrets set YOUTUBE_CLIENT_SECRET=REDACTED
 ```
 
 ---
@@ -197,7 +192,7 @@ Pour changer un secret :
 ```bash
 # 1. Générer un nouveau secret
 # 2. Le configurer
-supabase secrets set NOM_SECRET="nouvelle_valeur"
+supabase secrets set NOM_SECRET=REDACTED
 # 3. Tester
 # 4. Supprimer l'ancien (si nécessaire)
 ```

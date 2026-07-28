@@ -17,13 +17,22 @@ if ! supabase status &> /dev/null; then
 fi
 
 echo ""
+read -s -p "Mot de passe IONOS email : " IONOS_EMAIL_PASSWORD
+echo ""
+read -s -p "Mot de passe SFTP IONOS : " SFTP_PASSWORD
+echo ""
+if [ -z "$IONOS_EMAIL_PASSWORD" ] || [ -z "$SFTP_PASSWORD" ]; then
+    echo "Mot de passe vide"
+    exit 1
+fi
+IONOS_EMAIL_PASSWORD_PROMPTED=1
 echo "📧 Configuration des secrets IONOS Email..."
 
 # IONOS SMTP (envoi d'emails) - Port 465 pour TLS direct
 supabase secrets set IONOS_SMTP_HOST="smtp.ionos.fr"
 supabase secrets set IONOS_SMTP_PORT="465"
 supabase secrets set IONOS_SMTP_USER="team@taxiassur.com"
-supabase secrets set IONOS_SMTP_PASSWORD="TAXIassur!,"
+supabase secrets set IONOS_SMTP_PASSWORD="$IONOS_EMAIL_PASSWORD"
 supabase secrets set IONOS_FROM_EMAIL="team@taxiassur.com"
 supabase secrets set IONOS_FROM_NAME="TaxiAssur"
 
@@ -31,7 +40,7 @@ supabase secrets set IONOS_FROM_NAME="TaxiAssur"
 supabase secrets set IONOS_IMAP_HOST="imap.ionos.fr"
 supabase secrets set IONOS_IMAP_PORT="993"
 supabase secrets set IONOS_IMAP_USER="team@taxiassur.com"
-supabase secrets set IONOS_IMAP_PASSWORD="TAXIassur!,"
+supabase secrets set IONOS_IMAP_PASSWORD="$IONOS_EMAIL_PASSWORD"
 supabase secrets set IONOS_IMAP_SECURE="true"
 
 echo ""
@@ -41,7 +50,7 @@ echo "🚀 Configuration des secrets SFTP (déploiement)..."
 supabase secrets set SFTP_HOST="home749874859.1and1-data.host"
 supabase secrets set SFTP_PORT="22"
 supabase secrets set SFTP_USER="acc1591324770"
-supabase secrets set SFTP_PASSWORD="TAXIassur2026!,&"
+supabase secrets set SFTP_PASSWORD="$SFTP_PASSWORD"
 supabase secrets set SFTP_REMOTE_PATH="/dist"
 
 echo ""
