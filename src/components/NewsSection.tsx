@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Calendar, TrendingUp, Newspaper, ArrowRight } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { listD1Content } from '@/lib/d1-public-cache';
 import { stripHtml, createSmartExcerpt } from '../lib/text-utils';
 import { logger } from '@/lib/logger';
 
@@ -31,6 +32,19 @@ export default function NewsSection({ limit = 3, showTitle = true }: NewsSection
 
   const loadNews = async () => {
     try {
+      const d1News = await listD1Content<NewsArticle>('news_articles', {
+        limit,
+        status: 'published',
+        sort: 'published_at',
+      });
+
+      if (d1News.length > 0) {
+        setNews(d1News.map(article => ({
+          ...article,
+          excerpt: getCleanExcerpt(article)
+        })));
+        return;
+      }
       const { data, error } = await supabase
         .from('news_articles')
         .select('id, title, slug, excerpt, content, category, score, published_at, source')

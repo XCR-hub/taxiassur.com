@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { Calendar, Clock, Tag, ArrowLeft, TrendingUp, ExternalLink } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { getD1Content, listD1Content } from '@/lib/d1-public-cache';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import ArticleContent from '../components/ArticleContent';
@@ -38,6 +39,12 @@ export default function NewsArticle() {
 
   const loadArticle = async (articleSlug: string) => {
     try {
+      const d1Article = await getD1Content<NewsArticle>('news_articles', { slug: articleSlug });
+      if (d1Article) {
+        setArticle(d1Article);
+        loadRelatedArticles(d1Article.category, d1Article.id);
+        return;
+      }
       const { data, error } = await supabase
         .from('news_articles')
         .select('*')
@@ -63,6 +70,18 @@ export default function NewsArticle() {
 
   const loadRelatedArticles = async (category: string, currentId: string) => {
     try {
+      const d1Related = await listD1Content<NewsArticle>('news_articles', {
+        limit: 3,
+        status: 'published',
+        category,
+        excludeId: currentId,
+        sort: 'published_at',
+      });
+
+      if (d1Related.length > 0) {
+        setRelatedArticles(d1Related);
+        return;
+      }
       const { data, error } = await supabase
         .from('news_articles')
         .select('id, title, slug, excerpt, category, published_at, score')

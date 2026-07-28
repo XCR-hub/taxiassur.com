@@ -12,12 +12,14 @@ import { MapPin, Phone, CheckCircle, Users, Award, TrendingDown, Shield, Clock, 
 import Card from '../components/Card';
 import StickyCTA from '../components/StickyCTA';
 import { supabase } from '@/lib/supabase';
+import { getD1Content } from '@/lib/d1-public-cache';
 import { logger } from '@/lib/logger';
 
 interface CityPageData {
   id: string;
   city_name: string;
   title: string;
+  h1_title?: string | null;
   slug: string;
   content: string;
   dept?: string;
@@ -93,6 +95,20 @@ const CityPage: React.FC = () => {
       }
 
       try {
+        for (const lookupSlug of lookupSlugs) {
+          const d1CityPage = await getD1Content<CityPageData>('city_pages', { slug: lookupSlug });
+          if (d1CityPage) {
+            const cityName = d1CityPage.city_name || d1CityPage.city || d1CityPage.title || lookupSlug;
+            setCityPageData({
+              ...d1CityPage,
+              city_name: cityName,
+              city: cityName,
+            });
+            setUseTemplate(false);
+            return;
+          }
+        }
+
         // Charger la page ville
         const { data, error } = await supabase
           .from('city_pages')

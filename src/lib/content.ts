@@ -2,6 +2,7 @@ import { BlogPost, FaqEntry, Review, Offer, BlogPostSchema, FaqEntrySchema, Revi
 import { supabase } from '@/lib/supabase';
 import { generateCityPages } from './ping';
 import { logger } from '@/lib/logger';
+import { getD1Content, listD1Content } from '@/lib/d1-public-cache';
 
 // Type pour les pages ville
 export interface CityPage {
@@ -33,6 +34,91 @@ function getCityPublicUrl(slug: string): string {
   return slug.startsWith('assurance-taxi-') ? `/${slug}` : `/assurance-taxi-${slug}`;
 }
 
+type BlogPostRow = {
+  id?: string;
+  slug?: string;
+  title?: string;
+  excerpt?: string;
+  content?: string;
+  author?: string | null;
+  featured_image?: string | null;
+  keywords?: string[] | null;
+  created_at?: string;
+  updated_at?: string | null;
+};
+
+type FaqEntryRow = {
+  id?: string | number | null;
+  question: string;
+  answer: string;
+  created_at?: string;
+  updated_at?: string;
+  category?: string | null;
+};
+
+type CityPageRow = {
+  id: string;
+  city?: string | null;
+  city_name?: string | null;
+  slug: string;
+  dept?: string | null;
+  department?: string | null;
+  region?: string | null;
+  taxi_count?: number | null;
+  title?: string | null;
+  meta_description?: string | null;
+  created_at?: string;
+};
+
+function mapBlogPostRow(item: BlogPostRow): BlogPost {
+  const slug = item.slug || item.id || '';
+
+  return {
+    id: slug,
+    title: item.title || '',
+    excerpt: item.excerpt || '',
+    content: item.content || '',
+    author: item.author || 'TaxiAssur',
+    coverImage: item.featured_image || null,
+    tags: item.keywords || [],
+    createdAt: item.created_at || new Date().toISOString(),
+    updatedAt: item.updated_at || item.created_at || new Date().toISOString(),
+    faq: [],
+    status: 'published',
+  };
+}
+
+function mapFaqEntryRow(item: FaqEntryRow): FaqEntry {
+  return {
+    id: item.id?.toString() || Math.random().toString(),
+    question: item.question,
+    answer: item.answer,
+    updatedAt: item.updated_at || item.created_at,
+    tags: [item.category || 'assurance-taxi'],
+    status: 'published',
+  };
+}
+
+function mapCityPageRow(item: CityPageRow): CityPage {
+  const cityName = item.city_name || item.city || '';
+  const taxiCount = item.taxi_count || 0;
+
+  return {
+    id: item.id,
+    name: cityName,
+    slug: item.slug,
+    department: item.department || item.dept || '',
+    region: item.region || '',
+    url: getCityPublicUrl(item.slug),
+    taxis_insured: taxiCount,
+    average_savings: 35,
+    satisfied_clients: Math.floor(taxiCount * 0.8),
+    average_rating: 4.8,
+    meta_title: item.title || cityName,
+    meta_description: item.meta_description || '',
+    created_at: item.created_at,
+  };
+}
 // Fonction utilitaire pour lire les fichiers JSON locaux
 async function fetchLocalContent<T extends { status?: string }>(type: string, schema: { parse: (data: unknown) => T }): Promise<T[]> {
   try {
@@ -189,6 +275,13 @@ async function fetchLocalItem<T>(type: string, id: string, schema: { parse: (dat
 
 // Blog Posts
 export async function getBlogPosts(): Promise<BlogPost[]> {
+  // D1 public cache: blog list. Supabase remains the fallback for CRM/backoffice continuity.
+  const d1Posts = await listD1Content<BlogPostRow>('blog_posts', { limit: 100, status: 'published', sort: 'updated_at' });
+  if (d1Posts.length > 0) {
+    return d1Posts
+      .map(mapBlogPostRow)
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }
   if (supabase) {
     try {
       logger.log('🔍 Fetching blog posts from Supabase...');
@@ -232,6 +325,11 @@ export async function getBlogPosts(): Promise<BlogPost[]> {
 }
 
 export async function getBlogPost(id: string): Promise<BlogPost | null> {
+  // D1 public cache: single blog. Supabase remains the fallback.
+  const d1Post = await getD1Content<BlogPostRow>('blog_posts', { slug: id });
+  if (d1Post) {
+    return mapBlogPostRow(d1Post);
+  }
   if (supabase) {
     try {
       logger.log(`🔍 Fetching blog post "${id}" from Supabase...`);
@@ -267,6 +365,11 @@ export async function getBlogPost(id: string): Promise<BlogPost | null> {
 
 // FAQ Entries
 export async function getFaqEntries(): Promise<FaqEntry[]> {
+  // D1 public cache: FAQ. Supabase remains the fallback.
+  const d1Faqs = await listD1Content<FaqEntryRow>('faq_entries', { limit: 100, status: 'published', sort: 'updated_at' });
+  if (d1Faqs.length > 0) {
+    return d1Faqs.map(mapFaqEntryRow);
+  }
   if (supabase) {
     try {
       logger.log('🔍 Fetching FAQ entries from Supabase...');
@@ -297,6 +400,13 @@ export async function getFaqEntries(): Promise<FaqEntry[]> {
 
 // City Pages - Chargement dynamique depuis Supabase
 export async function getCityPages(): Promise<CityPage[]> {
+  // D1 public cache: city list. Supabase remains the fallback.
+  const d1Cities = await listD1Content<CityPageRow>('city_pages', { limit: 100, status: 'published', sort: 'updated_at' });
+  if (d1Cities.length > 0) {
+    return d1Cities
+      .filter((item) => isIndexableCitySlug(item.slug))
+      .map(mapCityPageRow);
+  }
   // Mode hybride : Essayer Supabase, sinon fallback vers villes statiques
   const USE_STATIC_CITIES = false;  // ✅ Supabase activé
 
@@ -356,6 +466,14 @@ export async function getCityPages(): Promise<CityPage[]> {
 export async function getCityBySlug(slug: string): Promise<CityPage | null> {
   if (!isIndexableCitySlug(slug)) return null;
 
+  // D1 public cache: single city. Supabase remains the fallback.
+  const lookupSlugs = Array.from(new Set([slug, slug.replace(/^assurance-taxi-/, ''), slug.startsWith('assurance-taxi-') ? slug : `assurance-taxi-${slug}`].filter(Boolean)));
+  for (const lookupSlug of lookupSlugs) {
+    const d1City = await getD1Content<CityPageRow>('city_pages', { slug: lookupSlug });
+    if (d1City && isIndexableCitySlug(d1City.slug)) {
+      return mapCityPageRow(d1City);
+    }
+  }
   // Mode hybride : Essayer Supabase, sinon fallback vers villes statiques
   const USE_STATIC_CITIES = false;  // ✅ Supabase activé
 

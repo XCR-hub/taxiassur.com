@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Calendar, Clock, Tag, ExternalLink, TrendingUp } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { listD1Content } from '@/lib/d1-public-cache';
 import { stripHtml, createSmartExcerpt } from '../lib/text-utils';
 import Footer from '../components/Footer';
 import Header from '../components/Header';
@@ -33,6 +34,19 @@ export default function Actualites() {
 
   const loadNews = async () => {
     try {
+      const d1News = await listD1Content<NewsArticle>('news_articles', {
+        limit: 20,
+        status: 'published',
+        sort: 'published_at',
+      });
+
+      if (d1News.length > 0) {
+        setNews(d1News.map(article => ({
+          ...article,
+          excerpt: getCleanExcerpt(article)
+        })));
+        return;
+      }
       const { data, error } = await supabase
         .from('news_articles')
         .select('*')
