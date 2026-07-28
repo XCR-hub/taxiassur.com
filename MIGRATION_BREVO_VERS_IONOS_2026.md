@@ -113,7 +113,7 @@ Les autres fonctions peuvent etre migrees progressivement ou desactivees si inut
 IONOS_SMTP_HOST=smtp.ionos.fr
 IONOS_SMTP_PORT=587
 IONOS_EMAIL_USER=team@taxiassur.com
-IONOS_EMAIL_PASSWORD=<votre_mot_de_passe>
+IONOS_EMAIL_PASSWORD=REDACTED
 ```
 
 **Design Email Modernise :**
@@ -262,13 +262,13 @@ Fonctions deja existantes pour IONOS :
 IONOS_SMTP_HOST=smtp.ionos.fr
 IONOS_SMTP_PORT=587
 IONOS_EMAIL_USER=team@taxiassur.com
-IONOS_EMAIL_PASSWORD=<mot_de_passe>
+IONOS_EMAIL_PASSWORD=REDACTED
 
 # IMAP (Reception)
 IONOS_IMAP_HOST=imap.ionos.fr
 IONOS_IMAP_PORT=993
 IONOS_IMAP_USER=team@taxiassur.com
-IONOS_IMAP_PASSWORD=<mot_de_passe>
+IONOS_IMAP_PASSWORD=REDACTED
 ```
 
 **Note :** Ces variables sont automatiquement configurees dans Supabase.

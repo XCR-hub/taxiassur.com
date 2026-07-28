@@ -42,7 +42,7 @@ Créer un fichier `.env.deploy` :
 IONOS_HOST=access123456789.webspace-data.io
 IONOS_PORT=22
 IONOS_USERNAME=u123456789
-IONOS_PASSWORD=votre_mot_de_passe
+IONOS_PASSWORD=REDACTED
 IONOS_REMOTE_PATH=/
 ```
 

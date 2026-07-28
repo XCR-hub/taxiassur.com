@@ -162,7 +162,7 @@ alert(`✅ Email d'accès envoyé avec succès à ${lead.email} !`);
 ### Secrets Supabase (déjà configurés)
 ```bash
 IONOS_EMAIL_USER=team@taxiassur.com
-IONOS_EMAIL_PASSWORD=***
+IONOS_EMAIL_PASSWORD=REDACTED
 IONOS_SMTP_HOST=smtp.ionos.fr
 IONOS_SMTP_PORT=587
 ```

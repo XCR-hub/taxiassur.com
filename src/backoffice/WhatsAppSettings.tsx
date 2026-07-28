@@ -312,7 +312,7 @@ export default function WhatsAppSettings() {
           <div className="bg-gray-900 text-green-400 p-4 rounded-lg font-mono text-sm overflow-x-auto">
             <pre>{`# Twilio WhatsApp Configuration
 TWILIO_ACCOUNT_SID=ACxxxxxxxxxxxxxxxxxxxxxx
-TWILIO_AUTH_TOKEN=votre_auth_token_secret
+TWILIO_AUTH_TOKEN=YOUR_TWILIO_AUTH_TOKEN
 TWILIO_PHONE_NUMBER=+16058006320
 TWILIO_WHATSAPP_NUMBER=whatsapp:+16058006320`}</pre>
           </div>

@@ -57,6 +57,7 @@
     "seo:sitemap": "node scripts/generate-clean-sitemap.js",
     "seo:indexnow": "node scripts/submit-indexnow.js",
     "seo:full": "npm run seo:sitemap && npm run seo:indexnow",
+    "security:scan-secrets": "node scripts/scan-secrets.cjs",
     "secrets:configure": "bash scripts/configure-supabase-secrets.sh",
     "secrets:list": "supabase secrets list",
     "configure:bolt-webhook": "bash scripts/configure-bolt-webhook.sh",

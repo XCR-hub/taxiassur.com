@@ -441,9 +441,9 @@ Une interaction est créée automatiquement :
 IONOS_SMTP_HOST=smtp.ionos.fr
 IONOS_SMTP_PORT=465
 IONOS_EMAIL_USER=team@taxiassur.com
-IONOS_EMAIL_PASSWORD=TAXIassur!
+IONOS_EMAIL_PASSWORD=REDACTED
 # OU
-IONOS_SMTP_PASSWORD=TAXIassur!
+IONOS_SMTP_PASSWORD=REDACTED
 ```
 
 **Important** : Au moins l'un des deux secrets de password doit être configuré.

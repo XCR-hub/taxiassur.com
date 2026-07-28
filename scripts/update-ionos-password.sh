@@ -62,13 +62,20 @@ fi
 echo ""
 echo -e "${BLUE}⚙️  Mise à jour des secrets...${NC}"
 
+read -s -p "Mot de passe IONOS: " IONOS_EMAIL_PASSWORD
+echo ""
+if [[ -z "$IONOS_EMAIL_PASSWORD" ]]; then
+    echo -e "${RED}Mot de passe IONOS vide${NC}"
+    exit 1
+fi
+
 # Mettre à jour tous les secrets IONOS
 supabase secrets set \
   --project-ref bpwcakjtwgdtfwghylwv \
   IONOS_SMTP_HOST="smtp.ionos.fr" \
   IONOS_SMTP_PORT="587" \
   IONOS_EMAIL_USER="team@taxiassur.com" \
-  IONOS_EMAIL_PASSWORD="TAXIassur!,"
+  IONOS_EMAIL_PASSWORD="$IONOS_EMAIL_PASSWORD"
 
 echo ""
 echo -e "${GREEN}✅ Secrets mis à jour avec succès !${NC}"

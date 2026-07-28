@@ -39,7 +39,7 @@ https://supabase.com/dashboard/project/drohhxrkoequjphvabvq/settings/vault
 ### Étape 2 : Ajouter le Secret
 1. Cliquez sur **"New secret"**
 2. Name : `OPENAI_API_KEY`
-3. Value : `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`
+3. Value : `sk-proj_REDACTED`
 4. Cliquez sur **"Add secret"**
 
 ### Étape 3 : Vérifier (5 min après)

@@ -19,14 +19,14 @@ Pour activer les publications automatiques, il faut configurer la clé `OPENAI_A
 
 3. Remplissez :
    - **Name** : `OPENAI_API_KEY`
-   - **Value** : `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`
+   - **Value** : `sk-proj_REDACTED`
 
 4. Cliquez sur **"Add secret"**
 
 ### Méthode 2 : Via Supabase CLI
 
 ```bash
-npx supabase secrets set OPENAI_API_KEY="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" --project-ref drohhxrkoequjphvabvq
+npx supabase secrets set OPENAI_API_KEY="sk-proj_REDACTED" --project-ref drohhxrkoequjphvabvq
 ```
 
 ## 🧪 Test Manuel

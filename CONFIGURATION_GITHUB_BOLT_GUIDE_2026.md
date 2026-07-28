@@ -33,7 +33,7 @@ https://github.com/settings/tokens/new
 ### 1.3 Copier le token
 
 ```
-ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+ghp_REDACTED
 ```
 
 ⚠️ **IMPORTANT**: Copiez-le immédiatement, vous ne pourrez plus le revoir!
@@ -47,14 +47,14 @@ ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 1. Aller sur: https://supabase.com/dashboard/project/YOUR-PROJECT-ID/settings/vault
 2. Cliquer `New Secret`
 3. Name: `GITHUB_TOKEN`
-4. Value: `ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx`
+4. Value: `ghp_REDACTED`
 5. Cliquer `Add secret`
 
 ### Option B: Via la ligne de commande
 
 ```bash
 # Si vous avez Supabase CLI installé
-supabase secrets set GITHUB_TOKEN=ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+supabase secrets set GITHUB_TOKEN=ghp_REDACTED
 ```
 
 ---

@@ -91,7 +91,7 @@ Permet de :
 IONOS_IMAP_HOST=imap.ionos.com
 IONOS_IMAP_PORT=993
 IONOS_IMAP_USER=tim@taxiassur.com
-IONOS_IMAP_PASSWORD=***
+IONOS_IMAP_PASSWORD=REDACTED
 IONOS_IMAP_TLS=true
 ```
 
@@ -381,13 +381,13 @@ describe('Document Classification', () => {
 IONOS_IMAP_HOST=imap.ionos.com
 IONOS_IMAP_PORT=993
 IONOS_IMAP_USER=tim@taxiassur.com
-IONOS_IMAP_PASSWORD=***
+IONOS_IMAP_PASSWORD=REDACTED
 IONOS_IMAP_TLS=true
 
 IONOS_SMTP_HOST=smtp.ionos.com
 IONOS_SMTP_PORT=465
 IONOS_SMTP_USER=tim@taxiassur.com
-IONOS_SMTP_PASSWORD=***
+IONOS_SMTP_PASSWORD=REDACTED
 ```
 
 ### Configuration IONOS (à vérifier)

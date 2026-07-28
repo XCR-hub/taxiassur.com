@@ -48,7 +48,7 @@
   "type": "service_account",
   "project_id": "taxiassur-gsc-api",
   "private_key_id": "abc123...",
-  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBA...\n-----END PRIVATE KEY-----\n",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nREDACTED\n-----END PRIVATE KEY-----\n",
   "client_email": "taxiassur-gsc-reader@taxiassur-gsc-api.iam.gserviceaccount.com",
   "client_id": "123456789...",
   "auth_uri": "https://accounts.google.com/o/oauth2/auth",
@@ -91,10 +91,7 @@ Du fichier JSON téléchargé, vous avez besoin de :
 
 2. **GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY** :
    ```
-   -----BEGIN PRIVATE KEY-----
-   MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC8...
-   (toute la clé, y compris les sauts de ligne \n)
-   -----END PRIVATE KEY-----
+   -----BEGIN PRIVATE KEY-----\nREDACTED\n-----END PRIVATE KEY-----
    ```
 
 ### 3.2 Mettre à Jour les Secrets
@@ -108,7 +105,7 @@ Du fichier JSON téléchargé, vous avez besoin de :
 
 ```bash
 GOOGLE_SERVICE_ACCOUNT_EMAIL=taxiassur-gsc-reader@taxiassur-gsc-api.iam.gserviceaccount.com
-GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nMIIEvQ...\n-----END PRIVATE KEY-----\n"
+GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nREDACTED\n-----END PRIVATE KEY-----\n"
 ```
 
 **Option B : Via CLI Supabase**
@@ -118,9 +115,7 @@ GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nMIIEvQ...\n----
 supabase secrets set GOOGLE_SERVICE_ACCOUNT_EMAIL="taxiassur-gsc-reader@taxiassur-gsc-api.iam.gserviceaccount.com"
 
 # Private Key (avec guillemets et \n préservés)
-supabase secrets set GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----
-MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC8...
------END PRIVATE KEY-----"
+supabase secrets set GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nREDACTED\n-----END PRIVATE KEY-----"
 ```
 
 **ATTENTION** : La clé privée doit contenir les sauts de ligne `\n` ou être en une seule ligne.

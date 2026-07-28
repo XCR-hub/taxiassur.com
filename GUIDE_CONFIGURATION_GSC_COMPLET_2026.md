@@ -110,7 +110,7 @@ Vous devriez voir quelque chose comme :
   "type": "service_account",
   "project_id": "taxiassur-gsc-123456",
   "private_key_id": "abc123...",
-  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIE...\n-----END PRIVATE KEY-----\n",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nREDACTED\n-----END PRIVATE KEY-----\n",
   "client_email": "taxiassur-gsc-bot@taxiassur-gsc-123456.iam.gserviceaccount.com",
   "client_id": "123456789012345678901",
   ...
@@ -141,9 +141,7 @@ Vous aurez besoin de 3 valeurs :
 
 **Secret 2** :
 - **Name** : `GSC_SERVICE_ACCOUNT_PRIVATE_KEY`
-- **Value** : La clé privée complète (avec -----BEGIN PRIVATE KEY----- et les \n)
-  ```
-  -----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC...\n-----END PRIVATE KEY-----\n
+- **Value** : La clé privée complète (avec -----BEGIN PRIVATE KEY-----\nREDACTED\n-----END PRIVATE KEY-----\n
   ```
 
 **Secret 3** :
@@ -164,7 +162,7 @@ supabase login
 # Configurer les secrets
 supabase secrets set GSC_SERVICE_ACCOUNT_EMAIL="taxiassur-gsc-bot@....iam.gserviceaccount.com"
 
-supabase secrets set GSC_SERVICE_ACCOUNT_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nMIIE...\n-----END PRIVATE KEY-----\n"
+supabase secrets set GSC_SERVICE_ACCOUNT_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nREDACTED\n-----END PRIVATE KEY-----\n"
 
 supabase secrets set GSC_SITE_URL="https://taxiassur.com/"
 ```

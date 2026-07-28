@@ -10,7 +10,7 @@ Tous les emails du système TaxiAssur partent de **team@taxiassur.com**
 IONOS_SMTP_HOST="smtp.ionos.fr"
 IONOS_SMTP_PORT="587"
 IONOS_EMAIL_USER="team@taxiassur.com"
-IONOS_EMAIL_PASSWORD="TAXIassur!,"
+IONOS_EMAIL_PASSWORD=REDACTED
 ```
 
 ## 📝 Mise à Jour du Mot de Passe

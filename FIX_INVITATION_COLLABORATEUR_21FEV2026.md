@@ -167,7 +167,7 @@ VALUES (uuid, 'tcerda@wcrf.fr', 'Tony', 'admin', true)
 IONOS_SMTP_HOST=smtp.ionos.fr
 IONOS_SMTP_PORT=465
 IONOS_EMAIL_USER=team@taxiassur.com
-IONOS_EMAIL_PASSWORD=TAXIassur!
+IONOS_EMAIL_PASSWORD=REDACTED
 ```
 
 **Note** : Les secrets sont automatiquement configurés dans Supabase Dashboard.

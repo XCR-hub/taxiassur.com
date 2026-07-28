@@ -6,13 +6,13 @@
 ```bash
 # IONOS Email Configuration (team@taxiassur.com)
 IONOS_EMAIL_USER=team@taxiassur.com
-IONOS_EMAIL_PASSWORD=TAXIassur!,
+IONOS_EMAIL_PASSWORD=REDACTED,
 IONOS_SMTP_HOST=smtp.ionos.fr
 IONOS_SMTP_PORT=465              # Port 465 pour SSL/TLS direct (corrigé)
 IONOS_IMAP_HOST=imap.ionos.fr   # imap.ionos.fr (corrigé)
 IONOS_IMAP_PORT=993
 IONOS_IMAP_USER=team@taxiassur.com
-IONOS_IMAP_PASSWORD=TAXIassur!,
+IONOS_IMAP_PASSWORD=REDACTED,
 IONOS_IMAP_TLS=true
 ```
 

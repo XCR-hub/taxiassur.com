@@ -56,7 +56,7 @@ Voici tous les secrets IONOS nécessaires :
 IONOS_SMTP_HOST="smtp.ionos.fr"
 IONOS_SMTP_PORT="587"
 IONOS_EMAIL_USER="team@taxiassur.com"
-IONOS_EMAIL_PASSWORD="TAXIassur!,"
+IONOS_EMAIL_PASSWORD=REDACTED
 ```
 
 ## 🎯 Actions automatiques après mise à jour

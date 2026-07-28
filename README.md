@@ -150,11 +150,11 @@ VITE_SUPABASE_ANON_KEY=your-anon-key
 # Email (Brevo)
 BREVO_API_KEY=your-brevo-key
 IONOS_EMAIL=your-email@domain.com
-IONOS_PASSWORD=your-password
+IONOS_PASSWORD=REDACTED
 
 # WhatsApp/SMS (Twilio)
 TWILIO_ACCOUNT_SID=your-sid
-TWILIO_AUTH_TOKEN=your-token
+TWILIO_AUTH_TOKEN=REDACTED
 TWILIO_PHONE_NUMBER=+33...
 
 # IA (OpenAI)

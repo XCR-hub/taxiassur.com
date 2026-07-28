@@ -33,9 +33,9 @@ IONOS_SMTP_PORT=465
 IONOS_EMAIL_USER=team@taxiassur.com
 
 # Au moins l'un des deux suivants :
-IONOS_EMAIL_PASSWORD=TAXIassur!
+IONOS_EMAIL_PASSWORD=REDACTED
 # OU
-IONOS_SMTP_PASSWORD=TAXIassur!
+IONOS_SMTP_PASSWORD=REDACTED
 ```
 
 ### Si un secret manque

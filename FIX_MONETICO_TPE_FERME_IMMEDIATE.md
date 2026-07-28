@@ -53,7 +53,7 @@ Vous devriez voir :
 MONETICO_MODE=production
 MONETICO_TPE=7374133
 MONETICO_SOCIETE=taxiassur
-MONETICO_MAC_KEY=***
+MONETICO_MAC_KEY=REDACTED
 ```
 
 ### 2. Attendre le Rechargement

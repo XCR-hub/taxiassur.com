@@ -13,7 +13,7 @@ DROP FUNCTION IF EXISTS trg_send_lead_notification_direct();
 CREATE OR REPLACE FUNCTION trg_send_lead_email_brevo()
 RETURNS TRIGGER AS $$
 DECLARE
-  v_brevo_key TEXT := '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';
+  v_brevo_key TEXT := 'xkeysib_REDACTED';
   v_prospect_url TEXT;
   v_response_id INTEGER;
 BEGIN

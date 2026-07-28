@@ -42,7 +42,7 @@ MONETICO_TEST_MAC_KEY=106FA85BF342FD4EE95C883D82865B5CC1F63890
 MONETICO_MODE=production
 MONETICO_TPE=<À_DEMANDER_À_INGINECO>
 MONETICO_SOCIETE=taxiassur
-MONETICO_MAC_KEY=<À_DEMANDER_À_INGINECO>
+MONETICO_MAC_KEY=REDACTED
 MONETICO_URL=https://p.monetico-services.com/paiement.cgi
 ```
 
@@ -63,7 +63,7 @@ MONETICO_URL=https://p.monetico-services.com/paiement.cgi
 IONOS_SMTP_HOST=smtp.ionos.fr
 IONOS_SMTP_PORT=465
 IONOS_EMAIL_USER=team@taxiassur.com
-IONOS_EMAIL_PASSWORD=<SECRET_REQUIS>
+IONOS_EMAIL_PASSWORD=REDACTED
 
 # IMAP (Réception d'emails)
 IONOS_IMAP_HOST=imap.ionos.fr
@@ -107,7 +107,7 @@ BREVO_SENDER_NAME=TaxiAssur
 
 ```bash
 TWILIO_ACCOUNT_SID=<SECRET_REQUIS>
-TWILIO_AUTH_TOKEN=<SECRET_REQUIS>
+TWILIO_AUTH_TOKEN=REDACTED
 TWILIO_MESSAGING_SERVICE_SID=<SECRET_REQUIS>
 TWILIO_WHATSAPP_FROM=whatsapp:+14155238886
 ```
@@ -261,7 +261,7 @@ supabase secrets set IONOS_EMAIL_PASSWORD="votre_mot_de_passe"
 supabase secrets set \
   IONOS_EMAIL_PASSWORD="votre_mot_de_passe" \
   MONETICO_TPE="votre_tpe" \
-  MONETICO_MAC_KEY="votre_clé_mac"
+  MONETICO_MAC_KEY=REDACTED
 
 # Lister tous les secrets
 supabase secrets list
@@ -343,7 +343,7 @@ if [ "$HAS_MONETICO" = "o" ]; then
   supabase secrets set \
     MONETICO_MODE="production" \
     MONETICO_TPE="$MONETICO_TPE" \
-    MONETICO_MAC_KEY="$MONETICO_MAC_KEY"
+    MONETICO_MAC_KEY=REDACTED
 fi
 
 # OpenAI (PRIORITÉ 3 - si disponible)

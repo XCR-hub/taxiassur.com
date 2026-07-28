@@ -49,7 +49,7 @@ Les secrets Google ne sont **PAS encore configurés** :
 GOOGLE_SERVICE_ACCOUNT_EMAIL=taxiassur-gsc@votre-projet.iam.gserviceaccount.com
 
 # Clé privée (dans le JSON, field "private_key")
-GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nMIIE...\n-----END PRIVATE KEY-----\n"
+GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nREDACTED\n-----END PRIVATE KEY-----\n"
 ```
 
 ### Étape 2 : Tester la Synchronisation (5 min)

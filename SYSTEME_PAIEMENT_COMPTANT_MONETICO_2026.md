@@ -208,7 +208,7 @@ Dans Supabase Dashboard → Settings → Edge Functions → Secrets :
 ```bash
 MONETICO_TPE=votre_numero_tpe
 MONETICO_SOCIETE=TaxiAssur
-MONETICO_MAC_KEY=votre_cle_mac_secrete
+MONETICO_MAC_KEY=REDACTED
 MONETICO_VERSION=3.0
 FRONTEND_URL=https://taxiassur.com
 ```

@@ -36,7 +36,7 @@
 IONOS_IMAP_HOST=imap.ionos.com
 IONOS_IMAP_PORT=993
 IONOS_IMAP_USER=tim@taxiassur.com
-IONOS_IMAP_PASSWORD=*** (à configurer)
+IONOS_IMAP_PASSWORD=REDACTED
 IONOS_IMAP_TLS=true
 ```
 

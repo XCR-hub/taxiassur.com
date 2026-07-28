@@ -18,7 +18,7 @@
 MONETICO_MODE="production"
 MONETICO_TPE="7374133"
 MONETICO_SOCIETE="taxiassur"
-MONETICO_MAC_KEY="[Votre clé MAC de production]"
+MONETICO_MAC_KEY=REDACTED
 ```
 
 ⚠️ **IMPORTANT** : La clé MAC de production peut être différente de celle de test.

@@ -17,7 +17,7 @@ https://supabase.com/dashboard/project/drohhxrkoequjphvabvq/settings/vault
 
 ```
 IONOS_EMAIL_USER=team@taxiassur.com
-IONOS_EMAIL_PASSWORD=TAXIassur!,
+IONOS_EMAIL_PASSWORD=REDACTED,
 IONOS_SMTP_HOST=smtp.ionos.fr
 IONOS_SMTP_PORT=465
 ```
