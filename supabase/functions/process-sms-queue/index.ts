@@ -8,6 +8,14 @@ const corsHeaders = {
 };
 
 const OUR_NUMBER = "+33744410598";
+const MISSING_TEXT_VALUES = new Set(["undefined", "null", "nan", "none", "n/a", "na"]);
+
+function cleanText(value: unknown): string {
+  if (value === null || value === undefined) return "";
+  const text = String(value).trim();
+  if (!text || MISSING_TEXT_VALUES.has(text.toLowerCase())) return "";
+  return text;
+}
 
 const SMS_TEMPLATES: Record<string, (vars: any) => string> = {
   new_lead_prospect: (vars) =>
@@ -94,7 +102,17 @@ Deno.serve(async (req: Request) => {
 
     for (const msg of pendingMessages || []) {
       try {
-        const result = await sendSMSViaBrevo(msg.to_number, msg.content, msg.workflow_trigger || "crm-conversation");
+        const recipient = cleanText(msg.to_number);
+        if (!recipient) {
+          await supabase.from("sms_messages").update({
+            status: "failed",
+            metadata: { ...((msg.metadata as any) || {}), error: "Skipped invalid SMS recipient" },
+          }).eq("id", msg.id);
+          totalFailed++;
+          continue;
+        }
+
+        const result = await sendSMSViaBrevo(recipient, msg.content, msg.workflow_trigger || "crm-conversation");
 
         await supabase.from("sms_messages").update({
           status: "sent",
@@ -149,13 +167,24 @@ Deno.serve(async (req: Request) => {
       try {
         await supabase.from("sms_queue").update({ status: "processing" }).eq("id", sms.id);
 
+        const recipient = cleanText(sms.recipient);
+        if (!recipient) {
+          await supabase.from("sms_queue").update({
+            status: "failed",
+            error_message: "Skipped invalid SMS recipient",
+            attempts: (sms.attempts || 0) + 1,
+          }).eq("id", sms.id);
+          totalFailed++;
+          continue;
+        }
+
         const vars = sms.variables || {};
         const templateFn = SMS_TEMPLATES[sms.template_key];
         const content = templateFn ? templateFn(vars) : (sms.content || "");
 
         if (!content) throw new Error(`No content for template: ${sms.template_key}`);
 
-        const result = await sendSMSViaBrevo(sms.recipient, content, sms.template_key);
+        const result = await sendSMSViaBrevo(recipient, content, sms.template_key);
 
         await supabase.from("sms_queue").update({
           status: "sent",
@@ -167,7 +196,7 @@ Deno.serve(async (req: Request) => {
         // Also insert into sms_messages for conversation tracking
         if (sms.lead_id) {
           const { data: convId } = await supabase.rpc("get_or_create_sms_conversation", {
-            p_phone_number: sms.recipient,
+            p_phone_number: recipient,
             p_lead_id: sms.lead_id,
           });
 
@@ -176,7 +205,7 @@ Deno.serve(async (req: Request) => {
             lead_id: sms.lead_id,
             direction: "outbound",
             from_number: OUR_NUMBER,
-            to_number: sms.recipient,
+            to_number: recipient,
             content,
             status: "sent",
             provider_message_id: result.messageId,
@@ -259,6 +288,8 @@ async function processNoResponseWorkflows(supabase: any) {
     if (!leads?.length) continue;
 
     for (const lead of leads) {
+      const recipient = cleanText(lead.phone);
+      if (!recipient) continue;
       const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
       const { count } = await supabase.from("sms_messages")
         .select("id", { count: "exact", head: true })
@@ -285,7 +316,7 @@ async function processNoResponseWorkflows(supabase: any) {
         .replace(/\{\{email\}\}/g, lead.email || "");
 
       const { data: convId } = await supabase.rpc("get_or_create_sms_conversation", {
-        p_phone_number: lead.phone, p_lead_id: lead.id,
+        p_phone_number: recipient, p_lead_id: lead.id,
       });
 
       await supabase.from("sms_messages").insert({
@@ -293,7 +324,7 @@ async function processNoResponseWorkflows(supabase: any) {
         lead_id: lead.id,
         direction: "outbound",
         from_number: OUR_NUMBER,
-        to_number: lead.phone,
+        to_number: recipient,
         content: message,
         status: "pending",
         is_automated: true,
