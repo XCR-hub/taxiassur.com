@@ -1,0 +1,76 @@
+name: Refresh Cloudflare D1 Cache
+
+on:
+  schedule:
+    - cron: '17 * * * *'
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - 'scripts/d1-*.cjs'
+      - 'cloudflare/d1/**'
+      - '.github/workflows/refresh-cloudflare-d1-cache.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cloudflare-d1-cache
+  cancel-in-progress: true
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      PUBLIC_BACKUP_DIR: cloudflare/d1/generated/supabase-public-cache
+      PUBLIC_IMPORT_SQL: cloudflare/d1/generated/public-cache.sql
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check required secrets
+        id: secrets
+        shell: bash
+        run: |
+          missing=0
+          for name in CLOUDFLARE_ACCOUNT_ID CLOUDFLARE_API_TOKEN SUPABASE_URL SUPABASE_SERVICE_ROLE_KEY; do
+            if [ -z "${!name}" ]; then
+              echo "Missing ${name}."
+              missing=1
+            fi
+          done
+          if [ "$missing" -eq 1 ]; then
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "ready=true" >> "$GITHUB_OUTPUT"
+
+      - name: Export public Supabase cache
+        if: steps.secrets.outputs.ready == 'true'
+        run: node scripts/d1-export-public-cache.cjs --out "$PUBLIC_BACKUP_DIR"
+
+      - name: Build D1 import SQL
+        if: steps.secrets.outputs.ready == 'true'
+        run: node scripts/d1-build-public-cache.cjs --backup "$PUBLIC_BACKUP_DIR" --out "$PUBLIC_IMPORT_SQL"
+
+      - name: Apply D1 schema
+        if: steps.secrets.outputs.ready == 'true'
+        run: npx wrangler d1 execute taxiassur-prod --remote --file cloudflare/d1/schema-public-cache.sql
+
+      - name: Import D1 public cache
+        if: steps.secrets.outputs.ready == 'true'
+        run: npx wrangler d1 execute taxiassur-prod --remote --file "$PUBLIC_IMPORT_SQL"

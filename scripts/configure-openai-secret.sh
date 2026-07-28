@@ -1,28 +1,23 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-# Configuration du secret OpenAI pour les Edge Functions Supabase
-# Ce script configure la clé API OpenAI nécessaire pour les publications automatiques
+# Configure OPENAI_API_KEY in Supabase without storing the key in Git.
+# Usage:
+#   OPENAI_API_KEY=... SUPABASE_PROJECT_REF=drohhxrkoequjphvabvq bash scripts/configure-openai-secret.sh
 
-OPENAI_KEY="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"
+set -euo pipefail
 
-echo "🔧 Configuration du secret OPENAI_API_KEY dans Supabase..."
+PROJECT_REF="${SUPABASE_PROJECT_REF:-drohhxrkoequjphvabvq}"
+OPENAI_KEY="${OPENAI_API_KEY:-}"
 
-# Configurer le secret via Supabase CLI
-supabase secrets set OPENAI_API_KEY="$OPENAI_KEY" --project-ref drohhxrkoequjphvabvq
-
-if [ $? -eq 0 ]; then
-    echo "✅ Secret OPENAI_API_KEY configuré avec succès !"
-    echo ""
-    echo "Les publications automatiques sont maintenant activées :"
-    echo "  - Pinterest : 3x par jour (10h, 14h, 19h)"
-    echo "  - LinkedIn : 2x par jour en semaine (9h, 15h)"
-else
-    echo "❌ Erreur lors de la configuration du secret"
-    echo ""
-    echo "Configuration manuelle via Dashboard Supabase :"
-    echo "1. Allez sur https://supabase.com/dashboard/project/drohhxrkoequjphvabvq/settings/vault"
-    echo "2. Cliquez sur 'New secret'"
-    echo "3. Nom : OPENAI_API_KEY"
-    echo "4. Valeur : $OPENAI_KEY"
-    echo "5. Cliquez sur 'Add secret'"
+if [[ -z "${OPENAI_KEY}" ]]; then
+  read -r -s -p "OPENAI_API_KEY: " OPENAI_KEY
+  echo
 fi
+
+if [[ -z "${OPENAI_KEY}" ]]; then
+  echo "OPENAI_API_KEY manquante."
+  exit 1
+fi
+
+supabase secrets set "OPENAI_API_KEY=${OPENAI_KEY}" --project-ref "${PROJECT_REF}" >/dev/null
+echo "OPENAI_API_KEY configuree dans Supabase (${PROJECT_REF})."
