@@ -15,6 +15,7 @@ Reduire progressivement la dependance a Supabase tout en gardant le site, les le
 - Dernier etat fonctionnel du miroir serveur : 444 tables OK, 0 table en echec, 7072 lignes importees.
 - Une API Node de lecture seule est prete dans `server/postgres-read-api.mjs` et installable via `scripts/install-server-postgres-read-api.ps1`.
 - Un proxy public Cloudflare Pages `/api/postgres-public/*` permet de lire le miroir PostgreSQL sans exposer le token serveur au navigateur.
+- La verification production `npm run verify:production` controle le site, D1, le proxy PostgreSQL et l'alignement des compteurs publics.
 - Supabase reste la base primaire pour le CRM, les leads, les emails, les SMS, les paiements, les documents, Auth, Realtime, Edge Functions et crons.
 - Le scan antivirus documents est pret cote base et peut etre installe en tache planifiee serveur avec `scripts/install-server-clamav-document-scan.ps1`.
 - ClamAV `1.5.3` est installe sur `SERVEUR-XCR`, les signatures sont stockees dans `F:\TaxiAssur\ClamAV\db`, et les taches `TaxiAssurDocumentClamAVScan` / `TaxiAssurClamAVFreshclamUpdate` sont planifiees.

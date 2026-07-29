@@ -118,3 +118,29 @@ TAXIASSUR_POSTGRES_READ_API_URL=https://postgres-read-api.taxiassur.com
 ```
 
 The proxy allows only public SEO tables and filters unpublished rows before returning data. The frontend public cache order is now D1 first, PostgreSQL mirror second, then the existing Supabase/local fallback in the calling content loaders.
+
+## Production Verification
+
+Run the public production health check after deployments and after mirror sync operations:
+
+```powershell
+npm run verify:production
+```
+
+The script checks:
+
+- `/assurance-taxi` returns `200`;
+- `deploy-info.json` matches the current local Git commit;
+- D1 health is OK;
+- `/api/postgres-public/health` is OK;
+- D1 and PostgreSQL public counts match for blog, city, FAQ, news and GSC cache tables;
+- both D1 and PostgreSQL can return at least one blog item.
+
+Optional environment variables:
+
+```powershell
+$env:SITE_URL = "https://taxiassur.com"
+$env:EXPECTED_COMMIT = "<commit-sha>"
+$env:PRODUCTION_HEALTH_REPORT = "C:\Users\TCERD\taxiassur-production-health-latest.json"
+npm run verify:production
+```

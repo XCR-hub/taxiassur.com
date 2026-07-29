@@ -40,6 +40,7 @@
     "setup": "node scripts/setup.js",
     "verify": "node scripts/verify-automations.js",
     "verify:deployment": "node scripts/verify-deployment.js",
+    "verify:production": "node scripts/verify-production-health.cjs",
     "populate-cities": "node scripts/populate-city-pages.js",
     "backup:full": "node scripts/backup-system.js full",
     "backup:critical": "node scripts/backup-system.js critical",
