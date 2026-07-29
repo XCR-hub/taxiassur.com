@@ -53,13 +53,29 @@ Worker:
 npm run server:scan-documents-clamav
 ```
 
+Server installation on `192.168.1.70`:
+
+```powershell
+npm run server:install-clamav-document-scan
+```
+
+The installer copies the worker to `F:\TaxiAssur\Scripts`, creates `F:\TaxiAssur\Secrets\taxiassur-document-scan.env`, writes logs to `F:\TaxiAssur\Logs`, and registers the Windows scheduled task `TaxiAssurDocumentClamAVScan` every 10 minutes. It leaves the task disabled if `node.exe`, `clamscan.exe`, the ClamAV signature database, `SUPABASE_URL`, or a Supabase server key is missing.
+
 Required environment variables on the server:
 
 - `SUPABASE_URL`
 - `SUPABASE_SERVICE_ROLE_KEY` or `SUPABASE_SERVER_KEY`
 - `CLAMSCAN_PATH` if `clamscan` is not in `PATH`
 
-Schedule the worker every 5 to 15 minutes on the server. Documents with `security_scan_status != clean` should remain treated as untrusted until reviewed.
+Documents with `security_scan_status != clean` should remain treated as untrusted until reviewed.
+
+Current server state on `192.168.1.70` / `SERVEUR-XCR` as of 2026-07-29:
+
+- ClamAV `1.5.3` is installed in `C:\Program Files\ClamAV`.
+- Signature databases are stored in `F:\TaxiAssur\ClamAV\db`.
+- `TaxiAssurDocumentClamAVScan` runs every 10 minutes and returned task result `0` after installation.
+- `TaxiAssurClamAVFreshclamUpdate` refreshes signatures every 6 hours.
+- Latest worker log showed `Pending scans: 0` after activation.
 
 ## Current infrastructure dependency
 

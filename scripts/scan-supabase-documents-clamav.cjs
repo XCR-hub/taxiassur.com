@@ -11,6 +11,8 @@ const SUPABASE_KEY =
   process.env.SUPABASE_SERVER_KEY ||
   process.env.SUPABASE_SECRET_KEY;
 const CLAMSCAN_PATH = process.env.CLAMSCAN_PATH || 'clamscan';
+const CLAMSCAN_DATABASE_PATH = process.env.CLAMSCAN_DATABASE_PATH || '';
+const CLAMSCAN_EXTRA_ARGS = (process.env.CLAMSCAN_ARGS || '').split(/\s+/).filter(Boolean);
 const SCAN_LIMIT = Number.parseInt(process.env.SCAN_LIMIT || '25', 10);
 
 const DEFAULT_BUCKETS = {
@@ -85,7 +87,11 @@ async function downloadToTemp(row) {
 
 function scanFile(filePath) {
   const startedAt = new Date().toISOString();
-  const result = spawnSync(CLAMSCAN_PATH, ['--no-summary', filePath], {
+  const args = [...CLAMSCAN_EXTRA_ARGS];
+  if (CLAMSCAN_DATABASE_PATH) args.push('--database', CLAMSCAN_DATABASE_PATH);
+  args.push('--no-summary', filePath);
+
+  const result = spawnSync(CLAMSCAN_PATH, args, {
     encoding: 'utf8',
     windowsHide: true,
   });
