@@ -46,6 +46,7 @@
     "backup:supabase-rest": "node scripts/backup-supabase-rest.cjs",
     "server:install-postgres-read-api": "powershell -ExecutionPolicy Bypass -File scripts/install-server-postgres-read-api.ps1",
     "server:test-postgres-read-api": "powershell -ExecutionPolicy Bypass -File scripts/test-server-postgres-read-api.ps1",
+    "server:install-cloudflare-postgres-tunnel": "powershell -ExecutionPolicy Bypass -File scripts/install-server-cloudflare-postgres-tunnel.ps1",
     "server:verify-postgres-mirror": "powershell -ExecutionPolicy Bypass -File scripts/verify-server-postgres-mirror.ps1",
     "d1:apply-schema": "npx wrangler d1 execute taxiassur-prod --remote --file cloudflare/d1/schema-public-cache.sql",
     "d1:build-public-cache": "node scripts/d1-build-public-cache.cjs --out cloudflare/d1/generated/public-cache.sql",
