@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import {
-  LayoutDashboard, FileText, Shield, CreditCard, Bell, User, LogOut, Menu, X, Home
+  LayoutDashboard, FileText, Shield, CreditCard, Bell, User, LogOut, Menu, X, Home, Gift, ShieldCheck
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
@@ -64,6 +64,8 @@ export default function ClientLayout({ children, email }: ClientLayoutProps) {
     { icon: Shield,          label: 'Sinistres',       path: '/client/sinistres' },
     { icon: CreditCard,      label: 'Paiements',       path: '/client/paiements' },
     { icon: Bell,            label: 'Notifications',   path: '/client/notifications', badge: unreadCount },
+    { icon: Gift,            label: 'Parrainage',      path: '/client/parrainage' },
+    { icon: ShieldCheck,     label: 'Confidentialite', path: '/client/confidentialite' },
     { icon: User,            label: 'Mon Profil',      path: '/client/profil' },
   ];
 

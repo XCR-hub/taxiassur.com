@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Shield, Phone, Clock, Send } from 'lucide-react';
 import { LeadSchema, Lead } from '../lib/schema';
@@ -7,11 +7,14 @@ import Card from './Card';
 import { logger } from '@/lib/logger';
 import { createLead } from '@/lib/leads';
 import { toast } from '@/lib/toast';
+import TurnstileWidget from './security/TurnstileWidget';
+import { isTurnstileEnabled, verifyTurnstileToken } from '@/lib/turnstile';
 
 const LeadForm: React.FC = () => {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [turnstileToken, setTurnstileToken] = useState('');
   const [formData, setFormData] = useState<Lead>({
     name: '',
     email: '',
@@ -25,7 +28,7 @@ const LeadForm: React.FC = () => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
-    
+
     // Clear error when user starts typing
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
@@ -39,14 +42,14 @@ const LeadForm: React.FC = () => {
       return true;
     } catch (error) {
       const newErrors: Record<string, string> = {};
-      
+
       if (error.errors) {
         error.errors.forEach((err: { path: string[]; message: string }) => {
           const field = err.path[0];
           newErrors[field] = err.message;
         });
       }
-      
+
       setErrors(newErrors);
       return false;
     }
@@ -68,9 +71,23 @@ const LeadForm: React.FC = () => {
       return;
     }
 
+    if (isTurnstileEnabled() && !turnstileToken) {
+      toast.error('Validation anti-spam requise.');
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
+      if (isTurnstileEnabled()) {
+        const turnstileValid = await verifyTurnstileToken(turnstileToken, 'lead_form');
+        if (!turnstileValid) {
+          toast.error('Validation anti-spam refusee. Veuillez reessayer.');
+          setTurnstileToken('');
+          return;
+        }
+      }
+
       logger.log('🚀 Creating lead...');
       const result = await createLead({
         name: formData.name,
@@ -102,6 +119,14 @@ const LeadForm: React.FC = () => {
     }
   };
 
+  const handleTurnstileVerify = useCallback((token: string) => {
+    setTurnstileToken(token);
+  }, []);
+
+  const handleTurnstileReset = useCallback(() => {
+    setTurnstileToken('');
+  }, []);
+
   return (
     <section id="devis" className="section-padding section-darker taxi-stripe">
       <div className="container-max">
@@ -114,7 +139,7 @@ const LeadForm: React.FC = () => {
             <p className="text-xl text-gray-200 mb-8 drop-shadow-md">
               🤖 Formulaire IA sécurisé → Analyse personnalisée → Offre sur-mesure
             </p>
-            
+
             {/* Trust indicators */}
             <div className="flex flex-col sm:flex-row justify-center items-center space-y-4 sm:space-y-0 sm:space-x-8 mb-8">
               <div className="flex items-center space-x-2">
@@ -263,11 +288,19 @@ const LeadForm: React.FC = () => {
                 </div>
               </div>
 
+              <TurnstileWidget
+                action="lead_form"
+                className="flex justify-center"
+                onVerify={handleTurnstileVerify}
+                onExpire={handleTurnstileReset}
+                onError={handleTurnstileReset}
+              />
+
               {/* Legal consent */}
               <div className="bg-gray-800/50 p-4 rounded-lg border border-gray-700 backdrop-blur-sm">
                 <p className="text-xs text-gray-300">
-                  En soumettant ce formulaire, j'accepte d'être recontacté par TaxiAssur.com 
-                  pour recevoir mon devis personnalisé. Données sécurisées selon notre 
+                  En soumettant ce formulaire, j'accepte d'être recontacté par TaxiAssur.com
+                  pour recevoir mon devis personnalisé. Données sécurisées selon notre
                   <a href="/policy" className="text-amber-600 hover:underline"> politique de confidentialité</a>.
                 </p>
               </div>
@@ -275,10 +308,10 @@ const LeadForm: React.FC = () => {
               {/* Submit button */}
               <button
                 type="submit"
-                disabled={isSubmitting}
+                disabled={isSubmitting || (isTurnstileEnabled() && !turnstileToken)}
                 className={`w-full py-4 px-6 rounded-lg font-bold text-lg transition-all duration-200 flex items-center justify-center space-x-2 ${
-                  isSubmitting 
-                    ? 'bg-gray-700 cursor-not-allowed text-gray-300' 
+                  isSubmitting
+                    ? 'bg-gray-700 cursor-not-allowed text-gray-300'
                     : 'bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-black shadow-xl hover:shadow-amber-500/25 transform hover:scale-105'
                 }`}
               >

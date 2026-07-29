@@ -1,4 +1,5 @@
 import { logger } from '@/lib/logger';
+import { isBehavioralPersonalizationAllowed } from '@/lib/client-consent';
 
 /**
  * Behavioral Tracking System
@@ -23,14 +24,17 @@ class BehavioralTracker {
   private ctaClicks: number = 0;
   private exitIntent: boolean = false;
   private hasSubmitted: boolean = false;
+  private enabled: boolean = false;
 
-  constructor() {
+  constructor(enabled: boolean = true) {
+    this.enabled = enabled;
     this.startTime = Date.now();
     this.init();
   }
 
   private init() {
     if (typeof window === 'undefined') return;
+    if (!this.enabled || !isBehavioralPersonalizationAllowed()) return;
 
     this.trackScrollDepth();
     this.trackInteractions();
@@ -109,6 +113,7 @@ class BehavioralTracker {
 
   private submit() {
     if (this.hasSubmitted) return;
+    if (!this.enabled || !isBehavioralPersonalizationAllowed()) return;
 
     const timeOnPage = Math.floor((Date.now() - this.startTime) / 1000);
 
@@ -131,6 +136,8 @@ class BehavioralTracker {
   }
 
   private sendToAnalytics(metrics: PageMetrics) {
+    if (!isBehavioralPersonalizationAllowed()) return;
+
     if (typeof window.gtag === 'function') {
       window.gtag('event', 'page_engagement', {
         time_on_page: metrics.timeOnPage,
@@ -152,6 +159,8 @@ class BehavioralTracker {
   }
 
   private async sendToSupabase(metrics: PageMetrics) {
+    if (!isBehavioralPersonalizationAllowed()) return;
+
     try {
       const response = await fetch('/api/analytics/behavior', {
         method: 'POST',
@@ -169,6 +178,8 @@ class BehavioralTracker {
   }
 
   private saveToLocalStorage(metrics: PageMetrics) {
+    if (!isBehavioralPersonalizationAllowed()) return;
+
     try {
       const key = 'behavioral_metrics';
       const existing = JSON.parse(localStorage.getItem(key) || '[]');
@@ -183,6 +194,16 @@ class BehavioralTracker {
   }
 
   public getMetrics(): Partial<PageMetrics> {
+    if (!this.enabled || !isBehavioralPersonalizationAllowed()) {
+      return {
+        timeOnPage: 0,
+        scrollDepth: 0,
+        interactions: 0,
+        ctaClicks: 0,
+        exitIntent: false
+      };
+    }
+
     return {
       timeOnPage: Math.floor((Date.now() - this.startTime) / 1000),
       scrollDepth: this.maxScrollDepth,
@@ -197,7 +218,7 @@ let trackerInstance: BehavioralTracker | null = null;
 
 export function initBehavioralTracking(): BehavioralTracker {
   if (trackerInstance) return trackerInstance;
-  trackerInstance = new BehavioralTracker();
+  trackerInstance = new BehavioralTracker(isBehavioralPersonalizationAllowed());
   return trackerInstance;
 }
 
@@ -212,6 +233,10 @@ export function getAverageMetrics(): {
   totalPages: number;
 } {
   try {
+    if (!isBehavioralPersonalizationAllowed()) {
+      return { avgTimeOnPage: 0, avgScrollDepth: 0, avgInteractions: 0, totalPages: 0 };
+    }
+
     const metrics: PageMetrics[] = JSON.parse(
       localStorage.getItem('behavioral_metrics') || '[]'
     );

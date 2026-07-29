@@ -338,43 +338,47 @@ export default function ContratSignatureStep({ leadId, onComplete }: ContratSign
         throw new Error(activationResult?.error || 'Erreur lors de l\'activation du client');
       }
 
-      // Send congratulations email
-      const { data: leadData } = await supabase
-        .from('crm_leads')
-        .select('email, first_name, access_token')
-        .eq('id', leadId)
-        .single();
+      // Ensure client app access, then send the dedicated client portal email.
+      const { error: portalAccessError } = await supabase
+        .rpc('ensure_client_app_access', { p_lead_id: leadId });
 
-      if (leadData?.email) {
-        const clientSpaceUrl = leadData.access_token
-          ? `${window.location.origin}/espace-client?token=${leadData.access_token}`
-          : `${window.location.origin}/espace-client`;
+      if (portalAccessError) {
+        console.warn('Client app access creation failed:', portalAccessError);
+      }
 
-        await supabase.functions.invoke('send-crm-email', {
-          body: {
-            to: leadData.email,
-            subject: 'Félicitations ! Votre contrat est prêt',
-            content: `
-              <p>Bonjour ${leadData.first_name || 'Cher client'},</p>
+      const { data: accessEmailResult, error: accessEmailError } = await supabase.functions.invoke('send-client-access', {
+        body: { lead_id: leadId }
+      });
 
-              <p>🎉 <strong>Félicitations !</strong> Votre contrat d'assurance taxi est maintenant finalisé.</p>
+      if (accessEmailError || accessEmailResult?.success === false) {
+        console.warn('Dedicated client access email failed, falling back to CRM email:', accessEmailError || accessEmailResult);
 
-              <p>Vous trouverez dans votre espace client :</p>
-              <ul>
-                <li>Votre contrat signé</li>
-                <li>Votre attestation d'assurance</li>
-                <li>Le mémo de votre véhicule</li>
-              </ul>
+        const { data: leadData } = await supabase
+          .from('crm_leads')
+          .select('email, first_name, access_token')
+          .eq('id', leadId)
+          .single();
 
-              <p>🔐 <a href="${clientSpaceUrl}">Accédez à votre espace client</a></p>
+        if (leadData?.email) {
+          const clientSpaceUrl = leadData.access_token
+            ? `${window.location.origin}/espace-client?token=${leadData.access_token}`
+            : `${window.location.origin}/espace-client`;
 
-              <p>Bienvenue dans la famille TaxiAssur !</p>
-
-              <p>L'équipe TaxiAssur</p>
-            `,
-            leadId: leadId
-          }
-        });
+          await supabase.functions.invoke('send-crm-email', {
+            body: {
+              to: leadData.email,
+              subject: 'Votre espace client TaxiAssur est pret',
+              content: `
+                <p>Bonjour ${leadData.first_name || 'Cher client'},</p>
+                <p>Votre contrat d assurance taxi est finalise.</p>
+                <p>Votre espace client permet de gerer le contrat, les documents, les paiements, les demandes, les avenants et le suivi client.</p>
+                <p><a href="${clientSpaceUrl}">Acceder a mon espace client</a></p>
+                <p>L equipe TaxiAssur</p>
+              `,
+              leadId: leadId
+            }
+          });
+        }
       }
 
       toast.success('🎉 Contrat finalisé ! Le prospect est maintenant client.');
