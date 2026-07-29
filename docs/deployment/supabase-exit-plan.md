@@ -14,6 +14,7 @@ Reduire progressivement la dependance a Supabase tout en gardant le site, les le
 - Le serveur `192.168.1.70` heberge un miroir PostgreSQL local sous `F:\TaxiAssur`.
 - Dernier etat fonctionnel du miroir serveur : 444 tables OK, 0 table en echec, 7072 lignes importees.
 - Une API Node de lecture seule est prete dans `server/postgres-read-api.mjs` et installable via `scripts/install-server-postgres-read-api.ps1`.
+- Un proxy public Cloudflare Pages `/api/postgres-public/*` permet de lire le miroir PostgreSQL sans exposer le token serveur au navigateur.
 - Supabase reste la base primaire pour le CRM, les leads, les emails, les SMS, les paiements, les documents, Auth, Realtime, Edge Functions et crons.
 - Le scan antivirus documents est pret cote base et peut etre installe en tache planifiee serveur avec `scripts/install-server-clamav-document-scan.ps1`.
 - ClamAV `1.5.3` est installe sur `SERVEUR-XCR`, les signatures sont stockees dans `F:\TaxiAssur\ClamAV\db`, et les taches `TaxiAssurDocumentClamAVScan` / `TaxiAssurClamAVFreshclamUpdate` sont planifiees.
@@ -105,6 +106,7 @@ Les exports de sauvegarde peuvent etre stockes dans Nextcloud. En revanche, les 
 - Installer et tester l'API interne en lecture seule devant PostgreSQL local.
 - Exposer cette API uniquement via un tunnel/reverse proxy securise, jamais directement via l'IP LAN.
 - Brancher un endpoint non critique du backoffice en double lecture pour comparer Supabase et PostgreSQL local.
+- Etendre progressivement le fallback `/api/postgres-public/*` aux lectures publiques qui utilisent encore Supabase directement.
 - Installer ClamAV sur `192.168.1.70`, puis activer `TaxiAssurDocumentClamAVScan` avec les secrets serveur locaux.
 
 ### Phase 3 - Avant toute bascule metier

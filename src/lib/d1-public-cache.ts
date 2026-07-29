@@ -1,6 +1,6 @@
 export type PublicContentTable = 'blog_posts' | 'city_pages' | 'faq_entries' | 'news_articles';
 
-interface D1ContentRow<T> {
+interface PublicContentRow<T> {
   source_table: PublicContentTable;
   source_id: string;
   slug: string | null;
@@ -14,25 +14,27 @@ interface D1ContentRow<T> {
   payload: T;
 }
 
-interface D1ItemResponse<T> {
+interface PublicItemResponse<T> {
   ok: boolean;
-  item?: D1ContentRow<T>;
+  item?: PublicContentRow<T>;
   error?: string;
 }
 
-interface D1ListResponse<T> {
+interface PublicListResponse<T> {
   ok: boolean;
-  items?: Array<D1ContentRow<T>>;
+  items?: Array<PublicContentRow<T>>;
   error?: string;
 }
 
-interface D1ListOptions {
+interface PublicListOptions {
   limit?: number;
   status?: 'published' | 'all';
   category?: string;
   excludeId?: string;
   sort?: 'published_at' | 'updated_at' | 'title';
 }
+
+const PUBLIC_CACHE_ENDPOINTS = ['/api/d1', '/api/postgres-public'];
 
 async function fetchWithTimeout(url: string, timeoutMs = 3500): Promise<Response> {
   const controller = new AbortController();
@@ -60,26 +62,47 @@ function searchParams(params: Record<string, string | number | undefined>): stri
   return query.toString();
 }
 
-export async function getD1Content<T>(
-  table: PublicContentTable,
-  lookup: { slug?: string; id?: string },
-): Promise<T | null> {
-  const query = searchParams({ table, slug: lookup.slug, id: lookup.id });
-
+async function getPublicContentFromEndpoint<T>(endpoint: string, query: string): Promise<T | null> {
   try {
-    const response = await fetchWithTimeout(`/api/d1/content?${query}`);
+    const response = await fetchWithTimeout(`${endpoint}/content?${query}`);
     if (!response.ok) return null;
 
-    const data = (await response.json()) as D1ItemResponse<T>;
+    const data = (await response.json()) as PublicItemResponse<T>;
     return data.ok && data.item?.payload ? data.item.payload : null;
   } catch {
     return null;
   }
 }
 
+async function listPublicContentFromEndpoint<T>(endpoint: string, query: string): Promise<T[]> {
+  try {
+    const response = await fetchWithTimeout(`${endpoint}/list?${query}`);
+    if (!response.ok) return [];
+
+    const data = (await response.json()) as PublicListResponse<T>;
+    return data.ok && data.items ? data.items.map((item) => item.payload).filter(Boolean) : [];
+  } catch {
+    return [];
+  }
+}
+
+export async function getD1Content<T>(
+  table: PublicContentTable,
+  lookup: { slug?: string; id?: string },
+): Promise<T | null> {
+  const query = searchParams({ table, slug: lookup.slug, id: lookup.id });
+
+  for (const endpoint of PUBLIC_CACHE_ENDPOINTS) {
+    const item = await getPublicContentFromEndpoint<T>(endpoint, query);
+    if (item) return item;
+  }
+
+  return null;
+}
+
 export async function listD1Content<T>(
   table: PublicContentTable,
-  options: D1ListOptions = {},
+  options: PublicListOptions = {},
 ): Promise<T[]> {
   const query = searchParams({
     table,
@@ -90,13 +113,10 @@ export async function listD1Content<T>(
     sort: options.sort,
   });
 
-  try {
-    const response = await fetchWithTimeout(`/api/d1/list?${query}`);
-    if (!response.ok) return [];
-
-    const data = (await response.json()) as D1ListResponse<T>;
-    return data.ok && data.items ? data.items.map((item) => item.payload).filter(Boolean) : [];
-  } catch {
-    return [];
+  for (const endpoint of PUBLIC_CACHE_ENDPOINTS) {
+    const items = await listPublicContentFromEndpoint<T>(endpoint, query);
+    if (items.length > 0) return items;
   }
+
+  return [];
 }

@@ -99,3 +99,22 @@ To add a table, update only `TAXIASSUR_READ_API_ALLOWED_TABLES` in the server en
 ## Limits
 
 The API reads the `supabase_rest` mirror where each row is stored as JSONB in column `data`. It does not implement Supabase Auth, Storage, Realtime, RLS, Edge Functions, crons or webhooks.
+
+## Cloudflare Pages Public Proxy
+
+The browser must never receive `TAXIASSUR_READ_API_TOKEN` directly. Public reads use Cloudflare Pages Functions as a controlled proxy:
+
+```text
+GET /api/postgres-public/health
+GET /api/postgres-public/list?table=blog_posts&limit=10
+GET /api/postgres-public/content?table=blog_posts&slug=<slug>
+```
+
+Required Cloudflare Pages secrets:
+
+```text
+TAXIASSUR_POSTGRES_READ_API_TOKEN=<server token from F:\TaxiAssur\Secrets\taxiassur-postgres-read-api.env>
+TAXIASSUR_POSTGRES_READ_API_URL=https://postgres-read-api.taxiassur.com
+```
+
+The proxy allows only public SEO tables and filters unpublished rows before returning data. The frontend public cache order is now D1 first, PostgreSQL mirror second, then the existing Supabase/local fallback in the calling content loaders.
