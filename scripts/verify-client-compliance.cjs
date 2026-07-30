@@ -125,12 +125,23 @@ const requiredChecks = [
   {
     label: 'Turnstile frontend helper calls server verification',
     file: 'src/lib/turnstile.ts',
-    patterns: ['verify-turnstile', 'getTurnstileSiteKey'],
+    patterns: ['verify-turnstile', 'getTurnstileSiteKey', 'readPublicEnv', 'ENV_CONFIG'],
+  },
+  {
+    label: 'public runtime config enables Turnstile in production',
+    file: 'public/env-config.js',
+    patterns: ['VITE_CAPTCHA_PROVIDER', 'turnstile', 'VITE_TURNSTILE_SITE_KEY'],
   },
   {
     label: 'Turnstile Supabase function verifies with Cloudflare',
     file: 'supabase/functions/verify-turnstile/index.ts',
-    patterns: ['challenges.cloudflare.com/turnstile/v0/siteverify', 'TURNSTILE_SECRET_KEY'],
+    patterns: [
+      'challenges.cloudflare.com/turnstile/v0/siteverify',
+      'TURNSTILE_SECRET_KEY',
+      'TURNSTILE_ALLOWED_HOSTNAMES',
+      'token.length > 2048',
+      'hostnameMatches',
+    ],
   },
   {
     label: 'document antivirus worker and installer are exposed',

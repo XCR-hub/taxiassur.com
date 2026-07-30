@@ -31,7 +31,9 @@ No hidden phone contact import, mailbox scraping or cross-site navigation tracki
 
 Frontend:
 
-- Set `VITE_TURNSTILE_SITE_KEY` on Cloudflare Pages.
+- The TaxiAssur Cloudflare Turnstile widget is configured for `taxiassur.com` and `www.taxiassur.com`.
+- `public/env-config.js` exposes the public `VITE_TURNSTILE_SITE_KEY` and sets `VITE_CAPTCHA_PROVIDER=turnstile`.
+- `src/lib/turnstile.ts` reads both Vite build-time variables and runtime `window.ENV_CONFIG` values.
 
 ### Public form protection
 
@@ -43,6 +45,7 @@ Supabase Edge Function:
 
 - Deploy `verify-turnstile`.
 - Set `TURNSTILE_SECRET_KEY` in Supabase secrets.
+- Optional: set `TURNSTILE_ALLOWED_HOSTNAMES`; default is `taxiassur.com,www.taxiassur.com`.
 
 The main lead form validates the Turnstile token server-side before creating the lead when a site key is configured.
 
