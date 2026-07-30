@@ -55,6 +55,48 @@ async function fetchJson(label, url, timeoutMs = 12000) {
   }
 }
 
+async function fetchText(label, url, timeoutMs = 12000) {
+  const { controller, timeout } = withTimeout(timeoutMs);
+  try {
+    const response = await fetch(url, {
+      headers: {
+        accept: 'text/plain,*/*',
+        'cache-control': 'no-cache',
+      },
+      signal: controller.signal,
+    });
+    const text = await response.text();
+    return { label, ok: response.ok, status: response.status, text };
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+async function postJson(label, url, body, headers = {}, timeoutMs = 12000) {
+  const { controller, timeout } = withTimeout(timeoutMs);
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        accept: 'application/json',
+        'content-type': 'application/json',
+        ...headers,
+      },
+      body: JSON.stringify(body),
+      signal: controller.signal,
+    });
+    const text = await response.text();
+    let json = null;
+    try {
+      json = text ? JSON.parse(text) : null;
+    } catch {
+      json = null;
+    }
+    return { label, ok: response.ok, status: response.status, json, text };
+  } finally {
+    clearTimeout(timeout);
+  }
+}
 async function fetchStatus(label, url, timeoutMs = 12000) {
   const { controller, timeout } = withTimeout(timeoutMs);
   try {
@@ -98,6 +140,10 @@ function commitMatches(deployed, expected) {
   return expected.startsWith(deployed) || deployed.startsWith(expected);
 }
 
+function readRuntimeConfigValue(text, key) {
+  const match = text.match(new RegExp(`${key}\\s*:\\s*['\"]([^'\"]+)['\"]`));
+  return match?.[1] || '';
+}
 async function main() {
   const checkedAt = new Date().toISOString();
   const checks = [];
@@ -108,6 +154,31 @@ async function main() {
   const d1Sample = await fetchJson('d1-blog-sample', `${SITE_URL}/api/d1/list?table=blog_posts&limit=1&ts=${Date.now()}`);
   const postgresSample = await fetchJson('postgres-blog-sample', `${SITE_URL}/api/postgres-public/list?table=blog_posts&limit=1&ts=${Date.now()}`);
   const mainPage = await fetchStatus('main-page', `${SITE_URL}/assurance-taxi?ts=${Date.now()}`);
+  const envConfig = await fetchText('env-config', `${SITE_URL}/env-config.js?ts=${Date.now()}`);
+  const runtimeConfigText = envConfig.text || '';
+  const turnstileProvider = readRuntimeConfigValue(runtimeConfigText, 'VITE_CAPTCHA_PROVIDER');
+  const turnstileSiteKey = readRuntimeConfigValue(runtimeConfigText, 'VITE_TURNSTILE_SITE_KEY');
+  const supabaseUrl = readRuntimeConfigValue(runtimeConfigText, 'VITE_SUPABASE_URL').replace(/\/$/, '');
+  const supabaseAnonKey = readRuntimeConfigValue(runtimeConfigText, 'VITE_SUPABASE_ANON_KEY');
+  const supabaseHeaders = supabaseAnonKey
+    ? { apikey: supabaseAnonKey, authorization: `Bearer ${supabaseAnonKey}` }
+    : {};
+  const invalidTurnstile = supabaseUrl && supabaseAnonKey
+    ? await postJson(
+      'turnstile-invalid-token',
+      `${supabaseUrl}/functions/v1/verify-turnstile`,
+      { token: 'invalid', action: 'contact_form' },
+      supabaseHeaders,
+    )
+    : null;
+  const emptyLead = supabaseUrl && supabaseAnonKey
+    ? await postJson(
+      'create-lead-direct-empty-lead',
+      `${supabaseUrl}/functions/v1/create-lead-direct`,
+      { lead: {} },
+      supabaseHeaders,
+    )
+    : null;
 
   addCheck(checks, 'site page /assurance-taxi returns 200', mainPage.ok && mainPage.status === 200, mainPage);
   addCheck(checks, 'deploy-info is reachable', deployInfo.ok && deployInfo.json?.commit, {
@@ -117,6 +188,26 @@ async function main() {
   addCheck(checks, 'deployed commit matches local HEAD', commitMatches(deployInfo.json?.commit, EXPECTED_COMMIT), {
     deployed: deployInfo.json?.commit || null,
     expected: EXPECTED_COMMIT || null,
+  });
+  addCheck(checks, 'env-config is reachable', envConfig.ok && runtimeConfigText.includes('window.ENV_CONFIG'), {
+    status: envConfig.status,
+  });
+  addCheck(checks, 'Turnstile runtime config is enabled', turnstileProvider === 'turnstile' && /^0x[\w-]+$/.test(turnstileSiteKey), {
+    provider: turnstileProvider || null,
+    has_site_key: Boolean(turnstileSiteKey),
+  });
+  addCheck(checks, 'Supabase runtime config is available for Edge Function probes', Boolean(supabaseUrl && supabaseAnonKey), {
+    has_url: Boolean(supabaseUrl),
+    has_anon_key: Boolean(supabaseAnonKey),
+  });
+  addCheck(checks, 'Turnstile rejects invalid tokens server-side', invalidTurnstile?.status === 403 && invalidTurnstile?.json?.success === false, {
+    status: invalidTurnstile?.status || null,
+    success: invalidTurnstile?.json?.success ?? null,
+    error_codes: invalidTurnstile?.json?.error_codes || [],
+  });
+  addCheck(checks, 'create-lead-direct rejects empty public leads', emptyLead?.status === 400 && /Lead incomplet refuse/.test(emptyLead?.json?.error || ''), {
+    status: emptyLead?.status || null,
+    error: emptyLead?.json?.error || null,
   });
   addCheck(checks, 'D1 health is OK', d1Health.ok && d1Health.json?.ok === true, {
     status: d1Health.status,

@@ -1,4 +1,4 @@
-﻿# TaxiAssur Cloudflare Tunnel for PostgreSQL Read API
+# TaxiAssur Cloudflare Tunnel for PostgreSQL Read API
 
 ## Current State
 
@@ -66,6 +66,25 @@ curl.exe -sS -o NUL -w '%{http_code}' https://postgres-read-api.taxiassur.com/ap
 ```
 
 With the server token from `F:\TaxiAssur\Secrets\taxiassur-postgres-read-api.env`, `/api/health` should return counts for the mirrored public tables.
+
+## Troubleshooting
+
+If `https://postgres-read-api.taxiassur.com/health` returns Cloudflare error `1033`, the Cloudflare Tunnel connector is not connected even if the local PostgreSQL read API is healthy.
+
+Run:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\test-server-postgres-read-api.ps1 -UseStoredCredentials
+powershell -ExecutionPolicy Bypass -File scripts\install-server-cloudflare-postgres-tunnel.ps1 -UseStoredCredentials
+npm run verify:production
+```
+
+Expected recovery signs:
+
+- `test-server-postgres-read-api.ps1` reports local `/health` and `/api/health` as `200`.
+- `install-server-cloudflare-postgres-tunnel.ps1` reports `cloudflared_process_count` greater than `0`.
+- `https://postgres-read-api.taxiassur.com/health` returns `200`.
+- `npm run verify:production` shows matching D1/PostgreSQL counts.
 
 ## Security Notes
 
