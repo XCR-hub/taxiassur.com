@@ -34,3 +34,6 @@ supabase/.temp/
 cloudflare/d1/generated/
 .tmp-supabase-push-*/
 .turnstile-sitekey.tmp
+
+# Generated local reports
+reports/

@@ -62,11 +62,39 @@ function toIsoDate(value) {
 
 const UUID_PATTERN = '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}';
 const CITY_UUID_SLUG_RE = new RegExp(`^(assurance-taxi-)?ville-${UUID_PATTERN}$`, 'i');
+const TIMESTAMPED_SLUG_RE = /-\d{10,}(?:\.\d+)?$/;
+const CITY_MONEY_DOORWAY_RE = /^(assurance-taxi-)?pas-cher(?:e)?-/i;
+const BROKEN_SLUG_PATTERNS = [
+  /\s/,
+  /%20/i,
+  /(?:^|-)r-(?:glement|gulations|vision|cents|siliation|duire)/i,
+  /(?:^|-)n-mes(?:-|$)/i,
+  /(?:^|-)mont-vrain(?:-|$)/i,
+  /(?:^|-)bar-ul(?:-|$)/i,
+  /(?:^|-)bi-re(?:-|$)/i,
+  /(?:^|-)crit-res(?:-|$)/i,
+  /(?:^|-)m-e-sur(?:-|$)/i,
+];
+
+function hasBrokenSlugEncoding(slug) {
+  const value = String(slug || '').trim();
+  return BROKEN_SLUG_PATTERNS.some((pattern) => pattern.test(value));
+}
+
+function isIndexableContentSlug(slug) {
+  const value = String(slug || '').trim();
+  if (!value) return false;
+  if (hasBrokenSlugEncoding(value)) return false;
+  if (TIMESTAMPED_SLUG_RE.test(value)) return false;
+  return true;
+}
 
 function isIndexableCitySlug(slug) {
   const value = String(slug || '').trim();
   if (!value) return false;
   if (CITY_UUID_SLUG_RE.test(value)) return false;
+  if (hasBrokenSlugEncoding(value)) return false;
+  if (CITY_MONEY_DOORWAY_RE.test(value)) return false;
   return true;
 }
 
@@ -137,7 +165,7 @@ async function generateSitemap() {
   );
 
   for (const post of blogPosts) {
-    if (!post.slug) continue;
+    if (!isIndexableContentSlug(post.slug)) continue;
     addUrl(urls, seen, `/blog/${post.slug}`, post.updated_at || post.created_at, 'monthly', '0.6');
   }
 
@@ -153,7 +181,7 @@ async function generateSitemap() {
   );
 
   for (const article of newsArticles) {
-    if (!article.slug) continue;
+    if (!isIndexableContentSlug(article.slug)) continue;
     addUrl(urls, seen, `/actualites/${article.slug}`, article.updated_at || article.published_at || article.created_at, 'monthly', '0.5');
   }
 

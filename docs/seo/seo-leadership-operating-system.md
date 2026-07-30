@@ -19,6 +19,7 @@ Aucune modification technique ne peut garantir une position numero 1 Google. Le 
 - `public/robots.txt` bloque les zones privees et les doublons legacy `/ville/`.
 - `public/llms.txt` et `public/ai.txt` exposent les pages publiques de reference aux assistants IA.
 - `npm run verify:seo-leadership` controle les signaux locaux et, en production, les canonicals HTML reelles.
+- `npm run seo:quality-audit` repere les slugs casses, les doublons, les URLs trop longues et les clusters de pages a risque.
 
 ## Cycle de publication automatique
 

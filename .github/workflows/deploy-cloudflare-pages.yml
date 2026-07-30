@@ -45,6 +45,9 @@ jobs:
           SKIP_LIVE_SEO_CHECK: '1'
         run: npm run verify:seo-leadership
 
+      - name: SEO quality audit
+        run: npm run seo:quality-audit
+
       - name: Build and validate Cloudflare output
         run: npm run build:cloudflare
 
