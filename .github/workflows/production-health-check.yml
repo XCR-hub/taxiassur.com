@@ -1,0 +1,39 @@
+name: Production Health Check
+
+on:
+  schedule:
+    - cron: '37 */2 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-health-check
+  cancel-in-progress: true
+
+jobs:
+  health:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Verify production site and public caches
+        env:
+          SITE_URL: https://taxiassur.com
+          EXPECTED_COMMIT: skip
+        run: |
+          for attempt in 1 2 3; do
+            if npm run verify:production; then
+              exit 0
+            fi
+            echo "Production health check failed on attempt ${attempt}; retrying in 10s..."
+            sleep 10
+          done
+          npm run verify:production

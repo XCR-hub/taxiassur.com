@@ -5,7 +5,11 @@ const { writeFileSync, mkdirSync } = require('node:fs');
 const path = require('node:path');
 
 const SITE_URL = (process.env.SITE_URL || 'https://taxiassur.com').replace(/\/$/, '');
-const EXPECTED_COMMIT = process.env.EXPECTED_COMMIT || currentGitCommit();
+const EXPECTED_COMMIT_INPUT = process.env.EXPECTED_COMMIT;
+const SKIP_COMMIT_CHECK =
+  process.env.SKIP_DEPLOY_COMMIT_CHECK === '1' ||
+  ['skip', 'none', 'false', '0'].includes(String(EXPECTED_COMMIT_INPUT || '').toLowerCase());
+const EXPECTED_COMMIT = SKIP_COMMIT_CHECK ? '' : (EXPECTED_COMMIT_INPUT || currentGitCommit());
 const REPORT_PATH = process.env.PRODUCTION_HEALTH_REPORT || '';
 const CONTENT_TABLES = ['blog_posts', 'city_pages', 'faq_entries', 'news_articles'];
 const GSC_TABLES = ['gsc_pages', 'gsc_queries'];

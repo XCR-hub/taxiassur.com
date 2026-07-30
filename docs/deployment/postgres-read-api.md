@@ -143,4 +143,8 @@ $env:SITE_URL = "https://taxiassur.com"
 $env:EXPECTED_COMMIT = "<commit-sha>"
 $env:PRODUCTION_HEALTH_REPORT = "C:\Users\TCERD\taxiassur-production-health-latest.json"
 npm run verify:production
+
+# For scheduled D1/cache checks where the live commit does not matter:
+$env:EXPECTED_COMMIT = "skip"
+npm run verify:production
 ```

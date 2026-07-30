@@ -19,6 +19,8 @@ jobs:
     env:
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      VITE_CAPTCHA_PROVIDER: turnstile
+      VITE_TURNSTILE_SITE_KEY: "${{ vars.VITE_TURNSTILE_SITE_KEY || secrets.VITE_TURNSTILE_SITE_KEY || '0x4AAAAAAEAauofq7vsai3yI' }}"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -34,6 +36,9 @@ jobs:
 
       - name: Security secret scan
         run: npm run security:scan-secrets
+
+      - name: Client compliance guard
+        run: npm run verify:client-compliance
 
       - name: Build and validate Cloudflare output
         run: npm run build:cloudflare
@@ -56,3 +61,18 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: pages deploy dist --project-name taxiassur --branch main
+
+      - name: Verify production site
+        if: steps.cloudflare.outputs.ready == 'true'
+        env:
+          SITE_URL: https://taxiassur.com
+          EXPECTED_COMMIT: ${{ github.sha }}
+        run: |
+          for attempt in 1 2 3 4 5 6; do
+            if npm run verify:production; then
+              exit 0
+            fi
+            echo "Production verification failed on attempt ${attempt}; retrying in 10s..."
+            sleep 10
+          done
+          npm run verify:production

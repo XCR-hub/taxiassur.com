@@ -72,3 +72,17 @@ jobs:
 
       - name: Import D1 public cache
         run: npx wrangler d1 execute taxiassur-prod --remote --file "$PUBLIC_IMPORT_SQL"
+
+      - name: Verify production public cache
+        env:
+          SITE_URL: https://taxiassur.com
+          EXPECTED_COMMIT: skip
+        run: |
+          for attempt in 1 2 3; do
+            if npm run verify:production; then
+              exit 0
+            fi
+            echo "Production public cache verification failed on attempt ${attempt}; retrying in 10s..."
+            sleep 10
+          done
+          npm run verify:production

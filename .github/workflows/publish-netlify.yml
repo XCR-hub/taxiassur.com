@@ -18,6 +18,9 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      VITE_CAPTCHA_PROVIDER: turnstile
+      VITE_TURNSTILE_SITE_KEY: "${{ vars.VITE_TURNSTILE_SITE_KEY || secrets.VITE_TURNSTILE_SITE_KEY || '0x4AAAAAAEAauofq7vsai3yI' }}"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -33,6 +36,9 @@ jobs:
 
       - name: Security secret scan
         run: npm run security:scan-secrets
+
+      - name: Client compliance guard
+        run: npm run verify:client-compliance
 
       - name: Build
         run: npm run build
