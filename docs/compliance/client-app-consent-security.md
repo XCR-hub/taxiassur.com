@@ -77,6 +77,17 @@ Current server state on `192.168.1.70` / `SERVEUR-XCR` as of 2026-07-29:
 - `TaxiAssurClamAVFreshclamUpdate` refreshes signatures every 6 hours.
 - Latest worker log showed `Pending scans: 0` after activation.
 
+
+## Local verification
+
+Run this static check before deployments that touch the client app, consent, referral, Turnstile or document scan flows:
+
+```powershell
+npm run verify:client-compliance
+```
+
+The check verifies the expected post-contract client access wiring, separate opt-ins, revocation, capped referral reward, Turnstile verification and document antivirus scan hooks. It also fails if browser contact import or mailbox/contact harvesting patterns are introduced.
+
 ## Current infrastructure dependency
 
 The local PostgreSQL server at `192.168.1.70` is a mirror/read replica, not yet the production primary. Supabase is still used for writes, storage, Edge Functions and several workflows. Cloudflare is still used for DNS, Pages hosting, D1 public cache and Tunnel.
