@@ -62,6 +62,14 @@ jobs:
           fi
           echo "ready=true" >> "$GITHUB_OUTPUT"
 
+      - name: Align Cloudflare AI robots access
+        if: steps.cloudflare.outputs.ready == 'true'
+        env:
+          CLOUDFLARE_ZONE_NAME: taxiassur.com
+          CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_BOT_MANAGEMENT_API_TOKEN || secrets.CLOUDFLARE_API_TOKEN }}
+        run: npm run cloudflare:ai-robots -- --soft
+
       - name: Deploy to Cloudflare Pages production
         if: steps.cloudflare.outputs.ready == 'true'
         uses: cloudflare/wrangler-action@v3

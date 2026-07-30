@@ -72,6 +72,7 @@
     "configure:bolt-webhook": "bash scripts/configure-bolt-webhook.sh",
     "d1:export-public-cache": "node scripts/d1-export-public-cache.cjs",
     "d1:refresh-public-cache": "npm run d1:export-public-cache -- --out cloudflare/d1/generated/supabase-public-cache && node scripts/d1-build-public-cache.cjs --backup cloudflare/d1/generated/supabase-public-cache --out cloudflare/d1/generated/public-cache.sql && npx wrangler d1 execute taxiassur-prod --remote --file cloudflare/d1/schema-public-cache.sql && npx wrangler d1 execute taxiassur-prod --remote --file cloudflare/d1/generated/public-cache.sql",
+    "cloudflare:ai-robots": "node scripts/configure-cloudflare-ai-robots.cjs",
     "seo:quality-audit": "node scripts/seo-quality-audit.cjs"
   },
   "dependencies": {

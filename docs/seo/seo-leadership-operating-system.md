@@ -47,3 +47,16 @@ $env:SKIP_LIVE_SEO_CHECK='1'; npm run verify:seo-leadership
 ## Point Cloudflare a surveiller
 
 Cloudflare peut ajouter des regles robots gerees avant le `robots.txt` du projet. Si TaxiAssur veut etre davantage visible dans les assistants IA, verifier dans Cloudflare que les controles AI crawler ne bloquent pas GPTBot, OAI-SearchBot, ClaudeBot, PerplexityBot ou Google-Extended contre l intention business.
+
+Reglage cible pour TaxiAssur: garder `public/robots.txt` comme source de verite et desactiver le `robots.txt` manage Cloudflare (`is_robots_txt_managed=false`). Le script suivant ne modifie que ce parametre et laisse les autres protections bots inchangees:
+
+```powershell
+$env:CLOUDFLARE_BOT_MANAGEMENT_API_TOKEN='<token Cloudflare avec Zone Read + Bot Management Write>'
+# Optionnel si le token ne peut pas lister les zones:
+# $env:CLOUDFLARE_ZONE_ID='<zone id taxiassur.com>'
+npm run cloudflare:ai-robots -- --dry-run
+npm run cloudflare:ai-robots
+Remove-Item Env:\CLOUDFLARE_BOT_MANAGEMENT_API_TOKEN
+```
+
+Le workflow Cloudflare Pages lance aussi cette commande en mode `--soft` avec `CLOUDFLARE_BOT_MANAGEMENT_API_TOKEN` si le secret existe, sinon avec `CLOUDFLARE_API_TOKEN`. Il transmet aussi `CLOUDFLARE_ZONE_ID` si le secret existe. Si le token n a pas les droits Bot Management, le deploiement continue mais le warning live reste visible dans `npm run verify:seo-leadership`.
