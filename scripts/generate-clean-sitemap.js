@@ -43,6 +43,7 @@ const staticPages = [
   { url: '/contact', priority: '0.7', changefreq: 'monthly' },
   { url: '/blog', priority: '0.8', changefreq: 'daily' },
   { url: '/actualites', priority: '0.7', changefreq: 'daily' },
+  { url: '/villes', priority: '0.7', changefreq: 'weekly' },
   { url: '/reviews', priority: '0.6', changefreq: 'weekly' },
   { url: '/programme-partenaires', priority: '0.5', changefreq: 'monthly' },
   { url: '/newsletter', priority: '0.4', changefreq: 'monthly' },

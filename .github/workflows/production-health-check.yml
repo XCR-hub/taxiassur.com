@@ -37,3 +37,9 @@ jobs:
             sleep 10
           done
           npm run verify:production
+
+      - name: Verify production SEO signals
+        env:
+          SITE_URL: https://taxiassur.com
+          EXPECTED_COMMIT: skip
+        run: npm run verify:seo-leadership

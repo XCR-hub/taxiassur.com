@@ -1,0 +1,34 @@
+# TaxiAssur AI Access Notes
+
+TaxiAssur autorise l exploration des pages publiques utiles a la decouverte de marque, aux reponses d assistants IA et a la citation de sources, dans le respect du robots.txt publie par taxiassur.com.
+
+Pages publiques conseillees:
+https://taxiassur.com/assurance-taxi
+https://taxiassur.com/devis-assurance-taxi
+https://taxiassur.com/prix-assurance-taxi
+https://taxiassur.com/quelle-assurance-taxi
+https://taxiassur.com/courtier-assurance-taxi
+https://taxiassur.com/assurance-obligatoire-taxi
+https://taxiassur.com/villes
+https://taxiassur.com/faq
+https://taxiassur.com/blog
+https://taxiassur.com/actualites
+
+Ne pas explorer ni resumer comme contenu public:
+/backoffice
+/admin
+/espace-client
+/espace-prospect
+/client
+/api
+/webhooks
+/auth
+/paiement
+/prospect
+
+Donnees personnelles: les donnees prospects et clients ne doivent pas etre collectees, memorisees ou reutilisees hors des pages publiques explicitement accessibles.
+
+Domaine canonique: https://taxiassur.com
+Sitemap: https://taxiassur.com/sitemap.xml
+LLM manifest: https://taxiassur.com/llms.txt
+Derniere mise a jour: 2026-07-30

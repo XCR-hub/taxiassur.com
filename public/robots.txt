@@ -1,5 +1,5 @@
 # Robots.txt - TaxiAssur.com
-# Last updated: 2026-04-28
+# Last updated: 2026-07-30
 
 User-agent: *
 Allow: /
@@ -26,9 +26,8 @@ Disallow: /paiement/
 Disallow: /down-payment
 Disallow: /test-notifications
 
-# Duplicate content: /ville/ duplicates /assurance-taxi-* pages
+# Duplicate legacy city paths: canonical pages use /assurance-taxi-*
 Disallow: /ville/
-Disallow: /villes/
 
 # Newsletter utility pages
 Disallow: /newsletter/subscribe
