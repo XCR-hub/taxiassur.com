@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { CheckCircle, Phone, Send, Shield, Clock, TrendingDown, Zap, Star, FileText, MapPin, Users } from 'lucide-react';
+import { useTurnstileGuard } from '@/hooks/useTurnstileGuard';
 
 const Hero: React.FC = () => {
   const totalArticles = 25;
@@ -16,6 +17,7 @@ const Hero: React.FC = () => {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
+  const turnstile = useTurnstileGuard({ action: 'hero_lead_form', className: 'flex justify-center' });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -50,7 +52,20 @@ const Hero: React.FC = () => {
       return;
     }
 
+    if (!turnstile.canSubmit) {
+      setErrors(['Validation anti-spam requise.']);
+      setIsSubmitting(false);
+      return;
+    }
+
     try {
+      const turnstileValid = await turnstile.verify();
+      if (!turnstileValid) {
+        setErrors(['Validation anti-spam refusee. Veuillez reessayer.']);
+        setIsSubmitting(false);
+        return;
+      }
+
       const { createLead } = await import('@/lib/leads');
       const response = await createLead({
         name: formData.name,
@@ -337,6 +352,8 @@ const Hero: React.FC = () => {
                     </div>
                   </div>
 
+                  {turnstile.widget}
+
                   {/* Legal consent */}
                   <div className="bg-gray-800/50 p-3 sm:p-4 rounded-lg border border-gray-600">
                     <p className="text-xs text-gray-300">
@@ -349,7 +366,7 @@ const Hero: React.FC = () => {
                   {/* Submit button */}
                   <button
                     type="submit"
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || !turnstile.canSubmit}
                     className="w-full py-3 sm:py-4 px-4 sm:px-6 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-black font-bold text-base sm:text-lg rounded-xl transition-all duration-200 shadow-xl hover:shadow-2xl flex items-center justify-center space-x-2"
                   >
                     {isSubmitting ? (

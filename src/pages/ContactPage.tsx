@@ -1,6 +1,7 @@
 import { useState, FormEvent } from 'react';
 import { supabase } from '../lib/supabase';
 import Seo from '../components/Seo';
+import { useTurnstileGuard } from '@/hooks/useTurnstileGuard';
 
 interface ContactFormData {
   name: string;
@@ -22,6 +23,7 @@ function ContactPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
+  const turnstile = useTurnstileGuard({ action: 'contact_form', className: 'flex justify-center' });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -35,6 +37,19 @@ function ContactPage() {
     setErrorMessage('');
 
     try {
+      if (!turnstile.canSubmit) {
+        setSubmitStatus('error');
+        setErrorMessage('Validation anti-spam requise');
+        return;
+      }
+
+      const turnstileValid = await turnstile.verify();
+      if (!turnstileValid) {
+        setSubmitStatus('error');
+        setErrorMessage('Validation anti-spam refusee. Veuillez reessayer');
+        return;
+      }
+
       const { error } = await supabase.from('contact_messages').insert([
         {
           name: formData.name,
@@ -193,9 +208,11 @@ function ContactPage() {
                   ></textarea>
                 </div>
 
+                {turnstile.widget}
+
                 <button
                   type="submit"
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || !turnstile.canSubmit}
                   className="w-full btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isSubmitting ? 'Envoi en cours...' : 'Envoyer le message'}

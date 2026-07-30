@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { ArrowRight, CheckCircle, Sparkles, Zap, Shield, Clock, User, Mail, Phone, MapPin, Car, Send } from 'lucide-react';
+import React, { useState } from 'react';
+import { ArrowRight, CheckCircle, Sparkles, Zap, Shield, Clock, User, Mail, Phone, MapPin, Car } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { logger } from '@/lib/logger';
 import { createLead } from '@/lib/leads';
 import { toast } from '@/lib/toast';
+import { useTurnstileGuard } from '@/hooks/useTurnstileGuard';
 
 interface FormData {
   name: string;
@@ -18,6 +19,7 @@ const AIQuoteProcess: React.FC = () => {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(0);
   const [isProcessing, setIsProcessing] = useState(false);
+  const turnstile = useTurnstileGuard({ action: 'ai_quote_process', className: 'flex justify-center' });
   const [formData, setFormData] = useState<FormData>({
     name: '',
     email: '',
@@ -65,10 +67,22 @@ const AIQuoteProcess: React.FC = () => {
   };
 
   const handleSubmit = async () => {
+    if (!turnstile.canSubmit) {
+      toast.error('Validation anti-spam requise.');
+      return;
+    }
+
     setIsProcessing(true);
     setCurrentStep(3);
 
     try {
+      const turnstileValid = await turnstile.verify();
+      if (!turnstileValid) {
+        toast.error('Validation anti-spam refusee. Veuillez reessayer.');
+        setCurrentStep(2);
+        return;
+      }
+
       await new Promise(resolve => setTimeout(resolve, 2000));
 
       const result = await createLead({
@@ -276,7 +290,7 @@ const AIQuoteProcess: React.FC = () => {
               <button
                 key={option.value}
                 type="button"
-                onClick={() => updateFormData('status', option.value as any)}
+                onClick={() => updateFormData('status', option.value as FormData['status'])}
                 className={`p-4 rounded-xl border-2 transition-all duration-300 group ${
                   formData.status === option.value
                     ? 'ai-border-active bg-amber-500/20 text-amber-300 scale-105'
@@ -305,10 +319,12 @@ const AIQuoteProcess: React.FC = () => {
         </div>
       </div>
 
-      <div className="text-center">
+      <div className="text-center space-y-4">
+        {turnstile.widget}
+
         <button
           onClick={handleSubmit}
-          disabled={!isStepValid(2)}
+          disabled={!isStepValid(2) || !turnstile.canSubmit || isProcessing}
           className="group relative px-8 py-4 btn-taxi-ai text-black font-bold rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
         >
           <span className="flex items-center space-x-2 drop-shadow-md relative z-10">

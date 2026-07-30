@@ -6,13 +6,15 @@ import { useAnalytics } from '../hooks/useAnalytics';
 import { logger } from '@/lib/logger';
 import { createLead } from '@/lib/leads';
 import { toast } from '@/lib/toast';
+import { useTurnstileGuard } from '@/hooks/useTurnstileGuard';
 
 const EnhancedFormLead: React.FC = () => {
   const navigate = useNavigate();
   const { trackFormStart, trackFormSubmit, trackFormComplete } = useAnalytics();
-  const { securityState, rateLimitState, validateSecurity, recordAttempt, updateHoneypot, getSecurityPayload } = useFormSecurity();
+  const { rateLimitState, validateSecurity, recordAttempt, updateHoneypot } = useFormSecurity();
   
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const turnstile = useTurnstileGuard({ action: 'enhanced_devis_form', className: 'flex justify-center' });
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
     name: '',
@@ -98,11 +100,23 @@ const EnhancedFormLead: React.FC = () => {
       return; // Silent fail for bots
     }
 
-    logger.log('✅ Security check passed');
+    logger.log('??? Security check passed');
+
+    if (!turnstile.canSubmit) {
+      toast.error('Validation anti-spam requise.');
+      return;
+    }
+
     setIsSubmitting(true);
     recordAttempt();
 
     try {
+      const turnstileValid = await turnstile.verify();
+      if (!turnstileValid) {
+        toast.error('Validation anti-spam refusee. Veuillez reessayer.');
+        return;
+      }
+
       logger.log('📊 Tracking form submit...');
       trackFormSubmit(formData);
 
@@ -368,6 +382,8 @@ const EnhancedFormLead: React.FC = () => {
           </div>
         )}
 
+        {currentStep === 3 && turnstile.widget}
+
         {/* Navigation */}
         <div className="flex justify-between mt-6">
           {currentStep > 1 && (
@@ -392,7 +408,7 @@ const EnhancedFormLead: React.FC = () => {
           ) : (
             <button
               type="submit"
-              disabled={isSubmitting || rateLimitState.blocked}
+              disabled={isSubmitting || rateLimitState.blocked || !turnstile.canSubmit}
               className="ml-auto px-6 py-2 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 disabled:bg-gray-700 disabled:text-gray-300 text-black font-bold rounded-lg transition-all duration-300 flex items-center space-x-2 text-sm"
             >
               {isSubmitting ? (

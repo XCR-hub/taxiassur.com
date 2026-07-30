@@ -73,6 +73,56 @@ const requiredChecks = [
     ],
   },
   {
+    label: 'public hero lead form is protected by Turnstile',
+    file: 'src/components/Hero.tsx',
+    patterns: ['useTurnstileGuard', "action: 'hero_lead_form'", 'turnstile.verify', '!turnstile.canSubmit'],
+  },
+  {
+    label: 'public devis form is protected by Turnstile',
+    file: 'src/components/FormLead.tsx',
+    patterns: ['useTurnstileGuard', "action: 'devis_form'", 'turnstile.verify', '!turnstile.canSubmit'],
+  },
+  {
+    label: 'public contact form is protected by Turnstile',
+    file: 'src/pages/ContactPage.tsx',
+    patterns: ['useTurnstileGuard', "action: 'contact_form'", 'turnstile.verify', '!turnstile.canSubmit'],
+  },
+  {
+    label: 'AI quote process is protected by Turnstile',
+    file: 'src/components/AIQuoteProcess.tsx',
+    patterns: ['useTurnstileGuard', "action: 'ai_quote_process'", 'turnstile.verify', '!turnstile.canSubmit'],
+  },
+  {
+    label: 'enhanced lead form is protected by Turnstile',
+    file: 'src/components/EnhancedFormLead.tsx',
+    patterns: ['useTurnstileGuard', "action: 'enhanced_devis_form'", 'turnstile.verify', '!turnstile.canSubmit'],
+  },
+  {
+    label: 'public quote request form is protected by Turnstile',
+    file: 'src/pages/QuotePage.tsx',
+    patterns: ['useTurnstileGuard', "action: 'quote_request'", 'turnstile.verify', '!turnstile.canSubmit'],
+  },
+  {
+    label: 'newsletter footer requires opt-in and Turnstile',
+    file: 'src/components/NewsletterFooterWidget.tsx',
+    patterns: ['marketingConsent', "action: 'newsletter_footer'", 'turnstile.verify', 'Desinscription possible'],
+  },
+  {
+    label: 'newsletter subscription page requires opt-in and Turnstile',
+    file: 'src/components/NewsletterSubscribeForm.tsx',
+    patterns: ['marketingConsent', "action: 'newsletter_subscribe'", 'turnstile.verify', 'desinscrire a tout moment'],
+  },
+  {
+    label: 'lead creation helper rejects incomplete public leads',
+    file: 'src/lib/leads.ts',
+    patterns: ['normalizedInput', 'Merci de renseigner votre nom', 'Adresse email invalide'],
+  },
+  {
+    label: 'direct lead edge function rejects incomplete public leads',
+    file: 'supabase/functions/create-lead-direct/index.ts',
+    patterns: ['cleanText', 'Lead incomplet refuse', 'Adresse email invalide', 'normalizedEmail'],
+  },
+  {
     label: 'Turnstile frontend helper calls server verification',
     file: 'src/lib/turnstile.ts',
     patterns: ['verify-turnstile', 'getTurnstileSiteKey'],

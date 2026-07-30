@@ -27,16 +27,6 @@ export const LeadSchema = z.object({
 export type Lead = z.infer<typeof LeadSchema>;
 export type LeadStatus = z.infer<typeof LeadStatusSchema>;
 
-// Mapping entre les valeurs TypeScript et les valeurs DB
-// IMPORTANT: Depuis la migration 20251015000000, la DB utilise les valeurs françaises
-const statusToDb: Record<LeadStatus, string> = {
-  nouveau: 'nouveau',
-  'contacté': 'contacté',
-  'devis envoyé': 'devis envoyé',
-  client: 'client',
-  perdu: 'perdu'
-};
-
 const statusFromDb: Record<string, LeadStatus> = {
   // Valeurs françaises avec espaces (depuis migration 20251015110000)
   nouveau: 'nouveau',
@@ -232,18 +222,6 @@ export async function sendDevisEmail(leadId: string, attachment?: File | null): 
   }
 }
 
-async function fileToBase64(file: File): Promise<{ filename: string; content: string }> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const base64 = (reader.result as string).split(',')[1];
-      resolve({ filename: file.name, content: base64 });
-    };
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-}
-
 export async function sendContractEmail(leadId: string, attachment?: File | null): Promise<boolean> {
   try {
     if (attachment) {
@@ -421,28 +399,51 @@ export async function createLead(input: CreateLeadInput, forceNew: boolean = fal
     console.log('🚀 [FORM] === DÉBUT CRÉATION LEAD ===');
     console.log('🚀 [FORM] Input:', JSON.stringify(input, null, 2));
 
-    const nameParts = input.name.trim().split(/\s+/);
+    const normalizedInput = {
+      name: (input.name || '').trim(),
+      email: (input.email || '').toLowerCase().trim(),
+      phone: (input.phone || '').trim(),
+      city: (input.city || '').trim(),
+      status: input.status,
+      immatriculation: (input.immatriculation || '').trim(),
+      source: (input.source || 'website').trim(),
+      notes: (input.notes || '').trim()
+    };
+
+    if (!normalizedInput.name || !normalizedInput.email || !normalizedInput.phone || !normalizedInput.city) {
+      return {
+        success: false,
+        error: 'Merci de renseigner votre nom, email, telephone et ville avant envoi.'
+      };
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedInput.email)) {
+      return { success: false, error: 'Adresse email invalide.' };
+    }
+
+    const nameParts = normalizedInput.name.split(/\s+/);
     const firstName = nameParts[0] || 'Client';
     const lastName = nameParts.slice(1).join(' ') || '';
-    const vehicleType = input.status === 'vtc' ? 'VTC' : input.status === 'autre' ? 'Autre' : 'Taxi';
+    const vehicleType = normalizedInput.status === 'vtc' ? 'VTC' : normalizedInput.status === 'autre' ? 'Autre' : 'Taxi';
 
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://drohhxrkoequjphvabvq.supabase.co';
-    const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || ((window as any).ENV_CONFIG?.VITE_SUPABASE_ANON_KEY) || '';
+    const runtimeWindow = window as Window & { ENV_CONFIG?: { VITE_SUPABASE_ANON_KEY?: string } };
+    const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || runtimeWindow.ENV_CONFIG?.VITE_SUPABASE_ANON_KEY || '';
 
     console.log('🔧 [FORM] Supabase URL:', supabaseUrl);
     console.log('🔧 [FORM] Supabase Key présente:', supabaseKey ? 'OUI' : 'NON');
 
     const leadParams = {
-      p_email: input.email,
+      p_email: normalizedInput.email,
       p_first_name: firstName,
       p_last_name: lastName,
-      p_phone: input.phone,
-      p_city: input.city,
-      p_source: input.source || 'website',
+      p_phone: normalizedInput.phone,
+      p_city: normalizedInput.city,
+      p_source: normalizedInput.source,
       p_metadata: {
         vehicle_type: vehicleType,
-        immatriculation: input.immatriculation || '',
-        notes: input.notes || ''
+        immatriculation: normalizedInput.immatriculation,
+        notes: normalizedInput.notes
       }
     };
 

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { Mail, Send, CheckCircle, TrendingUp, FileText, Gift, Bell, Star, Users, AlertCircle } from 'lucide-react';
 import AITaxiBackground from './AITaxiBackground';
+import { useTurnstileGuard } from '@/hooks/useTurnstileGuard';
 
 export default function NewsletterSubscribeForm() {
   const [email, setEmail] = useState('');
@@ -9,13 +10,32 @@ export default function NewsletterSubscribeForm() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
+  const [marketingConsent, setMarketingConsent] = useState(false);
+  const turnstile = useTurnstileGuard({ action: 'newsletter_subscribe', className: 'flex justify-center' });
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
+
+    if (!marketingConsent) {
+      setError("Veuillez accepter l'inscription a la newsletter avant envoi.");
+      return;
+    }
+
+    if (!turnstile.canSubmit) {
+      setError('Validation anti-spam requise.');
+      return;
+    }
+
     setLoading(true);
 
     try {
+      const turnstileValid = await turnstile.verify();
+      if (!turnstileValid) {
+        setError('Validation anti-spam refusee. Veuillez reessayer.');
+        return;
+      }
+
       const { error: insertError } = await supabase
         .from('newsletter_subscribers')
         .insert({
@@ -293,9 +313,21 @@ export default function NewsletterSubscribeForm() {
                   />
                 </div>
 
+                <label className="flex items-start gap-3 text-sm text-gray-300 leading-relaxed">
+                  <input
+                    type="checkbox"
+                    checked={marketingConsent}
+                    onChange={(e) => setMarketingConsent(e.target.checked)}
+                    className="mt-1 h-4 w-4 rounded border-gray-600 bg-gray-800 text-amber-500 focus:ring-amber-500"
+                  />
+                  <span>J'accepte de recevoir les actualites, guides et offres TaxiAssur par email. Je peux me desinscrire a tout moment.</span>
+                </label>
+
+                {turnstile.widget}
+
                 <button
                   type="submit"
-                  disabled={loading || !email}
+                  disabled={loading || !email || !marketingConsent || !turnstile.canSubmit}
                   className="w-full bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 disabled:from-gray-700 disabled:to-gray-700 text-black font-bold py-4 px-6 rounded-lg transition-all duration-300 flex items-center justify-center space-x-2 shadow-xl hover:shadow-amber-500/50 transform hover:scale-105 disabled:scale-100 text-lg"
                 >
                   {loading ? (

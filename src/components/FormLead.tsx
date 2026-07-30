@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Shield, Phone, Clock, Send } from 'lucide-react';
 import { logger } from '@/lib/logger';
 import { createLead, checkExistingEmail, resendAccess } from '@/lib/leads';
 import ExistingLeadChoiceModal from './ExistingLeadChoiceModal';
 import { toast } from '@/lib/toast';
+import { useTurnstileGuard } from '@/hooks/useTurnstileGuard';
 
 interface ExistingLeadData {
   email: string;
@@ -17,10 +17,10 @@ interface ExistingLeadData {
 }
 
 const FormLead: React.FC = () => {
-  const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [existingLead, setExistingLead] = useState<ExistingLeadData | null>(null);
+  const turnstile = useTurnstileGuard({ action: 'devis_form', className: 'flex justify-center' });
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -44,10 +44,21 @@ const FormLead: React.FC = () => {
     // Anti-spam checks
     if (formData.company) return; // Honeypot check
     if (Date.now() - startTime < 1000) return; // Minimum 1 second delay
+    if (!turnstile.canSubmit) {
+      toast.error('Validation anti-spam requise.');
+      return;
+    }
 
     setIsSubmitting(true);
 
     try {
+      const turnstileValid = await turnstile.verify();
+      if (!turnstileValid) {
+        toast.error('Validation anti-spam refusee. Veuillez reessayer.');
+        setIsSubmitting(false);
+        return;
+      }
+
       // Vérifier si l'email existe déjà
       const existingData = await checkExistingEmail(formData.email);
 
@@ -301,6 +312,8 @@ const FormLead: React.FC = () => {
                 </div>
               </div>
 
+              {turnstile.widget}
+
               {/* Legal consent */}
               <div className="bg-gray-800/50 p-4 rounded-lg border border-gray-700 backdrop-blur-sm">
                 <p className="text-xs text-gray-300">
@@ -313,7 +326,7 @@ const FormLead: React.FC = () => {
               {/* Submit button */}
               <button
                 type="submit"
-                disabled={isSubmitting}
+                disabled={isSubmitting || !turnstile.canSubmit}
                 className={`w-full py-4 px-6 rounded-lg font-bold text-lg transition-all duration-200 flex items-center justify-center space-x-2 ${
                   isSubmitting
                     ? 'bg-gray-700 cursor-not-allowed text-gray-300'

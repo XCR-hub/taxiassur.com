@@ -1,6 +1,7 @@
 import { useState, FormEvent } from 'react';
 import { supabase } from '../lib/supabase';
 import Seo from '../components/Seo';
+import { useTurnstileGuard } from '@/hooks/useTurnstileGuard';
 
 interface FormData {
   companyName: string;
@@ -34,6 +35,7 @@ function QuotePage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
+  const turnstile = useTurnstileGuard({ action: 'quote_request', className: 'flex justify-center' });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -57,6 +59,19 @@ function QuotePage() {
     setErrorMessage('');
 
     try {
+      if (!turnstile.canSubmit) {
+        setSubmitStatus('error');
+        setErrorMessage('Validation anti-spam requise');
+        return;
+      }
+
+      const turnstileValid = await turnstile.verify();
+      if (!turnstileValid) {
+        setSubmitStatus('error');
+        setErrorMessage('Validation anti-spam refusee. Veuillez reessayer');
+        return;
+      }
+
       const { error } = await supabase.from('quote_requests').insert([
         {
           company_name: formData.companyName,
@@ -358,9 +373,11 @@ function QuotePage() {
             </div>
 
             <div className="pt-4">
+              {turnstile.widget}
+
               <button
                 type="submit"
-                disabled={isSubmitting}
+                disabled={isSubmitting || !turnstile.canSubmit}
                 className="w-full btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isSubmitting ? 'Envoi en cours...' : 'Demander mon devis gratuit'}

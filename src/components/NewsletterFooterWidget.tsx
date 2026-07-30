@@ -1,16 +1,19 @@
 import { useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { Mail, CheckCircle, ArrowRight } from 'lucide-react';
+import { useTurnstileGuard } from '@/hooks/useTurnstileGuard';
 
 export default function NewsletterFooterWidget() {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [marketingConsent, setMarketingConsent] = useState(false);
+  const turnstile = useTurnstileGuard({ action: 'newsletter_footer', className: 'flex justify-center' });
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
-    if (!email || !email.includes('@')) {
+    if (!email || !email.includes('@') || !marketingConsent || !turnstile.canSubmit) {
       setStatus('error');
       setTimeout(() => setStatus('idle'), 3000);
       return;
@@ -19,6 +22,12 @@ export default function NewsletterFooterWidget() {
     setLoading(true);
 
     try {
+      const turnstileValid = await turnstile.verify();
+      if (!turnstileValid) {
+        setStatus('error');
+        return;
+      }
+
       const { error } = await supabase
         .from('newsletter_subscribers')
         .insert({
@@ -81,6 +90,18 @@ export default function NewsletterFooterWidget() {
             />
           </div>
 
+          <label className="flex items-start gap-2 text-xs text-gray-400 leading-relaxed">
+            <input
+              type="checkbox"
+              checked={marketingConsent}
+              onChange={(e) => setMarketingConsent(e.target.checked)}
+              className="mt-0.5 h-4 w-4 rounded border-gray-600 bg-gray-900 text-orange-500 focus:ring-orange-500"
+            />
+            <span>J'accepte de recevoir les actualites et offres TaxiAssur par email. Desinscription possible a tout moment.</span>
+          </label>
+
+          {turnstile.widget}
+
           {status === 'error' && (
             <p className="text-red-400 text-xs">
               Erreur d'inscription. Vérifiez votre email.
@@ -89,7 +110,7 @@ export default function NewsletterFooterWidget() {
 
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || !marketingConsent || !turnstile.canSubmit}
             className="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white py-2.5 px-4 rounded-lg font-semibold hover:from-orange-600 hover:to-red-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2 text-sm group"
           >
             {loading ? (

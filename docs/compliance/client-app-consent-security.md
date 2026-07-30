@@ -33,6 +33,12 @@ Frontend:
 
 - Set `VITE_TURNSTILE_SITE_KEY` on Cloudflare Pages.
 
+### Public form protection
+
+When Turnstile is configured, public write paths must validate a token before writing or creating a lead. This includes the homepage hero lead form, the devis form, contact form, public quote request form and newsletter signup forms. The shared hook is `useTurnstileGuard`.
+
+The public lead creation helper and `create-lead-direct` Edge Function also reject incomplete leads before any database write. Required public lead fields are name, email, phone and city.
+
 Supabase Edge Function:
 
 - Deploy `verify-turnstile`.

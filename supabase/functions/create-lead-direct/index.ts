@@ -17,6 +17,20 @@ interface LeadInput {
   p_source: string;
 }
 
+function cleanText(value: unknown): string {
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function jsonResponse(body: Record<string, unknown>, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: {
+      ...corsHeaders,
+      "Content-Type": "application/json",
+    },
+  });
+}
+
 Deno.serve(async (req: Request) => {
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
@@ -29,6 +43,25 @@ Deno.serve(async (req: Request) => {
   try {
     // Parse input
     const input: LeadInput = await req.json();
+    const normalizedEmail = cleanText(input.p_email).toLowerCase();
+    const normalizedPhone = cleanText(input.p_phone);
+    const normalizedCity = cleanText(input.p_city);
+    const firstName = cleanText(input.p_first_name);
+    const lastName = cleanText(input.p_last_name);
+
+    if (!normalizedEmail || !normalizedPhone || !normalizedCity || (!firstName && !lastName)) {
+      return jsonResponse(
+        {
+          success: false,
+          error: "Lead incomplet refuse: nom, email, telephone et ville sont obligatoires",
+        },
+        400
+      );
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+      return jsonResponse({ success: false, error: "Adresse email invalide" }, 400);
+    }
 
     // Create Supabase client with service_role (bypasses RLS and PostgREST cache)
     const supabase = createClient(
@@ -43,12 +76,9 @@ Deno.serve(async (req: Request) => {
     );
 
     console.log("[create-lead-direct] Creating lead:", {
-      email: input.p_email,
-      name: `${input.p_first_name} ${input.p_last_name}`,
+      email: normalizedEmail,
+      name: `${firstName} ${lastName}`.trim(),
     });
-
-    // Normaliser l'email
-    const normalizedEmail = input.p_email.toLowerCase().trim();
 
     // 1. Vérifier si un lead existe déjà avec cet email
     const { data: existingLead } = await supabase
@@ -66,10 +96,10 @@ Deno.serve(async (req: Request) => {
       const { error: updateError } = await supabase
         .from("crm_leads")
         .update({
-          first_name: input.p_first_name || existingLead.first_name,
-          last_name: input.p_last_name || existingLead.last_name,
-          phone: input.p_phone || existingLead.phone,
-          city: input.p_city || existingLead.city,
+          first_name: firstName || existingLead.first_name,
+          last_name: lastName || existingLead.last_name,
+          phone: normalizedPhone || existingLead.phone,
+          city: normalizedCity || existingLead.city,
           source: input.p_source || existingLead.source,
           metadata: input.p_metadata || existingLead.metadata,
           updated_at: new Date().toISOString(),
@@ -97,10 +127,10 @@ Deno.serve(async (req: Request) => {
         .from("crm_leads")
         .insert({
           email: normalizedEmail,
-          first_name: input.p_first_name,
-          last_name: input.p_last_name,
-          phone: input.p_phone,
-          city: input.p_city,
+          first_name: firstName,
+          last_name: lastName,
+          phone: normalizedPhone,
+          city: normalizedCity,
           source: input.p_source || "website",
           metadata: input.p_metadata || {},
           access_token: accessToken,
