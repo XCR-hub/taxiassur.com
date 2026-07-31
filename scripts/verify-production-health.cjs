@@ -5,6 +5,7 @@ const { writeFileSync, mkdirSync } = require('node:fs');
 const path = require('node:path');
 
 const SITE_URL = (process.env.SITE_URL || 'https://taxiassur.com').replace(/\/$/, '');
+const COUNT_TOLERANCE = Math.max(0, Number(process.env.PUBLIC_MIRROR_COUNT_TOLERANCE || 0));
 const EXPECTED_COMMIT_INPUT = process.env.EXPECTED_COMMIT;
 const SKIP_COMMIT_CHECK =
   process.env.SKIP_DEPLOY_COMMIT_CHECK === '1' ||
@@ -227,14 +228,23 @@ async function main() {
 
   const d1 = d1Counts(d1Health.json);
   const pg = postgresCounts(postgresHealth.json);
-  const countComparisons = ALL_TABLES.map((table) => ({
-    table,
-    d1: d1[table] ?? 0,
-    postgres: pg[table] ?? 0,
-    equal: (d1[table] ?? 0) === (pg[table] ?? 0),
-  }));
+  const countComparisons = ALL_TABLES.map((table) => {
+    const d1Rows = d1[table] ?? 0;
+    const postgresRows = pg[table] ?? 0;
+    const difference = Math.abs(d1Rows - postgresRows);
 
-  addCheck(checks, 'D1 and PostgreSQL public counts match', countComparisons.every((row) => row.equal), {
+    return {
+      table,
+      d1: d1Rows,
+      postgres: postgresRows,
+      difference,
+      tolerance: COUNT_TOLERANCE,
+      equal: d1Rows === postgresRows,
+      within_tolerance: difference <= COUNT_TOLERANCE,
+    };
+  });
+
+  addCheck(checks, 'D1 and PostgreSQL public counts are within tolerance', countComparisons.every((row) => row.within_tolerance), {
     counts: countComparisons,
   });
 

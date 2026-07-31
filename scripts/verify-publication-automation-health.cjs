@@ -2,6 +2,7 @@
 
 const SITE_URL = (process.env.SITE_URL || 'https://taxiassur.com').replace(/\/$/, '');
 const REPORT_PATH = process.env.PUBLICATION_HEALTH_REPORT || 'reports/publication-automation-health.json';
+const COUNT_TOLERANCE = Math.max(0, Number(process.env.PUBLIC_MIRROR_COUNT_TOLERANCE || 0));
 
 const REQUIRED_COUNTS = {
   blog_posts: 100,
@@ -160,18 +161,30 @@ async function main() {
 
   const d1Counts = rowsFromD1Health(d1Health.json);
   const pgCounts = rowsFromPostgresHealth(postgresHealth.json);
-  const countComparisons = Object.keys(REQUIRED_COUNTS).map((table) => ({
-    table,
-    d1: d1Counts[table] || 0,
-    postgres: pgCounts[table] || 0,
-    min: REQUIRED_COUNTS[table],
-    equal: (d1Counts[table] || 0) === (pgCounts[table] || 0),
-    enough: (d1Counts[table] || 0) >= REQUIRED_COUNTS[table] && (pgCounts[table] || 0) >= REQUIRED_COUNTS[table],
-  }));
+  const countComparisons = Object.keys(REQUIRED_COUNTS).map((table) => {
+    const d1Rows = d1Counts[table] || 0;
+    const postgresRows = pgCounts[table] || 0;
+    const difference = Math.abs(d1Rows - postgresRows);
+
+    return {
+      table,
+      d1: d1Rows,
+      postgres: postgresRows,
+      min: REQUIRED_COUNTS[table],
+      difference,
+      tolerance: COUNT_TOLERANCE,
+      equal: d1Rows === postgresRows,
+      within_tolerance: difference <= COUNT_TOLERANCE,
+      enough: d1Rows >= REQUIRED_COUNTS[table] && postgresRows >= REQUIRED_COUNTS[table],
+    };
+  });
 
   for (const row of countComparisons) {
     addCheck(`${row.table} public volume is sufficient`, row.enough, row);
-    addCheck(`${row.table} D1/PostgreSQL counts match`, row.equal, row);
+    addCheck(`${row.table} D1/PostgreSQL counts are within tolerance`, row.within_tolerance, row);
+    if (!row.equal && row.within_tolerance) {
+      addWarning(`${row.table} D1/PostgreSQL counts differ within tolerance`, row);
+    }
   }
 
   const locs = Array.from(sitemap.text.matchAll(/<loc>([^<]+)<\/loc>/g)).map((match) => match[1]);

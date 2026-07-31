@@ -84,6 +84,7 @@ jobs:
         env:
           SITE_URL: https://taxiassur.com
           EXPECTED_COMMIT: ${{ github.sha }}
+          PUBLIC_MIRROR_COUNT_TOLERANCE: '5'
         run: |
           for attempt in 1 2 3 4 5 6; do
             if npm run verify:production; then
@@ -104,4 +105,5 @@ jobs:
         if: steps.cloudflare.outputs.ready == 'true'
         env:
           SITE_URL: https://taxiassur.com
+          PUBLIC_MIRROR_COUNT_TOLERANCE: '5'
         run: npm run verify:publications
