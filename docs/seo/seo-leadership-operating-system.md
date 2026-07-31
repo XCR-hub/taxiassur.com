@@ -51,12 +51,17 @@ Cloudflare peut ajouter des regles robots gerees avant le `robots.txt` du projet
 Reglage cible pour TaxiAssur: garder `public/robots.txt` comme source de verite et desactiver le `robots.txt` manage Cloudflare (`is_robots_txt_managed=false`). Le script suivant ne modifie que ce parametre et laisse les autres protections bots inchangees:
 
 ```powershell
-$env:CLOUDFLARE_BOT_MANAGEMENT_API_TOKEN='<token Cloudflare avec Zone Read + Bot Management Write>'
-# Optionnel si le token ne peut pas lister les zones:
+$env:CLOUDFLARE_BOT_MANAGEMENT_API_TOKEN='<token Cloudflare avec droits Bot Management sur la zone>'
+# Optionnel si le token ne peut pas lister les zones ni lire les domaines Pages:
 # $env:CLOUDFLARE_ZONE_ID='<zone id taxiassur.com>'
+# Optionnel pour resolution automatique via les domaines Cloudflare Pages:
+$env:CLOUDFLARE_ACCOUNT_ID='<account id Cloudflare>'
+$env:CLOUDFLARE_PAGES_PROJECT='taxiassur'
 npm run cloudflare:ai-robots -- --dry-run
 npm run cloudflare:ai-robots
 Remove-Item Env:\CLOUDFLARE_BOT_MANAGEMENT_API_TOKEN
 ```
 
-Le workflow Cloudflare Pages lance aussi cette commande en mode `--soft` avec `CLOUDFLARE_BOT_MANAGEMENT_API_TOKEN` si le secret existe, sinon avec `CLOUDFLARE_API_TOKEN`. Il transmet aussi `CLOUDFLARE_ZONE_ID` si le secret existe. Si le token n a pas les droits Bot Management, le deploiement continue mais le warning live reste visible dans `npm run verify:seo-leadership`.
+Zone id verifie via Cloudflare Pages le 2026-07-31 : `6db20e6211bb587c873310cba0578f24` pour `taxiassur.com`.
+
+Le workflow Cloudflare Pages lance aussi cette commande en mode `--soft` avec `CLOUDFLARE_BOT_MANAGEMENT_API_TOKEN` si le secret existe, sinon avec `CLOUDFLARE_API_TOKEN`. Il transmet aussi `CLOUDFLARE_ZONE_ID` si le secret existe et `CLOUDFLARE_PAGES_PROJECT=taxiassur` pour resoudre automatiquement le `zone_tag` depuis les domaines Pages. Si le token n a pas les droits Bot Management, le deploiement continue mais le warning live reste visible dans `npm run verify:seo-leadership`.

@@ -6,6 +6,8 @@ const args = new Set(process.argv.slice(2));
 const SOFT = args.has('--soft');
 const DRY_RUN = args.has('--dry-run');
 const ZONE_NAME = process.env.CLOUDFLARE_ZONE_NAME || 'taxiassur.com';
+const ACCOUNT_ID = process.env.CLOUDFLARE_ACCOUNT_ID || '';
+const PAGES_PROJECT = process.env.CLOUDFLARE_PAGES_PROJECT || 'taxiassur';
 const TOKEN =
   process.env.CLOUDFLARE_BOT_MANAGEMENT_API_TOKEN ||
   process.env.CLOUDFLARE_API_TOKEN ||
@@ -61,13 +63,37 @@ async function cf(path, options = {}) {
 }
 
 async function resolveZoneId() {
-  if (process.env.CLOUDFLARE_ZONE_ID) return process.env.CLOUDFLARE_ZONE_ID;
+  if (process.env.CLOUDFLARE_ZONE_ID) {
+    info('zone resolved from CLOUDFLARE_ZONE_ID');
+    return process.env.CLOUDFLARE_ZONE_ID;
+  }
+
+  if (ACCOUNT_ID) {
+    try {
+      const domains = await cf(
+        `/accounts/${ACCOUNT_ID}/pages/projects/${encodeURIComponent(PAGES_PROJECT)}/domains`,
+      );
+      const candidates = Array.isArray(domains) ? domains : [];
+      const exact = candidates.find((domain) => domain?.name === ZONE_NAME && domain?.zone_tag);
+      const related = candidates.find(
+        (domain) => domain?.name?.endsWith(`.${ZONE_NAME}`) && domain?.zone_tag,
+      );
+      const zoneTag = exact?.zone_tag || related?.zone_tag;
+      if (zoneTag) {
+        info('zone resolved from Cloudflare Pages custom domain zone_tag');
+        return zoneTag;
+      }
+    } catch (error) {
+      warn(`Cloudflare Pages domain zone lookup failed: ${error.message}`);
+    }
+  }
 
   const zones = await cf(`/zones?name=${encodeURIComponent(ZONE_NAME)}`);
   if (!Array.isArray(zones) || zones.length === 0) {
     throw new Error(`Cloudflare zone not found: ${ZONE_NAME}`);
   }
 
+  info('zone resolved from Cloudflare zone list');
   return zones[0].id;
 }
 
