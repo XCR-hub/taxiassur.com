@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
-import { getSupabaseAnonKey, getSupabaseUrl } from '@/lib/env';
+import { getSupabaseUrl } from '@/lib/env';
+import { supabaseRestFetch } from '@/lib/supabase-rest';
 
 interface AdminUser {
   id: string;
@@ -86,34 +87,18 @@ export function useAdminAuth() {
     loadTimestampRef.current = now;
 
     try {
-      const baseUrl = getSupabaseUrl() || 'https://drohhxrkoequjphvabvq.supabase.co';
-      const anonKey = getSupabaseAnonKey();
       const normalizedEmail = email.toLowerCase();
-      const currentSession = accessToken
-        ? null
-        : (await supabase.auth.getSession()).data.session;
-      const authToken = accessToken || currentSession?.access_token || anonKey;
-
-      if (!anonKey || !authToken) {
-        throw new Error('Configuration Supabase publique manquante pour le backoffice');
-      }
-
-      const restHeaders = {
-        apikey: anonKey,
-        Authorization: `Bearer ${authToken}`,
-      };
+      const userPath = '/rest/v1/admin_users?select=id,email,full_name,role,is_active&email=ilike.' + encodeURIComponent(normalizedEmail) + '&is_active=eq.true&limit=1';
 
       const res = await Promise.race([
-        fetch(`${baseUrl}/rest/v1/admin_users?select=id,email,full_name,role,is_active&email=ilike.${encodeURIComponent(normalizedEmail)}&is_active=eq.true&limit=1`, {
-          headers: restHeaders
-        }),
+        supabaseRestFetch(userPath, {}, { accessToken, retryWithAnonOnAuthError: true }),
         new Promise<never>((_, reject) =>
           setTimeout(() => reject(new Error('Admin user load timeout')), 8000)
         )
       ]);
 
       if (!res.ok) {
-        throw new Error(`Admin user load failed HTTP ${res.status}`);
+        throw new Error('Admin user load failed HTTP ' + res.status);
       }
 
       const rows = await res.json();
@@ -122,12 +107,15 @@ export function useAdminAuth() {
       if (adminUser) {
         let perms: any[] = [];
         try {
-          const permsRes = await fetch(`${baseUrl}/rest/v1/user_permissions?select=id,user_id,permission_type,can_view,can_edit,can_delete&user_id=eq.${adminUser.id}`, {
-            headers: restHeaders
+          const permsRes = await supabaseRestFetch('/rest/v1/user_permissions?select=id,user_id,permission_type,can_view,can_edit,can_delete&user_id=eq.' + adminUser.id, {}, {
+            accessToken,
+            retryWithAnonOnAuthError: true,
           });
-          const permsData = await permsRes.json();
-          if (Array.isArray(permsData)) {
-            perms = permsData;
+          if (permsRes.ok) {
+            const permsData = await permsRes.json();
+            if (Array.isArray(permsData)) {
+              perms = permsData;
+            }
           }
         } catch {
           perms = [];
@@ -137,11 +125,10 @@ export function useAdminAuth() {
         const userCache = { ...adminUser, cachedAt: Date.now() };
         localStorage.setItem('taxiassur_user', JSON.stringify(userCache));
 
-        fetch(`${baseUrl}/rest/v1/admin_users?id=eq.${adminUser.id}`, {
+        supabaseRestFetch('/rest/v1/admin_users?id=eq.' + adminUser.id, {
           method: 'PATCH',
-          headers: { ...restHeaders, 'Content-Type': 'application/json' },
           body: JSON.stringify({ last_login: new Date().toISOString() })
-        }).catch(() => {});
+        }, { accessToken, retryWithAnonOnAuthError: false }).catch(() => {});
 
         updateGlobalState({ user: adminUser as AdminUser, loading: false, isAuthenticated: true });
       } else {
@@ -159,12 +146,8 @@ export function useAdminAuth() {
     let mounted = true;
 
     if (globalAuthInitialized && globalAuthState?.isAuthenticated) {
-      if (globalAuthState.user?.role === 'master') return;
-      const permsStr = localStorage.getItem('taxiassur_permissions');
-      try {
-        const perms = permsStr ? JSON.parse(permsStr) : [];
-        if (Array.isArray(perms) && perms.length > 0) return;
-      } catch {}
+      const cachedAt = Number((globalAuthState.user as AdminUser & { cachedAt?: number } | null)?.cachedAt || 0);
+      if (cachedAt && Date.now() - cachedAt < 5 * 60 * 1000) return;
     }
 
     const getCachedUser = () => {
@@ -229,6 +212,7 @@ export function useAdminAuth() {
     const initAuth = async () => {
       if (!mounted) return;
 
+      let usingCachedUser = false;
       try {
         console.log('🔍 Checking auth session...');
 
@@ -236,21 +220,22 @@ export function useAdminAuth() {
         const cachedSession = validateCachedSession();
 
         if (cachedUser && cachedSession) {
-          if (cachedUser.role === 'master') {
-            updateGlobalState({ user: cachedUser, loading: false, isAuthenticated: true });
-            return;
+          let canUseCachedUser = cachedUser.role === 'master';
+          if (!canUseCachedUser) {
+            const permsStr = localStorage.getItem('taxiassur_permissions');
+            try {
+              const perms = permsStr ? JSON.parse(permsStr) : [];
+              canUseCachedUser = Array.isArray(perms) && perms.length > 0;
+            } catch {}
           }
-          const permsStr = localStorage.getItem('taxiassur_permissions');
-          try {
-            const perms = permsStr ? JSON.parse(permsStr) : [];
-            if (Array.isArray(perms) && perms.length > 0) {
-              updateGlobalState({ user: cachedUser, loading: false, isAuthenticated: true });
-              return;
-            }
-          } catch {}
+
+          if (canUseCachedUser) {
+            updateGlobalState({ user: cachedUser, loading: false, isAuthenticated: true });
+            usingCachedUser = true;
+          }
         }
 
-        // Seulement si pas de cache : vérifier avec Supabase
+        // Toujours verifier Supabase en arriere-plan pour eviter les sessions obsoletes.
         console.log('🔍 No valid cache, verifying with Supabase...');
 
         const result = await Promise.race([
@@ -269,7 +254,7 @@ export function useAdminAuth() {
 
         if (sessionError) {
           console.error('❌ Session error:', sessionError);
-          updateGlobalState({ user: null, loading: false, isAuthenticated: false });
+          if (!usingCachedUser) updateGlobalState({ user: null, loading: false, isAuthenticated: false });
           return;
         }
 
@@ -280,12 +265,12 @@ export function useAdminAuth() {
           await loadAdminUser(session.user.email!, session.access_token);
         } else {
           console.log('🚫 No session found');
-          updateGlobalState({ user: null, loading: false, isAuthenticated: false });
+          if (!usingCachedUser) updateGlobalState({ user: null, loading: false, isAuthenticated: false });
         }
       } catch (error) {
         console.error('❌ Error in initAuth:', error);
         if (mounted) {
-          updateGlobalState({ user: null, loading: false, isAuthenticated: false });
+          if (!usingCachedUser) updateGlobalState({ user: null, loading: false, isAuthenticated: false });
         }
       }
     };

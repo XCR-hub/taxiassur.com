@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
-import { getSupabaseAnonKey, getSupabaseUrl } from '@/lib/env';
+import { supabaseRestFetch, supabaseRestJson } from '@/lib/supabase-rest';
 
 interface AdminUser {
   id: string;
@@ -137,49 +137,32 @@ const UserManagement: React.FC = () => {
     setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 4000);
   };
 
-  const restBase = getSupabaseUrl() || 'https://drohhxrkoequjphvabvq.supabase.co';
-  const restKey = getSupabaseAnonKey();
+  async function restGet<T = any>(table: string, query = ''): Promise<T> {
+    return supabaseRestJson<T>('/rest/v1/' + table + '?' + query);
+  }
 
-  const getRestHeaders = async (preferReturn = true): Promise<Record<string, string>> => {
-    const { data: { session } } = await supabase.auth.getSession();
-    const authToken = session?.access_token || restKey;
+  async function restPost<T = any>(table: string, body: any): Promise<T> {
+    return supabaseRestJson<T>('/rest/v1/' + table, {
+      method: 'POST',
+      headers: { Prefer: 'return=representation' },
+      body: JSON.stringify(body),
+    }, { retryWithAnonOnAuthError: false });
+  }
 
-    if (!restKey || !authToken) {
-      throw new Error('Configuration Supabase publique manquante pour le backoffice');
-    }
+  async function restPatch<T = any>(table: string, query: string, body: any): Promise<T> {
+    return supabaseRestJson<T>('/rest/v1/' + table + '?' + query, {
+      method: 'PATCH',
+      headers: { Prefer: 'return=representation' },
+      body: JSON.stringify(body),
+    }, { retryWithAnonOnAuthError: false });
+  }
 
-    const headers: Record<string, string> = {
-      apikey: restKey,
-      Authorization: `Bearer ${authToken}`,
-      'Content-Type': 'application/json',
-    };
-
-    if (preferReturn) headers.Prefer = 'return=representation';
-    return headers;
-  };
-
-  const restGet = async (table: string, query = '') => {
-    const res = await fetch(`${restBase}/rest/v1/${table}?${query}`, { headers: await getRestHeaders(false) });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    return res.json();
-  };
-
-  const restPost = async (table: string, body: any) => {
-    const res = await fetch(`${restBase}/rest/v1/${table}`, { method: 'POST', headers: await getRestHeaders(), body: JSON.stringify(body) });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    return res.json();
-  };
-
-  const restPatch = async (table: string, query: string, body: any) => {
-    const res = await fetch(`${restBase}/rest/v1/${table}?${query}`, { method: 'PATCH', headers: await getRestHeaders(), body: JSON.stringify(body) });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    return res.json();
-  };
-
-  const restDelete = async (table: string, query: string) => {
-    const res = await fetch(`${restBase}/rest/v1/${table}?${query}`, { method: 'DELETE', headers: await getRestHeaders(false) });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  };
+  async function restDelete(table: string, query: string): Promise<void> {
+    const res = await supabaseRestFetch('/rest/v1/' + table + '?' + query, {
+      method: 'DELETE',
+    }, { retryWithAnonOnAuthError: false });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+  }
 
   const fetchUsersDirect = async (): Promise<AdminUser[]> => {
     return restGet('admin_users', 'select=*&order=created_at.desc');
@@ -271,14 +254,11 @@ const UserManagement: React.FC = () => {
     }
   };
 
-  const invokeEdgeFunction = async (name: string, body: any) => {
-    const res = await fetch(`${restBase}/functions/v1/${name}`, {
+  const invokeEdgeFunction = async (name: string, body: any): Promise<any> => {
+    return supabaseRestJson<any>('/functions/v1/' + name, {
       method: 'POST',
-      headers: await getRestHeaders(false),
       body: JSON.stringify(body)
-    });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    return res.json();
+    }, { retryWithAnonOnAuthError: false });
   };
 
   const handleResendInvite = async (user: AdminUser) => {
@@ -298,11 +278,10 @@ const UserManagement: React.FC = () => {
   const handleResetPassword = async (user: AdminUser) => {
     try {
       setSending(true);
-      const res = await fetch(`${restBase}/auth/v1/recover`, {
+      const res = await supabaseRestFetch('/auth/v1/recover', {
         method: 'POST',
-        headers: await getRestHeaders(false),
         body: JSON.stringify({ email: user.email })
-      });
+      }, { useAnonOnly: true });
       if (!res.ok) { showToast('error', 'Erreur envoi email'); return; }
       showToast('success', `Email de reinitialisation envoye`);
     } catch (err) {
