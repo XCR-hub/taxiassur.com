@@ -8,6 +8,26 @@
 /assets/*
   Cache-Control: public, max-age=31536000, immutable
 
+/backoffice
+  Cache-Control: no-store, max-age=0
+  X-Robots-Tag: noindex, nofollow, noarchive
+
+/backoffice/*
+  Cache-Control: no-store, max-age=0
+  X-Robots-Tag: noindex, nofollow, noarchive
+
+/admin
+  Cache-Control: no-store, max-age=0
+  X-Robots-Tag: noindex, nofollow, noarchive
+
+/admin/*
+  Cache-Control: no-store, max-age=0
+  X-Robots-Tag: noindex, nofollow, noarchive
+
+/auth/*
+  Cache-Control: no-store, max-age=0
+  X-Robots-Tag: noindex, nofollow, noarchive
+
 /sitemap.xml
   Cache-Control: public, max-age=300, must-revalidate
 

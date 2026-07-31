@@ -47,6 +47,14 @@ export default defineConfig(({ mode }) => ({
         ],
       },
       workbox: {
+        cleanupOutdatedCaches: true,
+        clientsClaim: true,
+        skipWaiting: true,
+        navigateFallbackDenylist: [
+          /^\/backoffice(?:\/|$)/,
+          /^\/admin(?:\/|$)/,
+          /^\/auth(?:\/|$)/,
+        ],
         globPatterns: ['**/*.{js,css,html,ico,png,svg,jpg,jpeg,webp}'],
         runtimeCaching: [
           {
