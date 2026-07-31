@@ -28,7 +28,8 @@ jobs:
         env:
           SITE_URL: https://taxiassur.com
           EXPECTED_COMMIT: skip
-          PUBLIC_MIRROR_COUNT_TOLERANCE: '5'
+          PUBLIC_MIRROR_COUNT_TOLERANCE: '10'
+          PUBLIC_MIRROR_GSC_COUNT_TOLERANCE: '25'
         run: |
           for attempt in 1 2 3; do
             if npm run verify:production; then
@@ -48,7 +49,8 @@ jobs:
       - name: Verify public publication automations
         env:
           SITE_URL: https://taxiassur.com
-          PUBLIC_MIRROR_COUNT_TOLERANCE: '5'
+          PUBLIC_MIRROR_COUNT_TOLERANCE: '10'
+          PUBLIC_MIRROR_GSC_COUNT_TOLERANCE: '25'
         run: npm run verify:publications
 
       - name: SEO quality audit

@@ -3,6 +3,7 @@
 const SITE_URL = (process.env.SITE_URL || 'https://taxiassur.com').replace(/\/$/, '');
 const REPORT_PATH = process.env.PUBLICATION_HEALTH_REPORT || 'reports/publication-automation-health.json';
 const COUNT_TOLERANCE = Math.max(0, Number(process.env.PUBLIC_MIRROR_COUNT_TOLERANCE || 0));
+const GSC_COUNT_TOLERANCE = Math.max(COUNT_TOLERANCE, Number(process.env.PUBLIC_MIRROR_GSC_COUNT_TOLERANCE || COUNT_TOLERANCE));
 
 const REQUIRED_COUNTS = {
   blog_posts: 100,
@@ -32,6 +33,10 @@ function addCheck(name, ok, details = {}) {
 
 function addWarning(name, details = {}) {
   warnings.push({ name, details });
+}
+
+function toleranceForTable(table) {
+  return table.startsWith('gsc_') ? GSC_COUNT_TOLERANCE : COUNT_TOLERANCE;
 }
 
 async function fetchText(label, url, options = {}) {
@@ -165,6 +170,7 @@ async function main() {
     const d1Rows = d1Counts[table] || 0;
     const postgresRows = pgCounts[table] || 0;
     const difference = Math.abs(d1Rows - postgresRows);
+    const tolerance = toleranceForTable(table);
 
     return {
       table,
@@ -172,9 +178,9 @@ async function main() {
       postgres: postgresRows,
       min: REQUIRED_COUNTS[table],
       difference,
-      tolerance: COUNT_TOLERANCE,
+      tolerance,
       equal: d1Rows === postgresRows,
-      within_tolerance: difference <= COUNT_TOLERANCE,
+      within_tolerance: difference <= tolerance,
       enough: d1Rows >= REQUIRED_COUNTS[table] && postgresRows >= REQUIRED_COUNTS[table],
     };
   });

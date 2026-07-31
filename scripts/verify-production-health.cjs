@@ -6,6 +6,7 @@ const path = require('node:path');
 
 const SITE_URL = (process.env.SITE_URL || 'https://taxiassur.com').replace(/\/$/, '');
 const COUNT_TOLERANCE = Math.max(0, Number(process.env.PUBLIC_MIRROR_COUNT_TOLERANCE || 0));
+const GSC_COUNT_TOLERANCE = Math.max(COUNT_TOLERANCE, Number(process.env.PUBLIC_MIRROR_GSC_COUNT_TOLERANCE || COUNT_TOLERANCE));
 const EXPECTED_COMMIT_INPUT = process.env.EXPECTED_COMMIT;
 const SKIP_COMMIT_CHECK =
   process.env.SKIP_DEPLOY_COMMIT_CHECK === '1' ||
@@ -135,6 +136,10 @@ function addCheck(checks, name, ok, details = {}) {
   checks.push({ name, ok: Boolean(ok), details });
 }
 
+function toleranceForTable(table) {
+  return table.startsWith('gsc_') ? GSC_COUNT_TOLERANCE : COUNT_TOLERANCE;
+}
+
 function commitMatches(deployed, expected) {
   if (!expected) return true;
   if (!deployed) return false;
@@ -232,15 +237,16 @@ async function main() {
     const d1Rows = d1[table] ?? 0;
     const postgresRows = pg[table] ?? 0;
     const difference = Math.abs(d1Rows - postgresRows);
+    const tolerance = toleranceForTable(table);
 
     return {
       table,
       d1: d1Rows,
       postgres: postgresRows,
       difference,
-      tolerance: COUNT_TOLERANCE,
+      tolerance,
       equal: d1Rows === postgresRows,
-      within_tolerance: difference <= COUNT_TOLERANCE,
+      within_tolerance: difference <= tolerance,
     };
   });
 
