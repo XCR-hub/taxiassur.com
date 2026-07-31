@@ -4,15 +4,15 @@
 
 Reduire progressivement la dependance a Supabase tout en gardant le site, les leads, les emails, les workflows et le contenu SEO operationnels.
 
-## Etat verifie le 2026-07-30
+## Etat verifie le 2026-07-31
 
 - Le site public `taxiassur.com` est servi par Cloudflare Pages.
-- Le dernier deploiement verifie en production est `a5cb060a`.
+- Le dernier deploiement verifie en production est `465b9de2`.
 - Cloudflare D1 `taxiassur-prod` est operationnel pour le cache public SEO.
-- D1 contient actuellement : 757 articles blog, 376 pages villes, 152 FAQ, 2963 actualites, 1128 pages GSC et 1658 requetes GSC.
+- D1 contient actuellement : 766 articles blog, 376 pages villes, 152 FAQ, 2979 actualites, 1279 pages GSC et 1802 requetes GSC.
 - Le workflow GitHub `Refresh Cloudflare D1 Cache` fonctionne avec le secret dedie `CLOUDFLARE_D1_API_TOKEN`.
 - Le serveur `192.168.1.70` heberge un miroir PostgreSQL local sous `F:\TaxiAssur`.
-- Dernier etat fonctionnel du miroir serveur : 444 tables OK, 0 table en echec, 7072 lignes importees.
+- Dernier etat fonctionnel du miroir serveur : sync `ok`, 444 tables OK sur 444, 236504 lignes synchronisees, sauvegarde `taxiassur_20260731-021931.dump`.
 - Une API Node de lecture seule est prete dans `server/postgres-read-api.mjs` et installable via `scripts/install-server-postgres-read-api.ps1`.
 - Un proxy public Cloudflare Pages `/api/postgres-public/*` permet de lire le miroir PostgreSQL sans exposer le token serveur au navigateur.
 - La verification production `npm run verify:production` controle le site, D1, le proxy PostgreSQL et l'alignement des compteurs publics.
@@ -105,6 +105,7 @@ Les exports de sauvegarde peuvent etre stockes dans Nextcloud. En revanche, les 
 ### Phase 2 - Prochaine etape sure
 
 - Verifier regulierement le miroir avec `scripts/verify-server-postgres-mirror.ps1`.
+- Redeployer les scripts de sync/backup serveur avec `npm run server:deploy-postgres-sync -- -UseStoredCredentials`.
 - Installer et tester l'API interne en lecture seule devant PostgreSQL local.
 - Exposer cette API uniquement via un tunnel/reverse proxy securise, jamais directement via l'IP LAN.
 - Brancher un endpoint non critique du backoffice en double lecture pour comparer Supabase et PostgreSQL local.

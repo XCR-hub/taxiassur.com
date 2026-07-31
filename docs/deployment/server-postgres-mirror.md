@@ -6,6 +6,28 @@ Le serveur `192.168.1.70` heberge un miroir PostgreSQL local de TaxiAssur. Ce mi
 
 Ce miroir n'est pas encore la base primaire du site public.
 
+## Etat verifie au 2026-07-31
+
+- La synchronisation Supabase REST -> PostgreSQL local est operationnelle via la tache planifiee `TaxiAssur Supabase REST to PostgreSQL Sync`.
+- Dernier rapport serveur verifie : `ok`, 444 tables OK sur 444, 236504 lignes synchronisees.
+- Derniere sauvegarde PostgreSQL post-sync verifiee : `taxiassur_20260731-021931.dump` dans `F:\TaxiAssur\Backups\PostgreSQL`.
+- Les scripts serveur corriges sont maintenant versionnes dans le depot :
+  - `scripts/server-sync-supabase-rest-to-postgres.ps1` ;
+  - `scripts/server-backup-taxiassur-postgres.ps1` ;
+  - `scripts/deploy-server-postgres-sync.ps1`.
+- Le parser `.env` ne doit pas utiliser `ConvertFrom-StringData` pour ces fichiers, car les chemins Windows comme `F:\TaxiAssur\...` peuvent etre interpretes comme des sequences d echappement.
+
+Pour redeployer les scripts serveur avec les identifiants Windows deja stockes :
+
+```powershell
+npm run server:deploy-postgres-sync -- -UseStoredCredentials
+```
+
+Pour redeployer puis lancer une sync complete immediatement :
+
+```powershell
+npm run server:deploy-postgres-sync -- -UseStoredCredentials -RunNow
+```
 ## Etat connu au 2026-07-28
 
 - PostgreSQL a ete installe sur le serveur Windows `192.168.1.70`.
