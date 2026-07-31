@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
+import { getSupabaseAnonKey, getSupabaseUrl } from '@/lib/env';
 
 interface AdminUser {
   id: string;
@@ -136,30 +137,47 @@ const UserManagement: React.FC = () => {
     setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 4000);
   };
 
-  const restBase = import.meta.env.VITE_SUPABASE_URL || 'https://drohhxrkoequjphvabvq.supabase.co';
-  const restKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-  const restHeaders = { 'apikey': restKey, 'Authorization': `Bearer ${restKey}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' };
+  const restBase = getSupabaseUrl() || 'https://drohhxrkoequjphvabvq.supabase.co';
+  const restKey = getSupabaseAnonKey();
+
+  const getRestHeaders = async (preferReturn = true): Promise<Record<string, string>> => {
+    const { data: { session } } = await supabase.auth.getSession();
+    const authToken = session?.access_token || restKey;
+
+    if (!restKey || !authToken) {
+      throw new Error('Configuration Supabase publique manquante pour le backoffice');
+    }
+
+    const headers: Record<string, string> = {
+      apikey: restKey,
+      Authorization: `Bearer ${authToken}`,
+      'Content-Type': 'application/json',
+    };
+
+    if (preferReturn) headers.Prefer = 'return=representation';
+    return headers;
+  };
 
   const restGet = async (table: string, query = '') => {
-    const res = await fetch(`${restBase}/rest/v1/${table}?${query}`, { headers: restHeaders });
+    const res = await fetch(`${restBase}/rest/v1/${table}?${query}`, { headers: await getRestHeaders(false) });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return res.json();
   };
 
   const restPost = async (table: string, body: any) => {
-    const res = await fetch(`${restBase}/rest/v1/${table}`, { method: 'POST', headers: restHeaders, body: JSON.stringify(body) });
+    const res = await fetch(`${restBase}/rest/v1/${table}`, { method: 'POST', headers: await getRestHeaders(), body: JSON.stringify(body) });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return res.json();
   };
 
   const restPatch = async (table: string, query: string, body: any) => {
-    const res = await fetch(`${restBase}/rest/v1/${table}?${query}`, { method: 'PATCH', headers: restHeaders, body: JSON.stringify(body) });
+    const res = await fetch(`${restBase}/rest/v1/${table}?${query}`, { method: 'PATCH', headers: await getRestHeaders(), body: JSON.stringify(body) });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return res.json();
   };
 
   const restDelete = async (table: string, query: string) => {
-    const res = await fetch(`${restBase}/rest/v1/${table}?${query}`, { method: 'DELETE', headers: restHeaders });
+    const res = await fetch(`${restBase}/rest/v1/${table}?${query}`, { method: 'DELETE', headers: await getRestHeaders(false) });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
   };
 
@@ -256,7 +274,7 @@ const UserManagement: React.FC = () => {
   const invokeEdgeFunction = async (name: string, body: any) => {
     const res = await fetch(`${restBase}/functions/v1/${name}`, {
       method: 'POST',
-      headers: { 'Authorization': `Bearer ${restKey}`, 'Content-Type': 'application/json' },
+      headers: await getRestHeaders(false),
       body: JSON.stringify(body)
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -282,7 +300,7 @@ const UserManagement: React.FC = () => {
       setSending(true);
       const res = await fetch(`${restBase}/auth/v1/recover`, {
         method: 'POST',
-        headers: { 'apikey': restKey, 'Content-Type': 'application/json' },
+        headers: await getRestHeaders(false),
         body: JSON.stringify({ email: user.email })
       });
       if (!res.ok) { showToast('error', 'Erreur envoi email'); return; }

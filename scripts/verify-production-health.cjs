@@ -34,13 +34,14 @@ function withTimeout(ms = 10000) {
   return { controller, timeout };
 }
 
-async function fetchJson(label, url, timeoutMs = 12000) {
+async function fetchJson(label, url, timeoutMs = 12000, headers = {}) {
   const { controller, timeout } = withTimeout(timeoutMs);
   try {
     const response = await fetch(url, {
       headers: {
         accept: 'application/json',
         'cache-control': 'no-cache',
+        ...headers,
       },
       signal: controller.signal,
     });
@@ -185,6 +186,14 @@ async function main() {
       supabaseHeaders,
     )
     : null;
+  const adminUsersProbe = supabaseUrl && supabaseAnonKey
+    ? await fetchJson(
+      'admin-users-runtime-rest-probe',
+      `${supabaseUrl}/rest/v1/admin_users?select=id&limit=1`,
+      12000,
+      supabaseHeaders,
+    )
+    : null;
 
   addCheck(checks, 'site page /assurance-taxi returns 200', mainPage.ok && mainPage.status === 200, mainPage);
   addCheck(checks, 'deploy-info is reachable', deployInfo.ok && deployInfo.json?.commit, {
@@ -205,6 +214,10 @@ async function main() {
   addCheck(checks, 'Supabase runtime config is available for Edge Function probes', Boolean(supabaseUrl && supabaseAnonKey), {
     has_url: Boolean(supabaseUrl),
     has_anon_key: Boolean(supabaseAnonKey),
+  });
+  addCheck(checks, 'Backoffice admin_users REST bootstrap accepts runtime Supabase key', adminUsersProbe?.ok && Array.isArray(adminUsersProbe?.json), {
+    status: adminUsersProbe?.status || null,
+    rows: Array.isArray(adminUsersProbe?.json) ? adminUsersProbe.json.length : null,
   });
   addCheck(checks, 'Turnstile rejects invalid tokens server-side', invalidTurnstile?.status === 403 && invalidTurnstile?.json?.success === false, {
     status: invalidTurnstile?.status || null,

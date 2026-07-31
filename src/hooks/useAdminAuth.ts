@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
+import { getSupabaseAnonKey, getSupabaseUrl } from '@/lib/env';
 
 interface AdminUser {
   id: string;
@@ -71,7 +72,7 @@ export function useAdminAuth() {
     setState(newState);
   };
 
-  const loadAdminUser = React.useCallback(async (email: string) => {
+  const loadAdminUser = React.useCallback(async (email: string, accessToken?: string) => {
     const now = Date.now();
     if (
       isLoadingUserRef.current ||
@@ -85,18 +86,35 @@ export function useAdminAuth() {
     loadTimestampRef.current = now;
 
     try {
-      const baseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://drohhxrkoequjphvabvq.supabase.co';
-      const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+      const baseUrl = getSupabaseUrl() || 'https://drohhxrkoequjphvabvq.supabase.co';
+      const anonKey = getSupabaseAnonKey();
       const normalizedEmail = email.toLowerCase();
+      const currentSession = accessToken
+        ? null
+        : (await supabase.auth.getSession()).data.session;
+      const authToken = accessToken || currentSession?.access_token || anonKey;
+
+      if (!anonKey || !authToken) {
+        throw new Error('Configuration Supabase publique manquante pour le backoffice');
+      }
+
+      const restHeaders = {
+        apikey: anonKey,
+        Authorization: `Bearer ${authToken}`,
+      };
 
       const res = await Promise.race([
         fetch(`${baseUrl}/rest/v1/admin_users?select=id,email,full_name,role,is_active&email=ilike.${encodeURIComponent(normalizedEmail)}&is_active=eq.true&limit=1`, {
-          headers: { 'apikey': anonKey, 'Authorization': `Bearer ${anonKey}` }
+          headers: restHeaders
         }),
         new Promise<never>((_, reject) =>
           setTimeout(() => reject(new Error('Admin user load timeout')), 8000)
         )
       ]);
+
+      if (!res.ok) {
+        throw new Error(`Admin user load failed HTTP ${res.status}`);
+      }
 
       const rows = await res.json();
       const adminUser = Array.isArray(rows) && rows.length > 0 ? rows[0] : null;
@@ -105,7 +123,7 @@ export function useAdminAuth() {
         let perms: any[] = [];
         try {
           const permsRes = await fetch(`${baseUrl}/rest/v1/user_permissions?select=id,user_id,permission_type,can_view,can_edit,can_delete&user_id=eq.${adminUser.id}`, {
-            headers: { 'apikey': anonKey, 'Authorization': `Bearer ${anonKey}` }
+            headers: restHeaders
           });
           const permsData = await permsRes.json();
           if (Array.isArray(permsData)) {
@@ -121,7 +139,7 @@ export function useAdminAuth() {
 
         fetch(`${baseUrl}/rest/v1/admin_users?id=eq.${adminUser.id}`, {
           method: 'PATCH',
-          headers: { 'apikey': anonKey, 'Authorization': `Bearer ${anonKey}`, 'Content-Type': 'application/json' },
+          headers: { ...restHeaders, 'Content-Type': 'application/json' },
           body: JSON.stringify({ last_login: new Date().toISOString() })
         }).catch(() => {});
 
@@ -176,7 +194,8 @@ export function useAdminAuth() {
 
     const validateCachedSession = () => {
       try {
-        const supabaseKey = `sb-${import.meta.env.VITE_SUPABASE_URL?.split('//')[1]?.split('.')[0]}-auth-token`;
+        const supabaseProjectRef = getSupabaseUrl()?.split('//')[1]?.split('.')[0];
+        const supabaseKey = supabaseProjectRef ? `sb-${supabaseProjectRef}-auth-token` : 'taxiassur-auth';
         let stored = localStorage.getItem(supabaseKey);
 
         if (!stored || stored === 'null' || stored === 'undefined') {
@@ -258,7 +277,7 @@ export function useAdminAuth() {
 
         if (session?.user) {
           console.log('👤 User found, loading admin data...');
-          await loadAdminUser(session.user.email!);
+          await loadAdminUser(session.user.email!, session.access_token);
         } else {
           console.log('🚫 No session found');
           updateGlobalState({ user: null, loading: false, isAuthenticated: false });
@@ -288,7 +307,7 @@ export function useAdminAuth() {
       }
 
       if (event === 'SIGNED_IN' && session?.user) {
-        await loadAdminUser(session.user.email!);
+        await loadAdminUser(session.user.email!, session.access_token);
       } else if (event === 'TOKEN_REFRESHED') {
         console.log('🔄 Token refreshed, updating cache timestamp');
         const userStr = localStorage.getItem('taxiassur_user');
