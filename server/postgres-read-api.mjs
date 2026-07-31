@@ -220,10 +220,40 @@ function requiredTable(value) {
 function buildFilters(params) {
   const filters = ['data IS NOT NULL'];
   for (const [key, value] of params.entries()) {
-    if (!FILTERABLE_FIELDS.has(key) || value === '') continue;
+    if (value === '') continue;
+    if (key === 'status') {
+      const statusFilter = buildStatusFilter(value);
+      if (statusFilter) filters.push(statusFilter);
+      continue;
+    }
+    if (!FILTERABLE_FIELDS.has(key)) continue;
     filters.push(`data ->> ${quoteLiteral(key)} = ${quoteLiteral(String(value).slice(0, 500))}`);
   }
   return filters.join(' AND ');
+}
+
+function buildStatusFilter(value) {
+  const status = String(value || '').toLowerCase().slice(0, 50);
+  if (!status || status === 'all') return null;
+
+  if (status === 'published') {
+    return `(
+      lower(COALESCE(data ->> 'status', '')) = 'published'
+      OR lower(COALESCE(data ->> 'published', '')) = 'true'
+      OR lower(COALESCE(data ->> 'is_published', '')) = 'true'
+      OR (NOT (data ? 'status') AND NOT (data ? 'published') AND NOT (data ? 'is_published'))
+    )`;
+  }
+
+  if (status === 'draft') {
+    return `(
+      lower(COALESCE(data ->> 'status', '')) = 'draft'
+      OR lower(COALESCE(data ->> 'published', '')) = 'false'
+      OR lower(COALESCE(data ->> 'is_published', '')) = 'false'
+    )`;
+  }
+
+  return `lower(COALESCE(data ->> 'status', '')) = ${quoteLiteral(status)}`;
 }
 
 function buildOrder(params) {

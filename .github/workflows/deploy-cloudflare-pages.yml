@@ -99,3 +99,9 @@ jobs:
         env:
           SITE_URL: https://taxiassur.com
         run: npm run verify:seo-leadership
+
+      - name: Verify public publication automations
+        if: steps.cloudflare.outputs.ready == 'true'
+        env:
+          SITE_URL: https://taxiassur.com
+        run: npm run verify:publications

@@ -25,13 +25,16 @@ export async function onRequestGet({ request, env }) {
   }
 
   try {
-    const data = await postgresFetch(env, '/api/read', {
+    const readParams = {
       table,
       limit: Math.min(limit * 5, 250),
       sort,
       direction: 'desc',
       category,
-    });
+    };
+    if (status !== 'all') readParams.status = status;
+
+    const data = await postgresFetch(env, '/api/read', readParams);
 
     const items = (data.items || [])
       .filter((item) => isPublished(item, status))

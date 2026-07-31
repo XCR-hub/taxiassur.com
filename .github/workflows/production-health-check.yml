@@ -44,5 +44,10 @@ jobs:
           EXPECTED_COMMIT: skip
         run: npm run verify:seo-leadership
 
+      - name: Verify public publication automations
+        env:
+          SITE_URL: https://taxiassur.com
+        run: npm run verify:publications
+
       - name: SEO quality audit
         run: npm run seo:quality-audit

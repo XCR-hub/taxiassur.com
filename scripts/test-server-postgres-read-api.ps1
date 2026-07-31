@@ -67,6 +67,7 @@ try {
       $apiHealth = Invoke-WebRequest -UseBasicParsing -Uri "http://127.0.0.1:$ApiPort/api/health" -Headers $headers -TimeoutSec 75
       $tables = Invoke-WebRequest -UseBasicParsing -Uri "http://127.0.0.1:$ApiPort/api/tables" -Headers $headers -TimeoutSec 75
       $blog = Invoke-WebRequest -UseBasicParsing -Uri "http://127.0.0.1:$ApiPort/api/read?table=blog_posts&limit=3" -Headers $headers -TimeoutSec 75
+      $newsPublished = Invoke-WebRequest -UseBasicParsing -Uri "http://127.0.0.1:$ApiPort/api/read?table=news_articles&limit=3&status=published" -Headers $headers -TimeoutSec 75
 
       $task = Get-ScheduledTask -TaskName 'TaxiAssur PostgreSQL Read API' -ErrorAction SilentlyContinue | Select-Object TaskName,State
       $taskInfo = Get-ScheduledTaskInfo -TaskName 'TaxiAssur PostgreSQL Read API' -ErrorAction SilentlyContinue | Select-Object LastRunTime,LastTaskResult,NextRunTime
@@ -82,6 +83,8 @@ try {
         tables = ($tables.Content | ConvertFrom-Json)
         sample_status = [int]$blog.StatusCode
         sample = ($blog.Content | ConvertFrom-Json)
+        news_published_status = [int]$newsPublished.StatusCode
+        news_published = ($newsPublished.Content | ConvertFrom-Json)
         task = $task
         task_info = $taskInfo
         process_count = $processes.Count
