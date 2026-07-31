@@ -28,6 +28,8 @@ import { CRMPushNotifications } from '@/components/CRMPushNotifications';
 import { IncomingCallNotification } from '@/components/crm/IncomingCallNotification';
 import AdminLogin from '@/components/AdminLogin';
 import NavigationMenu from './NavigationMenu';
+import { supabase } from '@/lib/supabase';
+import { logger } from '@/lib/logger';
 
 const CRMLayout: React.FC = () => {
   const navigate = useNavigate();
@@ -39,6 +41,8 @@ const CRMLayout: React.FC = () => {
     if (typeof window === 'undefined') return false;
     return localStorage.getItem('crm-hacker-mode') === '1';
   });
+  const [passwordResetSending, setPasswordResetSending] = useState(false);
+  const [passwordResetMessage, setPasswordResetMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   useEffect(() => {
     console.log('CRM Layout v2026.03');
@@ -74,6 +78,26 @@ const CRMLayout: React.FC = () => {
   const handleLogout = async () => {
     await signOut();
     navigate('/backoffice');
+  };
+
+  const handlePasswordResetEmail = async () => {
+    if (!user?.email || passwordResetSending) return;
+    setPasswordResetSending(true);
+    setPasswordResetMessage(null);
+
+    try {
+      const redirectTo = `${window.location.origin}/auth/set-password`;
+      const { error } = await supabase.auth.resetPasswordForEmail(user.email, { redirectTo });
+      if (error) throw error;
+
+      setPasswordResetMessage({ type: 'success', text: 'Email de réinitialisation envoyé.' });
+    } catch (error) {
+      logger.error('Erreur envoi reinitialisation mot de passe:', error);
+      setPasswordResetMessage({ type: 'error', text: 'Envoi impossible pour le moment.' });
+    } finally {
+      setPasswordResetSending(false);
+      window.setTimeout(() => setPasswordResetMessage(null), 5000);
+    }
   };
 
   const currentPath = location.pathname;
@@ -386,6 +410,48 @@ const CRMLayout: React.FC = () => {
               </button>
 
               <button
+                onClick={handlePasswordResetEmail}
+                className="crm-nav-link"
+                disabled={passwordResetSending}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 10,
+                  padding: '7px 12px',
+                  borderRadius: 8,
+                  color: '#f59e0b',
+                  background: 'none',
+                  border: '1px solid transparent',
+                  cursor: passwordResetSending ? 'wait' : 'pointer',
+                  width: '100%',
+                  transition: 'all 0.15s',
+                  fontSize: 12,
+                  marginBottom: 4,
+                  opacity: passwordResetSending ? 0.6 : 1,
+                }}
+              >
+                {passwordResetSending ? <RefreshCw size={14} className="animate-spin" /> : <Mail size={14} />}
+                <span>Mot de passe</span>
+              </button>
+
+              {passwordResetMessage && (
+                <div
+                  style={{
+                    marginBottom: 6,
+                    padding: '6px 9px',
+                    borderRadius: 8,
+                    border: `1px solid ${passwordResetMessage.type === 'success' ? 'rgba(34,197,94,0.25)' : 'rgba(239,68,68,0.25)'}`,
+                    background: passwordResetMessage.type === 'success' ? 'rgba(34,197,94,0.08)' : 'rgba(239,68,68,0.08)',
+                    color: passwordResetMessage.type === 'success' ? '#86efac' : '#fca5a5',
+                    fontSize: 10,
+                    lineHeight: 1.35,
+                  }}
+                >
+                  {passwordResetMessage.text}
+                </div>
+              )}
+
+              <button
                 onClick={handleLogout}
                 className="crm-nav-link"
                 style={{
@@ -430,6 +496,7 @@ const CRMLayout: React.FC = () => {
               {[
                 { icon: Terminal, onClick: () => setHackerMode(v => !v), color: hackerMode ? '#00ff9c' : 'rgba(255,255,255,0.3)', label: hackerMode ? 'Terminal ON' : 'Terminal OFF' },
                 { icon: Settings, onClick: () => navigate('/backoffice/crm-killer/settings'), color: 'rgba(255,255,255,0.3)', label: 'Parametres' },
+                { icon: Mail, onClick: handlePasswordResetEmail, color: '#f59e0b', label: passwordResetSending ? 'Envoi...' : 'Mot de passe' },
                 { icon: LogOut, onClick: handleLogout, color: 'rgba(239,68,68,0.5)', label: 'Deconnexion' },
               ].map(btn => (
                 <button

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Settings, Users, Bell, Shield, Database, Zap, Mail, MessageSquare, Bot, Save, CheckCircle, X, UserPlus, Trash2, Lock, Eye, CreditCard as Edit, AlertTriangle, Send, Key } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/lib/toast';
+import { getSupabaseAnonKey, getSupabaseUrl } from '@/lib/env';
 
 interface CRMSettings {
   company_name: string;
@@ -200,10 +201,17 @@ const CRMAdminSettings: React.FC = () => {
   const loadUsers = async () => {
     setLoadingUsers(true);
     try {
-      const url = import.meta.env.VITE_SUPABASE_URL || 'https://drohhxrkoequjphvabvq.supabase.co';
-      const key = import.meta.env.VITE_SUPABASE_ANON_KEY;
+      const url = getSupabaseUrl() || 'https://drohhxrkoequjphvabvq.supabase.co';
+      const key = getSupabaseAnonKey();
+      const { data: { session } } = await supabase.auth.getSession();
+      const authToken = session?.access_token || key;
+
+      if (!key || !authToken) {
+        throw new Error('Configuration Supabase publique manquante pour le backoffice');
+      }
+
       const res = await fetch(`${url}/rest/v1/admin_users?select=*&order=created_at.desc`, {
-        headers: { 'apikey': key, 'Authorization': `Bearer ${key}` }
+        headers: { apikey: key, Authorization: `Bearer ${authToken}` }
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       setUsers(await res.json() || []);

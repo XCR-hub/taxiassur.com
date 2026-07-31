@@ -226,21 +226,24 @@ export default function AdminLogin({ onSuccess }: AdminLoginProps) {
               </div>
             </div>
 
-            <div className="flex items-center justify-between -mt-2">
-              <span className="text-xs text-gray-400">Lien securise envoye par email</span>
+            <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 flex flex-col sm:flex-row sm:items-center gap-3">
+              <div className="flex-1">
+                <p className="text-sm font-bold text-amber-900">Mot de passe oublié ?</p>
+                <p className="text-xs text-amber-800 mt-1">Saisissez votre email, puis recevez un lien sécurisé pour créer un nouveau mot de passe.</p>
+              </div>
               <button
                 type="button"
                 onClick={handleForgotPassword}
                 disabled={loading || resetLoading}
-                className="text-sm font-semibold text-gray-700 hover:text-amber-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="inline-flex items-center justify-center gap-2 rounded-lg bg-amber-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-amber-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {resetLoading ? (
-                  <span className="inline-flex items-center gap-1.5">
-                    <RefreshCw size={13} className="animate-spin" />
+                  <>
+                    <RefreshCw size={14} className="animate-spin" />
                     Envoi...
-                  </span>
+                  </>
                 ) : (
-                  'Mot de passe oublie ?'
+                  'Recevoir le lien'
                 )}
               </button>
             </div>
