@@ -28,6 +28,7 @@ If credentials are already stored for `192.168.1.70` in Windows Credential Manag
 powershell -ExecutionPolicy Bypass -File scripts\install-server-postgres-read-api.ps1 -UseStoredCredentials
 ```
 
+Operational note: the scheduled task runs a small PowerShell supervisor (`F:\TaxiAssur\Scripts\start-postgres-read-api.ps1`). The supervisor keeps the task alive, starts `node.exe`, checks `http://127.0.0.1:8791/health`, and restarts the Node API if the local healthcheck fails. This avoids Windows Task Scheduler killing or stalling a detached Node child process.
 The script:
 
 - copies `server\postgres-read-api.mjs` to `F:\TaxiAssur\Api`;

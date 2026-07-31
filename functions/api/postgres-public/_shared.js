@@ -88,8 +88,15 @@ export async function postgresFetch(env, pathname, params = {}) {
     }
   });
 
+  const timeoutMs = Math.min(
+    25000,
+    Math.max(
+      4500,
+      Number.parseInt(env.TAXIASSUR_POSTGRES_READ_API_TIMEOUT_MS || env.POSTGRES_READ_API_TIMEOUT_MS || '25000', 10) || 25000,
+    ),
+  );
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 4500);
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
     const response = await fetch(url, {

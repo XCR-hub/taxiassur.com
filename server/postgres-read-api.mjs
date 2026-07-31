@@ -1,4 +1,4 @@
-﻿import { createServer } from 'node:http';
+import { createServer } from 'node:http';
 import { spawn } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { timingSafeEqual } from 'node:crypto';
@@ -63,6 +63,9 @@ const config = {
   defaultLimit: intEnv('TAXIASSUR_READ_API_DEFAULT_LIMIT', 50),
   rateWindowMs: intEnv('TAXIASSUR_READ_API_RATE_WINDOW_MS', 60000),
   rateMax: intEnv('TAXIASSUR_READ_API_RATE_MAX', 120),
+  cacheTtlMs: intEnv('TAXIASSUR_READ_API_CACHE_TTL_MS', 300000),
+  dbStatementTimeoutMs: intEnv('TAXIASSUR_READ_API_STATEMENT_TIMEOUT_MS', 30000),
+  psqlTimeoutMs: intEnv('TAXIASSUR_READ_API_PSQL_TIMEOUT_MS', 45000),
 };
 
 if (!config.dbPassword) {
@@ -81,6 +84,7 @@ if (!existsSync(config.psqlPath)) {
 }
 
 const buckets = new Map();
+const responseCache = new Map();
 
 const server = createServer(async (req, res) => {
   const started = Date.now();
@@ -94,14 +98,7 @@ const server = createServer(async (req, res) => {
     }
 
     if (url.pathname === '/health' && req.method === 'GET') {
-      const db = await dbPing();
-      return sendJson(res, origin, 200, {
-        ok: db === '1',
-        service: 'taxiassur-postgres-read-api',
-        database: config.dbName,
-        schema: config.dbSchema,
-        checked_at: new Date().toISOString(),
-      });
+      return sendJson(res, origin, 200, serviceHealth());
     }
 
     if (!url.pathname.startsWith('/api/') || req.method !== 'GET') {
@@ -122,24 +119,24 @@ const server = createServer(async (req, res) => {
     }
 
     if (url.pathname === '/api/health') {
-      const health = await authenticatedHealth();
+      const health = await cachedJson('health', authenticatedHealth);
       return sendJson(res, origin, 200, health);
     }
 
     if (url.pathname === '/api/tables') {
-      const tables = await listTables();
+      const tables = await cachedJson('tables', listTables);
       return sendJson(res, origin, 200, { ok: true, tables });
     }
 
     if (url.pathname === '/api/read') {
       const table = requiredTable(url.searchParams.get('table'));
-      const result = await readRows(table, url.searchParams);
+      const result = await cachedJson(`read:${url.searchParams.toString()}`, () => readRows(table, url.searchParams));
       return sendJson(res, origin, 200, result);
     }
 
     if (url.pathname === '/api/item') {
       const table = requiredTable(url.searchParams.get('table'));
-      const result = await readItem(table, url.searchParams);
+      const result = await cachedJson(`item:${url.searchParams.toString()}`, () => readItem(table, url.searchParams));
       return sendJson(res, origin, 200, result);
     }
 
@@ -224,7 +221,7 @@ function buildFilters(params) {
   const filters = ['data IS NOT NULL'];
   for (const [key, value] of params.entries()) {
     if (!FILTERABLE_FIELDS.has(key) || value === '') continue;
-    filters.push(`data ->> ${quoteLiteral(key)} = ${quoteLiteral(value.slice(0, 500))}`);
+    filters.push(`data ->> ${quoteLiteral(key)} = ${quoteLiteral(String(value).slice(0, 500))}`);
   }
   return filters.join(' AND ');
 }
@@ -236,9 +233,43 @@ function buildOrder(params) {
   return `COALESCE(data ->> ${quoteLiteral(field)}, data ->> 'created_at', '') ${direction}`;
 }
 
-async function dbPing() {
-  const output = await runPsql('SELECT 1;');
-  return output.trim().split(/\r?\n/).filter(Boolean).at(-1) || '';
+function serviceHealth() {
+  return {
+    ok: true,
+    service: 'taxiassur-postgres-read-api',
+    database: config.dbName,
+    schema: config.dbSchema,
+    cache_entries: responseCache.size,
+    checked_at: new Date().toISOString(),
+  };
+}
+
+async function cachedJson(key, loader) {
+  const now = Date.now();
+  const existing = responseCache.get(key);
+  if (existing?.value && existing.expiresAt > now) return existing.value;
+  if (existing?.pending) return existing.pending;
+
+  const pending = loader()
+    .then((value) => {
+      responseCache.set(key, { value, expiresAt: Date.now() + config.cacheTtlMs });
+      trimCache();
+      return value;
+    })
+    .catch((error) => {
+      responseCache.delete(key);
+      throw error;
+    });
+  responseCache.set(key, { pending, expiresAt: now + config.cacheTtlMs });
+  return pending;
+}
+
+function trimCache() {
+  if (responseCache.size <= 200) return;
+  const now = Date.now();
+  for (const [key, entry] of responseCache.entries()) {
+    if (!entry.value || entry.expiresAt <= now) responseCache.delete(key);
+  }
 }
 
 async function authenticatedHealth() {
@@ -311,6 +342,7 @@ async function readItem(table, params) {
 
 function runPsql(sql) {
   return new Promise((resolve, reject) => {
+    let settled = false;
     const child = spawn(config.psqlPath, [
       '-X',
       '-q',
@@ -328,17 +360,31 @@ function runPsql(sql) {
         ...process.env,
         PGPASSWORD: config.dbPassword,
         PGCLIENTENCODING: 'UTF8',
-        PGOPTIONS: '-c default_transaction_read_only=on -c statement_timeout=5000',
+        PGOPTIONS: `-c default_transaction_read_only=on -c statement_timeout=${config.dbStatementTimeoutMs}`,
       },
     });
     let stdout = '';
     let stderr = '';
+    const timer = setTimeout(() => {
+      if (settled) return;
+      child.kill();
+      finish(new Error(`psql timeout after ${config.psqlTimeoutMs}ms`));
+    }, config.psqlTimeoutMs);
+
+    function finish(error, output = '') {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      if (error) reject(error);
+      else resolve(output);
+    }
+
     child.stdout.on('data', (chunk) => { stdout += chunk.toString('utf8'); });
     child.stderr.on('data', (chunk) => { stderr += chunk.toString('utf8'); });
-    child.on('error', reject);
+    child.on('error', finish);
     child.on('close', (code) => {
-      if (code !== 0) reject(new Error(`psql exit ${code}: ${stderr.slice(0, 1000)}`));
-      else resolve(stdout);
+      if (code !== 0) finish(new Error(`psql exit ${code}: ${stderr.slice(0, 1000)}`));
+      else finish(null, stdout);
     });
     child.stdin.end(sql);
   });

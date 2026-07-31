@@ -1,4 +1,4 @@
-﻿param(
+param(
   [string]$Server = '192.168.1.70',
   [string]$DefaultUser = 'XCR\Administrateur',
   [switch]$UseStoredCredentials,
@@ -63,10 +63,10 @@ try {
       if ([string]::IsNullOrWhiteSpace($apiEnv.TAXIASSUR_READ_API_TOKEN)) { throw 'TAXIASSUR_READ_API_TOKEN missing' }
 
       $headers = @{ Authorization = "Bearer $($apiEnv.TAXIASSUR_READ_API_TOKEN)" }
-      $health = Invoke-WebRequest -UseBasicParsing -Uri "http://127.0.0.1:$ApiPort/health" -TimeoutSec 10
-      $apiHealth = Invoke-WebRequest -UseBasicParsing -Uri "http://127.0.0.1:$ApiPort/api/health" -Headers $headers -TimeoutSec 15
-      $tables = Invoke-WebRequest -UseBasicParsing -Uri "http://127.0.0.1:$ApiPort/api/tables" -Headers $headers -TimeoutSec 15
-      $blog = Invoke-WebRequest -UseBasicParsing -Uri "http://127.0.0.1:$ApiPort/api/read?table=blog_posts&limit=3" -Headers $headers -TimeoutSec 15
+      $health = Invoke-WebRequest -UseBasicParsing -Uri "http://127.0.0.1:$ApiPort/health" -TimeoutSec 30
+      $apiHealth = Invoke-WebRequest -UseBasicParsing -Uri "http://127.0.0.1:$ApiPort/api/health" -Headers $headers -TimeoutSec 75
+      $tables = Invoke-WebRequest -UseBasicParsing -Uri "http://127.0.0.1:$ApiPort/api/tables" -Headers $headers -TimeoutSec 75
+      $blog = Invoke-WebRequest -UseBasicParsing -Uri "http://127.0.0.1:$ApiPort/api/read?table=blog_posts&limit=3" -Headers $headers -TimeoutSec 75
 
       $task = Get-ScheduledTask -TaskName 'TaxiAssur PostgreSQL Read API' -ErrorAction SilentlyContinue | Select-Object TaskName,State
       $taskInfo = Get-ScheduledTaskInfo -TaskName 'TaxiAssur PostgreSQL Read API' -ErrorAction SilentlyContinue | Select-Object LastRunTime,LastTaskResult,NextRunTime

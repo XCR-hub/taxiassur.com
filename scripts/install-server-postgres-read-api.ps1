@@ -1,4 +1,4 @@
-﻿param(
+param(
   [string]$Server = '192.168.1.70',
   [string]$DefaultUser = 'XCR\Administrateur',
   [switch]$UseStoredCredentials,
@@ -173,19 +173,65 @@ try {
       $startupScript = Join-Path $scriptsDir 'start-postgres-read-api.ps1'
 
       @"
-`$ErrorActionPreference = 'Stop'
-`$env:TAXIASSUR_READ_API_ENV_FILE = '$envFile'
-Remove-Item -LiteralPath '$outLog','$errLog' -Force -ErrorAction SilentlyContinue
-Start-Process -FilePath '$node' -ArgumentList '$apiFile' -WorkingDirectory '$apiDir' -WindowStyle Hidden -RedirectStandardOutput '$outLog' -RedirectStandardError '$errLog'
+`$ErrorActionPreference = 'Continue'
+`$node = '$node'
+`$apiFile = '$apiFile'
+`$apiDir = '$apiDir'
+`$healthUrl = 'http://127.0.0.1:$ApiPort/health'
+`$logFile = Join-Path '$logsDir' 'taxiassur-postgres-read-api-supervisor.log'
+
+function Write-SupervisorLog([string]`$Message) {
+  "[`$(Get-Date -Format o)] `$Message" | Add-Content -LiteralPath `$logFile -Encoding UTF8
+}
+
+function Get-ApiProcess {
+  @(Get-CimInstance Win32_Process -Filter "Name='node.exe'" -ErrorAction SilentlyContinue | Where-Object { `$_.CommandLine -like '*postgres-read-api.mjs*' })
+}
+
+function Test-ApiHealth {
+  try {
+    `$response = Invoke-WebRequest -UseBasicParsing -Uri `$healthUrl -TimeoutSec 8
+    return ([int]`$response.StatusCode -eq 200)
+  } catch {
+    return `$false
+  }
+}
+
+function Start-ApiProcess {
+  Write-SupervisorLog 'starting node api'
+  try {
+    `$process = Start-Process -FilePath `$node -ArgumentList `$apiFile -WorkingDirectory `$apiDir -WindowStyle Hidden -PassThru
+    Write-SupervisorLog "started node pid=`$(`$process.Id)"
+  } catch {
+    Write-SupervisorLog "start failed: `$(`$_.Exception.Message)"
+  }
+}
+
+Write-SupervisorLog "supervisor start as `$([System.Security.Principal.WindowsIdentity]::GetCurrent().Name)"
+while (`$true) {
+  `$processes = Get-ApiProcess
+  if (`$processes.Count -eq 0) {
+    Start-ApiProcess
+    Start-Sleep -Seconds 5
+  } elseif (-not (Test-ApiHealth)) {
+    Write-SupervisorLog 'health failed; restarting node api'
+    `$processes | ForEach-Object { Stop-Process -Id `$_.ProcessId -Force -ErrorAction SilentlyContinue }
+    Start-Sleep -Seconds 2
+    Start-ApiProcess
+    Start-Sleep -Seconds 5
+  }
+  Start-Sleep -Seconds 30
+}
 "@ | Set-Content -LiteralPath $startupScript -Encoding UTF8
 
       $taskName = 'TaxiAssur PostgreSQL Read API'
       Get-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue | Unregister-ScheduledTask -Confirm:$false
       $action = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument "-NoProfile -ExecutionPolicy Bypass -File `"$startupScript`""
       $trigger = New-ScheduledTaskTrigger -AtStartup
-      $settings = New-ScheduledTaskSettingsSet -RestartCount 5 -RestartInterval (New-TimeSpan -Minutes 1) -ExecutionTimeLimit ([TimeSpan]::Zero)
+      $settings = New-ScheduledTaskSettingsSet -MultipleInstances IgnoreNew -RestartCount 5 -RestartInterval (New-TimeSpan -Minutes 1) -ExecutionTimeLimit ([TimeSpan]::Zero)
       Register-ScheduledTask -TaskName $taskName -Action $action -Trigger $trigger -Settings $settings -User 'SYSTEM' -RunLevel Highest -Force | Out-Null
 
+      Get-CimInstance Win32_Process -Filter "Name='powershell.exe'" -ErrorAction SilentlyContinue | Where-Object { $_.CommandLine -like '*start-postgres-read-api.ps1*' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }
       Get-Process node -ErrorAction SilentlyContinue | ForEach-Object {
         try {
           $cmd = (Get-CimInstance Win32_Process -Filter "ProcessId=$($_.Id)").CommandLine
@@ -196,8 +242,8 @@ Start-Process -FilePath '$node' -ArgumentList '$apiFile' -WorkingDirectory '$api
       Start-ScheduledTask -TaskName $taskName
       Start-Sleep -Seconds 3
 
-      $health = Invoke-WebRequest -UseBasicParsing -Uri "http://127.0.0.1:$ApiPort/health" -TimeoutSec 10
-      $apiHealth = Invoke-WebRequest -UseBasicParsing -Uri "http://127.0.0.1:$ApiPort/api/health" -Headers @{ Authorization = "Bearer $apiToken" } -TimeoutSec 15
+      $health = Invoke-WebRequest -UseBasicParsing -Uri "http://127.0.0.1:$ApiPort/health" -TimeoutSec 30
+      $apiHealth = Invoke-WebRequest -UseBasicParsing -Uri "http://127.0.0.1:$ApiPort/api/health" -Headers @{ Authorization = "Bearer $apiToken" } -TimeoutSec 75
 
       [pscustomobject]@{
         computer = $env:COMPUTERNAME
@@ -210,6 +256,7 @@ Start-Process -FilePath '$node' -ArgumentList '$apiFile' -WorkingDirectory '$api
         health_status = [int]$health.StatusCode
         api_health_status = [int]$apiHealth.StatusCode
         api_health_body = ($apiHealth.Content | ConvertFrom-Json)
+        process_count = @(Get-CimInstance Win32_Process -Filter "Name='node.exe'" -ErrorAction SilentlyContinue | Where-Object { $_.CommandLine -like '*postgres-read-api.mjs*' }).Count
         token_present = $true
         token_length = $apiToken.Length
         db_user = 'taxiassur_read_api'
