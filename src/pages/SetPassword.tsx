@@ -242,6 +242,17 @@ const SetPassword: React.FC = () => {
     );
   }
 
+  const isRecoveryFlow = hashType === 'recovery';
+  const passwordPageTitle = isRecoveryFlow ? 'Nouveau mot de passe' : 'Creer votre compte';
+  const passwordPageSubtitle = isRecoveryFlow
+    ? 'Definissez un nouveau mot de passe pour votre acces TaxiAssur'
+    : 'Definissez votre mot de passe pour acceder a TaxiAssur';
+  const successTitle = isRecoveryFlow ? 'Mot de passe mis a jour !' : 'Mot de passe defini !';
+  const successBody = isRecoveryFlow
+    ? 'Votre mot de passe a ete modifie avec succes. Redirection...'
+    : 'Votre compte a ete cree avec succes. Redirection...';
+  const submitLabel = isRecoveryFlow ? 'Enregistrer mon nouveau mot de passe' : 'Creer mon compte';
+
   if (success) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 flex items-center justify-center p-4">
@@ -249,8 +260,8 @@ const SetPassword: React.FC = () => {
           <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <CheckCircle className="w-8 h-8 text-green-600" />
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Mot de passe defini !</h2>
-          <p className="text-gray-600">Votre compte a ete cree avec succes. Redirection...</p>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">{successTitle}</h2>
+          <p className="text-gray-600">{successBody}</p>
         </div>
       </div>
     );
@@ -266,8 +277,8 @@ const SetPassword: React.FC = () => {
           <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <Lock className="w-8 h-8 text-blue-600" />
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Creer votre compte</h1>
-          <p className="text-gray-600">Definissez votre mot de passe pour acceder a TaxiAssur</p>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">{passwordPageTitle}</h1>
+          <p className="text-gray-600">{passwordPageSubtitle}</p>
         </div>
 
         {isHashFlow && !sessionReady && !error && (
@@ -348,7 +359,7 @@ const SetPassword: React.FC = () => {
             disabled={loading || formDisabled || !passwordValid || !confirmPassword || password !== confirmPassword}
             className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 px-4 rounded-lg font-medium hover:from-blue-700 hover:to-blue-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? 'Creation en cours...' : 'Creer mon compte'}
+            {loading ? 'Enregistrement en cours...' : submitLabel}
           </button>
         </form>
 

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
-import { Lock, Mail, AlertCircle, ArrowRight, Shield, Car, Users, Zap } from 'lucide-react';
+import { Lock, Mail, AlertCircle, ArrowRight, Shield, Car, Users, Zap, CheckCircle, RefreshCw } from 'lucide-react';
 
 interface AdminLoginProps {
   onSuccess: () => void;
@@ -17,6 +17,9 @@ export default function AdminLogin({ onSuccess }: AdminLoginProps) {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [resetLoading, setResetLoading] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
+  const [resetError, setResetError] = useState('');
   const [liveStats, setLiveStats] = useState<LiveStats>({ leads: 0, automations: 0 });
 
   useEffect(() => {
@@ -63,6 +66,34 @@ export default function AdminLogin({ onSuccess }: AdminLoginProps) {
       setError(err instanceof Error ? err.message : 'Erreur de connexion');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    const normalizedEmail = email.trim().toLowerCase();
+    setError('');
+    setResetError('');
+    setResetSent(false);
+
+    if (!normalizedEmail) {
+      setResetError('Saisissez votre adresse email avant de demander un lien.');
+      return;
+    }
+
+    setResetLoading(true);
+    try {
+      const redirectTo = `${window.location.origin}/auth/set-password`;
+      const { error: resetPasswordError } = await supabase.auth.resetPasswordForEmail(normalizedEmail, {
+        redirectTo,
+      });
+
+      if (resetPasswordError) throw resetPasswordError;
+      setResetSent(true);
+    } catch (err) {
+      logger.error('Erreur mot de passe oublie:', err);
+      setResetError('Impossible d\'envoyer le lien pour le moment. Verifiez l\'email ou reessayez dans quelques minutes.');
+    } finally {
+      setResetLoading(false);
     }
   };
 
@@ -163,7 +194,11 @@ export default function AdminLogin({ onSuccess }: AdminLoginProps) {
                   id="email"
                   type="email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    setResetSent(false);
+                    setResetError('');
+                  }}
                   className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-900 focus:border-gray-900 text-gray-900 bg-gray-50/60 placeholder-gray-400 text-sm transition-all"
                   placeholder="admin@taxiassur.com"
                   required
@@ -190,6 +225,42 @@ export default function AdminLogin({ onSuccess }: AdminLoginProps) {
                 />
               </div>
             </div>
+
+            <div className="flex items-center justify-between -mt-2">
+              <span className="text-xs text-gray-400">Lien securise envoye par email</span>
+              <button
+                type="button"
+                onClick={handleForgotPassword}
+                disabled={loading || resetLoading}
+                className="text-sm font-semibold text-gray-700 hover:text-amber-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {resetLoading ? (
+                  <span className="inline-flex items-center gap-1.5">
+                    <RefreshCw size={13} className="animate-spin" />
+                    Envoi...
+                  </span>
+                ) : (
+                  'Mot de passe oublie ?'
+                )}
+              </button>
+            </div>
+
+            {resetError && (
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3">
+                <AlertCircle size={18} className="text-amber-600 shrink-0 mt-0.5" />
+                <p className="text-sm text-amber-800">{resetError}</p>
+              </div>
+            )}
+
+            {resetSent && (
+              <div className="bg-green-50 border border-green-200 rounded-xl p-4 flex items-start gap-3">
+                <CheckCircle size={18} className="text-green-600 shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-semibold text-green-800">Lien de reinitialisation envoye.</p>
+                  <p className="text-xs text-green-700 mt-1">Verifiez la boite mail {email.trim().toLowerCase()} et ouvrez le lien recu.</p>
+                </div>
+              </div>
+            )}
 
             <button
               type="submit"
