@@ -57,6 +57,11 @@ $env:CLOUDFLARE_BOT_MANAGEMENT_API_TOKEN='<token Cloudflare avec droits Bot Mana
 # Optionnel pour resolution automatique via les domaines Cloudflare Pages:
 $env:CLOUDFLARE_ACCOUNT_ID='<account id Cloudflare>'
 $env:CLOUDFLARE_PAGES_PROJECT='taxiassur'
+# Commande interactive conseillee si le token est dans le presse-papiers ou doit etre saisi masque:
+npm run cloudflare:ai-robots:fix -- -DryRun
+npm run cloudflare:ai-robots:fix
+
+# Variante non interactive:
 npm run cloudflare:ai-robots -- --dry-run
 npm run cloudflare:ai-robots
 Remove-Item Env:\CLOUDFLARE_BOT_MANAGEMENT_API_TOKEN
