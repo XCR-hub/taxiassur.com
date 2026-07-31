@@ -96,6 +96,44 @@ TON : Phrases affirmatives. Present de narration. Vocabulaire precis.
 STRUCTURE : Paragraphes TRES inegaux. Certains de 1-2 lignes, d'autres de 5-6.`;
 }
 
+function slugify(value: string): string {
+  return value
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 90);
+}
+
+function formatFrenchDate(date: Date): string {
+  return new Intl.DateTimeFormat('fr-FR', {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'Europe/Paris',
+  }).format(date);
+}
+
+async function buildUniqueSlug(supabase: any, baseSlug: string, publishedAt: Date): Promise<string> {
+  const stamp = publishedAt.toISOString().slice(0, 10).replace(/-/g, '');
+  const base = `${baseSlug}-${stamp}`.replace(/-+/g, '-').replace(/^-+|-+$/g, '').slice(0, 110);
+
+  for (let attempt = 0; attempt < 10; attempt += 1) {
+    const suffix = attempt === 0 ? '' : `-${attempt + 1}`;
+    const candidate = `${base}${suffix}`;
+    const { data, error } = await supabase
+      .from('news_articles')
+      .select('id')
+      .eq('slug', candidate)
+      .maybeSingle();
+
+    if (error) throw new Error(`Erreur verification slug: ${error.message}`);
+    if (!data) return candidate;
+  }
+
+  return `${base}-${crypto.randomUUID().slice(0, 8)}`;
+}
 function buildNewsUserPrompt(topic: typeof TOPICS[0], forbiddenPatterns: string[]): string {
   return `Ecris un article d'actualite complet (800-1200 mots) sur : "${topic.title}"
 
@@ -132,9 +170,13 @@ Deno.serve(async (req: Request) => {
     const pexelsKey = Deno.env.get('PEXELS_API_KEY');
 
     const supabase = createClient(supabaseUrl, supabaseKey);
+    const requestBody = await req.json().catch(() => ({}));
+    const force = requestBody.force === true || new URL(req.url).searchParams.get('force') === 'true';
+    const minIntervalHours = Number.isFinite(Number(requestBody.min_interval_hours))
+      ? Math.max(1, Math.min(168, Number(requestBody.min_interval_hours)))
+      : 24;
 
-    const oneDayAgo = new Date();
-    oneDayAgo.setDate(oneDayAgo.getDate() - 1);
+    const oneDayAgo = new Date(Date.now() - minIntervalHours * 60 * 60 * 1000);
 
     const { data: recentArticles, error: checkError } = await supabase
       .from('news_articles')
@@ -149,10 +191,12 @@ Deno.serve(async (req: Request) => {
       throw new Error(`Erreur verification articles: ${checkError.message}`);
     }
 
-    if (recentArticles && recentArticles.length > 0) {
+    if (!force && recentArticles && recentArticles.length > 0) {
       return new Response(
         JSON.stringify({
-          message: 'Article deja publie dans les dernieres 24h',
+          success: true,
+          skipped: true,
+          message: `Article deja publie dans les dernieres ${minIntervalHours}h`,
           lastPublished: recentArticles[0].published_at
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -293,12 +337,9 @@ Cite des sources. Utilise des chiffres precis. Contextualise historiquement.`;
       excerpt = `Decouvrez notre analyse sur ${selectedTopic.title.toLowerCase()}. Conseils et informations pour les professionnels du taxi.`;
     }
 
-    const slug = selectedTopic.title
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '');
+    const publishedAt = new Date();
+    const articleTitle = `${selectedTopic.title} : point du ${formatFrenchDate(publishedAt)}`;
+    const slug = await buildUniqueSlug(supabase, slugify(articleTitle), publishedAt);
 
     const wordCount = content.split(/\s+/).length;
     const readingTime = Math.ceil(wordCount / 200);
@@ -306,7 +347,7 @@ Cite des sources. Utilise des chiffres precis. Contextualise historiquement.`;
     const { data: insertedArticle, error: insertError } = await supabase
       .from('news_articles')
       .insert({
-        title: selectedTopic.title,
+        title: articleTitle,
         content,
         excerpt,
         category: selectedTopic.category,
@@ -317,7 +358,7 @@ Cite des sources. Utilise des chiffres precis. Contextualise historiquement.`;
         source: 'TaxiAssur Redaction',
         source_url: `https://taxiassur.com/actualites/${slug}`,
         score: Math.floor(Math.random() * 15) + 85,
-        published_at: new Date().toISOString()
+        published_at: publishedAt.toISOString()
       })
       .select()
       .single();
@@ -336,7 +377,8 @@ Cite des sources. Utilise des chiffres precis. Contextualise historiquement.`;
           slug: insertedArticle.slug,
           image_url: insertedArticle.image_url,
           published_at: insertedArticle.published_at,
-          anti_ai_version: '2.0'
+          anti_ai_version: '2.0',
+          force
         }
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
