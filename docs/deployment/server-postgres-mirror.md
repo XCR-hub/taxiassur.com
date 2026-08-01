@@ -6,27 +6,32 @@ Le serveur `192.168.1.70` heberge un miroir PostgreSQL local de TaxiAssur. Ce mi
 
 Ce miroir n'est pas encore la base primaire du site public.
 
-## Etat verifie au 2026-07-31
+## Etat verifie au 2026-08-01
 
 - La synchronisation Supabase REST -> PostgreSQL local est operationnelle via la tache planifiee `TaxiAssur Supabase REST to PostgreSQL Sync`.
-- Dernier rapport serveur verifie : `ok`, 444 tables OK sur 444, 236504 lignes synchronisees.
-- Derniere sauvegarde PostgreSQL post-sync verifiee : `taxiassur_20260731-021931.dump` dans `F:\TaxiAssur\Backups\PostgreSQL`.
+- La tache est configuree en repetition toutes les 60 minutes (`PT1H`), avec `MultipleInstances IgnoreNew` pour eviter les chevauchements si une sync est encore en cours.
+- Dernier rapport serveur verifie : `ok`, 444 tables OK sur 444, 0 echec, 239174 lignes synchronisees, 0 ligne JSON invalide.
+- Derniere sauvegarde PostgreSQL post-sync verifiee : `taxiassur_20260801-124741.dump` dans `F:\TaxiAssur\Backups\PostgreSQL`.
+- Les compteurs publics PostgreSQL sont alignes avec D1 : 779 articles blog, 376 pages villes, 152 FAQ, 2981 actualites, 1433 pages GSC et 1943 requetes GSC.
 - Les scripts serveur corriges sont maintenant versionnes dans le depot :
   - `scripts/server-sync-supabase-rest-to-postgres.ps1` ;
   - `scripts/server-backup-taxiassur-postgres.ps1` ;
-  - `scripts/deploy-server-postgres-sync.ps1`.
+  - `scripts/deploy-server-postgres-sync.ps1` ;
+  - `scripts/verify-server-postgres-mirror.ps1`.
 - Le parser `.env` ne doit pas utiliser `ConvertFrom-StringData` pour ces fichiers, car les chemins Windows comme `F:\TaxiAssur\...` peuvent etre interpretes comme des sequences d echappement.
 
 Pour redeployer les scripts serveur avec les identifiants Windows deja stockes :
 
 ```powershell
-npm run server:deploy-postgres-sync -- -UseStoredCredentials
+npm run server:deploy-postgres-sync -- -UseStoredCredentials -SyncIntervalMinutes 60
 ```
+
+Le parametre par defaut est 60 minutes. Garder au moins 30 minutes pour eviter des cycles de sync trop rapproches.
 
 Pour redeployer puis lancer une sync complete immediatement :
 
 ```powershell
-npm run server:deploy-postgres-sync -- -UseStoredCredentials -RunNow
+npm run server:deploy-postgres-sync -- -UseStoredCredentials -SyncIntervalMinutes 60 -RunNow
 ```
 ## Etat connu au 2026-07-28
 
@@ -44,10 +49,10 @@ npm run server:deploy-postgres-sync -- -UseStoredCredentials -RunNow
 Depuis le poste local :
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File scripts\verify-server-postgres-mirror.ps1
+powershell -ExecutionPolicy Bypass -File scripts\verify-server-postgres-mirror.ps1 -UseStoredCredentials
 ```
 
-Le script demande les identifiants Windows du serveur via `Get-Credential`, ouvre une session WinRM, puis verifie :
+Le script utilise les identifiants Windows stockes avec `-UseStoredCredentials`, ou demande les identifiants via `Get-Credential` si le switch est absent. Il ouvre une session WinRM, puis verifie :
 
 - presence des dossiers `F:\TaxiAssur`, `PostgreSQL`, `Scripts`, `Secrets`, `Backups` ;
 - services PostgreSQL/TaxiAssur ;

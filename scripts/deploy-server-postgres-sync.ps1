@@ -2,7 +2,8 @@ param(
   [string]$Server = '192.168.1.70',
   [string]$DefaultUser = 'XCR\Administrateur',
   [switch]$UseStoredCredentials,
-  [switch]$RunNow
+  [switch]$RunNow,
+  [int]$SyncIntervalMinutes = 60
 )
 
 $ErrorActionPreference = 'Stop'
@@ -42,6 +43,7 @@ foreach ($file in @($localSyncScript, $localBackupScript)) {
 Write-Host 'Deploiement scripts PostgreSQL sync TaxiAssur'
 Write-Host "Serveur : $Server"
 Write-Host "Run now : $RunNow"
+Write-Host "Intervalle sync : $SyncIntervalMinutes minutes"
 Write-Host ''
 
 $session = $null
@@ -69,11 +71,32 @@ try {
     }
   }
 
+  Step 'Configuration tache sync planifiee'
+  Invoke-Command -Session $session -ScriptBlock {
+    param($TaskName, $RemoteSyncScript, $SyncIntervalMinutes)
+    if ($SyncIntervalMinutes -lt 30) { $SyncIntervalMinutes = 30 }
+    $nextRun = (Get-Date).AddMinutes($SyncIntervalMinutes)
+    $action = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument "-NoProfile -ExecutionPolicy Bypass -File `"$RemoteSyncScript`""
+    $trigger = New-ScheduledTaskTrigger -Once -At $nextRun -RepetitionInterval (New-TimeSpan -Minutes $SyncIntervalMinutes) -RepetitionDuration (New-TimeSpan -Days 3650)
+    $settings = New-ScheduledTaskSettingsSet -MultipleInstances IgnoreNew -StartWhenAvailable -ExecutionTimeLimit (New-TimeSpan -Hours 3)
+    $principal = New-ScheduledTaskPrincipal -UserId 'SYSTEM' -RunLevel Highest
+    Register-ScheduledTask -TaskName $TaskName -Action $action -Trigger $trigger -Settings $settings -Principal $principal -Description 'TaxiAssur Supabase REST to PostgreSQL mirror sync' -Force | Out-Null
+    $task = Get-ScheduledTask -TaskName $TaskName
+    $info = Get-ScheduledTaskInfo -TaskName $TaskName
+    [pscustomobject]@{
+      task = $task.TaskName
+      state = $task.State
+      nextRunTime = $info.NextRunTime
+      intervalMinutes = $SyncIntervalMinutes
+    }
+  } -ArgumentList $taskName,$remoteSyncScript,$SyncIntervalMinutes | ConvertTo-Json -Depth 5
+
   if ($RunNow) {
     Step 'Lancement tache sync'
     Invoke-Command -Session $session -ScriptBlock {
       param($TaskName)
-      Start-ScheduledTask -TaskName $TaskName
+      $task = Get-ScheduledTask -TaskName $TaskName
+      if ($task.State -ne 'Running') { Start-ScheduledTask -TaskName $TaskName }
       Start-Sleep -Seconds 2
       $task = Get-ScheduledTask -TaskName $TaskName
       $info = Get-ScheduledTaskInfo -TaskName $TaskName
