@@ -61,6 +61,12 @@ Cette verification echoue si :
 
 Les seuils peuvent etre ajustes par table avec `MIN_D1_<TABLE>_ROWS`, par exemple `MIN_D1_NEWS_ARTICLES_ROWS=1000`.
 
+Modes de verification :
+
+- `D1_VERIFY_MODE=auto` (defaut) interroge directement l API Cloudflare si les secrets sont presents, sinon utilise l endpoint public `/api/d1/health`.
+- `D1_VERIFY_MODE=direct` exige `CLOUDFLARE_ACCOUNT_ID` et `CLOUDFLARE_API_TOKEN` ou `CLOUDFLARE_D1_API_TOKEN`.
+- `D1_VERIFY_MODE=public` force le controle via `SITE_URL/api/d1/health`, utile sur un poste local sans secrets Cloudflare.
+
 Endpoint de sante :
 
 ```text
