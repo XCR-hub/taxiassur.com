@@ -3,6 +3,7 @@ function json(data, init = {}) {
     ...init,
     headers: {
       'cache-control': 'no-store',
+      'x-taxiassur-source': 'd1-cache',
       ...(init.headers || {}),
     },
   });

@@ -96,6 +96,12 @@ jobs:
           done
           npm run verify:production
 
+      - name: Verify self-hosted public source priority
+        if: steps.cloudflare.outputs.ready == 'true'
+        env:
+          SITE_URL: https://taxiassur.com
+        run: npm run verify:self-hosted-first
+
       - name: Verify production SEO signals
         if: steps.cloudflare.outputs.ready == 'true'
         env:

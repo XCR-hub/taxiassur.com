@@ -5,6 +5,7 @@ function json(data, init = {}) {
     ...init,
     headers: {
       'cache-control': 'public, max-age=60',
+      'x-taxiassur-source': 'd1-cache',
       ...(init.headers || {}),
     },
   });

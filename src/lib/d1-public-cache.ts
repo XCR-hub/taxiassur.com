@@ -1,4 +1,8 @@
+import { getEnv } from '@/lib/env';
+
 export type PublicContentTable = 'blog_posts' | 'city_pages' | 'faq_entries' | 'news_articles';
+
+type PublicSourceKey = 'postgres' | 'd1';
 
 interface PublicContentRow<T> {
   source_table: PublicContentTable;
@@ -34,12 +38,47 @@ interface PublicListOptions {
   sort?: 'published_at' | 'updated_at' | 'title';
 }
 
-const PUBLIC_CACHE_ENDPOINTS = [
-  '/api/postgres-public', // Primary: local PostgreSQL mirror exposed through the read API.
-  '/api/d1', // Fallback: Cloudflare D1 cache.
-];
+const SOURCE_ENDPOINTS: Record<PublicSourceKey, string> = {
+  postgres: '/api/postgres-public',
+  d1: '/api/d1',
+};
 
-async function fetchWithTimeout(url: string, timeoutMs = 3500): Promise<Response> {
+const DEFAULT_SOURCE_ORDER: PublicSourceKey[] = ['postgres', 'd1'];
+
+function normalizeSourceKey(value: string): PublicSourceKey | null {
+  const normalized = value.trim().toLowerCase();
+  if (['postgres', 'postgres-public', 'postgres_public', 'pg'].includes(normalized)) return 'postgres';
+  if (['d1', 'cloudflare-d1', 'cloudflare_d1'].includes(normalized)) return 'd1';
+  return null;
+}
+
+function getPublicSourceOrder(): PublicSourceKey[] {
+  const configured = getEnv('VITE_PUBLIC_CONTENT_SOURCE_ORDER') || '';
+  const seen = new Set<PublicSourceKey>();
+  const order = configured
+    .split(',')
+    .map(normalizeSourceKey)
+    .filter((source): source is PublicSourceKey => Boolean(source))
+    .filter((source) => {
+      if (seen.has(source)) return false;
+      seen.add(source);
+      return true;
+    });
+
+  return order.length > 0 ? order : DEFAULT_SOURCE_ORDER;
+}
+
+function getPublicCacheEndpoints(): string[] {
+  return getPublicSourceOrder().map((source) => SOURCE_ENDPOINTS[source]);
+}
+
+function getPublicFetchTimeoutMs(): number {
+  const configured = Number(getEnv('VITE_PUBLIC_CONTENT_TIMEOUT_MS') || '');
+  if (!Number.isFinite(configured) || configured <= 0) return 3500;
+  return Math.min(10000, Math.max(1200, Math.round(configured)));
+}
+
+async function fetchWithTimeout(url: string, timeoutMs = getPublicFetchTimeoutMs()): Promise<Response> {
   const controller = new AbortController();
   const timeout = window.setTimeout(() => controller.abort(), timeoutMs);
 
@@ -95,7 +134,7 @@ export async function getD1Content<T>(
 ): Promise<T | null> {
   const query = searchParams({ table, slug: lookup.slug, id: lookup.id });
 
-  for (const endpoint of PUBLIC_CACHE_ENDPOINTS) {
+  for (const endpoint of getPublicCacheEndpoints()) {
     const item = await getPublicContentFromEndpoint<T>(endpoint, query);
     if (item) return item;
   }
@@ -116,7 +155,7 @@ export async function listD1Content<T>(
     sort: options.sort,
   });
 
-  for (const endpoint of PUBLIC_CACHE_ENDPOINTS) {
+  for (const endpoint of getPublicCacheEndpoints()) {
     const items = await listPublicContentFromEndpoint<T>(endpoint, query);
     if (items.length > 0) return items;
   }
