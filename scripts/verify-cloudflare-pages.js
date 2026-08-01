@@ -23,6 +23,75 @@ function parseRules(content) {
     .filter(({ line }) => line && !line.startsWith('#'));
 }
 
+function parseHeaderBlocks(content) {
+  const blocks = [];
+  let current = null;
+
+  content.split(/\r?\n/).forEach((rawLine, index) => {
+    const line = rawLine.trim();
+    if (!line || line.startsWith('#')) return;
+
+    if (/^\s/.test(rawLine)) {
+      if (!current) {
+        fail(`${headersPath}:${index + 1} header appears before any path rule`);
+        return;
+      }
+      const separator = line.indexOf(':');
+      if (separator === -1) {
+        fail(`${headersPath}:${index + 1} invalid header syntax`);
+        return;
+      }
+      current.headers.push({
+        name: line.slice(0, separator).trim().toLowerCase(),
+        value: line.slice(separator + 1).trim(),
+        number: index + 1,
+      });
+      return;
+    }
+
+    current = { source: line, headers: [], number: index + 1 };
+    blocks.push(current);
+  });
+
+  return blocks;
+}
+
+function findHeaderValue(blocks, source, headerName) {
+  const block = blocks.find((candidate) => candidate.source === source);
+  if (!block) return '';
+  const header = block.headers.find((candidate) => candidate.name === headerName.toLowerCase());
+  return header?.value || '';
+}
+
+function requireHeaderIncludes(blocks, source, headerName, fragments) {
+  const value = findHeaderValue(blocks, source, headerName);
+  if (!value) {
+    fail(`${headersPath} missing ${headerName} on ${source}`);
+    return;
+  }
+
+  const normalizedValue = value.toLowerCase();
+  const missing = fragments.filter((fragment) => !normalizedValue.includes(fragment.toLowerCase()));
+  if (missing.length > 0) {
+    fail(`${headersPath} ${source} ${headerName} must include ${missing.join(', ')}; got ${value}`);
+  }
+}
+
+function verifyHeaders(content) {
+  const blocks = parseHeaderBlocks(content);
+
+  requireHeaderIncludes(blocks, '/assets/*', 'Cache-Control', ['public', 'max-age=31536000', 'immutable']);
+  for (const source of ['/backoffice', '/backoffice/*', '/admin', '/admin/*', '/auth/*', '/api/*', '/env-config.js', '/deploy-info.json']) {
+    requireHeaderIncludes(blocks, source, 'Cache-Control', ['no-store']);
+  }
+  for (const source of ['/sw.js', '/registerSW.js', '/workbox-*.js']) {
+    requireHeaderIncludes(blocks, source, 'Cache-Control', ['no-cache', 'no-store', 'must-revalidate']);
+  }
+  requireHeaderIncludes(blocks, '/manifest.webmanifest', 'Cache-Control', ['no-cache', 'must-revalidate']);
+
+  return blocks.length;
+}
+
 if (!existsSync(redirectsPath)) {
   fail('Missing Cloudflare _redirects file');
 } else {
@@ -73,8 +142,12 @@ if (!existsSync(redirectsPath)) {
 
 if (!existsSync(headersPath)) {
   fail('Missing Cloudflare _headers file');
-} else if (!process.exitCode) {
-  console.log(`Cloudflare headers OK: ${headersPath}`);
+} else {
+  const headers = readFileSync(headersPath, 'utf8');
+  const headerRuleCount = verifyHeaders(headers);
+  if (!process.exitCode) {
+    console.log(`Cloudflare headers OK: ${headersPath}, ${headerRuleCount} rules`);
+  }
 }
 if (existsSync('dist/api')) {
   fail('dist/api must not be deployed on static hosts; legacy PHP API files belong outside public/');

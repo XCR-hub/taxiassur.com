@@ -57,7 +57,7 @@ async function fetchJson(label, url, timeoutMs = 12000, headers = {}) {
     } catch {
       throw new Error(`${label} returned non-JSON response (${response.status})`);
     }
-    return { label, ok: response.ok, status: response.status, json };
+    return { label, ok: response.ok, status: response.status, json, headers: responseHeaders(response.headers) };
   } finally {
     clearTimeout(timeout);
   }
@@ -74,7 +74,7 @@ async function fetchText(label, url, timeoutMs = 12000) {
       signal: controller.signal,
     });
     const text = await response.text();
-    return { label, ok: response.ok, status: response.status, text };
+    return { label, ok: response.ok, status: response.status, text, headers: responseHeaders(response.headers) };
   } finally {
     clearTimeout(timeout);
   }
@@ -112,10 +112,34 @@ async function fetchStatus(label, url, timeoutMs = 12000) {
       headers: { 'cache-control': 'no-cache' },
       signal: controller.signal,
     });
-    return { label, ok: response.ok, status: response.status };
+    return { label, ok: response.ok, status: response.status, headers: responseHeaders(response.headers) };
   } finally {
     clearTimeout(timeout);
   }
+}
+
+function responseHeaders(headers) {
+  return Object.fromEntries(Array.from(headers.entries()).map(([name, value]) => [name.toLowerCase(), value]));
+}
+
+function responseHeader(fetchResult, name) {
+  return fetchResult?.headers?.[name.toLowerCase()] || '';
+}
+
+function cacheControlDetails(fetchResult, fragments) {
+  const cacheControl = responseHeader(fetchResult, 'cache-control');
+  const normalized = cacheControl.toLowerCase();
+  const missing = fragments.filter((fragment) => !normalized.includes(fragment.toLowerCase()));
+  return {
+    status: fetchResult?.status || null,
+    cache_control: cacheControl || null,
+    missing,
+  };
+}
+
+function addCacheControlCheck(checks, name, fetchResult, fragments) {
+  const details = cacheControlDetails(fetchResult, fragments);
+  addCheck(checks, name, fetchResult?.ok && details.missing.length === 0, details);
 }
 
 function d1Counts(d1Health) {
@@ -180,6 +204,13 @@ async function main() {
   const homeHtml = await fetchText('home-html', `${SITE_URL}/?ts=${Date.now()}`);
   const directGoogleTagLoads = findDirectGoogleTagLoads(homeHtml.text || '');
   const envConfig = await fetchText('env-config', `${SITE_URL}/env-config.js?ts=${Date.now()}`);
+  const [backofficePage, setPasswordPage, serviceWorker, registerSw, webManifest] = await Promise.all([
+    fetchStatus('backoffice-page', `${SITE_URL}/backoffice?ts=${Date.now()}`),
+    fetchStatus('set-password-page', `${SITE_URL}/auth/set-password?ts=${Date.now()}`),
+    fetchText('service-worker', `${SITE_URL}/sw.js?ts=${Date.now()}`),
+    fetchText('register-sw', `${SITE_URL}/registerSW.js?ts=${Date.now()}`),
+    fetchText('web-manifest', `${SITE_URL}/manifest.webmanifest?ts=${Date.now()}`),
+  ]);
   const runtimeConfigText = envConfig.text || '';
   const turnstileProvider = readRuntimeConfigValue(runtimeConfigText, 'VITE_CAPTCHA_PROVIDER');
   const turnstileSiteKey = readRuntimeConfigValue(runtimeConfigText, 'VITE_TURNSTILE_SITE_KEY');
@@ -233,6 +264,13 @@ async function main() {
   addCheck(checks, 'env-config is reachable', envConfig.ok && runtimeConfigText.includes('window.ENV_CONFIG'), {
     status: envConfig.status,
   });
+  addCacheControlCheck(checks, 'backoffice page is no-store in Cloudflare', backofficePage, ['no-store']);
+  addCacheControlCheck(checks, 'set-password page is no-store in Cloudflare', setPasswordPage, ['no-store']);
+  addCacheControlCheck(checks, 'env-config runtime file is no-store in Cloudflare', envConfig, ['no-store']);
+  addCacheControlCheck(checks, 'deploy-info runtime file is no-store in Cloudflare', deployInfo, ['no-store']);
+  addCacheControlCheck(checks, 'service worker is not sticky cached in Cloudflare', serviceWorker, ['no-cache', 'no-store', 'must-revalidate']);
+  addCacheControlCheck(checks, 'registerSW is not sticky cached in Cloudflare', registerSw, ['no-cache', 'no-store', 'must-revalidate']);
+  addCacheControlCheck(checks, 'web manifest is revalidated in Cloudflare', webManifest, ['no-cache', 'must-revalidate']);
   addCheck(checks, 'env-config exposes only browser-safe runtime values', runtimePublicConfigAudit.ok, {
     issue_count: runtimePublicConfigAudit.issues.length,
     issues: runtimePublicConfigAudit.issues,
