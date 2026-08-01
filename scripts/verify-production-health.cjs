@@ -151,6 +151,27 @@ function readRuntimeConfigValue(text, key) {
   const match = text.match(new RegExp(`${key}\\s*:\\s*['\"]([^'\"]+)['\"]`));
   return match?.[1] || '';
 }
+function inspectSupabasePublicKey(key) {
+  if (!key) return { ok: false, type: 'missing' };
+  if (key.startsWith('sb_secret_')) return { ok: false, type: 'sb_secret' };
+  if (key.startsWith('sb_publishable_')) return { ok: true, type: 'sb_publishable' };
+
+  const parts = key.split('.');
+  if (parts.length === 3) {
+    try {
+      const payload = JSON.parse(Buffer.from(parts[1].replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString('utf8'));
+      return {
+        ok: payload.role === 'anon',
+        type: 'jwt',
+        role: payload.role || null,
+      };
+    } catch (error) {
+      return { ok: false, type: 'jwt', error: error instanceof Error ? error.message : String(error) };
+    }
+  }
+
+  return { ok: false, type: 'unknown' };
+}
 async function main() {
   const checkedAt = new Date().toISOString();
   const checks = [];
@@ -211,10 +232,12 @@ async function main() {
     provider: turnstileProvider || null,
     has_site_key: Boolean(turnstileSiteKey),
   });
+  const supabasePublicKeyInfo = inspectSupabasePublicKey(supabaseAnonKey);
   addCheck(checks, 'Supabase runtime config is available for Edge Function probes', Boolean(supabaseUrl && supabaseAnonKey), {
     has_url: Boolean(supabaseUrl),
     has_anon_key: Boolean(supabaseAnonKey),
   });
+  addCheck(checks, 'Supabase runtime public key is not server/service_role', supabasePublicKeyInfo.ok, supabasePublicKeyInfo);
   addCheck(checks, 'Backoffice admin_users REST bootstrap accepts runtime Supabase key', adminUsersProbe?.ok && Array.isArray(adminUsersProbe?.json), {
     status: adminUsersProbe?.status || null,
     rows: Array.isArray(adminUsersProbe?.json) ? adminUsersProbe.json.length : null,

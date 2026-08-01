@@ -59,6 +59,27 @@ function readRuntimeConfigValue(text, key) {
   return match?.[1] || '';
 }
 
+function inspectSupabasePublicKey(key) {
+  if (!key) return { ok: false, type: 'missing' };
+  if (key.startsWith('sb_secret_')) return { ok: false, type: 'sb_secret' };
+  if (key.startsWith('sb_publishable_')) return { ok: true, type: 'sb_publishable' };
+
+  const parts = key.split('.');
+  if (parts.length === 3) {
+    try {
+      const payload = JSON.parse(Buffer.from(parts[1].replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString('utf8'));
+      return {
+        ok: payload.role === 'anon',
+        type: 'jwt',
+        role: payload.role || null,
+      };
+    } catch (error) {
+      return { ok: false, type: 'jwt', error: error instanceof Error ? error.message : String(error) };
+    }
+  }
+
+  return { ok: false, type: 'unknown' };
+}
 function verifySourceGuards() {
   const router = read('src/router.tsx');
   const login = read('src/components/AdminLogin.tsx');
@@ -94,6 +115,9 @@ function verifySourceGuards() {
   addCheck('production health probes admin_users REST bootstrap', productionHealth.includes('admin-users-runtime-rest-probe'), {
     file: 'scripts/verify-production-health.cjs',
   });
+  addCheck('production health rejects server/service_role runtime Supabase keys', productionHealth.includes('Supabase runtime public key is not server/service_role'), {
+    file: 'scripts/verify-production-health.cjs',
+  });
 }
 
 async function verifyLiveGuards() {
@@ -114,10 +138,12 @@ async function verifyLiveGuards() {
 
   const supabaseUrl = readRuntimeConfigValue(envConfig.text || '', 'VITE_SUPABASE_URL').replace(/\/$/, '');
   const supabaseAnonKey = readRuntimeConfigValue(envConfig.text || '', 'VITE_SUPABASE_ANON_KEY');
+  const supabasePublicKeyInfo = inspectSupabasePublicKey(supabaseAnonKey);
   addCheck('runtime Supabase public config exists for backoffice auth', Boolean(supabaseUrl && supabaseAnonKey), {
     has_url: Boolean(supabaseUrl),
     has_anon_key: Boolean(supabaseAnonKey),
   });
+  addCheck('runtime Supabase public key is not server/service_role', supabasePublicKeyInfo.ok, supabasePublicKeyInfo);
 
   if (supabaseUrl && supabaseAnonKey) {
     const adminUsers = await fetchJson(
