@@ -13,6 +13,7 @@ const PUBLIC_SEO_RUNTIME_FILES = [
   'src/pages/NewsArticle.tsx',
   'src/pages/CityPage.tsx',
   'src/components/NewsSection.tsx',
+  'src/hooks/useRealStats.ts',
 ];
 const PUBLIC_SEO_PAGE_FILES = PUBLIC_SEO_RUNTIME_FILES.filter((file) => file !== 'src/lib/content.ts');
 const PUBLIC_SEO_TABLES = ['blog_posts', 'city_pages', 'faq_entries', 'news_articles'];
@@ -67,6 +68,7 @@ function verifyLocalSourceOrder() {
   addCheck('public helper keeps D1 fallback endpoint', source.includes("d1: '/api/d1'"), { file: helperPath });
   addCheck('default public source order is PostgreSQL then D1', /DEFAULT_SOURCE_ORDER:\s*PublicSourceKey\[\]\s*=\s*\['postgres',\s*'d1'\]/.test(source), { file: helperPath });
   addCheck('runtime public source order is configurable', source.includes('VITE_PUBLIC_CONTENT_SOURCE_ORDER'), { file: helperPath });
+  addCheck('public helper exposes aggregate health counts', source.includes('getPublicContentCounts') && source.includes('/health?stats=') && source.includes('normalizeHealthCounts'), { file: helperPath });
   addCheck('public fetch timeout is configurable and bounded', source.includes('VITE_PUBLIC_CONTENT_TIMEOUT_MS') && source.includes('Math.min(10000'), { file: helperPath });
 }
 
@@ -78,7 +80,7 @@ function verifyPublicSeoRuntimeNoSupabaseFallback() {
   for (const relativeFile of PUBLIC_SEO_RUNTIME_FILES) {
     const filePath = path.resolve(relativeFile);
     const fileSource = readFileSync(filePath, 'utf8');
-    const usesAutonomousHelper = fileSource.includes('getD1Content') || fileSource.includes('listD1Content');
+    const usesAutonomousHelper = fileSource.includes('getD1Content') || fileSource.includes('listD1Content') || fileSource.includes('getPublicContentCounts');
 
     if (!usesAutonomousHelper) {
       missingHelperFindings.push({ file: relativeFile });
@@ -111,6 +113,12 @@ function verifyPublicSeoRuntimeNoSupabaseFallback() {
   addCheck('public SEO pages do not import Supabase client directly', directClientImports.length === 0, {
     files: PUBLIC_SEO_PAGE_FILES,
     findings: directClientImports,
+  });
+
+  const statsHookPath = path.resolve('src/hooks/useRealStats.ts');
+  const statsHookSource = readFileSync(statsHookPath, 'utf8');
+  addCheck('public stats hook uses autonomous counts', statsHookSource.includes('getPublicContentCounts') && !statsHookSource.includes('@/lib/supabase') && !statsHookSource.includes("from('blog_posts'") && !statsHookSource.includes("from('faq_entries'") && !statsHookSource.includes("from('city_pages'"), {
+    file: statsHookPath,
   });
 }
 

@@ -38,6 +38,14 @@ interface PublicListOptions {
   sort?: 'published_at' | 'updated_at' | 'title';
 }
 
+export interface PublicContentCounts {
+  blog_posts: number;
+  city_pages: number;
+  faq_entries: number;
+  news_articles: number;
+  gsc_pages?: number;
+  gsc_queries?: number;
+}
 const SOURCE_ENDPOINTS: Record<PublicSourceKey, string> = {
   postgres: '/api/postgres-public',
   d1: '/api/d1',
@@ -128,6 +136,66 @@ async function listPublicContentFromEndpoint<T>(endpoint: string, query: string)
   }
 }
 
+function numberFromUnknown(value: unknown): number {
+  const numeric = Number(value || 0);
+  return Number.isFinite(numeric) && numeric > 0 ? numeric : 0;
+}
+
+function countsFromRows(rows: unknown): Partial<PublicContentCounts> {
+  if (!Array.isArray(rows)) return {};
+
+  return rows.reduce<Partial<PublicContentCounts>>((acc, row) => {
+    if (!row || typeof row !== 'object') return acc;
+    const sourceTable = String((row as { source_table?: unknown }).source_table || '') as keyof PublicContentCounts;
+    if (!sourceTable) return acc;
+    acc[sourceTable] = numberFromUnknown((row as { rows?: unknown }).rows);
+    return acc;
+  }, {});
+}
+
+function normalizeHealthCounts(data: unknown): PublicContentCounts | null {
+  if (!data || typeof data !== 'object') return null;
+  const health = data as {
+    tables?: Record<string, unknown>;
+    counts?: {
+      public_content_cache?: unknown;
+      gsc_metrics_cache?: unknown;
+    };
+  };
+
+  const counts: Partial<PublicContentCounts> = {};
+
+  if (health.tables && typeof health.tables === 'object' && !Array.isArray(health.tables)) {
+    for (const key of ['blog_posts', 'city_pages', 'faq_entries', 'news_articles', 'gsc_pages', 'gsc_queries'] as Array<keyof PublicContentCounts>) {
+      counts[key] = numberFromUnknown(health.tables[key]);
+    }
+  }
+
+  Object.assign(counts, countsFromRows(health.counts?.public_content_cache));
+  Object.assign(counts, countsFromRows(health.counts?.gsc_metrics_cache));
+
+  if (!counts.blog_posts && !counts.city_pages && !counts.faq_entries && !counts.news_articles) return null;
+
+  return {
+    blog_posts: counts.blog_posts || 0,
+    city_pages: counts.city_pages || 0,
+    faq_entries: counts.faq_entries || 0,
+    news_articles: counts.news_articles || 0,
+    gsc_pages: counts.gsc_pages || 0,
+    gsc_queries: counts.gsc_queries || 0,
+  };
+}
+
+async function getPublicCountsFromEndpoint(endpoint: string): Promise<PublicContentCounts | null> {
+  try {
+    const response = await fetchWithTimeout(`${endpoint}/health?stats=${Date.now()}`);
+    if (!response.ok) return null;
+    return normalizeHealthCounts(await response.json());
+  } catch {
+    return null;
+  }
+}
+
 export async function getD1Content<T>(
   table: PublicContentTable,
   lookup: { slug?: string; id?: string },
@@ -161,4 +229,13 @@ export async function listD1Content<T>(
   }
 
   return [];
+}
+
+export async function getPublicContentCounts(): Promise<PublicContentCounts | null> {
+  for (const endpoint of getPublicCacheEndpoints()) {
+    const counts = await getPublicCountsFromEndpoint(endpoint);
+    if (counts) return counts;
+  }
+
+  return null;
 }
