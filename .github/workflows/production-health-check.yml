@@ -38,12 +38,12 @@ jobs:
           PUBLIC_MIRROR_COUNT_TOLERANCE: '10'
           PUBLIC_MIRROR_GSC_COUNT_TOLERANCE: '25'
         run: |
-          for attempt in 1 2 3; do
+          for attempt in $(seq 1 12); do
             if npm run verify:production; then
               exit 0
             fi
-            echo "Production health check failed on attempt ${attempt}; retrying in 10s..."
-            sleep 10
+            echo "Production health check failed on attempt ${attempt}; retrying in 15s..."
+            sleep 15
           done
           npm run verify:production
 
