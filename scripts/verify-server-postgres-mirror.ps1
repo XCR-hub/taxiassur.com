@@ -1,6 +1,7 @@
 param(
   [string]$Server = '192.168.1.70',
   [string]$DefaultUser = 'XCR\Administrateur',
+  [switch]$UseStoredCredentials,
   [string]$ReportPath = "$env:USERPROFILE\taxiassur-server-mirror-status-192-168-1-70.json"
 )
 
@@ -8,6 +9,10 @@ $ErrorActionPreference = 'Stop'
 
 function Step($Message) {
   Write-Host "[$(Get-Date -Format HH:mm:ss)] $Message"
+}
+
+function Read-AdminCredential([string]$UserName) {
+  Get-Credential -UserName $UserName -Message "Identifiants admin pour $Server"
 }
 
 function Save-Report($Report) {
@@ -19,11 +24,13 @@ Write-Host "Serveur : $Server"
 Write-Host 'Aucun mot de passe ne sera affiche ni sauvegarde.'
 Write-Host ''
 
-$credential = Get-Credential -UserName $DefaultUser -Message "Identifiants admin pour $Server"
+$credential = if ($UseStoredCredentials) { $null } else { Read-AdminCredential $DefaultUser }
 
 try {
   Step 'Test WinRM'
-  $session = New-PSSession -ComputerName $Server -Credential $credential
+  $sessionParams = @{ ComputerName = $Server; Authentication = 'Negotiate' }
+  if ($credential) { $sessionParams.Credential = $credential }
+  $session = New-PSSession @sessionParams
   Step 'OK - Session WinRM ouverte'
 
   $remote = Invoke-Command -Session $session -ScriptBlock {
@@ -79,8 +86,8 @@ try {
     $drives = Get-PSDrive -PSProvider FileSystem | Select-Object Name,Used,Free,Root
 
     $pgBin = @(
-      Join-Path $pgRoot 'bin\psql.exe',
-      Join-Path $pgRoot 'bin\pg_isready.exe'
+      (Join-Path $pgRoot 'bin\psql.exe'),
+      (Join-Path $pgRoot 'bin\pg_isready.exe')
     ) | ForEach-Object {
       [pscustomobject]@{ Path = $_; Exists = Test-Path -LiteralPath $_ }
     }
