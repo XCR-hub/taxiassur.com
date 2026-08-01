@@ -14,7 +14,10 @@ const SUPABASE_URL = process.env.VITE_SUPABASE_URL;
 const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY;
 const SITE_URL = 'https://taxiassur.com';
 const HOST = new URL(SITE_URL).host;
-const SITEMAP_PATH = path.join(__dirname, '../public/sitemap.xml');
+const SITEMAP_CANDIDATES = [
+  path.join(__dirname, '../dist/sitemap.xml'),
+  path.join(__dirname, '../public/sitemap.xml'),
+];
 const INDEXNOW_KEY_PATH = path.join(__dirname, '../public/indexnow-key.txt');
 const DRY_RUN = process.argv.includes('--dry-run');
 const BATCH_SIZE = 1000;
@@ -32,12 +35,36 @@ function unescapeXml(value) {
     .replace(/&apos;/g, "'");
 }
 
-function readUrlsFromSitemap() {
-  if (!fs.existsSync(SITEMAP_PATH)) {
-    throw new Error(`Sitemap not found: ${SITEMAP_PATH}`);
+function resolveSitemapPath() {
+  const sitemapArgIndex = process.argv.findIndex(arg => arg === '--sitemap');
+  const sitemapArgValue = process.argv.find(arg => arg.startsWith('--sitemap='));
+  const configuredPath = sitemapArgValue
+    ? sitemapArgValue.slice('--sitemap='.length)
+    : sitemapArgIndex >= 0
+      ? process.argv[sitemapArgIndex + 1]
+      : null;
+
+  if (configuredPath && !configuredPath.startsWith('--')) {
+    return path.resolve(process.cwd(), configuredPath);
   }
 
-  const xml = fs.readFileSync(SITEMAP_PATH, 'utf8');
+  const existingPath = SITEMAP_CANDIDATES.find(candidatePath => fs.existsSync(candidatePath));
+  if (!existingPath) {
+    throw new Error(`Sitemap not found. Checked: ${SITEMAP_CANDIDATES.join(', ')}`);
+  }
+
+  return existingPath;
+}
+
+function readUrlsFromSitemap() {
+  const sitemapPath = resolveSitemapPath();
+  if (!fs.existsSync(sitemapPath)) {
+    throw new Error(`Sitemap not found: ${sitemapPath}`);
+  }
+
+  console.log(`Reading sitemap: ${path.relative(path.resolve(__dirname, '..'), sitemapPath)}`);
+
+  const xml = fs.readFileSync(sitemapPath, 'utf8');
   const urls = [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)]
     .map(match => unescapeXml(match[1].trim()))
     .filter(url => url.startsWith(`${SITE_URL}/`) || url === SITE_URL)
@@ -68,6 +95,11 @@ function ensureIndexNowKey(key) {
     : '';
 
   if (existingKey !== key) {
+    if (DRY_RUN) {
+      console.log(`Dry run enabled: IndexNow key would be written to ${INDEXNOW_KEY_PATH}`);
+      return;
+    }
+
     fs.writeFileSync(INDEXNOW_KEY_PATH, `${key}\n`, 'utf8');
     console.log(`IndexNow key written to ${INDEXNOW_KEY_PATH}`);
   } else {

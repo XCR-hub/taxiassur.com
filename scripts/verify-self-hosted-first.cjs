@@ -134,8 +134,10 @@ function verifyPublicSeoRuntimeNoSupabaseFallback() {
 function verifyAutonomousSitemapGeneration() {
   const generatorPath = path.resolve('scripts/generate-clean-sitemap.js');
   const optionalPath = path.resolve('scripts/generate-sitemap-optional.js');
+  const indexNowPath = path.resolve('scripts/submit-indexnow.js');
   const generatorSource = readFileSync(generatorPath, 'utf8');
   const optionalSource = readFileSync(optionalPath, 'utf8');
+  const indexNowSource = readFileSync(indexNowPath, 'utf8');
   const packagePath = path.resolve('package.json');
   const postgresListPath = path.resolve('functions/api/postgres-public/list.js');
   const d1ListPath = path.resolve('functions/api/d1/list.js');
@@ -159,6 +161,9 @@ function verifyAutonomousSitemapGeneration() {
   addCheck('production build writes autonomous sitemap to dist after Vite build', buildScript.includes(sitemapBuildStep) && buildScript.indexOf('vite build') >= 0 && buildScript.indexOf('vite build') < buildScript.indexOf(sitemapBuildStep), {
     file: packagePath,
     build: buildScript,
+  });
+  addCheck('IndexNow submits the built sitemap before baseline fallback', indexNowSource.includes('../dist/sitemap.xml') && indexNowSource.includes('../public/sitemap.xml') && indexNowSource.indexOf('../dist/sitemap.xml') < indexNowSource.indexOf('../public/sitemap.xml'), {
+    file: indexNowPath,
   });
   addCheck('public PostgreSQL list endpoint supports pagination', postgresListSource.includes("url.searchParams.get('offset')") && postgresListSource.includes('nextOffset') && postgresListSource.includes('limit,') && postgresListSource.includes('offset,'), {
     file: postgresListPath,
