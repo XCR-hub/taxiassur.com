@@ -19,6 +19,33 @@ const SOURCE_ENDPOINTS = {
   d1: '/api/d1',
 };
 
+function parseArgs(argv) {
+  const parsed = {};
+  for (let index = 0; index < argv.length; index += 1) {
+    const arg = argv[index];
+    if (arg === '--out') {
+      parsed.out = argv[index + 1];
+      index += 1;
+    } else if (arg.startsWith('--out=')) {
+      parsed.out = arg.slice('--out='.length);
+    } else if (arg === '--baseline') {
+      parsed.baseline = argv[index + 1];
+      index += 1;
+    } else if (arg.startsWith('--baseline=')) {
+      parsed.baseline = arg.slice('--baseline='.length);
+    }
+  }
+  return parsed;
+}
+
+function resolveProjectPath(value, fallback) {
+  return path.resolve(rootDir, value || fallback);
+}
+
+const cliArgs = parseArgs(process.argv.slice(2));
+const BASELINE_SITEMAP_PATH = resolveProjectPath(cliArgs.baseline, path.join('public', 'sitemap.xml'));
+const OUTPUT_SITEMAP_PATH = resolveProjectPath(cliArgs.out, path.join('public', 'sitemap.xml'));
+
 const staticPages = [
   { url: '/', priority: '1.0', changefreq: 'daily' },
   { url: '/assurance-taxi', priority: '0.9', changefreq: 'weekly' },
@@ -240,9 +267,8 @@ async function fetchPublicRows(table, options = {}) {
 }
 
 function readExistingLocalSitemap() {
-  const sitemapPath = path.join(rootDir, 'public', 'sitemap.xml');
-  if (!fs.existsSync(sitemapPath)) return [];
-  return parseExistingSitemap(fs.readFileSync(sitemapPath, 'utf8'));
+  if (!fs.existsSync(BASELINE_SITEMAP_PATH)) return [];
+  return parseExistingSitemap(fs.readFileSync(BASELINE_SITEMAP_PATH, 'utf8'));
 }
 
 async function generateSitemap() {
@@ -308,10 +334,10 @@ async function generateSitemap() {
 
   xml += '</urlset>\n';
 
-  const sitemapPath = path.join(rootDir, 'public', 'sitemap.xml');
-  fs.writeFileSync(sitemapPath, xml, 'utf8');
+  fs.mkdirSync(path.dirname(OUTPUT_SITEMAP_PATH), { recursive: true });
+  fs.writeFileSync(OUTPUT_SITEMAP_PATH, xml, 'utf8');
 
-  console.log(`Sitemap generated: ${sitemapPath}`);
+  console.log(`Sitemap generated: ${OUTPUT_SITEMAP_PATH}`);
   console.log(`Total URLs: ${urls.length}`);
   console.log(`Existing sitemap URLs preserved: ${existingUrls.length}`);
   console.log(`Static pages: ${staticPages.length}`);

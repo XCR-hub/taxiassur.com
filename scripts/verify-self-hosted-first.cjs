@@ -119,6 +119,9 @@ function verifyAutonomousSitemapGeneration() {
   const optionalPath = path.resolve('scripts/generate-sitemap-optional.js');
   const generatorSource = readFileSync(generatorPath, 'utf8');
   const optionalSource = readFileSync(optionalPath, 'utf8');
+  const packagePath = path.resolve('package.json');
+  const packageJson = JSON.parse(readFileSync(packagePath, 'utf8'));
+  const buildScript = packageJson.scripts?.build || '';
 
   addCheck('sitemap generator does not import Supabase client', !generatorSource.includes('@supabase/supabase-js') && !generatorSource.includes('createClient('), {
     file: generatorPath,
@@ -128,6 +131,11 @@ function verifyAutonomousSitemapGeneration() {
   });
   addCheck('optional sitemap build is not gated by Supabase environment', !optionalSource.includes('VITE_SUPABASE_URL') && !optionalSource.includes('SUPABASE'), {
     file: optionalPath,
+  });
+  const sitemapBuildStep = 'generate-sitemap-optional.js --out dist/sitemap.xml';
+  addCheck('production build writes autonomous sitemap to dist after Vite build', buildScript.includes(sitemapBuildStep) && buildScript.indexOf('vite build') >= 0 && buildScript.indexOf('vite build') < buildScript.indexOf(sitemapBuildStep), {
+    file: packagePath,
+    build: buildScript,
   });
 }
 function rowsFromHealth(json) {

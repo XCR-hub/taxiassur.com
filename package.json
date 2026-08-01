@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "node scripts/generate-sitemap-optional.js && vite build && npm run copy:api && node scripts/generate-deploy-info.js && npm run verify:build",
+    "build": "vite build && npm run copy:api && node scripts/generate-sitemap-optional.js --out dist/sitemap.xml && node scripts/generate-deploy-info.js && npm run verify:build",
     "copy:api": "node scripts/copy-static-build-files.js",
     "verify:cloudflare": "node scripts/verify-cloudflare-pages.js",
     "build:cloudflare": "npm run build && npm run verify:cloudflare",

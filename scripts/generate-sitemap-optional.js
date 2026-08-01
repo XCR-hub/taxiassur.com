@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 const __filename = fileURLToPath(import.meta.url);
 const rootDir = dirname(dirname(__filename));
 
-const result = spawnSync(process.execPath, ['scripts/generate-clean-sitemap.js'], {
+const result = spawnSync(process.execPath, ['scripts/generate-clean-sitemap.js', ...process.argv.slice(2)], {
   cwd: rootDir,
   stdio: 'inherit',
   shell: false,
