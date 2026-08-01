@@ -248,7 +248,7 @@ async function main() {
     )
     : null;
 
-  addCheck(checks, 'site page /assurance-taxi returns 200', mainPage.ok && mainPage.status === 200, mainPage);
+  addCheck(checks, 'site page /assurance-taxi returns 200', mainPage.ok && mainPage.status === 200, { status: mainPage.status });
   addCheck(checks, 'public HTML does not load Google tags before consent', homeHtml.ok && directGoogleTagLoads.length === 0, {
     status: homeHtml.status,
     matches: directGoogleTagLoads,
