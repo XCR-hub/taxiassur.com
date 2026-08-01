@@ -83,6 +83,55 @@ function rowsFromPostgresHealth(json) {
   return out;
 }
 
+function parseIsoDate(value) {
+  if (!value) return null;
+  const date = new Date(value);
+  return Number.isFinite(date.getTime()) ? date : null;
+}
+
+function ageHours(date) {
+  return (Date.now() - date.getTime()) / 3600000;
+}
+
+function d1FreshnessFromHealth(json) {
+  const metadata = json?.metadata || {};
+  const generatedAt = parseIsoDate(metadata.generated_at);
+  return {
+    available: metadata.available === true,
+    generated_at: metadata.generated_at || null,
+    age_hours: generatedAt ? Number(ageHours(generatedAt).toFixed(2)) : null,
+    imported_rows: metadata.imported_rows ?? null,
+  };
+}
+
+function postgresFreshnessFromHealth(json) {
+  const details = {};
+  const tableDetails = Array.isArray(json?.table_details) ? json.table_details : [];
+  for (const row of tableDetails) {
+    if (!row?.source_table) continue;
+    const importedAt = row.imported_at || null;
+    const importedDate = parseIsoDate(importedAt);
+    details[row.source_table] = {
+      imported_at: importedAt,
+      age_hours: importedDate ? Number(ageHours(importedDate).toFixed(2)) : null,
+    };
+  }
+  return details;
+}
+
+function freshnessForComparison(table, d1Freshness, postgresFreshness) {
+  const d1GeneratedAt = parseIsoDate(d1Freshness.generated_at);
+  const postgresImportedAt = parseIsoDate(postgresFreshness[table]?.imported_at);
+  const sourceLagMinutes = d1GeneratedAt && postgresImportedAt
+    ? Math.round((d1GeneratedAt.getTime() - postgresImportedAt.getTime()) / 60000)
+    : null;
+  return {
+    d1_generated_at: d1Freshness.generated_at,
+    postgres_imported_at: postgresFreshness[table]?.imported_at || null,
+    source_lag_minutes: sourceLagMinutes,
+  };
+}
+
 function itemPayload(item) {
   return item?.payload && typeof item.payload === 'object' ? item.payload : item || {};
 }
@@ -166,6 +215,8 @@ async function main() {
 
   const d1Counts = rowsFromD1Health(d1Health.json);
   const pgCounts = rowsFromPostgresHealth(postgresHealth.json);
+  const d1Freshness = d1FreshnessFromHealth(d1Health.json);
+  const postgresFreshness = postgresFreshnessFromHealth(postgresHealth.json);
   const countComparisons = Object.keys(REQUIRED_COUNTS).map((table) => {
     const d1Rows = d1Counts[table] || 0;
     const postgresRows = pgCounts[table] || 0;
@@ -182,6 +233,7 @@ async function main() {
       equal: d1Rows === postgresRows,
       within_tolerance: difference <= tolerance,
       enough: d1Rows >= REQUIRED_COUNTS[table] && postgresRows >= REQUIRED_COUNTS[table],
+      ...freshnessForComparison(table, d1Freshness, postgresFreshness),
     };
   });
 
@@ -189,7 +241,13 @@ async function main() {
     addCheck(`${row.table} public volume is sufficient`, row.enough, row);
     addCheck(`${row.table} D1/PostgreSQL counts are within tolerance`, row.within_tolerance, row);
     if (!row.equal && row.within_tolerance) {
-      addWarning(`${row.table} D1/PostgreSQL counts differ within tolerance`, row);
+      const postgresBehindD1 = row.d1 > row.postgres && row.source_lag_minutes !== null && row.source_lag_minutes > 0;
+      addWarning(
+        postgresBehindD1
+          ? `${row.table} PostgreSQL mirror is behind D1 within tolerance`
+          : `${row.table} D1/PostgreSQL counts differ within tolerance`,
+        row,
+      );
     }
   }
 
@@ -232,6 +290,10 @@ async function main() {
       d1: d1Counts,
       postgres: pgCounts,
       comparisons: countComparisons,
+    },
+    freshness: {
+      d1: d1Freshness,
+      postgres: postgresFreshness,
     },
     warnings,
     checks,

@@ -66,6 +66,8 @@ Il verifie maintenant :
 
 Options utiles : `-MaxSyncAgeHours`, `-ExpectedSyncIntervalMinutes`, `-MaxRunningSyncHours`, `-MinDataDriveFreeGB`, `-MinPostgresBackupBytes`, `-PrintRawReport`.
 
+Le controle public `npm run verify:publications` affiche aussi la fraicheur D1 (`generated_at`) et la derniere importation PostgreSQL (`imported_at`) par table. Si D1 a quelques lignes d'avance mais que l'ecart reste dans la tolerance, le rapport indique explicitement que le miroir PostgreSQL est en retard sur D1 et donne le decalage en minutes.
+
 Le rapport local est ecrit ici :
 
 ```text
