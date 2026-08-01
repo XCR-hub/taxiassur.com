@@ -82,14 +82,30 @@ function verifyWorkflows() {
   });
 
   const forbidden = [];
+  const deprecatedActions = [];
+  const deprecatedActionRules = [
+    { pattern: /actions\/checkout@v[1-4]\b/i, replacement: 'actions/checkout@v7' },
+    { pattern: /actions\/setup-node@v[1-4]\b/i, replacement: 'actions/setup-node@v7' },
+    { pattern: /cloudflare\/wrangler-action@v[1-3]\b/i, replacement: 'cloudflare/wrangler-action@v4' },
+  ];
+
   for (const file of files) {
     const source = read(file);
     if (/vercel|netlify-cli|NETLIFY_|deploy_netlify/i.test(source)) {
       forbidden.push(file);
     }
+
+    source.split(/\r?\n/).forEach((line, index) => {
+      for (const rule of deprecatedActionRules) {
+        if (rule.pattern.test(line)) {
+          deprecatedActions.push({ file, line: index + 1, replacement: rule.replacement });
+        }
+      }
+    });
   }
 
   addCheck('GitHub workflows contain no Vercel/Netlify deploy path', forbidden.length === 0, { forbidden });
+  addCheck('GitHub workflows avoid deprecated Node 20 action runtimes', deprecatedActions.length === 0, { deprecatedActions });
 }
 
 function main() {
