@@ -123,6 +123,20 @@ const requiredChecks = [
     patterns: ['cleanText', 'Lead incomplet refuse', 'Adresse email invalide', 'normalizedEmail'],
   },
   {
+    label: 'database migration skips empty lead notifications',
+    file: 'supabase/migrations/20260728184500_skip_empty_lead_notifications.sql',
+    patterns: [
+      'CREATE OR REPLACE FUNCTION public.is_real_contact_text',
+      "'undefined'",
+      'CREATE OR REPLACE FUNCTION public.send_lead_email_via_brevo',
+      'trg_queue_new_lead_emails',
+      'CREATE OR REPLACE FUNCTION public.enqueue_sms_for_lead_notification',
+      'Skipped invalid empty lead notification',
+      'Skipped invalid empty lead email',
+      'Skipped invalid empty lead SMS',
+    ],
+  },
+  {
     label: 'Turnstile frontend helper calls server verification',
     file: 'src/lib/turnstile.ts',
     patterns: ['verify-turnstile', 'getTurnstileSiteKey', 'readPublicEnv', 'ENV_CONFIG'],
