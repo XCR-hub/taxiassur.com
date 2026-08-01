@@ -7,8 +7,12 @@ const { collectPublicRuntimeConfigIssues, readRuntimeConfigValue } = require('./
 const SITE_URL = (process.env.SITE_URL || 'https://taxiassur.com').replace(/\/$/, '');
 const SKIP_LIVE = process.env.SKIP_LIVE_BACKOFFICE_AUTH_CHECK === '1';
 const REPORT_PATH = process.env.BACKOFFICE_AUTH_REPORT || '';
-const configuredMaxLiveJsAssets = Number.parseInt(process.env.BACKOFFICE_AUTH_MAX_LIVE_JS_ASSETS || '80', 10);
-const MAX_LIVE_JS_ASSETS = Number.isFinite(configuredMaxLiveJsAssets) && configuredMaxLiveJsAssets > 0 ? configuredMaxLiveJsAssets : 80;
+const configuredMaxLiveJsAssets = Number.parseInt(process.env.BACKOFFICE_AUTH_MAX_LIVE_JS_ASSETS || '120', 10);
+const MAX_LIVE_JS_ASSETS = Number.isFinite(configuredMaxLiveJsAssets) && configuredMaxLiveJsAssets > 0 ? configuredMaxLiveJsAssets : 120;
+const configuredLiveBundleAttempts = Number.parseInt(process.env.BACKOFFICE_AUTH_LIVE_BUNDLE_ATTEMPTS || '5', 10);
+const LIVE_BUNDLE_ATTEMPTS = Number.isFinite(configuredLiveBundleAttempts) && configuredLiveBundleAttempts > 0 ? Math.min(configuredLiveBundleAttempts, 8) : 5;
+const configuredLiveBundleRetryDelayMs = Number.parseInt(process.env.BACKOFFICE_AUTH_LIVE_BUNDLE_RETRY_DELAY_MS || '5000', 10);
+const LIVE_BUNDLE_RETRY_DELAY_MS = Number.isFinite(configuredLiveBundleRetryDelayMs) && configuredLiveBundleRetryDelayMs >= 0 ? Math.min(configuredLiveBundleRetryDelayMs, 15000) : 5000;
 const REQUIRED_ADMIN_EMAILS = (process.env.REQUIRED_BACKOFFICE_ADMIN_EMAILS || 'master@taxiassur.com')
   .split(',')
   .map((email) => email.trim().toLowerCase())
@@ -45,13 +49,23 @@ function summarizeMarkers(text, markers) {
   };
 }
 
+function summarizeBackofficeBundle(bundle) {
+  const text = bundle.text || '';
+  return {
+    reset: summarizeMarkers(text, PASSWORD_RESET_MARKERS),
+    sidebar: summarizeMarkers(text, CRM_SIDEBAR_MARKERS),
+  };
+}
+
 function addBackofficeBundleChecks(prefix, bundle) {
-  const reset = summarizeMarkers(bundle.text || '', PASSWORD_RESET_MARKERS);
-  const sidebar = summarizeMarkers(bundle.text || '', CRM_SIDEBAR_MARKERS);
+  const { reset, sidebar } = summarizeBackofficeBundle(bundle);
   const baseDetails = {
     asset_count: bundle.asset_count,
     bytes: bundle.bytes,
     fetch_failures: bundle.fetch_failures || [],
+    attempts: bundle.attempts,
+    truncated: bundle.truncated,
+    max_live_js_assets: bundle.max_live_js_assets,
   };
 
   addCheck(`${prefix} bundle exposes password reset UI`, bundle.available !== false && reset.ok, {
@@ -64,6 +78,15 @@ function addBackofficeBundleChecks(prefix, bundle) {
     found: sidebar.found,
     reason: bundle.reason,
   });
+}
+
+function hasRequiredBackofficeMarkers(bundle) {
+  const { reset, sidebar } = summarizeBackofficeBundle(bundle);
+  return bundle.available !== false && reset.ok && sidebar.ok;
+}
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 function withTimeout(ms = 12000) {
@@ -188,7 +211,24 @@ async function fetchLiveBundle(seedTexts) {
     asset_count: seen.size,
     bytes: Buffer.byteLength(text, 'utf8'),
     fetch_failures: failures.slice(0, 10),
+    truncated: queue.length > 0,
+    max_live_js_assets: MAX_LIVE_JS_ASSETS,
   };
+}
+
+async function fetchLiveBundleWithRetries(seedTexts) {
+  let bestBundle = null;
+
+  for (let attempt = 1; attempt <= LIVE_BUNDLE_ATTEMPTS; attempt += 1) {
+    const bundle = await fetchLiveBundle(seedTexts);
+    bundle.attempts = attempt;
+    bestBundle = bundle;
+
+    if (hasRequiredBackofficeMarkers(bundle)) return bundle;
+    if (attempt < LIVE_BUNDLE_ATTEMPTS) await sleep(LIVE_BUNDLE_RETRY_DELAY_MS);
+  }
+
+  return bestBundle || { available: false, reason: 'live bundle retry scan produced no result', text: '', asset_count: 0, bytes: 0, attempts: 0 };
 }
 
 function verifySourceGuards() {
@@ -238,6 +278,11 @@ function verifyLocalBuildGuards() {
     return;
   }
 
+  addCheck('live bundle scanner budget covers local JS asset graph', bundle.asset_count <= MAX_LIVE_JS_ASSETS, {
+    asset_count: bundle.asset_count,
+    max_live_js_assets: MAX_LIVE_JS_ASSETS,
+  });
+
   addBackofficeBundleChecks('local dist backoffice', bundle);
 }
 
@@ -275,7 +320,7 @@ async function verifyLiveGuards() {
   });
   addCheck('runtime Supabase public key is not server/service_role', supabasePublicKeyInfo.ok, supabasePublicKeyInfo);
 
-  const liveBundle = await fetchLiveBundle([backoffice.text || '', setPassword.text || '']);
+  const liveBundle = await fetchLiveBundleWithRetries([backoffice.text || '', setPassword.text || '']);
   addBackofficeBundleChecks('live backoffice', liveBundle);
 
   if (supabaseUrl && supabaseAnonKey) {
