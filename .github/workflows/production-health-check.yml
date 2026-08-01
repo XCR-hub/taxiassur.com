@@ -37,6 +37,10 @@ jobs:
           EXPECTED_COMMIT: skip
           PUBLIC_MIRROR_COUNT_TOLERANCE: '10'
           PUBLIC_MIRROR_GSC_COUNT_TOLERANCE: '25'
+          REQUIRE_D1_CACHE_METADATA: '1'
+          REQUIRE_POSTGRES_IMPORT_METADATA: '1'
+          MAX_D1_CACHE_AGE_HOURS: '4'
+          MAX_POSTGRES_IMPORT_AGE_HOURS: '4'
         run: |
           for attempt in $(seq 1 12); do
             if npm run verify:production; then

@@ -68,11 +68,11 @@ The deployment workflow also runs:
 - `npm run security:scan-secrets`;
 - `npm run verify:client-compliance`;
 - `npm run build:cloudflare`;
-- `npm run verify:production` after Cloudflare Pages deployment, with the deployed commit expected to match `github.sha`.
+- `npm run verify:production` after Cloudflare Pages deployment, with the deployed commit expected to match `github.sha` and strict freshness checks for the D1 public cache and PostgreSQL mirror.
 
 The workflow builds Turnstile into the Vite bundle with `VITE_CAPTCHA_PROVIDER=turnstile` and `VITE_TURNSTILE_SITE_KEY`. Prefer setting `VITE_TURNSTILE_SITE_KEY` as a GitHub repository variable when rotating the public site key.
 
-The workflow `.github/workflows/production-health-check.yml` runs every 2 hours and checks the public site, D1, the PostgreSQL public proxy, and public count alignment without requiring a commit match.
+The workflow `.github/workflows/production-health-check.yml` runs every 2 hours and checks the public site, D1, the PostgreSQL public proxy, public count alignment, and freshness metadata without requiring a commit match.
 
 ## Redirects
 
