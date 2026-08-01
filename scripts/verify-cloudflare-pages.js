@@ -6,6 +6,8 @@ import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
 const { collectPublicRuntimeConfigIssues, formatRuntimeConfigIssue } = require('./lib/runtime-public-config.cjs');
 
+const MAX_JS_CHUNK_BYTES = Number(process.env.MAX_JS_CHUNK_BYTES || 500 * 1024);
+
 const redirectsPath = existsSync('dist/_redirects') ? 'dist/_redirects' : 'public/_redirects';
 const headersPath = existsSync('dist/_headers') ? 'dist/_headers' : 'public/_headers';
 
@@ -110,6 +112,99 @@ const forbiddenDistSignatures = [
   'taxiassur_webhook_secret_2024',
 ];
 
+
+function collectJsAssets(dir) {
+  const files = [];
+  if (!existsSync(dir)) return files;
+
+  for (const entry of readdirSync(dir)) {
+    const filePath = `${dir}/${entry}`;
+    const stat = statSync(filePath);
+    if (stat.isDirectory()) {
+      files.push(...collectJsAssets(filePath));
+      continue;
+    }
+    if (filePath.endsWith('.js')) {
+      files.push(filePath.replace(/\\/g, '/'));
+    }
+  }
+
+  return files;
+}
+
+function localStaticChunkImports(content) {
+  const imports = new Set();
+  const regex = /from\s*["']\.\/([^"']+\.js)["']/g;
+
+  for (const match of content.matchAll(regex)) {
+    imports.add(match[1]);
+  }
+
+  return [...imports];
+}
+
+function findGraphCycle(graph) {
+  const visiting = new Set();
+  const visited = new Set();
+  const stack = [];
+
+  function visit(node) {
+    if (visiting.has(node)) {
+      const start = stack.indexOf(node);
+      return stack.slice(start).concat(node);
+    }
+    if (visited.has(node)) return null;
+
+    visiting.add(node);
+    stack.push(node);
+
+    for (const dependency of graph.get(node) || []) {
+      const cycle = visit(dependency);
+      if (cycle) return cycle;
+    }
+
+    stack.pop();
+    visiting.delete(node);
+    visited.add(node);
+    return null;
+  }
+
+  for (const node of graph.keys()) {
+    const cycle = visit(node);
+    if (cycle) return cycle;
+  }
+
+  return null;
+}
+
+function verifyChunkGraph(dir) {
+  const files = collectJsAssets(dir);
+  if (files.length === 0) return;
+
+  const knownChunks = new Set(files.map((file) => file.split('/').at(-1)));
+  const graph = new Map();
+  let largest = { file: '', bytes: 0 };
+
+  for (const file of files) {
+    const name = file.split('/').at(-1);
+    const size = statSync(file).size;
+    if (size > largest.bytes) largest = { file: name, bytes: size };
+    if (size > MAX_JS_CHUNK_BYTES) {
+      fail(`${file} is ${(size / 1024).toFixed(1)} KiB, above MAX_JS_CHUNK_BYTES ${(MAX_JS_CHUNK_BYTES / 1024).toFixed(1)} KiB`);
+    }
+
+    const content = readFileSync(file, 'utf8');
+    const imports = localStaticChunkImports(content).filter((target) => knownChunks.has(target));
+    graph.set(name, imports);
+  }
+
+  const cycle = findGraphCycle(graph);
+  if (cycle) {
+    fail(`JavaScript chunk import cycle detected: ${cycle.join(' -> ')}`);
+  } else if (!process.exitCode) {
+    console.log(`Cloudflare chunk graph OK: ${files.length} JS chunks, largest ${largest.file} ${(largest.bytes / 1024).toFixed(1)} KiB`);
+  }
+}
 function scanBuiltFile(path) {
   if (!existsSync(path)) return;
   const content = readFileSync(path, 'utf8');
@@ -136,3 +231,4 @@ function scanBuiltDirectory(dir) {
 }
 
 scanBuiltDirectory('dist');
+verifyChunkGraph('dist/assets');
