@@ -21,6 +21,21 @@ const REPORT_PATH = process.env.PRODUCTION_HEALTH_REPORT || '';
 const CONTENT_TABLES = ['blog_posts', 'city_pages', 'faq_entries', 'news_articles'];
 const GSC_TABLES = ['gsc_pages', 'gsc_queries'];
 const ALL_TABLES = [...CONTENT_TABLES, ...GSC_TABLES];
+const PRIVATE_CSP_REQUIRED_FRAGMENTS = [
+  "default-src 'self'",
+  "script-src 'self'",
+  "connect-src 'self'",
+  "frame-ancestors 'none'",
+  "object-src 'none'",
+];
+const PRIVATE_CSP_FORBIDDEN_FRAGMENTS = [
+  'googletagmanager.com',
+  'google-analytics.com',
+  'analytics.google.com',
+  'doubleclick.net',
+  'pinterest.com',
+  'facebook.com',
+];
 
 function currentGitCommit() {
   try {
@@ -142,6 +157,22 @@ function addCacheControlCheck(checks, name, fetchResult, fragments) {
   addCheck(checks, name, fetchResult?.ok && details.missing.length === 0, details);
 }
 
+function privateCspDetails(fetchResult) {
+  const csp = responseHeader(fetchResult, 'content-security-policy');
+  const normalized = csp.toLowerCase();
+  return {
+    status: fetchResult?.status || null,
+    has_csp: Boolean(csp),
+    missing: PRIVATE_CSP_REQUIRED_FRAGMENTS.filter((fragment) => !normalized.includes(fragment.toLowerCase())),
+    forbidden: PRIVATE_CSP_FORBIDDEN_FRAGMENTS.filter((fragment) => normalized.includes(fragment.toLowerCase())),
+  };
+}
+
+function addPrivateCspCheck(checks, name, fetchResult) {
+  const details = privateCspDetails(fetchResult);
+  addCheck(checks, name, fetchResult?.ok && details.has_csp && details.missing.length === 0 && details.forbidden.length === 0, details);
+}
+
 function d1Counts(d1Health) {
   const out = {};
   for (const row of d1Health?.counts?.public_content_cache || []) {
@@ -204,9 +235,11 @@ async function main() {
   const homeHtml = await fetchText('home-html', `${SITE_URL}/?ts=${Date.now()}`);
   const directGoogleTagLoads = findDirectGoogleTagLoads(homeHtml.text || '');
   const envConfig = await fetchText('env-config', `${SITE_URL}/env-config.js?ts=${Date.now()}`);
-  const [backofficePage, setPasswordPage, serviceWorker, registerSw, webManifest] = await Promise.all([
+  const [backofficePage, setPasswordPage, clientPage, prospectPage, serviceWorker, registerSw, webManifest] = await Promise.all([
     fetchStatus('backoffice-page', `${SITE_URL}/backoffice?ts=${Date.now()}`),
     fetchStatus('set-password-page', `${SITE_URL}/auth/set-password?ts=${Date.now()}`),
+    fetchStatus('client-page', `${SITE_URL}/espace-client?ts=${Date.now()}`),
+    fetchStatus('prospect-page', `${SITE_URL}/espace-prospect?ts=${Date.now()}`),
     fetchText('service-worker', `${SITE_URL}/sw.js?ts=${Date.now()}`),
     fetchText('register-sw', `${SITE_URL}/registerSW.js?ts=${Date.now()}`),
     fetchText('web-manifest', `${SITE_URL}/manifest.webmanifest?ts=${Date.now()}`),
@@ -266,6 +299,12 @@ async function main() {
   });
   addCacheControlCheck(checks, 'backoffice page is no-store in Cloudflare', backofficePage, ['no-store']);
   addCacheControlCheck(checks, 'set-password page is no-store in Cloudflare', setPasswordPage, ['no-store']);
+  addCacheControlCheck(checks, 'client portal page is no-store in Cloudflare', clientPage, ['no-store']);
+  addCacheControlCheck(checks, 'prospect portal page is no-store in Cloudflare', prospectPage, ['no-store']);
+  addPrivateCspCheck(checks, 'backoffice page blocks third-party tags with CSP', backofficePage);
+  addPrivateCspCheck(checks, 'set-password page blocks third-party tags with CSP', setPasswordPage);
+  addPrivateCspCheck(checks, 'client portal page blocks third-party tags with CSP', clientPage);
+  addPrivateCspCheck(checks, 'prospect portal page blocks third-party tags with CSP', prospectPage);
   addCacheControlCheck(checks, 'env-config runtime file is no-store in Cloudflare', envConfig, ['no-store']);
   addCacheControlCheck(checks, 'deploy-info runtime file is no-store in Cloudflare', deployInfo, ['no-store']);
   addCacheControlCheck(checks, 'service worker is not sticky cached in Cloudflare', serviceWorker, ['no-cache', 'no-store', 'must-revalidate']);

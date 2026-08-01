@@ -7,6 +7,33 @@ const require = createRequire(import.meta.url);
 const { collectPublicRuntimeConfigIssues, formatRuntimeConfigIssue } = require('./lib/runtime-public-config.cjs');
 
 const MAX_JS_CHUNK_BYTES = Number(process.env.MAX_JS_CHUNK_BYTES || 500 * 1024);
+const PRIVATE_DOCUMENT_SOURCES = [
+  '/backoffice',
+  '/backoffice/*',
+  '/admin',
+  '/admin/*',
+  '/auth/*',
+  '/espace-client',
+  '/espace-client/*',
+  '/espace-prospect',
+  '/espace-prospect/*',
+  '/client/*',
+];
+const PRIVATE_CSP_REQUIRED_FRAGMENTS = [
+  "default-src 'self'",
+  "script-src 'self'",
+  "connect-src 'self'",
+  "frame-ancestors 'none'",
+  "object-src 'none'",
+];
+const PRIVATE_CSP_FORBIDDEN_FRAGMENTS = [
+  'googletagmanager.com',
+  'google-analytics.com',
+  'analytics.google.com',
+  'doubleclick.net',
+  'pinterest.com',
+  'facebook.com',
+];
 
 const redirectsPath = existsSync('dist/_redirects') ? 'dist/_redirects' : 'public/_redirects';
 const headersPath = existsSync('dist/_headers') ? 'dist/_headers' : 'public/_headers';
@@ -77,17 +104,35 @@ function requireHeaderIncludes(blocks, source, headerName, fragments) {
   }
 }
 
+function requireHeaderExcludes(blocks, source, headerName, fragments) {
+  const value = findHeaderValue(blocks, source, headerName);
+  if (!value) return;
+
+  const normalizedValue = value.toLowerCase();
+  const forbidden = fragments.filter((fragment) => normalizedValue.includes(fragment.toLowerCase()));
+  if (forbidden.length > 0) {
+    fail(`${headersPath} ${source} ${headerName} must not include ${forbidden.join(', ')}; got ${value}`);
+  }
+}
+
+function verifyPrivateDocumentCsp(blocks) {
+  for (const source of PRIVATE_DOCUMENT_SOURCES) {
+    requireHeaderIncludes(blocks, source, 'Content-Security-Policy', PRIVATE_CSP_REQUIRED_FRAGMENTS);
+    requireHeaderExcludes(blocks, source, 'Content-Security-Policy', PRIVATE_CSP_FORBIDDEN_FRAGMENTS);
+  }
+}
 function verifyHeaders(content) {
   const blocks = parseHeaderBlocks(content);
 
   requireHeaderIncludes(blocks, '/assets/*', 'Cache-Control', ['public', 'max-age=31536000', 'immutable']);
-  for (const source of ['/backoffice', '/backoffice/*', '/admin', '/admin/*', '/auth/*', '/api/*', '/env-config.js', '/deploy-info.json']) {
+  for (const source of [...PRIVATE_DOCUMENT_SOURCES, '/api/*', '/env-config.js', '/deploy-info.json']) {
     requireHeaderIncludes(blocks, source, 'Cache-Control', ['no-store']);
   }
   for (const source of ['/sw.js', '/registerSW.js', '/workbox-*.js']) {
     requireHeaderIncludes(blocks, source, 'Cache-Control', ['no-cache', 'no-store', 'must-revalidate']);
   }
   requireHeaderIncludes(blocks, '/manifest.webmanifest', 'Cache-Control', ['no-cache', 'must-revalidate']);
+  verifyPrivateDocumentCsp(blocks);
 
   return blocks.length;
 }

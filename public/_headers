@@ -29,22 +29,52 @@
 /backoffice
   Cache-Control: no-store, max-age=0
   X-Robots-Tag: noindex, nofollow, noarchive
+  Content-Security-Policy: default-src 'self'; base-uri 'self'; frame-ancestors 'none'; object-src 'none'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://challenges.cloudflare.com; worker-src 'self' blob:; connect-src 'self' https://drohhxrkoequjphvabvq.supabase.co wss://drohhxrkoequjphvabvq.supabase.co https://postgres-read-api.taxiassur.com https://challenges.cloudflare.com; img-src 'self' data: blob: https://drohhxrkoequjphvabvq.supabase.co https://images.pexels.com; style-src 'self' 'unsafe-inline' data:; font-src 'self' data:; frame-src 'self' https://challenges.cloudflare.com; manifest-src 'self'; form-action 'self'; media-src 'self' blob: https://drohhxrkoequjphvabvq.supabase.co
 
 /backoffice/*
   Cache-Control: no-store, max-age=0
   X-Robots-Tag: noindex, nofollow, noarchive
+  Content-Security-Policy: default-src 'self'; base-uri 'self'; frame-ancestors 'none'; object-src 'none'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://challenges.cloudflare.com; worker-src 'self' blob:; connect-src 'self' https://drohhxrkoequjphvabvq.supabase.co wss://drohhxrkoequjphvabvq.supabase.co https://postgres-read-api.taxiassur.com https://challenges.cloudflare.com; img-src 'self' data: blob: https://drohhxrkoequjphvabvq.supabase.co https://images.pexels.com; style-src 'self' 'unsafe-inline' data:; font-src 'self' data:; frame-src 'self' https://challenges.cloudflare.com; manifest-src 'self'; form-action 'self'; media-src 'self' blob: https://drohhxrkoequjphvabvq.supabase.co
 
 /admin
   Cache-Control: no-store, max-age=0
   X-Robots-Tag: noindex, nofollow, noarchive
+  Content-Security-Policy: default-src 'self'; base-uri 'self'; frame-ancestors 'none'; object-src 'none'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://challenges.cloudflare.com; worker-src 'self' blob:; connect-src 'self' https://drohhxrkoequjphvabvq.supabase.co wss://drohhxrkoequjphvabvq.supabase.co https://postgres-read-api.taxiassur.com https://challenges.cloudflare.com; img-src 'self' data: blob: https://drohhxrkoequjphvabvq.supabase.co https://images.pexels.com; style-src 'self' 'unsafe-inline' data:; font-src 'self' data:; frame-src 'self' https://challenges.cloudflare.com; manifest-src 'self'; form-action 'self'; media-src 'self' blob: https://drohhxrkoequjphvabvq.supabase.co
 
 /admin/*
   Cache-Control: no-store, max-age=0
   X-Robots-Tag: noindex, nofollow, noarchive
+  Content-Security-Policy: default-src 'self'; base-uri 'self'; frame-ancestors 'none'; object-src 'none'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://challenges.cloudflare.com; worker-src 'self' blob:; connect-src 'self' https://drohhxrkoequjphvabvq.supabase.co wss://drohhxrkoequjphvabvq.supabase.co https://postgres-read-api.taxiassur.com https://challenges.cloudflare.com; img-src 'self' data: blob: https://drohhxrkoequjphvabvq.supabase.co https://images.pexels.com; style-src 'self' 'unsafe-inline' data:; font-src 'self' data:; frame-src 'self' https://challenges.cloudflare.com; manifest-src 'self'; form-action 'self'; media-src 'self' blob: https://drohhxrkoequjphvabvq.supabase.co
 
 /auth/*
   Cache-Control: no-store, max-age=0
   X-Robots-Tag: noindex, nofollow, noarchive
+  Content-Security-Policy: default-src 'self'; base-uri 'self'; frame-ancestors 'none'; object-src 'none'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://challenges.cloudflare.com; worker-src 'self' blob:; connect-src 'self' https://drohhxrkoequjphvabvq.supabase.co wss://drohhxrkoequjphvabvq.supabase.co https://postgres-read-api.taxiassur.com https://challenges.cloudflare.com; img-src 'self' data: blob: https://drohhxrkoequjphvabvq.supabase.co https://images.pexels.com; style-src 'self' 'unsafe-inline' data:; font-src 'self' data:; frame-src 'self' https://challenges.cloudflare.com; manifest-src 'self'; form-action 'self'; media-src 'self' blob: https://drohhxrkoequjphvabvq.supabase.co
+
+/espace-client
+  Cache-Control: no-store, max-age=0
+  X-Robots-Tag: noindex, nofollow, noarchive
+  Content-Security-Policy: default-src 'self'; base-uri 'self'; frame-ancestors 'none'; object-src 'none'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://challenges.cloudflare.com; worker-src 'self' blob:; connect-src 'self' https://drohhxrkoequjphvabvq.supabase.co wss://drohhxrkoequjphvabvq.supabase.co https://postgres-read-api.taxiassur.com https://challenges.cloudflare.com; img-src 'self' data: blob: https://drohhxrkoequjphvabvq.supabase.co https://images.pexels.com; style-src 'self' 'unsafe-inline' data:; font-src 'self' data:; frame-src 'self' https://challenges.cloudflare.com; manifest-src 'self'; form-action 'self'; media-src 'self' blob: https://drohhxrkoequjphvabvq.supabase.co
+
+/espace-client/*
+  Cache-Control: no-store, max-age=0
+  X-Robots-Tag: noindex, nofollow, noarchive
+  Content-Security-Policy: default-src 'self'; base-uri 'self'; frame-ancestors 'none'; object-src 'none'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://challenges.cloudflare.com; worker-src 'self' blob:; connect-src 'self' https://drohhxrkoequjphvabvq.supabase.co wss://drohhxrkoequjphvabvq.supabase.co https://postgres-read-api.taxiassur.com https://challenges.cloudflare.com; img-src 'self' data: blob: https://drohhxrkoequjphvabvq.supabase.co https://images.pexels.com; style-src 'self' 'unsafe-inline' data:; font-src 'self' data:; frame-src 'self' https://challenges.cloudflare.com; manifest-src 'self'; form-action 'self'; media-src 'self' blob: https://drohhxrkoequjphvabvq.supabase.co
+
+/espace-prospect
+  Cache-Control: no-store, max-age=0
+  X-Robots-Tag: noindex, nofollow, noarchive
+  Content-Security-Policy: default-src 'self'; base-uri 'self'; frame-ancestors 'none'; object-src 'none'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://challenges.cloudflare.com; worker-src 'self' blob:; connect-src 'self' https://drohhxrkoequjphvabvq.supabase.co wss://drohhxrkoequjphvabvq.supabase.co https://postgres-read-api.taxiassur.com https://challenges.cloudflare.com; img-src 'self' data: blob: https://drohhxrkoequjphvabvq.supabase.co https://images.pexels.com; style-src 'self' 'unsafe-inline' data:; font-src 'self' data:; frame-src 'self' https://challenges.cloudflare.com; manifest-src 'self'; form-action 'self'; media-src 'self' blob: https://drohhxrkoequjphvabvq.supabase.co
+
+/espace-prospect/*
+  Cache-Control: no-store, max-age=0
+  X-Robots-Tag: noindex, nofollow, noarchive
+  Content-Security-Policy: default-src 'self'; base-uri 'self'; frame-ancestors 'none'; object-src 'none'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://challenges.cloudflare.com; worker-src 'self' blob:; connect-src 'self' https://drohhxrkoequjphvabvq.supabase.co wss://drohhxrkoequjphvabvq.supabase.co https://postgres-read-api.taxiassur.com https://challenges.cloudflare.com; img-src 'self' data: blob: https://drohhxrkoequjphvabvq.supabase.co https://images.pexels.com; style-src 'self' 'unsafe-inline' data:; font-src 'self' data:; frame-src 'self' https://challenges.cloudflare.com; manifest-src 'self'; form-action 'self'; media-src 'self' blob: https://drohhxrkoequjphvabvq.supabase.co
+
+/client/*
+  Cache-Control: no-store, max-age=0
+  X-Robots-Tag: noindex, nofollow, noarchive
+  Content-Security-Policy: default-src 'self'; base-uri 'self'; frame-ancestors 'none'; object-src 'none'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://challenges.cloudflare.com; worker-src 'self' blob:; connect-src 'self' https://drohhxrkoequjphvabvq.supabase.co wss://drohhxrkoequjphvabvq.supabase.co https://postgres-read-api.taxiassur.com https://challenges.cloudflare.com; img-src 'self' data: blob: https://drohhxrkoequjphvabvq.supabase.co https://images.pexels.com; style-src 'self' 'unsafe-inline' data:; font-src 'self' data:; frame-src 'self' https://challenges.cloudflare.com; manifest-src 'self'; form-action 'self'; media-src 'self' blob: https://drohhxrkoequjphvabvq.supabase.co
 
 /sitemap.xml
   Cache-Control: public, max-age=300, must-revalidate
