@@ -260,7 +260,10 @@ function buildOrder(params) {
   const requested = params.get('sort') || 'updated_at';
   const field = SORT_FIELDS.has(requested) ? requested : 'updated_at';
   const direction = String(params.get('direction') || 'desc').toLowerCase() === 'asc' ? 'ASC' : 'DESC';
-  return `COALESCE(data ->> ${quoteLiteral(field)}, data ->> 'created_at', '') ${direction}`;
+  const primary = `COALESCE(data ->> ${quoteLiteral(field)}, data ->> 'created_at', '') ${direction}`;
+  const recency = "COALESCE(data ->> 'updated_at', data ->> 'published_at', data ->> 'created_at', '') DESC";
+  const stableKey = "COALESCE(data ->> 'slug', data ->> 'id', data ->> 'title', '') ASC";
+  return `${primary}, ${recency}, ${stableKey}`;
 }
 
 function serviceHealth() {

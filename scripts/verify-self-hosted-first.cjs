@@ -120,7 +120,13 @@ function verifyAutonomousSitemapGeneration() {
   const generatorSource = readFileSync(generatorPath, 'utf8');
   const optionalSource = readFileSync(optionalPath, 'utf8');
   const packagePath = path.resolve('package.json');
+  const postgresListPath = path.resolve('functions/api/postgres-public/list.js');
+  const d1ListPath = path.resolve('functions/api/d1/list.js');
+  const serverReadApiPath = path.resolve('server/postgres-read-api.mjs');
   const packageJson = JSON.parse(readFileSync(packagePath, 'utf8'));
+  const postgresListSource = readFileSync(postgresListPath, 'utf8');
+  const d1ListSource = readFileSync(d1ListPath, 'utf8');
+  const serverReadApiSource = readFileSync(serverReadApiPath, 'utf8');
   const buildScript = packageJson.scripts?.build || '';
 
   addCheck('sitemap generator does not import Supabase client', !generatorSource.includes('@supabase/supabase-js') && !generatorSource.includes('createClient('), {
@@ -136,6 +142,18 @@ function verifyAutonomousSitemapGeneration() {
   addCheck('production build writes autonomous sitemap to dist after Vite build', buildScript.includes(sitemapBuildStep) && buildScript.indexOf('vite build') >= 0 && buildScript.indexOf('vite build') < buildScript.indexOf(sitemapBuildStep), {
     file: packagePath,
     build: buildScript,
+  });
+  addCheck('public PostgreSQL list endpoint supports pagination', postgresListSource.includes("url.searchParams.get('offset')") && postgresListSource.includes('nextOffset') && postgresListSource.includes('limit,') && postgresListSource.includes('offset,'), {
+    file: postgresListPath,
+  });
+  addCheck('public D1 list endpoint supports pagination', d1ListSource.includes("url.searchParams.get('offset')") && d1ListSource.includes('LIMIT ? OFFSET ?') && d1ListSource.includes('nextOffset'), {
+    file: d1ListPath,
+  });
+  addCheck('PostgreSQL read API uses stable secondary ordering', serverReadApiSource.includes('stableKey') && serverReadApiSource.includes("data ->> 'slug'") && serverReadApiSource.includes("data ->> 'id'"), {
+    file: serverReadApiPath,
+  });
+  addCheck('sitemap generator paginates public content rows', generatorSource.includes('PUBLIC_LIST_MAX_PAGES') && generatorSource.includes("url.searchParams.set('offset'") && generatorSource.includes('fetchPublicRowsFromSource') && generatorSource.includes('added === 0'), {
+    file: generatorPath,
   });
 }
 function rowsFromHealth(json) {

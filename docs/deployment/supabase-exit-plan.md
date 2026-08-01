@@ -11,7 +11,8 @@ Reduire progressivement la dependance a Supabase tout en gardant le site, les le
 - Cloudflare D1 `taxiassur-prod` reste operationnel comme cache public SEO de secours.
 - Le proxy public `/api/postgres-public/*` lit le miroir PostgreSQL local sans exposer le token serveur au navigateur.
 - Les lectures publiques SEO `blog_posts`, `city_pages`, `faq_entries` et `news_articles` utilisent le cache autonome PostgreSQL puis D1, sans fallback direct Supabase cote navigateur.
-- La generation du sitemap de build lit les endpoints publics PostgreSQL puis D1 et conserve le sitemap existant si les sources publiques sont indisponibles.
+- La generation du sitemap de build lit les endpoints publics PostgreSQL puis D1, pagine les contenus publics et conserve le sitemap existant si les sources publiques sont indisponibles.
+- Les endpoints publics `postgres-public/list` et `d1/list` supportent `limit`/`offset` avec tri stable pour eviter les doublons ou les variations entre builds.
 - Les compteurs publics verifies en production sont : 775 articles blog, 376 pages villes, 152 FAQ, 2980 actualites, 1433 pages GSC et 1943 requetes GSC.
 - Le workflow GitHub `Refresh Cloudflare D1 Cache` fonctionne avec le secret dedie `CLOUDFLARE_D1_API_TOKEN`.
 - Le serveur `192.168.1.70` heberge un miroir PostgreSQL local sous `F:\TaxiAssur`.

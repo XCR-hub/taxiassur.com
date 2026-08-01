@@ -11,7 +11,8 @@ dotenv.config({ path: path.join(rootDir, '.env') });
 
 const SITE_URL = (process.env.SITE_URL || 'https://taxiassur.com').replace(/\/$/, '');
 const MIN_SITEMAP_URLS = Math.max(1, Number(process.env.MIN_SITEMAP_URLS || 800));
-const PUBLIC_LIST_LIMIT = Math.max(1, Math.min(100, Number(process.env.PUBLIC_SITEMAP_LIST_LIMIT || 100)));
+const PUBLIC_LIST_LIMIT = Math.max(1, Math.min(250, Number(process.env.PUBLIC_SITEMAP_LIST_LIMIT || 250)));
+const PUBLIC_LIST_MAX_PAGES = Math.max(1, Math.min(100, Number(process.env.PUBLIC_SITEMAP_MAX_PAGES || 30)));
 const FETCH_TIMEOUT_MS = Math.max(1500, Math.min(15000, Number(process.env.PUBLIC_SITEMAP_FETCH_TIMEOUT_MS || 8000)));
 const DEFAULT_SOURCE_ORDER = ['postgres-public', 'd1'];
 const SOURCE_ENDPOINTS = {
@@ -246,17 +247,60 @@ async function fetchJson(url) {
   }
 }
 
-async function fetchPublicRows(table, options = {}) {
-  const order = getPublicSourceOrder();
-  for (const source of order) {
-    const endpoint = SOURCE_ENDPOINTS[source];
+function itemKey(item) {
+  const payload = payloadFor(item);
+  return String(
+    item?.source_id ||
+    item?.id ||
+    item?.slug ||
+    payload?.id ||
+    payload?.slug ||
+    JSON.stringify(item).slice(0, 250),
+  );
+}
+
+async function fetchPublicRowsFromSource(table, source, options = {}) {
+  const endpoint = SOURCE_ENDPOINTS[source];
+  const items = [];
+  const seen = new Set();
+  let lastStatus = 0;
+  let lastError = '';
+
+  for (let page = 0; page < PUBLIC_LIST_MAX_PAGES; page += 1) {
+    const offset = page * PUBLIC_LIST_LIMIT;
     const url = new URL(`${SITE_URL}${endpoint}/list`);
     url.searchParams.set('table', table);
     url.searchParams.set('limit', String(PUBLIC_LIST_LIMIT));
+    url.searchParams.set('offset', String(offset));
     url.searchParams.set('status', 'published');
     if (options.sort) url.searchParams.set('sort', options.sort);
 
     const result = await fetchJson(url.toString());
+    lastStatus = result.status;
+    lastError = result.error || '';
+    if (!result.ok) return { ok: false, status: lastStatus, error: lastError, items };
+    if (result.items.length === 0) break;
+
+    let added = 0;
+    for (const item of result.items) {
+      const key = itemKey(item);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      items.push(item);
+      added += 1;
+    }
+
+    if (added === 0) break;
+    if (result.items.length < PUBLIC_LIST_LIMIT) break;
+  }
+
+  return { ok: true, status: lastStatus || 200, error: lastError, items };
+}
+
+async function fetchPublicRows(table, options = {}) {
+  const order = getPublicSourceOrder();
+  for (const source of order) {
+    const result = await fetchPublicRowsFromSource(table, source, options);
     if (result.ok && result.items.length > 0) {
       console.log(`Loaded ${result.items.length} ${table} rows from ${source}`);
       return result.items;

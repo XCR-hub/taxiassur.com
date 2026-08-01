@@ -9,10 +9,17 @@ import {
   publicRow,
 } from './_shared.js';
 
+function nonNegativeInt(value, fallback, max) {
+  const parsed = Number.parseInt(value || '', 10);
+  if (!Number.isFinite(parsed) || parsed < 0) return fallback;
+  return Math.min(parsed, max);
+}
+
 export async function onRequestGet({ request, env }) {
   const url = new URL(request.url);
   const table = url.searchParams.get('table');
-  const limit = positiveInt(url.searchParams.get('limit'), 20, 100);
+  const limit = positiveInt(url.searchParams.get('limit'), 20, 250);
+  const offset = nonNegativeInt(url.searchParams.get('offset'), 0, 100000);
   const status = url.searchParams.get('status') || 'published';
   const category = url.searchParams.get('category');
   const excludeId = url.searchParams.get('excludeId');
@@ -27,7 +34,8 @@ export async function onRequestGet({ request, env }) {
   try {
     const readParams = {
       table,
-      limit: Math.min(limit * 5, 250),
+      limit,
+      offset,
       sort,
       direction: 'desc',
       category,
@@ -44,6 +52,10 @@ export async function onRequestGet({ request, env }) {
 
     return json({
       ok: true,
+      table,
+      limit,
+      offset,
+      nextOffset: items.length === limit ? offset + limit : null,
       items,
     });
   } catch (error) {

@@ -26,6 +26,12 @@ function positiveInt(value, fallback, max) {
   return Math.min(parsed, max);
 }
 
+function nonNegativeInt(value, fallback, max) {
+  const parsed = Number.parseInt(value || '', 10);
+  if (!Number.isFinite(parsed) || parsed < 0) return fallback;
+  return Math.min(parsed, max);
+}
+
 export async function onRequestGet({ request, env }) {
   if (!env.TAXIASSUR_DB) {
     return json({ ok: false, error: 'D1 binding TAXIASSUR_DB is not configured.' }, { status: 503 });
@@ -33,7 +39,8 @@ export async function onRequestGet({ request, env }) {
 
   const url = new URL(request.url);
   const table = url.searchParams.get('table');
-  const limit = positiveInt(url.searchParams.get('limit'), 20, 100);
+  const limit = positiveInt(url.searchParams.get('limit'), 20, 250);
+  const offset = nonNegativeInt(url.searchParams.get('offset'), 0, 100000);
   const status = url.searchParams.get('status') || 'published';
   const category = url.searchParams.get('category');
   const excludeId = url.searchParams.get('excludeId');
@@ -64,23 +71,32 @@ export async function onRequestGet({ request, env }) {
   }
 
   try {
+    const stableSecondaryOrder = sort === 'title'
+      ? 'updated_at DESC, slug ASC, source_id ASC'
+      : 'updated_at DESC, title ASC, slug ASC, source_id ASC';
     const result = await env.TAXIASSUR_DB
       .prepare(
         `SELECT source_table, source_id, slug, url, title, status, category, city, published_at, updated_at, payload
          FROM public_content_cache
          WHERE ${where.join(' AND ')}
-         ORDER BY ${sort} DESC, updated_at DESC, title ASC
-         LIMIT ?`,
+         ORDER BY ${sort} DESC, ${stableSecondaryOrder}
+         LIMIT ? OFFSET ?`,
       )
-      .bind(...bindings, limit)
+      .bind(...bindings, limit, offset)
       .all();
+
+    const items = (result.results || []).map((row) => ({
+      ...row,
+      payload: parsePayload(row.payload),
+    }));
 
     return json({
       ok: true,
-      items: (result.results || []).map((row) => ({
-        ...row,
-        payload: parsePayload(row.payload),
-      })),
+      table,
+      limit,
+      offset,
+      nextOffset: items.length === limit ? offset + limit : null,
+      items,
     });
   } catch (error) {
     return json(
