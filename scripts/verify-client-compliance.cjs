@@ -83,9 +83,14 @@ const requiredChecks = [
     patterns: ['useTurnstileGuard', "action: 'devis_form'", 'turnstile.verify', '!turnstile.canSubmit'],
   },
   {
-    label: 'public contact form is protected by Turnstile',
-    file: 'src/pages/ContactPage.tsx',
-    patterns: ['useTurnstileGuard', "action: 'contact_form'", 'turnstile.verify', '!turnstile.canSubmit'],
+    label: 'public contact page mounts the protected lead form',
+    file: 'src/pages/Contact.tsx',
+    patterns: ['LeadForm', 'canonical="/contact"'],
+  },
+  {
+    label: 'shared public lead form is protected by Turnstile',
+    file: 'src/components/LeadForm.tsx',
+    patterns: ['TurnstileWidget', 'verifyTurnstileToken', 'action="lead_form"', 'isTurnstileEnabled() && !turnstileToken'],
   },
   {
     label: 'AI quote process is protected by Turnstile',
@@ -98,9 +103,9 @@ const requiredChecks = [
     patterns: ['useTurnstileGuard', "action: 'enhanced_devis_form'", 'turnstile.verify', '!turnstile.canSubmit'],
   },
   {
-    label: 'public quote request form is protected by Turnstile',
-    file: 'src/pages/QuotePage.tsx',
-    patterns: ['useTurnstileGuard', "action: 'quote_request'", 'turnstile.verify', '!turnstile.canSubmit'],
+    label: 'public quote page mounts the protected lead form',
+    file: 'src/pages/DevisAssuranceTaxi.tsx',
+    patterns: ['LeadForm', 'canonical="/devis-assurance-taxi"'],
   },
   {
     label: 'newsletter footer requires opt-in and Turnstile',
