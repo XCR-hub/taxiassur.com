@@ -45,11 +45,21 @@ Le fichier genere est ignore par Git : `cloudflare/d1/generated/public-cache.sql
 
 ## Verification
 
-Verification directe des metadonnees D1 apres import :
+Verification directe des metadonnees et volumes reels D1 apres import :
 
 ```powershell
 npm run d1:verify-public-cache-metadata
 ```
+
+Cette verification echoue si :
+
+- les metadonnees `generated_at`, `imported_rows` ou `tables` manquent ;
+- le cache depasse `MAX_D1_CACHE_AGE_HOURS` ;
+- une table attendue n'a aucune ligne dans D1 ;
+- les volumes reels sont sous les seuils par defaut : `blog_posts=100`, `city_pages=100`, `faq_entries=50`, `news_articles=500`, `gsc_pages=100`, `gsc_queries=100` ;
+- le total reel dans `public_content_cache` + `gsc_metrics_cache` ne correspond pas a `public_cache_metadata.imported_rows`.
+
+Les seuils peuvent etre ajustes par table avec `MIN_D1_<TABLE>_ROWS`, par exemple `MIN_D1_NEWS_ARTICLES_ROWS=1000`.
 
 Endpoint de sante :
 
