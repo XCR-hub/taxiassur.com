@@ -70,3 +70,7 @@ Remove-Item Env:\CLOUDFLARE_BOT_MANAGEMENT_API_TOKEN
 Zone id verifie via Cloudflare Pages le 2026-07-31 : `6db20e6211bb587c873310cba0578f24` pour `taxiassur.com`.
 
 Le workflow Cloudflare Pages lance aussi cette commande en mode `--soft` avec `CLOUDFLARE_BOT_MANAGEMENT_API_TOKEN` si le secret existe, sinon avec `CLOUDFLARE_API_TOKEN`. Il transmet aussi `CLOUDFLARE_ZONE_ID` si le secret existe et `CLOUDFLARE_PAGES_PROJECT=taxiassur` pour resoudre automatiquement le `zone_tag` depuis les domaines Pages. Si le token n a pas les droits Bot Management, le deploiement continue mais le warning live reste visible dans `npm run verify:seo-leadership`.
+
+Diagnostic du 2026-08-01: le deploiement Cloudflare Pages passe, mais l etape `Align Cloudflare AI robots access` recoit `Cloudflare API 403` sur `/bot_management`. Le token actuel a donc assez de droits pour publier Pages, mais pas pour modifier le `robots.txt` manage par Cloudflare. Tant que ce reglage reste actif, le `robots.txt` live bloque avant nos regles projet: GPTBot, ClaudeBot, Google-Extended, Applebot-Extended, Amazonbot, CCBot, Bytespider et meta-externalagent.
+
+Action durable: creer ou corriger le secret GitHub `CLOUDFLARE_BOT_MANAGEMENT_API_TOKEN` avec un token Cloudflare autorise sur la zone `taxiassur.com` pour lire/modifier les reglages Bot Management / AI crawler. Le droit `Pages Write` seul ne suffit pas. Garder aussi `CLOUDFLARE_ZONE_ID=6db20e6211bb587c873310cba0578f24` pour eviter les resolutions de zone fragiles.

@@ -38,6 +38,52 @@ function extractLocs(sitemap) {
   return [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map((match) => match[1]);
 }
 
+const AI_ROBOT_AGENTS = [
+  'GPTBot',
+  'OAI-SearchBot',
+  'ChatGPT-User',
+  'ClaudeBot',
+  'Claude-Web',
+  'Claude-SearchBot',
+  'PerplexityBot',
+  'Google-Extended',
+  'Applebot-Extended',
+  'Amazonbot',
+  'CCBot',
+  'Bytespider',
+  'meta-externalagent',
+];
+
+function managedRobotsBlock(robots) {
+  const match = robots.match(/# BEGIN Cloudflare Managed content([\s\S]*?)# END Cloudflare Managed Content/i);
+  return match ? match[1] : robots;
+}
+
+function blockedAiAgentsFromRobots(robots) {
+  const blocks = managedRobotsBlock(robots).split(/\r?\n\s*\r?\n/);
+  const targets = new Map(AI_ROBOT_AGENTS.map((agent) => [agent.toLowerCase(), agent]));
+  const blocked = new Set();
+
+  for (const block of blocks) {
+    const lines = block
+      .split(/\r?\n/)
+      .map((line) => line.replace(/#.*/, '').trim())
+      .filter(Boolean);
+    const agents = lines
+      .map((line) => line.match(/^User-agent:\s*(.+)$/i)?.[1]?.trim())
+      .filter(Boolean);
+    const disallowsRoot = lines.some((line) => /^Disallow:\s*\/\s*$/i.test(line));
+    if (!disallowsRoot) continue;
+
+    for (const agent of agents) {
+      const target = targets.get(agent.toLowerCase());
+      if (target) blocked.add(target);
+    }
+  }
+
+  return AI_ROBOT_AGENTS.filter((agent) => blocked.has(agent));
+}
+
 function sitemapSource() {
   const buildSitemap = 'dist/sitemap.xml';
   if (exists(buildSitemap)) {
@@ -169,8 +215,9 @@ async function checkLiveSite() {
     addCheck(`live ${label} reachable`, result.ok, `status ${result.status}`);
     if (route === '/robots.txt' && result.ok) {
       addCheck('live robots exposes sitemap', result.text.includes('Sitemap: https://taxiassur.com/sitemap.xml'));
-      if (/User-agent:\s*(GPTBot|ClaudeBot|Google-Extended|Applebot-Extended)[\s\S]{0,180}Disallow:\s*\//i.test(result.text)) {
-        addWarning('Cloudflare managed robots appears to block at least one AI crawler before the project robots.txt rules. Review Cloudflare AI crawl controls if AI discovery is desired.');
+      const blockedAiAgents = blockedAiAgentsFromRobots(result.text);
+      if (blockedAiAgents.length) {
+        addWarning(`Cloudflare Managed robots.txt blocks AI/search-assistant crawlers before project rules: ${blockedAiAgents.join(', ')}. Disable Managed robots.txt in Cloudflare or fix CLOUDFLARE_BOT_MANAGEMENT_API_TOKEN; Pages Write alone is not enough.`);
       }
     }
     if (route === '/sitemap.xml' && result.ok) {

@@ -25,6 +25,27 @@ function warn(message) {
   console.warn(`WARN - ${message}`);
 }
 
+function escapeGitHubAnnotation(message) {
+  return String(message)
+    .replace(/%/g, '%25')
+    .replace(/\r/g, '%0D')
+    .replace(/\n/g, '%0A')
+    .replace(/:/g, '%3A')
+    .replace(/,/g, '%2C');
+}
+
+function githubWarning(message) {
+  if (process.env.GITHUB_ACTIONS !== 'true') return;
+  console.warn(`::warning title=Cloudflare AI robots::${escapeGitHubAnnotation(message)}`);
+}
+
+function withActionableCloudflareGuidance(message) {
+  if (/Cloudflare API (401|403) on .*\/bot_management/i.test(message) || /Authentication error/i.test(message)) {
+    return `${message}. The current token can deploy Cloudflare Pages but cannot read or update Bot Management for ${ZONE_NAME}. Use a Cloudflare token scoped to this zone with Bot Management / AI crawler settings access and save it as CLOUDFLARE_BOT_MANAGEMENT_API_TOKEN, or disable Cloudflare Managed robots.txt manually. Pages Write alone is not enough.`;
+  }
+  return message;
+}
+
 function formatCloudflareErrors(body) {
   if (!body || !Array.isArray(body.errors) || body.errors.length === 0) return '';
   return body.errors
@@ -147,9 +168,11 @@ async function main() {
 }
 
 main().catch((error) => {
-  const message = error && error.message ? error.message : String(error);
+  const rawMessage = error && error.message ? error.message : String(error);
+  const message = withActionableCloudflareGuidance(rawMessage);
   if (SOFT) {
     warn(message);
+    githubWarning(message);
     warn('continuing because --soft is enabled');
     process.exit(0);
   }
