@@ -5,6 +5,15 @@ import { visualizer } from 'rollup-plugin-visualizer';
 import path from 'path'
 import fs from 'fs'
 
+const importsSupabaseClient = (id: string): boolean => {
+  try {
+    const source = fs.readFileSync(id, 'utf8');
+    return /from\s+['"](?:\.\/|@\/lib\/)supabase(?:['"]|\.ts['"])/.test(source)
+      || /from\s+['"](?:\.\/|@\/lib\/)supabase-instance(?:['"]|\.ts['"])/.test(source);
+  } catch {
+    return false;
+  }
+};
 const skipBrokenPublicFiles = () => ({
   name: 'skip-broken-public-files',
   buildStart() {
@@ -162,12 +171,16 @@ export default defineConfig(({ mode }) => ({
             ) {
               return 'lib-heavy';
             }
-            // Supabase-dependent libs: separate to avoid loading supabase on public pages
+            // Supabase-dependent libs: separate to avoid misplacing helpers that import the client
+            if (importsSupabaseClient(id)) {
+              return 'lib-supabase';
+            }
             if (
               id.includes('leads') ||
               id.includes('auth') ||
               id.includes('supabase-instance') ||
               id.includes('supabase.ts') ||
+              id.includes('document-utils') ||
               id.includes('commercial-workflow') ||
               id.includes('crm-pipeline')
             ) {

@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { toast } from './toast';
 
 export function getDocumentUrl(filePath: string, bucketParam?: string): string {
   if (!filePath) return '';
@@ -49,7 +50,6 @@ export async function openDocument(filePath: string, bucket?: string) {
   if (isOrphanEmailRef(filePath)) {
     const resolved = await resolveOrphanPath(filePath);
     if (!resolved) {
-      const { toast } = await import('./toast');
       toast.error("Ce fichier n'est plus disponible en stockage. Demandez au prospect de le renvoyer.");
       return;
     }
@@ -65,7 +65,6 @@ export async function downloadDocument(filePath: string, fileName: string, bucke
   if (isOrphanEmailRef(filePath)) {
     const resolved = await resolveOrphanPath(filePath);
     if (!resolved) {
-      const { toast } = await import('./toast');
       toast.error("Ce fichier n'est plus disponible en stockage. Demandez au prospect de le renvoyer.");
       throw new Error('Orphan email attachment');
     }
