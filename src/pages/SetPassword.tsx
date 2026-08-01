@@ -9,7 +9,10 @@ const SetPassword: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const authCode = searchParams.get('code');
+  const tokenHash = searchParams.get('token_hash');
   const legacyToken = searchParams.get('token');
+  const queryType = searchParams.get('type') || searchParams.get('otp_type');
 
   const hashParams = new URLSearchParams(location.hash.substring(1));
   const accessToken = hashParams.get('access_token');
@@ -19,8 +22,14 @@ const SetPassword: React.FC = () => {
   const hashErrorCode = hashParams.get('error_code');
   const hashErrorDescription = hashParams.get('error_description');
 
+  type VerifyOtpType = Parameters<typeof supabase.auth.verifyOtp>[0]['type'];
+  const allowedOtpTypes = new Set(['signup', 'invite', 'magiclink', 'recovery', 'email_change', 'email']);
+  const otpType: VerifyOtpType = (allowedOtpTypes.has(queryType || '') ? queryType : 'recovery') as VerifyOtpType;
+
   const isHashFlow = !!(accessToken && (hashType === 'recovery' || hashType === 'invite'));
-  const hasValidEntry = isHashFlow || !!legacyToken;
+  const isCodeFlow = !!authCode;
+  const hasOtpToken = !!(tokenHash || legacyToken);
+  const hasValidEntry = isHashFlow || isCodeFlow || hasOtpToken;
 
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -59,9 +68,21 @@ const SetPassword: React.FC = () => {
       return;
     }
 
-    if (!legacyToken && !isHashFlow) {
-      setError('Token de verification manquant. Utilisez le lien recu par email.');
+    if (authCode) {
+      supabase.auth.exchangeCodeForSession(authCode)
+        .then(({ error: exchangeError }) => {
+          if (exchangeError) {
+            setError('Code de recuperation invalide ou expire. Demandez un nouveau lien.');
+          } else {
+            setSessionReady(true);
+          }
+        });
+      return;
     }
+
+    if (hasOtpToken) return;
+
+    setError('Token de verification manquant. Utilisez le lien recu par email.');
   }, []);
 
   const criteria = {
@@ -89,13 +110,13 @@ const SetPassword: React.FC = () => {
     setLoading(true);
 
     try {
-      if (isHashFlow) {
+      if (isHashFlow || isCodeFlow) {
         const { error: updateError } = await supabase.auth.updateUser({ password });
         if (updateError) throw updateError;
       } else {
         const { error: verifyError } = await supabase.auth.verifyOtp({
-          token_hash: legacyToken!,
-          type: 'email',
+          token_hash: tokenHash || legacyToken!,
+          type: otpType,
         });
         if (verifyError) throw verifyError;
 
@@ -267,7 +288,7 @@ const SetPassword: React.FC = () => {
     );
   }
 
-  const formDisabled = isHashFlow ? !sessionReady : !legacyToken;
+  const formDisabled = (isHashFlow || isCodeFlow) ? !sessionReady : !hasOtpToken;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 flex items-center justify-center p-4">

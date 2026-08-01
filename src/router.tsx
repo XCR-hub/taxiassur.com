@@ -549,6 +549,22 @@ export const router = createBrowserRouter([
     element: <SetPassword />,
   },
   {
+    path: '/auth/reset-password',
+    element: <SetPassword />,
+  },
+  {
+    path: '/reset-password',
+    element: <SetPassword />,
+  },
+  {
+    path: '/set-password',
+    element: <SetPassword />,
+  },
+  {
+    path: '/mot-de-passe-oublie',
+    element: <SetPassword />,
+  },
+  {
     path: '/client/dashboard',
     element: <ClientDashboard />,
   },

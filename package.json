@@ -41,6 +41,7 @@
     "verify": "node scripts/verify-automations.js",
     "verify:deployment": "node scripts/verify-deployment.js",
     "verify:production": "node scripts/verify-production-health.cjs",
+    "verify:backoffice-auth": "node scripts/verify-backoffice-auth.cjs",
     "verify:self-hosted-first": "node scripts/verify-self-hosted-first.cjs",
     "verify:publications": "node scripts/verify-publication-automation-health.cjs",
     "verify:client-compliance": "node scripts/verify-client-compliance.cjs",

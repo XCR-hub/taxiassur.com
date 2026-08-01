@@ -40,6 +40,11 @@ jobs:
       - name: Client compliance guard
         run: npm run verify:client-compliance
 
+      - name: Backoffice auth guard
+        env:
+          SKIP_LIVE_BACKOFFICE_AUTH_CHECK: '1'
+        run: npm run verify:backoffice-auth
+
       - name: SEO leadership guard
         env:
           SKIP_LIVE_SEO_CHECK: '1'
@@ -101,6 +106,12 @@ jobs:
         env:
           SITE_URL: https://taxiassur.com
         run: npm run verify:self-hosted-first
+
+      - name: Verify production backoffice auth
+        if: steps.cloudflare.outputs.ready == 'true'
+        env:
+          SITE_URL: https://taxiassur.com
+        run: npm run verify:backoffice-auth
 
       - name: Verify production SEO signals
         if: steps.cloudflare.outputs.ready == 'true'

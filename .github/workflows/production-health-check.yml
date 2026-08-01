@@ -40,6 +40,11 @@ jobs:
           done
           npm run verify:production
 
+      - name: Verify production backoffice auth
+        env:
+          SITE_URL: https://taxiassur.com
+        run: npm run verify:backoffice-auth
+
       - name: Verify production SEO signals
         env:
           SITE_URL: https://taxiassur.com
