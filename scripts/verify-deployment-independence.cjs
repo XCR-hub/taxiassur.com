@@ -74,6 +74,9 @@ function verifyWorkflows() {
   addCheck('production workflow deploys with Cloudflare Pages', deployWorkflow.includes('cloudflare/wrangler-action') && deployWorkflow.includes('pages deploy dist --project-name taxiassur --branch main'), {
     file: '.github/workflows/deploy-cloudflare-pages.yml',
   });
+  addCheck('production workflow fails when Cloudflare secrets are missing', deployWorkflow.includes('::error::Cloudflare deployment is not configured') && deployWorkflow.includes('exit 1') && !deployWorkflow.includes('Cloudflare deploy skipped'), {
+    file: '.github/workflows/deploy-cloudflare-pages.yml',
+  });
   addCheck('production workflow runs deployment independence guard', deployWorkflow.includes('npm run verify:deployment-independence'), {
     file: '.github/workflows/deploy-cloudflare-pages.yml',
   });
