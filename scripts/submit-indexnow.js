@@ -12,7 +12,7 @@ dotenv.config({ path: path.join(__dirname, '../.env') });
 
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL;
 const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY;
-const SITE_URL = 'https://taxiassur.com';
+const SITE_URL = (process.env.SITE_URL || 'https://taxiassur.com').replace(/\/$/, '');
 const HOST = new URL(SITE_URL).host;
 const SITEMAP_CANDIDATES = [
   path.join(__dirname, '../dist/sitemap.xml'),
@@ -20,6 +20,7 @@ const SITEMAP_CANDIDATES = [
 ];
 const INDEXNOW_KEY_PATH = path.join(__dirname, '../public/indexnow-key.txt');
 const DRY_RUN = process.argv.includes('--dry-run');
+const SOFT_FAIL = process.argv.includes('--soft');
 const BATCH_SIZE = 1000;
 
 const supabase = SUPABASE_URL && SUPABASE_ANON_KEY
@@ -194,11 +195,21 @@ async function main() {
   console.log(`IndexNow failed: ${errorCount}`);
 
   if (errorCount > 0) {
+    const message = `IndexNow submission had ${errorCount} failed URLs`;
+    if (SOFT_FAIL) {
+      console.log(`::warning title=IndexNow::${message}`);
+      return;
+    }
     process.exitCode = 1;
   }
 }
 
 main().catch(error => {
-  console.error(`IndexNow submission failed: ${error.message}`);
+  const message = `IndexNow submission failed: ${error.message}`;
+  if (SOFT_FAIL) {
+    console.log(`::warning title=IndexNow::${message}`);
+    return;
+  }
+  console.error(message);
   process.exit(1);
 });

@@ -80,6 +80,9 @@ function verifyWorkflows() {
   addCheck('production workflow runs deployment independence guard', deployWorkflow.includes('npm run verify:deployment-independence'), {
     file: '.github/workflows/deploy-cloudflare-pages.yml',
   });
+  addCheck('production workflow submits built sitemap to IndexNow after publication verification', deployWorkflow.includes('Submit built sitemap to IndexNow') && deployWorkflow.includes('npm run seo:indexnow -- --sitemap dist/sitemap.xml --soft') && deployWorkflow.indexOf('Verify public publication automations') < deployWorkflow.indexOf('Submit built sitemap to IndexNow'), {
+    file: '.github/workflows/deploy-cloudflare-pages.yml',
+  });
 
   const forbidden = [];
   const deprecatedActions = [];

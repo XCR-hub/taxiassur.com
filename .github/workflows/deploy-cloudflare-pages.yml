@@ -133,3 +133,9 @@ jobs:
           PUBLIC_MIRROR_COUNT_TOLERANCE: '5'
           PUBLIC_MIRROR_GSC_COUNT_TOLERANCE: '25'
         run: npm run verify:publications
+
+      - name: Submit built sitemap to IndexNow
+        if: steps.cloudflare.outputs.ready == 'true'
+        env:
+          SITE_URL: https://taxiassur.com
+        run: npm run seo:indexnow -- --sitemap dist/sitemap.xml --soft
