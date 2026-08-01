@@ -15,10 +15,10 @@ Aucune modification technique ne peut garantir une position numero 1 Google. Le 
 ## Socle technique installe
 
 - `functions/_middleware.js` injecte des balises SEO route par route en HTML brut Cloudflare Pages.
-- `public/sitemap.xml` liste les pages indexables canoniques sur `https://taxiassur.com`.
+- `public/sitemap.xml` sert de baseline de secours ; le build genere le sitemap publie dans `dist/sitemap.xml` depuis les sources publiques PostgreSQL puis D1.
 - `public/robots.txt` bloque les zones privees et les doublons legacy `/ville/`.
 - `public/llms.txt` et `public/ai.txt` exposent les pages publiques de reference aux assistants IA.
-- `npm run verify:seo-leadership` controle les signaux locaux et, en production, les canonicals HTML reelles.
+- `npm run verify:seo-leadership` controle les signaux locaux, le sitemap de build quand il existe, le sitemap live et les canonicals HTML reelles en production.
 - `npm run seo:quality-audit` repere les slugs casses, les doublons, les URLs trop longues et les clusters de pages a risque.
 
 ## Cycle de publication automatique

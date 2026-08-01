@@ -6,6 +6,7 @@ const ROOT = path.resolve(__dirname, '..');
 const SITE_URL = (process.env.SITE_URL || 'https://taxiassur.com').replace(/\/$/, '');
 const SKIP_LIVE = ['1', 'true', 'yes'].includes(String(process.env.SKIP_LIVE_SEO_CHECK || '').toLowerCase());
 const LIVE_TIMEOUT_MS = Number(process.env.SEO_LIVE_TIMEOUT_MS || 12000);
+const MIN_SITEMAP_URLS = Number(process.env.MIN_SITEMAP_URLS || 800);
 
 const checks = [];
 const warnings = [];
@@ -35,6 +36,25 @@ function addWarning(message) {
 
 function extractLocs(sitemap) {
   return [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map((match) => match[1]);
+}
+
+function sitemapSource() {
+  const buildSitemap = 'dist/sitemap.xml';
+  if (exists(buildSitemap)) {
+    return { file: buildSitemap, label: 'build sitemap' };
+  }
+  return { file: 'public/sitemap.xml', label: 'baseline sitemap' };
+}
+
+function checkSitemapRules(label, locs) {
+  addCheck(`${label} contains at least ${MIN_SITEMAP_URLS} URLs`, locs.length >= MIN_SITEMAP_URLS, `${locs.length} URLs`);
+  addCheck(`${label} stays below Google file URL limit`, locs.length <= 50000, `${locs.length}/50000 URLs`);
+  addCheck(`${label} uses canonical apex host only`, locs.every((url) => url.startsWith(`${SITE_URL}/`) || url === `${SITE_URL}/`));
+  addCheck(`${label} has no www URLs`, locs.every((url) => !url.includes('www.taxiassur.com')));
+  addCheck(`${label} has no Cloudflare preview URLs`, locs.every((url) => !url.includes('pages.dev')));
+  addCheck(`${label} excludes /m/ mirror URLs`, locs.every((url) => !url.includes('/m/')));
+  addCheck(`${label} excludes legacy /ville/ URLs`, locs.every((url) => !url.includes('/ville/')));
+  addCheck(`${label} excludes query-string duplicates`, locs.every((url) => !url.includes('?')));
 }
 
 function canonicalUrls(html) {
@@ -90,17 +110,11 @@ function checkLocalFiles() {
   addCheck('robots blocks private backoffice paths', /^\s*Disallow:\s*\/backoffice\/?\s*$/m.test(robots));
   addCheck('robots blocks client areas', /^\s*Disallow:\s*\/espace-client\s*$/m.test(robots));
 
-  const sitemap = read('public/sitemap.xml');
+  const localSitemap = sitemapSource();
+  const sitemap = read(localSitemap.file);
   const locs = extractLocs(sitemap);
   const locSet = new Set(locs);
-  addCheck('sitemap contains URLs', locs.length > 0, `${locs.length} URLs`);
-  addCheck('sitemap stays below Google file URL limit', locs.length <= 50000, `${locs.length}/50000 URLs`);
-  addCheck('sitemap uses canonical apex host only', locs.every((url) => url.startsWith(`${SITE_URL}/`) || url === `${SITE_URL}/`));
-  addCheck('sitemap has no www URLs', locs.every((url) => !url.includes('www.taxiassur.com')));
-  addCheck('sitemap has no Cloudflare preview URLs', locs.every((url) => !url.includes('pages.dev')));
-  addCheck('sitemap excludes /m/ mirror URLs', locs.every((url) => !url.includes('/m/')));
-  addCheck('sitemap excludes legacy /ville/ URLs', locs.every((url) => !url.includes('/ville/')));
-  addCheck('sitemap excludes query-string duplicates', locs.every((url) => !url.includes('?')));
+  checkSitemapRules(localSitemap.label, locs);
 
   const requiredUrls = [
     '/',
@@ -160,6 +174,8 @@ async function checkLiveSite() {
       }
     }
     if (route === '/sitemap.xml' && result.ok) {
+      const liveLocs = extractLocs(result.text);
+      checkSitemapRules('live sitemap', liveLocs);
       addCheck('live sitemap includes /villes', result.text.includes('<loc>https://taxiassur.com/villes</loc>'));
     }
   }
