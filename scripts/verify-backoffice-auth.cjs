@@ -1,13 +1,25 @@
 #!/usr/bin/env node
 
-const { readFileSync, writeFileSync, mkdirSync } = require('node:fs');
+const { existsSync, readFileSync, writeFileSync, mkdirSync, readdirSync } = require('node:fs');
 const path = require('node:path');
 const { collectPublicRuntimeConfigIssues, readRuntimeConfigValue } = require('./lib/runtime-public-config.cjs');
 
 const SITE_URL = (process.env.SITE_URL || 'https://taxiassur.com').replace(/\/$/, '');
 const SKIP_LIVE = process.env.SKIP_LIVE_BACKOFFICE_AUTH_CHECK === '1';
 const REPORT_PATH = process.env.BACKOFFICE_AUTH_REPORT || '';
+const configuredMaxLiveJsAssets = Number.parseInt(process.env.BACKOFFICE_AUTH_MAX_LIVE_JS_ASSETS || '80', 10);
+const MAX_LIVE_JS_ASSETS = Number.isFinite(configuredMaxLiveJsAssets) && configuredMaxLiveJsAssets > 0 ? configuredMaxLiveJsAssets : 80;
 const checks = [];
+
+const PASSWORD_RESET_MARKERS = [
+  { name: 'reset_text', pattern: /Mot de passe oubli/i },
+  { name: 'supabase_reset_call', value: 'resetPasswordForEmail' },
+  { name: 'reset_redirect', value: '/auth/set-password' },
+];
+
+const CRM_SIDEBAR_MARKERS = [
+  { name: 'crm_sidebar_class', value: 'crm-sidebar' },
+];
 
 function read(relativePath) {
   return readFileSync(path.join(process.cwd(), relativePath), 'utf8');
@@ -15,6 +27,39 @@ function read(relativePath) {
 
 function addCheck(name, ok, details = {}) {
   checks.push({ name, ok: Boolean(ok), details });
+}
+
+function markerExists(text, marker) {
+  return marker.pattern ? marker.pattern.test(text) : text.includes(marker.value);
+}
+
+function summarizeMarkers(text, markers) {
+  const found = Object.fromEntries(markers.map((marker) => [marker.name, markerExists(text, marker)]));
+  return {
+    ok: Object.values(found).every(Boolean),
+    found,
+  };
+}
+
+function addBackofficeBundleChecks(prefix, bundle) {
+  const reset = summarizeMarkers(bundle.text || '', PASSWORD_RESET_MARKERS);
+  const sidebar = summarizeMarkers(bundle.text || '', CRM_SIDEBAR_MARKERS);
+  const baseDetails = {
+    asset_count: bundle.asset_count,
+    bytes: bundle.bytes,
+    fetch_failures: bundle.fetch_failures || [],
+  };
+
+  addCheck(`${prefix} bundle exposes password reset UI`, bundle.available !== false && reset.ok, {
+    ...baseDetails,
+    found: reset.found,
+    reason: bundle.reason,
+  });
+  addCheck(`${prefix} bundle contains persistent CRM sidebar marker`, bundle.available !== false && sidebar.ok, {
+    ...baseDetails,
+    found: sidebar.found,
+    reason: bundle.reason,
+  });
 }
 
 function withTimeout(ms = 12000) {
@@ -55,6 +100,93 @@ async function fetchJson(label, url, timeoutMs = 12000, headers = {}) {
   }
 }
 
+function readLocalBuildBundle() {
+  const distDir = path.join(process.cwd(), 'dist');
+  const assetsDir = path.join(distDir, 'assets');
+
+  if (!existsSync(assetsDir)) {
+    return { available: false, reason: 'dist/assets is not present yet', text: '', asset_count: 0, bytes: 0 };
+  }
+
+  const indexPath = path.join(distDir, 'index.html');
+  const jsFiles = readdirSync(assetsDir)
+    .filter((file) => file.endsWith('.js'))
+    .sort();
+  const texts = [];
+
+  if (existsSync(indexPath)) {
+    texts.push(readFileSync(indexPath, 'utf8'));
+  }
+
+  for (const file of jsFiles) {
+    texts.push(readFileSync(path.join(assetsDir, file), 'utf8'));
+  }
+
+  const text = texts.join('\n');
+  return {
+    available: true,
+    text,
+    asset_count: jsFiles.length,
+    bytes: Buffer.byteLength(text, 'utf8'),
+  };
+}
+
+function extractJsAssetPaths(text) {
+  const assets = new Set();
+  const assetPattern = /(?:^|["'(`,\s])((?:\.\/|\/)?assets\/[A-Za-z0-9._~@/-]+\.js)(?=["'`),\s]|$)/g;
+  let match;
+
+  while ((match = assetPattern.exec(text || '')) !== null) {
+    let assetPath = match[1].replace(/^\.\//, '');
+    if (!assetPath.startsWith('/')) assetPath = `/${assetPath}`;
+    assets.add(assetPath);
+  }
+
+  return Array.from(assets);
+}
+
+async function fetchLiveBundle(seedTexts) {
+  const queue = [];
+  const seen = new Set();
+  const failures = [];
+  const texts = [...seedTexts];
+
+  for (const seedText of seedTexts) {
+    for (const assetPath of extractJsAssetPaths(seedText)) {
+      if (!queue.includes(assetPath)) queue.push(assetPath);
+    }
+  }
+
+  while (queue.length > 0 && seen.size < MAX_LIVE_JS_ASSETS) {
+    const assetPath = queue.shift();
+    if (!assetPath || seen.has(assetPath)) continue;
+    seen.add(assetPath);
+
+    const asset = await fetchText(`live asset ${assetPath}`, `${SITE_URL}${assetPath}?ts=${Date.now()}`, 12000);
+    if (!asset.ok) {
+      failures.push({ asset: assetPath, status: asset.status });
+      continue;
+    }
+
+    texts.push(asset.text || '');
+    for (const discoveredPath of extractJsAssetPaths(asset.text || '')) {
+      if (!seen.has(discoveredPath) && !queue.includes(discoveredPath) && seen.size + queue.length < MAX_LIVE_JS_ASSETS) {
+        queue.push(discoveredPath);
+      }
+    }
+  }
+
+  const text = texts.join('\n');
+  return {
+    available: seen.size > 0,
+    reason: seen.size > 0 ? undefined : 'no live JS assets discovered from backoffice routes',
+    text,
+    asset_count: seen.size,
+    bytes: Buffer.byteLength(text, 'utf8'),
+    fetch_failures: failures.slice(0, 10),
+  };
+}
+
 function verifySourceGuards() {
   const router = read('src/router.tsx');
   const login = read('src/components/AdminLogin.tsx');
@@ -69,7 +201,7 @@ function verifySourceGuards() {
   addCheck('login exposes password reset action', login.includes('Mot de passe oubli') && login.includes('resetPasswordForEmail'), {
     file: 'src/components/AdminLogin.tsx',
   });
-  addCheck('login reset redirects to /auth/set-password', login.includes("/auth/set-password"), {
+  addCheck('login reset redirects to /auth/set-password', login.includes('/auth/set-password'), {
     file: 'src/components/AdminLogin.tsx',
   });
   addCheck('set-password handles Supabase PKCE code flow', setPassword.includes('exchangeCodeForSession(authCode)'), {
@@ -93,6 +225,16 @@ function verifySourceGuards() {
   addCheck('production health rejects server/service_role runtime Supabase keys', productionHealth.includes('Supabase runtime public key is not server/service_role'), {
     file: 'scripts/verify-production-health.cjs',
   });
+}
+
+function verifyLocalBuildGuards() {
+  const bundle = readLocalBuildBundle();
+  if (!bundle.available) {
+    addCheck('local dist backoffice bundle checks skipped', true, { reason: bundle.reason });
+    return;
+  }
+
+  addBackofficeBundleChecks('local dist backoffice', bundle);
 }
 
 async function verifyLiveGuards() {
@@ -129,6 +271,9 @@ async function verifyLiveGuards() {
   });
   addCheck('runtime Supabase public key is not server/service_role', supabasePublicKeyInfo.ok, supabasePublicKeyInfo);
 
+  const liveBundle = await fetchLiveBundle([backoffice.text || '', setPassword.text || '']);
+  addBackofficeBundleChecks('live backoffice', liveBundle);
+
   if (supabaseUrl && supabaseAnonKey) {
     const adminUsers = await fetchJson(
       'admin-users-rest',
@@ -145,6 +290,7 @@ async function verifyLiveGuards() {
 
 async function main() {
   verifySourceGuards();
+  verifyLocalBuildGuards();
   await verifyLiveGuards();
 
   const report = {
