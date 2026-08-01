@@ -148,6 +148,11 @@ function commitMatches(deployed, expected) {
   return expected.startsWith(deployed) || deployed.startsWith(expected);
 }
 
+function findDirectGoogleTagLoads(html) {
+  const matches = html.match(/googletagmanager\.com\/(?:gtm\.js|gtag\/js|ns\.html)|google-analytics\.com/gi) || [];
+  return [...new Set(matches)].slice(0, 10);
+}
+
 async function main() {
   const checkedAt = new Date().toISOString();
   const checks = [];
@@ -158,6 +163,8 @@ async function main() {
   const d1Sample = await fetchJson('d1-blog-sample', `${SITE_URL}/api/d1/list?table=blog_posts&limit=1&ts=${Date.now()}`);
   const postgresSample = await fetchJson('postgres-blog-sample', `${SITE_URL}/api/postgres-public/list?table=blog_posts&limit=1&ts=${Date.now()}`);
   const mainPage = await fetchStatus('main-page', `${SITE_URL}/assurance-taxi?ts=${Date.now()}`);
+  const homeHtml = await fetchText('home-html', `${SITE_URL}/?ts=${Date.now()}`);
+  const directGoogleTagLoads = findDirectGoogleTagLoads(homeHtml.text || '');
   const envConfig = await fetchText('env-config', `${SITE_URL}/env-config.js?ts=${Date.now()}`);
   const runtimeConfigText = envConfig.text || '';
   const turnstileProvider = readRuntimeConfigValue(runtimeConfigText, 'VITE_CAPTCHA_PROVIDER');
@@ -197,6 +204,10 @@ async function main() {
     : null;
 
   addCheck(checks, 'site page /assurance-taxi returns 200', mainPage.ok && mainPage.status === 200, mainPage);
+  addCheck(checks, 'public HTML does not load Google tags before consent', homeHtml.ok && directGoogleTagLoads.length === 0, {
+    status: homeHtml.status,
+    matches: directGoogleTagLoads,
+  });
   addCheck(checks, 'deploy-info is reachable', deployInfo.ok && deployInfo.json?.commit, {
     status: deployInfo.status,
     commit: deployInfo.json?.commit,
