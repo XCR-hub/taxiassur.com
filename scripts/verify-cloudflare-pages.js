@@ -1,6 +1,10 @@
 #!/usr/bin/env node
 
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
+import { createRequire } from 'node:module';
+
+const require = createRequire(import.meta.url);
+const { collectPublicRuntimeConfigIssues, formatRuntimeConfigIssue } = require('./lib/runtime-public-config.cjs');
 
 const redirectsPath = existsSync('dist/_redirects') ? 'dist/_redirects' : 'public/_redirects';
 const headersPath = existsSync('dist/_headers') ? 'dist/_headers' : 'public/_headers';
@@ -77,22 +81,17 @@ if (existsSync('dist/api')) {
 const envConfigPath = existsSync('dist/env-config.js') ? 'dist/env-config.js' : 'public/env-config.js';
 if (existsSync(envConfigPath)) {
   const envConfig = readFileSync(envConfigPath, 'utf8');
-  const forbiddenPublicKeys = [
-    'VITE_SUPABASE_SERVICE_ROLE_KEY',
-    'VITE_OPENAI_API_KEY',
-    'VITE_RESEND_API_KEY',
-    'VITE_SMTP_PASSWORD',
-    'VITE_SERP_API_KEY',
-    'VITE_ADMIN_PASSWORD',
-    'VITE_HCAPTCHA_SECRET_KEY',
-    'VITE_MAKE_API_TOKEN',
-    'VITE_MAKE_SECRET',
-  ];
+  const runtimeConfigAudit = collectPublicRuntimeConfigIssues(envConfig, {
+    requireEnvConfig: true,
+    requireSupabaseAnonKey: true,
+  });
 
-  for (const key of forbiddenPublicKeys) {
-    if (envConfig.includes(key)) {
-      fail(`${envConfigPath} exposes forbidden browser key ${key}`);
-    }
+  for (const issue of runtimeConfigAudit.issues) {
+    fail(`${envConfigPath} ${formatRuntimeConfigIssue(issue)}`);
+  }
+
+  if (runtimeConfigAudit.ok && !process.exitCode) {
+    console.log(`Runtime public config OK: ${envConfigPath}`);
   }
 }
 const forbiddenDistSignatures = [

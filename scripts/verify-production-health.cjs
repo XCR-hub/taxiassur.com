@@ -3,6 +3,7 @@
 const { execFileSync } = require('node:child_process');
 const { writeFileSync, mkdirSync } = require('node:fs');
 const path = require('node:path');
+const { collectPublicRuntimeConfigIssues, readRuntimeConfigValue } = require('./lib/runtime-public-config.cjs');
 
 const SITE_URL = (process.env.SITE_URL || 'https://taxiassur.com').replace(/\/$/, '');
 const COUNT_TOLERANCE = Math.max(0, Number(process.env.PUBLIC_MIRROR_COUNT_TOLERANCE || 0));
@@ -147,31 +148,6 @@ function commitMatches(deployed, expected) {
   return expected.startsWith(deployed) || deployed.startsWith(expected);
 }
 
-function readRuntimeConfigValue(text, key) {
-  const match = text.match(new RegExp(`${key}\\s*:\\s*['\"]([^'\"]+)['\"]`));
-  return match?.[1] || '';
-}
-function inspectSupabasePublicKey(key) {
-  if (!key) return { ok: false, type: 'missing' };
-  if (key.startsWith('sb_secret_')) return { ok: false, type: 'sb_secret' };
-  if (key.startsWith('sb_publishable_')) return { ok: true, type: 'sb_publishable' };
-
-  const parts = key.split('.');
-  if (parts.length === 3) {
-    try {
-      const payload = JSON.parse(Buffer.from(parts[1].replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString('utf8'));
-      return {
-        ok: payload.role === 'anon',
-        type: 'jwt',
-        role: payload.role || null,
-      };
-    } catch (error) {
-      return { ok: false, type: 'jwt', error: error instanceof Error ? error.message : String(error) };
-    }
-  }
-
-  return { ok: false, type: 'unknown' };
-}
 async function main() {
   const checkedAt = new Date().toISOString();
   const checks = [];
@@ -188,6 +164,10 @@ async function main() {
   const turnstileSiteKey = readRuntimeConfigValue(runtimeConfigText, 'VITE_TURNSTILE_SITE_KEY');
   const supabaseUrl = readRuntimeConfigValue(runtimeConfigText, 'VITE_SUPABASE_URL').replace(/\/$/, '');
   const supabaseAnonKey = readRuntimeConfigValue(runtimeConfigText, 'VITE_SUPABASE_ANON_KEY');
+  const runtimePublicConfigAudit = collectPublicRuntimeConfigIssues(runtimeConfigText, {
+    requireEnvConfig: true,
+    requireSupabaseAnonKey: true,
+  });
   const supabaseHeaders = supabaseAnonKey
     ? { apikey: supabaseAnonKey, authorization: `Bearer ${supabaseAnonKey}` }
     : {};
@@ -228,11 +208,15 @@ async function main() {
   addCheck(checks, 'env-config is reachable', envConfig.ok && runtimeConfigText.includes('window.ENV_CONFIG'), {
     status: envConfig.status,
   });
+  addCheck(checks, 'env-config exposes only browser-safe runtime values', runtimePublicConfigAudit.ok, {
+    issue_count: runtimePublicConfigAudit.issues.length,
+    issues: runtimePublicConfigAudit.issues,
+  });
   addCheck(checks, 'Turnstile runtime config is enabled', turnstileProvider === 'turnstile' && /^0x[\w-]+$/.test(turnstileSiteKey), {
     provider: turnstileProvider || null,
     has_site_key: Boolean(turnstileSiteKey),
   });
-  const supabasePublicKeyInfo = inspectSupabasePublicKey(supabaseAnonKey);
+  const supabasePublicKeyInfo = runtimePublicConfigAudit.supabase_public_key;
   addCheck(checks, 'Supabase runtime config is available for Edge Function probes', Boolean(supabaseUrl && supabaseAnonKey), {
     has_url: Boolean(supabaseUrl),
     has_anon_key: Boolean(supabaseAnonKey),

@@ -2,6 +2,7 @@
 
 const { readFileSync, writeFileSync, mkdirSync } = require('node:fs');
 const path = require('node:path');
+const { collectPublicRuntimeConfigIssues, readRuntimeConfigValue } = require('./lib/runtime-public-config.cjs');
 
 const SITE_URL = (process.env.SITE_URL || 'https://taxiassur.com').replace(/\/$/, '');
 const SKIP_LIVE = process.env.SKIP_LIVE_BACKOFFICE_AUTH_CHECK === '1';
@@ -54,32 +55,6 @@ async function fetchJson(label, url, timeoutMs = 12000, headers = {}) {
   }
 }
 
-function readRuntimeConfigValue(text, key) {
-  const match = text.match(new RegExp(`${key}\\s*:\\s*['\"]([^'\"]+)['\"]`));
-  return match?.[1] || '';
-}
-
-function inspectSupabasePublicKey(key) {
-  if (!key) return { ok: false, type: 'missing' };
-  if (key.startsWith('sb_secret_')) return { ok: false, type: 'sb_secret' };
-  if (key.startsWith('sb_publishable_')) return { ok: true, type: 'sb_publishable' };
-
-  const parts = key.split('.');
-  if (parts.length === 3) {
-    try {
-      const payload = JSON.parse(Buffer.from(parts[1].replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString('utf8'));
-      return {
-        ok: payload.role === 'anon',
-        type: 'jwt',
-        role: payload.role || null,
-      };
-    } catch (error) {
-      return { ok: false, type: 'jwt', error: error instanceof Error ? error.message : String(error) };
-    }
-  }
-
-  return { ok: false, type: 'unknown' };
-}
 function verifySourceGuards() {
   const router = read('src/router.tsx');
   const login = read('src/components/AdminLogin.tsx');
@@ -132,13 +107,22 @@ async function verifyLiveGuards() {
     fetchText('env-config', `${SITE_URL}/env-config.js?ts=${Date.now()}`),
   ]);
 
+  const runtimeConfigText = envConfig.text || '';
+  const runtimePublicConfigAudit = collectPublicRuntimeConfigIssues(runtimeConfigText, {
+    requireEnvConfig: true,
+    requireSupabaseAnonKey: true,
+  });
+  const supabaseUrl = readRuntimeConfigValue(runtimeConfigText, 'VITE_SUPABASE_URL').replace(/\/$/, '');
+  const supabaseAnonKey = readRuntimeConfigValue(runtimeConfigText, 'VITE_SUPABASE_ANON_KEY');
+  const supabasePublicKeyInfo = runtimePublicConfigAudit.supabase_public_key;
+
   addCheck('/backoffice is reachable', backoffice.ok && backoffice.status === 200, { status: backoffice.status });
   addCheck('/auth/set-password is reachable', setPassword.ok && setPassword.status === 200, { status: setPassword.status });
-  addCheck('runtime env-config is reachable', envConfig.ok && envConfig.text.includes('window.ENV_CONFIG'), { status: envConfig.status });
-
-  const supabaseUrl = readRuntimeConfigValue(envConfig.text || '', 'VITE_SUPABASE_URL').replace(/\/$/, '');
-  const supabaseAnonKey = readRuntimeConfigValue(envConfig.text || '', 'VITE_SUPABASE_ANON_KEY');
-  const supabasePublicKeyInfo = inspectSupabasePublicKey(supabaseAnonKey);
+  addCheck('runtime env-config is reachable', envConfig.ok && runtimeConfigText.includes('window.ENV_CONFIG'), { status: envConfig.status });
+  addCheck('runtime env-config exposes only browser-safe values', runtimePublicConfigAudit.ok, {
+    issue_count: runtimePublicConfigAudit.issues.length,
+    issues: runtimePublicConfigAudit.issues,
+  });
   addCheck('runtime Supabase public config exists for backoffice auth', Boolean(supabaseUrl && supabaseAnonKey), {
     has_url: Boolean(supabaseUrl),
     has_anon_key: Boolean(supabaseAnonKey),
