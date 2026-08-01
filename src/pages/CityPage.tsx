@@ -11,7 +11,6 @@ import { generateCityPages } from '../lib/ping';
 import { MapPin, Phone, CheckCircle, Users, Award, TrendingDown, Shield, Clock, Star, Target, Zap, Crown, Gift } from 'lucide-react';
 import Card from '../components/Card';
 import StickyCTA from '../components/StickyCTA';
-import { supabase } from '@/lib/supabase';
 import { getD1Content } from '@/lib/d1-public-cache';
 import { logger } from '@/lib/logger';
 
@@ -35,32 +34,6 @@ interface CityPageData {
   updated_at: string;
 }
 
-interface FAQ {
-  id: string;
-  question: string;
-  answer: string;
-  city?: string;
-}
-
-interface BlogPost {
-  id: string;
-  title: string;
-  slug: string;
-  excerpt?: string;
-  published: boolean;
-  created_at: string;
-}
-
-interface NewsArticle {
-  id: string;
-  title: string;
-  slug: string;
-  excerpt?: string;
-  published: boolean;
-  created_at: string;
-}
-
-
 function getCityPublicPath(slug: string): string {
   return slug.startsWith('assurance-taxi-') ? `/${slug}` : `/assurance-taxi-${slug}`;
 }
@@ -79,9 +52,6 @@ const CityPage: React.FC = () => {
   const invalidCitySlug = !isIndexableCitySlug(lookupSlug);
   const lookupSlugs = Array.from(new Set([lookupSlug, lookupSlug.replace(/^assurance-taxi-/, ""), lookupSlug.startsWith("assurance-taxi-") ? lookupSlug : `assurance-taxi-${lookupSlug}`].filter(Boolean)));
   const [cityPageData, setCityPageData] = useState<CityPageData | null>(null);
-  const [faqs, setFaqs] = useState<FAQ[]>([]);
-  const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
-  const [newsArticles, setNewsArticles] = useState<NewsArticle[]>([]);
   const [loading, setLoading] = useState(true);
   const [useTemplate, setUseTemplate] = useState(false);
 
@@ -110,47 +80,8 @@ const CityPage: React.FC = () => {
         }
 
         // Charger la page ville
-        const { data, error } = await supabase
-          .from('city_pages')
-          .select('*')
-          .in('slug', lookupSlugs)
-          .or('status.eq.published,published.eq.true,is_published.eq.true')
-          .maybeSingle();
-
-        if (error) {
-          logger.warn('Supabase city page fetch failed:', error);
-          setUseTemplate(true);
-        } else if (data) {
-          setCityPageData(data);
-
-          // Charger les FAQ (de la ville ou générales)
-          const { data: faqData } = await supabase
-            .from('faq')
-            .select('*')
-            .or(`city.eq.${data.city_name},city.is.null`)
-            .limit(5);
-          if (faqData) setFaqs(faqData);
-
-          // Charger les articles de blog récents
-          const { data: blogData } = await supabase
-            .from('blog_posts')
-            .select('id, title, slug, excerpt, published, created_at')
-            .eq('published', true)
-            .order('created_at', { ascending: false })
-            .limit(3);
-          if (blogData) setBlogPosts(blogData);
-
-          // Charger les actualités récentes
-          const { data: newsData } = await supabase
-            .from('news_articles')
-            .select('id, title, slug, excerpt, published, created_at')
-            .eq('published', true)
-            .order('created_at', { ascending: false })
-            .limit(3);
-          if (newsData) setNewsArticles(newsData);
-        } else {
-          setUseTemplate(true);
-        }
+        logger.warn('Autonomous public city cache did not return page, using static template:', slug);
+        setUseTemplate(true);
       } catch (err) {
         logger.warn('Error loading city page:', err);
         setUseTemplate(true);

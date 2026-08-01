@@ -4,18 +4,19 @@
 
 Reduire progressivement la dependance a Supabase tout en gardant le site, les leads, les emails, les workflows et le contenu SEO operationnels.
 
-## Etat verifie le 2026-07-31
+## Etat verifie le 2026-08-01
 
 - Le site public `taxiassur.com` est servi par Cloudflare Pages.
-- Le dernier deploiement verifie en production est `465b9de2`.
-- Cloudflare D1 `taxiassur-prod` est operationnel pour le cache public SEO.
-- D1 contient actuellement : 766 articles blog, 376 pages villes, 152 FAQ, 2979 actualites, 1279 pages GSC et 1802 requetes GSC.
+- Le flux de production Cloudflare Pages est verifie par `npm run verify:production` apres deploiement.
+- Cloudflare D1 `taxiassur-prod` reste operationnel comme cache public SEO de secours.
+- Le proxy public `/api/postgres-public/*` lit le miroir PostgreSQL local sans exposer le token serveur au navigateur.
+- Les lectures publiques SEO `blog_posts`, `city_pages`, `faq_entries` et `news_articles` utilisent le cache autonome PostgreSQL puis D1, sans fallback direct Supabase cote navigateur.
+- Les compteurs publics verifies en production sont : 775 articles blog, 376 pages villes, 152 FAQ, 2980 actualites, 1433 pages GSC et 1943 requetes GSC.
 - Le workflow GitHub `Refresh Cloudflare D1 Cache` fonctionne avec le secret dedie `CLOUDFLARE_D1_API_TOKEN`.
 - Le serveur `192.168.1.70` heberge un miroir PostgreSQL local sous `F:\TaxiAssur`.
 - Dernier etat fonctionnel du miroir serveur : sync `ok`, 444 tables OK sur 444, 236504 lignes synchronisees, sauvegarde `taxiassur_20260731-021931.dump`.
 - Une API Node de lecture seule est prete dans `server/postgres-read-api.mjs` et installable via `scripts/install-server-postgres-read-api.ps1`.
-- Un proxy public Cloudflare Pages `/api/postgres-public/*` permet de lire le miroir PostgreSQL sans exposer le token serveur au navigateur.
-- La verification production `npm run verify:production` controle le site, D1, le proxy PostgreSQL et l'alignement des compteurs publics.
+- La verification production controle le site, D1, le proxy PostgreSQL, l'alignement des compteurs publics et l'absence de tags Google avant consentement.
 - Les workflows GitHub executent maintenant `verify:client-compliance`, `verify:production` apres deploiement Cloudflare, et `Production Health Check` toutes les 2 heures.
 - Supabase reste la base primaire pour le CRM, les leads, les emails, les SMS, les paiements, les documents, Auth, Realtime, Edge Functions et crons.
 - Le scan antivirus documents est pret cote base et peut etre installe en tache planifiee serveur avec `scripts/install-server-clamav-document-scan.ps1`.
@@ -109,8 +110,8 @@ Les exports de sauvegarde peuvent etre stockes dans Nextcloud. En revanche, les 
 - Installer et tester l'API interne en lecture seule devant PostgreSQL local.
 - Exposer cette API uniquement via un tunnel/reverse proxy securise, jamais directement via l'IP LAN.
 - Brancher un endpoint non critique du backoffice en double lecture pour comparer Supabase et PostgreSQL local.
-- Etendre progressivement le fallback `/api/postgres-public/*` aux lectures publiques qui utilisent encore Supabase directement.
-- Installer ClamAV sur `192.168.1.70`, puis activer `TaxiAssurDocumentClamAVScan` avec les secrets serveur locaux.
+- Maintenir le garde-fou `npm run verify:self-hosted-first` pour empecher le retour de fallbacks Supabase sur les lectures SEO publiques.
+- Surveiller les taches planifiees ClamAV et les rapports de scan documents.
 
 ### Phase 3 - Avant toute bascule metier
 

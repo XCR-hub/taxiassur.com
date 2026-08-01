@@ -7,6 +7,16 @@ const SITE_URL = (process.env.SITE_URL || 'https://taxiassur.com').replace(/\/$/
 const REPORT_PATH = process.env.SELF_HOSTED_FIRST_REPORT || 'reports/self-hosted-first-health.json';
 const SKIP_LIVE = process.env.SKIP_LIVE_SELF_HOSTED_CHECK === '1';
 
+const PUBLIC_SEO_RUNTIME_FILES = [
+  'src/lib/content.ts',
+  'src/pages/Actualites.tsx',
+  'src/pages/NewsArticle.tsx',
+  'src/pages/CityPage.tsx',
+  'src/components/NewsSection.tsx',
+];
+const PUBLIC_SEO_PAGE_FILES = PUBLIC_SEO_RUNTIME_FILES.filter((file) => file !== 'src/lib/content.ts');
+const PUBLIC_SEO_TABLES = ['blog_posts', 'city_pages', 'faq_entries', 'news_articles'];
+
 const checks = [];
 const warnings = [];
 
@@ -60,6 +70,49 @@ function verifyLocalSourceOrder() {
   addCheck('public fetch timeout is configurable and bounded', source.includes('VITE_PUBLIC_CONTENT_TIMEOUT_MS') && source.includes('Math.min(10000'), { file: helperPath });
 }
 
+function verifyPublicSeoRuntimeNoSupabaseFallback() {
+  const directSeoTableFindings = [];
+  const missingHelperFindings = [];
+  const directClientImports = [];
+
+  for (const relativeFile of PUBLIC_SEO_RUNTIME_FILES) {
+    const filePath = path.resolve(relativeFile);
+    const fileSource = readFileSync(filePath, 'utf8');
+    const usesAutonomousHelper = fileSource.includes('getD1Content') || fileSource.includes('listD1Content');
+
+    if (!usesAutonomousHelper) {
+      missingHelperFindings.push({ file: relativeFile });
+    }
+
+    for (const table of PUBLIC_SEO_TABLES) {
+      const directSupabaseTablePattern = new RegExp("\\.from\\(\\s*['\"`]" + table + "['\"`]\\s*\\)");
+      if (directSupabaseTablePattern.test(fileSource)) {
+        directSeoTableFindings.push({ file: relativeFile, table });
+      }
+    }
+  }
+
+  for (const relativeFile of PUBLIC_SEO_PAGE_FILES) {
+    const filePath = path.resolve(relativeFile);
+    const fileSource = readFileSync(filePath, 'utf8');
+    if (fileSource.includes('@/lib/supabase') || fileSource.includes("from '@/integrations/supabase/client'")) {
+      directClientImports.push({ file: relativeFile });
+    }
+  }
+
+  addCheck('public SEO runtime uses autonomous public content helper', missingHelperFindings.length === 0, {
+    files: PUBLIC_SEO_RUNTIME_FILES,
+    findings: missingHelperFindings,
+  });
+  addCheck('public SEO runtime does not fall back to Supabase SEO tables', directSeoTableFindings.length === 0, {
+    tables: PUBLIC_SEO_TABLES,
+    findings: directSeoTableFindings,
+  });
+  addCheck('public SEO pages do not import Supabase client directly', directClientImports.length === 0, {
+    files: PUBLIC_SEO_PAGE_FILES,
+    findings: directClientImports,
+  });
+}
 function rowsFromHealth(json) {
   const tables = json?.tables || {};
   return {
@@ -128,6 +181,7 @@ async function verifyLiveSources() {
 
 async function main() {
   verifyLocalSourceOrder();
+  verifyPublicSeoRuntimeNoSupabaseFallback();
   await verifyLiveSources();
 
   const report = {

@@ -275,49 +275,14 @@ async function fetchLocalItem<T>(type: string, id: string, schema: { parse: (dat
 
 // Blog Posts
 export async function getBlogPosts(): Promise<BlogPost[]> {
-  // D1 public cache: blog list. Supabase remains the fallback for CRM/backoffice continuity.
+  // Public autonomous cache: blog list, PostgreSQL first then D1.
   const d1Posts = await listD1Content<BlogPostRow>('blog_posts', { limit: 100, status: 'published', sort: 'updated_at' });
   if (d1Posts.length > 0) {
     return d1Posts
       .map(mapBlogPostRow)
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }
-  if (supabase) {
-    try {
-      logger.log('🔍 Fetching blog posts from Supabase...');
-      const { data, error } = await supabase
-        .from('blog_posts')
-        .select('*')
-        .eq('published', true)
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        logger.error('❌ Supabase error:', error.message);
-      } else if (data && data.length > 0) {
-        logger.log(`✅ Loaded ${data.length} blog posts from Supabase`);
-        return data.map(item => ({
-          id: item.slug,
-          title: item.title,
-          excerpt: item.excerpt,
-          content: item.content,
-          author: item.author || 'TaxiAssur',
-          coverImage: item.featured_image || null,
-          tags: item.keywords || [],
-          createdAt: item.created_at,
-          updatedAt: item.updated_at || item.created_at,
-          faq: [],
-          status: 'published'
-        }));
-      } else {
-        logger.log('⚠️ No blog posts found in Supabase, trying local...');
-      }
-    } catch (error) {
-      logger.error('❌ Supabase blog fetch exception:', error);
-    }
-  } else {
-    logger.log('⚠️ Supabase not configured, using local content');
-  }
-
+  logger.warn('Autonomous public blog cache returned no posts, using local files.');
   logger.log('📂 Loading blog posts from local files...');
   const posts = await fetchLocalContent<BlogPost>('blog', BlogPostSchema);
   logger.log(`✅ Loaded ${posts.length} blog posts from local files`);
@@ -325,125 +290,36 @@ export async function getBlogPosts(): Promise<BlogPost[]> {
 }
 
 export async function getBlogPost(id: string): Promise<BlogPost | null> {
-  // D1 public cache: single blog. Supabase remains the fallback.
+  // Public autonomous cache: single blog, PostgreSQL first then D1.
   const d1Post = await getD1Content<BlogPostRow>('blog_posts', { slug: id });
   if (d1Post) {
     return mapBlogPostRow(d1Post);
   }
-  if (supabase) {
-    try {
-      logger.log(`🔍 Fetching blog post "${id}" from Supabase...`);
-      const { data, error } = await supabase
-        .from('blog_posts')
-        .select('*')
-        .eq('slug', id)
-        .eq('published', true)
-        .maybeSingle();
-
-      if (!error && data) {
-        return {
-          id: data.slug,
-          title: data.title,
-          excerpt: data.excerpt,
-          content: data.content,
-          author: data.author || 'TaxiAssur',
-          coverImage: data.featured_image || null,
-          tags: data.keywords || [],
-          createdAt: data.created_at,
-          updatedAt: data.updated_at || data.created_at,
-          faq: [],
-          status: 'published'
-        };
-      }
-    } catch (error) {
-      logger.warn('Supabase blog post fetch failed, falling back to local:', error);
-    }
-  }
-
+  logger.warn('Autonomous public blog cache missed post, using local file fallback:', id);
   return await fetchLocalItem<BlogPost>('blog', id, BlogPostSchema);
 }
 
 // FAQ Entries
 export async function getFaqEntries(): Promise<FaqEntry[]> {
-  // D1 public cache: FAQ. Supabase remains the fallback.
+  // Public autonomous cache: FAQ, PostgreSQL first then D1.
   const d1Faqs = await listD1Content<FaqEntryRow>('faq_entries', { limit: 100, status: 'published', sort: 'updated_at' });
   if (d1Faqs.length > 0) {
     return d1Faqs.map(mapFaqEntryRow);
   }
-  if (supabase) {
-    try {
-      logger.log('🔍 Fetching FAQ entries from Supabase...');
-      const { data, error } = await supabase
-        .from('faq_entries')
-        .select('*')
-        .order('order_index', { ascending: true });
-
-      if (!error && data && data.length > 0) {
-        logger.log('✅ Loaded', data.length, 'FAQ from Supabase');
-        return (data as Array<{ id?: string | number | null; question: string; answer: string; created_at?: string; category?: string }>).map((item) => ({
-          id: item.id?.toString() || Math.random().toString(),
-          question: item.question,
-          answer: item.answer,
-          updatedAt: item.created_at,
-          tags: [item.category || 'assurance-taxi'],
-          status: 'published' as const
-        }));
-      }
-    } catch (error) {
-      logger.warn('⚠️ Supabase FAQ fetch failed, falling back to local:', error);
-    }
-  }
-
+  logger.warn('Autonomous public FAQ cache returned no entries, using local files.');
   logger.log('📂 Loading FAQ from local files...');
   return await fetchLocalContent<FaqEntry>('faq', FaqEntrySchema);
 }
 
-// City Pages - Chargement dynamique depuis Supabase
+// City Pages - chargement dynamique depuis le cache public autonome
 export async function getCityPages(): Promise<CityPage[]> {
-  // D1 public cache: city list. Supabase remains the fallback.
+  // Public autonomous cache: city list, PostgreSQL first then D1.
   const d1Cities = await listD1Content<CityPageRow>('city_pages', { limit: 100, status: 'published', sort: 'updated_at' });
   if (d1Cities.length > 0) {
     return d1Cities
       .filter((item) => isIndexableCitySlug(item.slug))
       .map(mapCityPageRow);
   }
-  // Mode hybride : Essayer Supabase, sinon fallback vers villes statiques
-  const USE_STATIC_CITIES = false;  // ✅ Supabase activé
-
-  // Essayer d'abord Supabase directement (pas de RPC)
-  if (supabase && !USE_STATIC_CITIES) {
-    try {
-      const { data, error } = await supabase
-        .from('city_pages')
-        .select('*')
-        .or('status.eq.published,published.eq.true,is_published.eq.true')
-        .order('taxi_count', { ascending: false });
-
-      if (!error && data && data.length > 0) {
-        logger.log('✅ Loaded', data.length, 'city pages from Supabase');
-        return (data as Array<{ id: string; city: string; slug: string; dept?: string; region?: string; taxi_count?: number; title?: string; meta_description?: string; created_at?: string }>)
-          .filter((item) => isIndexableCitySlug(item.slug))
-          .map((item) => ({
-          id: item.id,
-          name: item.city,
-          slug: item.slug,
-          department: item.dept || '',
-          region: item.region || '',
-          url: getCityPublicUrl(item.slug),
-          taxis_insured: item.taxi_count || 0,
-          average_savings: 35,
-          satisfied_clients: Math.floor((item.taxi_count || 0) * 0.8),
-          average_rating: 4.8,
-          meta_title: item.title || item.city,
-          meta_description: item.meta_description || '',
-          created_at: item.created_at
-        }));
-      }
-    } catch (error) {
-      logger.warn('⚠️ Supabase city pages fetch failed, falling back to static:', error);
-    }
-  }
-
   // Fallback vers les villes statiques de ping.ts
   logger.log('📍 Using static city pages (safe mode)');
   return (generateCityPages() as Array<{ city: string; slug: string; title: string; description: string; department?: string; region?: string }>).map((city) => ({
@@ -466,7 +342,7 @@ export async function getCityPages(): Promise<CityPage[]> {
 export async function getCityBySlug(slug: string): Promise<CityPage | null> {
   if (!isIndexableCitySlug(slug)) return null;
 
-  // D1 public cache: single city. Supabase remains the fallback.
+  // Public autonomous cache: single city, PostgreSQL first then D1.
   const lookupSlugs = Array.from(new Set([slug, slug.replace(/^assurance-taxi-/, ''), slug.startsWith('assurance-taxi-') ? slug : `assurance-taxi-${slug}`].filter(Boolean)));
   for (const lookupSlug of lookupSlugs) {
     const d1City = await getD1Content<CityPageRow>('city_pages', { slug: lookupSlug });
@@ -474,39 +350,6 @@ export async function getCityBySlug(slug: string): Promise<CityPage | null> {
       return mapCityPageRow(d1City);
     }
   }
-  // Mode hybride : Essayer Supabase, sinon fallback vers villes statiques
-  const USE_STATIC_CITIES = false;  // ✅ Supabase activé
-
-  if (supabase && !USE_STATIC_CITIES) {
-    try {
-      const { data, error } = await supabase
-        .from('city_pages')
-        .select('*')
-        .eq('slug', slug)
-        .or('status.eq.published,published.eq.true,is_published.eq.true')
-        .single();
-
-      if (!error && data) {
-        return {
-          id: data.id,
-          name: data.city,              // ✅ CORRECTION: city → name
-          slug: data.slug,
-          department: data.dept || '',  // ✅ CORRECTION: dept → department
-          region: data.region || '',
-          url: getCityPublicUrl(data.slug),
-          taxis_insured: data.taxi_count || 0,  // ✅ CORRECTION: taxi_count → taxis_insured
-          average_savings: 35,
-          satisfied_clients: Math.floor((data.taxi_count || 0) * 0.8),
-          average_rating: 4.8,
-          meta_title: data.title || data.city,
-          meta_description: data.meta_description || ''
-        };
-      }
-    } catch (error) {
-      logger.warn('⚠️ Supabase city fetch failed:', error);
-    }
-  }
-
   // Fallback vers les villes statiques
   logger.log('📍 Using static city page for:', slug);
   const allCities = await getCityPages();

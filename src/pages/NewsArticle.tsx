@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { Calendar, Clock, Tag, ArrowLeft, TrendingUp, ExternalLink } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
 import { getD1Content, listD1Content } from '@/lib/d1-public-cache';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
@@ -45,22 +44,7 @@ export default function NewsArticle() {
         loadRelatedArticles(d1Article.category, d1Article.id);
         return;
       }
-      const { data, error } = await supabase
-        .from('news_articles')
-        .select('*')
-        .eq('slug', articleSlug)
-        .eq('status', 'published')
-        .maybeSingle();
-
-      if (error) {
-        logger.error('Error loading article:', error);
-        return;
-      }
-
-      if (data) {
-        setArticle(data);
-        loadRelatedArticles(data.category, data.id);
-      }
+      logger.warn('Autonomous public news cache did not return article:', articleSlug);
     } catch (err) {
       logger.error('Failed to load article:', err);
     } finally {
@@ -82,18 +66,7 @@ export default function NewsArticle() {
         setRelatedArticles(d1Related);
         return;
       }
-      const { data, error } = await supabase
-        .from('news_articles')
-        .select('id, title, slug, excerpt, category, published_at, score')
-        .eq('category', category)
-        .neq('id', currentId)
-        .eq('status', 'published')
-        .order('published_at', { ascending: false })
-        .limit(3);
-
-      if (!error && data) {
-        setRelatedArticles(data);
-      }
+      setRelatedArticles([]);
     } catch (err) {
       logger.error('Failed to load related articles:', err);
     }

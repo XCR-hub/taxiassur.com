@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Calendar, Clock, Tag, ExternalLink, TrendingUp } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
 import { listD1Content } from '@/lib/d1-public-cache';
 import { stripHtml, createSmartExcerpt } from '../lib/text-utils';
 import Footer from '../components/Footer';
@@ -47,25 +46,8 @@ export default function Actualites() {
         })));
         return;
       }
-      const { data, error } = await supabase
-        .from('news_articles')
-        .select('*')
-        .eq('status', 'published')
-        .not('published_at', 'is', null)
-        .order('published_at', { ascending: false })
-        .limit(20);
-
-      if (error) {
-        logger.error('Error loading news:', error);
-        return;
-      }
-
-      const cleanedData = (data || []).map(article => ({
-        ...article,
-        excerpt: getCleanExcerpt(article)
-      }));
-
-      setNews(cleanedData);
+      logger.warn('Autonomous public news cache returned no articles');
+      setNews([]);
     } catch (err) {
       logger.error('Failed to load news:', err);
     } finally {

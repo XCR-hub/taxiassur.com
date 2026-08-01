@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { Calendar, TrendingUp, Newspaper, ArrowRight } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
 import { listD1Content } from '@/lib/d1-public-cache';
 import { stripHtml, createSmartExcerpt } from '../lib/text-utils';
 import { logger } from '@/lib/logger';
@@ -45,24 +44,8 @@ export default function NewsSection({ limit = 3, showTitle = true }: NewsSection
         })));
         return;
       }
-      const { data, error } = await supabase
-        .from('news_articles')
-        .select('id, title, slug, excerpt, content, category, score, published_at, source')
-        .eq('status', 'published')
-        .order('published_at', { ascending: false })
-        .limit(limit);
-
-      if (error) {
-        logger.error('Error loading news:', error);
-        return;
-      }
-
-      const cleanedData = (data || []).map(article => ({
-        ...article,
-        excerpt: getCleanExcerpt(article)
-      }));
-
-      setNews(cleanedData);
+      logger.warn('Autonomous public news cache returned no articles');
+      setNews([]);
     } catch (err) {
       logger.error('Failed to load news:', err);
     } finally {
