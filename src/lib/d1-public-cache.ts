@@ -34,7 +34,10 @@ interface PublicListOptions {
   sort?: 'published_at' | 'updated_at' | 'title';
 }
 
-const PUBLIC_CACHE_ENDPOINTS = ['/api/d1', '/api/postgres-public'];
+const PUBLIC_CACHE_ENDPOINTS = [
+  '/api/postgres-public', // Primary: local PostgreSQL mirror exposed through the read API.
+  '/api/d1', // Fallback: Cloudflare D1 cache.
+];
 
 async function fetchWithTimeout(url: string, timeoutMs = 3500): Promise<Response> {
   const controller = new AbortController();
