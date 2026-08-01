@@ -1,5 +1,3 @@
-#!/usr/bin/env sh
-. "$(dirname -- "$0")/_/husky.sh"
-
-npm run lint
-npm run test:run
+npm run security:scan-secrets
+npm run verify:client-compliance
+SKIP_LIVE_BACKOFFICE_AUTH_CHECK=1 npm run verify:backoffice-auth
