@@ -1,5 +1,4 @@
 import { BlogPost, FaqEntry, Review, Offer, BlogPostSchema, FaqEntrySchema, ReviewSchema, OfferSchema } from './schema';
-import { supabase } from '@/lib/supabase';
 import { generateCityPages } from './ping';
 import { logger } from '@/lib/logger';
 import { getD1Content, listD1Content } from '@/lib/d1-public-cache';
@@ -21,8 +20,6 @@ export interface CityPage {
   created_at?: string;
 }
 
-// Use singleton Supabase instance - NEVER create new instances
-logger.log('🔧 Content module using singleton Supabase instance');
 const UUID_PATTERN = '[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}';
 const CITY_UUID_SLUG_RE = new RegExp(`^(assurance-taxi-)?ville-${UUID_PATTERN}$`, 'i');
 
@@ -358,65 +355,16 @@ export async function getCityBySlug(slug: string): Promise<CityPage | null> {
 
 // Reviews
 export async function getReviews(): Promise<Review[]> {
-  if (supabase) {
-    try {
-      const { data, error } = await supabase
-        .from('reviews')
-        .select('*')
-        .eq('status', 'published')
-        .order('created_at', { ascending: false });
-
-      if (!error && data) {
-        return data.map(item => ReviewSchema.parse(item));
-      }
-    } catch (error) {
-      logger.warn('Supabase reviews fetch failed, falling back to local:', error);
-    }
-  }
-
   const reviews = await fetchLocalContent<Review>('reviews', ReviewSchema);
   return reviews.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 }
 
 // Offers
 export async function getOffers(): Promise<Offer[]> {
-  if (supabase) {
-    try {
-      const { data, error } = await supabase
-        .from('offers')
-        .select('*')
-        .eq('status', 'published')
-        .order('updated_at', { ascending: false });
-
-      if (!error && data) {
-        return data.map(item => OfferSchema.parse(item));
-      }
-    } catch (error) {
-      logger.warn('Supabase offers fetch failed, falling back to local:', error);
-    }
-  }
-
   return await fetchLocalContent<Offer>('offers', OfferSchema);
 }
 
 export async function getOffer(id: string): Promise<Offer | null> {
-  if (supabase) {
-    try {
-      const { data, error } = await supabase
-        .from('offers')
-        .select('*')
-        .eq('id', id)
-        .eq('status', 'published')
-        .single();
-      
-      if (!error && data) {
-        return OfferSchema.parse(data);
-      }
-    } catch (error) {
-      logger.warn('Supabase offer fetch failed, falling back to local:', error);
-    }
-  }
-  
   return await fetchLocalItem<Offer>('offers', id, OfferSchema);
 }
 

@@ -76,6 +76,7 @@ function verifyPublicSeoRuntimeNoSupabaseFallback() {
   const directSeoTableFindings = [];
   const missingHelperFindings = [];
   const directClientImports = [];
+  const directRuntimeClientImports = [];
 
   for (const relativeFile of PUBLIC_SEO_RUNTIME_FILES) {
     const filePath = path.resolve(relativeFile);
@@ -84,6 +85,10 @@ function verifyPublicSeoRuntimeNoSupabaseFallback() {
 
     if (!usesAutonomousHelper) {
       missingHelperFindings.push({ file: relativeFile });
+    }
+
+    if (fileSource.includes('@/lib/supabase') || fileSource.includes("from '@/integrations/supabase/client'")) {
+      directRuntimeClientImports.push({ file: relativeFile });
     }
 
     for (const table of PUBLIC_SEO_TABLES) {
@@ -109,6 +114,10 @@ function verifyPublicSeoRuntimeNoSupabaseFallback() {
   addCheck('public SEO runtime does not fall back to Supabase SEO tables', directSeoTableFindings.length === 0, {
     tables: PUBLIC_SEO_TABLES,
     findings: directSeoTableFindings,
+  });
+  addCheck('public SEO runtime does not import Supabase client directly', directRuntimeClientImports.length === 0, {
+    files: PUBLIC_SEO_RUNTIME_FILES,
+    findings: directRuntimeClientImports,
   });
   addCheck('public SEO pages do not import Supabase client directly', directClientImports.length === 0, {
     files: PUBLIC_SEO_PAGE_FILES,
